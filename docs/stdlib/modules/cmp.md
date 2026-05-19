@@ -112,7 +112,7 @@ partial orders. Those belong in later trait and derive slices.
 The focused positive behavior test is:
 
 ```text
-tests/cases/standard-library/ok/std-cmp-value-helpers.ari
+tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari
 ```
 
 `make check-prelude` emits LLVM for that file, checks representative public

@@ -96,7 +96,7 @@ paths, so implement `convert::From` or `convert::Into` when calling
 The focused positive behavior test is:
 
 ```text
-tests/cases/standard-library/ok/std-convert-value-helpers.ari
+tests/cases/standard-library/ok/convert/std-convert-value-helpers.ari
 ```
 
 `make check-prelude` emits LLVM for that file, checks representative public

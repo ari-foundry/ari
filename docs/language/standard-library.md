@@ -295,8 +295,9 @@ small source APIs with focused tests before becoming a larger design promise.
 1. Put source declarations and source implementations under `lib/std.arih` or
    `lib/std/<module>.arih`.
 2. Add compiler support only when source Ari cannot express the primitive yet.
-3. Add positive tests under `tests/cases/standard-library/ok/` and negative
-   diagnostics under `tests/cases/standard-library/errors/`.
+3. Add positive tests under `tests/cases/standard-library/ok/<feature>/` and
+   negative diagnostics under
+   `tests/cases/standard-library/errors/<feature>/`.
 4. Add or update `tests/std_api_manifest.txt` for public declarations.
 5. Document the user-facing behavior here or in a focused language page.
 6. Update the developer roadmap or test matrix when the API changes compiler

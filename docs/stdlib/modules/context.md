@@ -86,12 +86,12 @@ fn main() -> i64 {
 
 ## Tests
 
-- `tests/cases/standard-library/ok/context-argc.ari` checks direct argc access.
-- `tests/cases/standard-library/ok/context-arg.ari` checks direct argument hook
+- `tests/cases/standard-library/ok/context/context-argc.ari` checks direct argc access.
+- `tests/cases/standard-library/ok/context/context-arg.ari` checks direct argument hook
   lowering.
-- `tests/cases/standard-library/ok/prelude-input.ari` keeps context access
+- `tests/cases/standard-library/ok/input/prelude-input.ari` keeps context access
   covered beside prelude input hooks.
-- `tests/cases/standard-library/ok/std-context-args.ari` checks `has_arg`,
+- `tests/cases/standard-library/ok/context/std-context-args.ari` checks `has_arg`,
   argument-count helpers, main-thread helpers, root aliases, LLVM hook
   visibility, and executable behavior.
 

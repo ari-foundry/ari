@@ -78,8 +78,8 @@ fn tile_score(width: i64, height: i64) -> i64 {
 The focused behavior test is:
 
 ```text
-tests/cases/standard-library/ok/std-math-integer-helpers.ari
-tests/cases/standard-library/ok/std-math-division-rounding.ari
+tests/cases/standard-library/ok/math/std-math-integer-helpers.ari
+tests/cases/standard-library/ok/math/std-math-division-rounding.ari
 ```
 
 `make check-prelude` emits LLVM for those files, checks the public helper

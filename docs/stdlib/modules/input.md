@@ -72,13 +72,13 @@ Use `std::input` when the code is about reading stdin as user input. Use
 
 ## Tests
 
-- `tests/cases/standard-library/ok/prelude-input.ari` checks raw byte input
+- `tests/cases/standard-library/ok/input/prelude-input.ari` checks raw byte input
   names and runtime hook lowering.
-- `tests/cases/standard-library/ok/std-input-byte-option.ari` checks
+- `tests/cases/standard-library/ok/input/std-input-byte-option.ari` checks
   `input::try_read_byte()` and EOF conversion to `Option[u8]`.
-- `tests/cases/standard-library/ok/prelude-read-line.ari` checks borrowed line
+- `tests/cases/standard-library/ok/input/prelude-read-line.ari` checks borrowed line
   input aliases.
-- `tests/cases/standard-library/ok/prelude-read-line-owned.ari` checks owned
+- `tests/cases/standard-library/ok/input/prelude-read-line-owned.ari` checks owned
   line input with explicit zones.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for

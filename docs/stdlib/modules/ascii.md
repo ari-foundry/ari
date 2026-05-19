@@ -149,12 +149,12 @@ fn read_prefix(bytes: Slice[u8]) -> i64 {
 The focused positive tests are:
 
 ```text
-tests/cases/standard-library/ok/std-ascii-byte-helpers.ari
-tests/cases/standard-library/ok/std-ascii-class-helpers.ari
-tests/cases/standard-library/ok/std-ascii-slice-helpers.ari
-tests/cases/standard-library/ok/std-ascii-prefix-parsers.ari
-tests/cases/standard-library/ok/std-ascii-case-compare.ari
-tests/cases/standard-library/ok/std-ascii-case-search.ari
+tests/cases/standard-library/ok/ascii/std-ascii-byte-helpers.ari
+tests/cases/standard-library/ok/ascii/std-ascii-class-helpers.ari
+tests/cases/standard-library/ok/ascii/std-ascii-slice-helpers.ari
+tests/cases/standard-library/ok/ascii/std-ascii-prefix-parsers.ari
+tests/cases/standard-library/ok/ascii/std-ascii-case-compare.ari
+tests/cases/standard-library/ok/ascii/std-ascii-case-search.ari
 ```
 
 `make check-prelude` compiles them to LLVM, checks representative public

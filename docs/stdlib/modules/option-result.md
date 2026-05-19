@@ -113,15 +113,15 @@ fn main() -> i64 {
 Focused positive tests:
 
 ```text
-tests/cases/standard-library/ok/prelude-option-result-methods.ari
-tests/cases/standard-library/ok/prelude-option-result-predicates.ari
-tests/cases/standard-library/ok/prelude-option-filter.ari
-tests/cases/standard-library/ok/prelude-option-flatten.ari
-tests/cases/standard-library/ok/prelude-option-transpose.ari
-tests/cases/standard-library/ok/prelude-result-transpose.ari
-tests/cases/standard-library/ok/prelude-option-result-combinators.ari
-tests/cases/standard-library/ok/prelude-option-result-conversions.ari
-tests/cases/standard-library/ok/prelude-option-result-unwrap.ari
+tests/cases/standard-library/ok/prelude/prelude-option-result-methods.ari
+tests/cases/standard-library/ok/prelude/prelude-option-result-predicates.ari
+tests/cases/standard-library/ok/prelude/prelude-option-filter.ari
+tests/cases/standard-library/ok/prelude/prelude-option-flatten.ari
+tests/cases/standard-library/ok/prelude/prelude-option-transpose.ari
+tests/cases/standard-library/ok/prelude/prelude-result-transpose.ari
+tests/cases/standard-library/ok/prelude/prelude-option-result-combinators.ari
+tests/cases/standard-library/ok/prelude/prelude-option-result-conversions.ari
+tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap.ari
 ```
 
 `make check-prelude` compiles the tests to LLVM, checks representative method

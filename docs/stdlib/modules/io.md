@@ -63,15 +63,15 @@ output, or tests that should make the backend IO calls visible in LLVM IR.
 
 ## Tests
 
-- `tests/cases/standard-library/ok/prelude-io.ari` checks scalar IO names and
+- `tests/cases/standard-library/ok/prelude/prelude-io.ari` checks scalar IO names and
   root aliases.
-- `tests/cases/standard-library/ok/std-io-byte-slice.ari` checks
+- `tests/cases/standard-library/ok/io/std-io-byte-slice.ari` checks
   `io::write_bytes`, `std::io::write_bytes`, root `write_bytes`, stdout, and
   the returned byte count.
-- `tests/cases/standard-library/ok/prelude-input.ari` checks byte input hook
+- `tests/cases/standard-library/ok/input/prelude-input.ari` checks byte input hook
   lowering.
-- `tests/cases/standard-library/ok/prelude-read-line.ari` and
-  `tests/cases/standard-library/ok/prelude-read-line-owned.ari` cover borrowed
+- `tests/cases/standard-library/ok/input/prelude-read-line.ari` and
+  `tests/cases/standard-library/ok/input/prelude-read-line-owned.ari` cover borrowed
   and owned line input.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for

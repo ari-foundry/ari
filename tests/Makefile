@@ -16,19 +16,19 @@ check: check-std-api $(TARGET) check-cli check-tools check-prelude check-control
 	mkdir -p $(BUILD_DIR)/ir
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/ir/count.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/ir/count.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-io.ari --emit-llvm $(BUILD_DIR)/ir/prelude-io.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-io.ari --emit-llvm $(BUILD_DIR)/ir/prelude-io.ll
 	grep -q "declare i32 @printf" $(BUILD_DIR)/ir/prelude-io.ll
-	$(TARGET) tests/cases/standard-library/ok/format-print.ari --emit-llvm $(BUILD_DIR)/ir/format-print.ll
+	$(TARGET) tests/cases/standard-library/ok/format/format-print.ari --emit-llvm $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_write_i64" $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_newline" $(BUILD_DIR)/ir/format-print.ll
-	$(TARGET) tests/cases/standard-library/ok/format-print-u64.ari --emit-llvm $(BUILD_DIR)/ir/format-print-u64.ll
+	$(TARGET) tests/cases/standard-library/ok/format/format-print-u64.ari --emit-llvm $(BUILD_DIR)/ir/format-print-u64.ll
 	grep -q "@ari_builtin_write_u64" $(BUILD_DIR)/ir/format-print-u64.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format-print-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print-u64.elf; $(BUILD_DIR)/format-print-u64.elf >$(BUILD_DIR)/format-print-u64.out; grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/format-print-u64.out; grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/format-print-u64.out; fi
-	$(TARGET) tests/cases/standard-library/ok/format-float-precision.ari --emit-llvm $(BUILD_DIR)/ir/format-float-precision.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-print-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print-u64.elf; $(BUILD_DIR)/format-print-u64.elf >$(BUILD_DIR)/format-print-u64.out; grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/format-print-u64.out; grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/format-print-u64.out; fi
+	$(TARGET) tests/cases/standard-library/ok/format/format-float-precision.ari --emit-llvm $(BUILD_DIR)/ir/format-float-precision.ll
 	grep -F -q "\\25\\2E\\32\\66" $(BUILD_DIR)/ir/format-float-precision.ll
 	grep -q "fpext float" $(BUILD_DIR)/ir/format-float-precision.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format-float-precision.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-float-precision.elf; $(BUILD_DIR)/format-float-precision.elf >$(BUILD_DIR)/format-float-precision.out; grep -q "pi=3.14 default=1.500000" $(BUILD_DIR)/format-float-precision.out; grep -q "whole=6" $(BUILD_DIR)/format-float-precision.out; fi
-	$(TARGET) tests/cases/standard-library/ok/context-arg.ari --emit-llvm $(BUILD_DIR)/ir/context-arg.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-float-precision.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-float-precision.elf; $(BUILD_DIR)/format-float-precision.elf >$(BUILD_DIR)/format-float-precision.out; grep -q "pi=3.14 default=1.500000" $(BUILD_DIR)/format-float-precision.out; grep -q "whole=6" $(BUILD_DIR)/format-float-precision.out; fi
+	$(TARGET) tests/cases/standard-library/ok/context/context-arg.ari --emit-llvm $(BUILD_DIR)/ir/context-arg.ll
 	grep -q "@ari_builtin_context_arg" $(BUILD_DIR)/ir/context-arg.ll
 	$(TARGET) tests/cases/ffi/ok/ffi-c-puts.ari --emit-llvm $(BUILD_DIR)/ir/ffi-c-puts.ll
 	grep -q 'declare i32 @"puts"(ptr)' $(BUILD_DIR)/ir/ffi-c-puts.ll
@@ -83,7 +83,7 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	grep -q '"message":"missing final newline"' $(BUILD_DIR)/tools/lint-missing-final-newline.json
 	$(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --rule lint/missing-final-newline=off $(BUILD_DIR)/tools/lint-missing-final-newline.ari >$(BUILD_DIR)/tools/lint-missing-final-newline-off.out
 	grep -q '$(BUILD_DIR)/tools/lint-missing-final-newline.ari: ok' $(BUILD_DIR)/tools/lint-missing-final-newline-off.out
-	if $(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --json tests/cases/standard-library/errors/prelude-macro-format-no-default-zone.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
+	if $(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --json tests/cases/standard-library/errors/format/prelude-macro-format-no-default-zone.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
 	grep -q '"line":2' $(BUILD_DIR)/tools/lint-format.json
 	grep -q '"code":"ari/compiler"' $(BUILD_DIR)/tools/lint-format.json
 	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/tools/lint-format.json
@@ -149,36 +149,36 @@ check-cli: $(TARGET)
 
 check-prelude: $(TARGET)
 	mkdir -p $(BUILD_DIR)/prelude
-	$(TARGET) tests/cases/standard-library/ok/prelude-builtins.ari -o $(BUILD_DIR)/prelude/prelude-builtins.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-builtins.ari -o $(BUILD_DIR)/prelude/prelude-builtins.elf
 	$(BUILD_DIR)/prelude/prelude-builtins.elf; code=$$?; test $$code -eq 7
-	$(TARGET) tests/cases/standard-library/ok/prelude-std-root-builtins.ari -o $(BUILD_DIR)/prelude/prelude-std-root-builtins.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-root-builtins.ari -o $(BUILD_DIR)/prelude/prelude-std-root-builtins.elf
 	$(BUILD_DIR)/prelude/prelude-std-root-builtins.elf >$(BUILD_DIR)/prelude/prelude-std-root-builtins.out; code=$$?; test $$code -eq 9
 	grep -qx "4" $(BUILD_DIR)/prelude/prelude-std-root-builtins.out
 	grep -qx "5" $(BUILD_DIR)/prelude/prelude-std-root-builtins.out
-	$(TARGET) tests/cases/standard-library/ok/prelude-macros.ari -o $(BUILD_DIR)/prelude/prelude-macros.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-macros.ari -o $(BUILD_DIR)/prelude/prelude-macros.elf
 	$(BUILD_DIR)/prelude/prelude-macros.elf >$(BUILD_DIR)/prelude/prelude-macros.out; code=$$?; test $$code -eq 7
 	grep -q "macro=5 ok=1" $(BUILD_DIR)/prelude/prelude-macros.out
-	$(TARGET) tests/cases/standard-library/ok/format-float-llvm.ari -o $(BUILD_DIR)/prelude/format-float-llvm.elf
+	$(TARGET) tests/cases/standard-library/ok/format/format-float-llvm.ari -o $(BUILD_DIR)/prelude/format-float-llvm.elf
 	$(BUILD_DIR)/prelude/format-float-llvm.elf >$(BUILD_DIR)/prelude/format-float-llvm.out
 	grep -qx "value=1.3 default=1.500000 whole=6" $(BUILD_DIR)/prelude/format-float-llvm.out
 	grep -qx "round=1.12 carry=10 neg=-2.5" $(BUILD_DIR)/prelude/format-float-llvm.out
-	$(TARGET) tests/cases/standard-library/ok/format-print-u64.ari -o $(BUILD_DIR)/prelude/format-print-u64.elf
+	$(TARGET) tests/cases/standard-library/ok/format/format-print-u64.ari -o $(BUILD_DIR)/prelude/format-print-u64.elf
 	$(BUILD_DIR)/prelude/format-print-u64.elf >$(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/prelude/format-print-u64.out
-	$(TARGET) tests/cases/standard-library/ok/std-io-byte-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-byte-slice.ll
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-byte-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-byte-slice.ll
 	grep -q '_ARNv3std2io11write_bytes' $(BUILD_DIR)/prelude/std-io-byte-slice.ll
 	grep -q "@ari_builtin_write_byte" $(BUILD_DIR)/prelude/std-io-byte-slice.ll
-	$(TARGET) tests/cases/standard-library/ok/std-io-byte-slice.ari -o $(BUILD_DIR)/prelude/std-io-byte-slice.elf
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-byte-slice.ari -o $(BUILD_DIR)/prelude/std-io-byte-slice.elf
 	$(BUILD_DIR)/prelude/std-io-byte-slice.elf >$(BUILD_DIR)/prelude/std-io-byte-slice.out; code=$$?; test $$code -eq 6
 	grep -qx "AB" $(BUILD_DIR)/prelude/std-io-byte-slice.out
 	grep -qx "CD" $(BUILD_DIR)/prelude/std-io-byte-slice.out
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-io-byte-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-io-byte-slice.elf; $(BUILD_DIR)/prelude/std-io-byte-slice.elf >$(BUILD_DIR)/prelude/std-io-byte-slice.out; code=$$?; test $$code -eq 6; grep -qx "AB" $(BUILD_DIR)/prelude/std-io-byte-slice.out; grep -qx "CD" $(BUILD_DIR)/prelude/std-io-byte-slice.out; fi
-	$(TARGET) tests/cases/standard-library/ok/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.elf
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/io/std-io-byte-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-io-byte-slice.elf; $(BUILD_DIR)/prelude/std-io-byte-slice.elf >$(BUILD_DIR)/prelude/std-io-byte-slice.out; code=$$?; test $$code -eq 6; grep -qx "AB" $(BUILD_DIR)/prelude/std-io-byte-slice.out; grep -qx "CD" $(BUILD_DIR)/prelude/std-io-byte-slice.out; fi
+	$(TARGET) tests/cases/standard-library/ok/format/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.elf
 	$(BUILD_DIR)/prelude/raw-string-literals.elf >$(BUILD_DIR)/prelude/raw-string-literals.out; code=$$?; test $$code -eq 141
 	grep -qx "A" $(BUILD_DIR)/prelude/raw-string-literals.out
 	grep -qx "B" $(BUILD_DIR)/prelude/raw-string-literals.out
-	$(TARGET) tests/cases/standard-library/ok/prelude-macros.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-macros.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-macros.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_i64" $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_bool" $(BUILD_DIR)/prelude/prelude-macros.ll
 	$(TARGET) tests/cases/match/ok/rare-payload-packing.ari --emit-llvm $(BUILD_DIR)/prelude/rare-payload-packing.ll
@@ -186,17 +186,17 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_assert_ne_bool" $(BUILD_DIR)/prelude/rare-payload-packing.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 4)" $(BUILD_DIR)/prelude/rare-payload-packing.ll
 	grep -q "@ari_builtin_write_bool" $(BUILD_DIR)/prelude/rare-payload-packing.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-input.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-input.ll
+	$(TARGET) tests/cases/standard-library/ok/input/prelude-input.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "@ari_builtin_read_byte" $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "@ari_builtin_context_arg" $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "declare i32 @getchar" $(BUILD_DIR)/prelude/prelude-input.ll
-	$(TARGET) tests/cases/standard-library/ok/std-input-byte-option.ari --emit-llvm $(BUILD_DIR)/prelude/std-input-byte-option.ll
+	$(TARGET) tests/cases/standard-library/ok/input/std-input-byte-option.ari --emit-llvm $(BUILD_DIR)/prelude/std-input-byte-option.ll
 	grep -q '_ARNv3std5input13try_read_byte' $(BUILD_DIR)/prelude/std-input-byte-option.ll
 	grep -q "@ari_builtin_read_byte" $(BUILD_DIR)/prelude/std-input-byte-option.ll
-	$(TARGET) tests/cases/standard-library/ok/std-input-byte-option.ari -o $(BUILD_DIR)/prelude/std-input-byte-option.elf
+	$(TARGET) tests/cases/standard-library/ok/input/std-input-byte-option.ari -o $(BUILD_DIR)/prelude/std-input-byte-option.elf
 	printf 'A' | $(BUILD_DIR)/prelude/std-input-byte-option.elf; code=$$?; test $$code -eq 72
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-input-byte-option.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-input-byte-option.elf; printf 'A' | $(BUILD_DIR)/prelude/std-input-byte-option.elf; code=$$?; test $$code -eq 72; fi
-	$(TARGET) tests/cases/standard-library/ok/std-context-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-context-args.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/input/std-input-byte-option.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-input-byte-option.elf; printf 'A' | $(BUILD_DIR)/prelude/std-input-byte-option.elf; code=$$?; test $$code -eq 72; fi
+	$(TARGET) tests/cases/standard-library/ok/context/std-context-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -q "@ari_builtin_context_thread_id" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -q "@ari_thread_id" $(BUILD_DIR)/prelude/std-context-args.ll
@@ -205,18 +205,18 @@ check-prelude: $(TARGET)
 	grep -F -q "std7context14user_arg_count" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -F -q "std7context13has_user_args" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -F -q "std7context14is_main_thread" $(BUILD_DIR)/prelude/std-context-args.ll
-	$(TARGET) tests/cases/standard-library/ok/std-context-args.ari -o $(BUILD_DIR)/prelude/std-context-args.elf
+	$(TARGET) tests/cases/standard-library/ok/context/std-context-args.ari -o $(BUILD_DIR)/prelude/std-context-args.elf
 	$(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 123
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-context-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-context-args.elf; $(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 123; fi
-	$(TARGET) tests/cases/standard-library/ok/std-env-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-args.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/context/std-context-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-context-args.elf; $(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 123; fi
+	$(TARGET) tests/cases/standard-library/ok/env/std-env-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env9arg_count" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env7try_arg" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env12program_name" $(BUILD_DIR)/prelude/std-env-args.ll
-	$(TARGET) tests/cases/standard-library/ok/std-env-args.ari -o $(BUILD_DIR)/prelude/std-env-args.elf
+	$(TARGET) tests/cases/standard-library/ok/env/std-env-args.ari -o $(BUILD_DIR)/prelude/std-env-args.elf
 	$(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-env-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-args.elf; $(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98; fi
-	$(TARGET) tests/cases/standard-library/ok/std-env-vars.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-vars.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-args.elf; $(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98; fi
+	$(TARGET) tests/cases/standard-library/ok/env/std-env-vars.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -q "@ari_builtin_env_get" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -q "@ari_builtin_env_has" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -q "@ari_builtin_env_set" $(BUILD_DIR)/prelude/std-env-vars.ll
@@ -225,10 +225,10 @@ check-prelude: $(TARGET)
 	grep -q "@setenv" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -q "@unsetenv" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -F -q "std3env7try_get" $(BUILD_DIR)/prelude/std-env-vars.ll
-	$(TARGET) tests/cases/standard-library/ok/std-env-vars.ari -o $(BUILD_DIR)/prelude/std-env-vars.elf
+	$(TARGET) tests/cases/standard-library/ok/env/std-env-vars.ari -o $(BUILD_DIR)/prelude/std-env-vars.elf
 	$(BUILD_DIR)/prelude/std-env-vars.elf; code=$$?; test $$code -eq 158
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-env-vars.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-vars.elf; $(BUILD_DIR)/prelude/std-env-vars.elf; code=$$?; test $$code -eq 158; fi
-	$(TARGET) tests/cases/standard-library/ok/std-env-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-paths.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-vars.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-vars.elf; $(BUILD_DIR)/prelude/std-env-vars.elf; code=$$?; test $$code -eq 158; fi
+	$(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -q "@ari_builtin_env_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -q "@ari_builtin_env_set_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -q "@ari_builtin_env_executable_path" $(BUILD_DIR)/prelude/std-env-paths.ll
@@ -237,61 +237,61 @@ check-prelude: $(TARGET)
 	grep -q "@readlink" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env15try_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env19try_executable_path" $(BUILD_DIR)/prelude/std-env-paths.ll
-	$(TARGET) tests/cases/standard-library/ok/std-env-paths.ari -o $(BUILD_DIR)/prelude/std-env-paths.elf
+	$(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari -o $(BUILD_DIR)/prelude/std-env-paths.elf
 	$(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-env-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-paths.elf; $(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39; fi
-	$(TARGET) tests/cases/standard-library/ok/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-paths.elf; $(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39; fi
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -F -q "std7process10is_success" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -F -q "std7process10is_failure" $(BUILD_DIR)/prelude/std-process-basic.ll
-	$(TARGET) tests/cases/standard-library/ok/std-process-basic.ari -o $(BUILD_DIR)/prelude/std-process-basic.elf
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari -o $(BUILD_DIR)/prelude/std-process-basic.elf
 	$(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53
-	$(TARGET) tests/cases/standard-library/ok/std-process-exit.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-exit.ll
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-exit.ll
 	grep -q "@ari_builtin_process_exit" $(BUILD_DIR)/prelude/std-process-exit.ll
 	grep -q "call void @exit(i32 %narrow)" $(BUILD_DIR)/prelude/std-process-exit.ll
-	$(TARGET) tests/cases/standard-library/ok/std-process-exit.ari -o $(BUILD_DIR)/prelude/std-process-exit.elf
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari -o $(BUILD_DIR)/prelude/std-process-exit.elf
 	$(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-process-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-basic.elf; $(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-process-exit.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit.elf; $(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42; fi
-	$(TARGET) tests/cases/standard-library/ok/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-basic.elf; $(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit.elf; $(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42; fi
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 1)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 3)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-std-qualified-print.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf; $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf >$(BUILD_DIR)/prelude/prelude-std-qualified-print.out; code=$$?; test $$code -eq 6; grep -qx "std root 1" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std io 2" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std alias 3" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; fi
-	$(TARGET) tests/cases/standard-library/ok/prelude-read-line.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-read-line.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-qualified-print.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf; $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf >$(BUILD_DIR)/prelude/prelude-std-qualified-print.out; code=$$?; test $$code -eq 6; grep -qx "std root 1" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std io 2" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std alias 3" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; fi
+	$(TARGET) tests/cases/standard-library/ok/input/prelude-read-line.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-read-line.ll
 	grep -q "@ari_builtin_read_line" $(BUILD_DIR)/prelude/prelude-read-line.ll
 	grep -q "declare ptr @fgets" $(BUILD_DIR)/prelude/prelude-read-line.ll
 	grep -q "@ari_line_buffer" $(BUILD_DIR)/prelude/prelude-read-line.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-read-line-owned.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-read-line-owned.ll
+	$(TARGET) tests/cases/standard-library/ok/input/prelude-read-line-owned.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-read-line-owned.ll
 	grep -q 'ari_builtin_read_line_owned' $(BUILD_DIR)/prelude/prelude-read-line-owned.ll
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/prelude-read-line-owned.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
-		$(TARGET) tests/cases/standard-library/ok/prelude-read-line.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line.elf; \
+		$(TARGET) tests/cases/standard-library/ok/input/prelude-read-line.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line.elf; \
 		printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line.elf >$(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "alpha" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "beta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "gamma" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "delta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 	fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-read-line-owned.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; code=$$?; test $$code -eq 161; fi
-	$(TARGET) tests/cases/standard-library/ok/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.elf
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/input/prelude-read-line-owned.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; code=$$?; test $$code -eq 161; fi
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.elf
 	$(BUILD_DIR)/prelude/prelude-trait-surface.elf; code=$$?; test $$code -eq 0
-	$(TARGET) tests/cases/standard-library/ok/std-convert-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-convert-value-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/convert/std-convert-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-convert-value-helpers.ll
 	grep -F -q 'std7convert15identity__G_i64' $(BUILD_DIR)/prelude/std-convert-value-helpers.ll
 	grep -F -q 'std7convert15from__G_i32_i64' $(BUILD_DIR)/prelude/std-convert-value-helpers.ll
 	grep -F -q 'std7convert15into__G_i64_i32' $(BUILD_DIR)/prelude/std-convert-value-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-convert-value-helpers.ari -o $(BUILD_DIR)/prelude/std-convert-value-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/convert/std-convert-value-helpers.ari -o $(BUILD_DIR)/prelude/std-convert-value-helpers.elf
 	$(BUILD_DIR)/prelude/std-convert-value-helpers.elf; code=$$?; test $$code -eq 48
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-convert-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-convert-value-helpers.elf; $(BUILD_DIR)/prelude/std-convert-value-helpers.elf; code=$$?; test $$code -eq 48; fi
-	$(TARGET) tests/cases/standard-library/ok/std-cmp-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/convert/std-convert-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-convert-value-helpers.elf; $(BUILD_DIR)/prelude/std-convert-value-helpers.elf; code=$$?; test $$code -eq 48; fi
+	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp10min__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp10max__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp12clamp__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp17is_between__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-cmp-value-helpers.ari -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf
 	$(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 235
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 235; fi
-	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 235; fi
+	$(TARGET) tests/cases/standard-library/ok/math/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3abs' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math4sign' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math11is_positive' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
@@ -302,235 +302,235 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4math3pow' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3gcd' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3lcm' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari -o $(BUILD_DIR)/prelude/std-math-integer-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/math/std-math-integer-helpers.ari -o $(BUILD_DIR)/prelude/std-math-integer-helpers.elf
 	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 71
-	$(TARGET) tests/cases/standard-library/ok/std-math-division-rounding.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-division-rounding.ll
+	$(TARGET) tests/cases/standard-library/ok/math/std-math-division-rounding.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-division-rounding.ll
 	grep -q '_ARNv3std4math9div_floor' $(BUILD_DIR)/prelude/std-math-division-rounding.ll
 	grep -q '_ARNv3std4math8div_ceil' $(BUILD_DIR)/prelude/std-math-division-rounding.ll
 	grep -q '_ARNv3std4math9mod_floor' $(BUILD_DIR)/prelude/std-math-division-rounding.ll
-	$(TARGET) tests/cases/standard-library/ok/std-math-division-rounding.ari -o $(BUILD_DIR)/prelude/std-math-division-rounding.elf
+	$(TARGET) tests/cases/standard-library/ok/math/std-math-division-rounding.ari -o $(BUILD_DIR)/prelude/std-math-division-rounding.elf
 	$(BUILD_DIR)/prelude/std-math-division-rounding.elf; code=$$?; test $$code -eq 182
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-byte-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-byte-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8is_digit' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8to_lower' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii11digit_value' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii9hex_value' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-byte-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-byte-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-byte-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-byte-helpers.elf
 	$(BUILD_DIR)/prelude/std-ascii-byte-helpers.elf; code=$$?; test $$code -eq 177
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-class-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-class-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
 	grep -q '_ARNv3std5ascii10is_control' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
 	grep -q '_ARNv3std5ascii12is_printable' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
 	grep -q '_ARNv3std5ascii10is_graphic' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
 	grep -q '_ARNv3std5ascii14is_punctuation' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
 	grep -q '_ARNv3std5ascii8is_blank' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-class-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-class-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-class-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-class-helpers.elf
 	$(BUILD_DIR)/prelude/std-ascii-class-helpers.elf; code=$$?; test $$code -eq 171
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-slice-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-slice-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
 	grep -q '_ARNv3std5ascii15skip_whitespace' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
 	grep -q '_ARNv3std5ascii10trim_start' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
 	grep -q '_ARNv3std5ascii8trim_end' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
 	grep -q '_ARNv3std5ascii13parse_decimal' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
 	grep -q '_ARNv3std5ascii9parse_hex' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-slice-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-slice-helpers.elf
 	$(BUILD_DIR)/prelude/std-ascii-slice-helpers.elf; code=$$?; test $$code -eq 19
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-prefix-parsers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.ll
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-prefix-parsers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.ll
 	grep -q '_ARNv3std5ascii20parse_decimal_prefix' $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.ll
 	grep -q '_ARNv3std5ascii16parse_hex_prefix' $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-prefix-parsers.ari -o $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.elf
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-prefix-parsers.ari -o $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.elf
 	$(BUILD_DIR)/prelude/std-ascii-prefix-parsers.elf; code=$$?; test $$code -eq 39
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-case-compare.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-case-compare.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
 	grep -q '_ARNv3std5ascii18equals_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
 	grep -q '_ARNv3std5ascii23starts_with_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
 	grep -q '_ARNv3std5ascii21ends_with_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-case-compare.ari -o $(BUILD_DIR)/prelude/std-ascii-case-compare.elf
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-case-compare.ari -o $(BUILD_DIR)/prelude/std-ascii-case-compare.elf
 	$(BUILD_DIR)/prelude/std-ascii-case-compare.elf; code=$$?; test $$code -eq 8
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-case-search.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-case-search.ll
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-case-search.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-case-search.ll
 	grep -q '_ARNv3std5ascii20index_of_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-search.ll
 	grep -q '_ARNv3std5ascii20contains_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-search.ll
-	$(TARGET) tests/cases/standard-library/ok/std-ascii-case-search.ari -o $(BUILD_DIR)/prelude/std-ascii-case-search.elf
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-case-search.ari -o $(BUILD_DIR)/prelude/std-ascii-case-search.elf
 	$(BUILD_DIR)/prelude/std-ascii-case-search.elf; code=$$?; test $$code -eq 167
-	$(TARGET) tests/cases/standard-library/ok/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits6is_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits7any_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits15is_power_of_two' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits8align_up' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-bits-mask-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-mask-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-mask-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-mask-helpers.elf; code=$$?; test $$code -eq 199
-	$(TARGET) tests/cases/standard-library/ok/std-bits-rotate-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-rotate-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll
 	grep -q '_ARNv3std4bits11rotate_left' $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll
 	grep -q '_ARNv3std4bits12rotate_right' $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-bits-rotate-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-rotate-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-rotate-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-rotate-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-rotate-helpers.elf; code=$$?; test $$code -eq 101
-	$(TARGET) tests/cases/standard-library/ok/std-bits-scan-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-scan-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
 	grep -q '_ARNv3std4bits10count_ones' $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
 	grep -q '_ARNv3std4bits11count_zeros' $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
 	grep -q '_ARNv3std4bits13leading_zeros' $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
 	grep -q '_ARNv3std4bits14trailing_zeros' $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-bits-scan-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-scan-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-scan-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-scan-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-scan-helpers.elf; code=$$?; test $$code -eq 187
-	$(TARGET) tests/cases/standard-library/ok/std-bits-one-run-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-one-run-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-one-run-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-one-run-helpers.ll
 	grep -q '_ARNv3std4bits12leading_ones' $(BUILD_DIR)/prelude/std-bits-one-run-helpers.ll
 	grep -q '_ARNv3std4bits13trailing_ones' $(BUILD_DIR)/prelude/std-bits-one-run-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-bits-one-run-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-one-run-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-one-run-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-one-run-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-one-run-helpers.elf; code=$$?; test $$code -eq 158
-	$(TARGET) tests/cases/standard-library/ok/std-bits-width-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-width-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
 	grep -q '_ARNv3std4bits9bit_width' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
 	grep -q '_ARNv3std4bits18floor_power_of_two' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
 	grep -q '_ARNv3std4bits17ceil_power_of_two' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
 	grep -q '_ARNv3std4bits8low_mask' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-bits-width-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-width-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-width-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-width-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-width-helpers.elf; code=$$?; test $$code -eq 239
-	$(TARGET) tests/cases/standard-library/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.elf
 	$(BUILD_DIR)/prelude/prelude-explicit-move.elf; code=$$?; test $$code -eq 32
-	$(TARGET) tests/cases/standard-library/ok/std-mem-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
 	grep -q '_mem_replace' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
 	grep -q '_mem_swap' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
 	grep -q 'load { i64, i64 }, ptr' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-mem-value-helpers.ari -o $(BUILD_DIR)/prelude/std-mem-value-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-value-helpers.ari -o $(BUILD_DIR)/prelude/std-mem-value-helpers.elf
 	$(BUILD_DIR)/prelude/std-mem-value-helpers.elf; code=$$?; test $$code -eq 46
-	$(TARGET) tests/cases/standard-library/ok/prelude-header-main.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-header-main.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-header-main.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call void @"ari_builtin_zone_destroy"' $(BUILD_DIR)/prelude/prelude-header-main.ll
-	$(TARGET) tests/cases/standard-library/ok/std-zone-alloc-array.ari --emit-llvm $(BUILD_DIR)/prelude/std-zone-alloc-array.ll
+	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari --emit-llvm $(BUILD_DIR)/prelude/std-zone-alloc-array.ll
 	grep -q '_ARNv3std4zone18alloc_array__G_i64' $(BUILD_DIR)/prelude/std-zone-alloc-array.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-zone-alloc-array.ll
-	$(TARGET) tests/cases/standard-library/ok/std-zone-alloc-array.ari -o $(BUILD_DIR)/prelude/std-zone-alloc-array.elf
+	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari -o $(BUILD_DIR)/prelude/std-zone-alloc-array.elf
 	$(BUILD_DIR)/prelude/std-zone-alloc-array.elf; code=$$?; test $$code -eq 72
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-zone-alloc-array.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; code=$$?; test $$code -eq 72; fi
-	$(TARGET) tests/cases/standard-library/ok/std-vec-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; code=$$?; test $$code -eq 72; fi
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
 	grep -q '_ARNv3std3vec19alloc_buffer__G_i64' $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-with-capacity.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-with-capacity.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-with-capacity.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-with-capacity.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-with-capacity.ll
 	grep -q '_ARNv3std3vec20with_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-with-capacity.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-new-handle.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-new-handle.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-new-handle.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-new-handle.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-new-handle.ll
 	grep -q '_ARNv3std3vec10new__G_i64' $(BUILD_DIR)/prelude/std-vec-new-handle.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-macro-new.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-macro-new.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-macro-new.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-macro-new.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-macro-new.ll
 	grep -q '_ARNv3std3vec10new__G_i64' $(BUILD_DIR)/prelude/std-vec-macro-new.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-root-alias.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-root-alias.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-root-alias.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-root-alias.ll
 	grep -q '_ARNv3std3vec10new__G_i64' $(BUILD_DIR)/prelude/std-vec-root-alias.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-root-alias.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-macro-new.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-macro-new.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-macro-new.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-macro-new.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-boxed-macro-new.ll
 	grep -q '_ARNv3std5boxed10new__G_i64' $(BUILD_DIR)/prelude/std-boxed-macro-new.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-box.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-box.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-box.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -q '_ARNv3std5boxed10new__G_i64' $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -F -q 'define i64 @"_ARNv4impl20std__boxed__Box_i64_8inherent3get"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent3set' $(BUILD_DIR)/prelude/std-boxed-box.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-set-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-set-drop-value.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-set-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-set-drop-value.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent3set' $(BUILD_DIR)/prelude/std-boxed-set-drop-value.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-boxed-set-drop-value.ll) -ge 2
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-replace.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-replace.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-replace.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-replace.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent7replace' $(BUILD_DIR)/prelude/std-boxed-replace.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-copy-to.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-copy-to.ll
 	grep -F -q 'define { ptr } @"_ARNv4impl20std__boxed__Box_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-boxed-copy-to.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-swap.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-swap.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-swap.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-swap.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4swap' $(BUILD_DIR)/prelude/std-boxed-swap.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-as-ref-mut.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-as-ref-mut.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.ll
 	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent6as_ref"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.ll
 	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent6as_mut"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-as-mut-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-as-mut-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent10as_mut_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-take.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4take' $(BUILD_DIR)/prelude/std-boxed-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent8is_empty' $(BUILD_DIR)/prelude/std-boxed-take.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-try-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-try-take.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-try-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-try-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent8try_take' $(BUILD_DIR)/prelude/std-boxed-try-take.ll
 	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-boxed-try-take.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-clear.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-clear.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-clear.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-clear.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent5clear' $(BUILD_DIR)/prelude/std-boxed-clear.ll
 	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-boxed-clear.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-put-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-put-in.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-put-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-put-in.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent6put_in' $(BUILD_DIR)/prelude/std-boxed-put-in.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-drop.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-drop.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_9std__Drop4drop' $(BUILD_DIR)/prelude/std-boxed-drop.ll
-	$(TARGET) tests/cases/standard-library/ok/std-boxed-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_9std__Drop4drop' $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
 	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-box-root.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-box-root.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/prelude-box-root.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-box-root.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent3new' $(BUILD_DIR)/prelude/prelude-box-root.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent7copy_to' $(BUILD_DIR)/prelude/prelude-box-root.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
 	grep -q 'call ptr @"ari_builtin_string_alloc_buffer"' $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
 	grep -q 'call ptr @ari_builtin_zone_alloc(ptr %zone.slot, i64 %capacity, i64 1)' $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-handle.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-handle.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-handle.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q 'ari_builtin_string_with_capacity' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q 'ari_builtin_string_new' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent3len"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent8capacity"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent8is_empty"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-first-last.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-first-last.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-first-last.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-first-last.ll
 	grep -F -q 'define i8 @"_ARNv4impl19std__string__String8inherent5first"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-first-last.ll
 	grep -F -q 'define i8 @"_ARNv4impl19std__string__String8inherent4last"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-first-last.ll
 	grep -F -q 'define i8 @"_ARNv4impl19std__string__String8inherent3get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-string-handle.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-try-byte-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-try-byte-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent9try_first"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent8try_last"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent7try_get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent7try_pop"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-try-byte-access.ari -o $(BUILD_DIR)/prelude/std-string-try-byte-access.elf
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-try-byte-access.ari -o $(BUILD_DIR)/prelude/std-string-try-byte-access.elf
 	$(BUILD_DIR)/prelude/std-string-try-byte-access.elf; code=$$?; test $$code -eq 98
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-try-byte-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-try-byte-access.elf; $(BUILD_DIR)/prelude/std-string-try-byte-access.elf; code=$$?; test $$code -eq 98; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-try-byte-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-try-byte-access.elf; $(BUILD_DIR)/prelude/std-string-try-byte-access.elf; code=$$?; test $$code -eq 98; fi
 	grep -F -q 'define ptr @"_ARNv4impl19std__string__String8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent7push_in' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-handle.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-fixed-push.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-fixed-push.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-fixed-push.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-fixed-push.ll
 	grep -q '_ARNv4impl19std__string__String8inherent4push' $(BUILD_DIR)/prelude/std-string-fixed-push.ll
 	grep -q '_ARNv4impl19std__string__String8inherent6insert' $(BUILD_DIR)/prelude/std-string-fixed-push.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-search.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-search.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-search.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-search.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent8index_of"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent8contains"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent5count"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-prefix-suffix.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-prefix-suffix.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-prefix-suffix.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-prefix-suffix.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-string-prefix-suffix.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-string-prefix-suffix.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-equals.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-equals.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-equals.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-equals.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-string-equals.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-ascii-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-ascii-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { ptr, i64 } @"_ARNv4impl19std__string__String8inherent10trim_start"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { ptr, i64 } @"_ARNv4impl19std__string__String8inherent8trim_end"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { ptr, i64 } @"_ARNv4impl19std__string__String8inherent4trim"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__string__String8inherent13parse_decimal"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__string__String8inherent9parse_hex"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-ascii-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; code=$$?; test $$code -eq 186; fi
-	$(TARGET) tests/cases/standard-library/ok/std-string-prefix-parsers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-prefix-parsers.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-ascii-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; code=$$?; test $$code -eq 186; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-prefix-parsers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-prefix-parsers.ll
 	grep -F -q 'String8inherent20parse_decimal_prefix' $(BUILD_DIR)/prelude/std-string-prefix-parsers.ll
 	grep -F -q 'String8inherent16parse_hex_prefix' $(BUILD_DIR)/prelude/std-string-prefix-parsers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-prefix-parsers.ari -o $(BUILD_DIR)/prelude/std-string-prefix-parsers.elf
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-prefix-parsers.ari -o $(BUILD_DIR)/prelude/std-string-prefix-parsers.elf
 	$(BUILD_DIR)/prelude/std-string-prefix-parsers.elf; code=$$?; test $$code -eq 39
-	$(TARGET) tests/cases/standard-library/ok/std-string-ascii-case-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-ascii-case-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
 	grep -F -q 'String8inherent18equals_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
 	grep -F -q 'String8inherent23starts_with_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
 	grep -F -q 'String8inherent21ends_with_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
 	grep -F -q 'String8inherent20index_of_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
 	grep -F -q 'String8inherent20contains_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-ascii-case-helpers.ari -o $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.elf
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-ascii-case-helpers.ari -o $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.elf
 	$(BUILD_DIR)/prelude/std-string-ascii-case-helpers.elf; code=$$?; test $$code -eq 120
-	$(TARGET) tests/cases/standard-library/ok/std-string-trim-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-trim-copy.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-trim-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent13trim_start_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent11trim_end_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent7trim_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-trim-copy.ari -o $(BUILD_DIR)/prelude/std-string-trim-copy.elf
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-trim-copy.ari -o $(BUILD_DIR)/prelude/std-string-trim-copy.elf
 	$(BUILD_DIR)/prelude/std-string-trim-copy.elf; code=$$?; test $$code -eq 131
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-trim-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-trim-copy.elf; $(BUILD_DIR)/prelude/std-string-trim-copy.elf; code=$$?; test $$code -eq 131; fi
-	$(TARGET) tests/cases/standard-library/ok/std-string-from-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-copy.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-trim-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-trim-copy.elf; $(BUILD_DIR)/prelude/std-string-trim-copy.elf; code=$$?; test $$code -eq 131; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-from-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @ari_builtin_string_copy_to(ptr %value.slot, ptr %target.slot)' $(BUILD_DIR)/prelude/std-string-from-copy.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-copy-to-method.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-copy-to-method.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-copy-to-method.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-copy-to-method.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-copy-to-method.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-slice-in.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-slice-in.ll
 	grep -q '_ARNv3std6string13from_slice_in' $(BUILD_DIR)/prelude/std-string-from-slice-in.ll
 	grep -q '_ARNv4impl19std__string__String8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-string-from-slice-in.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-string-root.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-string-root.ll
+	$(TARGET) tests/cases/standard-library/ok/string/prelude-string-root.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-string-root.ll
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/prelude-string-root.ll
 	grep -q 'ari_builtin_string_copy_to' $(BUILD_DIR)/prelude/prelude-string-root.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-grow.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-grow.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-grow.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv4impl19std__string__String8inherent7reserve' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv4impl19std__string__String8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv4impl19std__string__String8inherent7push_in' $(BUILD_DIR)/prelude/std-string-grow.ll
@@ -539,7 +539,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl19std__string__String8inherent9resize_in' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv3std6string16grow_to_capacity' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv3std6string21ensure_spare_capacity' $(BUILD_DIR)/prelude/std-string-grow.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
 	grep -q '_ARNv4impl19std__string__String8inherent7reserve' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
 	grep -q '_ARNv4impl19std__string__String8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
 	grep -q '_ARNv4impl19std__string__String8inherent7push_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
@@ -552,38 +552,38 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl19std__string__String8inherent14append_bool_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
 	grep -q '_ARNv4impl19std__string__String8inherent13append_f32_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
 	grep -q '_ARNv4impl19std__string__String8inherent13append_f64_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-append.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-append.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_string_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_bool_in' $(BUILD_DIR)/prelude/std-string-append.ll
-	$(TARGET) tests/cases/standard-library/ok/std-string-append-f32.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append-f32.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-append-f32.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append-f32.ll
 	grep -F -q 'define void @"_ARNv4impl19std__string__String8inherent13append_f32_in"(ptr %arg0, ptr %arg1, float %arg2, i64 %arg3)' $(BUILD_DIR)/prelude/std-string-append-f32.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-append-f32.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-append-f32.elf; $(BUILD_DIR)/prelude/std-string-append-f32.elf; code=$$?; test $$code -eq 8; fi
-	$(TARGET) tests/cases/standard-library/ok/std-string-append-u64.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append-u64.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-append-f32.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-append-f32.elf; $(BUILD_DIR)/prelude/std-string-append-f32.elf; code=$$?; test $$code -eq 8; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-append-u64.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append-u64.ll
 	grep -F -q 'define void @"_ARNv4impl19std__string__String8inherent13append_u64_in"(ptr %arg0, ptr %arg1, i64 %arg2)' $(BUILD_DIR)/prelude/std-string-append-u64.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-append-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-append-u64.elf; $(BUILD_DIR)/prelude/std-string-append-u64.elf; code=$$?; test $$code -eq 24; fi
-	$(TARGET) tests/cases/standard-library/ok/prelude-format-in.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-append-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-append-u64.elf; $(BUILD_DIR)/prelude/std-string-append-u64.elf; code=$$?; test $$code -eq 24; fi
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-format-in.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_string_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_bool_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_f32_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_f64_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-format-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in.elf; $(BUILD_DIR)/prelude/prelude-format-in.elf; code=$$?; test $$code -eq 155; fi
-	$(TARGET) tests/cases/standard-library/ok/prelude-format-in-u64.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in-u64.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-format-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in.elf; $(BUILD_DIR)/prelude/prelude-format-in.elf; code=$$?; test $$code -eq 155; fi
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-format-in-u64.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in-u64.ll
 	grep -q 'append_u64_in' $(BUILD_DIR)/prelude/prelude-format-in-u64.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-format-in-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in-u64.elf; $(BUILD_DIR)/prelude/prelude-format-in-u64.elf; code=$$?; test $$code -eq 26; fi
-	$(TARGET) tests/cases/standard-library/ok/prelude-format-in-display.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in-display.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-format-in-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in-u64.elf; $(BUILD_DIR)/prelude/prelude-format-in-u64.elf; code=$$?; test $$code -eq 26; fi
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-format-in-display.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	grep -F -q 'std__fmt__Display9format_in"(ptr' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	grep -E -q 'getelementptr inbounds \{ i64, i64 \}, ptr %t[0-9]+, i32 0, i32 0' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	grep -E -q 'getelementptr inbounds \{ i64, i64 \}, ptr %t[0-9]+, i32 0, i32 1' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-format-in-display.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in-display.elf; $(BUILD_DIR)/prelude/prelude-format-in-display.elf; code=$$?; test $$code -eq 150; fi
-	$(TARGET) tests/cases/standard-library/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-format-in-display.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in-display.elf; $(BUILD_DIR)/prelude/prelude-format-in-display.elf; code=$$?; test $$code -eq 150; fi
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent3len"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent8capacity"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent8is_empty"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-fixed-ops.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-fixed-ops.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent4push' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-replace.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-replace.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-replace.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-replace.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7replace' $(BUILD_DIR)/prelude/std-vec-replace.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent4swap' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6insert' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
@@ -592,141 +592,141 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent8index_of"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent8contains"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent5count"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-get-ref-mut.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-get-ref-mut.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-get-ref-mut.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-get-ref-mut.ll
 	grep -F -q 'define ptr @"_ARNv4impl18std__vec__Vec_i64_8inherent7get_ref"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-get-ref-mut.ll
 	grep -F -q 'define ptr @"_ARNv4impl18std__vec__Vec_i64_8inherent7get_mut"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-get-ref-mut.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-slice-compare.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-slice-compare.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
 	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
 	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
 	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-as-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-slice.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-slice.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8as_slice' $(BUILD_DIR)/prelude/std-vec-as-slice.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-reserve.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-reserve.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-reserve.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-reserve.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7reserve' $(BUILD_DIR)/prelude/std-vec-reserve.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-reserve-extra.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-reserve-extra.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-reserve-extra.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-reserve-extra.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-vec-reserve-extra.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-copy-to.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-copy-to.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl18std__vec__Vec_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-vec-copy-to.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl18std__vec__Vec_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-as-mut-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-mut-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl18std__vec__Vec_i64_8inherent10as_mut_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-iter.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-iter.ll
 	grep -F -q 'define { ptr, i64, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent4iter"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-iter.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__vec__Iter_i64_13std__Iterator4next"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-iter.ll
 	grep -F -q 'define { ptr, i64, i64 } @"_ARNv4impl18std__vec__Vec_i64_17std__IntoIterator9into_iter"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-iter.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-push-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-push-in.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-push-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-push-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-push-in.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-insert-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-insert-in.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-insert-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-insert-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9insert_in' $(BUILD_DIR)/prelude/std-vec-insert-in.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-extend-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-extend-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
 	grep -q '_ARNv3std3vec20from_slice_in__G_i64' $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-resize-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-resize-in.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-resize-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-resize-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9resize_in' $(BUILD_DIR)/prelude/std-vec-resize-in.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-growth-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec23grow_to_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec28ensure_spare_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7reserve' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9insert_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9resize_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-try-pop.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-pop.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-pop.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7try_pop' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-try-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-access.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent9try_first"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-try-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent8try_last"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-try-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent7try_get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-try-access.ll
-	$(TARGET) tests/cases/standard-library/ok/std-vec-try-access.ari -o $(BUILD_DIR)/prelude/std-vec-try-access.elf
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-access.ari -o $(BUILD_DIR)/prelude/std-vec-try-access.elf
 	$(BUILD_DIR)/prelude/std-vec-try-access.elf; code=$$?; test $$code -eq 120
-	$(TARGET) tests/cases/standard-library/ok/std-vec-shrink-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-shrink-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	grep -q '_ARNv3std3vec20shrink_to_len__G_i64' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3set' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent5clear' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8truncate' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9resize_in' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll) -ge 3
-	$(TARGET) tests/cases/standard-library/ok/std-vec-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-drop-value.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-drop-value.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_9std__Drop4drop' $(BUILD_DIR)/prelude/std-vec-drop-value.ll
 	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-vec-drop-value.ll
-	$(TARGET) tests/cases/standard-library/ok/std-collections-set.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set.ll
 	grep -q '_ARNv3std11collections10new__G_i64' $(BUILD_DIR)/prelude/std-collections-set.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent6insert' $(BUILD_DIR)/prelude/std-collections-set.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-set.ll
-	$(TARGET) tests/cases/standard-library/ok/std-collections-set.ari -o $(BUILD_DIR)/prelude/std-collections-set.elf
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set.ari -o $(BUILD_DIR)/prelude/std-collections-set.elf
 	$(BUILD_DIR)/prelude/std-collections-set.elf; code=$$?; test $$code -eq 250
-	$(TARGET) tests/cases/standard-library/ok/std-collections-set-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-access.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-access.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent5first' $(BUILD_DIR)/prelude/std-collections-set-access.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent9try_first' $(BUILD_DIR)/prelude/std-collections-set-access.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent7try_get' $(BUILD_DIR)/prelude/std-collections-set-access.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent7reserve' $(BUILD_DIR)/prelude/std-collections-set-access.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-collections-set-access.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent7try_pop' $(BUILD_DIR)/prelude/std-collections-set-access.ll
-	$(TARGET) tests/cases/standard-library/ok/std-collections-set-access.ari -o $(BUILD_DIR)/prelude/std-collections-set-access.elf
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-access.ari -o $(BUILD_DIR)/prelude/std-collections-set-access.elf
 	$(BUILD_DIR)/prelude/std-collections-set-access.elf; code=$$?; test $$code -eq 120
-	$(TARGET) tests/cases/standard-library/ok/std-collections-set-replace.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-replace.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-replace.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-replace.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent7replace' $(BUILD_DIR)/prelude/std-collections-set-replace.ll
 	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-collections-set-replace.ll
-	$(TARGET) tests/cases/standard-library/ok/std-collections-set-replace.ari -o $(BUILD_DIR)/prelude/std-collections-set-replace.elf
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-replace.ari -o $(BUILD_DIR)/prelude/std-collections-set-replace.elf
 	$(BUILD_DIR)/prelude/std-collections-set-replace.elf; code=$$?; test $$code -eq 127
-	$(TARGET) tests/cases/standard-library/ok/std-collections-set-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-iter.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-iter.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent4iter' $(BUILD_DIR)/prelude/std-collections-set-iter.ll
 	grep -q 'std__collections__Iter_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-set-iter.ll
 	grep -q 'std__collections__Set_i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-set-iter.ll
-	$(TARGET) tests/cases/standard-library/ok/std-collections-set-iter.ari -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-iter.ari -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf
 	$(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37
-	$(TARGET) tests/cases/standard-library/ok/std-collections-hash.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-hash.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-hash.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent6insert' $(BUILD_DIR)/prelude/std-collections-hash.ll
 	grep -q '_ARNv3std11collections36hash_map_grow_to_capacity__G_i64_i64' $(BUILD_DIR)/prelude/std-collections-hash.ll
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-hash.ll
-	$(TARGET) tests/cases/standard-library/ok/std-collections-hash.ari -o $(BUILD_DIR)/prelude/std-collections-hash.elf
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari -o $(BUILD_DIR)/prelude/std-collections-hash.elf
 	$(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255
-	$(TARGET) tests/cases/standard-library/ok/std-collections-tree.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6insert' $(BUILD_DIR)/prelude/std-collections-tree.ll
 	grep -q '_ARNv3std11collections30tree_map_fix_insert__G_i64_i64' $(BUILD_DIR)/prelude/std-collections-tree.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent7replace' $(BUILD_DIR)/prelude/std-collections-tree.ll
-	$(TARGET) tests/cases/standard-library/ok/std-collections-tree.ari -o $(BUILD_DIR)/prelude/std-collections-tree.elf
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari -o $(BUILD_DIR)/prelude/std-collections-tree.elf
 	$(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159
 	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
-	$(TARGET) tests/cases/standard-library/ok/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
+	$(TARGET) tests/cases/standard-library/ok/runtime/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_u64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_newline"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	if grep -q 'declare i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll; then exit 1; fi
 	if grep -q 'declare i64 @"ari_builtin_write_u64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll; then exit 1; fi
 	if grep -q 'declare i64 @"ari_builtin_newline"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll; then exit 1; fi
-	$(TARGET) tests/cases/standard-library/ok/std-prelude-unqualified.ari --emit-llvm $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/std-prelude-unqualified.ari --emit-llvm $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
 	grep -q 'call i64 @"_ARNv10span_score"' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
 	grep -q 'call ptr @"ari_builtin_zone_create"' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
 	grep -q 'call void @"ari_builtin_zone_destroy"' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
 	grep -F -q 'getelementptr inbounds { i64, [3 x i64] }' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
-	$(TARGET) tests/cases/standard-library/ok/std-prelude-local-shadow.ari --emit-llvm $(BUILD_DIR)/prelude/std-prelude-local-shadow.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/std-prelude-local-shadow.ari --emit-llvm $(BUILD_DIR)/prelude/std-prelude-local-shadow.ll
 	grep -q 'call i64 @"_ARNv5Debug"' $(BUILD_DIR)/prelude/std-prelude-local-shadow.ll
-	$(TARGET) tests/cases/standard-library/ok/std-library-smoke.ari --emit-llvm $(BUILD_DIR)/prelude/std-library-smoke.ll
+	$(TARGET) tests/cases/standard-library/ok/smoke/std-library-smoke.ari --emit-llvm $(BUILD_DIR)/prelude/std-library-smoke.ll
 	grep -q '_ARNv3std3vec10new__G_i64' $(BUILD_DIR)/prelude/std-library-smoke.ll
 	grep -q 'ari_builtin_string_new' $(BUILD_DIR)/prelude/std-library-smoke.ll
 	grep -q '_ARNv3std5boxed10new__G_i64' $(BUILD_DIR)/prelude/std-library-smoke.ll
 	grep -F -q 'Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-library-smoke.ll
 	grep -F -q 'Result_i64__i32_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-library-smoke.ll
-	$(TARGET) tests/cases/standard-library/ok/std-library-smoke.ari -o $(BUILD_DIR)/prelude/std-library-smoke.elf
+	$(TARGET) tests/cases/standard-library/ok/smoke/std-library-smoke.ari -o $(BUILD_DIR)/prelude/std-library-smoke.elf
 	$(BUILD_DIR)/prelude/std-library-smoke.elf; code=$$?; test $$code -eq 232
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result.ll
 	grep -q "try.ok" $(BUILD_DIR)/prelude/prelude-option-result.ll
 	grep -q "coalesce.ok" $(BUILD_DIR)/prelude/prelude-option-result.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-view.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-view.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-view.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q '_ARNv3std12slice__G_i64' $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "slice.bounds.fail" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "slice.range.bounds.fail" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 8" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 7" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 5" $(BUILD_DIR)/prelude/prelude-slice-view.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl15std__Slice_i64_8inherent5first"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl15std__Slice_i64_8inherent4last"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl15std__Slice_i64_8inherent3get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
@@ -736,56 +736,56 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-metadata.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-metadata.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-metadata.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent8is_empty"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-metadata.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-option-access.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl15std__Slice_i64_8inherent9try_first"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl15std__Slice_i64_8inherent8try_last"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl15std__Slice_i64_8inherent7try_get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-as-ptr.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl15std__Slice_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-as-ptr.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl15std__Slice_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-view.ari -o $(BUILD_DIR)/prelude/prelude-slice-view.elf
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-view.ari -o $(BUILD_DIR)/prelude/prelude-slice-view.elf
 	$(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf
 	$(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-metadata.ari -o $(BUILD_DIR)/prelude/prelude-slice-metadata.elf
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari -o $(BUILD_DIR)/prelude/prelude-slice-metadata.elf
 	$(BUILD_DIR)/prelude/prelude-slice-metadata.elf; code=$$?; test $$code -eq 23
-	$(TARGET) tests/cases/standard-library/ok/prelude-slice-option-access.ari -o $(BUILD_DIR)/prelude/prelude-slice-option-access.elf
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari -o $(BUILD_DIR)/prelude/prelude-slice-option-access.elf
 	$(BUILD_DIR)/prelude/prelude-slice-option-access.elf; code=$$?; test $$code -eq 77
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl16std__Option_i64_8inherent7is_some"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl21std__Result_i64__i32_8inherent5is_ok"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'Result_i64__i32_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-methods.ari -o $(BUILD_DIR)/prelude/prelude-option-result-methods.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-methods.ari -o $(BUILD_DIR)/prelude/prelude-option-result-methods.elf
 	$(BUILD_DIR)/prelude/prelude-option-result-methods.elf; code=$$?; test $$code -eq 91
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-predicates.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-predicates.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
 	grep -F -q 'define i1 @"_ARNv4impl16std__Option_i64_8inherent11is_some_and"({ i32, i64 } %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
 	grep -F -q 'define i1 @"_ARNv4impl16std__Option_i64_8inherent10is_none_or"({ i32, i64 } %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
 	grep -F -q 'define i1 @"_ARNv4impl21std__Result_i64__i32_8inherent9is_ok_and"({ i32, i64 } %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
 	grep -F -q 'define i1 @"_ARNv4impl21std__Result_i64__i32_8inherent10is_err_and"({ i32, i64 } %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-predicates.ari -o $(BUILD_DIR)/prelude/prelude-option-result-predicates.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-predicates.ari -o $(BUILD_DIR)/prelude/prelude-option-result-predicates.elf
 	$(BUILD_DIR)/prelude/prelude-option-result-predicates.elf; code=$$?; test $$code -eq 236
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-filter.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-filter.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-filter.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-filter.ll
 	grep -F -q 'Option_i64_8inherent6filter' $(BUILD_DIR)/prelude/prelude-option-filter.ll
 	grep -F -q 'Option_bool_8inherent6filter' $(BUILD_DIR)/prelude/prelude-option-filter.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-filter.ari -o $(BUILD_DIR)/prelude/prelude-option-filter.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-filter.ari -o $(BUILD_DIR)/prelude/prelude-option-filter.elf
 	$(BUILD_DIR)/prelude/prelude-option-filter.elf; code=$$?; test $$code -eq 59
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-flatten.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-flatten.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-flatten.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-flatten.ll
 	grep -F -q 'std__Option_i64__8inherent7flatten' $(BUILD_DIR)/prelude/prelude-option-flatten.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-flatten.ari -o $(BUILD_DIR)/prelude/prelude-option-flatten.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-flatten.ari -o $(BUILD_DIR)/prelude/prelude-option-flatten.elf
 	$(BUILD_DIR)/prelude/prelude-option-flatten.elf; code=$$?; test $$code -eq 61
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-transpose.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-transpose.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-transpose.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-transpose.ll
 	grep -F -q 'std__Option_std__Result_i64__i32__8inherent9transpose' $(BUILD_DIR)/prelude/prelude-option-transpose.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-transpose.ari -o $(BUILD_DIR)/prelude/prelude-option-transpose.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-transpose.ari -o $(BUILD_DIR)/prelude/prelude-option-transpose.elf
 	$(BUILD_DIR)/prelude/prelude-option-transpose.elf; code=$$?; test $$code -eq 71
-	$(TARGET) tests/cases/standard-library/ok/prelude-result-transpose.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-result-transpose.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-result-transpose.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-result-transpose.ll
 	grep -F -q 'std__Result_std__Option_i64___i32_8inherent9transpose' $(BUILD_DIR)/prelude/prelude-result-transpose.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-result-transpose.ari -o $(BUILD_DIR)/prelude/prelude-result-transpose.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-result-transpose.ari -o $(BUILD_DIR)/prelude/prelude-result-transpose.elf
 	$(BUILD_DIR)/prelude/prelude-result-transpose.elf; code=$$?; test $$code -eq 67
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-combinators.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-combinators.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Option_i64_8inherent10map__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Option_i64_8inherent15and_then__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Option_i64_8inherent2or' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
@@ -795,9 +795,9 @@ check-prelude: $(TARGET)
 	grep -F -q 'Result_i64__i32_8inherent15and_then__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Result_i64__i32_8inherent9or__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Result_i64__i32_8inherent14or_else__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-combinators.ari -o $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-combinators.ari -o $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf
 	$(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; code=$$?; test $$code -eq 99
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-conversions.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-conversions.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-conversions.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-conversions.ll
 	grep -F -q 'Option_i64_8inherent14unwrap_or_else' $(BUILD_DIR)/prelude/prelude-option-result-conversions.ll
 	grep -F -q 'Option_i64_8inherent12ok_or__G_i32' $(BUILD_DIR)/prelude/prelude-option-result-conversions.ll
 	grep -F -q 'Option_i64_8inherent17ok_or_else__G_i32' $(BUILD_DIR)/prelude/prelude-option-result-conversions.ll
@@ -805,100 +805,100 @@ check-prelude: $(TARGET)
 	grep -F -q 'Result_i64__i32_8inherent2ok' $(BUILD_DIR)/prelude/prelude-option-result-conversions.ll
 	grep -F -q 'Result_i64__i32_8inherent3err' $(BUILD_DIR)/prelude/prelude-option-result-conversions.ll
 	grep -F -q 'Result_i64__i32_8inherent14unwrap_or_else' $(BUILD_DIR)/prelude/prelude-option-result-conversions.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-conversions.ari -o $(BUILD_DIR)/prelude/prelude-option-result-conversions.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-conversions.ari -o $(BUILD_DIR)/prelude/prelude-option-result-conversions.elf
 	$(BUILD_DIR)/prelude/prelude-option-result-conversions.elf; code=$$?; test $$code -eq 95
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-unwrap.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'Option_i64_8inherent6unwrap' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'Option_i64_8inherent6expect' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'Result_i64__i32_8inherent6unwrap' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'Result_i64__i32_8inherent10unwrap_err' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'call void @"ari_builtin_panic"()' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'unreachable' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
-	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-unwrap-llvm.ari -o $(BUILD_DIR)/prelude/prelude-option-result-unwrap-llvm.elf
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap-llvm.ari -o $(BUILD_DIR)/prelude/prelude-option-result-unwrap-llvm.elf
 	$(BUILD_DIR)/prelude/prelude-option-result-unwrap-llvm.elf; code=$$?; test $$code -eq 52
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; code=$$?; test $$code -eq 91; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-predicates.elf; $(BUILD_DIR)/prelude/prelude-option-result-predicates.elf; code=$$?; test $$code -eq 236; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-filter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-filter.elf; $(BUILD_DIR)/prelude/prelude-option-filter.elf; code=$$?; test $$code -eq 59; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-flatten.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-flatten.elf; $(BUILD_DIR)/prelude/prelude-option-flatten.elf; code=$$?; test $$code -eq 61; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-transpose.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-transpose.elf; $(BUILD_DIR)/prelude/prelude-option-transpose.elf; code=$$?; test $$code -eq 71; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-result-transpose.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-result-transpose.elf; $(BUILD_DIR)/prelude/prelude-result-transpose.elf; code=$$?; test $$code -eq 67; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-combinators.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; code=$$?; test $$code -eq 99; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-conversions.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-conversions.elf; $(BUILD_DIR)/prelude/prelude-option-result-conversions.elf; code=$$?; test $$code -eq 95; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-unwrap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; code=$$?; test $$code -eq 91; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-slice-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf; $(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-slice-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; code=$$?; test $$code -eq 47; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-slice-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; code=$$?; test $$code -eq 32; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; code=$$?; test $$code -eq 91; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-predicates.elf; $(BUILD_DIR)/prelude/prelude-option-result-predicates.elf; code=$$?; test $$code -eq 236; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-filter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-filter.elf; $(BUILD_DIR)/prelude/prelude-option-filter.elf; code=$$?; test $$code -eq 59; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-flatten.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-flatten.elf; $(BUILD_DIR)/prelude/prelude-option-flatten.elf; code=$$?; test $$code -eq 61; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-transpose.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-transpose.elf; $(BUILD_DIR)/prelude/prelude-option-transpose.elf; code=$$?; test $$code -eq 71; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-result-transpose.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-result-transpose.elf; $(BUILD_DIR)/prelude/prelude-result-transpose.elf; code=$$?; test $$code -eq 67; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-combinators.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; code=$$?; test $$code -eq 99; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-conversions.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-conversions.elf; $(BUILD_DIR)/prelude/prelude-option-result-conversions.elf; code=$$?; test $$code -eq 95; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; code=$$?; test $$code -eq 91; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf; $(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; code=$$?; test $$code -eq 47; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; code=$$?; test $$code -eq 32; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
-		$(TARGET) tests/cases/standard-library/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
+		$(TARGET) tests/cases/standard-library/ok/prelude/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
 		$(BUILD_DIR)/prelude/prelude-header-main.elf >$(BUILD_DIR)/prelude/prelude-header-main.out; \
 		code=$$?; test $$code -eq 21; \
 		grep -qx "1" $(BUILD_DIR)/prelude/prelude-header-main.out; \
 	fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-vec-alloc-buffer.elf; code=$$?; test $$code -eq 41; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-with-capacity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; code=$$?; test $$code -eq 46; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-new-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-new-handle.elf; $(BUILD_DIR)/prelude/std-vec-new-handle.elf; code=$$?; test $$code -eq 40; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-macro-new.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-macro-new.elf; $(BUILD_DIR)/prelude/std-vec-macro-new.elf; code=$$?; test $$code -eq 29; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-root-alias.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-root-alias.elf; $(BUILD_DIR)/prelude/std-vec-root-alias.elf; code=$$?; test $$code -eq 14; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-macro-new.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-macro-new.elf; $(BUILD_DIR)/prelude/std-boxed-macro-new.elf; code=$$?; test $$code -eq 50; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-box.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-box.elf; $(BUILD_DIR)/prelude/std-boxed-box.elf; code=$$?; test $$code -eq 30; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-set-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-set-drop-value.elf; $(BUILD_DIR)/prelude/std-boxed-set-drop-value.elf; code=$$?; test $$code -eq 34; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-replace.elf; $(BUILD_DIR)/prelude/std-boxed-replace.elf; code=$$?; test $$code -eq 29; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; code=$$?; test $$code -eq 51; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-swap.elf; $(BUILD_DIR)/prelude/std-boxed-swap.elf; code=$$?; test $$code -eq 85; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-as-ref-mut.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.elf; $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.elf; code=$$?; test $$code -eq 45; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-as-mut-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; code=$$?; test $$code -eq 38; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-take.elf; $(BUILD_DIR)/prelude/std-boxed-take.elf; code=$$?; test $$code -eq 24; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-try-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-try-take.elf; $(BUILD_DIR)/prelude/std-boxed-try-take.elf; code=$$?; test $$code -eq 42; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-clear.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-clear.elf; $(BUILD_DIR)/prelude/std-boxed-clear.elf; code=$$?; test $$code -eq 30; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-put-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-put-in.elf; $(BUILD_DIR)/prelude/std-boxed-put-in.elf; code=$$?; test $$code -eq 110; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-boxed-drop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-drop.elf; $(BUILD_DIR)/prelude/std-boxed-drop.elf; code=$$?; test $$code -eq 0; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-box-root.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-box-root.elf; $(BUILD_DIR)/prelude/prelude-box-root.elf; code=$$?; test $$code -eq 43; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; code=$$?; test $$code -eq 6; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-handle.elf; $(BUILD_DIR)/prelude/std-string-handle.elf; code=$$?; test $$code -eq 153; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-fixed-push.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-fixed-push.elf; $(BUILD_DIR)/prelude/std-string-fixed-push.elf; code=$$?; test $$code -eq 179; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-first-last.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-first-last.elf; $(BUILD_DIR)/prelude/std-string-first-last.elf; code=$$?; test $$code -eq 239; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-search.elf; $(BUILD_DIR)/prelude/std-string-search.elf; code=$$?; test $$code -eq 77; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-prefix-suffix.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; code=$$?; test $$code -eq 143; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-equals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-equals.elf; $(BUILD_DIR)/prelude/std-string-equals.elf; code=$$?; test $$code -eq 83; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-from-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-copy.elf; $(BUILD_DIR)/prelude/std-string-from-copy.elf; code=$$?; test $$code -eq 163; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-copy-to-method.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; code=$$?; test $$code -eq 104; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; code=$$?; test $$code -eq 103; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-grow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-grow.elf; $(BUILD_DIR)/prelude/std-string-grow.elf; code=$$?; test $$code -eq 177; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-implicit-zone.elf; $(BUILD_DIR)/prelude/std-string-implicit-zone.elf; code=$$?; test $$code -eq 142; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-get-ref-mut.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-get-ref-mut.elf; $(BUILD_DIR)/prelude/std-vec-get-ref-mut.elf; code=$$?; test $$code -eq 30; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-slice-compare.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; code=$$?; test $$code -eq 221; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-replace.elf; $(BUILD_DIR)/prelude/std-vec-replace.elf; code=$$?; test $$code -eq 22; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-as-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-slice.elf; $(BUILD_DIR)/prelude/std-vec-as-slice.elf; code=$$?; test $$code -eq 99; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-reserve.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-reserve.elf; $(BUILD_DIR)/prelude/std-vec-reserve.elf; code=$$?; test $$code -eq 43; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-reserve-extra.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-reserve-extra.elf; $(BUILD_DIR)/prelude/std-vec-reserve-extra.elf; code=$$?; test $$code -eq 41; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-copy-to.elf; $(BUILD_DIR)/prelude/std-vec-copy-to.elf; code=$$?; test $$code -eq 19; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-ptr.elf; $(BUILD_DIR)/prelude/std-vec-as-ptr.elf; code=$$?; test $$code -eq 17; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-as-mut-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.elf; $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.elf; code=$$?; test $$code -eq 30; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-iter.elf; $(BUILD_DIR)/prelude/std-vec-iter.elf; code=$$?; test $$code -eq 31; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-push-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-push-in.elf; $(BUILD_DIR)/prelude/std-vec-push-in.elf; code=$$?; test $$code -eq 25; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-insert-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-insert-in.elf; $(BUILD_DIR)/prelude/std-vec-insert-in.elf; code=$$?; test $$code -eq 23; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-extend-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; code=$$?; test $$code -eq 11; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; code=$$?; test $$code -eq 40; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-resize-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-resize-in.elf; $(BUILD_DIR)/prelude/std-vec-resize-in.elf; code=$$?; test $$code -eq 37; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-growth-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; code=$$?; test $$code -eq 135; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; code=$$?; test $$code -eq 36; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-try-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-try-pop.elf; $(BUILD_DIR)/prelude/std-vec-try-pop.elf; code=$$?; test $$code -eq 25; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-shrink-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; code=$$?; test $$code -eq 13; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-drop-value.elf; code=$$?; test $$code -eq 0; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set.elf; $(BUILD_DIR)/prelude/std-collections-set.elf; code=$$?; test $$code -eq 250; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-access.elf; $(BUILD_DIR)/prelude/std-collections-set-access.elf; code=$$?; test $$code -eq 120; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-replace.elf; $(BUILD_DIR)/prelude/std-collections-set-replace.elf; code=$$?; test $$code -eq 127; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf; $(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-hash.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash.elf; $(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-prelude-local-shadow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; code=$$?; test $$code -eq 8; fi
-	$(TARGET) --no-implicit-std --module-path lib tests/cases/standard-library/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-vec-alloc-buffer.elf; code=$$?; test $$code -eq 41; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-with-capacity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; code=$$?; test $$code -eq 46; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-new-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-new-handle.elf; $(BUILD_DIR)/prelude/std-vec-new-handle.elf; code=$$?; test $$code -eq 40; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-macro-new.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-macro-new.elf; $(BUILD_DIR)/prelude/std-vec-macro-new.elf; code=$$?; test $$code -eq 29; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-root-alias.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-root-alias.elf; $(BUILD_DIR)/prelude/std-vec-root-alias.elf; code=$$?; test $$code -eq 14; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-macro-new.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-macro-new.elf; $(BUILD_DIR)/prelude/std-boxed-macro-new.elf; code=$$?; test $$code -eq 50; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-box.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-box.elf; $(BUILD_DIR)/prelude/std-boxed-box.elf; code=$$?; test $$code -eq 30; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-set-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-set-drop-value.elf; $(BUILD_DIR)/prelude/std-boxed-set-drop-value.elf; code=$$?; test $$code -eq 34; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-replace.elf; $(BUILD_DIR)/prelude/std-boxed-replace.elf; code=$$?; test $$code -eq 29; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; code=$$?; test $$code -eq 51; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-swap.elf; $(BUILD_DIR)/prelude/std-boxed-swap.elf; code=$$?; test $$code -eq 85; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-as-ref-mut.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.elf; $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.elf; code=$$?; test $$code -eq 45; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-as-mut-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; code=$$?; test $$code -eq 38; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-take.elf; $(BUILD_DIR)/prelude/std-boxed-take.elf; code=$$?; test $$code -eq 24; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-try-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-try-take.elf; $(BUILD_DIR)/prelude/std-boxed-try-take.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-clear.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-clear.elf; $(BUILD_DIR)/prelude/std-boxed-clear.elf; code=$$?; test $$code -eq 30; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-put-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-put-in.elf; $(BUILD_DIR)/prelude/std-boxed-put-in.elf; code=$$?; test $$code -eq 110; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-drop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-drop.elf; $(BUILD_DIR)/prelude/std-boxed-drop.elf; code=$$?; test $$code -eq 0; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/prelude-box-root.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-box-root.elf; $(BUILD_DIR)/prelude/prelude-box-root.elf; code=$$?; test $$code -eq 43; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; code=$$?; test $$code -eq 6; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-handle.elf; $(BUILD_DIR)/prelude/std-string-handle.elf; code=$$?; test $$code -eq 153; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-fixed-push.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-fixed-push.elf; $(BUILD_DIR)/prelude/std-string-fixed-push.elf; code=$$?; test $$code -eq 179; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-first-last.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-first-last.elf; $(BUILD_DIR)/prelude/std-string-first-last.elf; code=$$?; test $$code -eq 239; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-search.elf; $(BUILD_DIR)/prelude/std-string-search.elf; code=$$?; test $$code -eq 77; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-prefix-suffix.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; code=$$?; test $$code -eq 143; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-equals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-equals.elf; $(BUILD_DIR)/prelude/std-string-equals.elf; code=$$?; test $$code -eq 83; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-from-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-copy.elf; $(BUILD_DIR)/prelude/std-string-from-copy.elf; code=$$?; test $$code -eq 163; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-copy-to-method.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; code=$$?; test $$code -eq 104; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; code=$$?; test $$code -eq 103; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-grow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-grow.elf; $(BUILD_DIR)/prelude/std-string-grow.elf; code=$$?; test $$code -eq 177; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-implicit-zone.elf; $(BUILD_DIR)/prelude/std-string-implicit-zone.elf; code=$$?; test $$code -eq 142; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-get-ref-mut.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-get-ref-mut.elf; $(BUILD_DIR)/prelude/std-vec-get-ref-mut.elf; code=$$?; test $$code -eq 30; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-slice-compare.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; code=$$?; test $$code -eq 221; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-replace.elf; $(BUILD_DIR)/prelude/std-vec-replace.elf; code=$$?; test $$code -eq 22; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-slice.elf; $(BUILD_DIR)/prelude/std-vec-as-slice.elf; code=$$?; test $$code -eq 99; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-reserve.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-reserve.elf; $(BUILD_DIR)/prelude/std-vec-reserve.elf; code=$$?; test $$code -eq 43; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-reserve-extra.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-reserve-extra.elf; $(BUILD_DIR)/prelude/std-vec-reserve-extra.elf; code=$$?; test $$code -eq 41; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-copy-to.elf; $(BUILD_DIR)/prelude/std-vec-copy-to.elf; code=$$?; test $$code -eq 19; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-ptr.elf; $(BUILD_DIR)/prelude/std-vec-as-ptr.elf; code=$$?; test $$code -eq 17; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-mut-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.elf; $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.elf; code=$$?; test $$code -eq 30; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-iter.elf; $(BUILD_DIR)/prelude/std-vec-iter.elf; code=$$?; test $$code -eq 31; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-push-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-push-in.elf; $(BUILD_DIR)/prelude/std-vec-push-in.elf; code=$$?; test $$code -eq 25; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-insert-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-insert-in.elf; $(BUILD_DIR)/prelude/std-vec-insert-in.elf; code=$$?; test $$code -eq 23; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-extend-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; code=$$?; test $$code -eq 11; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; code=$$?; test $$code -eq 40; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-resize-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-resize-in.elf; $(BUILD_DIR)/prelude/std-vec-resize-in.elf; code=$$?; test $$code -eq 37; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; code=$$?; test $$code -eq 135; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; code=$$?; test $$code -eq 36; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-try-pop.elf; $(BUILD_DIR)/prelude/std-vec-try-pop.elf; code=$$?; test $$code -eq 25; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-shrink-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; code=$$?; test $$code -eq 13; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-drop-value.elf; code=$$?; test $$code -eq 0; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set.elf; $(BUILD_DIR)/prelude/std-collections-set.elf; code=$$?; test $$code -eq 250; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-access.elf; $(BUILD_DIR)/prelude/std-collections-set-access.elf; code=$$?; test $$code -eq 120; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-replace.elf; $(BUILD_DIR)/prelude/std-collections-set-replace.elf; code=$$?; test $$code -eq 127; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf; $(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash.elf; $(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/std-prelude-local-shadow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; code=$$?; test $$code -eq 8; fi
+	$(TARGET) --no-implicit-std --module-path lib tests/cases/standard-library/ok/prelude/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
 	grep -q 'option	implicit_std	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std	lib/std.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::io	lib/std/io.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
@@ -941,181 +941,181 @@ check-prelude: $(TARGET)
 	grep -q 'item	std::io	extern-ari-fn	std::io::write_u64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
 	grep -q 'call i64 @"ari_builtin_write_u64"' $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
-	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/std-use-without-implicit.ari -o $(BUILD_DIR)/prelude/std-use-without-implicit.elf >$(BUILD_DIR)/prelude/std-use-without-implicit.err 2>&1; then exit 1; fi
+	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude/std-use-without-implicit.ari -o $(BUILD_DIR)/prelude/std-use-without-implicit.elf >$(BUILD_DIR)/prelude/std-use-without-implicit.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'write_i64'" $(BUILD_DIR)/prelude/std-use-without-implicit.err
-	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude-bare-without-std.ari -o $(BUILD_DIR)/prelude/prelude-bare-without-std.elf >$(BUILD_DIR)/prelude/prelude-bare-without-std.err 2>&1; then exit 1; fi
+	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude/prelude-bare-without-std.ari -o $(BUILD_DIR)/prelude/prelude-bare-without-std.elf >$(BUILD_DIR)/prelude/prelude-bare-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'write_i64'" $(BUILD_DIR)/prelude/prelude-bare-without-std.err
-	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude-path-without-std.ari -o $(BUILD_DIR)/prelude/prelude-path-without-std.elf >$(BUILD_DIR)/prelude/prelude-path-without-std.err 2>&1; then exit 1; fi
+	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude/prelude-path-without-std.ari -o $(BUILD_DIR)/prelude/prelude-path-without-std.elf >$(BUILD_DIR)/prelude/prelude-path-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'io::write_i64'" $(BUILD_DIR)/prelude/prelude-path-without-std.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-maybe-removed.ari -o $(BUILD_DIR)/prelude/prelude-maybe-removed.elf >$(BUILD_DIR)/prelude/prelude-maybe-removed.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-maybe-removed.ari -o $(BUILD_DIR)/prelude/prelude-maybe-removed.elf >$(BUILD_DIR)/prelude/prelude-maybe-removed.err 2>&1; then exit 1; fi
 	grep -q "unsupported executable type 'Maybe'" $(BUILD_DIR)/prelude/prelude-maybe-removed.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-alloc-buffer-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-alloc-buffer-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'data' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-with-capacity-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-with-capacity-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-with-capacity-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-with-capacity-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-with-capacity-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-with-capacity-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-with-capacity-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-new-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-new-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-macro-new-shape.ari -o $(BUILD_DIR)/prelude/std-vec-macro-new-shape.elf >$(BUILD_DIR)/prelude/std-vec-macro-new-shape.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-macro-new-shape.ari -o $(BUILD_DIR)/prelude/std-vec-macro-new-shape.elf >$(BUILD_DIR)/prelude/std-vec-macro-new-shape.err 2>&1; then exit 1; fi
 	grep -q "Vec! expects Vec!(T, ref mut zone, capacity)" $(BUILD_DIR)/prelude/std-vec-macro-new-shape.err
-	if $(TARGET) tests/cases/standard-library/errors/std-boxed-macro-new-shape.ari -o $(BUILD_DIR)/prelude/std-boxed-macro-new-shape.elf >$(BUILD_DIR)/prelude/std-boxed-macro-new-shape.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/std-boxed-macro-new-shape.ari -o $(BUILD_DIR)/prelude/std-boxed-macro-new-shape.elf >$(BUILD_DIR)/prelude/std-boxed-macro-new-shape.err 2>&1; then exit 1; fi
 	grep -q "Box! expects Box!(T, ref mut zone, value)" $(BUILD_DIR)/prelude/std-boxed-macro-new-shape.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-metadata-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-metadata-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-get-ref-mut-conflict.ari -o $(BUILD_DIR)/prelude/std-vec-get-ref-mut-conflict.elf >$(BUILD_DIR)/prelude/std-vec-get-ref-mut-conflict.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-get-ref-mut-conflict.ari -o $(BUILD_DIR)/prelude/std-vec-get-ref-mut-conflict.elf >$(BUILD_DIR)/prelude/std-vec-get-ref-mut-conflict.err 2>&1; then exit 1; fi
 	grep -q "cannot mutably borrow already borrowed binding 'vec'" $(BUILD_DIR)/prelude/std-vec-get-ref-mut-conflict.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-if-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-if-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'chosen' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-push-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-push-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-push-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-push-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-push-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-push-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-push-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-slice-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-slice-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-slice-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-slice-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-slice-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-slice-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'tail' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-slice-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-reserve-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-reserve-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-reserve-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-reserve-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.reserve zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-reserve-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-reserve-untracked-receiver.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.elf >$(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-reserve-untracked-receiver.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.elf >$(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.reserve receiver must come from a tracked zone allocation" $(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.reserve receiver must come from a tracked zone allocation to infer its zone" $(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-reserve-extra-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-reserve-extra-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.reserve_extra zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-push-in-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-push-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.push_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-push-in-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-insert-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-insert-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.insert_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-extend-from-slice-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-extend-from-slice-in-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-extend-from-slice-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-extend-from-slice-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.extend_from_slice_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-resize-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-resize-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-resize-in-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-resize-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-resize-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-resize-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.resize_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-resize-in-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-set-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-set-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-set-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-set-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-set-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'set' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-set-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-iter-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-set-iter-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-set-iter-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-set-iter-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-set-iter-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-set-iter-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'cursor' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-set-iter-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-set-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::collections::Set.insert zone argument must match the set allocation zone" $(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-replace-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-replace-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-replace-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-set-replace-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-replace-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-replace-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::collections::Set.replace zone argument must match the set allocation zone" $(BUILD_DIR)/prelude/std-collections-set-replace-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-reserve-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-reserve-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-reserve-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-set-reserve-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-reserve-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-reserve-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::collections::Set.reserve zone argument must match the set allocation zone" $(BUILD_DIR)/prelude/std-collections-set-reserve-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-reserve-extra-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-reserve-extra-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-reserve-extra-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-set-reserve-extra-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-reserve-extra-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-reserve-extra-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::collections::Set.reserve_extra zone argument must match the set allocation zone" $(BUILD_DIR)/prelude/std-collections-set-reserve-extra-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-hash-map-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-hash-map-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-hash-map-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-insert-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-hash-map-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-insert-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::collections::HashMap.insert zone argument must match the hash map allocation zone" $(BUILD_DIR)/prelude/std-collections-hash-map-insert-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-tree-map-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-tree-map-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-collections-tree-set-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-tree-set-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::collections::TreeSet.insert zone argument must match the tree set allocation zone" $(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-slice-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/prelude-slice-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-slice-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/prelude-slice-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-as-mut-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-as-mut-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-as-mut-ptr-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-as-mut-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-as-mut-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-as-mut-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-as-mut-ptr-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-vec-iter-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-iter-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-iter-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-iter-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-iter-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-iter-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'cursor' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-iter-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-boxed-box-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-box-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-box-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/std-boxed-box-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-box-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-box-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'boxed' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-box-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-boxed-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/std-boxed-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-boxed-as-mut-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/std-boxed-as-mut-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-boxed-as-ref-mut-conflict.ari -o $(BUILD_DIR)/prelude/std-boxed-as-ref-mut-conflict.elf >$(BUILD_DIR)/prelude/std-boxed-as-ref-mut-conflict.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/std-boxed-as-ref-mut-conflict.ari -o $(BUILD_DIR)/prelude/std-boxed-as-ref-mut-conflict.elf >$(BUILD_DIR)/prelude/std-boxed-as-ref-mut-conflict.err 2>&1; then exit 1; fi
 	grep -q "cannot mutably borrow already borrowed binding 'boxed'" $(BUILD_DIR)/prelude/std-boxed-as-ref-mut-conflict.err
-	if $(TARGET) tests/cases/standard-library/errors/std-boxed-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/std-boxed-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-boxed-drop-use-after.ari -o $(BUILD_DIR)/prelude/std-boxed-drop-use-after.elf >$(BUILD_DIR)/prelude/std-boxed-drop-use-after.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/std-boxed-drop-use-after.ari -o $(BUILD_DIR)/prelude/std-boxed-drop-use-after.elf >$(BUILD_DIR)/prelude/std-boxed-drop-use-after.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'boxed'" $(BUILD_DIR)/prelude/std-boxed-drop-use-after.err
-	if $(TARGET) tests/cases/standard-library/errors/std-boxed-put-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-boxed-put-in-different-zone.elf >$(BUILD_DIR)/prelude/std-boxed-put-in-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/std-boxed-put-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-boxed-put-in-different-zone.elf >$(BUILD_DIR)/prelude/std-boxed-put-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::boxed::Box.put_in zone argument must match the box allocation zone" $(BUILD_DIR)/prelude/std-boxed-put-in-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-boxed-put-in-untracked.ari -o $(BUILD_DIR)/prelude/std-boxed-put-in-untracked.elf >$(BUILD_DIR)/prelude/std-boxed-put-in-untracked.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/std-boxed-put-in-untracked.ari -o $(BUILD_DIR)/prelude/std-boxed-put-in-untracked.elf >$(BUILD_DIR)/prelude/std-boxed-put-in-untracked.err 2>&1; then exit 1; fi
 	grep -q "std::boxed::Box.put_in receiver must come from a tracked zone allocation" $(BUILD_DIR)/prelude/std-boxed-put-in-untracked.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-alloc-buffer-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.elf >$(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-alloc-buffer-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.elf >$(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'data' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-string-handle-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-string-handle-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-handle-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-string-as-ptr-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-string-as-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-as-ptr-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-copy-to-method-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-copy-to-method-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-copy-to-method-after-target-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-copy-to-method-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-copy-to-method-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-copy-to-method-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-copy-to-method-after-target-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-trim-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-trim-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-trim-to-after-target-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-trim-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-trim-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-trim-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-trim-to-after-target-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-string-push-in-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-string-push-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.push_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-push-in-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.reserve receiver must come from a tracked zone allocation to infer its zone" $(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-append-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-append-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_i64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-append-f64-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-append-f64-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_f64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-append-f32-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f32-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f32-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-append-f32-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f32-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f32-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_f32_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-f32-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/std-string-append-u64-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-u64-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-u64-different-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-append-u64-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-u64-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-u64-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_u64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-u64-different-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi
 	grep -q "struct 'std::string::String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-string-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-string-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-string-root-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/string/prelude-string-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-string-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-string-root-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-string-root-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-box-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-box-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-box-root-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/boxed/prelude-box-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-box-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-box-root-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'boxed' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-box-root-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-unique-reserved.ari -o $(BUILD_DIR)/prelude/prelude-unique-reserved.elf >$(BUILD_DIR)/prelude/prelude-unique-reserved.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-unique-reserved.ari -o $(BUILD_DIR)/prelude/prelude-unique-reserved.elf >$(BUILD_DIR)/prelude/prelude-unique-reserved.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'Unique' is reserved for smart-pointer policy; use Box\\[T\\] for today's explicit-zone handle" $(BUILD_DIR)/prelude/prelude-unique-reserved.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-shared-reserved.ari -o $(BUILD_DIR)/prelude/prelude-shared-reserved.elf >$(BUILD_DIR)/prelude/prelude-shared-reserved.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-shared-reserved.ari -o $(BUILD_DIR)/prelude/prelude-shared-reserved.elf >$(BUILD_DIR)/prelude/prelude-shared-reserved.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'Shared' is reserved for future reference-counted ownership" $(BUILD_DIR)/prelude/prelude-shared-reserved.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-weak-reserved.ari -o $(BUILD_DIR)/prelude/prelude-weak-reserved.elf >$(BUILD_DIR)/prelude/prelude-weak-reserved.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-weak-reserved.ari -o $(BUILD_DIR)/prelude/prelude-weak-reserved.elf >$(BUILD_DIR)/prelude/prelude-weak-reserved.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'Weak' is reserved for future non-owning shared-pointer handles" $(BUILD_DIR)/prelude/prelude-weak-reserved.err
-	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude-special-without-std.ari -o $(BUILD_DIR)/prelude/prelude-special-without-std.elf >$(BUILD_DIR)/prelude/prelude-special-without-std.err 2>&1; then exit 1; fi
+	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude/prelude-special-without-std.ari -o $(BUILD_DIR)/prelude/prelude-special-without-std.elf >$(BUILD_DIR)/prelude/prelude-special-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'size_of'" $(BUILD_DIR)/prelude/prelude-special-without-std.err
-	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/cases/standard-library/errors/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi
+	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/cases/standard-library/errors/prelude/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'std::mem::size_of'" $(BUILD_DIR)/prelude/prelude-special-missing-decl.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-take-non-place.ari -o $(BUILD_DIR)/prelude/prelude-take-non-place.elf >$(BUILD_DIR)/prelude/prelude-take-non-place.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-take-non-place.ari -o $(BUILD_DIR)/prelude/prelude-take-non-place.elf >$(BUILD_DIR)/prelude/prelude-take-non-place.err 2>&1; then exit 1; fi
 	grep -q "take expects a local binding, field, tuple index, or index expression" $(BUILD_DIR)/prelude/prelude-take-non-place.err
-	if $(TARGET) tests/cases/standard-library/errors/std-mem-replace-own.ari -o $(BUILD_DIR)/prelude/std-mem-replace-own.elf >$(BUILD_DIR)/prelude/std-mem-replace-own.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/mem/std-mem-replace-own.ari -o $(BUILD_DIR)/prelude/std-mem-replace-own.elf >$(BUILD_DIR)/prelude/std-mem-replace-own.err 2>&1; then exit 1; fi
 	grep -q "std::mem::replace cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/prelude/std-mem-replace-own.err
-	if $(TARGET) tests/cases/standard-library/errors/std-mem-swap-own.ari -o $(BUILD_DIR)/prelude/std-mem-swap-own.elf >$(BUILD_DIR)/prelude/std-mem-swap-own.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/mem/std-mem-swap-own.ari -o $(BUILD_DIR)/prelude/std-mem-swap-own.elf >$(BUILD_DIR)/prelude/std-mem-swap-own.err 2>&1; then exit 1; fi
 	grep -q "std::mem::swap cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/prelude/std-mem-swap-own.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-move-borrow-result.ari -o $(BUILD_DIR)/prelude/prelude-move-borrow-result.elf >$(BUILD_DIR)/prelude/prelude-move-borrow-result.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-move-borrow-result.ari -o $(BUILD_DIR)/prelude/prelude-move-borrow-result.elf >$(BUILD_DIR)/prelude/prelude-move-borrow-result.err 2>&1; then exit 1; fi
 	grep -q "move cannot return borrow-valued expressions" $(BUILD_DIR)/prelude/prelude-move-borrow-result.err
-	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude-trait-without-std.ari -o $(BUILD_DIR)/prelude/prelude-trait-without-std.elf >$(BUILD_DIR)/prelude/prelude-trait-without-std.err 2>&1; then exit 1; fi
+	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude/prelude-trait-without-std.ari -o $(BUILD_DIR)/prelude/prelude-trait-without-std.elf >$(BUILD_DIR)/prelude/prelude-trait-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown trait 'Debug'" $(BUILD_DIR)/prelude/prelude-trait-without-std.err
-	if $(TARGET) tests/cases/standard-library/errors/ari-builtin-unknown.ari -o $(BUILD_DIR)/prelude/ari-builtin-unknown.elf >$(BUILD_DIR)/prelude/ari-builtin-unknown.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/runtime/ari-builtin-unknown.ari -o $(BUILD_DIR)/prelude/ari-builtin-unknown.elf >$(BUILD_DIR)/prelude/ari-builtin-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown Ari builtin symbol 'puts'" $(BUILD_DIR)/prelude/ari-builtin-unknown.err
-	if $(TARGET) tests/cases/standard-library/errors/ari-builtin-missing-link.ari -o $(BUILD_DIR)/prelude/ari-builtin-missing-link.elf >$(BUILD_DIR)/prelude/ari-builtin-missing-link.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/runtime/ari-builtin-missing-link.ari -o $(BUILD_DIR)/prelude/ari-builtin-missing-link.elf >$(BUILD_DIR)/prelude/ari-builtin-missing-link.err 2>&1; then exit 1; fi
 	grep -q 'extern "ari" builtin declarations require an explicit builtin symbol' $(BUILD_DIR)/prelude/ari-builtin-missing-link.err
-	if $(TARGET) tests/cases/standard-library/errors/ari-builtin-signature-arity.ari -o $(BUILD_DIR)/prelude/ari-builtin-signature-arity.elf >$(BUILD_DIR)/prelude/ari-builtin-signature-arity.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/runtime/ari-builtin-signature-arity.ari -o $(BUILD_DIR)/prelude/ari-builtin-signature-arity.elf >$(BUILD_DIR)/prelude/ari-builtin-signature-arity.err 2>&1; then exit 1; fi
 	grep -q "Ari builtin 'ari_builtin_write_i64' expects 1 parameter, got 0" $(BUILD_DIR)/prelude/ari-builtin-signature-arity.err
-	if $(TARGET) tests/cases/standard-library/errors/ari-builtin-signature-param.ari -o $(BUILD_DIR)/prelude/ari-builtin-signature-param.elf >$(BUILD_DIR)/prelude/ari-builtin-signature-param.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/runtime/ari-builtin-signature-param.ari -o $(BUILD_DIR)/prelude/ari-builtin-signature-param.elf >$(BUILD_DIR)/prelude/ari-builtin-signature-param.err 2>&1; then exit 1; fi
 	grep -q "Ari builtin 'ari_builtin_write_i64' parameter 1 must be i64, got u64" $(BUILD_DIR)/prelude/ari-builtin-signature-param.err
-	if $(TARGET) tests/cases/standard-library/errors/ari-builtin-signature-result.ari -o $(BUILD_DIR)/prelude/ari-builtin-signature-result.elf >$(BUILD_DIR)/prelude/ari-builtin-signature-result.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/runtime/ari-builtin-signature-result.ari -o $(BUILD_DIR)/prelude/ari-builtin-signature-result.elf >$(BUILD_DIR)/prelude/ari-builtin-signature-result.err 2>&1; then exit 1; fi
 	grep -q "Ari builtin 'ari_builtin_write_i64' return type must be i64, got u64" $(BUILD_DIR)/prelude/ari-builtin-signature-result.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-result-arity.ari -o $(BUILD_DIR)/prelude/prelude-result-arity.elf >$(BUILD_DIR)/prelude/prelude-result-arity.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-result-arity.ari -o $(BUILD_DIR)/prelude/prelude-result-arity.elf >$(BUILD_DIR)/prelude/prelude-result-arity.err 2>&1; then exit 1; fi
 	grep -q "enum 'std::Result' expects 2 type arguments" $(BUILD_DIR)/prelude/prelude-result-arity.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/input/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-macro-format-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/format/prelude-macro-format-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err 2>&1; then exit 1; fi
 	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-macro-format-qualified-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/format/prelude-macro-format-qualified-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err 2>&1; then exit 1; fi
 	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-format-in-f128.ari -o $(BUILD_DIR)/prelude/prelude-format-in-f128.elf >$(BUILD_DIR)/prelude/prelude-format-in-f128.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-f128.ari -o $(BUILD_DIR)/prelude/prelude-format-in-f128.elf >$(BUILD_DIR)/prelude/prelude-format-in-f128.err 2>&1; then exit 1; fi
 	grep -q "format_in! currently supports string, integer, bool, f32, f64, and Display values, got f128" $(BUILD_DIR)/prelude/prelude-format-in-f128.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-format-in-no-display.ari -o $(BUILD_DIR)/prelude/prelude-format-in-no-display.elf >$(BUILD_DIR)/prelude/prelude-format-in-no-display.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-no-display.ari -o $(BUILD_DIR)/prelude/prelude-format-in-no-display.elf >$(BUILD_DIR)/prelude/prelude-format-in-no-display.err 2>&1; then exit 1; fi
 	grep -q "format_in! currently supports string, integer, bool, f32, f64, and Display values, got Point" $(BUILD_DIR)/prelude/prelude-format-in-no-display.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-macro-nonprelude-qualified.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-macro-nonprelude-qualified.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'other::format!'" $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-macro-nonprelude-matches.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-macro-nonprelude-matches.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'other::matches!'" $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-macro-assert-eq-type.ari -o $(BUILD_DIR)/prelude/prelude-macro-assert-eq-type.elf >$(BUILD_DIR)/prelude/prelude-macro-assert-eq-type.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-macro-assert-eq-type.ari -o $(BUILD_DIR)/prelude/prelude-macro-assert-eq-type.elf >$(BUILD_DIR)/prelude/prelude-macro-assert-eq-type.err 2>&1; then exit 1; fi
 	grep -q "assert_eq! arguments must both be integer values or both be bool values" $(BUILD_DIR)/prelude/prelude-macro-assert-eq-type.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude-assert-type.ari -o $(BUILD_DIR)/prelude/prelude-assert-type.elf >$(BUILD_DIR)/prelude/prelude-assert-type.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-assert-type.ari -o $(BUILD_DIR)/prelude/prelude-assert-type.elf >$(BUILD_DIR)/prelude/prelude-assert-type.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected bool, got i64" $(BUILD_DIR)/prelude/prelude-assert-type.err
 
 check-control-flow: $(TARGET)
@@ -4152,13 +4152,13 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "enum case 'Hidden::A' is not public" $(BUILD_DIR)/errors/private-module-enum-case.err
 	if $(TARGET) tests/cases/modules/errors/missing-module.ari -o $(BUILD_DIR)/errors/missing-module.elf >$(BUILD_DIR)/errors/missing-module.err 2>&1; then exit 1; fi
 	grep -q "cannot find module file for 'definitely_missing_module'" $(BUILD_DIR)/errors/missing-module.err
-	if $(TARGET) tests/cases/standard-library/errors/format-placeholder-count.ari -o $(BUILD_DIR)/errors/format-placeholder-count.elf >$(BUILD_DIR)/errors/format-placeholder-count.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/format/format-placeholder-count.ari -o $(BUILD_DIR)/errors/format-placeholder-count.elf >$(BUILD_DIR)/errors/format-placeholder-count.err 2>&1; then exit 1; fi
 	grep -q "format string has 2 placeholders but 1 values were provided" $(BUILD_DIR)/errors/format-placeholder-count.err
-	if $(TARGET) tests/cases/standard-library/errors/format-nonliteral.ari -o $(BUILD_DIR)/errors/format-nonliteral.elf >$(BUILD_DIR)/errors/format-nonliteral.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/format/format-nonliteral.ari -o $(BUILD_DIR)/errors/format-nonliteral.elf >$(BUILD_DIR)/errors/format-nonliteral.err 2>&1; then exit 1; fi
 	grep -q "expects a string literal format argument" $(BUILD_DIR)/errors/format-nonliteral.err
-	if $(TARGET) tests/cases/standard-library/errors/format-precision-nonfloat.ari -o $(BUILD_DIR)/errors/format-precision-nonfloat.elf >$(BUILD_DIR)/errors/format-precision-nonfloat.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/format/format-precision-nonfloat.ari -o $(BUILD_DIR)/errors/format-precision-nonfloat.elf >$(BUILD_DIR)/errors/format-precision-nonfloat.err 2>&1; then exit 1; fi
 	grep -q "format precision placeholders require f32 or f64 arguments" $(BUILD_DIR)/errors/format-precision-nonfloat.err
-	if $(TARGET) tests/cases/standard-library/errors/format-precision-syntax.ari -o $(BUILD_DIR)/errors/format-precision-syntax.elf >$(BUILD_DIR)/errors/format-precision-syntax.err 2>&1; then exit 1; fi
+	if $(TARGET) tests/cases/standard-library/errors/format/format-precision-syntax.ari -o $(BUILD_DIR)/errors/format-precision-syntax.elf >$(BUILD_DIR)/errors/format-precision-syntax.err 2>&1; then exit 1; fi
 	grep -q "format precision placeholder expects digits after colon-dot" $(BUILD_DIR)/errors/format-precision-syntax.err
 	if $(TARGET) tests/cases/ffi/errors/extern-cpp-removed.ari -o $(BUILD_DIR)/errors/extern-cpp-removed.elf >$(BUILD_DIR)/errors/extern-cpp-removed.err 2>&1; then exit 1; fi
 	grep -q 'extern ABI must be "C" or "ari"' $(BUILD_DIR)/errors/extern-cpp-removed.err

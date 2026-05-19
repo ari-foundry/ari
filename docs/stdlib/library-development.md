@@ -8,9 +8,9 @@ This guide is for contributors adding or changing source libraries under
 1. Decide whether the API can be implemented in Ari source.
 2. Put public declarations in `lib/std.arih` or a child module in `lib/std/`.
 3. Keep helpers private unless users need the name.
-4. Add focused tests in `tests/cases/standard-library/ok/`.
-5. Add diagnostics in `tests/cases/standard-library/errors/` when misuse
-   should be rejected at compile time.
+4. Add focused tests in `tests/cases/standard-library/ok/<feature>/`.
+5. Add diagnostics in `tests/cases/standard-library/errors/<feature>/` when
+   misuse should be rejected at compile time.
 6. Add the test to `tests/Makefile`.
 7. Update `tests/std_api_manifest.txt`.
 8. Update this `docs/stdlib/` folder and any focused language docs.

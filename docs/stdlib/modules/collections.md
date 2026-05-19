@@ -214,27 +214,27 @@ fn main() -> i64 {
 Focused positive coverage:
 
 ```text
-tests/cases/standard-library/ok/std-collections-set.ari
-tests/cases/standard-library/ok/std-collections-set-access.ari
-tests/cases/standard-library/ok/std-collections-set-replace.ari
-tests/cases/standard-library/ok/std-collections-set-iter.ari
-tests/cases/standard-library/ok/std-collections-hash.ari
-tests/cases/standard-library/ok/std-collections-tree.ari
+tests/cases/standard-library/ok/collections/std-collections-set.ari
+tests/cases/standard-library/ok/collections/std-collections-set-access.ari
+tests/cases/standard-library/ok/collections/std-collections-set-replace.ari
+tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
+tests/cases/standard-library/ok/collections/std-collections-hash.ari
+tests/cases/standard-library/ok/collections/std-collections-tree.ari
 ```
 
 Focused negative coverage:
 
 ```text
-tests/cases/standard-library/errors/std-collections-set-after-reset.ari
-tests/cases/standard-library/errors/std-collections-set-iter-after-reset.ari
-tests/cases/standard-library/errors/std-collections-set-insert-different-zone.ari
-tests/cases/standard-library/errors/std-collections-set-replace-different-zone.ari
-tests/cases/standard-library/errors/std-collections-set-reserve-different-zone.ari
-tests/cases/standard-library/errors/std-collections-set-reserve-extra-different-zone.ari
-tests/cases/standard-library/errors/std-collections-hash-map-after-reset.ari
-tests/cases/standard-library/errors/std-collections-hash-map-insert-different-zone.ari
-tests/cases/standard-library/errors/std-collections-tree-map-after-reset.ari
-tests/cases/standard-library/errors/std-collections-tree-set-insert-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-set-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-set-iter-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-set-insert-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-set-replace-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-set-reserve-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-set-reserve-extra-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-hash-map-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-hash-map-insert-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-tree-map-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-tree-set-insert-different-zone.ari
 ```
 
 `std-collections-hash.ari` forces collisions with a custom hash function so the

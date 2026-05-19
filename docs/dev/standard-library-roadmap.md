@@ -202,8 +202,9 @@ Likely compiler work:
 Before landing a public library API:
 
 - Add or update source in `lib/std.arih` or `lib/std/<module>.arih`.
-- Add focused positive tests in `tests/cases/standard-library/ok/`.
-- Add negative diagnostics in `tests/cases/standard-library/errors/` for misuse.
+- Add focused positive tests in `tests/cases/standard-library/ok/<feature>/`.
+- Add negative diagnostics in `tests/cases/standard-library/errors/<feature>/`
+  for misuse.
 - Add IR or executable checks in `tests/Makefile` when behavior reaches the
   backend.
 - Update `tests/std_api_manifest.txt`.

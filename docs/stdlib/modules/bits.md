@@ -103,11 +103,11 @@ fn enable_write(flags: u64) -> u64 {
 The focused positive tests are:
 
 ```text
-tests/cases/standard-library/ok/std-bits-mask-helpers.ari
-tests/cases/standard-library/ok/std-bits-rotate-helpers.ari
-tests/cases/standard-library/ok/std-bits-scan-helpers.ari
-tests/cases/standard-library/ok/std-bits-one-run-helpers.ari
-tests/cases/standard-library/ok/std-bits-width-helpers.ari
+tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari
+tests/cases/standard-library/ok/bits/std-bits-rotate-helpers.ari
+tests/cases/standard-library/ok/bits/std-bits-scan-helpers.ari
+tests/cases/standard-library/ok/bits/std-bits-one-run-helpers.ari
+tests/cases/standard-library/ok/bits/std-bits-width-helpers.ari
 ```
 
 `make check-prelude` compiles them to LLVM, checks representative public

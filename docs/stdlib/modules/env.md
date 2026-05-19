@@ -156,15 +156,15 @@ fn main() -> i64 {
 
 ## Tests
 
-- `tests/cases/standard-library/ok/std-env-args.ari` checks the source wrappers,
+- `tests/cases/standard-library/ok/env/std-env-args.ari` checks the source wrappers,
   `Option` result shape, LLVM symbols, and executable behavior.
-- `tests/cases/standard-library/ok/std-env-vars.ari` checks current-process
+- `tests/cases/standard-library/ok/env/std-env-vars.ari` checks current-process
   environment `get`/`has`/`try_get`/`set`/`remove` behavior and runtime hook
   lowering.
-- `tests/cases/standard-library/ok/std-env-paths.ari` checks current
+- `tests/cases/standard-library/ok/env/std-env-paths.ari` checks current
   directory, `set_current_dir`, executable-path lookup, `Option` wrappers,
   LLVM symbols, and executable behavior.
-- `tests/cases/standard-library/ok/std-context-args.ari` remains the lower-level
+- `tests/cases/standard-library/ok/context/std-context-args.ari` remains the lower-level
   context hook and root alias coverage.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for

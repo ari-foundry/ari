@@ -218,25 +218,25 @@ fn main() -> i64 {
 Focused positive tests include:
 
 ```text
-tests/cases/standard-library/ok/std-string-handle.ari
-tests/cases/standard-library/ok/std-string-first-last.ari
-tests/cases/standard-library/ok/std-string-try-byte-access.ari
-tests/cases/standard-library/ok/std-string-search.ari
-tests/cases/standard-library/ok/std-string-prefix-suffix.ari
-tests/cases/standard-library/ok/std-string-equals.ari
-tests/cases/standard-library/ok/std-string-ascii-helpers.ari
-tests/cases/standard-library/ok/std-string-ascii-case-helpers.ari
-tests/cases/standard-library/ok/std-string-prefix-parsers.ari
-tests/cases/standard-library/ok/std-string-trim-copy.ari
-tests/cases/standard-library/ok/std-string-grow.ari
-tests/cases/standard-library/ok/std-string-append.ari
-tests/cases/standard-library/ok/std-string-from-slice-in.ari
+tests/cases/standard-library/ok/string/std-string-handle.ari
+tests/cases/standard-library/ok/string/std-string-first-last.ari
+tests/cases/standard-library/ok/string/std-string-try-byte-access.ari
+tests/cases/standard-library/ok/string/std-string-search.ari
+tests/cases/standard-library/ok/string/std-string-prefix-suffix.ari
+tests/cases/standard-library/ok/string/std-string-equals.ari
+tests/cases/standard-library/ok/string/std-string-ascii-helpers.ari
+tests/cases/standard-library/ok/string/std-string-ascii-case-helpers.ari
+tests/cases/standard-library/ok/string/std-string-prefix-parsers.ari
+tests/cases/standard-library/ok/string/std-string-trim-copy.ari
+tests/cases/standard-library/ok/string/std-string-grow.ari
+tests/cases/standard-library/ok/string/std-string-append.ari
+tests/cases/standard-library/ok/string/std-string-from-slice-in.ari
 ```
 
 Focused diagnostics include:
 
 ```text
-tests/cases/standard-library/errors/std-string-trim-to-after-target-reset.ari
+tests/cases/standard-library/errors/string/std-string-trim-to-after-target-reset.ari
 ```
 
 `make check-prelude` compiles these to LLVM, checks representative symbols and

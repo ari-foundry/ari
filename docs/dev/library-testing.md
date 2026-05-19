@@ -8,16 +8,17 @@ contributors adding APIs under `lib/std.arih` or `lib/std/`.
 | Layer | Purpose | Where |
 | --- | --- | --- |
 | API manifest | Prevent public `std` APIs from changing accidentally. | `tests/std_api_manifest.txt`, checked by `make check-std-api`. |
-| Positive source behavior | Compile and run valid library use. | `tests/cases/standard-library/ok/std-<module>-<feature>.ari`, `tests/cases/standard-library/ok/prelude-<feature>.ari`. |
-| Negative diagnostics | Lock down misuse and unsupported surfaces. | `tests/cases/standard-library/errors/std-<module>-<feature>.ari`, `tests/cases/standard-library/errors/prelude-<feature>.ari`. |
+| Positive source behavior | Compile and run valid library use. | `tests/cases/standard-library/ok/<feature>/std-<module>-<case>.ari`, `tests/cases/standard-library/ok/prelude/prelude-<case>.ari`. |
+| Negative diagnostics | Lock down misuse and unsupported surfaces. | `tests/cases/standard-library/errors/<feature>/std-<module>-<case>.ari`, `tests/cases/standard-library/errors/prelude/prelude-<case>.ari`. |
 | Backend checks | Inspect LLVM, symbols, runtime hooks, and executable output. | `tests/Makefile` under the relevant check target. |
-| Cross-library smoke | Exercise several library families together. | `tests/cases/standard-library/ok/std-library-smoke.ari`. |
+| Cross-library smoke | Exercise several library families together. | `tests/cases/standard-library/ok/smoke/std-library-smoke.ari`. |
 | Docs coverage | Explain user-visible behavior and remaining limits. | `docs/language/standard-library.md`, focused language docs, `docs/dev/test-matrix.md`. |
 
 ## Naming Scheme
 
 Use file names that identify both the library family and the behavior under
-test:
+test. The containing folder identifies the feature family, and the basename
+identifies the exact case:
 
 - `std-vec-try-pop.ari`: source `std::vec` method behavior.
 - `std-vec-try-access.ari`: source `std::vec` Option-returning access
@@ -73,6 +74,10 @@ test:
 - `std-collections-set-reserve-extra-different-zone.ari`: negative same-zone
   growth diagnostic for spare-capacity set reserve with the wrong allocation
   zone.
+- `std-collections-hash.ari`: open-addressed `HashMap`/`HashSet` collision,
+  replacement, tombstone, removal, and set-taking behavior.
+- `std-collections-tree.ari`: red-black `TreeMap`/`TreeSet` insertion,
+  replacement, lookup, and rotation-path behavior.
 - `std-io-byte-slice.ari`: source `std::io` byte-slice output over the raw
   write-byte backend hook.
 - `std-input-byte-option.ari`: source `std::input` EOF-to-Option byte helper
@@ -142,7 +147,7 @@ Run these depending on the change:
 
 ## Adding A Library Test
 
-1. Put valid programs under `tests/cases/<feature>/ok/`; put diagnostics under `tests/cases/<feature>/errors/`.
+1. Put valid standard-library programs under `tests/cases/standard-library/ok/<feature>/`; put diagnostics under `tests/cases/standard-library/errors/<feature>/`.
 2. Use a file name that starts with the library category.
 3. Add the test to the narrowest `tests/Makefile` target.
 4. For runtime behavior, compile to an executable and check the exit code or

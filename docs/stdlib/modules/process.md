@@ -63,8 +63,8 @@ fn main() -> i64 {
 Focused positive coverage:
 
 ```text
-tests/cases/standard-library/ok/std-process-basic.ari
-tests/cases/standard-library/ok/std-process-exit.ari
+tests/cases/standard-library/ok/process/std-process-basic.ari
+tests/cases/standard-library/ok/process/std-process-exit.ari
 ```
 
 `make check-prelude` emits LLVM, checks the runtime hook symbols, and executes

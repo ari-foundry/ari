@@ -195,17 +195,17 @@ fn main() -> i64 {
 Focused positive tests include:
 
 ```text
-tests/cases/standard-library/ok/prelude-slice-methods.ari
-tests/cases/standard-library/ok/prelude-slice-metadata.ari
-tests/cases/standard-library/ok/prelude-slice-option-access.ari
-tests/cases/standard-library/ok/prelude-slice-copy-to.ari
-tests/cases/standard-library/ok/std-vec-metadata-methods.ari
-tests/cases/standard-library/ok/std-vec-fixed-ops.ari
-tests/cases/standard-library/ok/std-vec-try-access.ari
-tests/cases/standard-library/ok/std-vec-try-pop.ari
-tests/cases/standard-library/ok/std-vec-slice-compare.ari
-tests/cases/standard-library/ok/std-vec-growth-paths.ari
-tests/cases/standard-library/ok/std-vec-iter.ari
+tests/cases/standard-library/ok/vec/prelude-slice-methods.ari
+tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari
+tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari
+tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
+tests/cases/standard-library/ok/vec/std-vec-metadata-methods.ari
+tests/cases/standard-library/ok/vec/std-vec-fixed-ops.ari
+tests/cases/standard-library/ok/vec/std-vec-try-access.ari
+tests/cases/standard-library/ok/vec/std-vec-try-pop.ari
+tests/cases/standard-library/ok/vec/std-vec-slice-compare.ari
+tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari
+tests/cases/standard-library/ok/vec/std-vec-iter.ari
 ```
 
 `make check-prelude` compiles these to LLVM, checks representative symbols,

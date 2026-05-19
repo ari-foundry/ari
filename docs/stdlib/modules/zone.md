@@ -87,7 +87,7 @@ behavior.
 
 ## Tests
 
-- `tests/cases/standard-library/ok/std-zone-alloc-array.ari` checks
+- `tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari` checks
   `std::zone::alloc_array`, the root `alloc_array` alias, null return for
   zero count, pointer loads/stores, LLVM symbol emission, and runtime result.
 - Existing zone, vector, string, and boxed tests cover reset/destroy

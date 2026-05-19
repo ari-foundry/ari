@@ -5,9 +5,14 @@ compiler-known hooks.
 
 ## Folders
 
-- `ok/`: programs that should compile. Many are also linked and executed from
-  `tests/Makefile`.
-- `errors/`: programs that should fail with a stable diagnostic.
+- `ok/<feature>/`: programs that should compile. Many are also linked and
+  executed from `tests/Makefile`.
+- `errors/<feature>/`: programs that should fail with a stable diagnostic.
+
+Feature folders use the library family as the directory name, for example
+`ok/collections/`, `ok/string/`, `ok/vec/`, `errors/format/`, or
+`errors/prelude/`. Keep new files in the narrowest feature folder instead of
+adding them directly under `ok/` or `errors/`.
 
 ## Name Prefixes
 
@@ -26,7 +31,8 @@ make that family explicit in the name, such as `metadata-methods`,
 
 ## Adding Tests
 
-1. Add valid programs under `ok/` and diagnostics under `errors/`.
+1. Add valid programs under `ok/<feature>/` and diagnostics under
+   `errors/<feature>/`.
 2. Add the file to the narrowest target in `tests/Makefile`, usually
    `check-prelude` for source `std`.
 3. Check generated LLVM when the API has a public symbol or lowers through a
