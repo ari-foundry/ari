@@ -1,0 +1,111 @@
+// Covers the first std::algo slice over mutable Slice views.
+impl cmp::Ord[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+fn greater(left: i64, right: i64) -> bool {
+  return left > right;
+}
+
+fn even(value: ref i64) -> bool {
+  let raw = (ref value) as ptr i64;
+  return (*raw % 2) == 0;
+}
+
+fn partition_ok(values: Slice[i64], split: i64) -> bool {
+  var index = 0;
+  while index < split {
+    if (values[index] % 2) != 0 {
+      return false;
+    }
+    index = index + 1;
+  }
+  while index < values.len {
+    if (values[index] % 2) == 0 {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  var sorted = [5, 1, 4, 1, 3];
+  algo::sort<i64>(sorted.as_slice());
+  if algo::is_sorted<i64>(sorted.as_slice()) &&
+     sorted[0] == 1 && sorted[1] == 1 && sorted[2] == 3 &&
+     sorted[3] == 4 && sorted[4] == 5 {
+    score = score + 1;
+  }
+
+  let found = algo::binary_search<i64>(sorted.as_slice(), 4).unwrap_or(-1);
+  let missing = algo::binary_search<i64>(sorted.as_slice(), 9);
+  if found == 3 && missing.is_none() {
+    score = score + 1;
+  }
+
+  let smallest = algo::min<i64>(sorted.as_slice()).unwrap_or(0);
+  let largest = algo::max<i64>(sorted.as_slice()).unwrap_or(0);
+  let clamped = algo::clamp<i64>(9, 2, 7);
+  if smallest == 1 && largest == 5 && clamped == 7 {
+    score = score + 1;
+  }
+
+  var stable = [3, 1, 2, 1];
+  algo::stable_sort<i64>(stable.as_slice());
+  if stable[0] == 1 && stable[1] == 1 && stable[2] == 2 && stable[3] == 3 {
+    score = score + 1;
+  }
+
+  var descending = [1, 4, 2, 3];
+  algo::sort_by<i64>(descending.as_slice(), greater);
+  if descending[0] == 4 && descending[1] == 3 &&
+     descending[2] == 2 && descending[3] == 1 {
+    score = score + 1;
+  }
+
+  var descending_stable = [2, 4, 1, 3];
+  algo::stable_sort_by<i64>(descending_stable.as_slice(), greater);
+  if descending_stable[0] == 4 && descending_stable[1] == 3 &&
+     descending_stable[2] == 2 && descending_stable[3] == 1 {
+    score = score + 1;
+  }
+
+  var order = [1, 2, 3, 4, 5];
+  algo::reverse<i64>(order.as_slice());
+  algo::rotate_left<i64>(order.as_slice(), 2);
+  algo::rotate_right<i64>(order.as_slice(), 1);
+  if order[0] == 4 && order[1] == 3 && order[2] == 2 &&
+     order[3] == 1 && order[4] == 5 {
+    score = score + 1;
+  }
+
+  var parted = [1, 2, 3, 4, 5, 6];
+  let split = algo::partition<i64>(parted.as_slice(), even);
+  if split == 3 && partition_ok(parted.as_slice(), split) {
+    score = score + 1;
+  }
+
+  var target = [0, 0, 0, 0];
+  var source = [8, 7, 6];
+  let copied = algo::copy<i64>(target.as_slice(), source.as_slice());
+  algo::fill<i64>(target.as_slice()[3..4], 5);
+  if copied == 3 && target[0] == 8 && target[1] == 7 &&
+     target[2] == 6 && target[3] == 5 {
+    score = score + 1;
+  }
+
+  var compact = [1, 1, 2, 2, 2, 3, 1, 1];
+  let unique_len = algo::dedup<i64>(compact.as_slice());
+  algo::swap<i64>(compact.as_slice(), 1, 2);
+  if unique_len == 4 && compact[0] == 1 && compact[1] == 3 &&
+     compact[2] == 2 && compact[3] == 1 {
+    score = score + 1;
+  }
+
+  return score;
+}

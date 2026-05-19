@@ -1,0 +1,250 @@
+// Source-level algorithms over borrowed Slice views.
+//
+// This first slice intentionally uses compact, natural names. The module path
+// already carries the domain, so callers write `algo::reverse(values)` rather
+// than type-suffixed helper names.
+
+fn check_index(length: i64, index: i64) -> void {
+  std::assert(index >= 0);
+  std::assert(index < length);
+}
+
+fn reverse_range[T](values: std::Slice[T], start: i64, end: i64) -> void {
+  var left = start;
+  var right = end - 1;
+  while left < right {
+    swap<T>(values, left, right);
+    left = left + 1;
+    right = right - 1;
+  }
+}
+
+pub fn swap[T](values: std::Slice[T], left: i64, right: i64) -> void {
+  check_index(values.len, left);
+  check_index(values.len, right);
+  if left == right {
+    return;
+  }
+  let value = ptr_load(ptr_add(values.data, left));
+  ptr_store(ptr_add(values.data, left), ptr_load(ptr_add(values.data, right)));
+  ptr_store(ptr_add(values.data, right), value);
+}
+
+pub fn reverse[T](values: std::Slice[T]) -> void {
+  reverse_range<T>(values, 0, values.len);
+}
+
+pub fn rotate_left[T](values: std::Slice[T], count: i64) -> void {
+  std::assert(count >= 0);
+  if values.len <= 1 {
+    return;
+  }
+  let amount = count % values.len;
+  if amount == 0 {
+    return;
+  }
+  reverse_range<T>(values, 0, amount);
+  reverse_range<T>(values, amount, values.len);
+  reverse<T>(values);
+}
+
+pub fn rotate_right[T](values: std::Slice[T], count: i64) -> void {
+  std::assert(count >= 0);
+  if values.len <= 1 {
+    return;
+  }
+  let amount = count % values.len;
+  if amount == 0 {
+    return;
+  }
+  rotate_left<T>(values, values.len - amount);
+}
+
+pub fn fill[T](values: std::Slice[T], value: T) -> void {
+  var index = 0;
+  while index < values.len {
+    ptr_store(ptr_add(values.data, index), value);
+    index = index + 1;
+  }
+}
+
+pub fn copy[T](target: std::Slice[T], source: std::Slice[T]) -> i64 {
+  var count = source.len;
+  if target.len < count {
+    count = target.len;
+  }
+  var index = 0;
+  while index < count {
+    ptr_store(ptr_add(target.data, index), ptr_load(ptr_add(source.data, index)));
+    index = index + 1;
+  }
+  return count;
+}
+
+pub fn partition[T](values: std::Slice[T], keep: fn(ref T) -> bool) -> i64 {
+  if values.len == 0 {
+    return 0;
+  }
+
+  var left = 0;
+  var right = values.len - 1;
+  while left <= right {
+    while left < values.len && keep(ref *ptr_add(values.data, left)) {
+      left = left + 1;
+    }
+    while right >= 0 && !keep(ref *ptr_add(values.data, right)) {
+      right = right - 1;
+    }
+    if left < right {
+      swap<T>(values, left, right);
+      left = left + 1;
+      right = right - 1;
+    }
+  }
+  return left;
+}
+
+pub fn dedup[T](values: std::Slice[T]) -> i64 {
+  if values.len <= 1 {
+    return values.len;
+  }
+
+  var write = 1;
+  var read = 1;
+  while read < values.len {
+    if ptr_load(ptr_add(values.data, read)) != ptr_load(ptr_add(values.data, write - 1)) {
+      if write != read {
+        ptr_store(ptr_add(values.data, write), ptr_load(ptr_add(values.data, read)));
+      }
+      write = write + 1;
+    }
+    read = read + 1;
+  }
+  return write;
+}
+
+pub fn is_sorted[T: std::cmp::Ord[T]](values: std::Slice[T]) -> bool {
+  var index = 1;
+  while index < values.len {
+    if ptr_load(ptr_add(values.data, index)).lt(ptr_load(ptr_add(values.data, index - 1))) {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+pub fn min[T: std::cmp::Ord[T]](values: std::Slice[T]) -> std::Option[T] {
+  if values.len == 0 {
+    return std::None<T>();
+  }
+  var best = ptr_load(values.data);
+  var index = 1;
+  while index < values.len {
+    let value = ptr_load(ptr_add(values.data, index));
+    if value.lt(best) {
+      best = value;
+    }
+    index = index + 1;
+  }
+  return std::Some<T>(best);
+}
+
+pub fn max[T: std::cmp::Ord[T]](values: std::Slice[T]) -> std::Option[T] {
+  if values.len == 0 {
+    return std::None<T>();
+  }
+  var best = ptr_load(values.data);
+  var index = 1;
+  while index < values.len {
+    let value = ptr_load(ptr_add(values.data, index));
+    if best.lt(value) {
+      best = value;
+    }
+    index = index + 1;
+  }
+  return std::Some<T>(best);
+}
+
+pub fn clamp[T: std::cmp::Ord[T]](value: T, low: T, high: T) -> T {
+  return std::cmp::clamp<T>(value, low, high);
+}
+
+pub fn binary_search[T: std::cmp::Ord[T]](values: std::Slice[T], target: T) -> std::Option[i64] {
+  var low = 0;
+  var high = values.len;
+  while low < high {
+    let mid = low + ((high - low) / 2);
+    let value = ptr_load(ptr_add(values.data, mid));
+    if value.lt(target) {
+      low = mid + 1;
+    } else if target.lt(value) {
+      high = mid;
+    } else {
+      return std::Some<i64>(mid);
+    }
+  }
+  return std::None<i64>();
+}
+
+pub fn sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
+  var index = 0;
+  while index < values.len {
+    var best = index;
+    var scan = index + 1;
+    while scan < values.len {
+      if ptr_load(ptr_add(values.data, scan)).lt(ptr_load(ptr_add(values.data, best))) {
+        best = scan;
+      }
+      scan = scan + 1;
+    }
+    if best != index {
+      swap<T>(values, index, best);
+    }
+    index = index + 1;
+  }
+}
+
+pub fn sort_by[T](values: std::Slice[T], less: fn(T, T) -> bool) -> void {
+  var index = 0;
+  while index < values.len {
+    var best = index;
+    var scan = index + 1;
+    while scan < values.len {
+      if less(ptr_load(ptr_add(values.data, scan)), ptr_load(ptr_add(values.data, best))) {
+        best = scan;
+      }
+      scan = scan + 1;
+    }
+    if best != index {
+      swap<T>(values, index, best);
+    }
+    index = index + 1;
+  }
+}
+
+pub fn stable_sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
+  var index = 1;
+  while index < values.len {
+    var cursor = index;
+    while cursor > 0 &&
+          ptr_load(ptr_add(values.data, cursor)).lt(ptr_load(ptr_add(values.data, cursor - 1))) {
+      swap<T>(values, cursor - 1, cursor);
+      cursor = cursor - 1;
+    }
+    index = index + 1;
+  }
+}
+
+pub fn stable_sort_by[T](values: std::Slice[T], less: fn(T, T) -> bool) -> void {
+  var index = 1;
+  while index < values.len {
+    var cursor = index;
+    while cursor > 0 &&
+          less(ptr_load(ptr_add(values.data, cursor)), ptr_load(ptr_add(values.data, cursor - 1))) {
+      swap<T>(values, cursor - 1, cursor);
+      cursor = cursor - 1;
+    }
+    index = index + 1;
+  }
+}

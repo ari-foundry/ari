@@ -83,6 +83,9 @@ identifies the exact case:
 - `std-net-addresses.ari`: source `std::net` IPv4/IPv6 constructors, generic
   IP predicates, socket-address construction, port replacement, loopback, and
   unspecified checks.
+- `std-algo-slice-helpers.ari`: source `std::algo` sort/stable sort,
+  comparator sort, binary search, reverse/rotate, partition, min/max/clamp,
+  swap, fill, copy, and dedup behavior over borrowed slices.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

@@ -433,6 +433,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf
 	$(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 235
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 235; fi
+	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
+	grep -F -q 'std4algo11sort__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
+	grep -F -q 'std4algo18stable_sort__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
+	grep -F -q 'std4algo20binary_search__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
+	grep -F -q 'std4algo16partition__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
+	grep -F -q 'std4algo12dedup__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf
+	$(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 10
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 10; fi
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3abs' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math4sign' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll

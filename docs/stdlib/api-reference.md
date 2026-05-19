@@ -935,6 +935,36 @@ an `impl cmp::Ord[T] for T`. `clamp` and `is_between` assert that
 The root prelude re-exports the value helpers as `min<T>`, `max<T>`,
 `clamp<T>`, and `is_between<T>`.
 
+## Algorithms
+
+`std::algo` contains source algorithms over borrowed `Slice[T]` views:
+
+```ari
+algo::sort<T>(values)
+algo::sort_by<T>(values, less)
+algo::stable_sort<T>(values)
+algo::stable_sort_by<T>(values, less)
+algo::binary_search<T>(values, target)
+algo::is_sorted<T>(values)
+algo::reverse<T>(values)
+algo::rotate_left<T>(values, count)
+algo::rotate_right<T>(values, count)
+algo::partition<T>(values, keep)
+algo::min<T>(values)
+algo::max<T>(values)
+algo::clamp<T>(value, low, high)
+algo::swap<T>(values, left, right)
+algo::fill<T>(values, value)
+algo::copy<T>(target, source)
+algo::dedup<T>(values)
+```
+
+The ordered helpers use `cmp::Ord[T]`; the `*_by` helpers take an explicit
+`fn(T, T) -> bool` comparator. `binary_search` returns `Option[i64]`.
+`partition` accepts `fn(ref T) -> bool` and returns the split index. `copy`
+returns the number of copied elements. `dedup` compacts consecutive duplicates
+and returns the logical prefix length.
+
 ## Conversion
 
 `std::convert` contains explicit conversion trait names and source helper

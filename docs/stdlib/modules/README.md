@@ -33,6 +33,8 @@ limits, examples, and test files for one module.
   split between `format_in!` macro lowering and source formatting traits.
 - [std::cmp](cmp.md): source comparison traits, generic value selection,
   inclusive clamping, and inclusive range predicates.
+- [std::algo](algo.md): source slice algorithms for sorting, binary search,
+  reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup.
 - [std::convert](convert.md): explicit conversion traits plus source
   `identity`, `from`, and `into` helper calls for generic code.
 - [std::context](context.md): runtime-backed program argument and thread-id

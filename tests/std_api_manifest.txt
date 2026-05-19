@@ -10,6 +10,23 @@
 
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
+fn std::algo::binary_search[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers binary search over ordered slices; docs/stdlib/modules/algo.md
+fn std::algo::clamp[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers clamp wrapper over cmp; docs/stdlib/modules/algo.md
+fn std::algo::copy[T]|check-prelude std-algo-slice-helpers prefix copy between slices; docs/stdlib/modules/algo.md
+fn std::algo::dedup[T]|check-prelude std-algo-slice-helpers consecutive duplicate compaction; docs/stdlib/modules/algo.md
+fn std::algo::fill[T]|check-prelude std-algo-slice-helpers fill slice values; docs/stdlib/modules/algo.md
+fn std::algo::is_sorted[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers sortedness predicate; docs/stdlib/modules/algo.md
+fn std::algo::max[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers slice maximum helper; docs/stdlib/modules/algo.md
+fn std::algo::min[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers slice minimum helper; docs/stdlib/modules/algo.md
+fn std::algo::partition[T]|check-prelude std-algo-slice-helpers borrowed-predicate partition; docs/stdlib/modules/algo.md
+fn std::algo::reverse[T]|check-prelude std-algo-slice-helpers in-place slice reverse; docs/stdlib/modules/algo.md
+fn std::algo::rotate_left[T]|check-prelude std-algo-slice-helpers left rotation; docs/stdlib/modules/algo.md
+fn std::algo::rotate_right[T]|check-prelude std-algo-slice-helpers right rotation; docs/stdlib/modules/algo.md
+fn std::algo::sort[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers ordered sort; docs/stdlib/modules/algo.md
+fn std::algo::sort_by[T]|check-prelude std-algo-slice-helpers comparator sort; docs/stdlib/modules/algo.md
+fn std::algo::stable_sort[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers ordered stable sort; docs/stdlib/modules/algo.md
+fn std::algo::stable_sort_by[T]|check-prelude std-algo-slice-helpers comparator stable sort; docs/stdlib/modules/algo.md
+fn std::algo::swap[T]|check-prelude std-algo-slice-helpers element swap; docs/stdlib/modules/algo.md
 fn std::ascii::contains_ignore_case|std ascii case search tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::digit_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::ends_with_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
@@ -622,6 +639,7 @@ method std::vec::Vec[T]::try_first|check-prelude std-vec-try-access Option-retur
 method std::vec::Vec[T]::try_get|check-prelude std-vec-try-access Option-returning out-of-range access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_last|check-prelude std-vec-try-access Option-returning empty-safe access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+module std::algo|check-prelude std-algo-slice-helpers source algorithm module; docs/stdlib/modules/algo.md
 module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overview.md module map
 module std::bits|module load and std bits mask helper tests; docs/stdlib/overview.md module map
 module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows

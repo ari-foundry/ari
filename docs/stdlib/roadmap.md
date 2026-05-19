@@ -11,8 +11,9 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 - Keep focused tests under `tests/cases/standard-library/`.
 - Keep this `docs/stdlib/` folder current with every public API.
 
-Current source families: `option`, `result`, `mem` layout, pointer, value, and
-byte memory helpers, `zone` raw allocation plus source typed array allocation,
+Current source families: `option`, `result`, `algo` slice sort/search/reorder
+helpers, `mem` layout, pointer, value, and byte memory helpers, `zone` raw
+allocation plus source typed array allocation,
 `boxed`, `string` byte access/search/ASCII
 helpers including case search, prefix parsers, and owned trim copies, `ascii`
 byte classification, case-insensitive comparison/search, slice helpers, and
@@ -61,6 +62,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, richer status/result values, and `std::sync` integration. |
 | `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`; future generic atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
 | `std::collections` | Store keyed, queue-like, linked, and priority data beyond vectors. | Current linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, FIFO/linked/heap tests, live-bucket hash iterators, sorted tree iterators; future tree deletion and trait-driven constructors. |
+| `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting, move-aware algorithm contracts, `std::hash`, `std::encoding` hex/base64 helpers, and optional compression policy. |
 | `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, error-code translation. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
@@ -84,6 +86,9 @@ work. Each one should land in small tested slices with natural API names.
 - Keep `HashMap`/`HashSet` and `TreeMap`/`TreeSet` on explicit hash or
   comparator constructors until generic trait-driven `Hash`, `Eq`, and `Ord`
   selection is testable.
+- Grow `std::algo` in small source slices: keep the current borrowed-slice
+  algorithms simple, then add faster sort implementations, hashing traits, and
+  encoding helpers only after ownership and byte-string policy are clearer.
 - Keep `std::string::String` byte-oriented until a Unicode/text policy is
   designed.
 - Expose small `String` conveniences only when they preserve byte-string

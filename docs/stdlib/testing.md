@@ -52,6 +52,7 @@ std-fs-read-write.ari
 std-fs-create-truncate-copy.ari
 std-fs-rename-dir.ari
 std-fs-links.ari
+std-algo-slice-helpers.ari
 std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari
