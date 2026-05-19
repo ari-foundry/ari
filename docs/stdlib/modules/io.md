@@ -2,8 +2,8 @@
 
 `std::io` is the byte-oriented process IO module. It keeps the raw runtime
 hooks visible, then layers a small Ari-source interface over them so code can
-talk about readers, writers, exact reads, whole-slice writes, and seekable
-in-memory cursors with natural names.
+talk about readers, writers, exact reads, whole-slice writes, buffered wrappers,
+and seekable in-memory cursors with natural names.
 
 Use `std::input` for ordinary stdin line/byte helpers, `std::fs` for files, and
 `std::io` when you want the lower-level IO contracts directly.
@@ -16,8 +16,9 @@ Implemented now:
   `write_byte`, `write_bytes`, `newline`
 - raw stdin/line hooks: `read_byte`, `read_line`, `read_line_owned`
 - source traits: `Reader`, `Writer`, `Seek`
-- source handles: `Stdin`, `Stdout`, `Cursor`
-- source constructors and adapters: `stdin`, `stdout`, `cursor`
+- source handles: `Stdin`, `Stdout`, `Cursor`, `BufReader`, `BufWriter`
+- source constructors and adapters: `stdin`, `stdout`, `cursor`,
+  `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
 - source helpers: `read_exact`, `write_all`, `flush`
 
 Roadmap, not implemented yet:
@@ -26,10 +27,11 @@ Roadmap, not implemented yet:
   handle model.
 - `pipe()`: needs explicit read/write handle ownership, close behavior, and
   platform split.
-- `BufReader[R]` and `BufWriter[W]`: need zone-backed buffers, generic wrapper
-  layout policy, and flush/drop rules.
 - `File` as `Reader`/`Writer`/`Seek`: should land with the owned file-resource
   policy so copied handles cannot accidentally double-close.
+- zone-owning buffered constructors and drop-time writer flush: need compiler
+  support for new std types that own zone-backed raw buffers and a clear
+  generic `Drop`/flush policy.
 
 ## API
 
@@ -48,9 +50,15 @@ pub trait Seek {
   fn seek(self: ref mut Self, position: i64) -> bool;
 }
 
+io::BufReader[R]
+io::BufWriter[W]
 io::stdin() -> io::Stdin
 io::stdout() -> io::Stdout
 io::cursor(values: Slice[u8]) -> io::Cursor
+io::buf_reader[R: Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
+io::buf_writer[W: Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
+io::BufReader::new<R>(inner: R, buffer: Slice[u8]) -> io::BufReader[R]
+io::BufWriter::new<W>(inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
 
 io::read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
 io::write_all[W: Writer](writer: ref mut W, values: Slice[u8]) -> bool
@@ -90,24 +98,34 @@ immediate; a real flush hook belongs with future OS handles.
 so it is useful for tests, parsers, and examples that should not depend on
 host stdin.
 
+`BufReader[R]` and `BufWriter[W]` wrap any `Reader` or `Writer` with an
+explicit caller-provided `Slice[u8]` buffer. This keeps allocation visible and
+lets the wrappers be implemented in Ari source today. The buffer slice must
+stay alive while the wrapper is used. `BufWriter` flushes only when the buffer
+is full or when `flush()` is called; there is no implicit drop-time flush yet.
+
 ## Examples
 
 ```ari
 fn main() -> i64 {
   var input = [65u8, 66u8, 67u8];
   var cursor = io::cursor(input.as_slice());
+  var storage = [0u8, 0u8];
+  var reader = io::buf_reader<io::Cursor>(cursor, storage.as_slice());
 
   var output = [0u8, 0u8];
   let output_view = output.as_slice();
   let output_raw = output_view.as_ptr();
-  if !io::read_exact<io::Cursor>(ref mut cursor, output_raw, 2) {
+  if !io::read_exact<io::BufReader[io::Cursor]>(ref mut reader, output_raw, 2) {
     return 1;
   }
 
   var out = io::stdout();
-  io::write_all<io::Stdout>(ref mut out, output.as_slice());
-  io::flush<io::Stdout>(ref mut out);
-  return cursor.position();
+  var out_storage = [0u8, 0u8];
+  var writer = io::BufWriter::new<io::Stdout>(out, out_storage.as_slice());
+  io::write_all<io::BufWriter[io::Stdout]>(ref mut writer, output.as_slice());
+  io::flush<io::BufWriter[io::Stdout]>(ref mut writer);
+  return reader.buffered_len();
 }
 ```
 
@@ -134,6 +152,10 @@ enough to explain close, copy, drop, and seek behavior consistently.
 - `tests/cases/standard-library/ok/io/std-io-traits-cursor.ari` checks
   `Reader`, `Writer`, `Seek`, `Cursor`, `stdin`, `stdout`, `read_exact`,
   `write_all`, `flush`, generated helper symbols, and stdout output.
+- `tests/cases/standard-library/ok/io/std-io-buffered.ari` checks
+  `BufReader`, `BufWriter`, caller-provided buffers, associated constructors,
+  exact reads through a buffered reader, whole-slice writes through a buffered
+  writer, generated helper symbols, and stdout output.
 - `tests/cases/standard-library/ok/input/prelude-input.ari` checks byte input
   hook lowering.
 - `tests/cases/standard-library/ok/input/prelude-read-line.ari` and

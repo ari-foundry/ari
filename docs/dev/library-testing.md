@@ -147,6 +147,9 @@ identifies the exact case:
 - `std-io-traits-cursor.ari`: source `std::io` `Reader`/`Writer`/`Seek`,
   `Cursor`, `stdin`, `stdout`, `read_exact`, `write_all`, and `flush`
   behavior plus generated helper symbol checks.
+- `std-io-buffered.ari`: source `std::io` `BufReader`/`BufWriter` behavior
+  with caller-provided buffers, exact reads, explicit flush, stdout output,
+  and generated helper symbol checks.
 - `std-input-byte-option.ari`: source `std::input` EOF-to-Option byte helper
   behavior over the raw stdin hook.
 - `std-cmp-value-helpers.ari`: source `std::cmp` trait-bound value selection,

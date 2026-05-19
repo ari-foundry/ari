@@ -180,6 +180,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-traits-cursor.ari -o $(BUILD_DIR)/prelude/std-io-traits-cursor.elf
 	$(BUILD_DIR)/prelude/std-io-traits-cursor.elf >$(BUILD_DIR)/prelude/std-io-traits-cursor.out; code=$$?; test $$code -eq 8
 	grep -qx "OK" $(BUILD_DIR)/prelude/std-io-traits-cursor.out
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-buffered.ll
+	grep -q '_ARNv3std2io29buf_reader__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-buffered.ll
+	grep -q '_ARNv3std2io29buf_writer__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-buffered.ll
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari -o $(BUILD_DIR)/prelude/std-io-buffered.elf
+	$(BUILD_DIR)/prelude/std-io-buffered.elf >$(BUILD_DIR)/prelude/std-io-buffered.out; code=$$?; test $$code -eq 10
+	grep -qx "ABC" $(BUILD_DIR)/prelude/std-io-buffered.out
 	$(TARGET) tests/cases/standard-library/ok/format/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.elf
 	$(BUILD_DIR)/prelude/raw-string-literals.elf >$(BUILD_DIR)/prelude/raw-string-literals.out; code=$$?; test $$code -eq 141
 	grep -qx "A" $(BUILD_DIR)/prelude/raw-string-literals.out

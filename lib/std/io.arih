@@ -20,6 +20,19 @@ pub struct Cursor {
   mut position: i64,
 }
 
+pub struct BufReader[R] {
+  mut inner: R,
+  buffer: std::Slice[u8],
+  mut start: i64,
+  mut end: i64,
+}
+
+pub struct BufWriter[W] {
+  mut inner: W,
+  buffer: std::Slice[u8],
+  mut len: i64,
+}
+
 pub trait Reader {
   fn read_byte(self: ref mut Self) -> i64;
 }
@@ -44,6 +57,25 @@ pub fn stdout() -> std::io::Stdout {
 
 pub fn cursor(values: std::Slice[u8]) -> std::io::Cursor {
   return std::io::Cursor { data: values, position: 0 };
+}
+
+pub fn buf_reader[R: Reader](inner: R, buffer: std::Slice[u8]) -> std::io::BufReader[R] {
+  std::assert(buffer.len > 0);
+  return std::io::BufReader<R> {
+    inner: inner,
+    buffer: buffer,
+    start: 0,
+    end: 0,
+  };
+}
+
+pub fn buf_writer[W: Writer](inner: W, buffer: std::Slice[u8]) -> std::io::BufWriter[W] {
+  std::assert(buffer.len > 0);
+  return std::io::BufWriter<W> {
+    inner: inner,
+    buffer: buffer,
+    len: 0,
+  };
 }
 
 pub fn write_bytes(values: std::Slice[u8]) -> i64 {
@@ -81,6 +113,69 @@ pub fn write_all[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> bool {
 
 pub fn flush[W: Writer](writer: ref mut W) -> bool {
   return writer.flush();
+}
+
+fn fill_buffer[R: Reader](reader: ref mut std::io::BufReader[R]) -> bool {
+  reader.start = 0;
+  reader.end = 0;
+  while reader.end < reader.buffer.len {
+    let value = reader.inner.read_byte();
+    if value < 0 {
+      return reader.end > 0;
+    }
+    std::mem::ptr_store(std::mem::ptr_add(reader.buffer.data, reader.end), value as u8);
+    reader.end = reader.end + 1;
+  }
+  return true;
+}
+
+fn flush_buffer[W: Writer](writer: ref mut std::io::BufWriter[W]) -> bool {
+  var index = 0;
+  while index < writer.len {
+    let value = std::mem::ptr_load(std::mem::ptr_add(writer.buffer.data, index));
+    if !writer.inner.write_byte(value) {
+      return false;
+    }
+    index = index + 1;
+  }
+  writer.len = 0;
+  return true;
+}
+
+pub impl[R: Reader] std::io::BufReader[R] {
+  fn new(inner: R, buffer: std::Slice[u8]) -> std::io::BufReader[R] {
+    return std::io::buf_reader<R>(inner, buffer);
+  }
+
+  fn buffered_len(self: ref Self) -> i64 {
+    return self.end - self.start;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.buffer.len;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.buffered_len() == 0;
+  }
+}
+
+pub impl[W: Writer] std::io::BufWriter[W] {
+  fn new(inner: W, buffer: std::Slice[u8]) -> std::io::BufWriter[W] {
+    return std::io::buf_writer<W>(inner, buffer);
+  }
+
+  fn buffered_len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.buffer.len;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
 }
 
 impl std::io::Reader for std::io::Stdin {
@@ -129,5 +224,38 @@ impl std::io::Seek for std::io::Cursor {
     }
     self.position = position;
     return true;
+  }
+}
+
+impl[R: std::io::Reader] std::io::Reader for std::io::BufReader[R] {
+  pub fn read_byte(self: ref mut Self) -> i64 {
+    if self.start >= self.end {
+      if !std::io::fill_buffer<R>(self) {
+        return -1;
+      }
+    }
+    let value = std::mem::ptr_load(std::mem::ptr_add(self.buffer.data, self.start));
+    self.start = self.start + 1;
+    return value as i64;
+  }
+}
+
+impl[W: std::io::Writer] std::io::Writer for std::io::BufWriter[W] {
+  pub fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if self.len >= self.buffer.len {
+      if !std::io::flush_buffer<W>(self) {
+        return false;
+      }
+    }
+    std::mem::ptr_store(std::mem::ptr_add(self.buffer.data, self.len), value);
+    self.len = self.len + 1;
+    return true;
+  }
+
+  pub fn flush(self: ref mut Self) -> bool {
+    if !std::io::flush_buffer<W>(self) {
+      return false;
+    }
+    return self.inner.flush();
   }
 }

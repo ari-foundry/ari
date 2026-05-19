@@ -313,9 +313,13 @@ io::Seek
 io::Stdin
 io::Stdout
 io::Cursor
+io::BufReader[R]
+io::BufWriter[W]
 io::stdin()
 io::stdout()
 io::cursor(values)
+io::buf_reader[R: Reader](inner, buffer)
+io::buf_writer[W: Writer](inner, buffer)
 io::read_exact[R: Reader](reader: ref mut R, output, len)
 io::write_all[W: Writer](writer: ref mut W, values)
 io::flush[W: Writer](writer: ref mut W)
@@ -343,9 +347,11 @@ the line must survive later input reads.
 
 `io::Cursor` implements `Reader` and `Seek` over a borrowed `Slice[u8]`.
 `io::Stdout` implements `Writer` over the current stdout hook, with `flush`
-currently succeeding as a no-op. `stderr`, `pipe`, `BufReader`, and
-`BufWriter` remain roadmap items until owned OS handles and zone-backed buffer
-wrappers are specified.
+currently succeeding as a no-op. `io::BufReader` and `io::BufWriter` wrap any
+`Reader` or `Writer` with an explicit caller-provided `Slice[u8]` buffer, so
+allocation and buffer lifetime stay visible. `stderr`, `pipe`, file adapters,
+zone-owning buffered constructors, and drop-time writer flush remain roadmap
+items until owned OS handles and generic resource policy are specified.
 
 ## Memory And Zones
 

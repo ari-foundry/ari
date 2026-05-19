@@ -12,8 +12,8 @@ limits, examples, and test files for one module.
   borrowed views, byte search, ASCII case search, trim views/copies, and
   whole/prefix parsing helpers.
 - [std::io](io.md): low-level process IO hooks plus `Reader`/`Writer`/`Seek`,
-  `stdin`/`stdout`, `Cursor`, exact reads, whole-slice writes, and current
-  buffered/pipe roadmap notes.
+  `stdin`/`stdout`, `Cursor`, caller-buffered `BufReader`/`BufWriter`, exact
+  reads, whole-slice writes, and current `stderr`/`pipe` roadmap notes.
 - [std::input](input.md): stdin-facing byte and line input, including
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,

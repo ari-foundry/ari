@@ -1,0 +1,65 @@
+// Covers source std::io BufReader/BufWriter behavior over generic traits.
+fn main() -> i64 {
+  var score = 0;
+
+  var source = [65u8, 66u8, 67u8, 68u8, 69u8];
+  var cursor = io::cursor(source.as_slice());
+  var reader_storage = [0u8, 0u8];
+  var reader = io::buf_reader<io::Cursor>(cursor, reader_storage.as_slice());
+
+  if reader.capacity() == 2 && reader.is_empty() {
+    score = score + 1;
+  }
+  if reader.read_byte() == 65 && reader.buffered_len() == 1 {
+    score = score + 1;
+  }
+
+  var output = [0u8, 0u8, 0u8];
+  let output_view = output.as_slice();
+  let output_raw = output_view.as_ptr();
+  if io::read_exact<io::BufReader[io::Cursor]>(ref mut reader, output_raw, 3) {
+    if ptr_load(output_raw) == 66u8 &&
+       ptr_load(ptr_add(output_raw, 1)) == 67u8 &&
+       ptr_load(ptr_add(output_raw, 2)) == 68u8 {
+      score = score + 1;
+    }
+  }
+  if reader.read_byte() == 69 {
+    score = score + 1;
+  }
+  if reader.read_byte() < 0 {
+    score = score + 1;
+  }
+
+  var stdout = io::stdout();
+  var writer_storage = [0u8, 0u8];
+  var writer = io::BufWriter::new<io::Stdout>(stdout, writer_storage.as_slice());
+
+  if writer.capacity() == 2 && writer.is_empty() {
+    score = score + 1;
+  }
+  if writer.write_byte(65u8) && writer.write_byte(66u8) {
+    if writer.buffered_len() == 2 {
+      score = score + 1;
+    }
+  }
+  if writer.write_byte(67u8) {
+    if writer.buffered_len() == 1 {
+      score = score + 1;
+    }
+  }
+  if writer.flush() {
+    if writer.is_empty() {
+      score = score + 1;
+    }
+  }
+
+  var newline = [10u8];
+  if io::write_all<io::BufWriter[io::Stdout]>(ref mut writer, newline.as_slice()) {
+    if writer.flush() && writer.is_empty() {
+      score = score + 1;
+    }
+  }
+
+  return score;
+}

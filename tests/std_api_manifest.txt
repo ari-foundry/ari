@@ -130,6 +130,8 @@ fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelu
 fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
 fn std::input::try_read_byte|std input byte option tests; docs/stdlib/modules/input.md
+fn std::io::buf_reader[R: Reader]|std io buffered tests; docs/stdlib/modules/io.md
+fn std::io::buf_writer[W: Writer]|std io buffered tests; docs/stdlib/modules/io.md
 fn std::io::cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::flush[W: Writer]|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::newline|prelude IO and print tests; docs/dev/test-matrix.md Prelude row
@@ -451,6 +453,14 @@ method std::fs::File::is_open|check-prelude std-fs-basic open-handle predicate; 
 method std::fs::File::read_byte|check-prelude std-fs-basic value file handle byte read method; docs/stdlib/modules/fs.md
 method std::fs::File::write_byte|check-prelude std-fs-basic value file handle byte write method; docs/stdlib/modules/fs.md
 method std::fs::File::write_bytes|check-prelude std-fs-basic value file handle slice write method; docs/stdlib/modules/fs.md
+method std::io::BufReader[R]::buffered_len|std io buffered tests; docs/stdlib/modules/io.md
+method std::io::BufReader[R]::capacity|std io buffered tests; docs/stdlib/modules/io.md
+method std::io::BufReader[R]::is_empty|std io buffered tests; docs/stdlib/modules/io.md
+method std::io::BufReader[R]::new|std io buffered tests; docs/stdlib/modules/io.md
+method std::io::BufWriter[W]::buffered_len|std io buffered tests; docs/stdlib/modules/io.md
+method std::io::BufWriter[W]::capacity|std io buffered tests; docs/stdlib/modules/io.md
+method std::io::BufWriter[W]::is_empty|std io buffered tests; docs/stdlib/modules/io.md
+method std::io::BufWriter[W]::new|std io buffered tests; docs/stdlib/modules/io.md
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
@@ -619,6 +629,8 @@ struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdl
 struct std::collections::TreeSetIter[T]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
 struct std::fs::File|std fs file handle tests; docs/stdlib/modules/fs.md
+struct std::io::BufReader[R]|std io buffered tests; docs/stdlib/modules/io.md
+struct std::io::BufWriter[W]|std io buffered tests; docs/stdlib/modules/io.md
 struct std::io::Cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::io::Stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::io::Stdout|std io trait/cursor tests; docs/stdlib/modules/io.md

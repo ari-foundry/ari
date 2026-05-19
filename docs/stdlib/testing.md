@@ -72,6 +72,7 @@ std-collections-set-reserve-different-zone.ari
 std-collections-set-reserve-extra-different-zone.ari
 std-io-byte-slice.ari
 std-io-traits-cursor.ari
+std-io-buffered.ari
 std-input-byte-option.ari
 std-cmp-value-helpers.ari
 std-convert-value-helpers.ari
