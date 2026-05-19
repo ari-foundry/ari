@@ -1087,6 +1087,15 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i64 @ari_builtin_write_error_byte(i8 %value) {");
+        line("entry:");
+        line("  %slot = alloca i8, align 1");
+        line("  store i8 %value, ptr %slot, align 1");
+        line("  %written = call i64 @write(i32 2, ptr %slot, i64 1)");
+        line("  ret i64 %written");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "i64 @ari_builtin_newline() {");
         line("entry:");
         line("  call i32 @putchar(i32 10)");

@@ -22,8 +22,9 @@ The standard library is ordinary Ari source whenever possible. It lives at
 environment-variable, current-directory, and executable-path helpers now live
 in `std::env`, while `std::context` stays the low-level runtime context layer.
 `std::io` now has source `Reader`/`Writer`/`Seek` contracts, `Stdin`,
-`Stdout`, `Cursor`, caller-buffered `BufReader`/`BufWriter`, `read_exact`,
-`write_all`, and `flush` on top of the raw process IO hooks. `std::process`
+`Stdout`, `Stderr`, `Cursor`, caller-buffered `BufReader`/`BufWriter`,
+`read_exact`, `write_all`, and `flush` on top of the raw process IO hooks.
+`std::process`
 starts the OS-facing surface with current
 process id, explicit exit helpers, and the first POSIX fork/wait slice,
 `std::thread` adds

@@ -155,6 +155,9 @@ identifies the exact case:
 - `std-io-traits-cursor.ari`: source `std::io` `Reader`/`Writer`/`Seek`,
   `Cursor`, `stdin`, `stdout`, `read_exact`, `write_all`, and `flush`
   behavior plus generated helper symbol checks.
+- `std-io-stderr.ari`: source `std::io` `Stderr` writer behavior, stderr
+  routing, explicit flush success, stdout/stderr separation, and generated
+  helper symbol checks.
 - `std-io-buffered.ari`: source `std::io` `BufReader`/`BufWriter` behavior
   with caller-provided buffers, exact reads, explicit flush, stdout output,
   and generated helper symbol checks.

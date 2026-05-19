@@ -297,10 +297,10 @@ io::flush<io::BufWriter[io::Stdout]>(ref mut writer)
 ```
 
 `io::Cursor` implements `io::Reader` and `io::Seek` over a borrowed
-`Slice[u8]`. `io::Stdout` implements `io::Writer`. `io::BufReader` and
-`io::BufWriter` add buffering with explicit caller-provided `Slice[u8]`
-storage. `io::read_exact` copies from any `Reader` into a raw byte buffer and
-returns `false` if EOF arrives early.
+`Slice[u8]`. `io::Stdout` and `io::Stderr` implement `io::Writer`.
+`io::BufReader` and `io::BufWriter` add buffering with explicit
+caller-provided `Slice[u8]` storage. `io::read_exact` copies from any
+`Reader` into a raw byte buffer and returns `false` if EOF arrives early.
 
 Unqualified aliases are also available:
 
@@ -447,6 +447,7 @@ io::write_byte(value: u8) -> i64
 io::write_bytes(values: Slice[u8]) -> i64
 io::stdin() -> io::Stdin
 io::stdout() -> io::Stdout
+io::stderr() -> io::Stderr
 io::cursor(values: Slice[u8]) -> io::Cursor
 io::buf_reader[R: io::Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::buf_writer[W: io::Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]

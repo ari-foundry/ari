@@ -16,15 +16,13 @@ Implemented now:
   `write_byte`, `write_bytes`, `newline`
 - raw stdin/line hooks: `read_byte`, `read_line`, `read_line_owned`
 - source traits: `Reader`, `Writer`, `Seek`
-- source handles: `Stdin`, `Stdout`, `Cursor`, `BufReader`, `BufWriter`
-- source constructors and adapters: `stdin`, `stdout`, `cursor`,
+- source handles: `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`
+- source constructors and adapters: `stdin`, `stdout`, `stderr`, `cursor`,
   `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
 - source helpers: `read_exact`, `write_all`, `flush`
 
 Roadmap, not implemented yet:
 
-- `Stderr` and `stderr()`: needs a runtime stderr write hook or an owned OS
-  handle model.
 - `pipe()`: needs explicit read/write handle ownership, close behavior, and
   platform split.
 - `File` as `Reader`/`Writer`/`Seek`: should land with the owned file-resource
@@ -52,8 +50,12 @@ pub trait Seek {
 
 io::BufReader[R]
 io::BufWriter[W]
+io::Stdin
+io::Stdout
+io::Stderr
 io::stdin() -> io::Stdin
 io::stdout() -> io::Stdout
+io::stderr() -> io::Stderr
 io::cursor(values: Slice[u8]) -> io::Cursor
 io::buf_reader[R: Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::buf_writer[W: Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
@@ -91,8 +93,9 @@ matches the existing runtime hook and keeps `read_exact` simple: it returns
 
 `Writer.write_byte` returns whether the byte was accepted. `write_all` returns
 `false` on the first failed byte write. `flush` delegates to the writer. The
-current `Stdout.flush()` is a no-op success because the existing stdout hook is
-immediate; a real flush hook belongs with future OS handles.
+current `Stdout.flush()` and `Stderr.flush()` are no-op successes because the
+existing process stream hooks write immediately; real flush hooks belong with
+future OS handles.
 
 `Cursor` reads from a borrowed `Slice[u8]`. It implements `Reader` and `Seek`,
 so it is useful for tests, parsers, and examples that should not depend on
@@ -132,7 +135,8 @@ fn main() -> i64 {
 For formatted output, prefer `print`, `println`, `print!`, and `println!`.
 For raw byte output to stdout, create `var out = io::stdout()` and call
 `io::write_all(ref mut out, bytes)`, or use the older `io::write_bytes(bytes)`
-helper.
+helper. For raw byte output to stderr, create `var err = io::stderr()` and use
+the same `io::write_all`/`io::flush` helpers.
 
 ## Design Notes
 
@@ -152,6 +156,9 @@ enough to explain close, copy, drop, and seek behavior consistently.
 - `tests/cases/standard-library/ok/io/std-io-traits-cursor.ari` checks
   `Reader`, `Writer`, `Seek`, `Cursor`, `stdin`, `stdout`, `read_exact`,
   `write_all`, `flush`, generated helper symbols, and stdout output.
+- `tests/cases/standard-library/ok/io/std-io-stderr.ari` checks `Stderr`,
+  stderr routing, explicit flush success, generated helper symbols, and
+  stdout/stderr stream separation.
 - `tests/cases/standard-library/ok/io/std-io-buffered.ari` checks
   `BufReader`, `BufWriter`, caller-provided buffers, associated constructors,
   exact reads through a buffered reader, whole-slice writes through a buffered

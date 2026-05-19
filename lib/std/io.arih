@@ -4,6 +4,7 @@ pub extern "ari" fn write_i64(value: i64) -> i64 = "ari_builtin_write_i64";
 pub extern "ari" fn write_u64(value: u64) -> i64 = "ari_builtin_write_u64";
 pub extern "ari" fn write_bool(value: bool) -> i64 = "ari_builtin_write_bool";
 pub extern "ari" fn write_byte(value: u8) -> i64 = "ari_builtin_write_byte";
+extern "ari" fn write_error_byte(value: u8) -> i64 = "ari_builtin_write_error_byte";
 pub extern "ari" fn newline() -> i64 = "ari_builtin_newline";
 pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
 pub extern "ari" fn read_line() -> string = "ari_builtin_read_line";
@@ -13,6 +14,9 @@ pub struct Stdin {
 }
 
 pub struct Stdout {
+}
+
+pub struct Stderr {
 }
 
 pub struct Cursor {
@@ -53,6 +57,10 @@ pub fn stdin() -> std::io::Stdin {
 
 pub fn stdout() -> std::io::Stdout {
   return std::io::Stdout {};
+}
+
+pub fn stderr() -> std::io::Stderr {
+  return std::io::Stderr {};
 }
 
 pub fn cursor(values: std::Slice[u8]) -> std::io::Cursor {
@@ -192,6 +200,18 @@ impl std::io::Writer for std::io::Stdout {
   pub fn flush(self: ref mut Self) -> bool {
     // The current stdout hook writes directly; a real flush hook belongs with
     // future owned OS handles.
+    return true;
+  }
+}
+
+impl std::io::Writer for std::io::Stderr {
+  pub fn write_byte(self: ref mut Self, value: u8) -> bool {
+    return std::io::write_error_byte(value) == 1;
+  }
+
+  pub fn flush(self: ref mut Self) -> bool {
+    // Stderr currently writes through the host descriptor immediately. A real
+    // flush hook belongs with future owned OS handles.
     return true;
   }
 }

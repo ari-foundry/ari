@@ -45,6 +45,8 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::write_byte", "ari_builtin_write_byte"},
         {"io::write_byte", "ari_builtin_write_byte"},
         {"std::io::write_byte", "ari_builtin_write_byte"},
+        {"io::write_error_byte", "ari_builtin_write_error_byte"},
+        {"std::io::write_error_byte", "ari_builtin_write_error_byte"},
         {"newline", "ari_builtin_newline"},
         {"std::newline", "ari_builtin_newline"},
         {"io::newline", "ari_builtin_newline"},
@@ -270,6 +272,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_write_u64") return builtin_sig({u64}, i64);
     if (symbol == "ari_builtin_write_bool") return builtin_sig({boolean}, i64);
     if (symbol == "ari_builtin_write_byte") return builtin_sig({u8}, i64);
+    if (symbol == "ari_builtin_write_error_byte") return builtin_sig({u8}, i64);
     if (symbol == "ari_builtin_newline") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_read_byte") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_read_line") return builtin_sig({}, source_string);

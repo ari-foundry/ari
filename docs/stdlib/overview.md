@@ -20,7 +20,7 @@ hiding allocation, ownership, or backend behavior.
 | `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `try_get`, `move`, `take`, `assert`, `panic`. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `filter`, `flatten`, `transpose`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
-| `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, `write_bytes`, `read_line`. |
+| `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, `write_bytes`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. |
@@ -179,11 +179,11 @@ the raw `-1` EOF sentinel into `Option[u8]`.
 
 `std::io` keeps raw process IO visible and adds a small source trait layer.
 Scalar and line operations are runtime hooks. `write_bytes`, `read_exact`,
-`write_all`, `flush`, `Stdin`, `Stdout`, `Cursor`, `BufReader`, and
+`write_all`, `flush`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, and
 `BufWriter` are source Ari over `Slice[u8]`, raw pointers, explicit
-caller-provided buffers, and the single-byte hooks. `stderr`, `pipe`, file
-adapters, and zone-owning buffered constructors stay on the roadmap until
-owned OS handles and resource flush/drop rules are explicit.
+caller-provided buffers, and the process stream hooks. `pipe`, file adapters,
+and zone-owning buffered constructors stay on the roadmap until owned OS
+handles and resource flush/drop rules are explicit.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support
