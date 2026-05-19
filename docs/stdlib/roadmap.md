@@ -35,9 +35,10 @@ open/read/write/append/close/remove hooks plus source `File` methods and
 accessors, `pop`/`try_pop`, replace-or-insert updates, explicit reserve
 growth, direct iterator support, open-addressed `HashMap`/`HashSet` with
 tombstones and live-bucket iterators, red-black-tree `TreeMap`/`TreeSet` with
-sorted iterators, and the first `math` sign predicate/arithmetic/
-division-rounding and `bits` numeric helper slices, including zero/one-run bit
-scans.
+sorted iterators, growable `Deque`, fixed `RingBuffer`, zone-backed
+`LinkedList`, and `BinaryHeap`/`PriorityQueue` priority containers, and the
+first `math` sign predicate/arithmetic/division-rounding and `bits` numeric
+helper slices, including zero/one-run bit scans.
 
 ## Essential Library Families
 
@@ -52,7 +53,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, richer status/result values, and `std::sync` integration. |
 | `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`; future generic atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
-| `std::collections` | Store keyed and set-like data beyond vectors. | Current linear `Set[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, live-bucket hash iterators, sorted tree iterators; future tree deletion, deques, and trait-driven constructors. |
+| `std::collections` | Store keyed, queue-like, linked, and priority data beyond vectors. | Current linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, FIFO/linked/heap tests, live-bucket hash iterators, sorted tree iterators; future tree deletion and trait-driven constructors. |
 | `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, error-code translation. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
@@ -71,7 +72,8 @@ work. Each one should land in small tested slices with natural API names.
 - Add collection helpers in small slices: slice methods, vector methods, the
   current linear `Set[T]` access/update/reserve/iteration surface, hash/table
   lookup and tombstones, tree insertion/lookup, hash and tree iterators,
-  red-black deletion, then deques.
+  deque/ring-buffer/linked-list/heap families, red-black deletion, and then
+  trait-driven constructors.
 - Keep `HashMap`/`HashSet` and `TreeMap`/`TreeSet` on explicit hash or
   comparator constructors until generic trait-driven `Hash`, `Eq`, and `Ord`
   selection is testable.

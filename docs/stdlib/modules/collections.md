@@ -1,11 +1,16 @@
 # std::collections
 
 `std::collections` contains source Ari collection handles that allocate through
-an explicit `Zone`. The module now has three distinct families:
+an explicit `Zone`. The module now has several distinct families:
 
 | Type | Data Structure | Use It For |
 | --- | --- | --- |
 | `Set[T]` | linear insertion-order buffer | tiny unique lists, stable insertion-order access, iteration |
+| `Deque[T]` | growable circular buffer | push/pop at both ends, queue-like worklists, recent-front access |
+| `RingBuffer[T]` | fixed-capacity circular buffer | bounded FIFO buffers, streaming windows, overwrite-oldest queues |
+| `LinkedList[T]` | zone-backed doubly linked index nodes | stable front/back node links and cheap end insertion/removal |
+| `BinaryHeap[T]` | comparator-driven binary heap | max-priority scheduling, repeated highest-priority pop |
+| `PriorityQueue[T]` | binary-heap priority queue surface | user-facing priority queue naming over the same heap policy |
 | `HashMap[K, V]`, `HashSet[T]` | open-addressed hash table with tombstones | fast average-case lookup when a hash function is available |
 | `TreeMap[K, V]`, `TreeSet[T]` | red-black tree | ordered lookup when a strict less-than comparator is available |
 
@@ -74,6 +79,122 @@ set.copy_to(ref mut target)
 returns `None`. `take` moves the removed value out, while `remove` drops it.
 `iter` yields insertion-order values and `Set[T]` implements
 `IntoIterator[T]`.
+
+## Deque
+
+`Deque[T]` is a growable double-ended queue. It stores values in a circular
+buffer and grows by copying live values into a larger zone allocation in
+logical front-to-back order.
+
+```ari
+collections::deque<T>(ref mut zone, capacity)
+Deque::new<T>(ref mut zone, capacity)
+```
+
+Important methods:
+
+```ari
+deque.len()
+deque.capacity()
+deque.is_empty()
+deque.front()
+deque.try_front()
+deque.back()
+deque.try_back()
+deque.get(index)
+deque.try_get(index)
+deque.push_front(ref mut zone, value)
+deque.push_back(ref mut zone, value)
+deque.pop_front()
+deque.try_pop_front()
+deque.pop_back()
+deque.try_pop_back()
+deque.clear()
+deque.reserve(ref mut zone, capacity)
+deque.reserve_extra(ref mut zone, additional)
+deque.iter()
+```
+
+Use `Deque[T]` when both ends matter. `push_front` and `push_back` take the
+same zone used by the constructor because growth may allocate. `iter` and
+`for value in deque` yield logical front-to-back order, not physical storage
+order.
+
+## RingBuffer
+
+`RingBuffer[T]` is fixed-capacity. It is useful when an application must bound
+memory and either reject new values while full or intentionally overwrite the
+oldest value.
+
+```ari
+collections::ring_buffer<T>(ref mut zone, capacity)
+RingBuffer::new<T>(ref mut zone, capacity)
+```
+
+Important methods:
+
+```ari
+buffer.len()
+buffer.capacity()
+buffer.is_empty()
+buffer.is_full()
+buffer.push(value)
+buffer.push_overwrite(value)
+buffer.peek()
+buffer.try_peek()
+buffer.get(index)
+buffer.try_get(index)
+buffer.pop()
+buffer.try_pop()
+buffer.clear()
+buffer.iter()
+```
+
+`push` returns `false` when the buffer is full. `push_overwrite` always keeps
+the new value; it returns `Some(oldest)` when a full buffer overwrote the
+oldest slot and `None` when it appended without overwriting. `peek` and `pop`
+operate on the oldest value.
+
+## LinkedList
+
+`LinkedList[T]` uses doubly linked node indices over zone-backed arrays. It
+does not allocate one host heap node at a time; Ari keeps allocation explicit
+and zone-oriented. Removed node slots are put on a small free list and reused
+by later pushes.
+
+```ari
+collections::linked_list<T>(ref mut zone, capacity)
+LinkedList::new<T>(ref mut zone, capacity)
+```
+
+Important methods:
+
+```ari
+list.len()
+list.capacity()
+list.is_empty()
+list.front()
+list.try_front()
+list.back()
+list.try_back()
+list.get(index)
+list.try_get(index)
+list.push_front(ref mut zone, value)
+list.push_back(ref mut zone, value)
+list.pop_front()
+list.try_pop_front()
+list.pop_back()
+list.try_pop_back()
+list.remove_at(index)
+list.try_remove_at(index)
+list.clear()
+list.reserve(ref mut zone, capacity)
+list.reserve_extra(ref mut zone, additional)
+list.iter()
+```
+
+`get` and `remove_at` traverse from the head, so they are O(n). Prefer
+front/back operations for queue-like code. `iter` yields front-to-back values.
 
 ## HashMap And HashSet
 
@@ -189,6 +310,40 @@ returns the previous equal value or inserts a new one. `TreeSet.iter()` yields
 values in ascending comparator order, and `TreeSet[T]` implements
 `IntoIterator[T]`.
 
+## BinaryHeap And PriorityQueue
+
+`BinaryHeap[T]` and `PriorityQueue[T]` are comparator-driven max-priority
+containers. The `less(a, b)` function means `a` has lower priority than `b`.
+With `collections::less_i64`, larger integers pop first.
+
+```ari
+collections::binary_heap<T>(ref mut zone, capacity, less)
+BinaryHeap::new<T>(ref mut zone, capacity, less)
+collections::priority_queue<T>(ref mut zone, capacity, less)
+PriorityQueue::new<T>(ref mut zone, capacity, less)
+```
+
+Important methods:
+
+```ari
+heap.len()
+heap.capacity()
+heap.is_empty()
+heap.peek()
+heap.try_peek()
+heap.push(ref mut zone, value)
+heap.pop()
+heap.try_pop()
+heap.clear()
+heap.reserve(ref mut zone, capacity)
+heap.reserve_extra(ref mut zone, additional)
+```
+
+The priority queue has the same method surface. `peek` reads the current
+highest-priority value, while `pop` removes it and restores the heap invariant.
+Use `BinaryHeap[T]` when the data-structure name matters; use
+`PriorityQueue[T]` when the abstraction is an application queue.
+
 ## Examples
 
 Hash table:
@@ -237,6 +392,10 @@ tests/cases/standard-library/ok/collections/std-collections-hash.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
+tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari
+tests/cases/standard-library/ok/collections/ring-buffer/std-collections-ring-buffer.ari
+tests/cases/standard-library/ok/collections/linked-list/std-collections-linked-list.ari
+tests/cases/standard-library/ok/collections/heap/std-collections-heap.ari
 ```
 
 Focused negative coverage:
@@ -258,6 +417,13 @@ tests/cases/standard-library/errors/collections/std-collections-tree-map-keys-af
 tests/cases/standard-library/errors/collections/std-collections-tree-map-values-after-reset.ari
 tests/cases/standard-library/errors/collections/std-collections-tree-set-iter-after-reset.ari
 tests/cases/standard-library/errors/collections/std-collections-tree-set-insert-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-deque-iter-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-ring-buffer-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-linked-list-iter-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-deque-push-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-linked-list-push-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-binary-heap-push-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-priority-queue-push-different-zone.ari
 ```
 
 `std-collections-hash.ari` forces collisions with a custom hash function so the
@@ -265,6 +431,14 @@ linear-probing and tombstone paths are exercised. `std-collections-hash-iter`
 checks key, value, and set cursors after tombstones. `std-collections-tree.ari`
 inserts mixed key order to exercise red-black rotations, while
 `std-collections-tree-iter.ari` checks sorted successor traversal.
+`std-collections-deque.ari` checks circular growth and both-end operations.
+`std-collections-ring-buffer.ari` checks bounded push failure, overwrite, and
+FIFO iteration. `std-collections-linked-list.ari` checks front/back operations,
+indexed removal, and node-slot reuse. `std-collections-heap.ari` checks
+max-priority pop order for `BinaryHeap` and `PriorityQueue`. The new negative
+collection tests lock down reset invalidation for deque/ring/list handles and
+same-zone diagnostics for deque, linked-list, heap, and priority-queue growth
+paths.
 
 `make check-prelude` compiles the positive tests, checks representative
 monomorphized symbols, runs the executables, and checks the negative zone
@@ -285,3 +459,7 @@ and checked by `make check-std-api`.
 - Tree removal is not implemented in this slice. It should land with focused
   red-black deletion tests before `TreeMap.remove` or `TreeSet.take` become
   public.
+- `LinkedList[T]` is zone-backed index storage rather than one allocation per
+  node. Spare node storage is reused by the list and reclaimed with the zone.
+- `BinaryHeap[T]` and `PriorityQueue[T]` require an explicit comparator until
+  generic `Ord` dispatch is available inside containers.

@@ -1,0 +1,69 @@
+// Covers the zone-backed linked list: front/back operations, indexed removal,
+// freed-slot reuse, iteration, optional helpers, and root aliasing.
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var list = LinkedList::new<i64>(ref mut zone, 1);
+  var failure = 0;
+
+  if !list.is_empty() {
+    failure = 1;
+  }
+  let empty_front = list.try_front();
+  if !empty_front.is_none() {
+    failure = 2;
+  }
+
+  list.push_back(ref mut zone, 2);
+  list.push_front(ref mut zone, 1);
+  list.push_back(ref mut zone, 3);
+  if list.len() != 3 {
+    failure = 3;
+  }
+  if list.front() != 1 {
+    failure = 4;
+  }
+  if list.back() != 3 {
+    failure = 5;
+  }
+  if list.get(1) != 2 {
+    failure = 6;
+  }
+
+  var sum = 0;
+  for value in list {
+    sum = sum + value;
+  }
+  if sum != 6 {
+    failure = 7;
+  }
+
+  if list.remove_at(1) != 2 {
+    failure = 8;
+  }
+  if list.try_get(1).unwrap_or(0) != 3 {
+    failure = 9;
+  }
+  list.push_back(ref mut zone, 4);
+  if list.back() != 4 {
+    failure = 10;
+  }
+  if list.pop_front() != 1 {
+    failure = 11;
+  }
+  if list.pop_back() != 4 {
+    failure = 12;
+  }
+  if list.pop_back() != 3 {
+    failure = 13;
+  }
+  let empty_remove = list.try_remove_at(0);
+  if !empty_remove.is_none() {
+    failure = 14;
+  }
+
+  zone::destroy(zone);
+  if failure != 0 {
+    return failure;
+  }
+  return 42;
+}

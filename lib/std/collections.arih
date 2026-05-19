@@ -57,6 +57,73 @@ pub struct TreeSetIter[T] {
   mut current: i64,
 }
 
+// Growable double-ended queue backed by a circular buffer.
+pub struct Deque[T] {
+  mut data: ptr T,
+  mut len: i64,
+  mut capacity: i64,
+  mut head: i64,
+}
+
+pub struct DequeIter[T] {
+  data: ptr T,
+  len: i64,
+  capacity: i64,
+  head: i64,
+  mut index: i64,
+}
+
+// Fixed-capacity queue. `push` fails when full, while `push_overwrite` keeps
+// the newest values and returns the overwritten oldest value.
+pub struct RingBuffer[T] {
+  mut data: ptr T,
+  mut len: i64,
+  capacity: i64,
+  mut head: i64,
+}
+
+pub struct RingBufferIter[T] {
+  data: ptr T,
+  len: i64,
+  capacity: i64,
+  head: i64,
+  mut index: i64,
+}
+
+// Intrusive-index linked list over zone storage. Freed node slots are reused.
+pub struct LinkedList[T] {
+  mut data: ptr T,
+  mut next_node: ptr i64,
+  mut prev: ptr i64,
+  mut head: i64,
+  mut tail: i64,
+  mut len: i64,
+  mut capacity: i64,
+  mut next_slot: i64,
+  mut free: i64,
+}
+
+pub struct LinkedListIter[T] {
+  data: ptr T,
+  next_node: ptr i64,
+  mut current: i64,
+}
+
+// Max-priority binary heap. `less(a, b)` means `a` has lower priority than `b`.
+pub struct BinaryHeap[T] {
+  less: fn(T, T) -> bool,
+  mut data: ptr T,
+  mut len: i64,
+  mut capacity: i64,
+}
+
+pub struct PriorityQueue[T] {
+  less: fn(T, T) -> bool,
+  mut data: ptr T,
+  mut len: i64,
+  mut capacity: i64,
+}
+
 // Open-addressed hash map. Callers provide the hash function until std::Hash
 // exists as a trait that the compiler can resolve for generic keys.
 pub struct HashMap[K, V] {
@@ -1635,6 +1702,1019 @@ impl[T] std::Drop for std::collections::TreeSet[T] {
   fn drop(self) -> void {
     var dropped = self;
     tree_set_drop_values<T>(ref mut dropped);
+    return;
+  }
+}
+
+fn normalized_sequence_capacity(capacity: i64) -> i64 {
+  if capacity < 1 {
+    return 1;
+  }
+  return capacity;
+}
+
+fn circular_slot(head: i64, offset: i64, capacity: i64) -> i64 {
+  return (head + offset) % capacity;
+}
+
+pub fn deque[T](zone: ref mut Zone, capacity: i64) -> std::collections::Deque[T] {
+  let actual = normalized_sequence_capacity(capacity);
+  let data = std::zone::alloc_array<T>(zone, actual);
+  return std::collections::Deque<T> {
+    data: data,
+    len: 0,
+    capacity: actual,
+    head: 0,
+  };
+}
+
+fn deque_grow_to_capacity[T](
+  deque: ref mut std::collections::Deque[T],
+  zone: ref mut Zone,
+  capacity: i64
+) -> void {
+  let actual = normalized_sequence_capacity(capacity);
+  if actual <= deque.capacity {
+    return;
+  }
+  let old_data = deque.data;
+  let old_capacity = deque.capacity;
+  let old_head = deque.head;
+  let new_data = std::zone::alloc_array<T>(zone, actual);
+  var index = 0;
+  while index < deque.len {
+    let old_slot = circular_slot(old_head, index, old_capacity);
+    ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, old_slot)));
+    index = index + 1;
+  }
+  deque.data = new_data;
+  deque.capacity = actual;
+  deque.head = 0;
+}
+
+fn deque_ensure_spare_capacity[T](deque: ref mut std::collections::Deque[T], zone: ref mut Zone) -> void {
+  if deque.len >= deque.capacity {
+    deque_grow_to_capacity<T>(deque, zone, next_growth_capacity(deque.capacity, deque.len + 1));
+  }
+}
+
+fn deque_drop_values[T](deque: ref mut std::collections::Deque[T]) -> void {
+  var index = 0;
+  while index < deque.len {
+    let slot = circular_slot(deque.head, index, deque.capacity);
+    let value = ptr_load(ptr_add(deque.data, slot));
+    drop value;
+    index = index + 1;
+  }
+  deque.len = 0;
+  deque.head = 0;
+}
+
+pub impl[T] std::collections::Deque[T] {
+  fn new(zone: ref mut Zone, capacity: i64) -> std::collections::Deque[T] {
+    return std::collections::deque<T>(zone, capacity);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn front(self: ref Self) -> T {
+    std::assert(self.len > 0);
+    return ptr_load(ptr_add(self.data, self.head));
+  }
+
+  fn try_front(self: ref Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.front());
+  }
+
+  fn back(self: ref Self) -> T {
+    std::assert(self.len > 0);
+    let slot = circular_slot(self.head, self.len - 1, self.capacity);
+    return ptr_load(ptr_add(self.data, slot));
+  }
+
+  fn try_back(self: ref Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.back());
+  }
+
+  fn get(self: ref Self, index: i64) -> T {
+    std::assert(index >= 0);
+    std::assert(index < self.len);
+    let slot = circular_slot(self.head, index, self.capacity);
+    return ptr_load(ptr_add(self.data, slot));
+  }
+
+  fn try_get(self: ref Self, index: i64) -> std::Option[T] {
+    if index < 0 {
+      return std::None<T>();
+    }
+    if index >= self.len {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.get(index));
+  }
+
+  fn push_back(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
+    deque_ensure_spare_capacity<T>(self, zone);
+    let slot = circular_slot(self.head, self.len, self.capacity);
+    ptr_store(ptr_add(self.data, slot), value);
+    self.len = self.len + 1;
+  }
+
+  fn push_front(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
+    deque_ensure_spare_capacity<T>(self, zone);
+    self.head = (self.head + self.capacity - 1) % self.capacity;
+    ptr_store(ptr_add(self.data, self.head), value);
+    self.len = self.len + 1;
+  }
+
+  fn pop_front(self: ref mut Self) -> T {
+    std::assert(self.len > 0);
+    let value = ptr_load(ptr_add(self.data, self.head));
+    self.head = (self.head + 1) % self.capacity;
+    self.len = self.len - 1;
+    if self.len == 0 {
+      self.head = 0;
+    }
+    return value;
+  }
+
+  fn try_pop_front(self: ref mut Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.pop_front());
+  }
+
+  fn pop_back(self: ref mut Self) -> T {
+    std::assert(self.len > 0);
+    let slot = circular_slot(self.head, self.len - 1, self.capacity);
+    let value = ptr_load(ptr_add(self.data, slot));
+    self.len = self.len - 1;
+    if self.len == 0 {
+      self.head = 0;
+    }
+    return value;
+  }
+
+  fn try_pop_back(self: ref mut Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.pop_back());
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    deque_drop_values<T>(self);
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    deque_grow_to_capacity<T>(self, zone, capacity);
+  }
+
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    deque_grow_to_capacity<T>(self, zone, self.len + additional);
+  }
+
+  fn iter(self: ref Self) -> std::collections::DequeIter[T] {
+    return std::collections::DequeIter<T> {
+      data: self.data,
+      len: self.len,
+      capacity: self.capacity,
+      head: self.head,
+      index: 0,
+    };
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::DequeIter[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.index >= self.len {
+      return std::None<T>();
+    }
+    let slot = circular_slot(self.head, self.index, self.capacity);
+    self.index = self.index + 1;
+    return std::Some<T>(ptr_load(ptr_add(self.data, slot)));
+  }
+}
+
+impl[T] std::IntoIterator[T] for std::collections::Deque[T] {
+  pub fn into_iter(self: ref mut Self) -> std::collections::DequeIter[T] {
+    return self.iter();
+  }
+}
+
+impl[T] std::Drop for std::collections::Deque[T] {
+  fn drop(self) -> void {
+    var dropped = self;
+    deque_drop_values<T>(ref mut dropped);
+    return;
+  }
+}
+
+pub fn ring_buffer[T](zone: ref mut Zone, capacity: i64) -> std::collections::RingBuffer[T] {
+  let actual = normalized_sequence_capacity(capacity);
+  let data = std::zone::alloc_array<T>(zone, actual);
+  return std::collections::RingBuffer<T> {
+    data: data,
+    len: 0,
+    capacity: actual,
+    head: 0,
+  };
+}
+
+fn ring_buffer_drop_values[T](buffer: ref mut std::collections::RingBuffer[T]) -> void {
+  var index = 0;
+  while index < buffer.len {
+    let slot = circular_slot(buffer.head, index, buffer.capacity);
+    let value = ptr_load(ptr_add(buffer.data, slot));
+    drop value;
+    index = index + 1;
+  }
+  buffer.len = 0;
+  buffer.head = 0;
+}
+
+pub impl[T] std::collections::RingBuffer[T] {
+  fn new(zone: ref mut Zone, capacity: i64) -> std::collections::RingBuffer[T] {
+    return std::collections::ring_buffer<T>(zone, capacity);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn is_full(self: ref Self) -> bool {
+    return self.len == self.capacity;
+  }
+
+  fn push(self: ref mut Self, value: T) -> bool {
+    if self.is_full() {
+      return false;
+    }
+    let slot = circular_slot(self.head, self.len, self.capacity);
+    ptr_store(ptr_add(self.data, slot), value);
+    self.len = self.len + 1;
+    return true;
+  }
+
+  fn push_overwrite(self: ref mut Self, value: T) -> std::Option[T] {
+    if self.is_full() {
+      let old = ptr_load(ptr_add(self.data, self.head));
+      ptr_store(ptr_add(self.data, self.head), value);
+      self.head = (self.head + 1) % self.capacity;
+      return std::Some<T>(old);
+    }
+    self.push(value);
+    return std::None<T>();
+  }
+
+  fn peek(self: ref Self) -> T {
+    std::assert(self.len > 0);
+    return ptr_load(ptr_add(self.data, self.head));
+  }
+
+  fn try_peek(self: ref Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.peek());
+  }
+
+  fn get(self: ref Self, index: i64) -> T {
+    std::assert(index >= 0);
+    std::assert(index < self.len);
+    let slot = circular_slot(self.head, index, self.capacity);
+    return ptr_load(ptr_add(self.data, slot));
+  }
+
+  fn try_get(self: ref Self, index: i64) -> std::Option[T] {
+    if index < 0 {
+      return std::None<T>();
+    }
+    if index >= self.len {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.get(index));
+  }
+
+  fn pop(self: ref mut Self) -> T {
+    std::assert(self.len > 0);
+    let value = ptr_load(ptr_add(self.data, self.head));
+    self.head = (self.head + 1) % self.capacity;
+    self.len = self.len - 1;
+    if self.len == 0 {
+      self.head = 0;
+    }
+    return value;
+  }
+
+  fn try_pop(self: ref mut Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.pop());
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    ring_buffer_drop_values<T>(self);
+  }
+
+  fn iter(self: ref Self) -> std::collections::RingBufferIter[T] {
+    return std::collections::RingBufferIter<T> {
+      data: self.data,
+      len: self.len,
+      capacity: self.capacity,
+      head: self.head,
+      index: 0,
+    };
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::RingBufferIter[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.index >= self.len {
+      return std::None<T>();
+    }
+    let slot = circular_slot(self.head, self.index, self.capacity);
+    self.index = self.index + 1;
+    return std::Some<T>(ptr_load(ptr_add(self.data, slot)));
+  }
+}
+
+impl[T] std::IntoIterator[T] for std::collections::RingBuffer[T] {
+  pub fn into_iter(self: ref mut Self) -> std::collections::RingBufferIter[T] {
+    return self.iter();
+  }
+}
+
+impl[T] std::Drop for std::collections::RingBuffer[T] {
+  fn drop(self) -> void {
+    var dropped = self;
+    ring_buffer_drop_values<T>(ref mut dropped);
+    return;
+  }
+}
+
+pub fn linked_list[T](zone: ref mut Zone, capacity: i64) -> std::collections::LinkedList[T] {
+  let actual = normalized_sequence_capacity(capacity);
+  let data = std::zone::alloc_array<T>(zone, actual);
+  let next_node = std::zone::alloc_array<i64>(zone, actual);
+  let prev = std::zone::alloc_array<i64>(zone, actual);
+  return std::collections::LinkedList<T> {
+    data: data,
+    next_node: next_node,
+    prev: prev,
+    head: -1,
+    tail: -1,
+    len: 0,
+    capacity: actual,
+    next_slot: 0,
+    free: -1,
+  };
+}
+
+fn linked_list_grow_to_capacity[T](
+  list: ref mut std::collections::LinkedList[T],
+  zone: ref mut Zone,
+  capacity: i64
+) -> void {
+  let actual = normalized_sequence_capacity(capacity);
+  if actual <= list.capacity {
+    return;
+  }
+  let old_data = list.data;
+  let old_next = list.next_node;
+  let old_prev = list.prev;
+  let new_data = std::zone::alloc_array<T>(zone, actual);
+  let new_next = std::zone::alloc_array<i64>(zone, actual);
+  let new_prev = std::zone::alloc_array<i64>(zone, actual);
+  var node = list.head;
+  while node >= 0 {
+    ptr_store(ptr_add(new_data, node), ptr_load(ptr_add(old_data, node)));
+    node = ptr_load(ptr_add(old_next, node));
+  }
+  var index = 0;
+  while index < list.next_slot {
+    ptr_store(ptr_add(new_next, index), ptr_load(ptr_add(old_next, index)));
+    ptr_store(ptr_add(new_prev, index), ptr_load(ptr_add(old_prev, index)));
+    index = index + 1;
+  }
+  list.data = new_data;
+  list.next_node = new_next;
+  list.prev = new_prev;
+  list.capacity = actual;
+}
+
+fn linked_list_alloc_node[T](list: ref mut std::collections::LinkedList[T], zone: ref mut Zone) -> i64 {
+  if list.free >= 0 {
+    let reused = list.free;
+    list.free = ptr_load(ptr_add(list.next_node, reused));
+    return reused;
+  }
+  if list.next_slot >= list.capacity {
+    linked_list_grow_to_capacity<T>(list, zone, next_growth_capacity(list.capacity, list.next_slot + 1));
+  }
+  let node = list.next_slot;
+  list.next_slot = list.next_slot + 1;
+  return node;
+}
+
+fn linked_list_release_node[T](list: ref mut std::collections::LinkedList[T], node: i64) -> void {
+  ptr_store(ptr_add(list.next_node, node), list.free);
+  ptr_store(ptr_add(list.prev, node), -1);
+  list.free = node;
+}
+
+fn linked_list_node_at[T](list: ref std::collections::LinkedList[T], index: i64) -> i64 {
+  if index < 0 {
+    return -1;
+  }
+  if index >= list.len {
+    return -1;
+  }
+  var current = list.head;
+  var cursor = 0;
+  while cursor < index {
+    current = ptr_load(ptr_add(list.next_node, current));
+    cursor = cursor + 1;
+  }
+  return current;
+}
+
+fn linked_list_node_at_mut[T](list: ref mut std::collections::LinkedList[T], index: i64) -> i64 {
+  if index < 0 {
+    return -1;
+  }
+  if index >= list.len {
+    return -1;
+  }
+  var current = list.head;
+  var cursor = 0;
+  while cursor < index {
+    current = ptr_load(ptr_add(list.next_node, current));
+    cursor = cursor + 1;
+  }
+  return current;
+}
+
+fn linked_list_detach_node[T](list: ref mut std::collections::LinkedList[T], node: i64) -> T {
+  let previous = ptr_load(ptr_add(list.prev, node));
+  let following = ptr_load(ptr_add(list.next_node, node));
+  if previous >= 0 {
+    ptr_store(ptr_add(list.next_node, previous), following);
+  } else {
+    list.head = following;
+  }
+  if following >= 0 {
+    ptr_store(ptr_add(list.prev, following), previous);
+  } else {
+    list.tail = previous;
+  }
+  list.len = list.len - 1;
+  let value = ptr_load(ptr_add(list.data, node));
+  linked_list_release_node<T>(list, node);
+  return value;
+}
+
+fn linked_list_drop_values[T](list: ref mut std::collections::LinkedList[T]) -> void {
+  var node = list.head;
+  while node >= 0 {
+    let following = ptr_load(ptr_add(list.next_node, node));
+    let value = ptr_load(ptr_add(list.data, node));
+    drop value;
+    node = following;
+  }
+  list.head = -1;
+  list.tail = -1;
+  list.len = 0;
+  list.next_slot = 0;
+  list.free = -1;
+}
+
+pub impl[T] std::collections::LinkedList[T] {
+  fn new(zone: ref mut Zone, capacity: i64) -> std::collections::LinkedList[T] {
+    return std::collections::linked_list<T>(zone, capacity);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn front(self: ref Self) -> T {
+    std::assert(self.head >= 0);
+    return ptr_load(ptr_add(self.data, self.head));
+  }
+
+  fn try_front(self: ref Self) -> std::Option[T] {
+    if self.head < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.front());
+  }
+
+  fn back(self: ref Self) -> T {
+    std::assert(self.tail >= 0);
+    return ptr_load(ptr_add(self.data, self.tail));
+  }
+
+  fn try_back(self: ref Self) -> std::Option[T] {
+    if self.tail < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.back());
+  }
+
+  fn get(self: ref Self, index: i64) -> T {
+    let node = linked_list_node_at<T>(self, index);
+    std::assert(node >= 0);
+    return ptr_load(ptr_add(self.data, node));
+  }
+
+  fn try_get(self: ref Self, index: i64) -> std::Option[T] {
+    let node = linked_list_node_at<T>(self, index);
+    if node < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+
+  fn push_front(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
+    let node = linked_list_alloc_node<T>(self, zone);
+    ptr_store(ptr_add(self.data, node), value);
+    ptr_store(ptr_add(self.prev, node), -1);
+    ptr_store(ptr_add(self.next_node, node), self.head);
+    if self.head >= 0 {
+      ptr_store(ptr_add(self.prev, self.head), node);
+    } else {
+      self.tail = node;
+    }
+    self.head = node;
+    self.len = self.len + 1;
+  }
+
+  fn push_back(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
+    let node = linked_list_alloc_node<T>(self, zone);
+    ptr_store(ptr_add(self.data, node), value);
+    ptr_store(ptr_add(self.next_node, node), -1);
+    ptr_store(ptr_add(self.prev, node), self.tail);
+    if self.tail >= 0 {
+      ptr_store(ptr_add(self.next_node, self.tail), node);
+    } else {
+      self.head = node;
+    }
+    self.tail = node;
+    self.len = self.len + 1;
+  }
+
+  fn pop_front(self: ref mut Self) -> T {
+    std::assert(self.head >= 0);
+    return linked_list_detach_node<T>(self, self.head);
+  }
+
+  fn try_pop_front(self: ref mut Self) -> std::Option[T] {
+    if self.head < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.pop_front());
+  }
+
+  fn pop_back(self: ref mut Self) -> T {
+    std::assert(self.tail >= 0);
+    return linked_list_detach_node<T>(self, self.tail);
+  }
+
+  fn try_pop_back(self: ref mut Self) -> std::Option[T] {
+    if self.tail < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.pop_back());
+  }
+
+  fn remove_at(self: ref mut Self, index: i64) -> T {
+    let node = linked_list_node_at_mut<T>(self, index);
+    std::assert(node >= 0);
+    return linked_list_detach_node<T>(self, node);
+  }
+
+  fn try_remove_at(self: ref mut Self, index: i64) -> std::Option[T] {
+    let node = linked_list_node_at_mut<T>(self, index);
+    if node < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(linked_list_detach_node<T>(self, node));
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    linked_list_drop_values<T>(self);
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    linked_list_grow_to_capacity<T>(self, zone, capacity);
+  }
+
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    linked_list_grow_to_capacity<T>(self, zone, self.len + additional);
+  }
+
+  fn iter(self: ref Self) -> std::collections::LinkedListIter[T] {
+    return std::collections::LinkedListIter<T> {
+      data: self.data,
+      next_node: self.next_node,
+      current: self.head,
+    };
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::LinkedListIter[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.current < 0 {
+      return std::None<T>();
+    }
+    let node = self.current;
+    self.current = ptr_load(ptr_add(self.next_node, node));
+    return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+}
+
+impl[T] std::IntoIterator[T] for std::collections::LinkedList[T] {
+  pub fn into_iter(self: ref mut Self) -> std::collections::LinkedListIter[T] {
+    return self.iter();
+  }
+}
+
+impl[T] std::Drop for std::collections::LinkedList[T] {
+  fn drop(self) -> void {
+    var dropped = self;
+    linked_list_drop_values<T>(ref mut dropped);
+    return;
+  }
+}
+
+fn slot_swap[T](data: ptr T, left: i64, right: i64) -> void {
+  let left_value = ptr_load(ptr_add(data, left));
+  let right_value = ptr_load(ptr_add(data, right));
+  ptr_store(ptr_add(data, left), right_value);
+  ptr_store(ptr_add(data, right), left_value);
+}
+
+pub fn binary_heap[T](
+  zone: ref mut Zone,
+  capacity: i64,
+  less: fn(T, T) -> bool
+) -> std::collections::BinaryHeap[T] {
+  let actual = normalized_sequence_capacity(capacity);
+  let data = std::zone::alloc_array<T>(zone, actual);
+  return std::collections::BinaryHeap<T> {
+    less: less,
+    data: data,
+    len: 0,
+    capacity: actual,
+  };
+}
+
+fn binary_heap_grow_to_capacity[T](
+  heap: ref mut std::collections::BinaryHeap[T],
+  zone: ref mut Zone,
+  capacity: i64
+) -> void {
+  let actual = normalized_sequence_capacity(capacity);
+  if actual <= heap.capacity {
+    return;
+  }
+  let old_data = heap.data;
+  let new_data = std::zone::alloc_array<T>(zone, actual);
+  var index = 0;
+  while index < heap.len {
+    ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, index)));
+    index = index + 1;
+  }
+  heap.data = new_data;
+  heap.capacity = actual;
+}
+
+fn binary_heap_sift_up[T](heap: ref mut std::collections::BinaryHeap[T], start: i64) -> void {
+  let less = heap.less;
+  var index = start;
+  while index > 0 {
+    let parent = (index - 1) / 2;
+    if !less(ptr_load(ptr_add(heap.data, parent)), ptr_load(ptr_add(heap.data, index))) {
+      return;
+    }
+    slot_swap<T>(heap.data, parent, index);
+    index = parent;
+  }
+}
+
+fn binary_heap_sift_down[T](heap: ref mut std::collections::BinaryHeap[T], start: i64) -> void {
+  let less = heap.less;
+  var index = start;
+  while true {
+    let left = index * 2 + 1;
+    if left >= heap.len {
+      return;
+    }
+    var best = left;
+    let right = left + 1;
+    if right < heap.len {
+      if less(ptr_load(ptr_add(heap.data, best)), ptr_load(ptr_add(heap.data, right))) {
+        best = right;
+      }
+    }
+    if !less(ptr_load(ptr_add(heap.data, index)), ptr_load(ptr_add(heap.data, best))) {
+      return;
+    }
+    slot_swap<T>(heap.data, index, best);
+    index = best;
+  }
+}
+
+fn binary_heap_drop_values[T](heap: ref mut std::collections::BinaryHeap[T]) -> void {
+  var index = 0;
+  while index < heap.len {
+    let value = ptr_load(ptr_add(heap.data, index));
+    drop value;
+    index = index + 1;
+  }
+  heap.len = 0;
+}
+
+pub impl[T] std::collections::BinaryHeap[T] {
+  fn new(
+    zone: ref mut Zone,
+    capacity: i64,
+    less: fn(T, T) -> bool
+  ) -> std::collections::BinaryHeap[T] {
+    return std::collections::binary_heap<T>(zone, capacity, less);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn peek(self: ref Self) -> T {
+    std::assert(self.len > 0);
+    return ptr_load(self.data);
+  }
+
+  fn try_peek(self: ref Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.peek());
+  }
+
+  fn push(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
+    if self.len >= self.capacity {
+      binary_heap_grow_to_capacity<T>(self, zone, next_growth_capacity(self.capacity, self.len + 1));
+    }
+    ptr_store(ptr_add(self.data, self.len), value);
+    self.len = self.len + 1;
+    binary_heap_sift_up<T>(self, self.len - 1);
+  }
+
+  fn pop(self: ref mut Self) -> T {
+    std::assert(self.len > 0);
+    let top = ptr_load(self.data);
+    self.len = self.len - 1;
+    if self.len > 0 {
+      let last = ptr_load(ptr_add(self.data, self.len));
+      ptr_store(self.data, last);
+      binary_heap_sift_down<T>(self, 0);
+    }
+    return top;
+  }
+
+  fn try_pop(self: ref mut Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.pop());
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    binary_heap_drop_values<T>(self);
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    binary_heap_grow_to_capacity<T>(self, zone, capacity);
+  }
+
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    binary_heap_grow_to_capacity<T>(self, zone, self.len + additional);
+  }
+}
+
+impl[T] std::Drop for std::collections::BinaryHeap[T] {
+  fn drop(self) -> void {
+    var dropped = self;
+    binary_heap_drop_values<T>(ref mut dropped);
+    return;
+  }
+}
+
+pub fn priority_queue[T](
+  zone: ref mut Zone,
+  capacity: i64,
+  less: fn(T, T) -> bool
+) -> std::collections::PriorityQueue[T] {
+  let actual = normalized_sequence_capacity(capacity);
+  let data = std::zone::alloc_array<T>(zone, actual);
+  return std::collections::PriorityQueue<T> {
+    less: less,
+    data: data,
+    len: 0,
+    capacity: actual,
+  };
+}
+
+fn priority_queue_grow_to_capacity[T](
+  queue: ref mut std::collections::PriorityQueue[T],
+  zone: ref mut Zone,
+  capacity: i64
+) -> void {
+  let actual = normalized_sequence_capacity(capacity);
+  if actual <= queue.capacity {
+    return;
+  }
+  let old_data = queue.data;
+  let new_data = std::zone::alloc_array<T>(zone, actual);
+  var index = 0;
+  while index < queue.len {
+    ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, index)));
+    index = index + 1;
+  }
+  queue.data = new_data;
+  queue.capacity = actual;
+}
+
+fn priority_queue_sift_up[T](queue: ref mut std::collections::PriorityQueue[T], start: i64) -> void {
+  let less = queue.less;
+  var index = start;
+  while index > 0 {
+    let parent = (index - 1) / 2;
+    if !less(ptr_load(ptr_add(queue.data, parent)), ptr_load(ptr_add(queue.data, index))) {
+      return;
+    }
+    slot_swap<T>(queue.data, parent, index);
+    index = parent;
+  }
+}
+
+fn priority_queue_sift_down[T](queue: ref mut std::collections::PriorityQueue[T], start: i64) -> void {
+  let less = queue.less;
+  var index = start;
+  while true {
+    let left = index * 2 + 1;
+    if left >= queue.len {
+      return;
+    }
+    var best = left;
+    let right = left + 1;
+    if right < queue.len {
+      if less(ptr_load(ptr_add(queue.data, best)), ptr_load(ptr_add(queue.data, right))) {
+        best = right;
+      }
+    }
+    if !less(ptr_load(ptr_add(queue.data, index)), ptr_load(ptr_add(queue.data, best))) {
+      return;
+    }
+    slot_swap<T>(queue.data, index, best);
+    index = best;
+  }
+}
+
+fn priority_queue_drop_values[T](queue: ref mut std::collections::PriorityQueue[T]) -> void {
+  var index = 0;
+  while index < queue.len {
+    let value = ptr_load(ptr_add(queue.data, index));
+    drop value;
+    index = index + 1;
+  }
+  queue.len = 0;
+}
+
+pub impl[T] std::collections::PriorityQueue[T] {
+  fn new(
+    zone: ref mut Zone,
+    capacity: i64,
+    less: fn(T, T) -> bool
+  ) -> std::collections::PriorityQueue[T] {
+    return std::collections::priority_queue<T>(zone, capacity, less);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn peek(self: ref Self) -> T {
+    std::assert(self.len > 0);
+    return ptr_load(self.data);
+  }
+
+  fn try_peek(self: ref Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.peek());
+  }
+
+  fn push(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
+    if self.len >= self.capacity {
+      priority_queue_grow_to_capacity<T>(self, zone, next_growth_capacity(self.capacity, self.len + 1));
+    }
+    ptr_store(ptr_add(self.data, self.len), value);
+    self.len = self.len + 1;
+    priority_queue_sift_up<T>(self, self.len - 1);
+  }
+
+  fn pop(self: ref mut Self) -> T {
+    std::assert(self.len > 0);
+    let top = ptr_load(self.data);
+    self.len = self.len - 1;
+    if self.len > 0 {
+      let last = ptr_load(ptr_add(self.data, self.len));
+      ptr_store(self.data, last);
+      priority_queue_sift_down<T>(self, 0);
+    }
+    return top;
+  }
+
+  fn try_pop(self: ref mut Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.pop());
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    priority_queue_drop_values<T>(self);
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    priority_queue_grow_to_capacity<T>(self, zone, capacity);
+  }
+
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    priority_queue_grow_to_capacity<T>(self, zone, self.len + additional);
+  }
+}
+
+impl[T] std::Drop for std::collections::PriorityQueue[T] {
+  fn drop(self) -> void {
+    var dropped = self;
+    priority_queue_drop_values<T>(ref mut dropped);
     return;
   }
 }

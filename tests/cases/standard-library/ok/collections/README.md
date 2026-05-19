@@ -21,3 +21,13 @@ automated checks.
   and rotation paths.
 - `std-collections-tree-iter.ari`: sorted tree map key/value cursors and tree
   set iteration.
+- `deque/std-collections-deque.ari`: growable double-ended queue operations,
+  circular growth, optional helpers, iteration, and root aliasing.
+- `ring-buffer/std-collections-ring-buffer.ari`: fixed-capacity FIFO behavior,
+  full push rejection, overwrite-oldest behavior, wraparound reads, and
+  iteration.
+- `linked-list/std-collections-linked-list.ari`: zone-backed linked list
+  front/back operations, indexed removal, freed-slot reuse, optional helpers,
+  and iteration.
+- `heap/std-collections-heap.ari`: `BinaryHeap` and `PriorityQueue`
+  comparator-driven max-priority ordering, growth, and root aliasing.

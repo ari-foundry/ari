@@ -100,6 +100,10 @@ Omit the semicolon only for the final value expression in a function, block,
 | local vector | `Vec[i64]` | Compiler-known local vector surface from list literals. |
 | source vector handle | `std::vec::Vec[i64]`, `std::Vec[i64]` | Zone-backed growable handle. |
 | source set handle | `std::collections::Set[i64]`, `Set[i64]` | Zone-backed linear insertion-order set. |
+| source deque handle | `Deque[i64]`, `std::collections::Deque[i64]` | Zone-backed growable double-ended queue. |
+| source ring buffer handle | `RingBuffer[i64]`, `std::collections::RingBuffer[i64]` | Zone-backed fixed-capacity FIFO buffer. |
+| source linked list handle | `LinkedList[i64]`, `std::collections::LinkedList[i64]` | Zone-backed doubly linked reusable node slots. |
+| source heap handle | `BinaryHeap[i64]`, `PriorityQueue[i64]` | Comparator-driven highest-priority removal. |
 | slice view | `Slice[i64]`, `std::Slice[i64]` | Non-owning pointer plus length view. |
 | raw pointer | `ptr i64`, `i64?`, `ptr c_void` | Use explicit casts and `std::mem` helpers. |
 | shared borrow | `ref i64` | Many shared borrows may overlap. |

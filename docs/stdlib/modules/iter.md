@@ -38,10 +38,12 @@ for value in cursor {
 ```
 
 Collections that implement `IntoIterator[T]` can be used directly in `for`
-loops. Today `std::collections::Set[T]`, `HashSet[T]`, and `TreeSet[T]` expose
-that path. `HashMap` and `TreeMap` intentionally expose `keys()` and
-`values()` instead of a pair iterator until tuple or pair conventions are
-stable.
+loops. Today `std::collections::Set[T]`, `Deque[T]`, `RingBuffer[T]`,
+`LinkedList[T]`, `HashSet[T]`, and `TreeSet[T]` expose that path. `HashMap`
+and `TreeMap` intentionally expose `keys()` and `values()` instead of a pair
+iterator until tuple or pair conventions are stable. `BinaryHeap[T]` and
+`PriorityQueue[T]` expose priority removal through `pop()` rather than an
+iterator so callers do not mistake heap storage order for priority order.
 
 ## Current Limits
 
@@ -60,4 +62,7 @@ tests/cases/standard-library/ok/vec/std-vec-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
+tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari
+tests/cases/standard-library/ok/collections/ring-buffer/std-collections-ring-buffer.ari
+tests/cases/standard-library/ok/collections/linked-list/std-collections-linked-list.ari
 ```

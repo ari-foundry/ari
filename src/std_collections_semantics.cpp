@@ -40,6 +40,14 @@ std::string collection_type_display_name(const IrType& type) {
     if (type.name == "std::collections::TreeMapValues") return "std::collections::TreeMapValues";
     if (type.name == "std::collections::TreeSet") return "std::collections::TreeSet";
     if (type.name == "std::collections::TreeSetIter") return "std::collections::TreeSetIter";
+    if (type.name == "std::collections::Deque") return "std::collections::Deque";
+    if (type.name == "std::collections::DequeIter") return "std::collections::DequeIter";
+    if (type.name == "std::collections::RingBuffer") return "std::collections::RingBuffer";
+    if (type.name == "std::collections::RingBufferIter") return "std::collections::RingBufferIter";
+    if (type.name == "std::collections::LinkedList") return "std::collections::LinkedList";
+    if (type.name == "std::collections::LinkedListIter") return "std::collections::LinkedListIter";
+    if (type.name == "std::collections::BinaryHeap") return "std::collections::BinaryHeap";
+    if (type.name == "std::collections::PriorityQueue") return "std::collections::PriorityQueue";
     if (type.name == "std::collections::Iter") return "std::collections::Iter";
     return "std::collections::Set";
 }
@@ -49,6 +57,11 @@ std::string collection_allocation_noun(const IrType& type) {
     if (type.name == "std::collections::HashSet") return "hash set";
     if (type.name == "std::collections::TreeMap") return "tree map";
     if (type.name == "std::collections::TreeSet") return "tree set";
+    if (type.name == "std::collections::Deque") return "deque";
+    if (type.name == "std::collections::RingBuffer") return "ring buffer";
+    if (type.name == "std::collections::LinkedList") return "linked list";
+    if (type.name == "std::collections::BinaryHeap") return "binary heap";
+    if (type.name == "std::collections::PriorityQueue") return "priority queue";
     return "set";
 }
 
@@ -69,7 +82,10 @@ bool is_std_collections_iter_handle_type(const IrType& type) {
             type.name == "std::collections::HashSetIter" ||
             type.name == "std::collections::TreeMapKeys" ||
             type.name == "std::collections::TreeMapValues" ||
-            type.name == "std::collections::TreeSetIter");
+            type.name == "std::collections::TreeSetIter" ||
+            type.name == "std::collections::DequeIter" ||
+            type.name == "std::collections::RingBufferIter" ||
+            type.name == "std::collections::LinkedListIter");
 }
 
 static bool is_std_collections_hash_map_handle_type(const IrType& type) {
@@ -132,12 +148,65 @@ static bool is_std_collections_tree_set_iter_handle_type(const IrType& type) {
            type.name == "std::collections::TreeSetIter";
 }
 
+static bool is_std_collections_deque_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::Deque";
+}
+
+static bool is_std_collections_deque_iter_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::DequeIter";
+}
+
+static bool is_std_collections_ring_buffer_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::RingBuffer";
+}
+
+static bool is_std_collections_ring_buffer_iter_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::RingBufferIter";
+}
+
+static bool is_std_collections_linked_list_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::LinkedList";
+}
+
+static bool is_std_collections_linked_list_iter_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::LinkedListIter";
+}
+
+static bool is_std_collections_binary_heap_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::BinaryHeap";
+}
+
+static bool is_std_collections_priority_queue_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::PriorityQueue";
+}
+
 bool is_std_collections_mutable_handle_type(const IrType& type) {
     return is_std_collections_set_handle_type(type) ||
            is_std_collections_hash_map_handle_type(type) ||
            is_std_collections_hash_set_handle_type(type) ||
            is_std_collections_tree_map_handle_type(type) ||
-           is_std_collections_tree_set_handle_type(type);
+           is_std_collections_tree_set_handle_type(type) ||
+           is_std_collections_deque_handle_type(type) ||
+           is_std_collections_ring_buffer_handle_type(type) ||
+           is_std_collections_linked_list_handle_type(type) ||
+           is_std_collections_binary_heap_handle_type(type) ||
+           is_std_collections_priority_queue_handle_type(type);
 }
 
 bool is_std_collections_zone_handle_type(const IrType& type) {
@@ -146,7 +215,12 @@ bool is_std_collections_zone_handle_type(const IrType& type) {
            is_std_collections_hash_map_handle_type(type) ||
            is_std_collections_hash_set_handle_type(type) ||
            is_std_collections_tree_map_handle_type(type) ||
-           is_std_collections_tree_set_handle_type(type);
+           is_std_collections_tree_set_handle_type(type) ||
+           is_std_collections_deque_handle_type(type) ||
+           is_std_collections_ring_buffer_handle_type(type) ||
+           is_std_collections_linked_list_handle_type(type) ||
+           is_std_collections_binary_heap_handle_type(type) ||
+           is_std_collections_priority_queue_handle_type(type);
 }
 
 std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(const IrType& type) {
@@ -155,7 +229,9 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
         if (is_std_collections_hash_map_handle_type(type) ||
             is_std_collections_hash_set_handle_type(type) ||
             is_std_collections_tree_map_handle_type(type) ||
-            is_std_collections_tree_set_handle_type(type)) {
+            is_std_collections_tree_set_handle_type(type) ||
+            is_std_collections_binary_heap_handle_type(type) ||
+            is_std_collections_priority_queue_handle_type(type)) {
             return 1;
         }
         return 0;
@@ -175,6 +251,12 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
     bool has_colors = false;
     bool has_root = false;
     bool has_current = false;
+    bool has_head = false;
+    bool has_tail = false;
+    bool has_next_slot = false;
+    bool has_free = false;
+    bool has_next_node = false;
+    bool has_prev = false;
     for (std::size_t i = 0; i < type.field_names.size(); ++i) {
         const std::string& name = type.field_names[i];
         const IrType& field_type = type.field_types[i];
@@ -204,6 +286,12 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
         } else if (name == "parent") {
             if (!is_i64_ptr_type(field_type)) return std::nullopt;
             has_parent = true;
+        } else if (name == "next_node") {
+            if (!is_i64_ptr_type(field_type)) return std::nullopt;
+            has_next_node = true;
+        } else if (name == "prev") {
+            if (!is_i64_ptr_type(field_type)) return std::nullopt;
+            has_prev = true;
         } else if (name == "colors") {
             if (!is_i64_ptr_type(field_type)) return std::nullopt;
             has_colors = true;
@@ -224,6 +312,18 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
             if (!is_std_collections_iter_handle_type(type)) return std::nullopt;
             if (!is_i64_value_type(field_type)) return std::nullopt;
             has_current = true;
+        } else if (name == "head") {
+            if (!is_i64_value_type(field_type)) return std::nullopt;
+            has_head = true;
+        } else if (name == "tail") {
+            if (!is_i64_value_type(field_type)) return std::nullopt;
+            has_tail = true;
+        } else if (name == "next_slot") {
+            if (!is_i64_value_type(field_type)) return std::nullopt;
+            has_next_slot = true;
+        } else if (name == "free") {
+            if (!is_i64_value_type(field_type)) return std::nullopt;
+            has_free = true;
         } else {
             return std::nullopt;
         }
@@ -258,6 +358,15 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
             if (!data_index || !has_left || !has_right || !has_parent || !has_current) return std::nullopt;
             return data_index;
         }
+        if (is_std_collections_deque_iter_handle_type(type) ||
+            is_std_collections_ring_buffer_iter_handle_type(type)) {
+            if (!data_index || !has_len || !has_capacity || !has_head || !has_index) return std::nullopt;
+            return data_index;
+        }
+        if (is_std_collections_linked_list_iter_handle_type(type)) {
+            if (!data_index || !has_next_node || !has_current) return std::nullopt;
+            return data_index;
+        }
         if (!data_index || !has_len || !has_index) return std::nullopt;
         return data_index;
     }
@@ -287,6 +396,23 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
         }
         return data_index;
     }
+    if (is_std_collections_deque_handle_type(type) ||
+        is_std_collections_ring_buffer_handle_type(type)) {
+        if (!data_index || !has_len || !has_capacity || !has_head) return std::nullopt;
+        return data_index;
+    }
+    if (is_std_collections_linked_list_handle_type(type)) {
+        if (!data_index || !has_next_node || !has_prev || !has_head || !has_tail ||
+            !has_len || !has_capacity || !has_next_slot || !has_free) {
+            return std::nullopt;
+        }
+        return data_index;
+    }
+    if (is_std_collections_binary_heap_handle_type(type) ||
+        is_std_collections_priority_queue_handle_type(type)) {
+        if (!has_hash_or_less || !data_index || !has_len || !has_capacity) return std::nullopt;
+        return data_index;
+    }
     return data_index;
 }
 
@@ -309,6 +435,14 @@ std::vector<std::vector<std::size_t>> std_collections_zone_handle_storage_field_
         if (is_std_collections_tree_map_values_handle_type(type)) return {{0}, {1}, {2}, {3}};
         if (is_std_collections_tree_set_handle_type(type)) return {{1}, {2}, {3}, {4}, {5}};
         if (is_std_collections_tree_set_iter_handle_type(type)) return {{0}, {1}, {2}, {3}};
+        if (is_std_collections_deque_handle_type(type)) return {{0}};
+        if (is_std_collections_deque_iter_handle_type(type)) return {{0}};
+        if (is_std_collections_ring_buffer_handle_type(type)) return {{0}};
+        if (is_std_collections_ring_buffer_iter_handle_type(type)) return {{0}};
+        if (is_std_collections_linked_list_handle_type(type)) return {{0}, {1}, {2}};
+        if (is_std_collections_linked_list_iter_handle_type(type)) return {{0}, {1}};
+        if (is_std_collections_binary_heap_handle_type(type)) return {{1}};
+        if (is_std_collections_priority_queue_handle_type(type)) return {{1}};
         return {{0}};
     }
 
@@ -316,7 +450,8 @@ std::vector<std::vector<std::size_t>> std_collections_zone_handle_storage_field_
     for (std::size_t i = 0; i < type.field_names.size(); ++i) {
         const std::string& name = type.field_names[i];
         if (name == "data" || name == "keys" || name == "values" || name == "states" ||
-            name == "left" || name == "right" || name == "parent" || name == "colors") {
+            name == "left" || name == "right" || name == "parent" || name == "colors" ||
+            name == "next_node" || name == "prev") {
             paths.push_back(std::vector<std::size_t>{i});
         }
     }
@@ -332,10 +467,19 @@ bool std_collections_set_method_requires_same_zone_argument(const std::string& m
            method_name == "hash_set_ensure_spare_capacity" ||
            method_name == "tree_map_grow_to_capacity" ||
            method_name == "tree_set_grow_to_capacity" ||
+           method_name == "deque_grow_to_capacity" ||
+           method_name == "deque_ensure_spare_capacity" ||
+           method_name == "linked_list_grow_to_capacity" ||
+           method_name == "linked_list_alloc_node" ||
+           method_name == "binary_heap_grow_to_capacity" ||
+           method_name == "priority_queue_grow_to_capacity" ||
            method_name == "reserve" ||
            method_name == "reserve_extra" ||
            method_name == "replace" ||
-           method_name == "insert";
+           method_name == "insert" ||
+           method_name == "push_back" ||
+           method_name == "push_front" ||
+           method_name == "push";
 }
 
 bool std_collections_result_preserves_receiver_zone(const IrExpr& call) {
@@ -356,6 +500,11 @@ std::optional<std::string> std_collections_set_same_zone_method_violation(
     }
     IrType receiver_value_type = value_qualified_set_type(receiver_type);
     if (!is_std_collections_mutable_handle_type(receiver_value_type)) return std::nullopt;
+    if (method_name == "push" &&
+        !is_std_collections_binary_heap_handle_type(receiver_value_type) &&
+        !is_std_collections_priority_queue_handle_type(receiver_value_type)) {
+        return std::nullopt;
+    }
 
     std::string type_name = collection_type_display_name(receiver_value_type);
 

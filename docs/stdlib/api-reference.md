@@ -19,6 +19,11 @@ String
 Thread
 AtomicI64
 Set[T]
+Deque[T]
+RingBuffer[T]
+LinkedList[T]
+BinaryHeap[T]
+PriorityQueue[T]
 HashMap[K, V]
 HashSet[T]
 TreeMap[K, V]
@@ -536,6 +541,69 @@ zone. The set preserves insertion order in accessors, `index_of`, `as_slice`,
 and `Set[T]` implements `IntoIterator[T]`, so `for value in set` works through
 the standard iterator path.
 
+Double-ended and bounded sequence collections:
+
+```ari
+collections::deque<T>(ref mut zone, capacity)
+Deque::new<T>(ref mut zone, capacity)
+deque.push_front(ref mut zone, value)
+deque.push_back(ref mut zone, value)
+deque.pop_front()
+deque.try_pop_front()
+deque.pop_back()
+deque.try_pop_back()
+deque.front()
+deque.back()
+deque.get(index)
+deque.try_get(index)
+deque.iter()
+
+collections::ring_buffer<T>(ref mut zone, capacity)
+RingBuffer::new<T>(ref mut zone, capacity)
+buffer.push(value)
+buffer.push_overwrite(value)
+buffer.pop()
+buffer.try_pop()
+buffer.peek()
+buffer.try_peek()
+buffer.get(index)
+buffer.try_get(index)
+buffer.is_full()
+buffer.iter()
+```
+
+`Deque[T]` grows with the same zone when either end needs more room.
+`RingBuffer[T]` is fixed-capacity: `push` returns `false` when full, and
+`push_overwrite` returns the overwritten oldest value when it has to make room.
+
+Linked lists and priority queues:
+
+```ari
+collections::linked_list<T>(ref mut zone, capacity)
+LinkedList::new<T>(ref mut zone, capacity)
+list.push_front(ref mut zone, value)
+list.push_back(ref mut zone, value)
+list.pop_front()
+list.pop_back()
+list.remove_at(index)
+list.try_remove_at(index)
+list.iter()
+
+collections::binary_heap<T>(ref mut zone, capacity, less)
+BinaryHeap::new<T>(ref mut zone, capacity, less)
+collections::priority_queue<T>(ref mut zone, capacity, less)
+PriorityQueue::new<T>(ref mut zone, capacity, less)
+heap.push(ref mut zone, value)
+heap.peek()
+heap.try_peek()
+heap.pop()
+heap.try_pop()
+```
+
+`LinkedList[T]` uses zone-backed index nodes and reuses removed node slots.
+`BinaryHeap[T]` and `PriorityQueue[T]` use `less(a, b)` as a lower-priority
+predicate, so `collections::less_i64` makes larger integers pop first.
+
 Hash-table collections use explicit hash functions:
 
 ```ari
@@ -922,3 +990,9 @@ library collection tied to an explicit allocation zone.
 
 Use `Slice[T]` when you only need a borrowed view. Use `String` when bytes must
 be owned and copied into a zone. Use `Box[T]` for one zone-backed owned value.
+
+Use `Set[T]` for tiny insertion-order unique lists, `Deque[T]` for both-end
+queues, `RingBuffer[T]` for bounded FIFO storage, `LinkedList[T]` for
+front/back linked node operations, hash containers for average-case lookup,
+tree containers for sorted lookup, and heaps/priority queues for repeated
+highest-priority removal.

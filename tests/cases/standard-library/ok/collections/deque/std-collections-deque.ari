@@ -1,0 +1,75 @@
+// Covers growable double-ended queues: both-end push/pop, circular growth,
+// indexed reads, optional helpers, iteration, and root aliasing.
+fn main() -> i64 {
+  var zone = zone::create(2048);
+  var deque = Deque::new<i64>(ref mut zone, 1);
+  var failure = 0;
+
+  if !deque.is_empty() {
+    failure = 1;
+  }
+  let empty_pop_front = deque.try_pop_front();
+  if !empty_pop_front.is_none() {
+    failure = 2;
+  }
+
+  deque.push_back(ref mut zone, 10);
+  deque.push_front(ref mut zone, 5);
+  deque.push_back(ref mut zone, 20);
+  if deque.len() != 3 {
+    failure = 3;
+  }
+  if deque.front() != 5 {
+    failure = 4;
+  }
+  if deque.back() != 20 {
+    failure = 5;
+  }
+  if deque.get(1) != 10 {
+    failure = 6;
+  }
+
+  if deque.pop_front() != 5 {
+    failure = 7;
+  }
+  deque.push_back(ref mut zone, 30);
+  deque.push_front(ref mut zone, 1);
+  if deque.try_get(3).unwrap_or(0) != 30 {
+    failure = 8;
+  }
+  let missing_get = deque.try_get(4);
+  if !missing_get.is_none() {
+    failure = 9;
+  }
+
+  var sum = 0;
+  for value in deque {
+    sum = sum + value;
+  }
+  if sum != 61 {
+    failure = 10;
+  }
+
+  if deque.pop_back() != 30 {
+    failure = 11;
+  }
+  if deque.pop_front() != 1 {
+    failure = 12;
+  }
+  if deque.pop_front() != 10 {
+    failure = 13;
+  }
+  if deque.pop_back() != 20 {
+    failure = 14;
+  }
+  let empty_back = deque.try_back();
+  if !empty_back.is_none() {
+    failure = 15;
+  }
+
+  zone::destroy(zone);
+  if failure != 0 {
+    return failure;
+  }
+  return 42;
+}

@@ -1,0 +1,10 @@
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var buffer = RingBuffer::new<i64>(ref mut zone, 2);
+  buffer.push(1);
+  zone::reset(ref mut zone);
+  let value = buffer.peek();
+
+  zone::destroy(zone);
+  return 0;
+}

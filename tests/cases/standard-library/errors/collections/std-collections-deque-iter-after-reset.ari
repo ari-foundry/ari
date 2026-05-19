@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var deque = Deque::new<i64>(ref mut zone, 1);
+  deque.push_back(ref mut zone, 1);
+  var cursor = deque.iter();
+  zone::reset(ref mut zone);
+  let value = cursor.next();
+
+  zone::destroy(zone);
+  return 0;
+}

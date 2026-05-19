@@ -69,12 +69,17 @@ fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md
 fn std::cmp::is_between[T: Ord[T]|std cmp value helper tests; docs/stdlib/api-reference.md Comparison section
 fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::min[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::collections::binary_heap[T]|check-prelude std-collections-heap explicit-comparator binary heap constructor; docs/stdlib/modules/collections.md
+fn std::collections::deque[T]|check-prelude std-collections-deque growable double-ended queue constructor; docs/stdlib/modules/collections.md
 fn std::collections::from_slice_in[T]|check-prelude std-collections-set source linear set from slice; docs/stdlib/modules/collections.md
 fn std::collections::hash_i64|check-prelude std-collections-hash public i64 hash helper for explicit hasher containers; docs/stdlib/modules/collections.md
 fn std::collections::hash_map[K, V]|check-prelude std-collections-hash explicit-hasher hash map constructor; docs/stdlib/modules/collections.md
 fn std::collections::hash_set[T]|check-prelude std-collections-hash explicit-hasher hash set constructor; docs/stdlib/modules/collections.md
 fn std::collections::less_i64|check-prelude std-collections-tree public i64 ordering helper for explicit comparator containers; docs/stdlib/modules/collections.md
+fn std::collections::linked_list[T]|check-prelude std-collections-linked-list zone-backed linked list constructor; docs/stdlib/modules/collections.md
 fn std::collections::new[T]|check-prelude std-collections-set source linear set constructor; docs/stdlib/modules/collections.md
+fn std::collections::priority_queue[T]|check-prelude std-collections-heap priority queue constructor over binary-heap ordering; docs/stdlib/modules/collections.md
+fn std::collections::ring_buffer[T]|check-prelude std-collections-ring-buffer fixed-capacity ring buffer constructor; docs/stdlib/modules/collections.md
 fn std::collections::tree_map[K, V]|check-prelude std-collections-tree explicit-comparator tree map constructor; docs/stdlib/modules/collections.md
 fn std::collections::tree_set[T]|check-prelude std-collections-tree explicit-comparator tree set constructor; docs/stdlib/modules/collections.md
 fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
@@ -279,6 +284,38 @@ method std::boxed::Box[T]::set|check-prelude std-boxed-box and std-boxed-set-dro
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::take|check-prelude std-boxed-take value move-out leaves empty handle; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::try_take|check-prelude std-boxed-try-take Option-returning empty-handle move-out; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::collections::BinaryHeap[T]::capacity|check-prelude std-collections-heap binary heap capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::clear|check-prelude std-collections-heap drops live heap values; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::is_empty|check-prelude std-collections-heap binary heap emptiness predicate; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::len|check-prelude std-collections-heap binary heap length metadata; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::new|check-prelude std-collections-heap associated explicit-comparator constructor; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::peek|check-prelude std-collections-heap asserting highest-priority access; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::pop|check-prelude std-collections-heap highest-priority removal; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::push|check-prelude std-collections-heap same-zone heap insertion and sift-up; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::reserve|check-prelude std-collections-heap same-zone heap storage growth; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::reserve_extra|check-prelude std-collections-heap same-zone heap spare-capacity growth; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::try_peek|check-prelude std-collections-heap optional highest-priority access; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::try_pop|check-prelude std-collections-heap optional highest-priority removal; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::back|check-prelude std-collections-deque asserting back accessor; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::capacity|check-prelude std-collections-deque deque capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::clear|check-prelude std-collections-deque drops live deque values; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::front|check-prelude std-collections-deque asserting front accessor; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::get|check-prelude std-collections-deque logical indexed read through circular storage; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::is_empty|check-prelude std-collections-deque deque emptiness predicate; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::iter|check-prelude std-collections-deque logical-order iterator and IntoIterator; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::len|check-prelude std-collections-deque deque length metadata; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::new|check-prelude std-collections-deque associated growable deque constructor; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::pop_back|check-prelude std-collections-deque back removal; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::pop_front|check-prelude std-collections-deque front removal; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::push_back|check-prelude std-collections-deque same-zone push at back; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::push_front|check-prelude std-collections-deque same-zone push at front; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::reserve|check-prelude std-collections-deque same-zone circular storage growth; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::reserve_extra|check-prelude std-collections-deque same-zone spare-capacity growth; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::try_back|check-prelude std-collections-deque optional back accessor; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::try_front|check-prelude std-collections-deque optional front accessor; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::try_get|check-prelude std-collections-deque optional indexed read; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::try_pop_back|check-prelude std-collections-deque optional back removal; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::try_pop_front|check-prelude std-collections-deque optional front removal; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::capacity|check-prelude std-collections-hash hash table capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::clear|check-prelude std-collections-hash drops live hash map entries; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::contains|check-prelude std-collections-hash hash lookup predicate; docs/stdlib/modules/collections.md
@@ -304,6 +341,55 @@ method std::collections::HashSet[T]::remove|check-prelude std-collections-hash d
 method std::collections::HashSet[T]::replace|check-prelude std-collections-hash replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::reserve|check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::take|check-prelude std-collections-hash Option-returning removal; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::back|check-prelude std-collections-linked-list asserting back accessor; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::capacity|check-prelude std-collections-linked-list linked list capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::clear|check-prelude std-collections-linked-list drops live linked list values; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::front|check-prelude std-collections-linked-list asserting front accessor; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::get|check-prelude std-collections-linked-list indexed traversal read; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::is_empty|check-prelude std-collections-linked-list linked list emptiness predicate; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::iter|check-prelude std-collections-linked-list forward iterator and IntoIterator; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::len|check-prelude std-collections-linked-list linked list length metadata; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::new|check-prelude std-collections-linked-list associated linked list constructor; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::pop_back|check-prelude std-collections-linked-list back removal and node reuse path; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::pop_front|check-prelude std-collections-linked-list front removal and node reuse path; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::push_back|check-prelude std-collections-linked-list same-zone push at back; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::push_front|check-prelude std-collections-linked-list same-zone push at front; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::remove_at|check-prelude std-collections-linked-list indexed removal; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::reserve|check-prelude std-collections-linked-list same-zone node storage growth; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::reserve_extra|check-prelude std-collections-linked-list same-zone spare-node growth; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::try_back|check-prelude std-collections-linked-list optional back accessor; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::try_front|check-prelude std-collections-linked-list optional front accessor; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::try_get|check-prelude std-collections-linked-list optional indexed traversal read; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::try_pop_back|check-prelude std-collections-linked-list optional back removal; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::try_pop_front|check-prelude std-collections-linked-list optional front removal; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::try_remove_at|check-prelude std-collections-linked-list optional indexed removal; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::capacity|check-prelude std-collections-heap priority queue capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::clear|check-prelude std-collections-heap drops live priority queue values; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::is_empty|check-prelude std-collections-heap priority queue emptiness predicate; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::len|check-prelude std-collections-heap priority queue length metadata; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::new|check-prelude std-collections-heap associated priority queue constructor; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::peek|check-prelude std-collections-heap highest-priority access; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::pop|check-prelude std-collections-heap highest-priority removal; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::push|check-prelude std-collections-heap same-zone priority queue insertion; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::reserve|check-prelude std-collections-heap same-zone priority queue storage growth; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::reserve_extra|check-prelude std-collections-heap same-zone priority queue spare-capacity growth; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::try_peek|check-prelude std-collections-heap optional highest-priority access; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::try_pop|check-prelude std-collections-heap optional highest-priority removal; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::capacity|check-prelude std-collections-ring-buffer ring buffer fixed capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::clear|check-prelude std-collections-ring-buffer drops live ring buffer values; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::get|check-prelude std-collections-ring-buffer logical indexed read after wraparound; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::is_empty|check-prelude std-collections-ring-buffer emptiness predicate; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::is_full|check-prelude std-collections-ring-buffer full-capacity predicate; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::iter|check-prelude std-collections-ring-buffer FIFO iterator and IntoIterator; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::len|check-prelude std-collections-ring-buffer ring buffer length metadata; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::new|check-prelude std-collections-ring-buffer associated fixed-capacity constructor; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::peek|check-prelude std-collections-ring-buffer oldest-value access; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::pop|check-prelude std-collections-ring-buffer FIFO removal; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::push|check-prelude std-collections-ring-buffer bounded push failure path; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::push_overwrite|check-prelude std-collections-ring-buffer overwrite-oldest behavior; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::try_get|check-prelude std-collections-ring-buffer optional indexed read; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::try_peek|check-prelude std-collections-ring-buffer optional oldest-value access; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::try_pop|check-prelude std-collections-ring-buffer optional FIFO removal; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::as_slice|check-prelude std-collections-set borrowed set storage view; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::capacity|check-prelude std-collections-set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::clear|check-prelude std-collections-set value drop clear; docs/stdlib/modules/collections.md
@@ -503,12 +589,20 @@ struct std::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
 struct std::ascii::ParsedInt|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::collections::BinaryHeap[T]|std collections binary heap tests; docs/stdlib/modules/collections.md
+struct std::collections::DequeIter[T]|std collections deque iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::Deque[T]|std collections deque tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMapKeys[K]|std collections hash iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMapValues[V]|std collections hash iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMap[K, V]|std collections hash map tests; docs/stdlib/modules/collections.md
 struct std::collections::HashSetIter[T]|std collections hash iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashSet[T]|std collections hash set tests; docs/stdlib/modules/collections.md
 struct std::collections::Iter[T]|std collections iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::LinkedListIter[T]|std collections linked list iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::LinkedList[T]|std collections linked list tests; docs/stdlib/modules/collections.md
+struct std::collections::PriorityQueue[T]|std collections priority queue tests; docs/stdlib/modules/collections.md
+struct std::collections::RingBufferIter[T]|std collections ring buffer iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::RingBuffer[T]|std collections ring buffer tests; docs/stdlib/modules/collections.md
 struct std::collections::Set[T]|std collections linear set tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapKeys[K]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapValues[V]|std collections tree iterator tests; docs/stdlib/modules/collections.md
@@ -583,9 +677,14 @@ trait-method std::fmt::Display::format_in|format_in Display borrowed receiver te
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
 use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md
+use std::BinaryHeap|check-prelude std-collections-heap root alias for std::collections::BinaryHeap[T]; docs/stdlib/modules/collections.md
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row
+use std::Deque|check-prelude std-collections-deque root alias for std::collections::Deque[T]; docs/stdlib/modules/collections.md
 use std::HashMap|check-prelude std-collections-hash root alias for std::collections::HashMap[K, V]; docs/stdlib/modules/collections.md
 use std::HashSet|check-prelude std-collections-hash root alias for std::collections::HashSet[T]; docs/stdlib/modules/collections.md
+use std::LinkedList|check-prelude std-collections-linked-list root alias for std::collections::LinkedList[T]; docs/stdlib/modules/collections.md
+use std::PriorityQueue|check-prelude std-collections-heap root alias for std::collections::PriorityQueue[T]; docs/stdlib/modules/collections.md
+use std::RingBuffer|check-prelude std-collections-ring-buffer root alias for std::collections::RingBuffer[T]; docs/stdlib/modules/collections.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::Thread|check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md

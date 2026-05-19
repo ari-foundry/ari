@@ -16,10 +16,11 @@ limits, examples, and test files for one module.
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,
   safe accessors, growth, copy, and iterator entry points.
-- [std::collections](collections.md): source `Set[T]`, hash-table
-  `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`,
-  natural lookup/update names, explicit hash/comparator constructors,
-  live-bucket hash iterators, sorted tree iterators, copied views, and
+- [std::collections](collections.md): source `Set[T]`, `Deque[T]`,
+  `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`,
+  hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree
+  `TreeMap[K,V]`/`TreeSet[T]`, natural lookup/update names, explicit
+  hash/comparator constructors, collection iterators, copied views, and
   explicit-zone provenance.
 - [std::iter](iter.md): range constructors plus the minimal iterator traits
   used by `for` loops and collection cursors.

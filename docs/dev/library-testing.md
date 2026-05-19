@@ -108,6 +108,32 @@ identifies the exact case:
   replacement, lookup, and rotation-path behavior.
 - `std-collections-tree-iter.ari`: sorted `TreeMap.keys`, `TreeMap.values`,
   `TreeSet.iter`, and direct `TreeSet` `IntoIterator` successor traversal.
+- `deque/std-collections-deque.ari`: `Deque[T]` front/back pushes and pops,
+  circular growth, optional helpers, root aliasing, and direct `IntoIterator`.
+- `ring-buffer/std-collections-ring-buffer.ari`: `RingBuffer[T]` full-state
+  push rejection, overwrite-oldest behavior, FIFO pop order, wraparound reads,
+  optional helpers, and iteration.
+- `linked-list/std-collections-linked-list.ari`: `LinkedList[T]` front/back
+  operations, indexed removal, freed-slot reuse, optional helpers, root
+  aliasing, and direct iteration.
+- `heap/std-collections-heap.ari`: `BinaryHeap[T]` and `PriorityQueue[T]`
+  comparator-driven max-priority ordering, growth, optional helpers, and root
+  aliases.
+- `std-collections-deque-iter-after-reset.ari`: negative source-zone
+  provenance diagnostic for deque cursors after reset.
+- `std-collections-ring-buffer-after-reset.ari`: negative source-zone
+  provenance diagnostic for ring buffer handles after reset.
+- `std-collections-linked-list-iter-after-reset.ari`: negative source-zone
+  provenance diagnostic for linked-list cursors after reset.
+- `std-collections-deque-push-different-zone.ari`: negative same-zone growth
+  diagnostic for deque push with the wrong allocation zone.
+- `std-collections-linked-list-push-different-zone.ari`: negative same-zone
+  growth diagnostic for linked-list push with the wrong allocation zone.
+- `std-collections-binary-heap-push-different-zone.ari`: negative same-zone
+  growth diagnostic for binary-heap push with the wrong allocation zone.
+- `std-collections-priority-queue-push-different-zone.ari`: negative
+  same-zone growth diagnostic for priority-queue push with the wrong
+  allocation zone.
 - `std-collections-tree-map-keys-after-reset.ari`: negative source-zone
   provenance diagnostic for tree map key cursors after reset.
 - `std-collections-tree-map-values-after-reset.ari`: negative source-zone

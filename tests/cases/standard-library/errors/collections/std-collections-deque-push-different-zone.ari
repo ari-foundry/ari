@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var left = zone::create(128);
+  var right = zone::create(128);
+  var deque = Deque::new<i64>(ref mut left, 1);
+
+  deque.push_back(ref mut right, 5);
+
+  zone::destroy(right);
+  zone::destroy(left);
+  return 0;
+}

@@ -31,9 +31,11 @@ byte-oriented file handle slice with mode-string opens for read, write,
 append, and read/write access. Source
 collection work includes `std::collections::Set[T]` as a linear explicit-zone
 set with insertion-order access, optional access, replace-or-insert updates,
-iterator support, and reserve growth; real hash-table `HashMap`/`HashSet`
-handles with live-bucket iterators; and red-black-tree `TreeMap`/`TreeSet`
-handles with sorted key/value iteration.
+iterator support, and reserve growth; growable `Deque`, bounded `RingBuffer`,
+zone-backed `LinkedList`, and comparator-driven `BinaryHeap`/`PriorityQueue`
+handles; real hash-table `HashMap`/`HashSet` handles with live-bucket
+iterators; and red-black-tree `TreeMap`/`TreeSet` handles with sorted
+key/value iteration.
 A few declarations are still compiler-known because the
 current language cannot express them directly: layout queries, typed raw
 pointer operations, runtime IO hooks, explicit zone allocation, formatting

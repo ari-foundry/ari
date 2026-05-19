@@ -67,8 +67,13 @@ pub mod vec;
 pub use vec::Vec;
 
 pub mod collections;
+pub use collections::BinaryHeap;
+pub use collections::Deque;
 pub use collections::HashMap;
 pub use collections::HashSet;
+pub use collections::LinkedList;
+pub use collections::PriorityQueue;
+pub use collections::RingBuffer;
 pub use collections::Set;
 pub use collections::TreeMap;
 pub use collections::TreeSet;

@@ -788,6 +788,34 @@ check-prelude: $(TARGET)
 	grep -q 'std__collections__TreeSet_i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-tree-iter.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf
 	$(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 39
+	$(TARGET) tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-deque.ll
+	grep -q '_ARNv3std11collections12deque__G_i64' $(BUILD_DIR)/prelude/std-collections-deque.ll
+	grep -q '_ARNv4impl28std__collections__Deque_i64_8inherent10push_front' $(BUILD_DIR)/prelude/std-collections-deque.ll
+	grep -q '_ARNv4impl28std__collections__Deque_i64_8inherent9push_back' $(BUILD_DIR)/prelude/std-collections-deque.ll
+	grep -q 'std__collections__DequeIter_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-deque.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari -o $(BUILD_DIR)/prelude/std-collections-deque.elf
+	$(BUILD_DIR)/prelude/std-collections-deque.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/standard-library/ok/collections/ring-buffer/std-collections-ring-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-ring-buffer.ll
+	grep -q '_ARNv3std11collections18ring_buffer__G_i64' $(BUILD_DIR)/prelude/std-collections-ring-buffer.ll
+	grep -q '_ARNv4impl33std__collections__RingBuffer_i64_8inherent4push' $(BUILD_DIR)/prelude/std-collections-ring-buffer.ll
+	grep -q '_ARNv4impl33std__collections__RingBuffer_i64_8inherent14push_overwrite' $(BUILD_DIR)/prelude/std-collections-ring-buffer.ll
+	grep -q 'std__collections__RingBufferIter_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-ring-buffer.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/ring-buffer/std-collections-ring-buffer.ari -o $(BUILD_DIR)/prelude/std-collections-ring-buffer.elf
+	$(BUILD_DIR)/prelude/std-collections-ring-buffer.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/standard-library/ok/collections/linked-list/std-collections-linked-list.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-linked-list.ll
+	grep -q '_ARNv3std11collections18linked_list__G_i64' $(BUILD_DIR)/prelude/std-collections-linked-list.ll
+	grep -q '_ARNv3std11collections29linked_list_alloc_node__G_i64' $(BUILD_DIR)/prelude/std-collections-linked-list.ll
+	grep -q '_ARNv4impl33std__collections__LinkedList_i64_8inherent13try_remove_at' $(BUILD_DIR)/prelude/std-collections-linked-list.ll
+	grep -q 'std__collections__LinkedListIter_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-linked-list.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/linked-list/std-collections-linked-list.ari -o $(BUILD_DIR)/prelude/std-collections-linked-list.elf
+	$(BUILD_DIR)/prelude/std-collections-linked-list.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/standard-library/ok/collections/heap/std-collections-heap.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-heap.ll
+	grep -q '_ARNv3std11collections18binary_heap__G_i64' $(BUILD_DIR)/prelude/std-collections-heap.ll
+	grep -q '_ARNv3std11collections21priority_queue__G_i64' $(BUILD_DIR)/prelude/std-collections-heap.ll
+	grep -q '_ARNv3std11collections28binary_heap_sift_down__G_i64' $(BUILD_DIR)/prelude/std-collections-heap.ll
+	grep -q '_ARNv4impl36std__collections__PriorityQueue_i64_8inherent4push' $(BUILD_DIR)/prelude/std-collections-heap.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/heap/std-collections-heap.ari -o $(BUILD_DIR)/prelude/std-collections-heap.elf
+	$(BUILD_DIR)/prelude/std-collections-heap.elf; code=$$?; test $$code -eq 42
 	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
 	$(TARGET) tests/cases/standard-library/ok/runtime/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
@@ -993,6 +1021,10 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 39; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-deque.elf; $(BUILD_DIR)/prelude/std-collections-deque.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/ring-buffer/std-collections-ring-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-ring-buffer.elf; $(BUILD_DIR)/prelude/std-collections-ring-buffer.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/linked-list/std-collections-linked-list.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-linked-list.elf; $(BUILD_DIR)/prelude/std-collections-linked-list.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/heap/std-collections-heap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-heap.elf; $(BUILD_DIR)/prelude/std-collections-heap.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/std-prelude-local-shadow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; code=$$?; test $$code -eq 8; fi
 	$(TARGET) --no-implicit-std --module-path lib tests/cases/standard-library/ok/prelude/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
@@ -1122,6 +1154,20 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'cursor' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-tree-set-iter-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-tree-set-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::collections::TreeSet.insert zone argument must match the tree set allocation zone" $(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-deque-iter-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-deque-iter-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-deque-iter-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'cursor' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-deque-iter-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-ring-buffer-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-ring-buffer-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-ring-buffer-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'buffer' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-ring-buffer-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-linked-list-iter-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-linked-list-iter-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-linked-list-iter-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'cursor' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-linked-list-iter-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-deque-push-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-deque-push-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-deque-push-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::collections::Deque.push_back zone argument must match the deque allocation zone" $(BUILD_DIR)/prelude/std-collections-deque-push-different-zone.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-linked-list-push-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-linked-list-push-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-linked-list-push-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::collections::LinkedList.push_front zone argument must match the linked list allocation zone" $(BUILD_DIR)/prelude/std-collections-linked-list-push-different-zone.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-binary-heap-push-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-binary-heap-push-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-binary-heap-push-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::collections::BinaryHeap.push zone argument must match the binary heap allocation zone" $(BUILD_DIR)/prelude/std-collections-binary-heap-push-different-zone.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-priority-queue-push-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-priority-queue-push-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-priority-queue-push-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::collections::PriorityQueue.push zone argument must match the priority queue allocation zone" $(BUILD_DIR)/prelude/std-collections-priority-queue-push-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/prelude-slice-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/prelude-slice-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.err 2>&1; then exit 1; fi

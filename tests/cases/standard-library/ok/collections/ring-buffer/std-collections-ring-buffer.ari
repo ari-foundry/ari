@@ -1,0 +1,83 @@
+// Covers fixed-capacity ring buffers: full detection, FIFO pop order,
+// overwrite semantics, wraparound reads, iteration, and root aliasing.
+fn main() -> i64 {
+  var zone = zone::create(2048);
+  var buffer = RingBuffer::new<i64>(ref mut zone, 3);
+  var failure = 0;
+
+  if !buffer.is_empty() {
+    failure = 1;
+  }
+  if buffer.is_full() {
+    failure = 2;
+  }
+  if !buffer.push(1) {
+    failure = 3;
+  }
+  buffer.push(2);
+  buffer.push(3);
+  if !buffer.is_full() {
+    failure = 4;
+  }
+  if buffer.push(4) {
+    failure = 5;
+  }
+  if buffer.peek() != 1 {
+    failure = 6;
+  }
+  if buffer.pop() != 1 {
+    failure = 7;
+  }
+  if !buffer.push(4) {
+    failure = 8;
+  }
+  if buffer.get(0) != 2 {
+    failure = 9;
+  }
+  if buffer.get(2) != 4 {
+    failure = 10;
+  }
+
+  let overwritten = buffer.push_overwrite(5);
+  if overwritten.unwrap_or(0) != 2 {
+    failure = 11;
+  }
+  if buffer.get(0) != 3 {
+    failure = 12;
+  }
+  if buffer.get(2) != 5 {
+    failure = 13;
+  }
+  let missing_get = buffer.try_get(3);
+  if !missing_get.is_none() {
+    failure = 14;
+  }
+
+  var sum = 0;
+  for value in buffer {
+    sum = sum + value;
+  }
+  if sum != 12 {
+    failure = 15;
+  }
+
+  if buffer.pop() != 3 {
+    failure = 16;
+  }
+  if buffer.pop() != 4 {
+    failure = 17;
+  }
+  if buffer.pop() != 5 {
+    failure = 18;
+  }
+  let empty_pop = buffer.try_pop();
+  if !empty_pop.is_none() {
+    failure = 19;
+  }
+
+  zone::destroy(zone);
+  if failure != 0 {
+    return failure;
+  }
+  return 42;
+}

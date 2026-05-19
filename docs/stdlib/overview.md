@@ -35,7 +35,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
-| `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]`, `Iter[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, live-bucket hash iteration, and sorted tree iteration. |
+| `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
 | `std::iter` | Range and iterator traits. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`. |
 | `std::fmt` | Formatting trait surface. | `Display::format_in`, `Debug`. |
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
@@ -50,10 +50,12 @@ zone. Methods with an `_in` suffix take an explicit zone for growth or copying;
 methods with a `_to` suffix copy a derived value into a target zone.
 For tracked local `std::vec::Vec[T]` and `std::string::String` handles, Ari can
 infer the same source zone for common mutating methods. `std::collections`
-keeps growth explicit today: `Set`, `HashMap`, `HashSet`, `TreeMap`, and
-`TreeSet` spell `ref mut zone` on inserting/replacing/reserving methods. Their
-handles keep the same zone provenance as their backing storage, and `Set`
-iterator cursors preserve the set's provenance.
+keeps growth explicit today: `Set`, `Deque`, `LinkedList`, `BinaryHeap`,
+`PriorityQueue`, `HashMap`, `HashSet`, `TreeMap`, and `TreeSet` spell
+`ref mut zone` on methods that may allocate. Fixed-capacity `RingBuffer`
+allocates only at construction. Their handles keep the same zone provenance as
+their backing storage, and collection iterator cursors preserve that
+provenance.
 
 Use `zone::destroy(zone)` when a manually created zone is no longer needed.
 Pointers, strings, vectors, boxes, and slices derived from that zone become
@@ -145,14 +147,17 @@ hooks. The handle is a visible value today and should become a stronger owned
 resource when OS resource ownership is modeled by the language.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
-small, insertion-order, linear set with iterator support. `HashMap[K,V]` and
-`HashSet[T]` are real open-addressed hash tables with tombstones and live-bucket
-iterators. `TreeMap[K,V]` and `TreeSet[T]` are red-black trees with sorted
-successor iterators for keys, values, and set values. Hash and tree
-constructors take explicit hash/comparator functions until `Hash`/`Ord` trait
-dispatch is strong enough for fully trait-driven containers. The compiler only
-recognizes the handle shapes so zone reset/destroy invalidation and same-zone
-growth diagnostics stay as strong as `std::vec::Vec[T]`.
+small, insertion-order, linear set with iterator support. `Deque[T]` and
+`RingBuffer[T]` cover growable and bounded queue shapes, `LinkedList[T]` uses
+zone-backed reusable node slots, and `BinaryHeap[T]`/`PriorityQueue[T]` cover
+highest-priority removal. `HashMap[K,V]` and `HashSet[T]` are real
+open-addressed hash tables with tombstones and live-bucket iterators.
+`TreeMap[K,V]` and `TreeSet[T]` are red-black trees with sorted successor
+iterators for keys, values, and set values. Hash, tree, and heap constructors
+take explicit policy functions until trait dispatch is strong enough for fully
+trait-driven containers. The compiler only recognizes the handle shapes so
+zone reset/destroy invalidation and same-zone growth diagnostics stay as strong
+as `std::vec::Vec[T]`.
 
 `std::zone` keeps allocation visible. Raw byte allocation and lifecycle hooks
 are runtime-backed, while `alloc_array<T>` is source Ari that packages the
