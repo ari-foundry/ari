@@ -9,6 +9,43 @@ pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
 pub extern "ari" fn read_line() -> string = "ari_builtin_read_line";
 pub extern "ari" fn read_line_owned(zone: ref mut Zone) -> std::string::String = "ari_builtin_read_line_owned";
 
+pub struct Stdin {
+}
+
+pub struct Stdout {
+}
+
+pub struct Cursor {
+  data: std::Slice[u8],
+  mut position: i64,
+}
+
+pub trait Reader {
+  fn read_byte(self: ref mut Self) -> i64;
+}
+
+pub trait Writer {
+  fn write_byte(self: ref mut Self, value: u8) -> bool;
+  fn flush(self: ref mut Self) -> bool;
+}
+
+pub trait Seek {
+  fn position(self: ref Self) -> i64;
+  fn seek(self: ref mut Self, position: i64) -> bool;
+}
+
+pub fn stdin() -> std::io::Stdin {
+  return std::io::Stdin {};
+}
+
+pub fn stdout() -> std::io::Stdout {
+  return std::io::Stdout {};
+}
+
+pub fn cursor(values: std::Slice[u8]) -> std::io::Cursor {
+  return std::io::Cursor { data: values, position: 0 };
+}
+
 pub fn write_bytes(values: std::Slice[u8]) -> i64 {
   var index = 0;
   while index < values.len {
@@ -16,4 +53,81 @@ pub fn write_bytes(values: std::Slice[u8]) -> i64 {
     index = index + 1;
   }
   return index;
+}
+
+pub fn read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool {
+  var index = 0;
+  while index < len {
+    let value = reader.read_byte();
+    if value < 0 {
+      return false;
+    }
+    std::mem::ptr_store(std::mem::ptr_add(output, index), value as u8);
+    index = index + 1;
+  }
+  return true;
+}
+
+pub fn write_all[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> bool {
+  var index = 0;
+  while index < values.len {
+    if !writer.write_byte(values[index]) {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+pub fn flush[W: Writer](writer: ref mut W) -> bool {
+  return writer.flush();
+}
+
+impl std::io::Reader for std::io::Stdin {
+  pub fn read_byte(self: ref mut Self) -> i64 {
+    return std::io::read_byte();
+  }
+}
+
+impl std::io::Writer for std::io::Stdout {
+  pub fn write_byte(self: ref mut Self, value: u8) -> bool {
+    return std::io::write_byte(value) >= 0;
+  }
+
+  pub fn flush(self: ref mut Self) -> bool {
+    // The current stdout hook writes directly; a real flush hook belongs with
+    // future owned OS handles.
+    return true;
+  }
+}
+
+impl std::io::Reader for std::io::Cursor {
+  pub fn read_byte(self: ref mut Self) -> i64 {
+    if self.position < 0 {
+      return -1;
+    }
+    if self.position >= self.data.len {
+      return -1;
+    }
+    let value = self.data[self.position];
+    self.position = self.position + 1;
+    return value as i64;
+  }
+}
+
+impl std::io::Seek for std::io::Cursor {
+  pub fn position(self: ref Self) -> i64 {
+    return self.position;
+  }
+
+  pub fn seek(self: ref mut Self, position: i64) -> bool {
+    if position < 0 {
+      return false;
+    }
+    if position > self.data.len {
+      return false;
+    }
+    self.position = position;
+    return true;
+  }
 }

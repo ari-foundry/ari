@@ -11,7 +11,9 @@ limits, examples, and test files for one module.
 - [std::string](string.md): zone-backed owned byte-string handles, growth,
   borrowed views, byte search, ASCII case search, trim views/copies, and
   whole/prefix parsing helpers.
-- [std::io](io.md): low-level process IO hooks plus source byte-slice output.
+- [std::io](io.md): low-level process IO hooks plus `Reader`/`Writer`/`Seek`,
+  `stdin`/`stdout`, `Cursor`, exact reads, whole-slice writes, and current
+  buffered/pipe roadmap notes.
 - [std::input](input.md): stdin-facing byte and line input, including
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,

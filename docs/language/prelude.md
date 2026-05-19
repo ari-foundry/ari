@@ -282,6 +282,21 @@ io::newline()
 let byte = io::read_byte()
 ```
 
+For reusable byte code, `std::io` also has source traits and small handles:
+
+```ari
+var source = [65u8, 66u8]
+var cursor = io::cursor(source.as_slice())
+var out = io::stdout()
+io::write_all<io::Stdout>(ref mut out, source.as_slice())
+io::flush<io::Stdout>(ref mut out)
+```
+
+`io::Cursor` implements `io::Reader` and `io::Seek` over a borrowed
+`Slice[u8]`. `io::Stdout` implements `io::Writer`. `io::read_exact` copies
+from any `Reader` into a raw byte buffer and returns `false` if EOF arrives
+early.
+
 Unqualified aliases are also available:
 
 ```ari
@@ -425,6 +440,12 @@ io::write_u64(value: u64) -> i64
 io::write_bool(value: bool) -> i64
 io::write_byte(value: u8) -> i64
 io::write_bytes(values: Slice[u8]) -> i64
+io::stdin() -> io::Stdin
+io::stdout() -> io::Stdout
+io::cursor(values: Slice[u8]) -> io::Cursor
+io::read_exact[R: io::Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
+io::write_all[W: io::Writer](writer: ref mut W, values: Slice[u8]) -> bool
+io::flush[W: io::Writer](writer: ref mut W) -> bool
 io::newline() -> i64
 io::read_byte() -> i64
 io::read_line() -> string

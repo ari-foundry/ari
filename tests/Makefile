@@ -174,6 +174,12 @@ check-prelude: $(TARGET)
 	grep -qx "AB" $(BUILD_DIR)/prelude/std-io-byte-slice.out
 	grep -qx "CD" $(BUILD_DIR)/prelude/std-io-byte-slice.out
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/io/std-io-byte-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-io-byte-slice.elf; $(BUILD_DIR)/prelude/std-io-byte-slice.elf >$(BUILD_DIR)/prelude/std-io-byte-slice.out; code=$$?; test $$code -eq 6; grep -qx "AB" $(BUILD_DIR)/prelude/std-io-byte-slice.out; grep -qx "CD" $(BUILD_DIR)/prelude/std-io-byte-slice.out; fi
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-traits-cursor.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-traits-cursor.ll
+	grep -q '_ARNv3std2io29read_exact__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-traits-cursor.ll
+	grep -q '_ARNv3std2io28write_all__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-traits-cursor.ll
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-traits-cursor.ari -o $(BUILD_DIR)/prelude/std-io-traits-cursor.elf
+	$(BUILD_DIR)/prelude/std-io-traits-cursor.elf >$(BUILD_DIR)/prelude/std-io-traits-cursor.out; code=$$?; test $$code -eq 8
+	grep -qx "OK" $(BUILD_DIR)/prelude/std-io-traits-cursor.out
 	$(TARGET) tests/cases/standard-library/ok/format/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.elf
 	$(BUILD_DIR)/prelude/raw-string-literals.elf >$(BUILD_DIR)/prelude/raw-string-literals.out; code=$$?; test $$code -eq 141
 	grep -qx "A" $(BUILD_DIR)/prelude/raw-string-literals.out

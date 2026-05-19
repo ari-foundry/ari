@@ -64,11 +64,18 @@ io::write_u64(value)
 io::write_bool(value)
 io::write_byte(value)
 io::write_bytes(values)
+io::stdin()
+io::stdout()
+io::cursor(values)
+io::read_exact[R: Reader](reader: ref mut R, output, len)
+io::write_all[W: Writer](writer: ref mut W, values)
+io::flush[W: Writer](writer: ref mut W)
 io::newline()
 ```
 
 Use `std::input` when the code is about reading stdin as user input. Use
-`std::io` when testing or documenting the raw runtime hooks directly.
+`std::io` when testing or documenting the raw runtime hooks directly, or when
+generic byte code should accept a `Reader`, `Writer`, or `Seek` implementation.
 
 ## Tests
 

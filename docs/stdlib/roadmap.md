@@ -22,8 +22,9 @@ identity/from/into helpers, `context` runtime hooks plus the source
 `remove` and path-state helpers `current_dir`/`try_current_dir`/
 `set_current_dir`/`executable_path`/`try_executable_path`,
 `input` runtime hooks plus the source `try_read_byte` EOF helper,
-`io` runtime hooks plus source byte-slice output, current `process`
-id/exit/status helpers plus the first POSIX fork/wait slice, `thread`
+`io` runtime hooks plus source `Reader`/`Writer`/`Seek`, `Stdin`, `Stdout`,
+`Cursor`, `read_exact`, `write_all`, `flush`, and byte-slice output, current
+`process` id/exit/status helpers plus the first POSIX fork/wait slice, `thread`
 function-pointer spawn/join/yield hooks plus runtime ids and source handle
 helpers, `sync` concrete `AtomicI64` sequentially consistent load/store/swap/
 fetch-add/compare-exchange hooks plus source method wrappers, `time`
@@ -48,6 +49,7 @@ work. Each one should land in small tested slices with natural API names.
 
 | Family | Purpose | Current Or Planned APIs |
 | --- | --- | --- |
+| `std::io` | Provide byte-oriented process IO contracts that other libraries can share without hiding raw hooks. | Current `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Cursor`, `stdin`, `stdout`, `cursor`, `read_exact`, `write_all`, `flush`, and raw scalar/byte/line hooks; future `Stderr`, `stderr`, `pipe`, `BufReader`, `BufWriter`, and file adapters after owned OS handles and buffer flushing policy are settled. |
 | `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future path normalization and platform-specific expansion. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `exit`, `success`, `failure`, status predicates, POSIX `fork`, `wait`, and child/error predicates; future portable `spawn`, richer status/result values, and process handles. |
 | `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, whole-file `write`/`append`, `read_to_string`, and `close`; future owned resource policy, metadata, directory iteration, path helpers, and an options-style open builder. |

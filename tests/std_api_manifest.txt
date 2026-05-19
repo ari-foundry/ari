@@ -130,10 +130,16 @@ fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelu
 fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
 fn std::input::try_read_byte|std input byte option tests; docs/stdlib/modules/input.md
+fn std::io::cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
+fn std::io::flush[W: Writer]|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::newline|prelude IO and print tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
+fn std::io::read_exact[R: Reader]|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::read_line|prelude read_line/input tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_line_owned|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+fn std::io::stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
+fn std::io::stdout|std io trait/cursor tests; docs/stdlib/modules/io.md
+fn std::io::write_all[W: Writer]|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::write_bool|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_bytes|std io byte slice tests; docs/stdlib/modules/io.md
@@ -613,6 +619,9 @@ struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdl
 struct std::collections::TreeSetIter[T]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
 struct std::fs::File|std fs file handle tests; docs/stdlib/modules/fs.md
+struct std::io::Cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
+struct std::io::Stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
+struct std::io::Stdout|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -654,6 +663,9 @@ trait std::convert::TryFrom[T]|convert module trait surface; docs/dev/test-matri
 trait std::convert::TryInto[T]|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait std::fmt::Debug|fmt module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait std::fmt::Display|fmt module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::io::Reader|std io trait/cursor tests; docs/stdlib/modules/io.md
+trait std::io::Seek|std io trait/cursor tests; docs/stdlib/modules/io.md
+trait std::io::Writer|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait std::iter::IntoIterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait std::iter::Iterable[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait std::iter::Iterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
@@ -677,6 +689,11 @@ trait-method std::cmp::PartialOrd[T]::lt|cmp module trait surface; docs/dev/test
 trait-method std::convert::From[T]::from|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::convert::Into[T]::into|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::fmt::Display::format_in|format_in Display borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+trait-method std::io::Reader::read_byte|std io trait/cursor tests; docs/stdlib/modules/io.md
+trait-method std::io::Seek::position|std io trait/cursor tests; docs/stdlib/modules/io.md
+trait-method std::io::Seek::seek|std io trait/cursor tests; docs/stdlib/modules/io.md
+trait-method std::io::Writer::flush|std io trait/cursor tests; docs/stdlib/modules/io.md
+trait-method std::io::Writer::write_byte|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
 use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md

@@ -31,7 +31,9 @@ The current `std` package already provides:
   fallback helpers, including consuming payload predicate helpers
 - assertion, panic, `move`, and `take` helpers
 - IO/input/context/env declarations and source helpers such as
-  `io::write_bytes`, `input::try_read_byte`, `context::has_arg`,
+  `io::Reader`, `io::Writer`, `io::Seek`, `io::cursor`,
+  `io::read_exact`, `io::write_all`, `io::flush`, `io::write_bytes`,
+  `input::try_read_byte`, `context::has_arg`,
   `context::user_arg_count`, `context::is_main_thread`,
   `env::try_arg`, `env::program_name`, `env::try_get`, and current-process
   environment/path hooks `get`/`has`/`set`/`remove`/`current_dir`/
@@ -197,6 +199,7 @@ Likely compiler work:
 
 | Module | Next Useful Slice | Tests To Add First | Compiler Work If Needed |
 | --- | --- | --- | --- |
+| `std::io` | Grow from the current `Reader`/`Writer`/`Seek`, `Stdin`, `Stdout`, `Cursor`, `read_exact`, `write_all`, and `flush` slice into `stderr`, `pipe`, `BufReader`, `BufWriter`, and file adapters. | current `std-io-byte-slice` raw stdout byte-slice output and `std-io-traits-cursor` trait/cursor/exact-read/write-all/flush checks; future stderr routing, pipe EOF/close behavior, buffered read fill behavior, buffered writer flush behavior, and `File` trait-adapter tests. | No compiler work for the current source slice. Future buffered generic wrappers may need generic aggregate/layout polish, while `stderr` and `pipe` need runtime hooks and owned OS handle policy. |
 | `std::option` | Inspect-style helpers after borrowed function-pointer ergonomics are clear. | Predicate/filter/combinator/conversion/flatten/transpose behavior plus wrong-payload negative tests. | Generic enum method specialization diagnostics. |
 | `std::result` | Error conversion helpers that use `From`/`Into` after trait impl patterns mature. | `Result` projection/conversion, transpose, eager/lazy fallback, and `?` residual tests. | Residual conversion and trait-bound selection. |
 | `std::mem` | Safer copy/fill helpers for copyable values. | Scalar, aggregate, and owner-rejection tests. | Layout service and ownership-aware raw memory checks. |

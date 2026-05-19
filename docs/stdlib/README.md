@@ -21,8 +21,11 @@ The standard library is ordinary Ari source whenever possible. It lives at
 `lib/std.arih`, with child modules in `lib/std/`. User-facing argument,
 environment-variable, current-directory, and executable-path helpers now live
 in `std::env`, while `std::context` stays the low-level runtime context layer.
-`std::process` starts the OS-facing surface with current process id, explicit
-exit helpers, and the first POSIX fork/wait slice, `std::thread` adds
+`std::io` now has source `Reader`/`Writer`/`Seek` contracts, `Stdin`,
+`Stdout`, `Cursor`, `read_exact`, `write_all`, and `flush` on top of the raw
+process IO hooks. `std::process` starts the OS-facing surface with current
+process id, explicit exit helpers, and the first POSIX fork/wait slice,
+`std::thread` adds
 function-pointer spawn/join, scheduler yield, and per-thread runtime ids,
 `std::sync` adds the first concrete atomic integer primitive, `std::time` adds
 monotonic instants, wall-clock timestamps, non-negative

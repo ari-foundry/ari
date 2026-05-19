@@ -303,10 +303,22 @@ handle once and do not reuse copied handles after closing.
 
 ## IO And Input
 
-`std::io` exposes low-level process IO hooks, while `std::input` keeps
-stdin-oriented helper names:
+`std::io` exposes low-level process IO hooks and a small trait surface for
+byte readers/writers, while `std::input` keeps stdin-oriented helper names:
 
 ```ari
+io::Reader
+io::Writer
+io::Seek
+io::Stdin
+io::Stdout
+io::Cursor
+io::stdin()
+io::stdout()
+io::cursor(values)
+io::read_exact[R: Reader](reader: ref mut R, output, len)
+io::write_all[W: Writer](writer: ref mut W, values)
+io::flush[W: Writer](writer: ref mut W)
 io::write_i64(value)
 io::write_u64(value)
 io::write_bool(value)
@@ -328,6 +340,12 @@ input::owned_line(ref mut zone)
 writes every byte in a `Slice[u8]` and returns the byte count attempted.
 Borrowed line input uses a reusable runtime buffer; use the owned forms when
 the line must survive later input reads.
+
+`io::Cursor` implements `Reader` and `Seek` over a borrowed `Slice[u8]`.
+`io::Stdout` implements `Writer` over the current stdout hook, with `flush`
+currently succeeding as a no-op. `stderr`, `pipe`, `BufReader`, and
+`BufWriter` remain roadmap items until owned OS handles and zone-backed buffer
+wrappers are specified.
 
 ## Memory And Zones
 
