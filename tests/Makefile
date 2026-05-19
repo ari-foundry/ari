@@ -271,8 +271,20 @@ check-prelude: $(TARGET)
 	grep -q "call void @exit(i32 %narrow)" $(BUILD_DIR)/prelude/std-process-exit.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari -o $(BUILD_DIR)/prelude/std-process-exit.elf
 	$(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-fork-wait.ll
+	grep -q "@ari_builtin_process_fork" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
+	grep -q "@ari_builtin_process_wait" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
+	grep -q "declare i32 @fork" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
+	grep -q "declare i32 @waitpid" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
+	grep -F -q "std7process8is_child" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
+	grep -F -q "std7process9is_parent" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
+	grep -F -q "std7process13is_fork_error" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
+	grep -F -q "std7process13is_wait_error" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari -o $(BUILD_DIR)/prelude/std-process-fork-wait.elf
+	$(BUILD_DIR)/prelude/std-process-fork-wait.elf; code=$$?; test $$code -eq 112
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-basic.elf; $(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit.elf; $(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-fork-wait.elf; $(BUILD_DIR)/prelude/std-process-fork-wait.elf; code=$$?; test $$code -eq 112; fi
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_monotonic_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_unix_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll

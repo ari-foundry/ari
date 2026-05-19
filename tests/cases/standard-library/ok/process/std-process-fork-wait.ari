@@ -1,0 +1,41 @@
+// Covers the first child-process slice: POSIX fork, parent/child predicates,
+// explicit child exit, wait decoding, and wait failure sentinels.
+fn main() -> i64 {
+  let child = process::fork();
+
+  if process::is_fork_error(child) {
+    return 2;
+  }
+
+  if process::is_child(child) {
+    process::exit(37);
+    return 1;
+  }
+
+  var score = 0;
+  if process::is_parent(child) {
+    score = score + 11;
+  }
+  if process::is_child(0) {
+    score = score + 13;
+  }
+  if process::is_fork_error(-1) {
+    score = score + 17;
+  }
+
+  let status = process::wait(child);
+  if status == 37 {
+    score = score + 19;
+  }
+  if process::is_success(status - 37) {
+    score = score + 23;
+  }
+
+  // The only child has already been consumed, so waiting for any child should
+  // report a failure sentinel on the current POSIX runtime path.
+  if process::is_wait_error(process::wait(-1)) {
+    score = score + 29;
+  }
+
+  return score;
+}

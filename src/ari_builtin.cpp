@@ -99,6 +99,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::process::id", "ari_builtin_process_id"},
         {"process::exit", "ari_builtin_process_exit"},
         {"std::process::exit", "ari_builtin_process_exit"},
+        {"process::fork", "ari_builtin_process_fork"},
+        {"std::process::fork", "ari_builtin_process_fork"},
+        {"process::wait", "ari_builtin_process_wait"},
+        {"std::process::wait", "ari_builtin_process_wait"},
         {"time::monotonic_nanos", "ari_builtin_time_monotonic_nanos"},
         {"std::time::monotonic_nanos", "ari_builtin_time_monotonic_nanos"},
         {"time::unix_nanos", "ari_builtin_time_unix_nanos"},
@@ -207,6 +211,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_env_executable_path") return builtin_sig({}, source_string);
     if (symbol == "ari_builtin_process_id") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_process_exit") return builtin_sig({i64}, void_type);
+    if (symbol == "ari_builtin_process_fork") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_process_wait") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_time_monotonic_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_unix_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);

@@ -125,9 +125,10 @@ current-process variable and `env::remove(name)` unsets it; both return whether
 the host accepted the request. `env::current_dir()` and
 `env::executable_path()` return borrowed runtime strings, with `try_*` wrappers
 for ordinary failure; `env::set_current_dir(path)` mutates the current process
-working directory. Child process and thread APIs are still roadmap items.
+working directory. Portable child-process spawn handles and thread APIs are
+still roadmap items.
 
-Current-process helpers live in `std::process`:
+Process helpers live in `std::process`:
 
 ```ari
 process::id()
@@ -136,12 +137,24 @@ process::success()
 process::failure()
 process::is_success(code)
 process::is_failure(code)
+process::fork()
+process::wait(pid)
+process::is_child(pid)
+process::is_parent(pid)
+process::is_fork_error(pid)
+process::is_wait_error(status)
 ```
 
 `id()` returns the host process id as `i64`. `exit(code)` terminates the
 process and does not return. The status helpers are source functions for the
-common `0` success and `1` failure convention. Child process handles, spawn,
-wait, and fork are still future work.
+common `0` success and `1` failure convention.
+
+`fork()` and `wait(pid)` are the first POSIX child-process slice on the
+Linux/LLVM runtime path. `fork()` returns `0` in the child, a positive child pid
+in the parent, and a negative value on failure; use `is_child`, `is_parent`,
+and `is_fork_error` to make that branch readable. `wait(pid)` returns a normal
+child exit status or `-1`; use `is_wait_error` for that sentinel. Rich process
+handles, portable spawn, and detailed status values remain roadmap work.
 
 Runtime-backed time helpers live in `std::time`:
 

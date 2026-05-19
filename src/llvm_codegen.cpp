@@ -389,6 +389,8 @@ private:
                symbol == "chdir" ||
                symbol == "readlink" ||
                symbol == "getpid" ||
+               symbol == "fork" ||
+               symbol == "waitpid" ||
                symbol == "clock_gettime" ||
                symbol == "nanosleep" ||
                symbol == "access" ||
@@ -464,6 +466,8 @@ private:
         declarations_ << "declare i32 @chdir(ptr)\n";
         declarations_ << "declare i64 @readlink(ptr, ptr, i64)\n";
         declarations_ << "declare i32 @getpid()\n";
+        declarations_ << "declare i32 @fork()\n";
+        declarations_ << "declare i32 @waitpid(i32, ptr, i32)\n";
         declarations_ << "declare i32 @clock_gettime(i32, ptr)\n";
         declarations_ << "declare i32 @nanosleep(ptr, ptr)\n";
         declarations_ << "declare i32 @access(ptr, i32)\n";
@@ -736,6 +740,36 @@ private:
         line("  %narrow = trunc i64 %code to i32");
         line("  call void @exit(i32 %narrow)");
         line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_process_fork() {");
+        line("entry:");
+        line("  %pid32 = call i32 @fork()");
+        line("  %pid = sext i32 %pid32 to i64");
+        line("  ret i64 %pid");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_process_wait(i64 %pid) {");
+        line("entry:");
+        line("  %status.ptr = alloca i32, align 4");
+        line("  %pid32 = trunc i64 %pid to i32");
+        line("  %waited = call i32 @waitpid(i32 %pid32, ptr %status.ptr, i32 0)");
+        line("  %failed = icmp sle i32 %waited, 0");
+        line("  br i1 %failed, label %fail, label %decode");
+        line("decode:");
+        line("  %status = load i32, ptr %status.ptr, align 4");
+        line("  %signal.bits = and i32 %status, 127");
+        line("  %exited = icmp eq i32 %signal.bits, 0");
+        line("  br i1 %exited, label %exit_status, label %fail");
+        line("exit_status:");
+        line("  %shifted = ashr i32 %status, 8");
+        line("  %code32 = and i32 %shifted, 255");
+        line("  %code = sext i32 %code32 to i64");
+        line("  ret i64 %code");
+        line("fail:");
+        line("  ret i64 -1");
         line("}");
         line();
 

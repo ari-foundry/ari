@@ -1,7 +1,9 @@
-// Current-process helpers. Keep these small and explicit until process
-// handles, spawn/wait, and platform fork policy are designed.
+// Process helpers. Keep raw OS boundaries small and explicit until richer
+// child-process handles and cross-platform spawn policy are designed.
 pub extern "ari" fn id() -> i64 = "ari_builtin_process_id";
 pub extern "ari" fn exit(code: i64) -> void = "ari_builtin_process_exit";
+pub extern "ari" fn fork() -> i64 = "ari_builtin_process_fork";
+pub extern "ari" fn wait(pid: i64) -> i64 = "ari_builtin_process_wait";
 
 pub fn success() -> i64 {
   return 0;
@@ -17,4 +19,20 @@ pub fn is_success(code: i64) -> bool {
 
 pub fn is_failure(code: i64) -> bool {
   return !is_success(code);
+}
+
+pub fn is_child(pid: i64) -> bool {
+  return pid == 0;
+}
+
+pub fn is_parent(pid: i64) -> bool {
+  return pid > 0;
+}
+
+pub fn is_fork_error(pid: i64) -> bool {
+  return pid < 0;
+}
+
+pub fn is_wait_error(status: i64) -> bool {
+  return status < 0;
 }

@@ -52,6 +52,8 @@ identifies the exact case:
   success/failure status helper behavior.
 - `std-process-exit.ari`: runtime-backed explicit process exit status
   behavior.
+- `std-process-fork-wait.ari`: runtime-backed POSIX `fork`/`wait` behavior,
+  child/parent predicates, explicit child exit, and wait failure sentinel.
 - `std-time-basic.ari`: runtime-backed monotonic and wall-clock nanosecond
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
 - `std-fs-basic.ari`: runtime-backed file existence, creation/truncating

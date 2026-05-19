@@ -34,8 +34,8 @@ limits, examples, and test files for one module.
 - [std::env](env.md): user-facing process argument and environment-variable
   helpers, including `try_arg`, `program_name`, `try_get`, `set`,
   `current_dir`, `set_current_dir`, and `try_executable_path`.
-- [std::process](process.md): current process id, explicit exit, and status
-  helper functions.
+- [std::process](process.md): current process id, explicit exit, status helper
+  functions, and the first POSIX fork/wait child-process slice.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock
   timestamps, non-negative durations, elapsed-time helpers, and sleep.
 - [std::fs](fs.md): runtime-backed file existence, create/truncate write,

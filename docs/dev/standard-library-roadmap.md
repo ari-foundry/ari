@@ -37,7 +37,7 @@ The current `std` package already provides:
   environment/path hooks `get`/`has`/`set`/`remove`/`current_dir`/
   `set_current_dir`/`executable_path`
 - the first `std::process` current-process helpers: `id`, `exit`, and source
-  status helpers
+  status helpers, plus the first POSIX `fork`/`wait` child-process slice
 - the first `std::time` helpers: monotonic nanosecond reads, wall-clock Unix
   nanosecond reads, sleep, `Duration`, `Instant`, `SystemTime`, and source
   elapsed-time helpers
@@ -157,10 +157,10 @@ Likely compiler work:
   variables into current-directory and executable-path helpers after owned
   string behavior and OS wrapper conventions are stable.
 - Add thin wrappers for file, time, process, thread, synchronization, and
-  syscall-adjacent APIs in small capability-oriented slices. The first time
-  and filesystem slices are implemented; child processes, threads,
-  synchronization, directories, metadata, and raw OS wrappers still need
-  ownership policy.
+  syscall-adjacent APIs in small capability-oriented slices. The first time,
+  filesystem, and POSIX fork/wait process slices are implemented; portable
+  child-process handles, threads, synchronization, directories, metadata, and
+  raw OS wrappers still need ownership policy.
 - Keep OS resources explicit. File handles, process handles, and buffers should
   be visible owners or zone-backed handles.
 - Prefer small modules: `std::env`, `std::fs`, `std::time`, `std::process`,
@@ -194,7 +194,7 @@ Likely compiler work:
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
 | `std::env` | Path normalization and platform-specific policy after the argument, environment-variable, cwd, and executable-path slices. | Current `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future canonicalization and platform differences. | Runtime string ownership, OS wrapper declarations, and platform error policy. |
-| `std::process` | Grow from the current `id`/`exit` seed into child process handles. | current `id`, explicit exit status, source status predicates, future spawn/wait result handling, fork platform guards. | Current id/exit use runtime hooks; spawn/wait/fork need runtime wrappers for POSIX/Windows split and handle ownership. |
+| `std::process` | Grow from the current `id`/`exit`/POSIX fork seed into child process handles. | current `id`, explicit exit status, source status predicates, `std-process-fork-wait` POSIX child branch and wait-status decode; future spawn result handling, richer status values, and platform guards. | Current id/exit/fork/wait use runtime hooks; portable spawn/wait needs runtime wrappers for POSIX/Windows split and handle ownership. |
 | `std::time` | Grow from monotonic/wall-clock reads and sleep into timers and interruption-aware sleep. | current `std-time-basic` duration constructor, elapsed-time, wall-clock, and sleep-hook checks; future sleep-interruption and timer-handle tests. | Current monotonic/unix/sleep hooks use LLVM runtime calls; future timers may need handle ownership and platform-specific wrappers. |
 | `std::fs` | Grow from byte-oriented files into owned resource handles, metadata, directory iteration, and path helpers. | current `std-fs-basic` existence/remove, open/read/write/close, byte-slice write, and `Option[File]` open checks; future invalid close, append mode, metadata, directory, and path tests. | Current file hooks use LLVM runtime calls to `access`, `unlink`, `open`, `read`, `write`, and `close`; future work needs OS-resource ownership/drop policy and platform-specific wrappers. |
 | `std::thread` | Spawn/join handles after function pointer and ownership transfer rules are stable. | join success/failure, moved capture rejection, shared state diagnostics. | Runtime thread wrapper, entry trampoline ABI, and send/share trait policy. |
