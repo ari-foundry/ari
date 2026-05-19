@@ -5,14 +5,15 @@ can work with files without reaching directly for raw syscalls or C ABI
 declarations. The first slices are deliberately small: check whether a path
 exists, open a byte stream with a compact mode string, read and write bytes,
 write or append a byte slice in one call, create/truncate/copy small files,
-read a whole file into Ari's byte-oriented `String`, rename paths, create or
-remove one empty directory, close the handle, and remove a file.
+read a whole file into Ari's byte-oriented `String`, rename paths, create hard
+or symbolic links, create or remove one empty directory, close the handle, and
+remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `read_byte`, `write_byte`, `write_bytes`, `read`, `write`, `append`,
-`truncate`, `copy`, `rename`, `create_dir`, `remove_dir`, `close`, `exists`,
-and `remove`, not type-suffixed names.
+`truncate`, `copy`, `rename`, `hard_link`, `symbolic_link`, `create_dir`,
+`remove_dir`, `close`, `exists`, and `remove`, not type-suffixed names.
 
 ## API
 
@@ -20,6 +21,8 @@ and `remove`, not type-suffixed names.
 fs::exists(path)
 fs::remove(path)
 fs::rename(source, target)
+fs::hard_link(existing, link_path)
+fs::symbolic_link(target, link_path)
 fs::create_dir(path)
 fs::remove_dir(path)
 fs::open(path, mode)
@@ -129,6 +132,18 @@ including replacing some existing targets when the OS allows it. Portable
 overwrite policy is still a future documentation point, so tests use a missing
 target path.
 
+`hard_link(existing, link_path)` creates a new hard link to an existing file
+and returns whether the host accepted the request. The destination path must
+not already exist. This is a thin runtime hook over the host filesystem; cross
+filesystem limitations and platform differences follow the OS.
+
+`symbolic_link(target, link_path)` creates a symbolic link at `link_path` that
+points at `target`. The destination path must not already exist. On the current
+Linux/glibc runtime path this is a direct `symlink` wrapper. Relative targets
+are resolved by the host relative to the directory containing `link_path`, not
+the caller's current directory. Windows-specific file-vs-directory symlink
+behavior remains future platform work.
+
 `create_dir(path)` creates one directory with the current default permission
 mode used by Ari's runtime shim. It does not create parent directories.
 `remove_dir(path)` removes one empty directory. Recursive directory creation,
@@ -149,8 +164,8 @@ recursive removal, and directory iteration are separate future slices.
 | rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)` and empty directory removal with `remove_dir(path)`. |
 | copy | Current: source streaming `copy(source, target)` for byte files. |
-| hard link | Roadmap: runtime `link`/platform wrapper plus capability docs. |
-| symbolic link | Roadmap: runtime `symlink`/Windows split plus capability docs. |
+| hard link | Current: `hard_link(existing, link_path)` runtime hook. |
+| symbolic link | Current: `symbolic_link(target, link_path)` runtime hook on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Roadmap: runtime path resolution returning an owned Ari string/path. |
 | read directory | Roadmap: `DirEntry`/iterator handle and OS-resource ownership policy. |
 | create directory | Current: single-directory `create_dir(path)`; recursive creation is roadmap. |
@@ -249,6 +264,20 @@ if fs::create_dir(dir) {
 }
 ```
 
+Create hard and symbolic links to a file:
+
+```ari
+let hard = "build/prelude/example-fs-hard.tmp";
+let symbolic = "build/prelude/example-fs-symbolic.tmp";
+let symbolic_target = "example-fs.tmp";
+if fs::hard_link(path, hard) {
+  fs::remove(hard);
+}
+if fs::symbolic_link(symbolic_target, symbolic) {
+  fs::remove(symbolic);
+}
+```
+
 Open an existing file for both reading and writing:
 
 ```ari
@@ -263,11 +292,13 @@ if file.is_open() {
 ## Current Limits
 
 - This slice is byte-oriented. There is no owned path type, directory
-  iteration, metadata, permissions API, canonicalization, link API, recursive
-  directory API, file locking API, temporary-file API, or text encoding policy
-  yet.
+  iteration, metadata, permissions API, canonicalization, recursive directory
+  API, file locking API, temporary-file API, or text encoding policy yet. Link
+  creation exists, but richer link metadata and platform-specific symlink
+  policy are still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
-  `unlink`, `rename`, `mkdir`, `rmdir`, `open`, `read`, `write`, and `close`.
+  `unlink`, `rename`, `link`, `symlink`, `mkdir`, `rmdir`, `open`, `read`,
+  `write`, and `close`.
 - `File` is not a tracked `own` resource yet. The caller must close each
   successful handle exactly once by convention. Future ownership work should
   make OS resources harder to copy and accidentally double-close.
@@ -287,6 +318,7 @@ tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
 tests/cases/standard-library/ok/fs/std-fs-read-write.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
+tests/cases/standard-library/ok/fs/std-fs-links.ari
 ```
 
 `make check-prelude` emits LLVM for the runtime hooks, checks the C syscall
@@ -301,15 +333,19 @@ write, append, read-to-byte-string, missing-file empty reads, and truncating
 rewrite behavior. `std-fs-create-truncate-copy.ari` covers source `create`,
 `try_create`, `read`, `truncate`, missing-source copy failure, and whole-file
 copy behavior. `std-fs-rename-dir.ari` covers runtime-backed `rename`,
-`create_dir`, and `remove_dir` behavior.
+`create_dir`, and `remove_dir` behavior. `std-fs-links.ari` covers
+runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
+checks.
 
 ## Next Work
 
 - Add `metadata(path)`, `permissions(path)`, and permission mutation as a
   separate tested runtime slice.
 - Add explicit overwrite/platform policy for `rename`.
-- Add hard links, symbolic links, and canonicalization as one or more
-  OS-wrapper slices with clear platform behavior.
+- Add canonicalization as an OS-wrapper slice returning an owned Ari string or
+  path value.
+- Expand link support with metadata/readlink helpers and clearer
+  platform-specific symlink policy.
 - Add directory iteration after Ari can represent owned OS-resource iterator
   handles.
 - Add recursive directory creation/removal after the single-directory hooks

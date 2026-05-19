@@ -316,6 +316,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf
 	$(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-links.ll
+	grep -q "@ari_builtin_fs_hard_link" $(BUILD_DIR)/prelude/std-fs-links.ll
+	grep -q "@ari_builtin_fs_symbolic_link" $(BUILD_DIR)/prelude/std-fs-links.ll
+	grep -q "declare i32 @link" $(BUILD_DIR)/prelude/std-fs-links.ll
+	grep -q "declare i32 @symlink" $(BUILD_DIR)/prelude/std-fs-links.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari -o $(BUILD_DIR)/prelude/std-fs-links.elf
+	$(BUILD_DIR)/prelude/std-fs-links.elf; code=$$?; test $$code -eq 63
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-links.elf; $(BUILD_DIR)/prelude/std-fs-links.elf; code=$$?; test $$code -eq 63; fi
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv4" $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv6" $(BUILD_DIR)/prelude/std-net-addresses.ll

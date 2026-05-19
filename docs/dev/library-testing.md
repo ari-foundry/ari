@@ -78,6 +78,8 @@ identifies the exact case:
 - `std-fs-rename-dir.ari`: runtime-backed `rename`, single-directory
   `create_dir`/`remove_dir`, duplicate-create failure, and missing-source
   rename failure.
+- `std-fs-links.ari`: runtime-backed `hard_link` and `symbolic_link`,
+  read-through behavior, missing-source failure, and duplicate-link failure.
 - `std-net-addresses.ari`: source `std::net` IPv4/IPv6 constructors, generic
   IP predicates, socket-address construction, port replacement, loopback, and
   unspecified checks.

@@ -259,6 +259,8 @@ Filesystem helpers live in `std::fs`:
 fs::exists(path)
 fs::remove(path)
 fs::rename(source, target)
+fs::hard_link(existing, link_path)
+fs::symbolic_link(target, link_path)
 fs::create_dir(path)
 fs::remove_dir(path)
 fs::open(path, mode)

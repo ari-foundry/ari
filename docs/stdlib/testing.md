@@ -49,6 +49,9 @@ std-fs-basic.ari
 std-fs-append.ari
 std-fs-open-modes.ari
 std-fs-read-write.ari
+std-fs-create-truncate-copy.ari
+std-fs-rename-dir.ari
+std-fs-links.ari
 std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari

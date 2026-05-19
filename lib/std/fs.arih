@@ -9,6 +9,10 @@ pub struct File {
 pub extern "ari" fn exists(path: string) -> bool = "ari_builtin_fs_exists";
 pub extern "ari" fn remove(path: string) -> bool = "ari_builtin_fs_remove";
 pub extern "ari" fn rename(source: string, target: string) -> bool = "ari_builtin_fs_rename";
+// Relative symbolic-link targets are resolved by the host from the link's
+// parent directory, matching POSIX symlink behavior.
+pub extern "ari" fn hard_link(existing: string, link_path: string) -> bool = "ari_builtin_fs_hard_link";
+pub extern "ari" fn symbolic_link(target: string, link_path: string) -> bool = "ari_builtin_fs_symbolic_link";
 pub extern "ari" fn create_dir(path: string) -> bool = "ari_builtin_fs_create_dir";
 pub extern "ari" fn remove_dir(path: string) -> bool = "ari_builtin_fs_remove_dir";
 // Modes: "r", "w", "a", "rw", "r+", "w+", and "a+".

@@ -400,6 +400,8 @@ private:
                symbol == "access" ||
                symbol == "unlink" ||
                symbol == "rename" ||
+               symbol == "link" ||
+               symbol == "symlink" ||
                symbol == "mkdir" ||
                symbol == "rmdir" ||
                symbol == "open" ||
@@ -492,6 +494,8 @@ private:
         declarations_ << "declare i32 @access(ptr, i32)\n";
         declarations_ << "declare i32 @unlink(ptr)\n";
         declarations_ << "declare i32 @rename(ptr, ptr)\n";
+        declarations_ << "declare i32 @link(ptr, ptr)\n";
+        declarations_ << "declare i32 @symlink(ptr, ptr)\n";
         declarations_ << "declare i32 @mkdir(ptr, i32)\n";
         declarations_ << "declare i32 @rmdir(ptr)\n";
         declarations_ << "declare i32 @open(ptr, i32, i32)\n";
@@ -688,6 +692,22 @@ private:
         line("define " + runtime_visibility + "i1 @ari_builtin_fs_rename(ptr %source, ptr %target) {");
         line("entry:");
         line("  %code = call i32 @rename(ptr %source, ptr %target)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_hard_link(ptr %existing, ptr %link_path) {");
+        line("entry:");
+        line("  %code = call i32 @link(ptr %existing, ptr %link_path)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_symbolic_link(ptr %target, ptr %link_path) {");
+        line("entry:");
+        line("  %code = call i32 @symlink(ptr %target, ptr %link_path)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  ret i1 %ok");
         line("}");

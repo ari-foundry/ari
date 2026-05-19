@@ -1,0 +1,51 @@
+// Covers filesystem hard links and symbolic links over the runtime hooks.
+fn first_byte(path: string) -> i64 {
+  let file = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
+  if !file.is_open() {
+    return -1;
+  }
+  let byte = file.read_byte();
+  file.close();
+  return byte;
+}
+
+fn main() -> i64 {
+  let source = "build/prelude/std-fs-links-source.tmp";
+  let hard = "build/prelude/std-fs-links-hard.tmp";
+  let symbolic = "build/prelude/std-fs-links-symbolic.tmp";
+  let symbolic_target = "std-fs-links-source.tmp";
+
+  fs::remove(symbolic);
+  fs::remove(hard);
+  fs::remove(source);
+
+  var data = [76u8, 78u8, 75u8, 10u8];
+  if !fs::write(source, data.as_slice()) {
+    return 1;
+  }
+
+  var score = 0;
+  if fs::hard_link(source, hard) {
+    score = score + 1;
+  }
+  if first_byte(hard) == 76 {
+    score = score + 2;
+  }
+  if !fs::hard_link("build/prelude/std-fs-links-missing.tmp", hard) {
+    score = score + 4;
+  }
+  if fs::symbolic_link(symbolic_target, symbolic) {
+    score = score + 8;
+  }
+  if first_byte(symbolic) == 76 {
+    score = score + 16;
+  }
+  if !fs::symbolic_link(symbolic_target, symbolic) {
+    score = score + 32;
+  }
+
+  fs::remove(symbolic);
+  fs::remove(hard);
+  fs::remove(source);
+  return score;
+}

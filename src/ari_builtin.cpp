@@ -133,6 +133,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::fs::remove", "ari_builtin_fs_remove"},
         {"fs::rename", "ari_builtin_fs_rename"},
         {"std::fs::rename", "ari_builtin_fs_rename"},
+        {"fs::hard_link", "ari_builtin_fs_hard_link"},
+        {"std::fs::hard_link", "ari_builtin_fs_hard_link"},
+        {"fs::symbolic_link", "ari_builtin_fs_symbolic_link"},
+        {"std::fs::symbolic_link", "ari_builtin_fs_symbolic_link"},
         {"fs::create_dir", "ari_builtin_fs_create_dir"},
         {"std::fs::create_dir", "ari_builtin_fs_create_dir"},
         {"fs::remove_dir", "ari_builtin_fs_remove_dir"},
@@ -265,6 +269,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_remove") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_rename") return builtin_sig({source_string, source_string}, boolean);
+    if (symbol == "ari_builtin_fs_hard_link") return builtin_sig({source_string, source_string}, boolean);
+    if (symbol == "ari_builtin_fs_symbolic_link") return builtin_sig({source_string, source_string}, boolean);
     if (symbol == "ari_builtin_fs_create_dir") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_remove_dir") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_open") return builtin_sig({source_string, source_string}, fs_file);
