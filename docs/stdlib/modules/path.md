@@ -55,7 +55,14 @@ or a `Components` iterator. `PathBytes` methods are wrappers over the module
 functions, so their boundary behavior is the same.
 When a `PathBytes` value is expected, a string literal can be used directly;
 the literal lowers to a borrowed path-byte view without requiring
-`path::bytes("...")`.
+`path::bytes("...")`. Literal receivers also work for path-specific methods
+whose names do not overlap with generic byte-slice helpers:
+
+```ari
+"/tmp/bin".file_name()
+"src/main.ari".extension()
+"/tmp".join_in(ref mut zone, "bin")
+```
 
 `trim_trailing_separators` removes trailing `/` bytes while preserving root
 `/`. `file_name` returns the last component after trimming trailing

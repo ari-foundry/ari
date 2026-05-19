@@ -330,7 +330,13 @@ view.codepoint_at(byte_index)
 `std::string::utf8(bytes)` when invalid UTF-8 is normal input; do not mutate
 the underlying bytes while keeping a validated view. A string literal can also
 coerce directly to `Utf8` when that type is expected; the compiler validates
-the literal bytes and rejects invalid UTF-8.
+the literal bytes and rejects invalid UTF-8. For the UTF-8-specific scalar
+helpers, the literal can be the receiver directly:
+
+```ari
+"\xC3\xA9".codepoint_count()
+"\xC3\xA9".codepoint_at(0)
+```
 
 ## OS Strings And C ABI Views
 
@@ -361,6 +367,8 @@ same bytes should be interpreted as path bytes. `std::c::CStr.as_slice()` and
 helpers operate on logical content bytes. Keep owned C-shaped storage in
 `std::c::CString`; it lives with `std::c::CStr`, POSIX `errno`, and dynamic
 loader handles in the dedicated C ABI module.
+String literals can use the OS-boundary validation helpers directly as
+receivers too: `"name".is_utf8()` and `"name".try_utf8()`.
 
 ## Example
 

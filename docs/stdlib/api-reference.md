@@ -1453,7 +1453,12 @@ not be UTF-8, `PathBytes` for path interpretation, and `std::c::CStr` or the
 builtin `string` type for NUL-terminated C ABI text. `std::string::c_str(text)`
 returns that same `std::c::CStr` borrowed view. String literals can flow
 directly into expected `Utf8`, `OsStr`, `PathBytes`, and `CStr` boundary views;
-direct `Utf8` literals are validated at compile time.
+direct `Utf8` literals are validated at compile time. Non-overlapping boundary
+methods can also use literal receivers: `"\xC3\xA9".codepoint_count()` uses a
+validated `Utf8` view, `"name".is_utf8()` uses an `OsStr` view, and
+`"/tmp/bin".file_name()` uses a `PathBytes` view. Generic byte-slice methods
+such as `len`, `is_empty`, `find`, and `starts_with` still use the direct
+`Slice[u8]` receiver path.
 
 `std::boxed::Box[T]` is a zone-backed single-value owner:
 

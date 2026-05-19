@@ -174,7 +174,9 @@ Literals can also flow into typed borrowed boundary views when the expected
 type is clear:
 `std::string::Utf8`, `std::string::OsStr`, `std::path::PathBytes`, and
 `std::c::CStr`. Direct `Utf8` literals are checked for valid UTF-8 during
-semantic analysis.
+semantic analysis. Methods that belong clearly to one boundary view can use a
+literal receiver directly: `"\xC3\xA9".codepoint_count()` for `Utf8`,
+`"name".is_utf8()` for `OsStr`, and `"/tmp/bin".file_name()` for `PathBytes`.
 `std::string::from_slice_in(ref mut Zone, Slice[u8])` copies a borrowed byte
 slice into a new target-zone string handle. It supports checked byte
 `first`/`last`/`get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone

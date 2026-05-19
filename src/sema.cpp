@@ -16966,6 +16966,60 @@ private:
             make_prelude_slice_type(loc, integer_type(IrPrimitiveKind::U8, loc)));
     }
 
+    IrType make_string_literal_slice_boundary_type(SourceLocation loc,
+                                                   const std::string& name) const {
+        IrType type = primitive_type(IrPrimitiveKind::Struct, name, loc);
+        type.field_names.push_back("bytes");
+        type.field_types.push_back(make_prelude_slice_type(loc, integer_type(IrPrimitiveKind::U8, loc)));
+        type.field_mutable.push_back(false);
+        return type;
+    }
+
+    static bool is_string_literal_utf8_receiver_method(const std::string& name) {
+        return name == "codepoint_count" || name == "codepoint_at";
+    }
+
+    static bool is_string_literal_os_receiver_method(const std::string& name) {
+        return name == "is_utf8" || name == "try_utf8";
+    }
+
+    static bool is_string_literal_path_receiver_method(const std::string& name) {
+        return name == "is_absolute" ||
+               name == "is_relative" ||
+               name == "trim_trailing_separators" ||
+               name == "components" ||
+               name == "file_name" ||
+               name == "parent" ||
+               name == "extension" ||
+               name == "stem" ||
+               name == "join_in" ||
+               name == "normalize_in";
+    }
+
+    IrExprPtr try_make_string_literal_boundary_receiver_expr(SourceLocation loc,
+                                                             const std::string& value,
+                                                             const std::string& method_name) const {
+        if (is_string_literal_utf8_receiver_method(method_name)) {
+            return make_string_literal_boundary_expr(
+                loc,
+                value,
+                make_string_literal_slice_boundary_type(loc, "std::string::Utf8"));
+        }
+        if (is_string_literal_os_receiver_method(method_name)) {
+            return make_string_literal_boundary_expr(
+                loc,
+                value,
+                make_string_literal_slice_boundary_type(loc, "std::string::OsStr"));
+        }
+        if (is_string_literal_path_receiver_method(method_name)) {
+            return make_string_literal_boundary_expr(
+                loc,
+                value,
+                make_string_literal_slice_boundary_type(loc, "std::path::PathBytes"));
+        }
+        return nullptr;
+    }
+
     IrExprPtr make_string_literal_byte_sequence_expr(SourceLocation loc,
                                                      const std::string& value,
                                                      const IrType& expected) const {
@@ -23607,9 +23661,15 @@ private:
         }
         if (!receiver) {
             if (receiver_source.kind == ExprKind::String) {
-                receiver = make_string_literal_u8_slice_expr(
+                receiver = try_make_string_literal_boundary_receiver_expr(
                     receiver_source.loc,
-                    receiver_source.string_value);
+                    receiver_source.string_value,
+                    expr.name);
+                if (!receiver) {
+                    receiver = make_string_literal_u8_slice_expr(
+                        receiver_source.loc,
+                        receiver_source.string_value);
+                }
             } else {
                 receiver = check_expr(receiver_source);
             }

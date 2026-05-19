@@ -23,6 +23,14 @@ fn main() -> i64 {
   assert_eq_i64(utf8_len("ok"), 2);
   assert(path_is_relative("bin"));
 
+  assert("hello".is_utf8());
+  assert(!"\xC3\x28".is_utf8());
+  let literal_utf8 = "hello".try_utf8().unwrap();
+  assert_eq_i64(literal_utf8.codepoint_count(), 5);
+  assert_eq_i64("\xC3\xA9".codepoint_count(), 1);
+  let literal_scalar = "\xC3\xA9".codepoint_at(0).unwrap();
+  assert_eq_i64(literal_scalar.scalar() as i64, 233);
+
   let c_text: CStr = "hello";
   assert_eq_i64(c_text.len(), 5);
   assert(c_text.as_slice().equals("hello"));
@@ -44,8 +52,19 @@ fn main() -> i64 {
   let base: std::path::PathBytes = "/tmp";
   assert(base.is_absolute());
   assert(base.as_slice().equals("/tmp"));
+  assert("/tmp/bin".is_absolute());
+  assert("tmp/bin".is_relative());
+  assert("/tmp/bin/".trim_trailing_separators().equals("/tmp/bin"));
+  assert("/tmp/bin".file_name().unwrap().equals("bin"));
+  assert("src/main.ari".parent().unwrap().equals("src"));
+  assert("src/main.ari".extension().unwrap().equals("ari"));
+  assert("src/main.ari".stem().unwrap().equals("main"));
   let joined = base.join_in(ref mut zone, "bin");
   assert(joined.equals("/tmp/bin"));
+  let direct_joined = "/tmp".join_in(ref mut zone, "bin");
+  assert(direct_joined.equals("/tmp/bin"));
+  let normalized = "/tmp//./bin/".normalize_in(ref mut zone);
+  assert(normalized.equals("/tmp/bin"));
   zone::destroy(zone);
 
   return 0;
