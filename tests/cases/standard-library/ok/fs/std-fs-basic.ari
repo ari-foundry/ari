@@ -1,0 +1,65 @@
+// Covers the first std::fs slice: existence checks, open/read/write/close,
+// byte-slice writes, deletion, and Option-returning open helpers.
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-basic.tmp";
+  if fs::exists(path) {
+    fs::remove(path);
+  }
+
+  var score = 0;
+  if !fs::exists(path) {
+    score = score + 1;
+  }
+
+  let missing = fs::try_open_read(path);
+  if missing.is_none() {
+    score = score + 2;
+  }
+
+  let writer = fs::try_open_write(path).unwrap_or(fs::File::invalid());
+  if writer.is_open() {
+    score = score + 3;
+  }
+  if writer.write_byte(65 as u8) {
+    score = score + 4;
+  }
+
+  var tail = [66 as u8, 67 as u8];
+  if writer.write_bytes(tail.as_slice()) == 2 {
+    score = score + 5;
+  }
+  if writer.close() {
+    score = score + 6;
+  }
+  if fs::exists(path) {
+    score = score + 7;
+  }
+
+  let reader = fs::try_open_read(path).unwrap_or(fs::File::invalid());
+  if reader.is_open() {
+    score = score + 8;
+  }
+  if reader.read_byte() == 65 {
+    score = score + 9;
+  }
+  if fs::read_byte(reader) == 66 {
+    score = score + 10;
+  }
+  if reader.read_byte() == 67 {
+    score = score + 11;
+  }
+  if reader.read_byte() < 0 {
+    score = score + 12;
+  }
+  if fs::close(reader) {
+    score = score + 13;
+  }
+  if fs::remove(path) {
+    score = score + 14;
+  }
+  if !fs::exists(path) {
+    score = score + 15;
+  }
+
+  return score;
+}

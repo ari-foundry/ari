@@ -105,6 +105,20 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::time::unix_nanos", "ari_builtin_time_unix_nanos"},
         {"time::sleep_nanos", "ari_builtin_time_sleep_nanos"},
         {"std::time::sleep_nanos", "ari_builtin_time_sleep_nanos"},
+        {"fs::exists", "ari_builtin_fs_exists"},
+        {"std::fs::exists", "ari_builtin_fs_exists"},
+        {"fs::remove", "ari_builtin_fs_remove"},
+        {"std::fs::remove", "ari_builtin_fs_remove"},
+        {"fs::open_read", "ari_builtin_fs_open_read"},
+        {"std::fs::open_read", "ari_builtin_fs_open_read"},
+        {"fs::open_write", "ari_builtin_fs_open_write"},
+        {"std::fs::open_write", "ari_builtin_fs_open_write"},
+        {"fs::close", "ari_builtin_fs_close"},
+        {"std::fs::close", "ari_builtin_fs_close"},
+        {"fs::read_byte", "ari_builtin_fs_read_byte"},
+        {"std::fs::read_byte", "ari_builtin_fs_read_byte"},
+        {"fs::write_byte", "ari_builtin_fs_write_byte"},
+        {"std::fs::write_byte", "ari_builtin_fs_write_byte"},
         {"create", "ari_builtin_zone_create"},
         {"std::create", "ari_builtin_zone_create"},
         {"zone::create", "ari_builtin_zone_create"},
@@ -179,6 +193,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     const AriBuiltinTypeExpectation raw_string = builtin_type("std::string::RawString");
     const AriBuiltinTypeExpectation std_string = builtin_type("std::string::String");
     const AriBuiltinTypeExpectation ref_std_string = builtin_type("ref std::string::String");
+    const AriBuiltinTypeExpectation fs_file = builtin_type("std::fs::File");
 
     if (symbol == "ari_builtin_context_argc") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_context_arg") return builtin_sig({i64}, source_string);
@@ -195,6 +210,13 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_time_monotonic_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_unix_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);
+    if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
+    if (symbol == "ari_builtin_fs_remove") return builtin_sig({source_string}, boolean);
+    if (symbol == "ari_builtin_fs_open_read") return builtin_sig({source_string}, fs_file);
+    if (symbol == "ari_builtin_fs_open_write") return builtin_sig({source_string}, fs_file);
+    if (symbol == "ari_builtin_fs_close") return builtin_sig({fs_file}, boolean);
+    if (symbol == "ari_builtin_fs_read_byte") return builtin_sig({fs_file}, i64);
+    if (symbol == "ari_builtin_fs_write_byte") return builtin_sig({fs_file, u8}, boolean);
     if (symbol == "ari_builtin_write_i64") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_write_u64") return builtin_sig({u64}, i64);
     if (symbol == "ari_builtin_write_bool") return builtin_sig({boolean}, i64);

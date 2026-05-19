@@ -1,0 +1,68 @@
+// Small filesystem helpers.
+//
+// The first std::fs slice keeps the OS boundary explicit: Ari source owns the
+// handle shape and Option helpers, while the runtime owns platform syscalls.
+pub struct File {
+  fd: i64,
+}
+
+pub extern "ari" fn exists(path: string) -> bool = "ari_builtin_fs_exists";
+pub extern "ari" fn remove(path: string) -> bool = "ari_builtin_fs_remove";
+pub extern "ari" fn open_read(path: string) -> File = "ari_builtin_fs_open_read";
+pub extern "ari" fn open_write(path: string) -> File = "ari_builtin_fs_open_write";
+pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";
+pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
+pub extern "ari" fn write_byte(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
+
+pub fn try_open_read(path: string) -> std::Option[File] {
+  let file = open_read(path);
+  if file.is_open() {
+    return std::Some<File>(file);
+  }
+  return std::None<File>();
+}
+
+pub fn try_open_write(path: string) -> std::Option[File] {
+  let file = open_write(path);
+  if file.is_open() {
+    return std::Some<File>(file);
+  }
+  return std::None<File>();
+}
+
+pub fn write_bytes(file: File, values: std::Slice[u8]) -> i64 {
+  var index = 0;
+  while index < values.len {
+    if !write_byte(file, values[index]) {
+      return index;
+    }
+    index = index + 1;
+  }
+  return index;
+}
+
+pub impl std::fs::File {
+  fn invalid() -> File {
+    return File { fd: -1 };
+  }
+
+  fn is_open(self) -> bool {
+    return self.fd >= 0;
+  }
+
+  fn close(self) -> bool {
+    return close(self);
+  }
+
+  fn read_byte(self) -> i64 {
+    return read_byte(self);
+  }
+
+  fn write_byte(self, value: u8) -> bool {
+    return write_byte(self, value);
+  }
+
+  fn write_bytes(self, values: std::Slice[u8]) -> i64 {
+    return write_bytes(self, values);
+  }
+}

@@ -33,6 +33,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. | Argument wrappers over `std::context` plus runtime-backed current-process environment/path hooks. |
 | `std::process` | Current-process helpers. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`. | First runtime-backed process slice. Child process handles, spawn, wait, and fork are future work. |
 | `std::time` | Monotonic instants, wall-clock timestamps, durations, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. | First runtime-backed time slice over host clock/sleep hooks plus source value wrappers. |
+| `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `open_read`, `open_write`, `try_open_read`, `try_open_write`, `read_byte`, `write_byte`, `write_bytes`, `close`. | First runtime-backed file slice over host file descriptor hooks plus source `Option[File]` helpers. |
 | `std::mem` | Layout and raw pointer helpers. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. | Compiler-lowered where layout or typed pointer semantics are required. |
 | `std::zone` | Explicit allocation capability. | `create`, byte `alloc`, typed `alloc[T]`, `alloc_array[T]`, `new[T]`, `promote[T]`, `reset`, `destroy`, `allocation_zone`. | Runtime-backed with ownership/provenance checks in sema plus source raw array allocation. |
 | `std::boxed` | Zone-backed single-value owner handle. | `Box[T]`, `new`, `Box::new`, `get`, `set`, `replace`, `take`, `try_take`, `clear`, `put_in`, `copy_to`, `as_ref`, `as_mut`, `swap`, raw pointer access. | Implemented as an explicit-zone seed for future smart-pointer work. |
@@ -90,6 +91,7 @@ Use this table when writing code from docs alone:
 | Inspect or terminate the current process. | `process::id()`, `process::exit(code)`, `process::success()`, `process::failure()` | `exit` terminates immediately and does not run later Ari cleanup. Spawn, wait, and fork are future process-handle work. |
 | Measure elapsed time or sleep. | `time::now()`, `start.elapsed()`, `time::elapsed(start)`, `time::milliseconds(n)`, `time::sleep(duration)` | Use `Instant` for elapsed time because it is monotonic. `sleep` is a thin current-thread sleep wrapper and does not report interruption yet. |
 | Read wall-clock Unix time. | `time::system_now()`, `system_time.as_unix_nanos()` | Use `SystemTime` for timestamps, not duration measurement; host wall clocks can move. |
+| Work with small byte files. | `fs::try_open_read(path)`, `fs::try_open_write(path)`, `file.read_byte()`, `file.write_byte(byte)`, `file.write_bytes(slice)`, `file.close()`, `fs::exists(path)`, `fs::remove(path)` | Prefer `try_open_*` so failed open calls use `Option[File]`. `open_write` creates or truncates. `read_byte` returns `-1` at EOF/failure. The current `File` is a value handle, so close successful handles once and do not reuse copies after closing. |
 | Read stdin. | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` | `try_read_byte` returns `Option[u8]` instead of the raw `-1` EOF sentinel. Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
 | Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.unwrap_or`, `.map<U>`, `.and_then<U>`, `.filter()`, `.flatten()`, `.transpose()`, `?`, or `??` when that reads better than `match`. |
 | Convert missing values into failures. | `option.ok_or<E>(error)`, `option.ok_or_else<E>(op)` | Lazy form builds the error only for `None`. |
@@ -113,7 +115,7 @@ Use this table when writing code from docs alone:
 | Convert values generically. | `convert::identity`, `convert::from`, `convert::into` | `from<T, U>` uses `convert::From[T]` for destination `U`; `into<T, U>` uses `convert::Into[T]` on source `U`. |
 | Iterate ranges. | `range(start, end)`, `range_inclusive(start, end)`, `start..end`, `start..=end` | Works directly in `for` loops and stores as `Range[T]`/`RangeInclusive[T]`. |
 | Work with bit masks, rotations, powers of two, and bit scans. | `bits::is_set`, `bits::rotate_left`, `bits::bit_width`, `bits::low_mask`, `bits::align_up`, `bits::leading_ones` | Current helpers take `u64`. Rotate counts are non-negative and wrap modulo 64; alignment helpers assert a non-zero power-of-two alignment. Zero-run helpers return `64` for `0u64`; one-run helpers return `64` for `~0u64`. |
-| Plan OS-facing code. | `std::env`, `std::process`, and `std::time` today; future `std::thread`, `std::sync`, `std::fs`, `std::os` | Args, current-process environment variables, current directory/executable path, current process id/exit, monotonic/wall-clock reads, and sleep are implemented. Process spawn/fork, thread join, shared ownership/atomics, files, and raw syscall wrappers need runtime and ownership policy work. |
+| Plan OS-facing code. | `std::env`, `std::process`, `std::time`, and `std::fs` today; future `std::thread`, `std::sync`, `std::os` | Args, current-process environment variables, current directory/executable path, current process id/exit, monotonic/wall-clock reads, sleep, and byte-oriented file handles are implemented. Process spawn/fork, thread join, shared ownership/atomics, directories, metadata, and raw syscall wrappers need runtime and ownership policy work. |
 | Choose between collection families. | `Set`, `HashMap`/`HashSet`, `TreeMap`/`TreeSet` | Use `Set` for small insertion-order unique lists, hash containers for average-case lookup, and tree containers for ordered lookup. Hash/tree containers currently take explicit hash/comparator functions until `Hash`/`Ord` trait-driven constructors land. |
 | Implement custom iteration. | `Iterator[T]::next(self: ref mut Self) -> Option[T]` | Use `for item in iterator`; use `for let pattern in iterator` for skip-on-mismatch filtering. |
 | Format into owned text. | `format_in!(ref mut zone, "...", values...)` | Default-zone `format!` is intentionally not executable in the current surface. |
@@ -215,6 +217,12 @@ tree map iterators walk ascending key order.
 `clear`. Both have `iter()` and direct `for value in set` support. `HashSet`
 also has `take(value)` and `remove(value)`. Hash set iteration walks live
 buckets; tree set iteration walks ascending comparator order.
+
+`std::fs::File` methods include `invalid`, `is_open`, `close`, `read_byte`,
+`write_byte`, and `write_bytes`. Use `fs::try_open_read` or
+`fs::try_open_write` to obtain an `Option[File]` before calling them. The
+current handle is copyable source data, so closing is a caller convention until
+the language has a stronger OS-resource ownership model.
 
 `std::vec::Vec[T]` mutating methods include `push`, `pop`, `try_pop`, `set`,
 `replace`, `swap`, `insert`, `remove`, `truncate`, `clear`, `reserve`,

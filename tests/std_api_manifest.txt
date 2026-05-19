@@ -104,6 +104,16 @@ fn std::env::try_arg|check-prelude std-env-args optional argument helper; docs/s
 fn std::env::try_current_dir|check-prelude std-env-paths optional current directory helper; docs/stdlib/modules/env.md
 fn std::env::try_executable_path|check-prelude std-env-paths optional executable path helper; docs/stdlib/modules/env.md
 fn std::env::try_get|check-prelude std-env-vars optional environment variable helper; docs/stdlib/modules/env.md
+fn std::fs::close|check-prelude std-fs-basic file close hook; docs/stdlib/modules/fs.md
+fn std::fs::exists|check-prelude std-fs-basic file existence hook; docs/stdlib/modules/fs.md
+fn std::fs::open_read|check-prelude std-fs-basic read-only open hook; docs/stdlib/modules/fs.md
+fn std::fs::open_write|check-prelude std-fs-basic create/truncate write open hook; docs/stdlib/modules/fs.md
+fn std::fs::read_byte|check-prelude std-fs-basic file byte read hook; docs/stdlib/modules/fs.md
+fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
+fn std::fs::try_open_read|check-prelude std-fs-basic Option-returning read open helper; docs/stdlib/modules/fs.md
+fn std::fs::try_open_write|check-prelude std-fs-basic Option-returning write open helper; docs/stdlib/modules/fs.md
+fn std::fs::write_byte|check-prelude std-fs-basic file byte write hook; docs/stdlib/modules/fs.md
+fn std::fs::write_bytes|check-prelude std-fs-basic source byte-slice write helper; docs/stdlib/modules/fs.md
 fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row
 fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
@@ -319,6 +329,12 @@ method std::collections::TreeSet[T]::len|check-prelude std-collections-tree meta
 method std::collections::TreeSet[T]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
+method std::fs::File::close|check-prelude std-fs-basic value file handle close method; docs/stdlib/modules/fs.md
+method std::fs::File::invalid|check-prelude std-fs-basic invalid file fallback constructor; docs/stdlib/modules/fs.md
+method std::fs::File::is_open|check-prelude std-fs-basic open-handle predicate; docs/stdlib/modules/fs.md
+method std::fs::File::read_byte|check-prelude std-fs-basic value file handle byte read method; docs/stdlib/modules/fs.md
+method std::fs::File::write_byte|check-prelude std-fs-basic value file handle byte write method; docs/stdlib/modules/fs.md
+method std::fs::File::write_bytes|check-prelude std-fs-basic value file handle slice write method; docs/stdlib/modules/fs.md
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
@@ -435,6 +451,7 @@ module std::context|context runtime tests; docs/dev/test-matrix.md Context runti
 module std::convert|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::env|std env argument helper tests; docs/stdlib/modules/env.md
 module std::fmt|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+module std::fs|std fs file handle tests; docs/stdlib/modules/fs.md
 module std::input|prelude input tests; docs/dev/test-matrix.md Prelude row
 module std::io|prelude IO tests; docs/dev/test-matrix.md Prelude row
 module std::iter|range and iterator tests; docs/dev/test-matrix.md Control flow row
@@ -464,6 +481,7 @@ struct std::collections::TreeMapValues[V]|std collections tree iterator tests; d
 struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSetIter[T]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
+struct std::fs::File|std fs file handle tests; docs/stdlib/modules/fs.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row

@@ -240,6 +240,25 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari -o $(BUILD_DIR)/prelude/std-env-paths.elf
 	$(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-paths.elf; $(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "@ari_builtin_fs_exists" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "@ari_builtin_fs_remove" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "@ari_builtin_fs_open_read" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "@ari_builtin_fs_open_write" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "@ari_builtin_fs_close" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "@ari_builtin_fs_read_byte" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "@ari_builtin_fs_write_byte" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "declare i32 @access" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "declare i32 @unlink" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "declare i32 @open" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "declare i64 @read" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "declare i64 @write" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -q "declare i32 @close" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -F -q "std2fs13try_open_read" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	grep -F -q "std2fs14try_open_write" $(BUILD_DIR)/prelude/std-fs-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-basic.ari -o $(BUILD_DIR)/prelude/std-fs-basic.elf
+	$(BUILD_DIR)/prelude/std-fs-basic.elf; code=$$?; test $$code -eq 120
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-basic.elf; $(BUILD_DIR)/prelude/std-fs-basic.elf; code=$$?; test $$code -eq 120; fi
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll
@@ -938,6 +957,10 @@ check-prelude: $(TARGET)
 	grep -q 'import	std	std::env	env	lib/std/env.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::process	lib/std/process.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::process	process	lib/std/process.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::time	lib/std/time.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::time	time	lib/std/time.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::fs	lib/std/fs.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::fs	fs	lib/std/fs.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::mem	lib/std/mem.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::mem	mem	lib/std/mem.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::zone	lib/std/zone.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta

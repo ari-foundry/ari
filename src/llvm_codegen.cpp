@@ -391,6 +391,12 @@ private:
                symbol == "getpid" ||
                symbol == "clock_gettime" ||
                symbol == "nanosleep" ||
+               symbol == "access" ||
+               symbol == "unlink" ||
+               symbol == "open" ||
+               symbol == "read" ||
+               symbol == "write" ||
+               symbol == "close" ||
                symbol == "malloc" ||
                symbol == "free" ||
                symbol == "exit";
@@ -416,7 +422,11 @@ private:
         if (symbol == "ari_builtin_env_has" ||
             symbol == "ari_builtin_env_set" ||
             symbol == "ari_builtin_env_remove" ||
-            symbol == "ari_builtin_env_set_current_dir") {
+            symbol == "ari_builtin_env_set_current_dir" ||
+            symbol == "ari_builtin_fs_exists" ||
+            symbol == "ari_builtin_fs_remove" ||
+            symbol == "ari_builtin_fs_close" ||
+            symbol == "ari_builtin_fs_write_byte") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_panic" ||
@@ -456,6 +466,12 @@ private:
         declarations_ << "declare i32 @getpid()\n";
         declarations_ << "declare i32 @clock_gettime(i32, ptr)\n";
         declarations_ << "declare i32 @nanosleep(ptr, ptr)\n";
+        declarations_ << "declare i32 @access(ptr, i32)\n";
+        declarations_ << "declare i32 @unlink(ptr)\n";
+        declarations_ << "declare i32 @open(ptr, i32, i32)\n";
+        declarations_ << "declare i64 @read(i32, ptr, i64)\n";
+        declarations_ << "declare i64 @write(i32, ptr, i64)\n";
+        declarations_ << "declare i32 @close(i32)\n";
         declarations_ << "declare ptr @malloc(i64)\n";
         declarations_ << "declare void @free(ptr)\n";
         declarations_ << "declare void @exit(i32)\n";
@@ -618,6 +634,92 @@ private:
         line("empty:");
         line("  store i8 0, ptr " + executable_path_buffer);
         line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_exists(ptr %path) {");
+        line("entry:");
+        line("  %code = call i32 @access(ptr %path, i32 0)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_remove(ptr %path) {");
+        line("entry:");
+        line("  %code = call i32 @unlink(ptr %path)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ i64 } @ari_builtin_fs_open_read(ptr %path) {");
+        line("entry:");
+        line("  %fd32 = call i32 @open(ptr %path, i32 0, i32 0)");
+        line("  %fd = sext i32 %fd32 to i64");
+        line("  %file = insertvalue { i64 } undef, i64 %fd, 0");
+        line("  ret { i64 } %file");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ i64 } @ari_builtin_fs_open_write(ptr %path) {");
+        line("entry:");
+        line("  %fd32 = call i32 @open(ptr %path, i32 577, i32 420)");
+        line("  %fd = sext i32 %fd32 to i64");
+        line("  %file = insertvalue { i64 } undef, i64 %fd, 0");
+        line("  ret { i64 } %file");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_close({ i64 } %file) {");
+        line("entry:");
+        line("  %fd = extractvalue { i64 } %file, 0");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %do_close");
+        line("do_close:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %code = call i32 @close(i32 %fd32)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_read_byte({ i64 } %file) {");
+        line("entry:");
+        line("  %fd = extractvalue { i64 } %file, 0");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %do_read");
+        line("do_read:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %byte.ptr = alloca i8, align 1");
+        line("  %count = call i64 @read(i32 %fd32, ptr %byte.ptr, i64 1)");
+        line("  %one = icmp eq i64 %count, 1");
+        line("  br i1 %one, label %load, label %fail");
+        line("load:");
+        line("  %byte = load i8, ptr %byte.ptr, align 1");
+        line("  %wide = zext i8 %byte to i64");
+        line("  ret i64 %wide");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_write_byte({ i64 } %file, i8 %value) {");
+        line("entry:");
+        line("  %fd = extractvalue { i64 } %file, 0");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %do_write");
+        line("do_write:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %byte.ptr = alloca i8, align 1");
+        line("  store i8 %value, ptr %byte.ptr, align 1");
+        line("  %count = call i64 @write(i32 %fd32, ptr %byte.ptr, i64 1)");
+        line("  %ok = icmp eq i64 %count, 1");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
         line("}");
         line();
 

@@ -125,8 +125,7 @@ current-process variable and `env::remove(name)` unsets it; both return whether
 the host accepted the request. `env::current_dir()` and
 `env::executable_path()` return borrowed runtime strings, with `try_*` wrappers
 for ordinary failure; `env::set_current_dir(path)` mutates the current process
-working directory. Files, time, child processes, and thread APIs are still
-roadmap items.
+working directory. Child process and thread APIs are still roadmap items.
 
 Current-process helpers live in `std::process`:
 
@@ -184,6 +183,38 @@ Use `Instant` for elapsed time and `SystemTime` for Unix wall-clock
 timestamps. `Duration` constructors assert on negative values. The raw
 `*_nanos` functions are exposed for low-level code, but ordinary code should
 prefer `now`, `system_now`, `elapsed`, and `sleep`.
+
+Filesystem helpers live in `std::fs`:
+
+```ari
+fs::exists(path)
+fs::remove(path)
+fs::open_read(path)
+fs::open_write(path)
+fs::try_open_read(path)
+fs::try_open_write(path)
+fs::close(file)
+fs::read_byte(file)
+fs::write_byte(file, value)
+fs::write_bytes(file, values)
+
+File::invalid()
+file.is_open()
+file.close()
+file.read_byte()
+file.write_byte(value)
+file.write_bytes(values)
+```
+
+Use `try_open_read` and `try_open_write` for ordinary fallible open operations;
+they return `Option[File]`. The raw open calls return a `File` directly, with
+`File::invalid()` and `file.is_open()` exposing the invalid-handle convention.
+`open_write` creates or truncates a file. `read_byte` returns an `i64` byte
+value or `-1` at EOF/failure, and `write_byte` returns whether one byte was
+written. `write_bytes` writes a `Slice[u8]` and returns the count written before
+the first failed byte write. The current `File` value is not an owned resource
+yet, so close each successful handle once and do not reuse copied handles after
+closing.
 
 ## IO And Input
 
