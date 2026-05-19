@@ -48,8 +48,9 @@ limits, examples, and test files for one module.
 - [std::env](env.md): user-facing process argument and environment-variable
   helpers, including `try_arg`, `program_name`, `try_get`, `set`,
   `current_dir`, `set_current_dir`, and `try_executable_path`.
-- [std::process](process.md): current process id, explicit exit, status helper
-  functions, and the first POSIX fork/wait child-process slice.
+- [std::process](process.md): current process id, uid/gid, explicit exit and
+  abort hooks, status helper functions, and the first POSIX fork/wait
+  child-process slice.
 - [std::thread](thread.md): function-pointer thread spawn/join, runtime thread
   ids, invalid-handle sentinels, and cooperative yield.
 - [std::sync](sync.md): concrete `AtomicI64` load/store/swap/fetch-add/

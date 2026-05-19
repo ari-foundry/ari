@@ -6,5 +6,8 @@ and update `tests/Makefile` whenever the fixture should be part of automated
 checks.
 
 - `std-process-basic.ari`: current-process id and status helper predicates.
+- `std-process-identity.ari`: current-process uid/gid and root predicate.
 - `std-process-exit.ari`: explicit process termination status.
+- `std-process-abort.ari`: abort hook lowering without executing the aborting
+  branch.
 - `std-process-fork-wait.ari`: POSIX child-process fork/wait behavior.

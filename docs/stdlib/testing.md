@@ -42,7 +42,9 @@ std-target-linux64.ari
 std-env-paths.ari
 std-env-vars.ari
 std-process-basic.ari
+std-process-identity.ari
 std-process-exit.ari
+std-process-abort.ari
 std-process-fork-wait.ari
 std-thread-basic.ari
 std-sync-atomic-i64.ari

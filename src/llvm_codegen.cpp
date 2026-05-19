@@ -455,6 +455,8 @@ private:
                symbol == "chdir" ||
                symbol == "readlink" ||
                symbol == "getpid" ||
+               symbol == "getuid" ||
+               symbol == "getgid" ||
                symbol == "fork" ||
                symbol == "waitpid" ||
                symbol == "pthread_create" ||
@@ -475,7 +477,8 @@ private:
                symbol == "close" ||
                symbol == "malloc" ||
                symbol == "free" ||
-               symbol == "exit";
+               symbol == "exit" ||
+               symbol == "abort";
     }
 
     static IrType builtin_result_type(const std::string& symbol, SourceLocation loc) {
@@ -518,6 +521,7 @@ private:
         }
         if (symbol == "ari_builtin_panic" ||
             symbol == "ari_builtin_process_exit" ||
+            symbol == "ari_builtin_process_abort" ||
             symbol == "ari_builtin_thread_yield" ||
             symbol == "ari_builtin_mem_copy_bytes" ||
             symbol == "ari_builtin_mem_move_bytes" ||
@@ -556,6 +560,8 @@ private:
         declarations_ << "declare i32 @chdir(ptr)\n";
         declarations_ << "declare i64 @readlink(ptr, ptr, i64)\n";
         declarations_ << "declare i32 @getpid()\n";
+        declarations_ << "declare i32 @getuid()\n";
+        declarations_ << "declare i32 @getgid()\n";
         declarations_ << "declare i32 @fork()\n";
         declarations_ << "declare i32 @waitpid(i32, ptr, i32)\n";
         declarations_ << "declare i32 @pthread_create(ptr, ptr, ptr, ptr)\n";
@@ -580,6 +586,7 @@ private:
         declarations_ << "declare ptr @malloc(i64)\n";
         declarations_ << "declare void @free(ptr)\n";
         declarations_ << "declare void @exit(i32)\n";
+        declarations_ << "declare void @abort()\n";
         declarations_ << "@stdin = external global ptr\n";
         for (const auto& fn : program_.extern_functions) {
             const std::string& symbol = extern_symbols_.at(fn.name);
@@ -1089,10 +1096,33 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i64 @ari_builtin_process_uid() {");
+        line("entry:");
+        line("  %uid = call i32 @getuid()");
+        line("  %wide = zext i32 %uid to i64");
+        line("  ret i64 %wide");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_process_gid() {");
+        line("entry:");
+        line("  %gid = call i32 @getgid()");
+        line("  %wide = zext i32 %gid to i64");
+        line("  ret i64 %wide");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "void @ari_builtin_process_exit(i64 %code) {");
         line("entry:");
         line("  %narrow = trunc i64 %code to i32");
         line("  call void @exit(i32 %narrow)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_process_abort() {");
+        line("entry:");
+        line("  call void @abort()");
         line("  unreachable");
         line("}");
         line();

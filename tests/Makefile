@@ -360,11 +360,24 @@ check-prelude: $(TARGET)
 	grep -F -q "std7process10is_failure" $(BUILD_DIR)/prelude/std-process-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari -o $(BUILD_DIR)/prelude/std-process-basic.elf
 	$(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-identity.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-identity.ll
+	grep -q "@ari_builtin_process_uid" $(BUILD_DIR)/prelude/std-process-identity.ll
+	grep -q "@ari_builtin_process_gid" $(BUILD_DIR)/prelude/std-process-identity.ll
+	grep -q "@getuid" $(BUILD_DIR)/prelude/std-process-identity.ll
+	grep -q "@getgid" $(BUILD_DIR)/prelude/std-process-identity.ll
+	grep -F -q "std7process7is_root" $(BUILD_DIR)/prelude/std-process-identity.ll
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-identity.ari -o $(BUILD_DIR)/prelude/std-process-identity.elf
+	$(BUILD_DIR)/prelude/std-process-identity.elf; code=$$?; test $$code -eq 26
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-exit.ll
 	grep -q "@ari_builtin_process_exit" $(BUILD_DIR)/prelude/std-process-exit.ll
 	grep -q "call void @exit(i32 %narrow)" $(BUILD_DIR)/prelude/std-process-exit.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari -o $(BUILD_DIR)/prelude/std-process-exit.elf
 	$(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-abort.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-abort.ll
+	grep -q "@ari_builtin_process_abort" $(BUILD_DIR)/prelude/std-process-abort.ll
+	grep -q "call void @abort()" $(BUILD_DIR)/prelude/std-process-abort.ll
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-abort.ari -o $(BUILD_DIR)/prelude/std-process-abort.elf
+	$(BUILD_DIR)/prelude/std-process-abort.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-fork-wait.ll
 	grep -q "@ari_builtin_process_fork" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
 	grep -q "@ari_builtin_process_wait" $(BUILD_DIR)/prelude/std-process-fork-wait.ll
@@ -377,7 +390,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari -o $(BUILD_DIR)/prelude/std-process-fork-wait.elf
 	$(BUILD_DIR)/prelude/std-process-fork-wait.elf; code=$$?; test $$code -eq 112
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-basic.elf; $(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-identity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-identity.elf; $(BUILD_DIR)/prelude/std-process-identity.elf; code=$$?; test $$code -eq 26; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit.elf; $(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-abort.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-abort.elf; $(BUILD_DIR)/prelude/std-process-abort.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-fork-wait.elf; $(BUILD_DIR)/prelude/std-process-fork-wait.elf; code=$$?; test $$code -eq 112; fi
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-basic.ll
 	grep -q "@ari_builtin_thread_spawn" $(BUILD_DIR)/prelude/std-thread-basic.ll

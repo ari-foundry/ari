@@ -25,7 +25,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. |
-| `std::process` | Current-process helpers and POSIX child-process control. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
+| `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `is_success`, `is_failure`, `is_root`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
 | `std::thread` | Function-pointer thread spawn/join and runtime ids. | `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `load`, `store`, `swap`, `fetch_add`, `compare_exchange`. |
 | `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
@@ -138,10 +138,12 @@ hooks for `get`, `has`, `set`, `remove`, `current_dir`, `set_current_dir`, and
 `try_executable_path` helpers keeping ordinary absence in `Option[string]`.
 
 `std::process` starts with a small runtime-backed process surface: `id` reads
-the host process id, `exit` terminates with an explicit status, and the status
-helpers are source Ari. The first POSIX child-process slice adds runtime-backed
-`fork`/`wait` plus source branch and error predicates. Portable spawn, richer
-status values, and process handles are intentionally still roadmap work.
+the host process id, `uid`/`gid` read current user and group identity, `exit`
+terminates with an explicit status, `abort` terminates abnormally, and the
+status/root helpers are source Ari. The first POSIX child-process slice adds
+runtime-backed `fork`/`wait` plus source branch and error predicates. Portable
+spawn, richer status values, and process handles are intentionally still
+roadmap work.
 
 `std::thread` is the first thread slice. `spawn`, `join`, and `yield_now` are
 runtime-backed because they call the host threading API and install Ari's

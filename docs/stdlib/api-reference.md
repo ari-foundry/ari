@@ -190,11 +190,15 @@ Process helpers live in `std::process`:
 
 ```ari
 process::id()
+process::uid()
+process::gid()
 process::exit(code)
+process::abort()
 process::success()
 process::failure()
 process::is_success(code)
 process::is_failure(code)
+process::is_root()
 process::fork()
 process::wait(pid)
 process::is_child(pid)
@@ -203,9 +207,12 @@ process::is_fork_error(pid)
 process::is_wait_error(status)
 ```
 
-`id()` returns the host process id as `i64`. `exit(code)` terminates the
-process and does not return. The status helpers are source functions for the
-common `0` success and `1` failure convention.
+`id()` returns the host process id as `i64`. `uid()` and `gid()` return the
+current user and group ids. `is_root()` is the source convenience check for
+`uid() == 0`. `exit(code)` terminates the process and does not return.
+`abort()` terminates through the host abnormal-termination path. The status
+helpers are source functions for the common `0` success and `1` failure
+convention.
 
 `fork()` and `wait(pid)` are the first POSIX child-process slice on the
 Linux/LLVM runtime path. `fork()` returns `0` in the child, a positive child pid

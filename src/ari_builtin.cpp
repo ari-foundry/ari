@@ -123,8 +123,14 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::env::executable_path", "ari_builtin_env_executable_path"},
         {"process::id", "ari_builtin_process_id"},
         {"std::process::id", "ari_builtin_process_id"},
+        {"process::uid", "ari_builtin_process_uid"},
+        {"std::process::uid", "ari_builtin_process_uid"},
+        {"process::gid", "ari_builtin_process_gid"},
+        {"std::process::gid", "ari_builtin_process_gid"},
         {"process::exit", "ari_builtin_process_exit"},
         {"std::process::exit", "ari_builtin_process_exit"},
+        {"process::abort", "ari_builtin_process_abort"},
+        {"std::process::abort", "ari_builtin_process_abort"},
         {"process::fork", "ari_builtin_process_fork"},
         {"std::process::fork", "ari_builtin_process_fork"},
         {"process::wait", "ari_builtin_process_wait"},
@@ -300,7 +306,10 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_env_set_current_dir") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_env_executable_path") return builtin_sig({}, source_string);
     if (symbol == "ari_builtin_process_id") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_process_uid") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_process_gid") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_process_exit") return builtin_sig({i64}, void_type);
+    if (symbol == "ari_builtin_process_abort") return builtin_sig({}, void_type);
     if (symbol == "ari_builtin_process_fork") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_process_wait") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_thread_spawn") return builtin_sig({thread_entry}, thread_handle);

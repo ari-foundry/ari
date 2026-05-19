@@ -1,0 +1,11 @@
+// Covers abort hook lowering without executing the aborting path.
+fn abort_if_requested(run: bool) -> void {
+  if run {
+    process::abort();
+  }
+}
+
+fn main() -> i64 {
+  abort_if_requested(false);
+  return 0;
+}

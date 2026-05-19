@@ -15,6 +15,8 @@ Implemented now:
 - `std::env`, `std::fs`, `std::process`, `std::thread`, `std::sync`, and
   `std::time` provide the first hosted Linux/glibc-backed runtime hooks through
   the LLVM driver.
+- `std::process` currently covers process id, user id, group id, explicit exit,
+  explicit abort, and the first POSIX `fork`/`wait` slice.
 - `std::net` provides IP and socket-address values, but not sockets yet.
 - Hosted executables currently rely on the platform CRT and dynamic linker;
   Ari emits LLVM IR and lets the LLVM driver link.
@@ -73,6 +75,14 @@ useful for modern systems work.
 
 | API Family | Current Status | Future Module Shape |
 | --- | --- | --- |
+| raw syscall wrapper | Not exposed. | Future `std::os::linux::syscall` should return typed error values and stay behind target guards. |
+| errno mapping | `std::target::uses_posix_errno()` reports the ABI family, but no runtime errno accessor exists. | Add `std::os::errno` together with the first fallible descriptor wrappers. |
+| file descriptor abstraction | `std::fs::File` stores an internal descriptor value, but no public raw descriptor type exists. | Add an owned `Fd`/`OwnedFd` plus borrowed descriptor view before exposing `fcntl`, `poll`, or epoll. |
+| close-on-exec | Not exposed. | Add after descriptor ownership exists; default new descriptors to close-on-exec where possible. |
+| nonblocking mode | Not exposed. | Add descriptor methods backed by `fcntl` and document interaction with IO helpers. |
+| fcntl | Not exposed. | Future low-level descriptor module with typed flag helpers. |
+| ioctl | Not exposed. | Keep optional and narrow; prefer typed wrappers for common devices over a raw catch-all. |
+| poll/select | Not exposed. | `poll` can be a portable readiness seed; `select` is legacy and should stay compatibility-oriented. |
 | epoll | `target::has_epoll()` reports Linux family support. | `std::os::linux::epoll` with owned epoll fd, `add`, `modify`, `remove`, and `wait`. |
 | inotify | `target::has_inotify()` reports Linux family support. | Owned inotify fd plus event buffer parsing. |
 | fanotify | `target::has_fanotify_api()` reports Linux family support only. | Optional; permission-heavy and likely not a first runtime slice. |
@@ -83,14 +93,45 @@ useful for modern systems work.
 | memfd | `target::has_memfd()` reports Linux family support. | Owned anonymous file descriptor wrapper. |
 | io_uring | `target::has_io_uring_api()` reports Linux family support only. | Optional advanced async API after ownership and buffer pinning rules exist. |
 
+## Process, Signals, And Memory Mapping
+
+| API Family | Current Status | Future Module Shape |
+| --- | --- | --- |
+| argv/env | Portable surface exists through `std::context` and `std::env`. | Keep user-facing wrappers portable; reserve raw `environ` access for `std::os` if needed. |
+| current process info | `std::process::id`, `uid`, `gid`, and `is_root` exist. | Add parent id, session/process-group helpers only with clear platform policy. |
+| exit/abort | `std::process::exit` and `abort` exist. | Document destructor/cleanup limits anywhere higher-level runtime teardown is added. |
+| spawn | Not exposed. | Prefer a portable `std::process::spawn` builder before exposing POSIX-only `posix_spawn`. |
+| fork | `std::process::fork` exists as a POSIX slice. | Keep marked as sharp; fork-with-threads and async-signal-safe limitations need more docs. |
+| exec | Not exposed. | Add after argument/environment vector ownership and error reporting are stable. |
+| wait | `std::process::wait` returns normal child exit status or `-1`. | Replace sentinel-only status with a richer status/result value. |
+| kill | Not exposed. | Add with signal constants and permission/error mapping. |
+| working directory | `std::env::current_dir` and `set_current_dir` exist. | Owned path values and canonicalization should live with `std::path`/`std::fs`. |
+| daemon helpers | Not exposed. | Optional; should be policy-heavy and probably separate from core process APIs. |
+| signal mask | Not exposed. | Future `std::os::signal` with mask values and clear thread/process scope. |
+| sigaction | Not exposed. | Needs function-pointer ABI, signal-safe restrictions, and handler lifetime policy. |
+| raise/kill signals | Not exposed. | Add after signal constants and status/error mapping. |
+| SIGINT/SIGTERM handling | Not exposed. | Prefer small, documented helpers after signal action policy exists. |
+| sigaltstack | Not exposed. | Optional advanced API; depends on raw memory and stack lifetime policy. |
+| signal-safe docs | Not complete yet. | Document async-signal-safe limits before allowing user handlers. |
+| mmap/anonymous mapping | Not exposed. | Future owned mapping type with `munmap` in drop-like cleanup policy. |
+| file mapping | Not exposed. | Depends on public descriptor ownership and path/file error reporting. |
+| mprotect/msync/mlock/madvise | Not exposed. | Add as methods on owned mappings with platform flags. |
+| page size | Not exposed. | Add a simple runtime or target helper before mapping alignment APIs. |
+
 ## Implementation Roadmap
 
 1. Keep `std::target` current with compiler target support.
 2. Add explicit `std::os` docs before adding raw wrappers.
 3. Introduce a small owned descriptor type and `errno`/error policy.
-4. Implement `epoll`, `eventfd`, `timerfd`, and `memfd` before more complex
-   security or namespace APIs.
-5. Add optional `pidfd`, `inotify`, and eventually `io_uring` once the runtime
+4. Add process expansion in order: richer wait status, `kill`, `exec`, then
+   portable `spawn`.
+5. Implement descriptor readiness primitives in order: `poll`, then Linux
+   `epoll`, `eventfd`, `timerfd`, and `memfd`.
+6. Add memory mapping only after descriptor/error policy and owned mapping
+   cleanup are designed.
+7. Add signal mask/action support only after signal-safe limitations are fully
+   documented.
+8. Add optional `pidfd`, `inotify`, and eventually `io_uring` once the runtime
    can test kernel-version-dependent behavior.
-6. Keep cgroups, namespaces, seccomp, capabilities, and fanotify optional until
+9. Keep cgroups, namespaces, seccomp, capabilities, and fanotify optional until
    there is a real application need and privilege-aware tests.

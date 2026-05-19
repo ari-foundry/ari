@@ -144,8 +144,8 @@ fn main() -> i64 {
 - Executable path lookup is currently Linux-specific and reads
   `/proc/self/exe`. Cross-platform normalization belongs behind this module
   later.
-- Child-process mutation is a future OS-facing slice. Current process id/exit
-  helpers live in `std::process`.
+- Child-process mutation is a future OS-facing slice. Current process
+  identity and termination helpers live in `std::process`.
 - Argument strings are borrowed from the host runtime context. Copy into a
   zone-backed `std::string::String` when owned text is needed.
 - Environment variable values are also borrowed host strings. Copy into a

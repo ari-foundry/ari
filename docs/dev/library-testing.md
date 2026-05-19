@@ -58,8 +58,12 @@ identifies the exact case:
   `set_current_dir`, executable path, and `Option` wrapper behavior.
 - `std-process-basic.ari`: runtime-backed `std::process::id` plus source
   success/failure status helper behavior.
+- `std-process-identity.ari`: runtime-backed `std::process::uid`/`gid` plus
+  source `is_root` behavior.
 - `std-process-exit.ari`: runtime-backed explicit process exit status
   behavior.
+- `std-process-abort.ari`: abort hook lowering while the executable follows a
+  non-aborting path.
 - `std-process-fork-wait.ari`: runtime-backed POSIX `fork`/`wait` behavior,
   child/parent predicates, explicit child exit, and wait failure sentinel.
 - `std-thread-basic.ari`: runtime-backed `std::thread` function-pointer

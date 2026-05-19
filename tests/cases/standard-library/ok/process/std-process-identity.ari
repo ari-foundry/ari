@@ -1,0 +1,22 @@
+// Covers current-process identity helpers that are safe to read in normal tests.
+fn main() -> i64 {
+  let pid = process::id();
+  let uid = process::uid();
+  let gid = process::gid();
+  var score = 0;
+
+  if pid > 0 {
+    score = score + 3;
+  }
+  if uid >= 0 {
+    score = score + 5;
+  }
+  if gid >= 0 {
+    score = score + 7;
+  }
+  if process::is_root() == (uid == 0) {
+    score = score + 11;
+  }
+
+  return score;
+}

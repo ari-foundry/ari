@@ -268,17 +268,21 @@ fn std::path::normalize_in|check-prelude std-path-basic lightweight lexical norm
 fn std::path::parent|check-prelude std-path-basic borrowed parent path view; docs/stdlib/modules/path.md
 fn std::path::stem|check-prelude std-path-basic borrowed file-stem view; docs/stdlib/modules/path.md
 fn std::path::trim_trailing_separators|check-prelude std-path-basic borrowed trailing slash trim helper; docs/stdlib/modules/path.md
+fn std::process::abort|check-prelude std-process-abort explicit process abort hook; docs/stdlib/modules/process.md
 fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
 fn std::process::failure|check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md
 fn std::process::fork|check-prelude std-process-fork-wait POSIX fork hook; docs/stdlib/modules/process.md
+fn std::process::gid|check-prelude std-process-identity current process group id hook; docs/stdlib/modules/process.md
 fn std::process::id|check-prelude std-process-basic current process id hook; docs/stdlib/modules/process.md
 fn std::process::is_child|check-prelude std-process-fork-wait source child-branch predicate; docs/stdlib/modules/process.md
 fn std::process::is_failure|check-prelude std-process-basic source status predicate; docs/stdlib/modules/process.md
 fn std::process::is_fork_error|check-prelude std-process-fork-wait source fork failure predicate; docs/stdlib/modules/process.md
 fn std::process::is_parent|check-prelude std-process-fork-wait source parent-branch predicate; docs/stdlib/modules/process.md
+fn std::process::is_root|check-prelude std-process-identity source root-user predicate; docs/stdlib/modules/process.md
 fn std::process::is_success|check-prelude std-process-basic source status predicate; docs/stdlib/modules/process.md
 fn std::process::is_wait_error|check-prelude std-process-fork-wait source wait failure predicate; docs/stdlib/modules/process.md
 fn std::process::success|check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md
+fn std::process::uid|check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md
 fn std::process::wait|check-prelude std-process-fork-wait POSIX wait hook and exit-status decode; docs/stdlib/modules/process.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
