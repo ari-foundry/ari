@@ -534,6 +534,7 @@ mem::ptr_store<T>(pointer, value)
 mem::copy_bytes(target, source, len)
 mem::move_bytes(target, source, len)
 mem::set_bytes(target, value, len)
+mem::page_size()
 mem::replace<T>(ref mut place, value)
 mem::swap<T>(ref mut left, ref mut right)
 ```
@@ -542,6 +543,10 @@ mem::swap<T>(ref mut left, ref mut right)
 lengths. `copy_bytes` is for non-overlapping regions, `move_bytes` permits
 overlap, and `set_bytes` fills a region with one byte. They lower through LLVM
 memory intrinsics and trap on negative lengths.
+
+`page_size()` returns the hosted runtime page size in bytes. Use it to check
+alignment or prepare for future mapping APIs; it does not allocate or map
+memory.
 
 `std::zone` exposes the explicit allocation capability:
 

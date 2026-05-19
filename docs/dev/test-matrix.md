@@ -111,7 +111,8 @@ Checklist:
 - [x] scalar `ptr_load`/`ptr_store` lower on LLVM
 - [x] plain aggregate `ptr_load`/`ptr_store` and `*pointer` whole-copy lower on LLVM
 - [x] `std::mem::copy_bytes`/`move_bytes`/`set_bytes` lower through LLVM
-      memory intrinsics
+      memory intrinsics, and `std::mem::page_size` lowers through the hosted
+      runtime page-size hook
 - [x] scalar field/element access through raw aggregate pointers lowers on LLVM
 - [x] C variadic extern declarations, default promotions, calls, and function-pointer rejection
 - [x] C callback/function-pointer parameters lower as `ptr` and accept Ari function names

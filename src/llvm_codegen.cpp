@@ -457,6 +457,7 @@ private:
                symbol == "getpid" ||
                symbol == "getuid" ||
                symbol == "getgid" ||
+               symbol == "getpagesize" ||
                symbol == "fork" ||
                symbol == "waitpid" ||
                symbol == "pthread_create" ||
@@ -562,6 +563,7 @@ private:
         declarations_ << "declare i32 @getpid()\n";
         declarations_ << "declare i32 @getuid()\n";
         declarations_ << "declare i32 @getgid()\n";
+        declarations_ << "declare i32 @getpagesize()\n";
         declarations_ << "declare i32 @fork()\n";
         declarations_ << "declare i32 @waitpid(i32, ptr, i32)\n";
         declarations_ << "declare i32 @pthread_create(ptr, ptr, ptr, ptr)\n";
@@ -1085,6 +1087,14 @@ private:
         line("fail:");
         line("  call void @exit(i32 1)");
         line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_mem_page_size() {");
+        line("entry:");
+        line("  %size = call i32 @getpagesize()");
+        line("  %wide = zext i32 %size to i64");
+        line("  ret i64 %wide");
         line("}");
         line();
 

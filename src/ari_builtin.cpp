@@ -197,6 +197,8 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::mem::move_bytes", "ari_builtin_mem_move_bytes"},
         {"mem::set_bytes", "ari_builtin_mem_set_bytes"},
         {"std::mem::set_bytes", "ari_builtin_mem_set_bytes"},
+        {"mem::page_size", "ari_builtin_mem_page_size"},
+        {"std::mem::page_size", "ari_builtin_mem_page_size"},
         {"create", "ari_builtin_zone_create"},
         {"std::create", "ari_builtin_zone_create"},
         {"zone::create", "ari_builtin_zone_create"},
@@ -312,6 +314,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_process_abort") return builtin_sig({}, void_type);
     if (symbol == "ari_builtin_process_fork") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_process_wait") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_mem_page_size") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_thread_spawn") return builtin_sig({thread_entry}, thread_handle);
     if (symbol == "ari_builtin_thread_join") return builtin_sig({thread_handle}, i64);
     if (symbol == "ari_builtin_thread_yield") return builtin_sig({}, void_type);

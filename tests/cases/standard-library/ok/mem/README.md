@@ -9,3 +9,5 @@ checks.
   plain aggregate values.
 - `std-mem-byte-ops.ari`: byte-level `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM memory intrinsic lowering.
+- `std-mem-page-size.ari`: hosted runtime page-size query and basic
+  page-alignment invariants for future mapping APIs.

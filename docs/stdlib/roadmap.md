@@ -13,7 +13,7 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 
 Current source families: `option`, `result`, `algo` slice sort/search/reorder
 helpers, `hash` deterministic hasher/value/byte-slice helpers, `mem` layout,
-pointer, value, and byte memory helpers, `zone` raw
+pointer, value, byte memory, and hosted page-size helpers, `zone` raw
 allocation plus source typed array allocation,
 `boxed`, `string` byte access/search/ASCII
 helpers including case search, prefix parsers, and owned trim copies, `ascii`
@@ -80,7 +80,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::hash` | Provide deterministic non-cryptographic hashing without tying hash policy to one collection type. | Current `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers, and `collections::hash_i64` compatibility; future aggregate/derive impls and trait-driven hash collection constructors. |
 | `std::parse` | Parse whole byte-slice values with names that read naturally at call sites. | Current ASCII-trimmed `integer`, `boolean`, `is_float`, `float_or`, and panicking `float`; future overflow policy, richer parse errors, and `Option[f64]`/`Result[f64,E]` after float enum payloads are supported. |
 | `std::encoding` | Validate text encodings and convert bytes to portable text forms. | Current `is_ascii`, `utf8_count`, `is_utf8`, `utf16_count`, `is_utf16`, lowercase hex encode/decode, and standard base64 encode/decode; future URL-safe/MIME base64 variants, fallible `String` decoders after zone-backed enum payloads, and optional compression policy in a separate module. |
-| `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, errno mapping, `syscall`, close-on-exec/nonblocking descriptor flags, `fcntl`, `ioctl`, `poll`, `select`, Linux `epoll`/`eventfd`/`timerfd`/`signalfd`, optional `pidfd`/`memfd`, signals, memory mapping, and page-size helpers. |
+| `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, errno mapping, `syscall`, close-on-exec/nonblocking descriptor flags, `fcntl`, `ioctl`, `poll`, `select`, Linux `epoll`/`eventfd`/`timerfd`/`signalfd`, optional `pidfd`/`memfd`, signals, and memory mapping. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
 

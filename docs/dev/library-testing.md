@@ -201,6 +201,8 @@ identifies the exact case:
 - `std-mem-byte-ops.ari`: `std::mem` byte `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM `memcpy`/`memmove`/`memset` intrinsic
   lowering checks.
+- `std-mem-page-size.ari`: `std::mem::page_size` hosted runtime hook lowering
+  and basic page-size invariants.
 - `std-input-byte-option.ari`: source `std::input` EOF-to-Option byte helper
   behavior over the raw stdin hook.
 - `std-cmp-value-helpers.ari`: source `std::cmp` trait-bound value selection,

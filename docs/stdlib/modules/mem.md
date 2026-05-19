@@ -13,6 +13,7 @@ Implemented now:
 - raw pointer arithmetic: `ptr_offset<T>`, `ptr_add<T>`
 - raw pointer scalar/plain-aggregate access: `ptr_load<T>`, `ptr_store<T>`
 - byte memory routines: `copy_bytes`, `move_bytes`, `set_bytes`
+- hosted runtime page query: `page_size`
 - value helpers: `replace<T>`, `swap<T>`
 
 The byte routines are runtime-owned Ari builtins lowered by the LLVM backend:
@@ -32,6 +33,7 @@ mem::ptr_store<T>(target: ptr T, value: T) -> void
 mem::copy_bytes(target: ptr u8, source: ptr u8, len: i64) -> void
 mem::move_bytes(target: ptr u8, source: ptr u8, len: i64) -> void
 mem::set_bytes(target: ptr u8, value: u8, len: i64) -> void
+mem::page_size() -> i64
 mem::replace<T>(target: ref mut T, value: T) -> T
 mem::swap<T>(left: ref mut T, right: ref mut T) -> void
 ```
@@ -46,6 +48,11 @@ memory. Use `move_bytes` when the regions may overlap. `set_bytes(target,
 value, len)` fills `len` bytes with `value`. A negative `len` traps through
 the runtime. The functions do not validate that pointers are non-null or that
 the regions are initialized; callers own that invariant.
+
+`page_size()` returns the hosted runtime page size in bytes. It is useful for
+checking alignment and planning future mapping APIs, but it does not allocate,
+map, protect, or lock memory by itself. On the current Linux/LLVM runtime path
+it lowers through `getpagesize`.
 
 ## Example
 
@@ -65,6 +72,8 @@ fn main() -> i64 {
   mem::move_bytes(ptr_add(target, 1), target, 3);
 
   let first = ptr_load(target);
+  let page = mem::page_size();
+  assert(page > 0);
   zone::destroy(zone);
   return first as i64;
 }
@@ -88,6 +97,8 @@ unless the surrounding API has a clear ownership and drop policy.
 - `tests/cases/standard-library/ok/mem/std-mem-byte-ops.ari` checks
   `copy_bytes`, `move_bytes`, `set_bytes`, overlapping move behavior, and LLVM
   intrinsic lowering.
+- `tests/cases/standard-library/ok/mem/std-mem-page-size.ari` checks
+  `page_size`, hosted runtime lowering, and basic page-size invariants.
 
 Run `make check-std-api` after public API edits. For this module, a focused
 manual check is:

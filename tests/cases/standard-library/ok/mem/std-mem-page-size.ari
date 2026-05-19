@@ -1,0 +1,17 @@
+// Covers the hosted runtime page-size query used by future mapping APIs.
+fn main() -> i64 {
+  let page = mem::page_size();
+  var score = 0;
+
+  if page > 0 {
+    score = score + 7;
+  }
+  if (page & (page - 1)) == 0 {
+    score = score + 11;
+  }
+  if page >= mem::align_of<u64>() {
+    score = score + 13;
+  }
+
+  return score;
+}

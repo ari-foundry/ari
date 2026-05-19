@@ -627,6 +627,11 @@ check-prelude: $(TARGET)
 	grep -q '@llvm.memset.p0.i64' $(BUILD_DIR)/prelude/std-mem-byte-ops.ll
 	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-byte-ops.ari -o $(BUILD_DIR)/prelude/std-mem-byte-ops.elf
 	$(BUILD_DIR)/prelude/std-mem-byte-ops.elf; code=$$?; test $$code -eq 5
+	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-page-size.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-page-size.ll
+	grep -q '@ari_builtin_mem_page_size' $(BUILD_DIR)/prelude/std-mem-page-size.ll
+	grep -q '@getpagesize' $(BUILD_DIR)/prelude/std-mem-page-size.ll
+	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-page-size.ari -o $(BUILD_DIR)/prelude/std-mem-page-size.elf
+	$(BUILD_DIR)/prelude/std-mem-page-size.elf; code=$$?; test $$code -eq 31
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-header-main.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/prelude-header-main.ll

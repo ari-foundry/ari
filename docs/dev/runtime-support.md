@@ -28,6 +28,8 @@ Implemented runtime support today:
 - LLVM atomic instructions for the first `AtomicI64` slice
 - byte memory routines: `std::mem::copy_bytes`, `move_bytes`, and `set_bytes`
   lower to `llvm.memcpy`, `llvm.memmove`, and `llvm.memset`
+- hosted page-size query: `std::mem::page_size` lowers to the platform runtime
+  page-size hook
 
 ## Required Runtime Families
 

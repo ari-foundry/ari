@@ -17,6 +17,8 @@ Implemented now:
   the LLVM driver.
 - `std::process` currently covers process id, user id, group id, explicit exit,
   explicit abort, and the first POSIX `fork`/`wait` slice.
+- `std::mem::page_size()` reports the hosted runtime page size for alignment
+  and future mapping work.
 - `std::net` provides IP and socket-address values, but not sockets yet.
 - Hosted executables currently rely on the platform CRT and dynamic linker;
   Ari emits LLVM IR and lets the LLVM driver link.
@@ -116,7 +118,7 @@ useful for modern systems work.
 | mmap/anonymous mapping | Not exposed. | Future owned mapping type with `munmap` in drop-like cleanup policy. |
 | file mapping | Not exposed. | Depends on public descriptor ownership and path/file error reporting. |
 | mprotect/msync/mlock/madvise | Not exposed. | Add as methods on owned mappings with platform flags. |
-| page size | Not exposed. | Add a simple runtime or target helper before mapping alignment APIs. |
+| page size | `std::mem::page_size()` returns the hosted runtime page size. | Use it as the alignment seed for future owned mapping APIs. |
 
 ## Implementation Roadmap
 

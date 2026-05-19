@@ -18,7 +18,7 @@ limits, examples, and test files for one module.
 - [std::input](input.md): stdin-facing byte and line input, including
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::mem](mem.md): layout queries, raw pointer helpers, byte memory
-  routines, and value `replace`/`swap`.
+  routines, hosted page-size lookup, and value `replace`/`swap`.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,
   safe accessors, growth, copy, and iterator entry points.
 - [std::hash](hash.md): deterministic non-cryptographic `Hasher`,
