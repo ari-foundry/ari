@@ -1032,8 +1032,9 @@ check-prelude: $(TARGET)
 	grep -q 'write_unsigned' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 8; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-display-builtins.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-display-builtins.ll
+	grep -q '_ARNv3std3fmt8float_in' $(BUILD_DIR)/prelude/std-fmt-display-builtins.ll
 	grep -q 'std__fmt__Display9format_in' $(BUILD_DIR)/prelude/std-fmt-display-builtins.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-display-builtins.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-display-builtins.elf; $(BUILD_DIR)/prelude/std-fmt-display-builtins.elf; code=$$?; test $$code -eq 39; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-display-builtins.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-display-builtins.elf; $(BUILD_DIR)/prelude/std-fmt-display-builtins.elf; code=$$?; test $$code -eq 66; fi
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent3len"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent8capacity"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll

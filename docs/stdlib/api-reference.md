@@ -1541,6 +1541,7 @@ fmt::alternate(spec)
 fmt::unsigned_in(ref mut zone, value, spec)
 fmt::integer_in(ref mut zone, value)
 fmt::boolean_in(ref mut zone, value)
+fmt::float_in(ref mut zone, value, precision)
 fmt::text_in(ref mut zone, value)
 fmt::debug_text_in(ref mut zone, value)
 fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
@@ -1549,8 +1550,10 @@ fmt::write_boolean<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_text<W: io::Writer>(ref mut writer, ref mut zone, value)
 ```
 
-Built-in `Display` impls cover `i64`, `u64`, `bool`, lowercase `string`, and
-`std::string::String`. Use explicit impls for domain structs and enums.
+Built-in `Display` impls cover `i64`, `u64`, `bool`, `f32`, `f64`, lowercase
+`string`, and `std::string::String`. Use explicit impls for domain structs and
+enums. Float `Display` uses six fractional digits; call `fmt::float_in` to pick
+a precision explicitly.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 and `format_in!(ref mut zone, "...", values...)`. Use `format_in!` for owned

@@ -1,5 +1,5 @@
 fn main() -> i64 {
-  var zone = zone::create(256);
+  var zone = zone::create(1024);
   var text = std::string::empty(ref mut zone);
 
   text.append_value("n=");
@@ -11,10 +11,16 @@ fn main() -> i64 {
 
   let suffix = std::string::from(ref mut zone, "!");
   text.append_value(suffix);
+  text.append_value(" f=");
+  text.append_value(1.5f32);
+  text.append_value(" d=");
+  text.append_value(-2.25f64);
 
-  assert_equal[bool](text.equals_text("n=-12 ok=true max=18446744073709551615!"), true);
+  let direct = fmt::float_in(ref mut zone, 2.125f64, 2);
+  assert_equal[bool](text.equals_text("n=-12 ok=true max=18446744073709551615! f=1.500000 d=-2.250000"), true);
+  assert_equal[bool](direct.equals_text("2.12"), true);
 
-  let answer = text.len();
+  let answer = text.len() + direct.len();
   zone::destroy(zone);
   return answer;
 }

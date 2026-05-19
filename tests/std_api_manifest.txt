@@ -218,6 +218,7 @@ fn std::fmt::boolean_in|check-prelude std-fmt-format-spec allocator-backed bool 
 fn std::fmt::center|check-prelude std-fmt-format-spec center alignment spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::debug_text_in|check-prelude std-fmt-format-spec source debug text quoting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::decimal|check-prelude std-fmt-format-spec decimal integer spec helper; docs/stdlib/modules/fmt.md
+fn std::fmt::float_in|check-prelude std-fmt-display-builtins allocator-backed float formatting helper and Display impls; docs/stdlib/modules/fmt.md
 fn std::fmt::hex|check-prelude std-fmt-format-spec hexadecimal integer spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::integer_in|check-prelude std-fmt-format-spec allocator-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::left|check-prelude std-fmt-format-spec left alignment spec helper; docs/stdlib/modules/fmt.md
