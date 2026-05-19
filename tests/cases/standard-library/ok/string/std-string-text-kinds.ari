@@ -1,5 +1,5 @@
 // Covers the first explicit text-kind views:
-// UTF-8 bytes, OS string bytes, and NUL-terminated C strings.
+// UTF-8 bytes, OS string bytes, and the shared std::c::CStr C string view.
 fn expect_char(value: std::Option[std::encoding::Utf8Char], scalar: u32, len: i64, index: i64) -> bool {
   match value {
     std::Some(ch) => {
@@ -34,9 +34,11 @@ fn main() -> i64 {
   assert_eq_i64(utf8_from_os.codepoint_count(), 3);
 
   var hello = [104u8, 101u8, 108u8, 108u8, 111u8];
-  let c = std::string::c_str("hello");
+  let c: std::c::CStr = std::string::c_str("hello");
+  let root_alias: CStr = std::string::c_str("hello");
   assert_eq_i64(c.len(), 5);
   assert(!c.is_empty());
+  assert_eq_i64(root_alias.len(), 5);
   let c_view = c.as_slice();
   assert(c_view.equals(hello.as_slice()));
   let c_bytes = std::string::c_bytes("hello");

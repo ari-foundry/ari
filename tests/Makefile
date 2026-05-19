@@ -905,7 +905,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std6string5c_str' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q 'std__string__Utf88inherent15codepoint_count' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	grep -q 'std__string__OsStr8inherent8try_utf8' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
-	grep -q 'std__string__CStr8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q 'std__c__CStr8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf
 	$(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf; $(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0; fi

@@ -31,7 +31,8 @@ std::string::bytes("literal")
 `utf8(bytes)` validates a borrowed `Slice[u8]` and returns
 `Option[std::string::Utf8]`. `os_str(bytes)` keeps operating-system bytes
 distinct from normal text; the current POSIX slice stores raw bytes and may not
-be valid UTF-8. `c_str(text)` wraps Ari's NUL-terminated `string` value, while
+be valid UTF-8. `c_str(text)` is a convenience wrapper for
+`std::c::from_string(text)` and returns the shared `std::c::CStr` type, while
 `c_len` and `c_bytes` expose bytes before the trailing NUL. `bytes(text)` is
 the natural alias for `c_bytes(text)` when a string literal should be treated
 as a `Slice[u8]`, for example `std::string::bytes("true")`.
@@ -305,9 +306,10 @@ view.codepoint_at(byte_index)
 `std::string::utf8(bytes)` when invalid UTF-8 is normal input; do not mutate
 the underlying bytes while keeping a validated view.
 
-## OS Strings And C Strings
+## OS Strings And C ABI Views
 
-`OsStr` and `CStr` make boundary data explicit:
+`OsStr` makes OS-boundary data explicit. C ABI text uses the single
+`std::c::CStr` borrowed view:
 
 ```ari
 let os = std::string::os_str(bytes);
@@ -318,7 +320,7 @@ os.is_utf8()
 os.try_utf8()
 
 let c = std::string::c_str("literal");
-c.as_string()
+c.as_ptr()
 c.as_slice()
 c.len()
 c.is_empty()
@@ -326,11 +328,11 @@ c.is_empty()
 
 `OsStr` is not text by default. Convert with `try_utf8` only after deciding the
 OS bytes should be interpreted as UTF-8. Use `std::path::from_os(os)` when the
-same bytes should be interpreted as path bytes. `CStr.as_slice()` and
+same bytes should be interpreted as path bytes. `std::c::CStr.as_slice()` and
 `std::string::c_bytes(text)` exclude the trailing NUL because Ari byte-slice
-helpers operate on logical content bytes. For C ABI work, prefer the dedicated
-`std::c` module: it provides `std::c::CStr`, zone-backed
-`std::c::CString`, POSIX `errno`, and dynamic loader handles.
+helpers operate on logical content bytes. Keep owned C-shaped storage in
+`std::c::CString`; it lives with `std::c::CStr`, POSIX `errno`, and dynamic
+loader handles in the dedicated C ABI module.
 
 ## Example
 

@@ -16,10 +16,6 @@ pub struct OsStr {
   bytes: std::Slice[u8],
 }
 
-pub struct CStr {
-  text: string,
-}
-
 pub extern "ari" fn alloc_buffer(zone: ref mut Zone, capacity: i64) -> ptr u8 = "ari_builtin_string_alloc_buffer";
 pub extern "ari" fn with_capacity(zone: ref mut Zone, capacity: i64) -> RawString = "ari_builtin_string_with_capacity";
 pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::String = "ari_builtin_string_new";
@@ -46,8 +42,8 @@ pub fn os_str(bytes: std::Slice[u8]) -> std::string::OsStr {
   return std::string::OsStr { bytes: bytes };
 }
 
-pub fn c_str(text: string) -> std::string::CStr {
-  return std::string::CStr { text: text };
+pub fn c_str(text: string) -> std::c::CStr {
+  return std::c::from_string(text);
 }
 
 pub fn c_len(text: string) -> i64 {
@@ -184,24 +180,6 @@ pub impl std::string::OsStr {
 
   fn try_utf8(self: ref Self) -> std::Option[std::string::Utf8] {
     return std::string::utf8(self.bytes);
-  }
-}
-
-pub impl std::string::CStr {
-  fn as_string(self: ref Self) -> string {
-    return self.text;
-  }
-
-  fn len(self: ref Self) -> i64 {
-    return c_string_len(self.text);
-  }
-
-  fn is_empty(self: ref Self) -> bool {
-    return self.len() == 0;
-  }
-
-  fn as_slice(self: ref Self) -> std::Slice[u8] {
-    return std::string::c_bytes(self.text);
   }
 }
 

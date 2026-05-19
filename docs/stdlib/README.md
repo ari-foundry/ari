@@ -73,9 +73,9 @@ iterators; and red-black-tree `TreeMap`/`TreeSet` handles with sorted
 key/value iteration. Root `Slice[T]` now has borrowed range views, split
 views, subsequence search, lexicographic comparison, lazy chunks/windows, and
 delimiter splitting, while `std::string` mirrors those byte-view operations
-and adds allocator-backed `join_in` plus typed borrowed `Utf8`, `OsStr`, and
-`CStr` views so code can distinguish validated UTF-8, OS bytes, and
-NUL-terminated C strings. `std::algo` adds source slice algorithms
+and adds allocator-backed `join_in` plus typed borrowed `Utf8`/`OsStr` views
+and shared `std::c::CStr` construction so code can distinguish validated
+UTF-8, OS bytes, and NUL-terminated C strings. `std::algo` adds source slice algorithms
 for sorting, binary search, reverse/rotate, partition, min/max/clamp, swap,
 fill, copy, and dedup. `std::parse` adds whole-input integer, bool, and
 decimal float parsing,

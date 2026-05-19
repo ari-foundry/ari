@@ -5,7 +5,7 @@ together. Use this page when deciding which API a library should accept.
 
 | Kind | Current Type | Meaning | Use It For |
 | --- | --- | --- | --- |
-| C string | `string`, `std::string::CStr`, `std::c::CStr`, `std::c::CString` | NUL-terminated bytes. Borrowed views exclude the terminator when viewed as a slice; owned `CString` stores one trailing NUL in a zone. | String literals, C ABI calls, dynamic loader names, and C-shaped owned buffers. |
+| C string | `string`, `std::c::CStr`, `std::c::CString` | NUL-terminated bytes. Borrowed views exclude the terminator when viewed as a slice; owned `CString` stores one trailing NUL in a zone. | String literals, C ABI calls, dynamic loader names, and C-shaped owned buffers. |
 | Owned byte string | `std::string::String` | Zone-backed mutable bytes with no UTF-8 promise. | Output buffers, parser buffers, byte-oriented file reads, formatting results. |
 | UTF-8 string view | `std::string::Utf8` | Borrowed bytes that have already passed UTF-8 validation. | Unicode scalar counting and byte-offset scalar lookup. |
 | OS string view | `std::string::OsStr` | Borrowed operating-system string bytes. On the current POSIX slice this is raw bytes and may not be UTF-8. | Environment/path boundary data before deciding whether it is text. |
@@ -23,10 +23,10 @@ together. Use this page when deciding which API a library should accept.
   current directory will immediately be inspected as a path.
 - Keep path manipulation in `std::path`; path bytes are not normal text even
   when they happen to be UTF-8.
-- Use `std::string::c_str(text)` for the older text-kind view in the string
-  module, and `std::c::from_string(text)` when the value is headed to C ABI
-  helpers. Use `std::c::from_slice_in(ref mut zone, bytes)` when owned
-  NUL-terminated storage is required.
+- Use `std::string::c_str(text)` or `std::c::from_string(text)` to create the
+  same borrowed `std::c::CStr` view. Use
+  `std::c::from_slice_in(ref mut zone, bytes)` when owned NUL-terminated
+  storage is required.
 - Use `cstr.as_slice()`, `std::string::c_bytes(text)`, or the natural alias
   `std::string::bytes(text)` when byte helpers should ignore the trailing NUL.
 

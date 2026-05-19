@@ -49,8 +49,8 @@ identifies the exact case:
 - `std-string-unicode-helpers.ari`: source `std::string` UTF-8 validation,
   code-point access, and scalar append convenience methods.
 - `std-string-text-kinds.ari`: source `std::string` typed borrowed
-  `Utf8`/`OsStr`/`CStr` views, C string byte slicing, and OS-to-UTF-8
-  validation behavior.
+  `Utf8`/`OsStr` views, shared `std::c::CStr` construction, C string byte
+  slicing, and OS-to-UTF-8 validation behavior.
 - `std-string-byte-literals.ari`: byte character literals, literal byte arrays,
   and `std::string::bytes` views over lowercase `string` values.
 - `std-string-prefix-parsers.ari`: source `std::string` prefix parser

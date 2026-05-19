@@ -19,8 +19,8 @@ non-cryptographic PRNG helpers, `mem` layout,
 pointer, value, byte memory, and hosted page-size helpers, `zone` raw
 allocation plus source typed array allocation,
 `boxed`, `string` byte access/search/split/chunk/window/join/ASCII helpers
-including case search, prefix parsers, owned trim copies, and typed borrowed
-`Utf8`/`OsStr`/`CStr` views, `ascii`
+including case search, prefix parsers, owned trim copies, typed borrowed
+`Utf8`/`OsStr` views, and `std::c::CStr` convenience construction, `ascii`
 byte classification, case-insensitive comparison/search, slice helpers, and
 prefix parsers, `vec` source growable sequence handles with direct borrowed
 range/split/subsequence/compare/chunk/window wrappers, `iter` range/trait
@@ -101,7 +101,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::math` | Provide arithmetic helpers whose names communicate policy better than raw operators. | Current natural `i64` sign/parity helpers, checked add/sub/neg/abs, wrapping/overflowing/saturating add, saturating sub/neg/abs, powers, floor/ceil division, `gcd`, and `lcm`; future checked multiplication, generic numeric traits, and floating helpers. |
 | `std::parse` | Parse whole byte-slice values with names that read naturally at call sites. | Current ASCII-trimmed `integer`, `boolean`, `is_float`, `float_or`, and panicking `float`; future overflow policy, richer parse errors, and `Option[f64]`/`Result[f64,E]` after float enum payloads are supported. |
 | `std::encoding` | Validate text encodings and convert bytes to portable text forms. | Current `is_ascii`, UTF-8/UTF-16 counts, UTF-8 scalar decode/encode helpers, lowercase hex encode/decode, and standard base64 encode/decode; future URL-safe/MIME base64 variants, fallible `String` decoders after zone-backed enum payloads, normalization/transcoding, and optional compression policy in a separate module. |
-| text/path kinds | Keep byte strings, validated text, OS strings, paths, and C strings from collapsing into one API shape. | Current borrowed `std::string::Utf8`, `OsStr`, `CStr`, borrowed `std::c::CStr`, owned `std::c::CString`, and `std::path::PathBytes`; future owned `Utf8String`, `OsString`, `PathBuf`, Windows path/OS-string semantics, fallible owned conversions, and richer C string handoff policy. |
+| text/path kinds | Keep byte strings, validated text, OS strings, paths, and C strings from collapsing into one API shape. | Current borrowed `std::string::Utf8`, `OsStr`, borrowed `std::c::CStr`, owned `std::c::CString`, and `std::path::PathBytes`; future owned `Utf8String`, `OsString`, `PathBuf`, Windows path/OS-string semantics, fallible owned conversions, and richer C string handoff policy. |
 | `std::error` | Give recoverable failures a shared vocabulary instead of bools and sentinel integers. | Current `Kind`, compact `Error`, POSIX `from_errno`, `from_raw`, `raw`, `kind`, `code`, predicate helpers, root `Error`/`ErrorKind` aliases, and `Result[T, i64]` bridge; future direct `Result[T, Error]`, Windows error mapping, owned messages, and conversions from fs/io/net/process wrappers. |
 | `std::log` | Emit simple diagnostics without making every tool invent its own stderr prefix format. | Current `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, and `error`; future source locations, structured records, global or scoped filters, test-runner capture, and backtrace integration. |
 | `std::test` | Let library/application tests aggregate checks before returning one final status. | Current `Report`, `report`, `scratch`, `check`, generic `equal`/`not_equal`, pass/fail accessors, `ok`, `finish`, `require`, and method wrappers; future test discovery/runner integration, named tests, source locations, richer assertion messages, log capture, stack/backtrace reporting, optional benchmark helpers, and optional fuzz hooks. |

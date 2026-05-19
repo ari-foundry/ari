@@ -97,7 +97,7 @@ Omit the semicolon only for the final value expression in a function, block,
 | owned byte string handle | `String`, `std::string::String` | Zone-backed explicit allocation handle. |
 | validated UTF-8 view | `std::string::Utf8` | Borrowed bytes that passed UTF-8 validation. |
 | OS string byte view | `std::string::OsStr` | Borrowed OS boundary bytes; not necessarily UTF-8. |
-| C string view | `std::string::CStr`, `std::c::CStr` | Borrowed wrapper around NUL-terminated `string` or `ptr c_char`. |
+| C string view | `std::c::CStr`, `CStr` | Borrowed wrapper around NUL-terminated `string` or `ptr c_char`; `std::string::c_str(text)` returns this same type. |
 | owned C string | `std::c::CString`, `CString` | Zone-backed bytes with one trailing NUL for C-shaped storage. |
 | path byte view | `std::path::PathBytes` | Borrowed bytes interpreted by lexical path helpers. |
 | tuple | `(i64, bool)`, `()` | Single-element tuples are not supported. |

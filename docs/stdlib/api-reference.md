@@ -1281,7 +1281,6 @@ set.iter()
 ```ari
 std::string::Utf8
 std::string::OsStr
-std::string::CStr
 std::string::utf8(bytes)
 std::string::os_str(bytes)
 std::string::c_str(text)
@@ -1390,7 +1389,7 @@ os.is_empty()
 os.is_utf8()
 os.try_utf8()
 
-c.as_string()
+c.as_ptr()
 c.as_slice()
 c.len()
 c.is_empty()
@@ -1440,8 +1439,9 @@ scalar encoded as UTF-8 and panics for invalid scalar values. These helpers
 work with Unicode scalar values, not grapheme clusters or normalization.
 Use `std::string::utf8(bytes)` to construct a validated borrowed `Utf8` view
 when a function requires UTF-8. Use `OsStr` for operating-system bytes that may
-not be UTF-8, `PathBytes` for path interpretation, and `CStr` or the builtin
-`string` type for NUL-terminated C ABI text.
+not be UTF-8, `PathBytes` for path interpretation, and `std::c::CStr` or the
+builtin `string` type for NUL-terminated C ABI text. `std::string::c_str(text)`
+returns that same `std::c::CStr` borrowed view.
 
 `std::boxed::Box[T]` is a zone-backed single-value owner:
 
