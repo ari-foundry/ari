@@ -44,3 +44,11 @@ Within each feature directory, tests still use readable file prefixes:
 - `std-library-smoke.ari` for a small cross-library integration test.
 
 See `docs/dev/library-testing.md` for the full standard library testing policy.
+
+## README Placement
+
+Keep README files at navigation boundaries such as `tests/`, `tests/cases/`,
+`tests/cases/<feature>/`, and `tests/cases/standard-library/`. Do not add
+README files inside `ok/`, `errors/`, or their leaf feature folders; those
+directories should stay lightweight and be explained by focused test file names,
+`tests/Makefile`, `tests/std_api_manifest.txt`, and the standard library docs.

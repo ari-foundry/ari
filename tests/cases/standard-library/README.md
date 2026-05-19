@@ -14,6 +14,11 @@ Feature folders use the library family as the directory name, for example
 `errors/prelude/`. Keep new files in the narrowest feature folder instead of
 adding them directly under `ok/` or `errors/`.
 
+Do not add README files under `ok/`, `errors/`, or their nested feature
+folders. This page, `docs/dev/library-testing.md`, `tests/std_api_manifest.txt`,
+and descriptive test filenames are the navigation surface for standard library
+fixtures.
+
 ## Name Prefixes
 
 - `std-<module>-<feature>.ari`: source module APIs such as
