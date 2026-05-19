@@ -1,0 +1,32 @@
+// Covers thread runtime convenience helpers: available parallelism and sleep.
+fn helper_value() -> i64 {
+  thread::sleep(time::nanoseconds(0));
+  thread::yield_now();
+  if thread::available_parallelism() < 1 {
+    return 80;
+  }
+  if thread::id() <= 0 {
+    return 81;
+  }
+  return 11;
+}
+
+fn main() -> i64 {
+  if thread::available_parallelism() < 1 {
+    return 1;
+  }
+
+  thread::sleep(time::Duration::zero());
+
+  let helper = thread::spawn(helper_value);
+  if !helper.is_valid() {
+    return 2;
+  }
+
+  let result = helper.join();
+  if result != 11 {
+    return result;
+  }
+
+  return 24;
+}

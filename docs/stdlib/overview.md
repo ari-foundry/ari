@@ -28,7 +28,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `is_success`, `is_failure`, `is_root`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
-| `std::thread` | Function-pointer thread spawn/join and runtime ids. | `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, `is_join_error`. |
+| `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `Mutex`, `Once`, atomic `load`/`store`/`swap`/`fetch_add`/`compare_exchange`, `try_lock`, `lock`, `unlock`, `call_once`. |
 | `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
 | `std::fs` | Byte-oriented filesystem handles. | `File`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `remove`, `rename`, `hard_link`, `symbolic_link`, `create_dir`, `remove_dir`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, whole-file `read`, `write`, `append`, `truncate`, `copy`, `read_to_string`, `close`. |
@@ -154,12 +154,14 @@ runtime-backed `fork`/`wait` plus source branch and error predicates. Portable
 spawn, richer status values, and process handles are intentionally still
 roadmap work.
 
-`std::thread` is the first thread slice. `spawn`, `join`, and `yield_now` are
-runtime-backed because they call the host threading API and install Ari's
-per-thread runtime id before source code runs. `id`, `is_main`,
+`std::thread` is the first thread slice. `spawn`, `join`, `yield_now`, and
+`available_parallelism` are runtime-backed because they call the host threading
+or process APIs and install Ari's per-thread runtime id before source code
+runs. `sleep` delegates to `std::time`, while `id`, `is_main`,
 `is_join_error`, and the `Thread` methods are source helpers. Capturing
-closures, shared ownership, locks, and richer status values remain future
-`std::sync` and richer thread-policy work.
+closures, user-facing thread-local storage, custom stack sizes, shared
+ownership, locks, and richer status values remain future `std::sync` and
+richer thread-policy work.
 
 `std::sync` now starts with `AtomicI64`, plus source `Mutex` and `Once`
 helpers built on it. Atomic method names are the names developers expect:

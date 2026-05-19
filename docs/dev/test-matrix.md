@@ -434,6 +434,9 @@ Checklist:
       keeping the current concrete `i64` signatures
 - [x] source `std::math` exposes checked and saturating add/sub/neg/abs helpers
       with `Option[i64]` overflow reporting and edge-case saturation behavior
+- [x] runtime-backed `std::thread` exposes function-pointer spawn/join,
+      cooperative yield, duration sleep, hosted available parallelism, runtime
+      thread ids, invalid-handle checks, and source handle wrappers
 - [x] source `std::string::String.copy_to(ref mut Zone)` mirrors the
       top-level target-zone copy helper while preserving reset/destroy
       provenance on the returned handle

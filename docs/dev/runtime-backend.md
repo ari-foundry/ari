@@ -48,6 +48,11 @@ nonzero id before a spawned Ari thread calls source code. The slot is
 thread-local so thread runtime work keeps per-thread context state without
 changing the public `std::context::thread_id()` API.
 
+`std::thread::available_parallelism()` is also runtime-backed. On the hosted
+Linux path it calls `sysconf(_SC_NPROCESSORS_ONLN)` and clamps failure to `1`
+so callers can use it as a loop bound without special casing unavailable host
+information.
+
 Hosted output still relies on the platform CRT for the process `_start`,
 startup objects, dynamic linker setup, and low-level compiler runtime support.
 The detailed ownership plan for `_start`, `crt0`, TLS setup, init/fini arrays,

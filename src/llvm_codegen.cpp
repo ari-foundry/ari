@@ -27,6 +27,9 @@ namespace ari {
 
 namespace {
 
+// Linux glibc and musl use this sysconf selector for online processors.
+constexpr int kScNprocessorsOnln = 84;
+
 static std::string quote_global(const std::string& name) {
     std::string out = "@\"";
     for (char c : name) {
@@ -463,6 +466,7 @@ private:
                symbol == "pthread_create" ||
                symbol == "pthread_join" ||
                symbol == "sched_yield" ||
+               symbol == "sysconf" ||
                symbol == "clock_gettime" ||
                symbol == "nanosleep" ||
                symbol == "access" ||
@@ -569,6 +573,7 @@ private:
         declarations_ << "declare i32 @pthread_create(ptr, ptr, ptr, ptr)\n";
         declarations_ << "declare i32 @pthread_join(i64, ptr)\n";
         declarations_ << "declare i32 @sched_yield()\n";
+        declarations_ << "declare i64 @sysconf(i32)\n";
         declarations_ << "declare i32 @clock_gettime(i32, ptr)\n";
         declarations_ << "declare i32 @nanosleep(ptr, ptr)\n";
         declarations_ << "declare i32 @access(ptr, i32)\n";
@@ -1232,6 +1237,18 @@ private:
         line("entry:");
         line("  %ignored = call i32 @sched_yield()");
         line("  ret void");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_thread_available_parallelism() {");
+        line("entry:");
+        line("  %count = call i64 @sysconf(i32 " + std::to_string(kScNprocessorsOnln) + ")");
+        line("  %invalid = icmp slt i64 %count, 1");
+        line("  br i1 %invalid, label %fallback, label %ok");
+        line("ok:");
+        line("  ret i64 %count");
+        line("fallback:");
+        line("  ret i64 1");
         line("}");
         line();
 

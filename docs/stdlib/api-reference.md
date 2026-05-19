@@ -342,8 +342,10 @@ Thread helpers live in `std::thread`:
 thread::spawn(entry)
 thread::join(thread)
 thread::yield_now()
+thread::sleep(duration)
 thread::id()
 thread::is_main()
+thread::available_parallelism()
 thread::is_join_error(status)
 
 Thread::spawn(entry)
@@ -359,6 +361,10 @@ returns the entry function's `i64` result, or `-1` for the current failure
 sentinel; use `is_join_error(status)` for that check. `id()` returns the
 current Ari runtime thread id, with main thread `0` and spawned threads
 positive. `yield_now()` is a host scheduler hint, not synchronization.
+`sleep(duration)` forwards to `std::time::sleep`. `available_parallelism()`
+returns the hosted runtime's online processor count and falls back to `1` when
+the platform call fails. User-facing thread-local storage and stack-size
+configuration remain roadmap work.
 
 Synchronization helpers live in `std::sync`:
 

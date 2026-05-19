@@ -423,6 +423,14 @@ check-prelude: $(TARGET)
 	grep -F -q "std6thread13is_join_error" $(BUILD_DIR)/prelude/std-thread-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari -o $(BUILD_DIR)/prelude/std-thread-basic.elf
 	$(BUILD_DIR)/prelude/std-thread-basic.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-runtime-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-runtime-helpers.ll
+	grep -q "@ari_builtin_thread_available_parallelism" $(BUILD_DIR)/prelude/std-thread-runtime-helpers.ll
+	grep -q "@ari_builtin_time_sleep_nanos" $(BUILD_DIR)/prelude/std-thread-runtime-helpers.ll
+	grep -q "declare i64 @sysconf" $(BUILD_DIR)/prelude/std-thread-runtime-helpers.ll
+	grep -q "declare i32 @nanosleep" $(BUILD_DIR)/prelude/std-thread-runtime-helpers.ll
+	grep -F -q "std6thread5sleep" $(BUILD_DIR)/prelude/std-thread-runtime-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-runtime-helpers.ari -o $(BUILD_DIR)/prelude/std-thread-runtime-helpers.elf
+	$(BUILD_DIR)/prelude/std-thread-runtime-helpers.elf; code=$$?; test $$code -eq 24
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-thread-basic.elf; $(BUILD_DIR)/prelude/std-thread-basic.elf; code=$$?; test $$code -eq 42; fi
 	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-atomic-i64.ari --emit-llvm $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
 	grep -q "@ari_builtin_sync_atomic_i64_load" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll

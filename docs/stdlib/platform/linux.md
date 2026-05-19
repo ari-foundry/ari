@@ -14,7 +14,8 @@ Implemented now:
   family, Linux syscall ABI family, and Linux API-family predicates.
 - `std::env`, `std::fs`, `std::process`, `std::thread`, `std::sync`, and
   `std::time` provide the first hosted Linux/glibc-backed runtime hooks through
-  the LLVM driver.
+  the LLVM driver. `std::thread::available_parallelism()` currently uses
+  `sysconf(_SC_NPROCESSORS_ONLN)` and clamps host failure to `1`.
 - `std::process` currently covers process id, user id, group id, explicit exit,
   explicit abort, and the first POSIX `fork`/`wait` slice.
 - `std::mem::page_size()` reports the hosted runtime page size for alignment

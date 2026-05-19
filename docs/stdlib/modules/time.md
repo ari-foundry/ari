@@ -54,9 +54,10 @@ earlier instant is actually later; `try_duration_since` returns
 not elapsed-time measurement. Wall-clock time can move if the host clock is
 changed.
 
-`sleep(duration)` sleeps the current thread for the duration. The first runtime
-hook is intentionally thin and best-effort; it does not expose interruption or
-remaining-time details yet.
+`sleep(duration)` sleeps the current thread for the duration. `std::thread`
+also re-exports this behavior as `thread::sleep(duration)` for thread-oriented
+code. The first runtime hook is intentionally thin and best-effort; it does not
+expose interruption or remaining-time details yet.
 
 ## Example
 

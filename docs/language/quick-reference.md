@@ -233,7 +233,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | environment/path state | `env::try_get(name)`, `env::set(name, value)`, `env::try_current_dir()`, `env::set_current_dir(path)`, `env::try_executable_path()` |
 | current process | `process::id()`, `process::exit(code)`, `process::success()`, `process::failure()` |
 | POSIX child process | `process::fork()`, `process::wait(pid)`, `process::is_child(pid)`, `process::is_parent(pid)`, `process::is_wait_error(status)` |
-| thread | `thread::spawn(entry)`, `thread::join(handle)`, `handle.join()`, `thread::id()`, `thread::yield_now()` |
+| thread | `thread::spawn(entry)`, `thread::join(handle)`, `handle.join()`, `thread::id()`, `thread::yield_now()`, `thread::sleep(duration)`, `thread::available_parallelism()` |
 | atomic i64 | `AtomicI64::new(value)`, `.load()`, `.store(replacement)`, `.fetch_add(amount)`, `.compare_exchange(expected, replacement)` |
 | input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` |
 | raw IO | `io::Reader`, `io::Writer`, `io::Seek`, `io::BufReader`, `io::BufWriter`, `io::cursor(bytes)`, `io::read_exact`, `io::stdout()`, `io::stderr()`, `io::write_all`, `io::flush`, `io::write_bytes`, `io::newline` |

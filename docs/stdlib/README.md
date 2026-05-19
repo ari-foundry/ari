@@ -36,7 +36,8 @@ process id, explicit exit helpers, and the first POSIX fork/wait slice,
 `std::target` reports compiler-known target, object/debug format, libc/env,
 errno, syscall, and Linux API-family facts,
 `std::thread` adds
-function-pointer spawn/join, scheduler yield, and per-thread runtime ids,
+function-pointer spawn/join, scheduler sleep/yield helpers, available
+parallelism, and per-thread runtime ids,
 `std::sync` adds the first concrete atomic integer primitive plus source
 `Mutex` and `Once` helpers, `std::time` adds monotonic instants, wall-clock
 timestamps, non-negative

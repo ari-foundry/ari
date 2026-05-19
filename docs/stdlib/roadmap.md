@@ -37,8 +37,9 @@ API-family predicates,
 `flush`, stderr routing, and byte-slice output, current
 `process` id/uid/gid/exit/abort/status/root helpers plus the first POSIX
 fork/wait slice, `thread`
-function-pointer spawn/join/yield hooks plus runtime ids and source handle
-helpers, `sync` concrete `AtomicI64` sequentially consistent load/store/swap/
+function-pointer spawn/join/sleep/yield hooks plus runtime ids, available
+parallelism, and source handle helpers, `sync` concrete `AtomicI64`
+sequentially consistent load/store/swap/
 fetch-add/compare-exchange hooks plus source `Mutex` and `Once` helpers,
 `time`
 monotonic/wall-clock/sleep hooks plus source
@@ -76,7 +77,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::path` | Manipulate path bytes without opening the filesystem. | Current POSIX-style `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, borrowed `components`, `file_name`, `parent`, `extension`, `stem`, `join_in`, and `normalize_in`; future platform-specific paths, owned `Path`/`PathBuf`, runtime canonicalization, and richer component kinds. |
 | `std::net` | Represent network addresses now and sockets later through explicit handles. | Current source-only `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, constructors, family predicates, loopback/unspecified checks, and port helpers; future DNS lookup, `TcpListener`, `TcpStream`, `UdpSocket`, Unix domain sockets, socket options, nonblocking mode, `std::time::Duration` timeouts, shutdown, and owned socket handles. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
-| `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, richer status/result values, and `std::sync` integration. |
+| `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, user-facing `ThreadLocal[T]`, custom stack-size options, richer status/result values, and `std::sync` integration. |
 | `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`, plus source primitive `Mutex` and `Once`; future generic atomics, memory-order parameters, value-protecting `Mutex[T]`, `RwLock`, `Condvar`, `OnceLock`, `LazyLock`, `Barrier`, optional `Semaphore`, `Shared`, `Weak`, MPSC channels, and Linux futex-backed internals after ownership rules are stable. |
 | `std::collections` | Store keyed, queue-like, linked, and priority data beyond vectors. | Current linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, FIFO/linked/heap tests, live-bucket hash iterators, sorted tree iterators; future tree deletion and trait-driven constructors. |
 | `std::iter` | Compose sequence processing without forcing every operation onto each collection type. | Current `range`, `range_inclusive`, `Iterator`, `IntoIterator`, lazy `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed `collect`; future captured closures, richer adapter inference, and collect targets beyond `std::vec::Vec[T]`. |
@@ -157,8 +158,8 @@ work. Each one should land in small tested slices with natural API names.
   values once owned path buffers and canonicalization policy are stable.
 - Keep `std::context` as the low-level runtime state boundary: arguments and
   runtime thread identity are implemented now. `std::thread` extends the same
-  thread-id slot for spawned Ari threads instead of changing the public context
-  API shape.
+  thread-id slot for spawned Ari threads and exposes hosted available
+  parallelism instead of changing the public context API shape.
 - Grow `std::process` from current-process helpers and the first POSIX
   fork/wait slice into portable child-process handles. `std::time` and
   `std::fs` now have their first thin wrappers; time should grow toward timers
@@ -166,11 +167,12 @@ work. Each one should land in small tested slices with natural API names.
   owned-resource policy, metadata, permission mutation, directory iteration,
   recursive directory helpers, canonicalization, temporary files, path helpers,
   richer link metadata/platform symlink policy, and optional locking.
-  `std::thread` now has its first function-pointer spawn/join wrapper, and
-  `std::sync` has a first concrete atomic integer primitive plus source
-  `Mutex` and `Once` helpers. Grow them toward explicit ownership transfer,
-  richer statuses, generic atomics, value-protecting locks, blocking waits,
-  channels, and safer shared-state policy.
+  `std::thread` now has its first function-pointer spawn/join wrapper, sleep
+  convenience, and available-parallelism hook, and `std::sync` has a first
+  concrete atomic integer primitive plus source `Mutex` and `Once` helpers.
+  Grow them toward explicit ownership transfer, user-facing TLS, stack-size
+  options, richer statuses, generic atomics, value-protecting locks, blocking
+  waits, channels, and safer shared-state policy.
 - Keep syscall-facing helpers minimal and modern: process arguments and
   environment, current directory, file descriptors/handles, time, process
   spawn/fork where the platform supports it, thread creation/join, atomics or

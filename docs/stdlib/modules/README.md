@@ -56,7 +56,8 @@ limits, examples, and test files for one module.
   abort hooks, status helper functions, and the first POSIX fork/wait
   child-process slice.
 - [std::thread](thread.md): function-pointer thread spawn/join, runtime thread
-  ids, invalid-handle sentinels, and cooperative yield.
+  ids, invalid-handle sentinels, cooperative sleep/yield, available
+  parallelism, and thread-local/stack-size roadmap notes.
 - [std::sync](sync.md): concrete `AtomicI64` operations, source `Mutex` and
   `Once` helpers, current memory-order policy, and lock/channel roadmap.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock

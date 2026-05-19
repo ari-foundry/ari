@@ -9,6 +9,12 @@ pub struct Thread {
 pub extern "ari" fn spawn(entry: fn() -> i64) -> Thread = "ari_builtin_thread_spawn";
 pub extern "ari" fn join(thread: Thread) -> i64 = "ari_builtin_thread_join";
 pub extern "ari" fn yield_now() -> void = "ari_builtin_thread_yield";
+pub extern "ari" fn available_parallelism() -> i64 = "ari_builtin_thread_available_parallelism";
+
+pub fn sleep(duration: std::time::Duration) -> void {
+  std::time::sleep(duration);
+  return;
+}
 
 pub fn id() -> i64 {
   return std::context::thread_id();

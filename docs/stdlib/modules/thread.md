@@ -2,7 +2,8 @@
 
 `std::thread` is the first Ari thread module. It starts deliberately small:
 spawn a plain function pointer, join the returned handle, ask for the current
-Ari runtime thread id, and yield the current OS thread.
+Ari runtime thread id, sleep/yield the current OS thread, and ask the runtime
+how much parallelism is available.
 
 The API is thin because thread ownership needs a strong foundation. Capturing
 closures, shared ownership, locks, and typed result handles should grow in
@@ -17,8 +18,10 @@ work.
 thread::spawn(entry: fn() -> i64) -> Thread
 thread::join(thread: Thread) -> i64
 thread::yield_now() -> void
+thread::sleep(duration: std::time::Duration) -> void
 thread::id() -> i64
 thread::is_main() -> bool
+thread::available_parallelism() -> i64
 thread::is_join_error(status: i64) -> bool
 
 Thread::spawn(entry: fn() -> i64) -> Thread
@@ -47,6 +50,15 @@ entry function. It returns `-1` on join failure or for an invalid handle; use
 
 `yield_now()` asks the host scheduler to let another runnable thread make
 progress. It is only a hint; it does not create a synchronization boundary.
+`sleep(duration)` delegates to `std::time::sleep` so users can write
+thread-oriented code without reaching into the time module at every call site.
+`available_parallelism()` returns the number of online processors reported by
+the hosted runtime and clamps host failures to `1`.
+
+Ari already uses thread-local runtime storage internally for the current
+thread id. General user-facing `ThreadLocal[T]` storage is not exposed yet
+because it needs generic static storage, destructor, and ownership-transfer
+policy.
 
 ## Example
 
@@ -56,6 +68,7 @@ fn worker() -> i64 {
     return -1;
   }
   thread::yield_now();
+  thread::sleep(time::Duration::zero());
   return thread::id();
 }
 
@@ -88,6 +101,11 @@ fn main() -> i64 {
 - There is no captured shared-state API yet. `std::sync::AtomicI64`,
   primitive `Mutex`, and `Once` exist, but value-protecting locks, `Shared`,
   channels, and send/share rules remain future `std::sync` work.
+- There is no user-facing thread-local storage API yet. The runtime TLS slot
+  currently stores only Ari's own thread id.
+- Stack size is not configurable yet. A future `Builder` or
+  `spawn_with_options` API should own custom stack size, names, and platform
+  error details together.
 - The current backend implementation uses pthreads on the LLVM/Linux path.
   Cross-platform thread policy remains roadmap work.
 
@@ -97,6 +115,9 @@ fn main() -> i64 {
   main-thread identity, function-pointer spawn, child thread ids, join result
   propagation, invalid-handle sentinels, method wrappers, root `Thread`, and
   scheduler yield lowering.
+- `tests/cases/standard-library/ok/thread/std-thread-runtime-helpers.ari`
+  checks `available_parallelism`, `thread::sleep`, child thread use of both
+  helpers, and the runtime hooks they lower through.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for
 the focused source/runtime coverage.

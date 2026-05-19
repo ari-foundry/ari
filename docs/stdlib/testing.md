@@ -48,6 +48,7 @@ std-process-exit.ari
 std-process-abort.ari
 std-process-fork-wait.ari
 std-thread-basic.ari
+std-thread-runtime-helpers.ari
 std-sync-atomic-i64.ari
 std-sync-mutex-once.ari
 std-time-basic.ari

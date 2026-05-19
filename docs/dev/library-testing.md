@@ -72,6 +72,9 @@ identifies the exact case:
 - `std-thread-basic.ari`: runtime-backed `std::thread` function-pointer
   spawn/join behavior, child runtime ids, invalid-handle sentinels, root
   `Thread`, method wrappers, and scheduler yield.
+- `std-thread-runtime-helpers.ari`: runtime-backed `std::thread`
+  `available_parallelism`, source `sleep` wrapper over `std::time`, child
+  thread use of both helpers, and `sysconf`/sleep hook lowering checks.
 - `std-sync-atomic-i64.ari`: runtime-backed `std::sync::AtomicI64`
   load/store/swap/fetch-add/compare-exchange behavior, method wrappers, root
   alias, and LLVM atomic lowering.

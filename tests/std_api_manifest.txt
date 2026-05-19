@@ -377,10 +377,12 @@ fn std::test::passed|check-prelude std-test-report passed-check count accessor; 
 fn std::test::report|check-prelude std-test-report unit-test report constructor; docs/stdlib/modules/test.md
 fn std::test::require|check-prelude std-test-report panic-on-failure helper; docs/stdlib/modules/test.md
 fn std::test::scratch|check-prelude std-test-report explicit scratch zone constructor; docs/stdlib/modules/test.md
+fn std::thread::available_parallelism|check-prelude std-thread-runtime-helpers runtime online processor count helper; docs/stdlib/modules/thread.md
 fn std::thread::id|check-prelude std-thread-basic source wrapper around context thread id; docs/stdlib/modules/thread.md
 fn std::thread::is_join_error|check-prelude std-thread-basic join sentinel helper; docs/stdlib/modules/thread.md
 fn std::thread::is_main|check-prelude std-thread-basic source main-thread predicate; docs/stdlib/modules/thread.md
 fn std::thread::join|check-prelude std-thread-basic thread join hook; docs/stdlib/modules/thread.md
+fn std::thread::sleep|check-prelude std-thread-runtime-helpers duration sleep convenience wrapper; docs/stdlib/modules/thread.md
 fn std::thread::spawn|check-prelude std-thread-basic function-pointer spawn hook; docs/stdlib/modules/thread.md
 fn std::thread::yield_now|check-prelude std-thread-basic scheduler yield hook; docs/stdlib/modules/thread.md
 fn std::time::elapsed|check-prelude std-time-basic source elapsed-time helper; docs/stdlib/modules/time.md
