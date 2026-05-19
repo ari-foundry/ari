@@ -1544,13 +1544,17 @@ fmt::boolean_in(ref mut zone, value)
 fmt::float_in(ref mut zone, value, precision)
 fmt::text_in(ref mut zone, value)
 fmt::debug_text_in(ref mut zone, value)
+fmt::debug_value<T: Debug>(ref mut zone, value)
 fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_integer<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_boolean<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_text<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_value<W: io::Writer, T: Display>(ref mut writer, ref mut zone, value)
+fmt::write_debug<W: io::Writer, T: Debug>(ref mut writer, ref mut zone, value)
 fmt::print_value<T: Display>(ref mut zone, value)
 fmt::println_value<T: Display>(ref mut zone, value)
+fmt::print_debug<T: Debug>(ref mut zone, value)
+fmt::println_debug<T: Debug>(ref mut zone, value)
 ```
 
 Built-in `Display` impls cover `i64`, `u64`, `bool`, `f32`, `f64`, lowercase
@@ -1559,6 +1563,9 @@ enums. Float `Display` uses six fractional digits; call `fmt::float_in` to pick
 a precision explicitly. Prefer `fmt::write_value` for generic Writer-backed
 display output and `fmt::print_value`/`fmt::println_value` for generic stdout
 display output instead of adding new type-suffixed `write_*` helpers.
+Built-in `Debug` impls cover the same initial scalar/text set. `string` and
+`String` debug output are quoted; use `fmt::debug_value`, `fmt::write_debug`,
+or `fmt::println_debug` when diagnostic output should use that policy.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 and `format_in!(ref mut zone, "...", values...)`. Use `format_in!` for owned

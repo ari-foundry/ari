@@ -1,4 +1,15 @@
-impl Debug for i64 {
+struct DebugOnly {
+  value: i64,
+}
+
+impl Debug for DebugOnly {
+  fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    var output = std::string::new(zone, 8);
+    output.append_string_in(zone, "Debug(");
+    output.append_i64_in(zone, self.value);
+    output.append_string_in(zone, ")");
+    return output;
+  }
 }
 
 struct DisplayOnly {

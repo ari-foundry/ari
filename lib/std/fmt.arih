@@ -1,4 +1,5 @@
 pub trait Debug {
+  fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String;
 }
 
 pub trait Display {
@@ -325,6 +326,58 @@ impl std::fmt::Display for std::string::String {
   }
 }
 
+impl std::fmt::Debug for i64 {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr i64);
+    return std::fmt::integer_in(zone, value);
+  }
+}
+
+impl std::fmt::Debug for u64 {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr u64);
+    return std::fmt::unsigned_in(zone, value, std::fmt::decimal());
+  }
+}
+
+impl std::fmt::Debug for bool {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr bool);
+    return std::fmt::boolean_in(zone, value);
+  }
+}
+
+impl std::fmt::Debug for f32 {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr f32);
+    return std::fmt::float_in(zone, value as f64, 6);
+  }
+}
+
+impl std::fmt::Debug for f64 {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr f64);
+    return std::fmt::float_in(zone, value, 6);
+  }
+}
+
+impl std::fmt::Debug for string {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr string);
+    return std::fmt::debug_text_in(zone, value);
+  }
+}
+
+impl std::fmt::Debug for std::string::String {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    var output = std::string::new(zone, self.len() + 2);
+    output.append_string_in(zone, "\"");
+    output.append_bytes(zone, self.as_slice());
+    output.append_string_in(zone, "\"");
+    return output;
+  }
+}
+
 pub fn write_unsigned[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: std::fmt::FormatSpec) -> bool {
   var text = std::fmt::unsigned_in(zone, value, spec);
   return std::io::write_all<W>(writer, text.as_slice());
@@ -350,6 +403,15 @@ pub fn write_value[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, 
   return std::io::write_all<W>(writer, text.as_slice());
 }
 
+pub fn debug_value[T: std::fmt::Debug](zone: ref mut Zone, value: T) -> std::string::String {
+  return value.debug_in(zone);
+}
+
+pub fn write_debug[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
+  var text = value.debug_in(zone);
+  return std::io::write_all<W>(writer, text.as_slice());
+}
+
 pub fn print_value[T: std::fmt::Display](zone: ref mut Zone, value: T) -> i64 {
   var text = value.format_in(zone);
   return std::io::write_bytes(text.as_slice());
@@ -357,6 +419,17 @@ pub fn print_value[T: std::fmt::Display](zone: ref mut Zone, value: T) -> i64 {
 
 pub fn println_value[T: std::fmt::Display](zone: ref mut Zone, value: T) -> i64 {
   let written = std::fmt::print_value<T>(zone, value);
+  std::io::newline();
+  return written + 1;
+}
+
+pub fn print_debug[T: std::fmt::Debug](zone: ref mut Zone, value: T) -> i64 {
+  var text = value.debug_in(zone);
+  return std::io::write_bytes(text.as_slice());
+}
+
+pub fn println_debug[T: std::fmt::Debug](zone: ref mut Zone, value: T) -> i64 {
+  let written = std::fmt::print_debug<T>(zone, value);
   std::io::newline();
   return written + 1;
 }

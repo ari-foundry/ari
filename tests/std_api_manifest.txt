@@ -217,13 +217,16 @@ fn std::fmt::binary|check-prelude std-fmt-format-spec binary integer spec helper
 fn std::fmt::boolean_in|check-prelude std-fmt-format-spec allocator-backed bool formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::center|check-prelude std-fmt-format-spec center alignment spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::debug_text_in|check-prelude std-fmt-format-spec source debug text quoting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::debug_value[T: std::fmt::Debug]|check-prelude std-fmt-debug-values generic allocator-backed Debug formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::decimal|check-prelude std-fmt-format-spec decimal integer spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::float_in|check-prelude std-fmt-display-builtins allocator-backed float formatting helper and Display impls; docs/stdlib/modules/fmt.md
 fn std::fmt::hex|check-prelude std-fmt-format-spec hexadecimal integer spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::integer_in|check-prelude std-fmt-format-spec allocator-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::left|check-prelude std-fmt-format-spec left alignment spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::octal|check-prelude std-fmt-format-spec octal integer spec helper; docs/stdlib/modules/fmt.md
+fn std::fmt::print_debug[T: std::fmt::Debug]|check-prelude std-fmt-debug-values generic stdout Debug formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::print_value[T: std::fmt::Display]|check-prelude std-fmt-print-value generic stdout Display formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::println_debug[T: std::fmt::Debug]|check-prelude std-fmt-debug-values generic stdout Debug line formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::println_value[T: std::fmt::Display]|check-prelude std-fmt-print-value generic stdout Display line formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::right|check-prelude std-fmt-format-spec right alignment spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::text_in|check-prelude std-fmt-format-spec allocator-backed text copy helper; docs/stdlib/modules/fmt.md
@@ -232,6 +235,7 @@ fn std::fmt::uppercase|check-prelude std-fmt-format-spec uppercase digit spec he
 fn std::fmt::with_precision|check-prelude std-fmt-format-spec integer precision spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::with_width|check-prelude std-fmt-format-spec width spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_boolean[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed bool formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_debug[W: std::io::Writer, T: std::fmt::Debug]|check-prelude std-fmt-debug-values generic Writer-backed Debug formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_integer[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_text[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed text formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_unsigned[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
@@ -1243,6 +1247,7 @@ trait-method std::cmp::PartialEq[T]::eq|cmp module trait surface; docs/dev/test-
 trait-method std::cmp::PartialOrd[T]::lt|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::convert::From[T]::from|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::convert::Into[T]::into|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::fmt::Debug::debug_in|check-prelude std-fmt-debug-values Debug borrowed receiver tests; docs/stdlib/modules/fmt.md
 trait-method std::fmt::Display::format_in|format_in Display borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 trait-method std::hash::Hash[T]::hash|check-prelude std-hash-basic primitive trait impl dispatch; docs/stdlib/modules/hash.md
 trait-method std::io::Reader::read_byte|std io trait/cursor tests; docs/stdlib/modules/io.md

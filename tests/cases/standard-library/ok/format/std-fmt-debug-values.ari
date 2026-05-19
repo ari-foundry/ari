@@ -1,0 +1,76 @@
+// Covers source Debug formatting as a real trait, including built-in impls,
+// user impls, Writer-backed debug output, and stdout debug helpers.
+struct MemoryWriter {
+  data: Slice[u8],
+  mut position: i64,
+}
+
+impl io::Writer for MemoryWriter {
+  fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if self.position >= self.data.len {
+      return false;
+    }
+    ptr_store(ptr_add(self.data.as_ptr(), self.position), value);
+    self.position = self.position + 1;
+    return true;
+  }
+
+  fn flush(self: ref mut Self) -> bool {
+    return true;
+  }
+}
+
+struct Pair {
+  left: i64,
+  right: bool,
+}
+
+impl fmt::Debug for Pair {
+  fn debug_in(self: ref Self, zone: ref mut Zone) -> String {
+    var output = std::string::new(zone, 16);
+    output.append_string_in(zone, "Pair(");
+    output.append_value(self.left);
+    output.append_string_in(zone, ",");
+    output.append_value(self.right);
+    output.append_string_in(zone, ")");
+    return output;
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var score = 0;
+
+  var quoted = fmt::debug_value(ref mut zone, "ari");
+  if quoted.len() == 5 && quoted.get(0) == '"' && quoted.get(4) == '"' {
+    score = score + 1;
+  }
+
+  var boolean = fmt::debug_value(ref mut zone, false);
+  if boolean.len() == 5 && boolean.get(0) == 'f' && boolean.get(4) == 'e' {
+    score = score + 1;
+  }
+
+  let pair = Pair { left: 7, right: true };
+  var custom = fmt::debug_value<Pair>(ref mut zone, pair);
+  if custom.len() == 12 && custom.get(0) == 'P' && custom.get(5) == '7' && custom.get(7) == 't' {
+    score = score + 1;
+  }
+
+  var buffer = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var writer = MemoryWriter { data: buffer.as_slice(), position: 0 };
+  if fmt::write_debug<MemoryWriter, string>(ref mut writer, ref mut zone, "io") {
+    if buffer[0] == '"' && buffer[1] == 'i' && buffer[2] == 'o' && buffer[3] == '"' && writer.position == 4 {
+      score = score + 1;
+    }
+  }
+
+  let printed = fmt::print_debug(ref mut zone, "out");
+  let printed_line = fmt::println_debug(ref mut zone, false);
+  if printed == 5 && printed_line == 6 {
+    score = score + 1;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

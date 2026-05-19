@@ -148,12 +148,14 @@ that calls each test in source order. `@derive(Debug)`, `@derive(Copy)`,
 `@derive(Clone)`, `@derive(Eq)`, and `@derive(PartialEq)` expand for structs
 and enums, including generic declarations; `@derive(Default)`, `@derive(Ord)`,
 and `@derive(PartialOrd)` expand for structs; `@derive(Default(CaseName))`,
-`@derive(Ord)`, and `@derive(PartialOrd)` expand for enums. `Debug` and `Copy`
-generate empty trait impls, `Clone` generates `fn clone(self) -> Self { return
-self; }`, struct `Default` generates a `default` associated function that
-defaults each field, enum `Default(CaseName)` returns the named case with
-defaulted payloads, `Eq`/`PartialEq` generate value-self `eq` methods for
-structs and enums, and `Ord`/`PartialOrd` generate value-self `lt` methods for
+`@derive(Ord)`, and `@derive(PartialOrd)` expand for enums. `Debug` generates
+`debug_in(ref Self, ref mut Zone) -> std::string::String` with the declaration
+name, `Copy` generates an empty marker impl, `Clone` generates
+`fn clone(self) -> Self { return self; }`, struct `Default` generates a
+`default` associated function that defaults each field, enum
+`Default(CaseName)` returns the named case with defaulted payloads,
+`Eq`/`PartialEq` generate value-self `eq` methods for structs and enums, and
+`Ord`/`PartialOrd` generate value-self `lt` methods for
 structs and enums. Enum ordering uses source case order before payload
 lexicographic comparison. `Copy` derive is only a marker-trait impl and does
 not change structural copyability. Other derive

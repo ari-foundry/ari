@@ -20,10 +20,15 @@ fn need_debug[T: Debug](value: T) -> i64 {
 }
 
 fn main() -> i64 {
+  var zone = zone::create(64);
   let point = Point { x: 1, y: 2 };
   let maybe: Maybe = Full(7);
   let boxed = Box { value: 9 };
+  let label = fmt::debug_value<Point>(ref mut zone, point);
+  let rendered = if label.len() == 5 && label.get(0) == 'P' && label.get(4) == 't' { 1 } else { 0 };
+  zone::destroy(zone);
   return need_debug<Point>(point) +
          need_debug<Maybe>(maybe) +
-         need_debug<Box[i64]>(boxed);
+         need_debug<Box[i64]>(boxed) +
+         rendered;
 }

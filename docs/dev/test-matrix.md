@@ -914,6 +914,10 @@ Checklist:
       explicit-zone strings, generic Display `write_value`, and
       `std::io::Writer` output plus generic Display stdout
       `print_value`/`println_value`
+- [x] source `std::fmt::Debug` has built-in impl coverage for `i64`, `u64`,
+      `bool`, `f32`, `f64`, lowercase `string`, and owned
+      `std::string::String`, plus generic `debug_value`, `write_debug`,
+      `print_debug`, and `println_debug`
 - [x] source `std::fmt::Display` has built-in impl coverage for `i64`, `u64`,
       `bool`, `f32`, `f64`, lowercase `string`, and owned
       `std::string::String`, plus custom user impl coverage through

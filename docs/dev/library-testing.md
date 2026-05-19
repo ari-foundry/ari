@@ -66,6 +66,9 @@ identifies the exact case:
 - `std-fmt-format-spec.ari`: source `std::fmt::FormatSpec` helper behavior,
   unsigned radix/width/precision/alignment formatting, debug text quoting,
   explicit-zone strings, and `io::Writer` output.
+- `std-fmt-debug-values.ari`: source `std::fmt::Debug` trait dispatch,
+  built-in and user debug impls, Writer-backed debug output, and stdout debug
+  helpers.
 - `std-context-args.ari`: runtime-backed `std::context` argument, startup cwd,
   startup executable path, and thread-id access, source context predicates, and
   root alias behavior.

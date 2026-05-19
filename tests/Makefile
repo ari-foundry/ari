@@ -1033,6 +1033,12 @@ check-prelude: $(TARGET)
 	grep -q 'write_unsigned' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_value' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 9; fi
+	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-debug-values.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
+	grep -q 'debug_value' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
+	grep -q 'write_debug' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
+	grep -q 'print_debug' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
+	grep -q 'println_debug' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-debug-values.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-debug-values.elf; $(BUILD_DIR)/prelude/std-fmt-debug-values.elf > $(BUILD_DIR)/prelude/std-fmt-debug-values.out; code=$$?; grep -qx '"out"false' $(BUILD_DIR)/prelude/std-fmt-debug-values.out; out_ok=$$?; test $$code -eq 5; test $$out_ok -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-print-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-print-value.ll
 	grep -q 'print_value' $(BUILD_DIR)/prelude/std-fmt-print-value.ll
 	grep -q 'println_value' $(BUILD_DIR)/prelude/std-fmt-print-value.ll
@@ -2843,7 +2849,7 @@ check-meta: $(TARGET)
 	$(TARGET) tests/cases/attributes/ok/attributes-builtin.ari --emit-llvm $(BUILD_DIR)/meta/attributes-builtin.ll >$(BUILD_DIR)/meta/attribute-deprecated.warn 2>&1
 	grep -q "warning: use of deprecated function 'old_value': use next_value" $(BUILD_DIR)/meta/attribute-deprecated.warn
 	$(TARGET) tests/cases/attributes/ok/attribute-derive-debug.ari -o $(BUILD_DIR)/meta/attribute-derive-debug.elf
-	$(BUILD_DIR)/meta/attribute-derive-debug.elf; code=$$?; test $$code -eq 3
+	$(BUILD_DIR)/meta/attribute-derive-debug.elf; code=$$?; test $$code -eq 4
 	$(TARGET) tests/cases/attributes/ok/attribute-derive-copy.ari -o $(BUILD_DIR)/meta/attribute-derive-copy.elf
 	$(BUILD_DIR)/meta/attribute-derive-copy.elf; code=$$?; test $$code -eq 4
 	$(TARGET) tests/cases/attributes/ok/attribute-derive-clone.ari -o $(BUILD_DIR)/meta/attribute-derive-clone.elf

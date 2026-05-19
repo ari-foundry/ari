@@ -160,10 +160,12 @@ on structs and enums. `@derive(Default)` is
 supported on named structs, tuple structs, and enums with an explicit default
 case marker such as `@derive(Default(Ready))`. Each derive preserves the
 generic parameters of generic declarations.
-`Debug` and `Copy` expand to empty trait impls so derived values satisfy their
-trait bounds. `Clone` expands on structs, fieldless enums, and payload-bearing
-enums to an impl with a value-self `clone` method that returns `self`, matching
-Ari's current `Clone` trait contract. Struct
+`Debug` expands to a `debug_in(ref Self, ref mut Zone) -> std::string::String`
+method that currently returns the declaration name. `Copy` expands to an empty
+trait impl so derived values satisfy the marker trait bound. `Clone` expands on
+structs, fieldless enums, and payload-bearing enums to an impl with a value-self
+`clone` method that returns `self`, matching Ari's current `Clone` trait
+contract. Struct
 `Default` derives expand to a `fn default() -> Self` method that constructs the
 struct by calling `Default::default<FieldType>()` for each field; field types
 must therefore have a visible `Default` impl. Enum `Default(CaseName)` derives
