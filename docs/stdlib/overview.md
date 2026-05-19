@@ -25,6 +25,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. |
 | `std::process` | Current-process helpers. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`. |
+| `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
@@ -113,6 +114,11 @@ hooks for `get`, `has`, `set`, `remove`, `current_dir`, `set_current_dir`, and
 `id` reads the host process id, `exit` terminates with an explicit status, and
 the status helpers are source Ari. Spawn, wait, fork, and process handles are
 intentionally still roadmap work.
+
+`std::time` follows the same OS-facing pattern. `monotonic_nanos`,
+`unix_nanos`, and `sleep_nanos` are runtime-backed because they call the host
+clock and sleep APIs, while `Duration`, `Instant`, `SystemTime`, and the
+constructor/elapsed helpers are ordinary Ari source.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
 small, insertion-order, linear set with iterator support. `HashMap[K,V]` and

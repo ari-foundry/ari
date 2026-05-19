@@ -144,6 +144,47 @@ process and does not return. The status helpers are source functions for the
 common `0` success and `1` failure convention. Child process handles, spawn,
 wait, and fork are still future work.
 
+Runtime-backed time helpers live in `std::time`:
+
+```ari
+time::monotonic_nanos()
+time::unix_nanos()
+time::sleep_nanos(nanos)
+
+time::nanoseconds(value)
+time::microseconds(value)
+time::milliseconds(value)
+time::seconds(value)
+time::now()
+time::system_now()
+time::elapsed(start)
+time::sleep(duration)
+
+Duration::zero()
+duration.as_nanos()
+duration.as_micros()
+duration.as_millis()
+duration.as_seconds()
+duration.is_zero()
+duration.add(other)
+duration.saturating_sub(other)
+
+Instant::now()
+instant.as_nanos()
+instant.duration_since(earlier)
+instant.try_duration_since(earlier)
+instant.elapsed()
+
+SystemTime::now()
+system_time.as_unix_nanos()
+system_time.duration_since_unix_epoch()
+```
+
+Use `Instant` for elapsed time and `SystemTime` for Unix wall-clock
+timestamps. `Duration` constructors assert on negative values. The raw
+`*_nanos` functions are exposed for low-level code, but ordinary code should
+prefer `now`, `system_now`, `elapsed`, and `sleep`.
+
 ## IO And Input
 
 `std::io` exposes low-level process IO hooks, while `std::input` keeps

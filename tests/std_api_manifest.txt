@@ -156,6 +156,17 @@ fn std::string::from_string|std string handle tests; docs/dev/test-matrix.md Exp
 fn std::string::new|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::with_capacity|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
+fn std::time::elapsed|check-prelude std-time-basic source elapsed-time helper; docs/stdlib/modules/time.md
+fn std::time::microseconds|check-prelude std-time-basic source duration constructor; docs/stdlib/modules/time.md
+fn std::time::milliseconds|check-prelude std-time-basic source duration constructor; docs/stdlib/modules/time.md
+fn std::time::monotonic_nanos|check-prelude std-time-basic monotonic clock hook; docs/stdlib/modules/time.md
+fn std::time::nanoseconds|check-prelude std-time-basic source duration constructor; docs/stdlib/modules/time.md
+fn std::time::now|check-prelude std-time-basic source monotonic instant helper; docs/stdlib/modules/time.md
+fn std::time::seconds|check-prelude std-time-basic source duration constructor; docs/stdlib/modules/time.md
+fn std::time::sleep|check-prelude std-time-basic source duration sleep helper; docs/stdlib/modules/time.md
+fn std::time::sleep_nanos|check-prelude std-time-basic runtime sleep hook; docs/stdlib/modules/time.md
+fn std::time::system_now|check-prelude std-time-basic source wall-clock helper; docs/stdlib/modules/time.md
+fn std::time::unix_nanos|check-prelude std-time-basic wall-clock hook; docs/stdlib/modules/time.md
 fn std::todo|planned panic helper tests; docs/dev/test-matrix.md Prelude row
 fn std::unreachable|planned panic helper tests; docs/dev/test-matrix.md Prelude row
 fn std::vec::alloc_buffer[T]|std vec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -361,6 +372,22 @@ method std::string::String::try_first|check-prelude std-string-try-byte-access O
 method std::string::String::try_get|check-prelude std-string-try-byte-access Option-returning out-of-range byte access; docs/stdlib/modules/string.md
 method std::string::String::try_last|check-prelude std-string-try-byte-access Option-returning empty-safe byte access; docs/stdlib/modules/string.md
 method std::string::String::try_pop|check-prelude std-string-try-byte-access Option-returning empty pop; docs/stdlib/modules/string.md
+method std::time::Duration::add|check-prelude std-time-basic source duration addition helper; docs/stdlib/modules/time.md
+method std::time::Duration::as_micros|check-prelude std-time-basic duration metadata helper; docs/stdlib/modules/time.md
+method std::time::Duration::as_millis|check-prelude std-time-basic duration metadata helper; docs/stdlib/modules/time.md
+method std::time::Duration::as_nanos|check-prelude std-time-basic duration metadata helper; docs/stdlib/modules/time.md
+method std::time::Duration::as_seconds|check-prelude std-time-basic duration metadata helper; docs/stdlib/modules/time.md
+method std::time::Duration::is_zero|check-prelude std-time-basic duration predicate helper; docs/stdlib/modules/time.md
+method std::time::Duration::saturating_sub|check-prelude std-time-basic non-negative duration subtraction; docs/stdlib/modules/time.md
+method std::time::Duration::zero|check-prelude std-time-basic associated zero duration constructor; docs/stdlib/modules/time.md
+method std::time::Instant::as_nanos|check-prelude std-time-basic instant metadata helper; docs/stdlib/modules/time.md
+method std::time::Instant::duration_since|check-prelude std-time-basic elapsed duration helper; docs/stdlib/modules/time.md
+method std::time::Instant::elapsed|check-prelude std-time-basic current elapsed duration helper; docs/stdlib/modules/time.md
+method std::time::Instant::now|check-prelude std-time-basic associated monotonic instant constructor; docs/stdlib/modules/time.md
+method std::time::Instant::try_duration_since|check-prelude std-time-basic Option-returning elapsed duration helper; docs/stdlib/modules/time.md
+method std::time::SystemTime::as_unix_nanos|check-prelude std-time-basic wall-clock metadata helper; docs/stdlib/modules/time.md
+method std::time::SystemTime::duration_since_unix_epoch|check-prelude std-time-basic wall-clock duration wrapper; docs/stdlib/modules/time.md
+method std::time::SystemTime::now|check-prelude std-time-basic associated wall-clock constructor; docs/stdlib/modules/time.md
 method std::vec::Vec[T]::as_mut_ptr|check-prelude std-vec-as-mut-ptr mutable borrowed receiver with reset invalidation; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_slice|check-prelude std-vec-as-slice; docs/dev/test-matrix.md Explicit memory zones row
@@ -417,6 +444,7 @@ module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude 
 module std::process|std process current-process tests; docs/stdlib/modules/process.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+module std::time|std time monotonic/wall-clock helper tests; docs/stdlib/modules/time.md
 module std::vec|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
 module std::zone|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
@@ -440,6 +468,9 @@ struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::time::Duration|std time duration helper tests; docs/stdlib/modules/time.md
+struct std::time::Instant|std time monotonic instant tests; docs/stdlib/modules/time.md
+struct std::time::SystemTime|std time wall-clock tests; docs/stdlib/modules/time.md
 struct std::vec::Iter[T]|std vec iterator tests; docs/dev/test-matrix.md Explicit memory zones and Control flow rows
 struct std::vec::RawVec[T]|std RawVec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::vec::Vec[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row

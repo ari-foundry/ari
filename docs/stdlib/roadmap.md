@@ -23,7 +23,8 @@ identity/from/into helpers, `context` runtime hooks plus the source
 `set_current_dir`/`executable_path`/`try_executable_path`,
 `input` runtime hooks plus the source `try_read_byte` EOF helper,
 `io` runtime hooks plus source byte-slice output, current `process`
-id/exit/status helpers,
+id/exit/status helpers, `time` monotonic/wall-clock/sleep hooks plus source
+`Duration`/`Instant`/`SystemTime` helpers,
 `collections::Set[T]` as the linear insertion-order set with `try_*`
 accessors, `pop`/`try_pop`, replace-or-insert updates, explicit reserve
 growth, direct iterator support, open-addressed `HashMap`/`HashSet` with
@@ -42,7 +43,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future path normalization and platform-specific expansion. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `exit`, `success`, `failure`, status predicates; future `spawn`, `wait`, platform `fork`, status/result handles. |
 | `std::fs` | Work with files and directories through owned handles. | Future open/read/write/close, metadata, directory iteration, path helpers. |
-| `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Future `Instant`, `Duration`, `now`, elapsed arithmetic, sleep. |
+| `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Future `spawn`, `join`, thread id, stack/runtime context setup. |
 | `std::sync` | Share state between threads deliberately. | Future atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
 | `std::collections` | Store keyed and set-like data beyond vectors. | Current linear `Set[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, live-bucket hash iterators, sorted tree iterators; future tree deletion, deques, and trait-driven constructors. |
@@ -99,8 +100,9 @@ work. Each one should land in small tested slices with natural API names.
   main-thread identity are implemented now; future thread support should extend
   the thread-id slot instead of changing the public context API shape.
 - Grow `std::process` from current-process helpers into child-process handles,
-  then add `std::fs`, `std::time`, `std::thread`, and `std::sync` as thin
-  explicit wrappers after C FFI conventions are stable.
+  then add `std::fs`, `std::thread`, and `std::sync` as thin explicit wrappers
+  after C FFI conventions are stable. `std::time` has its first thin wrapper
+  slice now and should grow toward timers and interruption-aware sleep.
 - Keep syscall-facing helpers minimal and modern: process arguments and
   environment, current directory, file descriptors/handles, time, process
   spawn/fork where the platform supports it, thread creation/join, atomics or

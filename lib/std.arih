@@ -8,6 +8,8 @@ pub mod env;
 
 pub mod process;
 
+pub mod time;
+
 pub enum Option[T] {
   None,
   Some(T),

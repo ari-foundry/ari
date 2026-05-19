@@ -22,7 +22,8 @@ The standard library is ordinary Ari source whenever possible. It lives at
 environment-variable, current-directory, and executable-path helpers now live
 in `std::env`, while `std::context` stays the low-level runtime context layer.
 `std::process` starts the OS-facing surface with current process id and
-explicit exit helpers. Source
+explicit exit helpers, and `std::time` adds monotonic instants, wall-clock
+timestamps, non-negative durations, elapsed-time helpers, and sleep. Source
 collection work includes `std::collections::Set[T]` as a linear explicit-zone
 set with insertion-order access, optional access, replace-or-insert updates,
 iterator support, and reserve growth; real hash-table `HashMap`/`HashSet`

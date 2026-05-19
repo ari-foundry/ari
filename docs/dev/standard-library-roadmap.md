@@ -38,6 +38,9 @@ The current `std` package already provides:
   `set_current_dir`/`executable_path`
 - the first `std::process` current-process helpers: `id`, `exit`, and source
   status helpers
+- the first `std::time` helpers: monotonic nanosecond reads, wall-clock Unix
+  nanosecond reads, sleep, `Duration`, `Instant`, `SystemTime`, and source
+  elapsed-time helpers
 - layout and pointer helpers in `std::mem`
 - explicit-zone allocation in `std::zone`, including the source
   `alloc_array<T>` raw buffer helper
@@ -151,7 +154,9 @@ Likely compiler work:
   variables into current-directory and executable-path helpers after owned
   string behavior and OS wrapper conventions are stable.
 - Add thin wrappers for file, time, process, thread, synchronization, and
-  syscall-adjacent APIs only after C FFI wrapper conventions are stable.
+  syscall-adjacent APIs in small capability-oriented slices. The first time
+  slice is implemented; files, child processes, threads, synchronization, and
+  raw OS wrappers still need ownership policy.
 - Keep OS resources explicit. File handles, process handles, and buffers should
   be visible owners or zone-backed handles.
 - Prefer small modules: `std::env`, `std::fs`, `std::time`, `std::process`,
@@ -186,6 +191,7 @@ Likely compiler work:
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
 | `std::env` | Path normalization and platform-specific policy after the argument, environment-variable, cwd, and executable-path slices. | Current `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future canonicalization and platform differences. | Runtime string ownership, OS wrapper declarations, and platform error policy. |
 | `std::process` | Grow from the current `id`/`exit` seed into child process handles. | current `id`, explicit exit status, source status predicates, future spawn/wait result handling, fork platform guards. | Current id/exit use runtime hooks; spawn/wait/fork need runtime wrappers for POSIX/Windows split and handle ownership. |
+| `std::time` | Grow from monotonic/wall-clock reads and sleep into timers and interruption-aware sleep. | current `std-time-basic` duration constructor, elapsed-time, wall-clock, and sleep-hook checks; future sleep-interruption and timer-handle tests. | Current monotonic/unix/sleep hooks use LLVM runtime calls; future timers may need handle ownership and platform-specific wrappers. |
 | `std::thread` | Spawn/join handles after function pointer and ownership transfer rules are stable. | join success/failure, moved capture rejection, shared state diagnostics. | Runtime thread wrapper, entry trampoline ABI, and send/share trait policy. |
 | `std::sync` | Shared ownership and atomics before locks/channels. | `Shared`/`Weak` upgrade behavior, atomic load/store/CAS, mutex poisoning or no-poison policy. | Reference-counted handle lowering, atomic intrinsics, and thread-safety trait checks. |
 | `std::collections` | Add tree deletion and trait-driven constructors after the current hash/tree iterator slice. | current set insertion/duplicate/replace/access/optional access/reserve/removal/iteration/copy/after-reset/same-zone tests; hash collision/tombstone and live-bucket iterator tests; tree rotation/replacement and sorted iterator tests; future red-black deletion tests. | Current collection handles have zone provenance recognition; next compiler work is trait-driven `Hash`/`Eq`/`Ord` dispatch and iterator lowering beyond the current cursor slices. |

@@ -10,6 +10,7 @@
 #include "target.hpp"
 #include "zone_runtime_layout.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
@@ -156,7 +157,19 @@ public:
         emit_extern_decls();
         emit_runtime();
         emit_trait_object_vtables();
-        for (const auto& fn : program_.functions) emit_function(fn);
+        std::vector<const IrFunction*> functions;
+        functions.reserve(program_.functions.size());
+        for (const auto& fn : program_.functions) functions.push_back(&fn);
+        std::stable_sort(functions.begin(), functions.end(), [&](const IrFunction* lhs, const IrFunction* rhs) {
+            const std::string& lhs_symbol = function_symbols_.at(lhs->name);
+            const std::string& rhs_symbol = function_symbols_.at(rhs->name);
+            if (lhs_symbol != rhs_symbol) return lhs_symbol < rhs_symbol;
+            return lhs->name < rhs->name;
+        });
+        // Module cache replay can discover reachable helpers in a slightly
+        // different order. Emit by final symbol so byte-for-byte cache checks
+        // stay stable without changing semantic lowering.
+        for (const IrFunction* fn : functions) emit_function(*fn);
         if (program_.require_main) emit_main_wrapper();
 
         std::ostringstream out;
@@ -376,6 +389,8 @@ private:
                symbol == "chdir" ||
                symbol == "readlink" ||
                symbol == "getpid" ||
+               symbol == "clock_gettime" ||
+               symbol == "nanosleep" ||
                symbol == "malloc" ||
                symbol == "free" ||
                symbol == "exit";
@@ -406,6 +421,7 @@ private:
         }
         if (symbol == "ari_builtin_panic" ||
             symbol == "ari_builtin_process_exit" ||
+            symbol == "ari_builtin_time_sleep_nanos" ||
             symbol == "ari_builtin_zone_reset" ||
             symbol == "ari_builtin_zone_destroy") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Void, "void", {}, {}, {}, {}, loc};
@@ -438,6 +454,8 @@ private:
         declarations_ << "declare i32 @chdir(ptr)\n";
         declarations_ << "declare i64 @readlink(ptr, ptr, i64)\n";
         declarations_ << "declare i32 @getpid()\n";
+        declarations_ << "declare i32 @clock_gettime(i32, ptr)\n";
+        declarations_ << "declare i32 @nanosleep(ptr, ptr)\n";
         declarations_ << "declare ptr @malloc(i64)\n";
         declarations_ << "declare void @free(ptr)\n";
         declarations_ << "declare void @exit(i32)\n";
@@ -615,6 +633,66 @@ private:
         line("entry:");
         line("  %narrow = trunc i64 %code to i32");
         line("  call void @exit(i32 %narrow)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_time_monotonic_nanos() {");
+        line("entry:");
+        line("  %ts = alloca { i64, i64 }, align 8");
+        line("  %code = call i32 @clock_gettime(i32 1, ptr %ts)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        line("  %sec.ptr = getelementptr inbounds { i64, i64 }, ptr %ts, i32 0, i32 0");
+        line("  %nsec.ptr = getelementptr inbounds { i64, i64 }, ptr %ts, i32 0, i32 1");
+        line("  %sec = load i64, ptr %sec.ptr");
+        line("  %nsec = load i64, ptr %nsec.ptr");
+        line("  %sec.ns = mul i64 %sec, 1000000000");
+        line("  %total = add i64 %sec.ns, %nsec");
+        line("  ret i64 %total");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_time_unix_nanos() {");
+        line("entry:");
+        line("  %ts = alloca { i64, i64 }, align 8");
+        line("  %code = call i32 @clock_gettime(i32 0, ptr %ts)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        line("  %sec.ptr = getelementptr inbounds { i64, i64 }, ptr %ts, i32 0, i32 0");
+        line("  %nsec.ptr = getelementptr inbounds { i64, i64 }, ptr %ts, i32 0, i32 1");
+        line("  %sec = load i64, ptr %sec.ptr");
+        line("  %nsec = load i64, ptr %nsec.ptr");
+        line("  %sec.ns = mul i64 %sec, 1000000000");
+        line("  %total = add i64 %sec.ns, %nsec");
+        line("  ret i64 %total");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_time_sleep_nanos(i64 %nanos) {");
+        line("entry:");
+        line("  %negative = icmp slt i64 %nanos, 0");
+        line("  br i1 %negative, label %fail, label %sleep");
+        line("sleep:");
+        line("  %ts = alloca { i64, i64 }, align 8");
+        line("  %sec = sdiv i64 %nanos, 1000000000");
+        line("  %nsec = srem i64 %nanos, 1000000000");
+        line("  %sec.ptr = getelementptr inbounds { i64, i64 }, ptr %ts, i32 0, i32 0");
+        line("  %nsec.ptr = getelementptr inbounds { i64, i64 }, ptr %ts, i32 0, i32 1");
+        line("  store i64 %sec, ptr %sec.ptr");
+        line("  store i64 %nsec, ptr %nsec.ptr");
+        line("  call i32 @nanosleep(ptr %ts, ptr null)");
+        line("  ret void");
+        line("fail:");
+        line("  call void @exit(i32 1)");
         line("  unreachable");
         line("}");
         line();

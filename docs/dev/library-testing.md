@@ -52,6 +52,8 @@ identifies the exact case:
   success/failure status helper behavior.
 - `std-process-exit.ari`: runtime-backed explicit process exit status
   behavior.
+- `std-time-basic.ari`: runtime-backed monotonic and wall-clock nanosecond
+  reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

@@ -1,0 +1,137 @@
+// Small, explicit time helpers.
+//
+// The raw runtime hooks expose nanoseconds so the public Ari API can keep
+// allocation-free value wrappers around monotonic time, wall-clock time, and
+// sleep durations.
+pub struct Duration {
+  nanos: i64,
+}
+
+pub struct Instant {
+  nanos: i64,
+}
+
+pub struct SystemTime {
+  nanos: i64,
+}
+
+pub extern "ari" fn monotonic_nanos() -> i64 = "ari_builtin_time_monotonic_nanos";
+pub extern "ari" fn unix_nanos() -> i64 = "ari_builtin_time_unix_nanos";
+pub extern "ari" fn sleep_nanos(nanos: i64) -> void = "ari_builtin_time_sleep_nanos";
+
+fn checked_nanos(value: i64) -> i64 {
+  std::assert(value >= 0);
+  return value;
+}
+
+pub fn nanoseconds(value: i64) -> Duration {
+  return Duration { nanos: checked_nanos(value) };
+}
+
+pub fn microseconds(value: i64) -> Duration {
+  return nanoseconds(checked_nanos(value) * 1000);
+}
+
+pub fn milliseconds(value: i64) -> Duration {
+  return nanoseconds(checked_nanos(value) * 1000000);
+}
+
+pub fn seconds(value: i64) -> Duration {
+  return nanoseconds(checked_nanos(value) * 1000000000);
+}
+
+pub fn now() -> Instant {
+  return Instant { nanos: monotonic_nanos() };
+}
+
+pub fn system_now() -> SystemTime {
+  return SystemTime { nanos: unix_nanos() };
+}
+
+pub fn elapsed(start: Instant) -> Duration {
+  let end = now();
+  return end.duration_since(start);
+}
+
+pub fn sleep(duration: Duration) -> void {
+  sleep_nanos(duration.as_nanos());
+  return;
+}
+
+pub impl std::time::Duration {
+  fn zero() -> Duration {
+    return Duration { nanos: 0 };
+  }
+
+  fn as_nanos(self) -> i64 {
+    return self.nanos;
+  }
+
+  fn as_micros(self) -> i64 {
+    return self.nanos / 1000;
+  }
+
+  fn as_millis(self) -> i64 {
+    return self.nanos / 1000000;
+  }
+
+  fn as_seconds(self) -> i64 {
+    return self.nanos / 1000000000;
+  }
+
+  fn is_zero(self) -> bool {
+    return self.nanos == 0;
+  }
+
+  fn add(self, other: Duration) -> Duration {
+    return Duration { nanos: self.nanos + other.nanos };
+  }
+
+  fn saturating_sub(self, other: Duration) -> Duration {
+    if self.nanos <= other.nanos {
+      return Duration::zero();
+    }
+    return Duration { nanos: self.nanos - other.nanos };
+  }
+}
+
+pub impl std::time::Instant {
+  fn now() -> Instant {
+    return now();
+  }
+
+  fn as_nanos(self) -> i64 {
+    return self.nanos;
+  }
+
+  fn duration_since(self, earlier: Instant) -> Duration {
+    std::assert(self.nanos >= earlier.nanos);
+    return Duration { nanos: self.nanos - earlier.nanos };
+  }
+
+  fn try_duration_since(self, earlier: Instant) -> std::Option[Duration] {
+    if self.nanos < earlier.nanos {
+      return std::None<Duration>();
+    }
+    return std::Some<Duration>(Duration { nanos: self.nanos - earlier.nanos });
+  }
+
+  fn elapsed(self) -> Duration {
+    let end = now();
+    return end.duration_since(self);
+  }
+}
+
+pub impl std::time::SystemTime {
+  fn now() -> SystemTime {
+    return system_now();
+  }
+
+  fn as_unix_nanos(self) -> i64 {
+    return self.nanos;
+  }
+
+  fn duration_since_unix_epoch(self) -> Duration {
+    return Duration { nanos: self.nanos };
+  }
+}

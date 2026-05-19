@@ -36,6 +36,8 @@ limits, examples, and test files for one module.
   `current_dir`, `set_current_dir`, and `try_executable_path`.
 - [std::process](process.md): current process id, explicit exit, and status
   helper functions.
+- [std::time](time.md): runtime-backed monotonic instants, wall-clock
+  timestamps, non-negative durations, elapsed-time helpers, and sleep.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,
   `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,

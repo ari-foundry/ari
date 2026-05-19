@@ -254,6 +254,17 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-basic.elf; $(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit.elf; $(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42; fi
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-basic.ll
+	grep -q "@ari_builtin_time_monotonic_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll
+	grep -q "@ari_builtin_time_unix_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll
+	grep -q "@ari_builtin_time_sleep_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll
+	grep -q "@clock_gettime" $(BUILD_DIR)/prelude/std-time-basic.ll
+	grep -q "@nanosleep" $(BUILD_DIR)/prelude/std-time-basic.ll
+	grep -F -q "std4time3now" $(BUILD_DIR)/prelude/std-time-basic.ll
+	grep -F -q "std4time7elapsed" $(BUILD_DIR)/prelude/std-time-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari -o $(BUILD_DIR)/prelude/std-time-basic.elf
+	$(BUILD_DIR)/prelude/std-time-basic.elf; code=$$?; test $$code -eq 105
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-basic.elf; $(BUILD_DIR)/prelude/std-time-basic.elf; code=$$?; test $$code -eq 105; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 1)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 3)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll

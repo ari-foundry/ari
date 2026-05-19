@@ -41,6 +41,7 @@ std-env-paths.ari
 std-env-vars.ari
 std-process-basic.ari
 std-process-exit.ari
+std-time-basic.ari
 std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari

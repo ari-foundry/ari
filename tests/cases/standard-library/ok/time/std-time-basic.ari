@@ -1,0 +1,64 @@
+// Covers the first std::time slice: duration constructors, monotonic instants,
+// wall-clock reads, elapsed helpers, and a zero-duration sleep.
+fn main() -> i64 {
+  let raw = time::monotonic_nanos();
+  let start = time::now();
+  time::sleep(time::nanoseconds(0));
+  let stop = time::now();
+  let delta = stop.duration_since(start);
+  let elapsed = time::elapsed(start);
+  let also_elapsed = start.elapsed();
+  let maybe_delta = stop.try_duration_since(start);
+  let maybe_backwards = start.try_duration_since(stop);
+  let mixed = time::seconds(2)
+    .add(time::milliseconds(5))
+    .add(time::microseconds(7))
+    .add(time::nanoseconds(11));
+  let wall = time::system_now();
+  var score = 0;
+
+  if raw >= 0 {
+    score = score + 1;
+  }
+  if stop.as_nanos() >= start.as_nanos() {
+    score = score + 2;
+  }
+  if delta.as_nanos() >= 0 {
+    score = score + 3;
+  }
+  if elapsed.as_nanos() >= delta.as_nanos() {
+    score = score + 4;
+  }
+  if also_elapsed.as_nanos() >= delta.as_nanos() {
+    score = score + 5;
+  }
+  if maybe_delta.is_some() {
+    score = score + 6;
+  }
+  if maybe_backwards.is_none() || stop.as_nanos() == start.as_nanos() {
+    score = score + 7;
+  }
+  if mixed.as_nanos() == 2005007011 {
+    score = score + 8;
+  }
+  if mixed.as_micros() == 2005007 {
+    score = score + 9;
+  }
+  if mixed.as_millis() == 2005 {
+    score = score + 10;
+  }
+  if mixed.as_seconds() == 2 {
+    score = score + 11;
+  }
+  if mixed.saturating_sub(time::seconds(3)).is_zero() {
+    score = score + 12;
+  }
+  if wall.as_unix_nanos() > 0 {
+    score = score + 13;
+  }
+  if wall.duration_since_unix_epoch().as_seconds() > 0 {
+    score = score + 14;
+  }
+
+  return score;
+}
