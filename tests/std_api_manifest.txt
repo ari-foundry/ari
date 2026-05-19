@@ -10,6 +10,13 @@
 
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
+enum std::target::Arch|check-prelude std-target-basic compiler-known architecture enum; docs/stdlib/modules/target.md
+enum std::target::DebugFormat|check-prelude std-target-basic compiler-known debug format enum; docs/stdlib/modules/target.md
+enum std::target::Env|check-prelude std-target-basic compiler-known target environment enum; docs/stdlib/modules/target.md
+enum std::target::ErrnoAbi|check-prelude std-target-basic compiler-known errno ABI enum; docs/stdlib/modules/target.md
+enum std::target::ObjectFormat|check-prelude std-target-basic compiler-known object format enum; docs/stdlib/modules/target.md
+enum std::target::Os|check-prelude std-target-basic compiler-known operating-system enum; docs/stdlib/modules/target.md
+enum std::target::SyscallAbi|check-prelude std-target-basic source syscall ABI classifier; docs/stdlib/modules/target.md
 fn std::algo::binary_search[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers binary search over ordered slices; docs/stdlib/modules/algo.md
 fn std::algo::clamp[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers clamp wrapper over cmp; docs/stdlib/modules/algo.md
 fn std::algo::copy[T]|check-prelude std-algo-slice-helpers prefix copy between slices; docs/stdlib/modules/algo.md
@@ -273,6 +280,50 @@ fn std::sync::load|check-prelude std-sync-atomic-i64 atomic load hook; docs/stdl
 fn std::sync::store|check-prelude std-sync-atomic-i64 atomic store hook; docs/stdlib/modules/sync.md
 fn std::sync::swap|check-prelude std-sync-atomic-i64 atomic exchange hook; docs/stdlib/modules/sync.md
 fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
+fn std::target::arch|check-prelude std-target-basic compiler-known target architecture enum hook; docs/stdlib/modules/target.md
+fn std::target::arch_name|check-prelude std-target-basic compiler-known target architecture string hook; docs/stdlib/modules/target.md
+fn std::target::debug_format|check-prelude std-target-basic compiler-known debug format hook; docs/stdlib/modules/target.md
+fn std::target::env|check-prelude std-target-basic compiler-known target environment enum hook; docs/stdlib/modules/target.md
+fn std::target::env_name|check-prelude std-target-basic compiler-known target environment string hook; docs/stdlib/modules/target.md
+fn std::target::errno_abi|check-prelude std-target-basic compiler-known errno ABI hook; docs/stdlib/modules/target.md
+fn std::target::has_capabilities_api|check-prelude std-target-basic Linux target capability family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_cgroups_api|check-prelude std-target-basic Linux target cgroups family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_epoll|check-prelude std-target-basic Linux target epoll family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_eventfd|check-prelude std-target-basic Linux target eventfd family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_fanotify_api|check-prelude std-target-basic Linux target fanotify family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_inotify|check-prelude std-target-basic Linux target inotify family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_io_uring_api|check-prelude std-target-basic Linux target io_uring family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_memfd|check-prelude std-target-basic Linux target memfd family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_namespaces_api|check-prelude std-target-basic Linux target namespaces family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_pidfd_api|check-prelude std-target-basic Linux target pidfd family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_procfs|check-prelude std-target-basic Linux procfs family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_seccomp_api|check-prelude std-target-basic Linux target seccomp family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_signalfd|check-prelude std-target-basic Linux target signalfd family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_sysfs|check-prelude std-target-basic Linux sysfs family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_timerfd|check-prelude std-target-basic Linux target timerfd family predicate; docs/stdlib/platform/linux.md
+fn std::target::has_tls|check-prelude std-target-basic target TLS availability predicate; docs/stdlib/modules/target.md
+fn std::target::has_vdso|check-prelude std-target-basic Linux vDSO family predicate; docs/stdlib/platform/linux.md
+fn std::target::is_aarch64|check-prelude std-target-basic source architecture predicate; docs/stdlib/modules/target.md
+fn std::target::is_gnu|check-prelude std-target-basic source target environment predicate; docs/stdlib/modules/target.md
+fn std::target::is_linux|check-prelude std-target-basic source OS predicate; docs/stdlib/modules/target.md
+fn std::target::is_macos|check-prelude std-target-basic source OS predicate; docs/stdlib/modules/target.md
+fn std::target::is_musl|check-prelude std-target-basic source target environment predicate; docs/stdlib/modules/target.md
+fn std::target::is_riscv64|check-prelude std-target-basic source architecture predicate; docs/stdlib/modules/target.md
+fn std::target::is_unix|check-prelude std-target-basic source Unix-family predicate; docs/stdlib/modules/target.md
+fn std::target::is_windows|check-prelude std-target-basic source OS predicate; docs/stdlib/modules/target.md
+fn std::target::is_x86_64|check-prelude std-target-basic source architecture predicate; docs/stdlib/modules/target.md
+fn std::target::long_bits|check-prelude std-target-basic compiler-known C long width hook; docs/stdlib/modules/target.md
+fn std::target::object_format|check-prelude std-target-basic compiler-known object format hook; docs/stdlib/modules/target.md
+fn std::target::os|check-prelude std-target-basic compiler-known operating-system enum hook; docs/stdlib/modules/target.md
+fn std::target::os_name|check-prelude std-target-basic compiler-known operating-system string hook; docs/stdlib/modules/target.md
+fn std::target::pointer_bits|check-prelude std-target-basic compiler-known pointer width hook; docs/stdlib/modules/target.md
+fn std::target::syscall_abi|check-prelude std-target-basic source Linux syscall ABI classifier; docs/stdlib/modules/target.md
+fn std::target::triple|check-prelude std-target-basic compiler-known target triple string hook; docs/stdlib/modules/target.md
+fn std::target::uses_dwarf|check-prelude std-target-basic source debug format predicate; docs/stdlib/modules/target.md
+fn std::target::uses_elf|check-prelude std-target-basic source object format predicate; docs/stdlib/modules/target.md
+fn std::target::uses_glibc|check-prelude std-target-basic source glibc target predicate; docs/stdlib/modules/target.md
+fn std::target::uses_musl|check-prelude std-target-basic source musl target predicate; docs/stdlib/modules/target.md
+fn std::target::uses_posix_errno|check-prelude std-target-basic source errno ABI predicate; docs/stdlib/modules/target.md
 fn std::thread::id|check-prelude std-thread-basic source wrapper around context thread id; docs/stdlib/modules/thread.md
 fn std::thread::is_join_error|check-prelude std-thread-basic join sentinel helper; docs/stdlib/modules/thread.md
 fn std::thread::is_main|check-prelude std-thread-basic source main-thread predicate; docs/stdlib/modules/thread.md
@@ -706,6 +757,7 @@ module std::process|std process current-process and POSIX fork/wait tests; docs/
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::sync|check-prelude std-sync-atomic-i64 atomic primitive module; docs/stdlib/modules/sync.md
+module std::target|check-prelude std-target-basic compiler-known target fact module; docs/stdlib/modules/target.md
 module std::thread|check-prelude std-thread-basic spawn/join module; docs/stdlib/modules/thread.md
 module std::time|std time monotonic/wall-clock helper tests; docs/stdlib/modules/time.md
 module std::vec|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row

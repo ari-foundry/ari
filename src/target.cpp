@@ -117,6 +117,10 @@ bool target_predicate_active(const TargetInfo& target, const std::string& name) 
     if (name == "macos" || name == "darwin") return target.macos;
     if (name == "windows") return target.windows;
     if (name == "unix") return target.unix;
+    if (name == "gnu" || name == "glibc") return target.linux && contains(target.triple, "gnu");
+    if (name == "musl") return target.linux && contains(target.triple, "musl");
+    if (name == "elf") return target.linux;
+    if (name == "dwarf") return target.unix;
     return false;
 }
 

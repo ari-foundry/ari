@@ -10,6 +10,8 @@ under `lib/std/`.
 - [API Reference](api-reference.md): current public APIs grouped by module.
 - [Module Guides](modules/README.md): focused notes for individual standard
   library modules.
+- [Platform Notes](platform/README.md): target, ABI, linker, and OS-specific
+  roadmap notes.
 - [Library Development](library-development.md): how to add or change a
   standard library API.
 - [Testing](testing.md): test names, check targets, and coverage expectations.
@@ -27,6 +29,8 @@ in `std::env`, while `std::context` stays the low-level runtime context layer.
 `std::process`
 starts the OS-facing surface with current
 process id, explicit exit helpers, and the first POSIX fork/wait slice,
+`std::target` reports compiler-known target, object/debug format, libc/env,
+errno, syscall, and Linux API-family facts,
 `std::thread` adds
 function-pointer spawn/join, scheduler yield, and per-thread runtime ids,
 `std::sync` adds the first concrete atomic integer primitive, `std::time` adds

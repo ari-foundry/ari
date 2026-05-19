@@ -134,8 +134,10 @@ The disabled declaration must still parse, but its names, types, and body are
 not resolved. `@cfg(true)` keeps the declaration. Boolean predicate forms
 `all(...)`, `any(...)`, and `not(...)` are supported, as are target predicates
 such as `target("unix")`, `target("linux")`, `target("windows")`, and common
-architecture names. `feature("name")` is enabled with `--cfg-feature name` or
-`--feature name`.
+architecture names. Linux environment and format predicates such as
+`target("gnu")`, `target("glibc")`, `target("musl")`, `target("elf")`, and
+`target("dwarf")` are also recognized. `feature("name")` is enabled with
+`--cfg-feature name` or `--feature name`.
 
 `@deprecated` may be written without arguments or with one string message. Uses
 of deprecated functions, structs, and enums emit warnings but do not stop

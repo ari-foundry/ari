@@ -332,6 +332,19 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari -o $(BUILD_DIR)/prelude/std-net-addresses.elf
 	$(BUILD_DIR)/prelude/std-net-addresses.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-net-addresses.elf; $(BUILD_DIR)/prelude/std-net-addresses.elf; code=$$?; test $$code -eq 120; fi
+	$(TARGET) tests/cases/standard-library/ok/target/std-target-basic.ari --target x86_64-pc-linux-gnu --emit-llvm $(BUILD_DIR)/prelude/std-target-basic.ll
+	grep -q 'target triple = "x86_64-pc-linux-gnu"' $(BUILD_DIR)/prelude/std-target-basic.ll
+	grep -q "@ari_builtin_target_triple" $(BUILD_DIR)/prelude/std-target-basic.ll
+	grep -q "@ari_builtin_target_arch" $(BUILD_DIR)/prelude/std-target-basic.ll
+	grep -q "_ARNv3std6target11syscall_abi" $(BUILD_DIR)/prelude/std-target-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/target/std-target-basic.ari --target x86_64-pc-linux-gnu -o $(BUILD_DIR)/prelude/std-target-basic.elf
+	$(BUILD_DIR)/prelude/std-target-basic.elf; code=$$?; test $$code -eq 37
+	$(TARGET) tests/cases/standard-library/ok/target/std-target-linux64.ari --target x86_64-pc-linux-gnu --emit-llvm $(BUILD_DIR)/prelude/std-target-linux64-x86_64.ll
+	grep -q 'target triple = "x86_64-pc-linux-gnu"' $(BUILD_DIR)/prelude/std-target-linux64-x86_64.ll
+	$(TARGET) tests/cases/standard-library/ok/target/std-target-linux64.ari --target aarch64-unknown-linux-gnu --emit-llvm $(BUILD_DIR)/prelude/std-target-linux64-aarch64.ll
+	grep -q 'target triple = "aarch64-unknown-linux-gnu"' $(BUILD_DIR)/prelude/std-target-linux64-aarch64.ll
+	$(TARGET) tests/cases/standard-library/ok/target/std-target-linux64.ari --target riscv64-unknown-linux-gnu --emit-llvm $(BUILD_DIR)/prelude/std-target-linux64-riscv64.ll
+	grep -q 'target triple = "riscv64-unknown-linux-gnu"' $(BUILD_DIR)/prelude/std-target-linux64-riscv64.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll
@@ -2584,6 +2597,10 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/attribute-cfg-feature.elf; code=$$?; test $$code -eq 13
 	$(TARGET) --target x86_64-pc-windows-msvc tests/cases/attributes/ok/attribute-cfg-target.ari --emit-llvm $(BUILD_DIR)/meta/attribute-cfg-target.ll
 	grep -q 'target triple = "x86_64-pc-windows-msvc"' $(BUILD_DIR)/meta/attribute-cfg-target.ll
+	$(TARGET) --target x86_64-pc-linux-gnu tests/cases/attributes/ok/attribute-cfg-target-env.ari -o $(BUILD_DIR)/meta/attribute-cfg-target-env.elf
+	$(BUILD_DIR)/meta/attribute-cfg-target-env.elf; code=$$?; test $$code -eq 17
+	$(TARGET) --target x86_64-unknown-linux-musl tests/cases/attributes/ok/attribute-cfg-target-env.ari --emit-llvm $(BUILD_DIR)/meta/attribute-cfg-target-env-musl.ll
+	grep -q 'target triple = "x86_64-unknown-linux-musl"' $(BUILD_DIR)/meta/attribute-cfg-target-env-musl.ll
 	$(TARGET) --test tests/cases/attributes/ok/attribute-test-runner.ari -o $(BUILD_DIR)/meta/attribute-test-runner.elf
 	$(BUILD_DIR)/meta/attribute-test-runner.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/attributes/ok/attribute-export-symbols.ari --shared --emit-llvm $(BUILD_DIR)/meta/attribute-export-symbols.ll

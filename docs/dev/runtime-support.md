@@ -19,6 +19,9 @@ Implemented runtime support today:
 
 - host `main` wrapper and `ari_entry`
 - context initialization for `argc`, `argv`, and thread-local Ari thread id
+- compiler-emitted `std::target` hooks for target triple, architecture, OS,
+  libc/environment, object/debug format, errno ABI, pointer width, C `long`
+  width, and Linux syscall/API-family classification
 - process IO, input, environment, path, process, thread, sync, time, fs, and
   net-address support hooks used by current `std`
 - panic/assert stop behavior through `exit(1)`
@@ -30,6 +33,7 @@ Implemented runtime support today:
 
 | Area | Purpose | Current Status | Roadmap |
 | --- | --- | --- | --- |
+| target ABI | Classify architecture, OS, libc/environment, pointer width, C ABI widths, object format, debug format, syscall ABI, and errno ABI. | `std::target` exposes the current compiler-known slice for x86_64/aarch64/riscv64 Linux and hosted Unix/Windows families recognized by `TargetInfo`. | Add cross-target tests and extend only as driver/linker support becomes real. |
 | `_start` entry | Enter a process before libc `main`, receive raw stack/process state, and call Ari initialization. | Host executables use the platform CRT-provided `_start` and Ari emits `main`. | Add only for freestanding or no-libc targets. It needs stack layout, auxv/envp handling, and target-specific assembly/object support. |
 | `crt0` / startup object | Own startup object files for targets that cannot rely on system CRT. | Not implemented; delegated to the LLVM driver and host CRT. | Create per-target startup objects when Ari supports freestanding/static runtime profiles. |
 | init/fini array | Run module/global constructors and destructors in executable/shared-library load/unload order. | Not needed for current source surface because Ari has no global constructors. | Add when global initialization, plugin-style libraries, or runtime-owned constructors appear. |
@@ -41,9 +45,12 @@ Implemented runtime support today:
 | `.eh_frame` | Supply unwind metadata for stack walking and exception runtimes. | Left to LLVM/toolchain defaults for generated functions. | Document exact requirements before adding Ari-owned unwinding or freestanding targets. |
 | backtrace support | Produce stack traces for panic diagnostics. | Not implemented. | Needs symbolization policy, frame metadata, and stderr/string formatting support. |
 | dynamic linker compatibility | Keep shared-library output usable with the platform loader. | `--shared` emits LLVM IR/object through the LLVM driver with visibility rules for public/exported Ari functions. | Expand with init/fini arrays, exported runtime ABI versioning, and loader tests. |
+| linker hardening profiles | Own static vs dynamic linking, PIE, RELRO, and stack-protector defaults deliberately. | Ari delegates these to the LLVM driver and host defaults today. | Add explicit driver flags and tests before exposing them through `std::target`. |
 | `libgcc_s` / compiler-rt replacement | Provide helper routines for arithmetic, unwinding, atomics, and builtins when the host runtime is absent. | Delegated to the LLVM driver, glibc, libgcc_s, or compiler-rt. | Needed for no-libc/freestanding profiles or custom target triples. |
 | atomic helper routines | Provide fallback calls for atomics that cannot lower inline on a target. | Current `AtomicI64` lowers to LLVM atomic instructions on the host path. | Add target-specific fallback policy if LLVM emits helper calls or if wider/generic atomics land. |
 | memory builtins | Provide efficient `memcpy`, `memmove`, `memset` behavior. | `std::mem` byte helpers now lower through LLVM memory intrinsics. | Later optimize source library copies to these helpers and document ownership-safe use. |
+| Linux descriptor APIs | Provide epoll, inotify, fanotify, eventfd, timerfd, signalfd, pidfd, memfd, and optional io_uring wrappers. | `std::target` only reports Linux API-family availability. No owned descriptors are exposed yet. | Add a small descriptor owner and errno/result policy before implementing wrappers. |
+| Linux kernel views | Provide safe access to procfs, sysfs, cgroups, namespaces, seccomp, and capabilities where appropriate. | `std::env::executable_path()` reads `/proc/self/exe`; the rest are platform-roadmap items. | Keep optional and privilege-aware; do not make them portable `std` APIs. |
 
 ## Implementation Rules
 

@@ -135,6 +135,57 @@ for ordinary failure; `env::set_current_dir(path)` mutates the current process
 working directory. Portable child-process spawn handles remain roadmap work;
 thread helpers live in `std::thread`.
 
+Target and platform facts live in `std::target`:
+
+```ari
+target::triple()
+target::arch()
+target::arch_name()
+target::os()
+target::os_name()
+target::env()
+target::env_name()
+target::object_format()
+target::debug_format()
+target::errno_abi()
+target::pointer_bits()
+target::long_bits()
+target::syscall_abi()
+target::is_x86_64()
+target::is_aarch64()
+target::is_riscv64()
+target::is_linux()
+target::is_macos()
+target::is_windows()
+target::is_unix()
+target::uses_glibc()
+target::uses_musl()
+target::uses_elf()
+target::uses_dwarf()
+target::uses_posix_errno()
+target::has_tls()
+target::has_vdso()
+target::has_procfs()
+target::has_sysfs()
+target::has_epoll()
+target::has_inotify()
+target::has_eventfd()
+target::has_timerfd()
+target::has_signalfd()
+target::has_memfd()
+target::has_pidfd_api()
+target::has_fanotify_api()
+target::has_io_uring_api()
+target::has_cgroups_api()
+target::has_namespaces_api()
+target::has_seccomp_api()
+target::has_capabilities_api()
+```
+
+`std::target` describes the selected compile target. It does not promise that
+a mounted filesystem, kernel version, process capability, or linker hardening
+mode is active at runtime.
+
 Process helpers live in `std::process`:
 
 ```ari

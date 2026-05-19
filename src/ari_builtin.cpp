@@ -83,6 +83,30 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::context::arg", "ari_builtin_context_arg"},
         {"context::thread_id", "ari_builtin_context_thread_id"},
         {"std::context::thread_id", "ari_builtin_context_thread_id"},
+        {"target::triple", "ari_builtin_target_triple"},
+        {"std::target::triple", "ari_builtin_target_triple"},
+        {"target::arch", "ari_builtin_target_arch"},
+        {"std::target::arch", "ari_builtin_target_arch"},
+        {"target::arch_name", "ari_builtin_target_arch_name"},
+        {"std::target::arch_name", "ari_builtin_target_arch_name"},
+        {"target::os", "ari_builtin_target_os"},
+        {"std::target::os", "ari_builtin_target_os"},
+        {"target::os_name", "ari_builtin_target_os_name"},
+        {"std::target::os_name", "ari_builtin_target_os_name"},
+        {"target::env", "ari_builtin_target_env"},
+        {"std::target::env", "ari_builtin_target_env"},
+        {"target::env_name", "ari_builtin_target_env_name"},
+        {"std::target::env_name", "ari_builtin_target_env_name"},
+        {"target::object_format", "ari_builtin_target_object_format"},
+        {"std::target::object_format", "ari_builtin_target_object_format"},
+        {"target::debug_format", "ari_builtin_target_debug_format"},
+        {"std::target::debug_format", "ari_builtin_target_debug_format"},
+        {"target::errno_abi", "ari_builtin_target_errno_abi"},
+        {"std::target::errno_abi", "ari_builtin_target_errno_abi"},
+        {"target::pointer_bits", "ari_builtin_target_pointer_bits"},
+        {"std::target::pointer_bits", "ari_builtin_target_pointer_bits"},
+        {"target::long_bits", "ari_builtin_target_long_bits"},
+        {"std::target::long_bits", "ari_builtin_target_long_bits"},
         {"env::get", "ari_builtin_env_get"},
         {"std::env::get", "ari_builtin_env_get"},
         {"env::has", "ari_builtin_env_has"},
@@ -230,6 +254,12 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     const AriBuiltinTypeExpectation source_string = builtin_type("string");
     const AriBuiltinTypeExpectation thread_entry = builtin_type("fn() -> i64");
     const AriBuiltinTypeExpectation thread_handle = builtin_type("std::thread::Thread");
+    const AriBuiltinTypeExpectation target_arch = builtin_type("std::target::Arch");
+    const AriBuiltinTypeExpectation target_os = builtin_type("std::target::Os");
+    const AriBuiltinTypeExpectation target_env = builtin_type("std::target::Env");
+    const AriBuiltinTypeExpectation target_object_format = builtin_type("std::target::ObjectFormat");
+    const AriBuiltinTypeExpectation target_debug_format = builtin_type("std::target::DebugFormat");
+    const AriBuiltinTypeExpectation target_errno_abi = builtin_type("std::target::ErrnoAbi");
     const AriBuiltinTypeExpectation ref_atomic_i64 = builtin_type("ref std::sync::AtomicI64");
     const AriBuiltinTypeExpectation ref_mut_atomic_i64 = builtin_type("ref mut std::sync::AtomicI64");
     const AriBuiltinTypeExpectation ptr_u8 = builtin_type("ptr u8");
@@ -244,6 +274,18 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_context_argc") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_context_arg") return builtin_sig({i64}, source_string);
     if (symbol == "ari_builtin_context_thread_id") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_target_triple") return builtin_sig({}, source_string);
+    if (symbol == "ari_builtin_target_arch") return builtin_sig({}, target_arch);
+    if (symbol == "ari_builtin_target_arch_name") return builtin_sig({}, source_string);
+    if (symbol == "ari_builtin_target_os") return builtin_sig({}, target_os);
+    if (symbol == "ari_builtin_target_os_name") return builtin_sig({}, source_string);
+    if (symbol == "ari_builtin_target_env") return builtin_sig({}, target_env);
+    if (symbol == "ari_builtin_target_env_name") return builtin_sig({}, source_string);
+    if (symbol == "ari_builtin_target_object_format") return builtin_sig({}, target_object_format);
+    if (symbol == "ari_builtin_target_debug_format") return builtin_sig({}, target_debug_format);
+    if (symbol == "ari_builtin_target_errno_abi") return builtin_sig({}, target_errno_abi);
+    if (symbol == "ari_builtin_target_pointer_bits") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_target_long_bits") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_env_get") return builtin_sig({source_string}, source_string);
     if (symbol == "ari_builtin_env_has") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_env_set") return builtin_sig({source_string, source_string}, boolean);

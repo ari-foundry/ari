@@ -1,0 +1,290 @@
+// Target and platform facts known by the compiler for this build.
+//
+// This module reports compile-target contracts, not live kernel probing. For
+// example, `has_epoll()` means the Linux target family exposes the API; actual
+// runtime failures still belong in future `std::os` result-returning wrappers.
+
+pub enum Arch {
+  UnknownArch,
+  X86_64,
+  Aarch64,
+  Riscv64,
+  X86,
+  Arm,
+}
+
+pub enum Os {
+  UnknownOs,
+  Linux,
+  Macos,
+  Windows,
+}
+
+pub enum Env {
+  UnknownEnv,
+  Gnu,
+  Musl,
+  Msvc,
+  Mingw,
+  Apple,
+}
+
+pub enum ObjectFormat {
+  UnknownObjectFormat,
+  Elf,
+  MachO,
+  Coff,
+}
+
+pub enum DebugFormat {
+  UnknownDebugFormat,
+  Dwarf,
+  CodeView,
+}
+
+pub enum ErrnoAbi {
+  UnknownErrnoAbi,
+  PosixThreadLocal,
+  WindowsLastError,
+}
+
+pub enum SyscallAbi {
+  UnknownSyscallAbi,
+  LinuxX86_64,
+  LinuxAarch64,
+  LinuxRiscv64,
+}
+
+pub extern "ari" fn triple() -> string = "ari_builtin_target_triple";
+pub extern "ari" fn arch() -> Arch = "ari_builtin_target_arch";
+pub extern "ari" fn arch_name() -> string = "ari_builtin_target_arch_name";
+pub extern "ari" fn os() -> Os = "ari_builtin_target_os";
+pub extern "ari" fn os_name() -> string = "ari_builtin_target_os_name";
+pub extern "ari" fn env() -> Env = "ari_builtin_target_env";
+pub extern "ari" fn env_name() -> string = "ari_builtin_target_env_name";
+pub extern "ari" fn object_format() -> ObjectFormat = "ari_builtin_target_object_format";
+pub extern "ari" fn debug_format() -> DebugFormat = "ari_builtin_target_debug_format";
+pub extern "ari" fn errno_abi() -> ErrnoAbi = "ari_builtin_target_errno_abi";
+pub extern "ari" fn pointer_bits() -> i64 = "ari_builtin_target_pointer_bits";
+pub extern "ari" fn long_bits() -> i64 = "ari_builtin_target_long_bits";
+
+pub fn is_x86_64() -> bool {
+  match arch() {
+    X86_64 => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_aarch64() -> bool {
+  match arch() {
+    Aarch64 => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_riscv64() -> bool {
+  match arch() {
+    Riscv64 => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_linux() -> bool {
+  match os() {
+    Linux => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_macos() -> bool {
+  match os() {
+    Macos => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_windows() -> bool {
+  match os() {
+    Windows => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_unix() -> bool {
+  return is_linux() || is_macos();
+}
+
+pub fn is_gnu() -> bool {
+  match env() {
+    Gnu => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_musl() -> bool {
+  match env() {
+    Musl => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn uses_glibc() -> bool {
+  return is_linux() && is_gnu();
+}
+
+pub fn uses_musl() -> bool {
+  return is_linux() && is_musl();
+}
+
+pub fn uses_elf() -> bool {
+  match object_format() {
+    Elf => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn uses_dwarf() -> bool {
+  match debug_format() {
+    Dwarf => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn uses_posix_errno() -> bool {
+  match errno_abi() {
+    PosixThreadLocal => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn syscall_abi() -> SyscallAbi {
+  if !is_linux() {
+    return UnknownSyscallAbi;
+  }
+  match arch() {
+    X86_64 => {
+      return LinuxX86_64;
+    }
+    Aarch64 => {
+      return LinuxAarch64;
+    }
+    Riscv64 => {
+      return LinuxRiscv64;
+    }
+    _ => {
+      return UnknownSyscallAbi;
+    }
+  }
+}
+
+pub fn has_tls() -> bool {
+  return is_linux() || is_macos() || is_windows();
+}
+
+pub fn has_vdso() -> bool {
+  return is_linux();
+}
+
+pub fn has_procfs() -> bool {
+  return is_linux();
+}
+
+pub fn has_sysfs() -> bool {
+  return is_linux();
+}
+
+pub fn has_epoll() -> bool {
+  return is_linux();
+}
+
+pub fn has_inotify() -> bool {
+  return is_linux();
+}
+
+pub fn has_eventfd() -> bool {
+  return is_linux();
+}
+
+pub fn has_timerfd() -> bool {
+  return is_linux();
+}
+
+pub fn has_signalfd() -> bool {
+  return is_linux();
+}
+
+pub fn has_memfd() -> bool {
+  return is_linux();
+}
+
+pub fn has_pidfd_api() -> bool {
+  return is_linux();
+}
+
+pub fn has_fanotify_api() -> bool {
+  return is_linux();
+}
+
+pub fn has_io_uring_api() -> bool {
+  return is_linux();
+}
+
+pub fn has_cgroups_api() -> bool {
+  return is_linux();
+}
+
+pub fn has_namespaces_api() -> bool {
+  return is_linux();
+}
+
+pub fn has_seccomp_api() -> bool {
+  return is_linux();
+}
+
+pub fn has_capabilities_api() -> bool {
+  return is_linux();
+}

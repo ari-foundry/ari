@@ -1,0 +1,58 @@
+// Covers compiler-known target facts and Linux API-family predicates.
+fn expect_linux_x86_64() -> void {
+  match target::arch() {
+    target::X86_64 => {
+    }
+    _ => {
+      std::panic();
+    }
+  }
+  match target::os() {
+    target::Linux => {
+    }
+    _ => {
+      std::panic();
+    }
+  }
+  match target::env() {
+    target::Gnu => {
+    }
+    _ => {
+      std::panic();
+    }
+  }
+  match target::syscall_abi() {
+    target::LinuxX86_64 => {
+    }
+    _ => {
+      std::panic();
+    }
+  }
+}
+
+fn main() -> i64 {
+  expect_linux_x86_64();
+  assert(target::pointer_bits() == 64);
+  assert(target::long_bits() == 64);
+  assert(target::is_x86_64());
+  assert(target::is_linux());
+  assert(target::is_unix());
+  assert(target::is_gnu());
+  assert(target::uses_glibc());
+  assert(target::uses_elf());
+  assert(target::uses_dwarf());
+  assert(target::uses_posix_errno());
+  assert(target::has_tls());
+  assert(target::has_vdso());
+  assert(target::has_procfs());
+  assert(target::has_sysfs());
+  assert(target::has_epoll());
+  assert(target::has_inotify());
+  assert(target::has_eventfd());
+  assert(target::has_timerfd());
+  assert(target::has_signalfd());
+  assert(target::has_memfd());
+  assert(target::has_pidfd_api());
+  assert(target::has_io_uring_api());
+  return 37;
+}

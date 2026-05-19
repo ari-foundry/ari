@@ -1,0 +1,18 @@
+@cfg(all(target("linux"), target("x86_64"), target("gnu"), target("glibc"), target("elf"), target("dwarf")))
+fn selected() -> i64 {
+  return 17;
+}
+
+@cfg(target("musl"))
+fn selected() -> i64 {
+  return 23;
+}
+
+@cfg(not(any(target("gnu"), target("musl"))))
+fn selected() -> i64 {
+  return missing_name();
+}
+
+fn main() -> i64 {
+  return selected();
+}

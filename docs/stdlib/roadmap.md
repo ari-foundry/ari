@@ -25,6 +25,9 @@ identity/from/into helpers, `context` runtime hooks plus the source
 `remove` and path-state helpers `current_dir`/`try_current_dir`/
 `set_current_dir`/`executable_path`/`try_executable_path`,
 `input` runtime hooks plus the source `try_read_byte` EOF helper,
+`target` compiler-known target triple, architecture, OS, environment/libc,
+object/debug format, errno ABI, pointer width, syscall ABI, and Linux
+API-family predicates,
 `io` runtime hooks plus source `Reader`/`Writer`/`Seek`, `Stdin`, `Stdout`,
 `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `read_exact`, `write_all`,
 `flush`, stderr routing, and byte-slice output, current
@@ -60,6 +63,7 @@ work. Each one should land in small tested slices with natural API names.
 | --- | --- | --- |
 | `std::io` | Provide byte-oriented process IO contracts that other libraries can share without hiding raw hooks. | Current `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, stderr routing, and raw scalar/byte/line hooks; future `pipe`, file adapters, zone-owning buffered constructors, and drop-time flush after owned OS handles and resource policy are settled. |
 | `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future path normalization and platform-specific expansion. |
+| `std::target` | Report compiler-known target facts without requiring users to parse triples by hand. | Current `triple`, `arch`, `arch_name`, `os`, `os_name`, `env`, `env_name`, `object_format`, `debug_format`, `errno_abi`, `pointer_bits`, `long_bits`, source predicates for Linux/glibc/musl/ELF/DWARF/TLS, Linux syscall ABI classification, and Linux API-family predicates for procfs/sysfs/vDSO/epoll/inotify/eventfd/timerfd/signalfd/memfd plus optional API families; future build-profile facts for static/dynamic/PIE/RELRO/stack-protector only after the driver owns those flags. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `exit`, `success`, `failure`, status predicates, POSIX `fork`, `wait`, and child/error predicates; future portable `spawn`, richer status/result values, and process handles. |
 | `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, `rename`, `hard_link`, `symbolic_link`, single-directory `create_dir`/`remove_dir`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, `create`/`try_create`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, whole-file `read`/`write`/`append`, `truncate`, source streaming `copy`, `read_to_string`, and `close`; future owned resource policy, metadata, permissions, directory iteration, recursive directory helpers, canonicalization, temporary files, richer link metadata/platform symlink policy, optional file locking, and an options-style open builder. |
 | `std::path` | Manipulate path bytes without opening the filesystem. | Current POSIX-style `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `file_name`, `parent`, `extension`, `stem`, `join_in`, and `normalize_in`; future platform-specific paths, owned `Path`/`PathBuf`, runtime canonicalization, and component iterators. |
@@ -133,6 +137,10 @@ work. Each one should land in small tested slices with natural API names.
 - Grow `std::env` from the current argument, variable, current-directory, and
   executable-path base into path normalization and platform-specific policy
   once owned-string behavior is stable.
+- Keep `std::target` as the cross-cutting target fact module. It can expose
+  compile-target facts such as x86_64/aarch64/riscv64, glibc/musl, ELF/DWARF,
+  TLS, syscall ABI, errno ABI, and Linux API families; it must not grow into a
+  raw syscall wrapper.
 - Grow `std::path` from lexical POSIX-style helpers into platform-aware path
   values once owned path buffers and canonicalization policy are stable.
 - Keep `std::context` as the low-level runtime state boundary: arguments and
@@ -154,6 +162,10 @@ work. Each one should land in small tested slices with natural API names.
   environment, current directory, file descriptors/handles, time, process
   spawn/fork where the platform supports it, thread creation/join, atomics or
   shared ownership handles, and error-code conversion.
+- Track Linux-specific epoll, inotify, eventfd, timerfd, signalfd, pidfd,
+  memfd, optional fanotify, optional io_uring, procfs, sysfs, cgroups,
+  namespaces, seccomp, and capabilities under `docs/stdlib/platform/` until
+  `std::os` has an owned descriptor and error policy.
 - Keep handles visible and owned; do not hide OS resources behind global state.
 - Track runtime ABI foundations separately in `docs/dev/runtime-support.md`:
   `_start`, `crt0`, init/fini arrays, TLS setup, stack protector hooks,

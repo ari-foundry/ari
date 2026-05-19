@@ -23,6 +23,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, `write_bytes`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, `has_arg`, `user_arg_count`, `is_main_thread`. |
+| `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
 | `std::thread` | Function-pointer thread spawn/join and runtime ids. | `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, `is_join_error`. |
@@ -121,6 +122,13 @@ hooks because they read the host runtime context, while `has_arg`,
 `user_arg_count`, `has_user_args`, and `is_main_thread` are ordinary source
 helpers that document Ari's valid-index and main-thread policies in one
 reusable place.
+
+`std::target` is compiler-backed because the selected target triple,
+architecture, libc/environment, object format, debug format, pointer width, and
+ABI families are known to the compiler and LLVM driver, not to portable source
+code. The readable predicates around those hooks are source Ari. Linux
+API-family helpers describe target availability; live kernel probing and
+fallible descriptor creation belong in future `std::os` wrappers.
 
 `std::env` wraps the context hooks with the names application code should use
 and adds `Option`-based argument access through `try_arg` and `program_name`.

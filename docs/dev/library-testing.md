@@ -42,6 +42,11 @@ identifies the exact case:
   byte access and empty pop behavior.
 - `std-context-args.ari`: runtime-backed `std::context` argument and thread-id
   access, source context predicates, and root alias behavior.
+- `std-target-basic.ari`: compiler-known `std::target` triple,
+  architecture, OS, environment/libc, object/debug format, errno ABI, syscall
+  ABI, pointer-width, and Linux API-family predicate behavior.
+- `std-target-linux64.ari`: LLVM-only target classification coverage for
+  x86_64, aarch64, and riscv64 Linux triples without cross-linking.
 - `std-env-args.ari`: source `std::env` argument helpers, `Option`-returning
   `try_arg`, and `program_name` behavior over the runtime context.
 - `std-env-vars.ari`: runtime-backed `std::env` environment variable

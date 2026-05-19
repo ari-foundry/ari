@@ -1,0 +1,25 @@
+// Covers Linux 64-bit target classification without requiring cross-linking.
+fn require_known_linux_syscall_abi() -> void {
+  match target::syscall_abi() {
+    target::LinuxX86_64 => {
+    }
+    target::LinuxAarch64 => {
+    }
+    target::LinuxRiscv64 => {
+    }
+    _ => {
+      std::panic();
+    }
+  }
+}
+
+fn main() -> i64 {
+  assert(target::is_linux());
+  assert(target::is_unix());
+  assert(target::pointer_bits() == 64);
+  assert(target::uses_elf());
+  assert(target::uses_dwarf());
+  assert(target::uses_posix_errno());
+  require_known_linux_syscall_abi();
+  return 0;
+}

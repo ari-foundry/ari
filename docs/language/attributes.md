@@ -41,6 +41,10 @@ ownership-sensitive data through explicit `ptr` or `ref` wrapper APIs.
 checking. Disabled declarations must still parse, but their names, types, and
 bodies are not resolved. Supported predicates are `true`, `false`, `all(...)`,
 `any(...)`, `not(...)`, `target("name")`, and `feature("name")`.
+Target names include supported architecture names such as `x86_64`,
+`aarch64`, and `riscv64`, OS families such as `linux`, `unix`, and `windows`,
+and environment/format predicates such as `gnu`, `glibc`, `musl`, `elf`, and
+`dwarf`.
 
 ```ari
 @cfg(feature("fast"))

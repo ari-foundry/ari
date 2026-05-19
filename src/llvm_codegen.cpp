@@ -121,6 +121,71 @@ static std::string fp128_literal_from_double(double value) {
     return "0xL" + hex16(low) + hex16(high);
 }
 
+static bool text_contains(const std::string& text, const std::string& needle) {
+    return text.find(needle) != std::string::npos;
+}
+
+static std::string target_env_name(const TargetInfo& target) {
+    if (target.macos) return "apple";
+    if (text_contains(target.triple, "musl")) return "musl";
+    if (text_contains(target.triple, "gnu")) return "gnu";
+    if (text_contains(target.triple, "msvc")) return "msvc";
+    if (text_contains(target.triple, "mingw")) return "mingw";
+    return "unknown";
+}
+
+static int target_arch_tag(const TargetInfo& target) {
+    if (target.arch == "x86_64") return 1;
+    if (target.arch == "aarch64") return 2;
+    if (target.arch == "riscv64") return 3;
+    if (target.arch == "x86") return 4;
+    if (target.arch == "arm") return 5;
+    return 0;
+}
+
+static int target_os_tag(const TargetInfo& target) {
+    if (target.linux) return 1;
+    if (target.macos) return 2;
+    if (target.windows) return 3;
+    return 0;
+}
+
+static int target_env_tag(const TargetInfo& target) {
+    const std::string env = target_env_name(target);
+    if (env == "gnu") return 1;
+    if (env == "musl") return 2;
+    if (env == "msvc") return 3;
+    if (env == "mingw") return 4;
+    if (env == "apple") return 5;
+    return 0;
+}
+
+static int target_object_format_tag(const TargetInfo& target) {
+    if (target.linux) return 1;
+    if (target.macos) return 2;
+    if (target.windows) return 3;
+    return 0;
+}
+
+static int target_debug_format_tag(const TargetInfo& target) {
+    if (target.linux || target.macos) return 1;
+    if (target.windows) return 2;
+    return 0;
+}
+
+static int target_errno_abi_tag(const TargetInfo& target) {
+    if (target.unix) return 1;
+    if (target.windows) return 2;
+    return 0;
+}
+
+static std::string target_os_name(const TargetInfo& target) {
+    if (target.linux) return "linux";
+    if (target.macos) return "macos";
+    if (target.windows) return "windows";
+    return "unknown";
+}
+
 static std::string float_literal(double value) {
     std::ostringstream out;
     out << std::scientific << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
@@ -424,6 +489,10 @@ private:
             return IrType{TypeQualifier::Ptr, IrPrimitiveKind::Void, "void", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_context_arg" ||
+            symbol == "ari_builtin_target_triple" ||
+            symbol == "ari_builtin_target_arch_name" ||
+            symbol == "ari_builtin_target_os_name" ||
+            symbol == "ari_builtin_target_env_name" ||
             symbol == "ari_builtin_env_get" ||
             symbol == "ari_builtin_env_current_dir" ||
             symbol == "ari_builtin_env_executable_path" ||
@@ -539,6 +608,11 @@ private:
         std::string fs_mode_write = string_ptr("w");
         std::string fs_mode_append = string_ptr("a");
         std::string proc_self_exe = string_ptr("/proc/self/exe");
+        TargetInfo target = resolve_target_info(options_.target_triple);
+        std::string target_triple = string_ptr(target.triple);
+        std::string target_arch = string_ptr(target.arch);
+        std::string target_os = string_ptr(target_os_name(target));
+        std::string target_env = string_ptr(target_env_name(target));
         std::string line_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_line_buffer, i64 0, i64 0)";
         std::string cwd_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_cwd_buffer, i64 0, i64 0)";
         std::string executable_path_buffer =
@@ -596,6 +670,78 @@ private:
         line("  ret ptr %arg");
         line("empty:");
         line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_target_triple() {");
+        line("entry:");
+        line("  ret ptr " + target_triple);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_target_arch() {");
+        line("entry:");
+        line("  ret i64 " + std::to_string(target_arch_tag(target)));
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_target_arch_name() {");
+        line("entry:");
+        line("  ret ptr " + target_arch);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_target_os() {");
+        line("entry:");
+        line("  ret i64 " + std::to_string(target_os_tag(target)));
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_target_os_name() {");
+        line("entry:");
+        line("  ret ptr " + target_os);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_target_env() {");
+        line("entry:");
+        line("  ret i64 " + std::to_string(target_env_tag(target)));
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_target_env_name() {");
+        line("entry:");
+        line("  ret ptr " + target_env);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_target_object_format() {");
+        line("entry:");
+        line("  ret i64 " + std::to_string(target_object_format_tag(target)));
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_target_debug_format() {");
+        line("entry:");
+        line("  ret i64 " + std::to_string(target_debug_format_tag(target)));
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_target_errno_abi() {");
+        line("entry:");
+        line("  ret i64 " + std::to_string(target_errno_abi_tag(target)));
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_target_pointer_bits() {");
+        line("entry:");
+        line("  ret i64 " + std::to_string(target.pointer_bits));
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_target_long_bits() {");
+        line("entry:");
+        line("  ret i64 " + std::to_string(target.long_bits));
         line("}");
         line();
 
