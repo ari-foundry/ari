@@ -230,7 +230,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | Need | Use |
 | --- | --- |
 | print text or values | `print`, `println`, `print!`, `println!` |
-| assertions | `assert!`, `debug_assert!`, `assert_eq!`, `assert_ne!` |
+| assertions | `assert!`, `debug_assert!`, `assert_eq!`, `assert_ne!`, `assert_equal(left, right)`, `assert_not_equal(left, right)` |
 | panic placeholders | `panic!()`, `todo!()`, `unreachable!()` |
 | optional value | `Option<T>`, `Some(value)`, `None<T>()` |
 | result value | `Result<T, E>`, `Ok<T, E>(value)`, `Err<T, E>(error)` |

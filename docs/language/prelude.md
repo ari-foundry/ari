@@ -406,6 +406,10 @@ matches!(value, Some(_))
 ```
 
 `assert_eq!` and `assert_ne!` dispatch to integer or bool assertion builtins.
+For source-level library code that should not encode the compared type in the
+function name, use the generic wrappers `assert_equal(left, right)` and
+`assert_not_equal(left, right)`. They lower through normal `==` / `!=`
+checking, so unsupported equality types still produce ordinary type errors.
 `matches!` uses the unqualified parser-special spelling and expands to a
 bool-valued pattern test using the same pattern engine as `match`, so enum,
 scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow

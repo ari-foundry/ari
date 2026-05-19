@@ -89,6 +89,15 @@ pub extern "ari" fn assert_eq_i64(left: i64, right: i64) -> i64 = "ari_builtin_a
 pub extern "ari" fn assert_ne_i64(left: i64, right: i64) -> i64 = "ari_builtin_assert_ne_i64";
 pub extern "ari" fn assert_eq_bool(left: bool, right: bool) -> i64 = "ari_builtin_assert_eq_bool";
 pub extern "ari" fn assert_ne_bool(left: bool, right: bool) -> i64 = "ari_builtin_assert_ne_bool";
+
+pub fn assert_equal[T](left: T, right: T) -> i64 {
+  return assert(left == right);
+}
+
+pub fn assert_not_equal[T](left: T, right: T) -> i64 {
+  return assert(left != right);
+}
+
 pub extern "ari" fn panic() -> void = "ari_builtin_panic";
 pub extern "ari" fn todo() -> void = "ari_builtin_panic";
 pub extern "ari" fn unreachable() -> void = "ari_builtin_panic";

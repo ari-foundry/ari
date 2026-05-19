@@ -72,6 +72,8 @@ The root prelude already provides immediate assertion and panic helpers:
 ```ari
 assert(condition)
 debug_assert(condition)
+assert_equal(left, right)
+assert_not_equal(left, right)
 assert_eq_i64(left, right)
 assert_ne_i64(left, right)
 assert_eq_bool(left, right)
@@ -81,6 +83,10 @@ todo()
 unreachable()
 ```
 
+Use `assert_equal` and `assert_not_equal` for normal source code so the
+compared type stays in the values instead of the function name. The
+type-specific `assert_eq_i64` and `assert_eq_bool` helpers remain as builtin
+compatibility hooks and macro targets.
 Use these when a single failed check should stop the program immediately.
 Use `std::test::Report` when a test should aggregate several checks and return
 one final status.

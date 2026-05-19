@@ -895,7 +895,8 @@ Checklist:
       `io::read_line_owned`, `input_owned`, and `input::owned_line`
 - [x] add assertion/stop function builtins: `assert`, `debug_assert`,
       `assert_eq_i64`, `assert_ne_i64`, `assert_eq_bool`, `assert_ne_bool`,
-      `panic`, `todo`, `unreachable`
+      source generic `assert_equal`/`assert_not_equal`, `panic`, `todo`,
+      `unreachable`
 - [x] add executable prelude macro forms: `assert!`, `debug_assert!`,
       `assert_eq!`, `assert_ne!`, `panic!`, `todo!`, `unreachable!`,
       `print!`, and `println!`

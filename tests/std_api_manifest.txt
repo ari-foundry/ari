@@ -68,8 +68,10 @@ fn std::ascii::trim_start|std ascii slice helper tests; docs/stdlib/api-referenc
 fn std::assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
 fn std::assert_eq_bool|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
 fn std::assert_eq_i64|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
+fn std::assert_equal[T]|prelude natural generic assertion tests; docs/language/prelude.md
 fn std::assert_ne_bool|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
 fn std::assert_ne_i64|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
+fn std::assert_not_equal[T]|prelude natural generic assertion tests; docs/language/prelude.md
 fn std::bits::align_down|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::align_up|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::any_set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
