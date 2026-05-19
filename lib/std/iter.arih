@@ -8,8 +8,107 @@ pub struct RangeInclusive[T] {
   end: T,
 }
 
+pub struct Map[I, T, U] {
+  mut inner: I,
+  op: fn(T) -> U,
+}
+
+pub struct Filter[I, T] {
+  mut inner: I,
+  keep: fn(ref T) -> bool,
+}
+
+pub struct Take[I, T] {
+  mut inner: I,
+  mut remaining: i64,
+}
+
+pub struct Skip[I, T] {
+  mut inner: I,
+  mut remaining: i64,
+}
+
+pub struct Enumerated[T] {
+  index: i64,
+  value: T,
+}
+
+pub struct Enumerate[I, T] {
+  mut inner: I,
+  mut index: i64,
+}
+
+pub struct Zipped[T, U] {
+  left: T,
+  right: U,
+}
+
+pub struct Zip[I, J, T, U] {
+  mut left: I,
+  mut right: J,
+}
+
 pub fn range[T](start: T, end: T) -> Range[T];
 pub fn range_inclusive[T](start: T, end: T) -> RangeInclusive[T];
+
+pub fn map[T, U, I: std::Iterator[T]](iter: I, op: fn(T) -> U) -> Map[I, T, U] {
+  return Map<I, T, U> { inner: iter, op: op };
+}
+
+pub fn filter[T, I: std::Iterator[T]](iter: I, keep: fn(ref T) -> bool) -> Filter[I, T] {
+  return Filter<I, T> { inner: iter, keep: keep };
+}
+
+pub fn take[T, I: std::Iterator[T]](iter: I, count: i64) -> Take[I, T] {
+  std::assert(count >= 0);
+  return Take<I, T> { inner: iter, remaining: count };
+}
+
+pub fn skip[T, I: std::Iterator[T]](iter: I, count: i64) -> Skip[I, T] {
+  std::assert(count >= 0);
+  return Skip<I, T> { inner: iter, remaining: count };
+}
+
+pub fn enumerate[T, I: std::Iterator[T]](iter: I) -> Enumerate[I, T] {
+  return Enumerate<I, T> { inner: iter, index: 0 };
+}
+
+pub fn zip[T, U, I: std::Iterator[T], J: std::Iterator[U]](
+  left: I,
+  right: J
+) -> Zip[I, J, T, U] {
+  return Zip<I, J, T, U> { left: left, right: right };
+}
+
+pub fn fold[T, U, I: std::Iterator[T]](iter: I, initial: U, op: fn(U, T) -> U) -> U {
+  var cursor = iter;
+  var current = initial;
+  var item = cursor.next();
+  while item.is_some() {
+    current = op(current, item.unwrap());
+    item = cursor.next();
+  }
+  return current;
+}
+
+pub fn reduce[T, I: std::Iterator[T]](iter: I, op: fn(T, T) -> T) -> std::Option[T] {
+  var cursor = iter;
+  var item = cursor.next();
+  if item.is_none() {
+    return std::None<T>();
+  }
+
+  var current = item.unwrap();
+  item = cursor.next();
+  while item.is_some() {
+    current = op(current, item.unwrap());
+    item = cursor.next();
+  }
+  return std::Some<T>(current);
+}
+
+// Collection is implemented by std::vec because Vec owns the allocation shape.
+pub use std::vec::collect;
 
 pub trait Iterable[T] {
 }
@@ -20,4 +119,111 @@ pub trait Iterator[T] {
 
 pub trait IntoIterator[T] {
   fn into_iter(self: ref mut Self) -> Self;
+}
+
+impl[T, U, I: std::Iterator[T]] std::Iterator[U] for std::iter::Map[I, T, U] {
+  pub fn next(self: ref mut Self) -> std::Option[U] {
+    let op = self.op;
+    return self.inner.next().map<U>(op);
+  }
+}
+
+impl[T, I: std::Iterator[T]] std::Iterator[T] for std::iter::Filter[I, T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    var item = self.inner.next();
+    let keep = self.keep;
+    while item.is_some() {
+      let value = item.unwrap();
+      if keep(ref value) {
+        return std::Some<T>(value);
+      }
+      item = self.inner.next();
+    }
+    return std::None<T>();
+  }
+}
+
+impl[T, I: std::Iterator[T]] std::Iterator[T] for std::iter::Take[I, T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.remaining <= 0 {
+      return std::None<T>();
+    }
+    self.remaining = self.remaining - 1;
+    return self.inner.next();
+  }
+}
+
+impl[T, I: std::Iterator[T]] std::Iterator[T] for std::iter::Skip[I, T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    while self.remaining > 0 {
+      let skipped = self.inner.next();
+      if skipped.is_none() {
+        self.remaining = 0;
+        return std::None<T>();
+      }
+      self.remaining = self.remaining - 1;
+    }
+    return self.inner.next();
+  }
+}
+
+impl[T, I: std::Iterator[T]] std::Iterator[std::iter::Enumerated[T]] for std::iter::Enumerate[I, T] {
+  pub fn next(self: ref mut Self) -> std::Option[std::iter::Enumerated[T]] {
+    match self.inner.next() {
+      std::Some(value) => {
+        let current = self.index;
+        self.index = self.index + 1;
+        let item = std::iter::Enumerated<T> { index: current, value: value };
+        return std::Some<std::iter::Enumerated[T]>(item);
+      }
+      std::None => {
+        return std::None<std::iter::Enumerated[T]>();
+      }
+    }
+  }
+}
+
+impl[T, U, I: std::Iterator[T], J: std::Iterator[U]]
+std::Iterator[std::iter::Zipped[T, U]] for std::iter::Zip[I, J, T, U] {
+  pub fn next(self: ref mut Self) -> std::Option[std::iter::Zipped[T, U]] {
+    match self.left.next() {
+      std::Some(left_value) => {
+        match self.right.next() {
+          std::Some(right_value) => {
+            let pair = std::iter::Zipped<T, U> {
+              left: left_value,
+              right: right_value,
+            };
+            return std::Some<std::iter::Zipped[T, U]>(pair);
+          }
+          std::None => {
+            return std::None<std::iter::Zipped[T, U]>();
+          }
+        }
+      }
+      std::None => {
+        return std::None<std::iter::Zipped[T, U]>();
+      }
+    }
+  }
+}
+
+pub impl[T] std::iter::Enumerated[T] {
+  fn index(self: ref Self) -> i64 {
+    return self.index;
+  }
+
+  fn value(self) -> T {
+    return self.value;
+  }
+}
+
+pub impl[T, U] std::iter::Zipped[T, U] {
+  fn left(self: ref Self) -> T {
+    return self.left;
+  }
+
+  fn right(self: ref Self) -> U {
+    return self.right;
+  }
 }

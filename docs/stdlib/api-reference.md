@@ -979,6 +979,15 @@ box.is_empty()
 ```ari
 iter::range<T>(start, end)
 iter::range_inclusive<T>(start, end)
+iter::map<T, U, I: std::Iterator[T]>(iter, op)
+iter::filter<T, I: std::Iterator[T]>(iter, keep)
+iter::take<T, I: std::Iterator[T]>(iter, count)
+iter::skip<T, I: std::Iterator[T]>(iter, count)
+iter::enumerate<T, I: std::Iterator[T]>(iter)
+iter::zip<T, U, I: std::Iterator[T], J: std::Iterator[U]>(left, right)
+iter::fold<T, U, I: std::Iterator[T]>(iter, initial, op)
+iter::reduce<T, I: std::Iterator[T]>(iter, op)
+iter::collect<T, I: std::Iterator[T]>(ref mut zone, iter)
 iter::Iterator[T]
 iter::IntoIterator[T]
 iter::Iterable[T]
@@ -989,6 +998,10 @@ Source cursors implement `Iterator[T]::next(self: ref mut Self) -> Option[T]`.
 Collections that implement `IntoIterator[T]` can be used directly in `for`
 loops; map-like collections use explicit `keys()` and `values()` cursors until
 pair or tuple iteration policy is stable.
+
+The adapter constructors are lazy except for `fold`, `reduce`, and `collect`.
+Use `skip` for the usual drop-count adapter because `drop` is a language
+operation. `collect` builds a `std::vec::Vec[T]` in the caller-provided zone.
 
 `std::fmt` contains the formatting trait surface:
 

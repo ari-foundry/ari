@@ -524,6 +524,9 @@ Checklist:
       `std::vec::Vec<T>` implements `IntoIterator[T]` for direct
       `for value in vec` lowering while preserving receiver-zone
       reset/destroy provenance
+- [x] source `std::iter` adapters cover lazy `map`, `filter`, `take`, `skip`,
+      `enumerate`, and `zip` plus eager `fold`, `reduce`, and explicit-zone
+      `collect` over `std::vec::Iter<T>`
 - [x] source `std::vec::Vec<T>` has a value-drop handle `Drop` impl that drops
       each current element while leaving storage release to the explicit zone,
       with shared shrink/drop lowering for `set`, `clear`, `truncate`, and

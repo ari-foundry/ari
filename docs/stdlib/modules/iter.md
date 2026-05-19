@@ -1,14 +1,24 @@
 # std::iter
 
-`std::iter` is the shared loop protocol layer. It currently keeps the surface
-small: range constructors for compiler-lowered numeric loops and traits used
-by source collection cursors.
+`std::iter` is the shared loop protocol layer. It contains range constructors,
+the iterator trait surface, lazy source adapters, and eager consumers for
+turning an iterator into a value.
 
 ## Public API
 
 ```ari
 iter::range<T>(start, end)
 iter::range_inclusive<T>(start, end)
+
+iter::map<T, U, I: std::Iterator[T]>(iter, op)
+iter::filter<T, I: std::Iterator[T]>(iter, keep)
+iter::take<T, I: std::Iterator[T]>(iter, count)
+iter::skip<T, I: std::Iterator[T]>(iter, count)
+iter::enumerate<T, I: std::Iterator[T]>(iter)
+iter::zip<T, U, I: std::Iterator[T], J: std::Iterator[U]>(left, right)
+iter::fold<T, U, I: std::Iterator[T]>(iter, initial, op)
+iter::reduce<T, I: std::Iterator[T]>(iter, op)
+iter::collect<T, I: std::Iterator[T]>(ref mut zone, iter)
 
 trait Iterator[T] {
   fn next(self: ref mut Self) -> Option[T];
@@ -22,8 +32,23 @@ trait Iterable[T]
 ```
 
 Root aliases expose `range(start, end)` and `range_inclusive(start, end)`.
-Range syntax such as `start..end` and `start..=end` lowers through the same
-range model.
+`iter::collect` is a public alias backed by `std::vec::collect`, so collection
+always names the target allocation zone explicitly.
+
+`skip` is the Ari standard name for the usual drop-count adapter because
+`drop` is already a language operation.
+
+## Lazy And Eager Operations
+
+`map`, `filter`, `take`, `skip`, `enumerate`, and `zip` are lazy. Constructing
+one of these adapters stores the source iterator and any callback, but does not
+pull values. Work happens only when `next` is called, normally through a `for`
+loop.
+
+`fold`, `reduce`, and `collect` are eager consumers. They advance the iterator
+until it is exhausted. `reduce` returns `None<T>()` for an empty iterator, while
+`collect` returns a `std::vec::Vec[T]` allocated in the zone passed by the
+caller.
 
 ## How To Use It
 
@@ -37,27 +62,60 @@ for value in cursor {
 }
 ```
 
+Adapters are ordinary iterator values. Use a mutable local plus `ref mut` when
+the adapter stores progress:
+
+```ari
+fn double(value: i64) -> i64 {
+  return value * 2;
+}
+
+var mapped = iter::map<i64, i64, std::vec::Iter[i64]>(values.iter(), double);
+var total = 0;
+for value in ref mut mapped {
+  total = total + value;
+}
+```
+
+`filter` predicates take a borrowed value so the predicate can inspect an item
+without consuming it before the adapter decides whether to yield it.
+
+```ari
+fn even(value: ref i64) -> bool {
+  let raw: ptr i64 = value as ptr i64;
+  return (*raw % 2) == 0;
+}
+```
+
+`enumerate` yields `Enumerated[T]` values with `index()` and `value()`
+accessors. `zip` yields `Zipped[T, U]` values with `left()` and `right()`.
+`zip` stops when either side is exhausted.
+
 Collections that implement `IntoIterator[T]` can be used directly in `for`
 loops. Today `std::collections::Set[T]`, `Deque[T]`, `RingBuffer[T]`,
 `LinkedList[T]`, `HashSet[T]`, and `TreeSet[T]` expose that path. `HashMap`
 and `TreeMap` intentionally expose `keys()` and `values()` instead of a pair
-iterator until tuple or pair conventions are stable. `BinaryHeap[T]` and
+iterator until tuple conventions are stable. `BinaryHeap[T]` and
 `PriorityQueue[T]` expose priority removal through `pop()` rather than an
 iterator so callers do not mistake heap storage order for priority order.
 
 ## Current Limits
 
 - `Iterable[T]` is a marker surface for future adapter design.
-- General iterator adapters such as `map`, `filter`, and `fold` are roadmap
-  work.
-- `IntoIterator[T]` is intentionally minimal while the compiler's general
-  iterator lowering is still growing.
+- Adapter callback values are plain function pointers. Closures and captures
+  are future work.
+- `collect` currently builds a `std::vec::Vec[T]`; other collection targets
+  should be added as explicit functions after their ownership contracts are
+  stable.
+- Direct map-entry iteration still waits for tuple or pair policy. Use
+  `HashMap.keys`, `HashMap.values`, `TreeMap.keys`, or `TreeMap.values`.
 
 ## Tests
 
 Representative coverage lives in:
 
 ```text
+tests/cases/standard-library/ok/iter/std-iter-adapters.ari
 tests/cases/standard-library/ok/vec/std-vec-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari

@@ -212,8 +212,16 @@ fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude ro
 fn std::io::write_bytes|std io byte slice tests; docs/stdlib/modules/io.md
 fn std::io::write_i64|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_u64|prelude IO and u64 format tests; docs/dev/test-matrix.md Prelude row
+fn std::iter::enumerate[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy index/value adapter; docs/stdlib/modules/iter.md
+fn std::iter::filter[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy predicate adapter; docs/stdlib/modules/iter.md
+fn std::iter::fold[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters eager fold consumer; docs/stdlib/modules/iter.md
+fn std::iter::map[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy mapping adapter; docs/stdlib/modules/iter.md
 fn std::iter::range[T]|range for-loop tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::range_inclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
+fn std::iter::reduce[T, I: std::Iterator[T]|check-prelude std-iter-adapters eager optional reduction; docs/stdlib/modules/iter.md
+fn std::iter::skip[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy drop-count adapter; docs/stdlib/modules/iter.md
+fn std::iter::take[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy bounded adapter; docs/stdlib/modules/iter.md
+fn std::iter::zip[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy pair adapter; docs/stdlib/modules/iter.md
 fn std::math::abs|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::div_ceil|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::div_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
@@ -348,6 +356,7 @@ fn std::time::unix_nanos|check-prelude std-time-basic wall-clock hook; docs/stdl
 fn std::todo|planned panic helper tests; docs/dev/test-matrix.md Prelude row
 fn std::unreachable|planned panic helper tests; docs/dev/test-matrix.md Prelude row
 fn std::vec::alloc_buffer[T]|std vec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::vec::collect[T, I: std::Iterator[T]|check-prelude std-iter-adapters zone-backed iterator collection; docs/stdlib/modules/iter.md
 fn std::vec::from_slice_in[T]|std vec from-slice target-zone copy tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::vec::new[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::vec::with_capacity[T]|std RawVec tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -597,6 +606,10 @@ method std::io::BufWriter[W]::buffered_len|std io buffered tests; docs/stdlib/mo
 method std::io::BufWriter[W]::capacity|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::is_empty|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::new|std io buffered tests; docs/stdlib/modules/io.md
+method std::iter::Enumerated[T]::index|check-prelude std-iter-adapters enumerate index accessor; docs/stdlib/modules/iter.md
+method std::iter::Enumerated[T]::value|check-prelude std-iter-adapters enumerate value accessor; docs/stdlib/modules/iter.md
+method std::iter::Zipped[T,U]::left|check-prelude std-iter-adapters zip left accessor; docs/stdlib/modules/iter.md
+method std::iter::Zipped[T,U]::right|check-prelude std-iter-adapters zip right accessor; docs/stdlib/modules/iter.md
 method std::net::IpAddr::is_loopback|check-prelude std-net-addresses generic IP loopback predicate; docs/stdlib/modules/net.md
 method std::net::IpAddr::is_unspecified|check-prelude std-net-addresses generic IP unspecified predicate; docs/stdlib/modules/net.md
 method std::net::IpAddr::is_v4|check-prelude std-net-addresses generic IPv4 family predicate; docs/stdlib/modules/net.md
@@ -805,8 +818,16 @@ struct std::io::Cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::io::Stderr|std io stderr tests; docs/stdlib/modules/io.md
 struct std::io::Stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::io::Stdout|std io trait/cursor tests; docs/stdlib/modules/io.md
+struct std::iter::Enumerate[I, T]|check-prelude std-iter-adapters lazy enumerate adapter state; docs/stdlib/modules/iter.md
+struct std::iter::Enumerated[T]|check-prelude std-iter-adapters enumerate item wrapper; docs/stdlib/modules/iter.md
+struct std::iter::Filter[I, T]|check-prelude std-iter-adapters lazy filter adapter state; docs/stdlib/modules/iter.md
+struct std::iter::Map[I, T, U]|check-prelude std-iter-adapters lazy map adapter state; docs/stdlib/modules/iter.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
+struct std::iter::Skip[I, T]|check-prelude std-iter-adapters lazy skip adapter state; docs/stdlib/modules/iter.md
+struct std::iter::Take[I, T]|check-prelude std-iter-adapters lazy take adapter state; docs/stdlib/modules/iter.md
+struct std::iter::Zip[I, J, T, U]|check-prelude std-iter-adapters lazy zip adapter state; docs/stdlib/modules/iter.md
+struct std::iter::Zipped[T, U]|check-prelude std-iter-adapters zip item wrapper; docs/stdlib/modules/iter.md
 struct std::net::IpAddr|std net generic IP address tests; docs/stdlib/modules/net.md
 struct std::net::Ipv4Addr|std net IPv4 address tests; docs/stdlib/modules/net.md
 struct std::net::Ipv6Addr|std net IPv6 address tests; docs/stdlib/modules/net.md
@@ -912,6 +933,7 @@ use std::has_arg|std context args root re-export tests; docs/stdlib/modules/cont
 use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::input_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::is_between|std cmp value helper root re-export tests; docs/stdlib/api-reference.md Comparison section
+use std::iter::collect|check-prelude std-iter-adapters natural iter::collect alias backed by std::vec; docs/stdlib/modules/iter.md
 use std::max|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::min|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::new|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows

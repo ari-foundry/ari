@@ -32,6 +32,17 @@ pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::vec::
   return output;
 }
 
+pub fn collect[T, I: std::Iterator[T]](zone: ref mut Zone, iter: I) -> std::vec::Vec[T] {
+  var cursor = iter;
+  var output = std::vec::new<T>(zone, 4);
+  var item = cursor.next();
+  while item.is_some() {
+    output.push_in(zone, item.unwrap());
+    item = cursor.next();
+  }
+  return output;
+}
+
 fn next_growth_capacity(current: i64, minimum: i64) -> i64 {
   var capacity = current * 2;
   if capacity < minimum {

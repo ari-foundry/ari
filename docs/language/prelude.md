@@ -601,6 +601,11 @@ the iterator once, mutably borrowing that hidden iterator binding, and calling
 `next` until it returns `None`. Value-self `next(self)` impls remain accepted as
 a compatibility subset for copyable snapshot-style iterators.
 
+`std::iter` provides source adapters over that same protocol. `map`, `filter`,
+`take`, `skip`, `enumerate`, and `zip` are lazy and advance only when `next` is
+called. `fold`, `reduce`, and `collect` are eager consumers; `collect` requires
+an explicit `ref mut Zone` and returns `std::vec::Vec[T]`.
+
 `IntoIterator[T]` has one current conversion method:
 
 ```ari

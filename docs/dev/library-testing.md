@@ -27,6 +27,9 @@ identifies the exact case:
   behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access
   behavior.
+- `std-iter-adapters.ari`: source `std::iter` lazy `map`, `filter`, `take`,
+  `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed
+  `collect` behavior over `std::vec::Iter[T]`.
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
 - `std-string-ascii-helpers.ari`: source `std::string` borrowed ASCII trim
   views and whole-string parsing behavior.

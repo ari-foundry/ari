@@ -4521,12 +4521,15 @@ private:
                 }
 
                 std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+                std::string previous_module = current_module_name_;
+                current_module_name_ = info.module_name;
                 for (const auto& item : substitutions) current_type_substitutions_.emplace(item.first, item.second);
                 for (const auto& field : info.fields) {
                     type.field_names.push_back(field.name);
                     type.field_types.push_back(resolve_executable_type(field.type));
                     type.field_mutable.push_back(field.mutable_field);
                 }
+                current_module_name_ = previous_module;
                 current_type_substitutions_ = std::move(previous_substitutions);
                 require_nonlocal_root_vector_storage(type.loc, type, "a struct field");
             } else {

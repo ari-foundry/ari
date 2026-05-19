@@ -1,0 +1,83 @@
+// Covers source iterator adapters and eager consumers built over Vec cursors.
+fn double(value: i64) -> i64 {
+  return value * 2;
+}
+
+fn is_even(value: ref i64) -> bool {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw % 2 == 0;
+}
+
+fn sum(left: i64, right: i64) -> i64 {
+  return left + right;
+}
+
+fn collect_score(zone: ref mut Zone, values: ref mut std::vec::Vec[i64]) -> i64 {
+  let collected = iter::collect<i64, std::vec::Iter[i64]>(zone, values.iter());
+  return collected.len() + collected.get(0) + collected.get(1) + collected.get(2);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var values = std::vec::new<i64>(ref mut zone, 6);
+  values.push(1);
+  values.push(2);
+  values.push(3);
+  values.push(4);
+  values.push(5);
+  values.push(6);
+
+  var mapped = iter::map<i64, i64, std::vec::Iter[i64]>(values.iter(), double);
+  var mapped_sum = 0;
+  for mapped_value in ref mut mapped {
+    mapped_sum = mapped_sum + mapped_value;
+  }
+
+  var filtered = iter::filter<i64, std::vec::Iter[i64]>(values.iter(), is_even);
+  var filtered_sum = 0;
+  for filtered_value in ref mut filtered {
+    filtered_sum = filtered_sum + filtered_value;
+  }
+
+  var taken = iter::take<i64, std::vec::Iter[i64]>(values.iter(), 3);
+  var taken_sum = 0;
+  for taken_value in ref mut taken {
+    taken_sum = taken_sum + taken_value;
+  }
+
+  var skipped = iter::skip<i64, std::vec::Iter[i64]>(values.iter(), 4);
+  var skipped_sum = 0;
+  for skipped_value in ref mut skipped {
+    skipped_sum = skipped_sum + skipped_value;
+  }
+
+  var enumerated = iter::enumerate<i64, std::vec::Iter[i64]>(values.iter());
+  var enumerate_score = 0;
+  for item in ref mut enumerated {
+    enumerate_score = enumerate_score + item.index() + item.value();
+  }
+
+  var others = std::vec::new<i64>(ref mut zone, 4);
+  others.push(10);
+  others.push(20);
+  others.push(30);
+  others.push(40);
+  var zipped = iter::zip<i64, i64, std::vec::Iter[i64], std::vec::Iter[i64]>(
+    values.iter(),
+    others.iter()
+  );
+  var zip_score = 0;
+  for pair in ref mut zipped {
+    zip_score = zip_score + pair.left() + pair.right();
+  }
+
+  let folded = iter::fold<i64, i64, std::vec::Iter[i64]>(values.iter(), 10, sum);
+  let reduced = iter::reduce<i64, std::vec::Iter[i64]>(values.iter(), sum).unwrap_or(0);
+  let collected_score = collect_score(ref mut zone, ref mut values);
+  let total = mapped_sum + filtered_sum + taken_sum + skipped_sum +
+      enumerate_score + zip_score + folded + reduced + collected_score;
+  assert_eq_i64(total, 281);
+
+  zone::destroy(zone);
+  return total - 281;
+}

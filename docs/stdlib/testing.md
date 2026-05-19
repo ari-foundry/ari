@@ -76,6 +76,7 @@ std-collections-heap.ari
 std-collections-deque-iter-after-reset.ari
 std-collections-ring-buffer-after-reset.ari
 std-collections-binary-heap-push-different-zone.ari
+std-iter-adapters.ari
 std-collections-set-after-reset.ari
 std-collections-set-iter-after-reset.ari
 std-collections-set-insert-different-zone.ari
