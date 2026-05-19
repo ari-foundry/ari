@@ -42,7 +42,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
 | `std::parse` | Whole-input value parsers over byte slices. | `integer`, `boolean`, `is_float`, `float_or`, `float`. |
 | `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, `utf8_count`, `is_utf8`, `utf8_at`, `utf8_next_index`, `encode_utf8_in`, `utf16_count`, `is_utf16`, `encode_hex_in`, `decode_hex_in`, `encode_base64_in`, `decode_base64_in`. |
-| `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
+| `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `slice`, `split_at`, `find`, `contains_slice`, `compare`, `chunks`, `windows`, `split`, `as_slice`, `iter`. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers. |
 | `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
 | `std::iter` | Range, iterator traits, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, `collect`. |
@@ -117,9 +117,10 @@ parsing are plain source methods.
 the preferred collection vocabulary where it fits: `is_empty` for length
 metadata, asserting `first`/`last`/`get` for programmer errors, and
 `try_first`/`try_last`/`try_get` for ordinary absence handled through
-`Option`. `Slice[T]` also owns borrowed-view operations such as `slice`,
-`split_at`, subsequence `find`, `contains_slice`, lexicographic `compare`,
-lazy `chunks`, lazy `windows`, and delimiter `split`; `String` exposes the
+`Option`. `Slice[T]` and `std::vec::Vec[T]` also share borrowed-view
+operations such as `slice`, `split_at`, subsequence `find`, `contains_slice`,
+lexicographic `compare`, lazy `chunks`, lazy `windows`, and delimiter `split`;
+`Vec[T]` returns views over its live element storage, and `String` exposes the
 same byte-view shape plus allocator-backed `join_in`.
 
 `std::bits` follows the same rule for current `u64` mask, rotation,

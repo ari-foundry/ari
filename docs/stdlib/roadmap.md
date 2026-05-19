@@ -20,8 +20,9 @@ allocation plus source typed array allocation,
 `boxed`, `string` byte access/search/split/chunk/window/join/ASCII helpers
 including case search, prefix parsers, and owned trim copies, `ascii`
 byte classification, case-insensitive comparison/search, slice helpers, and
-prefix parsers, `vec`, `iter` range/trait support plus lazy adapters and eager
-consumers, `fmt`, `cmp` comparison helpers, `convert`
+prefix parsers, `vec` source growable sequence handles with direct borrowed
+range/split/subsequence/compare/chunk/window wrappers, `iter` range/trait
+support plus lazy adapters and eager consumers, `fmt`, `cmp` comparison helpers, `convert`
 identity/from/into helpers, `context` runtime hooks plus the source
 `has_arg` helper, `env` source argument wrappers with `try_arg` and
 `program_name` plus current-process environment `get`/`has`/`try_get`/`set`/
@@ -87,6 +88,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`, plus source primitive `Mutex`, `RwLock`, and `Once`; future generic atomics, memory-order parameters, value-protecting `Mutex[T]`/`RwLock[T]`, `Condvar`, `OnceLock`, `LazyLock`, `Barrier`, optional `Semaphore`, `Shared`, `Weak`, MPSC channels, and Linux futex-backed internals after ownership rules are stable. |
 | `std::collections` | Store keyed, queue-like, linked, and priority data beyond vectors. | Current linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, FIFO/linked/heap tests, live-bucket hash iterators, sorted tree iterators; future tree deletion and trait-driven constructors. |
 | root `Slice[T]` | Borrow contiguous storage without owning or allocating. | Current length/indexing/access, `try_*` access, `slice`, `split_at`, `find`, `contains_slice`, `compare`, prefix/suffix/equality, `chunks`, `windows`, delimiter `split`, and copy-to-vector; future predicate split and stronger trait-bound diagnostics for generic comparison. |
+| `std::vec` | Own growable contiguous storage while keeping borrowed sequence work allocation-free. | Current explicit-zone `Vec[T]`, metadata, `try_*` accessors, mutation/growth, copy, iteration, raw pointer access, and direct `slice`, `split_at`, `find`, `contains_slice`, `compare`, `chunks`, `windows`, and delimiter `split` wrappers over live storage; future root/source vector unification and stronger trait-driven collection constructors. |
 | `std::iter` | Compose sequence processing without forcing every operation onto each collection type. | Current `range`, `range_inclusive`, `Iterator`, `IntoIterator`, lazy `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed `collect`; future captured closures, richer adapter inference, and collect targets beyond `std::vec::Vec[T]`. |
 | `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting and move-aware algorithm contracts. |
 | `std::hash` | Provide deterministic non-cryptographic hashing without tying hash policy to one collection type. | Current `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers, and `collections::hash_i64` compatibility; future aggregate/derive impls and trait-driven hash collection constructors. |
@@ -114,6 +116,9 @@ work. Each one should land in small tested slices with natural API names.
 - Keep borrowed sequence operations on `Slice[T]`: range views, split views,
   subsequence search, lexicographic compare, chunks, windows, and delimiter
   split should stay allocation-free and return views.
+- Keep the same borrowed sequence vocabulary available directly on
+  `std::vec::Vec[T]` when the vector owns the backing storage and the operation
+  can return views without allocation.
 - Add collection helpers in small slices: slice methods, vector methods, the
   current linear `Set[T]` access/update/reserve/iteration surface, hash/table
   lookup and tombstones, tree insertion/lookup, hash and tree iterators,

@@ -1,0 +1,72 @@
+// Covers std::vec::Vec[T] wrappers around borrowed Slice[T] sequence helpers.
+// Vec owns the storage; these APIs return or iterate borrowed views.
+impl cmp::Ord[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+fn expect_slice(values: Slice[i64], expected: Slice[i64]) -> void {
+  assert(values.equals(expected));
+}
+
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var values = std::vec::new<i64>(ref mut zone, 8);
+  values.push(1);
+  values.push(2);
+  values.push(3);
+  values.push(2);
+  values.push(4);
+  values.push(2);
+
+  var expected_middle = [2, 3, 2];
+  var expected_left = [1, 2, 3];
+  var expected_right = [2, 4, 2];
+  var needle = [3, 2];
+  var missing = [4, 4];
+  var same = [1, 2, 3, 2, 4, 2];
+  var shorter = [1, 2, 3, 2, 4];
+  var larger_at_index = [1, 2, 9];
+
+  expect_slice(values.slice(1, 4), expected_middle.as_slice());
+
+  let halves = values.split_at(3);
+  expect_slice(halves.left(), expected_left.as_slice());
+  expect_slice(halves.right(), expected_right.as_slice());
+
+  assert_eq_i64(values.find(needle.as_slice()), 2);
+  assert_eq_i64(values.find(values.slice(0, 0)), 0);
+  assert_eq_i64(values.find(missing.as_slice()), -1);
+  assert(values.contains_slice(needle.as_slice()));
+  assert(!values.contains_slice(missing.as_slice()));
+
+  assert_eq_i64(values.compare(same.as_slice()), 0);
+  assert_eq_i64(values.compare(shorter.as_slice()), 1);
+  assert_eq_i64(values.compare(larger_at_index.as_slice()), -1);
+
+  var chunks = values.chunks(2);
+  var chunk_score = 0;
+  for chunk in ref mut chunks {
+    chunk_score = chunk_score + chunk.len + chunk[0];
+  }
+  assert_eq_i64(chunk_score, 14);
+
+  var windows = values.windows(3);
+  var window_score = 0;
+  for window in ref mut windows {
+    window_score = window_score + window[0] + window[2];
+  }
+  assert_eq_i64(window_score, 19);
+
+  var split = values.split(2);
+  expect_slice(split.next().unwrap(), values.slice(0, 1));
+  expect_slice(split.next().unwrap(), values.slice(2, 3));
+  expect_slice(split.next().unwrap(), values.slice(4, 5));
+  assert_eq_i64(split.next().unwrap().len, 0);
+  let no_more = split.next();
+  assert(no_more.is_none());
+
+  zone::destroy(zone);
+  return 0;
+}

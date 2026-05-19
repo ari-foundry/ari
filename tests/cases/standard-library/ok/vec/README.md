@@ -14,3 +14,6 @@ should be part of automated checks.
   access.
 - `prelude-slice-copy-to.ari`: borrowed slice copy into a target zone-backed
   vector.
+- `std-vec-sequence.ari`: `std::vec::Vec[T]` borrowed range views, split
+  views, subsequence search, lexicographic compare, chunks, windows, and
+  delimiter splitting.

@@ -119,21 +119,35 @@ Search and slice comparison:
 vec.index_of(value)
 vec.contains(value)
 vec.count(value)
+vec.find(needle)
+vec.contains_slice(needle)
 vec.starts_with(values)
 vec.ends_with(values)
 vec.equals(values)
+vec.compare(values)
 ```
+
+`find` searches for a borrowed `Slice[T]` inside the vector and returns the
+first index or `-1`; an empty needle matches at `0`. `contains_slice` is the
+boolean wrapper. `compare` is lexicographic and returns `-1`, `0`, or `1`.
 
 Borrowed views and raw pointers:
 
 ```ari
+vec.slice(start, end)
+vec.split_at(index)
+vec.chunks(size)
+vec.windows(size)
+vec.split(delimiter)
 vec.as_slice()
 vec.as_ptr()
 vec.as_mut_ptr()
 ```
 
-`as_slice` returns a borrowed `Slice[T]` over the live elements. The pointer
-helpers preserve zone provenance in the checker.
+`slice` and `split_at` return borrowed `Slice[T]` views into the live vector
+storage. `chunks`, `windows`, and delimiter `split` return lazy iterators that
+yield borrowed `Slice[T]` views, so they do not allocate. `as_slice` is the
+whole-vector view. The pointer helpers preserve zone provenance in the checker.
 
 Iterator entry point:
 
@@ -223,6 +237,7 @@ tests/cases/standard-library/ok/vec/std-vec-fixed-ops.ari
 tests/cases/standard-library/ok/vec/std-vec-try-access.ari
 tests/cases/standard-library/ok/vec/std-vec-try-pop.ari
 tests/cases/standard-library/ok/vec/std-vec-slice-compare.ari
+tests/cases/standard-library/ok/vec/std-vec-sequence.ari
 tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari
 tests/cases/standard-library/ok/vec/std-vec-iter.ari
 ```

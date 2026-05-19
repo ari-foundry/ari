@@ -98,7 +98,7 @@ Omit the semicolon only for the final value expression in a function, block,
 | tuple | `(i64, bool)`, `()` | Single-element tuples are not supported. |
 | fixed array | `[i64, 3]` | Constant length, stack/aggregate storage. |
 | local vector | `Vec[i64]` | Compiler-known local vector surface from list literals. |
-| source vector handle | `std::vec::Vec[i64]`, `std::Vec[i64]` | Zone-backed growable handle. |
+| source vector handle | `std::vec::Vec[i64]`, `std::Vec[i64]` | Zone-backed growable handle with direct borrowed `slice`, `split_at`, `find`, `chunks`, `windows`, and `split` helpers. |
 | source set handle | `std::collections::Set[i64]`, `Set[i64]` | Zone-backed linear insertion-order set. |
 | source deque handle | `Deque[i64]`, `std::collections::Deque[i64]` | Zone-backed growable double-ended queue. |
 | source ring buffer handle | `RingBuffer[i64]`, `std::collections::RingBuffer[i64]` | Zone-backed fixed-capacity FIFO buffer. |

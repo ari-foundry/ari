@@ -328,6 +328,46 @@ pub impl[T] std::vec::Vec[T] {
     return total;
   }
 
+  fn slice(self: ref Self, start: i64, end: i64) -> super::Slice[T] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return view.slice(start, end);
+  }
+
+  fn split_at(self: ref Self, index: i64) -> super::SlicePair[T] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return view.split_at(index);
+  }
+
+  fn chunks(self: ref Self, size: i64) -> super::SliceChunks[T] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return view.chunks(size);
+  }
+
+  fn windows(self: ref Self, size: i64) -> super::SliceWindows[T] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return view.windows(size);
+  }
+
+  fn split(self: ref Self, delimiter: T) -> super::SliceSplit[T] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return view.split(delimiter);
+  }
+
+  fn find(self: ref Self, values: super::Slice[T]) -> i64 {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return view.find(values);
+  }
+
+  fn contains_slice(self: ref Self, values: super::Slice[T]) -> bool {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return view.contains_slice(values);
+  }
+
+  fn compare(self: ref Self, values: super::Slice[T]) -> i64 {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return view.compare(values);
+  }
+
   fn starts_with(self: ref Self, values: super::Slice[T]) -> bool {
     if values.len > self.raw.len {
       return false;

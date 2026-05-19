@@ -49,7 +49,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::ascii` | ASCII-only byte and slice helpers for byte strings and parsers. | `ParsedInt`, `is_digit`, `is_alpha`, `is_alphanumeric`, `is_blank`, `is_whitespace`, `is_control`, `is_printable`, `is_graphic`, `is_punctuation`, `is_hex_digit`, `to_lower`, `to_upper`, `digit_value`, `hex_value`, `equals_ignore_case`, `starts_with_ignore_case`, `ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`, `parse_hex`, `parse_hex_prefix`. | Implemented in Ari source; not a Unicode or locale-aware text API. |
 | `std::parse` | Whole-input parsers over ASCII-trimmed byte slices. | `integer`, `boolean`, `is_float`, `float_or`, `float`. | Implemented in Ari source. `float`/`float_or` are used instead of `Option[f64]` until float enum payloads are supported. |
 | `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `Utf8Char`, `is_ascii`, `is_unicode_scalar`, `utf8_count`, `is_utf8`, `utf8_width`, `utf8_encoded_len`, `utf8_at`, `utf8_next_index`, `encode_utf8_in`, `utf16_count`, `is_utf16`, `hex_encoded_len`, `encode_hex_in`, `hex_decoded_len`, `can_decode_hex`, `decode_hex_in`, `base64_encoded_len`, `encode_base64_in`, `base64_decoded_len`, `can_decode_base64`, `decode_base64_in`. | Implemented in Ari source. Decoders validate separately and panic on invalid input until zone-backed `Option[String]`/`Result[String,E]` payloads are supported. |
-| `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked and `Option` element access, mutation, growth, copy, slice view, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
+| `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked and `Option` element access, mutation, growth, copy, direct borrowed `slice`/`split_at`/`find`/`contains_slice`/`compare`/`chunks`/`windows`/`split`, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers. | Source-only first slice for values and byte slices. Hash-table constructors still take explicit hash functions until trait-driven collection constructors land. |
 | `std::collections` | Zone-backed collection handles beyond sequences. | Linear `Set[T]`/`Iter[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, queue/list/heap operations, lookup, insertion, replacement, removal, reserve, clear, hash bucket iterators, and sorted tree iterators. | Implemented in source Ari with compiler provenance recognition for reset/destroy and same-zone growth checks. |
 | `std::iter` | Iteration traits, range constructors, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, `collect`. | Adapter callbacks are plain function pointers today; closures and richer inference remain future work. |
@@ -124,7 +124,7 @@ Use this table when writing code from docs alone:
 | Convert failures back to optional values. | `result.ok()`, `result.err()` | Keeps only the selected payload branch. |
 | Work with borrowed contiguous data. | `Slice[T]`, `slice(data, len)`, `.as_slice()`, `.slice(start, end)`, `.split_at(index)`, `.find(needle)`, `.chunks(size)`, `.windows(size)`, `.split(delimiter)` | Slice methods borrow the view; use `try_get` when absence is expected, `find`/`contains_slice` for subslice search, lazy chunks/windows/split for allocation-free views, and `copy_to(ref mut zone)` when an owned collection is needed. |
 | Store a small local literal sequence. | Bare `Vec[T]` from `[a, b, c]` | This is compiler-known local vector storage, not `std::vec::Vec[T]`. Empty `[]` needs an expected type. |
-| Store a growable source collection. | `std::vec::new<T>(ref mut zone, capacity)` | Common tracked locals can call `push`, `insert`, `reserve`, and related methods without spelling the zone again. |
+| Store a growable source collection. | `std::vec::new<T>(ref mut zone, capacity)` | Common tracked locals can call `push`, `insert`, `reserve`, and related methods without spelling the zone again. Use `vec.slice`, `vec.split_at`, `vec.find`, `vec.contains_slice`, `vec.compare`, `vec.chunks`, `vec.windows`, and `vec.split` for allocation-free borrowed sequence views. |
 | Store unique values in insertion order. | `collections::new<T>(ref mut zone, capacity)` or `Set::new<T>(ref mut zone, capacity)` | `insert(ref mut zone, value)` returns whether a value was newly added. `replace(ref mut zone, value)` returns the previous equal value or inserts the missing value. Use `try_get`, `try_pop`, `contains`, `remove`, `take`, `reserve`, `iter`, `as_slice`, and `copy_to` for the linear set. |
 | Use both ends of a queue. | `Deque::new<T>(ref mut zone, capacity)` or `collections::deque<T>(...)` | `push_front`/`push_back` may grow with the same zone. `pop_front`/`pop_back`, `front`/`back`, `try_*`, `get`, and iteration use logical front-to-back order. |
 | Keep a bounded FIFO buffer. | `RingBuffer::new<T>(ref mut zone, capacity)` or `collections::ring_buffer<T>(...)` | `push(value)` returns `false` when full. `push_overwrite(value)` keeps the newest value and returns the overwritten oldest value as `Option[T]`. |
@@ -224,6 +224,14 @@ value.try_get(index)
 value.contains(item)
 value.index_of(item)
 value.count(item)
+value.find(needle)
+value.contains_slice(needle)
+value.compare(other)
+value.slice(start, end)
+value.split_at(index)
+value.chunks(size)
+value.windows(size)
+value.split(delimiter)
 value.as_ptr()
 value.as_slice()
 value.copy_to(ref mut zone)
@@ -231,7 +239,10 @@ value.copy_to(ref mut zone)
 
 The non-`try` accessors assert on bad indexes. `try_first`, `try_last`, and
 `try_get` return `Option[T]` for generic collections and `Option[u8]` for
-`String`; they are the better choice for normal control flow.
+`String`; they are the better choice for normal control flow. `find`,
+`contains_slice`, `compare`, `slice`, `split_at`, `chunks`, `windows`, and
+delimiter `split` are available on `Slice[T]` and `std::vec::Vec[T]`; on
+`String` the same names operate on byte views.
 
 `std::collections::Set[T]` also includes `insert(ref mut zone, value)`,
 `replace(ref mut zone, value)`, `remove(value)`, `take(value)`, `pop()`,

@@ -23,6 +23,9 @@ identifies the exact case:
 - `std-vec-try-pop.ari`: source `std::vec` method behavior.
 - `std-vec-try-access.ari`: source `std::vec` Option-returning access
   behavior.
+- `std-vec-sequence.ari`: source `std::vec::Vec[T]` direct borrowed
+  `slice`, `split_at`, subsequence search, lexicographic compare, chunks,
+  windows, and delimiter splitting wrappers over live storage.
 - `prelude-slice-metadata.ari`: root `Slice[T]` borrowed metadata helper
   behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access

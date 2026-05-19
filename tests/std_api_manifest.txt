@@ -878,13 +878,17 @@ method std::vec::Vec[T]::as_mut_ptr|check-prelude std-vec-as-mut-ptr mutable bor
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_slice|check-prelude std-vec-as-slice; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::capacity|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::chunks|check-prelude std-vec-sequence borrowed chunk iterator wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::clear|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::compare|check-prelude std-vec-sequence lexicographic borrowed view compare wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::contains|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::contains_slice|check-prelude std-vec-sequence borrowed subsequence predicate wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::copy_to|check-prelude std-vec-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::ends_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::equals|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::extend_from_slice_in|check-prelude std-vec-extend-from-slice-in; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::find|check-prelude std-vec-sequence borrowed subsequence search wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::first|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::get|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::get_mut|check-prelude std-vec-get-ref-mut mutable element borrow view; docs/dev/test-matrix.md Explicit memory zones row
@@ -905,6 +909,9 @@ method std::vec::Vec[T]::reserve|check-prelude std-vec-reserve; docs/dev/test-ma
 method std::vec::Vec[T]::reserve_extra|check-prelude std-vec-reserve-extra; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::resize_in|check-prelude std-vec-resize-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::set|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::slice|check-prelude std-vec-sequence borrowed range view wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::split|check-prelude std-vec-sequence borrowed delimiter split iterator wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::split_at|check-prelude std-vec-sequence borrowed split view wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::starts_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
@@ -912,6 +919,7 @@ method std::vec::Vec[T]::try_first|check-prelude std-vec-try-access Option-retur
 method std::vec::Vec[T]::try_get|check-prelude std-vec-try-access Option-returning out-of-range access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_last|check-prelude std-vec-try-access Option-returning empty-safe access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::vec::Vec[T]::windows|check-prelude std-vec-sequence borrowed window iterator wrapper; docs/stdlib/modules/vec.md
 module std::algo|check-prelude std-algo-slice-helpers source algorithm module; docs/stdlib/modules/algo.md
 module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overview.md module map
 module std::bits|module load and std bits mask helper tests; docs/stdlib/overview.md module map

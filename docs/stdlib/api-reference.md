@@ -890,6 +890,20 @@ vec.reserve(ref mut zone, capacity)
 vec.reserve_extra(ref mut zone, additional)
 vec.extend_from_slice_in(ref mut zone, values)
 vec.resize_in(ref mut zone, length, value)
+vec.index_of(value)
+vec.contains(value)
+vec.count(value)
+vec.find(needle)
+vec.contains_slice(needle)
+vec.starts_with(values)
+vec.ends_with(values)
+vec.equals(values)
+vec.compare(values)
+vec.slice(start, end)
+vec.split_at(index)
+vec.chunks(size)
+vec.windows(size)
+vec.split(delimiter)
 vec.as_slice()
 vec.as_ptr()
 vec.as_mut_ptr()
@@ -899,7 +913,11 @@ vec.iter()
 
 The `try_*` accessors return `Option[T]` for empty or out-of-range reads.
 Use the non-`try` forms when absence is a programmer error and an assertion is
-the desired behavior.
+the desired behavior. The borrowed sequence helpers mirror the root `Slice[T]`
+vocabulary: `slice` and `split_at` create views over live vector storage,
+`find` and `contains_slice` search for borrowed subsequences, `compare` is
+lexicographic, and `chunks`, `windows`, and delimiter `split` are lazy
+allocation-free view iterators.
 
 `std::collections::Set[T]` is a zone-backed linear set:
 
