@@ -85,6 +85,32 @@ python3 tests/check_std_api_manifest.py --print
 Copy only the new entries you meant to expose, then replace the placeholder
 note with the focused test and docs coverage. Keep entries sorted.
 
+## Library Build Entry Point
+
+Until Ari grows a package manager, use the Makefile under `lib/` as the
+library build boundary:
+
+```sh
+make build-lib
+make check-lib
+```
+
+`make build-lib` compiles the source `std` smoke program, emits module metadata
+and a module cache, verifies the metadata, and builds a tiny shared-library
+sample with LLVM IR, object, and C-header artifacts under `build/lib/`.
+`make check-lib` also runs the public API manifest check. For a one-off Ari
+library source, run:
+
+```sh
+make -C lib shared-library LIBRARY=path/to/api.ari LIBRARY_NAME=my_api
+```
+
+The `LIBRARY` path is relative to the repository root. This is not a package
+format yet; it is the temporary build contract that keeps library work out of
+the root compiler Makefile until a Cargo-like tool exists. Set
+`LIBRARY_SYMBOL=expected_symbol` for a known export, or `LIBRARY_SYMBOL=` for
+an ad hoc library where a symbol check is not useful.
+
 ## Review Checklist
 
 - The API has a clear module owner.

@@ -9,6 +9,8 @@ make sanitize
 make tools
 make lint
 make lsp
+make build-lib
+make check-lib
 ```
 
 Outputs:
@@ -22,6 +24,16 @@ build/ari-lsp
 ```
 
 `make` is the same as `make release`.
+
+`make build-lib` delegates to `lib/Makefile` after building `build/ari`. It
+checks the source standard library through the smoke program, writes
+`build/lib/std-smoke.arimeta`, `build/lib/std-smoke.aricache`, and
+`build/lib/std-smoke.ll`, verifies the metadata, and builds a small
+shared-library sample as LLVM IR, object, and C header. If the configured
+`LLVM_CC` exists, it also links `build/lib/libari_sample.so`.
+
+`make check-lib` runs the same library build plus `make check-std-api`. Use it
+as the narrow library-oriented check before broader `make check`.
 
 Native C++ builds are object-based. Release objects live under
 `build/obj/release`, debug objects under `build/obj/debug`, sanitizer objects

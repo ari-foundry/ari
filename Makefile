@@ -38,7 +38,7 @@ LINT_LIB_OBJS := $(patsubst tools/%.cpp,$(TOOLS_OBJ_DIR)/%.o,$(LINT_LIB_SRC))
 LSP_OBJS := $(patsubst tools/%.cpp,$(TOOLS_OBJ_DIR)/%.o,$(LSP_SRC))
 DEP_FILES := $(RELEASE_OBJS:.o=.d) $(DEBUG_OBJS:.o=.d) $(SANITIZE_OBJS:.o=.d) $(TOOLING_OBJS:.o=.d) $(LINT_OBJS:.o=.d) $(LSP_OBJS:.o=.d)
 
-.PHONY: all release debug sanitize tools lint lsp clean examples check-examples example run-example
+.PHONY: all release debug sanitize tools lint lsp clean examples check-examples example run-example libraries build-lib check-lib
 
 all: $(TARGET)
 release: $(TARGET)
@@ -47,6 +47,7 @@ sanitize: $(SANITIZE_TARGET)
 tools: lint lsp
 lint: $(LINT_TARGET)
 lsp: $(LSP_TARGET)
+libraries: build-lib
 
 EXAMPLE ?= count
 EXAMPLE_SRCS := $(sort $(wildcard examples/*.ari))
@@ -102,6 +103,12 @@ run-example: $(EXAMPLE_BIN)
 $(BUILD_DIR)/examples/%$(EXEEXT): examples/%.ari $(TARGET)
 	mkdir -p $(BUILD_DIR)/examples
 	$(TARGET) $< -o $@
+
+build-lib: $(TARGET)
+	$(MAKE) -C lib ARI=$(TARGET) LLVM_CC=$(LLVM_CC) build
+
+check-lib: $(TARGET)
+	$(MAKE) -C lib ARI=$(TARGET) LLVM_CC=$(LLVM_CC) check
 
 include tests/Makefile
 

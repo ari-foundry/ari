@@ -10,3 +10,8 @@ without bloating `Slice[T]` itself.
 OS entropy and deterministic non-cryptographic PRNG helpers live in `random`;
 keep cryptographic streams and richer distribution APIs out of this first
 slice until error/result and byte-buffer policies are stronger.
+
+Run `make build-lib` or `make check-lib` from the repository root when a source
+library change should prove that `std` still loads through the library build
+entry point. Those targets delegate to `lib/Makefile`, which keeps source
+library build policy separate from the compiler and tool build rules.

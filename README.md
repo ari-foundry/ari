@@ -37,6 +37,12 @@ make examples
 make run-example EXAMPLE=hello
 ```
 
+Build the source-library smoke artifacts and a shared-library sample:
+
+```sh
+make build-lib
+```
+
 Build the lint and LSP tools:
 
 ```sh
@@ -51,6 +57,8 @@ make debug
 make sanitize
 make tools
 make examples
+make build-lib
+make check-lib
 make check-examples
 make check-tools
 make check
