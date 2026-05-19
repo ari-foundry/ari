@@ -432,6 +432,8 @@ Checklist:
 - [x] source `std::math` exposes natural sign predicate names
       `is_positive`, `is_negative`, and `is_zero` without type suffixes, while
       keeping the current concrete `i64` signatures
+- [x] source `std::math` exposes checked and saturating add/sub/neg/abs helpers
+      with `Option[i64]` overflow reporting and edge-case saturation behavior
 - [x] source `std::string::String.copy_to(ref mut Zone)` mirrors the
       top-level target-zone copy helper while preserving reset/destroy
       provenance on the returned handle

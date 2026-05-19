@@ -222,6 +222,8 @@ identifies the exact case:
   helper behavior.
 - `std-math-division-rounding.ari`: source `std::math` signed division
   rounding and paired floor remainder behavior.
+- `std-math-checked-saturating.ari`: source `std::math` checked
+  add/sub/neg/abs and saturating add/sub/neg/abs overflow policy behavior.
 - `std-ascii-class-helpers.ari`: source `std::ascii` extended byte
   classification behavior.
 - `std-ascii-case-compare.ari`: source `std::ascii` borrowed-slice

@@ -63,8 +63,9 @@ next power would overflow `u64`. `low_mask(width)` returns the lowest `width`
 bits set and asserts that `width` is between `0` and `64`.
 
 `align_down` and `align_up` assert that `alignment` is a non-zero power of two.
-They do not define overflow behavior for `value + alignment - 1`; checked and
-wrapping variants belong in a later numeric policy slice.
+They do not define overflow behavior for `value + alignment - 1`; a future
+numeric-policy slice should add `u64` checked/wrapping alignment variants after
+the first `i64` checked/saturating helpers in `std::math`.
 
 Bit scan helpers:
 
@@ -120,7 +121,7 @@ The public API is tracked in `tests/std_api_manifest.txt` and checked by
 
 Potential next slices:
 
-- checked, wrapping, and saturating arithmetic helpers after overflow policy is
+- checked/wrapping alignment variants after unsigned overflow policy is
   documented
 - generic integer traits so `u8`, `u16`, `u32`, `u64`, and signed variants can
   share the same public names

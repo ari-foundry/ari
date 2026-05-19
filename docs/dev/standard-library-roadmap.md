@@ -86,7 +86,8 @@ The current `std` package already provides:
 - `std::convert` source helpers: `identity`, `from`, and `into`
 - `std::math` integer helpers implemented in Ari source with natural names:
   `abs`, `sign`, `is_positive`, `is_negative`, `is_zero`, `is_even`,
-  `is_odd`, `pow`, `div_floor`, `div_ceil`, `mod_floor`, `gcd`, and `lcm`
+  `is_odd`, checked/saturating add/sub/neg/abs, `pow`, `div_floor`,
+  `div_ceil`, `mod_floor`, `gcd`, and `lcm`
 - `std::ascii` byte classification, printable/control predicates, case
   conversion, borrowed-slice case-insensitive comparison/search, trimming,
   whole-slice digit parsing, and prefix digit parsing helpers
@@ -262,7 +263,7 @@ Likely compiler work:
 | `std::fmt` | Source trait impls for common values. | `format_in!`, `Display`, unsupported-type diagnostics. | Macro-to-trait lowering cleanup. |
 | `std::cmp` | Derived comparison impl coverage for more aggregate shapes. | Generic helper, inclusive range predicate, and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
 | `std::convert` | Concrete `From`/`Into` impl patterns and fallible conversion policy. | Identity/from/into behavior, explicit associated calls, and residual conversions. | Trait coherence and inference diagnostics. |
-| `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Sign predicate behavior, integer helper behavior, signed division rounding, overflow-policy diagnostics, and future checked/wrapping helpers. | Overflow intrinsics or diagnostics only after the source policy is designed. |
+| `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Sign predicate behavior, integer helper behavior, signed division rounding, checked/saturating add/sub/neg/abs behavior, and future wrapping/checked-multiply helpers. | Current checked/saturating helpers are pure source Ari; future wrapping and cross-width helpers likely need compiler intrinsics. |
 | `std::bits` | Grow natural helper names from u64 signatures into generic integer helpers. | Mask behavior, rotate count handling, power-of-two rounding, low-mask widths, alignment preconditions, zero/one-run scan edge cases, and future overflow-policy diagnostics. | Optional bit-scan intrinsics only after the source policy is stable. |
 
 ## API Landing Checklist

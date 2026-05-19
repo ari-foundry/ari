@@ -529,6 +529,17 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4math9mod_floor' $(BUILD_DIR)/prelude/std-math-division-rounding.ll
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-division-rounding.ari -o $(BUILD_DIR)/prelude/std-math-division-rounding.elf
 	$(BUILD_DIR)/prelude/std-math-division-rounding.elf; code=$$?; test $$code -eq 182
+	$(TARGET) tests/cases/standard-library/ok/math/std-math-checked-saturating.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math11checked_add' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math11checked_sub' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math11checked_neg' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math11checked_abs' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math14saturating_add' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math14saturating_sub' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math14saturating_neg' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math14saturating_abs' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	$(TARGET) tests/cases/standard-library/ok/math/std-math-checked-saturating.ari -o $(BUILD_DIR)/prelude/std-math-checked-saturating.elf
+	$(BUILD_DIR)/prelude/std-math-checked-saturating.elf; code=$$?; test $$code -eq 20
 	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-byte-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8is_digit' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8to_lower' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll

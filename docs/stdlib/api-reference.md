@@ -1252,6 +1252,14 @@ math::is_negative(value)
 math::is_zero(value)
 math::is_even(value)
 math::is_odd(value)
+math::checked_add(left, right)
+math::checked_sub(left, right)
+math::checked_neg(value)
+math::checked_abs(value)
+math::saturating_add(left, right)
+math::saturating_sub(left, right)
+math::saturating_neg(value)
+math::saturating_abs(value)
 math::pow(base, exponent)
 math::div_floor(numerator, denominator)
 math::div_ceil(numerator, denominator)
@@ -1266,8 +1274,13 @@ precondition at runtime. `div_floor` rounds signed division toward negative
 infinity, `div_ceil` rounds toward positive infinity, and `mod_floor` returns
 the matching floor remainder. The division helpers assert that
 `denominator != 0`. `gcd` and `lcm` normalize negative inputs through absolute
-values. `lcm` returns `0` when either input is `0`. These helpers
-intentionally do not define overflow semantics yet.
+values. `lcm` returns `0` when either input is `0`.
+
+`checked_add`, `checked_sub`, `checked_neg`, and `checked_abs` return
+`Option[i64]`, using `None<i64>()` for overflow or underflow. Their
+`saturating_*` counterparts clamp to the nearest `i64` bound. Other math
+helpers still use ordinary `i64` arithmetic internally, so wrapping operations
+and checked multiplication remain future numeric-policy work.
 
 ## Bits
 

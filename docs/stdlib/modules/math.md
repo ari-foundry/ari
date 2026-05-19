@@ -25,7 +25,29 @@ math::is_odd(value)
 `abs` returns the non-negative magnitude of the input. `sign` returns `-1`,
 `0`, or `1`. `is_positive`, `is_negative`, and `is_zero` are small predicate
 forms for the same sign policy. The parity helpers use integer remainder and
-work for negative values too.
+work for negative values too. `abs` is the simple arithmetic spelling; use
+`checked_abs` or `saturating_abs` below when the minimum `i64` value is a
+possible input.
+
+Overflow-policy helpers:
+
+```ari
+math::checked_add(left, right)
+math::checked_sub(left, right)
+math::checked_neg(value)
+math::checked_abs(value)
+math::saturating_add(left, right)
+math::saturating_sub(left, right)
+math::saturating_neg(value)
+math::saturating_abs(value)
+```
+
+The `checked_*` helpers return `std::Option[i64]`: `Some(value)` when the
+operation is representable, and `None<i64>()` when it would overflow or
+underflow. The `saturating_*` helpers clamp to the nearest `i64` bound instead:
+positive overflow becomes `9223372036854775807`, and negative overflow becomes
+`-9223372036854775808`. This gives Ari source code a documented spelling for
+integer edge cases before the compiler grows dedicated overflow intrinsics.
 
 Power and divisor helpers:
 
@@ -52,8 +74,11 @@ normalizes negative inputs and returns `0` when either input is `0`.
 
 ## Limits
 
-These helpers do not define overflow behavior yet. Keep inputs in a range where
-the intermediate `i64` arithmetic is meaningful for your program.
+The checked and saturating add/sub/neg/abs helpers define their `i64` overflow
+behavior. Other helpers still use ordinary `i64` arithmetic internally, so keep
+their inputs in a range where intermediate values are meaningful for your
+program. Future slices will add wrapping operations and checked multiplication
+once the compiler has a stronger intrinsic story.
 
 Use `std::bits` for bit masks, rotations, power-of-two rounding, low-bit masks,
 alignment helpers, and bit scans. Use plain operators for ordinary arithmetic
@@ -80,6 +105,7 @@ The focused behavior test is:
 ```text
 tests/cases/standard-library/ok/math/std-math-integer-helpers.ari
 tests/cases/standard-library/ok/math/std-math-division-rounding.ari
+tests/cases/standard-library/ok/math/std-math-checked-saturating.ari
 ```
 
 `make check-prelude` emits LLVM for those files, checks the public helper

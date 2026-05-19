@@ -234,6 +234,10 @@ fn std::log::trace|check-prelude std-log-basic trace-level string message helper
 fn std::log::warn|check-prelude std-log-basic warn-level string message helper; docs/stdlib/modules/log.md
 fn std::log::write|check-prelude std-log-basic level-prefixed byte-slice stderr logging; docs/stdlib/modules/log.md
 fn std::math::abs|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::checked_abs|std math checked/saturating tests; docs/stdlib/modules/math.md
+fn std::math::checked_add|std math checked/saturating tests; docs/stdlib/modules/math.md
+fn std::math::checked_neg|std math checked/saturating tests; docs/stdlib/modules/math.md
+fn std::math::checked_sub|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::div_ceil|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::div_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::gcd|std math integer helper tests; docs/stdlib/api-reference.md Math section
@@ -245,6 +249,10 @@ fn std::math::is_zero|std math integer helper tests; docs/stdlib/api-reference.m
 fn std::math::lcm|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::mod_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::saturating_abs|std math checked/saturating tests; docs/stdlib/modules/math.md
+fn std::math::saturating_add|std math checked/saturating tests; docs/stdlib/modules/math.md
+fn std::math::saturating_neg|std math checked/saturating tests; docs/stdlib/modules/math.md
+fn std::math::saturating_sub|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::sign|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::mem::align_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::copy_bytes|std mem byte operation tests; docs/stdlib/modules/mem.md

@@ -1,5 +1,13 @@
 // Source-only integer helpers. The public names stay natural; the current
 // signatures are i64-only until Ari has generic numeric traits.
+fn i64_min() -> i64 {
+  return -9223372036854775807 - 1;
+}
+
+fn i64_max() -> i64 {
+  return 9223372036854775807;
+}
+
 pub fn abs(value: i64) -> i64 {
   if value < 0 {
     return 0 - value;
@@ -35,6 +43,96 @@ pub fn is_even(value: i64) -> bool {
 
 pub fn is_odd(value: i64) -> bool {
   return !is_even(value);
+}
+
+pub fn checked_add(left: i64, right: i64) -> std::Option[i64] {
+  if right > 0 {
+    if left > i64_max() - right {
+      return std::None<i64>();
+    }
+  }
+  if right < 0 {
+    if left < i64_min() - right {
+      return std::None<i64>();
+    }
+  }
+  return std::Some<i64>(left + right);
+}
+
+pub fn checked_sub(left: i64, right: i64) -> std::Option[i64] {
+  if right > 0 {
+    if left < i64_min() + right {
+      return std::None<i64>();
+    }
+  }
+  if right < 0 {
+    if left > i64_max() + right {
+      return std::None<i64>();
+    }
+  }
+  return std::Some<i64>(left - right);
+}
+
+pub fn checked_neg(value: i64) -> std::Option[i64] {
+  if value == i64_min() {
+    return std::None<i64>();
+  }
+  return std::Some<i64>(0 - value);
+}
+
+pub fn checked_abs(value: i64) -> std::Option[i64] {
+  if value == i64_min() {
+    return std::None<i64>();
+  }
+  return std::Some<i64>(abs(value));
+}
+
+pub fn saturating_add(left: i64, right: i64) -> i64 {
+  match checked_add(left, right) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+
+  if right > 0 {
+    return i64_max();
+  }
+  return i64_min();
+}
+
+pub fn saturating_sub(left: i64, right: i64) -> i64 {
+  match checked_sub(left, right) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+
+  if right > 0 {
+    return i64_min();
+  }
+  return i64_max();
+}
+
+pub fn saturating_neg(value: i64) -> i64 {
+  match checked_neg(value) {
+    std::Some(result) => {
+      return result;
+    }
+    std::None => {}
+  }
+  return i64_max();
+}
+
+pub fn saturating_abs(value: i64) -> i64 {
+  match checked_abs(value) {
+    std::Some(result) => {
+      return result;
+    }
+    std::None => {}
+  }
+  return i64_max();
 }
 
 pub fn pow(base: i64, exponent: i64) -> i64 {

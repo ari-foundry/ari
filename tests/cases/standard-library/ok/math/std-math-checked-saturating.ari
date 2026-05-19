@@ -1,0 +1,77 @@
+// Covers the overflow-policy std::math slice: checked and saturating i64 helpers.
+fn expect_some(value: std::Option[i64], expected: i64) -> i64 {
+  match value {
+    std::Some(actual) => {
+      if actual == expected {
+        return 1;
+      }
+    }
+    std::None => {}
+  }
+  return 0;
+}
+
+fn expect_none(value: std::Option[i64]) -> i64 {
+  match value {
+    std::Some(_) => {}
+    std::None => {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+fn main() -> i64 {
+  let min = -9223372036854775807 - 1;
+  let max = 9223372036854775807;
+
+  var score = 0;
+  score = score + expect_some(std::math::checked_add(40, 2), 42);
+  score = score + expect_none(math::checked_add(max, 1));
+  score = score + expect_none(math::checked_add(min, -1));
+
+  score = score + expect_some(math::checked_sub(40, -2), 42);
+  score = score + expect_none(math::checked_sub(min, 1));
+  score = score + expect_none(math::checked_sub(max, -1));
+
+  score = score + expect_some(math::checked_neg(-42), 42);
+  score = score + expect_none(math::checked_neg(min));
+  score = score + expect_some(math::checked_abs(-42), 42);
+  score = score + expect_none(math::checked_abs(min));
+
+  if math::saturating_add(40, 2) == 42 {
+    score = score + 1;
+  }
+  if math::saturating_add(max, 1) == max {
+    score = score + 1;
+  }
+  if math::saturating_add(min, -1) == min {
+    score = score + 1;
+  }
+
+  if math::saturating_sub(40, -2) == 42 {
+    score = score + 1;
+  }
+  if math::saturating_sub(min, 1) == min {
+    score = score + 1;
+  }
+  if math::saturating_sub(max, -1) == max {
+    score = score + 1;
+  }
+
+  if math::saturating_neg(-42) == 42 {
+    score = score + 1;
+  }
+  if math::saturating_neg(min) == max {
+    score = score + 1;
+  }
+  if math::saturating_abs(-42) == 42 {
+    score = score + 1;
+  }
+  if math::saturating_abs(min) == max {
+    score = score + 1;
+  }
+
+  assert_eq_i64(score, 20);
+  return score;
+}

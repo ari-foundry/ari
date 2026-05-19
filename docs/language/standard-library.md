@@ -56,7 +56,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`, `is_between`. | Implemented for source-level trait-bound static dispatch. |
 | `std::algo` | Slice algorithms. | `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, `dedup`. | Source-only first slice over borrowed `Slice[T]` views. Faster sorts, move-aware contracts, hex/base64 encoding, and compression policy remain roadmap work. |
 | `std::convert` | Conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. | First source helper slice; broad conversion impls and fallible conversion methods are future work. |
-| `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_positive`, `is_negative`, `is_zero`, `is_even`, `is_odd`, `pow`, `div_floor`, `div_ceil`, `mod_floor`, `gcd`, `lcm`. | Current i64-signature helper slices with natural names; overflow policy is still future work. |
+| `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked add/sub/neg/abs, saturating add/sub/neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. | Current i64-signature helper slices with natural names; wrapping operations and checked multiplication remain future work. |
 | `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, and zero/one-run bit-scan helpers. | `is_set`, `any_set`, `set`, `clear`, `toggle`, `rotate_left`, `rotate_right`, `is_power_of_two`, `bit_width`, `floor_power_of_two`, `ceil_power_of_two`, `low_mask`, `align_down`, `align_up`, `count_ones`, `count_zeros`, `leading_zeros`, `trailing_zeros`, `leading_ones`, `trailing_ones`. | Current u64-signature helper slices; generic integer policy is future work. |
 
 ## API Conventions
@@ -361,7 +361,7 @@ small source APIs with focused tests before becoming a larger design promise.
 | Text And Formatting | Diagnostics, CLI tools, and user programs need owned text, byte helpers, and formatting. | `std::string`, `std::ascii`, `std::fmt`, formatting macros. |
 | IO And Process Context | Programs need arguments, environment variables, stdin/stdout/stderr, process status, files, child processes, threads, and synchronization. | `std::io`, `std::input`, `std::context`, `std::env`, `std::process`, `std::thread`, `std::sync`, `std::fs`. |
 | Iteration | Collections and ranges need a shared loop protocol. | `std::iter`, collection iterators. |
-| Numerics | Systems programs need reliable arithmetic and bit helpers beyond operators. | `std::math`, `std::bits`, future integer checked/wrapping helpers. |
+| Numerics | Systems programs need reliable arithmetic and bit helpers beyond operators. | `std::math`, `std::bits`, current checked/saturating add/sub/neg/abs, future wrapping and checked multiplication helpers. |
 | Testing And Diagnostics | Library work needs source-level tests and stable failure reporting. | current `std::test::Report` and `std::log` line helpers; future runner discovery, richer panic/assert messages, source locations, structured logging, stack/backtrace, optional benchmarks, and optional fuzz hooks. |
 | C Interop | Ari should call C libraries without making the standard library depend on a C++ ABI. | `extern "C"` declarations, future thin C library wrappers. |
 
