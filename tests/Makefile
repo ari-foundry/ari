@@ -2735,6 +2735,12 @@ check-generics: $(TARGET)
 	grep -q "identity__G_bool" $(BUILD_DIR)/generics/generic-explicit-type-args.ll
 	$(TARGET) tests/cases/generics/ok/generic-angle-type-annotations.ari -o $(BUILD_DIR)/generics/generic-angle-type-annotations.elf
 	$(BUILD_DIR)/generics/generic-angle-type-annotations.elf; code=$$?; test $$code -eq 5
+	$(TARGET) tests/cases/generics/ok/type-alias-char.ari -o $(BUILD_DIR)/generics/type-alias-char.elf
+	$(BUILD_DIR)/generics/type-alias-char.elf; code=$$?; test $$code -eq 55
+	$(TARGET) --no-implicit-std tests/cases/generics/ok/type-alias-no-implicit-std.ari -o $(BUILD_DIR)/generics/type-alias-no-implicit-std.elf
+	$(BUILD_DIR)/generics/type-alias-no-implicit-std.elf; code=$$?; test $$code -eq 90
+	if $(TARGET) tests/cases/generics/errors/type-alias-arity.ari -o $(BUILD_DIR)/generics/type-alias-arity.elf >$(BUILD_DIR)/generics/type-alias-arity.err 2>&1; then exit 1; fi
+	grep -q "type alias 'Boxed' expects 1 type argument" $(BUILD_DIR)/generics/type-alias-arity.err
 	$(TARGET) tests/cases/ir/ok/ast-type-argument-payloads.ari -o $(BUILD_DIR)/generics/ast-type-argument-payloads.elf
 	$(BUILD_DIR)/generics/ast-type-argument-payloads.elf; code=$$?; test $$code -eq 41
 	$(TARGET) tests/cases/ir/ok/ast-type-argument-payloads.ari --emit-llvm $(BUILD_DIR)/generics/ast-type-argument-payloads.ll

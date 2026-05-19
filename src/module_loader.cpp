@@ -231,6 +231,7 @@ void append_program(Program& dst, Program&& src) {
     move_append(dst.modules, src.modules);
     move_append(dst.item_macros, src.item_macros);
     move_append(dst.constants, src.constants);
+    move_append(dst.type_aliases, src.type_aliases);
     move_append(dst.functions, src.functions);
     move_append(dst.structs, src.structs);
     move_append(dst.enums, src.enums);

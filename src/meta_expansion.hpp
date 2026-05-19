@@ -11,6 +11,7 @@ struct ItemMacroExpansion {
     std::vector<UseDecl> uses;
     std::vector<ModuleDecl> modules;
     std::vector<ConstDecl> constants;
+    std::vector<TypeAliasDecl> type_aliases;
     std::vector<FunctionDecl> functions;
     std::vector<StructDecl> structs;
     std::vector<EnumDecl> enums;

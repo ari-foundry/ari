@@ -128,6 +128,7 @@ for keyword in (
     "extern",
     "enum",
     "trait",
+    "type",
     "dyn",
     "match",
     "mod",
@@ -183,6 +184,7 @@ for type_name in (
     "f64",
     "f128",
     "bool",
+    "char",
     "void",
 ):
     if type_name not in grammar_text:

@@ -90,7 +90,9 @@ Omit the semicolon only for the final value expression in a function, block,
 | Family | Examples | Notes |
 | --- | --- | --- |
 | signed integers | `i8`, `i16`, `i32`, `i64` | No implicit width casts. |
-| unsigned integers | `u8`, `u16`, `u32`, `u64` | Suffix literals like `255u8`; byte literals like `'A'`, `'\n'`, and `'\x41'` are `u8`. |
+| unsigned integers | `u8`, `u16`, `u32`, `u64` | Suffix literals like `255u8`; use `u8` for raw bytes. |
+| ASCII character byte | `char` | Standard alias for `u8`; byte literals like `'A'`, `'\n'`, and `'\x41'` fit naturally here. |
+| type alias | `type Letter = char;`, `type PairOf[T] = Pair[T];` | Aliases are source names for existing types and may be generic. |
 | floats | `f32`, `f64`, `f128` | `f32`/`f64` arithmetic lowers today; `f128` storage is limited. |
 | bool | `bool` | Used by logical operators and normal conditions. |
 | borrowed string pointer | `string` | NUL-terminated pointer-shaped string for literals and C-style text. |

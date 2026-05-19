@@ -53,6 +53,8 @@ public alias for that same explicit-zone source handle. `std::string` names the
 early allocator-backed byte-buffer seed for owned strings. The root
 `String`/`std::String` spelling is a public alias for `std::string::String`;
 it is a zone-backed source handle, so the explicit `Zone` still owns the bytes.
+The root `char` spelling is a public type alias for an ASCII `u8`, intended for
+byte character literals and scalar `std::ascii` helpers.
 `Unique[T]`, `Shared[T]`, and `Weak[T]` remain reserved smart-pointer spellings.
 Local declarations and explicit `use` aliases win over these implicit prelude
 names.

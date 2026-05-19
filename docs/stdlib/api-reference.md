@@ -1781,22 +1781,22 @@ policy:
 
 ```ari
 ascii::ParsedInt
-ascii::is_digit(byte)
-ascii::is_lower(byte)
-ascii::is_upper(byte)
-ascii::is_alpha(byte)
-ascii::is_alphanumeric(byte)
-ascii::is_blank(byte)
-ascii::is_whitespace(byte)
-ascii::is_control(byte)
-ascii::is_printable(byte)
-ascii::is_graphic(byte)
-ascii::is_punctuation(byte)
-ascii::is_hex_digit(byte)
-ascii::to_lower(byte)
-ascii::to_upper(byte)
-ascii::digit_value(byte)
-ascii::hex_value(byte)
+ascii::is_digit(ch)
+ascii::is_lower(ch)
+ascii::is_upper(ch)
+ascii::is_alpha(ch)
+ascii::is_alphanumeric(ch)
+ascii::is_blank(ch)
+ascii::is_whitespace(ch)
+ascii::is_control(ch)
+ascii::is_printable(ch)
+ascii::is_graphic(ch)
+ascii::is_punctuation(ch)
+ascii::is_hex_digit(ch)
+ascii::to_lower(ch)
+ascii::to_upper(ch)
+ascii::digit_value(ch)
+ascii::hex_value(ch)
 ascii::equals_ignore_case(left, right)
 ascii::starts_with_ignore_case(bytes, prefix)
 ascii::ends_with_ignore_case(bytes, suffix)
@@ -1815,8 +1815,9 @@ ascii::parse_hex_prefix(bytes)
 `is_blank` covers `' '` and `'\t'`. `is_whitespace` covers `' '`, `'\t'`,
 `'\n'`, and `'\r'`. `is_printable` includes space; `is_graphic` excludes
 space. `is_punctuation` is true for graphic ASCII bytes that are not letters or
-digits. Prefer byte character literals such as `'0'` and `'A'` over decimal
-byte casts for ASCII call sites.
+digits. Scalar helpers take `char`, the standard alias for an ASCII `u8`.
+Prefer character literals such as `'0'` and `'A'` over decimal byte casts for
+ASCII call sites.
 
 `digit_value` and `hex_value` return `Option[i64]`. Non-digit input returns
 `None<i64>()` where appropriate.

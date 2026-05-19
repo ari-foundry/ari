@@ -62,7 +62,7 @@ bool is_keyword(const std::string& text) {
         "as", "break", "const", "continue", "drop", "dyn", "else", "enum",
         "extern", "false", "fn", "for", "if", "impl", "in", "init", "let",
         "match", "meta", "mod", "mut", "next", "null", "own", "ptr", "pub",
-        "ref", "return", "struct", "trait", "true", "use", "var", "while"
+        "ref", "return", "struct", "trait", "true", "type", "use", "var", "while"
     };
     for (const char* keyword : keywords) {
         if (text == keyword) return true;

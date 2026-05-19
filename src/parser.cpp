@@ -203,6 +203,11 @@ private:
         } else if (match(TokenKind::KwConst)) {
             if (cfg_enabled) reject_attributes_except_cfg(attributes, "constant declarations");
             target.constants.push_back(parse_const(public_decl));
+        } else if (check(TokenKind::Identifier) && peek().text == "type" && peek(1).kind == TokenKind::Identifier) {
+            if (cfg_enabled) reject_attributes_except_cfg(attributes, "type alias declarations");
+            TypeAliasDecl decl = parse_type_alias(public_decl);
+            decl.source_tokens = declaration_source_tokens(source_start);
+            target.type_aliases.push_back(std::move(decl));
         } else if (match(TokenKind::KwFn)) {
             FunctionDecl fn = parse_function(false, true, public_decl, std::move(attributes));
             fn.source_tokens = declaration_source_tokens(source_start);
@@ -242,6 +247,22 @@ private:
         } else {
             fail(peek().loc, "expected top-level declaration");
         }
+    }
+
+    TypeAliasDecl parse_type_alias(bool public_decl) {
+        Token type_keyword = expect(TokenKind::Identifier, "expected type alias declaration");
+        if (type_keyword.text != "type") fail(type_keyword.loc, "expected type alias declaration");
+        Token name = expect(TokenKind::Identifier, "expected type alias name");
+        TypeAliasDecl decl;
+        decl.name = qualify_name(name.text);
+        decl.module_name = current_module_name();
+        decl.is_public = public_decl;
+        decl.loc = name.loc;
+        decl.generics = parse_generics();
+        expect(TokenKind::Equal, "expected = in type alias declaration");
+        decl.target = parse_type();
+        require_semicolon("expected ; after type alias declaration");
+        return decl;
     }
 
     ConstDecl parse_const(bool public_decl) {

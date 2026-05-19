@@ -190,6 +190,18 @@ MetaAstDeclInput summarize_meta_ast_decl_input(const std::vector<Token>& input_t
     for (const auto& decl : parsed_input.constants) {
         append_summary(summaries, "const", qualified_basename(decl.name), decl.is_public);
     }
+    for (const auto& decl : parsed_input.type_aliases) {
+        DeclMembers members;
+        members.return_type = type_ref_key(decl.target);
+        members.generics = generic_names(decl.generics);
+        append_summary(
+            summaries,
+            "type",
+            qualified_basename(decl.name),
+            decl.is_public,
+            DeclShape{decl.generics.size()},
+            std::move(members));
+    }
     for (const auto& decl : parsed_input.functions) {
         DeclMembers members;
         if (decl.has_return_type) members.return_type = type_ref_key(decl.return_type);

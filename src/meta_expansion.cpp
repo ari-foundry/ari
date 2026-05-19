@@ -50,10 +50,11 @@ void reject_unsupported_item_macro_output(const Program& program,
         fail_expansion(program.item_macros.front().loc,
                        "nested " + context + " is planned but not supported yet");
     }
-    if (program.uses.empty() && program.modules.empty() && program.constants.empty() && program.functions.empty() &&
+    if (program.uses.empty() && program.modules.empty() && program.constants.empty() &&
+        program.type_aliases.empty() && program.functions.empty() &&
         program.structs.empty() && program.enums.empty() && program.traits.empty() && program.impls.empty()) {
         fail_expansion(invocation_loc,
-                       context + " requires at least one generated use, inline module, function, constant, struct, enum, trait, or impl declaration");
+                       context + " requires at least one generated use, inline module, function, constant, type alias, struct, enum, trait, or impl declaration");
     }
 }
 
@@ -75,6 +76,10 @@ ItemMacroExpansion finish_declaration_expansion(Program program,
     expansion.constants = std::move(program.constants);
     for (auto& constant : expansion.constants) {
         if (force_public) constant.is_public = true;
+    }
+    expansion.type_aliases = std::move(program.type_aliases);
+    for (auto& alias : expansion.type_aliases) {
+        if (force_public) alias.is_public = true;
     }
     expansion.functions = std::move(program.functions);
     for (auto& fn : expansion.functions) {

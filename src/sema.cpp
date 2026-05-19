@@ -214,6 +214,15 @@ struct ConstantInfo {
     ConstantValue value;
 };
 
+struct TypeAliasInfo {
+    std::string name;
+    std::string module_name;
+    bool is_public = false;
+    std::vector<std::string> generic_names;
+    TypeRef target;
+    SourceLocation loc;
+};
+
 struct TrackedAggregateAccess {
     std::string base_name;
     IrType base_type;
@@ -256,11 +265,13 @@ public:
         collect_item_macro_uses();
         validate_attributes();
         validate_pattern_macro_invocations();
+        collect_type_alias_decls();
         collect_trait_decls();
         collect_struct_decls();
         collect_enum_layouts();
         expand_derive_impls();
         collect_constant_decls();
+        validate_type_alias_decls();
         validate_struct_decls();
         resolve_trait_supertraits();
         validate_trait_method_decls();
@@ -439,6 +450,7 @@ private:
     std::map<std::string, const FunctionDecl*> generic_functions_;
     std::map<std::string, MetaFunctionInfo> meta_functions_;
     std::map<std::string, ConstantInfo> constants_;
+    std::map<std::string, TypeAliasInfo> type_aliases_;
     std::map<std::string, StructInfo> structs_;
     std::map<std::string, EnumInfo> enums_;
     std::map<std::string, EnumCaseInfo> enum_cases_;
@@ -451,6 +463,7 @@ private:
     BorrowContext borrow_context_;
     std::vector<LoopInfo> loops_;
     std::map<std::string, IrType> current_type_substitutions_;
+    std::set<std::string> resolving_type_aliases_;
     std::vector<GenericTraitBound> current_generic_bounds_;
     std::vector<IrFunction> specialized_functions_;
     std::vector<PendingSpecialization> pending_specializations_;
@@ -467,6 +480,7 @@ private:
     std::vector<UseDecl> item_macro_uses_;
     std::vector<ModuleDecl> item_macro_modules_;
     std::vector<ConstDecl> item_macro_constants_;
+    std::vector<TypeAliasDecl> item_macro_type_aliases_;
     std::vector<FunctionDecl> item_macro_functions_;
     std::vector<StructDecl> item_macro_structs_;
     std::vector<EnumDecl> item_macro_enums_;
@@ -708,6 +722,15 @@ private:
         return resolved;
     }
 
+    std::string resolve_type_alias_name(const std::string& name) const {
+        std::string resolved = import_or_qualified_name(name);
+        if (type_aliases_.count(resolved)) return resolved;
+        if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
+        std::string scoped = current_module_name_ + "::" + resolved;
+        if (type_aliases_.count(scoped)) return scoped;
+        return resolved;
+    }
+
     std::string resolve_meta_function_name(const std::string& name) const {
         std::string resolved = import_or_qualified_name(name);
         if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
@@ -788,7 +811,7 @@ private:
             std::string base = unqualified_name(name);
             if (base == "i8" || base == "i16" || base == "i32" || base == "i64" ||
                 base == "u8" || base == "u16" || base == "u32" || base == "u64" ||
-                base == "bool" || base == "string") {
+                base == "char" || base == "bool" || base == "string") {
                 TypeRef type;
                 type.name = name;
                 type.loc = loc;
@@ -834,6 +857,13 @@ private:
         }
     }
 
+    void require_type_alias_access(SourceLocation loc, const TypeAliasInfo& info) const {
+        require_module_path_access(loc, info.module_name);
+        if (!can_access(info.module_name, info.is_public)) {
+            fail(loc, "type alias '" + info.name + "' is not public");
+        }
+    }
+
     void require_trait_access(SourceLocation loc, const TraitInfo& info) const {
         require_module_path_access(loc, info.module_name);
         if (!can_access(info.module_name, info.is_public)) {
@@ -867,6 +897,12 @@ private:
     void for_each_constant_decl(Visitor&& visitor) const {
         for (const auto& decl : program_.constants) visitor(decl);
         for (const auto& decl : item_macro_constants_) visitor(decl);
+    }
+
+    template <typename Visitor>
+    void for_each_type_alias_decl(Visitor&& visitor) const {
+        for (const auto& decl : program_.type_aliases) visitor(decl);
+        for (const auto& decl : item_macro_type_aliases_) visitor(decl);
     }
 
     template <typename Visitor>
@@ -1021,6 +1057,11 @@ private:
                 add(basename_of_qualified_name(decl.name), decl.name);
             }
         }
+        for_each_type_alias_decl([&](const TypeAliasDecl& decl) {
+            if (decl.module_name == "std" && decl.is_public) {
+                add_unqualified_type_alias(basename_of_qualified_name(decl.name), decl.name);
+            }
+        });
         for_each_function_decl([&](const FunctionDecl& decl) {
             if (decl.module_name == "std" && decl.is_public) {
                 add(basename_of_qualified_name(decl.name), decl.name);
@@ -1063,6 +1104,13 @@ private:
                 add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
             }
         }
+        for_each_type_alias_decl([&](const TypeAliasDecl& decl) {
+            if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
+                std::string alias = basename_of_qualified_name(decl.name);
+                add_unqualified_type_alias(alias, decl.name);
+                add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
+            }
+        });
         for_each_function_decl([&](const FunctionDecl& decl) {
             if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
                 std::string alias = basename_of_qualified_name(decl.name);
@@ -1111,6 +1159,11 @@ private:
             if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_constant_alias = true;
         });
         if (has_constant_alias) return true;
+        bool has_type_alias = false;
+        for_each_type_alias_decl([&](const TypeAliasDecl& decl) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_type_alias = true;
+        });
+        if (has_type_alias) return true;
         bool has_function_alias = false;
         for_each_function_decl([&](const FunctionDecl& decl) {
             if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_function_alias = true;
@@ -1174,6 +1227,9 @@ private:
             module_names.insert(decl.name);
         });
         for (const auto& decl : program_.constants) module_names.insert(decl.module_name);
+        for_each_type_alias_decl([&](const TypeAliasDecl& decl) {
+            module_names.insert(decl.module_name);
+        });
         for_each_function_decl([&](const FunctionDecl& decl) {
             module_names.insert(decl.module_name);
         });
@@ -1219,6 +1275,11 @@ private:
             }
         });
         for_each_constant_decl([&](const ConstDecl& decl) {
+            if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
+                add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
+            }
+        });
+        for_each_type_alias_decl([&](const TypeAliasDecl& decl) {
             if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
                 add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
             }
@@ -1412,6 +1473,7 @@ private:
         for (auto& use : expansion.uses) item_macro_uses_.push_back(std::move(use));
         for (auto& decl : expansion.modules) item_macro_modules_.push_back(std::move(decl));
         for (auto& constant : expansion.constants) item_macro_constants_.push_back(std::move(constant));
+        for (auto& alias : expansion.type_aliases) item_macro_type_aliases_.push_back(std::move(alias));
         for (auto& fn : expansion.functions) item_macro_functions_.push_back(std::move(fn));
         for (auto& decl : expansion.structs) item_macro_structs_.push_back(std::move(decl));
         for (auto& decl : expansion.enums) item_macro_enums_.push_back(std::move(decl));
@@ -1815,8 +1877,49 @@ private:
         });
     }
 
+    void collect_type_alias_decls() {
+        for_each_type_alias_decl([&](const TypeAliasDecl& decl) {
+            require_unique_generic_params(decl.generics, "type alias", decl.name);
+            TypeAliasInfo info;
+            info.name = decl.name;
+            info.module_name = decl.module_name;
+            info.is_public = decl.is_public;
+            info.target = decl.target;
+            info.loc = decl.loc;
+            for (const auto& generic : decl.generics) info.generic_names.push_back(generic.name);
+
+            auto inserted = type_aliases_.emplace(decl.name, std::move(info));
+            if (!inserted.second) fail(decl.loc, "duplicate type alias '" + decl.name + "'");
+        });
+    }
+
+    void validate_type_alias_decls() {
+        for_each_type_alias_decl([&](const TypeAliasDecl& decl) {
+            std::map<std::string, IrType> substitutions;
+            for (const auto& generic : decl.generics) {
+                IrType placeholder;
+                placeholder.qualifier = TypeQualifier::Value;
+                placeholder.primitive = IrPrimitiveKind::Unknown;
+                placeholder.name = generic.name;
+                placeholder.loc = generic.loc;
+                substitutions.emplace(generic.name, placeholder);
+            }
+
+            std::string previous_module = current_module_name_;
+            std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+            current_module_name_ = decl.module_name;
+            current_type_substitutions_ = std::move(substitutions);
+            (void)resolve_executable_type(decl.target);
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+        });
+    }
+
     void collect_struct_decls() {
         for_each_struct_decl([&](const StructDecl& decl) {
+            if (type_aliases_.count(decl.name)) {
+                fail(decl.loc, "duplicate type name '" + decl.name + "'");
+            }
             StructInfo info;
             info.name = decl.name;
             info.module_name = decl.module_name;
@@ -1879,6 +1982,9 @@ private:
 
     void collect_trait_decls() {
         for_each_trait_decl([&](const TraitDecl& decl) {
+            if (type_aliases_.count(decl.name)) {
+                fail(decl.loc, "duplicate type name '" + decl.name + "'");
+            }
             require_unique_generic_params(decl.generics, "trait", decl.name);
             TraitInfo info;
             info.name = decl.name;
@@ -3664,6 +3770,9 @@ private:
             if (structs_.count(decl.name)) {
                 fail(decl.loc, "enum '" + decl.name + "' conflicts with struct of the same name");
             }
+            if (type_aliases_.count(decl.name)) {
+                fail(decl.loc, "duplicate type name '" + decl.name + "'");
+            }
             if (decl.cases.size() > static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max())) {
                 fail(decl.loc, "enum '" + decl.name + "' has too many cases");
             }
@@ -4299,6 +4408,54 @@ private:
         return finish_associated_projection_type(ast_type, std::move(candidates.front()));
     }
 
+    const TypeAliasInfo* find_type_alias_application(const TypeRef& ast_type) const {
+        std::string alias_name = resolve_type_alias_name(ast_type.name);
+        auto found = type_aliases_.find(alias_name);
+        if (found == type_aliases_.end()) return nullptr;
+        return &found->second;
+    }
+
+    IrType resolve_type_alias_application(const TypeRef& ast_type, const TypeAliasInfo& info) {
+        require_type_alias_access(ast_type.loc, info);
+        if (ast_type.args.size() != info.generic_names.size()) {
+            fail(ast_type.loc,
+                 "type alias '" + info.name + "' expects " + std::to_string(info.generic_names.size()) +
+                     " type argument" + (info.generic_names.size() == 1 ? "" : "s"));
+        }
+        if (!resolving_type_aliases_.insert(info.name).second) {
+            fail(ast_type.loc, "recursive type alias '" + info.name + "'");
+        }
+
+        std::vector<IrType> args;
+        args.reserve(ast_type.args.size());
+        for (const auto& arg : ast_type.args) args.push_back(resolve_executable_type(arg));
+
+        std::map<std::string, IrType> substitutions;
+        for (std::size_t i = 0; i < args.size(); ++i) {
+            substitutions.emplace(info.generic_names[i], args[i]);
+        }
+
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = info.module_name;
+        current_type_substitutions_ = std::move(substitutions);
+        IrType expanded = resolve_executable_type(info.target);
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
+        resolving_type_aliases_.erase(info.name);
+
+        if (ast_type.qualifier != TypeQualifier::Value) {
+            if (expanded.qualifier != TypeQualifier::Value) {
+                fail(ast_type.loc,
+                     "type alias '" + info.name + "' already expands to " + type_name(expanded) +
+                         " and cannot also use an ownership qualifier");
+            }
+            expanded.qualifier = ast_type.qualifier;
+        }
+        expanded.loc = ast_type.loc;
+        return expanded;
+    }
+
     IrType resolve_executable_type(const TypeRef& ast_type) {
         if (ast_type.is_macro_invocation) return resolve_type_macro_invocation(ast_type);
         if (ast_type.has_associated_projection) {
@@ -4312,6 +4469,10 @@ private:
             type.qualifier = ast_type.qualifier;
             type.loc = ast_type.loc;
             return type;
+        }
+
+        if (const TypeAliasInfo* alias = find_type_alias_application(ast_type)) {
+            return resolve_type_alias_application(ast_type, *alias);
         }
 
         IrType type;
@@ -4401,6 +4562,10 @@ private:
             reject_type_args(ast_type);
             type.primitive = IrPrimitiveKind::I64;
             type.name = "i64";
+        } else if (type.name == "char") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::U8;
+            type.name = "u8";
         } else if (type.name == "u8") {
             reject_type_args(ast_type);
             type.primitive = IrPrimitiveKind::U8;

@@ -24,10 +24,12 @@ let delta: i32 = -10
 
 `256` is rejected for `u8`, and `-129` is rejected for `i8`.
 
-Single-quoted byte character literals are `u8` values:
+Single-quoted byte character literals are byte values. Prefer the `char`
+alias when the value is meant to be an ASCII character rather than arbitrary
+binary data:
 
 ```ari
-let c: u8 = 'c'
+let c: char = 'c'
 let newline = '\n'
 let raw = '\x7f'
 let bytes = ['t', 'r', 'u', 'e']
@@ -36,6 +38,32 @@ let bytes = ['t', 'r', 'u', 'e']
 These literals are byte-oriented, not full Unicode scalar values. Plain
 single-quoted characters must be ASCII. Use `'\xNN'` for arbitrary byte values
 and string literals for Unicode text.
+
+## Type Aliases
+
+Type aliases give an existing type a clearer source name:
+
+```ari
+type Byte = u8;
+type Letter = char;
+type PairOf[T] = Pair[T];
+```
+
+Aliases are resolved by the type checker before layout and codegen, so `Letter`
+and `char` have the same executable representation as `u8`. Generic aliases use
+the same declaration-side generic list as structs and functions, and type
+applications may use either `Alias[T]` or `Alias<T>` in annotations.
+
+The standard prelude exports:
+
+```ari
+type char = u8;
+```
+
+`char` is intentionally an ASCII byte alias today. Use it for APIs such as
+`ascii::is_digit(value: char)` or character literals like `'0'`. Keep `u8` for
+raw buffers, hashes, encoded bytes, and memory-oriented APIs where the value is
+not text.
 
 Both executable backends preserve the declared integer width when scalar locals
 are read or written. On the LLVM backend this includes narrow

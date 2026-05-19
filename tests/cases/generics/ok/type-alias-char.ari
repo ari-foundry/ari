@@ -1,0 +1,21 @@
+type Letter = char;
+type PairOf[T] = Pair<T>;
+
+struct Pair[T] {
+  left: T,
+  right: T,
+}
+
+fn is_ascii_digit(value: Letter) -> bool {
+  return value >= '0' && value <= '9';
+}
+
+fn main() -> i64 {
+  let first: char = 'A';
+  let second: Letter = '7';
+  let pair: PairOf[Letter] = Pair<Letter> { left: first, right: second };
+  if pair.left == 'A' && is_ascii_digit(pair.right) {
+    return pair.right as i64;
+  }
+  return 0;
+}

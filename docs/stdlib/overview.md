@@ -30,7 +30,7 @@ API evolution.
 
 | Module | Purpose | First Things To Use |
 | --- | --- | --- |
-| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `CStr`, `CString`, `Library`, `Symbol`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. Root `Slice[T]` includes access, subslicing, subsequence search, compare, chunks, windows, split, and copy helpers. |
+| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `char`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `CStr`, `CString`, `Library`, `Symbol`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. Root `char` is an ASCII `u8` alias; root `Slice[T]` includes access, subslicing, subsequence search, compare, chunks, windows, split, and copy helpers. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `filter`, `flatten`, `transpose`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
 | `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, `write_bytes`, `read_line`. |

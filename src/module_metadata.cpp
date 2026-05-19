@@ -333,6 +333,9 @@ void collect_module_metadata_source(ModuleMetadata& metadata,
     for (const auto& decl : program.constants) {
         add_item(metadata, decl.module_name, "const", decl.name, decl.is_public);
     }
+    for (const auto& decl : program.type_aliases) {
+        add_item(metadata, decl.module_name, "type", decl.name, decl.is_public);
+    }
     for (const auto& decl : program.functions) {
         std::string kind = decl.is_extern ? "extern-" + decl.extern_abi + "-fn" : (decl.meta ? "meta-fn" : "fn");
         add_item(metadata, decl.module_name, std::move(kind), decl.name, decl.is_public);

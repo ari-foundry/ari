@@ -6,80 +6,80 @@ pub struct ParsedInt {
   len: i64,
 }
 
-pub fn is_digit(value: u8) -> bool {
+pub fn is_digit(value: char) -> bool {
   return value >= '0' && value <= '9';
 }
 
-pub fn is_lower(value: u8) -> bool {
+pub fn is_lower(value: char) -> bool {
   return value >= 'a' && value <= 'z';
 }
 
-pub fn is_upper(value: u8) -> bool {
+pub fn is_upper(value: char) -> bool {
   return value >= 'A' && value <= 'Z';
 }
 
-pub fn is_alpha(value: u8) -> bool {
+pub fn is_alpha(value: char) -> bool {
   return is_lower(value) || is_upper(value);
 }
 
-pub fn is_alphanumeric(value: u8) -> bool {
+pub fn is_alphanumeric(value: char) -> bool {
   return is_alpha(value) || is_digit(value);
 }
 
-pub fn is_blank(value: u8) -> bool {
+pub fn is_blank(value: char) -> bool {
   return value == ' ' || value == '\t';
 }
 
-pub fn is_whitespace(value: u8) -> bool {
+pub fn is_whitespace(value: char) -> bool {
   return is_blank(value) ||
          value == '\n' ||
          value == '\r';
 }
 
-pub fn is_control(value: u8) -> bool {
+pub fn is_control(value: char) -> bool {
   return value <= '\x1f' || value == '\x7f';
 }
 
-pub fn is_printable(value: u8) -> bool {
+pub fn is_printable(value: char) -> bool {
   return value >= ' ' && value <= '~';
 }
 
-pub fn is_graphic(value: u8) -> bool {
+pub fn is_graphic(value: char) -> bool {
   return value >= '!' && value <= '~';
 }
 
-pub fn is_punctuation(value: u8) -> bool {
+pub fn is_punctuation(value: char) -> bool {
   return is_graphic(value) && !is_alphanumeric(value);
 }
 
-pub fn is_hex_digit(value: u8) -> bool {
+pub fn is_hex_digit(value: char) -> bool {
   return is_digit(value) ||
          (value >= 'A' && value <= 'F') ||
          (value >= 'a' && value <= 'f');
 }
 
-pub fn to_lower(value: u8) -> u8 {
+pub fn to_lower(value: char) -> char {
   if is_upper(value) {
-    return ((value as i64) + (('a' as i64) - ('A' as i64))) as u8;
+    return ((value as i64) + (('a' as i64) - ('A' as i64))) as char;
   }
   return value;
 }
 
-pub fn to_upper(value: u8) -> u8 {
+pub fn to_upper(value: char) -> char {
   if is_lower(value) {
-    return ((value as i64) - (('a' as i64) - ('A' as i64))) as u8;
+    return ((value as i64) - (('a' as i64) - ('A' as i64))) as char;
   }
   return value;
 }
 
-pub fn digit_value(value: u8) -> std::Option[i64] {
+pub fn digit_value(value: char) -> std::Option[i64] {
   if is_digit(value) {
     return std::Some<i64>((value as i64) - ('0' as i64));
   }
   return std::None<i64>();
 }
 
-pub fn hex_value(value: u8) -> std::Option[i64] {
+pub fn hex_value(value: char) -> std::Option[i64] {
   if is_digit(value) {
     return digit_value(value);
   }

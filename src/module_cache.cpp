@@ -295,6 +295,7 @@ std::string serialize_module_cache(const ModuleCache& cache) {
             count_key(summary.enum_count),
             count_key(summary.trait_count),
             count_key(summary.impl_count),
+            count_key(summary.type_alias_count),
         });
     }
     for (const auto& summary : cache.ir_summaries) {
@@ -369,7 +370,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 is_root,
             });
         } else if (tag == "ast-summary") {
-            if (fields.size() != 16) {
+            if (fields.size() != 17) {
                 throw CompileError("invalid module cache '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed ast-summary record");
             }
@@ -398,6 +399,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 parse_count_field(fields[count_offset + 6], display_path, line_number),
                 parse_count_field(fields[count_offset + 7], display_path, line_number),
                 parse_count_field(fields[count_offset + 8], display_path, line_number),
+                parse_count_field(fields[count_offset + 9], display_path, line_number),
             };
             require_valid_module_cache_ast_summary_payload(summary, display_path);
             cache.ast_summaries.push_back(std::move(summary));
@@ -505,6 +507,7 @@ void require_matching_module_cache_ast_summary(const ModuleCacheAstSummary& expe
     ARI_CHECK_SUMMARY_COUNT(enum_count, "enum");
     ARI_CHECK_SUMMARY_COUNT(trait_count, "trait");
     ARI_CHECK_SUMMARY_COUNT(impl_count, "impl");
+    ARI_CHECK_SUMMARY_COUNT(type_alias_count, "type alias");
 #undef ARI_CHECK_SUMMARY_COUNT
 }
 

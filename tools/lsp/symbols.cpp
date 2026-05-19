@@ -63,6 +63,10 @@ bool parse_symbol_line(const std::string& line, int line_number, Symbol& symbol)
         symbol.name = read_identifier_after(trimmed, 5);
         symbol.label = "trait";
         symbol.kind = 11;
+    } else if (starts_with_word(trimmed, "type")) {
+        symbol.name = read_identifier_after(trimmed, 4);
+        symbol.label = "type alias";
+        symbol.kind = 5;
     } else if (starts_with_word(trimmed, "impl")) {
         symbol.name = "impl " + read_identifier_after(trimmed, 4);
         symbol.label = "impl";
@@ -113,6 +117,7 @@ int completion_kind(const Symbol& symbol) {
     if (symbol.label == "struct") return 22;
     if (symbol.label == "enum") return 13;
     if (symbol.label == "trait") return 8;
+    if (symbol.label == "type alias") return 25;
     if (symbol.label == "impl") return 6;
     return 6;
 }

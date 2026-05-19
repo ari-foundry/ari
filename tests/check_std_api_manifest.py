@@ -17,7 +17,7 @@ IDENT = r"[A-Za-z_][A-Za-z0-9_]*"
 GENERIC = r"(\[[^\]]+\])?"
 
 MODULE_RE = re.compile(rf"^pub\s+mod\s+({IDENT})\s*;")
-TYPE_RE = re.compile(rf"^pub\s+(struct|enum|trait)\s+({IDENT}){GENERIC}")
+TYPE_RE = re.compile(rf"^pub\s+(struct|enum|trait|type)\s+({IDENT}){GENERIC}")
 CONST_RE = re.compile(rf"^pub\s+const\s+({IDENT})")
 FN_RE = re.compile(rf"^pub\s+(?:extern\s+\"[^\"]+\"\s+)?fn\s+({IDENT}){GENERIC}")
 IMPL_RE = re.compile(r"^pub\s+impl(?:\[[^\]]+\])?\s+([^{]+)\{")

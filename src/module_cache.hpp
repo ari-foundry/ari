@@ -34,6 +34,7 @@ struct ModuleCacheAstSummary {
     std::uint64_t enum_count = 0;
     std::uint64_t trait_count = 0;
     std::uint64_t impl_count = 0;
+    std::uint64_t type_alias_count = 0;
 };
 
 struct ModuleCacheIrSummary {

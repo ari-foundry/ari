@@ -1248,6 +1248,7 @@ trait-method std::io::Writer::flush|std io trait/cursor tests; docs/stdlib/modul
 trait-method std::io::Writer::write_byte|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
+type std::char|check-generics type-alias-char/no-implicit-std tests; docs/language/types.md Type Aliases section
 use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md
 use std::BinaryHeap|check-prelude std-collections-heap root alias for std::collections::BinaryHeap[T]; docs/stdlib/modules/collections.md
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row

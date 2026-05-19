@@ -824,6 +824,7 @@ struct DeclarationSummaryCounts {
     std::uint64_t module_decl_count = 0;
     std::uint64_t item_macro_count = 0;
     std::uint64_t constant_count = 0;
+    std::uint64_t type_alias_count = 0;
     std::uint64_t function_count = 0;
     std::uint64_t struct_count = 0;
     std::uint64_t enum_count = 0;
@@ -888,6 +889,15 @@ public:
             read_bool("constant visibility");
             skip_type("constant type");
             skip_const_initializer("constant initializer");
+        }
+
+        counts.type_alias_count = read_count("type alias count");
+        for (std::uint64_t i = 0; i < counts.type_alias_count; ++i) {
+            read_field("type alias module name");
+            read_field("type alias name");
+            read_bool("type alias visibility");
+            skip_generics();
+            skip_type("type alias target");
         }
 
         counts.function_count = read_count("function count");
@@ -1029,6 +1039,19 @@ public:
             decl.init = read_const_initializer("constant initializer");
             decl.loc = default_loc();
             program.constants.push_back(std::move(decl));
+        }
+
+        std::uint64_t type_alias_count = read_count("type alias count");
+        program.type_aliases.reserve(static_cast<std::size_t>(type_alias_count));
+        for (std::uint64_t i = 0; i < type_alias_count; ++i) {
+            TypeAliasDecl decl;
+            decl.module_name = read_field("type alias module name");
+            decl.name = read_field("type alias name");
+            decl.is_public = read_bool("type alias visibility");
+            decl.generics = read_generics();
+            decl.target = read_type("type alias target");
+            decl.loc = default_loc();
+            program.type_aliases.push_back(std::move(decl));
         }
 
         std::uint64_t function_count = read_count("function count");
@@ -1909,6 +1932,15 @@ std::string declaration_summary_payload(const Program& program) {
         append_const_initializer(out, decl.init);
     }
 
+    append_count(out, program.type_aliases.size());
+    for (const auto& decl : program.type_aliases) {
+        append_field(out, decl.module_name);
+        append_field(out, decl.name);
+        append_bool(out, decl.is_public);
+        append_generics(out, decl.generics);
+        append_type(out, decl.target);
+    }
+
     append_count(out, program.functions.size());
     for (const auto& fn : program.functions) append_function_signature(out, fn);
 
@@ -2015,6 +2047,7 @@ ModuleCacheAstSummary make_module_cache_ast_summary(const std::string& path,
     summary.module_import_count = program.module_imports.size();
     summary.module_decl_count = program.modules.size();
     summary.constant_count = program.constants.size();
+    summary.type_alias_count = program.type_aliases.size();
     summary.function_count = program.functions.size();
     summary.struct_count = program.structs.size();
     summary.enum_count = program.enums.size();
@@ -2053,6 +2086,7 @@ void require_valid_module_cache_ast_summary_payload(const ModuleCacheAstSummary&
         require_count_match(summary.module_import_count, counts.module_import_count, "module import", summary);
         require_count_match(summary.module_decl_count, counts.module_decl_count, "module declaration", summary);
         require_count_match(summary.constant_count, counts.constant_count, "constant", summary);
+        require_count_match(summary.type_alias_count, counts.type_alias_count, "type alias", summary);
         require_count_match(summary.function_count, counts.function_count, "function", summary);
         require_count_match(summary.struct_count, counts.struct_count, "struct", summary);
         require_count_match(summary.enum_count, counts.enum_count, "enum", summary);

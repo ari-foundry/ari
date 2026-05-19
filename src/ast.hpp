@@ -86,6 +86,16 @@ struct ConstDecl {
     SourceLocation loc;
 };
 
+struct TypeAliasDecl {
+    std::string name;
+    std::string module_name;
+    bool is_public = false;
+    std::vector<GenericParam> generics;
+    TypeRef target;
+    SourceLocation loc;
+    std::vector<Token> source_tokens;
+};
+
 enum class PatternKind {
     Wildcard,
     Binding,
@@ -870,6 +880,7 @@ struct Program {
     std::vector<ModuleDecl> modules;
     std::vector<ItemMacroInvocation> item_macros;
     std::vector<ConstDecl> constants;
+    std::vector<TypeAliasDecl> type_aliases;
     std::vector<FunctionDecl> functions;
     std::vector<StructDecl> structs;
     std::vector<EnumDecl> enums;

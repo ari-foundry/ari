@@ -38,6 +38,8 @@ pub enum Result[T, E] {
   Ok(T),
 }
 
+pub type char = u8;
+
 pub mod option;
 
 pub mod result;

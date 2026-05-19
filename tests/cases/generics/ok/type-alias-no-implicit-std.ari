@@ -1,0 +1,6 @@
+type Letter = char;
+
+fn main() -> i64 {
+  let value: Letter = 'Z';
+  return value as i64;
+}

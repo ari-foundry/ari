@@ -1,0 +1,6 @@
+type Boxed[T] = T;
+
+fn main() -> i64 {
+  let value: Boxed = 1;
+  return value;
+}

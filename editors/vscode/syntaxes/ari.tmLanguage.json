@@ -176,7 +176,7 @@
         },
         {
           "name": "meta.type.declaration.ari",
-          "match": "\\b(pub\\s+)?(struct|enum|trait|mod)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "match": "\\b(pub\\s+)?(struct|enum|trait|mod|type)\\s+([A-Za-z_][A-Za-z0-9_]*)",
           "captures": {
             "1": {
               "name": "keyword.declaration.visibility.ari"
@@ -240,7 +240,7 @@
         },
         {
           "name": "keyword.declaration.ari",
-          "match": "\\b(fn|meta|const|extern|mod|pub|use|impl|trait|struct|enum|let|var)\\b"
+          "match": "\\b(fn|meta|const|extern|mod|pub|use|impl|trait|struct|enum|type|let|var)\\b"
         },
         {
           "name": "storage.modifier.ari",
@@ -379,7 +379,7 @@
         },
         {
           "name": "storage.type.primitive.ari",
-          "match": "\\b(bool|void)\\b"
+          "match": "\\b(bool|char|void)\\b"
         },
         {
           "name": "support.type.ari",
