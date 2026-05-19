@@ -238,6 +238,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | current process | `process::id()`, `process::exit(code)`, `process::success()`, `process::failure()` |
 | POSIX child process | `process::fork()`, `process::wait(pid)`, `process::is_child(pid)`, `process::is_parent(pid)`, `process::is_wait_error(status)` |
 | thread | `thread::spawn(entry)`, `thread::join(handle)`, `handle.join()`, `thread::id()`, `thread::yield_now()`, `thread::sleep(duration)`, `thread::available_parallelism()` |
+| time | `time::now()`, `time::system_now()`, `time::milliseconds(n)`, `time::timeout(duration)`, `deadline.remaining()`, `deadline.has_expired()` |
 | atomic i64 | `AtomicI64::new(value)`, `.load()`, `.store(replacement)`, `.fetch_add(amount)`, `.compare_exchange(expected, replacement)` |
 | locks | `Mutex::new()`, `.lock()`, `.unlock()`, `RwLock::new()`, `.read_lock()`, `.read_unlock()`, `.write_lock()`, `.write_unlock()`, `Once::new()`, `.call_once(init)` |
 | input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` |

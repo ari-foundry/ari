@@ -1,0 +1,32 @@
+// Covers timeout/deadline helpers built on monotonic Instant values.
+// Keep actual sleeps at zero duration so the test remains deterministic and fast.
+fn main() -> i64 {
+  let start = time::now();
+  let later = start.add(time::seconds(60));
+  let positive = later.saturating_duration_since(start);
+  let reversed = start.saturating_duration_since(later);
+
+  assert_eq_i64(positive.as_seconds(), 60);
+  assert(reversed.is_zero());
+
+  let at = time::deadline_at(later);
+  assert(at.instant().as_nanos() == later.as_nanos());
+  assert(!at.has_expired());
+  assert(at.remaining().as_nanos() > 0);
+
+  let zero = time::timeout(time::Duration::zero());
+  assert(zero.has_expired());
+  assert(zero.remaining().is_zero());
+
+  let also_zero = time::timeout_after(time::nanoseconds(0));
+  assert(also_zero.has_expired());
+
+  let via_type = time::Deadline::after(time::nanoseconds(0));
+  assert(via_type.has_expired());
+  via_type.sleep();
+
+  let via_at = time::Deadline::at(start);
+  assert(via_at.has_expired());
+
+  return 0;
+}

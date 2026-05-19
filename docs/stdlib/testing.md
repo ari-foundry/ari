@@ -58,6 +58,7 @@ std-sync-atomic-i64.ari
 std-sync-mutex-once.ari
 std-sync-rwlock.ari
 std-time-basic.ari
+std-time-timeout.ari
 std-fs-basic.ari
 std-fs-append.ari
 std-fs-open-modes.ari

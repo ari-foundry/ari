@@ -72,7 +72,8 @@ limits, examples, and test files for one module.
   `RwLock`, and `Once` helpers, current memory-order policy, and lock/channel
   roadmap.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock
-  timestamps, non-negative durations, elapsed-time helpers, and sleep.
+  timestamps, non-negative durations, elapsed-time helpers, monotonic
+  deadlines/timeouts, and sleep.
 - [std::fs](fs.md): runtime-backed file existence, mode-string open calls,
   close, removal, `File` value handles, `Option[File]` open helpers, and
   source byte create/read/write/append/truncate/copy plus rename,

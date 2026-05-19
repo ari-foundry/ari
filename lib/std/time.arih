@@ -15,6 +15,10 @@ pub struct SystemTime {
   nanos: i64,
 }
 
+pub struct Deadline {
+  at: std::time::Instant,
+}
+
 pub extern "ari" fn monotonic_nanos() -> i64 = "ari_builtin_time_monotonic_nanos";
 pub extern "ari" fn unix_nanos() -> i64 = "ari_builtin_time_unix_nanos";
 pub extern "ari" fn sleep_nanos(nanos: i64) -> void = "ari_builtin_time_sleep_nanos";
@@ -56,6 +60,18 @@ pub fn elapsed(start: Instant) -> Duration {
 pub fn sleep(duration: Duration) -> void {
   sleep_nanos(duration.as_nanos());
   return;
+}
+
+pub fn deadline_at(instant: Instant) -> Deadline {
+  return Deadline { at: instant };
+}
+
+pub fn timeout_after(duration: Duration) -> Deadline {
+  return deadline_at(now().add(duration));
+}
+
+pub fn timeout(duration: Duration) -> Deadline {
+  return timeout_after(duration);
 }
 
 pub impl std::time::Duration {
@@ -109,6 +125,13 @@ pub impl std::time::Instant {
     return Duration { nanos: self.nanos - earlier.nanos };
   }
 
+  fn saturating_duration_since(self, earlier: Instant) -> Duration {
+    if self.nanos < earlier.nanos {
+      return Duration::zero();
+    }
+    return Duration { nanos: self.nanos - earlier.nanos };
+  }
+
   fn try_duration_since(self, earlier: Instant) -> std::Option[Duration] {
     if self.nanos < earlier.nanos {
       return std::None<Duration>();
@@ -119,6 +142,10 @@ pub impl std::time::Instant {
   fn elapsed(self) -> Duration {
     let end = now();
     return end.duration_since(self);
+  }
+
+  fn add(self, duration: Duration) -> Instant {
+    return Instant { nanos: self.nanos + duration.as_nanos() };
   }
 }
 
@@ -133,5 +160,35 @@ pub impl std::time::SystemTime {
 
   fn duration_since_unix_epoch(self) -> Duration {
     return Duration { nanos: self.nanos };
+  }
+}
+
+pub impl std::time::Deadline {
+  fn at(instant: Instant) -> Deadline {
+    return deadline_at(instant);
+  }
+
+  fn after(duration: Duration) -> Deadline {
+    return timeout_after(duration);
+  }
+
+  fn instant(self) -> Instant {
+    return self.at;
+  }
+
+  fn has_expired(self) -> bool {
+    return now().as_nanos() >= self.at.as_nanos();
+  }
+
+  fn remaining(self) -> Duration {
+    return self.at.saturating_duration_since(now());
+  }
+
+  fn sleep(self) -> void {
+    let wait = self.remaining();
+    if !wait.is_zero() {
+      sleep(wait);
+    }
+    return;
   }
 }

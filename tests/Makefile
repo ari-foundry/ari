@@ -487,6 +487,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari -o $(BUILD_DIR)/prelude/std-time-basic.elf
 	$(BUILD_DIR)/prelude/std-time-basic.elf; code=$$?; test $$code -eq 105
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-basic.elf; $(BUILD_DIR)/prelude/std-time-basic.elf; code=$$?; test $$code -eq 105; fi
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-timeout.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-timeout.ll
+	grep -F -q "std4time7timeout" $(BUILD_DIR)/prelude/std-time-timeout.ll
+	grep -F -q "std4time13timeout_after" $(BUILD_DIR)/prelude/std-time-timeout.ll
+	grep -F -q "std4time11deadline_at" $(BUILD_DIR)/prelude/std-time-timeout.ll
+	grep -F -q "std__time__Instant8inherent25saturating_duration_since" $(BUILD_DIR)/prelude/std-time-timeout.ll
+	grep -F -q "std__time__Deadline8inherent11has_expired" $(BUILD_DIR)/prelude/std-time-timeout.ll
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-timeout.ari -o $(BUILD_DIR)/prelude/std-time-timeout.elf
+	$(BUILD_DIR)/prelude/std-time-timeout.elf; code=$$?; test $$code -eq 0
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-timeout.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-timeout.elf; $(BUILD_DIR)/prelude/std-time-timeout.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 1)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 3)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll

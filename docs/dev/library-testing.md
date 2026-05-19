@@ -107,6 +107,8 @@ identifies the exact case:
   compare-exchange/fetch-add-backed lowering.
 - `std-time-basic.ari`: runtime-backed monotonic and wall-clock nanosecond
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
+- `std-time-timeout.ari`: source monotonic `Deadline`/timeout helpers,
+  remaining-time checks, and zero-duration sleep-until behavior.
 - `std-fs-basic.ari`: runtime-backed file existence, mode-string
   creation/truncating write, byte reads/writes, close, removal, and
   `Option[File]` open helpers.

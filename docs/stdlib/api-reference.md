@@ -534,6 +534,9 @@ time::now()
 time::system_now()
 time::elapsed(start)
 time::sleep(duration)
+time::deadline_at(instant)
+time::timeout_after(duration)
+time::timeout(duration)
 
 Duration::zero()
 duration.as_nanos()
@@ -547,18 +550,30 @@ duration.saturating_sub(other)
 Instant::now()
 instant.as_nanos()
 instant.duration_since(earlier)
+instant.saturating_duration_since(earlier)
 instant.try_duration_since(earlier)
 instant.elapsed()
+instant.add(duration)
 
 SystemTime::now()
 system_time.as_unix_nanos()
 system_time.duration_since_unix_epoch()
+
+Deadline::at(instant)
+Deadline::after(duration)
+deadline.instant()
+deadline.has_expired()
+deadline.remaining()
+deadline.sleep()
 ```
 
 Use `Instant` for elapsed time and `SystemTime` for Unix wall-clock
 timestamps. `Duration` constructors assert on negative values. The raw
 `*_nanos` functions are exposed for low-level code, but ordinary code should
-prefer `now`, `system_now`, `elapsed`, and `sleep`.
+prefer `now`, `system_now`, `elapsed`, and `sleep`. Use `Deadline` plus
+`timeout(duration)` or `deadline_at(instant)` when an API needs timeout policy
+without depending on wall-clock time. Calendar conversion is roadmap work and
+timezone databases are outside the first standard-library slice.
 
 Filesystem helpers live in `std::fs`:
 

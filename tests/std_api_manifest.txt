@@ -457,6 +457,7 @@ fn std::thread::join|check-prelude std-thread-basic thread join hook; docs/stdli
 fn std::thread::sleep|check-prelude std-thread-runtime-helpers duration sleep convenience wrapper; docs/stdlib/modules/thread.md
 fn std::thread::spawn|check-prelude std-thread-basic function-pointer spawn hook; docs/stdlib/modules/thread.md
 fn std::thread::yield_now|check-prelude std-thread-basic scheduler yield hook; docs/stdlib/modules/thread.md
+fn std::time::deadline_at|check-prelude std-time-timeout absolute deadline constructor; docs/stdlib/modules/time.md
 fn std::time::elapsed|check-prelude std-time-basic source elapsed-time helper; docs/stdlib/modules/time.md
 fn std::time::microseconds|check-prelude std-time-basic source duration constructor; docs/stdlib/modules/time.md
 fn std::time::milliseconds|check-prelude std-time-basic source duration constructor; docs/stdlib/modules/time.md
@@ -467,6 +468,8 @@ fn std::time::seconds|check-prelude std-time-basic source duration constructor; 
 fn std::time::sleep|check-prelude std-time-basic source duration sleep helper; docs/stdlib/modules/time.md
 fn std::time::sleep_nanos|check-prelude std-time-basic runtime sleep hook; docs/stdlib/modules/time.md
 fn std::time::system_now|check-prelude std-time-basic source wall-clock helper; docs/stdlib/modules/time.md
+fn std::time::timeout|check-prelude std-time-timeout timeout deadline constructor; docs/stdlib/modules/time.md
+fn std::time::timeout_after|check-prelude std-time-timeout named timeout deadline constructor; docs/stdlib/modules/time.md
 fn std::time::unix_nanos|check-prelude std-time-basic wall-clock hook; docs/stdlib/modules/time.md
 fn std::todo|planned panic helper tests; docs/dev/test-matrix.md Prelude row
 fn std::unreachable|planned panic helper tests; docs/dev/test-matrix.md Prelude row
@@ -903,6 +906,12 @@ method std::thread::Thread::invalid|check-prelude std-thread-basic invalid handl
 method std::thread::Thread::is_valid|check-prelude std-thread-basic handle validity predicate; docs/stdlib/modules/thread.md
 method std::thread::Thread::join|check-prelude std-thread-basic handle join helper; docs/stdlib/modules/thread.md
 method std::thread::Thread::spawn|check-prelude std-thread-basic associated function-pointer spawn helper; docs/stdlib/modules/thread.md
+method std::time::Deadline::after|check-prelude std-time-timeout associated timeout constructor; docs/stdlib/modules/time.md
+method std::time::Deadline::at|check-prelude std-time-timeout associated absolute deadline constructor; docs/stdlib/modules/time.md
+method std::time::Deadline::has_expired|check-prelude std-time-timeout deadline expiry predicate; docs/stdlib/modules/time.md
+method std::time::Deadline::instant|check-prelude std-time-timeout deadline instant accessor; docs/stdlib/modules/time.md
+method std::time::Deadline::remaining|check-prelude std-time-timeout remaining timeout helper; docs/stdlib/modules/time.md
+method std::time::Deadline::sleep|check-prelude std-time-timeout sleep until deadline helper; docs/stdlib/modules/time.md
 method std::time::Duration::add|check-prelude std-time-basic source duration addition helper; docs/stdlib/modules/time.md
 method std::time::Duration::as_micros|check-prelude std-time-basic duration metadata helper; docs/stdlib/modules/time.md
 method std::time::Duration::as_millis|check-prelude std-time-basic duration metadata helper; docs/stdlib/modules/time.md
@@ -911,10 +920,12 @@ method std::time::Duration::as_seconds|check-prelude std-time-basic duration met
 method std::time::Duration::is_zero|check-prelude std-time-basic duration predicate helper; docs/stdlib/modules/time.md
 method std::time::Duration::saturating_sub|check-prelude std-time-basic non-negative duration subtraction; docs/stdlib/modules/time.md
 method std::time::Duration::zero|check-prelude std-time-basic associated zero duration constructor; docs/stdlib/modules/time.md
+method std::time::Instant::add|check-prelude std-time-timeout instant plus duration helper; docs/stdlib/modules/time.md
 method std::time::Instant::as_nanos|check-prelude std-time-basic instant metadata helper; docs/stdlib/modules/time.md
 method std::time::Instant::duration_since|check-prelude std-time-basic elapsed duration helper; docs/stdlib/modules/time.md
 method std::time::Instant::elapsed|check-prelude std-time-basic current elapsed duration helper; docs/stdlib/modules/time.md
 method std::time::Instant::now|check-prelude std-time-basic associated monotonic instant constructor; docs/stdlib/modules/time.md
+method std::time::Instant::saturating_duration_since|check-prelude std-time-timeout nonnegative instant difference helper; docs/stdlib/modules/time.md
 method std::time::Instant::try_duration_since|check-prelude std-time-basic Option-returning elapsed duration helper; docs/stdlib/modules/time.md
 method std::time::SystemTime::as_unix_nanos|check-prelude std-time-basic wall-clock metadata helper; docs/stdlib/modules/time.md
 method std::time::SystemTime::duration_since_unix_epoch|check-prelude std-time-basic wall-clock duration wrapper; docs/stdlib/modules/time.md
@@ -1068,6 +1079,7 @@ struct std::sync::Once|check-prelude std-sync-mutex-once source one-time initial
 struct std::sync::RwLock|check-prelude std-sync-rwlock source reader-writer lock primitive; docs/stdlib/modules/sync.md
 struct std::test::Report|check-prelude std-test-report unit-test report counts; docs/stdlib/modules/test.md
 struct std::thread::Thread|check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md
+struct std::time::Deadline|check-prelude std-time-timeout monotonic deadline helper; docs/stdlib/modules/time.md
 struct std::time::Duration|std time duration helper tests; docs/stdlib/modules/time.md
 struct std::time::Instant|std time monotonic instant tests; docs/stdlib/modules/time.md
 struct std::time::SystemTime|std time wall-clock tests; docs/stdlib/modules/time.md
