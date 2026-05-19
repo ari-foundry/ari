@@ -223,6 +223,7 @@ path::is_separator(byte)
 path::is_absolute(path)
 path::is_relative(path)
 path::trim_trailing_separators(path)
+path::components(path)
 path::file_name(path)
 path::parent(path)
 path::extension(path)
@@ -231,8 +232,10 @@ path::join_in(ref mut zone, base, child)
 path::normalize_in(ref mut zone, path)
 ```
 
-The current separator policy is POSIX-style `/` only. Borrowed component
-helpers return `Option[Slice[u8]]` views into the original path bytes.
+The current separator policy is POSIX-style `/` only. Single-component helpers
+return `Option[Slice[u8]]` views into the original path bytes.
+`components(path)` returns a lazy iterator over non-empty borrowed components
+and skips leading, repeated, and trailing separators.
 `join_in` and `normalize_in` allocate byte strings in the caller-provided
 zone. Normalization collapses repeated separators and removes `.` components,
 but keeps `..` components because resolving them safely depends on stronger

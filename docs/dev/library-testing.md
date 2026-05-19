@@ -111,6 +111,9 @@ identifies the exact case:
 - `std-path-basic.ari`: source `std::path` POSIX-style separator policy,
   absolute/relative checks, borrowed component views, join, and lightweight
   normalization behavior.
+- `std-path-components.ari`: source `std::path::components` lazy borrowed
+  iterator behavior for absolute paths, repeated separators, trailing
+  separators, and root-only paths.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

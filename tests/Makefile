@@ -562,6 +562,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4path12normalize_in' $(BUILD_DIR)/prelude/std-path-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-basic.ari -o $(BUILD_DIR)/prelude/std-path-basic.elf
 	$(BUILD_DIR)/prelude/std-path-basic.elf; code=$$?; test $$code -eq 41
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-components.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-components.ll
+	grep -q '_ARNv3std4path10components' $(BUILD_DIR)/prelude/std-path-components.ll
+	grep -q 'std__path__Components13std__Iterator4next' $(BUILD_DIR)/prelude/std-path-components.ll
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-components.ari -o $(BUILD_DIR)/prelude/std-path-components.elf
+	$(BUILD_DIR)/prelude/std-path-components.elf; code=$$?; test $$code -eq 111
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits6is_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits7any_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll

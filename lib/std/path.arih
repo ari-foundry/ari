@@ -27,6 +27,11 @@ fn component_start(values: std::Slice[u8], end: i64) -> i64 {
   return separator + 1;
 }
 
+pub struct Components {
+  path: std::Slice[u8],
+  mut index: i64,
+}
+
 pub fn is_separator(value: u8) -> bool {
   return value == (47 as u8);
 }
@@ -55,6 +60,10 @@ pub fn trim_trailing_separators(path: std::Slice[u8]) -> std::Slice[u8] {
     end = end - 1;
   }
   return slice_range(path, 0, end);
+}
+
+pub fn components(path: std::Slice[u8]) -> Components {
+  return Components { path: path, index: 0 };
 }
 
 pub fn file_name(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
@@ -156,6 +165,30 @@ pub fn join_in(zone: ref mut Zone, base: std::Slice[u8], child: std::Slice[u8]) 
   }
   output.extend_from_slice_in(zone, child);
   return output;
+}
+
+impl std::Iterator[std::Slice[u8]] for std::path::Components {
+  pub fn next(self: ref mut Self) -> std::Option[std::Slice[u8]] {
+    while self.index < self.path.len {
+      if !is_separator(self.path[self.index]) {
+        break;
+      }
+      self.index = self.index + 1;
+    }
+
+    if self.index >= self.path.len {
+      return std::None<std::Slice[u8]>();
+    }
+
+    let start = self.index;
+    while self.index < self.path.len {
+      if is_separator(self.path[self.index]) {
+        break;
+      }
+      self.index = self.index + 1;
+    }
+    return std::Some<std::Slice[u8]>(slice_range(self.path, start, self.index));
+  }
 }
 
 pub fn normalize_in(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::String {

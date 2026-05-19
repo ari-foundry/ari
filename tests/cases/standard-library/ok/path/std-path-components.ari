@@ -1,0 +1,41 @@
+// Covers source-only lexical component iteration over borrowed path bytes.
+fn main() -> i64 {
+  var path = [
+    47u8,
+    117u8, 115u8, 114u8,
+    47u8, 47u8,
+    108u8, 111u8, 99u8, 97u8, 108u8,
+    47u8,
+    98u8, 105u8, 110u8,
+    47u8
+  ];
+  var usr = [117u8, 115u8, 114u8];
+  var local = [108u8, 111u8, 99u8, 97u8, 108u8];
+  var bin = [98u8, 105u8, 110u8];
+
+  var iterated = path::components(path.as_slice());
+  var score = 0;
+  for part in ref mut iterated {
+    if part.equals(usr.as_slice()) {
+      score = score + 1;
+    }
+    if part.equals(local.as_slice()) {
+      score = score + 10;
+    }
+    if part.equals(bin.as_slice()) {
+      score = score + 100;
+    }
+  }
+
+  var root = [47u8];
+  var empty = path::components(root.as_slice());
+  match empty.next() {
+    std::Some(_) => {
+      panic();
+    }
+    std::None => {}
+  }
+
+  assert_eq_i64(score, 111);
+  return score;
+}
