@@ -60,6 +60,10 @@ depends on it.
 - Use `assert` only for programmer errors and current precondition traps.
 - Keep mutating methods on `self: ref mut Self`.
 - Keep read-only methods on `self: ref Self`.
+- Read-only methods can be chained from non-owning temporary values. Prefer
+  `path.as_slice().equals("src")` over introducing a temporary only to satisfy
+  a borrowed receiver. Bind a local when the receiver is mutable or owns
+  resources.
 - Do not add hidden allocation. Every allocation must flow through `Zone`.
 
 ## Source Comments

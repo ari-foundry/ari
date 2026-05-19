@@ -20346,6 +20346,55 @@ private:
         return receiver_type;
     }
 
+    void materialize_temporary_borrow_receiver(SourceLocation loc,
+                                               const std::string& method_name,
+                                               IrExprPtr& receiver,
+                                               const IrType& result_type,
+                                               bool mutable_receiver_borrow,
+                                               std::vector<IrStmtPtr>& prelude) {
+        if (mutable_receiver_borrow) {
+            fail(loc,
+                 "method '" + method_name +
+                     "' with mutable borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
+        }
+        if (is_borrow_type(result_type) || contains_borrow_type(result_type)) {
+            fail(loc,
+                 "method '" + method_name +
+                     "' with borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
+        }
+        if (is_owner_type(receiver->type) || contains_borrow_type(receiver->type)) {
+            fail(loc,
+                 "method '" + method_name +
+                     "' with borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
+        }
+
+        IrType receiver_type = receiver->type;
+        std::string temp_name = make_hidden_local("$receiver");
+        declare_local(loc, temp_name, receiver_type, false);
+        prelude.push_back(make_ir_var_decl(
+            loc,
+            temp_name,
+            receiver_type,
+            std::move(receiver),
+            false));
+        receiver = check_expr(*make_ast_borrow_expr(
+            loc,
+            make_ast_name_expr(loc, temp_name),
+            false));
+    }
+
+    IrExprPtr wrap_call_with_receiver_prelude(SourceLocation loc,
+                                              std::vector<IrStmtPtr> prelude,
+                                              IrExprPtr call) const {
+        if (prelude.empty()) return call;
+        auto block = std::make_unique<IrExpr>();
+        block->kind = IrExprKind::Block;
+        block->loc = loc;
+        block->type = call->type;
+        set_ir_expr_block_payload(*block, "", std::move(prelude), std::move(call));
+        return block;
+    }
+
     static std::string drop_impl_key(const IrType& type) {
         return type_name(type);
     }
@@ -23105,6 +23154,7 @@ private:
             fail(expr.loc, "wrong argument count for trait-qualified method call '" + display + "'");
         }
 
+        std::vector<IrStmtPtr> receiver_prelude;
         bool mutable_receiver_borrow = false;
         if (!is_borrow_type(receiver->type) &&
             borrowed_receiver_matches_value(sig.params[0], receiver->type, mutable_receiver_borrow)) {
@@ -23113,11 +23163,16 @@ private:
                 clone_borrowable_receiver_expr(*expr.args.front()),
                 mutable_receiver_borrow);
             if (!expr_operand(*borrow_expr)) {
-                fail(expr.loc,
-                     "method '" + method_name +
-                         "' with borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
+                materialize_temporary_borrow_receiver(
+                    expr.args.front()->loc,
+                    method_name,
+                    receiver,
+                    sig.result,
+                    mutable_receiver_borrow,
+                    receiver_prelude);
+            } else {
+                receiver = check_expr(*borrow_expr);
             }
-            receiver = check_expr(*borrow_expr);
         }
 
         IrExprPtr receiver_arg = try_make_implicit_slice_argument(*expr.args.front(), sig.params[0]);
@@ -23140,13 +23195,14 @@ private:
                 sig.params[i]);
             args.push_back(std::move(arg));
         }
-        return finish_tracked_call(
+        IrExprPtr call = finish_tracked_call(
             expr.loc,
             display,
             method.lowered_name,
             sig,
             std::move(args),
             borrow_mark);
+        return wrap_call_with_receiver_prelude(expr.loc, std::move(receiver_prelude), std::move(call));
     }
 
     IrExprPtr check_trait_qualified_associated_call(
@@ -23599,6 +23655,7 @@ private:
             fail(expr.loc, "wrong argument count for method '" + expr.name + "'");
         }
 
+        std::vector<IrStmtPtr> receiver_prelude;
         bool mutable_receiver_borrow = false;
         if (!is_borrow_type(receiver->type) &&
             borrowed_receiver_matches_value(sig.params[0], receiver->type, mutable_receiver_borrow)) {
@@ -23607,11 +23664,16 @@ private:
                 clone_borrowable_receiver_expr(*expr_operand(expr)),
                 mutable_receiver_borrow);
             if (!expr_operand(*borrow_expr)) {
-                fail(expr.loc,
-                     "method '" + expr.name +
-                         "' with borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
+                materialize_temporary_borrow_receiver(
+                    expr_operand(expr)->loc,
+                    expr.name,
+                    receiver,
+                    sig.result,
+                    mutable_receiver_borrow,
+                    receiver_prelude);
+            } else {
+                receiver = check_expr(*borrow_expr);
             }
-            receiver = check_expr(*borrow_expr);
         }
 
         IrExprPtr receiver_arg = try_make_implicit_slice_argument(*expr_operand(expr), sig.params[0]);
@@ -23641,13 +23703,14 @@ private:
         require_std_box_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
         require_std_collections_set_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
         require_std_string_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
-        return finish_tracked_call(
+        IrExprPtr call = finish_tracked_call(
             expr.loc,
             expr.name,
             method.lowered_name,
             sig,
             std::move(args),
             borrow_mark);
+        return wrap_call_with_receiver_prelude(expr.loc, std::move(receiver_prelude), std::move(call));
     }
 
     IrExprPtr check_binary(const Expr& expr, IrExprPtr lowered) {

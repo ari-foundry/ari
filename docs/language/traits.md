@@ -51,6 +51,10 @@ fn main() -> i64 {
 This lowers to static dispatch through the matching impl method. If more than
 one visible impl provides the same method name for the same receiver type, the
 call is rejected as ambiguous until Ari has explicit disambiguation syntax.
+Read-only `self: ref Self` methods may also be called on non-owning temporary
+values, so helper chains such as `text.as_slice().equals("ari")` do not need a
+manual local binding. Mutable borrowed receivers and ownership-carrying
+temporaries still need a named local so mutation and drop behavior stay visible.
 
 ## Trait Bounds
 

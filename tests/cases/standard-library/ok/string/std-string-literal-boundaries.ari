@@ -25,14 +25,13 @@ fn main() -> i64 {
 
   let c_text: CStr = "hello";
   assert_eq_i64(c_text.len(), 5);
-  let c_bytes = c_text.as_slice();
-  assert(c_bytes.equals("hello"));
+  assert(c_text.as_slice().equals("hello"));
 
   let os_text: std::string::OsStr = "hello";
   assert_eq_i64(os_text.len(), 5);
   assert(os_text.is_utf8());
-  let os_bytes = os_text.as_slice();
-  assert(os_bytes.equals("hello"));
+  assert(os_text.as_slice().equals("hello"));
+  assert(std::string::bytes("hello").equals("hello"));
 
   let utf8_text: std::string::Utf8 = "\xC3\xA9";
   assert_eq_i64(utf8_text.len(), 2);
@@ -44,8 +43,7 @@ fn main() -> i64 {
   var zone = zone::create(96);
   let base: std::path::PathBytes = "/tmp";
   assert(base.is_absolute());
-  let base_bytes = base.as_slice();
-  assert(base_bytes.equals("/tmp"));
+  assert(base.as_slice().equals("/tmp"));
   let joined = base.join_in(ref mut zone, "bin");
   assert(joined.equals("/tmp/bin"));
   zone::destroy(zone);
