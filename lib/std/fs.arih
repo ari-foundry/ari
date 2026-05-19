@@ -57,6 +57,42 @@ pub fn write_bytes(file: File, values: std::Slice[u8]) -> i64 {
   return index;
 }
 
+fn write_all_with_mode(path: string, mode: string, values: std::Slice[u8]) -> bool {
+  let file = try_open(path, mode).unwrap_or(File::invalid());
+  if !file.is_open() {
+    return false;
+  }
+  let written = file.write_bytes(values);
+  let closed = file.close();
+  return written == values.len && closed;
+}
+
+pub fn write(path: string, values: std::Slice[u8]) -> bool {
+  return write_all_with_mode(path, "w", values);
+}
+
+pub fn append(path: string, values: std::Slice[u8]) -> bool {
+  return write_all_with_mode(path, "a", values);
+}
+
+pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {
+  var output = std::string::new(zone, 64);
+  let file = try_open(path, "r").unwrap_or(File::invalid());
+  if !file.is_open() {
+    return output;
+  }
+
+  // The current String is byte-oriented; this helper preserves bytes and stops
+  // at the existing read-byte EOF/failure sentinel.
+  var byte = file.read_byte();
+  while byte >= 0 {
+    output.push_in(zone, byte as u8);
+    byte = file.read_byte();
+  }
+  file.close();
+  return output;
+}
+
 pub impl std::fs::File {
   fn invalid() -> File {
     return File { fd: -1 };

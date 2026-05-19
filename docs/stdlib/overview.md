@@ -28,7 +28,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::thread` | Function-pointer thread spawn/join and runtime ids. | `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `load`, `store`, `swap`, `fetch_add`, `compare_exchange`. |
 | `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
-| `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `open`, `try_open`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, `close`. |
+| `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `open`, `try_open`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, whole-file `write`, `append`, `read_to_string`, `close`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
@@ -142,9 +142,10 @@ constructor/elapsed helpers are ordinary Ari source.
 `std::fs` is the first filesystem slice. `exists`, `remove`, mode-string
 `open`, close, and single-byte read/write are runtime-backed because they call
 host file-descriptor APIs. `try_open`, compatibility `try_open_*` wrappers,
-`write_bytes`, and the `File` methods are ordinary Ari source over the raw
-hooks. The handle is a visible value today and should become a stronger owned
-resource when OS resource ownership is modeled by the language.
+`write_bytes`, whole-file `write`, `append`, byte-string `read_to_string`, and
+the `File` methods are ordinary Ari source over the raw hooks. The handle is a
+visible value today and should become a stronger owned resource when OS
+resource ownership is modeled by the language.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
 small, insertion-order, linear set with iterator support. `Deque[T]` and

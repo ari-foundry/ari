@@ -71,6 +71,8 @@ identifies the exact case:
 - `std-fs-open-modes.ari`: mode-string `open`/`try_open` behavior for `"r"`,
   `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes, and invalid
   mode strings.
+- `std-fs-read-write.ari`: source whole-file `write`, `append`,
+  `read_to_string`, missing-file empty reads, and truncating rewrite behavior.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

@@ -4,11 +4,13 @@
 can work with files without reaching directly for raw syscalls or C ABI
 declarations. The first slices are deliberately small: check whether a path
 exists, open a byte stream with a compact mode string, read and write bytes,
-close the handle, and remove a file.
+write or append a byte slice in one call, read a whole file into Ari's
+byte-oriented `String`, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `read_byte`, `write_byte`,
-`write_bytes`, `close`, `exists`, and `remove`, not type-suffixed names.
+`write_bytes`, `write`, `append`, `read_to_string`, `close`, `exists`, and
+`remove`, not type-suffixed names.
 
 ## API
 
@@ -27,6 +29,9 @@ fs::close(file)
 fs::read_byte(file)
 fs::write_byte(file, value)
 fs::write_bytes(file, values)
+fs::write(path, values)
+fs::append(path, values)
+fs::read_to_string(ref mut zone, path)
 
 File::invalid()
 file.is_open()
@@ -68,6 +73,19 @@ compatibility wrappers over `open(path, "r")`, `open(path, "w")`, and
 `write_byte(file, value)` returns whether exactly one byte was written.
 `write_bytes(file, values)` writes each byte in a `Slice[u8]` until one write
 fails and returns the number of bytes written before that failure.
+
+`write(path, values)` opens `path` with `"w"`, writes the whole `Slice[u8]`,
+closes the handle, and returns whether the complete write and close succeeded.
+`append(path, values)` does the same with `"a"` mode. Both helpers are source
+Ari over `try_open`, `File.write_bytes`, and `File.close`.
+
+`read_to_string(ref mut zone, path)` opens `path` with `"r"`, reads bytes until
+the current `read_byte` EOF/failure sentinel, closes the handle, and returns a
+zone-backed `std::string::String`. The current Ari `String` is byte-oriented;
+this helper does not validate UTF-8 or any other text encoding. A missing or
+unopenable file returns an empty `String`, so use `fs::exists(path)` or
+`fs::try_open(path, "r")` first when absence must be distinguished from an
+empty file.
 
 `close(file)` returns whether the host accepted the close request. Closing an
 invalid handle returns `false`. The current first slice does not mutate the
@@ -125,6 +143,21 @@ if appender.is_open() {
 }
 ```
 
+Use the whole-file byte helpers for small files:
+
+```ari
+var data = [65 as u8, 66 as u8];
+fs::write(path, data.as_slice());
+
+var tail = [67 as u8];
+fs::append(path, tail.as_slice());
+
+var zone = zone::create(512);
+let text = fs::read_to_string(ref mut zone, path);
+let first = text.get(0);
+zone::destroy(zone);
+```
+
 Open an existing file for both reading and writing:
 
 ```ari
@@ -149,9 +182,9 @@ if file.is_open() {
 - The mode-string surface is intentionally small. Use `"rw"` or `"r+"` for
   existing read/write files, `"w+"` for create/truncate read/write, and `"a+"`
   for read/append. More detailed flags belong in a future options API.
-- Error details are not surfaced yet. Current APIs expose boolean success or a
-  `-1` read sentinel. A future `std::os` or `std::io` error value can carry
-  platform error codes.
+- Error details are not surfaced yet. Current APIs expose boolean success, an
+  empty-string read fallback, or a `-1` read sentinel. A future `std::os` or
+  `std::io` error value can carry platform error codes.
 
 ## Tests
 
@@ -159,6 +192,7 @@ if file.is_open() {
 tests/cases/standard-library/ok/fs/std-fs-basic.ari
 tests/cases/standard-library/ok/fs/std-fs-append.ari
 tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
+tests/cases/standard-library/ok/fs/std-fs-read-write.ari
 ```
 
 `make check-prelude` emits LLVM for the runtime hooks, checks the C syscall
@@ -168,7 +202,9 @@ reads, byte-slice writes, close, removal, and `Option[File]` read/write opens.
 `std-fs-append.ari` covers append-mode open, preservation of existing bytes,
 and failed append opens through `Option[File]`. `std-fs-open-modes.ari` covers
 the mode-string contract, including `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes,
-and invalid mode strings.
+and invalid mode strings. `std-fs-read-write.ari` covers source whole-file
+write, append, read-to-byte-string, missing-file empty reads, and truncating
+rewrite behavior.
 
 ## Next Work
 

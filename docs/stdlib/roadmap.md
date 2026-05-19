@@ -30,7 +30,8 @@ fetch-add/compare-exchange hooks plus source method wrappers, `time`
 monotonic/wall-clock/sleep hooks plus source
 `Duration`/`Instant`/`SystemTime` helpers, `fs` byte-oriented file existence,
 open/read/write/append/close/remove hooks plus source `File` methods and
-`Option[File]` open helpers,
+`Option[File]` open helpers, whole-file `write`/`append`, and
+`read_to_string`,
 `collections::Set[T]` as the linear insertion-order set with `try_*`
 accessors, `pop`/`try_pop`, replace-or-insert updates, explicit reserve
 growth, direct iterator support, open-addressed `HashMap`/`HashSet` with
@@ -49,7 +50,7 @@ work. Each one should land in small tested slices with natural API names.
 | --- | --- | --- |
 | `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future path normalization and platform-specific expansion. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `exit`, `success`, `failure`, status predicates, POSIX `fork`, `wait`, and child/error predicates; future portable `spawn`, richer status/result values, and process handles. |
-| `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, and `close`; future owned resource policy, metadata, directory iteration, path helpers, and an options-style open builder. |
+| `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, whole-file `write`/`append`, `read_to_string`, and `close`; future owned resource policy, metadata, directory iteration, path helpers, and an options-style open builder. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, richer status/result values, and `std::sync` integration. |
 | `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`; future generic atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |

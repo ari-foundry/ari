@@ -270,6 +270,9 @@ fs::close(file)
 fs::read_byte(file)
 fs::write_byte(file, value)
 fs::write_bytes(file, values)
+fs::write(path, values)
+fs::append(path, values)
+fs::read_to_string(ref mut zone, path)
 
 File::invalid()
 file.is_open()
@@ -290,6 +293,11 @@ as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns whether one byte was written. `write_bytes` writes a
 `Slice[u8]` and returns the count written before the first failed byte write.
+`write(path, values)` truncates or creates a small byte file and writes the
+whole `Slice[u8]`; `append(path, values)` creates if needed and appends the
+whole slice. `read_to_string(ref mut zone, path)` returns a zone-backed
+byte-oriented `std::string::String`, using an empty `String` when the file
+cannot be opened.
 The current `File` value is not an owned resource yet, so close each successful
 handle once and do not reuse copied handles after closing.
 

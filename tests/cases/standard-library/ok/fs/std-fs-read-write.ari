@@ -1,0 +1,66 @@
+// Covers source std::fs whole-file conveniences: byte-slice write, append,
+// read-to-byte-string, missing-file empty reads, and truncating rewrite.
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-read-write.tmp";
+  let missing_path = "build/prelude/std-fs-read-write-missing.tmp";
+  if fs::exists(path) {
+    fs::remove(path);
+  }
+  if fs::exists(missing_path) {
+    fs::remove(missing_path);
+  }
+
+  var zone = zone::create(1024);
+  var score = 0;
+
+  let missing = fs::read_to_string(ref mut zone, missing_path);
+  if missing.is_empty() {
+    score = score + 1;
+  }
+
+  var first = [65 as u8, 66 as u8];
+  if fs::write(path, first.as_slice()) {
+    score = score + 2;
+  }
+
+  var tail = [67 as u8, 68 as u8];
+  if fs::append(path, tail.as_slice()) {
+    score = score + 3;
+  }
+
+  let text = fs::read_to_string(ref mut zone, path);
+  if !text.is_empty() {
+    score = score + 4;
+  }
+  if text.len() == 4 {
+    score = score + 5;
+  }
+  if text.get(0) == 65 as u8 {
+    score = score + 6;
+  }
+  if text.get(3) == 68 as u8 {
+    score = score + 7;
+  }
+
+  var replacement = [90 as u8];
+  if fs::write(path, replacement.as_slice()) {
+    score = score + 8;
+  }
+  let after = fs::read_to_string(ref mut zone, path);
+  if after.len() == 1 {
+    score = score + 9;
+  }
+  if after.get(0) == 90 as u8 {
+    score = score + 10;
+  }
+
+  if fs::remove(path) {
+    score = score + 11;
+  }
+  if !fs::exists(path) {
+    score = score + 12;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

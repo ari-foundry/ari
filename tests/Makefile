@@ -271,6 +271,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-modes.ari -o $(BUILD_DIR)/prelude/std-fs-open-modes.elf
 	$(BUILD_DIR)/prelude/std-fs-open-modes.elf; code=$$?; test $$code -eq 34
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-modes.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-open-modes.elf; $(BUILD_DIR)/prelude/std-fs-open-modes.elf; code=$$?; test $$code -eq 34; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-write.ll
+	grep -F -q "std2fs5write" $(BUILD_DIR)/prelude/std-fs-read-write.ll
+	grep -F -q "std2fs6append" $(BUILD_DIR)/prelude/std-fs-read-write.ll
+	grep -F -q "std2fs14read_to_string" $(BUILD_DIR)/prelude/std-fs-read-write.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari -o $(BUILD_DIR)/prelude/std-fs-read-write.elf
+	$(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 78
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-write.elf; $(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 78; fi
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll
