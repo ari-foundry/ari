@@ -591,8 +591,8 @@ snapshot-style containers.
 The LLVM host backend initializes a small runtime context inside `@ari_entry`
 before the `@"ari::main"` bridge calls source `main`.
 It stores `argc`, `argv`, and the Ari runtime thread id. Current executable
-builds initialize the main thread id to `0`; later `std::thread` work should
-install nonzero ids for spawned Ari threads.
+builds initialize the main thread id to `0`; `std::thread` installs nonzero
+ids for spawned Ari threads before they enter source code.
 
 Available context builtins:
 
@@ -625,7 +625,7 @@ Out-of-range `arg(index)` currently returns an empty string, so use
 `env::try_arg(index)` when missing arguments are part of normal control flow.
 `context::user_arg_count()` excludes `argv[0]`, while
 `context::thread_id()` returns the Ari runtime thread id. The main thread is
-`0`, so `context::is_main_thread()` is true for current executable builds.
+`0`; spawned `std::thread` workers receive positive ids.
 `env::program_name()` is the optional `argv[0]` value. `env::try_current_dir()`
 and `env::try_executable_path()` are the preferred path accessors when host
 lookup failure should be handled normally.

@@ -103,6 +103,12 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::process::fork", "ari_builtin_process_fork"},
         {"process::wait", "ari_builtin_process_wait"},
         {"std::process::wait", "ari_builtin_process_wait"},
+        {"thread::spawn", "ari_builtin_thread_spawn"},
+        {"std::thread::spawn", "ari_builtin_thread_spawn"},
+        {"thread::join", "ari_builtin_thread_join"},
+        {"std::thread::join", "ari_builtin_thread_join"},
+        {"thread::yield_now", "ari_builtin_thread_yield"},
+        {"std::thread::yield_now", "ari_builtin_thread_yield"},
         {"time::monotonic_nanos", "ari_builtin_time_monotonic_nanos"},
         {"std::time::monotonic_nanos", "ari_builtin_time_monotonic_nanos"},
         {"time::unix_nanos", "ari_builtin_time_unix_nanos"},
@@ -194,6 +200,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     const AriBuiltinTypeExpectation boolean = builtin_type("bool");
     const AriBuiltinTypeExpectation void_type = builtin_type("void");
     const AriBuiltinTypeExpectation source_string = builtin_type("string");
+    const AriBuiltinTypeExpectation thread_entry = builtin_type("fn() -> i64");
+    const AriBuiltinTypeExpectation thread_handle = builtin_type("std::thread::Thread");
     const AriBuiltinTypeExpectation ptr_u8 = builtin_type("ptr u8");
     const AriBuiltinTypeExpectation ptr_c_void = builtin_type("ptr c_void", {"ptr void"});
     const AriBuiltinTypeExpectation own_zone = builtin_type("own Zone");
@@ -217,6 +225,9 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_process_exit") return builtin_sig({i64}, void_type);
     if (symbol == "ari_builtin_process_fork") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_process_wait") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_thread_spawn") return builtin_sig({thread_entry}, thread_handle);
+    if (symbol == "ari_builtin_thread_join") return builtin_sig({thread_handle}, i64);
+    if (symbol == "ari_builtin_thread_yield") return builtin_sig({}, void_type);
     if (symbol == "ari_builtin_time_monotonic_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_unix_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);

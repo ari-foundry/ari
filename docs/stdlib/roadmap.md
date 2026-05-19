@@ -23,9 +23,10 @@ identity/from/into helpers, `context` runtime hooks plus the source
 `set_current_dir`/`executable_path`/`try_executable_path`,
 `input` runtime hooks plus the source `try_read_byte` EOF helper,
 `io` runtime hooks plus source byte-slice output, current `process`
-id/exit/status helpers plus the first POSIX fork/wait slice, `time`
-monotonic/wall-clock/sleep hooks plus source `Duration`/`Instant`/
-`SystemTime` helpers, `fs` byte-oriented file existence,
+id/exit/status helpers plus the first POSIX fork/wait slice, `thread`
+function-pointer spawn/join/yield hooks plus runtime ids and source handle
+helpers, `time` monotonic/wall-clock/sleep hooks plus source
+`Duration`/`Instant`/`SystemTime` helpers, `fs` byte-oriented file existence,
 open/read/write/append/close/remove hooks plus source `File` methods and
 `Option[File]` open helpers,
 `collections::Set[T]` as the linear insertion-order set with `try_*`
@@ -47,7 +48,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `exit`, `success`, `failure`, status predicates, POSIX `fork`, `wait`, and child/error predicates; future portable `spawn`, richer status/result values, and process handles. |
 | `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, and `close`; future owned resource policy, metadata, directory iteration, path helpers, and an options-style open builder. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
-| `std::thread` | Start and join OS threads with clear ownership transfer. | Future `spawn`, `join`, thread id, stack/runtime context setup. |
+| `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, richer status/result values, and `std::sync` integration. |
 | `std::sync` | Share state between threads deliberately. | Future atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
 | `std::collections` | Store keyed and set-like data beyond vectors. | Current linear `Set[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, live-bucket hash iterators, sorted tree iterators; future tree deletion, deques, and trait-driven constructors. |
 | `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, error-code translation. |
@@ -100,15 +101,17 @@ work. Each one should land in small tested slices with natural API names.
   executable-path base into path normalization and platform-specific policy
   once owned-string behavior is stable.
 - Keep `std::context` as the low-level runtime state boundary: arguments and
-  main-thread identity are implemented now; future thread support should extend
-  the thread-id slot instead of changing the public context API shape.
+  runtime thread identity are implemented now. `std::thread` extends the same
+  thread-id slot for spawned Ari threads instead of changing the public context
+  API shape.
 - Grow `std::process` from current-process helpers and the first POSIX
   fork/wait slice into portable child-process handles. `std::time` and
   `std::fs` now have their first thin wrappers; time should grow toward timers
   and interruption-aware sleep, while filesystem work should next add stronger
-  owned-resource policy, metadata, directory iteration, and path helpers. Add
-  `std::thread` and `std::sync` as thin explicit wrappers after
-  ownership-transfer and shared-state rules are stable.
+  owned-resource policy, metadata, directory iteration, and path helpers.
+  `std::thread` now has its first function-pointer spawn/join wrapper; grow it
+  toward explicit ownership transfer, richer statuses, and safer shared-state
+  policy alongside future `std::sync`.
 - Keep syscall-facing helpers minimal and modern: process arguments and
   environment, current directory, file descriptors/handles, time, process
   spawn/fork where the platform supports it, thread creation/join, atomics or

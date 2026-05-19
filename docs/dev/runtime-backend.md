@@ -43,9 +43,9 @@ host main(argc, argv)
 ```
 
 The context stores `argc`, `argv`, and a thread-id slot. `ari_context_init`
-sets the main thread id to `0`; future `std::thread` support should install a
+sets the main thread id to `0`; the `std::thread` trampoline installs a
 nonzero id before a spawned Ari thread calls source code. The slot is
-thread-local so thread runtime work can keep per-thread context state without
+thread-local so thread runtime work keeps per-thread context state without
 changing the public `std::context::thread_id()` API.
 
 ## Calling Convention

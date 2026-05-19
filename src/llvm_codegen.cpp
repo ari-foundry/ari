@@ -178,6 +178,7 @@ public:
         out << "@ari_argc = internal global i32 0\n";
         out << "@ari_argv = internal global ptr null\n\n";
         out << "@ari_thread_id = internal thread_local global i64 0\n\n";
+        out << "@ari_next_thread_id = internal global i64 1\n\n";
         out << "@ari_cwd_buffer = internal global [4096 x i8] zeroinitializer, align 16\n";
         out << "@ari_executable_path_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_line_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
@@ -391,6 +392,9 @@ private:
                symbol == "getpid" ||
                symbol == "fork" ||
                symbol == "waitpid" ||
+               symbol == "pthread_create" ||
+               symbol == "pthread_join" ||
+               symbol == "sched_yield" ||
                symbol == "clock_gettime" ||
                symbol == "nanosleep" ||
                symbol == "access" ||
@@ -433,6 +437,7 @@ private:
         }
         if (symbol == "ari_builtin_panic" ||
             symbol == "ari_builtin_process_exit" ||
+            symbol == "ari_builtin_thread_yield" ||
             symbol == "ari_builtin_time_sleep_nanos" ||
             symbol == "ari_builtin_zone_reset" ||
             symbol == "ari_builtin_zone_destroy") {
@@ -468,6 +473,9 @@ private:
         declarations_ << "declare i32 @getpid()\n";
         declarations_ << "declare i32 @fork()\n";
         declarations_ << "declare i32 @waitpid(i32, ptr, i32)\n";
+        declarations_ << "declare i32 @pthread_create(ptr, ptr, ptr, ptr)\n";
+        declarations_ << "declare i32 @pthread_join(i64, ptr)\n";
+        declarations_ << "declare i32 @sched_yield()\n";
         declarations_ << "declare i32 @clock_gettime(i32, ptr)\n";
         declarations_ << "declare i32 @nanosleep(ptr, ptr)\n";
         declarations_ << "declare i32 @access(ptr, i32)\n";
@@ -841,6 +849,74 @@ private:
         line("  ret i64 %code");
         line("fail:");
         line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define private ptr @ari_thread_trampoline(ptr %packet) {");
+        line("entry:");
+        line("  %thread.entry = load ptr, ptr %packet, align 8");
+        line("  %id.ptr = getelementptr i8, ptr %packet, i64 8");
+        line("  %id = load i64, ptr %id.ptr, align 8");
+        line("  store i64 %id, ptr @ari_thread_id");
+        line("  call void @free(ptr %packet)");
+        line("  %result = call i64 %thread.entry()");
+        line("  %as.ptr = inttoptr i64 %result to ptr");
+        line("  ret ptr %as.ptr");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ i64, i64 } @ari_builtin_thread_spawn(ptr %start) {");
+        line("entry:");
+        line("  %native.ptr = alloca i64, align 8");
+        line("  %packet = call ptr @malloc(i64 16)");
+        line("  %alloc.failed = icmp eq ptr %packet, null");
+        line("  br i1 %alloc.failed, label %fail, label %prepare");
+        line("prepare:");
+        line("  store ptr %start, ptr %packet, align 8");
+        line("  %id.ptr = getelementptr i8, ptr %packet, i64 8");
+        line("  %id = atomicrmw add ptr @ari_next_thread_id, i64 1 monotonic");
+        line("  store i64 %id, ptr %id.ptr, align 8");
+        line("  %code = call i32 @pthread_create(ptr %native.ptr, ptr null, ptr @ari_thread_trampoline, ptr %packet)");
+        line("  %create.failed = icmp ne i32 %code, 0");
+        line("  br i1 %create.failed, label %create_fail, label %ok");
+        line("ok:");
+        line("  %native = load i64, ptr %native.ptr, align 8");
+        line("  %with.native = insertvalue { i64, i64 } undef, i64 %native, 0");
+        line("  %with.id = insertvalue { i64, i64 } %with.native, i64 %id, 1");
+        line("  ret { i64, i64 } %with.id");
+        line("create_fail:");
+        line("  call void @free(ptr %packet)");
+        line("  br label %fail");
+        line("fail:");
+        line("  %fail.native = insertvalue { i64, i64 } undef, i64 -1, 0");
+        line("  %fail.thread = insertvalue { i64, i64 } %fail.native, i64 -1, 1");
+        line("  ret { i64, i64 } %fail.thread");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_thread_join({ i64, i64 } %thread) {");
+        line("entry:");
+        line("  %native = extractvalue { i64, i64 } %thread, 0");
+        line("  %invalid = icmp slt i64 %native, 0");
+        line("  br i1 %invalid, label %fail, label %join");
+        line("join:");
+        line("  %result.ptr = alloca ptr, align 8");
+        line("  %code = call i32 @pthread_join(i64 %native, ptr %result.ptr)");
+        line("  %join.failed = icmp ne i32 %code, 0");
+        line("  br i1 %join.failed, label %fail, label %ok");
+        line("ok:");
+        line("  %result.raw = load ptr, ptr %result.ptr, align 8");
+        line("  %result = ptrtoint ptr %result.raw to i64");
+        line("  ret i64 %result");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_thread_yield() {");
+        line("entry:");
+        line("  %ignored = call i32 @sched_yield()");
+        line("  ret void");
         line("}");
         line();
 

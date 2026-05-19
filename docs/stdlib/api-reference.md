@@ -16,6 +16,7 @@ Range[T]
 RangeInclusive[T]
 Box[T]
 String
+Thread
 Set[T]
 HashMap[K, V]
 HashSet[T]
@@ -125,8 +126,8 @@ current-process variable and `env::remove(name)` unsets it; both return whether
 the host accepted the request. `env::current_dir()` and
 `env::executable_path()` return borrowed runtime strings, with `try_*` wrappers
 for ordinary failure; `env::set_current_dir(path)` mutates the current process
-working directory. Portable child-process spawn handles and thread APIs are
-still roadmap items.
+working directory. Portable child-process spawn handles remain roadmap work;
+thread helpers live in `std::thread`.
 
 Process helpers live in `std::process`:
 
@@ -155,6 +156,30 @@ in the parent, and a negative value on failure; use `is_child`, `is_parent`,
 and `is_fork_error` to make that branch readable. `wait(pid)` returns a normal
 child exit status or `-1`; use `is_wait_error` for that sentinel. Rich process
 handles, portable spawn, and detailed status values remain roadmap work.
+
+Thread helpers live in `std::thread`:
+
+```ari
+thread::spawn(entry)
+thread::join(thread)
+thread::yield_now()
+thread::id()
+thread::is_main()
+thread::is_join_error(status)
+
+Thread::spawn(entry)
+Thread::invalid()
+thread.id()
+thread.is_valid()
+thread.join()
+```
+
+`spawn(entry)` starts a thread from a plain `fn() -> i64` entry function and
+returns a `Thread` value handle. `join(thread)` waits for the handle and
+returns the entry function's `i64` result, or `-1` for the current failure
+sentinel; use `is_join_error(status)` for that check. `id()` returns the
+current Ari runtime thread id, with main thread `0` and spawned threads
+positive. `yield_now()` is a host scheduler hint, not synchronization.
 
 Runtime-backed time helpers live in `std::time`:
 

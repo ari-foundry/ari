@@ -1,0 +1,63 @@
+// Covers the first std::thread slice: main-thread identity, function-pointer
+// spawn, child runtime thread id, join result propagation, invalid sentinels,
+// and cooperative yield.
+fn child_value() -> i64 {
+  if thread::is_main() {
+    return 90;
+  }
+  let child_id = thread::id();
+  if child_id <= 0 {
+    return 91;
+  }
+  thread::yield_now();
+  return 37;
+}
+
+fn child_id_value() -> i64 {
+  return thread::id();
+}
+
+fn main() -> i64 {
+  if !thread::is_main() {
+    return 1;
+  }
+  if thread::id() != 0 {
+    return 2;
+  }
+
+  let invalid = Thread::invalid();
+  if invalid.is_valid() {
+    return 3;
+  }
+  if !thread::is_join_error(invalid.join()) {
+    return 4;
+  }
+
+  let first = thread::spawn(child_value);
+  if !first.is_valid() {
+    return 5;
+  }
+  if first.id() <= 0 {
+    return 6;
+  }
+  let first_result = first.join();
+  if thread::is_join_error(first_result) {
+    return 7;
+  }
+  if first_result != 37 {
+    return first_result;
+  }
+
+  let second = Thread::spawn(child_id_value);
+  if !second.is_valid() {
+    return 8;
+  }
+  let second_id = second.id();
+  let second_result = thread::join(second);
+  if second_result != second_id {
+    return 9;
+  }
+
+  thread::yield_now();
+  return 42;
+}

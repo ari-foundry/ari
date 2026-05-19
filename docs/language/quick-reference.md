@@ -229,6 +229,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | environment/path state | `env::try_get(name)`, `env::set(name, value)`, `env::try_current_dir()`, `env::set_current_dir(path)`, `env::try_executable_path()` |
 | current process | `process::id()`, `process::exit(code)`, `process::success()`, `process::failure()` |
 | POSIX child process | `process::fork()`, `process::wait(pid)`, `process::is_child(pid)`, `process::is_parent(pid)`, `process::is_wait_error(status)` |
+| thread | `thread::spawn(entry)`, `thread::join(handle)`, `handle.join()`, `thread::id()`, `thread::yield_now()` |
 | input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` |
 | raw IO | `io::write_i64`, `io::write_u64`, `io::write_bool`, `io::write_byte`, `io::write_bytes`, `io::newline` |
 | layout | `size_of<T>()`, `align_of<T>()` |

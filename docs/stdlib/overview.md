@@ -25,6 +25,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
+| `std::thread` | Function-pointer thread spawn/join and runtime ids. | `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, `is_join_error`. |
 | `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
 | `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `open`, `try_open`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, `close`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
@@ -62,8 +63,8 @@ invalid after `reset` or `destroy`, and sema rejects later use.
 Most helper methods are plain Ari source. Compiler hooks remain for primitives
 that need backend or checker knowledge:
 
-- `extern "ari"` IO, panic, environment, process, string allocation, and zone
-  runtime hooks.
+- `extern "ari"` IO, panic, environment, process, thread, string allocation,
+  and zone runtime hooks.
 - layout queries and typed pointer operations in `std::mem`.
 - formatting macros, because they inspect literal format strings.
 - provenance checks for zone-backed handles and raw pointers.
@@ -116,6 +117,13 @@ the host process id, `exit` terminates with an explicit status, and the status
 helpers are source Ari. The first POSIX child-process slice adds runtime-backed
 `fork`/`wait` plus source branch and error predicates. Portable spawn, richer
 status values, and process handles are intentionally still roadmap work.
+
+`std::thread` is the first thread slice. `spawn`, `join`, and `yield_now` are
+runtime-backed because they call the host threading API and install Ari's
+per-thread runtime id before source code runs. `id`, `is_main`,
+`is_join_error`, and the `Thread` methods are source helpers. Capturing
+closures, shared state, atomics, and locks remain future `std::sync` and richer
+thread-policy work.
 
 `std::time` follows the same OS-facing pattern. `monotonic_nanos`,
 `unix_nanos`, and `sleep_nanos` are runtime-backed because they call the host

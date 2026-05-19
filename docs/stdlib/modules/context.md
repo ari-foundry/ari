@@ -47,9 +47,9 @@ pointer-shaped value. If `index` is out of range, it returns an empty string.
 Index `0` is the host-provided `argv[0]` value.
 
 `thread_id()` returns the Ari runtime thread id. The main thread is `0`.
-Current executables only install the main-thread context, so
-`is_main_thread()` is true today. Future `std::thread` work should install
-nonzero ids for spawned Ari threads before they enter source code.
+`std::thread` installs nonzero ids for spawned Ari threads before they enter
+source code, so `is_main_thread()` is the low-level predicate for the current
+runtime context.
 
 Application code should usually prefer the user-facing `std::env` wrappers for
 arguments. `std::context` stays useful for runtime, tests, embedders, and other
@@ -79,8 +79,8 @@ fn main() -> i64 {
 - Argument strings are borrowed from the runtime context. Copy into a
   zone-backed `std::string::String` later when longer-lived owned text is
   needed.
-- `thread_id()` only distinguishes the main thread today. Thread spawning and
-  per-thread context installation are still roadmap work.
+- `std::thread` owns thread creation and joining. `std::context` intentionally
+  stays limited to reading the current runtime id.
 - Shared-library context behavior is still tracked separately in the compiler
   test matrix.
 

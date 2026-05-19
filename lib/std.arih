@@ -8,6 +8,8 @@ pub mod env;
 
 pub mod process;
 
+pub mod thread;
+
 pub mod time;
 
 pub mod fs;
@@ -68,6 +70,7 @@ pub use collections::HashSet;
 pub use collections::Set;
 pub use collections::TreeMap;
 pub use collections::TreeSet;
+pub use thread::Thread;
 
 pub impl[T] Slice[T] {
   fn is_empty(self: ref Self) -> bool {

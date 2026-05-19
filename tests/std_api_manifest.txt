@@ -176,6 +176,12 @@ fn std::string::from_string|std string handle tests; docs/dev/test-matrix.md Exp
 fn std::string::new|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::with_capacity|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
+fn std::thread::id|check-prelude std-thread-basic source wrapper around context thread id; docs/stdlib/modules/thread.md
+fn std::thread::is_join_error|check-prelude std-thread-basic join sentinel helper; docs/stdlib/modules/thread.md
+fn std::thread::is_main|check-prelude std-thread-basic source main-thread predicate; docs/stdlib/modules/thread.md
+fn std::thread::join|check-prelude std-thread-basic thread join hook; docs/stdlib/modules/thread.md
+fn std::thread::spawn|check-prelude std-thread-basic function-pointer spawn hook; docs/stdlib/modules/thread.md
+fn std::thread::yield_now|check-prelude std-thread-basic scheduler yield hook; docs/stdlib/modules/thread.md
 fn std::time::elapsed|check-prelude std-time-basic source elapsed-time helper; docs/stdlib/modules/time.md
 fn std::time::microseconds|check-prelude std-time-basic source duration constructor; docs/stdlib/modules/time.md
 fn std::time::milliseconds|check-prelude std-time-basic source duration constructor; docs/stdlib/modules/time.md
@@ -398,6 +404,11 @@ method std::string::String::try_first|check-prelude std-string-try-byte-access O
 method std::string::String::try_get|check-prelude std-string-try-byte-access Option-returning out-of-range byte access; docs/stdlib/modules/string.md
 method std::string::String::try_last|check-prelude std-string-try-byte-access Option-returning empty-safe byte access; docs/stdlib/modules/string.md
 method std::string::String::try_pop|check-prelude std-string-try-byte-access Option-returning empty pop; docs/stdlib/modules/string.md
+method std::thread::Thread::id|check-prelude std-thread-basic handle id accessor; docs/stdlib/modules/thread.md
+method std::thread::Thread::invalid|check-prelude std-thread-basic invalid handle sentinel; docs/stdlib/modules/thread.md
+method std::thread::Thread::is_valid|check-prelude std-thread-basic handle validity predicate; docs/stdlib/modules/thread.md
+method std::thread::Thread::join|check-prelude std-thread-basic handle join helper; docs/stdlib/modules/thread.md
+method std::thread::Thread::spawn|check-prelude std-thread-basic associated function-pointer spawn helper; docs/stdlib/modules/thread.md
 method std::time::Duration::add|check-prelude std-time-basic source duration addition helper; docs/stdlib/modules/time.md
 method std::time::Duration::as_micros|check-prelude std-time-basic duration metadata helper; docs/stdlib/modules/time.md
 method std::time::Duration::as_millis|check-prelude std-time-basic duration metadata helper; docs/stdlib/modules/time.md
@@ -471,6 +482,7 @@ module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude 
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+module std::thread|check-prelude std-thread-basic spawn/join module; docs/stdlib/modules/thread.md
 module std::time|std time monotonic/wall-clock helper tests; docs/stdlib/modules/time.md
 module std::vec|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
 module std::zone|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -496,6 +508,7 @@ struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::thread::Thread|check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md
 struct std::time::Duration|std time duration helper tests; docs/stdlib/modules/time.md
 struct std::time::Instant|std time monotonic instant tests; docs/stdlib/modules/time.md
 struct std::time::SystemTime|std time wall-clock tests; docs/stdlib/modules/time.md
@@ -561,6 +574,7 @@ use std::HashMap|check-prelude std-collections-hash root alias for std::collecti
 use std::HashSet|check-prelude std-collections-hash root alias for std::collections::HashSet[T]; docs/stdlib/modules/collections.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::Thread|check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md
 use std::TreeMap|check-prelude std-collections-tree root alias for std::collections::TreeMap[K, V]; docs/stdlib/modules/collections.md
 use std::TreeSet|check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md
 use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row

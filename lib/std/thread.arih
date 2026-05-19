@@ -1,0 +1,45 @@
+// Small thread helpers. The first runtime-backed slice deliberately accepts a
+// plain function pointer so thread entry does not hide capture or ownership
+// transfer rules behind a closure-like surface.
+pub struct Thread {
+  native: i64,
+  id: i64,
+}
+
+pub extern "ari" fn spawn(entry: fn() -> i64) -> Thread = "ari_builtin_thread_spawn";
+pub extern "ari" fn join(thread: Thread) -> i64 = "ari_builtin_thread_join";
+pub extern "ari" fn yield_now() -> void = "ari_builtin_thread_yield";
+
+pub fn id() -> i64 {
+  return std::context::thread_id();
+}
+
+pub fn is_main() -> bool {
+  return id() == 0;
+}
+
+pub fn is_join_error(status: i64) -> bool {
+  return status < 0;
+}
+
+pub impl std::thread::Thread {
+  fn invalid() -> Thread {
+    return Thread { native: -1, id: -1 };
+  }
+
+  fn spawn(entry: fn() -> i64) -> Thread {
+    return std::thread::spawn(entry);
+  }
+
+  fn id(self: ref Self) -> i64 {
+    return self.id;
+  }
+
+  fn is_valid(self: ref Self) -> bool {
+    return self.native >= 0 && self.id >= 0;
+  }
+
+  fn join(self) -> i64 {
+    return std::thread::join(self);
+  }
+}

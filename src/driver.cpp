@@ -258,6 +258,7 @@ int run(int argc, char** argv) {
     if (!target_triple.empty()) command += shell_quote("--target=" + target.triple) + " ";
     command += shell_quote(llvm_path) + " -o " + shell_quote(object_output.empty() ? output : object_output);
     if (object_output.empty()) {
+        if (target.unix) command += " -pthread";
         for (const auto& arg : link_args) command += " " + shell_quote(arg);
     }
     int status = std::system(command.c_str());

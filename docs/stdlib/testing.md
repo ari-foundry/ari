@@ -42,6 +42,7 @@ std-env-vars.ari
 std-process-basic.ari
 std-process-exit.ari
 std-process-fork-wait.ari
+std-thread-basic.ari
 std-time-basic.ari
 std-fs-basic.ari
 std-fs-append.ari
