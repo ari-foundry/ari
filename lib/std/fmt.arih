@@ -344,3 +344,8 @@ pub fn write_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, val
   var text = std::fmt::text_in(zone, value);
   return std::io::write_all<W>(writer, text.as_slice());
 }
+
+pub fn write_value[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
+  var text = value.format_in(zone);
+  return std::io::write_all<W>(writer, text.as_slice());
+}

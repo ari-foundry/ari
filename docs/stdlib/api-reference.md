@@ -1548,12 +1548,14 @@ fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_integer<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_boolean<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_text<W: io::Writer>(ref mut writer, ref mut zone, value)
+fmt::write_value<W: io::Writer, T: Display>(ref mut writer, ref mut zone, value)
 ```
 
 Built-in `Display` impls cover `i64`, `u64`, `bool`, `f32`, `f64`, lowercase
 `string`, and `std::string::String`. Use explicit impls for domain structs and
 enums. Float `Display` uses six fractional digits; call `fmt::float_in` to pick
-a precision explicitly.
+a precision explicitly. Prefer `fmt::write_value` for generic Writer-backed
+display output instead of adding new type-suffixed `write_*` helpers.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 and `format_in!(ref mut zone, "...", values...)`. Use `format_in!` for owned

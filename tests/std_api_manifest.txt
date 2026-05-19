@@ -233,6 +233,7 @@ fn std::fmt::write_boolean[W: std::io::Writer]|check-prelude std-fmt-format-spec
 fn std::fmt::write_integer[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_text[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed text formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_unsigned[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::write_value[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
 fn std::fs::append|check-prelude std-fs-read-write source whole-file append helper; docs/stdlib/modules/fs.md
 fn std::fs::can_execute|check-prelude std-fs-permissions execute/search access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_read|check-prelude std-fs-permissions read access hook; docs/stdlib/modules/fs.md

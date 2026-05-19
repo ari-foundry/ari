@@ -54,6 +54,9 @@ depends on it.
 - For string formatting extensions, prefer `String.append_value(value)` or
   `append_value_in(ref mut Zone, value)` with `std::fmt::Display` over adding a
   new type-specific `append_*_in` method.
+- For Writer-backed output, prefer `fmt::write_value(ref mut writer, ref mut
+  zone, value)` with `Display` over adding another type-specific `write_*`
+  helper. Keep `io::write_i64`-style names only for raw runtime hooks.
 - Use `_in` when a function needs an explicit allocation zone.
 - Prefer `Option` or `Result` for ordinary absence or recoverable failure.
 - Prefer `std::error::Error`/`ErrorKind` for shared OS, runtime, IO,

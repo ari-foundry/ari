@@ -43,6 +43,7 @@ write_unsigned[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64,
 write_integer[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> bool
 write_boolean[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> bool
 write_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool
+write_value[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
 ```
 
 `Display::format_in` writes an owned byte string into an explicit target zone.
@@ -109,6 +110,8 @@ The source helpers complement the macros:
 - Use `format_in!` for mixed literal templates and type-safe argument counting.
 - Use `Display::format_in` for standard display values and user-defined values
   that participate in `{}`.
+- Use `write_value` when a `std::io::Writer` should receive any `Display`
+  value without choosing a type-suffixed writer helper.
 - Use `float_in` when code wants to name float precision directly.
 - Use `FormatSpec` plus `unsigned_in` or `write_unsigned` when code needs
   explicit binary, octal, hexadecimal, width, precision, or alignment control

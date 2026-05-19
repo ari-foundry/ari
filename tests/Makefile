@@ -1030,7 +1030,8 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std3fmt11unsigned_in' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q '_ARNv3std3fmt13debug_text_in' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_unsigned' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 8; fi
+	grep -q 'write_value' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 9; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-display-builtins.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-display-builtins.ll
 	grep -q '_ARNv3std3fmt8float_in' $(BUILD_DIR)/prelude/std-fmt-display-builtins.ll
 	grep -q 'std__fmt__Display9format_in' $(BUILD_DIR)/prelude/std-fmt-display-builtins.ll

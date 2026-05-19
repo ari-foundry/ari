@@ -137,6 +137,9 @@ For raw byte output to stdout, create `var out = io::stdout()` and call
 `io::write_all(ref mut out, bytes)`, or use the older `io::write_bytes(bytes)`
 helper. For raw byte output to stderr, create `var err = io::stderr()` and use
 the same `io::write_all`/`io::flush` helpers.
+For formatted values, prefer `fmt::write_value(ref mut writer, ref mut zone,
+value)` so the value's `Display` impl carries the type instead of spelling a
+type suffix in the IO API.
 
 ## Design Notes
 

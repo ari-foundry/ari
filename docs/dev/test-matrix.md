@@ -911,7 +911,8 @@ Checklist:
 - [x] add source `std::fmt::FormatSpec` helpers for unsigned
       binary/octal/decimal/hex formatting, width, integer precision,
       left/right/center alignment, alternate prefixes, debug text quoting,
-      explicit-zone strings, and `std::io::Writer` output
+      explicit-zone strings, generic Display `write_value`, and
+      `std::io::Writer` output
 - [x] source `std::fmt::Display` has built-in impl coverage for `i64`, `u64`,
       `bool`, `f32`, `f64`, lowercase `string`, and owned
       `std::string::String`, plus custom user impl coverage through

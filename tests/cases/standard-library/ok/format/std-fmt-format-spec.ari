@@ -67,6 +67,14 @@ fn main() -> i64 {
     }
   }
 
+  var display_buffer = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var display_writer = MemoryWriter { data: display_buffer.as_slice(), position: 0 };
+  if fmt::write_value<MemoryWriter, i64>(ref mut display_writer, ref mut zone, -128) {
+    if display_buffer[0] == '-' && display_buffer[1] == '1' && display_buffer[3] == '8' && display_writer.position == 4 {
+      score = score + 1;
+    }
+  }
+
   zone::destroy(zone);
   return score;
 }
