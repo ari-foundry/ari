@@ -905,10 +905,9 @@ Checklist:
 - [x] reserve `format!` with targeted no-implicit-allocation-zone diagnostics
 - [x] lower `format_in!(ref mut Zone, "...", values...)` to source
       `std::string::String` construction plus same-zone string/i64/bool/f64
-      append helpers or borrowed-receiver `Display::format_in` /
-      `fmt::Display::format_in`, with value expressions evaluated once before
-      type-directed append selection and `{:.N}` float precision matching
-      `print`
+      append helpers or borrowed-receiver `Display::format_in`, with value
+      expressions evaluated once before type-directed append selection and
+      `{:.N}` float precision matching `print`
 - [x] add source `std::fmt::FormatSpec` helpers for unsigned
       binary/octal/decimal/hex formatting, width, integer precision,
       left/right/center alignment, alternate prefixes, debug text quoting,
@@ -917,6 +916,9 @@ Checklist:
       `bool`, `f32`, `f64`, lowercase `string`, and owned
       `std::string::String`, plus custom user impl coverage through
       `format_in!` and `String.append_value(value)`
+- [x] root `Display` and `Debug` are public aliases for `std::fmt::Display` and
+      `std::fmt::Debug`, so prelude and module-qualified formatting traits do
+      not diverge
 - [x] expose root `String` as the source `std::string::String` handle while
       keeping lowercase `string` as today's borrowed pointer-shaped text value
 - [x] reserve Rust-like standard traits: debug/display/default/clone/copy/drop,

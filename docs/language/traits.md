@@ -401,7 +401,8 @@ ToString
 ToOwned
 ```
 
-`Display` and `fmt::Display` use the explicit-zone formatting hook:
+`Display` is the root prelude alias for `fmt::Display`; both spellings use the
+same explicit-zone formatting hook:
 
 ```ari
 fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String

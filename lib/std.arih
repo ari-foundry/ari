@@ -419,6 +419,8 @@ impl[T] Iterator[Slice[T]] for SliceSplit[T] {
 }
 
 pub mod fmt;
+pub use fmt::Debug;
+pub use fmt::Display;
 
 pub mod cmp;
 
@@ -447,13 +449,6 @@ pub struct Range[T] {
 pub struct RangeInclusive[T] {
   start: T,
   end: T,
-}
-
-pub trait Debug {
-}
-
-pub trait Display {
-  fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String;
 }
 
 pub trait Default {

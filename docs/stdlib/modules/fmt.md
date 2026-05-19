@@ -4,6 +4,9 @@
 the first source formatting helpers for explicit-zone strings and
 `std::io::Writer` values. Compiler-assisted formatting macros still exist for
 the familiar `print!`, `println!`, and `format_in!` path.
+The root prelude names `Display` and `Debug` are public re-exports of
+`std::fmt::Display` and `std::fmt::Debug`, so `impl Display for T` and
+`impl fmt::Display for T` describe the same trait.
 
 ## Public API
 

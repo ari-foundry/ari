@@ -420,12 +420,12 @@ the same rules. `format_in!(ref mut zone, "...", values...)` builds a source
 `String` in the explicit zone and lowers `{}` placeholders for lowercase
 `string`, signed/unsigned integer, bool, `f32`, and `f64` values through the
 same checked append helpers as manual text construction. User-defined value
-types can participate
-by implementing borrowed-receiver `Display::format_in` or
-`fmt::Display::format_in`, returning a source `String` in the same explicit
-zone. The standard `fmt::Display` impls for `i64`, `u64`, `bool`, `f32`, `f64`,
-`string`, and `std::string::String` are also available to generic source APIs
-such as `String.append_value(value)`. `{:.N}` placeholders format
+types can participate by implementing borrowed-receiver `Display::format_in`;
+`Display` is the root alias for `fmt::Display`, so either spelling names the
+same trait. The impl returns a source `String` in the same explicit zone. The
+standard `fmt::Display` impls for `i64`, `u64`, `bool`, `f32`, `f64`, `string`,
+and `std::string::String` are also available to generic source APIs such as
+`String.append_value(value)`. `{:.N}` placeholders format
 `f32`/`f64` values with `N` decimal digits, matching the print formatting
 surface; precision placeholders do not dispatch through `Display`. Each value
 expression is evaluated once before the type-directed append call is selected,
@@ -528,8 +528,9 @@ On the LLVM/glibc host backend, IO builtins lower to C stdio calls.
 
 ## Prelude Traits
 
-Prelude traits are ordinary public trait declarations in `lib/std.arih`. The
-implicit prelude exposes the root forms and the child-module forms:
+Prelude traits are ordinary public trait declarations in `lib/std.arih` or
+public root re-exports from child modules. The implicit prelude exposes the
+root forms and the child-module forms:
 
 ```ari
 Debug
@@ -566,12 +567,12 @@ ToString
 ToOwned
 ```
 
-`Display` and `fmt::Display` define the explicit-zone formatting hook used by
-`format_in!` for user-defined values and by generic source helpers such as
-`String.append_value(value)`. Built-in impls cover `i64`, `u64`, `bool`, `f32`,
-`f64`, lowercase `string`, and owned `String`. Values passed through
-compiler-assisted formatting are evaluated once into a hidden local, then
-passed to the hook by shared borrow:
+`Display` is the root prelude alias for `fmt::Display`. It defines the
+explicit-zone formatting hook used by `format_in!` for user-defined values and
+by generic source helpers such as `String.append_value(value)`. Built-in impls
+cover `i64`, `u64`, `bool`, `f32`, `f64`, lowercase `string`, and owned
+`String`. Values passed through compiler-assisted formatting are evaluated once
+into a hidden local, then passed to the hook by shared borrow:
 
 ```ari
 fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String
@@ -997,9 +998,9 @@ scalar and user-defined values needed by explicit formatting, and
 expression for `{}` string/signed and unsigned integer/bool/float formatting
 plus `{:.N}` float precision, with each formatted value evaluated once before
 append dispatch.
-For user-defined value types, `format_in!` calls `Display::format_in` or
-`fmt::Display::format_in` with a shared borrow of the value and the same
-explicit zone, then appends the returned source string into the final output.
+For user-defined value types, `format_in!` calls `Display::format_in` with a
+shared borrow of the value and the same explicit zone, then appends the
+returned source string into the final output.
 `std::fmt::FormatSpec` is the source-library path for binary/octal/decimal/hex
 unsigned integers, width, integer precision, left/right/center alignment,
 uppercase digits, alternate prefixes, explicit-zone scalar text, debug text
