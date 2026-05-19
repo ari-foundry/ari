@@ -1397,11 +1397,13 @@ c.is_empty()
 
 String literals coerce to borrowed `Slice[u8]` values when a byte-slice API
 expects one, so calls such as `ascii::parse_decimal("123")` and
-`text.find("needle")` are valid. `std::string::bytes(text)` returns the same
-kind of view without the trailing NUL when code wants to name the boundary
-explicitly. Single-quoted byte character literals such as `'t'`, `'\n'`, and
-`'\x74'` are `u8`, so local byte vectors can be written as
-`['t', 'r', 'u', 'e']`.
+`text.find("needle")` are valid. They can also initialize local byte storage:
+`var bytes: Vec[u8] = "true";` and `let fixed: [u8, 4] = "true";`.
+`std::string::bytes(text)` returns the same kind of view without the trailing
+NUL when code wants to name the boundary explicitly. Single-quoted byte
+character literals such as `'t'`, `'\n'`, and `'\x74'` are `u8`, so local byte
+vectors can still be written as `['t', 'r', 'u', 'e']` when per-byte spelling
+is clearer.
 
 `std::string::from(ref mut zone, "text")`, `std::string::copy(ref mut zone,
 bytes)`, and `std::string::empty(ref mut zone)` are the natural constructors
@@ -1824,7 +1826,8 @@ ASCII call sites.
 Slice helpers take `Slice[u8]` and accept string literals directly. For
 example, `ascii::parse_decimal("123")` and
 `ascii::starts_with_ignore_case("AriLang", "ari")` lower to borrowed literal
-byte slices without the trailing NUL.
+byte slices without the trailing NUL. Use `var bytes: Vec[u8] = "text";` when
+the bytes should become mutable local storage.
 
 `digit_value` and `hex_value` return `Option[i64]`. Non-digit input returns
 `None<i64>()` where appropriate.

@@ -923,6 +923,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-literal-slice.ari -o $(BUILD_DIR)/prelude/std-string-literal-slice.elf
 	$(BUILD_DIR)/prelude/std-string-literal-slice.elf; code=$$?; test $$code -eq 0
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-literal-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-literal-slice.elf; $(BUILD_DIR)/prelude/std-string-literal-slice.elf; code=$$?; test $$code -eq 0; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-literal-sequence.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-literal-sequence.ll
+	grep -q 'i8 97' $(BUILD_DIR)/prelude/std-string-literal-sequence.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-literal-sequence.ari -o $(BUILD_DIR)/prelude/std-string-literal-sequence.elf
+	$(BUILD_DIR)/prelude/std-string-literal-sequence.elf; code=$$?; test $$code -eq 0
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-literal-sequence.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-literal-sequence.elf; $(BUILD_DIR)/prelude/std-string-literal-sequence.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-natural-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-natural-api.ll
 	grep -q '_ARNv3std6string4from' $(BUILD_DIR)/prelude/std-string-natural-api.ll
 	grep -q 'String8inherent6append' $(BUILD_DIR)/prelude/std-string-natural-api.ll
@@ -1610,6 +1615,8 @@ check-prelude: $(TARGET)
 	grep -q "std::string::String.append_f32_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-f32-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/string/std-string-append-u64-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-u64-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-u64-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_u64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-u64-different-zone.err
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-literal-array-length.ari -o $(BUILD_DIR)/prelude/std-string-literal-array-length.elf >$(BUILD_DIR)/prelude/std-string-literal-array-length.err 2>&1; then exit 1; fi
+	grep -q "string literal has 3 bytes but array type expects 2" $(BUILD_DIR)/prelude/std-string-literal-array-length.err
 	if $(TARGET) tests/cases/standard-library/errors/string/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi
 	grep -q "struct 'std::string::String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
 	if $(TARGET) tests/cases/standard-library/errors/string/prelude-string-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-string-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-string-root-after-reset.err 2>&1; then exit 1; fi

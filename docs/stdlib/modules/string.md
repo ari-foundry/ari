@@ -35,11 +35,13 @@ be valid UTF-8. `c_str(text)` is a convenience wrapper for
 `std::c::from_string(text)` and returns the shared `std::c::CStr` type, while
 `c_len` and `c_bytes` expose bytes before the trailing NUL. `bytes(text)` is
 the named helper for code that wants to make the boundary explicit. In normal
-calls and local initializers, a string literal can also flow directly into a
-`Slice[u8]` expectation:
+calls and local initializers, a string literal can also flow directly into
+borrowed or local byte-storage expectations:
 
 ```ari
 let bytes: Slice[u8] = "true";
+var buffer: Vec[u8] = "ari";
+let fixed: [u8, 3] = "lib";
 ascii::parse_decimal("123");
 ```
 

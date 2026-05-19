@@ -1,0 +1,29 @@
+// Covers natural string-literal coercion into local byte Vec and fixed-array
+// storage, so byte buffers do not need decimal u8 spellings.
+fn main() -> i64 {
+  var bytes: Vec[u8] = "ari";
+  assert_eq_i64(bytes.len(), 3);
+  assert_eq_i64(bytes.capacity(), 3);
+  assert_eq_i64(bytes[0] as i64, 'a' as i64);
+  assert_eq_i64(bytes[2] as i64, 'i' as i64);
+
+  var sized: Vec[u8; 5] = "ok";
+  assert_eq_i64(sized.len(), 2);
+  assert_eq_i64(sized.capacity(), 5);
+  sized.push('!');
+  assert_eq_i64(sized[2] as i64, '!' as i64);
+
+  let fixed: [u8, 3] = "lib";
+  assert_eq_i64(len(fixed), 3);
+  assert_eq_i64(fixed[0] as i64, 'l' as i64);
+  assert_eq_i64(fixed[2] as i64, 'b' as i64);
+
+  var newline: Vec[u8] = "OK\n";
+  assert_eq_i64(newline.len(), 3);
+  assert_eq_i64(newline[2] as i64, '\n' as i64);
+
+  var nul_cut: Vec[u8] = "\x00hidden";
+  assert_eq_i64(nul_cut.len(), 0);
+
+  return 0;
+}

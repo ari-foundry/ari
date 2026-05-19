@@ -16838,6 +16838,20 @@ private:
                is_u8_value_type(type.args[0]);
     }
 
+    static bool is_u8_vector_storage_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Vector &&
+               type.args.size() == 1 &&
+               is_u8_value_type(type.args[0]);
+    }
+
+    static bool is_u8_array_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Array &&
+               type.args.size() == 1 &&
+               is_u8_value_type(type.args[0]);
+    }
+
     static std::uint64_t string_literal_slice_len(const std::string& value) {
         std::size_t nul = value.find('\0');
         if (nul != std::string::npos) return static_cast<std::uint64_t>(nul);
@@ -16863,6 +16877,45 @@ private:
         return make_slice_view_expr(loc, std::move(data), std::move(length), expected);
     }
 
+    IrExprPtr make_string_literal_byte_sequence_expr(SourceLocation loc,
+                                                     const std::string& value,
+                                                     const IrType& expected) const {
+        const std::uint64_t len = string_literal_slice_len(value);
+        IrType output_type;
+        if (is_u8_vector_storage_type(expected)) {
+            if (expected.array_size != 0 && len > expected.array_size) {
+                fail(loc,
+                     "string literal has " + std::to_string(len) +
+                         " bytes but vector storage capacity is " + std::to_string(expected.array_size));
+            }
+            output_type = make_vector_storage_type(
+                loc,
+                expected.args[0],
+                expected.array_size == 0 ? len : expected.array_size);
+        } else if (is_u8_array_type(expected)) {
+            if (len != expected.array_size) {
+                fail(loc,
+                     "string literal has " + std::to_string(len) +
+                         " bytes but array type expects " + std::to_string(expected.array_size));
+            }
+            output_type = array_storage_type(loc, expected.args[0], expected.array_size);
+        } else {
+            throw CompileError(where(loc) + ": internal error: string literal byte sequence expected Vec[u8] or [u8, N]");
+        }
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::Vector;
+        lowered->loc = loc;
+        lowered->type = std::move(output_type);
+        lowered->args.reserve(static_cast<std::size_t>(len));
+        IrType byte_type = integer_type(IrPrimitiveKind::U8, loc);
+        for (std::uint64_t index = 0; index < len; ++index) {
+            unsigned char byte = static_cast<unsigned char>(value[static_cast<std::size_t>(index)]);
+            lowered->args.push_back(make_integer_literal(loc, byte_type, byte));
+        }
+        return lowered;
+    }
+
     IrExprPtr make_typed_empty_vector_expr(SourceLocation loc, const IrType& expected) const {
         const IrType& element = require_typed_empty_vector_element_type(loc, expected);
         require_plain_prelude_aggregate_element(loc, element, "vector");
@@ -16875,6 +16928,10 @@ private:
         }
         if (expr.kind == ExprKind::String && is_prelude_u8_slice_type(expected)) {
             return make_string_literal_slice_expr(expr.loc, expr.string_value, expected);
+        }
+        if (expr.kind == ExprKind::String &&
+            (is_u8_vector_storage_type(expected) || is_u8_array_type(expected))) {
+            return make_string_literal_byte_sequence_expr(expr.loc, expr.string_value, expected);
         }
         if (expr.kind == ExprKind::Name) {
             std::string generic_name;

@@ -67,7 +67,9 @@ ascii::ParsedInt
 
 Slice helpers operate on borrowed `Slice[u8]` values. A string literal can be
 passed directly anywhere a `Slice[u8]` is expected; Ari lowers it to a borrowed
-view over the literal bytes without the trailing NUL.
+view over the literal bytes without the trailing NUL. The same literal can
+initialize local `Vec[u8]` and `[u8, N]` storage when owned local bytes are more
+convenient.
 
 ```ari
 ascii::equals_ignore_case(left, right)
