@@ -1,0 +1,78 @@
+// Covers runtime-backed std::fs rename and single-directory create/remove.
+fn main() -> i64 {
+  let dir_path = "build/prelude/std-fs-rename-dir.tmp";
+  let source_path = "build/prelude/std-fs-rename-dir-source.tmp";
+  let target_path = "build/prelude/std-fs-rename-dir-target.tmp";
+  let missing_path = "build/prelude/std-fs-rename-dir-missing.tmp";
+
+  if fs::exists(dir_path) {
+    fs::remove(dir_path);
+    fs::remove_dir(dir_path);
+  }
+  if fs::exists(source_path) {
+    fs::remove(source_path);
+  }
+  if fs::exists(target_path) {
+    fs::remove(target_path);
+    fs::remove_dir(target_path);
+  }
+  if fs::exists(missing_path) {
+    fs::remove(missing_path);
+  }
+
+  var score = 0;
+
+  if fs::create_dir(dir_path) {
+    score = score + 1;
+  }
+  if fs::exists(dir_path) {
+    score = score + 2;
+  }
+  if !fs::create_dir(dir_path) {
+    score = score + 3;
+  }
+  if fs::remove_dir(dir_path) {
+    score = score + 4;
+  }
+  if !fs::exists(dir_path) {
+    score = score + 5;
+  }
+
+  var data = [82 as u8, 78 as u8];
+  if fs::write(source_path, data.as_slice()) {
+    score = score + 6;
+  }
+  if fs::rename(source_path, target_path) {
+    score = score + 7;
+  }
+  if !fs::exists(source_path) {
+    score = score + 8;
+  }
+  if fs::exists(target_path) {
+    score = score + 9;
+  }
+
+  var zone = zone::create(512);
+  let renamed = fs::read(ref mut zone, target_path);
+  if renamed.len() == 2 {
+    score = score + 10;
+  }
+  if renamed.get(0) == 82 as u8 {
+    score = score + 11;
+  }
+  if renamed.get(1) == 78 as u8 {
+    score = score + 12;
+  }
+  if !fs::rename(missing_path, source_path) {
+    score = score + 13;
+  }
+  if fs::remove(target_path) {
+    score = score + 14;
+  }
+  if !fs::exists(target_path) {
+    score = score + 15;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

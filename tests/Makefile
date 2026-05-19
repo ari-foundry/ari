@@ -299,6 +299,16 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf
 	$(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 91
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 91; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
+	grep -q "@ari_builtin_fs_rename" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
+	grep -q "@ari_builtin_fs_create_dir" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
+	grep -q "@ari_builtin_fs_remove_dir" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
+	grep -q "declare i32 @rename" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
+	grep -q "declare i32 @mkdir" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
+	grep -q "declare i32 @rmdir" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf
+	$(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120; fi
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll

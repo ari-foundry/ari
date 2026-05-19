@@ -8,6 +8,9 @@ pub struct File {
 
 pub extern "ari" fn exists(path: string) -> bool = "ari_builtin_fs_exists";
 pub extern "ari" fn remove(path: string) -> bool = "ari_builtin_fs_remove";
+pub extern "ari" fn rename(source: string, target: string) -> bool = "ari_builtin_fs_rename";
+pub extern "ari" fn create_dir(path: string) -> bool = "ari_builtin_fs_create_dir";
+pub extern "ari" fn remove_dir(path: string) -> bool = "ari_builtin_fs_remove_dir";
 // Modes: "r", "w", "a", "rw", "r+", "w+", and "a+".
 pub extern "ari" fn open(path: string, mode: string) -> File = "ari_builtin_fs_open";
 pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";

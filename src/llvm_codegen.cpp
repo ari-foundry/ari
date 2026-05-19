@@ -399,6 +399,9 @@ private:
                symbol == "nanosleep" ||
                symbol == "access" ||
                symbol == "unlink" ||
+               symbol == "rename" ||
+               symbol == "mkdir" ||
+               symbol == "rmdir" ||
                symbol == "open" ||
                symbol == "read" ||
                symbol == "write" ||
@@ -431,6 +434,9 @@ private:
             symbol == "ari_builtin_env_set_current_dir" ||
             symbol == "ari_builtin_fs_exists" ||
             symbol == "ari_builtin_fs_remove" ||
+            symbol == "ari_builtin_fs_rename" ||
+            symbol == "ari_builtin_fs_create_dir" ||
+            symbol == "ari_builtin_fs_remove_dir" ||
             symbol == "ari_builtin_fs_close" ||
             symbol == "ari_builtin_fs_write_byte" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
@@ -482,6 +488,9 @@ private:
         declarations_ << "declare i32 @nanosleep(ptr, ptr)\n";
         declarations_ << "declare i32 @access(ptr, i32)\n";
         declarations_ << "declare i32 @unlink(ptr)\n";
+        declarations_ << "declare i32 @rename(ptr, ptr)\n";
+        declarations_ << "declare i32 @mkdir(ptr, i32)\n";
+        declarations_ << "declare i32 @rmdir(ptr)\n";
         declarations_ << "declare i32 @open(ptr, i32, i32)\n";
         declarations_ << "declare i64 @read(i32, ptr, i64)\n";
         declarations_ << "declare i64 @write(i32, ptr, i64)\n";
@@ -665,6 +674,31 @@ private:
         line("define " + runtime_visibility + "i1 @ari_builtin_fs_remove(ptr %path) {");
         line("entry:");
         line("  %code = call i32 @unlink(ptr %path)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_rename(ptr %source, ptr %target) {");
+        line("entry:");
+        line("  %code = call i32 @rename(ptr %source, ptr %target)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_create_dir(ptr %path) {");
+        line("entry:");
+        // 0755 in decimal; the process umask still applies on POSIX hosts.
+        line("  %code = call i32 @mkdir(ptr %path, i32 493)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_remove_dir(ptr %path) {");
+        line("entry:");
+        line("  %code = call i32 @rmdir(ptr %path)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  ret i1 %ok");
         line("}");

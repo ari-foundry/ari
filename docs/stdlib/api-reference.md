@@ -258,6 +258,9 @@ Filesystem helpers live in `std::fs`:
 ```ari
 fs::exists(path)
 fs::remove(path)
+fs::rename(source, target)
+fs::create_dir(path)
+fs::remove_dir(path)
 fs::open(path, mode)
 fs::create(path)
 fs::open_read(path)
@@ -307,7 +310,10 @@ whole slice. `read(ref mut zone, path)` is the short alias for
 `std::string::String` and using an empty `String` when the file cannot be
 opened. `truncate(path)` creates or empties a file. `copy(source, target)`
 streams bytes from the source handle into the target opened with truncating
-semantics.
+semantics. `rename(source, target)` moves or renames one path according to the
+host runtime's current behavior. `create_dir(path)` creates one directory and
+`remove_dir(path)` removes one empty directory; recursive directory helpers and
+directory iteration are future work.
 The current `File` value is not an owned resource yet, so close each successful
 handle once and do not reuse copied handles after closing.
 

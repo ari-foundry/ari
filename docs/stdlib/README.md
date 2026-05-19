@@ -33,7 +33,8 @@ monotonic instants, wall-clock timestamps, non-negative
 durations, elapsed-time helpers, and sleep, and `std::fs` adds the first
 byte-oriented file handle slice with mode-string opens for read, write,
 append, and read/write access plus source create, read, write, append,
-truncate, copy, and read-to-byte-string helpers. Source
+truncate, copy, rename, single-directory create/remove, and
+read-to-byte-string helpers. Source
 collection work includes `std::collections::Set[T]` as a linear explicit-zone
 set with insertion-order access, optional access, replace-or-insert updates,
 iterator support, and reserve growth; growable `Deque`, bounded `RingBuffer`,

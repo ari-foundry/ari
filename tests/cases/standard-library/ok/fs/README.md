@@ -9,6 +9,7 @@ These cases cover the first `std::fs` slice:
 - source whole-file convenience helpers for byte-slice write, append, and
   byte-string reads
 - create/truncate/copy/read convenience helpers built over mode-string opens
+- runtime-backed rename and single-directory create/remove hooks
 - append-mode opens that preserve existing bytes and create missing files
 - read/write mode strings such as `"rw"`, plus familiar `"r+"`, `"w+"`,
   and `"a+"` aliases
@@ -26,3 +27,5 @@ Files in this folder:
   whole-file conveniences.
 - `std-fs-create-truncate-copy.ari`: source `create`, `try_create`, `read`,
   `truncate`, and `copy` helpers.
+- `std-fs-rename-dir.ari`: runtime-backed `rename`, `create_dir`, and
+  `remove_dir` hooks.
