@@ -913,6 +913,9 @@ Checklist:
       binary/octal/decimal/hex formatting, width, integer precision,
       left/right/center alignment, alternate prefixes, debug text quoting,
       explicit-zone strings, and `std::io::Writer` output
+- [x] source `std::fmt::Display` has built-in impl coverage for `i64`, `u64`,
+      `bool`, lowercase `string`, and owned `std::string::String`, plus custom
+      user impl coverage through `format_in!` and `String.append_value(value)`
 - [x] expose root `String` as the source `std::string::String` handle while
       keeping lowercase `string` as today's borrowed pointer-shaped text value
 - [x] reserve Rust-like standard traits: debug/display/default/clone/copy/drop,

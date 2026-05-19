@@ -199,8 +199,9 @@ text.push_codepoint_in(ref mut zone, scalar)
 
 These helpers are the current source-side building blocks used by owned
 formatting paths. `append_value_in[T: std::fmt::Display]` calls
-`value.format_in(ref mut zone)` and appends the rendered bytes, so user-defined
-types can participate without adding names such as `append_point_in`.
+`value.format_in(ref mut zone)` and appends the rendered bytes, so standard
+display values and user-defined types can participate without adding names such
+as `append_point_in`.
 Tracked local strings can call the natural convenience form:
 
 ```ari

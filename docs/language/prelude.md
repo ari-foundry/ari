@@ -423,7 +423,9 @@ same checked append helpers as manual text construction. User-defined value
 types can participate
 by implementing borrowed-receiver `Display::format_in` or
 `fmt::Display::format_in`, returning a source `String` in the same explicit
-zone. `{:.N}` placeholders format
+zone. The standard `fmt::Display` impls for `i64`, `u64`, `bool`, `string`, and
+`std::string::String` are also available to generic source APIs such as
+`String.append_value(value)`. `{:.N}` placeholders format
 `f32`/`f64` values with `N` decimal digits, matching the print formatting
 surface; precision placeholders do not dispatch through `Display`. Each value
 expression is evaluated once before the type-directed append call is selected,
@@ -565,8 +567,11 @@ ToOwned
 ```
 
 `Display` and `fmt::Display` define the explicit-zone formatting hook used by
-`format_in!` for user-defined values. The value is evaluated once into a hidden
-local, then passed to the hook by shared borrow:
+`format_in!` for user-defined values and by generic source helpers such as
+`String.append_value(value)`. Built-in impls cover `i64`, `u64`, `bool`,
+lowercase `string`, and owned `String`. Values passed through compiler-assisted
+formatting are evaluated once into a hidden local, then passed to the hook by
+shared borrow:
 
 ```ari
 fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String

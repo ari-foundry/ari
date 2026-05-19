@@ -271,6 +271,40 @@ pub fn debug_text_in(zone: ref mut Zone, value: string) -> std::string::String {
   return output;
 }
 
+impl std::fmt::Display for i64 {
+  pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr i64);
+    return std::fmt::integer_in(zone, value);
+  }
+}
+
+impl std::fmt::Display for u64 {
+  pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr u64);
+    return std::fmt::unsigned_in(zone, value, std::fmt::decimal());
+  }
+}
+
+impl std::fmt::Display for bool {
+  pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr bool);
+    return std::fmt::boolean_in(zone, value);
+  }
+}
+
+impl std::fmt::Display for string {
+  pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr string);
+    return std::fmt::text_in(zone, value);
+  }
+}
+
+impl std::fmt::Display for std::string::String {
+  pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return self.copy_to(zone);
+  }
+}
+
 pub fn write_unsigned[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: std::fmt::FormatSpec) -> bool {
   var text = std::fmt::unsigned_in(zone, value, spec);
   return std::io::write_all<W>(writer, text.as_slice());

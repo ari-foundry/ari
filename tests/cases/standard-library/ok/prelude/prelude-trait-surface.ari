@@ -1,11 +1,14 @@
 impl Debug for i64 {
 }
 
-impl fmt::Display for i64 {
+struct DisplayOnly {
+  value: i64,
+}
+
+impl fmt::Display for DisplayOnly {
   fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
-    let value = ptr_load(self as ptr i64);
     var output = std::string::new(zone, 1);
-    output.append_i64_in(zone, value);
+    output.append_i64_in(zone, self.value);
     return output;
   }
 }

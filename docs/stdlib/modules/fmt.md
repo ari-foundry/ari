@@ -44,6 +44,10 @@ write_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) 
 `Display::format_in` writes an owned byte string into an explicit target zone.
 That keeps allocation visible and matches Ari's current standard-library rule:
 owned strings never appear from a hidden global heap.
+The standard library implements `Display` for `i64`, `u64`, `bool`, lowercase
+`string`, and `std::string::String`, so `String.append_value(value)` and custom
+formatting code can use those common values without adding type-suffixed append
+helpers.
 
 Treat `FormatSpec` as a value built by helper functions. Start with a base such
 as `fmt::hex()` or `fmt::binary()`, then chain natural modifiers:
@@ -96,7 +100,8 @@ not executable yet; use `format_in!` so the allocation zone is clear.
 The source helpers complement the macros:
 
 - Use `format_in!` for mixed literal templates and type-safe argument counting.
-- Use `Display::format_in` for user-defined values that participate in `{}`.
+- Use `Display::format_in` for standard display values and user-defined values
+  that participate in `{}`.
 - Use `FormatSpec` plus `unsigned_in` or `write_unsigned` when code needs
   explicit binary, octal, hexadecimal, width, precision, or alignment control
   without adding more compiler lowering.
@@ -105,6 +110,9 @@ The source helpers complement the macros:
 
 - `Debug` is still a trait surface. Full debug formatting, derived debug, and
   custom debug formatter dispatch are future work.
+- `Display` is intentionally small first: signed/unsigned 64-bit integers,
+  bools, literal `string`, owned `String`, and user-defined impls. `char`/`u8`
+  needs a distinct text-vs-number policy before getting a default impl.
 - `unsigned_in` handles base-specific formatting for `u64`. Negative signed
   integer base formatting should wait for the generic integer policy rather
   than adding type-suffixed one-off helpers.

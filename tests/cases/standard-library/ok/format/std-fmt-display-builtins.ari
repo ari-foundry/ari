@@ -1,0 +1,20 @@
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var text = std::string::empty(ref mut zone);
+
+  text.append_value("n=");
+  text.append_value(-12);
+  text.append_value(" ok=");
+  text.append_value(true);
+  text.append_value(" max=");
+  text.append_value(18446744073709551615u64);
+
+  let suffix = std::string::from(ref mut zone, "!");
+  text.append_value(suffix);
+
+  assert_equal[bool](text.equals_text("n=-12 ok=true max=18446744073709551615!"), true);
+
+  let answer = text.len();
+  zone::destroy(zone);
+  return answer;
+}
