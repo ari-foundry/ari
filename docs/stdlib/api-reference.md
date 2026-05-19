@@ -18,6 +18,8 @@ Box[T]
 String
 Thread
 AtomicI64
+Mutex
+Once
 Set[T]
 Deque[T]
 RingBuffer[T]
@@ -362,26 +364,49 @@ Synchronization helpers live in `std::sync`:
 
 ```ari
 AtomicI64::new(value)
+Mutex::new()
+Once::new()
 
 sync::load(ref value)
 sync::store(ref mut value, replacement)
 sync::swap(ref mut value, replacement)
 sync::fetch_add(ref mut value, amount)
 sync::compare_exchange(ref mut value, expected, replacement)
+sync::try_lock(ref mut mutex)
+sync::lock(ref mut mutex)
+sync::unlock(ref mut mutex)
+sync::is_locked(ref mutex)
+sync::call_once(ref mut once, action)
+sync::is_completed(ref once)
 
 atomic.load()
 atomic.store(replacement)
 atomic.swap(replacement)
 atomic.fetch_add(amount)
 atomic.compare_exchange(expected, replacement)
+
+mutex.try_lock()
+mutex.lock()
+mutex.unlock()
+mutex.is_locked()
+
+once.call_once(action)
+once.is_completed()
 ```
 
-The first sync slice is concrete: `AtomicI64` only. Operations use
-sequentially consistent ordering and keep the API name natural by putting the
-type in the value, not in every method name. `fetch_add` and `swap` return the
-previous value; `compare_exchange` returns whether the replacement happened.
-`Shared`, `Weak`, `Mutex`, channels, and weaker memory-order options remain
-future concurrency work.
+The atomic slice is concrete: `AtomicI64` only. Operations use sequentially
+consistent ordering and keep the API name natural by putting the type in the
+value, not in every method name. `fetch_add` and `swap` return the previous
+value; `compare_exchange` returns whether the replacement happened.
+
+`Mutex` is a source spin/yield lock built on `AtomicI64`. It is not a
+value-protecting `Mutex[T]` and has no guard type yet, so keep lock/unlock
+scopes explicit and small. `Once` runs a plain `fn() -> void` at most once and
+reports whether the current caller ran it.
+
+`Shared`, `Weak`, `RwLock`, `Condvar`, `OnceLock`, `LazyLock`, barriers,
+semaphores, MPSC channels, futex-backed blocking locks, and weaker
+memory-order options remain future concurrency work.
 
 Runtime-backed time helpers live in `std::time`:
 

@@ -57,8 +57,8 @@ limits, examples, and test files for one module.
   child-process slice.
 - [std::thread](thread.md): function-pointer thread spawn/join, runtime thread
   ids, invalid-handle sentinels, and cooperative yield.
-- [std::sync](sync.md): concrete `AtomicI64` load/store/swap/fetch-add/
-  compare-exchange operations and current concurrency limits.
+- [std::sync](sync.md): concrete `AtomicI64` operations, source `Mutex` and
+  `Once` helpers, current memory-order policy, and lock/channel roadmap.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock
   timestamps, non-negative durations, elapsed-time helpers, and sleep.
 - [std::fs](fs.md): runtime-backed file existence, mode-string open calls,

@@ -303,11 +303,17 @@ fn std::string::from_slice_in|std string from-slice target-zone copy tests; docs
 fn std::string::from_string|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::new|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::with_capacity|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::sync::call_once|check-prelude std-sync-mutex-once source once execution helper; docs/stdlib/modules/sync.md
 fn std::sync::compare_exchange|check-prelude std-sync-atomic-i64 atomic compare-and-exchange hook; docs/stdlib/modules/sync.md
 fn std::sync::fetch_add|check-prelude std-sync-atomic-i64 atomic fetch-add hook; docs/stdlib/modules/sync.md
+fn std::sync::is_completed|check-prelude std-sync-mutex-once source once completion predicate; docs/stdlib/modules/sync.md
+fn std::sync::is_locked|check-prelude std-sync-mutex-once source mutex state predicate; docs/stdlib/modules/sync.md
 fn std::sync::load|check-prelude std-sync-atomic-i64 atomic load hook; docs/stdlib/modules/sync.md
+fn std::sync::lock|check-prelude std-sync-mutex-once source mutex spin lock helper; docs/stdlib/modules/sync.md
 fn std::sync::store|check-prelude std-sync-atomic-i64 atomic store hook; docs/stdlib/modules/sync.md
 fn std::sync::swap|check-prelude std-sync-atomic-i64 atomic exchange hook; docs/stdlib/modules/sync.md
+fn std::sync::try_lock|check-prelude std-sync-mutex-once source mutex nonblocking lock helper; docs/stdlib/modules/sync.md
+fn std::sync::unlock|check-prelude std-sync-mutex-once source mutex unlock helper; docs/stdlib/modules/sync.md
 fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
 fn std::target::arch|check-prelude std-target-basic compiler-known target architecture enum hook; docs/stdlib/modules/target.md
 fn std::target::arch_name|check-prelude std-target-basic compiler-known target architecture string hook; docs/stdlib/modules/target.md
@@ -721,6 +727,14 @@ method std::sync::AtomicI64::load|check-prelude std-sync-atomic-i64 load method 
 method std::sync::AtomicI64::new|check-prelude std-sync-atomic-i64 associated constructor; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::store|check-prelude std-sync-atomic-i64 store method wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::swap|check-prelude std-sync-atomic-i64 exchange method wrapper; docs/stdlib/modules/sync.md
+method std::sync::Mutex::is_locked|check-prelude std-sync-mutex-once mutex method state predicate; docs/stdlib/modules/sync.md
+method std::sync::Mutex::lock|check-prelude std-sync-mutex-once mutex method spin lock helper; docs/stdlib/modules/sync.md
+method std::sync::Mutex::new|check-prelude std-sync-mutex-once mutex associated constructor; docs/stdlib/modules/sync.md
+method std::sync::Mutex::try_lock|check-prelude std-sync-mutex-once mutex method nonblocking lock helper; docs/stdlib/modules/sync.md
+method std::sync::Mutex::unlock|check-prelude std-sync-mutex-once mutex method unlock helper; docs/stdlib/modules/sync.md
+method std::sync::Once::call_once|check-prelude std-sync-mutex-once once method execution helper; docs/stdlib/modules/sync.md
+method std::sync::Once::is_completed|check-prelude std-sync-mutex-once once method completion predicate; docs/stdlib/modules/sync.md
+method std::sync::Once::new|check-prelude std-sync-mutex-once once associated constructor; docs/stdlib/modules/sync.md
 method std::test::Report::check|check-prelude std-test-report method condition aggregation; docs/stdlib/modules/test.md
 method std::test::Report::equal[T]|check-prelude std-test-report method generic equality aggregation; docs/stdlib/modules/test.md
 method std::test::Report::failed|check-prelude std-test-report method failed-count accessor; docs/stdlib/modules/test.md
@@ -873,6 +887,8 @@ struct std::path::Components|check-prelude std-path-components borrowed lexical 
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::sync::AtomicI64|check-prelude std-sync-atomic-i64 atomic primitive value; docs/stdlib/modules/sync.md
+struct std::sync::Mutex|check-prelude std-sync-mutex-once source mutex primitive; docs/stdlib/modules/sync.md
+struct std::sync::Once|check-prelude std-sync-mutex-once source one-time initialization primitive; docs/stdlib/modules/sync.md
 struct std::test::Report|check-prelude std-test-report unit-test report counts; docs/stdlib/modules/test.md
 struct std::thread::Thread|check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md
 struct std::time::Duration|std time duration helper tests; docs/stdlib/modules/time.md
@@ -952,6 +968,8 @@ use std::Deque|check-prelude std-collections-deque root alias for std::collectio
 use std::HashMap|check-prelude std-collections-hash root alias for std::collections::HashMap[K, V]; docs/stdlib/modules/collections.md
 use std::HashSet|check-prelude std-collections-hash root alias for std::collections::HashSet[T]; docs/stdlib/modules/collections.md
 use std::LinkedList|check-prelude std-collections-linked-list root alias for std::collections::LinkedList[T]; docs/stdlib/modules/collections.md
+use std::Mutex|check-prelude std-sync-mutex-once root alias for std::sync::Mutex; docs/stdlib/modules/sync.md
+use std::Once|check-prelude std-sync-mutex-once root alias for std::sync::Once; docs/stdlib/modules/sync.md
 use std::PriorityQueue|check-prelude std-collections-heap root alias for std::collections::PriorityQueue[T]; docs/stdlib/modules/collections.md
 use std::RingBuffer|check-prelude std-collections-ring-buffer root alias for std::collections::RingBuffer[T]; docs/stdlib/modules/collections.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md

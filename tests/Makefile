@@ -438,6 +438,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-atomic-i64.ari -o $(BUILD_DIR)/prelude/std-sync-atomic-i64.elf
 	$(BUILD_DIR)/prelude/std-sync-atomic-i64.elf; code=$$?; test $$code -eq 42
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/sync/std-sync-atomic-i64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-sync-atomic-i64.elf; $(BUILD_DIR)/prelude/std-sync-atomic-i64.elf; code=$$?; test $$code -eq 42; fi
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-mutex-once.ari --emit-llvm $(BUILD_DIR)/prelude/std-sync-mutex-once.ll
+	grep -q '_ARNv3std4sync8try_lock' $(BUILD_DIR)/prelude/std-sync-mutex-once.ll
+	grep -q '_ARNv3std4sync9call_once' $(BUILD_DIR)/prelude/std-sync-mutex-once.ll
+	grep -q "@ari_builtin_sync_atomic_i64_compare_exchange" $(BUILD_DIR)/prelude/std-sync-mutex-once.ll
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-mutex-once.ari -o $(BUILD_DIR)/prelude/std-sync-mutex-once.elf
+	$(BUILD_DIR)/prelude/std-sync-mutex-once.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_monotonic_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_unix_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll

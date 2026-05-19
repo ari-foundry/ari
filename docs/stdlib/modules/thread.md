@@ -85,9 +85,9 @@ fn main() -> i64 {
   more than once.
 - Join failure is represented by `-1` until Ari has a richer thread result or
   status type.
-- There is no captured shared-state API yet. `std::sync::AtomicI64` exists,
-  but `Shared`, `Mutex`, and channels belong in future `std::sync` work after
-  ownership and send/share rules are documented.
+- There is no captured shared-state API yet. `std::sync::AtomicI64`,
+  primitive `Mutex`, and `Once` exist, but value-protecting locks, `Shared`,
+  channels, and send/share rules remain future `std::sync` work.
 - The current backend implementation uses pthreads on the LLVM/Linux path.
   Cross-platform thread policy remains roadmap work.
 

@@ -75,6 +75,9 @@ identifies the exact case:
 - `std-sync-atomic-i64.ari`: runtime-backed `std::sync::AtomicI64`
   load/store/swap/fetch-add/compare-exchange behavior, method wrappers, root
   alias, and LLVM atomic lowering.
+- `std-sync-mutex-once.ari`: source `std::sync::Mutex` try/lock/unlock
+  behavior, source `std::sync::Once` call-once state transitions, method
+  wrappers, root aliases, and compare-exchange-backed lowering.
 - `std-time-basic.ari`: runtime-backed monotonic and wall-clock nanosecond
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
 - `std-fs-basic.ari`: runtime-backed file existence, mode-string

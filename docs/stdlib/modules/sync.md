@@ -1,16 +1,16 @@
 # std::sync
 
 `std::sync` holds the small pieces that make concurrent code explicit. The
-first slice is intentionally narrow: a concrete `AtomicI64` value with natural
-operation names. It gives Ari a tested synchronization primitive without
-pretending that captured thread entries, shared ownership, locks, or channels
-are designed yet.
+current slice has a concrete `AtomicI64`, plus source `Mutex` and `Once`
+helpers built on that atomic primitive. It gives Ari tested synchronization
+vocabulary without pretending that captured thread entries, shared ownership,
+guard lifetimes, condition variables, or channels are fully designed yet.
 
 All current operations use sequentially consistent ordering. Ari does not
 expose memory-order parameters yet because the language still needs a clear
 send/share story before weaker ordering choices are useful to most users.
 
-## API
+## Atomic API
 
 ```ari
 AtomicI64::new(value: i64) -> AtomicI64
@@ -37,6 +37,51 @@ value. `swap` replaces the value and returns the previous value.
 The root prelude re-exports `AtomicI64`, so ordinary programs can write
 `AtomicI64::new(0)` and keep the operation names on the value.
 
+## Mutex API
+
+```ari
+Mutex::new() -> Mutex
+
+sync::try_lock(ref mut mutex) -> bool
+sync::lock(ref mut mutex) -> void
+sync::unlock(ref mut mutex) -> void
+sync::is_locked(ref mutex) -> bool
+
+mutex.try_lock() -> bool
+mutex.lock() -> void
+mutex.unlock() -> void
+mutex.is_locked() -> bool
+```
+
+`Mutex` is a small explicit lock primitive. `try_lock` attempts one
+compare-exchange and returns immediately. `lock` spins and yields with
+`thread::yield_now()` until the lock is acquired. `unlock` stores the unlocked
+state. `is_locked` is a diagnostic predicate, not a synchronization proof.
+
+This is not yet a generic `Mutex[T]` and does not create an RAII guard. Use
+explicit `lock`/`unlock` in tightly scoped code and keep future value-protecting
+locks on the roadmap until Ari has a send/share and guard-lifetime policy.
+
+## Once API
+
+```ari
+Once::new() -> Once
+
+sync::call_once(ref mut once, action: fn() -> void) -> bool
+sync::is_completed(ref once) -> bool
+
+once.call_once(action) -> bool
+once.is_completed() -> bool
+```
+
+`call_once` runs `action` exactly once for a given `Once` value. It returns
+`true` for the caller that ran the action and `false` for later callers.
+Concurrent callers spin/yield while another caller is running the action.
+If the action panics, the current executable exits through Ari's panic path; a
+recoverable poisoning policy is intentionally not promised yet.
+
+The root prelude re-exports `Mutex` and `Once` alongside `AtomicI64`.
+
 ## Example
 
 ```ari
@@ -56,22 +101,63 @@ fn main() -> i64 {
 }
 ```
 
+```ari
+fn initialize() -> void {
+  return;
+}
+
+fn main() -> i64 {
+  var mutex = Mutex::new();
+  mutex.lock();
+  mutex.unlock();
+
+  var once = Once::new();
+  once.call_once(initialize);
+  return 0;
+}
+```
+
 ## Current Limits
 
-- Only `AtomicI64` exists. Generic atomics should wait for a stable numeric and
-  memory-model design.
+- Only `AtomicI64` exists in the atomic family. Generic atomics should wait
+  for a stable numeric and memory-model design.
 - All operations are sequentially consistent.
-- There is no `Shared`, `Weak`, `Mutex`, channel, or send/share trait policy
-  yet.
+- `Mutex` is a primitive lock only. There is no `Mutex[T]`, guard type, or
+  poisoning/no-poisoning policy yet.
+- `Once` runs plain `fn() -> void` entries only. `OnceLock[T]` and `LazyLock`
+  need value storage, initialization result policy, and shared access rules.
+- There is no `Shared`, `Weak`, `RwLock`, `Condvar`, `Barrier`, channel, or
+  send/share trait policy yet.
 - Current `std::thread` entries cannot capture references to an atomic value.
   This module is still useful for backend/runtime lowering and for future
   thread-sharing work, but it is not a full shared-state story by itself.
+
+## Synchronization Roadmap
+
+| Feature | Status |
+| --- | --- |
+| Atomic types | Current `AtomicI64`; future generic integer atomics and pointer atomics. |
+| Memory ordering | Current operations are sequentially consistent; future `Ordering` parameters should land only with teachable memory-model docs and tests. |
+| Mutex | Current source primitive `Mutex`; future value-protecting `Mutex[T]`, guard lifetime, poisoning/no-poisoning policy, and futex-backed runtime implementation. |
+| RwLock | Roadmap after shared/unique guard policy is clear. |
+| Condvar | Roadmap after `Mutex` guards and OS wait/wake runtime hooks exist. |
+| Once | Current source `Once`; future panic/poison policy. |
+| OnceLock | Roadmap after value storage and shared access policy are stable. |
+| LazyLock | Roadmap after `OnceLock` and function/closure initialization policy. |
+| Barrier | Roadmap after thread group coordination and wake primitives. |
+| Semaphore | Optional roadmap after permit ownership and async/blocking policy. |
+| MPSC channel | Roadmap after allocation ownership, send/share traits, and blocking wake policy. |
+| Futex primitives | Linux internal implementation detail for future blocking locks, not a portable public API. |
 
 ## Tests
 
 - `tests/cases/standard-library/ok/sync/std-sync-atomic-i64.ari` checks
   module functions, method wrappers, root `AtomicI64`, compare-exchange success
   and failure paths, and LLVM atomic lowering.
+- `tests/cases/standard-library/ok/sync/std-sync-mutex-once.ari` checks
+  source `Mutex` lock/unlock helpers, source `Once` state transitions, method
+  wrappers, root aliases, and atomic compare-exchange lowering through the
+  implementation.
 
 For small sync edits, run `make check-std-api`, then compile this test with
 `--emit-llvm` and run the resulting executable. Use the broader prelude target

@@ -47,9 +47,10 @@ The current `std` package already provides:
   child-process slice
 - the first `std::thread` helpers: `Thread`, function-pointer `spawn`, `join`,
   `yield_now`, runtime thread ids, and source predicates/method wrappers
-- the first `std::sync` helper: concrete `AtomicI64` with sequentially
+- the first `std::sync` helpers: concrete `AtomicI64` with sequentially
   consistent `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`
-  hooks plus method wrappers
+  hooks plus method wrappers, and source `Mutex`/`Once` helpers built on the
+  atomic primitive
 - the first `std::time` helpers: monotonic nanosecond reads, wall-clock Unix
   nanosecond reads, sleep, `Duration`, `Instant`, `SystemTime`, and source
   elapsed-time helpers
@@ -189,9 +190,10 @@ Likely compiler work:
 - Add thin wrappers for file, time, process, thread, synchronization, and
   syscall-adjacent APIs in small capability-oriented slices. The first target,
   time, filesystem, POSIX fork/wait process, function-pointer thread, and
-  concrete atomic integer slices are implemented; portable child-process
-  handles, richer thread statuses, generic synchronization, directories,
-  metadata, and raw OS wrappers still need ownership policy.
+  concrete atomic integer, source mutex, and source once slices are
+  implemented; portable child-process handles, richer thread statuses,
+  generic synchronization, blocking locks, directories, metadata, and raw OS
+  wrappers still need ownership policy.
 - Keep OS resources explicit. File handles, process handles, and buffers should
   be visible owners or zone-backed handles.
 - Prefer small modules: `std::env`, `std::fs`, `std::time`, `std::process`,
@@ -245,7 +247,7 @@ Likely compiler work:
 | `std::path` | Grow from POSIX-style lexical byte helpers into owned and platform-aware path values. | current `std-path-basic` separator policy, absolute/relative predicates, trailing-separator trim, file name, parent, stem, extension, join, and normalization checks; current `std-path-components` borrowed iterator checks; future Windows drive/UNC path tests, owned path-buffer tests, richer component-kind tests, and canonicalization integration tests. | Current helpers are pure source Ari. Future owned `PathBuf` may need stronger zone-backed enum/aggregate provenance and canonicalization needs runtime filesystem wrappers. |
 | `std::net` | Grow from source address values into runtime-backed sockets. | current `std-net-addresses` IPv4/IPv6 constructors, generic `IpAddr` predicates, socket-address construction, port replacement, loopback, and unspecified checks; future DNS lookup, TCP listener accept loops, TCP stream connect/read/write/shutdown, UDP send/receive, Unix domain sockets, socket options, nonblocking mode, timeout behavior, and error propagation tests. | Current address slice needs no compiler work. Future sockets need runtime wrappers for `getaddrinfo`, `socket`, `bind`, `listen`, `accept`, `connect`, `send`, `recv`, `setsockopt`, `fcntl`/platform nonblocking, timeout policy, shutdown, and owned socket handle/drop semantics. |
 | `std::thread` | Grow from the current plain function-pointer spawn/join handle into safer ownership-transfer and result policy. | current `std-thread-basic` main/child id, spawn/join, invalid-handle, method-wrapper, root `Thread`, and yield checks; future moved capture rejection, richer status/result values, shared state diagnostics, and platform guards. | Current pthread trampoline uses a runtime packet and thread-local id; future work needs send/share trait policy, owned handle semantics, and platform-specific wrappers. |
-| `std::sync` | Grow from concrete `AtomicI64` into shared ownership before locks/channels. | current `std-sync-atomic-i64` load/store/swap/fetch-add/compare-exchange, method-wrapper, root alias, and LLVM atomic lowering checks; future `Shared`/`Weak` upgrade behavior, generic atomics, and mutex poisoning or no-poison policy. | Current atomic hooks lower directly to LLVM atomic instructions; future work needs reference-counted handle lowering, memory-order policy, and thread-safety trait checks. |
+| `std::sync` | Grow from concrete `AtomicI64`, primitive `Mutex`, and `Once` into shared ownership, value-protecting locks, and channels. | current `std-sync-atomic-i64` load/store/swap/fetch-add/compare-exchange, method-wrapper, root alias, and LLVM atomic lowering checks; current `std-sync-mutex-once` primitive mutex lock/unlock and once state checks; future `Shared`/`Weak` upgrade behavior, generic atomics, memory-order parameters, `Mutex[T]` guard policy, `RwLock`, `Condvar`, `OnceLock`, `LazyLock`, `Barrier`, optional `Semaphore`, MPSC channels, and futex-backed blocking implementation tests. | Current atomic hooks lower directly to LLVM atomic instructions; source `Mutex`/`Once` reuse those hooks. Future work needs reference-counted handle lowering, memory-order policy, thread-safety trait checks, guard lifetime modeling, blocking wait/wake runtime hooks, and Linux futex internals hidden behind portable APIs. |
 | `std::collections` | Add tree deletion and trait-driven constructors after the current queue/list/heap slice. | current set insertion/duplicate/replace/access/optional access/reserve/removal/iteration/copy/after-reset/same-zone tests; hash collision/tombstone and live-bucket iterator tests; tree rotation/replacement and sorted iterator tests; deque circular growth tests; ring-buffer full/overwrite tests; linked-list node reuse tests; binary-heap and priority-queue pop-order tests; future red-black deletion tests. | Current collection handles have zone provenance recognition; next compiler work is trait-driven `Hash`/`Eq`/`Ord` dispatch, richer comparator policies, and iterator lowering beyond the current cursor slices. |
 | `std::algo` | Grow from the first source slice algorithms into faster, move-aware ordering and slice transformation helpers. | current `std-algo-slice-helpers` sorting/stable sorting, comparator sorting, binary search, min/max/clamp, reverse/rotate, partition, fill, copy, dedup, and swap checks; future large-slice sort stress tests and ownership-valued algorithm rejection/move policy tests. | Current algorithms need no compiler work. Faster generic algorithms may need move-aware temporary storage, `Copy`/ownership constraints, and trait-driven `Ord` dispatch. |
 | `std::hash` | Grow the first deterministic source hasher into collection defaults and aggregate hashing policy. | current `std-hash-basic` hasher construction/reset/finalization, byte-slice hashing, primitive write helpers, generic `Hash[T]` dispatch for primitive values, and `collections::hash_i64` compatibility checks; future aggregate impls, trait-driven hash collection constructors, and collision-seed policy tests. | Current hashing is pure source Ari and needs no compiler work. Trait-driven collection constructors may need richer generic inference and default function-value selection. |

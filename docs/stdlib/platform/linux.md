@@ -93,6 +93,7 @@ useful for modern systems work.
 | signalfd | `target::has_signalfd()` reports Linux family support. | Needs signal-mask policy before implementation. |
 | pidfd | `target::has_pidfd_api()` reports Linux family support only. | Future process handle path; kernel version can still reject it. |
 | memfd | `target::has_memfd()` reports Linux family support. | Owned anonymous file descriptor wrapper. |
+| futex | Not exposed as portable `std`. | Internal runtime primitive for future blocking `Mutex`, `Condvar`, `RwLock`, barriers, semaphores, and channels after ownership and wait/wake policy are documented. |
 | io_uring | `target::has_io_uring_api()` reports Linux family support only. | Optional advanced async API after ownership and buffer pinning rules exist. |
 
 ## Process, Signals, And Memory Mapping

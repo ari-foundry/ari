@@ -1,0 +1,55 @@
+// Covers source Mutex and Once helpers built on the AtomicI64 primitive.
+fn initialize_once() -> void {
+  return;
+}
+
+fn main() -> i64 {
+  var mutex = Mutex::new();
+  if mutex.is_locked() {
+    return 1;
+  }
+  if !mutex.try_lock() {
+    return 2;
+  }
+  if !mutex.is_locked() {
+    return 3;
+  }
+  if mutex.try_lock() {
+    return 4;
+  }
+  mutex.unlock();
+  if mutex.is_locked() {
+    return 5;
+  }
+
+  sync::lock(ref mut mutex);
+  if !sync::is_locked(ref mutex) {
+    return 6;
+  }
+  sync::unlock(ref mut mutex);
+  if sync::is_locked(ref mutex) {
+    return 7;
+  }
+
+  var once = Once::new();
+  if once.is_completed() {
+    return 8;
+  }
+  if !once.call_once(initialize_once) {
+    return 9;
+  }
+  if !sync::is_completed(ref once) {
+    return 10;
+  }
+  if once.call_once(initialize_once) {
+    return 11;
+  }
+
+  var other = std::sync::Mutex::new();
+  if !std::sync::try_lock(ref mut other) {
+    return 12;
+  }
+  std::sync::unlock(ref mut other);
+
+  return 42;
+}

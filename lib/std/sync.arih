@@ -7,11 +7,56 @@ pub struct AtomicI64 {
   mut value: i64,
 }
 
+pub struct Mutex {
+  mut state: AtomicI64,
+}
+
+pub struct Once {
+  mut state: AtomicI64,
+}
+
 pub extern "ari" fn load(value: ref AtomicI64) -> i64 = "ari_builtin_sync_atomic_i64_load";
 pub extern "ari" fn store(value: ref mut AtomicI64, replacement: i64) -> void = "ari_builtin_sync_atomic_i64_store";
 pub extern "ari" fn swap(value: ref mut AtomicI64, replacement: i64) -> i64 = "ari_builtin_sync_atomic_i64_swap";
 pub extern "ari" fn fetch_add(value: ref mut AtomicI64, amount: i64) -> i64 = "ari_builtin_sync_atomic_i64_fetch_add";
 pub extern "ari" fn compare_exchange(value: ref mut AtomicI64, expected: i64, replacement: i64) -> bool = "ari_builtin_sync_atomic_i64_compare_exchange";
+
+pub fn try_lock(lock: ref mut std::sync::Mutex) -> bool {
+  return lock.state.compare_exchange(0, 1);
+}
+
+pub fn lock(lock: ref mut std::sync::Mutex) -> void {
+  while !std::sync::try_lock(lock) {
+    std::thread::yield_now();
+  }
+}
+
+pub fn unlock(lock: ref mut std::sync::Mutex) -> void {
+  lock.state.store(0);
+}
+
+pub fn is_locked(lock: ref std::sync::Mutex) -> bool {
+  return lock.state.load() != 0;
+}
+
+pub fn call_once(once: ref mut std::sync::Once, action: fn() -> void) -> bool {
+  if once.state.load() == 2 {
+    return false;
+  }
+  if once.state.compare_exchange(0, 1) {
+    action();
+    once.state.store(2);
+    return true;
+  }
+  while once.state.load() == 1 {
+    std::thread::yield_now();
+  }
+  return false;
+}
+
+pub fn is_completed(once: ref std::sync::Once) -> bool {
+  return once.state.load() == 2;
+}
 
 pub impl std::sync::AtomicI64 {
   fn new(value: i64) -> AtomicI64 {
@@ -36,5 +81,41 @@ pub impl std::sync::AtomicI64 {
 
   fn compare_exchange(self: ref mut Self, expected: i64, replacement: i64) -> bool {
     return std::sync::compare_exchange(self, expected, replacement);
+  }
+}
+
+pub impl std::sync::Mutex {
+  fn new() -> Mutex {
+    return Mutex { state: AtomicI64::new(0) };
+  }
+
+  fn try_lock(self: ref mut Self) -> bool {
+    return std::sync::try_lock(self);
+  }
+
+  fn lock(self: ref mut Self) -> void {
+    std::sync::lock(self);
+  }
+
+  fn unlock(self: ref mut Self) -> void {
+    std::sync::unlock(self);
+  }
+
+  fn is_locked(self: ref Self) -> bool {
+    return std::sync::is_locked(self);
+  }
+}
+
+pub impl std::sync::Once {
+  fn new() -> Once {
+    return Once { state: AtomicI64::new(0) };
+  }
+
+  fn call_once(self: ref mut Self, action: fn() -> void) -> bool {
+    return std::sync::call_once(self, action);
+  }
+
+  fn is_completed(self: ref Self) -> bool {
+    return std::sync::is_completed(self);
   }
 }

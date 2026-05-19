@@ -37,8 +37,9 @@ process id, explicit exit helpers, and the first POSIX fork/wait slice,
 errno, syscall, and Linux API-family facts,
 `std::thread` adds
 function-pointer spawn/join, scheduler yield, and per-thread runtime ids,
-`std::sync` adds the first concrete atomic integer primitive, `std::time` adds
-monotonic instants, wall-clock timestamps, non-negative
+`std::sync` adds the first concrete atomic integer primitive plus source
+`Mutex` and `Once` helpers, `std::time` adds monotonic instants, wall-clock
+timestamps, non-negative
 durations, elapsed-time helpers, and sleep, and `std::fs` adds the first
 byte-oriented file handle slice with mode-string opens for read, write,
 append, and read/write access plus access-permission checks, source create,
