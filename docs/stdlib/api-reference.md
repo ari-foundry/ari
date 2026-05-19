@@ -317,6 +317,54 @@ directory iteration are future work.
 The current `File` value is not an owned resource yet, so close each successful
 handle once and do not reuse copied handles after closing.
 
+Network address helpers live in `std::net`:
+
+```ari
+net::Ipv4Addr
+net::Ipv6Addr
+net::IpAddr
+net::SocketAddr
+
+net::ipv4(a, b, c, d)
+net::ipv6(s0, s1, s2, s3, s4, s5, s6, s7)
+net::socket_addr(ip, port)
+net::localhost(port)
+
+Ipv4Addr::new(a, b, c, d)
+Ipv4Addr::any()
+Ipv4Addr::localhost()
+ipv4.octet(index)
+ipv4.is_unspecified()
+ipv4.is_loopback()
+ipv4.as_ip()
+
+Ipv6Addr::new(s0, s1, s2, s3, s4, s5, s6, s7)
+Ipv6Addr::any()
+Ipv6Addr::localhost()
+ipv6.segment(index)
+ipv6.is_unspecified()
+ipv6.is_loopback()
+ipv6.as_ip()
+
+ip.is_v4()
+ip.is_v6()
+ip.is_unspecified()
+ip.is_loopback()
+
+SocketAddr::new(ip, port)
+SocketAddr::localhost(port)
+addr.ip()
+addr.port()
+addr.with_port(port)
+addr.is_unspecified()
+addr.is_loopback()
+```
+
+The current network slice is source-only and deterministic. It does not do DNS
+lookup, open sockets, or touch the host network. TCP listeners/streams, UDP
+sockets, Unix domain sockets, socket options, nonblocking mode, timeouts, and
+shutdown are roadmap work for the runtime-backed `std::net` handle layer.
+
 ## IO And Input
 
 `std::io` exposes low-level process IO hooks and a small trait surface for

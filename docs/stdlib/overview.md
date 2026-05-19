@@ -29,6 +29,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `load`, `store`, `swap`, `fetch_add`, `compare_exchange`. |
 | `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
 | `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `rename`, `create_dir`, `remove_dir`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, whole-file `read`, `write`, `append`, `truncate`, `copy`, `read_to_string`, `close`. |
+| `std::net` | Source network address values. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `ipv4`, `ipv6`, `socket_addr`, `localhost`, family/loopback/unspecified predicates, port helpers. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
@@ -148,6 +149,11 @@ whole-file `read`, `write`, `append`, `truncate`, `copy`, byte-string
 runtime hooks over the raw OS boundary. The handle is a visible value today and
 should become a stronger owned resource when OS resource ownership is modeled
 by the language.
+
+`std::net` starts with deterministic value types: IPv4, IPv6, generic IP, and
+socket addresses. DNS lookup and TCP/UDP/Unix sockets remain runtime-backed
+roadmap work because they need owned OS handles, errors, nonblocking behavior,
+timeouts, and shutdown policy.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
 small, insertion-order, linear set with iterator support. `Deque[T]` and

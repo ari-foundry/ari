@@ -1,0 +1,226 @@
+// Network address value helpers.
+//
+// This first std::net slice stays source-only: address values are ordinary
+// Ari data, while sockets and DNS remain future OS-resource/runtime work.
+pub struct Ipv4Addr {
+  a: u8,
+  b: u8,
+  c: u8,
+  d: u8,
+}
+
+pub struct Ipv6Addr {
+  s0: u16,
+  s1: u16,
+  s2: u16,
+  s3: u16,
+  s4: u16,
+  s5: u16,
+  s6: u16,
+  s7: u16,
+}
+
+pub struct IpAddr {
+  family: i64,
+  s0: u16,
+  s1: u16,
+  s2: u16,
+  s3: u16,
+  s4: u16,
+  s5: u16,
+  s6: u16,
+  s7: u16,
+}
+
+pub struct SocketAddr {
+  ip: IpAddr,
+  port: u16,
+}
+
+pub fn ipv4(a: u8, b: u8, c: u8, d: u8) -> Ipv4Addr {
+  return Ipv4Addr { a: a, b: b, c: c, d: d };
+}
+
+pub fn ipv6(s0: u16, s1: u16, s2: u16, s3: u16, s4: u16, s5: u16, s6: u16, s7: u16) -> Ipv6Addr {
+  return Ipv6Addr { s0: s0, s1: s1, s2: s2, s3: s3, s4: s4, s5: s5, s6: s6, s7: s7 };
+}
+
+pub fn socket_addr(ip: IpAddr, port: u16) -> SocketAddr {
+  return SocketAddr { ip: ip, port: port };
+}
+
+pub fn localhost(port: u16) -> SocketAddr {
+  let host = Ipv4Addr::localhost();
+  return socket_addr(host.as_ip(), port);
+}
+
+pub impl std::net::Ipv4Addr {
+  fn new(a: u8, b: u8, c: u8, d: u8) -> Ipv4Addr {
+    return ipv4(a, b, c, d);
+  }
+
+  fn any() -> Ipv4Addr {
+    return ipv4(0 as u8, 0 as u8, 0 as u8, 0 as u8);
+  }
+
+  fn localhost() -> Ipv4Addr {
+    return ipv4(127 as u8, 0 as u8, 0 as u8, 1 as u8);
+  }
+
+  fn octet(self: ref Self, index: i64) -> u8 {
+    std::assert(index >= 0);
+    std::assert(index < 4);
+    if index == 0 {
+      return self.a;
+    }
+    if index == 1 {
+      return self.b;
+    }
+    if index == 2 {
+      return self.c;
+    }
+    return self.d;
+  }
+
+  fn is_unspecified(self: ref Self) -> bool {
+    return self.a == 0 as u8 && self.b == 0 as u8 && self.c == 0 as u8 && self.d == 0 as u8;
+  }
+
+  fn is_loopback(self: ref Self) -> bool {
+    return self.a == 127 as u8;
+  }
+
+  fn as_ip(self: ref Self) -> IpAddr {
+    return IpAddr {
+      family: 4,
+      s0: self.a as u16,
+      s1: self.b as u16,
+      s2: self.c as u16,
+      s3: self.d as u16,
+      s4: 0 as u16,
+      s5: 0 as u16,
+      s6: 0 as u16,
+      s7: 0 as u16,
+    };
+  }
+}
+
+pub impl std::net::Ipv6Addr {
+  fn new(s0: u16, s1: u16, s2: u16, s3: u16, s4: u16, s5: u16, s6: u16, s7: u16) -> Ipv6Addr {
+    return ipv6(s0, s1, s2, s3, s4, s5, s6, s7);
+  }
+
+  fn any() -> Ipv6Addr {
+    return ipv6(0 as u16, 0 as u16, 0 as u16, 0 as u16, 0 as u16, 0 as u16, 0 as u16, 0 as u16);
+  }
+
+  fn localhost() -> Ipv6Addr {
+    return ipv6(0 as u16, 0 as u16, 0 as u16, 0 as u16, 0 as u16, 0 as u16, 0 as u16, 1 as u16);
+  }
+
+  fn segment(self: ref Self, index: i64) -> u16 {
+    std::assert(index >= 0);
+    std::assert(index < 8);
+    if index == 0 {
+      return self.s0;
+    }
+    if index == 1 {
+      return self.s1;
+    }
+    if index == 2 {
+      return self.s2;
+    }
+    if index == 3 {
+      return self.s3;
+    }
+    if index == 4 {
+      return self.s4;
+    }
+    if index == 5 {
+      return self.s5;
+    }
+    if index == 6 {
+      return self.s6;
+    }
+    return self.s7;
+  }
+
+  fn is_unspecified(self: ref Self) -> bool {
+    return self.s0 == 0 as u16 && self.s1 == 0 as u16 && self.s2 == 0 as u16 && self.s3 == 0 as u16 &&
+      self.s4 == 0 as u16 && self.s5 == 0 as u16 && self.s6 == 0 as u16 && self.s7 == 0 as u16;
+  }
+
+  fn is_loopback(self: ref Self) -> bool {
+    return self.s0 == 0 as u16 && self.s1 == 0 as u16 && self.s2 == 0 as u16 && self.s3 == 0 as u16 &&
+      self.s4 == 0 as u16 && self.s5 == 0 as u16 && self.s6 == 0 as u16 && self.s7 == 1 as u16;
+  }
+
+  fn as_ip(self: ref Self) -> IpAddr {
+    return IpAddr {
+      family: 6,
+      s0: self.s0,
+      s1: self.s1,
+      s2: self.s2,
+      s3: self.s3,
+      s4: self.s4,
+      s5: self.s5,
+      s6: self.s6,
+      s7: self.s7,
+    };
+  }
+}
+
+pub impl std::net::IpAddr {
+  fn is_v4(self: ref Self) -> bool {
+    return self.family == 4;
+  }
+
+  fn is_v6(self: ref Self) -> bool {
+    return self.family == 6;
+  }
+
+  fn is_unspecified(self: ref Self) -> bool {
+    return self.s0 == 0 as u16 && self.s1 == 0 as u16 && self.s2 == 0 as u16 && self.s3 == 0 as u16 &&
+      self.s4 == 0 as u16 && self.s5 == 0 as u16 && self.s6 == 0 as u16 && self.s7 == 0 as u16;
+  }
+
+  fn is_loopback(self: ref Self) -> bool {
+    if self.is_v4() {
+      return self.s0 == 127 as u16;
+    }
+    return self.s0 == 0 as u16 && self.s1 == 0 as u16 && self.s2 == 0 as u16 && self.s3 == 0 as u16 &&
+      self.s4 == 0 as u16 && self.s5 == 0 as u16 && self.s6 == 0 as u16 && self.s7 == 1 as u16;
+  }
+}
+
+pub impl std::net::SocketAddr {
+  fn new(ip: IpAddr, port: u16) -> SocketAddr {
+    return socket_addr(ip, port);
+  }
+
+  fn localhost(port: u16) -> SocketAddr {
+    return std::net::localhost(port);
+  }
+
+  fn ip(self: ref Self) -> IpAddr {
+    return self.ip;
+  }
+
+  fn port(self: ref Self) -> u16 {
+    return self.port;
+  }
+
+  fn with_port(self: ref Self, port: u16) -> SocketAddr {
+    return SocketAddr { ip: self.ip, port: port };
+  }
+
+  fn is_loopback(self: ref Self) -> bool {
+    let ip = self.ip;
+    return ip.is_loopback();
+  }
+
+  fn is_unspecified(self: ref Self) -> bool {
+    let ip = self.ip;
+    return ip.is_unspecified();
+  }
+}

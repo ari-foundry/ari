@@ -1,0 +1,68 @@
+// Covers source-only std::net IP address and socket address value helpers.
+fn main() -> i64 {
+  var score = 0;
+
+  let any4 = net::Ipv4Addr::any();
+  if any4.is_unspecified() {
+    score = score + 1;
+  }
+  if !any4.is_loopback() {
+    score = score + 2;
+  }
+  if any4.octet(0) == 0 as u8 && any4.octet(3) == 0 as u8 {
+    score = score + 3;
+  }
+
+  let loop4 = net::Ipv4Addr::localhost();
+  if loop4.is_loopback() {
+    score = score + 4;
+  }
+  let ip4 = loop4.as_ip();
+  if ip4.is_v4() && !ip4.is_v6() {
+    score = score + 5;
+  }
+  if ip4.is_loopback() {
+    score = score + 6;
+  }
+
+  let any6 = net::Ipv6Addr::any();
+  if any6.is_unspecified() {
+    score = score + 7;
+  }
+  if any6.segment(7) == 0 as u16 {
+    score = score + 8;
+  }
+
+  let loop6 = net::Ipv6Addr::localhost();
+  if loop6.is_loopback() {
+    score = score + 9;
+  }
+  let ip6 = loop6.as_ip();
+  if ip6.is_v6() && !ip6.is_v4() {
+    score = score + 10;
+  }
+
+  let addr = net::socket_addr(ip4, 8080 as u16);
+  if addr.port() == 8080 as u16 {
+    score = score + 11;
+  }
+  if addr.is_loopback() {
+    score = score + 12;
+  }
+
+  let changed = addr.with_port(443 as u16);
+  if changed.port() == 443 as u16 {
+    score = score + 13;
+  }
+  let changed_ip = changed.ip();
+  if changed_ip.is_loopback() {
+    score = score + 14;
+  }
+
+  let local = net::SocketAddr::localhost(9000 as u16);
+  if local.is_loopback() && local.port() == 9000 as u16 {
+    score = score + 15;
+  }
+
+  return score;
+}

@@ -309,6 +309,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf
 	$(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120; fi
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-addresses.ll
+	grep -F -q "std3net4ipv4" $(BUILD_DIR)/prelude/std-net-addresses.ll
+	grep -F -q "std3net4ipv6" $(BUILD_DIR)/prelude/std-net-addresses.ll
+	grep -F -q "std3net11socket_addr" $(BUILD_DIR)/prelude/std-net-addresses.ll
+	grep -F -q "std3net9localhost" $(BUILD_DIR)/prelude/std-net-addresses.ll
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari -o $(BUILD_DIR)/prelude/std-net-addresses.elf
+	$(BUILD_DIR)/prelude/std-net-addresses.elf; code=$$?; test $$code -eq 120
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-net-addresses.elf; $(BUILD_DIR)/prelude/std-net-addresses.elf; code=$$?; test $$code -eq 120; fi
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll

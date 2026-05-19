@@ -179,6 +179,10 @@ fn std::mem::replace[T]|std mem value helper tests; docs/dev/test-matrix.md Prel
 fn std::mem::size_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::swap[T]|std mem value helper tests; docs/dev/test-matrix.md Prelude and C FFI rows
 fn std::move[T]|explicit move tests; docs/dev/test-matrix.md Ownership row
+fn std::net::ipv4|check-prelude std-net-addresses source IPv4 constructor; docs/stdlib/modules/net.md
+fn std::net::ipv6|check-prelude std-net-addresses source IPv6 constructor; docs/stdlib/modules/net.md
+fn std::net::localhost|check-prelude std-net-addresses source loopback socket address constructor; docs/stdlib/modules/net.md
+fn std::net::socket_addr|check-prelude std-net-addresses source socket address constructor; docs/stdlib/modules/net.md
 fn std::panic|prelude panic helpers; docs/dev/test-matrix.md Prelude row
 fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
 fn std::process::failure|check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md
@@ -469,6 +473,31 @@ method std::io::BufWriter[W]::buffered_len|std io buffered tests; docs/stdlib/mo
 method std::io::BufWriter[W]::capacity|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::is_empty|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::new|std io buffered tests; docs/stdlib/modules/io.md
+method std::net::IpAddr::is_loopback|check-prelude std-net-addresses generic IP loopback predicate; docs/stdlib/modules/net.md
+method std::net::IpAddr::is_unspecified|check-prelude std-net-addresses generic IP unspecified predicate; docs/stdlib/modules/net.md
+method std::net::IpAddr::is_v4|check-prelude std-net-addresses generic IPv4 family predicate; docs/stdlib/modules/net.md
+method std::net::IpAddr::is_v6|check-prelude std-net-addresses generic IPv6 family predicate; docs/stdlib/modules/net.md
+method std::net::Ipv4Addr::any|check-prelude std-net-addresses IPv4 unspecified constructor; docs/stdlib/modules/net.md
+method std::net::Ipv4Addr::as_ip|check-prelude std-net-addresses IPv4 to generic IP conversion; docs/stdlib/modules/net.md
+method std::net::Ipv4Addr::is_loopback|check-prelude std-net-addresses IPv4 loopback predicate; docs/stdlib/modules/net.md
+method std::net::Ipv4Addr::is_unspecified|check-prelude std-net-addresses IPv4 unspecified predicate; docs/stdlib/modules/net.md
+method std::net::Ipv4Addr::localhost|check-prelude std-net-addresses IPv4 loopback constructor; docs/stdlib/modules/net.md
+method std::net::Ipv4Addr::new|check-prelude std-net-addresses IPv4 associated constructor; docs/stdlib/modules/net.md
+method std::net::Ipv4Addr::octet|check-prelude std-net-addresses IPv4 octet accessor; docs/stdlib/modules/net.md
+method std::net::Ipv6Addr::any|check-prelude std-net-addresses IPv6 unspecified constructor; docs/stdlib/modules/net.md
+method std::net::Ipv6Addr::as_ip|check-prelude std-net-addresses IPv6 to generic IP conversion; docs/stdlib/modules/net.md
+method std::net::Ipv6Addr::is_loopback|check-prelude std-net-addresses IPv6 loopback predicate; docs/stdlib/modules/net.md
+method std::net::Ipv6Addr::is_unspecified|check-prelude std-net-addresses IPv6 unspecified predicate; docs/stdlib/modules/net.md
+method std::net::Ipv6Addr::localhost|check-prelude std-net-addresses IPv6 loopback constructor; docs/stdlib/modules/net.md
+method std::net::Ipv6Addr::new|check-prelude std-net-addresses IPv6 associated constructor; docs/stdlib/modules/net.md
+method std::net::Ipv6Addr::segment|check-prelude std-net-addresses IPv6 segment accessor; docs/stdlib/modules/net.md
+method std::net::SocketAddr::ip|check-prelude std-net-addresses socket address IP accessor; docs/stdlib/modules/net.md
+method std::net::SocketAddr::is_loopback|check-prelude std-net-addresses socket address loopback predicate; docs/stdlib/modules/net.md
+method std::net::SocketAddr::is_unspecified|check-prelude std-net-addresses socket address unspecified predicate; docs/stdlib/modules/net.md
+method std::net::SocketAddr::localhost|check-prelude std-net-addresses socket address loopback constructor; docs/stdlib/modules/net.md
+method std::net::SocketAddr::new|check-prelude std-net-addresses socket address associated constructor; docs/stdlib/modules/net.md
+method std::net::SocketAddr::port|check-prelude std-net-addresses socket address port accessor; docs/stdlib/modules/net.md
+method std::net::SocketAddr::with_port|check-prelude std-net-addresses socket address port replacement; docs/stdlib/modules/net.md
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
@@ -602,6 +631,7 @@ module std::io|prelude IO tests; docs/dev/test-matrix.md Prelude row
 module std::iter|range and iterator tests; docs/dev/test-matrix.md Control flow row
 module std::math|std math integer helper tests; docs/stdlib/overview.md module map
 module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
+module std::net|std net address value tests; docs/stdlib/modules/net.md
 module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude row
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
@@ -644,6 +674,10 @@ struct std::io::Stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::io::Stdout|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
+struct std::net::IpAddr|std net generic IP address tests; docs/stdlib/modules/net.md
+struct std::net::Ipv4Addr|std net IPv4 address tests; docs/stdlib/modules/net.md
+struct std::net::Ipv6Addr|std net IPv6 address tests; docs/stdlib/modules/net.md
+struct std::net::SocketAddr|std net socket address tests; docs/stdlib/modules/net.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::sync::AtomicI64|check-prelude std-sync-atomic-i64 atomic primitive value; docs/stdlib/modules/sync.md

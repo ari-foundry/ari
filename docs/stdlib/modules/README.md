@@ -49,6 +49,8 @@ limits, examples, and test files for one module.
   close, removal, `File` value handles, `Option[File]` open helpers, and
   source byte create/read/write/append/truncate/copy plus rename and
   single-directory create/remove helpers.
+- [std::net](net.md): source-only IPv4, IPv6, generic IP, and socket-address
+  value helpers plus networking runtime roadmap.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,
   `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,

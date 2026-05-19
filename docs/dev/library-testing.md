@@ -75,6 +75,12 @@ identifies the exact case:
   `read_to_string`, missing-file empty reads, and truncating rewrite behavior.
 - `std-fs-create-truncate-copy.ari`: source `create`, `try_create`, natural
   `read`, `truncate`, streaming `copy`, and missing-source copy failure.
+- `std-fs-rename-dir.ari`: runtime-backed `rename`, single-directory
+  `create_dir`/`remove_dir`, duplicate-create failure, and missing-source
+  rename failure.
+- `std-net-addresses.ari`: source `std::net` IPv4/IPv6 constructors, generic
+  IP predicates, socket-address construction, port replacement, loopback, and
+  unspecified checks.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.
