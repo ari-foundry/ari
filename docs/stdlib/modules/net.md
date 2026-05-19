@@ -120,8 +120,10 @@ let https = local.with_port(443 as u16);
 
 - This slice does not open sockets, perform DNS lookup, or touch the host
   network. It is safe to run in deterministic compiler tests.
-- There is no socket error type yet. Runtime-backed networking should not grow
-  boolean-only APIs for operations where callers need OS error detail.
+- Runtime-backed networking should use `std::error::Error` for OS error detail
+  instead of growing boolean-only APIs for operations where callers need to
+  distinguish retryable, timeout, refused, unsupported, or invalid-input
+  failures.
 - Socket handles should be owned resources, unlike the copyable address values
   in this file. That needs the same ownership/drop policy being developed for
   `std::fs::File`.

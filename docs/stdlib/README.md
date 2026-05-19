@@ -27,9 +27,11 @@ in `std::env`, while `std::context` stays the low-level runtime context layer.
 `Stdout`, `Stderr`, `Cursor`, caller-buffered `BufReader`/`BufWriter`,
 `read_exact`, `write_all`, and `flush` on top of the raw process IO hooks.
 `std::test` adds source executable unit-test reports, generic equality checks,
-and scratch-zone helpers, and `std::log` adds level-prefixed `stderr`
-diagnostic lines while richer runner, structured logging, source-location, and
-backtrace support remain roadmap work.
+and scratch-zone helpers, `std::log` adds level-prefixed `stderr` diagnostic
+lines, and `std::error` adds shared recoverable error categories, compact
+error values, and POSIX errno mapping while richer runner, structured logging,
+source-location, direct `Result[T, Error]`, and backtrace support remain
+roadmap work.
 `std::process`
 starts the OS-facing surface with current
 process id, explicit exit helpers, and the first POSIX fork/wait slice,

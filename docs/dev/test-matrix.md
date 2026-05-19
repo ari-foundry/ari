@@ -949,6 +949,10 @@ Checklist:
       `map`/`and_then`/`filter`/`flatten`/`transpose`, and Result
       `map`/`and_then`/`transpose`/`map_err`/`or` combinator methods
       implemented in `std::option` and `std::result`
+- [x] add source `std::error` recoverable error values with stable kinds,
+      POSIX errno mapping, predicate helpers, root `Error`/`ErrorKind`
+      aliases, and a compact raw scalar bridge for current `Result[T, i64]`
+      error flow
 - [x] expose source `Slice[T]` and `slice(data, len)` as a non-owning
       pointer/length view through the source prelude, with `len(view)`,
       `view.len()`, source `view.is_empty()`, `view[index]`, and `view[index] = value`
@@ -972,7 +976,7 @@ Checklist:
 - [x] resolve source `std` child modules as package files under `lib/std/` for
       both implicit `std` loading and explicit `mod std;` loading, including
       `std::boxed`, `std::cmp`, `std::collections`, `std::context`,
-      `std::convert`, `std::env`, `std::fmt`, `std::process`,
+      `std::convert`, `std::env`, `std::error`, `std::fmt`, `std::process`,
       `std::thread`, `std::sync`, `std::time`, `std::fs`, `std::ascii`,
       `std::bits`, `std::input`, `std::io`, `std::iter`, `std::mem`,
       `std::option`, `std::result`, `std::string`, `std::vec`, and

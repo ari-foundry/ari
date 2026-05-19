@@ -1,0 +1,266 @@
+// Common recoverable error values.
+//
+// Ari keeps ordinary failure in `Result[T, E]` instead of exceptions. This
+// module provides the first shared error vocabulary for IO, filesystem,
+// process, networking, parsing, and runtime wrappers that need more detail
+// than a bool or sentinel integer can carry. The value stays one word today so
+// callers can bridge through `Result[T, i64]` while mixed enum payload storage
+// matures.
+
+pub enum Kind {
+  NotFound,
+  PermissionDenied,
+  AlreadyExists,
+  InvalidInput,
+  InvalidData,
+  Interrupted,
+  WouldBlock,
+  TimedOut,
+  BrokenPipe,
+  UnexpectedEof,
+  Unsupported,
+  OutOfMemory,
+  ResourceBusy,
+  InProgress,
+  NotDirectory,
+  IsDirectory,
+  DirectoryNotEmpty,
+  StorageFull,
+  CrossDevice,
+  Other,
+}
+
+pub struct Error {
+  // Keep Error one word so it can travel through today's compact
+  // `Result[T, E]` payload storage when `T` is also a scalar.
+  raw: i64,
+}
+
+fn kind_id(kind: std::error::Kind) -> i64 {
+  match kind {
+    NotFound => { return 1; }
+    PermissionDenied => { return 2; }
+    AlreadyExists => { return 3; }
+    InvalidInput => { return 4; }
+    InvalidData => { return 5; }
+    Interrupted => { return 6; }
+    WouldBlock => { return 7; }
+    TimedOut => { return 8; }
+    BrokenPipe => { return 9; }
+    UnexpectedEof => { return 10; }
+    Unsupported => { return 11; }
+    OutOfMemory => { return 12; }
+    ResourceBusy => { return 13; }
+    InProgress => { return 14; }
+    NotDirectory => { return 15; }
+    IsDirectory => { return 16; }
+    DirectoryNotEmpty => { return 17; }
+    StorageFull => { return 18; }
+    CrossDevice => { return 19; }
+    Other => { return 20; }
+  }
+}
+
+fn kind_from_id(id: i64) -> std::error::Kind {
+  if id == 1 { return NotFound; }
+  if id == 2 { return PermissionDenied; }
+  if id == 3 { return AlreadyExists; }
+  if id == 4 { return InvalidInput; }
+  if id == 5 { return InvalidData; }
+  if id == 6 { return Interrupted; }
+  if id == 7 { return WouldBlock; }
+  if id == 8 { return TimedOut; }
+  if id == 9 { return BrokenPipe; }
+  if id == 10 { return UnexpectedEof; }
+  if id == 11 { return Unsupported; }
+  if id == 12 { return OutOfMemory; }
+  if id == 13 { return ResourceBusy; }
+  if id == 14 { return InProgress; }
+  if id == 15 { return NotDirectory; }
+  if id == 16 { return IsDirectory; }
+  if id == 17 { return DirectoryNotEmpty; }
+  if id == 18 { return StorageFull; }
+  if id == 19 { return CrossDevice; }
+  return Other;
+}
+
+fn pack(kind: std::error::Kind, code: i64) -> std::error::Error {
+  std::assert(code >= 0);
+  std::assert(code < 1000000);
+  return std::error::Error { raw: (kind_id(kind) * 1000000) + code };
+}
+
+pub fn new(kind: std::error::Kind) -> std::error::Error {
+  return pack(kind, 0);
+}
+
+pub fn with_code(kind: std::error::Kind, code: i64) -> std::error::Error {
+  return pack(kind, code);
+}
+
+pub fn from_raw(raw: i64) -> std::error::Error {
+  std::assert(raw >= 0);
+  return std::error::Error { raw: raw };
+}
+
+pub fn from_errno(code: i64) -> std::error::Error {
+  if code == 2 {
+    return std::error::with_code(NotFound, code);
+  }
+  if code == 1 || code == 13 {
+    return std::error::with_code(PermissionDenied, code);
+  }
+  if code == 17 {
+    return std::error::with_code(AlreadyExists, code);
+  }
+  if code == 22 {
+    return std::error::with_code(InvalidInput, code);
+  }
+  if code == 84 {
+    return std::error::with_code(InvalidData, code);
+  }
+  if code == 4 {
+    return std::error::with_code(Interrupted, code);
+  }
+  if code == 11 {
+    return std::error::with_code(WouldBlock, code);
+  }
+  if code == 110 {
+    return std::error::with_code(TimedOut, code);
+  }
+  if code == 32 {
+    return std::error::with_code(BrokenPipe, code);
+  }
+  if code == 38 || code == 95 {
+    return std::error::with_code(Unsupported, code);
+  }
+  if code == 12 {
+    return std::error::with_code(OutOfMemory, code);
+  }
+  if code == 16 {
+    return std::error::with_code(ResourceBusy, code);
+  }
+  if code == 115 {
+    return std::error::with_code(InProgress, code);
+  }
+  if code == 20 {
+    return std::error::with_code(NotDirectory, code);
+  }
+  if code == 21 {
+    return std::error::with_code(IsDirectory, code);
+  }
+  if code == 39 {
+    return std::error::with_code(DirectoryNotEmpty, code);
+  }
+  if code == 28 {
+    return std::error::with_code(StorageFull, code);
+  }
+  if code == 18 {
+    return std::error::with_code(CrossDevice, code);
+  }
+  return std::error::with_code(Other, code);
+}
+
+pub fn kind(value: ref std::error::Error) -> std::error::Kind {
+  return kind_from_id(value.raw / 1000000);
+}
+
+pub fn code(value: ref std::error::Error) -> i64 {
+  return value.raw % 1000000;
+}
+
+pub fn raw(value: ref std::error::Error) -> i64 {
+  return value.raw;
+}
+
+pub fn is_kind(value: ref std::error::Error, kind: std::error::Kind) -> bool {
+  return kind_id(std::error::kind(value)) == kind_id(kind);
+}
+
+pub fn is_not_found(value: ref std::error::Error) -> bool {
+  return std::error::is_kind(value, NotFound);
+}
+
+pub fn is_interrupted(value: ref std::error::Error) -> bool {
+  return std::error::is_kind(value, Interrupted);
+}
+
+pub fn is_retryable(value: ref std::error::Error) -> bool {
+  if std::error::is_kind(value, Interrupted) {
+    return true;
+  }
+  if std::error::is_kind(value, WouldBlock) {
+    return true;
+  }
+  if std::error::is_kind(value, TimedOut) {
+    return true;
+  }
+  return std::error::is_kind(value, InProgress);
+}
+
+pub fn name(kind: std::error::Kind) -> string {
+  match kind {
+    NotFound => { return "not found"; }
+    PermissionDenied => { return "permission denied"; }
+    AlreadyExists => { return "already exists"; }
+    InvalidInput => { return "invalid input"; }
+    InvalidData => { return "invalid data"; }
+    Interrupted => { return "interrupted"; }
+    WouldBlock => { return "would block"; }
+    TimedOut => { return "timed out"; }
+    BrokenPipe => { return "broken pipe"; }
+    UnexpectedEof => { return "unexpected eof"; }
+    Unsupported => { return "unsupported"; }
+    OutOfMemory => { return "out of memory"; }
+    ResourceBusy => { return "resource busy"; }
+    InProgress => { return "in progress"; }
+    NotDirectory => { return "not a directory"; }
+    IsDirectory => { return "is a directory"; }
+    DirectoryNotEmpty => { return "directory not empty"; }
+    StorageFull => { return "storage full"; }
+    CrossDevice => { return "cross-device operation"; }
+    Other => { return "other error"; }
+  }
+}
+
+pub fn message(value: ref std::error::Error) -> string {
+  return std::error::name(std::error::kind(value));
+}
+
+pub impl std::error::Error {
+  fn kind(self: ref Self) -> std::error::Kind {
+    return std::error::kind(self);
+  }
+
+  fn code(self: ref Self) -> i64 {
+    return std::error::code(self);
+  }
+
+  fn raw(self: ref Self) -> i64 {
+    return std::error::raw(self);
+  }
+
+  fn is_kind(self: ref Self, kind: std::error::Kind) -> bool {
+    return std::error::is_kind(self, kind);
+  }
+
+  fn is_not_found(self: ref Self) -> bool {
+    return std::error::is_not_found(self);
+  }
+
+  fn is_interrupted(self: ref Self) -> bool {
+    return std::error::is_interrupted(self);
+  }
+
+  fn is_retryable(self: ref Self) -> bool {
+    return std::error::is_retryable(self);
+  }
+
+  fn name(self: ref Self) -> string {
+    return std::error::name(std::error::kind(self));
+  }
+
+  fn message(self: ref Self) -> string {
+    return std::error::message(self);
+  }
+}

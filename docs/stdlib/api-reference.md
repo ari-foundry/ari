@@ -17,6 +17,8 @@ RangeInclusive[T]
 Box[T]
 String
 Thread
+Error
+ErrorKind
 AtomicI64
 Mutex
 Once
@@ -133,6 +135,42 @@ with `zone::destroy(zone)` when the test is done.
 
 Debug printing currently uses `print`, `println`, `print!`, `println!`, and
 the `std::io` writer surface.
+
+Recoverable error values live in `std::error`:
+
+```ari
+error::Kind
+error::Error
+
+error::new(kind)
+error::with_code(kind, code)
+error::from_errno(code)
+error::from_raw(raw)
+error::kind(ref error)
+error::code(ref error)
+error::raw(ref error)
+error::is_kind(ref error, kind)
+error::is_not_found(ref error)
+error::is_interrupted(ref error)
+error::is_retryable(ref error)
+error::name(kind)
+error::message(ref error)
+
+reason.kind()
+reason.code()
+reason.raw()
+reason.is_kind(kind)
+reason.is_not_found()
+reason.is_interrupted()
+reason.is_retryable()
+reason.name()
+reason.message()
+```
+
+Use `Error` for OS/runtime/library failures, and use `ErrorKind` for the root
+alias of `std::error::Kind`. Current `Error` values have a compact raw scalar
+representation so they can pass through `Result[T, i64]` while mixed
+`Result[T, Error]` payload storage is still roadmap work.
 
 Level-prefixed diagnostic logging lives in `std::log`:
 

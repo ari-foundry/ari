@@ -1,0 +1,70 @@
+// Covers source std::error recoverable error values and current Result integration.
+fn maybe_value(flag: bool) -> Result[i64, i64] {
+  if flag {
+    return Ok<i64, i64>(42);
+  }
+  let reason = error::with_code(error::InvalidInput, 22);
+  return Err<i64, i64>(reason.raw());
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  let missing = error::from_errno(2);
+  if missing.is_not_found() && missing.code() == 2 {
+    score = score + 1;
+  }
+
+  match missing.kind() {
+    error::NotFound => {
+      score = score + 1;
+    }
+    _ => {
+      panic();
+    }
+  }
+
+  let denied: std::Error = error::from_errno(13);
+  if error::is_kind(ref denied, error::PermissionDenied) {
+    score = score + 1;
+  }
+
+  let retry = error::from_errno(11);
+  if retry.is_retryable() && !missing.is_retryable() {
+    score = score + 1;
+  }
+
+  let unknown = error::from_errno(9999);
+  if unknown.is_kind(error::Other) && unknown.code() == 9999 {
+    score = score + 1;
+  }
+
+  let root_kind: ErrorKind = unknown.kind();
+  match root_kind {
+    error::Other => {
+      score = score + 1;
+    }
+    _ => {
+      panic();
+    }
+  }
+
+  let name = missing.name() as ptr u8;
+  if ptr_load(name) == 110u8 {
+    score = score + 1;
+  }
+
+  match maybe_value(false) {
+    Ok(_) => {
+      panic();
+    }
+    Err(raw_reason) => {
+      let reason = error::from_raw(raw_reason);
+      if reason.is_kind(error::InvalidInput) {
+        score = score + 1;
+      }
+    }
+  }
+
+  return score;
+}

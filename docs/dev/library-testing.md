@@ -51,6 +51,9 @@ identifies the exact case:
 - `std-test-report.ari`: source `std::test::Report` aggregation, generic
   equality helpers, method wrappers, explicit finish status, and scratch zone
   creation.
+- `std-error-basic.ari`: source `std::error::Kind` and compact `Error`
+  behavior, POSIX errno mapping, root aliases, predicate helpers, string names,
+  and the current raw scalar bridge for `Result[T, i64]`.
 - `std-target-basic.ari`: compiler-known `std::target` triple,
   architecture, OS, environment/libc, object/debug format, errno ABI, syscall
   ABI, pointer-width, and Linux API-family predicate behavior.

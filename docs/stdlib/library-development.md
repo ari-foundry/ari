@@ -53,6 +53,10 @@ depends on it.
   keep the suffixed form only as a documented compatibility shim.
 - Use `_in` when a function needs an explicit allocation zone.
 - Prefer `Option` or `Result` for ordinary absence or recoverable failure.
+- Prefer `std::error::Error`/`ErrorKind` for shared OS, runtime, IO,
+  filesystem, network, or parser failures. Until direct `Result[T, Error]`
+  payload storage is available for every `T`, use `error.raw()` with
+  `Result[T, i64]` and reconstruct with `error::from_raw(raw)`.
 - Use `assert` only for programmer errors and current precondition traps.
 - Keep mutating methods on `self: ref mut Self`.
 - Keep read-only methods on `self: ref Self`.

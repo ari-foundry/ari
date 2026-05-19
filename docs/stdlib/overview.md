@@ -17,7 +17,7 @@ hiding allocation, ownership, or backend behavior.
 
 | Module | Purpose | First Things To Use |
 | --- | --- | --- |
-| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `try_get`, `move`, `take`, `assert`, `panic`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. |
+| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `filter`, `flatten`, `transpose`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
 | `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, `write_bytes`, `read_line`. |
@@ -25,6 +25,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::test` | Executable unit-test helpers. | `Report`, `report`, `scratch`, `check`, `equal`, `not_equal`, `passed`, `failed`, `ok`, `finish`, `require`. |
 | `std::log` | Level-prefixed stderr diagnostics. | `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, `error`. |
+| `std::error` | Shared recoverable error values. | `Kind`, `Error`, `new`, `with_code`, `from_errno`, `from_raw`, `kind`, `code`, `raw`, `is_kind`, `is_not_found`, `is_interrupted`, `is_retryable`, `name`, `message`. |
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `is_success`, `is_failure`, `is_root`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
@@ -94,12 +95,16 @@ encodes or decodes hex/base64 into caller-provided zones. The public APIs avoid
 zone-backed or float enum payloads until the compiler can safely lower
 `Option[String]`, `Result[String, E]`, and `Option[f64]`.
 
-`std::test` and `std::log` are also source-first. `std::test::Report`
-aggregates checks, generic `equal`/`not_equal` stay naturally named, and
-`scratch` simply creates an explicit `Zone` for tests. `std::log` writes
-level-prefixed diagnostic lines to `stderr` through `std::io::Stderr`. Rich
-test discovery, source locations, structured logging, stack traces, and
-backtraces remain runtime and driver roadmap work.
+`std::test`, `std::log`, and `std::error` are also source-first.
+`std::test::Report` aggregates checks, generic `equal`/`not_equal` stay
+naturally named, and `scratch` simply creates an explicit `Zone` for tests.
+`std::log` writes level-prefixed diagnostic lines to `stderr` through
+`std::io::Stderr`. `std::error` defines compact recoverable error values,
+stable error categories, POSIX errno mapping, and a raw scalar bridge for
+today's `Result[T, i64]` storage limits. Rich test discovery, source
+locations, structured logging, stack traces, backtraces, and direct
+`Result[T, Error]` mixed-payload storage remain runtime, driver, and compiler
+roadmap work.
 
 `std::string::String` follows the same direction where it can. Its allocation
 constructors and runtime copy hooks still depend on compiler-known zone/string

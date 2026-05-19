@@ -198,6 +198,12 @@ check-prelude: $(TARGET)
 	grep -qx "\[warn\] careful" $(BUILD_DIR)/prelude/std-log-basic.err
 	grep -qx "\[debug\] debugging" $(BUILD_DIR)/prelude/std-log-basic.err
 	grep -qx "\[error\] broken" $(BUILD_DIR)/prelude/std-log-basic.err
+	$(TARGET) tests/cases/standard-library/ok/error/std-error-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-error-basic.ll
+	grep -q '_ARNv3std5error10from_errno' $(BUILD_DIR)/prelude/std-error-basic.ll
+	grep -q '_ARNv3std5error8from_raw' $(BUILD_DIR)/prelude/std-error-basic.ll
+	grep -q 'std__error__Error8inherent12is_retryable' $(BUILD_DIR)/prelude/std-error-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/error/std-error-basic.ari -o $(BUILD_DIR)/prelude/std-error-basic.elf
+	$(BUILD_DIR)/prelude/std-error-basic.elf; code=$$?; test $$code -eq 8
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_reader__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_writer__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-buffered.ll

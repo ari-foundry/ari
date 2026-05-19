@@ -48,6 +48,9 @@ limits, examples, and test files for one module.
   checks, scratch zones for tests, and diagnostics/test-runner roadmap notes.
 - [std::log](log.md): source-only stderr logging levels, byte-slice messages,
   string messages, convenience level functions, and diagnostics roadmap notes.
+- [std::error](error.md): shared recoverable error categories, compact error
+  values, POSIX errno mapping, root aliases, and the current raw-error bridge
+  for `Result[T, i64]`.
 - [std::target](target.md): compiler-known target triple, architecture, OS,
   environment/libc, object/debug format, errno ABI, syscall ABI, and Linux
   API-family predicates.

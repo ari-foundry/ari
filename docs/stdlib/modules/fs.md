@@ -340,9 +340,10 @@ if file.is_open() {
 - The mode-string surface is intentionally small. Use `"rw"` or `"r+"` for
   existing read/write files, `"w+"` for create/truncate read/write, and `"a+"`
   for read/append. More detailed flags belong in a future options API.
-- Error details are not surfaced yet. Current APIs expose boolean success, an
-  empty-string read fallback, or a `-1` read sentinel. A future `std::os` or
-  `std::io` error value can carry platform error codes.
+- Error details are not surfaced from `std::fs` yet. Current APIs expose
+  boolean success, an empty-string read fallback, or a `-1` read sentinel.
+  New richer APIs should use `std::error::Error` instead of growing more
+  sentinel conventions.
 
 ## Tests
 
