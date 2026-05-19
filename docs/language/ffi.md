@@ -319,6 +319,21 @@ sentinel-plus-errno APIs, and `c::open`/`c::symbol` for hosted dynamic loading.
 Zone-backed `CString` storage is still subject to Ari's conservative FFI
 escape checks when passed to arbitrary imported C calls.
 
+Dynamic function symbols become callable by choosing an explicit function
+pointer type:
+
+```ari
+var library = c::open(c::from_string("libc.so.6"), c::lazy());
+let symbol = library.symbol(c::from_string("strlen"));
+let strlen = symbol.function<fn(ptr c_char) -> size_t>();
+let text = c::from_string("ari");
+let len = strlen(text.as_ptr());
+library.close();
+```
+
+The type argument is required today because this is a return-only generic
+choice; Ari does not infer it from the later indirect call yet.
+
 For the current supported target tables, `c_char` is signed (`i8`). Use
 `c_schar` or `c_uchar` when an API needs explicit signedness. Pointer-width
 aliases such as `size_t`, `ptrdiff_t`, `intptr_t`, `usize`, and `isize`, plus

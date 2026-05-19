@@ -63,6 +63,7 @@ c::global() -> i64
 c::open(path: CStr, flags: i64) -> Library
 c::main_program(flags: i64) -> Library
 c::symbol(library: ref Library, name: CStr) -> Symbol
+c::function[T](symbol: ref Symbol) -> T
 c::close(library: ref mut Library) -> bool
 c::last_error() -> CStr
 ```
@@ -186,6 +187,25 @@ fn load_strlen() -> i64 {
 }
 ```
 
+To call a loaded function, ask the `Symbol` for a function-pointer type:
+
+```ari
+fn loaded_strlen() -> i64 {
+  var library = c::open(c::from_string("libc.so.6"), c::lazy());
+  let symbol = library.symbol(c::from_string("strlen"));
+  let strlen = symbol.function<fn(ptr c_char) -> size_t>();
+  let text = c::from_string("ari");
+  let result = strlen(text.as_ptr()) as i64;
+  library.close();
+  return result;
+}
+```
+
+The generic type argument is the C function signature. Ari does not infer this
+from a later indirect call yet, so write the signature at the boundary where
+the raw dynamic symbol becomes callable. `c::function<T>(ref symbol)` is the
+same operation in top-level form.
+
 Flag helpers use natural names because the module path already says this is
 the C dynamic loader:
 
@@ -199,10 +219,8 @@ the C dynamic loader:
 `c::main_program(flags)` passes a null path to the loader and returns a handle
 for symbols in the main program image. `Library::invalid()` and
 `Symbol::invalid()` are explicit sentinels for code that needs a default value.
-
-The current `Symbol` API exposes `as_ptr()` only. Typed symbol casting and a
-safe callable wrapper need a deliberate function-pointer cast policy, so they
-remain roadmap work.
+`Symbol.as_ptr()` is still available when a binding needs a raw address instead
+of a callable function pointer.
 
 ## Null Pointers
 
@@ -224,8 +242,8 @@ result.
   can carry richer payloads naturally.
 - Add explicit, documented FFI escape rules for passing zone-backed `CString`
   storage to imported C calls.
-- Add typed dynamic-symbol wrappers after Ari has a stable function-pointer
-  cast policy.
+- Add richer dynamic-symbol wrappers for non-function data symbols and for
+  APIs that want `Option`/`Result` instead of sentinel values.
 - Move OS-specific descriptor, syscall, signal, mmap, and socket wrappers into
   `std::os` or the appropriate portable modules rather than expanding
   `std::c` into a broad libc surface.
@@ -236,9 +254,11 @@ result.
 
 ```text
 tests/cases/standard-library/ok/c/std-c-interop.ari
+tests/cases/standard-library/ok/c/std-c-dynamic-function.ari
 ```
 
-The focused test covers borrowed C string views, owned NUL-terminated
+The focused tests cover borrowed C string views, owned NUL-terminated
 `CString` storage, C ABI aliases through imported libc calls, POSIX `errno`
-mapping, dynamic loading through `dlopen`/`dlsym`/`dlclose`, and LLVM symbol
-checks for the hosted C loader functions.
+mapping, dynamic loading through `dlopen`/`dlsym`/`dlclose`, typed dynamic
+function-pointer extraction, indirect calls through resolved C functions, and
+LLVM symbol checks for the hosted C loader functions.

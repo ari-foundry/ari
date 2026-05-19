@@ -233,6 +233,7 @@ c::global()
 c::open(path, flags)
 c::main_program(flags)
 c::symbol(ref library, name)
+c::function[T](ref symbol)
 c::close(ref mut library)
 c::last_error()
 
@@ -255,6 +256,7 @@ Library::invalid()
 
 symbol.is_valid()
 symbol.as_ptr()
+symbol.function[T]()
 Symbol::invalid()
 ```
 
@@ -279,8 +281,10 @@ imports remains roadmap work until Ari has an explicit FFI escape policy.
 `errno()` reads the current POSIX thread-local errno on the hosted Linux/glibc
 path, and `error()` maps it through `std::error::from_errno`. Dynamic loading
 wraps `dlopen`, `dlsym`, `dlclose`, and `dlerror` with `Library` and `Symbol`
-sentinels. Typed symbol casting is still future work; `Symbol.as_ptr()` returns
-the raw address.
+sentinels. `Symbol.function<fn(...) -> ...>()` casts a valid dynamic symbol to
+a callable function pointer; keep that signature at the boundary because Ari
+does not infer generic return-only function signatures yet. `Symbol.as_ptr()`
+returns the raw address for lower-level bindings.
 
 ## Process Context And Environment
 

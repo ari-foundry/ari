@@ -100,6 +100,7 @@ fn std::c::from_cstr_in|check-prelude std-c-interop owned CString copy from borr
 fn std::c::from_ptr|check-prelude std-c-interop borrowed non-null raw C string wrapper; docs/stdlib/modules/c.md
 fn std::c::from_slice_in|check-prelude std-c-interop zone-backed NUL-terminated CString constructor; docs/stdlib/modules/c.md
 fn std::c::from_string|check-prelude std-c-interop borrowed Ari string to CStr wrapper; docs/stdlib/modules/c.md
+fn std::c::function[T]|check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md
 fn std::c::global|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
 fn std::c::is_null|check-prelude std-c-interop raw pointer null predicate; docs/stdlib/modules/c.md
 fn std::c::last_error|check-prelude std-c-interop dynamic loader error view; docs/stdlib/modules/c.md
@@ -609,6 +610,7 @@ method std::c::Library::invalid|check-prelude std-c-interop invalid dynamic libr
 method std::c::Library::is_open|check-prelude std-c-interop dynamic library validity predicate; docs/stdlib/modules/c.md
 method std::c::Library::symbol|check-prelude std-c-interop dynamic symbol lookup method; docs/stdlib/modules/c.md
 method std::c::Symbol::as_ptr|check-prelude std-c-interop dynamic symbol raw pointer accessor; docs/stdlib/modules/c.md
+method std::c::Symbol::function[T]|check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md
 method std::c::Symbol::invalid|check-prelude std-c-interop invalid dynamic symbol sentinel; docs/stdlib/modules/c.md
 method std::c::Symbol::is_valid|check-prelude std-c-interop dynamic symbol validity predicate; docs/stdlib/modules/c.md
 method std::collections::BinaryHeap[T]::capacity|check-prelude std-collections-heap binary heap capacity metadata; docs/stdlib/modules/collections.md

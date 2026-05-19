@@ -1,0 +1,22 @@
+fn main() -> i64 {
+  var score = 0;
+
+  var library = c::open(c::from_string("libc.so.6"), c::lazy());
+  assert(library.is_open());
+
+  let strlen_symbol = library.symbol(c::from_string("strlen"));
+  assert(strlen_symbol.is_valid());
+
+  let strlen = strlen_symbol.function<fn(ptr c_char) -> size_t>();
+  let dynamic = c::from_string("dynamic");
+  assert_eq_i64(strlen(dynamic.as_ptr()) as i64, 7);
+  score = score + 1;
+
+  let strlen_again = c::function<fn(ptr c_char) -> size_t>(ref strlen_symbol);
+  let ari = c::from_string("ari");
+  assert_eq_i64(strlen_again(ari.as_ptr()) as i64, 3);
+  score = score + 1;
+
+  assert(library.close());
+  return score;
+}

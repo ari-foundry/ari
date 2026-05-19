@@ -70,6 +70,8 @@ identifies the exact case:
 - `std-c-interop.ari`: source `std::c` C ABI string views, zone-backed
   NUL-terminated `CString`, libc alias calls, POSIX errno mapping, dynamic
   loader handles, and root aliases.
+- `std-c-dynamic-function.ari`: source `std::c::Symbol` to typed function
+  pointer extraction and indirect dynamic calls.
 - `std-target-basic.ari`: compiler-known `std::target` triple,
   architecture, OS, environment/libc, object/debug format, errno ABI, syscall
   ABI, pointer-width, and Linux API-family predicate behavior.

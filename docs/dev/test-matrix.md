@@ -966,6 +966,9 @@ Checklist:
       zone-backed NUL-terminated `CString`, POSIX `errno`/`Error` bridging,
       root C boundary type aliases, and hosted dynamic loading wrappers over
       `dlopen`/`dlsym`/`dlclose`
+- [x] add typed dynamic function symbol extraction through
+      `Symbol.function<fn(...) -> ...>()` and raw-pointer-to-function-pointer
+      cast lowering
 - [x] expose source `Slice[T]` and `slice(data, len)` as a non-owning
       pointer/length view through the source prelude, with `len(view)`,
       `view.len()`, source `view.is_empty()`, `view[index]`, and `view[index] = value`

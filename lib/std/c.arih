@@ -117,6 +117,11 @@ pub fn symbol(library: ref std::c::Library, name: std::c::CStr) -> std::c::Symbo
   return std::c::Symbol { address: raw_dlsym(library.handle, name.as_ptr()) };
 }
 
+pub fn function[T](symbol: ref std::c::Symbol) -> T {
+  std::assert(symbol.is_valid());
+  return symbol.address as T;
+}
+
 pub fn close(library: ref mut std::c::Library) -> bool {
   if is_null_ptr(library.handle) {
     return true;
@@ -213,5 +218,9 @@ pub impl std::c::Symbol {
 
   fn as_ptr(self: ref Self) -> ptr c_void {
     return self.address;
+  }
+
+  fn function[T](self: ref Self) -> T {
+    return std::c::function<T>(self);
   }
 }

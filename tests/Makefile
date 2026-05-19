@@ -912,6 +912,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari -o $(BUILD_DIR)/prelude/std-c-interop.elf
 	$(BUILD_DIR)/prelude/std-c-interop.elf; code=$$?; test $$code -eq 7
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-c-interop.elf; $(BUILD_DIR)/prelude/std-c-interop.elf; code=$$?; test $$code -eq 7; fi
+	$(TARGET) tests/cases/standard-library/ok/c/std-c-dynamic-function.ari --emit-llvm $(BUILD_DIR)/prelude/std-c-dynamic-function.ll
+	grep -q 'define ptr @"_ARNv3std1c29function' $(BUILD_DIR)/prelude/std-c-dynamic-function.ll
+	grep -q 'call i64 %' $(BUILD_DIR)/prelude/std-c-dynamic-function.ll
+	$(TARGET) tests/cases/standard-library/ok/c/std-c-dynamic-function.ari -o $(BUILD_DIR)/prelude/std-c-dynamic-function.elf
+	$(BUILD_DIR)/prelude/std-c-dynamic-function.elf; code=$$?; test $$code -eq 2
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/c/std-c-dynamic-function.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-c-dynamic-function.elf; $(BUILD_DIR)/prelude/std-c-dynamic-function.elf; code=$$?; test $$code -eq 2; fi
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-trim-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent13trim_start_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent11trim_end_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll

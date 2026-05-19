@@ -120,7 +120,13 @@ bool is_raw_pointer_type(const IrType& type) {
 bool is_raw_pointer_cast(const IrType& from, const IrType& to) {
     return (is_raw_pointer_type(from) && is_raw_pointer_type(to)) ||
            (is_raw_pointer_type(from) && is_value_integer_type(to)) ||
+           (is_raw_pointer_type(from) &&
+            to.qualifier == TypeQualifier::Value &&
+            to.primitive == IrPrimitiveKind::Function) ||
            (is_value_integer_type(from) && is_raw_pointer_type(to)) ||
+           (from.qualifier == TypeQualifier::Value &&
+            from.primitive == IrPrimitiveKind::Function &&
+            is_raw_pointer_type(to)) ||
            (from.qualifier == TypeQualifier::Value &&
             from.primitive == IrPrimitiveKind::String &&
             is_raw_pointer_type(to)) ||

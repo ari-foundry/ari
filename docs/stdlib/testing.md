@@ -43,6 +43,7 @@ std-context-args.ari
 std-test-report.ari
 std-error-basic.ari
 std-c-interop.ari
+std-c-dynamic-function.ari
 std-target-basic.ari
 std-target-linux64.ari
 std-env-paths.ari
