@@ -22,7 +22,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
 | `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, `write_bytes`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
-| `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, `has_arg`, `user_arg_count`, `is_main_thread`. |
+| `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, startup `cwd`, startup `executable_path`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::test` | Executable unit-test helpers. | `Report`, `report`, `scratch`, `check`, `equal`, `not_equal`, `passed`, `failed`, `ok`, `finish`, `require`. |
 | `std::log` | Level-prefixed stderr diagnostics. | `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, `error`. |
 | `std::error` | Shared recoverable error values. | `Kind`, `Error`, `new`, `with_code`, `from_errno`, `from_raw`, `kind`, `code`, `raw`, `is_kind`, `is_not_found`, `is_interrupted`, `is_retryable`, `name`, `message`. |
@@ -157,10 +157,11 @@ without compiler-known comparison intrinsics.
 helpers. `identity`, `from`, and `into` are plain Ari functions over the
 module's trait surface.
 
-`std::context` keeps the same split: `argc`, `arg`, and `thread_id` are runtime
-hooks because they read the host runtime context, while `has_arg`,
-`user_arg_count`, `has_user_args`, and `is_main_thread` are ordinary source
-helpers that document Ari's valid-index and main-thread policies in one
+`std::context` keeps the same split: `argc`, `arg`, `thread_id`, startup `cwd`,
+and startup `executable_path` are runtime hooks because they read the host
+runtime context, while `has_arg`, `user_arg_count`, `has_user_args`,
+`is_main_thread`, and path view adapters are ordinary source helpers that
+document Ari's valid-index, main-thread, and startup-path policies in one
 reusable place.
 
 `std::target` is compiler-backed because the selected target triple,

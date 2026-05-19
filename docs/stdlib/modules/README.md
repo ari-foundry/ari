@@ -48,8 +48,8 @@ limits, examples, and test files for one module.
   reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup.
 - [std::convert](convert.md): explicit conversion traits plus source
   `identity`, `from`, and `into` helper calls for generic code.
-- [std::context](context.md): runtime-backed program argument and thread-id
-  access plus source predicates and root argument aliases.
+- [std::context](context.md): runtime-backed program argument, startup path,
+  and thread-id access plus source predicates and root argument aliases.
 - [std::test](test.md): source executable unit-test reports, generic equality
   checks, scratch zones for tests, and diagnostics/test-runner roadmap notes.
 - [std::log](log.md): source-only stderr logging levels, byte-slice messages,

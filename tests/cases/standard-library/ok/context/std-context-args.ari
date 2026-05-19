@@ -1,3 +1,9 @@
+fn same_text(left: string, right: string) -> bool {
+  let left_bytes = std::string::bytes(left);
+  let right_bytes = std::string::bytes(right);
+  return left_bytes.equals(right_bytes);
+}
+
 fn main() -> i64 {
   let count = context::argc();
   var score = 0;
@@ -38,6 +44,28 @@ fn main() -> i64 {
   if context::is_main_thread() {
     score = score + 11;
   }
+
+  let startup_cwd = context::cwd();
+  let maybe_cwd = context::try_cwd();
+  let maybe_cwd_os = context::try_cwd_os();
+  let cwd_os = context::cwd_os();
+  let cwd_path = context::cwd_path();
+  assert(context::has_cwd());
+  assert(maybe_cwd.is_some());
+  assert(maybe_cwd_os.is_some());
+  assert(!cwd_os.is_empty());
+  assert(cwd_path.is_absolute());
+  assert(same_text(startup_cwd, env::current_dir()));
+
+  let startup_exe = context::executable_path();
+  let maybe_exe = context::try_executable_path();
+  let maybe_exe_os = context::try_executable_path_os();
+  let exe_os = context::executable_path_os();
+  assert(context::has_executable_path());
+  assert(maybe_exe.is_some());
+  assert(maybe_exe_os.is_some());
+  assert(!exe_os.is_empty());
+  assert(same_text(startup_exe, env::executable_path()));
 
   return score;
 }

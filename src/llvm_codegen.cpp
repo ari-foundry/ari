@@ -245,6 +245,8 @@ public:
         out << "target triple = \"" << resolve_target_info(options_.target_triple).triple << "\"\n\n";
         out << "@ari_argc = internal global i32 0\n";
         out << "@ari_argv = internal global ptr null\n\n";
+        out << "@ari_context_cwd_buffer = internal global [4096 x i8] zeroinitializer, align 16\n";
+        out << "@ari_context_executable_path_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_thread_id = internal thread_local global i64 0\n\n";
         out << "@ari_next_thread_id = internal global i64 1\n\n";
         out << "@ari_cwd_buffer = internal global [4096 x i8] zeroinitializer, align 16\n";
@@ -501,6 +503,8 @@ private:
             return IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_context_arg" ||
+            symbol == "ari_builtin_context_cwd" ||
+            symbol == "ari_builtin_context_executable_path" ||
             symbol == "ari_builtin_target_triple" ||
             symbol == "ari_builtin_target_arch_name" ||
             symbol == "ari_builtin_target_os_name" ||
@@ -639,8 +643,12 @@ private:
         std::string target_env = string_ptr(target_env_name(target));
         std::string line_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_line_buffer, i64 0, i64 0)";
         std::string cwd_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_cwd_buffer, i64 0, i64 0)";
+        std::string context_cwd_buffer =
+            "getelementptr inbounds ([4096 x i8], ptr @ari_context_cwd_buffer, i64 0, i64 0)";
         std::string executable_path_buffer =
             "getelementptr inbounds ([4096 x i8], ptr @ari_executable_path_buffer, i64 0, i64 0)";
+        std::string context_executable_path_buffer =
+            "getelementptr inbounds ([4096 x i8], ptr @ari_context_executable_path_buffer, i64 0, i64 0)";
         const std::string zone_struct_bytes = std::to_string(kZoneRuntimeZoneStructBytes);
         const std::string zone_max_capacity = std::to_string(kZoneRuntimeMaxCreateCapacity);
         const std::string zone_arena_scale = std::to_string(kZoneRuntimeArenaReserveScale);
@@ -654,6 +662,26 @@ private:
         line("  store i32 %argc, ptr @ari_argc");
         line("  store ptr %argv, ptr @ari_argv");
         line("  store i64 0, ptr @ari_thread_id");
+        line("  %context.cwd = call ptr @getcwd(ptr " + context_cwd_buffer + ", i64 4096)");
+        line("  %context.cwd.missing = icmp eq ptr %context.cwd, null");
+        line("  br i1 %context.cwd.missing, label %cwd.empty, label %cwd.done");
+        line("cwd.empty:");
+        line("  store i8 0, ptr " + context_cwd_buffer);
+        line("  br label %cwd.done");
+        line("cwd.done:");
+        line("  %context.exe.len = call i64 @readlink(ptr " + proc_self_exe + ", ptr " + context_executable_path_buffer + ", i64 4095)");
+        line("  %context.exe.negative = icmp slt i64 %context.exe.len, 0");
+        line("  %context.exe.too_long = icmp sge i64 %context.exe.len, 4095");
+        line("  %context.exe.bad = or i1 %context.exe.negative, %context.exe.too_long");
+        line("  br i1 %context.exe.bad, label %exe.empty, label %exe.found");
+        line("exe.found:");
+        line("  %context.exe.end = getelementptr inbounds i8, ptr " + context_executable_path_buffer + ", i64 %context.exe.len");
+        line("  store i8 0, ptr %context.exe.end");
+        line("  br label %context.done");
+        line("exe.empty:");
+        line("  store i8 0, ptr " + context_executable_path_buffer);
+        line("  br label %context.done");
+        line("context.done:");
         line("  ret void");
         line("}");
         line();
@@ -694,6 +722,18 @@ private:
         line("  ret ptr %arg");
         line("empty:");
         line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_context_cwd() {");
+        line("entry:");
+        line("  ret ptr " + context_cwd_buffer);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_context_executable_path() {");
+        line("entry:");
+        line("  ret ptr " + context_executable_path_buffer);
         line("}");
         line();
 

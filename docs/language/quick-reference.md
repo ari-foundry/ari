@@ -234,7 +234,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | result value | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` |
 | optional/result helpers | Option: `.is_some()`, `.is_none()`, `.filter(fn(ref T) -> bool)`, `.flatten()` for nested options, `.transpose()` for optional results; Result: `.is_ok()`, `.is_err()`, `.transpose()` for result-wrapped options; both: `.unwrap_or(fallback)`, `.map<U>(fn)`, `.and_then<U>(fn)` |
 | process args | `env::try_arg(index)`, `env::try_arg_os(index)`, `env::program_name()`, `env::program_name_os()`, `env::arg_count()`, root `arg_count()`, `has_arg(index)` |
-| runtime context | `context::argc()`, `context::arg(index)`, `context::thread_id()`, `context::is_main_thread()` |
+| runtime context | `context::argc()`, `context::arg(index)`, `context::thread_id()`, `context::cwd()`, `context::cwd_path()`, `context::executable_path()`, `context::is_main_thread()` |
 | environment/path state | `env::try_get(name)`, `env::try_get_os(name)`, `env::set(name, value)`, `env::try_current_dir_path()`, `env::set_current_dir(path)`, `env::try_executable_path_os()` |
 | current process | `process::id()`, `process::exit(code)`, `process::success()`, `process::failure()` |
 | POSIX child process | `process::fork()`, `process::wait(pid)`, `process::is_child(pid)`, `process::is_parent(pid)`, `process::is_wait_error(status)` |

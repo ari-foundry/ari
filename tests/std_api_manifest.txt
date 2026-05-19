@@ -129,11 +129,22 @@ fn std::collections::tree_map[K, V]|check-prelude std-collections-tree explicit-
 fn std::collections::tree_set[T]|check-prelude std-collections-tree explicit-comparator tree set constructor; docs/stdlib/modules/collections.md
 fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::context::argc|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
+fn std::context::cwd|check-prelude std-context-args startup current-directory snapshot hook; docs/stdlib/modules/context.md
+fn std::context::cwd_os|check-prelude std-context-args startup current-directory OS-string view; docs/stdlib/modules/context.md
+fn std::context::cwd_path|check-prelude std-context-args startup current-directory path-byte view; docs/stdlib/modules/context.md
+fn std::context::executable_path|check-prelude std-context-args startup executable-path snapshot hook; docs/stdlib/modules/context.md
+fn std::context::executable_path_os|check-prelude std-context-args startup executable-path OS-string view; docs/stdlib/modules/context.md
 fn std::context::has_arg|std context args tests; docs/stdlib/modules/context.md
 fn std::context::has_args|check-prelude std-context-args source context predicate; docs/stdlib/modules/context.md
+fn std::context::has_cwd|check-prelude std-context-args source startup cwd predicate; docs/stdlib/modules/context.md
+fn std::context::has_executable_path|check-prelude std-context-args source startup executable-path predicate; docs/stdlib/modules/context.md
 fn std::context::has_user_args|check-prelude std-context-args source user argument predicate; docs/stdlib/modules/context.md
 fn std::context::is_main_thread|check-prelude std-context-args source thread predicate; docs/stdlib/modules/context.md
 fn std::context::thread_id|check-prelude std-context-args context thread id hook; docs/stdlib/modules/context.md
+fn std::context::try_cwd|check-prelude std-context-args optional startup cwd helper; docs/stdlib/modules/context.md
+fn std::context::try_cwd_os|check-prelude std-context-args optional startup cwd OS-string helper; docs/stdlib/modules/context.md
+fn std::context::try_executable_path|check-prelude std-context-args optional startup executable-path helper; docs/stdlib/modules/context.md
+fn std::context::try_executable_path_os|check-prelude std-context-args optional startup executable-path OS-string helper; docs/stdlib/modules/context.md
 fn std::context::user_arg_count|check-prelude std-context-args source user argument count; docs/stdlib/modules/context.md
 fn std::convert::from[T, U: From[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::convert::identity[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section

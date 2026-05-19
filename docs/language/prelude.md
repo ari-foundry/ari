@@ -630,9 +630,10 @@ snapshot-style containers.
 
 The LLVM host backend initializes a small runtime context inside `@ari_entry`
 before the `@"ari::main"` bridge calls source `main`.
-It stores `argc`, `argv`, and the Ari runtime thread id. Current executable
-builds initialize the main thread id to `0`; `std::thread` installs nonzero
-ids for spawned Ari threads before they enter source code.
+It stores `argc`, `argv`, the startup current working directory, the startup
+executable path, and the Ari runtime thread id. Current executable builds
+initialize the main thread id to `0`; `std::thread` installs nonzero ids for
+spawned Ari threads before they enter source code.
 
 Available context builtins:
 
@@ -640,11 +641,18 @@ Available context builtins:
 context::argc() -> i64
 context::arg(index: i64) -> string
 context::thread_id() -> i64
+context::cwd() -> string
+context::executable_path() -> string
 context::has_args() -> bool
 context::has_arg(index: i64) -> bool
 context::user_arg_count() -> i64
 context::has_user_args() -> bool
 context::is_main_thread() -> bool
+context::try_cwd() -> Option[string]
+context::cwd_os() -> std::string::OsStr
+context::cwd_path() -> std::path::PathBytes
+context::try_executable_path() -> Option[string]
+context::executable_path_os() -> std::string::OsStr
 env::arg_count() -> i64
 env::arg(index: i64) -> string
 env::has_arg(index: i64) -> bool
@@ -666,9 +674,11 @@ Out-of-range `arg(index)` currently returns an empty string, so use
 `context::user_arg_count()` excludes `argv[0]`, while
 `context::thread_id()` returns the Ari runtime thread id. The main thread is
 `0`; spawned `std::thread` workers receive positive ids.
-`env::program_name()` is the optional `argv[0]` value. `env::try_current_dir()`
-and `env::try_executable_path()` are the preferred path accessors when host
-lookup failure should be handled normally.
+`context::cwd()` and `context::executable_path()` are startup snapshots; they
+do not change after `env::set_current_dir(path)`. `env::program_name()` is the
+optional `argv[0]` value. `env::try_current_dir()` and
+`env::try_executable_path()` are the preferred path accessors when code wants
+the current process state and host lookup failure should be handled normally.
 
 ## Layout Queries
 

@@ -3,6 +3,20 @@
 pub extern "ari" fn argc() -> i64 = "ari_builtin_context_argc";
 pub extern "ari" fn arg(index: i64) -> string = "ari_builtin_context_arg";
 pub extern "ari" fn thread_id() -> i64 = "ari_builtin_context_thread_id";
+pub extern "ari" fn cwd() -> string = "ari_builtin_context_cwd";
+pub extern "ari" fn executable_path() -> string = "ari_builtin_context_executable_path";
+
+fn text_is_empty(value: string) -> bool {
+  return std::mem::ptr_load(value as ptr u8) == 0;
+}
+
+fn os_from_text(value: string) -> std::string::OsStr {
+  return std::string::os_str(std::string::c_bytes(value));
+}
+
+fn path_from_text(value: string) -> std::path::PathBytes {
+  return std::path::bytes(std::string::c_bytes(value));
+}
 
 pub fn has_args() -> bool {
   return argc() > 0;
@@ -29,4 +43,56 @@ pub fn has_user_args() -> bool {
 
 pub fn is_main_thread() -> bool {
   return thread_id() == 0;
+}
+
+pub fn has_cwd() -> bool {
+  return !text_is_empty(cwd());
+}
+
+pub fn try_cwd() -> std::Option[string] {
+  let path = cwd();
+  if text_is_empty(path) {
+    return std::None<string>();
+  }
+  return std::Some<string>(path);
+}
+
+pub fn cwd_os() -> std::string::OsStr {
+  return os_from_text(cwd());
+}
+
+pub fn try_cwd_os() -> std::Option[std::string::OsStr] {
+  let path = cwd();
+  if text_is_empty(path) {
+    return std::None<std::string::OsStr>();
+  }
+  return std::Some<std::string::OsStr>(os_from_text(path));
+}
+
+pub fn cwd_path() -> std::path::PathBytes {
+  return path_from_text(cwd());
+}
+
+pub fn has_executable_path() -> bool {
+  return !text_is_empty(executable_path());
+}
+
+pub fn try_executable_path() -> std::Option[string] {
+  let path = executable_path();
+  if text_is_empty(path) {
+    return std::None<string>();
+  }
+  return std::Some<string>(path);
+}
+
+pub fn executable_path_os() -> std::string::OsStr {
+  return os_from_text(executable_path());
+}
+
+pub fn try_executable_path_os() -> std::Option[std::string::OsStr] {
+  let path = executable_path();
+  if text_is_empty(path) {
+    return std::None<std::string::OsStr>();
+  }
+  return std::Some<std::string::OsStr>(os_from_text(path));
 }

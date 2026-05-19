@@ -83,6 +83,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::context::arg", "ari_builtin_context_arg"},
         {"context::thread_id", "ari_builtin_context_thread_id"},
         {"std::context::thread_id", "ari_builtin_context_thread_id"},
+        {"context::cwd", "ari_builtin_context_cwd"},
+        {"std::context::cwd", "ari_builtin_context_cwd"},
+        {"context::executable_path", "ari_builtin_context_executable_path"},
+        {"std::context::executable_path", "ari_builtin_context_executable_path"},
         {"target::triple", "ari_builtin_target_triple"},
         {"std::target::triple", "ari_builtin_target_triple"},
         {"target::arch", "ari_builtin_target_arch"},
@@ -292,6 +296,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_context_argc") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_context_arg") return builtin_sig({i64}, source_string);
     if (symbol == "ari_builtin_context_thread_id") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_context_cwd") return builtin_sig({}, source_string);
+    if (symbol == "ari_builtin_context_executable_path") return builtin_sig({}, source_string);
     if (symbol == "ari_builtin_target_triple") return builtin_sig({}, source_string);
     if (symbol == "ari_builtin_target_arch") return builtin_sig({}, target_arch);
     if (symbol == "ari_builtin_target_arch_name") return builtin_sig({}, source_string);

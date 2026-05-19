@@ -241,12 +241,18 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/context/std-context-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -q "@ari_builtin_context_thread_id" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -q "@ari_builtin_context_cwd" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -q "@ari_builtin_context_executable_path" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -q "@ari_context_cwd_buffer" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -q "@ari_thread_id" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -F -q "std7context7has_arg" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -F -q "std7context8has_args" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -F -q "std7context14user_arg_count" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -F -q "std7context13has_user_args" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -F -q "std7context14is_main_thread" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -F -q "std7context7has_cwd" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -F -q "std7context8cwd_path" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -F -q "std7context19try_executable_path" $(BUILD_DIR)/prelude/std-context-args.ll
 	$(TARGET) tests/cases/standard-library/ok/context/std-context-args.ari -o $(BUILD_DIR)/prelude/std-context-args.elf
 	$(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 123
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/context/std-context-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-context-args.elf; $(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 123; fi

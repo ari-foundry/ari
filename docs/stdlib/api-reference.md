@@ -294,11 +294,22 @@ Runtime-backed context access lives in `std::context`:
 context::argc()
 context::arg(index)
 context::thread_id()
+context::cwd()
+context::executable_path()
 context::has_args()
 context::has_arg(index)
 context::user_arg_count()
 context::has_user_args()
 context::is_main_thread()
+context::has_cwd()
+context::try_cwd()
+context::cwd_os()
+context::try_cwd_os()
+context::cwd_path()
+context::has_executable_path()
+context::try_executable_path()
+context::executable_path_os()
+context::try_executable_path_os()
 arg_count()
 arg(index)
 has_arg(index)
@@ -310,6 +321,9 @@ returns a lowercase `string`; out-of-range access returns an empty string.
 `user_arg_count()` excludes `argv[0]`, `has_user_args()` is its boolean form,
 and `thread_id()` returns the Ari runtime thread id. The main thread is `0`, so
 `is_main_thread()` is true for current executable builds.
+`context::cwd()` and `context::executable_path()` are startup snapshots captured
+by `@ari_entry`; use `std::env::current_dir()` when code needs the current
+process directory after possible `chdir` calls.
 
 Application code should usually use the user-facing `std::env` wrappers:
 

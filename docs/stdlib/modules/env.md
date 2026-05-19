@@ -7,9 +7,9 @@ CLIs need: current directory and executable path. Argument helpers are built on
 top of `std::context`, which owns the low-level runtime hooks initialized by
 the generated host entry wrapper.
 
-Use `std::env` from application code when you want to talk about program
-startup state. Use `std::context` only when you are testing or extending the
-runtime context layer itself.
+Use `std::env` from application code when you want friendly arguments,
+environment variables, or current process path state. Use `std::context` when
+you specifically need the startup snapshot captured by the runtime context.
 
 ## API
 
@@ -99,6 +99,10 @@ or `normalize_in`.
 returns whether the host accepted the request. This is process-local state:
 later relative paths in this process will observe the change, and child
 processes spawned later should inherit it.
+
+`std::context::cwd()` is different: it is the working-directory snapshot taken
+before source `main` runs, so it stays stable even if `set_current_dir(path)`
+later succeeds.
 
 `executable_path()` returns the host path to the running executable when the
 platform can provide it. On the current Linux backend this uses
