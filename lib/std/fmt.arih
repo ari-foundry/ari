@@ -349,3 +349,14 @@ pub fn write_value[W: std::io::Writer, T: std::fmt::Display](writer: ref mut W, 
   var text = value.format_in(zone);
   return std::io::write_all<W>(writer, text.as_slice());
 }
+
+pub fn print_value[T: std::fmt::Display](zone: ref mut Zone, value: T) -> i64 {
+  var text = value.format_in(zone);
+  return std::io::write_bytes(text.as_slice());
+}
+
+pub fn println_value[T: std::fmt::Display](zone: ref mut Zone, value: T) -> i64 {
+  let written = std::fmt::print_value<T>(zone, value);
+  std::io::newline();
+  return written + 1;
+}

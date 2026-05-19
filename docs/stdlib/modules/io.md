@@ -139,7 +139,9 @@ helper. For raw byte output to stderr, create `var err = io::stderr()` and use
 the same `io::write_all`/`io::flush` helpers.
 For formatted values, prefer `fmt::write_value(ref mut writer, ref mut zone,
 value)` so the value's `Display` impl carries the type instead of spelling a
-type suffix in the IO API.
+type suffix in the IO API. For direct stdout formatting without a `Writer`
+handle, prefer `fmt::print_value(ref mut zone, value)` or
+`fmt::println_value(ref mut zone, value)`.
 
 ## Design Notes
 

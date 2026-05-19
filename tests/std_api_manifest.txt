@@ -223,6 +223,8 @@ fn std::fmt::hex|check-prelude std-fmt-format-spec hexadecimal integer spec help
 fn std::fmt::integer_in|check-prelude std-fmt-format-spec allocator-backed signed integer formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::left|check-prelude std-fmt-format-spec left alignment spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::octal|check-prelude std-fmt-format-spec octal integer spec helper; docs/stdlib/modules/fmt.md
+fn std::fmt::print_value[T: std::fmt::Display]|check-prelude std-fmt-print-value generic stdout Display formatting helper; docs/stdlib/modules/fmt.md
+fn std::fmt::println_value[T: std::fmt::Display]|check-prelude std-fmt-print-value generic stdout Display line formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::right|check-prelude std-fmt-format-spec right alignment spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::text_in|check-prelude std-fmt-format-spec allocator-backed text copy helper; docs/stdlib/modules/fmt.md
 fn std::fmt::unsigned_in|check-prelude std-fmt-format-spec allocator-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md

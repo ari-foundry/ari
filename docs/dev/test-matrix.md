@@ -912,7 +912,8 @@ Checklist:
       binary/octal/decimal/hex formatting, width, integer precision,
       left/right/center alignment, alternate prefixes, debug text quoting,
       explicit-zone strings, generic Display `write_value`, and
-      `std::io::Writer` output
+      `std::io::Writer` output plus generic Display stdout
+      `print_value`/`println_value`
 - [x] source `std::fmt::Display` has built-in impl coverage for `i64`, `u64`,
       `bool`, `f32`, `f64`, lowercase `string`, and owned
       `std::string::String`, plus custom user impl coverage through

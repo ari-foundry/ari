@@ -1,0 +1,12 @@
+// Covers generic Display formatting to stdout without reaching for raw
+// type-specific IO hooks such as write_i64.
+fn main() -> i64 {
+  var zone = zone::create(128);
+
+  let first = fmt::print_value(ref mut zone, "pv=");
+  let second = fmt::print_value(ref mut zone, -12);
+  let third = fmt::println_value(ref mut zone, true);
+
+  zone::destroy(zone);
+  return first + second + third;
+}

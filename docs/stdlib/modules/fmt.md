@@ -44,6 +44,9 @@ write_integer[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) 
 write_boolean[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> bool
 write_text[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool
 write_value[W: io::Writer, T: Display](writer: ref mut W, zone: ref mut Zone, value: T) -> bool
+
+print_value[T: Display](zone: ref mut Zone, value: T) -> i64
+println_value[T: Display](zone: ref mut Zone, value: T) -> i64
 ```
 
 `Display::format_in` writes an owned byte string into an explicit target zone.
@@ -84,6 +87,16 @@ let ok = fmt::write_unsigned<io::Stdout>(
 );
 ```
 
+Use `print_value` and `println_value` for direct stdout output when a macro is
+not the right fit and the value already implements `Display`:
+
+```ari
+var zone = zone::create(64);
+fmt::print_value(ref mut zone, "score=");
+fmt::println_value(ref mut zone, 42);
+zone::destroy(zone);
+```
+
 `debug_text_in` is a small seed for debug-style output; it quotes a literal
 `string`. The broader `Debug` trait is still a trait marker until custom debug
 formatter dispatch is designed.
@@ -112,6 +125,8 @@ The source helpers complement the macros:
   that participate in `{}`.
 - Use `write_value` when a `std::io::Writer` should receive any `Display`
   value without choosing a type-suffixed writer helper.
+- Use `print_value` and `println_value` when stdout should receive any
+  `Display` value without choosing a type-suffixed IO hook.
 - Use `float_in` when code wants to name float precision directly.
 - Use `FormatSpec` plus `unsigned_in` or `write_unsigned` when code needs
   explicit binary, octal, hexadecimal, width, precision, or alignment control
@@ -143,6 +158,7 @@ Representative coverage lives in:
 
 ```text
 tests/cases/standard-library/ok/format/std-fmt-format-spec.ari
+tests/cases/standard-library/ok/format/std-fmt-print-value.ari
 tests/cases/standard-library/ok/format/format-print.ari
 tests/cases/standard-library/ok/format/format-print-u64.ari
 tests/cases/standard-library/ok/prelude/prelude-format-in.ari
