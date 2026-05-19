@@ -78,6 +78,8 @@ identifies the exact case:
   `get`/`has`/`try_get`/`set`/`remove` behavior.
 - `std-env-paths.ari`: runtime-backed `std::env` current directory,
   `set_current_dir`, executable path, and `Option` wrapper behavior.
+- `std-env-os-path-views.ari`: `std::env` `OsStr` argument/environment/path
+  views plus `PathBytes` current-directory conversion.
 - `std-process-basic.ari`: runtime-backed `std::process::id` plus source
   success/failure status helper behavior.
 - `std-process-identity.ari`: runtime-backed `std::process::uid`/`gid` plus

@@ -18,17 +18,28 @@ env::arg_count() -> i64
 env::arg(index: i64) -> string
 env::has_arg(index: i64) -> bool
 env::try_arg(index: i64) -> Option[string]
+env::arg_os(index: i64) -> std::string::OsStr
+env::try_arg_os(index: i64) -> Option[std::string::OsStr]
 env::program_name() -> Option[string]
+env::program_name_os() -> Option[std::string::OsStr]
 env::get(name: string) -> string
+env::get_os(name: string) -> std::string::OsStr
 env::has(name: string) -> bool
 env::try_get(name: string) -> Option[string]
+env::try_get_os(name: string) -> Option[std::string::OsStr]
 env::set(name: string, value: string) -> bool
 env::remove(name: string) -> bool
 env::current_dir() -> string
 env::try_current_dir() -> Option[string]
+env::current_dir_os() -> std::string::OsStr
+env::try_current_dir_os() -> Option[std::string::OsStr]
+env::current_dir_path() -> std::path::PathBytes
+env::try_current_dir_path() -> Option[std::path::PathBytes]
 env::set_current_dir(path: string) -> bool
 env::executable_path() -> string
 env::try_executable_path() -> Option[string]
+env::executable_path_os() -> std::string::OsStr
+env::try_executable_path_os() -> Option[std::string::OsStr]
 ```
 
 `arg_count()` returns the number of host arguments.
@@ -40,8 +51,14 @@ Negative indexes are always false.
 `Some(argument)` for an available argument and `None<string>()` when the index
 is missing.
 
+`arg_os(index)` and `try_arg_os(index)` expose the same argument as an
+`std::string::OsStr`. Use them when the argument should stay OS-boundary bytes
+until the caller explicitly validates it as UTF-8.
+
 `program_name()` is `try_arg(0)`, so it returns the host-provided executable
 name when one exists.
+
+`program_name_os()` is the OS-string form of `program_name()`.
 
 `arg(index)` returns the raw lowercase Ari `string` from the runtime context.
 It currently returns an empty string for out-of-range indexes, so prefer
@@ -56,6 +73,11 @@ environment variables: it returns `Some(value)` when the variable exists and
 environment. Missing variables return an empty string, so use `try_get` or
 `has` when absence matters.
 
+`get_os(name)` and `try_get_os(name)` expose environment variable values as
+`std::string::OsStr`. On the current POSIX target this preserves the raw bytes
+from the runtime C string and lets callers choose `try_utf8()` or a byte-level
+policy at the boundary.
+
 `set(name, value)` overwrites the current process environment variable and
 returns whether the host accepted the mutation. `remove(name)` unsets the
 variable and returns whether the host accepted the request. These mutations
@@ -67,6 +89,12 @@ lowercase Ari `string`. It returns an empty string if the host cannot provide
 one. `try_current_dir()` is the preferred accessor when failure is an ordinary
 branch.
 
+`current_dir_os()` and `try_current_dir_os()` expose the current directory as
+`std::string::OsStr`. `current_dir_path()` and `try_current_dir_path()` expose
+the same borrowed bytes as `std::path::PathBytes`, which is the preferred form
+for lexical path operations such as `is_absolute`, `components`, `file_name`,
+or `normalize_in`.
+
 `set_current_dir(path)` changes the current process working directory and
 returns whether the host accepted the request. This is process-local state:
 later relative paths in this process will observe the change, and child
@@ -77,6 +105,10 @@ platform can provide it. On the current Linux backend this uses
 `/proc/self/exe`. It returns an empty string if the path cannot be read or does
 not fit the runtime buffer. `try_executable_path()` wraps that policy in
 `Option[string]`.
+
+`executable_path_os()` and `try_executable_path_os()` expose the executable
+path as `std::string::OsStr`. Convert that value with `std::path::from_os`
+when the next operation is path manipulation.
 
 ## Example
 
@@ -91,6 +123,15 @@ fn main() -> i64 {
   let first = env::try_arg(1);
   if first.is_some() {
     println("first arg={}", first.unwrap());
+  }
+
+  let raw_first = env::try_arg_os(1);
+  if raw_first.is_some() {
+    let first_os = raw_first.unwrap();
+    let maybe_text = first_os.try_utf8();
+    if maybe_text.is_some() {
+      println("first arg was valid UTF-8");
+    }
   }
 
   return 0;
@@ -122,6 +163,14 @@ fn main() -> i64 {
     println("cwd={}", cwd.unwrap());
   }
 
+  let cwd_path = env::try_current_dir_path();
+  if cwd_path.is_some() {
+    let path = cwd_path.unwrap();
+    if path.is_absolute() {
+      println("cwd is absolute");
+    }
+  }
+
   if env::set_current_dir(env::current_dir()) {
     println("cwd unchanged");
   }
@@ -141,6 +190,9 @@ fn main() -> i64 {
   zone-backed `std::string::String` before storing them beyond the immediate
   use site or before calling another path helper that may reuse the same
   buffer.
+- The `*_os` and `*_path` helpers are borrowed views over those same runtime
+  buffers. They clarify API intent but do not extend the lifetime of the
+  underlying bytes.
 - Executable path lookup is currently Linux-specific and reads
   `/proc/self/exe`. Cross-platform normalization belongs behind this module
   later.
@@ -164,6 +216,9 @@ fn main() -> i64 {
 - `tests/cases/standard-library/ok/env/std-env-paths.ari` checks current
   directory, `set_current_dir`, executable-path lookup, `Option` wrappers,
   LLVM symbols, and executable behavior.
+- `tests/cases/standard-library/ok/env/std-env-os-path-views.ari` checks
+  `OsStr` argument/environment/path views and `PathBytes` current-directory
+  views.
 - `tests/cases/standard-library/ok/context/std-context-args.ari` remains the lower-level
   context hook and root alias coverage.
 

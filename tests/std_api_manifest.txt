@@ -145,19 +145,30 @@ fn std::encoding::utf8_next_index|check-prelude std-encoding-utf8-codepoints UTF
 fn std::encoding::utf8_width|check-prelude std-encoding-utf8-codepoints UTF-8 lead-byte width helper; docs/stdlib/modules/encoding.md
 fn std::env::arg|check-prelude std-env-args argument wrapper; docs/stdlib/modules/env.md
 fn std::env::arg_count|check-prelude std-env-args argument count wrapper; docs/stdlib/modules/env.md
+fn std::env::arg_os|check-prelude std-env-os-path-views OS-string argument view; docs/stdlib/modules/env.md
 fn std::env::current_dir|check-prelude std-env-paths current directory hook; docs/stdlib/modules/env.md
+fn std::env::current_dir_os|check-prelude std-env-os-path-views OS-string current directory view; docs/stdlib/modules/env.md
+fn std::env::current_dir_path|check-prelude std-env-os-path-views path-byte current directory view; docs/stdlib/modules/env.md
 fn std::env::executable_path|check-prelude std-env-paths executable path hook; docs/stdlib/modules/env.md
+fn std::env::executable_path_os|check-prelude std-env-os-path-views OS-string executable path view; docs/stdlib/modules/env.md
 fn std::env::get|check-prelude std-env-vars environment variable lookup; docs/stdlib/modules/env.md
+fn std::env::get_os|check-prelude std-env-os-path-views OS-string environment variable lookup; docs/stdlib/modules/env.md
 fn std::env::has|check-prelude std-env-vars environment variable presence; docs/stdlib/modules/env.md
 fn std::env::has_arg|check-prelude std-env-args argument range helper; docs/stdlib/modules/env.md
 fn std::env::program_name|check-prelude std-env-args optional program name helper; docs/stdlib/modules/env.md
+fn std::env::program_name_os|check-prelude std-env-os-path-views optional OS-string program name helper; docs/stdlib/modules/env.md
 fn std::env::remove|check-prelude std-env-vars environment variable removal; docs/stdlib/modules/env.md
 fn std::env::set|check-prelude std-env-vars environment variable mutation; docs/stdlib/modules/env.md
 fn std::env::set_current_dir|check-prelude std-env-paths current directory mutation; docs/stdlib/modules/env.md
 fn std::env::try_arg|check-prelude std-env-args optional argument helper; docs/stdlib/modules/env.md
+fn std::env::try_arg_os|check-prelude std-env-os-path-views optional OS-string argument helper; docs/stdlib/modules/env.md
 fn std::env::try_current_dir|check-prelude std-env-paths optional current directory helper; docs/stdlib/modules/env.md
+fn std::env::try_current_dir_os|check-prelude std-env-os-path-views optional OS-string current directory helper; docs/stdlib/modules/env.md
+fn std::env::try_current_dir_path|check-prelude std-env-os-path-views optional path-byte current directory helper; docs/stdlib/modules/env.md
 fn std::env::try_executable_path|check-prelude std-env-paths optional executable path helper; docs/stdlib/modules/env.md
+fn std::env::try_executable_path_os|check-prelude std-env-os-path-views optional OS-string executable path helper; docs/stdlib/modules/env.md
 fn std::env::try_get|check-prelude std-env-vars optional environment variable helper; docs/stdlib/modules/env.md
+fn std::env::try_get_os|check-prelude std-env-os-path-views optional OS-string environment variable helper; docs/stdlib/modules/env.md
 fn std::error::code|check-prelude std-error-basic error platform code extractor; docs/stdlib/modules/error.md
 fn std::error::from_errno|check-prelude std-error-basic POSIX errno mapping helper; docs/stdlib/modules/error.md
 fn std::error::from_raw|check-prelude std-error-basic compact Result-compatible error reconstruction; docs/stdlib/modules/error.md

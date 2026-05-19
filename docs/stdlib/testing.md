@@ -45,6 +45,7 @@ std-error-basic.ari
 std-target-basic.ari
 std-target-linux64.ari
 std-env-paths.ari
+std-env-os-path-views.ari
 std-env-vars.ari
 std-process-basic.ari
 std-process-identity.ari

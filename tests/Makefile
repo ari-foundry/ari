@@ -282,6 +282,16 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari -o $(BUILD_DIR)/prelude/std-env-paths.elf
 	$(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-paths.elf; $(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39; fi
+	$(TARGET) tests/cases/standard-library/ok/env/std-env-os-path-views.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env6arg_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env10try_arg_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env6get_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env10try_get_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env16current_dir_path" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env22try_executable_path_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	$(TARGET) tests/cases/standard-library/ok/env/std-env-os-path-views.ari -o $(BUILD_DIR)/prelude/std-env-os-path-views.elf
+	$(BUILD_DIR)/prelude/std-env-os-path-views.elf; code=$$?; test $$code -eq 0
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-os-path-views.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-os-path-views.elf; $(BUILD_DIR)/prelude/std-env-os-path-views.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-basic.ll
 	grep -q "@ari_builtin_fs_exists" $(BUILD_DIR)/prelude/std-fs-basic.ll
 	grep -q "@ari_builtin_fs_remove" $(BUILD_DIR)/prelude/std-fs-basic.ll

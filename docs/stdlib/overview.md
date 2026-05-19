@@ -27,7 +27,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::log` | Level-prefixed stderr diagnostics. | `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, `error`. |
 | `std::error` | Shared recoverable error values. | `Kind`, `Error`, `new`, `with_code`, `from_errno`, `from_raw`, `kind`, `code`, `raw`, `is_kind`, `is_not_found`, `is_interrupted`, `is_retryable`, `name`, `message`. |
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
-| `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. |
+| `std::env` | User-facing process argument, environment-variable, OS-string, and path-state helpers. | `arg_count`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, `get`, `get_os`, `try_get`, `try_get_os`, `set`, `remove`, `current_dir`, `current_dir_os`, `current_dir_path`, `try_current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `is_success`, `is_failure`, `is_root`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
 | `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `Mutex`, `RwLock`, `Once`, atomic `load`/`store`/`swap`/`fetch_add`/`compare_exchange`, mutex helpers, rwlock helpers, `call_once`. |
@@ -153,10 +153,15 @@ fallible descriptor creation belong in future `std::os` wrappers.
 
 `std::env` wraps the context hooks with the names application code should use
 and adds `Option`-based argument access through `try_arg` and `program_name`.
-Environment variables and process-local path state use small runtime-backed
-hooks for `get`, `has`, `set`, `remove`, `current_dir`, `set_current_dir`, and
-`executable_path`, with source `try_get`, `try_current_dir`, and
-`try_executable_path` helpers keeping ordinary absence in `Option[string]`.
+`arg_os`, `try_arg_os`, and `program_name_os` expose the same startup data as
+`std::string::OsStr` views. Environment variables and process-local path state
+use small runtime-backed hooks for `get`, `has`, `set`, `remove`,
+`current_dir`, `set_current_dir`, and `executable_path`, with source
+`try_get`, `try_current_dir`, and `try_executable_path` helpers keeping
+ordinary absence in `Option[string]`. Use `get_os`, `try_get_os`,
+`current_dir_os`, `current_dir_path`, `try_current_dir_path`, and
+`executable_path_os` when OS strings or lexical path bytes should stay distinct
+from ordinary text.
 
 `std::process` starts with a small runtime-backed process surface: `id` reads
 the host process id, `uid`/`gid` read current user and group identity, `exit`

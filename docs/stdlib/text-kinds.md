@@ -17,6 +17,10 @@ together. Use this page when deciding which API a library should accept.
 - Validate with `std::string::utf8(bytes)` before using Unicode scalar APIs.
 - Keep OS data as `OsStr` until the caller chooses either bytes, UTF-8, or a
   path interpretation.
+- Prefer `std::env`'s `*_os` helpers for arguments, environment variables, and
+  executable paths when byte-preserving OS-boundary behavior matters.
+- Prefer `std::env::current_dir_path()` or `try_current_dir_path()` when the
+  current directory will immediately be inspected as a path.
 - Keep path manipulation in `std::path`; path bytes are not normal text even
   when they happen to be UTF-8.
 - Use `std::string::c_str(text)` when the source is NUL-terminated `string`.

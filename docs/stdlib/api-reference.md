@@ -233,23 +233,38 @@ Application code should usually use the user-facing `std::env` wrappers:
 ```ari
 env::arg_count()
 env::arg(index)
+env::arg_os(index)
 env::has_arg(index)
 env::try_arg(index)
+env::try_arg_os(index)
 env::program_name()
+env::program_name_os()
 env::get(name)
+env::get_os(name)
 env::has(name)
 env::try_get(name)
+env::try_get_os(name)
 env::set(name, value)
 env::remove(name)
 env::current_dir()
 env::try_current_dir()
+env::current_dir_os()
+env::try_current_dir_os()
+env::current_dir_path()
+env::try_current_dir_path()
 env::set_current_dir(path)
 env::executable_path()
 env::try_executable_path()
+env::executable_path_os()
+env::try_executable_path_os()
 ```
 
 `env::try_arg(index)` returns `Option[string]`, and `env::program_name()` is
 the optional `argv[0]` value.
+
+`env::arg_os(index)`, `env::try_arg_os(index)`, and
+`env::program_name_os()` return `std::string::OsStr` views when the argument
+should stay in OS-string form until the caller chooses bytes or UTF-8.
 
 `env::try_get(name)` returns `Option[string]` for environment variables.
 `env::get(name)` returns an empty string when the variable is missing, so prefer
@@ -260,6 +275,14 @@ the host accepted the request. `env::current_dir()` and
 for ordinary failure; `env::set_current_dir(path)` mutates the current process
 working directory. Portable child-process spawn handles remain roadmap work;
 thread helpers live in `std::thread`.
+
+`env::get_os(name)` and `env::try_get_os(name)` return `OsStr` views for
+environment values. `env::current_dir_os()` / `try_current_dir_os()` and
+`env::executable_path_os()` / `try_executable_path_os()` expose path-like host
+data as OS strings. `env::current_dir_path()` and
+`env::try_current_dir_path()` expose the current directory as
+`std::path::PathBytes`; convert executable OS strings with `std::path::from_os`
+when the next step is path manipulation.
 
 Target and platform facts live in `std::target`:
 

@@ -39,9 +39,11 @@ The current `std` package already provides:
   `target::triple`, `target::arch`, `target::os`, `target::env`,
   `target::pointer_bits`, `target::long_bits`, `target::syscall_abi`,
   target predicates for Linux/glibc/musl/ELF/DWARF/TLS and Linux API families,
-  `env::try_arg`, `env::program_name`, `env::try_get`, and current-process
-  environment/path hooks `get`/`has`/`set`/`remove`/`current_dir`/
-  `set_current_dir`/`executable_path`
+  `env::try_arg`, `env::try_arg_os`, `env::program_name`,
+  `env::program_name_os`, `env::try_get`, `env::try_get_os`, and
+  current-process environment/path hooks `get`/`get_os`/`has`/`set`/`remove`/
+  `current_dir`/`current_dir_os`/`current_dir_path`/`set_current_dir`/
+  `executable_path`/`executable_path_os`
 - the first `std::process` current-process helpers: `id`, `uid`, `gid`, `exit`,
   `abort`, and source status/root helpers, plus the first POSIX `fork`/`wait`
   child-process slice
@@ -208,8 +210,8 @@ Likely compiler work:
 ### Phase 5: OS-Facing Libraries
 
 - Grow `std::env` from process arguments and current-process environment
-  variables into current-directory and executable-path helpers after owned
-  string behavior and OS wrapper conventions are stable.
+  variables into current-directory, executable-path, OS-string, and path-byte
+  helpers after owned string behavior and OS wrapper conventions are stable.
 - Add thin wrappers for file, time, process, thread, synchronization, and
   syscall-adjacent APIs in small capability-oriented slices. The first target,
   time, filesystem, POSIX fork/wait process, function-pointer thread, and
@@ -262,7 +264,7 @@ Likely compiler work:
 | `std::mem` | Grow from current layout/pointer/value helpers, byte `copy_bytes`/`move_bytes`/`set_bytes`, and hosted `page_size` into safer copy/fill and mapping-adjacent helpers. | current `std-mem-value-helpers` scalar/aggregate replace/swap tests, `std-mem-byte-ops` byte copy/move/set plus LLVM intrinsic checks, and `std-mem-page-size` runtime page-size checks; future owner-rejection, typed copy/fill, and owned mapping tests. | Current byte helpers use `extern "ari"` runtime wrappers around LLVM intrinsics and `page_size` uses a hosted runtime hook. Future typed copy/fill and mapping APIs need layout service, ownership-aware raw memory checks, descriptor/error policy, and owned mapping cleanup. |
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
-| `std::env` | Path normalization and platform-specific policy after the argument, environment-variable, cwd, and executable-path slices. | Current `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future canonicalization and platform differences. | Runtime string ownership, OS wrapper declarations, and platform error policy. |
+| `std::env` | Path normalization and platform-specific policy after the argument, environment-variable, cwd, executable-path, OS-string, and path-byte slices. | Current `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, `get`, `get_os`, `has`, `try_get`, `try_get_os`, `set`, `remove`, `current_dir`, `current_dir_os`, `current_dir_path`, `try_current_dir`, `try_current_dir_os`, `try_current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`, `try_executable_path`, `try_executable_path_os`; future canonicalization and platform differences. | Runtime string ownership, OS wrapper declarations, and platform error policy. |
 | `std::target` | Grow from compiler-known target facts into explicit build-profile reporting only after the driver owns those flags. | current `std-target-basic` x86_64 Linux GNU target enum/predicate/syscall ABI checks plus LLVM target triple inspection, and `std-target-linux64` LLVM-only classification for x86_64/aarch64/riscv64 Linux; future build-profile tests. | Current hooks are compiler-owned constants emitted by LLVM codegen. Future static/dynamic/PIE/RELRO/stack-protector facts need driver options and metadata. |
 | `std::process` | Grow from the current `id`/`uid`/`gid`/`exit`/`abort`/POSIX fork seed into child process handles. | current `id`, `uid`, `gid`, explicit exit status, abort hook lowering, source status/root predicates, `std-process-fork-wait` POSIX child branch and wait-status decode; future spawn/exec/kill result handling, richer status values, optional daemon helpers, and platform guards. | Current id/uid/gid/exit/abort/fork/wait use runtime hooks; portable spawn/exec/wait/kill needs runtime wrappers for POSIX/Windows split, errno/error mapping, and handle ownership. |
 | `std::time` | Grow from monotonic/wall-clock reads and sleep into timers and interruption-aware sleep. | current `std-time-basic` duration constructor, elapsed-time, wall-clock, and sleep-hook checks; future sleep-interruption and timer-handle tests. | Current monotonic/unix/sleep hooks use LLVM runtime calls; future timers may need handle ownership and platform-specific wrappers. |

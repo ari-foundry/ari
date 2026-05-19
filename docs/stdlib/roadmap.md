@@ -27,8 +27,10 @@ support plus lazy adapters and eager consumers, `fmt`, `cmp` comparison helpers,
 identity/from/into helpers, `context` runtime hooks plus the source
 `has_arg` helper, `env` source argument wrappers with `try_arg` and
 `program_name` plus current-process environment `get`/`has`/`try_get`/`set`/
-`remove` and path-state helpers `current_dir`/`try_current_dir`/
-`set_current_dir`/`executable_path`/`try_executable_path`,
+`remove`, OS-string views for arguments/environment/path-like values, and
+path-state helpers `current_dir`/`try_current_dir`/`current_dir_path`/
+`try_current_dir_path`/`set_current_dir`/`executable_path`/
+`try_executable_path`/`try_executable_path_os`,
 `test` source executable `Report` helpers, generic equality checks, and
 scratch zone construction, `log` source stderr levels, threshold predicates,
 byte-slice logging, string-message logging, and convenience level functions,
@@ -78,7 +80,7 @@ work. Each one should land in small tested slices with natural API names.
 | Family | Purpose | Current Or Planned APIs |
 | --- | --- | --- |
 | `std::io` | Provide byte-oriented process IO contracts that other libraries can share without hiding raw hooks. | Current `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, stderr routing, and raw scalar/byte/line hooks; future `pipe`, file adapters, zone-owning buffered constructors, and drop-time flush after owned OS handles and resource policy are settled. |
-| `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future path normalization and platform-specific expansion. |
+| `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `arg_os`, `has_arg`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, `get`, `get_os`, `has`, `try_get`, `try_get_os`, `set`, `remove`, `current_dir`, `current_dir_os`, `current_dir_path`, `try_current_dir`, `try_current_dir_os`, `try_current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`, `try_executable_path`, `try_executable_path_os`; future path normalization and platform-specific expansion. |
 | `std::target` | Report compiler-known target facts without requiring users to parse triples by hand. | Current `triple`, `arch`, `arch_name`, `os`, `os_name`, `env`, `env_name`, `object_format`, `debug_format`, `errno_abi`, `pointer_bits`, `long_bits`, source predicates for Linux/glibc/musl/ELF/DWARF/TLS, Linux syscall ABI classification, and Linux API-family predicates for procfs/sysfs/vDSO/epoll/inotify/eventfd/timerfd/signalfd/memfd plus optional API families; future build-profile facts for static/dynamic/PIE/RELRO/stack-protector only after the driver owns those flags. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, status/root predicates, POSIX `fork`, `wait`, and child/error predicates; future portable `spawn`, `exec`, `kill`, richer status/result values, daemon helpers as optional policy, and process handles. |
 | `std::fs` | Work with files and directories through explicit handles. | Current `File`, `Permissions`, `exists`, access-style `can_read`/`can_write`/`can_execute` and `permissions`, `remove`, `rename`, `hard_link`, `symbolic_link`, single-directory `create_dir`/`remove_dir`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, `create`/`try_create`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, whole-file `read`/`write`/`append`, `truncate`, source streaming `copy`, `read_to_string`, and `close`; future owned resource policy, metadata, permission mutation, directory iteration, recursive directory helpers, canonicalization, temporary files, richer link metadata/platform symlink policy, optional file locking, and an options-style open builder. |

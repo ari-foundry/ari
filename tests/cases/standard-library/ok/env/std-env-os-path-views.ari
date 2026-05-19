@@ -1,0 +1,57 @@
+// Covers std::env helpers that expose startup and process-path values through
+// the explicit OsStr and PathBytes boundary views.
+fn main() -> i64 {
+  let name = "ARI_STD_ENV_OS_VIEW_VALUE";
+  var expected = [97u8, 108u8, 112u8, 104u8, 97u8];
+
+  env::remove(name);
+  let missing = env::try_get_os(name);
+  assert(missing.is_none());
+
+  assert(env::set(name, "alpha"));
+  let value = env::get_os(name);
+  let value_slice = value.as_slice();
+  assert(value_slice.equals(expected.as_slice()));
+  assert(value.is_utf8());
+  let value_utf8 = value.try_utf8();
+  let valid_value = value_utf8.unwrap();
+  assert_eq_i64(valid_value.codepoint_count(), 5);
+  let present = env::try_get_os(name);
+  assert(present.is_some());
+
+  let count = env::arg_count();
+  assert(env::has_arg(0));
+  let arg0 = env::arg_os(0);
+  assert(!arg0.is_empty());
+  let first_arg = env::try_arg_os(0);
+  assert(first_arg.is_some());
+  let missing_arg = env::try_arg_os(count);
+  assert(missing_arg.is_none());
+  let program = env::program_name_os();
+  assert(program.is_some());
+
+  let cwd_os = env::current_dir_os();
+  assert(!cwd_os.is_empty());
+  assert(cwd_os.is_utf8());
+
+  let cwd_path = env::current_dir_path();
+  assert(!cwd_path.is_empty());
+  assert(cwd_path.is_absolute());
+
+  let maybe_cwd_os = env::try_current_dir_os();
+  assert(maybe_cwd_os.is_some());
+  let maybe_cwd_path = env::try_current_dir_path();
+  assert(maybe_cwd_path.is_some());
+  let unwrapped_cwd_path = maybe_cwd_path.unwrap();
+  assert(unwrapped_cwd_path.is_absolute());
+
+  let exe_os = env::executable_path_os();
+  assert(!exe_os.is_empty());
+  let exe_path = std::path::from_os(exe_os);
+  assert(!exe_path.is_empty());
+  let maybe_exe_os = env::try_executable_path_os();
+  assert(maybe_exe_os.is_some());
+
+  env::remove(name);
+  return 0;
+}

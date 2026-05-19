@@ -59,8 +59,9 @@ limits, examples, and test files for one module.
   environment/libc, object/debug format, errno ABI, syscall ABI, and Linux
   API-family predicates.
 - [std::env](env.md): user-facing process argument and environment-variable
-  helpers, including `try_arg`, `program_name`, `try_get`, `set`,
-  `current_dir`, `set_current_dir`, and `try_executable_path`.
+  helpers plus OS-string/path-byte views, including `try_arg`, `try_arg_os`,
+  `program_name_os`, `try_get`, `try_get_os`, `current_dir_path`,
+  `set_current_dir`, and `try_executable_path_os`.
 - [std::process](process.md): current process id, uid/gid, explicit exit and
   abort hooks, status helper functions, and the first POSIX fork/wait
   child-process slice.
