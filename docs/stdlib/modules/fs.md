@@ -2,13 +2,13 @@
 
 `std::fs` is Ari's portable filesystem module. It exists so ordinary programs
 can work with files without reaching directly for raw syscalls or C ABI
-declarations. The first slice is deliberately small: check whether a path
-exists, open a byte stream for reading or writing, read and write bytes, close
-the handle, and remove a file.
+declarations. The first slices are deliberately small: check whether a path
+exists, open a byte stream for reading, writing, or appending, read and write
+bytes, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
-use `open_read`, `open_write`, `read_byte`, `write_byte`, `write_bytes`,
-`close`, `exists`, and `remove`, not type-suffixed names.
+use `open_read`, `open_write`, `open_append`, `read_byte`, `write_byte`,
+`write_bytes`, `close`, `exists`, and `remove`, not type-suffixed names.
 
 ## API
 
@@ -17,8 +17,10 @@ fs::exists(path)
 fs::remove(path)
 fs::open_read(path)
 fs::open_write(path)
+fs::open_append(path)
 fs::try_open_read(path)
 fs::try_open_write(path)
+fs::try_open_append(path)
 fs::close(file)
 fs::read_byte(file)
 fs::write_byte(file, value)
@@ -34,14 +36,15 @@ file.write_bytes(values)
 
 `File` is a small value handle around the runtime file descriptor. Failed open
 operations return an invalid handle where `file.is_open()` is false. Prefer
-`try_open_read(path)` and `try_open_write(path)` for normal control flow; they
-return `Option[File]` and avoid making callers remember the invalid-handle
-sentinel.
+`try_open_read(path)`, `try_open_write(path)`, and `try_open_append(path)` for
+normal control flow; they return `Option[File]` and avoid making callers
+remember the invalid-handle sentinel.
 
 `open_read(path)` opens an existing file for byte reads. `open_write(path)`
 creates or truncates a file for byte writes using the current Linux/glibc LLVM
-runtime path. Both functions return a `File`; check `is_open()` before using
-the raw form.
+runtime path. `open_append(path)` creates the file if needed and writes new
+bytes at the end without truncating existing contents. All three raw functions
+return a `File`; check `is_open()` before using the raw form.
 
 `read_byte(file)` returns the next byte as `i64` or `-1` at EOF or on failure.
 `write_byte(file, value)` returns whether exactly one byte was written.
@@ -94,6 +97,16 @@ if maybe_file.is_none() {
 }
 ```
 
+Append to an existing file:
+
+```ari
+let appender = fs::try_open_append(path).unwrap_or(fs::File::invalid());
+if appender.is_open() {
+  appender.write_byte(10 as u8);
+  appender.close();
+}
+```
+
 ## Current Limits
 
 - This slice is byte-oriented. There is no owned path type, directory
@@ -104,8 +117,8 @@ if maybe_file.is_none() {
 - `File` is not a tracked `own` resource yet. The caller must close each
   successful handle exactly once by convention. Future ownership work should
   make OS resources harder to copy and accidentally double-close.
-- `open_write` creates or truncates a file. Append and read-write modes are
-  future API slices.
+- `open_write` creates or truncates a file. `open_append` creates or appends.
+  Read-write modes are still a future API slice.
 - Error details are not surfaced yet. Current APIs expose boolean success or a
   `-1` read sentinel. A future `std::os` or `std::io` error value can carry
   platform error codes.
@@ -114,16 +127,20 @@ if maybe_file.is_none() {
 
 ```text
 tests/cases/standard-library/ok/fs/std-fs-basic.ari
+tests/cases/standard-library/ok/fs/std-fs-append.ari
 ```
 
 `make check-prelude` emits LLVM for the runtime hooks, checks the C syscall
 declarations, runs the executable, and cleans up the temporary file under
-`build/prelude/`.
+`build/prelude/`. `std-fs-basic.ari` covers existence, create/truncate writes,
+reads, byte-slice writes, close, removal, and `Option[File]` read/write opens.
+`std-fs-append.ari` covers append-mode open, preservation of existing bytes,
+and failed append opens through `Option[File]`.
 
 ## Next Work
 
-- Add append/read-write open modes only after their names and failure policy
-  are documented.
+- Add read-write open mode only after its name and failure policy are
+  documented.
 - Add file metadata and directory iteration as separate tested slices.
 - Add path helpers after Ari has a clearer owned string/path story.
 - Promote `File` toward an owned resource handle when the compiler can express

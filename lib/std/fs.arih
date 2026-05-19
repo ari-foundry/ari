@@ -10,6 +10,7 @@ pub extern "ari" fn exists(path: string) -> bool = "ari_builtin_fs_exists";
 pub extern "ari" fn remove(path: string) -> bool = "ari_builtin_fs_remove";
 pub extern "ari" fn open_read(path: string) -> File = "ari_builtin_fs_open_read";
 pub extern "ari" fn open_write(path: string) -> File = "ari_builtin_fs_open_write";
+pub extern "ari" fn open_append(path: string) -> File = "ari_builtin_fs_open_append";
 pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";
 pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
 pub extern "ari" fn write_byte(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
@@ -24,6 +25,14 @@ pub fn try_open_read(path: string) -> std::Option[File] {
 
 pub fn try_open_write(path: string) -> std::Option[File] {
   let file = open_write(path);
+  if file.is_open() {
+    return std::Some<File>(file);
+  }
+  return std::None<File>();
+}
+
+pub fn try_open_append(path: string) -> std::Option[File] {
+  let file = open_append(path);
   if file.is_open() {
     return std::Some<File>(file);
   }

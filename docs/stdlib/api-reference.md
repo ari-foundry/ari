@@ -204,8 +204,10 @@ fs::exists(path)
 fs::remove(path)
 fs::open_read(path)
 fs::open_write(path)
+fs::open_append(path)
 fs::try_open_read(path)
 fs::try_open_write(path)
+fs::try_open_append(path)
 fs::close(file)
 fs::read_byte(file)
 fs::write_byte(file, value)
@@ -219,14 +221,16 @@ file.write_byte(value)
 file.write_bytes(values)
 ```
 
-Use `try_open_read` and `try_open_write` for ordinary fallible open operations;
-they return `Option[File]`. The raw open calls return a `File` directly, with
-`File::invalid()` and `file.is_open()` exposing the invalid-handle convention.
-`open_write` creates or truncates a file. `read_byte` returns an `i64` byte
-value or `-1` at EOF/failure, and `write_byte` returns whether one byte was
-written. `write_bytes` writes a `Slice[u8]` and returns the count written before
-the first failed byte write. The current `File` value is not an owned resource
-yet, so close each successful handle once and do not reuse copied handles after
+Use `try_open_read`, `try_open_write`, and `try_open_append` for ordinary
+fallible open operations; they return `Option[File]`. The raw open calls return
+a `File` directly, with `File::invalid()` and `file.is_open()` exposing the
+invalid-handle convention. `open_write` creates or truncates a file.
+`open_append` creates a file if needed and appends new bytes without truncating
+existing contents. `read_byte` returns an `i64` byte value or `-1` at
+EOF/failure, and `write_byte` returns whether one byte was written.
+`write_bytes` writes a `Slice[u8]` and returns the count written before the
+first failed byte write. The current `File` value is not an owned resource yet,
+so close each successful handle once and do not reuse copied handles after
 closing.
 
 ## IO And Input

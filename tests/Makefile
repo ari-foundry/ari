@@ -259,6 +259,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-basic.ari -o $(BUILD_DIR)/prelude/std-fs-basic.elf
 	$(BUILD_DIR)/prelude/std-fs-basic.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-basic.elf; $(BUILD_DIR)/prelude/std-fs-basic.elf; code=$$?; test $$code -eq 120; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-append.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-append.ll
+	grep -q "@ari_builtin_fs_open_append" $(BUILD_DIR)/prelude/std-fs-append.ll
+	grep -q "declare i32 @open" $(BUILD_DIR)/prelude/std-fs-append.ll
+	grep -F -q "std2fs15try_open_append" $(BUILD_DIR)/prelude/std-fs-append.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-append.ari -o $(BUILD_DIR)/prelude/std-fs-append.elf
+	$(BUILD_DIR)/prelude/std-fs-append.elf; code=$$?; test $$code -eq 153
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-append.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-append.elf; $(BUILD_DIR)/prelude/std-fs-append.elf; code=$$?; test $$code -eq 153; fi
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll

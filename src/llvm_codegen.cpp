@@ -675,6 +675,15 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "{ i64 } @ari_builtin_fs_open_append(ptr %path) {");
+        line("entry:");
+        line("  %fd32 = call i32 @open(ptr %path, i32 1089, i32 420)");
+        line("  %fd = sext i32 %fd32 to i64");
+        line("  %file = insertvalue { i64 } undef, i64 %fd, 0");
+        line("  ret { i64 } %file");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "i1 @ari_builtin_fs_close({ i64 } %file) {");
         line("entry:");
         line("  %fd = extractvalue { i64 } %file, 0");

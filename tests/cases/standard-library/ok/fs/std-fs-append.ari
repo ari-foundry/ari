@@ -1,0 +1,72 @@
+// Covers append-mode file opens: preserve existing bytes, append new bytes,
+// read the combined stream back, and surface failed append opens as Option.
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-append.tmp";
+  if fs::exists(path) {
+    fs::remove(path);
+  }
+
+  var score = 0;
+
+  let writer = fs::try_open_write(path).unwrap_or(fs::File::invalid());
+  if writer.is_open() {
+    score = score + 1;
+  }
+  if writer.write_byte(65 as u8) {
+    score = score + 2;
+  }
+  if writer.close() {
+    score = score + 3;
+  }
+
+  let appender = fs::try_open_append(path).unwrap_or(fs::File::invalid());
+  if appender.is_open() {
+    score = score + 4;
+  }
+  if appender.write_byte(66 as u8) {
+    score = score + 5;
+  }
+  var tail = [67 as u8, 68 as u8];
+  if appender.write_bytes(tail.as_slice()) == 2 {
+    score = score + 6;
+  }
+  if appender.close() {
+    score = score + 7;
+  }
+
+  let reader = fs::try_open_read(path).unwrap_or(fs::File::invalid());
+  if reader.is_open() {
+    score = score + 8;
+  }
+  if reader.read_byte() == 65 {
+    score = score + 9;
+  }
+  if reader.read_byte() == 66 {
+    score = score + 10;
+  }
+  if reader.read_byte() == 67 {
+    score = score + 11;
+  }
+  if reader.read_byte() == 68 {
+    score = score + 12;
+  }
+  if reader.read_byte() < 0 {
+    score = score + 13;
+  }
+  if reader.close() {
+    score = score + 14;
+  }
+  if fs::remove(path) {
+    score = score + 15;
+  }
+  if !fs::exists(path) {
+    score = score + 16;
+  }
+
+  let missing = fs::try_open_append("build/prelude/std-fs-append-no-such-dir/file.tmp");
+  if missing.is_none() {
+    score = score + 17;
+  }
+
+  return score;
+}

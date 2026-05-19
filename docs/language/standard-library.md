@@ -92,7 +92,7 @@ Use this table when writing code from docs alone:
 | Fork and wait for a child on POSIX. | `process::fork()`, `process::is_child(pid)`, `process::is_parent(pid)`, `process::wait(pid)`, `process::is_wait_error(status)` | This is the first Linux/LLVM runtime path slice. `wait` returns a normal child exit code or `-1`. Portable spawn, process handles, and richer status values are future work. |
 | Measure elapsed time or sleep. | `time::now()`, `start.elapsed()`, `time::elapsed(start)`, `time::milliseconds(n)`, `time::sleep(duration)` | Use `Instant` for elapsed time because it is monotonic. `sleep` is a thin current-thread sleep wrapper and does not report interruption yet. |
 | Read wall-clock Unix time. | `time::system_now()`, `system_time.as_unix_nanos()` | Use `SystemTime` for timestamps, not duration measurement; host wall clocks can move. |
-| Work with small byte files. | `fs::try_open_read(path)`, `fs::try_open_write(path)`, `file.read_byte()`, `file.write_byte(byte)`, `file.write_bytes(slice)`, `file.close()`, `fs::exists(path)`, `fs::remove(path)` | Prefer `try_open_*` so failed open calls use `Option[File]`. `open_write` creates or truncates. `read_byte` returns `-1` at EOF/failure. The current `File` is a value handle, so close successful handles once and do not reuse copies after closing. |
+| Work with small byte files. | `fs::try_open_read(path)`, `fs::try_open_write(path)`, `fs::try_open_append(path)`, `file.read_byte()`, `file.write_byte(byte)`, `file.write_bytes(slice)`, `file.close()`, `fs::exists(path)`, `fs::remove(path)` | Prefer `try_open_*` so failed open calls use `Option[File]`. `open_write` creates or truncates; `open_append` creates or appends. `read_byte` returns `-1` at EOF/failure. The current `File` is a value handle, so close successful handles once and do not reuse copies after closing. |
 | Read stdin. | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` | `try_read_byte` returns `Option[u8]` instead of the raw `-1` EOF sentinel. Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
 | Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.unwrap_or`, `.map<U>`, `.and_then<U>`, `.filter()`, `.flatten()`, `.transpose()`, `?`, or `??` when that reads better than `match`. |
 | Convert missing values into failures. | `option.ok_or<E>(error)`, `option.ok_or_else<E>(op)` | Lazy form builds the error only for `None`. |
@@ -221,9 +221,10 @@ buckets; tree set iteration walks ascending comparator order.
 
 `std::fs::File` methods include `invalid`, `is_open`, `close`, `read_byte`,
 `write_byte`, and `write_bytes`. Use `fs::try_open_read` or
-`fs::try_open_write` to obtain an `Option[File]` before calling them. The
-current handle is copyable source data, so closing is a caller convention until
-the language has a stronger OS-resource ownership model.
+`fs::try_open_write` or `fs::try_open_append` to obtain an `Option[File]`
+before calling them. The current handle is copyable source data, so closing is
+a caller convention until the language has a stronger OS-resource ownership
+model.
 
 `std::vec::Vec[T]` mutating methods include `push`, `pop`, `try_pop`, `set`,
 `replace`, `swap`, `insert`, `remove`, `truncate`, `clear`, `reserve`,

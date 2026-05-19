@@ -58,6 +58,8 @@ identifies the exact case:
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
 - `std-fs-basic.ari`: runtime-backed file existence, creation/truncating
   write, byte reads/writes, close, removal, and `Option[File]` open helpers.
+- `std-fs-append.ari`: runtime-backed append open, preservation of existing
+  bytes, appended byte-slice writes, and failed append opens as `Option`.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

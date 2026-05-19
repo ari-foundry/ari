@@ -117,6 +117,8 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::fs::open_read", "ari_builtin_fs_open_read"},
         {"fs::open_write", "ari_builtin_fs_open_write"},
         {"std::fs::open_write", "ari_builtin_fs_open_write"},
+        {"fs::open_append", "ari_builtin_fs_open_append"},
+        {"std::fs::open_append", "ari_builtin_fs_open_append"},
         {"fs::close", "ari_builtin_fs_close"},
         {"std::fs::close", "ari_builtin_fs_close"},
         {"fs::read_byte", "ari_builtin_fs_read_byte"},
@@ -220,6 +222,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_fs_remove") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_open_read") return builtin_sig({source_string}, fs_file);
     if (symbol == "ari_builtin_fs_open_write") return builtin_sig({source_string}, fs_file);
+    if (symbol == "ari_builtin_fs_open_append") return builtin_sig({source_string}, fs_file);
     if (symbol == "ari_builtin_fs_close") return builtin_sig({fs_file}, boolean);
     if (symbol == "ari_builtin_fs_read_byte") return builtin_sig({fs_file}, i64);
     if (symbol == "ari_builtin_fs_write_byte") return builtin_sig({fs_file, u8}, boolean);

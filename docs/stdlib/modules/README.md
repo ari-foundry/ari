@@ -38,8 +38,8 @@ limits, examples, and test files for one module.
   functions, and the first POSIX fork/wait child-process slice.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock
   timestamps, non-negative durations, elapsed-time helpers, and sleep.
-- [std::fs](fs.md): runtime-backed file existence, create/truncate write,
-  read, close, removal, `File` value handles, and `Option[File]` open helpers.
+- [std::fs](fs.md): runtime-backed file existence, read, create/truncate write,
+  append, close, removal, `File` value handles, and `Option[File]` open helpers.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,
   `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,

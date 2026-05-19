@@ -26,7 +26,7 @@ identity/from/into helpers, `context` runtime hooks plus the source
 id/exit/status helpers plus the first POSIX fork/wait slice, `time`
 monotonic/wall-clock/sleep hooks plus source `Duration`/`Instant`/
 `SystemTime` helpers, `fs` byte-oriented file existence,
-open/read/write/close/remove hooks plus source `File` methods and
+open/read/write/append/close/remove hooks plus source `File` methods and
 `Option[File]` open helpers,
 `collections::Set[T]` as the linear insertion-order set with `try_*`
 accessors, `pop`/`try_pop`, replace-or-insert updates, explicit reserve
@@ -45,7 +45,7 @@ work. Each one should land in small tested slices with natural API names.
 | --- | --- | --- |
 | `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future path normalization and platform-specific expansion. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `exit`, `success`, `failure`, status predicates, POSIX `fork`, `wait`, and child/error predicates; future portable `spawn`, richer status/result values, and process handles. |
-| `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, `open_read`, `open_write`, `try_open_read`, `try_open_write`, byte `read_byte`/`write_byte`/`write_bytes`, and `close`; future owned resource policy, metadata, directory iteration, path helpers, append/read-write modes. |
+| `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, `open_read`, `open_write`, `open_append`, `try_open_read`, `try_open_write`, `try_open_append`, byte `read_byte`/`write_byte`/`write_bytes`, and `close`; future owned resource policy, metadata, directory iteration, path helpers, and read-write modes. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Future `spawn`, `join`, thread id, stack/runtime context setup. |
 | `std::sync` | Share state between threads deliberately. | Future atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |

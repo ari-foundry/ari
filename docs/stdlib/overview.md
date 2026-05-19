@@ -26,7 +26,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
 | `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
-| `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `open_read`, `open_write`, `try_open_read`, `try_open_write`, `read_byte`, `write_byte`, `write_bytes`, `close`. |
+| `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `open_read`, `open_write`, `open_append`, `try_open_read`, `try_open_write`, `try_open_append`, `read_byte`, `write_byte`, `write_bytes`, `close`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
@@ -123,11 +123,12 @@ clock and sleep APIs, while `Duration`, `Instant`, `SystemTime`, and the
 constructor/elapsed helpers are ordinary Ari source.
 
 `std::fs` is the first filesystem slice. `exists`, `remove`, raw file
-open/close, and single-byte read/write are runtime-backed because they call
-host file-descriptor APIs. `try_open_read`, `try_open_write`, `write_bytes`,
-and the `File` methods are ordinary Ari source over the raw hooks. The handle
-is a visible value today and should become a stronger owned resource when OS
-resource ownership is modeled by the language.
+open/append/close, and single-byte read/write are runtime-backed because they
+call host file-descriptor APIs. `try_open_read`, `try_open_write`,
+`try_open_append`, `write_bytes`, and the `File` methods are ordinary Ari
+source over the raw hooks. The handle is a visible value today and should
+become a stronger owned resource when OS resource ownership is modeled by the
+language.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
 small, insertion-order, linear set with iterator support. `HashMap[K,V]` and
