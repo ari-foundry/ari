@@ -5,9 +5,11 @@ spawn a plain function pointer, join the returned handle, ask for the current
 Ari runtime thread id, and yield the current OS thread.
 
 The API is thin because thread ownership needs a strong foundation. Capturing
-closures, shared state, atomics, locks, and typed result handles should grow in
+closures, shared ownership, locks, and typed result handles should grow in
 later `std::sync` and richer `std::thread` slices instead of being hidden
-behind a too-broad first wrapper.
+behind a too-broad first wrapper. The first atomic primitive now lives in
+`std::sync`, but thread entry capture and shared-state policy are still future
+work.
 
 ## API
 
@@ -83,9 +85,9 @@ fn main() -> i64 {
   more than once.
 - Join failure is represented by `-1` until Ari has a richer thread result or
   status type.
-- There is no shared-state API yet. Atomics, `Shared`, `Mutex`, and channels
-  belong in future `std::sync` work after ownership and send/share rules are
-  documented.
+- There is no captured shared-state API yet. `std::sync::AtomicI64` exists,
+  but `Shared`, `Mutex`, and channels belong in future `std::sync` work after
+  ownership and send/share rules are documented.
 - The current backend implementation uses pthreads on the LLVM/Linux path.
   Cross-platform thread policy remains roadmap work.
 

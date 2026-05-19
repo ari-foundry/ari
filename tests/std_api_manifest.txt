@@ -175,6 +175,11 @@ fn std::string::from_slice_in|std string from-slice target-zone copy tests; docs
 fn std::string::from_string|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::new|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::with_capacity|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::sync::compare_exchange|check-prelude std-sync-atomic-i64 atomic compare-and-exchange hook; docs/stdlib/modules/sync.md
+fn std::sync::fetch_add|check-prelude std-sync-atomic-i64 atomic fetch-add hook; docs/stdlib/modules/sync.md
+fn std::sync::load|check-prelude std-sync-atomic-i64 atomic load hook; docs/stdlib/modules/sync.md
+fn std::sync::store|check-prelude std-sync-atomic-i64 atomic store hook; docs/stdlib/modules/sync.md
+fn std::sync::swap|check-prelude std-sync-atomic-i64 atomic exchange hook; docs/stdlib/modules/sync.md
 fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
 fn std::thread::id|check-prelude std-thread-basic source wrapper around context thread id; docs/stdlib/modules/thread.md
 fn std::thread::is_join_error|check-prelude std-thread-basic join sentinel helper; docs/stdlib/modules/thread.md
@@ -404,6 +409,12 @@ method std::string::String::try_first|check-prelude std-string-try-byte-access O
 method std::string::String::try_get|check-prelude std-string-try-byte-access Option-returning out-of-range byte access; docs/stdlib/modules/string.md
 method std::string::String::try_last|check-prelude std-string-try-byte-access Option-returning empty-safe byte access; docs/stdlib/modules/string.md
 method std::string::String::try_pop|check-prelude std-string-try-byte-access Option-returning empty pop; docs/stdlib/modules/string.md
+method std::sync::AtomicI64::compare_exchange|check-prelude std-sync-atomic-i64 compare-and-exchange method wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::fetch_add|check-prelude std-sync-atomic-i64 fetch-add method wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::load|check-prelude std-sync-atomic-i64 load method wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::new|check-prelude std-sync-atomic-i64 associated constructor; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::store|check-prelude std-sync-atomic-i64 store method wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::swap|check-prelude std-sync-atomic-i64 exchange method wrapper; docs/stdlib/modules/sync.md
 method std::thread::Thread::id|check-prelude std-thread-basic handle id accessor; docs/stdlib/modules/thread.md
 method std::thread::Thread::invalid|check-prelude std-thread-basic invalid handle sentinel; docs/stdlib/modules/thread.md
 method std::thread::Thread::is_valid|check-prelude std-thread-basic handle validity predicate; docs/stdlib/modules/thread.md
@@ -482,6 +493,7 @@ module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude 
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+module std::sync|check-prelude std-sync-atomic-i64 atomic primitive module; docs/stdlib/modules/sync.md
 module std::thread|check-prelude std-thread-basic spawn/join module; docs/stdlib/modules/thread.md
 module std::time|std time monotonic/wall-clock helper tests; docs/stdlib/modules/time.md
 module std::vec|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -508,6 +520,7 @@ struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::sync::AtomicI64|check-prelude std-sync-atomic-i64 atomic primitive value; docs/stdlib/modules/sync.md
 struct std::thread::Thread|check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md
 struct std::time::Duration|std time duration helper tests; docs/stdlib/modules/time.md
 struct std::time::Instant|std time monotonic instant tests; docs/stdlib/modules/time.md
@@ -569,6 +582,7 @@ trait-method std::convert::Into[T]::into|convert module trait surface; docs/dev/
 trait-method std::fmt::Display::format_in|format_in Display borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
+use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row
 use std::HashMap|check-prelude std-collections-hash root alias for std::collections::HashMap[K, V]; docs/stdlib/modules/collections.md
 use std::HashSet|check-prelude std-collections-hash root alias for std::collections::HashSet[T]; docs/stdlib/modules/collections.md

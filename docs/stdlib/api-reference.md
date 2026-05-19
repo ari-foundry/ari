@@ -17,6 +17,7 @@ RangeInclusive[T]
 Box[T]
 String
 Thread
+AtomicI64
 Set[T]
 HashMap[K, V]
 HashSet[T]
@@ -180,6 +181,31 @@ returns the entry function's `i64` result, or `-1` for the current failure
 sentinel; use `is_join_error(status)` for that check. `id()` returns the
 current Ari runtime thread id, with main thread `0` and spawned threads
 positive. `yield_now()` is a host scheduler hint, not synchronization.
+
+Synchronization helpers live in `std::sync`:
+
+```ari
+AtomicI64::new(value)
+
+sync::load(ref value)
+sync::store(ref mut value, replacement)
+sync::swap(ref mut value, replacement)
+sync::fetch_add(ref mut value, amount)
+sync::compare_exchange(ref mut value, expected, replacement)
+
+atomic.load()
+atomic.store(replacement)
+atomic.swap(replacement)
+atomic.fetch_add(amount)
+atomic.compare_exchange(expected, replacement)
+```
+
+The first sync slice is concrete: `AtomicI64` only. Operations use
+sequentially consistent ordering and keep the API name natural by putting the
+type in the value, not in every method name. `fetch_add` and `swap` return the
+previous value; `compare_exchange` returns whether the replacement happened.
+`Shared`, `Weak`, `Mutex`, channels, and weaker memory-order options remain
+future concurrency work.
 
 Runtime-backed time helpers live in `std::time`:
 

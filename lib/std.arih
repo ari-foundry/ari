@@ -10,6 +10,8 @@ pub mod process;
 
 pub mod thread;
 
+pub mod sync;
+
 pub mod time;
 
 pub mod fs;
@@ -70,6 +72,7 @@ pub use collections::HashSet;
 pub use collections::Set;
 pub use collections::TreeMap;
 pub use collections::TreeSet;
+pub use sync::AtomicI64;
 pub use thread::Thread;
 
 pub impl[T] Slice[T] {

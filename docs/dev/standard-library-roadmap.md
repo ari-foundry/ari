@@ -40,6 +40,9 @@ The current `std` package already provides:
   status helpers, plus the first POSIX `fork`/`wait` child-process slice
 - the first `std::thread` helpers: `Thread`, function-pointer `spawn`, `join`,
   `yield_now`, runtime thread ids, and source predicates/method wrappers
+- the first `std::sync` helper: concrete `AtomicI64` with sequentially
+  consistent `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`
+  hooks plus method wrappers
 - the first `std::time` helpers: monotonic nanosecond reads, wall-clock Unix
   nanosecond reads, sleep, `Duration`, `Instant`, `SystemTime`, and source
   elapsed-time helpers
@@ -160,10 +163,10 @@ Likely compiler work:
   string behavior and OS wrapper conventions are stable.
 - Add thin wrappers for file, time, process, thread, synchronization, and
   syscall-adjacent APIs in small capability-oriented slices. The first time,
-  filesystem, POSIX fork/wait process, and function-pointer thread slices are
-  implemented; portable child-process handles, richer thread statuses,
-  synchronization, directories, metadata, and raw OS wrappers still need
-  ownership policy.
+  filesystem, POSIX fork/wait process, function-pointer thread, and concrete
+  atomic integer slices are implemented; portable child-process handles,
+  richer thread statuses, generic synchronization, directories, metadata, and
+  raw OS wrappers still need ownership policy.
 - Keep OS resources explicit. File handles, process handles, and buffers should
   be visible owners or zone-backed handles.
 - Prefer small modules: `std::env`, `std::fs`, `std::time`, `std::process`,
@@ -201,7 +204,7 @@ Likely compiler work:
 | `std::time` | Grow from monotonic/wall-clock reads and sleep into timers and interruption-aware sleep. | current `std-time-basic` duration constructor, elapsed-time, wall-clock, and sleep-hook checks; future sleep-interruption and timer-handle tests. | Current monotonic/unix/sleep hooks use LLVM runtime calls; future timers may need handle ownership and platform-specific wrappers. |
 | `std::fs` | Grow from byte-oriented files into owned resource handles, metadata, directory iteration, and path helpers. | current `std-fs-basic` existence/remove, mode-string open/read/write/close, byte-slice write, and `Option[File]` checks; current `std-fs-append` append mode, preservation, and failed append checks; current `std-fs-open-modes` `"r"`/`"w"`/`"a"`/`"rw"`/`"r+"`/`"w+"`/`"a+"`/empty/invalid mode checks; future invalid close, metadata, directory, path, and options-builder tests. | Current file hooks use LLVM runtime calls to `access`, `unlink`, `open`, `read`, `write`, and `close`; future work needs OS-resource ownership/drop policy and platform-specific wrappers. |
 | `std::thread` | Grow from the current plain function-pointer spawn/join handle into safer ownership-transfer and result policy. | current `std-thread-basic` main/child id, spawn/join, invalid-handle, method-wrapper, root `Thread`, and yield checks; future moved capture rejection, richer status/result values, shared state diagnostics, and platform guards. | Current pthread trampoline uses a runtime packet and thread-local id; future work needs send/share trait policy, owned handle semantics, and platform-specific wrappers. |
-| `std::sync` | Shared ownership and atomics before locks/channels. | `Shared`/`Weak` upgrade behavior, atomic load/store/CAS, mutex poisoning or no-poison policy. | Reference-counted handle lowering, atomic intrinsics, and thread-safety trait checks. |
+| `std::sync` | Grow from concrete `AtomicI64` into shared ownership before locks/channels. | current `std-sync-atomic-i64` load/store/swap/fetch-add/compare-exchange, method-wrapper, root alias, and LLVM atomic lowering checks; future `Shared`/`Weak` upgrade behavior, generic atomics, and mutex poisoning or no-poison policy. | Current atomic hooks lower directly to LLVM atomic instructions; future work needs reference-counted handle lowering, memory-order policy, and thread-safety trait checks. |
 | `std::collections` | Add tree deletion and trait-driven constructors after the current hash/tree iterator slice. | current set insertion/duplicate/replace/access/optional access/reserve/removal/iteration/copy/after-reset/same-zone tests; hash collision/tombstone and live-bucket iterator tests; tree rotation/replacement and sorted iterator tests; future red-black deletion tests. | Current collection handles have zone provenance recognition; next compiler work is trait-driven `Hash`/`Eq`/`Ord` dispatch and iterator lowering beyond the current cursor slices. |
 | `std::string` | Add signed/checked parsers only after text and numeric policies are documented. | Search, growth, append, copy, ASCII case comparison/search, ASCII trim/parse, prefix parse, owned trim copy, and after-reset tests. | Formatting/string runtime hooks. |
 | `std::ascii` | Add signed parsers only after numeric sign and overflow policy is documented. | Byte classification behavior, case-insensitive comparison/search, slice trimming/parsing, prefix parser consumed-length behavior, source symbol checks, and future parser edge cases. | None for current whole-slice and prefix helpers; signed/checked parsers may need overflow diagnostics. |

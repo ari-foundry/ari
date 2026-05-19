@@ -109,6 +109,16 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::thread::join", "ari_builtin_thread_join"},
         {"thread::yield_now", "ari_builtin_thread_yield"},
         {"std::thread::yield_now", "ari_builtin_thread_yield"},
+        {"sync::load", "ari_builtin_sync_atomic_i64_load"},
+        {"std::sync::load", "ari_builtin_sync_atomic_i64_load"},
+        {"sync::store", "ari_builtin_sync_atomic_i64_store"},
+        {"std::sync::store", "ari_builtin_sync_atomic_i64_store"},
+        {"sync::swap", "ari_builtin_sync_atomic_i64_swap"},
+        {"std::sync::swap", "ari_builtin_sync_atomic_i64_swap"},
+        {"sync::fetch_add", "ari_builtin_sync_atomic_i64_fetch_add"},
+        {"std::sync::fetch_add", "ari_builtin_sync_atomic_i64_fetch_add"},
+        {"sync::compare_exchange", "ari_builtin_sync_atomic_i64_compare_exchange"},
+        {"std::sync::compare_exchange", "ari_builtin_sync_atomic_i64_compare_exchange"},
         {"time::monotonic_nanos", "ari_builtin_time_monotonic_nanos"},
         {"std::time::monotonic_nanos", "ari_builtin_time_monotonic_nanos"},
         {"time::unix_nanos", "ari_builtin_time_unix_nanos"},
@@ -202,6 +212,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     const AriBuiltinTypeExpectation source_string = builtin_type("string");
     const AriBuiltinTypeExpectation thread_entry = builtin_type("fn() -> i64");
     const AriBuiltinTypeExpectation thread_handle = builtin_type("std::thread::Thread");
+    const AriBuiltinTypeExpectation ref_atomic_i64 = builtin_type("ref std::sync::AtomicI64");
+    const AriBuiltinTypeExpectation ref_mut_atomic_i64 = builtin_type("ref mut std::sync::AtomicI64");
     const AriBuiltinTypeExpectation ptr_u8 = builtin_type("ptr u8");
     const AriBuiltinTypeExpectation ptr_c_void = builtin_type("ptr c_void", {"ptr void"});
     const AriBuiltinTypeExpectation own_zone = builtin_type("own Zone");
@@ -228,6 +240,11 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_thread_spawn") return builtin_sig({thread_entry}, thread_handle);
     if (symbol == "ari_builtin_thread_join") return builtin_sig({thread_handle}, i64);
     if (symbol == "ari_builtin_thread_yield") return builtin_sig({}, void_type);
+    if (symbol == "ari_builtin_sync_atomic_i64_load") return builtin_sig({ref_atomic_i64}, i64);
+    if (symbol == "ari_builtin_sync_atomic_i64_store") return builtin_sig({ref_mut_atomic_i64, i64}, void_type);
+    if (symbol == "ari_builtin_sync_atomic_i64_swap") return builtin_sig({ref_mut_atomic_i64, i64}, i64);
+    if (symbol == "ari_builtin_sync_atomic_i64_fetch_add") return builtin_sig({ref_mut_atomic_i64, i64}, i64);
+    if (symbol == "ari_builtin_sync_atomic_i64_compare_exchange") return builtin_sig({ref_mut_atomic_i64, i64, i64}, boolean);
     if (symbol == "ari_builtin_time_monotonic_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_unix_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);

@@ -1,0 +1,50 @@
+// Covers the first std::sync slice: a concrete AtomicI64 value with natural
+// load/store/swap/fetch_add/compare_exchange names and root alias access.
+fn main() -> i64 {
+  var value = AtomicI64::new(10);
+  if value.load() != 10 {
+    return 1;
+  }
+
+  sync::store(ref mut value, 12);
+  if sync::load(ref value) != 12 {
+    return 2;
+  }
+
+  let before_add = value.fetch_add(5);
+  if before_add != 12 {
+    return 3;
+  }
+  if value.load() != 17 {
+    return 4;
+  }
+
+  let before_swap = value.swap(4);
+  if before_swap != 17 {
+    return 5;
+  }
+  if value.load() != 4 {
+    return 6;
+  }
+
+  if !value.compare_exchange(4, 9) {
+    return 7;
+  }
+  if value.load() != 9 {
+    return 8;
+  }
+  if value.compare_exchange(4, 10) {
+    return 9;
+  }
+  if value.load() != 9 {
+    return 10;
+  }
+
+  let other = std::sync::AtomicI64::new(3);
+  let copied_root: AtomicI64 = other;
+  if copied_root.load() != 3 {
+    return 11;
+  }
+
+  return 42;
+}

@@ -1,0 +1,40 @@
+// Small synchronization primitives.
+//
+// The first sync slice exposes one concrete atomic integer. It deliberately
+// keeps memory ordering out of the public API until Ari has enough concurrency
+// surface to make ordering choices teachable and testable.
+pub struct AtomicI64 {
+  mut value: i64,
+}
+
+pub extern "ari" fn load(value: ref AtomicI64) -> i64 = "ari_builtin_sync_atomic_i64_load";
+pub extern "ari" fn store(value: ref mut AtomicI64, replacement: i64) -> void = "ari_builtin_sync_atomic_i64_store";
+pub extern "ari" fn swap(value: ref mut AtomicI64, replacement: i64) -> i64 = "ari_builtin_sync_atomic_i64_swap";
+pub extern "ari" fn fetch_add(value: ref mut AtomicI64, amount: i64) -> i64 = "ari_builtin_sync_atomic_i64_fetch_add";
+pub extern "ari" fn compare_exchange(value: ref mut AtomicI64, expected: i64, replacement: i64) -> bool = "ari_builtin_sync_atomic_i64_compare_exchange";
+
+pub impl std::sync::AtomicI64 {
+  fn new(value: i64) -> AtomicI64 {
+    return AtomicI64 { value: value };
+  }
+
+  fn load(self: ref Self) -> i64 {
+    return std::sync::load(self);
+  }
+
+  fn store(self: ref mut Self, replacement: i64) -> void {
+    std::sync::store(self, replacement);
+  }
+
+  fn swap(self: ref mut Self, replacement: i64) -> i64 {
+    return std::sync::swap(self, replacement);
+  }
+
+  fn fetch_add(self: ref mut Self, amount: i64) -> i64 {
+    return std::sync::fetch_add(self, amount);
+  }
+
+  fn compare_exchange(self: ref mut Self, expected: i64, replacement: i64) -> bool {
+    return std::sync::compare_exchange(self, expected, replacement);
+  }
+}

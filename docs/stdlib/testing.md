@@ -43,6 +43,7 @@ std-process-basic.ari
 std-process-exit.ari
 std-process-fork-wait.ari
 std-thread-basic.ari
+std-sync-atomic-i64.ari
 std-time-basic.ari
 std-fs-basic.ari
 std-fs-append.ari

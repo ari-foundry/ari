@@ -57,6 +57,9 @@ identifies the exact case:
 - `std-thread-basic.ari`: runtime-backed `std::thread` function-pointer
   spawn/join behavior, child runtime ids, invalid-handle sentinels, root
   `Thread`, method wrappers, and scheduler yield.
+- `std-sync-atomic-i64.ari`: runtime-backed `std::sync::AtomicI64`
+  load/store/swap/fetch-add/compare-exchange behavior, method wrappers, root
+  alias, and LLVM atomic lowering.
 - `std-time-basic.ari`: runtime-backed monotonic and wall-clock nanosecond
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
 - `std-fs-basic.ari`: runtime-backed file existence, mode-string

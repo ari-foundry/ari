@@ -432,12 +432,14 @@ private:
             symbol == "ari_builtin_fs_exists" ||
             symbol == "ari_builtin_fs_remove" ||
             symbol == "ari_builtin_fs_close" ||
-            symbol == "ari_builtin_fs_write_byte") {
+            symbol == "ari_builtin_fs_write_byte" ||
+            symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_panic" ||
             symbol == "ari_builtin_process_exit" ||
             symbol == "ari_builtin_thread_yield" ||
+            symbol == "ari_builtin_sync_atomic_i64_store" ||
             symbol == "ari_builtin_time_sleep_nanos" ||
             symbol == "ari_builtin_zone_reset" ||
             symbol == "ari_builtin_zone_destroy") {
@@ -917,6 +919,47 @@ private:
         line("entry:");
         line("  %ignored = call i32 @sched_yield()");
         line("  ret void");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_sync_atomic_i64_load(ptr %cell) {");
+        line("entry:");
+        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  %value = load atomic i64, ptr %value.ptr seq_cst, align 8");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_sync_atomic_i64_store(ptr %cell, i64 %next) {");
+        line("entry:");
+        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  store atomic i64 %next, ptr %value.ptr seq_cst, align 8");
+        line("  ret void");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_sync_atomic_i64_swap(ptr %cell, i64 %next) {");
+        line("entry:");
+        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  %previous = atomicrmw xchg ptr %value.ptr, i64 %next seq_cst");
+        line("  ret i64 %previous");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_sync_atomic_i64_fetch_add(ptr %cell, i64 %amount) {");
+        line("entry:");
+        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  %previous = atomicrmw add ptr %value.ptr, i64 %amount seq_cst");
+        line("  ret i64 %previous");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_sync_atomic_i64_compare_exchange(ptr %cell, i64 %expected, i64 %next) {");
+        line("entry:");
+        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  %result = cmpxchg ptr %value.ptr, i64 %expected, i64 %next seq_cst seq_cst");
+        line("  %exchanged = extractvalue { i64, i1 } %result, 1");
+        line("  ret i1 %exchanged");
         line("}");
         line();
 

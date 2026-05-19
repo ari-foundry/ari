@@ -310,6 +310,20 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari -o $(BUILD_DIR)/prelude/std-thread-basic.elf
 	$(BUILD_DIR)/prelude/std-thread-basic.elf; code=$$?; test $$code -eq 42
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-thread-basic.elf; $(BUILD_DIR)/prelude/std-thread-basic.elf; code=$$?; test $$code -eq 42; fi
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-atomic-i64.ari --emit-llvm $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "@ari_builtin_sync_atomic_i64_load" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "@ari_builtin_sync_atomic_i64_store" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "@ari_builtin_sync_atomic_i64_swap" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "@ari_builtin_sync_atomic_i64_fetch_add" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "@ari_builtin_sync_atomic_i64_compare_exchange" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "load atomic i64" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "store atomic i64" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "atomicrmw xchg" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "atomicrmw add" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	grep -q "cmpxchg" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-atomic-i64.ari -o $(BUILD_DIR)/prelude/std-sync-atomic-i64.elf
+	$(BUILD_DIR)/prelude/std-sync-atomic-i64.elf; code=$$?; test $$code -eq 42
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/sync/std-sync-atomic-i64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-sync-atomic-i64.elf; $(BUILD_DIR)/prelude/std-sync-atomic-i64.elf; code=$$?; test $$code -eq 42; fi
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_monotonic_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_unix_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll

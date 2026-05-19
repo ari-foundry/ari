@@ -25,7 +25,9 @@ identity/from/into helpers, `context` runtime hooks plus the source
 `io` runtime hooks plus source byte-slice output, current `process`
 id/exit/status helpers plus the first POSIX fork/wait slice, `thread`
 function-pointer spawn/join/yield hooks plus runtime ids and source handle
-helpers, `time` monotonic/wall-clock/sleep hooks plus source
+helpers, `sync` concrete `AtomicI64` sequentially consistent load/store/swap/
+fetch-add/compare-exchange hooks plus source method wrappers, `time`
+monotonic/wall-clock/sleep hooks plus source
 `Duration`/`Instant`/`SystemTime` helpers, `fs` byte-oriented file existence,
 open/read/write/append/close/remove hooks plus source `File` methods and
 `Option[File]` open helpers,
@@ -49,7 +51,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, and `close`; future owned resource policy, metadata, directory iteration, path helpers, and an options-style open builder. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, richer status/result values, and `std::sync` integration. |
-| `std::sync` | Share state between threads deliberately. | Future atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
+| `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`; future generic atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
 | `std::collections` | Store keyed and set-like data beyond vectors. | Current linear `Set[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, live-bucket hash iterators, sorted tree iterators; future tree deletion, deques, and trait-driven constructors. |
 | `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, error-code translation. |
 
@@ -109,9 +111,10 @@ work. Each one should land in small tested slices with natural API names.
   `std::fs` now have their first thin wrappers; time should grow toward timers
   and interruption-aware sleep, while filesystem work should next add stronger
   owned-resource policy, metadata, directory iteration, and path helpers.
-  `std::thread` now has its first function-pointer spawn/join wrapper; grow it
-  toward explicit ownership transfer, richer statuses, and safer shared-state
-  policy alongside future `std::sync`.
+  `std::thread` now has its first function-pointer spawn/join wrapper, and
+  `std::sync` has a first concrete atomic integer primitive. Grow them toward
+  explicit ownership transfer, richer statuses, generic atomics, and safer
+  shared-state policy.
 - Keep syscall-facing helpers minimal and modern: process arguments and
   environment, current directory, file descriptors/handles, time, process
   spawn/fork where the platform supports it, thread creation/join, atomics or

@@ -19,7 +19,8 @@ adding them directly under `ok/` or `errors/`.
 - `std-<module>-<feature>.ari`: source module APIs such as
   `std-vec-try-pop.ari`, `std-math-integer-helpers.ari`, or
   `std-env-vars.ari`. Put OS-facing source/runtime slices such as
-  `std-thread-basic.ari` in their own feature folder.
+  `std-thread-basic.ari` and `std-sync-atomic-i64.ari` in their own feature
+  folder.
 - `prelude-<feature>.ari`: root prelude names, aliases, macros, and implicit
   `std` loading.
 - `format-<feature>.ari`: formatting macro and runtime-lowering behavior.
