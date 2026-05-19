@@ -1395,11 +1395,13 @@ c.len()
 c.is_empty()
 ```
 
-`std::string::bytes(text)` returns a borrowed `Slice[u8]` over a lowercase
-`string` without the trailing NUL, which is the easiest way to feed parsers or
-compare a literal like `"true"` against byte slices. Single-quoted byte
-character literals such as `'t'`, `'\n'`, and `'\x74'` are `u8`, so local byte
-vectors can be written as `['t', 'r', 'u', 'e']`.
+String literals coerce to borrowed `Slice[u8]` values when a byte-slice API
+expects one, so calls such as `ascii::parse_decimal("123")` and
+`text.find("needle")` are valid. `std::string::bytes(text)` returns the same
+kind of view without the trailing NUL when code wants to name the boundary
+explicitly. Single-quoted byte character literals such as `'t'`, `'\n'`, and
+`'\x74'` are `u8`, so local byte vectors can be written as
+`['t', 'r', 'u', 'e']`.
 
 `std::string::from(ref mut zone, "text")`, `std::string::copy(ref mut zone,
 bytes)`, and `std::string::empty(ref mut zone)` are the natural constructors
@@ -1818,6 +1820,11 @@ space. `is_punctuation` is true for graphic ASCII bytes that are not letters or
 digits. Scalar helpers take `char`, the standard alias for an ASCII `u8`.
 Prefer character literals such as `'0'` and `'A'` over decimal byte casts for
 ASCII call sites.
+
+Slice helpers take `Slice[u8]` and accept string literals directly. For
+example, `ascii::parse_decimal("123")` and
+`ascii::starts_with_ignore_case("AriLang", "ari")` lower to borrowed literal
+byte slices without the trailing NUL.
 
 `digit_value` and `hex_value` return `Option[i64]`. Non-digit input returns
 `None<i64>()` where appropriate.

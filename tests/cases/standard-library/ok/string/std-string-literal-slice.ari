@@ -1,0 +1,27 @@
+// Covers natural string-literal coercion into borrowed Slice[u8] parameters
+// and locals, so byte-oriented APIs do not require std::string::bytes(...) at
+// every call site.
+fn main() -> i64 {
+  let truth: Slice[u8] = "true";
+  assert_eq_i64(truth.len(), 4);
+  assert_eq_i64(truth[0] as i64, 't' as i64);
+  assert_eq_i64(truth[3] as i64, 'e' as i64);
+
+  let nul_terminated_view: Slice[u8] = "\x00hidden";
+  assert_eq_i64(nul_terminated_view.len(), 0);
+
+  assert_eq_i64(std::ascii::parse_decimal("123").unwrap_or(0), 123);
+  assert_eq_i64(ascii::parse_hex("1Af").unwrap_or(0), 431);
+  assert(std::ascii::starts_with_ignore_case("AriLang", "ari"));
+  assert(ascii::ends_with_ignore_case("AriLang", "LANG"));
+
+  var zone = zone::create(16);
+  var text = std::string::from(ref mut zone, "truth");
+  assert_eq_i64(text.find("ru"), 1);
+  assert(text.starts_with("tr"));
+  assert(text.ends_with("th"));
+  assert(text.equals("truth"));
+  zone::destroy(zone);
+
+  return 0;
+}

@@ -7,10 +7,10 @@ that policy visible at every call site.
 
 ## When To Use It
 
-Use `std::ascii` when you have a `u8` or `Slice[u8]` from a `String`, raw byte
-input, or a byte-oriented parser and you need simple ASCII classification,
-case conversion, comparison, substring search, trimming, or small integer
-parsing.
+Use `std::ascii` when you have a `u8`, a string literal, or `Slice[u8]` from a
+`String`, raw byte input, or a byte-oriented parser and you need simple ASCII
+classification, case conversion, comparison, substring search, trimming, or
+small integer parsing.
 
 Do not use it as a Unicode or locale-aware text API. Those policies are future
 library work and should not be hidden behind ASCII helper names.
@@ -65,7 +65,9 @@ Prefix parsers return a small named result type:
 ascii::ParsedInt
 ```
 
-Slice helpers operate on borrowed `Slice[u8]` values:
+Slice helpers operate on borrowed `Slice[u8]` values. A string literal can be
+passed directly anywhere a `Slice[u8]` is expected; Ari lowers it to a borrowed
+view over the literal bytes without the trailing NUL.
 
 ```ari
 ascii::equals_ignore_case(left, right)
@@ -81,6 +83,13 @@ ascii::parse_decimal(bytes)
 ascii::parse_decimal_prefix(bytes)
 ascii::parse_hex(bytes)
 ascii::parse_hex_prefix(bytes)
+```
+
+For example:
+
+```ari
+ascii::parse_decimal("123")
+ascii::starts_with_ignore_case("AriLang", "ari")
 ```
 
 The `*_ignore_case` helpers compare only ASCII letter case. Bytes outside

@@ -156,9 +156,10 @@ The source prelude already has the allocator-backed seed under `std::string`.
 `std::string::String` handle with separate `len` and `capacity` metadata over
 zone-backed bytes, and `std::string::from_string(ref mut zone, text)` copies a
 borrowed lowercase `string` into that handle.
-`std::string::bytes(text)` returns a borrowed `Slice[u8]` over a lowercase
-`string` without the trailing NUL, so `"true"` can be passed to byte parsers or
-compared with a local byte vector like `['t', 'r', 'u', 'e']`.
+String literals coerce to borrowed `Slice[u8]` values when that type is
+expected, so `"true"` can be passed directly to byte parsers or compared with a
+local byte vector like `['t', 'r', 'u', 'e']`. `std::string::bytes(text)` is
+still available when code wants to name that boundary explicitly.
 `std::string::from_slice_in(ref mut Zone, Slice[u8])` copies a borrowed byte
 slice into a new target-zone string handle. It supports checked byte
 `first`/`last`/`get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone

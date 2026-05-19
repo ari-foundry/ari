@@ -34,8 +34,14 @@ distinct from normal text; the current POSIX slice stores raw bytes and may not
 be valid UTF-8. `c_str(text)` is a convenience wrapper for
 `std::c::from_string(text)` and returns the shared `std::c::CStr` type, while
 `c_len` and `c_bytes` expose bytes before the trailing NUL. `bytes(text)` is
-the natural alias for `c_bytes(text)` when a string literal should be treated
-as a `Slice[u8]`, for example `std::string::bytes("true")`.
+the named helper for code that wants to make the boundary explicit. In normal
+calls and local initializers, a string literal can also flow directly into a
+`Slice[u8]` expectation:
+
+```ari
+let bytes: Slice[u8] = "true";
+ascii::parse_decimal("123");
+```
 
 Avoid using `String` as a general text policy. UTF-8 helpers operate on Unicode
 scalar values and byte offsets. Unicode normalization, grapheme iteration,

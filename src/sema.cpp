@@ -16827,6 +16827,42 @@ private:
         return expr.kind == ExprKind::Vector && expr.args.empty();
     }
 
+    static bool is_u8_value_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::U8;
+    }
+
+    static bool is_prelude_u8_slice_type(const IrType& type) {
+        return is_prelude_slice_type(type) &&
+               type.args.size() == 1 &&
+               is_u8_value_type(type.args[0]);
+    }
+
+    static std::uint64_t string_literal_slice_len(const std::string& value) {
+        std::size_t nul = value.find('\0');
+        if (nul != std::string::npos) return static_cast<std::uint64_t>(nul);
+        return static_cast<std::uint64_t>(value.size());
+    }
+
+    IrExprPtr make_string_literal_slice_expr(SourceLocation loc,
+                                             const std::string& value,
+                                             const IrType& expected) const {
+        IrType byte_pointer = expected.args[0];
+        byte_pointer.qualifier = TypeQualifier::Ptr;
+        IrExprPtr data = make_cast_expr(
+            loc,
+            make_string_literal_expr(
+                loc,
+                primitive_type(IrPrimitiveKind::String, "string", loc),
+                value),
+            byte_pointer);
+        IrExprPtr length = make_integer_literal(
+            loc,
+            i64_type(loc),
+            string_literal_slice_len(value));
+        return make_slice_view_expr(loc, std::move(data), std::move(length), expected);
+    }
+
     IrExprPtr make_typed_empty_vector_expr(SourceLocation loc, const IrType& expected) const {
         const IrType& element = require_typed_empty_vector_element_type(loc, expected);
         require_plain_prelude_aggregate_element(loc, element, "vector");
@@ -16836,6 +16872,9 @@ private:
     IrExprPtr check_expr_with_expected(const Expr& expr, const IrType& expected) {
         if (is_empty_vector_literal_expr(expr)) {
             return make_typed_empty_vector_expr(expr.loc, expected);
+        }
+        if (expr.kind == ExprKind::String && is_prelude_u8_slice_type(expected)) {
+            return make_string_literal_slice_expr(expr.loc, expr.string_value, expected);
         }
         if (expr.kind == ExprKind::Name) {
             std::string generic_name;
@@ -21481,6 +21520,9 @@ private:
 
     IrExprPtr try_make_implicit_slice_argument(const Expr& arg_expr, const IrType& expected) {
         if (!is_prelude_slice_type(expected) || expected.args.size() != 1) return nullptr;
+        if (arg_expr.kind == ExprKind::String && is_prelude_u8_slice_type(expected)) {
+            return make_string_literal_slice_expr(arg_expr.loc, arg_expr.string_value, expected);
+        }
         if (arg_expr.kind == ExprKind::Name) {
             if (LocalInfo* local = find_local_slot(arg_expr.name)) {
                 if (local->type.primitive == IrPrimitiveKind::Array ||
