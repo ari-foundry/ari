@@ -442,6 +442,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf
 	$(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 10
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 10; fi
+	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-hash-basic.ll
+	grep -F -q 'std4hash3new' $(BUILD_DIR)/prelude/std-hash-basic.ll
+	grep -F -q 'std4hash12value__G_i64' $(BUILD_DIR)/prelude/std-hash-basic.ll
+	grep -F -q 'std4hash5bytes' $(BUILD_DIR)/prelude/std-hash-basic.ll
+	grep -F -q 'std4hash12write__G_i64' $(BUILD_DIR)/prelude/std-hash-basic.ll
+	grep -F -q 'std4hash10write_byte' $(BUILD_DIR)/prelude/std-hash-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari -o $(BUILD_DIR)/prelude/std-hash-basic.elf
+	$(BUILD_DIR)/prelude/std-hash-basic.elf; code=$$?; test $$code -eq 31
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-hash-basic.elf; $(BUILD_DIR)/prelude/std-hash-basic.elf; code=$$?; test $$code -eq 31; fi
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3abs' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math4sign' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll

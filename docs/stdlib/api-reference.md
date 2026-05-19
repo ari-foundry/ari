@@ -747,6 +747,8 @@ set.reserve(ref mut zone, capacity)
 set.iter()
 ```
 
+`collections::hash_i64` is a compatibility helper over `std::hash::value<i64>`.
+
 `HashMap.insert` returns `Option[V]` with the previous value on replacement.
 `HashMap.remove` returns `Option[V]` and leaves a tombstone so later probes
 still find collided keys. `HashMap.keys()` and `HashMap.values()` iterate live
@@ -964,6 +966,30 @@ The ordered helpers use `cmp::Ord[T]`; the `*_by` helpers take an explicit
 `partition` accepts `fn(ref T) -> bool` and returns the split index. `copy`
 returns the number of copied elements. `dedup` compacts consecutive duplicates
 and returns the logical prefix length.
+
+## Hashing
+
+`std::hash` contains deterministic, non-cryptographic hashing helpers:
+
+```ari
+hash::Hasher
+hash::Hash[T]
+hash::new()
+hash::reset(ref mut state)
+hash::finish(ref state)
+hash::write<T>(ref mut state, value)
+hash::value<T>(value)
+hash::bytes(values)
+hash::write_byte(ref mut state, value)
+hash::write_bytes(ref mut state, values)
+hash::write_u64(ref mut state, value)
+hash::write_i64(ref mut state, value)
+hash::write_bool(ref mut state, value)
+```
+
+Use `hash::value<T>` for a single value with a `Hash[T]` impl, `hash::bytes`
+for a borrowed `Slice[u8]`, and `Hasher` plus `write` calls for incremental
+hashing. Current built-in impls cover `i64`, `u64`, `u8`, and `bool`.
 
 ## Conversion
 

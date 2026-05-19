@@ -1,0 +1,52 @@
+// Covers the first std::hash slice and the collections::hash_i64 shim.
+fn same_manual_bytes(values: Slice[u8]) -> bool {
+  var state = hash::new();
+  var index = 0;
+  while index < values.len {
+    hash::write_byte(ref mut state, values[index]);
+    index = index + 1;
+  }
+  return hash::finish(ref state) == hash::bytes(values);
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  let a = hash::value<i64>(42);
+  let b = hash::value<i64>(42);
+  let c = hash::value<i64>(43);
+  if a == b && a != c {
+    score = score + 1;
+  }
+
+  var bytes = [65u8, 66u8, 67u8];
+  if same_manual_bytes(bytes.as_slice()) {
+    score = score + 2;
+  }
+
+  var first = hash::new();
+  hash::write<i64>(ref mut first, 7);
+  hash::write<bool>(ref mut first, true);
+  hash::write<u8>(ref mut first, 9u8);
+  let first_hash = hash::finish(ref first);
+
+  var second = hash::new();
+  hash::write_i64(ref mut second, 7);
+  hash::write_bool(ref mut second, true);
+  hash::write_byte(ref mut second, 9u8);
+  if first_hash == hash::finish(ref second) {
+    score = score + 4;
+  }
+
+  hash::reset(ref mut second);
+  hash::write_u64(ref mut second, 7u64);
+  if hash::finish(ref second) == hash::value<u64>(7u64) {
+    score = score + 8;
+  }
+
+  if collections::hash_i64(99) == hash::value<i64>(99) {
+    score = score + 16;
+  }
+
+  return score;
+}

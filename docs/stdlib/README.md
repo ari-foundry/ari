@@ -38,7 +38,9 @@ truncate, copy, rename, hard/symbolic links, single-directory create/remove, and
 read-to-byte-string helpers, and `std::net` adds source-only IPv4, IPv6,
 generic IP, and socket-address values while DNS and socket handles remain
 runtime roadmap work. Source
-collection work includes `std::collections::Set[T]` as a linear explicit-zone
+`std::hash` adds deterministic non-cryptographic `Hasher`/`Hash[T]` helpers
+for primitive values and byte slices. Source collection work includes
+`std::collections::Set[T]` as a linear explicit-zone
 set with insertion-order access, optional access, replace-or-insert updates,
 iterator support, and reserve growth; growable `Deque`, bounded `RingBuffer`,
 zone-backed `LinkedList`, and comparator-driven `BinaryHeap`/`PriorityQueue`

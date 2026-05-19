@@ -21,6 +21,9 @@ limits, examples, and test files for one module.
   routines, and value `replace`/`swap`.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,
   safe accessors, growth, copy, and iterator entry points.
+- [std::hash](hash.md): deterministic non-cryptographic `Hasher`,
+  `Hash[T]`, primitive hashing, byte-slice hashing, and collection hash
+  compatibility notes.
 - [std::collections](collections.md): source `Set[T]`, `Deque[T]`,
   `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`,
   hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree

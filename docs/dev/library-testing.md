@@ -86,6 +86,10 @@ identifies the exact case:
 - `std-algo-slice-helpers.ari`: source `std::algo` sort/stable sort,
   comparator sort, binary search, reverse/rotate, partition, min/max/clamp,
   swap, fill, copy, and dedup behavior over borrowed slices.
+- `std-hash-basic.ari`: source `std::hash` deterministic `Hasher`
+  construction/reset/finalization, byte-slice hashing, generic `Hash[T]`
+  dispatch for primitive values, primitive write helpers, and the
+  `collections::hash_i64` compatibility wrapper.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

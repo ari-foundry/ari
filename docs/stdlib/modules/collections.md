@@ -212,8 +212,8 @@ HashSet::new<T>(ref mut zone, capacity, hash)
 ```
 
 The hash function shape is `fn(K) -> u64` for `HashMap[K, V]` and
-`fn(T) -> u64` for `HashSet[T]`. `collections::hash_i64` is the first built-in
-helper for i64 keys.
+`fn(T) -> u64` for `HashSet[T]`. `collections::hash_i64` is kept as a
+compatibility helper for i64 keys and delegates to `std::hash::value<i64>`.
 
 ```ari
 map.len()

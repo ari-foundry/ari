@@ -469,8 +469,9 @@ impl Eq[i64] for i64 {
 Today this lets libraries agree on the same names while the compiler grows
 associated types, `Result`-based conversion traits, iterator lowering, and
 source-level standard modules. Concrete impl method calls and trait-bound
-generic calls already lower through static dispatch. `Hash` is intentionally not reserved in the
-prelude; it should live in an explicit collection/hash module later.
+generic calls already lower through static dispatch. `Hash` is intentionally
+not reserved in the prelude; use the explicit `std::hash` module when a public
+API needs hash behavior.
 
 ## Intended Model
 

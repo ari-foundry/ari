@@ -1,0 +1,113 @@
+// Stable source-level hashing helpers.
+//
+// The algorithm is a small FNV-1a style byte mixer with a final avalanche. It
+// is deterministic inside Ari's stdlib, but it is not a cryptographic hash.
+
+const OFFSET: u64 = 14695981039346656037u64;
+const PRIME: u64 = 1099511628211u64;
+
+pub struct Hasher {
+  mut state: u64,
+  mut len: i64,
+}
+
+pub trait Hash[T] {
+  fn hash(self, state: ref mut Hasher) -> void;
+}
+
+pub fn new() -> Hasher {
+  return Hasher { state: OFFSET, len: 0 };
+}
+
+pub fn reset(state: ref mut Hasher) -> void {
+  state.state = OFFSET;
+  state.len = 0;
+}
+
+fn avalanche(value: u64) -> u64 {
+  var hash = value;
+  hash = hash ^ (hash >> 33);
+  hash = hash * 18397679294719823053u64;
+  hash = hash ^ (hash >> 33);
+  hash = hash * 14181476777654086739u64;
+  hash = hash ^ (hash >> 33);
+  return hash;
+}
+
+pub fn finish(state: ref Hasher) -> u64 {
+  return avalanche(state.state ^ (state.len as u64));
+}
+
+pub fn write_byte(state: ref mut Hasher, value: u8) -> void {
+  state.state = state.state ^ (value as u64);
+  state.state = state.state * PRIME;
+  state.len = state.len + 1;
+}
+
+pub fn write_bytes(state: ref mut Hasher, values: std::Slice[u8]) -> void {
+  var index = 0;
+  while index < values.len {
+    write_byte(state, values[index]);
+    index = index + 1;
+  }
+}
+
+pub fn write_u64(state: ref mut Hasher, value: u64) -> void {
+  var shift = 0;
+  while shift < 64 {
+    write_byte(state, ((value >> shift) & 255u64) as u8);
+    shift = shift + 8;
+  }
+}
+
+pub fn write_i64(state: ref mut Hasher, value: i64) -> void {
+  write_u64(state, value as u64);
+}
+
+pub fn write_bool(state: ref mut Hasher, value: bool) -> void {
+  if value {
+    write_byte(state, 1u8);
+  } else {
+    write_byte(state, 0u8);
+  }
+}
+
+pub fn write[T: Hash[T]](state: ref mut Hasher, value: T) -> void {
+  value.hash(state);
+}
+
+pub fn value[T: Hash[T]](item: T) -> u64 {
+  var state = new();
+  write<T>(ref mut state, item);
+  return finish(ref state);
+}
+
+pub fn bytes(values: std::Slice[u8]) -> u64 {
+  var state = new();
+  write_bytes(ref mut state, values);
+  return finish(ref state);
+}
+
+impl std::hash::Hash[i64] for i64 {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_i64(state, self);
+  }
+}
+
+impl std::hash::Hash[u64] for u64 {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_u64(state, self);
+  }
+}
+
+impl std::hash::Hash[u8] for u8 {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_byte(state, self);
+  }
+}
+
+impl std::hash::Hash[bool] for bool {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_bool(state, self);
+  }
+}

@@ -68,6 +68,8 @@ pub use string::String;
 pub mod vec;
 pub use vec::Vec;
 
+pub mod hash;
+
 pub mod collections;
 pub use collections::BinaryHeap;
 pub use collections::Deque;

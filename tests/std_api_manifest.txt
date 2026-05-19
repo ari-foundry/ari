@@ -153,6 +153,17 @@ fn std::fs::try_open_write|check-prelude std-fs-basic compatibility Option-retur
 fn std::fs::write|check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md
 fn std::fs::write_byte|check-prelude std-fs-basic file byte write hook; docs/stdlib/modules/fs.md
 fn std::fs::write_bytes|check-prelude std-fs-basic source byte-slice write helper; docs/stdlib/modules/fs.md
+fn std::hash::bytes|check-prelude std-hash-basic byte-slice hasher convenience; docs/stdlib/modules/hash.md
+fn std::hash::finish|check-prelude std-hash-basic hasher finalization; docs/stdlib/modules/hash.md
+fn std::hash::new|check-prelude std-hash-basic hasher constructor; docs/stdlib/modules/hash.md
+fn std::hash::reset|check-prelude std-hash-basic hasher reset; docs/stdlib/modules/hash.md
+fn std::hash::value[T: Hash[T]|check-prelude std-hash-basic generic hash value helper; docs/stdlib/modules/hash.md
+fn std::hash::write[T: Hash[T]|check-prelude std-hash-basic generic hash feed helper; docs/stdlib/modules/hash.md
+fn std::hash::write_bool|check-prelude std-hash-basic primitive bool feed helper; docs/stdlib/modules/hash.md
+fn std::hash::write_byte|check-prelude std-hash-basic primitive byte feed helper; docs/stdlib/modules/hash.md
+fn std::hash::write_bytes|check-prelude std-hash-basic byte-slice feed helper; docs/stdlib/modules/hash.md
+fn std::hash::write_i64|check-prelude std-hash-basic primitive signed integer feed helper; docs/stdlib/modules/hash.md
+fn std::hash::write_u64|check-prelude std-hash-basic primitive unsigned integer feed helper; docs/stdlib/modules/hash.md
 fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row
 fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
@@ -650,6 +661,7 @@ module std::convert|prelude trait surface tests; docs/dev/test-matrix.md Front-e
 module std::env|std env argument helper tests; docs/stdlib/modules/env.md
 module std::fmt|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::fs|std fs file handle tests; docs/stdlib/modules/fs.md
+module std::hash|check-prelude std-hash-basic source deterministic hashing helpers; docs/stdlib/modules/hash.md
 module std::input|prelude input tests; docs/dev/test-matrix.md Prelude row
 module std::io|prelude IO tests; docs/dev/test-matrix.md Prelude row
 module std::iter|range and iterator tests; docs/dev/test-matrix.md Control flow row
@@ -691,6 +703,7 @@ struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdl
 struct std::collections::TreeSetIter[T]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
 struct std::fs::File|std fs file handle tests; docs/stdlib/modules/fs.md
+struct std::hash::Hasher|check-prelude std-hash-basic source hasher state; docs/stdlib/modules/hash.md
 struct std::io::BufReader[R]|std io buffered tests; docs/stdlib/modules/io.md
 struct std::io::BufWriter[W]|std io buffered tests; docs/stdlib/modules/io.md
 struct std::io::Cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
@@ -742,6 +755,7 @@ trait std::convert::TryFrom[T]|convert module trait surface; docs/dev/test-matri
 trait std::convert::TryInto[T]|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait std::fmt::Debug|fmt module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait std::fmt::Display|fmt module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::hash::Hash[T]|check-prelude std-hash-basic source hash trait; docs/stdlib/modules/hash.md
 trait std::io::Reader|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait std::io::Seek|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait std::io::Writer|std io trait/cursor tests; docs/stdlib/modules/io.md
@@ -768,6 +782,7 @@ trait-method std::cmp::PartialOrd[T]::lt|cmp module trait surface; docs/dev/test
 trait-method std::convert::From[T]::from|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::convert::Into[T]::into|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::fmt::Display::format_in|format_in Display borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+trait-method std::hash::Hash[T]::hash|check-prelude std-hash-basic primitive trait impl dispatch; docs/stdlib/modules/hash.md
 trait-method std::io::Reader::read_byte|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait-method std::io::Seek::position|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait-method std::io::Seek::seek|std io trait/cursor tests; docs/stdlib/modules/io.md

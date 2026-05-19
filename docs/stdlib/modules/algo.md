@@ -69,7 +69,7 @@ array or vector; use the returned length as the prefix boundary.
 | fill | Current: `fill(values, value)`. |
 | copy | Current: `copy(target, source) -> copied_count`. |
 | dedup | Current: consecutive in-place compaction returning logical length. |
-| hashing | Current seed lives in `std::collections::hash_i64`; future `std::hash` should provide traits and byte/hash builders. |
+| hashing | Current: `std::hash` has `Hasher`, `Hash[T]`, primitive hashing, byte-slice hashing, and `collections::hash_i64` compatibility. |
 | base64 | Optional roadmap: encoding/decoding module after byte-string allocation and error policy are settled. |
 | hex encoding | Roadmap: add `std::encoding::hex_encode`/decode helpers; current `std::ascii` has hex digit parsing helpers. |
 | compression | Optional roadmap: likely package/extension boundary before becoming core std. |
@@ -143,8 +143,8 @@ and swap over `Slice[i64]`.
 
 - Add faster `sort`/`stable_sort` implementations after iterator and
   move-aware temporary storage policy are stronger.
-- Introduce a dedicated `std::hash` module instead of keeping hashing helpers
-  tied to collections.
+- Grow `std::hash` with trait-driven collection constructors once `Hash`/`Eq`
+  dispatch policy is stronger.
 - Add `std::encoding` for hex and optional base64 once owned byte-string error
   handling is documented.
 - Keep compression optional unless Ari decides that a specific codec belongs

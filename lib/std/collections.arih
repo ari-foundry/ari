@@ -190,10 +190,7 @@ pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::colle
 }
 
 pub fn hash_i64(value: i64) -> u64 {
-  var hash = value as u64;
-  hash = hash ^ (hash >> 32);
-  hash = hash ^ (hash >> 16);
-  return hash;
+  return std::hash::value<i64>(value);
 }
 
 pub fn less_i64(left: i64, right: i64) -> bool {

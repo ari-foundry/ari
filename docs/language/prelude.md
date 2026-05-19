@@ -1101,5 +1101,6 @@ Shared[T]
 Weak[T]
 ```
 
-`Hash` and hash-map containers are intentionally not part of the prelude. They
-belong in an explicit collection module later.
+`Hash` and hash-map containers are intentionally not part of the prelude. Use
+`std::hash` for explicit hash state/value helpers and `std::collections` for
+hash-table containers.
