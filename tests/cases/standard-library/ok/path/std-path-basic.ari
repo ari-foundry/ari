@@ -1,0 +1,68 @@
+// Covers source-only lexical path helpers over borrowed byte slices.
+fn expect_some(value: std::Option[std::Slice[u8]], expected: std::Slice[u8]) -> bool {
+  match value {
+    std::Some(slice) => {
+      return slice.equals(expected);
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+fn expect_none(value: std::Option[std::Slice[u8]]) -> bool {
+  match value {
+    std::Some(_) => {
+      return false;
+    }
+    std::None => {
+      return true;
+    }
+  }
+}
+
+fn main() -> i64 {
+  var root = [47u8];
+  var usr = [47u8, 117u8, 115u8, 114u8];
+  var usr_bin_slash = [47u8, 117u8, 115u8, 114u8, 47u8, 98u8, 105u8, 110u8, 47u8];
+  var usr_bin = [47u8, 117u8, 115u8, 114u8, 47u8, 98u8, 105u8, 110u8];
+  var bin = [98u8, 105u8, 110u8];
+  var source = [115u8, 114u8, 99u8, 47u8, 109u8, 97u8, 105u8, 110u8, 46u8, 97u8, 114u8, 105u8];
+  var src = [115u8, 114u8, 99u8];
+  var main_name = [109u8, 97u8, 105u8, 110u8, 46u8, 97u8, 114u8, 105u8];
+  var main_stem = [109u8, 97u8, 105u8, 110u8];
+  var ari = [97u8, 114u8, 105u8];
+  var hidden = [46u8, 101u8, 110u8, 118u8];
+  var normalized_input = [47u8, 117u8, 115u8, 114u8, 47u8, 47u8, 46u8, 47u8, 98u8, 105u8, 110u8, 47u8];
+  var normalized = [47u8, 117u8, 115u8, 114u8, 47u8, 98u8, 105u8, 110u8];
+
+  assert(path::is_separator(47u8));
+  assert(!path::is_separator(65u8));
+  assert(path::is_absolute(usr_bin_slash.as_slice()));
+  assert(path::is_relative(source.as_slice()));
+  let trimmed_usr_bin = path::trim_trailing_separators(usr_bin_slash.as_slice());
+  let trimmed_root = path::trim_trailing_separators(root.as_slice());
+  assert(trimmed_usr_bin.equals(usr_bin.as_slice()));
+  assert(trimmed_root.equals(root.as_slice()));
+
+  assert(expect_some(path::file_name(usr_bin_slash.as_slice()), bin.as_slice()));
+  assert(expect_some(path::file_name(source.as_slice()), main_name.as_slice()));
+  assert(expect_none(path::file_name(root.as_slice())));
+  assert(expect_some(path::parent(usr_bin_slash.as_slice()), usr.as_slice()));
+  assert(expect_some(path::parent(source.as_slice()), src.as_slice()));
+  assert(expect_none(path::parent(hidden.as_slice())));
+  assert(expect_some(path::stem(source.as_slice()), main_stem.as_slice()));
+  assert(expect_some(path::stem(hidden.as_slice()), hidden.as_slice()));
+  assert(expect_some(path::extension(source.as_slice()), ari.as_slice()));
+  assert(expect_none(path::extension(hidden.as_slice())));
+
+  var zone = zone::create(128);
+  var joined = path::join_in(ref mut zone, src.as_slice(), main_name.as_slice());
+  assert(joined.equals(source.as_slice()));
+  var joined_abs = path::join_in(ref mut zone, src.as_slice(), usr_bin.as_slice());
+  assert(joined_abs.equals(usr_bin.as_slice()));
+  var normalized_text = path::normalize_in(ref mut zone, normalized_input.as_slice());
+  assert(normalized_text.equals(normalized.as_slice()));
+  zone::destroy(zone);
+  return 41;
+}

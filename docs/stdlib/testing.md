@@ -57,6 +57,7 @@ std-hash-basic.ari
 std-parse-basic.ari
 std-encoding-text.ari
 std-encoding-codec.ari
+std-path-basic.ari
 std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari

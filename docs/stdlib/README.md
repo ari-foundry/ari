@@ -35,7 +35,9 @@ durations, elapsed-time helpers, and sleep, and `std::fs` adds the first
 byte-oriented file handle slice with mode-string opens for read, write,
 append, and read/write access plus source create, read, write, append,
 truncate, copy, rename, hard/symbolic links, single-directory create/remove, and
-read-to-byte-string helpers, and `std::net` adds source-only IPv4, IPv6,
+read-to-byte-string helpers, `std::path` adds source-only lexical path
+splitting, joining, and lightweight normalization, and `std::net` adds
+source-only IPv4, IPv6,
 generic IP, and socket-address values while DNS and socket handles remain
 runtime roadmap work. Source
 `std::hash` adds deterministic non-cryptographic `Hasher`/`Hash[T]` helpers

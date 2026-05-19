@@ -532,6 +532,15 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding16decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-codec.ari -o $(BUILD_DIR)/prelude/std-encoding-codec.elf
 	$(BUILD_DIR)/prelude/std-encoding-codec.elf; code=$$?; test $$code -eq 13
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-basic.ll
+	grep -q '_ARNv3std4path12is_separator' $(BUILD_DIR)/prelude/std-path-basic.ll
+	grep -q '_ARNv3std4path11is_absolute' $(BUILD_DIR)/prelude/std-path-basic.ll
+	grep -q '_ARNv3std4path9file_name' $(BUILD_DIR)/prelude/std-path-basic.ll
+	grep -q '_ARNv3std4path6parent' $(BUILD_DIR)/prelude/std-path-basic.ll
+	grep -q '_ARNv3std4path7join_in' $(BUILD_DIR)/prelude/std-path-basic.ll
+	grep -q '_ARNv3std4path12normalize_in' $(BUILD_DIR)/prelude/std-path-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-basic.ari -o $(BUILD_DIR)/prelude/std-path-basic.elf
+	$(BUILD_DIR)/prelude/std-path-basic.elf; code=$$?; test $$code -eq 41
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits6is_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits7any_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll

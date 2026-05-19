@@ -238,6 +238,16 @@ fn std::parse::float|check-prelude std-parse-basic asserting decimal float parse
 fn std::parse::float_or|check-prelude std-parse-basic fallback decimal float parser; docs/stdlib/modules/parse.md
 fn std::parse::integer|check-prelude std-parse-basic ASCII-trimmed signed integer parser; docs/stdlib/modules/parse.md
 fn std::parse::is_float|check-prelude std-parse-basic decimal float validator; docs/stdlib/modules/parse.md
+fn std::path::extension|check-prelude std-path-basic borrowed final-extension view; docs/stdlib/modules/path.md
+fn std::path::file_name|check-prelude std-path-basic borrowed final-component view; docs/stdlib/modules/path.md
+fn std::path::is_absolute|check-prelude std-path-basic POSIX absolute path predicate; docs/stdlib/modules/path.md
+fn std::path::is_relative|check-prelude std-path-basic POSIX relative path predicate; docs/stdlib/modules/path.md
+fn std::path::is_separator|check-prelude std-path-basic POSIX slash separator predicate; docs/stdlib/modules/path.md
+fn std::path::join_in|check-prelude std-path-basic zone-backed lexical join helper; docs/stdlib/modules/path.md
+fn std::path::normalize_in|check-prelude std-path-basic lightweight lexical normalization helper; docs/stdlib/modules/path.md
+fn std::path::parent|check-prelude std-path-basic borrowed parent path view; docs/stdlib/modules/path.md
+fn std::path::stem|check-prelude std-path-basic borrowed file-stem view; docs/stdlib/modules/path.md
+fn std::path::trim_trailing_separators|check-prelude std-path-basic borrowed trailing slash trim helper; docs/stdlib/modules/path.md
 fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
 fn std::process::failure|check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md
 fn std::process::fork|check-prelude std-process-fork-wait POSIX fork hook; docs/stdlib/modules/process.md
@@ -691,6 +701,7 @@ module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
 module std::net|std net address value tests; docs/stdlib/modules/net.md
 module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude row
 module std::parse|check-prelude std-parse-basic whole-input parser helpers; docs/stdlib/modules/parse.md
+module std::path|check-prelude std-path-basic source lexical path helpers; docs/stdlib/modules/path.md
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows

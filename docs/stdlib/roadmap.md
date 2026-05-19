@@ -38,6 +38,8 @@ open/read/write/append/close/remove hooks plus source `File` methods and
 `Option[File]` open helpers, `create`/`try_create`, whole-file
 `read`/`write`/`append`, `truncate`, streaming `copy`, `rename`,
 single-directory `create_dir`/`remove_dir`, and `read_to_string`,
+`path` POSIX-style lexical separator, component, join, and lightweight
+normalization helpers,
 `collections::Set[T]` as the linear insertion-order set with `try_*`
 accessors, `pop`/`try_pop`, replace-or-insert updates, explicit reserve
 growth, direct iterator support, open-addressed `HashMap`/`HashSet` with
@@ -59,7 +61,8 @@ work. Each one should land in small tested slices with natural API names.
 | `std::io` | Provide byte-oriented process IO contracts that other libraries can share without hiding raw hooks. | Current `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, stderr routing, and raw scalar/byte/line hooks; future `pipe`, file adapters, zone-owning buffered constructors, and drop-time flush after owned OS handles and resource policy are settled. |
 | `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future path normalization and platform-specific expansion. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `exit`, `success`, `failure`, status predicates, POSIX `fork`, `wait`, and child/error predicates; future portable `spawn`, richer status/result values, and process handles. |
-| `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, `rename`, `hard_link`, `symbolic_link`, single-directory `create_dir`/`remove_dir`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, `create`/`try_create`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, whole-file `read`/`write`/`append`, `truncate`, source streaming `copy`, `read_to_string`, and `close`; future owned resource policy, metadata, permissions, directory iteration, recursive directory helpers, canonicalization, temporary files, path helpers, richer link metadata/platform symlink policy, optional file locking, and an options-style open builder. |
+| `std::fs` | Work with files and directories through explicit handles. | Current `File`, `exists`, `remove`, `rename`, `hard_link`, `symbolic_link`, single-directory `create_dir`/`remove_dir`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, `create`/`try_create`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, whole-file `read`/`write`/`append`, `truncate`, source streaming `copy`, `read_to_string`, and `close`; future owned resource policy, metadata, permissions, directory iteration, recursive directory helpers, canonicalization, temporary files, richer link metadata/platform symlink policy, optional file locking, and an options-style open builder. |
+| `std::path` | Manipulate path bytes without opening the filesystem. | Current POSIX-style `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `file_name`, `parent`, `extension`, `stem`, `join_in`, and `normalize_in`; future platform-specific paths, owned `Path`/`PathBuf`, runtime canonicalization, and component iterators. |
 | `std::net` | Represent network addresses now and sockets later through explicit handles. | Current source-only `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, constructors, family predicates, loopback/unspecified checks, and port helpers; future DNS lookup, `TcpListener`, `TcpStream`, `UdpSocket`, Unix domain sockets, socket options, nonblocking mode, `std::time::Duration` timeouts, shutdown, and owned socket handles. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, richer status/result values, and `std::sync` integration. |
@@ -130,6 +133,8 @@ work. Each one should land in small tested slices with natural API names.
 - Grow `std::env` from the current argument, variable, current-directory, and
   executable-path base into path normalization and platform-specific policy
   once owned-string behavior is stable.
+- Grow `std::path` from lexical POSIX-style helpers into platform-aware path
+  values once owned path buffers and canonicalization policy are stable.
 - Keep `std::context` as the low-level runtime state boundary: arguments and
   runtime thread identity are implemented now. `std::thread` extends the same
   thread-id slot for spawned Ari threads instead of changing the public context

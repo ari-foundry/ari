@@ -97,6 +97,9 @@ identifies the exact case:
   validation/counting behavior.
 - `std-encoding-codec.ari`: source `std::encoding` hex/base64 length,
   encode, decode, and invalid-input guard behavior.
+- `std-path-basic.ari`: source `std::path` POSIX-style separator policy,
+  absolute/relative checks, borrowed component views, join, and lightweight
+  normalization behavior.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

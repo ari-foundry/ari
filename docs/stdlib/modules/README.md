@@ -57,6 +57,9 @@ limits, examples, and test files for one module.
   close, removal, `File` value handles, `Option[File]` open helpers, and
   source byte create/read/write/append/truncate/copy plus rename,
   hard/symbolic links, and single-directory create/remove helpers.
+- [std::path](path.md): source-only POSIX-style lexical path helpers for
+  separators, absolute/relative checks, borrowed components, join, and
+  lightweight normalization.
 - [std::net](net.md): source-only IPv4, IPv6, generic IP, and socket-address
   value helpers plus networking runtime roadmap.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,

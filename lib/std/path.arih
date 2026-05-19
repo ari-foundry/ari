@@ -1,0 +1,219 @@
+// Lexical path helpers over byte slices.
+//
+// This first slice deliberately uses POSIX-style '/' separators only. The
+// functions do not touch the filesystem, so callers can use them for virtual
+// paths and tests without depending on host state.
+
+fn slice_range(values: std::Slice[u8], start: i64, end: i64) -> std::Slice[u8] {
+  std::assert(start >= 0);
+  std::assert(end >= start);
+  std::assert(end <= values.len);
+  return std::Slice<u8> { data: ptr_add(values.data, start), len: end - start };
+}
+
+fn last_separator_before(values: std::Slice[u8], end: i64) -> i64 {
+  var index = end - 1;
+  while index >= 0 {
+    if is_separator(values[index]) {
+      return index;
+    }
+    index = index - 1;
+  }
+  return -1;
+}
+
+fn component_start(values: std::Slice[u8], end: i64) -> i64 {
+  let separator = last_separator_before(values, end);
+  return separator + 1;
+}
+
+pub fn is_separator(value: u8) -> bool {
+  return value == (47 as u8);
+}
+
+pub fn is_absolute(path: std::Slice[u8]) -> bool {
+  if path.len == 0 {
+    return false;
+  }
+  return is_separator(path[0]);
+}
+
+pub fn is_relative(path: std::Slice[u8]) -> bool {
+  return !is_absolute(path);
+}
+
+pub fn trim_trailing_separators(path: std::Slice[u8]) -> std::Slice[u8] {
+  if path.len == 0 {
+    return path;
+  }
+
+  var end = path.len;
+  while end > 1 {
+    if !is_separator(path[end - 1]) {
+      return slice_range(path, 0, end);
+    }
+    end = end - 1;
+  }
+  return slice_range(path, 0, end);
+}
+
+pub fn file_name(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  let trimmed = trim_trailing_separators(path);
+  if trimmed.len == 0 {
+    return std::None<std::Slice[u8]>();
+  }
+  if trimmed.len == 1 {
+    if is_separator(trimmed[0]) {
+      return std::None<std::Slice[u8]>();
+    }
+  }
+
+  let start = component_start(trimmed, trimmed.len);
+  if start >= trimmed.len {
+    return std::None<std::Slice[u8]>();
+  }
+  return std::Some<std::Slice[u8]>(slice_range(trimmed, start, trimmed.len));
+}
+
+pub fn parent(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  let trimmed = trim_trailing_separators(path);
+  if trimmed.len == 0 {
+    return std::None<std::Slice[u8]>();
+  }
+  if trimmed.len == 1 {
+    if is_separator(trimmed[0]) {
+      return std::None<std::Slice[u8]>();
+    }
+  }
+
+  let separator = last_separator_before(trimmed, trimmed.len);
+  if separator < 0 {
+    return std::None<std::Slice[u8]>();
+  }
+  if separator == 0 {
+    return std::Some<std::Slice[u8]>(slice_range(trimmed, 0, 1));
+  }
+  return std::Some<std::Slice[u8]>(trim_trailing_separators(slice_range(trimmed, 0, separator)));
+}
+
+pub fn extension(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  let trimmed = trim_trailing_separators(path);
+  if trimmed.len == 0 {
+    return std::None<std::Slice[u8]>();
+  }
+  let start = component_start(trimmed, trimmed.len);
+  var index = trimmed.len - 1;
+  while index > start {
+    if trimmed[index] == (46 as u8) {
+      if index + 1 >= trimmed.len {
+        return std::None<std::Slice[u8]>();
+      }
+      return std::Some<std::Slice[u8]>(slice_range(trimmed, index + 1, trimmed.len));
+    }
+    index = index - 1;
+  }
+  return std::None<std::Slice[u8]>();
+}
+
+pub fn stem(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  let trimmed = trim_trailing_separators(path);
+  if trimmed.len == 0 {
+    return std::None<std::Slice[u8]>();
+  }
+  let start = component_start(trimmed, trimmed.len);
+  if start >= trimmed.len {
+    return std::None<std::Slice[u8]>();
+  }
+
+  var end = trimmed.len;
+  var index = trimmed.len - 1;
+  while index > start {
+    if trimmed[index] == (46 as u8) {
+      end = index;
+      index = start;
+    } else {
+      index = index - 1;
+    }
+  }
+  return std::Some<std::Slice[u8]>(slice_range(trimmed, start, end));
+}
+
+pub fn join_in(zone: ref mut Zone, base: std::Slice[u8], child: std::Slice[u8]) -> std::string::String {
+  if child.len == 0 {
+    return std::string::from_slice_in(zone, base);
+  }
+  if is_absolute(child) {
+    return std::string::from_slice_in(zone, child);
+  }
+  if base.len == 0 {
+    return std::string::from_slice_in(zone, child);
+  }
+
+  var output = std::string::new(zone, base.len + child.len + 1);
+  output.extend_from_slice_in(zone, base);
+  if !is_separator(base[base.len - 1]) {
+    output.push_in(zone, 47 as u8);
+  }
+  output.extend_from_slice_in(zone, child);
+  return output;
+}
+
+pub fn normalize_in(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::String {
+  var output = std::string::new(zone, path.len);
+  var index = 0;
+  var wrote_component = false;
+
+  if is_absolute(path) {
+    output.push_in(zone, 47 as u8);
+    index = 1;
+  }
+
+  while index < path.len {
+    while index < path.len {
+      if !is_separator(path[index]) {
+        break;
+      }
+      index = index + 1;
+    }
+    if index >= path.len {
+      break;
+    }
+
+    let start = index;
+    while index < path.len {
+      if is_separator(path[index]) {
+        break;
+      }
+      index = index + 1;
+    }
+    let len = index - start;
+
+    // Drop lexical "." components, but keep ".." because removing it safely
+    // requires a stronger path policy than this first source-only slice.
+    if len == 1 {
+      if path[start] == (46 as u8) {
+        if !wrote_component && !is_absolute(path) && index >= path.len {
+          output.push_in(zone, 46 as u8);
+          wrote_component = true;
+        }
+      } else {
+        if wrote_component {
+          output.push_in(zone, 47 as u8);
+        }
+        output.extend_from_slice_in(zone, slice_range(path, start, index));
+        wrote_component = true;
+      }
+    } else {
+      if wrote_component {
+        output.push_in(zone, 47 as u8);
+      }
+      output.extend_from_slice_in(zone, slice_range(path, start, index));
+      wrote_component = true;
+    }
+  }
+
+  if output.len() == 0 {
+    output.push_in(zone, 46 as u8);
+  }
+  return output;
+}

@@ -163,6 +163,30 @@ and `is_fork_error` to make that branch readable. `wait(pid)` returns a normal
 child exit status or `-1`; use `is_wait_error` for that sentinel. Rich process
 handles, portable spawn, and detailed status values remain roadmap work.
 
+## Paths
+
+`std::path` contains source-only lexical path helpers over `Slice[u8]`:
+
+```ari
+path::is_separator(byte)
+path::is_absolute(path)
+path::is_relative(path)
+path::trim_trailing_separators(path)
+path::file_name(path)
+path::parent(path)
+path::extension(path)
+path::stem(path)
+path::join_in(ref mut zone, base, child)
+path::normalize_in(ref mut zone, path)
+```
+
+The current separator policy is POSIX-style `/` only. Borrowed component
+helpers return `Option[Slice[u8]]` views into the original path bytes.
+`join_in` and `normalize_in` allocate byte strings in the caller-provided
+zone. Normalization collapses repeated separators and removes `.` components,
+but keeps `..` components because resolving them safely depends on stronger
+filesystem and platform policy.
+
 Thread helpers live in `std::thread`:
 
 ```ari

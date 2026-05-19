@@ -170,7 +170,7 @@ recursive removal, and directory iteration are separate future slices.
 | read directory | Roadmap: `DirEntry`/iterator handle and OS-resource ownership policy. |
 | create directory | Current: single-directory `create_dir(path)`; recursive creation is roadmap. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
-| path manipulation | Roadmap: add `std::path`/`Path` only after owned string/path policy is stable. |
+| path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
 | file locking | Optional roadmap: advisory locking after platform behavior is documented. |
 
 ## Examples
@@ -350,7 +350,8 @@ checks.
   handles.
 - Add recursive directory creation/removal after the single-directory hooks
   have stable policy.
-- Add path helpers after Ari has a clearer owned string/path story.
+- Grow `std::path` from lexical helpers into owned path values after Ari has a
+  clearer owned string/path story.
 - Add secure temporary files and optional file locking after the resource and
   platform policy is documented.
 - Add an `OpenOptions`-style builder after Ari has a clearer owned
