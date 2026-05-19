@@ -102,6 +102,12 @@ pub mod string;
 
 pub use string::String;
 
+pub mod c;
+pub use c::CStr;
+pub use c::CString;
+pub use c::Library;
+pub use c::Symbol;
+
 pub mod vec;
 pub use vec::Vec;
 

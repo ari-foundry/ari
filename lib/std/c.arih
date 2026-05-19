@@ -1,0 +1,217 @@
+// C ABI interop helpers.
+//
+// The compiler owns primitive C ABI type aliases such as `c_int`, `c_char`,
+// and `c_void`. This module adds source-level helpers for C string boundaries,
+// POSIX errno values, and the first hosted dynamic-loading handles.
+
+pub struct CStr {
+  data: ptr c_char,
+}
+
+pub struct CString {
+  data: ptr u8,
+  len: i64,
+}
+
+pub struct Library {
+  mut handle: ptr c_void,
+}
+
+pub struct Symbol {
+  address: ptr c_void,
+}
+
+extern "C" fn raw_dlopen(path: ptr c_char, flags: c_int) -> ptr c_void = "dlopen";
+extern "C" fn raw_dlsym(handle: ptr c_void, name: ptr c_char) -> ptr c_void = "dlsym";
+extern "C" fn raw_dlclose(handle: ptr c_void) -> c_int = "dlclose";
+extern "C" fn raw_dlerror() -> ptr c_char = "dlerror";
+extern "C" fn errno_location() -> ptr c_int = "__errno_location";
+
+fn is_null_ptr(value: ptr c_void) -> bool {
+  return (value as u64) == 0u64;
+}
+
+fn c_strlen(data: ptr c_char) -> i64 {
+  std::assert(!is_null_ptr(data as ptr c_void));
+  var len = 0;
+  while ptr_load(ptr_add(data, len)) != (0 as c_char) {
+    len = len + 1;
+  }
+  return len;
+}
+
+fn contains_nul(bytes: std::Slice[u8]) -> bool {
+  var index = 0;
+  while index < bytes.len {
+    if bytes[index] == 0u8 {
+      return true;
+    }
+    index = index + 1;
+  }
+  return false;
+}
+
+pub fn is_null(value: ptr c_void) -> bool {
+  return is_null_ptr(value);
+}
+
+pub fn from_string(text: string) -> std::c::CStr {
+  return std::c::CStr { data: text as ptr c_char };
+}
+
+pub fn from_ptr(data: ptr c_char) -> std::c::CStr {
+  std::assert(!is_null_ptr(data as ptr c_void));
+  return std::c::CStr { data: data };
+}
+
+pub fn from_slice_in(zone: ref mut Zone, bytes: std::Slice[u8]) -> std::c::CString {
+  std::assert(!contains_nul(bytes));
+  let data = std::zone::alloc_array<u8>(zone, bytes.len + 1);
+  var index = 0;
+  while index < bytes.len {
+    ptr_store(ptr_add(data, index), bytes[index]);
+    index = index + 1;
+  }
+  ptr_store(ptr_add(data, bytes.len), 0u8);
+  return std::c::CString { data: data, len: bytes.len };
+}
+
+pub fn from_cstr_in(zone: ref mut Zone, value: std::c::CStr) -> std::c::CString {
+  return std::c::from_slice_in(zone, value.as_slice());
+}
+
+pub fn errno() -> i64 {
+  return ptr_load(errno_location()) as i64;
+}
+
+pub fn error() -> std::error::Error {
+  return std::error::from_errno(std::c::errno());
+}
+
+pub fn lazy() -> i64 {
+  return 1;
+}
+
+pub fn now() -> i64 {
+  return 2;
+}
+
+pub fn local() -> i64 {
+  return 0;
+}
+
+pub fn global() -> i64 {
+  return 256;
+}
+
+pub fn open(path: std::c::CStr, flags: i64) -> std::c::Library {
+  return std::c::Library { handle: raw_dlopen(path.as_ptr(), flags as c_int) };
+}
+
+pub fn main_program(flags: i64) -> std::c::Library {
+  let path: ptr c_char = null;
+  return std::c::Library { handle: raw_dlopen(path, flags as c_int) };
+}
+
+pub fn symbol(library: ref std::c::Library, name: std::c::CStr) -> std::c::Symbol {
+  return std::c::Symbol { address: raw_dlsym(library.handle, name.as_ptr()) };
+}
+
+pub fn close(library: ref mut std::c::Library) -> bool {
+  if is_null_ptr(library.handle) {
+    return true;
+  }
+  let status = raw_dlclose(library.handle);
+  if status == 0 {
+    let empty: ptr c_void = null;
+    library.handle = empty;
+    return true;
+  }
+  return false;
+}
+
+pub fn last_error() -> std::c::CStr {
+  let data = raw_dlerror();
+  if is_null_ptr(data as ptr c_void) {
+    return std::c::from_string("");
+  }
+  return std::c::from_ptr(data);
+}
+
+pub impl std::c::CStr {
+  fn as_ptr(self: ref Self) -> ptr c_char {
+    return self.data;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return c_strlen(self.data);
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len() == 0;
+  }
+
+  fn as_slice(self: ref Self) -> std::Slice[u8] {
+    return std::Slice<u8> { data: self.data as ptr u8, len: self.len() };
+  }
+}
+
+pub impl std::c::CString {
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len() == 0;
+  }
+
+  fn as_ptr(self: ref Self) -> ptr c_char {
+    return self.data as ptr c_char;
+  }
+
+  fn as_c_str(self: ref Self) -> std::c::CStr {
+    return std::c::CStr { data: self.as_ptr() };
+  }
+
+  fn as_slice(self: ref Self) -> std::Slice[u8] {
+    return std::Slice<u8> { data: self.data, len: self.len };
+  }
+
+  fn as_bytes_with_nul(self: ref Self) -> std::Slice[u8] {
+    return std::Slice<u8> { data: self.data, len: self.len + 1 };
+  }
+}
+
+pub impl std::c::Library {
+  fn invalid() -> std::c::Library {
+    let handle: ptr c_void = null;
+    return std::c::Library { handle: handle };
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return !is_null_ptr(self.handle);
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return std::c::close(self);
+  }
+
+  fn symbol(self: ref Self, name: std::c::CStr) -> std::c::Symbol {
+    return std::c::symbol(self, name);
+  }
+}
+
+pub impl std::c::Symbol {
+  fn invalid() -> std::c::Symbol {
+    let address: ptr c_void = null;
+    return std::c::Symbol { address: address };
+  }
+
+  fn is_valid(self: ref Self) -> bool {
+    return !is_null_ptr(self.address);
+  }
+
+  fn as_ptr(self: ref Self) -> ptr c_void {
+    return self.address;
+  }
+}

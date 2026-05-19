@@ -19,6 +19,10 @@ String
 Thread
 Error
 ErrorKind
+CStr
+CString
+Library
+Symbol
 AtomicI64
 Mutex
 Once
@@ -202,6 +206,81 @@ global logging filter today.
 
 Source-location values, structured log records, benchmark helpers, fuzzing
 hooks, and stack/backtrace APIs are roadmap work.
+
+## C Interop
+
+`std::c` contains C ABI boundary helpers around compiler-known C alias types:
+
+```ari
+c::CStr
+c::CString
+c::Library
+c::Symbol
+
+c::from_string(text)
+c::from_ptr(data)
+c::from_slice_in(ref mut zone, bytes)
+c::from_cstr_in(ref mut zone, value)
+c::is_null(value)
+
+c::errno()
+c::error()
+
+c::lazy()
+c::now()
+c::local()
+c::global()
+c::open(path, flags)
+c::main_program(flags)
+c::symbol(ref library, name)
+c::close(ref mut library)
+c::last_error()
+
+cstr.as_ptr()
+cstr.len()
+cstr.is_empty()
+cstr.as_slice()
+
+cstring.len()
+cstring.is_empty()
+cstring.as_ptr()
+cstring.as_c_str()
+cstring.as_slice()
+cstring.as_bytes_with_nul()
+
+library.is_open()
+library.symbol(name)
+library.close()
+Library::invalid()
+
+symbol.is_valid()
+symbol.as_ptr()
+Symbol::invalid()
+```
+
+C ABI type aliases such as `c_int`, `c_char`, `c_void`, `size_t`, `c_long`,
+and `c_ulong` are compiler-owned and follow the selected target ABI. Use
+`ptr c_void` for `void*`; by-value `c_void` parameters are rejected.
+
+`CStr` is a borrowed non-owning NUL-terminated string view. Construct it from a
+string literal with `c::from_string("name")`, or from a non-null `ptr c_char`
+with `c::from_ptr(ptr)`. `CStr.as_slice()` excludes the trailing NUL.
+
+`CString` is a zone-backed owned C string buffer. `from_slice_in` asserts that
+the input bytes contain no interior NUL, copies them into the given zone, and
+adds one trailing NUL. `as_slice()` excludes the terminator, while
+`as_bytes_with_nul()` includes it.
+
+The current zone checker is conservative around arbitrary C calls: borrowed
+literal-backed `CStr` values can be passed to `extern "C"` calls today, while
+passing pointers from zone-backed `CString` storage directly to arbitrary C
+imports remains roadmap work until Ari has an explicit FFI escape policy.
+
+`errno()` reads the current POSIX thread-local errno on the hosted Linux/glibc
+path, and `error()` maps it through `std::error::from_errno`. Dynamic loading
+wraps `dlopen`, `dlsym`, `dlclose`, and `dlerror` with `Library` and `Symbol`
+sentinels. Typed symbol casting is still future work; `Symbol.as_ptr()` returns
+the raw address.
 
 ## Process Context And Environment
 

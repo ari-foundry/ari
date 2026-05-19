@@ -22,6 +22,10 @@ Implemented now:
   and future mapping work.
 - `std::random::entropy()` and `std::random::fill(values)` use the hosted Linux
   `getrandom` path first and fall back to `/dev/urandom` for OS seed material.
+- `std::c` provides the first hosted C boundary helpers: POSIX `errno`
+  reading through the glibc errno location, `std::error` mapping, borrowed and
+  owned C strings, and dynamic loading wrappers over `dlopen`, `dlsym`,
+  `dlclose`, and `dlerror`.
 - `std::net` provides IP and socket-address values, but not sockets yet.
 - Hosted executables currently rely on the platform CRT and dynamic linker;
   Ari emits LLVM IR and lets the LLVM driver link.
@@ -61,7 +65,7 @@ useful for modern systems work.
 | TLS | Ari emits a `thread_local` runtime thread-id slot for hosted targets. | Freestanding startup and custom thread runtimes need explicit TLS initialization. |
 | vDSO | `target::has_vdso()` is true for Linux targets as an API-family fact. | Runtime clock wrappers may use vDSO through libc/toolchain paths; direct vDSO use is future work. |
 | syscall ABI | `target::syscall_abi()` classifies x86_64, aarch64, and riscv64 Linux. | Raw syscall wrappers should wait for `std::os::linux` error and handle policy. |
-| errno ABI | `target::uses_posix_errno()` is true for Unix-style thread-local errno. | Add `std::os::errno` only when fallible wrappers need a stable error value. |
+| errno ABI | `target::uses_posix_errno()` is true for Unix-style thread-local errno, and `std::c::errno()` reads the hosted glibc errno location. | Generalize beyond the hosted glibc path when more libc targets are tested; add `std::os::errno` only when fallible wrappers need a stable error value. |
 | ELF | `target::uses_elf()` is true on Linux targets. | Add object/dynamic symbol tests where ABI changes are observable. |
 | DWARF | `target::uses_dwarf()` is true on Linux targets. | Backtrace and symbolization work should depend on the runtime-support roadmap. |
 
@@ -81,7 +85,7 @@ useful for modern systems work.
 | API Family | Current Status | Future Module Shape |
 | --- | --- | --- |
 | raw syscall wrapper | Not exposed. | Future `std::os::linux::syscall` should return typed error values and stay behind target guards. |
-| errno mapping | `std::target::uses_posix_errno()` reports the ABI family, but no runtime errno accessor exists. | Add `std::os::errno` together with the first fallible descriptor wrappers. |
+| errno mapping | `std::target::uses_posix_errno()` reports the ABI family, and `std::c::errno()`/`std::c::error()` provide the first hosted runtime accessor and `std::error` bridge. | Add portable `std::os::errno` together with the first fallible descriptor wrappers and non-glibc tests. |
 | getrandom | `std::random::entropy()` and `std::random::fill(values)` use the hosted libc/syscall path and hard-fail if entropy cannot be read. | Add fallible entropy once standard `Error` results can be returned. |
 | `/dev/urandom` | Used as the random fallback when `getrandom` cannot make progress. | Keep as fallback; do not expose raw device reads as portable API. |
 | file descriptor abstraction | `std::fs::File` stores an internal descriptor value, but no public raw descriptor type exists. | Add an owned `Fd`/`OwnedFd` plus borrowed descriptor view before exposing `fcntl`, `poll`, or epoll. |

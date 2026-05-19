@@ -93,6 +93,22 @@ fn std::bits::toggle|std bits mask helper tests; docs/stdlib/api-reference.md Bi
 fn std::bits::trailing_ones|std bits one-run helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::trailing_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::boxed::new[T]|check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::c::close|check-prelude std-c-interop dynamic library close wrapper; docs/stdlib/modules/c.md
+fn std::c::errno|check-prelude std-c-interop POSIX errno accessor; docs/stdlib/modules/c.md
+fn std::c::error|check-prelude std-c-interop errno-to-Error bridge; docs/stdlib/modules/c.md
+fn std::c::from_cstr_in|check-prelude std-c-interop owned CString copy from borrowed CStr; docs/stdlib/modules/c.md
+fn std::c::from_ptr|check-prelude std-c-interop borrowed non-null raw C string wrapper; docs/stdlib/modules/c.md
+fn std::c::from_slice_in|check-prelude std-c-interop zone-backed NUL-terminated CString constructor; docs/stdlib/modules/c.md
+fn std::c::from_string|check-prelude std-c-interop borrowed Ari string to CStr wrapper; docs/stdlib/modules/c.md
+fn std::c::global|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
+fn std::c::is_null|check-prelude std-c-interop raw pointer null predicate; docs/stdlib/modules/c.md
+fn std::c::last_error|check-prelude std-c-interop dynamic loader error view; docs/stdlib/modules/c.md
+fn std::c::lazy|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
+fn std::c::local|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
+fn std::c::main_program|check-prelude std-c-interop current process dynamic symbol handle; docs/stdlib/modules/c.md
+fn std::c::now|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
+fn std::c::open|check-prelude std-c-interop dynamic library open wrapper; docs/stdlib/modules/c.md
+fn std::c::symbol|check-prelude std-c-interop dynamic symbol lookup wrapper; docs/stdlib/modules/c.md
 fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::is_between[T: Ord[T]|std cmp value helper tests; docs/stdlib/api-reference.md Comparison section
 fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
@@ -578,6 +594,23 @@ method std::boxed::Box[T]::set|check-prelude std-boxed-box and std-boxed-set-dro
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::take|check-prelude std-boxed-take value move-out leaves empty handle; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::try_take|check-prelude std-boxed-try-take Option-returning empty-handle move-out; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::c::CStr::as_ptr|check-prelude std-c-interop borrowed raw C pointer accessor; docs/stdlib/modules/c.md
+method std::c::CStr::as_slice|check-prelude std-c-interop borrowed bytes without trailing NUL; docs/stdlib/modules/c.md
+method std::c::CStr::is_empty|check-prelude std-c-interop borrowed C string empty predicate; docs/stdlib/modules/c.md
+method std::c::CStr::len|check-prelude std-c-interop borrowed C string byte length; docs/stdlib/modules/c.md
+method std::c::CString::as_bytes_with_nul|check-prelude std-c-interop owned bytes including trailing NUL; docs/stdlib/modules/c.md
+method std::c::CString::as_c_str|check-prelude std-c-interop owned-to-borrowed C string view; docs/stdlib/modules/c.md
+method std::c::CString::as_ptr|check-prelude std-c-interop owned raw C pointer accessor; docs/stdlib/modules/c.md
+method std::c::CString::as_slice|check-prelude std-c-interop owned bytes without trailing NUL; docs/stdlib/modules/c.md
+method std::c::CString::is_empty|check-prelude std-c-interop owned C string empty predicate; docs/stdlib/modules/c.md
+method std::c::CString::len|check-prelude std-c-interop owned C string byte length; docs/stdlib/modules/c.md
+method std::c::Library::close|check-prelude std-c-interop dynamic library close method; docs/stdlib/modules/c.md
+method std::c::Library::invalid|check-prelude std-c-interop invalid dynamic library sentinel; docs/stdlib/modules/c.md
+method std::c::Library::is_open|check-prelude std-c-interop dynamic library validity predicate; docs/stdlib/modules/c.md
+method std::c::Library::symbol|check-prelude std-c-interop dynamic symbol lookup method; docs/stdlib/modules/c.md
+method std::c::Symbol::as_ptr|check-prelude std-c-interop dynamic symbol raw pointer accessor; docs/stdlib/modules/c.md
+method std::c::Symbol::invalid|check-prelude std-c-interop invalid dynamic symbol sentinel; docs/stdlib/modules/c.md
+method std::c::Symbol::is_valid|check-prelude std-c-interop dynamic symbol validity predicate; docs/stdlib/modules/c.md
 method std::collections::BinaryHeap[T]::capacity|check-prelude std-collections-heap binary heap capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::clear|check-prelude std-collections-heap drops live heap values; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::is_empty|check-prelude std-collections-heap binary heap emptiness predicate; docs/stdlib/modules/collections.md
@@ -1016,6 +1049,7 @@ module std::algo|check-prelude std-algo-slice-helpers source algorithm module; d
 module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overview.md module map
 module std::bits|module load and std bits mask helper tests; docs/stdlib/overview.md module map
 module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows
+module std::c|check-prelude std-c-interop C ABI string, errno, and dynamic loading helpers; docs/stdlib/modules/c.md
 module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::collections|std collections linear set tests; docs/stdlib/modules/collections.md
 module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row
@@ -1056,6 +1090,10 @@ struct std::SliceWindows[T]|check-prelude prelude-slice-sequence borrowed window
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
 struct std::ascii::ParsedInt|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::c::CStr|check-prelude std-c-interop borrowed C string view; docs/stdlib/modules/c.md
+struct std::c::CString|check-prelude std-c-interop zone-backed NUL-terminated owned C string; docs/stdlib/modules/c.md
+struct std::c::Library|check-prelude std-c-interop dynamic library handle wrapper; docs/stdlib/modules/c.md
+struct std::c::Symbol|check-prelude std-c-interop dynamic symbol handle wrapper; docs/stdlib/modules/c.md
 struct std::collections::BinaryHeap[T]|std collections binary heap tests; docs/stdlib/modules/collections.md
 struct std::collections::DequeIter[T]|std collections deque iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::Deque[T]|std collections deque tests; docs/stdlib/modules/collections.md
@@ -1192,11 +1230,14 @@ trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-m
 use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md
 use std::BinaryHeap|check-prelude std-collections-heap root alias for std::collections::BinaryHeap[T]; docs/stdlib/modules/collections.md
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row
+use std::CStr|check-prelude std-c-interop root alias for std::c::CStr; docs/stdlib/modules/c.md
+use std::CString|check-prelude std-c-interop root alias for std::c::CString; docs/stdlib/modules/c.md
 use std::Deque|check-prelude std-collections-deque root alias for std::collections::Deque[T]; docs/stdlib/modules/collections.md
 use std::Error|check-prelude std-error-basic root alias for std::error::Error; docs/stdlib/modules/error.md
 use std::ErrorKind|check-prelude std-error-basic root alias for std::error::Kind; docs/stdlib/modules/error.md
 use std::HashMap|check-prelude std-collections-hash root alias for std::collections::HashMap[K, V]; docs/stdlib/modules/collections.md
 use std::HashSet|check-prelude std-collections-hash root alias for std::collections::HashSet[T]; docs/stdlib/modules/collections.md
+use std::Library|check-prelude std-c-interop root alias for std::c::Library; docs/stdlib/modules/c.md
 use std::LinkedList|check-prelude std-collections-linked-list root alias for std::collections::LinkedList[T]; docs/stdlib/modules/collections.md
 use std::Mutex|check-prelude std-sync-mutex-once root alias for std::sync::Mutex; docs/stdlib/modules/sync.md
 use std::Once|check-prelude std-sync-mutex-once root alias for std::sync::Once; docs/stdlib/modules/sync.md
@@ -1206,6 +1247,7 @@ use std::RingBuffer|check-prelude std-collections-ring-buffer root alias for std
 use std::RwLock|check-prelude std-sync-rwlock root alias for std::sync::RwLock; docs/stdlib/modules/sync.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::Symbol|check-prelude std-c-interop root alias for std::c::Symbol; docs/stdlib/modules/c.md
 use std::Thread|check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md
 use std::TreeMap|check-prelude std-collections-tree root alias for std::collections::TreeMap[K, V]; docs/stdlib/modules/collections.md
 use std::TreeSet|check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md

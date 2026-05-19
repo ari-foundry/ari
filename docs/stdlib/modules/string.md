@@ -289,7 +289,9 @@ c.is_empty()
 OS bytes should be interpreted as UTF-8. Use `std::path::from_os(os)` when the
 same bytes should be interpreted as path bytes. `CStr.as_slice()` and
 `std::string::c_bytes(text)` exclude the trailing NUL because Ari byte-slice
-helpers operate on logical content bytes.
+helpers operate on logical content bytes. For C ABI work, prefer the dedicated
+`std::c` module: it provides `std::c::CStr`, zone-backed
+`std::c::CString`, POSIX `errno`, and dynamic loader handles.
 
 ## Example
 

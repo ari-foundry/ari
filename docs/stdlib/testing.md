@@ -42,6 +42,7 @@ std-fmt-format-spec.ari
 std-context-args.ari
 std-test-report.ari
 std-error-basic.ari
+std-c-interop.ari
 std-target-basic.ari
 std-target-linux64.ari
 std-env-paths.ari

@@ -97,7 +97,8 @@ Omit the semicolon only for the final value expression in a function, block,
 | owned byte string handle | `String`, `std::string::String` | Zone-backed explicit allocation handle. |
 | validated UTF-8 view | `std::string::Utf8` | Borrowed bytes that passed UTF-8 validation. |
 | OS string byte view | `std::string::OsStr` | Borrowed OS boundary bytes; not necessarily UTF-8. |
-| C string view | `std::string::CStr` | Borrowed wrapper around NUL-terminated `string`. |
+| C string view | `std::string::CStr`, `std::c::CStr` | Borrowed wrapper around NUL-terminated `string` or `ptr c_char`. |
+| owned C string | `std::c::CString`, `CString` | Zone-backed bytes with one trailing NUL for C-shaped storage. |
 | path byte view | `std::path::PathBytes` | Borrowed bytes interpreted by lexical path helpers. |
 | tuple | `(i64, bool)`, `()` | Single-element tuples are not supported. |
 | fixed array | `[i64, 3]` | Constant length, stack/aggregate storage. |
@@ -311,6 +312,22 @@ Use `--shared` for shared libraries and `--emit-c-header path` for supported
 C header output. C-facing aggregate values should use `@repr(C)`. Ownership
 does not cross C directly; expose owned resources through explicit `ptr`,
 `ref`, or wrapper APIs.
+
+For C string and loader helpers, use `std::c`:
+
+```ari
+extern "C" fn strlen(text: ptr c_char) -> size_t;
+
+fn main() -> i64 {
+  let text = c::from_string("ari");
+  return strlen(text.as_ptr()) as i64;
+}
+```
+
+`c_int`, `c_char`, `c_void`, `size_t`, and related C ABI aliases are
+compiler-known. `std::c::CString` owns NUL-terminated bytes in a `Zone`;
+passing zone-backed storage directly to arbitrary C imports is still gated on
+a future explicit FFI escape policy.
 
 ## Current Gotchas
 

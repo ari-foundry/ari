@@ -311,6 +311,14 @@ parameters, and can be explicitly cast to raw pointer types when low-level
 byte access is needed. Use `ptr c_void` for C `void*`; a by-value `c_void`
 parameter is rejected.
 
+The standard `std::c` module gives these raw pieces names that read naturally
+at the boundary. Use `c::from_string("name")` for borrowed literal-backed
+`CStr` values, `c::from_slice_in(ref mut zone, bytes)` for owned
+NUL-terminated `CString` storage, `c::errno()`/`c::error()` for
+sentinel-plus-errno APIs, and `c::open`/`c::symbol` for hosted dynamic loading.
+Zone-backed `CString` storage is still subject to Ari's conservative FFI
+escape checks when passed to arbitrary imported C calls.
+
 For the current supported target tables, `c_char` is signed (`i8`). Use
 `c_schar` or `c_uchar` when an API needs explicit signedness. Pointer-width
 aliases such as `size_t`, `ptrdiff_t`, `intptr_t`, `usize`, and `isize`, plus

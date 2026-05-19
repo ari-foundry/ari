@@ -67,6 +67,9 @@ identifies the exact case:
 - `std-error-basic.ari`: source `std::error::Kind` and compact `Error`
   behavior, POSIX errno mapping, root aliases, predicate helpers, string names,
   and the current raw scalar bridge for `Result[T, i64]`.
+- `std-c-interop.ari`: source `std::c` C ABI string views, zone-backed
+  NUL-terminated `CString`, libc alias calls, POSIX errno mapping, dynamic
+  loader handles, and root aliases.
 - `std-target-basic.ari`: compiler-known `std::target` triple,
   architecture, OS, environment/libc, object/debug format, errno ABI, syscall
   ABI, pointer-width, and Linux API-family predicate behavior.

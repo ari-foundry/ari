@@ -57,6 +57,9 @@ limits, examples, and test files for one module.
 - [std::error](error.md): shared recoverable error categories, compact error
   values, POSIX errno mapping, root aliases, and the current raw-error bridge
   for `Result[T, i64]`.
+- [std::c](c.md): C ABI boundary helpers, borrowed and owned
+  NUL-terminated strings, POSIX errno access, dynamic loading handles, and
+  libc type-mapping notes.
 - [std::target](target.md): compiler-known target triple, architecture, OS,
   environment/libc, object/debug format, errno ABI, syscall ABI, and Linux
   API-family predicates.

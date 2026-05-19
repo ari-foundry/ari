@@ -903,6 +903,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf
 	$(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf; $(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0; fi
+	$(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari --emit-llvm $(BUILD_DIR)/prelude/std-c-interop.ll
+	grep -q 'declare ptr @"dlopen"' $(BUILD_DIR)/prelude/std-c-interop.ll
+	grep -q 'declare ptr @"dlsym"' $(BUILD_DIR)/prelude/std-c-interop.ll
+	grep -q 'declare ptr @"__errno_location"' $(BUILD_DIR)/prelude/std-c-interop.ll
+	grep -q '_ARNv3std1c13from_slice_in' $(BUILD_DIR)/prelude/std-c-interop.ll
+	grep -q 'std__c__CString8inherent17as_bytes_with_nul' $(BUILD_DIR)/prelude/std-c-interop.ll
+	$(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari -o $(BUILD_DIR)/prelude/std-c-interop.elf
+	$(BUILD_DIR)/prelude/std-c-interop.elf; code=$$?; test $$code -eq 7
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-c-interop.elf; $(BUILD_DIR)/prelude/std-c-interop.elf; code=$$?; test $$code -eq 7; fi
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-trim-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent13trim_start_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent11trim_end_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
@@ -1397,6 +1406,8 @@ check-prelude: $(TARGET)
 	grep -q 'import	std	std::boxed	boxed	lib/std/boxed.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::string	lib/std/string.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::string	string	lib/std/string.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::c	lib/std/c.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::c	c	lib/std/c.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::vec	lib/std/vec.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::vec	vec	lib/std/vec.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::collections	lib/std/collections.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta

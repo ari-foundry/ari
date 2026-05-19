@@ -34,7 +34,9 @@ and scratch-zone helpers, `std::log` adds level-prefixed `stderr` diagnostic
 lines, and `std::error` adds shared recoverable error categories, compact
 error values, and POSIX errno mapping while richer runner, structured logging,
 source-location, direct `Result[T, Error]`, and backtrace support remain
-roadmap work.
+roadmap work. `std::c` adds the narrow C ABI boundary layer with borrowed
+`CStr`, zone-backed `CString`, POSIX `errno`, and hosted dynamic loading
+handles over `dlopen`/`dlsym`.
 `std::process`
 starts the OS-facing surface with current
 process id, explicit exit helpers, and the first POSIX fork/wait slice,

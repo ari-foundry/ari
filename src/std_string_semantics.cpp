@@ -16,6 +16,11 @@ bool is_u8_ptr_type(const IrType& type) {
            type.primitive == IrPrimitiveKind::U8;
 }
 
+bool is_i64_len_field(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::I64;
+}
+
 IrType value_qualified_string_type(IrType type) {
     type.qualifier = TypeQualifier::Value;
     return type;
@@ -66,13 +71,46 @@ bool is_std_string_handle_type(const IrType& type) {
            type.name == "std::string::String";
 }
 
+std::optional<std::size_t> std_c_cstring_data_field_index(const IrType& type) {
+    if (type.qualifier != TypeQualifier::Value ||
+        type.primitive != IrPrimitiveKind::Struct ||
+        type.name != "std::c::CString") {
+        return std::nullopt;
+    }
+    if (type.field_names.empty() && type.field_types.empty()) return 0;
+    if (type.field_names.size() != 2 || type.field_types.size() != 2) return std::nullopt;
+
+    std::optional<std::size_t> data_index;
+    bool has_len = false;
+    for (std::size_t i = 0; i < type.field_names.size(); ++i) {
+        const std::string& name = type.field_names[i];
+        const IrType& field_type = type.field_types[i];
+        if (name == "data") {
+            if (!is_u8_ptr_type(field_type)) return std::nullopt;
+            data_index = i;
+        } else if (name == "len") {
+            if (!is_i64_len_field(field_type)) return std::nullopt;
+            has_len = true;
+        } else {
+            return std::nullopt;
+        }
+    }
+    if (!data_index || !has_len) return std::nullopt;
+    return data_index;
+}
+
 bool is_std_string_zone_handle_type(const IrType& type) {
-    return is_std_string_raw_handle_type(type) || is_std_string_handle_type(type);
+    return is_std_string_raw_handle_type(type) ||
+           is_std_string_handle_type(type) ||
+           std_c_cstring_data_field_index(type).has_value();
 }
 
 std::optional<std::size_t> std_string_zone_handle_source_field_index(const IrType& type) {
     if (is_std_string_raw_handle_type(type)) {
         return std_string_raw_handle_data_field_index(type);
+    }
+    if (std::optional<std::size_t> index = std_c_cstring_data_field_index(type)) {
+        return index;
     }
     if (!is_std_string_handle_type(type)) return std::nullopt;
     if (type.field_names.empty() && type.field_types.empty()) return 0;
@@ -86,6 +124,9 @@ std::optional<std::vector<std::size_t>> std_string_zone_handle_data_field_path_i
     if (is_std_string_raw_handle_type(type)) {
         std::optional<std::size_t> data_index = std_string_raw_handle_data_field_index(type);
         if (!data_index) return std::nullopt;
+        return std::vector<std::size_t>{*data_index};
+    }
+    if (std::optional<std::size_t> data_index = std_c_cstring_data_field_index(type)) {
         return std::vector<std::size_t>{*data_index};
     }
     if (!is_std_string_handle_type(type)) return std::nullopt;
@@ -102,7 +143,7 @@ bool std_string_pointer_result_preserves_receiver_zone(const IrExpr& call) {
     return call.kind == IrExprKind::Call &&
            call.type.qualifier == TypeQualifier::Ptr &&
            !call.args.empty() &&
-           is_std_string_handle_type(value_qualified_string_type(call.args[0]->type));
+           is_std_string_zone_handle_type(value_qualified_string_type(call.args[0]->type));
 }
 
 bool std_string_extern_builtin_allows_zone_pointer_argument(const std::string& function_name,
