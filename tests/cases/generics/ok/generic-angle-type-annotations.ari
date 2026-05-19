@@ -1,0 +1,16 @@
+enum Maybe[T] {
+  None,
+  Some(T),
+}
+
+struct Box[T] {
+  value: T,
+}
+
+fn main() -> i64 {
+  let nested: Box<Maybe<i64>> = Box<Maybe<i64>> { value: Some<i64>(5) };
+  return match nested.value {
+    Some(value) => value,
+    None => 0,
+  };
+}

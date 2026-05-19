@@ -2733,6 +2733,8 @@ check-generics: $(TARGET)
 	$(TARGET) tests/cases/generics/ok/generic-explicit-type-args.ari --emit-llvm $(BUILD_DIR)/generics/generic-explicit-type-args.ll
 	grep -q "identity__G_i64" $(BUILD_DIR)/generics/generic-explicit-type-args.ll
 	grep -q "identity__G_bool" $(BUILD_DIR)/generics/generic-explicit-type-args.ll
+	$(TARGET) tests/cases/generics/ok/generic-angle-type-annotations.ari -o $(BUILD_DIR)/generics/generic-angle-type-annotations.elf
+	$(BUILD_DIR)/generics/generic-angle-type-annotations.elf; code=$$?; test $$code -eq 5
 	$(TARGET) tests/cases/ir/ok/ast-type-argument-payloads.ari -o $(BUILD_DIR)/generics/ast-type-argument-payloads.elf
 	$(BUILD_DIR)/generics/ast-type-argument-payloads.elf; code=$$?; test $$code -eq 41
 	$(TARGET) tests/cases/ir/ok/ast-type-argument-payloads.ari --emit-llvm $(BUILD_DIR)/generics/ast-type-argument-payloads.ll
@@ -4523,6 +4525,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "borrow expression result must be passed directly to a call" $(BUILD_DIR)/errors/discard-borrow.err
 	$(TARGET) tests/cases/borrowing/ok/borrow-call.ari -o $(BUILD_DIR)/errors/borrow-call.elf
 	$(BUILD_DIR)/errors/borrow-call.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/cases/borrowing/ok/borrow-symbol-syntax.ari -o $(BUILD_DIR)/errors/borrow-symbol-syntax.elf
+	$(BUILD_DIR)/errors/borrow-symbol-syntax.elf; code=$$?; test $$code -eq 15
 	$(TARGET) tests/cases/borrowing/ok/borrow-named.ari -o $(BUILD_DIR)/errors/borrow-named.elf
 	$(BUILD_DIR)/errors/borrow-named.elf; code=$$?; test $$code -eq 12
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/borrowing/ok/borrow-named.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-named.elf; $(BUILD_DIR)/errors/borrow-named.elf; code=$$?; test $$code -eq 12; fi

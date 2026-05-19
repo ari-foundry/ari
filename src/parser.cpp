@@ -421,6 +421,10 @@ private:
         SourceLocation loc = peek().loc;
         if (match(TokenKind::KwOwn)) {
             qualifier = TypeQualifier::Own;
+        } else if (match(TokenKind::Amp)) {
+            qualifier = match(TokenKind::KwMut) ? TypeQualifier::MutRef : TypeQualifier::Ref;
+        } else if (match(TokenKind::Star)) {
+            qualifier = TypeQualifier::Ptr;
         } else if (match(TokenKind::KwRef)) {
             qualifier = match(TokenKind::KwMut) ? TypeQualifier::MutRef : TypeQualifier::Ref;
         } else if (match(TokenKind::KwMut)) {
@@ -470,6 +474,13 @@ private:
                     } while (match(TokenKind::Comma));
                 }
                 expect(TokenKind::RBracket, "expected ] after dyn trait type arguments");
+            } else if (match(TokenKind::Less)) {
+                if (!check_type_argument_close()) {
+                    do {
+                        type.args.push_back(parse_type());
+                    } while (match(TokenKind::Comma));
+                }
+                expect_type_argument_close("expected > after dyn trait type arguments");
             }
             return finish_type(std::move(type));
         }
@@ -526,12 +537,29 @@ private:
                 type.has_associated_projection = true;
                 type.associated_projection = projection.text;
             }
+        } else if (match(TokenKind::Less)) {
+            if (type.name == "Vec" || type.name == "prelude::Vec") {
+                parse_vec_type_args(type);
+            } else if (!check_type_argument_close()) {
+                do {
+                    type.args.push_back(parse_type());
+                } while (match(TokenKind::Comma));
+            }
+            expect_type_argument_close("expected > after type arguments");
+            if (match(TokenKind::ColonColon)) {
+                Token projection =
+                    expect_identifier_or_contextual_name_keyword("expected associated type name after ::");
+                type.has_associated_projection = true;
+                type.associated_projection = projection.text;
+            }
         }
         return finish_type(std::move(type));
     }
 
     void parse_vec_type_args(TypeRef& type) {
-        if (check(TokenKind::RBracket)) fail(peek().loc, "Vec requires exactly one element type");
+        if (check(TokenKind::RBracket) || check_type_argument_close()) {
+            fail(peek().loc, "Vec requires exactly one element type");
+        }
         type.args.push_back(parse_type());
         if (match(TokenKind::Semicolon)) {
             Token size = expect(TokenKind::Integer, "expected integer Vec capacity");
@@ -540,8 +568,26 @@ private:
             return;
         }
         if (check(TokenKind::Comma)) {
-            fail(peek().loc, "Vec types use Vec[T] or Vec[T; capacity]");
+            fail(peek().loc, "Vec types use Vec<T>, Vec[T], or Vec[T; capacity]");
         }
+    }
+
+    bool check_type_argument_close() const {
+        return check(TokenKind::Greater) || check(TokenKind::GreaterGreater);
+    }
+
+    bool match_type_argument_close() {
+        if (match(TokenKind::Greater)) return true;
+        if (check(TokenKind::GreaterGreater)) {
+            tokens_[pos_].kind = TokenKind::Greater;
+            tokens_[pos_].text = ">";
+            return true;
+        }
+        return false;
+    }
+
+    void expect_type_argument_close(const std::string& message) {
+        if (!match_type_argument_close()) fail(peek().loc, message);
     }
 
     TypeRef finish_type(TypeRef type) {
@@ -1807,6 +1853,7 @@ private:
                kind == TokenKind::KwFalse ||
                kind == TokenKind::KwNull ||
                kind == TokenKind::KwRef ||
+               kind == TokenKind::Amp ||
                kind == TokenKind::KwMatch ||
                kind == TokenKind::KwIf ||
                kind == TokenKind::LBracket ||
@@ -1890,6 +1937,11 @@ private:
             Token ref = tokens_[pos_ - 1];
             bool mutable_borrow = match(TokenKind::KwMut);
             return make_ast_borrow_expr(ref.loc, parse_unary(), mutable_borrow);
+        }
+        if (match(TokenKind::Amp)) {
+            Token amp = tokens_[pos_ - 1];
+            bool mutable_borrow = match(TokenKind::KwMut);
+            return make_ast_borrow_expr(amp.loc, parse_unary(), mutable_borrow);
         }
         return parse_call();
     }
@@ -2025,6 +2077,14 @@ private:
                     return next == TokenKind::LParen || next == TokenKind::LBrace ||
                            next == TokenKind::ColonColon;
                 }
+            } else if (parens == 0 && brackets == 0 && kind == TokenKind::GreaterGreater) {
+                depth -= 2;
+                if (depth == 0) {
+                    TokenKind next = peek(static_cast<int>(i - pos_ + 1)).kind;
+                    return next == TokenKind::LParen || next == TokenKind::LBrace ||
+                           next == TokenKind::ColonColon;
+                }
+                if (depth < 0) return false;
             }
         }
         return false;
@@ -2041,7 +2101,11 @@ private:
                 type_args.push_back(parse_type());
             } while (match(TokenKind::Comma));
         }
-        expect(close, close_message);
+        if (close == TokenKind::Greater) {
+            expect_type_argument_close(close_message);
+        } else {
+            expect(close, close_message);
+        }
     }
 
     ExprPtr parse_call() {

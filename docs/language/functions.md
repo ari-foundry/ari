@@ -224,8 +224,9 @@ fn main() -> i64 {
 }
 ```
 
-Generic declarations keep the declaration-side `[T]` list. Call sites can spell
-their type arguments explicitly with `<T>` so `[]` stays available for indexing:
+Generic declarations keep the declaration-side `[T]` list for now. Call sites
+and type positions can spell type arguments explicitly with `<T>` so `[]` stays
+available for indexing and sequence patterns:
 
 ```ari
 fn make[T]() -> T {
@@ -242,6 +243,9 @@ inferred calls, so `identity<i64>(true)` is rejected. Generic type parameters
 that cannot be inferred and are not written explicitly are rejected during
 lowering, and a single type parameter must resolve to one concrete type for the
 whole call.
+
+Older `Type[T]` type applications remain accepted for existing standard-library
+docs and fixtures, but new user-facing examples should prefer `Type<T>`.
 
 This generic syntax is for Ari declarations. `extern "C"` declarations remain
 concrete C symbols and cannot have `[T]` parameters; expose one concrete C

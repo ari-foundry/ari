@@ -102,17 +102,17 @@ Omit the semicolon only for the final value expression in a function, block,
 | path byte view | `std::path::PathBytes` | Borrowed bytes interpreted by lexical path helpers. |
 | tuple | `(i64, bool)`, `()` | Single-element tuples are not supported. |
 | fixed array | `[i64, 3]` | Constant length, stack/aggregate storage. |
-| local vector | `Vec[i64]` | Compiler-known local vector surface from list literals. |
-| source vector handle | `std::vec::Vec[i64]`, `std::Vec[i64]` | Zone-backed growable handle with direct borrowed `slice`, `split_at`, `find`, `chunks`, `windows`, and `split` helpers. |
-| source set handle | `std::collections::Set[i64]`, `Set[i64]` | Zone-backed linear insertion-order set. |
-| source deque handle | `Deque[i64]`, `std::collections::Deque[i64]` | Zone-backed growable double-ended queue. |
-| source ring buffer handle | `RingBuffer[i64]`, `std::collections::RingBuffer[i64]` | Zone-backed fixed-capacity FIFO buffer. |
-| source linked list handle | `LinkedList[i64]`, `std::collections::LinkedList[i64]` | Zone-backed doubly linked reusable node slots. |
-| source heap handle | `BinaryHeap[i64]`, `PriorityQueue[i64]` | Comparator-driven highest-priority removal. |
-| slice view | `Slice[i64]`, `std::Slice[i64]` | Non-owning pointer plus length view. |
-| raw pointer | `ptr i64`, `i64?`, `ptr c_void` | Use explicit casts and `std::mem` helpers. |
-| shared borrow | `ref i64` | Many shared borrows may overlap. |
-| mutable borrow | `ref mut i64` | Requires mutable source and exclusive access. |
+| local vector | `Vec<i64>`, `Vec[i64]` | Compiler-known local vector surface from list literals. |
+| source vector handle | `std::vec::Vec<i64>`, `std::Vec<i64>` | Zone-backed growable handle with direct borrowed `slice`, `split_at`, `find`, `chunks`, `windows`, and `split` helpers. |
+| source set handle | `std::collections::Set<i64>`, `Set<i64>` | Zone-backed linear insertion-order set. |
+| source deque handle | `Deque<i64>`, `std::collections::Deque<i64>` | Zone-backed growable double-ended queue. |
+| source ring buffer handle | `RingBuffer<i64>`, `std::collections::RingBuffer<i64>` | Zone-backed fixed-capacity FIFO buffer. |
+| source linked list handle | `LinkedList<i64>`, `std::collections::LinkedList<i64>` | Zone-backed doubly linked reusable node slots. |
+| source heap handle | `BinaryHeap<i64>`, `PriorityQueue<i64>` | Comparator-driven highest-priority removal. |
+| slice view | `Slice<i64>`, `std::Slice<i64>` | Non-owning pointer plus length view. |
+| raw pointer | `*i64`, `ptr i64`, `i64?`, `*c_void` | Use explicit casts and `std::mem` helpers. |
+| shared borrow | `&i64`, `ref i64` | Many shared borrows may overlap. |
+| mutable borrow | `&mut i64`, `ref mut i64` | Requires mutable source and exclusive access. |
 | owner | `own i64`, `own Zone` | Must be consumed, returned, moved, dropped, or forgotten. |
 | function pointer | `fn(i64) -> i64` | Function names can become pointer values. |
 | trait object | `dyn Trait` forms | See [Traits](traits.md) and [Front-End Only Syntax](front-end-only.md). |
@@ -221,7 +221,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | null coalescing | `value ?? fallback` |
 
 `?` and `??` work with Option/Result-shaped enums, including generic
-`std::Option[T]` and `std::Result[T, E]`.
+`std::Option<T>` and `std::Result<T, E>`.
 
 ## Prelude And Standard Library Choices
 
@@ -230,9 +230,9 @@ Or-pattern alternatives must bind the same names with compatible types.
 | print text or values | `print`, `println`, `print!`, `println!` |
 | assertions | `assert!`, `debug_assert!`, `assert_eq!`, `assert_ne!` |
 | panic placeholders | `panic!()`, `todo!()`, `unreachable!()` |
-| optional value | `Option[T]`, `Some(value)`, `None<T>()` |
-| result value | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` |
-| optional/result helpers | Option: `.is_some()`, `.is_none()`, `.filter(fn(ref T) -> bool)`, `.flatten()` for nested options, `.transpose()` for optional results; Result: `.is_ok()`, `.is_err()`, `.transpose()` for result-wrapped options; both: `.unwrap_or(fallback)`, `.map<U>(fn)`, `.and_then<U>(fn)` |
+| optional value | `Option<T>`, `Some(value)`, `None<T>()` |
+| result value | `Result<T, E>`, `Ok<T, E>(value)`, `Err<T, E>(error)` |
+| optional/result helpers | Option: `.is_some()`, `.is_none()`, `.filter(fn(&T) -> bool)`, `.flatten()` for nested options, `.transpose()` for optional results; Result: `.is_ok()`, `.is_err()`, `.transpose()` for result-wrapped options; both: `.unwrap_or(fallback)`, `.map<U>(fn)`, `.and_then<U>(fn)` |
 | process args | `env::try_arg(index)`, `env::try_arg_os(index)`, `env::program_name()`, `env::program_name_os()`, `env::arg_count()`, root `arg_count()`, `has_arg(index)` |
 | runtime context | `context::argc()`, `context::arg(index)`, `context::thread_id()`, `context::cwd()`, `context::cwd_path()`, `context::executable_path()`, `context::is_main_thread()` |
 | environment/path state | `env::try_get(name)`, `env::try_get_os(name)`, `env::set(name, value)`, `env::try_current_dir_path()`, `env::set_current_dir(path)`, `env::try_executable_path_os()` |
@@ -242,30 +242,30 @@ Or-pattern alternatives must bind the same names with compatible types.
 | time | `time::now()`, `time::system_now()`, `time::milliseconds(n)`, `time::timeout(duration)`, `deadline.remaining()`, `deadline.has_expired()`, `system_time.to_utc()` |
 | atomic i64 | `AtomicI64::new(value)`, `.load()`, `.store(replacement)`, `.fetch_add(amount)`, `.compare_exchange(expected, replacement)` |
 | locks | `Mutex::new()`, `.lock()`, `.unlock()`, `RwLock::new()`, `.read_lock()`, `.read_unlock()`, `.write_lock()`, `.write_unlock()`, `Once::new()`, `.call_once(init)` |
-| input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` |
+| input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(&mut zone)` |
 | raw IO | `io::Reader`, `io::Writer`, `io::Seek`, `io::BufReader`, `io::BufWriter`, `io::cursor(bytes)`, `io::read_exact`, `io::stdout()`, `io::stderr()`, `io::write_all`, `io::flush`, `io::write_bytes`, `io::newline` |
 | layout | `size_of<T>()`, `align_of<T>()` |
 | raw pointers | `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `mem::copy_bytes`, `mem::move_bytes`, `mem::set_bytes` |
-| replace/swap | `mem::replace(ref mut place, value)`, `mem::swap(ref mut a, ref mut b)` |
+| replace/swap | `mem::replace(&mut place, value)`, `mem::swap(&mut a, &mut b)` |
 | explicit allocation | `zone::create`, `zone::alloc<T>`, `zone::alloc_array<T>`, `zone::new<T>`, `zone::reset`, `zone::destroy` |
 | temporary allocation | `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |
-| single-value handle | `std::boxed::Box[T]`, `Box!(T, ref mut zone, value)` |
-| owned byte string | `std::string::String`, `std::string::bytes("text")`, `std::string::from_string(ref mut zone, "text")`, `std::string::join_in(ref mut zone, parts, separator)`, `.try_get(index)`, `.find(bytes)`, `.split(delimiter)`, `.chunks(size)`, `.windows(size)`, `.is_utf8()`, `.codepoint_at(byte_index)`, `.push_codepoint_in(ref mut zone, scalar)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.trim_to(ref mut zone)` |
-| unique linear set | `collections::new<T>(ref mut zone, capacity)`, `Set::new<T>(ref mut zone, capacity)`, `.insert(ref mut zone, value)`, `.replace(ref mut zone, value)`, `.try_get(index)`, `.try_pop()`, `.reserve(ref mut zone, capacity)`, `.iter()`, `.contains(value)` |
+| single-value handle | `std::boxed::Box<T>`, `Box!(T, &mut zone, value)` |
+| owned byte string | `std::string::String`, `std::string::bytes("text")`, `std::string::from_string(&mut zone, "text")`, `std::string::join_in(&mut zone, parts, separator)`, `.try_get(index)`, `.find(bytes)`, `.split(delimiter)`, `.chunks(size)`, `.windows(size)`, `.is_utf8()`, `.codepoint_at(byte_index)`, `.push_codepoint_in(&mut zone, scalar)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.trim_to(&mut zone)` |
+| unique linear set | `collections::new<T>(&mut zone, capacity)`, `Set::new<T>(&mut zone, capacity)`, `.insert(&mut zone, value)`, `.replace(&mut zone, value)`, `.try_get(index)`, `.try_pop()`, `.reserve(&mut zone, capacity)`, `.iter()`, `.contains(value)` |
 | ASCII byte helpers | `ascii::is_digit`, `ascii::equals_ignore_case`, `ascii::index_of_ignore_case`, `ascii::trim`, `ascii::parse_decimal`, `ascii::parse_decimal_prefix` |
 | integer math helpers | `math::abs`, `math::is_positive`, `math::is_zero`, `math::div_floor`, `math::div_ceil`, `math::mod_floor`, `math::gcd` |
 | bit helpers | `bits::is_set`, `bits::rotate_left`, `bits::bit_width`, `bits::leading_zeros`, `bits::leading_ones` |
 | random helpers | `random::entropy`, `random::seed`, `random::from_entropy`, `rng.next()`, `rng.below(upper)`, `rng.range(start, end)`, `rng.float()`, `rng.fill(bytes)`, `rng.shuffle<T>(values)` |
-| source growable vector | `std::vec::Vec[T]`, `std::vec::new<T>(ref mut zone, capacity)` |
-| borrowed view | `Slice[T]`, `.as_slice()`, `slice(data, len)`, `.slice(start, end)`, `.find(needle)`, `.chunks(size)`, `.windows(size)`, `.split(delimiter)` |
+| source growable vector | `std::vec::Vec<T>`, `std::vec::new<T>(&mut zone, capacity)` |
+| borrowed view | `Slice<T>`, `.as_slice()`, `slice(data, len)`, `.slice(start, end)`, `.find(needle)`, `.chunks(size)`, `.windows(size)`, `.split(delimiter)` |
 | comparison helpers | `cmp::min`, `cmp::max`, `cmp::clamp` with `Ord` impls |
 | iteration traits | `Iterator[T]`, `IntoIterator[T]`, `iter::range`, `iter::range_inclusive` |
 
 Use lowercase `string` for borrowed pointer-shaped text. Use uppercase
 `String`/`std::string::String` when the text needs owned zone-backed storage.
-Use bare `Vec[T]` for local compiler-known vectors and `std::vec::Vec[T]` for
-the source standard-library growable handle. Use `Set[T]` or
-`std::collections::Set[T]` when you need insertion-order uniqueness; it is
+Use bare `Vec<T>` for local compiler-known vectors and `std::vec::Vec<T>` for
+the source standard-library growable handle. Use `Set<T>` or
+`std::collections::Set<T>` when you need insertion-order uniqueness; it is
 linear today, not hash-backed, supports standard iterator lowering, and its
 growth methods keep the source zone explicit.
 
@@ -277,8 +277,9 @@ growth methods keep the source zone explicit.
 - Use `drop value;` to consume an owner and run its `Drop` impl when one exists.
 - Use `forget value;` only when an owner may be unavailable after control flow
   and leaking any remaining live value is the intended behavior.
-- Use `ref value` for shared borrows and `ref mut value` for mutable borrows.
-- `ref mut` requires the source binding and selected struct field to be mutable.
+- Use `&value` for shared borrows and `&mut value` for mutable borrows.
+  `ref value` and `ref mut value` remain accepted as explicit legacy spellings.
+- `&mut` requires the source binding and selected struct field to be mutable.
 - Do not assign, move, drop, or reset through a place while it is borrowed.
 - Zone-backed pointers and handles cannot be used after their source zone has
   been reset or destroyed.
@@ -316,7 +317,7 @@ does not cross C directly; expose owned resources through explicit `ptr`,
 For C string and loader helpers, use `std::c`:
 
 ```ari
-extern "C" fn strlen(text: ptr c_char) -> size_t;
+extern "C" fn strlen(text: *c_char) -> size_t;
 
 fn main() -> i64 {
   let text = c::from_string("ari");
@@ -334,9 +335,9 @@ a future explicit FFI escape policy.
 - No local shadowing: one local name maps to one lowered slot.
 - No overload selection by parameter type or count.
 - No implicit numeric casts; write `as`.
-- Empty `[]` needs an expected `Vec[T]` or non-empty element list.
+- Empty `[]` needs an expected `Vec<T>`/`Vec[T]` or non-empty element list.
 - `format!` without an explicit zone is reserved; use `print`/`println` for
-  output or `format_in!(ref mut zone, ...)` for owned strings.
+  output or `format_in!(&mut zone, ...)` for owned strings.
 - Most standard-library allocation APIs are explicit-zone APIs.
 - Raw pointers are available, but Ari's ownership diagnostics are not a full
   memory-safety proof once raw pointer escape hatches are used.

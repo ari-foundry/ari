@@ -65,14 +65,17 @@ temporary borrow values through these generic prelude helpers.
 
 ## Borrowing
 
-Borrows can be passed directly to calls, or bound to a local borrow binding:
+Borrows can be passed directly to calls, or bound to a local borrow binding.
+The preferred spelling is `&T`, `&mut T`, `&value`, and `&mut value`; the
+older `ref T`, `ref mut T`, `ref value`, and `ref mut value` spellings remain
+accepted as explicit aliases.
 
 ```ari
-fn inspect(value: ref u32) -> i64 {
+fn inspect(value: &u32) -> i64 {
   return 0;
 }
 
-fn touch(value: ref mut i64) -> i64 {
+fn touch(value: &mut i64) -> i64 {
   return 0;
 }
 
@@ -86,29 +89,29 @@ fn main() -> i64 {
   var slot: i64 = 0;
   var pair = Pair { left: 10, right: 20 };
   let pick_first = true;
-  inspect(ref number);
-  touch(ref mut slot);
+  inspect(&number);
+  touch(&mut slot);
   {
-    let borrowed: ref u32 = ref number;
-    let again: ref u32 = ref borrowed;
+    let borrowed: &u32 = &number;
+    let again: &u32 = &borrowed;
     inspect(borrowed);
     inspect(again);
   }
   {
-    let borrowed: ref mut i64 = ref mut slot;
-    let again: ref mut i64 = ref mut borrowed;
+    let borrowed: &mut i64 = &mut slot;
+    let again: &mut i64 = &mut borrowed;
     touch(again);
   }
   {
-    let borrowed: ref mut Pair = ref mut pair;
-    let right: ref mut i64 = ref mut borrowed.right;
+    let borrowed: &mut Pair = &mut pair;
+    let right: &mut i64 = &mut borrowed.right;
     touch(right);
   }
   {
-    let chosen: ref u32 = if pick_first {
-      ref number
+    let chosen: &u32 = if pick_first {
+      &number
     } else {
-      ref number
+      &number
     };
     inspect(chosen);
   }
@@ -118,7 +121,7 @@ fn main() -> i64 {
 
 Rules currently checked:
 
-- `ref mut` requires a `var` binding
+- `&mut` / `ref mut` requires a `var` binding
 - a mutable borrow cannot overlap with any other borrow
 - a binding cannot be moved, dropped, or assigned while borrowed
 - borrowed aggregate fields and elements are tracked by path, so unrelated
@@ -136,8 +139,9 @@ Rules currently checked:
 - a named borrow keeps the source borrowed until its last visible use in the
   current straight-line statement scope, or until the binding's block exits
   when the checker cannot shorten it
-- borrow bindings must be initialized with `ref`, `ref mut`, or a compatible
-  borrow-valued block, `if`, `match`, or labeled-block expression result
+- borrow bindings must be initialized with `&`, `&mut`, `ref`, `ref mut`, or a
+  compatible borrow-valued block, `if`, `match`, or labeled-block expression
+  result
 - an existing local borrow binding can be reborrowed with `ref` when the source
   is `ref` or `ref mut`
 - an existing local `ref mut` borrow binding can be reborrowed with `ref mut`;
@@ -248,15 +252,15 @@ memory operations cannot go wrong. The language should still allow explicit
 escape hatches such as pointer casts, manual zone management, and explicit
 pointer loads/stores.
 
-`ptr T` can be stored and passed as an FFI pointer-shaped value, and `T?` is a
-nullable spelling for the same raw pointer type. `null` constructs a nullable
-raw pointer. `T?` is deliberately not a value-level maybe type; use
-`Option[T]` when absence should be represented as data instead of an address.
-Raw pointer casts use ordinary explicit casts, including
-`ptr T` to `ptr U`, `T?` to another raw pointer type, `ptr T` to an integer
-address, and an integer address back to `ptr T`. An explicit borrow can also
-be converted to a raw pointer with `(ref value) as ptr T`, `(ref mut value) as
-ptr T`, or the nullable spelling `(ref mut value) as T?`.
+`*T` is the preferred raw pointer spelling. `ptr T` remains accepted as the
+older explicit keyword form. `T?` is a nullable spelling for the same raw
+pointer type. `null` constructs a nullable raw pointer. `T?` is deliberately
+not a value-level maybe type; use `Option<T>` when absence should be
+represented as data instead of an address. Raw pointer casts use ordinary
+explicit casts, including `*T` to `*U`, `T?` to another raw pointer type, `*T`
+to an integer address, and an integer address back to `*T`. An explicit borrow
+can also be converted to a raw pointer with `(&value) as *T`, `(&mut value) as
+*T`, or the nullable spelling `(&mut value) as T?`.
 
 `ptr_offset(pointer, bytes)` performs an explicit byte-wise address offset and
 returns the same raw pointer type as `pointer`. `mem::ptr_offset` is the same

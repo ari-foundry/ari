@@ -252,7 +252,10 @@ zone::destroy(zone)
 
 The current layout is intentionally local. Generic struct declarations,
 generic struct field type checking, explicit type-argument construction, and
-field/argument-based type-argument inference work:
+field/argument-based type-argument inference work. In type positions, Ari now
+accepts the natural `Type<T>` spelling as the preferred form; the older
+`Type[T]` spelling remains accepted for existing code and for fixed-capacity
+`Vec[T; N]` examples.
 
 ```ari
 struct Box[T] {
@@ -263,6 +266,7 @@ struct Pair[Left, Right](Left, Right)
 
 let boxed = Box<i64> { value: 20 }
 let pair = Pair<i64, bool>(boxed.value, true)
+let annotated: Box<i64> = boxed
 
 let inferred_box = Box { value: 20 }
 let inferred_pair = Pair(inferred_box.value, true)
