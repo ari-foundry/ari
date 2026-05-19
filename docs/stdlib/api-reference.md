@@ -265,8 +265,9 @@ and `c_ulong` are compiler-owned and follow the selected target ABI. Use
 `ptr c_void` for `void*`; by-value `c_void` parameters are rejected.
 
 `CStr` is a borrowed non-owning NUL-terminated string view. Construct it from a
-string literal with `c::from_string("name")`, or from a non-null `ptr c_char`
-with `c::from_ptr(ptr)`. `CStr.as_slice()` excludes the trailing NUL.
+string literal with `c::from_string("name")`, assign a literal directly when
+`CStr` is expected, or wrap a non-null `ptr c_char` with `c::from_ptr(ptr)`.
+`CStr.as_slice()` excludes the trailing NUL.
 
 `CString` is a zone-backed owned C string buffer. `from_slice_in` asserts that
 the input bytes contain no interior NUL, copies them into the given zone, and
@@ -512,7 +513,8 @@ but keeps `..` components because resolving them safely depends on stronger
 filesystem and platform policy.
 `PathBytes` is the typed borrowed path-byte view. Use it when a byte slice or
 `std::string::OsStr` should be treated as a path rather than as generic bytes
-or validated text.
+or validated text. When `PathBytes` is expected, a string literal can be used
+directly as a borrowed path-byte view.
 
 Thread helpers live in `std::thread`:
 
@@ -1445,7 +1447,9 @@ Use `std::string::utf8(bytes)` to construct a validated borrowed `Utf8` view
 when a function requires UTF-8. Use `OsStr` for operating-system bytes that may
 not be UTF-8, `PathBytes` for path interpretation, and `std::c::CStr` or the
 builtin `string` type for NUL-terminated C ABI text. `std::string::c_str(text)`
-returns that same `std::c::CStr` borrowed view.
+returns that same `std::c::CStr` borrowed view. String literals can flow
+directly into expected `Utf8`, `OsStr`, `PathBytes`, and `CStr` boundary views;
+direct `Utf8` literals are validated at compile time.
 
 `std::boxed::Box[T]` is a zone-backed single-value owner:
 

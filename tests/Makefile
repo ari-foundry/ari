@@ -912,6 +912,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf
 	$(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf; $(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-literal-boundaries.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-literal-boundaries.ll
+	grep -q 'std__string__Utf88inherent15codepoint_count' $(BUILD_DIR)/prelude/std-string-literal-boundaries.ll
+	grep -q 'std__path__PathBytes8inherent7join_in' $(BUILD_DIR)/prelude/std-string-literal-boundaries.ll
+	grep -q 'std__c__CStr8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-literal-boundaries.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-literal-boundaries.ari -o $(BUILD_DIR)/prelude/std-string-literal-boundaries.elf
+	$(BUILD_DIR)/prelude/std-string-literal-boundaries.elf; code=$$?; test $$code -eq 0
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-literal-boundaries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-literal-boundaries.elf; $(BUILD_DIR)/prelude/std-string-literal-boundaries.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-byte-literals.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-byte-literals.ll
 	grep -q '_ARNv3std6string5bytes' $(BUILD_DIR)/prelude/std-string-byte-literals.ll
 	grep -q 'store i8 99' $(BUILD_DIR)/prelude/std-string-byte-literals.ll
@@ -1617,6 +1624,8 @@ check-prelude: $(TARGET)
 	grep -q "std::string::String.append_u64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-u64-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/string/std-string-literal-array-length.ari -o $(BUILD_DIR)/prelude/std-string-literal-array-length.elf >$(BUILD_DIR)/prelude/std-string-literal-array-length.err 2>&1; then exit 1; fi
 	grep -q "string literal has 3 bytes but array type expects 2" $(BUILD_DIR)/prelude/std-string-literal-array-length.err
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-literal-utf8-invalid.ari -o $(BUILD_DIR)/prelude/std-string-literal-utf8-invalid.elf >$(BUILD_DIR)/prelude/std-string-literal-utf8-invalid.err 2>&1; then exit 1; fi
+	grep -q "string literal is not valid UTF-8 for std::string::Utf8" $(BUILD_DIR)/prelude/std-string-literal-utf8-invalid.err
 	if $(TARGET) tests/cases/standard-library/errors/string/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi
 	grep -q "struct 'std::string::String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
 	if $(TARGET) tests/cases/standard-library/errors/string/prelude-string-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-string-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-string-root-after-reset.err 2>&1; then exit 1; fi

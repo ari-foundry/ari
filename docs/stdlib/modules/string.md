@@ -303,6 +303,7 @@ Validated borrowed UTF-8 bytes use `Utf8`:
 
 ```ari
 let view = std::string::utf8(bytes).unwrap();
+let literal_view: std::string::Utf8 = "\xC3\xA9";
 view.as_slice()
 view.len()
 view.is_empty()
@@ -312,7 +313,9 @@ view.codepoint_at(byte_index)
 
 `Utf8` records the API intent that the bytes are text. Construct the view with
 `std::string::utf8(bytes)` when invalid UTF-8 is normal input; do not mutate
-the underlying bytes while keeping a validated view.
+the underlying bytes while keeping a validated view. A string literal can also
+coerce directly to `Utf8` when that type is expected; the compiler validates
+the literal bytes and rejects invalid UTF-8.
 
 ## OS Strings And C ABI Views
 
@@ -321,6 +324,7 @@ the underlying bytes while keeping a validated view.
 
 ```ari
 let os = std::string::os_str(bytes);
+let literal_os: std::string::OsStr = "literal";
 os.as_slice()
 os.len()
 os.is_empty()
@@ -328,6 +332,7 @@ os.is_utf8()
 os.try_utf8()
 
 let c = std::string::c_str("literal");
+let literal_c: std::c::CStr = "literal";
 c.as_ptr()
 c.as_slice()
 c.len()

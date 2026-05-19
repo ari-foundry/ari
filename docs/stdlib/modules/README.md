@@ -11,8 +11,8 @@ limits, examples, and test files for one module.
 - [std::string](string.md): zone-backed owned byte-string handles, natural
   literal-oriented constructors and append/search helpers, borrowed views, byte
   search, ASCII case search, UTF-8 scalar helpers, typed `Utf8`/`OsStr`
-  views, shared `std::c::CStr` construction, trim views/copies, and
-  whole/prefix parsing helpers.
+  views, direct literal boundary coercions, shared `std::c::CStr`
+  construction, trim views/copies, and whole/prefix parsing helpers.
 - [std::io](io.md): low-level process IO hooks plus `Reader`/`Writer`/`Seek`,
   `stdin`/`stdout`/`stderr`, `Cursor`, caller-buffered
   `BufReader`/`BufWriter`, exact reads, whole-slice writes, and current
@@ -85,8 +85,9 @@ limits, examples, and test files for one module.
   source byte create/read/write/append/truncate/copy plus rename,
   hard/symbolic links, and single-directory create/remove helpers.
 - [std::path](path.md): source-only POSIX-style lexical path helpers for
-  separators, absolute/relative checks, typed `PathBytes` views, borrowed
-  components, join, and lightweight normalization.
+  separators, absolute/relative checks, typed `PathBytes` views including
+  direct literal coercion, borrowed components, join, and lightweight
+  normalization.
 - [std::net](net.md): source-only IPv4, IPv6, generic IP, and socket-address
   value helpers plus networking runtime roadmap.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,

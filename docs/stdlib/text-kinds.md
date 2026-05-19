@@ -27,6 +27,11 @@ together. Use this page when deciding which API a library should accept.
   same borrowed `std::c::CStr` view. Use
   `std::c::from_slice_in(ref mut zone, bytes)` when owned NUL-terminated
   storage is required.
+- When the expected type is clear, string literals can flow directly into
+  boundary views: `let text: std::string::Utf8 = "ok";`,
+  `let os: std::string::OsStr = "ok";`,
+  `let path: std::path::PathBytes = "/tmp";`, and `let c: CStr = "ok";`.
+  Direct `Utf8` literals are validated at compile time.
 - Use `cstr.as_slice()`, `std::string::c_bytes(text)`, or the natural alias
   `std::string::bytes(text)` when byte helpers should ignore the trailing NUL.
 

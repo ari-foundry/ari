@@ -34,6 +34,7 @@ handling:
 ```ari
 let path = path::bytes(bytes);
 let from_os = path::from_os(os);
+let literal_path: std::path::PathBytes = "/tmp/ari";
 path.as_slice()
 path.len()
 path.is_empty()
@@ -52,6 +53,9 @@ Borrowed helpers return views into the original byte slice; they do not
 allocate. Keep the source bytes alive while using returned `Slice[u8]` values
 or a `Components` iterator. `PathBytes` methods are wrappers over the module
 functions, so their boundary behavior is the same.
+When a `PathBytes` value is expected, a string literal can be used directly;
+the literal lowers to a borrowed path-byte view without requiring
+`path::bytes("...")`.
 
 `trim_trailing_separators` removes trailing `/` bytes while preserving root
 `/`. `file_name` returns the last component after trimming trailing

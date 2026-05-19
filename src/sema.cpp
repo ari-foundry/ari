@@ -16852,10 +16852,91 @@ private:
                is_u8_value_type(type.args[0]);
     }
 
+    static bool is_std_string_utf8_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Struct &&
+               type.name == "std::string::Utf8" &&
+               type.field_types.size() == 1 &&
+               is_prelude_u8_slice_type(type.field_types[0]);
+    }
+
+    static bool is_std_string_os_str_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Struct &&
+               type.name == "std::string::OsStr" &&
+               type.field_types.size() == 1 &&
+               is_prelude_u8_slice_type(type.field_types[0]);
+    }
+
+    static bool is_std_path_bytes_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Struct &&
+               type.name == "std::path::PathBytes" &&
+               type.field_types.size() == 1 &&
+               is_prelude_u8_slice_type(type.field_types[0]);
+    }
+
+    static bool is_std_c_str_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Struct &&
+               type.name == "std::c::CStr" &&
+               type.field_types.size() == 1 &&
+               is_raw_pointer_type(type.field_types[0]);
+    }
+
+    static bool is_string_literal_boundary_type(const IrType& type) {
+        return is_std_string_utf8_type(type) ||
+               is_std_string_os_str_type(type) ||
+               is_std_path_bytes_type(type) ||
+               is_std_c_str_type(type);
+    }
+
     static std::uint64_t string_literal_slice_len(const std::string& value) {
         std::size_t nul = value.find('\0');
         if (nul != std::string::npos) return static_cast<std::uint64_t>(nul);
         return static_cast<std::uint64_t>(value.size());
+    }
+
+    static bool is_valid_utf8_prefix(const std::string& value, std::uint64_t len) {
+        std::uint64_t index = 0;
+        while (index < len) {
+            unsigned char byte = static_cast<unsigned char>(value[static_cast<std::size_t>(index)]);
+            if (byte <= 0x7f) {
+                index += 1;
+                continue;
+            }
+
+            std::uint64_t width = 0;
+            std::uint32_t scalar = 0;
+            if (byte >= 0xc2 && byte <= 0xdf) {
+                width = 2;
+                scalar = byte & 0x1f;
+            } else if (byte >= 0xe0 && byte <= 0xef) {
+                width = 3;
+                scalar = byte & 0x0f;
+            } else if (byte >= 0xf0 && byte <= 0xf4) {
+                width = 4;
+                scalar = byte & 0x07;
+            } else {
+                return false;
+            }
+
+            if (index + width > len) return false;
+            for (std::uint64_t offset = 1; offset < width; ++offset) {
+                unsigned char next = static_cast<unsigned char>(
+                    value[static_cast<std::size_t>(index + offset)]);
+                if ((next & 0xc0) != 0x80) return false;
+                scalar = (scalar << 6) | (next & 0x3f);
+            }
+            if ((width == 3 && scalar < 0x800) ||
+                (width == 4 && scalar < 0x10000) ||
+                (scalar >= 0xd800 && scalar <= 0xdfff) ||
+                scalar > 0x10ffff) {
+                return false;
+            }
+            index += width;
+        }
+        return true;
     }
 
     IrExprPtr make_string_literal_slice_expr(SourceLocation loc,
@@ -16916,6 +16997,31 @@ private:
         return lowered;
     }
 
+    IrExprPtr make_string_literal_boundary_expr(SourceLocation loc,
+                                                const std::string& value,
+                                                const IrType& expected) const {
+        std::vector<IrExprPtr> elements;
+        elements.reserve(1);
+        if (is_std_c_str_type(expected)) {
+            IrExprPtr data = make_cast_expr(
+                loc,
+                make_string_literal_expr(
+                    loc,
+                    primitive_type(IrPrimitiveKind::String, "string", loc),
+                    value),
+                expected.field_types[0]);
+            elements.push_back(std::move(data));
+            return make_ir_tuple_expr(loc, expected, std::move(elements));
+        }
+
+        const std::uint64_t len = string_literal_slice_len(value);
+        if (is_std_string_utf8_type(expected) && !is_valid_utf8_prefix(value, len)) {
+            fail(loc, "string literal is not valid UTF-8 for std::string::Utf8");
+        }
+        elements.push_back(make_string_literal_slice_expr(loc, value, expected.field_types[0]));
+        return make_ir_tuple_expr(loc, expected, std::move(elements));
+    }
+
     IrExprPtr make_typed_empty_vector_expr(SourceLocation loc, const IrType& expected) const {
         const IrType& element = require_typed_empty_vector_element_type(loc, expected);
         require_plain_prelude_aggregate_element(loc, element, "vector");
@@ -16932,6 +17038,9 @@ private:
         if (expr.kind == ExprKind::String &&
             (is_u8_vector_storage_type(expected) || is_u8_array_type(expected))) {
             return make_string_literal_byte_sequence_expr(expr.loc, expr.string_value, expected);
+        }
+        if (expr.kind == ExprKind::String && is_string_literal_boundary_type(expected)) {
+            return make_string_literal_boundary_expr(expr.loc, expr.string_value, expected);
         }
         if (expr.kind == ExprKind::Name) {
             std::string generic_name;

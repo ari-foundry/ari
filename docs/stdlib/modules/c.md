@@ -87,14 +87,18 @@ extern "C" fn strlen(text: ptr c_char) -> size_t;
 
 fn main() -> i64 {
   let name = c::from_string("ari");
+  let direct: CStr = "ari";
   assert_eq_i64(name.len(), 3);
-  return strlen(name.as_ptr()) as i64;
+  assert_eq_i64(direct.len(), 3);
+  return strlen(direct.as_ptr()) as i64;
 }
 ```
 
 `CStr.as_slice()` returns the bytes before the trailing NUL. The terminator is
 not included because normal Ari `Slice[u8]` APIs expect a length, not a
-sentinel.
+sentinel. When a `CStr` is the expected type, a string literal can coerce
+directly to that borrowed C string view; use `c::from_string(text)` when the
+conversion should be visually explicit.
 
 `CString` is a zone-backed owned C string buffer. It copies a byte slice,
 asserts that the input has no interior NUL byte, appends one trailing NUL, and

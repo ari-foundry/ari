@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let text: std::string::Utf8 = "\xC3\x28";
+  return text.len();
+}

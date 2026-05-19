@@ -1,0 +1,54 @@
+// Covers natural string-literal coercion into typed borrowed text boundaries.
+// The explicit constructors still exist, but annotated locals and expected
+// call arguments should not need wrapper noise.
+fn c_len(value: CStr) -> i64 {
+  return value.len();
+}
+
+fn os_len(value: std::string::OsStr) -> i64 {
+  return value.len();
+}
+
+fn utf8_len(value: std::string::Utf8) -> i64 {
+  return value.len();
+}
+
+fn path_is_relative(value: std::path::PathBytes) -> bool {
+  return value.is_relative();
+}
+
+fn main() -> i64 {
+  assert_eq_i64(c_len("hello"), 5);
+  assert_eq_i64(os_len("hello"), 5);
+  assert_eq_i64(utf8_len("ok"), 2);
+  assert(path_is_relative("bin"));
+
+  let c_text: CStr = "hello";
+  assert_eq_i64(c_text.len(), 5);
+  let c_bytes = c_text.as_slice();
+  assert(c_bytes.equals("hello"));
+
+  let os_text: std::string::OsStr = "hello";
+  assert_eq_i64(os_text.len(), 5);
+  assert(os_text.is_utf8());
+  let os_bytes = os_text.as_slice();
+  assert(os_bytes.equals("hello"));
+
+  let utf8_text: std::string::Utf8 = "\xC3\xA9";
+  assert_eq_i64(utf8_text.len(), 2);
+  assert_eq_i64(utf8_text.codepoint_count(), 1);
+  let scalar = utf8_text.codepoint_at(0).unwrap();
+  assert_eq_i64(scalar.scalar() as i64, 233);
+  assert_eq_i64(scalar.next_index(0), 2);
+
+  var zone = zone::create(96);
+  let base: std::path::PathBytes = "/tmp";
+  assert(base.is_absolute());
+  let base_bytes = base.as_slice();
+  assert(base_bytes.equals("/tmp"));
+  let joined = base.join_in(ref mut zone, "bin");
+  assert(joined.equals("/tmp/bin"));
+  zone::destroy(zone);
+
+  return 0;
+}
