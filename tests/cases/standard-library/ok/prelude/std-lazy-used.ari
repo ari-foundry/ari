@@ -1,0 +1,7 @@
+// A referenced source std function is still lowered on demand.
+fn main() -> i64 {
+  if std::ascii::is_digit('7') {
+    return 7;
+  }
+  return 1;
+}

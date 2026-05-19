@@ -1,0 +1,5 @@
+// Implicit std stays visible for type checking, but unused source std
+// functions should not be lowered into the emitted LLVM module.
+fn main() -> i64 {
+  return 0;
+}

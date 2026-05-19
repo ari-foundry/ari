@@ -20,6 +20,9 @@ The library contract is explicit and capability-oriented:
 - public APIs are tracked in `tests/std_api_manifest.txt`
 - every public API has focused positive, negative, and backend coverage where
   applicable
+- unused source `std` function bodies stay declaration-only during semantic
+  checking and are lowered to IR only when a user function, generated helper, or
+  another reachable std function actually references them
 
 ## Current Baseline
 

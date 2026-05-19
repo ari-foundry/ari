@@ -149,6 +149,10 @@ check-cli: $(TARGET)
 
 check-prelude: $(TARGET)
 	mkdir -p $(BUILD_DIR)/prelude
+	$(TARGET) tests/cases/standard-library/ok/prelude/std-lazy-unused.ari --emit-llvm $(BUILD_DIR)/prelude/std-lazy-unused.ll
+	! grep -q '_ARNv3std' $(BUILD_DIR)/prelude/std-lazy-unused.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude/std-lazy-used.ari --emit-llvm $(BUILD_DIR)/prelude/std-lazy-used.ll
+	grep -q '_ARNv3std5ascii8is_digit' $(BUILD_DIR)/prelude/std-lazy-used.ll
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-builtins.ari -o $(BUILD_DIR)/prelude/prelude-builtins.elf
 	$(BUILD_DIR)/prelude/prelude-builtins.elf; code=$$?; test $$code -eq 7
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-root-builtins.ari -o $(BUILD_DIR)/prelude/prelude-std-root-builtins.elf
@@ -337,7 +341,6 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 78
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-write.elf; $(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 78; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
-	grep -F -q "std2fs6create" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	grep -F -q "std2fs10try_create" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	grep -F -q "std2fs4read" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	grep -F -q "std2fs8truncate" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll

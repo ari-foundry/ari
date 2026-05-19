@@ -296,6 +296,7 @@ public:
         for_each_function_decl([&](const FunctionDecl& fn) {
             if (is_executable_function(fn) &&
                 !options_.cached_ir_function_names.count(fn.name) &&
+                !is_lazy_std_function(fn) &&
                 !(options_.test_mode && fn.name == "main")) {
                 ir.functions.push_back(check_function(fn));
             }
@@ -305,8 +306,14 @@ public:
         }
         std::size_t impl_method_index = 0;
         std::size_t specialization_index = 0;
+        std::size_t std_function_index = 0;
         while (impl_method_index < impl_methods_to_lower_.size() ||
-               specialization_index < pending_specializations_.size()) {
+               specialization_index < pending_specializations_.size() ||
+               std_function_index < pending_std_functions_.size()) {
+            while (std_function_index < pending_std_functions_.size()) {
+                const FunctionDecl* fn = pending_std_functions_[std_function_index++];
+                ir.functions.push_back(check_function(*fn));
+            }
             while (impl_method_index < impl_methods_to_lower_.size()) {
                 ImplMethodInfo item = impl_methods_to_lower_[impl_method_index++];
                 IrFunction lowered = check_function_as(*item.fn, item.lowered_name, item.substitutions);
@@ -468,6 +475,9 @@ private:
     std::vector<IrFunction> specialized_functions_;
     std::vector<PendingSpecialization> pending_specializations_;
     std::set<std::string> queued_specializations_;
+    std::map<std::string, const FunctionDecl*> lazy_std_functions_;
+    std::vector<const FunctionDecl*> pending_std_functions_;
+    std::set<std::string> queued_std_functions_;
     std::map<std::string, std::vector<ImplMethodInfo>> method_impls_;
     std::map<std::string, std::vector<ImplMethodInfo>> associated_impls_;
     std::vector<ImplMethodInfo> generic_method_impls_;
@@ -511,6 +521,21 @@ private:
 
     static bool is_executable_function(const FunctionDecl& fn) {
         return !fn.meta && !fn.is_extern && fn.has_body && fn.generics.empty();
+    }
+
+    static bool is_lazy_std_function(const FunctionDecl& fn) {
+        return is_executable_function(fn) &&
+               is_std_module_name(fn.module_name) &&
+               fn.extern_link_name.empty() &&
+               !find_attribute(fn.attributes, "test");
+    }
+
+    void queue_std_function_for_lowering(const std::string& name) {
+        auto found = lazy_std_functions_.find(name);
+        if (found == lazy_std_functions_.end()) return;
+        if (!queued_std_functions_.insert(name).second) return;
+        if (cached_ir_function_available(name)) return;
+        pending_std_functions_.push_back(found->second);
     }
 
     static std::string unqualified_name(const std::string& name) {
@@ -3909,6 +3934,9 @@ private:
 
             auto inserted = functions_.emplace(fn.name, std::move(sig));
             if (!inserted.second) fail(fn.loc, "duplicate executable function '" + fn.name + "'");
+            if (is_lazy_std_function(fn)) {
+                lazy_std_functions_.emplace(fn.name, &fn);
+            }
         });
     }
 
@@ -16925,6 +16953,9 @@ private:
                         if (sig.deprecated) {
                             warn_deprecated_use(expr.loc, "function", function_name, sig.deprecated_message);
                         }
+                        if (!sig.is_extern) {
+                            queue_std_function_for_lowering(function_name);
+                        }
                         return make_function_ref_expr(expr.loc, function_name, function_pointer_type(sig, expr.loc));
                     }
                     std::string generic_function_name = resolve_generic_function_name(expr.name);
@@ -22769,6 +22800,9 @@ private:
                 }
             }
             args.push_back(std::move(arg));
+        }
+        if (!sig.is_extern) {
+            queue_std_function_for_lowering(function_name);
         }
         IrExprPtr call = finish_tracked_call(
             expr.loc,
