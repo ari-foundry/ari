@@ -45,6 +45,9 @@ identifies the exact case:
   byte access and empty pop behavior.
 - `std-context-args.ari`: runtime-backed `std::context` argument and thread-id
   access, source context predicates, and root alias behavior.
+- `std-test-report.ari`: source `std::test::Report` aggregation, generic
+  equality helpers, method wrappers, explicit finish status, and scratch zone
+  creation.
 - `std-target-basic.ari`: compiler-known `std::target` triple,
   architecture, OS, environment/libc, object/debug format, errno ABI, syscall
   ABI, pointer-width, and Linux API-family predicate behavior.

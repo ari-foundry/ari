@@ -26,6 +26,9 @@ in `std::env`, while `std::context` stays the low-level runtime context layer.
 `std::io` now has source `Reader`/`Writer`/`Seek` contracts, `Stdin`,
 `Stdout`, `Stderr`, `Cursor`, caller-buffered `BufReader`/`BufWriter`,
 `read_exact`, `write_all`, and `flush` on top of the raw process IO hooks.
+`std::test` adds source executable unit-test reports, generic equality checks,
+and scratch-zone helpers while richer runner, logging, and backtrace support
+remain roadmap work.
 `std::process`
 starts the OS-facing surface with current
 process id, explicit exit helpers, and the first POSIX fork/wait slice,

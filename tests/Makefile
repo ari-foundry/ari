@@ -200,6 +200,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-macros.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_i64" $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_bool" $(BUILD_DIR)/prelude/prelude-macros.ll
+	$(TARGET) tests/cases/standard-library/ok/test/std-test-report.ari --emit-llvm $(BUILD_DIR)/prelude/std-test-report.ll
+	grep -q '_ARNv3std4test6report' $(BUILD_DIR)/prelude/std-test-report.ll
+	grep -q '_ARNv3std4test12equal__G_i64' $(BUILD_DIR)/prelude/std-test-report.ll
+	grep -q '_ARNv3std4test7scratch' $(BUILD_DIR)/prelude/std-test-report.ll
+	$(TARGET) tests/cases/standard-library/ok/test/std-test-report.ari -o $(BUILD_DIR)/prelude/std-test-report.elf
+	$(BUILD_DIR)/prelude/std-test-report.elf; code=$$?; test $$code -eq 8
 	$(TARGET) tests/cases/match/ok/rare-payload-packing.ari --emit-llvm $(BUILD_DIR)/prelude/rare-payload-packing.ll
 	grep -q "@ari_builtin_assert_eq_i64" $(BUILD_DIR)/prelude/rare-payload-packing.ll
 	grep -q "@ari_builtin_assert_ne_bool" $(BUILD_DIR)/prelude/rare-payload-packing.ll

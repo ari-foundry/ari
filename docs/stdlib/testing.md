@@ -37,6 +37,7 @@ std-string-trim-copy.ari
 std-string-trim-to-after-target-reset.ari
 std-string-try-byte-access.ari
 std-context-args.ari
+std-test-report.ari
 std-target-basic.ari
 std-target-linux64.ari
 std-env-paths.ari

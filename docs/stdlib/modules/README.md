@@ -42,6 +42,8 @@ limits, examples, and test files for one module.
   `identity`, `from`, and `into` helper calls for generic code.
 - [std::context](context.md): runtime-backed program argument and thread-id
   access plus source predicates and root argument aliases.
+- [std::test](test.md): source executable unit-test reports, generic equality
+  checks, scratch zones for tests, and diagnostics/test-runner roadmap notes.
 - [std::target](target.md): compiler-known target triple, architecture, OS,
   environment/libc, object/debug format, errno ABI, syscall ABI, and Linux
   API-family predicates.

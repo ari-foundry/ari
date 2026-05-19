@@ -1,0 +1,94 @@
+// Small source helpers for executable unit-style tests.
+//
+// Ari's repository tests are still driven by Makefile fixtures, but library and
+// application authors often want a tiny report object that can aggregate checks
+// before returning one final status code.
+
+pub struct Report {
+  mut passed: i64,
+  mut failed: i64,
+}
+
+pub fn report() -> Report {
+  return Report { passed: 0, failed: 0 };
+}
+
+pub fn scratch(capacity: i64) -> own Zone {
+  return std::zone::create(capacity);
+}
+
+pub fn passed(result: ref Report) -> i64 {
+  return result.passed;
+}
+
+pub fn failed(result: ref Report) -> i64 {
+  return result.failed;
+}
+
+pub fn ok(result: ref Report) -> bool {
+  return result.failed == 0;
+}
+
+pub fn finish(result: ref Report) -> i64 {
+  if ok(result) {
+    return 0;
+  }
+  return 1;
+}
+
+pub fn check(result: ref mut Report, condition: bool) -> bool {
+  if condition {
+    result.passed = result.passed + 1;
+    return true;
+  }
+  result.failed = result.failed + 1;
+  return false;
+}
+
+pub fn equal[T](result: ref mut Report, left: T, right: T) -> bool {
+  return check(result, left == right);
+}
+
+pub fn not_equal[T](result: ref mut Report, left: T, right: T) -> bool {
+  return check(result, left != right);
+}
+
+pub fn require(result: ref Report) -> void {
+  if !ok(result) {
+    std::panic();
+  }
+}
+
+pub impl std::test::Report {
+  fn passed(self: ref Self) -> i64 {
+    return std::test::passed(self);
+  }
+
+  fn failed(self: ref Self) -> i64 {
+    return std::test::failed(self);
+  }
+
+  fn ok(self: ref Self) -> bool {
+    return std::test::ok(self);
+  }
+
+  fn finish(self: ref Self) -> i64 {
+    return std::test::finish(self);
+  }
+
+  fn check(self: ref mut Self, condition: bool) -> bool {
+    return std::test::check(self, condition);
+  }
+
+  fn equal[T](self: ref mut Self, left: T, right: T) -> bool {
+    return std::test::equal<T>(self, left, right);
+  }
+
+  fn not_equal[T](self: ref mut Self, left: T, right: T) -> bool {
+    return std::test::not_equal<T>(self, left, right);
+  }
+
+  fn require(self: ref Self) -> void {
+    std::test::require(self);
+  }
+}

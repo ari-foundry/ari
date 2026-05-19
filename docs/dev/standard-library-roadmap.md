@@ -95,6 +95,8 @@ The current `std` package already provides:
   hex and standard base64 encode/decode helpers
 - `std::bits` `u64` mask, rotation, power-of-two, low-mask, alignment, and
   zero/one-run bit-scan helpers
+- `std::test` executable unit-test `Report` helpers, generic equality checks,
+  scratch-zone construction, and finish/require status helpers
 
 This baseline is useful, but it is still a seed. Some APIs are compiler hooks
 with source declarations, and some names exist mainly so user code can start
@@ -213,8 +215,12 @@ Likely compiler work:
 
 ### Phase 6: Library Developer Experience
 
-- Add source-level test helpers when the language can express them.
+- Grow the current source-level `std::test::Report` helpers into a real test
+  runner when discovery, per-test isolation, and source locations are stable.
 - Build a library test runner around existing `@test` support when stable.
+- Add debug logging, source-location, stack/backtrace, optional benchmark,
+  and optional fuzzing APIs only after their runtime/driver contracts are
+  testable.
 - Keep docs and test names readable enough that a new contributor can copy a
   nearby pattern.
 
@@ -244,6 +250,7 @@ Likely compiler work:
 | `std::ascii` | Add signed parsers only after numeric sign and overflow policy is documented. | Byte classification behavior, case-insensitive comparison/search, slice trimming/parsing, prefix parser consumed-length behavior, source symbol checks, and future parser edge cases. | None for current whole-slice and prefix helpers; signed/checked parsers may need overflow diagnostics. |
 | `std::parse` | Grow from the current whole-input integer/bool/decimal-float slice into richer parse errors and overflow policy. | current `std-parse-basic` signed integer, bool, float validation/conversion, fallback, and invalid whole-input cases; future overflow, exponent edge, and locale-rejection tests. | Current helpers are pure source Ari. Future `Option[f64]` or `Result[f64,E]` needs float enum payload lowering. |
 | `std::encoding` | Grow from validation plus hex/base64 into variants and fallible owned decoders. | current `std-encoding-text` ASCII/UTF-8/UTF-16 validation/counting and `std-encoding-codec` hex/base64 length/encode/decode/invalid-input guard tests; future URL-safe base64, MIME line wrapping, richer decode errors, and optional compression tests. | Current helpers are pure source Ari over `Slice` and `String`. Future `Option[String]`/`Result[String,E]` decoders need zone-backed enum payload support. |
+| `std::test` | Grow from report aggregation into first-class test execution and diagnostics. | current `std-test-report` report counts, generic equality checks, method wrappers, scratch-zone creation, and finish status; future test discovery, per-test names/statuses, source location, richer assert messages, logging, backtrace/stack trace, optional benchmark, and optional fuzzing hooks. | Current helpers are pure source Ari over `Report` and `Zone`. Future source locations, backtraces, and runner integration need driver/runtime metadata and panic reporting policy. |
 | `std::vec` | Iterator collection support and root/source Vec unification plan after safe accessors. | Method, `try_*` access, iterator, borrow, owner-drop, same-zone, and `std::vec::collect` tests. | Iterator lowering, generic aggregate monomorphization, and explicit-zone provenance. |
 | `std::iter` | Lazy adapter and eager consumer layer over the canonical `std::Iterator[T]` protocol. | `std-iter-adapters` covers `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, and `collect` over `Vec` cursors. | Function-pointer callback typing, declaring-module field type resolution, and general iterator protocol lowering. |
 | `std::fmt` | Source trait impls for common values. | `format_in!`, `Display`, unsupported-type diagnostics. | Macro-to-trait lowering cleanup. |

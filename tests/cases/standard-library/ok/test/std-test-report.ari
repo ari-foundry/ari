@@ -1,0 +1,28 @@
+// Covers the source std::test report helpers used by executable unit-style tests.
+fn main() -> i64 {
+  var report = test::report();
+  var zone = test::scratch(64);
+
+  report.check(true);
+  report.equal(21, 21);
+  report.not_equal(21, 22);
+  test::equal(ref mut report, true, true);
+  test::not_equal(ref mut report, false, true);
+
+  var text = std::string::new(ref mut zone, 8);
+  text.push_in(ref mut zone, 65u8);
+  report.equal(text.len(), 1);
+  report.equal(text.first(), 65u8);
+  let report_is_ok = report.ok();
+  report.check(report_is_ok);
+
+  let passed = report.passed();
+  let failed = report.failed();
+  let status = report.finish();
+  zone::destroy(zone);
+
+  assert_eq_i64(passed, 8);
+  assert_eq_i64(failed, 0);
+  assert_eq_i64(status, 0);
+  return passed + failed + status;
+}

@@ -77,6 +77,62 @@ range(start, end)
 range_inclusive(start, end)
 ```
 
+## Test Support And Diagnostics
+
+Immediate assertion and panic helpers are available from the root prelude:
+
+```ari
+assert(condition)
+debug_assert(condition)
+assert_eq_i64(left, right)
+assert_ne_i64(left, right)
+assert_eq_bool(left, right)
+assert_ne_bool(left, right)
+panic()
+todo()
+unreachable()
+```
+
+Use these when a failed check should stop the program immediately. Current
+`panic`, `todo`, and `unreachable` share the same panic hook; Ari does not yet
+attach source location, stack trace, or backtrace data to that hook.
+
+Aggregated executable test helpers live in `std::test`:
+
+```ari
+test::Report
+
+test::report()
+test::scratch(capacity)
+test::check(ref mut report, condition)
+test::equal<T>(ref mut report, left, right)
+test::not_equal<T>(ref mut report, left, right)
+test::passed(ref report)
+test::failed(ref report)
+test::ok(ref report)
+test::finish(ref report)
+test::require(ref report)
+
+report.check(condition)
+report.equal<T>(left, right)
+report.not_equal<T>(left, right)
+report.passed()
+report.failed()
+report.ok()
+report.finish()
+report.require()
+```
+
+`Report` stores pass/fail counts. `equal` and `not_equal` use generic
+comparison, so the public names stay natural rather than type-suffixed.
+`finish()` returns `0` when no failures were recorded and `1` otherwise.
+`scratch(capacity)` creates an owned `Zone` for tests; destroy it explicitly
+with `zone::destroy(zone)` when the test is done.
+
+Debug printing currently uses `print`, `println`, `print!`, `println!`, and
+the `std::io` writer surface. Dedicated logging, source-location values,
+benchmark helpers, fuzzing hooks, and stack/backtrace APIs are roadmap work.
+
 ## Process Context And Environment
 
 Runtime-backed context access lives in `std::context`:
