@@ -31,9 +31,15 @@ bool ptr_field_matches_type_arg(const IrType& field_type, const IrType& type, st
 
 std::string collection_type_display_name(const IrType& type) {
     if (type.name == "std::collections::HashMap") return "std::collections::HashMap";
+    if (type.name == "std::collections::HashMapKeys") return "std::collections::HashMapKeys";
+    if (type.name == "std::collections::HashMapValues") return "std::collections::HashMapValues";
     if (type.name == "std::collections::HashSet") return "std::collections::HashSet";
+    if (type.name == "std::collections::HashSetIter") return "std::collections::HashSetIter";
     if (type.name == "std::collections::TreeMap") return "std::collections::TreeMap";
+    if (type.name == "std::collections::TreeMapKeys") return "std::collections::TreeMapKeys";
+    if (type.name == "std::collections::TreeMapValues") return "std::collections::TreeMapValues";
     if (type.name == "std::collections::TreeSet") return "std::collections::TreeSet";
+    if (type.name == "std::collections::TreeSetIter") return "std::collections::TreeSetIter";
     if (type.name == "std::collections::Iter") return "std::collections::Iter";
     return "std::collections::Set";
 }
@@ -57,7 +63,13 @@ bool is_std_collections_set_handle_type(const IrType& type) {
 bool is_std_collections_iter_handle_type(const IrType& type) {
     return type.qualifier == TypeQualifier::Value &&
            type.primitive == IrPrimitiveKind::Struct &&
-           type.name == "std::collections::Iter";
+           (type.name == "std::collections::Iter" ||
+            type.name == "std::collections::HashMapKeys" ||
+            type.name == "std::collections::HashMapValues" ||
+            type.name == "std::collections::HashSetIter" ||
+            type.name == "std::collections::TreeMapKeys" ||
+            type.name == "std::collections::TreeMapValues" ||
+            type.name == "std::collections::TreeSetIter");
 }
 
 static bool is_std_collections_hash_map_handle_type(const IrType& type) {
@@ -66,10 +78,28 @@ static bool is_std_collections_hash_map_handle_type(const IrType& type) {
            type.name == "std::collections::HashMap";
 }
 
+static bool is_std_collections_hash_map_keys_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::HashMapKeys";
+}
+
+static bool is_std_collections_hash_map_values_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::HashMapValues";
+}
+
 static bool is_std_collections_hash_set_handle_type(const IrType& type) {
     return type.qualifier == TypeQualifier::Value &&
            type.primitive == IrPrimitiveKind::Struct &&
            type.name == "std::collections::HashSet";
+}
+
+static bool is_std_collections_hash_set_iter_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::HashSetIter";
 }
 
 static bool is_std_collections_tree_map_handle_type(const IrType& type) {
@@ -78,10 +108,28 @@ static bool is_std_collections_tree_map_handle_type(const IrType& type) {
            type.name == "std::collections::TreeMap";
 }
 
+static bool is_std_collections_tree_map_keys_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::TreeMapKeys";
+}
+
+static bool is_std_collections_tree_map_values_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::TreeMapValues";
+}
+
 static bool is_std_collections_tree_set_handle_type(const IrType& type) {
     return type.qualifier == TypeQualifier::Value &&
            type.primitive == IrPrimitiveKind::Struct &&
            type.name == "std::collections::TreeSet";
+}
+
+static bool is_std_collections_tree_set_iter_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::TreeSetIter";
 }
 
 bool is_std_collections_mutable_handle_type(const IrType& type) {
@@ -119,13 +167,14 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
     bool has_capacity = false;
     bool has_index = false;
     bool has_hash_or_less = false;
-    bool has_values = false;
+    std::optional<std::size_t> values_index;
     bool has_states = false;
     bool has_left = false;
     bool has_right = false;
     bool has_parent = false;
     bool has_colors = false;
     bool has_root = false;
+    bool has_current = false;
     for (std::size_t i = 0; i < type.field_names.size(); ++i) {
         const std::string& name = type.field_names[i];
         const IrType& field_type = type.field_types[i];
@@ -138,8 +187,11 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
             if (!ptr_field_matches_type_arg(field_type, type, 0)) return std::nullopt;
             keys_index = i;
         } else if (name == "values") {
-            if (!ptr_field_matches_type_arg(field_type, type, 1)) return std::nullopt;
-            has_values = true;
+            std::size_t value_arg_index =
+                (is_std_collections_hash_map_handle_type(type) ||
+                 is_std_collections_tree_map_handle_type(type)) ? 1 : 0;
+            if (!ptr_field_matches_type_arg(field_type, type, value_arg_index)) return std::nullopt;
+            values_index = i;
         } else if (name == "states") {
             if (!is_i64_ptr_type(field_type)) return std::nullopt;
             has_states = true;
@@ -168,6 +220,10 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
         } else if (name == "root") {
             if (!is_i64_value_type(field_type)) return std::nullopt;
             has_root = true;
+        } else if (name == "current") {
+            if (!is_std_collections_iter_handle_type(type)) return std::nullopt;
+            if (!is_i64_value_type(field_type)) return std::nullopt;
+            has_current = true;
         } else {
             return std::nullopt;
         }
@@ -178,11 +234,35 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
         return data_index;
     }
     if (is_std_collections_iter_handle_type(type)) {
+        if (is_std_collections_hash_map_keys_handle_type(type)) {
+            if (!keys_index || !has_states || !has_capacity || !has_index) return std::nullopt;
+            return keys_index;
+        }
+        if (is_std_collections_hash_map_values_handle_type(type)) {
+            if (!values_index || !has_states || !has_capacity || !has_index) return std::nullopt;
+            return values_index;
+        }
+        if (is_std_collections_hash_set_iter_handle_type(type)) {
+            if (!data_index || !has_states || !has_capacity || !has_index) return std::nullopt;
+            return data_index;
+        }
+        if (is_std_collections_tree_map_keys_handle_type(type)) {
+            if (!keys_index || !has_left || !has_right || !has_parent || !has_current) return std::nullopt;
+            return keys_index;
+        }
+        if (is_std_collections_tree_map_values_handle_type(type)) {
+            if (!values_index || !has_left || !has_right || !has_parent || !has_current) return std::nullopt;
+            return values_index;
+        }
+        if (is_std_collections_tree_set_iter_handle_type(type)) {
+            if (!data_index || !has_left || !has_right || !has_parent || !has_current) return std::nullopt;
+            return data_index;
+        }
         if (!data_index || !has_len || !has_index) return std::nullopt;
         return data_index;
     }
     if (is_std_collections_hash_map_handle_type(type)) {
-        if (!has_hash_or_less || !keys_index || !has_values || !has_states || !has_len || !has_capacity) {
+        if (!has_hash_or_less || !keys_index || !values_index || !has_states || !has_len || !has_capacity) {
             return std::nullopt;
         }
         return keys_index;
@@ -194,7 +274,7 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
         return data_index;
     }
     if (is_std_collections_tree_map_handle_type(type)) {
-        if (!has_hash_or_less || !keys_index || !has_values || !has_left || !has_right ||
+        if (!has_hash_or_less || !keys_index || !values_index || !has_left || !has_right ||
             !has_parent || !has_colors || !has_root || !has_len || !has_capacity) {
             return std::nullopt;
         }
@@ -220,9 +300,15 @@ std::vector<std::vector<std::size_t>> std_collections_zone_handle_storage_field_
     if (!std_collections_set_zone_handle_source_field_index(type)) return {};
     if (type.field_names.empty() && type.field_types.empty()) {
         if (is_std_collections_hash_map_handle_type(type)) return {{1}, {2}, {3}};
+        if (is_std_collections_hash_map_keys_handle_type(type)) return {{0}, {1}};
+        if (is_std_collections_hash_map_values_handle_type(type)) return {{0}, {1}};
         if (is_std_collections_hash_set_handle_type(type)) return {{1}, {2}};
+        if (is_std_collections_hash_set_iter_handle_type(type)) return {{0}, {1}};
         if (is_std_collections_tree_map_handle_type(type)) return {{1}, {2}, {3}, {4}, {5}, {6}};
+        if (is_std_collections_tree_map_keys_handle_type(type)) return {{0}, {1}, {2}, {3}};
+        if (is_std_collections_tree_map_values_handle_type(type)) return {{0}, {1}, {2}, {3}};
         if (is_std_collections_tree_set_handle_type(type)) return {{1}, {2}, {3}, {4}, {5}};
+        if (is_std_collections_tree_set_iter_handle_type(type)) return {{0}, {1}, {2}, {3}};
         return {{0}};
     }
 
@@ -254,7 +340,7 @@ bool std_collections_set_method_requires_same_zone_argument(const std::string& m
 
 bool std_collections_result_preserves_receiver_zone(const IrExpr& call) {
     if (call.kind != IrExprKind::Call || call.args.empty()) return false;
-    if (!is_std_collections_set_handle_type(value_qualified_set_type(call.args[0]->type))) return false;
+    if (!is_std_collections_mutable_handle_type(value_qualified_set_type(call.args[0]->type))) return false;
     IrType result_type = value_qualified_set_type(call.type);
     return is_std_collections_iter_handle_type(result_type);
 }

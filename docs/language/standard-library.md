@@ -38,7 +38,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::string` | Zone-backed owned byte string seed. | `String`, `RawString`, capacity constructors, copy helpers, byte get/set/search, `try_get`, `try_pop`, growth, append helpers, ASCII case compare/search, trim views, trim copies, whole and prefix parse helpers, `as_slice`, `as_ptr`. | Implemented as a byte string. Full text/Unicode policy is still future work. |
 | `std::ascii` | ASCII-only byte and slice helpers for byte strings and parsers. | `ParsedInt`, `is_digit`, `is_alpha`, `is_alphanumeric`, `is_blank`, `is_whitespace`, `is_control`, `is_printable`, `is_graphic`, `is_punctuation`, `is_hex_digit`, `to_lower`, `to_upper`, `digit_value`, `hex_value`, `equals_ignore_case`, `starts_with_ignore_case`, `ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`, `parse_hex`, `parse_hex_prefix`. | Implemented in Ari source; not a Unicode or locale-aware text API. |
 | `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked and `Option` element access, mutation, growth, copy, slice view, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
-| `std::collections` | Zone-backed collection handles beyond sequences. | Linear `Set[T]`/`Iter[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear. | Implemented in source Ari with compiler provenance recognition for reset/destroy and same-zone growth checks. |
+| `std::collections` | Zone-backed collection handles beyond sequences. | Linear `Set[T]`/`Iter[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, hash bucket iterators, and sorted tree iterators. | Implemented in source Ari with compiler provenance recognition for reset/destroy and same-zone growth checks. |
 | `std::iter` | Iteration traits and range constructors. | `range`, `range_inclusive`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`. | Range lowering and `std::vec::Iter` are implemented; general iterator protocols are still growing. |
 | `std::fmt` | Formatting traits. | `Debug`, `Display::format_in`. | Trait surface is present; formatting macros still use compiler lowering. |
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`, `is_between`. | Implemented for source-level trait-bound static dispatch. |
@@ -96,10 +96,10 @@ Use this table when writing code from docs alone:
 | Store a small local literal sequence. | Bare `Vec[T]` from `[a, b, c]` | This is compiler-known local vector storage, not `std::vec::Vec[T]`. Empty `[]` needs an expected type. |
 | Store a growable source collection. | `std::vec::new<T>(ref mut zone, capacity)` | Common tracked locals can call `push`, `insert`, `reserve`, and related methods without spelling the zone again. |
 | Store unique values in insertion order. | `collections::new<T>(ref mut zone, capacity)` or `Set::new<T>(ref mut zone, capacity)` | `insert(ref mut zone, value)` returns whether a value was newly added. `replace(ref mut zone, value)` returns the previous equal value or inserts the missing value. Use `try_get`, `try_pop`, `contains`, `remove`, `take`, `reserve`, `iter`, `as_slice`, and `copy_to` for the linear set. |
-| Store values by hash lookup. | `HashMap::new<K,V>(ref mut zone, capacity, hash)` or `collections::hash_map<K,V>(...)` | Hash functions have shape `fn(K) -> u64`. `collections::hash_i64` is available for i64 keys. `insert` returns the replaced `Option[V]`, `try_get` handles absence, and `remove` leaves a tombstone for later probing. |
-| Store hash-based membership. | `HashSet::new<T>(ref mut zone, capacity, hash)` or `collections::hash_set<T>(...)` | `insert` returns whether the value was new. Use `replace`, `take`, `remove`, `contains`, `reserve`, and `clear`. |
-| Store values by ordered lookup. | `TreeMap::new<K,V>(ref mut zone, capacity, less)` or `collections::tree_map<K,V>(...)` | The comparator has shape `fn(K, K) -> bool` and must be a strict less-than relation. `collections::less_i64` is available for i64 keys. |
-| Store ordered membership. | `TreeSet::new<T>(ref mut zone, capacity, less)` or `collections::tree_set<T>(...)` | Uses a red-black tree. `insert` rejects equal values and `replace` returns the previous equal value. |
+| Store values by hash lookup. | `HashMap::new<K,V>(ref mut zone, capacity, hash)` or `collections::hash_map<K,V>(...)` | Hash functions have shape `fn(K) -> u64`. `collections::hash_i64` is available for i64 keys. `insert` returns the replaced `Option[V]`, `try_get` handles absence, `remove` leaves a tombstone for later probing, and `keys()`/`values()` iterate live buckets. |
+| Store hash-based membership. | `HashSet::new<T>(ref mut zone, capacity, hash)` or `collections::hash_set<T>(...)` | `insert` returns whether the value was new. Use `replace`, `take`, `remove`, `contains`, `reserve`, `clear`, and `iter`. Direct `for value in set` uses the same live-bucket cursor. |
+| Store values by ordered lookup. | `TreeMap::new<K,V>(ref mut zone, capacity, less)` or `collections::tree_map<K,V>(...)` | The comparator has shape `fn(K, K) -> bool` and must be a strict less-than relation. `collections::less_i64` is available for i64 keys. `keys()` and `values()` iterate in ascending key order. |
+| Store ordered membership. | `TreeSet::new<T>(ref mut zone, capacity, less)` or `collections::tree_set<T>(...)` | Uses a red-black tree. `insert` rejects equal values, `replace` returns the previous equal value, and `iter`/direct `for value in set` walk ascending comparator order. |
 | Store owned byte text. | `std::string::from_string(ref mut zone, "text")` or `std::string::new(ref mut zone, capacity)` | The handle stores bytes, not a full Unicode text abstraction yet. |
 | Compare, search, trim, or parse owned ASCII byte text. | `text.equals_ignore_case(bytes)`, `text.index_of_ignore_case(bytes)`, `text.trim()`, `text.trim_to(ref mut zone)`, `text.parse_decimal()`, `text.parse_decimal_prefix()` | Case-insensitive `String` helpers fold only ASCII letters. Plain trim methods return borrowed `Slice[u8]` views; `*_to` trim methods copy into a target zone. Whole parse methods require the whole string to be valid; prefix parsers return `Option[ascii::ParsedInt]`. |
 | Classify, compare, search, trim, or parse ASCII bytes. | `ascii::is_digit`, `ascii::is_printable`, `ascii::equals_ignore_case`, `ascii::index_of_ignore_case`, `ascii::to_lower`, `ascii::trim`, `ascii::parse_decimal_prefix` | Scalar helpers take `u8`; slice helpers take `Slice[u8]`. Case-insensitive comparison/search folds only ASCII letters. Whole parsers return `Option[i64]`; prefix parsers return `Option[ascii::ParsedInt]` with `value` and consumed `len`. |
@@ -202,13 +202,16 @@ implements `IntoIterator[T]` for direct `for value in set` loops.
 
 `std::collections::HashMap[K,V]` and `TreeMap[K,V]` share `len`, `capacity`,
 `is_empty`, `contains`, `get`, `try_get`, `insert(ref mut zone, key, value)`,
-`reserve(ref mut zone, capacity)`, and `clear`. `HashMap` also has
-`remove(key)`.
+`reserve(ref mut zone, capacity)`, `clear`, `keys()`, and `values()`.
+`HashMap` also has `remove(key)`. Hash map iterators walk live buckets;
+tree map iterators walk ascending key order.
 
 `std::collections::HashSet[T]` and `TreeSet[T]` share `len`, `capacity`,
 `is_empty`, `contains`, `insert(ref mut zone, value)`,
 `replace(ref mut zone, value)`, `reserve(ref mut zone, capacity)`, and
-`clear`. `HashSet` also has `take(value)` and `remove(value)`.
+`clear`. Both have `iter()` and direct `for value in set` support. `HashSet`
+also has `take(value)` and `remove(value)`. Hash set iteration walks live
+buckets; tree set iteration walks ascending comparator order.
 
 `std::vec::Vec[T]` mutating methods include `push`, `pop`, `try_pop`, `set`,
 `replace`, `swap`, `insert`, `remove`, `truncate`, `clear`, `reserve`,

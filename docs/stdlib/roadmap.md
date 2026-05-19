@@ -24,11 +24,13 @@ identity/from/into helpers, `context` runtime hooks plus the source
 `input` runtime hooks plus the source `try_read_byte` EOF helper,
 `io` runtime hooks plus source byte-slice output, current `process`
 id/exit/status helpers,
-`collections::Set[T]` as the first linear insertion-order set with
-`try_*` accessors, `pop`/`try_pop`, replace-or-insert updates, explicit
-reserve growth, direct iterator support, and the first `math` sign
-predicate/arithmetic/division-rounding and `bits` numeric helper slices,
-including zero/one-run bit scans.
+`collections::Set[T]` as the linear insertion-order set with `try_*`
+accessors, `pop`/`try_pop`, replace-or-insert updates, explicit reserve
+growth, direct iterator support, open-addressed `HashMap`/`HashSet` with
+tombstones and live-bucket iterators, red-black-tree `TreeMap`/`TreeSet` with
+sorted iterators, and the first `math` sign predicate/arithmetic/
+division-rounding and `bits` numeric helper slices, including zero/one-run bit
+scans.
 
 ## Essential Library Families
 
@@ -43,7 +45,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Future `Instant`, `Duration`, `now`, elapsed arithmetic, sleep. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Future `spawn`, `join`, thread id, stack/runtime context setup. |
 | `std::sync` | Share state between threads deliberately. | Future atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
-| `std::collections` | Store keyed and set-like data beyond vectors. | Current linear `Set[T]` with insertion-order access, optional access, replacement, removal, copy, reserve helpers, and direct iteration; future `HashMap` and `HashSet`. |
+| `std::collections` | Store keyed and set-like data beyond vectors. | Current linear `Set[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, live-bucket hash iterators, sorted tree iterators; future tree deletion, deques, and trait-driven constructors. |
 | `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, error-code translation. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
@@ -60,11 +62,12 @@ work. Each one should land in small tested slices with natural API names.
 - Keep shared collection access vocabulary aligned across `Slice[T]` and
   `std::vec::Vec[T]`, including `try_*` methods for `Option`-based absence.
 - Add collection helpers in small slices: slice methods, vector methods, the
-  current linear `Set[T]` access/update/reserve/iteration surface, iterator
-  adapters, then hash maps/sets/deques.
-- Add `HashMap` and `HashSet` only after generic aggregate layouts,
-  hashing/equality trait policy, and explicit allocation-zone ownership are
-  testable together.
+  current linear `Set[T]` access/update/reserve/iteration surface, hash/table
+  lookup and tombstones, tree insertion/lookup, hash and tree iterators,
+  red-black deletion, then deques.
+- Keep `HashMap`/`HashSet` and `TreeMap`/`TreeSet` on explicit hash or
+  comparator constructors until generic trait-driven `Hash`, `Eq`, and `Ord`
+  selection is testable.
 - Keep `std::string::String` byte-oriented until a Unicode/text policy is
   designed.
 - Expose small `String` conveniences only when they preserve byte-string

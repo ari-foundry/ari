@@ -45,6 +45,10 @@ std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari
 std-collections-set-iter.ari
+std-collections-hash.ari
+std-collections-hash-iter.ari
+std-collections-tree.ari
+std-collections-tree-iter.ari
 std-collections-set-after-reset.ari
 std-collections-set-iter-after-reset.ari
 std-collections-set-insert-different-zone.ari

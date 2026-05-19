@@ -105,10 +105,15 @@ map.insert(ref mut zone, key, value)
 map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
+map.keys()
+map.values()
 ```
 
 `HashMap.insert` inserts or replaces and returns `Option[V]`: `Some(previous)`
 on replacement, `None` on a new key. `remove` returns the removed value.
+`keys` and `values` iterate live buckets. That order is deterministic for a
+specific table state, but it is not insertion order and should not be used as
+a stable sorting rule.
 
 ```ari
 set.len()
@@ -121,11 +126,14 @@ set.take(value)
 set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
+set.iter()
 ```
 
 `HashSet.insert` returns whether the value was newly inserted. `replace`
 returns the previous equal value when present. `take` moves a removed value out;
-`remove` drops it.
+`remove` drops it. `HashSet.iter()` yields live buckets, and `HashSet[T]`
+implements `IntoIterator[T]` so `for value in set` works through the same
+cursor.
 
 ## TreeMap And TreeSet
 
@@ -156,9 +164,13 @@ map.try_get(key)
 map.insert(ref mut zone, key, value)
 map.clear()
 map.reserve(ref mut zone, capacity)
+map.keys()
+map.values()
 ```
 
-`TreeMap.insert` inserts or replaces and returns `Option[V]`.
+`TreeMap.insert` inserts or replaces and returns `Option[V]`. `keys` yields
+keys in ascending comparator order. `values` yields values in the same
+key-sorted order.
 
 ```ari
 set.len()
@@ -169,10 +181,13 @@ set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.clear()
 set.reserve(ref mut zone, capacity)
+set.iter()
 ```
 
 `TreeSet.insert` returns `false` for an equal existing value. `TreeSet.replace`
-returns the previous equal value or inserts a new one.
+returns the previous equal value or inserts a new one. `TreeSet.iter()` yields
+values in ascending comparator order, and `TreeSet[T]` implements
+`IntoIterator[T]`.
 
 ## Examples
 
@@ -219,7 +234,9 @@ tests/cases/standard-library/ok/collections/std-collections-set-access.ari
 tests/cases/standard-library/ok/collections/std-collections-set-replace.ari
 tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-hash.ari
+tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
+tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
 ```
 
 Focused negative coverage:
@@ -232,14 +249,22 @@ tests/cases/standard-library/errors/collections/std-collections-set-replace-diff
 tests/cases/standard-library/errors/collections/std-collections-set-reserve-different-zone.ari
 tests/cases/standard-library/errors/collections/std-collections-set-reserve-extra-different-zone.ari
 tests/cases/standard-library/errors/collections/std-collections-hash-map-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-hash-map-keys-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-hash-map-values-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-hash-set-iter-after-reset.ari
 tests/cases/standard-library/errors/collections/std-collections-hash-map-insert-different-zone.ari
 tests/cases/standard-library/errors/collections/std-collections-tree-map-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-tree-map-keys-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-tree-map-values-after-reset.ari
+tests/cases/standard-library/errors/collections/std-collections-tree-set-iter-after-reset.ari
 tests/cases/standard-library/errors/collections/std-collections-tree-set-insert-different-zone.ari
 ```
 
 `std-collections-hash.ari` forces collisions with a custom hash function so the
-linear-probing and tombstone paths are exercised. `std-collections-tree.ari`
-inserts mixed key order to exercise red-black rotations.
+linear-probing and tombstone paths are exercised. `std-collections-hash-iter`
+checks key, value, and set cursors after tombstones. `std-collections-tree.ari`
+inserts mixed key order to exercise red-black rotations, while
+`std-collections-tree-iter.ari` checks sorted successor traversal.
 
 `make check-prelude` compiles the positive tests, checks representative
 monomorphized symbols, runs the executables, and checks the negative zone
@@ -257,5 +282,6 @@ and checked by `make check-std-api`.
   dispatch is ready.
 - Tree containers require an explicit comparator. The future API should use
   `Ord` when generic trait dispatch is strong enough.
-- Tree removal and iterators are not implemented in this slice. They should
-  land with focused red-black deletion and traversal tests.
+- Tree removal is not implemented in this slice. It should land with focused
+  red-black deletion tests before `TreeMap.remove` or `TreeSet.take` become
+  public.

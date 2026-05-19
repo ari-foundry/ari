@@ -76,8 +76,25 @@ identifies the exact case:
   zone.
 - `std-collections-hash.ari`: open-addressed `HashMap`/`HashSet` collision,
   replacement, tombstone, removal, and set-taking behavior.
+- `std-collections-hash-iter.ari`: live-bucket `HashMap.keys`,
+  `HashMap.values`, `HashSet.iter`, and direct `HashSet` `IntoIterator`
+  behavior after tombstone reuse.
+- `std-collections-hash-map-keys-after-reset.ari`: negative source-zone
+  provenance diagnostic for hash map key cursors after reset.
+- `std-collections-hash-map-values-after-reset.ari`: negative source-zone
+  provenance diagnostic for hash map value cursors after reset.
+- `std-collections-hash-set-iter-after-reset.ari`: negative source-zone
+  provenance diagnostic for hash set iterators after reset.
 - `std-collections-tree.ari`: red-black `TreeMap`/`TreeSet` insertion,
   replacement, lookup, and rotation-path behavior.
+- `std-collections-tree-iter.ari`: sorted `TreeMap.keys`, `TreeMap.values`,
+  `TreeSet.iter`, and direct `TreeSet` `IntoIterator` successor traversal.
+- `std-collections-tree-map-keys-after-reset.ari`: negative source-zone
+  provenance diagnostic for tree map key cursors after reset.
+- `std-collections-tree-map-values-after-reset.ari`: negative source-zone
+  provenance diagnostic for tree map value cursors after reset.
+- `std-collections-tree-set-iter-after-reset.ari`: negative source-zone
+  provenance diagnostic for tree set iterators after reset.
 - `std-io-byte-slice.ari`: source `std::io` byte-slice output over the raw
   write-byte backend hook.
 - `std-input-byte-option.ari`: source `std::input` EOF-to-Option byte helper

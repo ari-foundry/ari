@@ -1,0 +1,66 @@
+// Covers ordered red-black tree iteration for set values and map keys/values.
+// Tree iterators yield ascending key order through parent/successor traversal.
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  map.insert(ref mut zone, 4, 40);
+  map.insert(ref mut zone, 2, 20);
+  map.insert(ref mut zone, 8, 80);
+  map.insert(ref mut zone, 1, 10);
+  map.insert(ref mut zone, 3, 30);
+
+  var keys = map.keys();
+  let key1 = keys.next().unwrap_or(0);
+  let key2 = keys.next().unwrap_or(0);
+  let key3 = keys.next().unwrap_or(0);
+  let key4 = keys.next().unwrap_or(0);
+  let key5 = keys.next().unwrap_or(0);
+  if key1 == 1 && key2 == 2 && key3 == 3 && key4 == 4 && key5 == 8 {
+    score = score + 5;
+  }
+  let no_more_keys = keys.next();
+  if no_more_keys.is_none() {
+    score = score + 3;
+  }
+
+  var values = map.values();
+  let value1 = values.next().unwrap_or(0);
+  let value2 = values.next().unwrap_or(0);
+  let value3 = values.next().unwrap_or(0);
+  let value4 = values.next().unwrap_or(0);
+  let value5 = values.next().unwrap_or(0);
+  if value1 == 10 && value2 == 20 && value3 == 30 && value4 == 40 && value5 == 80 {
+    score = score + 7;
+  }
+
+  var set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  set.insert(ref mut zone, 6);
+  set.insert(ref mut zone, 2);
+  set.insert(ref mut zone, 9);
+  set.insert(ref mut zone, 4);
+
+  var ordered = 0;
+  var factor = 1;
+  for set_value in set.iter() {
+    ordered = ordered + set_value * factor;
+    factor = factor * 10;
+  }
+  if ordered == 9642 {
+    score = score + 11;
+  }
+
+  var direct = 0;
+  var direct_factor = 1;
+  for direct_value in set {
+    direct = direct + direct_value * direct_factor;
+    direct_factor = direct_factor * 10;
+  }
+  if direct == 9642 {
+    score = score + 13;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

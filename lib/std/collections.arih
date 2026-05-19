@@ -12,6 +12,51 @@ pub struct Iter[T] {
   mut index: i64,
 }
 
+pub struct HashMapKeys[K] {
+  keys: ptr K,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+}
+
+pub struct HashMapValues[V] {
+  values: ptr V,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+}
+
+pub struct HashSetIter[T] {
+  data: ptr T,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+}
+
+pub struct TreeMapKeys[K] {
+  keys: ptr K,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  mut current: i64,
+}
+
+pub struct TreeMapValues[V] {
+  values: ptr V,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  mut current: i64,
+}
+
+pub struct TreeSetIter[T] {
+  data: ptr T,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  mut current: i64,
+}
+
 // Open-addressed hash map. Callers provide the hash function until std::Hash
 // exists as a trait that the compiler can resolve for generic keys.
 pub struct HashMap[K, V] {
@@ -342,6 +387,17 @@ fn init_states(states: ptr i64, capacity: i64) -> void {
   }
 }
 
+fn next_live_bucket(states: ptr i64, capacity: i64, start: i64) -> i64 {
+  var index = start;
+  while index < capacity {
+    if ptr_load(ptr_add(states, index)) == 1 {
+      return index;
+    }
+    index = index + 1;
+  }
+  return -1;
+}
+
 pub fn hash_map[K, V](
   zone: ref mut Zone,
   capacity: i64,
@@ -586,6 +642,46 @@ pub impl[K, V] std::collections::HashMap[K, V] {
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     hash_map_grow_to_capacity<K, V>(self, zone, capacity);
   }
+
+  fn keys(self: ref Self) -> std::collections::HashMapKeys[K] {
+    return std::collections::HashMapKeys<K> {
+      keys: self.keys,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+    };
+  }
+
+  fn values(self: ref Self) -> std::collections::HashMapValues[V] {
+    return std::collections::HashMapValues<V> {
+      values: self.values,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+    };
+  }
+}
+
+impl[K] std::Iterator[K] for std::collections::HashMapKeys[K] {
+  pub fn next(self: ref mut Self) -> std::Option[K] {
+    let bucket = next_live_bucket(self.states, self.capacity, self.index);
+    if bucket < 0 {
+      return std::None<K>();
+    }
+    self.index = bucket + 1;
+    return std::Some<K>(ptr_load(ptr_add(self.keys, bucket)));
+  }
+}
+
+impl[V] std::Iterator[V] for std::collections::HashMapValues[V] {
+  pub fn next(self: ref mut Self) -> std::Option[V] {
+    let bucket = next_live_bucket(self.states, self.capacity, self.index);
+    if bucket < 0 {
+      return std::None<V>();
+    }
+    self.index = bucket + 1;
+    return std::Some<V>(ptr_load(ptr_add(self.values, bucket)));
+  }
 }
 
 impl[K, V] std::Drop for std::collections::HashMap[K, V] {
@@ -794,6 +890,37 @@ pub impl[T] std::collections::HashSet[T] {
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     hash_set_grow_to_capacity<T>(self, zone, capacity);
   }
+
+  fn iter(self: ref Self) -> std::collections::HashSetIter[T] {
+    return std::collections::HashSetIter<T> {
+      data: self.data,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+    };
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::HashSetIter[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let bucket = next_live_bucket(self.states, self.capacity, self.index);
+    if bucket < 0 {
+      return std::None<T>();
+    }
+    self.index = bucket + 1;
+    return std::Some<T>(ptr_load(ptr_add(self.data, bucket)));
+  }
+}
+
+impl[T] std::IntoIterator[T] for std::collections::HashSet[T] {
+  pub fn into_iter(self: ref mut Self) -> std::collections::HashSetIter[T] {
+    return std::collections::HashSetIter<T> {
+      data: self.data,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+    };
+  }
 }
 
 impl[T] std::Drop for std::collections::HashSet[T] {
@@ -980,6 +1107,35 @@ fn tree_map_find_slot[K, V](map: ref std::collections::TreeMap[K, V], key: K) ->
   return -1;
 }
 
+fn tree_first_node(root: i64, left: ptr i64) -> i64 {
+  var node = root;
+  if node < 0 {
+    return -1;
+  }
+  while ptr_load(ptr_add(left, node)) >= 0 {
+    node = ptr_load(ptr_add(left, node));
+  }
+  return node;
+}
+
+fn tree_next_node(node: i64, left: ptr i64, right: ptr i64, parent: ptr i64) -> i64 {
+  if node < 0 {
+    return -1;
+  }
+  let right_child = ptr_load(ptr_add(right, node));
+  if right_child >= 0 {
+    return tree_first_node(right_child, left);
+  }
+
+  var child = node;
+  var ancestor = ptr_load(ptr_add(parent, child));
+  while ancestor >= 0 && child == ptr_load(ptr_add(right, ancestor)) {
+    child = ancestor;
+    ancestor = ptr_load(ptr_add(parent, ancestor));
+  }
+  return ancestor;
+}
+
 fn tree_map_grow_to_capacity[K, V](
   map: ref mut std::collections::TreeMap[K, V],
   zone: ref mut Zone,
@@ -1123,6 +1279,48 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     tree_map_grow_to_capacity<K, V>(self, zone, capacity);
+  }
+
+  fn keys(self: ref Self) -> std::collections::TreeMapKeys[K] {
+    return std::collections::TreeMapKeys<K> {
+      keys: self.keys,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+    };
+  }
+
+  fn values(self: ref Self) -> std::collections::TreeMapValues[V] {
+    return std::collections::TreeMapValues<V> {
+      values: self.values,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+    };
+  }
+}
+
+impl[K] std::Iterator[K] for std::collections::TreeMapKeys[K] {
+  pub fn next(self: ref mut Self) -> std::Option[K] {
+    if self.current < 0 {
+      return std::None<K>();
+    }
+    let node = self.current;
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    return std::Some<K>(ptr_load(ptr_add(self.keys, node)));
+  }
+}
+
+impl[V] std::Iterator[V] for std::collections::TreeMapValues[V] {
+  pub fn next(self: ref mut Self) -> std::Option[V] {
+    if self.current < 0 {
+      return std::None<V>();
+    }
+    let node = self.current;
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    return std::Some<V>(ptr_load(ptr_add(self.values, node)));
   }
 }
 
@@ -1397,6 +1595,39 @@ pub impl[T] std::collections::TreeSet[T] {
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     tree_set_grow_to_capacity<T>(self, zone, capacity);
+  }
+
+  fn iter(self: ref Self) -> std::collections::TreeSetIter[T] {
+    return std::collections::TreeSetIter<T> {
+      data: self.data,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+    };
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::TreeSetIter[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.current < 0 {
+      return std::None<T>();
+    }
+    let node = self.current;
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+}
+
+impl[T] std::IntoIterator[T] for std::collections::TreeSet[T] {
+  pub fn into_iter(self: ref mut Self) -> std::collections::TreeSetIter[T] {
+    return std::collections::TreeSetIter<T> {
+      data: self.data,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+    };
   }
 }
 

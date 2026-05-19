@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  map.insert(ref mut zone, 1, 10);
+  var cursor = map.values();
+  zone::reset(ref mut zone);
+  let value = cursor.next();
+
+  zone::destroy(zone);
+  return 0;
+}

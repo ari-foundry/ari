@@ -17,6 +17,10 @@ RangeInclusive[T]
 Box[T]
 String
 Set[T]
+HashMap[K, V]
+HashSet[T]
+TreeMap[K, V]
+TreeSet[T]
 std::Vec[T]
 move(value)
 take(place)
@@ -386,9 +390,82 @@ last insertion-order value, and `try_pop` returns `None` on an empty set.
 zone. The set preserves insertion order in accessors, `index_of`, `as_slice`,
 `iter`, and `copy_to`. `std::collections::Iter[T]` implements `Iterator[T]`,
 and `Set[T]` implements `IntoIterator[T]`, so `for value in set` works through
-the standard iterator path. It is linear, not hash-backed, so future
-`HashMap`/`HashSet` APIs can still choose a deliberate hashing and equality
-policy.
+the standard iterator path.
+
+Hash-table collections use explicit hash functions:
+
+```ari
+collections::hash_i64(value)
+collections::hash_map<K, V>(ref mut zone, capacity, hash)
+HashMap::new<K, V>(ref mut zone, capacity, hash)
+map.len()
+map.capacity()
+map.is_empty()
+map.contains(key)
+map.get(key)
+map.try_get(key)
+map.insert(ref mut zone, key, value)
+map.remove(key)
+map.clear()
+map.reserve(ref mut zone, capacity)
+map.keys()
+map.values()
+
+collections::hash_set<T>(ref mut zone, capacity, hash)
+HashSet::new<T>(ref mut zone, capacity, hash)
+set.len()
+set.capacity()
+set.is_empty()
+set.contains(value)
+set.insert(ref mut zone, value)
+set.replace(ref mut zone, value)
+set.take(value)
+set.remove(value)
+set.clear()
+set.reserve(ref mut zone, capacity)
+set.iter()
+```
+
+`HashMap.insert` returns `Option[V]` with the previous value on replacement.
+`HashMap.remove` returns `Option[V]` and leaves a tombstone so later probes
+still find collided keys. `HashMap.keys()` and `HashMap.values()` iterate live
+buckets; this is deterministic for the table state, but it is not insertion
+order. `HashSet.iter()` and direct `for value in set` use the same live-bucket
+cursor.
+
+Tree collections use explicit strict less-than comparators:
+
+```ari
+collections::less_i64(left, right)
+collections::tree_map<K, V>(ref mut zone, capacity, less)
+TreeMap::new<K, V>(ref mut zone, capacity, less)
+map.len()
+map.capacity()
+map.is_empty()
+map.contains(key)
+map.get(key)
+map.try_get(key)
+map.insert(ref mut zone, key, value)
+map.clear()
+map.reserve(ref mut zone, capacity)
+map.keys()
+map.values()
+
+collections::tree_set<T>(ref mut zone, capacity, less)
+TreeSet::new<T>(ref mut zone, capacity, less)
+set.len()
+set.capacity()
+set.is_empty()
+set.contains(value)
+set.insert(ref mut zone, value)
+set.replace(ref mut zone, value)
+set.clear()
+set.reserve(ref mut zone, capacity)
+set.iter()
+```
+
+`TreeMap.keys()`, `TreeMap.values()`, `TreeSet.iter()`, and direct
+`for value in tree_set` walk values in ascending comparator order.
 
 `std::string::String` is an owned byte string:
 
@@ -483,6 +560,36 @@ box.as_mut_ptr()
 box.swap(ref mut other)
 box.is_empty()
 ```
+
+## Iteration And Formatting
+
+`std::iter` contains the shared loop traits and range constructors:
+
+```ari
+iter::range<T>(start, end)
+iter::range_inclusive<T>(start, end)
+iter::Iterator[T]
+iter::IntoIterator[T]
+iter::Iterable[T]
+```
+
+Root aliases expose `range(start, end)` and `range_inclusive(start, end)`.
+Source cursors implement `Iterator[T]::next(self: ref mut Self) -> Option[T]`.
+Collections that implement `IntoIterator[T]` can be used directly in `for`
+loops; map-like collections use explicit `keys()` and `values()` cursors until
+pair or tuple iteration policy is stable.
+
+`std::fmt` contains the formatting trait surface:
+
+```ari
+fmt::Debug
+fmt::Display
+Display::format_in(self: ref Self, zone: ref mut Zone)
+```
+
+The executable formatting path is still macro-based: `print!`, `println!`,
+and `format_in!(ref mut zone, "...", values...)`. Use `format_in!` for owned
+formatted strings because Ari does not hide a default allocation zone.
 
 ## Comparison
 

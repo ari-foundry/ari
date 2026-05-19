@@ -1,0 +1,15 @@
+fn constant_hash(value: i64) -> u64 {
+  return 1;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var set = HashSet::new<i64>(ref mut zone, 1, constant_hash);
+  set.insert(ref mut zone, 1);
+  var cursor = set.iter();
+  zone::reset(ref mut zone);
+  let value = cursor.next();
+
+  zone::destroy(zone);
+  return 0;
+}

@@ -16,9 +16,15 @@ limits, examples, and test files for one module.
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,
   safe accessors, growth, copy, and iterator entry points.
-- [std::collections](collections.md): source linear `Set[T]` for unique
-  insertion-order values, optional access, replace-or-insert updates, iterator
-  support, reserve growth, copied views, and explicit-zone provenance.
+- [std::collections](collections.md): source `Set[T]`, hash-table
+  `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`,
+  natural lookup/update names, explicit hash/comparator constructors,
+  live-bucket hash iterators, sorted tree iterators, copied views, and
+  explicit-zone provenance.
+- [std::iter](iter.md): range constructors plus the minimal iterator traits
+  used by `for` loops and collection cursors.
+- [std::fmt](fmt.md): `Debug` and `Display` trait surface, plus the current
+  split between `format_in!` macro lowering and source formatting traits.
 - [std::cmp](cmp.md): source comparison traits, generic value selection,
   inclusive clamping, and inclusive range predicates.
 - [std::convert](convert.md): explicit conversion traits plus source

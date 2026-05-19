@@ -243,16 +243,19 @@ method std::collections::HashMap[K,V]::contains|check-prelude std-collections-ha
 method std::collections::HashMap[K,V]::get|check-prelude std-collections-hash asserting hash lookup; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::insert|check-prelude std-collections-hash insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::is_empty|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::keys|check-prelude std-collections-hash-iter bucket-order key iterator; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::len|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::new|check-prelude std-collections-hash associated explicit-hasher constructor; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::remove|check-prelude std-collections-hash tombstone removal; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::reserve|check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::try_get|check-prelude std-collections-hash Option-returning hash lookup; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::values|check-prelude std-collections-hash-iter bucket-order value iterator; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::capacity|check-prelude std-collections-hash hash set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::clear|check-prelude std-collections-hash drops live hash set entries; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::contains|check-prelude std-collections-hash hash set lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::insert|check-prelude std-collections-hash hash set insertion with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::is_empty|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::iter|check-prelude std-collections-hash-iter live-bucket iterator and IntoIterator; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::len|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::new|check-prelude std-collections-hash associated explicit-hasher constructor; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::remove|check-prelude std-collections-hash drop-on-remove membership helper; docs/stdlib/modules/collections.md
@@ -289,15 +292,18 @@ method std::collections::TreeMap[K,V]::contains|check-prelude std-collections-tr
 method std::collections::TreeMap[K,V]::get|check-prelude std-collections-tree asserting ordered lookup; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::insert|check-prelude std-collections-tree red-black insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::keys|check-prelude std-collections-tree-iter sorted key iterator; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::try_get|check-prelude std-collections-tree Option-returning ordered lookup; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::values|check-prelude std-collections-tree-iter sorted-by-key value iterator; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::capacity|check-prelude std-collections-tree tree set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::clear|check-prelude std-collections-tree drops live tree set nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::contains|check-prelude std-collections-tree ordered set lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::insert|check-prelude std-collections-tree red-black set insertion with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::iter|check-prelude std-collections-tree-iter sorted iterator and IntoIterator; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
@@ -418,11 +424,17 @@ struct std::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
 struct std::ascii::ParsedInt|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::collections::HashMapKeys[K]|std collections hash iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::HashMapValues[V]|std collections hash iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMap[K, V]|std collections hash map tests; docs/stdlib/modules/collections.md
+struct std::collections::HashSetIter[T]|std collections hash iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashSet[T]|std collections hash set tests; docs/stdlib/modules/collections.md
 struct std::collections::Iter[T]|std collections iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::Set[T]|std collections linear set tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeMapKeys[K]|std collections tree iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeMapValues[V]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeSetIter[T]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row

@@ -1,0 +1,47 @@
+// Covers hash-table iterators over live buckets after collisions, tombstones,
+// and replacement. Hash iteration is bucket-order, so callers should rely on
+// membership, not insertion order.
+fn constant_hash(value: i64) -> u64 {
+  return 7;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var map = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+
+  map.insert(ref mut zone, 1, 5);
+  map.insert(ref mut zone, 9, 7);
+  map.insert(ref mut zone, 17, 11);
+  map.remove(9);
+  map.insert(ref mut zone, 25, 13);
+
+  var key_sum = 0;
+  for key in map.keys() {
+    key_sum = key_sum + key;
+  }
+
+  var value_sum = 0;
+  for map_value in map.values() {
+    value_sum = value_sum + map_value;
+  }
+
+  var set = HashSet::new<i64>(ref mut zone, 1, constant_hash);
+  set.insert(ref mut zone, 2);
+  set.insert(ref mut zone, 10);
+  set.insert(ref mut zone, 18);
+  set.remove(10);
+  set.insert(ref mut zone, 26);
+
+  var set_sum = 0;
+  for set_value in set.iter() {
+    set_sum = set_sum + set_value;
+  }
+
+  var direct_sum = 0;
+  for direct_value in set {
+    direct_sum = direct_sum + direct_value;
+  }
+
+  zone::destroy(zone);
+  return key_sum + value_sum + set_sum + direct_sum;
+}
