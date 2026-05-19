@@ -39,6 +39,9 @@ identifies the exact case:
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
 - `std-string-split-join.ari`: source `std::string` byte-slice search,
   borrowed split/chunk/window views, and allocator-backed `join_in`.
+- `std-string-natural-api.ari`: source `std::string` literal-oriented
+  constructors, append helpers, text search/comparison wrappers, owned trim
+  aliases, and validated UTF-8 view access.
 - `std-string-ascii-helpers.ari`: source `std::string` borrowed ASCII trim
   views and whole-string parsing behavior.
 - `std-string-ascii-case-helpers.ari`: source `std::string` ASCII-only

@@ -139,9 +139,9 @@ Use this table when writing code from docs alone:
 | Store values by ordered lookup. | `TreeMap::new<K,V>(ref mut zone, capacity, less)` or `collections::tree_map<K,V>(...)` | The comparator has shape `fn(K, K) -> bool` and must be a strict less-than relation. `collections::less_i64` is available for i64 keys. `keys()` and `values()` iterate in ascending key order. |
 | Store ordered membership. | `TreeSet::new<T>(ref mut zone, capacity, less)` or `collections::tree_set<T>(...)` | Uses a red-black tree. `insert` rejects equal values, `replace` returns the previous equal value, and `iter`/direct `for value in set` walk ascending comparator order. |
 | Generate random values or shuffle a slice. | `random::entropy()`, `random::seed(123u64)`, `random::from_entropy()`, `rng.range(start, end)`, `rng.float()`, `rng.shuffle<T>(values)` | Use `entropy`/`fill` for OS-backed seed material. `Prng` is deterministic and non-cryptographic, so it is for simulations, tests, randomized algorithms, and repeatable shuffles. |
-| Store owned byte text. | `std::string::from_string(ref mut zone, "text")`, `std::string::from_slice_in(ref mut zone, std::string::bytes("true"))`, `std::string::new(ref mut zone, capacity)`, `std::string::join_in(ref mut zone, parts, separator)` | The handle stores bytes, not a full Unicode text abstraction yet. Use `std::string::bytes("literal")` for a borrowed `Slice[u8]` without the trailing NUL, and use `join_in` for allocating joins over `Slice[Slice[u8]]`; use `split`, `chunks`, and `windows` for borrowed byte views. |
+| Store owned byte text. | `std::string::from(ref mut zone, "text")`, `std::string::copy(ref mut zone, bytes)`, `std::string::empty(ref mut zone)`, `std::string::join_in(ref mut zone, parts, separator)` | The handle stores bytes, not a full Unicode text abstraction yet. Use `append`, `append_byte`, `append_bytes`, `contains_text`, `starts_with_text`, and `equals_text` for ordinary string-literal workflows. Use `std::string::bytes("literal")` when a borrowed `Slice[u8]` is the right boundary. |
 | Distinguish text and path boundary values. | `std::string::utf8(bytes)`, `std::string::os_str(bytes)`, `std::string::c_str(text)`, `std::path::bytes(bytes)`, `std::path::from_os(os)` | `String` is owned bytes, `Utf8` is validated borrowed UTF-8, `OsStr` is raw OS bytes, `CStr` wraps NUL-terminated `string`, and `PathBytes` means path policy. |
-| Compare, search, trim, or parse owned ASCII byte text. | `text.equals_ignore_case(bytes)`, `text.index_of_ignore_case(bytes)`, `text.trim()`, `text.trim_to(ref mut zone)`, `text.parse_decimal()`, `text.parse_decimal_prefix()` | Case-insensitive `String` helpers fold only ASCII letters. Plain trim methods return borrowed `Slice[u8]` views; `*_to` trim methods copy into a target zone. Whole parse methods require the whole string to be valid; prefix parsers return `Option[ascii::ParsedInt]`. |
+| Compare, search, trim, or parse owned ASCII byte text. | `text.equals_text_ignore_case("text")`, `text.index_of_text_ignore_case("text")`, `text.trim()`, `text.trimmed(ref mut zone)`, `text.parse_decimal()`, `text.parse_decimal_prefix()` | Case-insensitive `String` helpers fold only ASCII letters. Plain trim methods return borrowed `Slice[u8]` views; `trimmed*`/`*_to` methods copy into a target zone. Whole parse methods require the whole string to be valid; prefix parsers return `Option[ascii::ParsedInt]`. |
 | Classify, compare, search, trim, or parse ASCII bytes. | `ascii::is_digit`, `ascii::is_printable`, `ascii::equals_ignore_case`, `ascii::index_of_ignore_case`, `ascii::to_lower`, `ascii::trim`, `ascii::parse_decimal_prefix` | Scalar helpers take `u8`; slice helpers take `Slice[u8]`. Case-insensitive comparison/search folds only ASCII letters. Whole parsers return `Option[i64]`; prefix parsers return `Option[ascii::ParsedInt]` with `value` and consumed `len`. |
 | Parse whole byte-slice values. | `parse::integer(bytes)`, `parse::boolean(bytes)`, `parse::is_float(bytes)`, `parse::float_or(bytes, fallback)`, `parse::float(bytes)` | These helpers trim ASCII whitespace and reject trailing garbage. `boolean` accepts lowercase `true`/`false`. `float` panics on invalid input; use `is_float` or `float_or` when invalid input is ordinary. |
 | Validate text or encode bytes. | `encoding::is_ascii(bytes)`, `encoding::is_utf8(bytes)`, `encoding::utf8_count(bytes)`, `encoding::is_utf16(words)`, `encoding::encode_hex_in(ref mut zone, bytes)`, `encoding::decode_hex_in(ref mut zone, text)`, `encoding::encode_base64_in(ref mut zone, bytes)`, `encoding::decode_base64_in(ref mut zone, text)` | Hex emits lowercase. Base64 uses the standard `+`/`/` alphabet with `=` padding. Call `can_decode_hex` or `can_decode_base64` before decoding untrusted input. |
@@ -312,23 +312,27 @@ forms where applicable.
 
 `std::string::String` mutating methods are byte-oriented and include `push`,
 `pop`, `try_pop`, `set`, `replace`, `insert`, `truncate`, `clear`, `reserve`,
-`reserve_extra`, `extend_from_slice`, `resize`, `append_string`,
-`append_i64`, `append_u64`, `append_bool`, `append_f32`, `append_f64`, and
-the explicit-zone `_in` forms.
+`reserve_extra`, `append`, `append_byte`, `append_bytes`, `append_string_in`,
+`append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`,
+`append_f64_in`, and the explicit-zone `_in` forms.
 
 `trim_start`, `trim_end`, and `trim` return borrowed `Slice[u8]` views. Use
-`trim_start_to(ref mut zone)`, `trim_end_to(ref mut zone)`, or
-`trim_to(ref mut zone)` when the trimmed bytes need to be copied into a zone
-and survive after the source string's zone is reset.
+`trimmed_start(ref mut zone)`, `trimmed_end(ref mut zone)`,
+`trimmed(ref mut zone)`, or the older `*_to` names when the trimmed bytes need
+to be copied into a zone and survive after the source string's zone is reset.
 
-`std::string::String` read-only byte helpers also include `starts_with`,
-`ends_with`, `equals`, `equals_ignore_case`, `starts_with_ignore_case`,
-`ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`,
-`trim_start`, `trim_end`, `trim`, `parse_decimal`, `parse_decimal_prefix`,
-`parse_hex`, and `parse_hex_prefix`. The plain ASCII trim helpers return
-borrowed byte slices, the `*_to` trim helpers return copied strings in a target
-zone, whole parsers return `Option[i64]`, and prefix parsers return
-`Option[std::ascii::ParsedInt]`.
+`std::string::String` read-only byte helpers also include `find_text`,
+`contains_text`, `starts_with`, `starts_with_text`, `ends_with`,
+`ends_with_text`, `equals`, `equals_text`, `equals_ignore_case`,
+`equals_text_ignore_case`, `starts_with_ignore_case`,
+`starts_with_text_ignore_case`, `ends_with_ignore_case`,
+`ends_with_text_ignore_case`, `index_of_ignore_case`,
+`index_of_text_ignore_case`, `contains_ignore_case`, `contains_text_ignore_case`,
+`try_utf8`, `trim_start`, `trim_end`, `trim`, `parse_decimal`,
+`parse_decimal_prefix`, `parse_hex`, and `parse_hex_prefix`. The plain ASCII
+trim helpers return borrowed byte slices, the `*_to` trim helpers return
+copied strings in a target zone, whole parsers return `Option[i64]`, and prefix
+parsers return `Option[std::ascii::ParsedInt]`.
 
 `std::boxed::Box[T]` methods include `get`, `set`, `replace`, `take`,
 `try_take`, `clear`, `put_in`, `copy_to`, `as_ref`, `as_mut`, `as_ptr`,

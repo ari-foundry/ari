@@ -385,9 +385,15 @@ Checklist:
 - [x] `std::string::from_slice_in(ref mut Zone, Slice[u8])` copies a borrowed
       byte slice into independent source `std::string::String` storage tied to
       the target zone
+- [x] `std::string::from(ref mut Zone, string)`, `copy(ref mut Zone, Slice[u8])`,
+      and `empty(ref mut Zone)` provide the natural constructor spellings for
+      everyday string code while preserving the explicit target zone
 - [x] byte character literals such as `'c'`, `'\n'`, and `'\x63'` lower as
       `u8`, and `std::string::bytes(string)` exposes borrowed literal bytes as
       `Slice[u8]` without the trailing NUL
+- [x] source `std::string::String` exposes natural append helpers
+      `append`, `append_byte`, and `append_bytes` so literal text, one byte, and
+      borrowed byte views do not need the lower-level `_in` names in normal code
 - [x] source `std::string::String` exposes borrowed-receiver endpoint byte
       reads through `first` and `last`
 - [x] source `std::string::String` exposes `try_first`, `try_last`,
@@ -399,6 +405,10 @@ Checklist:
       `ends_with(Slice[u8])` prefix/suffix checks over borrowed byte views
 - [x] source `std::string::String.equals(Slice[u8])` checks exact byte-view
       equality with borrowed receiver lowering
+- [x] source `std::string::String` exposes literal-oriented
+      `find_text`, `contains_text`, `starts_with_text`, `ends_with_text`, and
+      `equals_text` wrappers so most text checks can accept Ari string literals
+      directly
 - [x] source `std::string::String` exposes borrowed ASCII `trim_start`,
       `trim_end`, and `trim` views plus whole-string `parse_decimal` and
       `parse_hex` helpers through the `std::ascii` source policy
@@ -409,13 +419,19 @@ Checklist:
       `equals_ignore_case`, `starts_with_ignore_case`,
       `ends_with_ignore_case`, `index_of_ignore_case`, and
       `contains_ignore_case` helpers through the `std::ascii` source policy
+- [x] source `std::string::String` exposes `_text_ignore_case` wrappers for the
+      ASCII case-insensitive comparison/search helpers
 - [x] source `std::string::String` exposes UTF-8 `is_utf8`,
       `codepoint_count`, `codepoint_at`, and `push_codepoint_in` helpers
       through the `std::encoding` source policy
+- [x] source `std::string::String.try_utf8()` returns the typed
+      `std::Option[std::string::Utf8]` view directly when bytes are valid UTF-8
 - [x] source `std::string::String` exposes `trim_start_to`,
       `trim_end_to`, and `trim_to` owned ASCII trim copies that remain valid
       after the source zone is reset, while target-zone reset invalidates the
       copied handle
+- [x] source `std::string::String` exposes natural owned trim aliases
+      `trimmed_start`, `trimmed_end`, and `trimmed`
 - [x] source `std::ascii` exposes byte classification predicates for
       alphanumeric, blank, control, printable, graphic, punctuation,
       whitespace, and hexadecimal parser code

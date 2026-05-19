@@ -28,6 +28,8 @@ checks.
 - `std-string-from-slice-in.ari`: owned copies from borrowed byte slices.
 - `std-string-byte-literals.ari`: byte character literals and literal string
   byte views.
+- `std-string-natural-api.ari`: literal-oriented constructors, append helpers,
+  text search/comparison wrappers, owned trim aliases, and UTF-8 view access.
 - `std-string-unicode-helpers.ari`: UTF-8 validation, code-point access, and
   scalar append convenience methods.
 - `std-string-text-kinds.ari`: typed borrowed views for validated UTF-8 bytes,

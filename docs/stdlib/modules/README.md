@@ -8,10 +8,10 @@ limits, examples, and test files for one module.
 
 - [std::option and std::result](option-result.md): ADT helpers for absence,
   failure, conversion, and lazy fallback.
-- [std::string](string.md): zone-backed owned byte-string handles, growth,
-  borrowed views, byte search, ASCII case search, UTF-8 scalar helpers, typed
-  `Utf8`/`OsStr`/`CStr` views, trim views/copies, and whole/prefix parsing
-  helpers.
+- [std::string](string.md): zone-backed owned byte-string handles, natural
+  literal-oriented constructors and append/search helpers, borrowed views, byte
+  search, ASCII case search, UTF-8 scalar helpers, typed `Utf8`/`OsStr`/`CStr`
+  views, trim views/copies, and whole/prefix parsing helpers.
 - [std::io](io.md): low-level process IO hooks plus `Reader`/`Writer`/`Seek`,
   `stdin`/`stdout`/`stderr`, `Cursor`, caller-buffered
   `BufReader`/`BufWriter`, exact reads, whole-slice writes, and current

@@ -1,0 +1,46 @@
+// Covers natural string-literal and text-oriented convenience APIs.
+fn main() -> i64 {
+  var zone = zone::create(1024);
+
+  var text = std::string::from(ref mut zone, "ari");
+  text.append(ref mut zone, "-lang");
+  text.append_byte(ref mut zone, '!');
+  text.append_bytes(ref mut zone, std::string::bytes(" ok"));
+
+  assert(text.equals_text("ari-lang! ok"));
+  assert(text.starts_with_text("ari"));
+  assert(text.ends_with_text("ok"));
+  assert(text.contains_text("lang"));
+  assert_eq_i64(text.find_text("lang"), 4);
+  assert_eq_i64(text.bytes().len, text.len());
+  let text_bytes = text.bytes();
+  assert(text_bytes.equals(text.as_slice()));
+
+  assert(text.equals_text_ignore_case("ARI-LANG! OK"));
+  assert(text.starts_with_text_ignore_case("ARI"));
+  assert(text.ends_with_text_ignore_case("OK"));
+  assert(text.contains_text_ignore_case("LANG"));
+  assert_eq_i64(text.index_of_text_ignore_case("OK"), 10);
+
+  let utf8 = text.try_utf8().unwrap();
+  assert_eq_i64(utf8.codepoint_count(), text.len());
+
+  var copied = std::string::copy(ref mut zone, text.bytes());
+  assert(copied.equals_text("ari-lang! ok"));
+
+  var spaced = std::string::from(ref mut zone, "  trim  ");
+  var left_trimmed = spaced.trimmed_start(ref mut zone);
+  var right_trimmed = spaced.trimmed_end(ref mut zone);
+  var trimmed = spaced.trimmed(ref mut zone);
+  assert(left_trimmed.equals_text("trim  "));
+  assert(right_trimmed.equals_text("  trim"));
+  assert(trimmed.equals_text("trim"));
+
+  var empty = std::string::empty(ref mut zone);
+  empty.append(ref mut zone, "");
+  assert(empty.is_empty());
+
+  let score = text.len() + copied.len() + trimmed.len() + utf8.codepoint_count();
+  zone::destroy(zone);
+  return score - 40;
+}

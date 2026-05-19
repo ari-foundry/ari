@@ -68,6 +68,18 @@ pub fn from_slice_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string:
   return output;
 }
 
+pub fn from(zone: ref mut Zone, text: string) -> std::string::String {
+  return std::string::from_string(zone, text);
+}
+
+pub fn copy(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
+  return std::string::from_slice_in(zone, values);
+}
+
+pub fn empty(zone: ref mut Zone) -> std::string::String {
+  return std::string::new(zone, 0);
+}
+
 pub fn join_in(
   zone: ref mut Zone,
   parts: std::Slice[std::Slice[u8]],
@@ -268,6 +280,29 @@ pub impl std::string::String {
 
   fn push_in(self: ref mut Self, zone: ref mut Zone, value: u8) -> void {
     append_byte_in(self, zone, value);
+  }
+
+  fn append_byte(self: ref mut Self, zone: ref mut Zone, value: u8) -> void {
+    append_byte_in(self, zone, value);
+  }
+
+  fn append_bytes(self: ref mut Self, zone: ref mut Zone, values: super::Slice[u8]) -> void {
+    var index = 0;
+    while index < values.len {
+      append_byte_in(self, zone, values[index]);
+      index = index + 1;
+    }
+  }
+
+  fn append(self: ref mut Self, zone: ref mut Zone, value: string) -> void {
+    let data = value as ptr u8;
+    var index = 0;
+    var byte = ptr_load(ptr_add(data, index));
+    while byte != '\x00' {
+      append_byte_in(self, zone, byte);
+      index = index + 1;
+      byte = ptr_load(ptr_add(data, index));
+    }
   }
 
   fn append_string_in(self: ref mut Self, zone: ref mut Zone, value: string) -> void {
@@ -570,6 +605,14 @@ pub impl std::string::String {
     return view.contains_slice(values);
   }
 
+  fn find_text(self: ref Self, value: string) -> i64 {
+    return self.find(std::string::bytes(value));
+  }
+
+  fn contains_text(self: ref Self, value: string) -> bool {
+    return self.contains_slice(std::string::bytes(value));
+  }
+
   fn starts_with(self: ref Self, values: super::Slice[u8]) -> bool {
     if values.len > self.raw.len {
       return false;
@@ -582,6 +625,10 @@ pub impl std::string::String {
       index = index + 1;
     }
     return true;
+  }
+
+  fn starts_with_text(self: ref Self, value: string) -> bool {
+    return self.starts_with(std::string::bytes(value));
   }
 
   fn ends_with(self: ref Self, values: super::Slice[u8]) -> bool {
@@ -599,6 +646,10 @@ pub impl std::string::String {
     return true;
   }
 
+  fn ends_with_text(self: ref Self, value: string) -> bool {
+    return self.ends_with(std::string::bytes(value));
+  }
+
   fn equals(self: ref Self, values: super::Slice[u8]) -> bool {
     if self.raw.len != values.len {
       return false;
@@ -613,9 +664,17 @@ pub impl std::string::String {
     return true;
   }
 
+  fn equals_text(self: ref Self, value: string) -> bool {
+    return self.equals(std::string::bytes(value));
+  }
+
   fn equals_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::equals_ignore_case(view, values);
+  }
+
+  fn equals_text_ignore_case(self: ref Self, value: string) -> bool {
+    return self.equals_ignore_case(std::string::bytes(value));
   }
 
   fn starts_with_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
@@ -623,9 +682,17 @@ pub impl std::string::String {
     return std::ascii::starts_with_ignore_case(view, values);
   }
 
+  fn starts_with_text_ignore_case(self: ref Self, value: string) -> bool {
+    return self.starts_with_ignore_case(std::string::bytes(value));
+  }
+
   fn ends_with_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::ends_with_ignore_case(view, values);
+  }
+
+  fn ends_with_text_ignore_case(self: ref Self, value: string) -> bool {
+    return self.ends_with_ignore_case(std::string::bytes(value));
   }
 
   fn index_of_ignore_case(self: ref Self, values: super::Slice[u8]) -> i64 {
@@ -633,14 +700,27 @@ pub impl std::string::String {
     return std::ascii::index_of_ignore_case(view, values);
   }
 
+  fn index_of_text_ignore_case(self: ref Self, value: string) -> i64 {
+    return self.index_of_ignore_case(std::string::bytes(value));
+  }
+
   fn contains_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::contains_ignore_case(view, values);
   }
 
+  fn contains_text_ignore_case(self: ref Self, value: string) -> bool {
+    return self.contains_ignore_case(std::string::bytes(value));
+  }
+
   fn is_utf8(self: ref Self) -> bool {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::encoding::is_utf8(view);
+  }
+
+  fn try_utf8(self: ref Self) -> std::Option[std::string::Utf8] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::string::utf8(view);
   }
 
   fn codepoint_count(self: ref Self) -> std::Option[i64] {
@@ -662,12 +742,20 @@ pub impl std::string::String {
     return std::string::from_slice_in(target, self.trim_start());
   }
 
+  fn trimmed_start(self: ref Self, target: ref mut Zone) -> std::string::String {
+    return std::string::from_slice_in(target, self.trim_start());
+  }
+
   fn trim_end(self: ref Self) -> super::Slice[u8] {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::trim_end(view);
   }
 
   fn trim_end_to(self: ref Self, target: ref mut Zone) -> std::string::String {
+    return std::string::from_slice_in(target, self.trim_end());
+  }
+
+  fn trimmed_end(self: ref Self, target: ref mut Zone) -> std::string::String {
     return std::string::from_slice_in(target, self.trim_end());
   }
 
@@ -679,6 +767,10 @@ pub impl std::string::String {
   }
 
   fn trim_to(self: ref Self, target: ref mut Zone) -> std::string::String {
+    return std::string::from_slice_in(target, self.trim());
+  }
+
+  fn trimmed(self: ref Self, target: ref mut Zone) -> std::string::String {
     return std::string::from_slice_in(target, self.trim());
   }
 
@@ -710,7 +802,11 @@ pub impl std::string::String {
     return self.raw.data;
   }
 
-  fn as_slice(self: ref mut Self) -> super::Slice[u8] {
+  fn bytes(self: ref Self) -> super::Slice[u8] {
+    return super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+  }
+
+  fn as_slice(self: ref Self) -> super::Slice[u8] {
     return super::Slice<u8> { data: self.raw.data, len: self.raw.len };
   }
 }

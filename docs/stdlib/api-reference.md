@@ -1289,7 +1289,10 @@ std::string::c_len(text)
 std::string::c_bytes(text)
 std::string::bytes(text)
 std::string::new(ref mut zone, capacity)
+std::string::empty(ref mut zone)
+std::string::from(ref mut zone, "text")
 std::string::from_string(ref mut zone, "text")
+std::string::copy(ref mut zone, bytes)
 std::string::from_slice_in(ref mut zone, bytes)
 std::string::join_in(ref mut zone, parts, separator)
 text.len()
@@ -1313,26 +1316,39 @@ text.clear()
 text.truncate(length)
 text.reserve(ref mut zone, capacity)
 text.reserve_extra(ref mut zone, additional)
+text.append(ref mut zone, "text")
+text.append_byte(ref mut zone, byte)
+text.append_bytes(ref mut zone, bytes)
 text.extend_from_slice_in(ref mut zone, bytes)
 text.resize_in(ref mut zone, length, byte)
 text.index_of(byte)
 text.contains(byte)
 text.count(byte)
 text.find(bytes)
+text.find_text("text")
 text.contains_slice(bytes)
+text.contains_text("text")
 text.slice(start, end)
 text.split_at(index)
 text.chunks(size)
 text.windows(size)
 text.split(delimiter)
 text.starts_with(bytes)
+text.starts_with_text("text")
 text.ends_with(bytes)
+text.ends_with_text("text")
 text.equals(bytes)
+text.equals_text("text")
 text.equals_ignore_case(bytes)
+text.equals_text_ignore_case("text")
 text.starts_with_ignore_case(bytes)
+text.starts_with_text_ignore_case("text")
 text.ends_with_ignore_case(bytes)
+text.ends_with_text_ignore_case("text")
 text.index_of_ignore_case(bytes)
+text.index_of_text_ignore_case("text")
 text.contains_ignore_case(bytes)
+text.contains_text_ignore_case("text")
 text.append_string_in(ref mut zone, "text")
 text.append_i64_in(ref mut zone, value)
 text.append_u64_in(ref mut zone, value)
@@ -1341,18 +1357,23 @@ text.append_f32_in(ref mut zone, value, precision)
 text.append_f64_in(ref mut zone, value, precision)
 text.push_codepoint_in(ref mut zone, scalar)
 text.is_utf8()
+text.try_utf8()
 text.codepoint_count()
 text.codepoint_at(byte_index)
 text.trim_start()
 text.trim_start_to(ref mut zone)
+text.trimmed_start(ref mut zone)
 text.trim_end()
 text.trim_end_to(ref mut zone)
+text.trimmed_end(ref mut zone)
 text.trim()
 text.trim_to(ref mut zone)
+text.trimmed(ref mut zone)
 text.parse_decimal()
 text.parse_decimal_prefix()
 text.parse_hex()
 text.parse_hex_prefix()
+text.bytes()
 text.as_slice()
 text.as_ptr()
 text.copy_to(ref mut zone)
@@ -1381,25 +1402,39 @@ compare a literal like `"true"` against byte slices. Single-quoted byte
 character literals such as `'t'`, `'\n'`, and `'\x74'` are `u8`, so local byte
 vectors can be written as `['t', 'r', 'u', 'e']`.
 
+`std::string::from(ref mut zone, "text")`, `std::string::copy(ref mut zone,
+bytes)`, and `std::string::empty(ref mut zone)` are the natural constructors
+for everyday code. The older `from_string` and `from_slice_in` names remain
+available when the source kind should be explicit. `text.append`, `append_byte`,
+and `append_bytes` grow with the owning zone while hiding the lower-level
+`append_string_in` and `extend_from_slice_in` names from normal call sites.
+
 `String` stores bytes, so `join_in`, `find`, `contains_slice`, `slice`,
 `split_at`, `chunks`, `windows`, and delimiter `split` operate on byte offsets
-and borrowed `Slice[u8]` views. `join_in` is the allocating helper: it joins
-`Slice[Slice[u8]]` parts with a byte separator into the caller's zone.
+and borrowed `Slice[u8]` views. `find_text`, `contains_text`,
+`starts_with_text`, `ends_with_text`, and `equals_text` accept Ari `string`
+values directly by using `std::string::bytes` internally. `join_in` is the
+allocating helper: it joins `Slice[Slice[u8]]` parts with a byte separator into
+the caller's zone.
 `equals_ignore_case`, `starts_with_ignore_case`,
 `ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`,
 `trim_start`, `trim_end`, `trim`, `parse_decimal`, `parse_decimal_prefix`,
 `parse_hex`, and `parse_hex_prefix` intentionally reuse `std::ascii` behavior.
+The `_text_ignore_case` forms are literal-friendly wrappers over the same ASCII
+policy.
 The `try_*` byte accessors return `Option[u8]` for empty or out-of-range
 access. The plain trim methods return borrowed `Slice[u8]` views, while
 `trim_start_to`, `trim_end_to`, and `trim_to` copy the trimmed bytes into a
-target zone and return owned `String` handles. The whole parse methods require
+target zone and return owned `String` handles. `trimmed_start`, `trimmed_end`,
+and `trimmed` are friendlier owned-copy aliases. The whole parse methods require
 the whole string to be valid and return `Option[i64]`; prefix parsers return
 `Option[std::ascii::ParsedInt]` and stop before the first invalid byte. Trim
 first when leading or trailing ASCII whitespace should be ignored.
 
 The UTF-8 helpers reuse `std::encoding`. `is_utf8` validates the whole byte
-string, `codepoint_count` returns an `Option[i64]` scalar count, and
-`codepoint_at` decodes one scalar at a byte offset into
+string, `try_utf8` returns `Option[std::string::Utf8]`, `codepoint_count`
+returns an `Option[i64]` scalar count, and `codepoint_at` decodes one scalar at
+a byte offset into
 `Option[std::encoding::Utf8Char]`. `push_codepoint_in` appends one Unicode
 scalar encoded as UTF-8 and panics for invalid scalar values. These helpers
 work with Unicode scalar values, not grapheme clusters or normalization.

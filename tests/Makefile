@@ -915,6 +915,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-byte-literals.ari -o $(BUILD_DIR)/prelude/std-string-byte-literals.elf
 	$(BUILD_DIR)/prelude/std-string-byte-literals.elf; code=$$?; test $$code -eq 4
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-byte-literals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-byte-literals.elf; $(BUILD_DIR)/prelude/std-string-byte-literals.elf; code=$$?; test $$code -eq 4; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-natural-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-natural-api.ll
+	grep -q '_ARNv3std6string4from' $(BUILD_DIR)/prelude/std-string-natural-api.ll
+	grep -q 'String8inherent6append' $(BUILD_DIR)/prelude/std-string-natural-api.ll
+	grep -q 'String8inherent13contains_text' $(BUILD_DIR)/prelude/std-string-natural-api.ll
+	grep -q 'String8inherent7trimmed' $(BUILD_DIR)/prelude/std-string-natural-api.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-natural-api.ari -o $(BUILD_DIR)/prelude/std-string-natural-api.elf
+	$(BUILD_DIR)/prelude/std-string-natural-api.elf; code=$$?; test $$code -eq 0
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-natural-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-natural-api.elf; $(BUILD_DIR)/prelude/std-string-natural-api.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari --emit-llvm $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q 'declare ptr @"dlopen"' $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q 'declare ptr @"dlsym"' $(BUILD_DIR)/prelude/std-c-interop.ll

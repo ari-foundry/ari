@@ -47,14 +47,20 @@ Constructors allocate in an explicit zone:
 
 ```ari
 std::string::new(ref mut zone, capacity)
+std::string::empty(ref mut zone)
+std::string::from(ref mut zone, "text")
 std::string::from_string(ref mut zone, "text")
+std::string::copy(ref mut zone, bytes)
 std::string::from_slice_in(ref mut zone, bytes)
 std::string::join_in(ref mut zone, parts, separator)
 ```
 
 `new` creates an empty buffer with fixed starting capacity.
-`from_string` copies a lowercase `string` literal/runtime value.
-`from_slice_in` copies a borrowed `Slice[u8]`.
+`empty` is the zero-capacity spelling for a string you plan to grow.
+`from` is the natural constructor for Ari `string` values and forwards to
+`from_string`. `copy` is the natural constructor for borrowed byte slices and
+forwards to `from_slice_in`. The older names stay documented because they make
+the backing source explicit in low-level library code.
 `join_in` joins a `Slice[Slice[u8]]` with a byte separator and returns an owned
 `String` in the provided zone.
 
@@ -101,12 +107,14 @@ they return `Option[u8]`. `replace` returns the previous byte.
 Borrowed views and raw pointers:
 
 ```ari
+text.bytes()
 text.as_slice()
 text.as_ptr()
 ```
 
-`as_slice` returns a borrowed `Slice[u8]` over the current bytes. `as_ptr`
-returns the backing byte pointer and preserves zone provenance in the checker.
+`bytes` is the natural read-only borrowed view. `as_slice` is the generic
+sequence spelling for the same `Slice[u8]` view. `as_ptr` returns the backing
+byte pointer and preserves zone provenance in the checker.
 
 ## Mutation And Growth
 
@@ -128,6 +136,9 @@ Growth-capable mutation uses the owning zone. The explicit forms are the
 source-level contract:
 
 ```ari
+text.append(ref mut zone, "text")
+text.append_byte(ref mut zone, byte)
+text.append_bytes(ref mut zone, bytes)
 text.push_in(ref mut zone, byte)
 text.insert_in(ref mut zone, index, byte)
 text.reserve(ref mut zone, capacity)
@@ -135,6 +146,10 @@ text.reserve_extra(ref mut zone, additional)
 text.extend_from_slice_in(ref mut zone, bytes)
 text.resize_in(ref mut zone, length, byte)
 ```
+
+Use `append` for Ari `string` values, `append_byte` for one byte, and
+`append_bytes` for a borrowed `Slice[u8]`. The `_in` forms remain the lower
+level names used by older tests and compiler-assisted formatting.
 
 For tracked local `String` handles, Ari can infer the same source zone for the
 common non-`_in` convenience calls documented in the language guide. The
@@ -166,12 +181,16 @@ text.index_of(byte)
 text.contains(byte)
 text.count(byte)
 text.find(bytes)
+text.find_text("text")
 text.contains_slice(bytes)
+text.contains_text("text")
 ```
 
 `index_of`, `contains`, and `count` operate on one byte. `find` searches for a
 borrowed byte slice and returns the first byte offset or `-1`; an empty search
-slice matches at `0`. `contains_slice` is the boolean wrapper.
+slice matches at `0`. `contains_slice` is the boolean wrapper. The `_text`
+forms accept Ari `string` values directly, so callers do not have to spell
+`std::string::bytes("literal")` at every search site.
 
 Slice comparison and view helpers operate on borrowed `Slice[u8]` values:
 
@@ -182,14 +201,18 @@ text.chunks(size)
 text.windows(size)
 text.split(delimiter)
 text.starts_with(bytes)
+text.starts_with_text("text")
 text.ends_with(bytes)
+text.ends_with_text("text")
 text.equals(bytes)
+text.equals_text("text")
 ```
 
 `slice` and `split_at` return borrowed byte views. `chunks`, `windows`, and
 delimiter `split` are lazy iterators over borrowed byte views and do not
 allocate. They compare exact byte values and do not perform case folding or
-decoding.
+decoding. The `_text` variants are exact byte comparisons against Ari `string`
+values without the trailing NUL.
 
 ## ASCII Helpers
 
@@ -197,16 +220,24 @@ decoding.
 
 ```ari
 text.equals_ignore_case(bytes)
+text.equals_text_ignore_case("text")
 text.starts_with_ignore_case(bytes)
+text.starts_with_text_ignore_case("text")
 text.ends_with_ignore_case(bytes)
+text.ends_with_text_ignore_case("text")
 text.index_of_ignore_case(bytes)
+text.index_of_text_ignore_case("text")
 text.contains_ignore_case(bytes)
+text.contains_text_ignore_case("text")
 text.trim_start()
 text.trim_start_to(ref mut zone)
+text.trimmed_start(ref mut zone)
 text.trim_end()
 text.trim_end_to(ref mut zone)
+text.trimmed_end(ref mut zone)
 text.trim()
 text.trim_to(ref mut zone)
+text.trimmed(ref mut zone)
 text.parse_decimal()
 text.parse_decimal_prefix()
 text.parse_hex()
@@ -220,12 +251,14 @@ matching byte offset or `-1`; an empty search slice matches at `0`.
 The trim methods return borrowed `Slice[u8]` views into the same storage; they
 do not allocate or copy. The `*_to` forms return owned `String` copies in a
 target zone, so the copied handle remains usable after the source zone is reset
-or destroyed. The whole-string parse methods require the entire string to be a
-valid decimal or hexadecimal ASCII integer and return `Option[i64]`. Empty
-input, whitespace, or invalid bytes return `None<i64>()`. The prefix parsers
-return `Option[std::ascii::ParsedInt]` with the parsed `value` and consumed
-byte `len`, stopping before the first invalid byte. To accept surrounding ASCII
-whitespace, trim first and parse the returned slice with `std::ascii`:
+or destroyed. `trimmed_start`, `trimmed_end`, and `trimmed` are the friendlier
+owned-copy aliases for those `*_to` methods. The whole-string parse methods
+require the entire string to be a valid decimal or hexadecimal ASCII integer
+and return `Option[i64]`. Empty input, whitespace, or invalid bytes return
+`None<i64>()`. The prefix parsers return `Option[std::ascii::ParsedInt]` with
+the parsed `value` and consumed byte `len`, stopping before the first invalid
+byte. To accept surrounding ASCII whitespace, trim first and parse the returned
+slice with `std::ascii`:
 
 ```ari
 let view = text.trim();
@@ -241,12 +274,15 @@ Overflow behavior is not promised yet.
 
 ```ari
 text.is_utf8()
+text.try_utf8()
 text.codepoint_count()
 text.codepoint_at(byte_index)
 text.push_codepoint_in(ref mut zone, scalar)
 ```
 
-`is_utf8` is the boolean validation form. `codepoint_count` returns
+`is_utf8` is the boolean validation form. `try_utf8` returns
+`Option[std::string::Utf8]` so validated text can be passed around without
+rechecking at each call site. `codepoint_count` returns
 `Option[i64]`, with `None<i64>()` for invalid UTF-8. `codepoint_at` decodes one
 Unicode scalar at a byte offset and returns `Option[std::encoding::Utf8Char]`.
 It returns `None` for continuation-byte offsets, invalid sequences, and
@@ -326,6 +362,7 @@ tests/cases/standard-library/ok/string/std-string-first-last.ari
 tests/cases/standard-library/ok/string/std-string-try-byte-access.ari
 tests/cases/standard-library/ok/string/std-string-search.ari
 tests/cases/standard-library/ok/string/std-string-split-join.ari
+tests/cases/standard-library/ok/string/std-string-natural-api.ari
 tests/cases/standard-library/ok/string/std-string-prefix-suffix.ari
 tests/cases/standard-library/ok/string/std-string-equals.ari
 tests/cases/standard-library/ok/string/std-string-ascii-helpers.ari
