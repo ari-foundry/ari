@@ -11,8 +11,9 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 - Keep focused tests under `tests/cases/standard-library/`.
 - Keep this `docs/stdlib/` folder current with every public API.
 
-Current source families: `option`, `result`, `mem`, `zone` raw allocation plus
-source typed array allocation, `boxed`, `string` byte access/search/ASCII
+Current source families: `option`, `result`, `mem` layout, pointer, value, and
+byte memory helpers, `zone` raw allocation plus source typed array allocation,
+`boxed`, `string` byte access/search/ASCII
 helpers including case search, prefix parsers, and owned trim copies, `ascii`
 byte classification, case-insensitive comparison/search, slice helpers, and
 prefix parsers, `vec`, `iter`, `fmt`, `cmp` comparison helpers, `convert`
@@ -130,6 +131,12 @@ work. Each one should land in small tested slices with natural API names.
   spawn/fork where the platform supports it, thread creation/join, atomics or
   shared ownership handles, and error-code conversion.
 - Keep handles visible and owned; do not hide OS resources behind global state.
+- Track runtime ABI foundations separately in `docs/dev/runtime-support.md`:
+  `_start`, `crt0`, init/fini arrays, TLS setup, stack protector hooks,
+  panic/unwind personalities, `.eh_frame`, backtraces, dynamic linker
+  compatibility, compiler-rt/libgcc-style helpers, atomic fallbacks, and
+  memory builtins should become public library assumptions only after the
+  runtime contract is documented and testable.
 
 ## Phase 6: Library Developer Experience
 

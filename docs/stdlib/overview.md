@@ -30,7 +30,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
 | `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `rename`, `create_dir`, `remove_dir`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, whole-file `read`, `write`, `append`, `truncate`, `copy`, `read_to_string`, `close`. |
 | `std::net` | Source network address values. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `ipv4`, `ipv6`, `socket_addr`, `localhost`, family/loopback/unspecified predicates, port helpers. |
-| `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
+| `std::mem` | Layout, raw pointer, and byte memory operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
@@ -69,7 +69,8 @@ that need backend or checker knowledge:
 
 - `extern "ari"` IO, panic, environment, process, thread, sync, string
   allocation, and zone runtime hooks.
-- layout queries and typed pointer operations in `std::mem`.
+- layout queries, typed pointer operations, and byte memory intrinsics in
+  `std::mem`.
 - formatting macros, because they inspect literal format strings.
 - provenance checks for zone-backed handles and raw pointers.
 

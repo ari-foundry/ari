@@ -151,6 +151,12 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::fs::read_byte", "ari_builtin_fs_read_byte"},
         {"fs::write_byte", "ari_builtin_fs_write_byte"},
         {"std::fs::write_byte", "ari_builtin_fs_write_byte"},
+        {"mem::copy_bytes", "ari_builtin_mem_copy_bytes"},
+        {"std::mem::copy_bytes", "ari_builtin_mem_copy_bytes"},
+        {"mem::move_bytes", "ari_builtin_mem_move_bytes"},
+        {"std::mem::move_bytes", "ari_builtin_mem_move_bytes"},
+        {"mem::set_bytes", "ari_builtin_mem_set_bytes"},
+        {"std::mem::set_bytes", "ari_builtin_mem_set_bytes"},
         {"create", "ari_builtin_zone_create"},
         {"std::create", "ari_builtin_zone_create"},
         {"zone::create", "ari_builtin_zone_create"},
@@ -268,6 +274,9 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_fs_close") return builtin_sig({fs_file}, boolean);
     if (symbol == "ari_builtin_fs_read_byte") return builtin_sig({fs_file}, i64);
     if (symbol == "ari_builtin_fs_write_byte") return builtin_sig({fs_file, u8}, boolean);
+    if (symbol == "ari_builtin_mem_copy_bytes") return builtin_sig({ptr_u8, ptr_u8, i64}, void_type);
+    if (symbol == "ari_builtin_mem_move_bytes") return builtin_sig({ptr_u8, ptr_u8, i64}, void_type);
+    if (symbol == "ari_builtin_mem_set_bytes") return builtin_sig({ptr_u8, u8, i64}, void_type);
     if (symbol == "ari_builtin_write_i64") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_write_u64") return builtin_sig({u64}, i64);
     if (symbol == "ari_builtin_write_bool") return builtin_sig({boolean}, i64);

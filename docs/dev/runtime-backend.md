@@ -48,6 +48,13 @@ nonzero id before a spawned Ari thread calls source code. The slot is
 thread-local so thread runtime work keeps per-thread context state without
 changing the public `std::context::thread_id()` API.
 
+Hosted output still relies on the platform CRT for the process `_start`,
+startup objects, dynamic linker setup, and low-level compiler runtime support.
+The detailed ownership plan for `_start`, `crt0`, TLS setup, init/fini arrays,
+stack protector hooks, unwinding, backtraces, compiler-rt/libgcc-style helper
+routines, atomic fallbacks, and memory builtins lives in
+[Runtime Support Roadmap](runtime-support.md).
+
 ## Calling Convention
 
 Host output uses LLVM IR symbols directly, and Ari's external FFI surface is C
@@ -125,6 +132,7 @@ The LLVM backend still intentionally rejects or does not ABI-lower:
 
 ## Future Direction
 
-No active backend work is queued in the roadmap right now. A likely future
-cleanup is to move compiler-known prelude stubs toward Ari source modules where
-possible.
+The next backend work should follow the staged runtime support plan. Hosted
+Linux can continue leaning on the LLVM driver and platform CRT, while
+freestanding/no-libc work should start with `_start`, `crt0`, TLS, panic, and
+compiler-runtime helper policy before exposing more public library APIs.

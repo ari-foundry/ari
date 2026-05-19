@@ -522,6 +522,12 @@ check-prelude: $(TARGET)
 	grep -q 'load { i64, i64 }, ptr' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-value-helpers.ari -o $(BUILD_DIR)/prelude/std-mem-value-helpers.elf
 	$(BUILD_DIR)/prelude/std-mem-value-helpers.elf; code=$$?; test $$code -eq 46
+	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-byte-ops.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-byte-ops.ll
+	grep -q '@llvm.memcpy.p0.p0.i64' $(BUILD_DIR)/prelude/std-mem-byte-ops.ll
+	grep -q '@llvm.memmove.p0.p0.i64' $(BUILD_DIR)/prelude/std-mem-byte-ops.ll
+	grep -q '@llvm.memset.p0.i64' $(BUILD_DIR)/prelude/std-mem-byte-ops.ll
+	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-byte-ops.ari -o $(BUILD_DIR)/prelude/std-mem-byte-ops.elf
+	$(BUILD_DIR)/prelude/std-mem-byte-ops.elf; code=$$?; test $$code -eq 5
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-header-main.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/prelude-header-main.ll

@@ -54,7 +54,9 @@ The current `std` package already provides:
   helpers, `create`/`try_create`, whole-file `read`/`write`/`append`,
   `truncate`, streaming `copy`, `rename`, single-directory
   `create_dir`/`remove_dir`, and `read_to_string`
-- layout and pointer helpers in `std::mem`
+- layout, pointer, value, and byte memory helpers in `std::mem`, including
+  `copy_bytes`, `move_bytes`, and `set_bytes` lowering through LLVM memory
+  intrinsics
 - explicit-zone allocation in `std::zone`, including the source
   `alloc_array<T>` raw buffer helper
 - source handles for `Box`, `String`, and `Vec`
@@ -205,7 +207,7 @@ Likely compiler work:
 | `std::io` | Grow from the current `Reader`/`Writer`/`Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, caller-buffered `BufReader`/`BufWriter`, `read_exact`, `write_all`, and `flush` slice into `pipe`, file adapters, zone-owning buffered constructors, and drop-time writer flush. | current `std-io-byte-slice` raw stdout byte-slice output, `std-io-traits-cursor` trait/cursor/exact-read/write-all/flush checks, `std-io-stderr` stderr routing and stdout/stderr separation checks, and `std-io-buffered` caller-provided buffer fill/flush checks; future pipe EOF/close behavior, zone-owned buffered storage, drop-time flush policy, and `File` trait-adapter tests. | Current stdout/stderr/caller-buffered source slice uses runtime stream hooks. Future zone-owning buffered wrappers need std raw-buffer provenance support, while `pipe` needs runtime hooks and owned OS handle policy. |
 | `std::option` | Inspect-style helpers after borrowed function-pointer ergonomics are clear. | Predicate/filter/combinator/conversion/flatten/transpose behavior plus wrong-payload negative tests. | Generic enum method specialization diagnostics. |
 | `std::result` | Error conversion helpers that use `From`/`Into` after trait impl patterns mature. | `Result` projection/conversion, transpose, eager/lazy fallback, and `?` residual tests. | Residual conversion and trait-bound selection. |
-| `std::mem` | Safer copy/fill helpers for copyable values. | Scalar, aggregate, and owner-rejection tests. | Layout service and ownership-aware raw memory checks. |
+| `std::mem` | Grow from current layout/pointer/value helpers and byte `copy_bytes`/`move_bytes`/`set_bytes` into safer copy/fill helpers for copyable typed values. | current `std-mem-value-helpers` scalar/aggregate replace/swap tests and `std-mem-byte-ops` byte copy/move/set plus LLVM intrinsic checks; future owner-rejection and typed copy/fill tests. | Current byte helpers use `extern "ari"` runtime wrappers around LLVM intrinsics. Future typed copy/fill needs layout service and ownership-aware raw memory checks. |
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
 | `std::env` | Path normalization and platform-specific policy after the argument, environment-variable, cwd, and executable-path slices. | Current `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future canonicalization and platform differences. | Runtime string ownership, OS wrapper declarations, and platform error policy. |

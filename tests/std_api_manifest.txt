@@ -172,11 +172,14 @@ fn std::math::mod_floor|std math division rounding tests; docs/stdlib/api-refere
 fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::sign|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::mem::align_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
+fn std::mem::copy_bytes|std mem byte operation tests; docs/stdlib/modules/mem.md
+fn std::mem::move_bytes|std mem byte operation tests; docs/stdlib/modules/mem.md
 fn std::mem::ptr_add[T]|typed pointer arithmetic tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::ptr_load[T]|raw pointer load tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::ptr_offset[T]|byte pointer offset tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::ptr_store[T]|raw pointer store tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::replace[T]|std mem value helper tests; docs/dev/test-matrix.md Prelude and C FFI rows
+fn std::mem::set_bytes|std mem byte operation tests; docs/stdlib/modules/mem.md
 fn std::mem::size_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::swap[T]|std mem value helper tests; docs/dev/test-matrix.md Prelude and C FFI rows
 fn std::move[T]|explicit move tests; docs/dev/test-matrix.md Ownership row

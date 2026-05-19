@@ -668,6 +668,9 @@ size_of<T>() -> i64
 align_of<T>() -> i64
 mem::size_of<T>() -> i64
 mem::align_of<T>() -> i64
+mem::copy_bytes(target: ptr u8, source: ptr u8, len: i64) -> void
+mem::move_bytes(target: ptr u8, source: ptr u8, len: i64) -> void
+mem::set_bytes(target: ptr u8, value: u8, len: i64) -> void
 mem::replace<T>(target: ref mut T, value: T) -> T
 mem::swap<T>(left: ref mut T, right: ref mut T) -> void
 ```
@@ -681,6 +684,10 @@ raw-pointer materialization rules as `ptr_load` / `ptr_store`. They work for
 copyable scalar and plain Ari-layout aggregate values. Ownership- or
 borrow-valued values are rejected until Ari has a safe move-aware raw-place
 contract for those cases.
+
+`copy_bytes`, `move_bytes`, and `set_bytes` are raw byte routines. Use
+`move_bytes` when regions may overlap. They lower through LLVM memory
+intrinsics and keep the byte count explicit in the name and argument list.
 
 ## Zone Allocation
 

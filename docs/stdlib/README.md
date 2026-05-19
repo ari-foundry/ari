@@ -47,8 +47,8 @@ iterators; and red-black-tree `TreeMap`/`TreeSet` handles with sorted
 key/value iteration.
 A few declarations are still compiler-known because the
 current language cannot express them directly: layout queries, typed raw
-pointer operations, runtime IO hooks, explicit zone allocation, formatting
-macro lowering, and some zone provenance checks.
+pointer operations, byte memory intrinsics, runtime IO hooks, explicit zone
+allocation, formatting macro lowering, and some zone provenance checks.
 
 The rule of thumb is simple: put behavior in Ari source first, and add
 compiler support only when the language cannot safely model the primitive yet.

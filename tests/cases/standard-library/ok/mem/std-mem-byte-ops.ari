@@ -1,0 +1,37 @@
+// Covers byte-level memory helpers lowered through LLVM memory intrinsics.
+fn main() -> i64 {
+  var zone = zone::create(128);
+  let source = zone::alloc_array<u8>(ref mut zone, 5);
+  let target = zone::alloc_array<u8>(ref mut zone, 5);
+
+  ptr_store(source, 65u8);
+  ptr_store(ptr_add(source, 1), 66u8);
+  ptr_store(ptr_add(source, 2), 67u8);
+  ptr_store(ptr_add(source, 3), 68u8);
+  ptr_store(ptr_add(source, 4), 69u8);
+
+  std::mem::set_bytes(target, 0u8, 5);
+  std::mem::copy_bytes(target, source, 4);
+  mem::move_bytes(ptr_add(target, 1), target, 3);
+  std::mem::set_bytes(ptr_add(target, 4), 90u8, 1);
+
+  var score = 0;
+  if ptr_load(target) == 65u8 {
+    score = score + 1;
+  }
+  if ptr_load(ptr_add(target, 1)) == 65u8 {
+    score = score + 1;
+  }
+  if ptr_load(ptr_add(target, 2)) == 66u8 {
+    score = score + 1;
+  }
+  if ptr_load(ptr_add(target, 3)) == 67u8 {
+    score = score + 1;
+  }
+  if ptr_load(ptr_add(target, 4)) == 90u8 {
+    score = score + 1;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

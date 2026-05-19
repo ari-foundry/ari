@@ -422,7 +422,7 @@ resource policy are specified.
 
 ## Memory And Zones
 
-`std::mem` exposes layout and raw pointer helpers:
+`std::mem` exposes layout, raw pointer, and byte memory helpers:
 
 ```ari
 mem::size_of<T>()
@@ -431,9 +431,17 @@ mem::ptr_offset<T>(pointer, bytes)
 mem::ptr_add<T>(pointer, count)
 mem::ptr_load<T>(pointer)
 mem::ptr_store<T>(pointer, value)
+mem::copy_bytes(target, source, len)
+mem::move_bytes(target, source, len)
+mem::set_bytes(target, value, len)
 mem::replace<T>(ref mut place, value)
 mem::swap<T>(ref mut left, ref mut right)
 ```
+
+`copy_bytes`, `move_bytes`, and `set_bytes` operate on `ptr u8` and byte
+lengths. `copy_bytes` is for non-overlapping regions, `move_bytes` permits
+overlap, and `set_bytes` fills a region with one byte. They lower through LLVM
+memory intrinsics and trap on negative lengths.
 
 `std::zone` exposes the explicit allocation capability:
 

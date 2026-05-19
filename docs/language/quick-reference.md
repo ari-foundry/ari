@@ -238,7 +238,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` |
 | raw IO | `io::Reader`, `io::Writer`, `io::Seek`, `io::BufReader`, `io::BufWriter`, `io::cursor(bytes)`, `io::read_exact`, `io::stdout()`, `io::stderr()`, `io::write_all`, `io::flush`, `io::write_bytes`, `io::newline` |
 | layout | `size_of<T>()`, `align_of<T>()` |
-| raw pointers | `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store` |
+| raw pointers | `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `mem::copy_bytes`, `mem::move_bytes`, `mem::set_bytes` |
 | replace/swap | `mem::replace(ref mut place, value)`, `mem::swap(ref mut a, ref mut b)` |
 | explicit allocation | `zone::create`, `zone::alloc<T>`, `zone::alloc_array<T>`, `zone::new<T>`, `zone::reset`, `zone::destroy` |
 | temporary allocation | `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |

@@ -445,6 +445,9 @@ private:
         if (symbol == "ari_builtin_panic" ||
             symbol == "ari_builtin_process_exit" ||
             symbol == "ari_builtin_thread_yield" ||
+            symbol == "ari_builtin_mem_copy_bytes" ||
+            symbol == "ari_builtin_mem_move_bytes" ||
+            symbol == "ari_builtin_mem_set_bytes" ||
             symbol == "ari_builtin_sync_atomic_i64_store" ||
             symbol == "ari_builtin_time_sleep_nanos" ||
             symbol == "ari_builtin_zone_reset" ||
@@ -495,6 +498,9 @@ private:
         declarations_ << "declare i64 @read(i32, ptr, i64)\n";
         declarations_ << "declare i64 @write(i32, ptr, i64)\n";
         declarations_ << "declare i32 @close(i32)\n";
+        declarations_ << "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n";
+        declarations_ << "declare void @llvm.memmove.p0.p0.i64(ptr, ptr, i64, i1)\n";
+        declarations_ << "declare void @llvm.memset.p0.i64(ptr, i8, i64, i1)\n";
         declarations_ << "declare ptr @malloc(i64)\n";
         declarations_ << "declare void @free(ptr)\n";
         declarations_ << "declare void @exit(i32)\n";
@@ -839,6 +845,45 @@ private:
         line("  ret i1 %ok");
         line("fail:");
         line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_mem_copy_bytes(ptr %target, ptr %source, i64 %len) {");
+        line("entry:");
+        line("  %bad.len = icmp slt i64 %len, 0");
+        line("  br i1 %bad.len, label %fail, label %copy");
+        line("copy:");
+        line("  call void @llvm.memcpy.p0.p0.i64(ptr %target, ptr %source, i64 %len, i1 false)");
+        line("  ret void");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_mem_move_bytes(ptr %target, ptr %source, i64 %len) {");
+        line("entry:");
+        line("  %bad.len = icmp slt i64 %len, 0");
+        line("  br i1 %bad.len, label %fail, label %move");
+        line("move:");
+        line("  call void @llvm.memmove.p0.p0.i64(ptr %target, ptr %source, i64 %len, i1 false)");
+        line("  ret void");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_mem_set_bytes(ptr %target, i8 %value, i64 %len) {");
+        line("entry:");
+        line("  %bad.len = icmp slt i64 %len, 0");
+        line("  br i1 %bad.len, label %fail, label %set");
+        line("set:");
+        line("  call void @llvm.memset.p0.i64(ptr %target, i8 %value, i64 %len, i1 false)");
+        line("  ret void");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
         line("}");
         line();
 

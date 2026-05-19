@@ -74,6 +74,7 @@ std-io-byte-slice.ari
 std-io-traits-cursor.ari
 std-io-stderr.ari
 std-io-buffered.ari
+std-mem-byte-ops.ari
 std-input-byte-option.ari
 std-cmp-value-helpers.ari
 std-convert-value-helpers.ari

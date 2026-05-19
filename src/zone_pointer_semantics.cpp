@@ -279,6 +279,20 @@ bool zone_metadata_extern_builtin_allows_zone_pointer_argument(const std::string
     return builtin_symbol && *builtin_symbol == "ari_builtin_zone_allocation_zone";
 }
 
+bool memory_extern_builtin_allows_zone_pointer_argument(const std::string& function_name,
+                                                        std::size_t arg_index) {
+    std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(function_name);
+    if (!builtin_symbol) return false;
+    if (*builtin_symbol == "ari_builtin_mem_copy_bytes" ||
+        *builtin_symbol == "ari_builtin_mem_move_bytes") {
+        return arg_index == 0 || arg_index == 1;
+    }
+    if (*builtin_symbol == "ari_builtin_mem_set_bytes") {
+        return arg_index == 0;
+    }
+    return false;
+}
+
 bool temporary_zone_source_from_expr(const IrExpr& value,
                                      const ZonePointerSourceResolver& resolver,
                                      const ZonePointerLocalAdapter& locals,
