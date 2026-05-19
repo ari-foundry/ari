@@ -73,6 +73,8 @@ identifies the exact case:
   mode strings.
 - `std-fs-read-write.ari`: source whole-file `write`, `append`,
   `read_to_string`, missing-file empty reads, and truncating rewrite behavior.
+- `std-fs-create-truncate-copy.ari`: source `create`, `try_create`, natural
+  `read`, `truncate`, streaming `copy`, and missing-source copy failure.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

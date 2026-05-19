@@ -4,13 +4,14 @@
 can work with files without reaching directly for raw syscalls or C ABI
 declarations. The first slices are deliberately small: check whether a path
 exists, open a byte stream with a compact mode string, read and write bytes,
-write or append a byte slice in one call, read a whole file into Ari's
-byte-oriented `String`, close the handle, and remove a file.
+write or append a byte slice in one call, create/truncate/copy small files,
+read a whole file into Ari's byte-oriented `String`, close the handle, and
+remove a file.
 
 The public names stay natural because the module path already says the domain:
-use `open(path, mode)`, `try_open(path, mode)`, `read_byte`, `write_byte`,
-`write_bytes`, `write`, `append`, `read_to_string`, `close`, `exists`, and
-`remove`, not type-suffixed names.
+use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
+`read_byte`, `write_byte`, `write_bytes`, `read`, `write`, `append`,
+`truncate`, `copy`, `close`, `exists`, and `remove`, not type-suffixed names.
 
 ## API
 
@@ -18,10 +19,12 @@ use `open(path, mode)`, `try_open(path, mode)`, `read_byte`, `write_byte`,
 fs::exists(path)
 fs::remove(path)
 fs::open(path, mode)
+fs::create(path)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
 fs::try_open(path, mode)
+fs::try_create(path)
 fs::try_open_read(path)
 fs::try_open_write(path)
 fs::try_open_append(path)
@@ -29,8 +32,11 @@ fs::close(file)
 fs::read_byte(file)
 fs::write_byte(file, value)
 fs::write_bytes(file, values)
+fs::read(ref mut zone, path)
 fs::write(path, values)
 fs::append(path, values)
+fs::truncate(path)
+fs::copy(source, target)
 fs::read_to_string(ref mut zone, path)
 
 File::invalid()
@@ -65,9 +71,14 @@ turns that into `None`. Rust's standard library usually exposes richer
 the language has stronger resource ownership, but mode strings are the right
 small first surface because they keep call sites short and familiar.
 
+`create(path)` is the natural spelling for `open(path, "w")`: it creates a
+file if needed and truncates existing contents. `try_create(path)` wraps that
+same operation in `Option[File]`.
+
 `open_read`, `open_write`, `open_append`, and their `try_open_*` partners are
 compatibility wrappers over `open(path, "r")`, `open(path, "w")`, and
-`open(path, "a")`. New docs and tests should prefer the mode-string form.
+`open(path, "a")`. New docs and tests should usually prefer the mode-string
+form or `create`/`try_create` when creating a file.
 
 `read_byte(file)` returns the next byte as `i64` or `-1` at EOF or on failure.
 `write_byte(file, value)` returns whether exactly one byte was written.
@@ -87,12 +98,50 @@ unopenable file returns an empty `String`, so use `fs::exists(path)` or
 `fs::try_open(path, "r")` first when absence must be distinguished from an
 empty file.
 
+`read(ref mut zone, path)` is the short natural alias for
+`read_to_string(ref mut zone, path)`. It is still byte-oriented and returns the
+same `std::string::String` handle.
+
+`truncate(path)` creates the file if needed, truncates it to empty, closes the
+handle, and returns whether the operation and close succeeded.
+
+`copy(source, target)` opens `source` for reading, opens `target` with
+truncating `"w"` semantics, streams bytes from one handle to the other, closes
+both handles, and returns whether the copy and both closes succeeded. It is
+source Ari over the current byte APIs. Detailed read/write error reporting is
+future `std::io` or `std::os` work because `read_byte` still uses one
+EOF/failure sentinel.
+
 `close(file)` returns whether the host accepted the close request. Closing an
 invalid handle returns `false`. The current first slice does not mutate the
 `File` value after closing, so do not reuse a copied handle after `close`.
 
 `exists(path)` checks whether the path exists. `remove(path)` removes a file
 path and returns whether the host accepted the request.
+
+## Feature Status
+
+| Need | Status |
+| --- | --- |
+| open | Current: `open(path, mode)`, `try_open(path, mode)`, and wrappers. |
+| create | Current: `create(path)` and `try_create(path)` over `"w"` mode. |
+| read | Current: byte `read_byte`, whole-file `read`, and `read_to_string`. |
+| write | Current: byte `write_byte`, `write_bytes`, and whole-file `write`. |
+| append | Current: `"a"`/`"a+"` modes and whole-file `append`. |
+| truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
+| metadata | Roadmap: needs a portable `Metadata` value and runtime `stat`/platform wrappers. |
+| permissions | Roadmap: should be a small permissions value built on metadata/chmod hooks. |
+| rename | Roadmap: add a `rename(source, target)` runtime hook and overwrite policy. |
+| remove | Current: file removal with `remove(path)`; directory removal is roadmap. |
+| copy | Current: source streaming `copy(source, target)` for byte files. |
+| hard link | Roadmap: runtime `link`/platform wrapper plus capability docs. |
+| symbolic link | Roadmap: runtime `symlink`/Windows split plus capability docs. |
+| canonicalize | Roadmap: runtime path resolution returning an owned Ari string/path. |
+| read directory | Roadmap: `DirEntry`/iterator handle and OS-resource ownership policy. |
+| create directory | Roadmap: `create_dir` and recursive `create_dir_all` hooks. |
+| temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
+| path manipulation | Roadmap: add `std::path`/`Path` only after owned string/path policy is stable. |
+| file locking | Optional roadmap: advisory locking after platform behavior is documented. |
 
 ## Examples
 
@@ -153,9 +202,22 @@ var tail = [67 as u8];
 fs::append(path, tail.as_slice());
 
 var zone = zone::create(512);
-let text = fs::read_to_string(ref mut zone, path);
+let text = fs::read(ref mut zone, path);
 let first = text.get(0);
 zone::destroy(zone);
+```
+
+Create, copy, and truncate small files:
+
+```ari
+let file = fs::try_create(path).unwrap_or(fs::File::invalid());
+if file.is_open() {
+  file.close();
+}
+
+let backup_path = "build/prelude/example-fs.bak";
+fs::copy(path, backup_path);
+fs::truncate(path);
 ```
 
 Open an existing file for both reading and writing:
@@ -172,8 +234,8 @@ if file.is_open() {
 ## Current Limits
 
 - This slice is byte-oriented. There is no owned path type, directory
-  iteration, metadata, permissions API, canonicalization, or text encoding
-  policy yet.
+  iteration, metadata, permissions API, canonicalization, link API, file
+  locking API, temporary-file API, or text encoding policy yet.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
   `unlink`, `open`, `read`, `write`, and `close`.
 - `File` is not a tracked `own` resource yet. The caller must close each
@@ -193,6 +255,7 @@ tests/cases/standard-library/ok/fs/std-fs-basic.ari
 tests/cases/standard-library/ok/fs/std-fs-append.ari
 tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
 tests/cases/standard-library/ok/fs/std-fs-read-write.ari
+tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 ```
 
 `make check-prelude` emits LLVM for the runtime hooks, checks the C syscall
@@ -204,12 +267,22 @@ and failed append opens through `Option[File]`. `std-fs-open-modes.ari` covers
 the mode-string contract, including `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes,
 and invalid mode strings. `std-fs-read-write.ari` covers source whole-file
 write, append, read-to-byte-string, missing-file empty reads, and truncating
-rewrite behavior.
+rewrite behavior. `std-fs-create-truncate-copy.ari` covers source `create`,
+`try_create`, `read`, `truncate`, missing-source copy failure, and whole-file
+copy behavior.
 
 ## Next Work
 
-- Add file metadata and directory iteration as separate tested slices.
+- Add `metadata(path)`, `permissions(path)`, and permission mutation as a
+  separate tested runtime slice.
+- Add `rename`, directory creation/removal, hard links, symbolic links, and
+  canonicalization as one or more OS-wrapper slices with clear overwrite and
+  platform behavior.
+- Add directory iteration after Ari can represent owned OS-resource iterator
+  handles.
 - Add path helpers after Ari has a clearer owned string/path story.
+- Add secure temporary files and optional file locking after the resource and
+  platform policy is documented.
 - Add an `OpenOptions`-style builder after Ari has a clearer owned
   OS-resource story and enough named flags to justify it.
 - Promote `File` toward an owned resource handle when the compiler can express

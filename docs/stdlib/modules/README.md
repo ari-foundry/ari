@@ -47,7 +47,7 @@ limits, examples, and test files for one module.
   timestamps, non-negative durations, elapsed-time helpers, and sleep.
 - [std::fs](fs.md): runtime-backed file existence, mode-string open calls,
   close, removal, `File` value handles, `Option[File]` open helpers, and
-  source whole-file byte write/append/read helpers.
+  source byte create/read/write/append/truncate/copy helpers.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,
   `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,

@@ -259,10 +259,12 @@ Filesystem helpers live in `std::fs`:
 fs::exists(path)
 fs::remove(path)
 fs::open(path, mode)
+fs::create(path)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
 fs::try_open(path, mode)
+fs::try_create(path)
 fs::try_open_read(path)
 fs::try_open_write(path)
 fs::try_open_append(path)
@@ -270,8 +272,11 @@ fs::close(file)
 fs::read_byte(file)
 fs::write_byte(file, value)
 fs::write_bytes(file, values)
+fs::read(ref mut zone, path)
 fs::write(path, values)
 fs::append(path, values)
+fs::truncate(path)
+fs::copy(source, target)
 fs::read_to_string(ref mut zone, path)
 
 File::invalid()
@@ -290,14 +295,19 @@ write, `"a"` for create/append write, `"rw"` for existing read/write, `"r+"`
 as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
 `"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
 `try_open_*` variants are compatibility wrappers over those mode strings.
+`create(path)` and `try_create(path)` are the natural create/truncate helpers
+over `"w"` mode.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns whether one byte was written. `write_bytes` writes a
 `Slice[u8]` and returns the count written before the first failed byte write.
 `write(path, values)` truncates or creates a small byte file and writes the
 whole `Slice[u8]`; `append(path, values)` creates if needed and appends the
-whole slice. `read_to_string(ref mut zone, path)` returns a zone-backed
-byte-oriented `std::string::String`, using an empty `String` when the file
-cannot be opened.
+whole slice. `read(ref mut zone, path)` is the short alias for
+`read_to_string(ref mut zone, path)`, returning a zone-backed byte-oriented
+`std::string::String` and using an empty `String` when the file cannot be
+opened. `truncate(path)` creates or empties a file. `copy(source, target)`
+streams bytes from the source handle into the target opened with truncating
+semantics.
 The current `File` value is not an owned resource yet, so close each successful
 handle once and do not reuse copied handles after closing.
 

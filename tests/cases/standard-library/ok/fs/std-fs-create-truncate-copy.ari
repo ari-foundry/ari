@@ -1,0 +1,70 @@
+// Covers source std::fs convenience helpers that build on mode-string opens:
+// create/try_create, read aliasing read_to_string, truncate, and streaming copy.
+fn main() -> i64 {
+  let source_path = "build/prelude/std-fs-create-truncate-copy-src.tmp";
+  let copy_path = "build/prelude/std-fs-create-truncate-copy-dst.tmp";
+  let missing_path = "build/prelude/std-fs-create-truncate-copy-missing.tmp";
+  if fs::exists(source_path) {
+    fs::remove(source_path);
+  }
+  if fs::exists(copy_path) {
+    fs::remove(copy_path);
+  }
+  if fs::exists(missing_path) {
+    fs::remove(missing_path);
+  }
+
+  var score = 0;
+  let created = fs::try_create(source_path).unwrap_or(fs::File::invalid());
+  if created.is_open() {
+    score = score + 1;
+  }
+
+  var seed = [70 as u8, 83 as u8];
+  if created.write_bytes(seed.as_slice()) == 2 {
+    score = score + 2;
+  }
+  if created.close() {
+    score = score + 3;
+  }
+  if fs::exists(source_path) {
+    score = score + 4;
+  }
+
+  var zone = zone::create(1024);
+  if fs::copy(source_path, copy_path) {
+    score = score + 5;
+  }
+
+  let copied = fs::read(ref mut zone, copy_path);
+  if copied.len() == 2 {
+    score = score + 6;
+  }
+  if copied.get(0) == 70 as u8 {
+    score = score + 7;
+  }
+  if copied.get(1) == 83 as u8 {
+    score = score + 8;
+  }
+
+  if fs::truncate(source_path) {
+    score = score + 9;
+  }
+  let truncated = fs::read(ref mut zone, source_path);
+  if truncated.is_empty() {
+    score = score + 10;
+  }
+  if !fs::copy(missing_path, copy_path) {
+    score = score + 11;
+  }
+
+  if fs::remove(source_path) {
+    score = score + 12;
+  }
+  if fs::remove(copy_path) {
+    score = score + 13;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

@@ -8,6 +8,7 @@ These cases cover the first `std::fs` slice:
 - byte read/write helpers over a filesystem handle
 - source whole-file convenience helpers for byte-slice write, append, and
   byte-string reads
+- create/truncate/copy/read convenience helpers built over mode-string opens
 - append-mode opens that preserve existing bytes and create missing files
 - read/write mode strings such as `"rw"`, plus familiar `"r+"`, `"w+"`,
   and `"a+"` aliases
@@ -23,3 +24,5 @@ Files in this folder:
 - `std-fs-open-modes.ari`: supported and rejected mode-string behavior.
 - `std-fs-read-write.ari`: source `write`, `append`, and `read_to_string`
   whole-file conveniences.
+- `std-fs-create-truncate-copy.ari`: source `create`, `try_create`, `read`,
+  `truncate`, and `copy` helpers.

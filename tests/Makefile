@@ -290,6 +290,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari -o $(BUILD_DIR)/prelude/std-fs-read-write.elf
 	$(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 78
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-write.elf; $(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 78; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
+	grep -F -q "std2fs6create" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
+	grep -F -q "std2fs10try_create" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
+	grep -F -q "std2fs4read" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
+	grep -F -q "std2fs8truncate" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
+	grep -F -q "std2fs4copy" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf
+	$(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 91
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 91; fi
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll

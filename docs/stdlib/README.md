@@ -32,8 +32,8 @@ function-pointer spawn/join, scheduler yield, and per-thread runtime ids,
 monotonic instants, wall-clock timestamps, non-negative
 durations, elapsed-time helpers, and sleep, and `std::fs` adds the first
 byte-oriented file handle slice with mode-string opens for read, write,
-append, and read/write access plus source whole-file write, append, and
-read-to-byte-string helpers. Source
+append, and read/write access plus source create, read, write, append,
+truncate, copy, and read-to-byte-string helpers. Source
 collection work includes `std::collections::Set[T]` as a linear explicit-zone
 set with insertion-order access, optional access, replace-or-insert updates,
 iterator support, and reserve growth; growable `Deque`, bounded `RingBuffer`,

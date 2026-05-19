@@ -22,6 +22,14 @@ pub fn try_open(path: string, mode: string) -> std::Option[File] {
   return std::None<File>();
 }
 
+pub fn create(path: string) -> File {
+  return open(path, "w");
+}
+
+pub fn try_create(path: string) -> std::Option[File] {
+  return try_open(path, "w");
+}
+
 pub fn open_read(path: string) -> File {
   return open(path, "r");
 }
@@ -91,6 +99,48 @@ pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {
   }
   file.close();
   return output;
+}
+
+pub fn read(zone: ref mut Zone, path: string) -> std::string::String {
+  return read_to_string(zone, path);
+}
+
+pub fn truncate(path: string) -> bool {
+  let file = try_create(path).unwrap_or(File::invalid());
+  if !file.is_open() {
+    return false;
+  }
+  return file.close();
+}
+
+pub fn copy(source: string, target: string) -> bool {
+  let reader = try_open(source, "r").unwrap_or(File::invalid());
+  if !reader.is_open() {
+    return false;
+  }
+
+  let writer = try_open(target, "w").unwrap_or(File::invalid());
+  if !writer.is_open() {
+    reader.close();
+    return false;
+  }
+
+  // Keep copy source-only for now. The current byte API has one EOF/failure
+  // sentinel, so detailed read errors remain future std::io/std::os work.
+  var ok = true;
+  var byte = reader.read_byte();
+  while byte >= 0 {
+    if !writer.write_byte(byte as u8) {
+      ok = false;
+      byte = -1;
+    } else {
+      byte = reader.read_byte();
+    }
+  }
+
+  let read_closed = reader.close();
+  let write_closed = writer.close();
+  return ok && read_closed && write_closed;
 }
 
 pub impl std::fs::File {
