@@ -294,7 +294,7 @@ fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude ro
 fn std::io::write_bytes|std io byte slice tests; docs/stdlib/modules/io.md
 fn std::io::write_i64|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_u64|prelude IO and u64 format tests; docs/dev/test-matrix.md Prelude row
-fn std::iter::enumerate[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy index/value adapter; docs/stdlib/modules/iter.md
+fn std::iter::enumerate[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy tuple index/value adapter; docs/stdlib/modules/iter.md
 fn std::iter::filter[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy predicate adapter; docs/stdlib/modules/iter.md
 fn std::iter::fold[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters eager fold consumer; docs/stdlib/modules/iter.md
 fn std::iter::map[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy mapping adapter; docs/stdlib/modules/iter.md
@@ -303,7 +303,7 @@ fn std::iter::range_inclusive[T]|inclusive range tests; docs/dev/test-matrix.md 
 fn std::iter::reduce[T, I: std::Iterator[T]|check-prelude std-iter-adapters eager optional reduction; docs/stdlib/modules/iter.md
 fn std::iter::skip[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy drop-count adapter; docs/stdlib/modules/iter.md
 fn std::iter::take[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy bounded adapter; docs/stdlib/modules/iter.md
-fn std::iter::zip[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy pair adapter; docs/stdlib/modules/iter.md
+fn std::iter::zip[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy tuple pair adapter; docs/stdlib/modules/iter.md
 fn std::log::debug|check-prelude std-log-basic debug-level string message helper; docs/stdlib/modules/log.md
 fn std::log::enabled|check-prelude std-log-basic level threshold predicate; docs/stdlib/modules/log.md
 fn std::log::error|check-prelude std-log-basic error-level string message helper; docs/stdlib/modules/log.md
@@ -329,7 +329,7 @@ fn std::math::is_positive|std math integer helper tests; docs/stdlib/api-referen
 fn std::math::is_zero|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::lcm|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::mod_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
-fn std::math::overflowing_add|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
+fn std::math::overflowing_add|std math wrapping/overflowing tests; tuple return keeps wrapped value and overflow flag; docs/stdlib/modules/math.md
 fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::saturating_abs|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::saturating_add|std math checked/saturating tests; docs/stdlib/modules/math.md
@@ -808,12 +808,6 @@ method std::io::BufWriter[W]::buffered_len|std io buffered tests; docs/stdlib/mo
 method std::io::BufWriter[W]::capacity|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::is_empty|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufWriter[W]::new|std io buffered tests; docs/stdlib/modules/io.md
-method std::iter::Enumerated[T]::index|check-prelude std-iter-adapters enumerate index accessor; docs/stdlib/modules/iter.md
-method std::iter::Enumerated[T]::value|check-prelude std-iter-adapters enumerate value accessor; docs/stdlib/modules/iter.md
-method std::iter::Zipped[T,U]::left|check-prelude std-iter-adapters zip left accessor; docs/stdlib/modules/iter.md
-method std::iter::Zipped[T,U]::right|check-prelude std-iter-adapters zip right accessor; docs/stdlib/modules/iter.md
-method std::math::Overflowing::overflowed|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
-method std::math::Overflowing::value|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
 method std::net::IpAddr::is_loopback|check-prelude std-net-addresses generic IP loopback predicate; docs/stdlib/modules/net.md
 method std::net::IpAddr::is_unspecified|check-prelude std-net-addresses generic IP unspecified predicate; docs/stdlib/modules/net.md
 method std::net::IpAddr::is_v4|check-prelude std-net-addresses generic IPv4 family predicate; docs/stdlib/modules/net.md
@@ -1141,7 +1135,6 @@ struct std::io::Stderr|std io stderr tests; docs/stdlib/modules/io.md
 struct std::io::Stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::io::Stdout|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::iter::Enumerate[I, T]|check-prelude std-iter-adapters lazy enumerate adapter state; docs/stdlib/modules/iter.md
-struct std::iter::Enumerated[T]|check-prelude std-iter-adapters enumerate item wrapper; docs/stdlib/modules/iter.md
 struct std::iter::Filter[I, T]|check-prelude std-iter-adapters lazy filter adapter state; docs/stdlib/modules/iter.md
 struct std::iter::Map[I, T, U]|check-prelude std-iter-adapters lazy map adapter state; docs/stdlib/modules/iter.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
@@ -1149,8 +1142,6 @@ struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Skip[I, T]|check-prelude std-iter-adapters lazy skip adapter state; docs/stdlib/modules/iter.md
 struct std::iter::Take[I, T]|check-prelude std-iter-adapters lazy take adapter state; docs/stdlib/modules/iter.md
 struct std::iter::Zip[I, J, T, U]|check-prelude std-iter-adapters lazy zip adapter state; docs/stdlib/modules/iter.md
-struct std::iter::Zipped[T, U]|check-prelude std-iter-adapters zip item wrapper; docs/stdlib/modules/iter.md
-struct std::math::Overflowing|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
 struct std::net::IpAddr|std net generic IP address tests; docs/stdlib/modules/net.md
 struct std::net::Ipv4Addr|std net IPv4 address tests; docs/stdlib/modules/net.md
 struct std::net::Ipv6Addr|std net IPv6 address tests; docs/stdlib/modules/net.md

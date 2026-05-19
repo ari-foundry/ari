@@ -1453,8 +1453,10 @@ iter::Iterable[T]
 Root aliases expose `range(start, end)` and `range_inclusive(start, end)`.
 Source cursors implement `Iterator[T]::next(self: ref mut Self) -> Option[T]`.
 Collections that implement `IntoIterator[T]` can be used directly in `for`
-loops; map-like collections use explicit `keys()` and `values()` cursors until
-pair or tuple iteration policy is stable.
+loops; `enumerate` yields `(index, value)` tuples and `zip` yields `(left,
+right)` tuples. Map-like collections still use explicit `keys()` and
+`values()` cursors while entry borrowing and collection-view policy stay
+explicit.
 
 The adapter constructors are lazy except for `fold`, `reduce`, and `collect`.
 Use `skip` for the usual drop-count adapter because `drop` is a language
@@ -1686,8 +1688,9 @@ values. `lcm` returns `0` when either input is `0`.
 `Option[i64]`, using `None<i64>()` for overflow or underflow. Their
 `saturating_*` counterparts clamp to the nearest `i64` bound. `wrapping_add`
 returns the two's-complement wrapped result. `overflowing_add` returns an
-`Overflowing` value with `value()` and `overflowed()` accessors, keeping the
-wrapped result and the overflow flag together. Other math helpers still use
+`(i64, bool)` tuple whose first slot is the wrapped result and whose second
+slot is the overflow flag. This keeps `Option` reserved for absent values and
+uses tuples for always-present product values. Other math helpers still use
 ordinary `i64` arithmetic internally, so checked multiplication and generic
 cross-width helpers remain future numeric-policy work.
 

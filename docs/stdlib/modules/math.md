@@ -51,18 +51,20 @@ positive overflow becomes `9223372036854775807`, and negative overflow becomes
 `-9223372036854775808`.
 
 `wrapping_add` returns the two's-complement wrapped result. `overflowing_add`
-returns an `Overflowing` value with `value()` and `overflowed()` accessors, so a
-caller can keep the wrapped result and still branch on the overflow flag:
+returns `(value, overflowed)`, a tuple whose first slot is the wrapped result
+and whose second slot is the overflow flag:
 
 ```ari
-let sum = math::overflowing_add(left, right);
-if sum.overflowed() {
-  return sum.value();
+let (sum, overflowed) = math::overflowing_add(left, right);
+if overflowed {
+  return sum;
 }
 ```
 
-This gives Ari source code documented spellings for integer edge cases before
-the compiler grows dedicated overflow intrinsics for every integer width.
+This deliberately uses a tuple because the operation always produces both
+pieces. `checked_*` still uses `Option[i64]` because the value may be absent.
+Together they give Ari source code documented spellings for integer edge cases
+before the compiler grows dedicated overflow intrinsics for every integer width.
 
 Power and divisor helpers:
 

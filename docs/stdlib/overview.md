@@ -13,6 +13,19 @@ hiding allocation, ownership, or backend behavior.
 - Track every public declaration in `tests/std_api_manifest.txt`.
 - Keep tests focused enough that a new contributor can copy a nearby pattern.
 
+## Return Shape Policy
+
+Use enums for real alternatives. `Option[T]` means a value may be absent, such
+as `try_get`, `binary_search`, parser failure, or checked arithmetic overflow.
+`Result[T, E]` means success and failure are different control-flow outcomes.
+
+Use tuples for small product values that are always present and conventional at
+the call site. `math::overflowing_add(left, right)` returns `(value,
+overflowed)` because the wrapped result and the flag are both produced every
+time. `iter::enumerate` and `iter::zip` likewise yield tuple items. Prefer a
+named struct when fields need domain names, invariants, methods, or longer-term
+API evolution.
+
 ## Module Map
 
 | Module | Purpose | First Things To Use |

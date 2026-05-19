@@ -87,8 +87,9 @@ fn even(value: ref i64) -> bool {
 }
 ```
 
-`enumerate` yields `Enumerated[T]` values with `index()` and `value()`
-accessors. `zip` yields `Zipped[T, U]` values with `left()` and `right()`.
+`enumerate` yields `(index, value)` tuples and `zip` yields `(left, right)`
+tuples. These are small product values where both fields are always present,
+so tuple slots/destructuring stay lighter than dedicated wrapper structs.
 `zip` stops when either side is exhausted.
 
 Collections that implement `IntoIterator[T]` can be used directly in `for`
@@ -107,8 +108,10 @@ iterator so callers do not mistake heap storage order for priority order.
 - `collect` currently builds a `std::vec::Vec[T]`; other collection targets
   should be added as explicit functions after their ownership contracts are
   stable.
-- Direct map-entry iteration still waits for tuple or pair policy. Use
-  `HashMap.keys`, `HashMap.values`, `TreeMap.keys`, or `TreeMap.values`.
+- Direct map-entry iteration still waits for a collection-view policy. Iterator
+  pair adapters use tuples, but maps still expose `HashMap.keys`,
+  `HashMap.values`, `TreeMap.keys`, or `TreeMap.values` while entry borrowing
+  is kept explicit.
 
 ## Tests
 

@@ -28,19 +28,9 @@ pub struct Skip[I, T] {
   mut remaining: i64,
 }
 
-pub struct Enumerated[T] {
-  index: i64,
-  value: T,
-}
-
 pub struct Enumerate[I, T] {
   mut inner: I,
   mut index: i64,
-}
-
-pub struct Zipped[T, U] {
-  left: T,
-  right: U,
 }
 
 pub struct Zip[I, J, T, U] {
@@ -167,63 +157,38 @@ impl[T, I: std::Iterator[T]] std::Iterator[T] for std::iter::Skip[I, T] {
   }
 }
 
-impl[T, I: std::Iterator[T]] std::Iterator[std::iter::Enumerated[T]] for std::iter::Enumerate[I, T] {
-  pub fn next(self: ref mut Self) -> std::Option[std::iter::Enumerated[T]] {
+impl[T, I: std::Iterator[T]] std::Iterator[(i64, T)] for std::iter::Enumerate[I, T] {
+  pub fn next(self: ref mut Self) -> std::Option[(i64, T)] {
     match self.inner.next() {
       std::Some(value) => {
         let current = self.index;
         self.index = self.index + 1;
-        let item = std::iter::Enumerated<T> { index: current, value: value };
-        return std::Some<std::iter::Enumerated[T]>(item);
+        return std::Some<(i64, T)>((current, value));
       }
       std::None => {
-        return std::None<std::iter::Enumerated[T]>();
+        return std::None<(i64, T)>();
       }
     }
   }
 }
 
 impl[T, U, I: std::Iterator[T], J: std::Iterator[U]]
-std::Iterator[std::iter::Zipped[T, U]] for std::iter::Zip[I, J, T, U] {
-  pub fn next(self: ref mut Self) -> std::Option[std::iter::Zipped[T, U]] {
+std::Iterator[(T, U)] for std::iter::Zip[I, J, T, U] {
+  pub fn next(self: ref mut Self) -> std::Option[(T, U)] {
     match self.left.next() {
       std::Some(left_value) => {
         match self.right.next() {
           std::Some(right_value) => {
-            let pair = std::iter::Zipped<T, U> {
-              left: left_value,
-              right: right_value,
-            };
-            return std::Some<std::iter::Zipped[T, U]>(pair);
+            return std::Some<(T, U)>((left_value, right_value));
           }
           std::None => {
-            return std::None<std::iter::Zipped[T, U]>();
+            return std::None<(T, U)>();
           }
         }
       }
       std::None => {
-        return std::None<std::iter::Zipped[T, U]>();
+        return std::None<(T, U)>();
       }
     }
-  }
-}
-
-pub impl[T] std::iter::Enumerated[T] {
-  fn index(self: ref Self) -> i64 {
-    return self.index;
-  }
-
-  fn value(self) -> T {
-    return self.value;
-  }
-}
-
-pub impl[T, U] std::iter::Zipped[T, U] {
-  fn left(self: ref Self) -> T {
-    return self.left;
-  }
-
-  fn right(self: ref Self) -> U {
-    return self.right;
   }
 }

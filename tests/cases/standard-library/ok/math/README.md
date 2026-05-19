@@ -11,5 +11,5 @@ checks.
   remainder behavior.
 - `std-math-checked-saturating.ari`: checked add/sub/neg/abs and saturating
   add/sub/neg/abs overflow policy behavior.
-- `std-math-wrapping-overflowing.ari`: wrapping add and overflowing add result
-  value/accessor behavior.
+- `std-math-wrapping-overflowing.ari`: wrapping add and overflowing add tuple
+  result behavior.

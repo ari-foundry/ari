@@ -54,7 +54,7 @@ fn main() -> i64 {
   var enumerated = iter::enumerate<i64, std::vec::Iter[i64]>(values.iter());
   var enumerate_score = 0;
   for item in ref mut enumerated {
-    enumerate_score = enumerate_score + item.index() + item.value();
+    enumerate_score = enumerate_score + item.0 + item.1;
   }
 
   var others = std::vec::new<i64>(ref mut zone, 4);
@@ -68,7 +68,8 @@ fn main() -> i64 {
   );
   var zip_score = 0;
   for pair in ref mut zipped {
-    zip_score = zip_score + pair.left() + pair.right();
+    let (left, right) = pair;
+    zip_score = zip_score + left + right;
   }
 
   let folded = iter::fold<i64, i64, std::vec::Iter[i64]>(values.iter(), 10, sum);

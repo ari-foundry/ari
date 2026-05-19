@@ -15,17 +15,17 @@ fn main() -> i64 {
   }
 
   let normal = math::overflowing_add(20, 22);
-  if normal.value() == 42 && !normal.overflowed() {
+  if normal.0 == 42 && !normal.1 {
     score = score + 1;
   }
 
   let positive = math::overflowing_add(max, 1);
-  if positive.value() == min && positive.overflowed() {
+  if positive.0 == min && positive.1 {
     score = score + 1;
   }
 
-  let negative = math::overflowing_add(min, -1);
-  if negative.value() == max && negative.overflowed() {
+  let (negative_value, negative_overflowed) = math::overflowing_add(min, -1);
+  if negative_value == max && negative_overflowed {
     score = score + 1;
   }
 
