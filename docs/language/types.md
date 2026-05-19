@@ -183,7 +183,7 @@ slice into a new target-zone string handle. It supports checked byte
 grow-on-demand `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in`, plus `append_string_in`,
 `append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`,
-`append_f64_in`, `truncate`, `clear`,
+`append_f64_in`, generic `append_value_in[T: std::fmt::Display]`, `truncate`, `clear`,
 byte search with `contains`, `index_of`, and `count`, UTF-8 validation and
 scalar helpers with `is_utf8`, `codepoint_count`, `codepoint_at(byte_index)`,
 and `push_codepoint_in(ref mut Zone, scalar)`, `as_ptr`, `as_slice`,
@@ -197,7 +197,10 @@ growth and append calls: `push(byte)`, `insert(index, byte)`,
 `resize(length, byte)`, `append_string(text)`, `append_i64(value)`,
 `append_u64(value)`, `append_bool(value)`, `append_f32(value, precision)`, and
 `append_f64(value, precision)` lower to the corresponding explicit same-zone
-methods. The explicit `_in` forms remain available when code should name the
+methods. `append_value(value)` lowers to `append_value_in` and uses
+`std::fmt::Display`, which is the preferred shape for user-defined formatted
+values because the value's type is carried by the trait bound instead of a
+method suffix. The explicit `_in` forms remain available when code should name the
 capability directly or when a handle was assembled without tracked provenance.
 Metadata, checked byte `first`/`last`/`get`, byte search, exact/prefix/suffix
 checks, UTF-8 scalar inspection, `as_ptr`, and target-zone copy borrow the

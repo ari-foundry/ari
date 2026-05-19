@@ -1358,6 +1358,7 @@ text.append_string_in(ref mut zone, "text")
 text.append_i64_in(ref mut zone, value)
 text.append_u64_in(ref mut zone, value)
 text.append_bool_in(ref mut zone, value)
+text.append_value_in(ref mut zone, display_value)
 text.append_f32_in(ref mut zone, value, precision)
 text.append_f64_in(ref mut zone, value, precision)
 text.push_codepoint_in(ref mut zone, scalar)
@@ -1420,7 +1421,8 @@ bytes)`, and `std::string::empty(ref mut zone)` are the natural constructors
 for everyday code. The older `from_string` and `from_slice_in` names remain
 available when the source kind should be explicit. `text.append`, `append_byte`,
 and `append_bytes` grow with the owning zone while hiding the lower-level
-`append_string_in` and `extend_from_slice_in` names from normal call sites.
+`append_string_in`, `append_value_in`, and `extend_from_slice_in` names from
+normal call sites.
 
 `String` stores bytes, so `join_in`, `find`, `contains_slice`, `slice`,
 `split_at`, `chunks`, `windows`, and delimiter `split` operate on byte offsets

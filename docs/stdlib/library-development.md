@@ -51,6 +51,9 @@ depends on it.
   that cannot yet be generic, such as `io::write_i64` or `append_i64_in`.
   When the language can express a generic source API, add the natural name and
   keep the suffixed form only as a documented compatibility shim.
+- For string formatting extensions, prefer `String.append_value(value)` or
+  `append_value_in(ref mut Zone, value)` with `std::fmt::Display` over adding a
+  new type-specific `append_*_in` method.
 - Use `_in` when a function needs an explicit allocation zone.
 - Prefer `Option` or `Result` for ordinary absence or recoverable failure.
 - Prefer `std::error::Error`/`ErrorKind` for shared OS, runtime, IO,

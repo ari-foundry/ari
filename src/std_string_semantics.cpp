@@ -161,6 +161,7 @@ bool std_string_method_requires_same_zone_argument(const std::string& method_nam
            method_name == "append_i64_in" ||
            method_name == "append_u64_in" ||
            method_name == "append_bool_in" ||
+           method_name == "append_value_in" ||
            method_name == "append_f32_in" ||
            method_name == "append_f64_in" ||
            method_name == "insert_in" ||
@@ -200,6 +201,9 @@ std::optional<StdStringImplicitZoneMethod> std_string_implicit_zone_method_for_c
     }
     if (method_name == "append_bool" && user_arg_count == 1) {
         return StdStringImplicitZoneMethod{"append_bool_in", false};
+    }
+    if (method_name == "append_value" && user_arg_count == 1) {
+        return StdStringImplicitZoneMethod{"append_value_in", false};
     }
     if (method_name == "append_f32" && user_arg_count == 2) {
         return StdStringImplicitZoneMethod{"append_f32_in", false};

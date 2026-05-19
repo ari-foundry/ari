@@ -314,7 +314,9 @@ forms where applicable.
 `pop`, `try_pop`, `set`, `replace`, `insert`, `truncate`, `clear`, `reserve`,
 `reserve_extra`, `append`, `append_byte`, `append_bytes`, `append_string_in`,
 `append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`,
-`append_f64_in`, and the explicit-zone `_in` forms. Single-byte text-like
+`append_f64_in`, `append_value_in[T: fmt::Display]`, and the explicit-zone
+`_in` forms. Tracked local strings can use `append_value(value)` to avoid
+type-specific append names for user-defined display values. Single-byte text-like
 parameters are spelled `char`, Ari's alias for ASCII `u8`, so call sites can
 prefer `'/'`, `'0'`, and `'!'` over decimal byte literals.
 

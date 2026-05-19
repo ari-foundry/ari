@@ -998,6 +998,9 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl19std__string__String8inherent14append_bool_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
 	grep -q '_ARNv4impl19std__string__String8inherent13append_f32_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
 	grep -q '_ARNv4impl19std__string__String8inherent13append_f64_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-append-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append-value.ll
+	grep -q 'append_value_in' $(BUILD_DIR)/prelude/std-string-append-value.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-append-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-append-value.elf; $(BUILD_DIR)/prelude/std-string-append-value.elf; code=$$?; test $$code -eq 196; fi
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-append.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_string_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/std-string-append.ll
@@ -1616,6 +1619,8 @@ check-prelude: $(TARGET)
 	grep -q "std::string::String.reserve receiver must come from a tracked zone allocation to infer its zone" $(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.err
 	if $(TARGET) tests/cases/standard-library/errors/string/std-string-append-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_i64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-different-zone.err
+	if $(TARGET) tests/cases/standard-library/errors/string/std-string-append-value-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-value-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-value-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::string::String.append_value_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-value-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/string/std-string-append-f64-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_f64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/string/std-string-append-f32-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f32-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f32-different-zone.err 2>&1; then exit 1; fi

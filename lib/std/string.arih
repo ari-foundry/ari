@@ -366,6 +366,11 @@ pub impl std::string::String {
     append_byte_in(self, zone, 'e');
   }
 
+  fn append_value_in[T: std::fmt::Display](self: ref mut Self, zone: ref mut Zone, value: T) -> void {
+    let rendered = value.format_in(zone);
+    self.append_bytes(zone, rendered.as_slice());
+  }
+
   fn push_codepoint_in(self: ref mut Self, zone: ref mut Zone, value: u32) -> void {
     match std::encoding::utf8_encoded_len(value) {
       std::Some(_) => {}

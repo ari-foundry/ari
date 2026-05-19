@@ -195,6 +195,9 @@ same zone for the common method surface. `text.push(byte)`,
 `text.append_i64(value)`, `text.append_u64(value)`, `text.append_bool(value)`,
 `text.append_f32(value, precision)`, and
 `text.append_f64(value, precision)` lower to the same explicit-zone helpers.
+For user-defined formatting, prefer `text.append_value(value)` with
+`fmt::Display`; the compiler lowers it to `append_value_in(ref mut Zone,
+value)`.
 The `_in` forms remain the spelling for untracked handles and for code that
 wants to pass the zone visibly.
 
@@ -982,9 +985,9 @@ additional)` for explicit growth, `push_in(ref mut Zone, byte)` and
 `insert_in(ref mut Zone, index, byte)` for grow-on-demand writes,
 `extend_from_slice_in(ref mut Zone, Slice[u8])` for bulk byte appends, and
 `resize_in(ref mut Zone, length, byte)` to grow or shrink. `append_string_in`,
-`append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`, and
-`append_f64_in` build
-text from the scalar values needed by explicit formatting, and
+`append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`,
+`append_f64_in`, and `append_value_in[T: fmt::Display]` build text from the
+scalar and user-defined values needed by explicit formatting, and
 `format_in!(ref mut Zone, "...", values...)` wraps those helpers in a single
 expression for `{}` string/signed and unsigned integer/bool/float formatting
 plus `{:.N}` float precision, with each formatted value evaluated once before
