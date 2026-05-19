@@ -61,9 +61,13 @@ iterator support, and reserve growth; growable `Deque`, bounded `RingBuffer`,
 zone-backed `LinkedList`, and comparator-driven `BinaryHeap`/`PriorityQueue`
 handles; real hash-table `HashMap`/`HashSet` handles with live-bucket
 iterators; and red-black-tree `TreeMap`/`TreeSet` handles with sorted
-key/value iteration. `std::algo` adds source slice algorithms for sorting,
-binary search, reverse/rotate, partition, min/max/clamp, swap, fill, copy, and
-dedup. `std::parse` adds whole-input integer, bool, and decimal float parsing,
+key/value iteration. Root `Slice[T]` now has borrowed range views, split
+views, subsequence search, lexicographic comparison, lazy chunks/windows, and
+delimiter splitting, while `std::string` mirrors those byte-view operations
+and adds allocator-backed `join_in`. `std::algo` adds source slice algorithms
+for sorting, binary search, reverse/rotate, partition, min/max/clamp, swap,
+fill, copy, and dedup. `std::parse` adds whole-input integer, bool, and
+decimal float parsing,
 and `std::encoding` adds ASCII/UTF-8/UTF-16 validation plus hex/base64 codecs.
 A few declarations are still compiler-known because the
 current language cannot express them directly: layout queries, typed raw

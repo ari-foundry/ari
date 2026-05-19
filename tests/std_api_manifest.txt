@@ -353,6 +353,7 @@ fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-mat
 fn std::string::copy_to|check-prelude std-string-from-copy borrowed source and target reset tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::from_slice_in|std string from-slice target-zone copy tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::from_string|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::string::join_in|check-prelude std-string-split-join allocator-backed byte-slice join helper; docs/stdlib/modules/string.md
 fn std::string::new|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::with_capacity|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::sync::call_once|check-prelude std-sync-mutex-once source once execution helper; docs/stdlib/modules/sync.md
@@ -465,20 +466,30 @@ fn std::zone::destroy|zone lifecycle and invalidation tests; docs/dev/test-matri
 fn std::zone::new[T]|placement construction tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::promote[T]|scratch promotion tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::reset|zone reset invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
+method SlicePair[T]::left|check-prelude prelude-slice-sequence split_at left half accessor; docs/stdlib/modules/slice.md
+method SlicePair[T]::right|check-prelude prelude-slice-sequence split_at right half accessor; docs/stdlib/modules/slice.md
 method Slice[T]::as_ptr|check-prelude prelude-slice-as-ptr borrowed receiver and provenance tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+method Slice[T]::chunks|check-prelude prelude-slice-sequence lazy borrowed chunk iterator; docs/stdlib/modules/slice.md
+method Slice[T]::compare|check-prelude prelude-slice-sequence lexicographic slice compare; docs/stdlib/modules/slice.md
 method Slice[T]::contains|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::contains_slice|check-prelude prelude-slice-sequence borrowed subsequence predicate; docs/stdlib/modules/slice.md
 method Slice[T]::count|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::ends_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::equals|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::find|check-prelude prelude-slice-sequence borrowed subsequence search; docs/stdlib/modules/slice.md
 method Slice[T]::first|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::get|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::is_empty|check-prelude prelude-slice-metadata borrowed receiver metadata helper; docs/stdlib/api-reference.md Slice section
 method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::slice|check-prelude prelude-slice-sequence borrowed range view helper; docs/stdlib/modules/slice.md
+method Slice[T]::split|check-prelude prelude-slice-sequence lazy borrowed delimiter split iterator; docs/stdlib/modules/slice.md
+method Slice[T]::split_at|check-prelude prelude-slice-sequence borrowed left/right split helper; docs/stdlib/modules/slice.md
 method Slice[T]::starts_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::try_first|check-prelude prelude-slice-option-access Option-returning empty-safe access; docs/stdlib/api-reference.md Slice section
 method Slice[T]::try_get|check-prelude prelude-slice-option-access Option-returning out-of-range access; docs/stdlib/api-reference.md Slice section
 method Slice[T]::try_last|check-prelude prelude-slice-option-access Option-returning empty-safe access; docs/stdlib/api-reference.md Slice section
+method Slice[T]::windows|check-prelude prelude-slice-sequence lazy borrowed window iterator; docs/stdlib/modules/slice.md
 method std::Option[T]::and_then[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::expect|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::filter|check-prelude prelude-option-filter borrowed predicate helper; docs/stdlib/api-reference.md Option and Result section
@@ -754,11 +765,13 @@ method std::string::String::append_u64_in|check-prelude std-string-append-u64, p
 method std::string::String::as_ptr|check-prelude std-string-handle borrowed receiver and as-ptr provenance tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::as_slice|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::capacity|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::chunks|check-prelude std-string-split-join byte-view chunk iterator; docs/stdlib/modules/string.md
 method std::string::String::clear|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::codepoint_at|check-prelude std-string-unicode-helpers UTF-8 scalar decode at byte offset; docs/stdlib/modules/string.md
 method std::string::String::codepoint_count|check-prelude std-string-unicode-helpers UTF-8 scalar count validator; docs/stdlib/modules/string.md
 method std::string::String::contains|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::contains_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only search; docs/stdlib/api-reference.md String section
+method std::string::String::contains_slice|check-prelude std-string-split-join byte-slice search predicate; docs/stdlib/modules/string.md
 method std::string::String::copy_to|check-prelude std-string-copy-to-method borrowed receiver and target reset tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::count|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::ends_with|check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -766,6 +779,7 @@ method std::string::String::ends_with_ignore_case|check-prelude std-string-ascii
 method std::string::String::equals|check-prelude std-string-equals borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::equals_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only comparison; docs/stdlib/api-reference.md String section
 method std::string::String::extend_from_slice_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::find|check-prelude std-string-split-join byte-slice search helper; docs/stdlib/modules/string.md
 method std::string::String::first|check-prelude std-string-first-last borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::get|check-prelude std-string-handle borrowed receiver and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::index_of|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -789,6 +803,9 @@ method std::string::String::reserve|check-prelude std-string-grow; docs/dev/test
 method std::string::String::reserve_extra|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::resize_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::set|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::slice|check-prelude std-string-split-join borrowed byte range view; docs/stdlib/modules/string.md
+method std::string::String::split|check-prelude std-string-split-join borrowed delimiter split iterator; docs/stdlib/modules/string.md
+method std::string::String::split_at|check-prelude std-string-split-join borrowed byte split helper; docs/stdlib/modules/string.md
 method std::string::String::starts_with|check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::starts_with_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only comparison; docs/stdlib/api-reference.md String section
 method std::string::String::trim|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
@@ -802,6 +819,7 @@ method std::string::String::try_first|check-prelude std-string-try-byte-access O
 method std::string::String::try_get|check-prelude std-string-try-byte-access Option-returning out-of-range byte access; docs/stdlib/modules/string.md
 method std::string::String::try_last|check-prelude std-string-try-byte-access Option-returning empty-safe byte access; docs/stdlib/modules/string.md
 method std::string::String::try_pop|check-prelude std-string-try-byte-access Option-returning empty pop; docs/stdlib/modules/string.md
+method std::string::String::windows|check-prelude std-string-split-join borrowed byte window iterator; docs/stdlib/modules/string.md
 method std::sync::AtomicI64::compare_exchange|check-prelude std-sync-atomic-i64 compare-and-exchange method wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::fetch_add|check-prelude std-sync-atomic-i64 fetch-add method wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::load|check-prelude std-sync-atomic-i64 load method wrapper; docs/stdlib/modules/sync.md
@@ -930,6 +948,10 @@ module std::vec|std vec handle tests; docs/dev/test-matrix.md Explicit memory zo
 module std::zone|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
+struct std::SliceChunks[T]|check-prelude prelude-slice-sequence borrowed chunk iterator; docs/stdlib/modules/slice.md
+struct std::SlicePair[T]|check-prelude prelude-slice-sequence split_at result pair; docs/stdlib/modules/slice.md
+struct std::SliceSplit[T]|check-prelude prelude-slice-sequence borrowed delimiter split iterator; docs/stdlib/modules/slice.md
+struct std::SliceWindows[T]|check-prelude prelude-slice-sequence borrowed window iterator; docs/stdlib/modules/slice.md
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
 struct std::ascii::ParsedInt|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row

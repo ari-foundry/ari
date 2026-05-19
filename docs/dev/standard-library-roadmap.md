@@ -76,10 +76,12 @@ The current `std` package already provides:
   iterators, and red-black-tree `TreeMap[K,V]`/`TreeSet[T]` with explicit
   comparators and sorted iterators; all use explicit-zone storage and
   provenance checks
-- `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access, and
-  `Option`-returning element access helpers
-- `std::string::String` empty-safe byte access, byte search, comparison,
-  ASCII case-insensitive comparison/search, UTF-8 validation/scalar helpers,
+- `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access,
+  `Option`-returning element access helpers, and root `Slice[T]` borrowed
+  range/split/subsequence/chunk/window helpers
+- `std::string::String` empty-safe byte access, byte search, byte-slice search,
+  split/chunk/window borrowed views, allocator-backed join, comparison, ASCII
+  case-insensitive comparison/search, UTF-8 validation/scalar helpers,
   borrowed and owned ASCII trim helpers, and whole/prefix ASCII parsing helpers
 - range/iterator traits and the `std::vec::Iter` implementation
 - comparison, formatting, and conversion trait surfaces, plus source
@@ -157,6 +159,10 @@ Likely compiler work:
   until the compiler-known local vector model is unified or retired.
 - Add collection APIs only when ownership, borrowing, and zone provenance can
   be tested in focused slices.
+- Keep `Slice[T]` borrowed sequence APIs allocation-free: `slice`, `split_at`,
+  `find`, `contains_slice`, `compare`, `chunks`, `windows`, and delimiter
+  `split` should produce views or scalar answers, while owning copies stay
+  explicit through `copy_to(ref mut zone)`.
 - Grow collection families in this order: slice helpers, vector methods,
   linear `Set[T]`, hash tables, red-black trees, iterators for hash/tree
   containers, deque/ring-buffer/linked-list/heap families, red-black deletion,

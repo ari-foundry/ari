@@ -19,6 +19,9 @@ limits, examples, and test files for one module.
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::mem](mem.md): layout queries, raw pointer helpers, byte memory
   routines, hosted page-size lookup, and value `replace`/`swap`.
+- [Slice[T]](slice.md): root borrowed contiguous views, indexing, subslicing,
+  subsequence search, comparison, lazy chunks/windows, delimiter splitting,
+  and copy-to-vector behavior.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,
   safe accessors, growth, copy, and iterator entry points.
 - [std::hash](hash.md): deterministic non-cryptographic `Hasher`,

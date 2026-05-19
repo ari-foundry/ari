@@ -17,7 +17,7 @@ hiding allocation, ownership, or backend behavior.
 
 | Module | Purpose | First Things To Use |
 | --- | --- | --- |
-| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. |
+| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. Root `Slice[T]` includes access, subslicing, subsequence search, compare, chunks, windows, split, and copy helpers. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `filter`, `flatten`, `transpose`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
 | `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, `write_bytes`, `read_line`. |
@@ -38,7 +38,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
-| `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `push_codepoint_in`, `is_utf8`, `codepoint_count`, `codepoint_at`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
+| `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `from_slice_in`, `join_in`, `push`, `try_get`, `try_pop`, `find`, `contains_slice`, `split`, `chunks`, `windows`, `append_i64_in`, `push_codepoint_in`, `is_utf8`, `codepoint_count`, `codepoint_at`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
 | `std::parse` | Whole-input value parsers over byte slices. | `integer`, `boolean`, `is_float`, `float_or`, `float`. |
 | `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, `utf8_count`, `is_utf8`, `utf8_at`, `utf8_next_index`, `encode_utf8_in`, `utf16_count`, `is_utf16`, `encode_hex_in`, `decode_hex_in`, `encode_base64_in`, `decode_base64_in`. |
@@ -117,7 +117,10 @@ parsing are plain source methods.
 the preferred collection vocabulary where it fits: `is_empty` for length
 metadata, asserting `first`/`last`/`get` for programmer errors, and
 `try_first`/`try_last`/`try_get` for ordinary absence handled through
-`Option`.
+`Option`. `Slice[T]` also owns borrowed-view operations such as `slice`,
+`split_at`, subsequence `find`, `contains_slice`, lexicographic `compare`,
+lazy `chunks`, lazy `windows`, and delimiter `split`; `String` exposes the
+same byte-view shape plus allocator-backed `join_in`.
 
 `std::bits` follows the same rule for current `u64` mask, rotation,
 power-of-two, low-mask, alignment, byte-swap, population-count, and source-loop

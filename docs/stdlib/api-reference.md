@@ -834,16 +834,29 @@ view.as_ptr()
 view.contains(value)
 view.index_of(value)
 view.count(value)
+view.find(needle)
+view.contains_slice(needle)
 view.starts_with(other)
 view.ends_with(other)
 view.equals(other)
+view.compare(other)
+view.slice(start, end)
+view.split_at(index)
+view.chunks(size)
+view.windows(size)
+view.split(delimiter)
 view.copy_to(ref mut zone)
 ```
 
 `first`, `last`, and `get` assert when the requested element does not exist.
 Use `try_first`, `try_last`, and `try_get` when absence is an ordinary branch;
 they return `Option[T]`. `is_empty` is a source method that borrows the view
-and checks whether the stored length is zero.
+and checks whether the stored length is zero. `find` searches for a borrowed
+subslice and returns an index or `-1`; an empty needle matches at `0`.
+`contains_slice` is the boolean wrapper. `compare` is lexicographic and
+returns `-1`, `0`, or `1`. `slice` and `split_at` return borrowed views into
+the same storage. `chunks`, `windows`, and delimiter `split` are lazy
+iterators that yield borrowed `Slice[T]` views.
 
 `std::vec::Vec[T]` is the source growable sequence:
 
@@ -1078,6 +1091,7 @@ set.iter()
 std::string::new(ref mut zone, capacity)
 std::string::from_string(ref mut zone, "text")
 std::string::from_slice_in(ref mut zone, bytes)
+std::string::join_in(ref mut zone, parts, separator)
 text.len()
 text.capacity()
 text.is_empty()
@@ -1104,6 +1118,13 @@ text.resize_in(ref mut zone, length, byte)
 text.index_of(byte)
 text.contains(byte)
 text.count(byte)
+text.find(bytes)
+text.contains_slice(bytes)
+text.slice(start, end)
+text.split_at(index)
+text.chunks(size)
+text.windows(size)
+text.split(delimiter)
 text.starts_with(bytes)
 text.ends_with(bytes)
 text.equals(bytes)
@@ -1137,7 +1158,11 @@ text.as_ptr()
 text.copy_to(ref mut zone)
 ```
 
-`String` stores bytes, so `equals_ignore_case`, `starts_with_ignore_case`,
+`String` stores bytes, so `join_in`, `find`, `contains_slice`, `slice`,
+`split_at`, `chunks`, `windows`, and delimiter `split` operate on byte offsets
+and borrowed `Slice[u8]` views. `join_in` is the allocating helper: it joins
+`Slice[Slice[u8]]` parts with a byte separator into the caller's zone.
+`equals_ignore_case`, `starts_with_ignore_case`,
 `ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`,
 `trim_start`, `trim_end`, `trim`, `parse_decimal`, `parse_decimal_prefix`,
 `parse_hex`, and `parse_hex_prefix` intentionally reuse `std::ascii` behavior.

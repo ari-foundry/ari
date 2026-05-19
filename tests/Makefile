@@ -806,6 +806,13 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent8index_of"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent8contains"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent5count"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-split-join.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-split-join.ll
+	grep -F -q 'std6string7join_in' $(BUILD_DIR)/prelude/std-string-split-join.ll
+	grep -F -q 'String8inherent5slice' $(BUILD_DIR)/prelude/std-string-split-join.ll
+	grep -F -q 'String8inherent5split' $(BUILD_DIR)/prelude/std-string-split-join.ll
+	grep -F -q 'String8inherent7windows' $(BUILD_DIR)/prelude/std-string-split-join.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-split-join.ari -o $(BUILD_DIR)/prelude/std-string-split-join.elf
+	$(BUILD_DIR)/prelude/std-string-split-join.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-prefix-suffix.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-prefix-suffix.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-string-prefix-suffix.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-string-prefix-suffix.ll
@@ -1120,6 +1127,13 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent5slice' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent8split_at' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent4find' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent7compare' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent6chunks' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent7windows' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-metadata.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent8is_empty"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-metadata.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
@@ -1134,6 +1148,8 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf
 	$(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari -o $(BUILD_DIR)/prelude/prelude-slice-sequence.elf
+	$(BUILD_DIR)/prelude/prelude-slice-sequence.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari -o $(BUILD_DIR)/prelude/prelude-slice-metadata.elf
 	$(BUILD_DIR)/prelude/prelude-slice-metadata.elf; code=$$?; test $$code -eq 23
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari -o $(BUILD_DIR)/prelude/prelude-slice-option-access.elf
@@ -1212,6 +1228,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; code=$$?; test $$code -eq 91; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf; $(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-sequence.elf; $(BUILD_DIR)/prelude/prelude-slice-sequence.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; code=$$?; test $$code -eq 47; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; code=$$?; test $$code -eq 32; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
@@ -1245,6 +1262,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-fixed-push.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-fixed-push.elf; $(BUILD_DIR)/prelude/std-string-fixed-push.elf; code=$$?; test $$code -eq 179; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-first-last.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-first-last.elf; $(BUILD_DIR)/prelude/std-string-first-last.elf; code=$$?; test $$code -eq 239; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-search.elf; $(BUILD_DIR)/prelude/std-string-search.elf; code=$$?; test $$code -eq 77; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-split-join.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-split-join.elf; $(BUILD_DIR)/prelude/std-string-split-join.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-prefix-suffix.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; code=$$?; test $$code -eq 143; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-equals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-equals.elf; $(BUILD_DIR)/prelude/std-string-equals.elf; code=$$?; test $$code -eq 83; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-from-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-copy.elf; $(BUILD_DIR)/prelude/std-string-from-copy.elf; code=$$?; test $$code -eq 163; fi

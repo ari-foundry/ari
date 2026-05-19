@@ -244,13 +244,13 @@ Or-pattern alternatives must bind the same names with compatible types.
 | explicit allocation | `zone::create`, `zone::alloc<T>`, `zone::alloc_array<T>`, `zone::new<T>`, `zone::reset`, `zone::destroy` |
 | temporary allocation | `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |
 | single-value handle | `std::boxed::Box[T]`, `Box!(T, ref mut zone, value)` |
-| owned byte string | `std::string::String`, `std::string::from_string(ref mut zone, "text")`, `.try_get(index)`, `.is_utf8()`, `.codepoint_at(byte_index)`, `.push_codepoint_in(ref mut zone, scalar)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.trim_to(ref mut zone)` |
+| owned byte string | `std::string::String`, `std::string::from_string(ref mut zone, "text")`, `std::string::join_in(ref mut zone, parts, separator)`, `.try_get(index)`, `.find(bytes)`, `.split(delimiter)`, `.chunks(size)`, `.windows(size)`, `.is_utf8()`, `.codepoint_at(byte_index)`, `.push_codepoint_in(ref mut zone, scalar)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.trim_to(ref mut zone)` |
 | unique linear set | `collections::new<T>(ref mut zone, capacity)`, `Set::new<T>(ref mut zone, capacity)`, `.insert(ref mut zone, value)`, `.replace(ref mut zone, value)`, `.try_get(index)`, `.try_pop()`, `.reserve(ref mut zone, capacity)`, `.iter()`, `.contains(value)` |
 | ASCII byte helpers | `ascii::is_digit`, `ascii::equals_ignore_case`, `ascii::index_of_ignore_case`, `ascii::trim`, `ascii::parse_decimal`, `ascii::parse_decimal_prefix` |
 | integer math helpers | `math::abs`, `math::is_positive`, `math::is_zero`, `math::div_floor`, `math::div_ceil`, `math::mod_floor`, `math::gcd` |
 | bit helpers | `bits::is_set`, `bits::rotate_left`, `bits::bit_width`, `bits::leading_zeros`, `bits::leading_ones` |
 | source growable vector | `std::vec::Vec[T]`, `std::vec::new<T>(ref mut zone, capacity)` |
-| borrowed view | `Slice[T]`, `.as_slice()`, `slice(data, len)` |
+| borrowed view | `Slice[T]`, `.as_slice()`, `slice(data, len)`, `.slice(start, end)`, `.find(needle)`, `.chunks(size)`, `.windows(size)`, `.split(delimiter)` |
 | comparison helpers | `cmp::min`, `cmp::max`, `cmp::clamp` with `Ord` impls |
 | iteration traits | `Iterator[T]`, `IntoIterator[T]`, `iter::range`, `iter::range_inclusive` |
 

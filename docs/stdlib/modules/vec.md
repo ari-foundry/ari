@@ -160,15 +160,33 @@ view.try_get(index)
 view.index_of(value)
 view.contains(value)
 view.count(value)
+view.find(needle)
+view.contains_slice(needle)
 view.starts_with(other)
 view.ends_with(other)
 view.equals(other)
+view.compare(other)
 view.copy_to(ref mut zone)
 ```
 
 Use `Slice[T]` when you only need a borrowed view. `is_empty` checks the
 view's stored length without touching elements. Use `try_*` accessors when
 absence is a normal branch and `first`/`last`/`get` when absence should trap.
+
+Borrowed view shaping and lazy splitting:
+
+```ari
+view.slice(start, end)
+view.split_at(index)
+view.chunks(size)
+view.windows(size)
+view.split(delimiter)
+```
+
+`slice` and `split_at` return borrowed views into the same storage. `chunks`,
+`windows`, and delimiter `split` are lazy iterators that yield `Slice[T]`
+views, so they do not allocate. The dedicated [Slice guide](slice.md) covers
+their exact boundary behavior.
 
 ## Example
 
@@ -196,6 +214,7 @@ Focused positive tests include:
 
 ```text
 tests/cases/standard-library/ok/vec/prelude-slice-methods.ari
+tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
 tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari
 tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari
 tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari

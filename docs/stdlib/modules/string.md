@@ -30,11 +30,14 @@ Constructors allocate in an explicit zone:
 std::string::new(ref mut zone, capacity)
 std::string::from_string(ref mut zone, "text")
 std::string::from_slice_in(ref mut zone, bytes)
+std::string::join_in(ref mut zone, parts, separator)
 ```
 
 `new` creates an empty buffer with fixed starting capacity.
 `from_string` copies a lowercase `string` literal/runtime value.
 `from_slice_in` copies a borrowed `Slice[u8]`.
+`join_in` joins a `Slice[Slice[u8]]` with a byte separator and returns an owned
+`String` in the provided zone.
 
 Copies also require a target zone:
 
@@ -143,17 +146,31 @@ Search helpers operate on bytes:
 text.index_of(byte)
 text.contains(byte)
 text.count(byte)
+text.find(bytes)
+text.contains_slice(bytes)
 ```
 
-Slice comparison helpers operate on borrowed `Slice[u8]` values:
+`index_of`, `contains`, and `count` operate on one byte. `find` searches for a
+borrowed byte slice and returns the first byte offset or `-1`; an empty search
+slice matches at `0`. `contains_slice` is the boolean wrapper.
+
+Slice comparison and view helpers operate on borrowed `Slice[u8]` values:
 
 ```ari
+text.slice(start, end)
+text.split_at(index)
+text.chunks(size)
+text.windows(size)
+text.split(delimiter)
 text.starts_with(bytes)
 text.ends_with(bytes)
 text.equals(bytes)
 ```
 
-They compare exact byte values and do not perform case folding or decoding.
+`slice` and `split_at` return borrowed byte views. `chunks`, `windows`, and
+delimiter `split` are lazy iterators over borrowed byte views and do not
+allocate. They compare exact byte values and do not perform case folding or
+decoding.
 
 ## ASCII Helpers
 
@@ -247,6 +264,7 @@ tests/cases/standard-library/ok/string/std-string-handle.ari
 tests/cases/standard-library/ok/string/std-string-first-last.ari
 tests/cases/standard-library/ok/string/std-string-try-byte-access.ari
 tests/cases/standard-library/ok/string/std-string-search.ari
+tests/cases/standard-library/ok/string/std-string-split-join.ari
 tests/cases/standard-library/ok/string/std-string-prefix-suffix.ari
 tests/cases/standard-library/ok/string/std-string-equals.ari
 tests/cases/standard-library/ok/string/std-string-ascii-helpers.ari

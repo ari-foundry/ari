@@ -11,12 +11,14 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 - Keep focused tests under `tests/cases/standard-library/`.
 - Keep this `docs/stdlib/` folder current with every public API.
 
-Current source families: `option`, `result`, `algo` slice sort/search/reorder
-helpers, `hash` deterministic hasher/value/byte-slice helpers, `mem` layout,
+Current source families: `option`, `result`, root `Slice[T]` access,
+subslice, split, subsequence search, compare, chunk/window, copy helpers,
+`algo` slice sort/search/reorder helpers, `hash` deterministic
+hasher/value/byte-slice helpers, `mem` layout,
 pointer, value, byte memory, and hosted page-size helpers, `zone` raw
 allocation plus source typed array allocation,
-`boxed`, `string` byte access/search/ASCII
-helpers including case search, prefix parsers, and owned trim copies, `ascii`
+`boxed`, `string` byte access/search/split/chunk/window/join/ASCII helpers
+including case search, prefix parsers, and owned trim copies, `ascii`
 byte classification, case-insensitive comparison/search, slice helpers, and
 prefix parsers, `vec`, `iter` range/trait support plus lazy adapters and eager
 consumers, `fmt`, `cmp` comparison helpers, `convert`
@@ -84,6 +86,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, user-facing `ThreadLocal[T]`, custom stack-size options, richer status/result values, and `std::sync` integration. |
 | `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`, plus source primitive `Mutex`, `RwLock`, and `Once`; future generic atomics, memory-order parameters, value-protecting `Mutex[T]`/`RwLock[T]`, `Condvar`, `OnceLock`, `LazyLock`, `Barrier`, optional `Semaphore`, `Shared`, `Weak`, MPSC channels, and Linux futex-backed internals after ownership rules are stable. |
 | `std::collections` | Store keyed, queue-like, linked, and priority data beyond vectors. | Current linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, FIFO/linked/heap tests, live-bucket hash iterators, sorted tree iterators; future tree deletion and trait-driven constructors. |
+| root `Slice[T]` | Borrow contiguous storage without owning or allocating. | Current length/indexing/access, `try_*` access, `slice`, `split_at`, `find`, `contains_slice`, `compare`, prefix/suffix/equality, `chunks`, `windows`, delimiter `split`, and copy-to-vector; future predicate split and stronger trait-bound diagnostics for generic comparison. |
 | `std::iter` | Compose sequence processing without forcing every operation onto each collection type. | Current `range`, `range_inclusive`, `Iterator`, `IntoIterator`, lazy `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed `collect`; future captured closures, richer adapter inference, and collect targets beyond `std::vec::Vec[T]`. |
 | `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting and move-aware algorithm contracts. |
 | `std::hash` | Provide deterministic non-cryptographic hashing without tying hash policy to one collection type. | Current `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers, and `collections::hash_i64` compatibility; future aggregate/derive impls and trait-driven hash collection constructors. |
@@ -108,6 +111,9 @@ work. Each one should land in small tested slices with natural API names.
   `Vec[T]`.
 - Keep shared collection access vocabulary aligned across `Slice[T]` and
   `std::vec::Vec[T]`, including `try_*` methods for `Option`-based absence.
+- Keep borrowed sequence operations on `Slice[T]`: range views, split views,
+  subsequence search, lexicographic compare, chunks, windows, and delimiter
+  split should stay allocation-free and return views.
 - Add collection helpers in small slices: slice methods, vector methods, the
   current linear `Set[T]` access/update/reserve/iteration surface, hash/table
   lookup and tombstones, tree insertion/lookup, hash and tree iterators,
@@ -125,7 +131,8 @@ work. Each one should land in small tested slices with natural API names.
   validation/access/append helpers through `std::encoding`.
 - Expose small `String` conveniences only when they preserve byte-string
   semantics, such as ASCII case comparison/search, borrowed ASCII trim views,
-  owned trim copies, and whole/prefix ASCII parsers.
+  owned trim copies, borrowed split/chunk/window views, byte-slice search,
+  allocator-backed `join_in`, and whole/prefix ASCII parsers.
 - Keep ASCII-only helpers in `std::ascii` so byte-oriented classification,
   comparison, search, trimming, and parsing behavior is explicit at call sites.
 - Keep whole-input value parsing in `std::parse` so application code does not

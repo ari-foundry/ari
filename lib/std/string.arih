@@ -20,6 +20,33 @@ pub fn from_slice_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string:
   return output;
 }
 
+pub fn join_in(
+  zone: ref mut Zone,
+  parts: std::Slice[std::Slice[u8]],
+  separator: std::Slice[u8]
+) -> std::string::String {
+  var capacity = 0;
+  var index = 0;
+  while index < parts.len {
+    capacity = capacity + parts[index].len;
+    if index > 0 {
+      capacity = capacity + separator.len;
+    }
+    index = index + 1;
+  }
+
+  var output = std::string::new(zone, capacity);
+  index = 0;
+  while index < parts.len {
+    if index > 0 {
+      output.extend_from_slice_in(zone, separator);
+    }
+    output.extend_from_slice_in(zone, parts[index]);
+    index = index + 1;
+  }
+  return output;
+}
+
 fn next_growth_capacity(current: i64, minimum: i64) -> i64 {
   var capacity = current * 2;
   if capacity < minimum {
@@ -396,6 +423,41 @@ pub impl std::string::String {
       index = index + 1;
     }
     return total;
+  }
+
+  fn slice(self: ref Self, start: i64, end: i64) -> super::Slice[u8] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return view.slice(start, end);
+  }
+
+  fn split_at(self: ref Self, index: i64) -> super::SlicePair[u8] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return view.split_at(index);
+  }
+
+  fn chunks(self: ref Self, size: i64) -> super::SliceChunks[u8] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return view.chunks(size);
+  }
+
+  fn windows(self: ref Self, size: i64) -> super::SliceWindows[u8] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return view.windows(size);
+  }
+
+  fn split(self: ref Self, delimiter: u8) -> super::SliceSplit[u8] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return view.split(delimiter);
+  }
+
+  fn find(self: ref Self, values: super::Slice[u8]) -> i64 {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return view.find(values);
+  }
+
+  fn contains_slice(self: ref Self, values: super::Slice[u8]) -> bool {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return view.contains_slice(values);
   }
 
   fn starts_with(self: ref Self, values: super::Slice[u8]) -> bool {

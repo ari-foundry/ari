@@ -27,10 +27,15 @@ identifies the exact case:
   behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access
   behavior.
+- `prelude-slice-sequence.ari`: root `Slice[T]` range views, split views,
+  subsequence search, lexicographic compare, chunks, windows, and delimiter
+  splitting.
 - `std-iter-adapters.ari`: source `std::iter` lazy `map`, `filter`, `take`,
   `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed
   `collect` behavior over `std::vec::Iter[T]`.
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
+- `std-string-split-join.ari`: source `std::string` byte-slice search,
+  borrowed split/chunk/window views, and allocator-backed `join_in`.
 - `std-string-ascii-helpers.ari`: source `std::string` borrowed ASCII trim
   views and whole-string parsing behavior.
 - `std-string-ascii-case-helpers.ari`: source `std::string` ASCII-only

@@ -1,0 +1,54 @@
+// Covers String byte-view sequence helpers plus allocator-backed join.
+fn expect_bytes(values: Slice[u8], expected: Slice[u8]) -> void {
+  assert(values.equals(expected));
+}
+
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var first_bytes = [97u8, 114u8, 105u8];
+  var second_bytes = [115u8, 116u8, 100u8, 108u8, 105u8, 98u8];
+  var third_bytes = [100u8, 111u8, 99u8, 115u8];
+  var separator_bytes = [47u8];
+  let first = first_bytes.as_slice();
+  let second = second_bytes.as_slice();
+  let third = third_bytes.as_slice();
+  let separator = separator_bytes.as_slice();
+
+  var expected = std::string::from_string(ref mut zone, "ari/stdlib/docs");
+  var stdlib = std::string::from_string(ref mut zone, "stdlib");
+
+  var parts = [first, second, third];
+  var joined = std::string::join_in(ref mut zone, parts.as_slice(), separator);
+  assert(joined.equals(expected.as_slice()));
+  assert_eq_i64(joined.find(stdlib.as_slice()), 4);
+  assert(joined.contains_slice(stdlib.as_slice()));
+
+  expect_bytes(joined.slice(0, 3), first);
+  let split_at_three = joined.split_at(3);
+  expect_bytes(split_at_three.left(), first);
+  assert_eq_i64(split_at_three.right().len, 12);
+
+  var chunks = joined.chunks(4);
+  var chunk_score = 0;
+  for chunk in ref mut chunks {
+    chunk_score = chunk_score + chunk.len + (chunk[0] as i64);
+  }
+  assert_eq_i64(chunk_score, 443);
+
+  var windows = joined.windows(3);
+  var window_score = 0;
+  for window in ref mut windows {
+    window_score = window_score + (window[0] as i64) + (window[2] as i64);
+  }
+  assert_eq_i64(window_score, 2529);
+
+  var pieces = joined.split(47u8);
+  expect_bytes(pieces.next().unwrap(), first);
+  expect_bytes(pieces.next().unwrap(), second);
+  expect_bytes(pieces.next().unwrap(), third);
+  let no_more = pieces.next();
+  assert(no_more.is_none());
+
+  zone::destroy(zone);
+  return 0;
+}

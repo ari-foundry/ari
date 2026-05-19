@@ -11,6 +11,8 @@ checks.
 - `std-string-first-last.ari`: endpoint byte access.
 - `std-string-try-byte-access.ari`: Option-returning byte access and empty pop.
 - `std-string-search.ari`: byte search and count helpers.
+- `std-string-split-join.ari`: byte-slice find, borrowed split/chunk/window
+  views, and allocator-backed join.
 - `std-string-prefix-suffix.ari`: borrowed slice prefix/suffix checks.
 - `std-string-equals.ari`: exact borrowed byte-slice comparison.
 - `std-string-ascii-helpers.ari`: ASCII trim views and whole ASCII parsers.

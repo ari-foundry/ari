@@ -47,6 +47,33 @@ pub struct Slice[T] {
   len: i64,
 }
 
+pub struct SlicePair[T] {
+  left: Slice[T],
+  right: Slice[T],
+}
+
+pub struct SliceChunks[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+  size: i64,
+}
+
+pub struct SliceWindows[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+  size: i64,
+}
+
+pub struct SliceSplit[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+  delimiter: T,
+  mut finished: bool,
+}
+
 pub fn slice[T](data: ptr T, len: i64) -> Slice[T] {
   return Slice<T> { data: data, len: len };
 }
@@ -148,6 +175,41 @@ pub impl[T] Slice[T] {
     return self.data;
   }
 
+  fn slice(self: ref Self, start: i64, end: i64) -> Slice[T] {
+    std::assert(start >= 0);
+    std::assert(end >= start);
+    std::assert(end <= self.len);
+    return Slice<T> { data: ptr_add(self.data, start), len: end - start };
+  }
+
+  fn split_at(self: ref Self, index: i64) -> SlicePair[T] {
+    std::assert(index >= 0);
+    std::assert(index <= self.len);
+    let left = Slice<T> { data: self.data, len: index };
+    let right = Slice<T> { data: ptr_add(self.data, index), len: self.len - index };
+    return SlicePair<T> { left: left, right: right };
+  }
+
+  fn chunks(self: ref Self, size: i64) -> SliceChunks[T] {
+    std::assert(size > 0);
+    return SliceChunks<T> { data: self.data, len: self.len, index: 0, size: size };
+  }
+
+  fn windows(self: ref Self, size: i64) -> SliceWindows[T] {
+    std::assert(size > 0);
+    return SliceWindows<T> { data: self.data, len: self.len, index: 0, size: size };
+  }
+
+  fn split(self: ref Self, delimiter: T) -> SliceSplit[T] {
+    return SliceSplit<T> {
+      data: self.data,
+      len: self.len,
+      index: 0,
+      delimiter: delimiter,
+      finished: false,
+    };
+  }
+
   fn index_of(self: ref Self, value: T) -> i64 {
     var index = 0;
     while index < self.len {
@@ -173,6 +235,61 @@ pub impl[T] Slice[T] {
       index = index + 1;
     }
     return total;
+  }
+
+  fn find(self: ref Self, values: Slice[T]) -> i64 {
+    if values.len == 0 {
+      return 0;
+    }
+    if values.len > self.len {
+      return -1;
+    }
+
+    var start = 0;
+    while start <= self.len - values.len {
+      var index = 0;
+      var matches = true;
+      while index < values.len {
+        if ptr_load(ptr_add(self.data, start + index)) != values[index] {
+          matches = false;
+          index = values.len;
+        } else {
+          index = index + 1;
+        }
+      }
+      if matches {
+        return start;
+      }
+      start = start + 1;
+    }
+    return -1;
+  }
+
+  fn contains_slice(self: ref Self, values: Slice[T]) -> bool {
+    return self.find(values) >= 0;
+  }
+
+  fn compare(self: ref Self, values: Slice[T]) -> i64 {
+    var index = 0;
+    while index < self.len && index < values.len {
+      let left = ptr_load(ptr_add(self.data, index));
+      let right = values[index];
+      if left.lt(right) {
+        return -1;
+      }
+      if right.lt(left) {
+        return 1;
+      }
+      index = index + 1;
+    }
+
+    if self.len < values.len {
+      return -1;
+    }
+    if self.len > values.len {
+      return 1;
+    }
+    return 0;
   }
 
   fn starts_with(self: ref Self, values: Slice[T]) -> bool {
@@ -220,6 +337,69 @@ pub impl[T] Slice[T] {
 }
 
 pub mod iter;
+
+pub impl[T] SlicePair[T] {
+  fn left(self: ref Self) -> Slice[T] {
+    return self.left;
+  }
+
+  fn right(self: ref Self) -> Slice[T] {
+    return self.right;
+  }
+}
+
+impl[T] Iterator[Slice[T]] for SliceChunks[T] {
+  pub fn next(self: ref mut Self) -> Option[Slice[T]] {
+    if self.index >= self.len {
+      return None<Slice[T]>();
+    }
+
+    var length = self.size;
+    if self.index + length > self.len {
+      length = self.len - self.index;
+    }
+
+    let current = Slice<T> { data: ptr_add(self.data, self.index), len: length };
+    self.index = self.index + length;
+    return Some<Slice[T]>(current);
+  }
+}
+
+impl[T] Iterator[Slice[T]] for SliceWindows[T] {
+  pub fn next(self: ref mut Self) -> Option[Slice[T]] {
+    if self.size > self.len {
+      return None<Slice[T]>();
+    }
+    if self.index + self.size > self.len {
+      return None<Slice[T]>();
+    }
+
+    let current = Slice<T> { data: ptr_add(self.data, self.index), len: self.size };
+    self.index = self.index + 1;
+    return Some<Slice[T]>(current);
+  }
+}
+
+impl[T] Iterator[Slice[T]] for SliceSplit[T] {
+  pub fn next(self: ref mut Self) -> Option[Slice[T]] {
+    if self.finished {
+      return None<Slice[T]>();
+    }
+
+    let start = self.index;
+    while self.index < self.len && ptr_load(ptr_add(self.data, self.index)) != self.delimiter {
+      self.index = self.index + 1;
+    }
+
+    let current = Slice<T> { data: ptr_add(self.data, start), len: self.index - start };
+    if self.index < self.len {
+      self.index = self.index + 1;
+    } else {
+      self.finished = true;
+    }
+    return Some<Slice[T]>(current);
+  }
+}
 
 pub mod fmt;
 
