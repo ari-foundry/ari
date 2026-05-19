@@ -56,10 +56,15 @@ identifies the exact case:
   child/parent predicates, explicit child exit, and wait failure sentinel.
 - `std-time-basic.ari`: runtime-backed monotonic and wall-clock nanosecond
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
-- `std-fs-basic.ari`: runtime-backed file existence, creation/truncating
-  write, byte reads/writes, close, removal, and `Option[File]` open helpers.
-- `std-fs-append.ari`: runtime-backed append open, preservation of existing
-  bytes, appended byte-slice writes, and failed append opens as `Option`.
+- `std-fs-basic.ari`: runtime-backed file existence, mode-string
+  creation/truncating write, byte reads/writes, close, removal, and
+  `Option[File]` open helpers.
+- `std-fs-append.ari`: runtime-backed `"a"` append mode, preservation of
+  existing bytes, appended byte-slice writes, and failed append opens as
+  `Option`.
+- `std-fs-open-modes.ari`: mode-string `open`/`try_open` behavior for `"r"`,
+  `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes, and invalid
+  mode strings.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

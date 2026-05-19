@@ -1,0 +1,137 @@
+// Covers the public mode-string contract for fs::open/try_open.  The modes
+// mirror familiar C/Python spelling where useful and also accept Ari's "rw".
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-open-modes.tmp";
+  if fs::exists(path) {
+    fs::remove(path);
+  }
+
+  var score = 0;
+
+  let missing_rw = fs::try_open(path, "rw");
+  if missing_rw.is_none() {
+    score = score + 1;
+  }
+
+  let writer = fs::try_open(path, "w").unwrap_or(fs::File::invalid());
+  if writer.is_open() {
+    score = score + 1;
+  }
+  if writer.write_byte(65 as u8) {
+    score = score + 1;
+  }
+  if writer.write_byte(66 as u8) {
+    score = score + 1;
+  }
+  if writer.close() {
+    score = score + 1;
+  }
+
+  let both = fs::try_open(path, "rw").unwrap_or(fs::File::invalid());
+  if both.is_open() {
+    score = score + 1;
+  }
+  if both.read_byte() == 65 {
+    score = score + 1;
+  }
+  if both.write_byte(90 as u8) {
+    score = score + 1;
+  }
+  if both.close() {
+    score = score + 1;
+  }
+
+  let reader = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
+  if reader.read_byte() == 65 {
+    score = score + 1;
+  }
+  if reader.read_byte() == 90 {
+    score = score + 1;
+  }
+  if reader.close() {
+    score = score + 1;
+  }
+
+  let plus = fs::try_open(path, "r+").unwrap_or(fs::File::invalid());
+  if plus.is_open() {
+    score = score + 1;
+  }
+  if plus.read_byte() == 65 {
+    score = score + 1;
+  }
+  if plus.write_byte(91 as u8) {
+    score = score + 1;
+  }
+  if plus.close() {
+    score = score + 1;
+  }
+
+  let check_plus = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
+  if check_plus.read_byte() == 65 {
+    score = score + 1;
+  }
+  if check_plus.read_byte() == 91 {
+    score = score + 1;
+  }
+  if check_plus.close() {
+    score = score + 1;
+  }
+
+  let trunc = fs::try_open(path, "w+").unwrap_or(fs::File::invalid());
+  if trunc.is_open() {
+    score = score + 1;
+  }
+  if trunc.write_byte(70 as u8) {
+    score = score + 1;
+  }
+  if trunc.close() {
+    score = score + 1;
+  }
+
+  let appender = fs::try_open(path, "a+").unwrap_or(fs::File::invalid());
+  if appender.is_open() {
+    score = score + 1;
+  }
+  if appender.write_byte(71 as u8) {
+    score = score + 1;
+  }
+  if appender.close() {
+    score = score + 1;
+  }
+
+  let final_reader = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
+  if final_reader.read_byte() == 70 {
+    score = score + 1;
+  }
+  if final_reader.read_byte() == 71 {
+    score = score + 1;
+  }
+  if final_reader.read_byte() < 0 {
+    score = score + 1;
+  }
+  if final_reader.close() {
+    score = score + 1;
+  }
+
+  let bad = fs::try_open(path, "bad");
+  if bad.is_none() {
+    score = score + 1;
+  }
+  let empty = fs::try_open(path, "");
+  if empty.is_none() {
+    score = score + 1;
+  }
+  let repeated = fs::try_open(path, "rr");
+  if repeated.is_none() {
+    score = score + 1;
+  }
+
+  if fs::remove(path) {
+    score = score + 1;
+  }
+  if !fs::exists(path) {
+    score = score + 1;
+  }
+
+  return score;
+}

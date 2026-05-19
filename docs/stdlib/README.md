@@ -25,7 +25,7 @@ in `std::env`, while `std::context` stays the low-level runtime context layer.
 exit helpers, and the first POSIX fork/wait slice, `std::time` adds monotonic
 instants, wall-clock timestamps, non-negative durations, elapsed-time helpers,
 and sleep, and `std::fs` adds the first byte-oriented file handle slice with
-read, truncate-write, and append opens. Source
+mode-string opens for read, write, append, and read/write access. Source
 collection work includes `std::collections::Set[T]` as a linear explicit-zone
 set with insertion-order access, optional access, replace-or-insert updates,
 iterator support, and reserve growth; real hash-table `HashMap`/`HashSet`

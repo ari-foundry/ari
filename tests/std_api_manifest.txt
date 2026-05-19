@@ -106,14 +106,16 @@ fn std::env::try_executable_path|check-prelude std-env-paths optional executable
 fn std::env::try_get|check-prelude std-env-vars optional environment variable helper; docs/stdlib/modules/env.md
 fn std::fs::close|check-prelude std-fs-basic file close hook; docs/stdlib/modules/fs.md
 fn std::fs::exists|check-prelude std-fs-basic file existence hook; docs/stdlib/modules/fs.md
-fn std::fs::open_append|check-prelude std-fs-append create/append open hook; docs/stdlib/modules/fs.md
-fn std::fs::open_read|check-prelude std-fs-basic read-only open hook; docs/stdlib/modules/fs.md
-fn std::fs::open_write|check-prelude std-fs-basic create/truncate write open hook; docs/stdlib/modules/fs.md
+fn std::fs::open|check-prelude std-fs-open-modes mode-string open hook; docs/stdlib/modules/fs.md
+fn std::fs::open_append|check-prelude std-fs-append compatibility append wrapper over mode-string open; docs/stdlib/modules/fs.md
+fn std::fs::open_read|check-prelude std-fs-basic compatibility read wrapper over mode-string open; docs/stdlib/modules/fs.md
+fn std::fs::open_write|check-prelude std-fs-basic compatibility write wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::read_byte|check-prelude std-fs-basic file byte read hook; docs/stdlib/modules/fs.md
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
-fn std::fs::try_open_append|check-prelude std-fs-append Option-returning append open helper; docs/stdlib/modules/fs.md
-fn std::fs::try_open_read|check-prelude std-fs-basic Option-returning read open helper; docs/stdlib/modules/fs.md
-fn std::fs::try_open_write|check-prelude std-fs-basic Option-returning write open helper; docs/stdlib/modules/fs.md
+fn std::fs::try_open|check-prelude std-fs-open-modes Option-returning mode-string open helper; docs/stdlib/modules/fs.md
+fn std::fs::try_open_append|check-prelude std-fs-append compatibility Option-returning append helper; docs/stdlib/modules/fs.md
+fn std::fs::try_open_read|check-prelude std-fs-basic compatibility Option-returning read helper; docs/stdlib/modules/fs.md
+fn std::fs::try_open_write|check-prelude std-fs-basic compatibility Option-returning write helper; docs/stdlib/modules/fs.md
 fn std::fs::write_byte|check-prelude std-fs-basic file byte write hook; docs/stdlib/modules/fs.md
 fn std::fs::write_bytes|check-prelude std-fs-basic source byte-slice write helper; docs/stdlib/modules/fs.md
 fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row

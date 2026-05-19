@@ -45,6 +45,7 @@ std-process-fork-wait.ari
 std-time-basic.ari
 std-fs-basic.ari
 std-fs-append.ari
+std-fs-open-modes.ari
 std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari

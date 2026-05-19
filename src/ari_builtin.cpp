@@ -113,6 +113,8 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::fs::exists", "ari_builtin_fs_exists"},
         {"fs::remove", "ari_builtin_fs_remove"},
         {"std::fs::remove", "ari_builtin_fs_remove"},
+        {"fs::open", "ari_builtin_fs_open"},
+        {"std::fs::open", "ari_builtin_fs_open"},
         {"fs::open_read", "ari_builtin_fs_open_read"},
         {"std::fs::open_read", "ari_builtin_fs_open_read"},
         {"fs::open_write", "ari_builtin_fs_open_write"},
@@ -220,6 +222,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_remove") return builtin_sig({source_string}, boolean);
+    if (symbol == "ari_builtin_fs_open") return builtin_sig({source_string, source_string}, fs_file);
     if (symbol == "ari_builtin_fs_open_read") return builtin_sig({source_string}, fs_file);
     if (symbol == "ari_builtin_fs_open_write") return builtin_sig({source_string}, fs_file);
     if (symbol == "ari_builtin_fs_open_append") return builtin_sig({source_string}, fs_file);

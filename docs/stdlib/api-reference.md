@@ -202,9 +202,11 @@ Filesystem helpers live in `std::fs`:
 ```ari
 fs::exists(path)
 fs::remove(path)
+fs::open(path, mode)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
+fs::try_open(path, mode)
 fs::try_open_read(path)
 fs::try_open_write(path)
 fs::try_open_append(path)
@@ -221,17 +223,19 @@ file.write_byte(value)
 file.write_bytes(values)
 ```
 
-Use `try_open_read`, `try_open_write`, and `try_open_append` for ordinary
-fallible open operations; they return `Option[File]`. The raw open calls return
-a `File` directly, with `File::invalid()` and `file.is_open()` exposing the
-invalid-handle convention. `open_write` creates or truncates a file.
-`open_append` creates a file if needed and appends new bytes without truncating
-existing contents. `read_byte` returns an `i64` byte value or `-1` at
-EOF/failure, and `write_byte` returns whether one byte was written.
-`write_bytes` writes a `Slice[u8]` and returns the count written before the
-first failed byte write. The current `File` value is not an owned resource yet,
-so close each successful handle once and do not reuse copied handles after
-closing.
+Use `try_open(path, mode)` for ordinary fallible open operations; it returns
+`Option[File]`. The raw `open(path, mode)` call returns a `File` directly,
+with `File::invalid()` and `file.is_open()` exposing the invalid-handle
+convention. Supported modes are `"r"` for read, `"w"` for create/truncate
+write, `"a"` for create/append write, `"rw"` for existing read/write, `"r+"`
+as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
+`"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
+`try_open_*` variants are compatibility wrappers over those mode strings.
+`read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
+`write_byte` returns whether one byte was written. `write_bytes` writes a
+`Slice[u8]` and returns the count written before the first failed byte write.
+The current `File` value is not an owned resource yet, so close each successful
+handle once and do not reuse copied handles after closing.
 
 ## IO And Input
 

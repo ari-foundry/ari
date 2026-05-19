@@ -1,5 +1,5 @@
-// Covers the first std::fs slice: existence checks, open/read/write/close,
-// byte-slice writes, deletion, and Option-returning open helpers.
+// Covers the first std::fs slice: existence checks, mode-string open calls,
+// read/write/close, byte-slice writes, deletion, and Option-returning helpers.
 fn main() -> i64 {
   let path = "build/prelude/std-fs-basic.tmp";
   if fs::exists(path) {
@@ -11,12 +11,12 @@ fn main() -> i64 {
     score = score + 1;
   }
 
-  let missing = fs::try_open_read(path);
+  let missing = fs::try_open(path, "r");
   if missing.is_none() {
     score = score + 2;
   }
 
-  let writer = fs::try_open_write(path).unwrap_or(fs::File::invalid());
+  let writer = fs::try_open(path, "w").unwrap_or(fs::File::invalid());
   if writer.is_open() {
     score = score + 3;
   }
@@ -35,7 +35,7 @@ fn main() -> i64 {
     score = score + 7;
   }
 
-  let reader = fs::try_open_read(path).unwrap_or(fs::File::invalid());
+  let reader = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
   if reader.is_open() {
     score = score + 8;
   }

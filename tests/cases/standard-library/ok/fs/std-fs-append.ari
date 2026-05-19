@@ -1,5 +1,5 @@
-// Covers append-mode file opens: preserve existing bytes, append new bytes,
-// read the combined stream back, and surface failed append opens as Option.
+// Covers append-mode file opens through fs::try_open(path, "a"): preserve
+// existing bytes, append new bytes, read back, and surface failures as Option.
 fn main() -> i64 {
   let path = "build/prelude/std-fs-append.tmp";
   if fs::exists(path) {
@@ -8,7 +8,7 @@ fn main() -> i64 {
 
   var score = 0;
 
-  let writer = fs::try_open_write(path).unwrap_or(fs::File::invalid());
+  let writer = fs::try_open(path, "w").unwrap_or(fs::File::invalid());
   if writer.is_open() {
     score = score + 1;
   }
@@ -19,7 +19,7 @@ fn main() -> i64 {
     score = score + 3;
   }
 
-  let appender = fs::try_open_append(path).unwrap_or(fs::File::invalid());
+  let appender = fs::try_open(path, "a").unwrap_or(fs::File::invalid());
   if appender.is_open() {
     score = score + 4;
   }
@@ -34,7 +34,7 @@ fn main() -> i64 {
     score = score + 7;
   }
 
-  let reader = fs::try_open_read(path).unwrap_or(fs::File::invalid());
+  let reader = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
   if reader.is_open() {
     score = score + 8;
   }
@@ -63,7 +63,7 @@ fn main() -> i64 {
     score = score + 16;
   }
 
-  let missing = fs::try_open_append("build/prelude/std-fs-append-no-such-dir/file.tmp");
+  let missing = fs::try_open("build/prelude/std-fs-append-no-such-dir/file.tmp", "a");
   if missing.is_none() {
     score = score + 17;
   }

@@ -33,7 +33,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::env` | User-facing process argument, environment-variable, and path-state helpers. | `arg_count`, `try_arg`, `program_name`, `get`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`. | Argument wrappers over `std::context` plus runtime-backed current-process environment/path hooks. |
 | `std::process` | Current-process helpers and the first POSIX child-process slice. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. | Runtime-backed id/exit/fork/wait hooks plus source predicates. Portable spawn, richer statuses, and process handles are future work. |
 | `std::time` | Monotonic instants, wall-clock timestamps, durations, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. | First runtime-backed time slice over host clock/sleep hooks plus source value wrappers. |
-| `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `open_read`, `open_write`, `try_open_read`, `try_open_write`, `read_byte`, `write_byte`, `write_bytes`, `close`. | First runtime-backed file slice over host file descriptor hooks plus source `Option[File]` helpers. |
+| `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `open`, `try_open`, compatibility `open_*`/`try_open_*`, `read_byte`, `write_byte`, `write_bytes`, `close`. | First runtime-backed file slice over host file descriptor hooks plus source `Option[File]` helpers. |
 | `std::mem` | Layout and raw pointer helpers. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. | Compiler-lowered where layout or typed pointer semantics are required. |
 | `std::zone` | Explicit allocation capability. | `create`, byte `alloc`, typed `alloc[T]`, `alloc_array[T]`, `new[T]`, `promote[T]`, `reset`, `destroy`, `allocation_zone`. | Runtime-backed with ownership/provenance checks in sema plus source raw array allocation. |
 | `std::boxed` | Zone-backed single-value owner handle. | `Box[T]`, `new`, `Box::new`, `get`, `set`, `replace`, `take`, `try_take`, `clear`, `put_in`, `copy_to`, `as_ref`, `as_mut`, `swap`, raw pointer access. | Implemented as an explicit-zone seed for future smart-pointer work. |
@@ -92,7 +92,7 @@ Use this table when writing code from docs alone:
 | Fork and wait for a child on POSIX. | `process::fork()`, `process::is_child(pid)`, `process::is_parent(pid)`, `process::wait(pid)`, `process::is_wait_error(status)` | This is the first Linux/LLVM runtime path slice. `wait` returns a normal child exit code or `-1`. Portable spawn, process handles, and richer status values are future work. |
 | Measure elapsed time or sleep. | `time::now()`, `start.elapsed()`, `time::elapsed(start)`, `time::milliseconds(n)`, `time::sleep(duration)` | Use `Instant` for elapsed time because it is monotonic. `sleep` is a thin current-thread sleep wrapper and does not report interruption yet. |
 | Read wall-clock Unix time. | `time::system_now()`, `system_time.as_unix_nanos()` | Use `SystemTime` for timestamps, not duration measurement; host wall clocks can move. |
-| Work with small byte files. | `fs::try_open_read(path)`, `fs::try_open_write(path)`, `fs::try_open_append(path)`, `file.read_byte()`, `file.write_byte(byte)`, `file.write_bytes(slice)`, `file.close()`, `fs::exists(path)`, `fs::remove(path)` | Prefer `try_open_*` so failed open calls use `Option[File]`. `open_write` creates or truncates; `open_append` creates or appends. `read_byte` returns `-1` at EOF/failure. The current `File` is a value handle, so close successful handles once and do not reuse copies after closing. |
+| Work with small byte files. | `fs::try_open(path, "r")`, `fs::try_open(path, "w")`, `fs::try_open(path, "a")`, `fs::try_open(path, "rw")`, `file.read_byte()`, `file.write_byte(byte)`, `file.write_bytes(slice)`, `file.close()`, `fs::exists(path)`, `fs::remove(path)` | Prefer `try_open` so failed open calls use `Option[File]`. `"w"` creates or truncates, `"a"` creates or appends, and `"rw"` opens an existing file for reading/writing. `read_byte` returns `-1` at EOF/failure. The current `File` is a value handle, so close successful handles once and do not reuse copies after closing. |
 | Read stdin. | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` | `try_read_byte` returns `Option[u8]` instead of the raw `-1` EOF sentinel. Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
 | Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.unwrap_or`, `.map<U>`, `.and_then<U>`, `.filter()`, `.flatten()`, `.transpose()`, `?`, or `??` when that reads better than `match`. |
 | Convert missing values into failures. | `option.ok_or<E>(error)`, `option.ok_or_else<E>(op)` | Lazy form builds the error only for `None`. |
@@ -220,11 +220,11 @@ also has `take(value)` and `remove(value)`. Hash set iteration walks live
 buckets; tree set iteration walks ascending comparator order.
 
 `std::fs::File` methods include `invalid`, `is_open`, `close`, `read_byte`,
-`write_byte`, and `write_bytes`. Use `fs::try_open_read` or
-`fs::try_open_write` or `fs::try_open_append` to obtain an `Option[File]`
-before calling them. The current handle is copyable source data, so closing is
-a caller convention until the language has a stronger OS-resource ownership
-model.
+`write_byte`, and `write_bytes`. Use `fs::try_open(path, mode)` to obtain an
+`Option[File]` before calling them. Supported modes are `"r"`, `"w"`, `"a"`,
+`"rw"`, `"r+"`, `"w+"`, and `"a+"`. The current handle is copyable source
+data, so closing is a caller convention until the language has a stronger
+OS-resource ownership model.
 
 `std::vec::Vec[T]` mutating methods include `push`, `pop`, `try_pop`, `set`,
 `replace`, `swap`, `insert`, `remove`, `truncate`, `clear`, `reserve`,

@@ -3,11 +3,11 @@
 `std::fs` is Ari's portable filesystem module. It exists so ordinary programs
 can work with files without reaching directly for raw syscalls or C ABI
 declarations. The first slices are deliberately small: check whether a path
-exists, open a byte stream for reading, writing, or appending, read and write
-bytes, close the handle, and remove a file.
+exists, open a byte stream with a compact mode string, read and write bytes,
+close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
-use `open_read`, `open_write`, `open_append`, `read_byte`, `write_byte`,
+use `open(path, mode)`, `try_open(path, mode)`, `read_byte`, `write_byte`,
 `write_bytes`, `close`, `exists`, and `remove`, not type-suffixed names.
 
 ## API
@@ -15,9 +15,11 @@ use `open_read`, `open_write`, `open_append`, `read_byte`, `write_byte`,
 ```ari
 fs::exists(path)
 fs::remove(path)
+fs::open(path, mode)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
+fs::try_open(path, mode)
 fs::try_open_read(path)
 fs::try_open_write(path)
 fs::try_open_append(path)
@@ -36,15 +38,31 @@ file.write_bytes(values)
 
 `File` is a small value handle around the runtime file descriptor. Failed open
 operations return an invalid handle where `file.is_open()` is false. Prefer
-`try_open_read(path)`, `try_open_write(path)`, and `try_open_append(path)` for
-normal control flow; they return `Option[File]` and avoid making callers
-remember the invalid-handle sentinel.
+`try_open(path, mode)` for normal control flow; it returns `Option[File]` and
+avoids making callers remember the invalid-handle sentinel.
 
-`open_read(path)` opens an existing file for byte reads. `open_write(path)`
-creates or truncates a file for byte writes using the current Linux/glibc LLVM
-runtime path. `open_append(path)` creates the file if needed and writes new
-bytes at the end without truncating existing contents. All three raw functions
-return a `File`; check `is_open()` before using the raw form.
+`open(path, mode)` takes a small mode string. Ari follows the familiar C/Python
+shape for common modes while also accepting the direct `"rw"` spelling:
+
+| Mode | Meaning |
+| --- | --- |
+| `"r"` | Open an existing file for reading. |
+| `"w"` | Create or truncate a file for writing. |
+| `"a"` | Create a file if needed and append writes at the end. |
+| `"rw"` | Open an existing file for reading and writing. |
+| `"r+"` | Alias for `"rw"` for C/Python familiarity. |
+| `"w+"` | Create or truncate a file for reading and writing. |
+| `"a+"` | Create if needed, read, and append writes at the end. |
+
+Invalid or unsupported mode strings return an invalid `File`; `try_open`
+turns that into `None`. Rust's standard library usually exposes richer
+`OpenOptions` builder values instead of strings. Ari can add that later when
+the language has stronger resource ownership, but mode strings are the right
+small first surface because they keep call sites short and familiar.
+
+`open_read`, `open_write`, `open_append`, and their `try_open_*` partners are
+compatibility wrappers over `open(path, "r")`, `open(path, "w")`, and
+`open(path, "a")`. New docs and tests should prefer the mode-string form.
 
 `read_byte(file)` returns the next byte as `i64` or `-1` at EOF or on failure.
 `write_byte(file, value)` returns whether exactly one byte was written.
@@ -65,7 +83,7 @@ Write and read a small file:
 ```ari
 fn main() -> i64 {
   let path = "build/prelude/example-fs.tmp";
-  let writer = fs::try_open_write(path).unwrap_or(fs::File::invalid());
+  let writer = fs::try_open(path, "w").unwrap_or(fs::File::invalid());
   if !writer.is_open() {
     return 1;
   }
@@ -77,7 +95,7 @@ fn main() -> i64 {
   }
   writer.close();
 
-  let reader = fs::try_open_read(path).unwrap_or(fs::File::invalid());
+  let reader = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
   if !reader.is_open() {
     return 3;
   }
@@ -91,7 +109,7 @@ fn main() -> i64 {
 Handle absence without a sentinel:
 
 ```ari
-let maybe_file = fs::try_open_read("missing-file.txt");
+let maybe_file = fs::try_open("missing-file.txt", "r");
 if maybe_file.is_none() {
   return 0;
 }
@@ -100,10 +118,21 @@ if maybe_file.is_none() {
 Append to an existing file:
 
 ```ari
-let appender = fs::try_open_append(path).unwrap_or(fs::File::invalid());
+let appender = fs::try_open(path, "a").unwrap_or(fs::File::invalid());
 if appender.is_open() {
   appender.write_byte(10 as u8);
   appender.close();
+}
+```
+
+Open an existing file for both reading and writing:
+
+```ari
+let file = fs::try_open(path, "rw").unwrap_or(fs::File::invalid());
+if file.is_open() {
+  let first = file.read_byte();
+  file.write_byte((first + 1) as u8);
+  file.close();
 }
 ```
 
@@ -117,8 +146,9 @@ if appender.is_open() {
 - `File` is not a tracked `own` resource yet. The caller must close each
   successful handle exactly once by convention. Future ownership work should
   make OS resources harder to copy and accidentally double-close.
-- `open_write` creates or truncates a file. `open_append` creates or appends.
-  Read-write modes are still a future API slice.
+- The mode-string surface is intentionally small. Use `"rw"` or `"r+"` for
+  existing read/write files, `"w+"` for create/truncate read/write, and `"a+"`
+  for read/append. More detailed flags belong in a future options API.
 - Error details are not surfaced yet. Current APIs expose boolean success or a
   `-1` read sentinel. A future `std::os` or `std::io` error value can carry
   platform error codes.
@@ -128,6 +158,7 @@ if appender.is_open() {
 ```text
 tests/cases/standard-library/ok/fs/std-fs-basic.ari
 tests/cases/standard-library/ok/fs/std-fs-append.ari
+tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
 ```
 
 `make check-prelude` emits LLVM for the runtime hooks, checks the C syscall
@@ -135,13 +166,15 @@ declarations, runs the executable, and cleans up the temporary file under
 `build/prelude/`. `std-fs-basic.ari` covers existence, create/truncate writes,
 reads, byte-slice writes, close, removal, and `Option[File]` read/write opens.
 `std-fs-append.ari` covers append-mode open, preservation of existing bytes,
-and failed append opens through `Option[File]`.
+and failed append opens through `Option[File]`. `std-fs-open-modes.ari` covers
+the mode-string contract, including `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes,
+and invalid mode strings.
 
 ## Next Work
 
-- Add read-write open mode only after its name and failure policy are
-  documented.
 - Add file metadata and directory iteration as separate tested slices.
 - Add path helpers after Ari has a clearer owned string/path story.
+- Add an `OpenOptions`-style builder after Ari has a clearer owned
+  OS-resource story and enough named flags to justify it.
 - Promote `File` toward an owned resource handle when the compiler can express
   OS-resource ownership and drop policy cleanly.
