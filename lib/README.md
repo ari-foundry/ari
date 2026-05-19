@@ -4,9 +4,20 @@ This folder contains Ari source libraries shipped with the compiler. `std.arih` 
 
 When adding public APIs, update `tests/std_api_manifest.txt`, the docs under `docs/stdlib/`, and focused tests under `tests/cases/standard-library/`.
 
-README files belong at library boundaries such as `lib/` and `lib/std/`, where
+README files belong at broad source-library boundaries such as `lib/`, where
 they explain ownership and navigation for a meaningful source area. Avoid
-adding README files to every tiny module or generated/test outcome folder.
+adding README files to child module folders or generated/test outcome folders.
+
+`lib/std/` is intentionally covered by this README. Each `.arih` file there is
+a source module loaded by `std.arih`. Keep APIs natural and
+capability-oriented: allocation-backed handles should take an explicit
+`ref mut Zone`, OS-backed helpers should stay in focused modules such as
+`target`, `env`, `process`, `thread`, `sync`, `time`, and `fs`, and public
+names should be mirrored in the stdlib docs and API manifest. Source-only
+algorithm helpers live in `algo` so slice operations can grow without bloating
+`Slice[T]` itself. OS entropy and deterministic non-cryptographic PRNG helpers
+live in `random`; keep cryptographic streams and richer distribution APIs out
+of this first slice until error/result and byte-buffer policies are stronger.
 
 ## Make Targets
 
