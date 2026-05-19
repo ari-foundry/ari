@@ -21,6 +21,7 @@ check: check-std-api $(TARGET) check-cli check-tools check-prelude check-control
 	$(TARGET) tests/cases/standard-library/ok/format/format-print.ari --emit-llvm $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_write_i64" $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_newline" $(BUILD_DIR)/ir/format-print.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-print.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print.elf; $(BUILD_DIR)/format-print.elf >$(BUILD_DIR)/format-print.out; grep -qx "value=-3 ok=true byte=A" $(BUILD_DIR)/format-print.out; grep -qx "{literal} 12" $(BUILD_DIR)/format-print.out; grep -qx "qualified=2" $(BUILD_DIR)/format-print.out; fi
 	$(TARGET) tests/cases/standard-library/ok/format/format-print-u64.ari --emit-llvm $(BUILD_DIR)/ir/format-print-u64.ll
 	grep -q "@ari_builtin_write_u64" $(BUILD_DIR)/ir/format-print-u64.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-print-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print-u64.elf; $(BUILD_DIR)/format-print-u64.elf >$(BUILD_DIR)/format-print-u64.out; grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/format-print-u64.out; grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/format-print-u64.out; fi
@@ -161,7 +162,7 @@ check-prelude: $(TARGET)
 	grep -qx "5" $(BUILD_DIR)/prelude/prelude-std-root-builtins.out
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-macros.ari -o $(BUILD_DIR)/prelude/prelude-macros.elf
 	$(BUILD_DIR)/prelude/prelude-macros.elf >$(BUILD_DIR)/prelude/prelude-macros.out; code=$$?; test $$code -eq 7
-	grep -q "macro=5 ok=1" $(BUILD_DIR)/prelude/prelude-macros.out
+	grep -q "macro=5 ok=true" $(BUILD_DIR)/prelude/prelude-macros.out
 	$(TARGET) tests/cases/standard-library/ok/format/format-float-llvm.ari -o $(BUILD_DIR)/prelude/format-float-llvm.elf
 	$(BUILD_DIR)/prelude/format-float-llvm.elf >$(BUILD_DIR)/prelude/format-float-llvm.out
 	grep -qx "value=1.3 default=1.500000 whole=6" $(BUILD_DIR)/prelude/format-float-llvm.out

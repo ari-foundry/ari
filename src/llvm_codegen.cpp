@@ -629,7 +629,9 @@ private:
         const std::string runtime_visibility = options_.shared_library ? "hidden " : "";
         std::string fmt_i64 = string_ptr("%lld");
         std::string fmt_u64 = string_ptr("%llu");
-        std::string fmt_bool = string_ptr("%d");
+        std::string fmt_text = string_ptr("%s");
+        std::string text_true = string_ptr("true");
+        std::string text_false = string_ptr("false");
         std::string empty = string_ptr("");
         std::string fs_mode_read = string_ptr("r");
         std::string fs_mode_write = string_ptr("w");
@@ -1472,8 +1474,8 @@ private:
 
         line("define " + runtime_visibility + "i64 @ari_builtin_write_bool(i1 %value) {");
         line("entry:");
-        line("  %wide = zext i1 %value to i32");
-        line("  call i32 (ptr, ...) @printf(ptr " + fmt_bool + ", i32 %wide)");
+        line("  %text = select i1 %value, ptr " + text_true + ", ptr " + text_false);
+        line("  call i32 (ptr, ...) @printf(ptr " + fmt_text + ", ptr %text)");
         line("  ret i64 0");
         line("}");
         line();

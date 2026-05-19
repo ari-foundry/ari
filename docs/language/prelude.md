@@ -251,7 +251,7 @@ Formatting rules:
 - `println` appends one newline
 - `print` does not append a newline
 
-`bool` currently prints as `1` or `0`.
+`bool` prints as lowercase `true` or `false`.
 On the LLVM backend, formatted `f32` and `f64` values use the
 same `{}` default precision and `{:.N}` fixed decimal precision surface as the
 LLVM host backend.
