@@ -31,7 +31,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
-| `std::collections` | Source collection handles beyond sequences. | `Set[T]`, `Iter[T]`, `new<T>`, `from_slice_in`, `insert`, `replace`, `try_get`, `try_pop`, `reserve`, `contains`, `as_slice`, `iter`, `copy_to`. |
+| `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]`, `Iter[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, and clear helpers. |
 | `std::iter` | Range and iterator traits. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`. |
 | `std::fmt` | Formatting trait surface. | `Display::format_in`, `Debug`. |
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
@@ -45,10 +45,11 @@ Anything that allocates takes a `ref mut Zone` or returns a handle tied to a
 zone. Methods with an `_in` suffix take an explicit zone for growth or copying;
 methods with a `_to` suffix copy a derived value into a target zone.
 For tracked local `std::vec::Vec[T]` and `std::string::String` handles, Ari can
-infer the same source zone for common mutating methods. `std::collections::Set[T]`
-keeps growth explicit today, so `insert(ref mut zone, value)` and
-`replace(ref mut zone, value)` spell the allocation capability at the call
-site. Its iterator cursor keeps the same zone provenance as the set.
+infer the same source zone for common mutating methods. `std::collections`
+keeps growth explicit today: `Set`, `HashMap`, `HashSet`, `TreeMap`, and
+`TreeSet` spell `ref mut zone` on inserting/replacing/reserving methods. Their
+handles keep the same zone provenance as their backing storage, and `Set`
+iterator cursors preserve the set's provenance.
 
 Use `zone::destroy(zone)` when a manually created zone is no longer needed.
 Pointers, strings, vectors, boxes, and slices derived from that zone become
@@ -113,13 +114,14 @@ hooks for `get`, `has`, `set`, `remove`, `current_dir`, `set_current_dir`, and
 the status helpers are source Ari. Spawn, wait, fork, and process handles are
 intentionally still roadmap work.
 
-`std::collections::Set[T]` is source Ari over typed zone allocation. Its
-insertion-order accessors and `try_*` methods mirror the collection vocabulary
-used by `Slice[T]` and `std::vec::Vec[T]`. `std::collections::Iter[T]`
-implements the standard iterator trait so direct `for value in set` lowering
-uses the same path as other source iterators. The compiler only recognizes the
-handle shapes so zone reset/destroy invalidation and same-zone growth
-diagnostics stay as strong as `std::vec::Vec[T]`.
+`std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
+small, insertion-order, linear set with iterator support. `HashMap[K,V]` and
+`HashSet[T]` are real open-addressed hash tables with tombstones. `TreeMap[K,V]`
+and `TreeSet[T]` are red-black trees. Hash and tree constructors take explicit
+hash/comparator functions until `Hash`/`Ord` trait dispatch is strong enough
+for fully trait-driven containers. The compiler only recognizes the handle
+shapes so zone reset/destroy invalidation and same-zone growth diagnostics stay
+as strong as `std::vec::Vec[T]`.
 
 `std::zone` keeps allocation visible. Raw byte allocation and lifecycle hooks
 are runtime-backed, while `alloc_array<T>` is source Ari that packages the

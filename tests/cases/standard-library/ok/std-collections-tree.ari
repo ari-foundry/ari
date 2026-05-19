@@ -1,0 +1,42 @@
+// Covers red-black tree collections: ordered lookup, rotations through mixed
+// insertion order, replacement, membership, and same-zone growth.
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  if map.is_empty() {
+    score = score + 1;
+  }
+  score = score + map.insert(ref mut zone, 4, 40).unwrap_or(2);
+  map.insert(ref mut zone, 2, 20);
+  map.insert(ref mut zone, 8, 80);
+  map.insert(ref mut zone, 1, 10);
+  map.insert(ref mut zone, 3, 30);
+  score = score + map.get(8);
+  score = score + map.insert(ref mut zone, 4, 41).unwrap_or(0);
+  if map.contains(3) {
+    score = score + 3;
+  }
+  if !map.contains(9) {
+    score = score + 5;
+  }
+
+  var set = collections::tree_set<i64>(ref mut zone, 1, collections::less_i64);
+  if set.insert(ref mut zone, 6) {
+    score = score + 6;
+  }
+  if set.insert(ref mut zone, 2) {
+    score = score + 2;
+  }
+  if !set.insert(ref mut zone, 6) {
+    score = score + 7;
+  }
+  if set.contains(2) {
+    score = score + 11;
+  }
+  score = score + set.replace(ref mut zone, 2).unwrap_or(0);
+
+  zone::destroy(zone);
+  return score;
+}

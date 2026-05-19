@@ -12,6 +12,52 @@ pub struct Iter[T] {
   mut index: i64,
 }
 
+// Open-addressed hash map. Callers provide the hash function until std::Hash
+// exists as a trait that the compiler can resolve for generic keys.
+pub struct HashMap[K, V] {
+  hash: fn(K) -> u64,
+  mut keys: ptr K,
+  mut values: ptr V,
+  mut states: ptr i64,
+  mut len: i64,
+  mut capacity: i64,
+}
+
+pub struct HashSet[T] {
+  hash: fn(T) -> u64,
+  mut data: ptr T,
+  mut states: ptr i64,
+  mut len: i64,
+  mut capacity: i64,
+}
+
+// Red-black tree maps and sets. Callers provide a strict less-than relation
+// until std::Ord dispatch is strong enough for fully trait-driven containers.
+pub struct TreeMap[K, V] {
+  less: fn(K, K) -> bool,
+  mut keys: ptr K,
+  mut values: ptr V,
+  mut left: ptr i64,
+  mut right: ptr i64,
+  mut parent: ptr i64,
+  mut colors: ptr i64,
+  mut root: i64,
+  mut len: i64,
+  mut capacity: i64,
+}
+
+pub struct TreeSet[T] {
+  less: fn(T, T) -> bool,
+  mut data: ptr T,
+  mut left: ptr i64,
+  mut right: ptr i64,
+  mut parent: ptr i64,
+  mut colors: ptr i64,
+  mut root: i64,
+  mut len: i64,
+  mut capacity: i64,
+}
+
 pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::collections::Set[T] {
   let data = std::zone::alloc_array<T>(zone, capacity);
   return std::collections::Set<T> {
@@ -29,6 +75,17 @@ pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::colle
     index = index + 1;
   }
   return set;
+}
+
+pub fn hash_i64(value: i64) -> u64 {
+  var hash = value as u64;
+  hash = hash ^ (hash >> 32);
+  hash = hash ^ (hash >> 16);
+  return hash;
+}
+
+pub fn less_i64(left: i64, right: i64) -> bool {
+  return left < right;
 }
 
 fn next_growth_capacity(current: i64, minimum: i64) -> i64 {
@@ -262,6 +319,1091 @@ impl[T] std::Drop for std::collections::Set[T] {
   fn drop(self) -> void {
     var dropped = self;
     drop_values<T>(ref mut dropped);
+    return;
+  }
+}
+
+fn normalized_hash_capacity(capacity: i64) -> i64 {
+  if capacity < 8 {
+    return 8;
+  }
+  return capacity;
+}
+
+fn bucket_for(hash: u64, capacity: i64) -> i64 {
+  return (hash % (capacity as u64)) as i64;
+}
+
+fn init_states(states: ptr i64, capacity: i64) -> void {
+  var index = 0;
+  while index < capacity {
+    ptr_store(ptr_add(states, index), 0);
+    index = index + 1;
+  }
+}
+
+pub fn hash_map[K, V](
+  zone: ref mut Zone,
+  capacity: i64,
+  hash: fn(K) -> u64
+) -> std::collections::HashMap[K, V] {
+  let actual = normalized_hash_capacity(capacity);
+  let keys = std::zone::alloc_array<K>(zone, actual);
+  let values = std::zone::alloc_array<V>(zone, actual);
+  let states = std::zone::alloc_array<i64>(zone, actual);
+  init_states(states, actual);
+  return std::collections::HashMap<K, V> {
+    hash: hash,
+    keys: keys,
+    values: values,
+    states: states,
+    len: 0,
+    capacity: actual,
+  };
+}
+
+pub fn hash_set[T](
+  zone: ref mut Zone,
+  capacity: i64,
+  hash: fn(T) -> u64
+) -> std::collections::HashSet[T] {
+  let actual = normalized_hash_capacity(capacity);
+  let data = std::zone::alloc_array<T>(zone, actual);
+  let states = std::zone::alloc_array<i64>(zone, actual);
+  init_states(states, actual);
+  return std::collections::HashSet<T> {
+    hash: hash,
+    data: data,
+    states: states,
+    len: 0,
+    capacity: actual,
+  };
+}
+
+fn hash_map_find_slot[K, V](map: ref std::collections::HashMap[K, V], key: K) -> i64 {
+  let hash = map.hash;
+  var index = bucket_for(hash(key), map.capacity);
+  var scanned = 0;
+  while scanned < map.capacity {
+    let state = ptr_load(ptr_add(map.states, index));
+    if state == 0 {
+      return -1;
+    }
+    if state == 1 {
+      if ptr_load(ptr_add(map.keys, index)) == key {
+        return index;
+      }
+    }
+    index = (index + 1) % map.capacity;
+    scanned = scanned + 1;
+  }
+  return -1;
+}
+
+fn hash_map_find_slot_mut[K, V](map: ref mut std::collections::HashMap[K, V], key: K) -> i64 {
+  let hash = map.hash;
+  var index = bucket_for(hash(key), map.capacity);
+  var scanned = 0;
+  while scanned < map.capacity {
+    let state = ptr_load(ptr_add(map.states, index));
+    if state == 0 {
+      return -1;
+    }
+    if state == 1 {
+      if ptr_load(ptr_add(map.keys, index)) == key {
+        return index;
+      }
+    }
+    index = (index + 1) % map.capacity;
+    scanned = scanned + 1;
+  }
+  return -1;
+}
+
+fn hash_map_find_insert_slot[K, V](map: ref mut std::collections::HashMap[K, V], key: K) -> i64 {
+  let hash = map.hash;
+  var index = bucket_for(hash(key), map.capacity);
+  var scanned = 0;
+  var tombstone = -1;
+  while scanned < map.capacity {
+    let state = ptr_load(ptr_add(map.states, index));
+    if state == 0 {
+      if tombstone >= 0 {
+        return tombstone;
+      }
+      return index;
+    }
+    if state == 2 {
+      if tombstone < 0 {
+        tombstone = index;
+      }
+    }
+    index = (index + 1) % map.capacity;
+    scanned = scanned + 1;
+  }
+  return tombstone;
+}
+
+fn hash_map_place_existing[K, V](map: ref mut std::collections::HashMap[K, V], key: K, value: V) -> void {
+  let index = hash_map_find_insert_slot<K, V>(map, key);
+  std::assert(index >= 0);
+  ptr_store(ptr_add(map.keys, index), key);
+  ptr_store(ptr_add(map.values, index), value);
+  ptr_store(ptr_add(map.states, index), 1);
+  map.len = map.len + 1;
+}
+
+fn hash_map_grow_to_capacity[K, V](
+  map: ref mut std::collections::HashMap[K, V],
+  zone: ref mut Zone,
+  capacity: i64
+) -> void {
+  let actual = normalized_hash_capacity(capacity);
+  if actual <= map.capacity {
+    return;
+  }
+  let old_keys = map.keys;
+  let old_values = map.values;
+  let old_states = map.states;
+  let old_capacity = map.capacity;
+  let new_keys = std::zone::alloc_array<K>(zone, actual);
+  let new_values = std::zone::alloc_array<V>(zone, actual);
+  let new_states = std::zone::alloc_array<i64>(zone, actual);
+  init_states(new_states, actual);
+  map.keys = new_keys;
+  map.values = new_values;
+  map.states = new_states;
+  map.capacity = actual;
+  map.len = 0;
+  var index = 0;
+  while index < old_capacity {
+    if ptr_load(ptr_add(old_states, index)) == 1 {
+      hash_map_place_existing<K, V>(
+        map,
+        ptr_load(ptr_add(old_keys, index)),
+        ptr_load(ptr_add(old_values, index))
+      );
+    }
+    index = index + 1;
+  }
+}
+
+fn hash_map_ensure_spare_capacity[K, V](
+  map: ref mut std::collections::HashMap[K, V],
+  zone: ref mut Zone
+) -> void {
+  if (map.len + 1) * 4 >= map.capacity * 3 {
+    hash_map_grow_to_capacity<K, V>(map, zone, map.capacity * 2);
+  }
+}
+
+fn hash_map_drop_values[K, V](map: ref mut std::collections::HashMap[K, V]) -> void {
+  var index = 0;
+  while index < map.capacity {
+    if ptr_load(ptr_add(map.states, index)) == 1 {
+      let key = ptr_load(ptr_add(map.keys, index));
+      let value = ptr_load(ptr_add(map.values, index));
+      drop key;
+      drop value;
+      ptr_store(ptr_add(map.states, index), 0);
+    }
+    index = index + 1;
+  }
+  map.len = 0;
+}
+
+pub impl[K, V] std::collections::HashMap[K, V] {
+  fn new(
+    zone: ref mut Zone,
+    capacity: i64,
+    hash: fn(K) -> u64
+  ) -> std::collections::HashMap[K, V] {
+    return std::collections::hash_map<K, V>(zone, capacity, hash);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn contains(self: ref Self, key: K) -> bool {
+    return hash_map_find_slot<K, V>(self, key) >= 0;
+  }
+
+  fn try_get(self: ref Self, key: K) -> std::Option[V] {
+    let index = hash_map_find_slot<K, V>(self, key);
+    if index < 0 {
+      return std::None<V>();
+    }
+    return std::Some<V>(ptr_load(ptr_add(self.values, index)));
+  }
+
+  fn get(self: ref Self, key: K) -> V {
+    let index = hash_map_find_slot<K, V>(self, key);
+    std::assert(index >= 0);
+    return ptr_load(ptr_add(self.values, index));
+  }
+
+  fn insert(self: ref mut Self, zone: ref mut Zone, key: K, value: V) -> std::Option[V] {
+    let existing = hash_map_find_slot_mut<K, V>(self, key);
+    if existing >= 0 {
+      let old_key = ptr_load(ptr_add(self.keys, existing));
+      let previous = ptr_load(ptr_add(self.values, existing));
+      drop old_key;
+      ptr_store(ptr_add(self.keys, existing), key);
+      ptr_store(ptr_add(self.values, existing), value);
+      return std::Some<V>(previous);
+    }
+    hash_map_ensure_spare_capacity<K, V>(self, zone);
+    hash_map_place_existing<K, V>(self, key, value);
+    return std::None<V>();
+  }
+
+  fn remove(self: ref mut Self, key: K) -> std::Option[V] {
+    let index = hash_map_find_slot_mut<K, V>(self, key);
+    if index < 0 {
+      return std::None<V>();
+    }
+    let removed_key = ptr_load(ptr_add(self.keys, index));
+    let removed_value = ptr_load(ptr_add(self.values, index));
+    drop removed_key;
+    ptr_store(ptr_add(self.states, index), 2);
+    self.len = self.len - 1;
+    return std::Some<V>(removed_value);
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    hash_map_drop_values<K, V>(self);
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    hash_map_grow_to_capacity<K, V>(self, zone, capacity);
+  }
+}
+
+impl[K, V] std::Drop for std::collections::HashMap[K, V] {
+  fn drop(self) -> void {
+    var dropped = self;
+    hash_map_drop_values<K, V>(ref mut dropped);
+    return;
+  }
+}
+
+fn hash_set_find_slot[T](set: ref std::collections::HashSet[T], value: T) -> i64 {
+  let hash = set.hash;
+  var index = bucket_for(hash(value), set.capacity);
+  var scanned = 0;
+  while scanned < set.capacity {
+    let state = ptr_load(ptr_add(set.states, index));
+    if state == 0 {
+      return -1;
+    }
+    if state == 1 {
+      if ptr_load(ptr_add(set.data, index)) == value {
+        return index;
+      }
+    }
+    index = (index + 1) % set.capacity;
+    scanned = scanned + 1;
+  }
+  return -1;
+}
+
+fn hash_set_find_slot_mut[T](set: ref mut std::collections::HashSet[T], value: T) -> i64 {
+  let hash = set.hash;
+  var index = bucket_for(hash(value), set.capacity);
+  var scanned = 0;
+  while scanned < set.capacity {
+    let state = ptr_load(ptr_add(set.states, index));
+    if state == 0 {
+      return -1;
+    }
+    if state == 1 {
+      if ptr_load(ptr_add(set.data, index)) == value {
+        return index;
+      }
+    }
+    index = (index + 1) % set.capacity;
+    scanned = scanned + 1;
+  }
+  return -1;
+}
+
+fn hash_set_find_insert_slot[T](set: ref mut std::collections::HashSet[T], value: T) -> i64 {
+  let hash = set.hash;
+  var index = bucket_for(hash(value), set.capacity);
+  var scanned = 0;
+  var tombstone = -1;
+  while scanned < set.capacity {
+    let state = ptr_load(ptr_add(set.states, index));
+    if state == 0 {
+      if tombstone >= 0 {
+        return tombstone;
+      }
+      return index;
+    }
+    if state == 2 {
+      if tombstone < 0 {
+        tombstone = index;
+      }
+    }
+    index = (index + 1) % set.capacity;
+    scanned = scanned + 1;
+  }
+  return tombstone;
+}
+
+fn hash_set_place_existing[T](set: ref mut std::collections::HashSet[T], value: T) -> void {
+  let index = hash_set_find_insert_slot<T>(set, value);
+  std::assert(index >= 0);
+  ptr_store(ptr_add(set.data, index), value);
+  ptr_store(ptr_add(set.states, index), 1);
+  set.len = set.len + 1;
+}
+
+fn hash_set_grow_to_capacity[T](
+  set: ref mut std::collections::HashSet[T],
+  zone: ref mut Zone,
+  capacity: i64
+) -> void {
+  let actual = normalized_hash_capacity(capacity);
+  if actual <= set.capacity {
+    return;
+  }
+  let old_data = set.data;
+  let old_states = set.states;
+  let old_capacity = set.capacity;
+  let new_data = std::zone::alloc_array<T>(zone, actual);
+  let new_states = std::zone::alloc_array<i64>(zone, actual);
+  init_states(new_states, actual);
+  set.data = new_data;
+  set.states = new_states;
+  set.capacity = actual;
+  set.len = 0;
+  var index = 0;
+  while index < old_capacity {
+    if ptr_load(ptr_add(old_states, index)) == 1 {
+      hash_set_place_existing<T>(set, ptr_load(ptr_add(old_data, index)));
+    }
+    index = index + 1;
+  }
+}
+
+fn hash_set_ensure_spare_capacity[T](
+  set: ref mut std::collections::HashSet[T],
+  zone: ref mut Zone
+) -> void {
+  if (set.len + 1) * 4 >= set.capacity * 3 {
+    hash_set_grow_to_capacity<T>(set, zone, set.capacity * 2);
+  }
+}
+
+fn hash_set_drop_values[T](set: ref mut std::collections::HashSet[T]) -> void {
+  var index = 0;
+  while index < set.capacity {
+    if ptr_load(ptr_add(set.states, index)) == 1 {
+      let value = ptr_load(ptr_add(set.data, index));
+      drop value;
+      ptr_store(ptr_add(set.states, index), 0);
+    }
+    index = index + 1;
+  }
+  set.len = 0;
+}
+
+pub impl[T] std::collections::HashSet[T] {
+  fn new(
+    zone: ref mut Zone,
+    capacity: i64,
+    hash: fn(T) -> u64
+  ) -> std::collections::HashSet[T] {
+    return std::collections::hash_set<T>(zone, capacity, hash);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn contains(self: ref Self, value: T) -> bool {
+    return hash_set_find_slot<T>(self, value) >= 0;
+  }
+
+  fn insert(self: ref mut Self, zone: ref mut Zone, value: T) -> bool {
+    if hash_set_find_slot_mut<T>(self, value) >= 0 {
+      return false;
+    }
+    hash_set_ensure_spare_capacity<T>(self, zone);
+    hash_set_place_existing<T>(self, value);
+    return true;
+  }
+
+  fn replace(self: ref mut Self, zone: ref mut Zone, value: T) -> std::Option[T] {
+    let existing = hash_set_find_slot_mut<T>(self, value);
+    if existing >= 0 {
+      let previous = ptr_load(ptr_add(self.data, existing));
+      ptr_store(ptr_add(self.data, existing), value);
+      return std::Some<T>(previous);
+    }
+    self.insert(zone, value);
+    return std::None<T>();
+  }
+
+  fn take(self: ref mut Self, value: T) -> std::Option[T] {
+    let index = hash_set_find_slot_mut<T>(self, value);
+    if index < 0 {
+      return std::None<T>();
+    }
+    let removed = ptr_load(ptr_add(self.data, index));
+    ptr_store(ptr_add(self.states, index), 2);
+    self.len = self.len - 1;
+    return std::Some<T>(removed);
+  }
+
+  fn remove(self: ref mut Self, value: T) -> bool {
+    let removed = self.take(value);
+    match removed {
+      std::Some(found) => {
+        drop found;
+        return true;
+      }
+      std::None => {
+        return false;
+      }
+    }
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    hash_set_drop_values<T>(self);
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    hash_set_grow_to_capacity<T>(self, zone, capacity);
+  }
+}
+
+impl[T] std::Drop for std::collections::HashSet[T] {
+  fn drop(self) -> void {
+    var dropped = self;
+    hash_set_drop_values<T>(ref mut dropped);
+    return;
+  }
+}
+
+fn normalized_tree_capacity(capacity: i64) -> i64 {
+  if capacity < 8 {
+    return 8;
+  }
+  return capacity;
+}
+
+pub fn tree_map[K, V](
+  zone: ref mut Zone,
+  capacity: i64,
+  less: fn(K, K) -> bool
+) -> std::collections::TreeMap[K, V] {
+  let actual = normalized_tree_capacity(capacity);
+  let keys = std::zone::alloc_array<K>(zone, actual);
+  let values = std::zone::alloc_array<V>(zone, actual);
+  let left = std::zone::alloc_array<i64>(zone, actual);
+  let right = std::zone::alloc_array<i64>(zone, actual);
+  let parent = std::zone::alloc_array<i64>(zone, actual);
+  let colors = std::zone::alloc_array<i64>(zone, actual);
+  return std::collections::TreeMap<K, V> {
+    less: less,
+    keys: keys,
+    values: values,
+    left: left,
+    right: right,
+    parent: parent,
+    colors: colors,
+    root: -1,
+    len: 0,
+    capacity: actual,
+  };
+}
+
+pub fn tree_set[T](
+  zone: ref mut Zone,
+  capacity: i64,
+  less: fn(T, T) -> bool
+) -> std::collections::TreeSet[T] {
+  let actual = normalized_tree_capacity(capacity);
+  let data = std::zone::alloc_array<T>(zone, actual);
+  let left = std::zone::alloc_array<i64>(zone, actual);
+  let right = std::zone::alloc_array<i64>(zone, actual);
+  let parent = std::zone::alloc_array<i64>(zone, actual);
+  let colors = std::zone::alloc_array<i64>(zone, actual);
+  return std::collections::TreeSet<T> {
+    less: less,
+    data: data,
+    left: left,
+    right: right,
+    parent: parent,
+    colors: colors,
+    root: -1,
+    len: 0,
+    capacity: actual,
+  };
+}
+
+fn tree_map_color[K, V](map: ref mut std::collections::TreeMap[K, V], node: i64) -> i64 {
+  if node < 0 {
+    return 0;
+  }
+  return ptr_load(ptr_add(map.colors, node));
+}
+
+fn tree_map_set_color[K, V](map: ref mut std::collections::TreeMap[K, V], node: i64, color: i64) -> void {
+  if node >= 0 {
+    ptr_store(ptr_add(map.colors, node), color);
+  }
+}
+
+fn tree_map_rotate_left[K, V](map: ref mut std::collections::TreeMap[K, V], node: i64) -> void {
+  let pivot = ptr_load(ptr_add(map.right, node));
+  std::assert(pivot >= 0);
+  ptr_store(ptr_add(map.right, node), ptr_load(ptr_add(map.left, pivot)));
+  if ptr_load(ptr_add(map.left, pivot)) >= 0 {
+    ptr_store(ptr_add(map.parent, ptr_load(ptr_add(map.left, pivot))), node);
+  }
+  ptr_store(ptr_add(map.parent, pivot), ptr_load(ptr_add(map.parent, node)));
+  if ptr_load(ptr_add(map.parent, node)) < 0 {
+    map.root = pivot;
+  } else {
+    let parent = ptr_load(ptr_add(map.parent, node));
+    if node == ptr_load(ptr_add(map.left, parent)) {
+      ptr_store(ptr_add(map.left, parent), pivot);
+    } else {
+      ptr_store(ptr_add(map.right, parent), pivot);
+    }
+  }
+  ptr_store(ptr_add(map.left, pivot), node);
+  ptr_store(ptr_add(map.parent, node), pivot);
+}
+
+fn tree_map_rotate_right[K, V](map: ref mut std::collections::TreeMap[K, V], node: i64) -> void {
+  let pivot = ptr_load(ptr_add(map.left, node));
+  std::assert(pivot >= 0);
+  ptr_store(ptr_add(map.left, node), ptr_load(ptr_add(map.right, pivot)));
+  if ptr_load(ptr_add(map.right, pivot)) >= 0 {
+    ptr_store(ptr_add(map.parent, ptr_load(ptr_add(map.right, pivot))), node);
+  }
+  ptr_store(ptr_add(map.parent, pivot), ptr_load(ptr_add(map.parent, node)));
+  if ptr_load(ptr_add(map.parent, node)) < 0 {
+    map.root = pivot;
+  } else {
+    let parent = ptr_load(ptr_add(map.parent, node));
+    if node == ptr_load(ptr_add(map.right, parent)) {
+      ptr_store(ptr_add(map.right, parent), pivot);
+    } else {
+      ptr_store(ptr_add(map.left, parent), pivot);
+    }
+  }
+  ptr_store(ptr_add(map.right, pivot), node);
+  ptr_store(ptr_add(map.parent, node), pivot);
+}
+
+fn tree_map_fix_insert[K, V](map: ref mut std::collections::TreeMap[K, V], inserted: i64) -> void {
+  var node = inserted;
+  while node != map.root && tree_map_color<K, V>(map, ptr_load(ptr_add(map.parent, node))) == 1 {
+    let parent = ptr_load(ptr_add(map.parent, node));
+    let grand = ptr_load(ptr_add(map.parent, parent));
+    if parent == ptr_load(ptr_add(map.left, grand)) {
+      let left_uncle = ptr_load(ptr_add(map.right, grand));
+      if tree_map_color<K, V>(map, left_uncle) == 1 {
+        tree_map_set_color<K, V>(map, parent, 0);
+        tree_map_set_color<K, V>(map, left_uncle, 0);
+        tree_map_set_color<K, V>(map, grand, 1);
+        node = grand;
+      } else {
+        if node == ptr_load(ptr_add(map.right, parent)) {
+          node = parent;
+          tree_map_rotate_left<K, V>(map, node);
+        }
+        let left_fixed_parent = ptr_load(ptr_add(map.parent, node));
+        let left_fixed_grand = ptr_load(ptr_add(map.parent, left_fixed_parent));
+        tree_map_set_color<K, V>(map, left_fixed_parent, 0);
+        tree_map_set_color<K, V>(map, left_fixed_grand, 1);
+        tree_map_rotate_right<K, V>(map, left_fixed_grand);
+      }
+    } else {
+      let right_uncle = ptr_load(ptr_add(map.left, grand));
+      if tree_map_color<K, V>(map, right_uncle) == 1 {
+        tree_map_set_color<K, V>(map, parent, 0);
+        tree_map_set_color<K, V>(map, right_uncle, 0);
+        tree_map_set_color<K, V>(map, grand, 1);
+        node = grand;
+      } else {
+        if node == ptr_load(ptr_add(map.left, parent)) {
+          node = parent;
+          tree_map_rotate_right<K, V>(map, node);
+        }
+        let right_fixed_parent = ptr_load(ptr_add(map.parent, node));
+        let right_fixed_grand = ptr_load(ptr_add(map.parent, right_fixed_parent));
+        tree_map_set_color<K, V>(map, right_fixed_parent, 0);
+        tree_map_set_color<K, V>(map, right_fixed_grand, 1);
+        tree_map_rotate_left<K, V>(map, right_fixed_grand);
+      }
+    }
+  }
+  tree_map_set_color<K, V>(map, map.root, 0);
+}
+
+fn tree_map_find_slot[K, V](map: ref std::collections::TreeMap[K, V], key: K) -> i64 {
+  let less = map.less;
+  var node = map.root;
+  while node >= 0 {
+    let node_key = ptr_load(ptr_add(map.keys, node));
+    if less(key, node_key) {
+      node = ptr_load(ptr_add(map.left, node));
+    } else if less(node_key, key) {
+      node = ptr_load(ptr_add(map.right, node));
+    } else {
+      return node;
+    }
+  }
+  return -1;
+}
+
+fn tree_map_grow_to_capacity[K, V](
+  map: ref mut std::collections::TreeMap[K, V],
+  zone: ref mut Zone,
+  capacity: i64
+) -> void {
+  let actual = normalized_tree_capacity(capacity);
+  if actual <= map.capacity {
+    return;
+  }
+  let old_keys = map.keys;
+  let old_values = map.values;
+  let old_left = map.left;
+  let old_right = map.right;
+  let old_parent = map.parent;
+  let old_colors = map.colors;
+  let new_keys = std::zone::alloc_array<K>(zone, actual);
+  let new_values = std::zone::alloc_array<V>(zone, actual);
+  let new_left = std::zone::alloc_array<i64>(zone, actual);
+  let new_right = std::zone::alloc_array<i64>(zone, actual);
+  let new_parent = std::zone::alloc_array<i64>(zone, actual);
+  let new_colors = std::zone::alloc_array<i64>(zone, actual);
+  var index = 0;
+  while index < map.len {
+    ptr_store(ptr_add(new_keys, index), ptr_load(ptr_add(old_keys, index)));
+    ptr_store(ptr_add(new_values, index), ptr_load(ptr_add(old_values, index)));
+    ptr_store(ptr_add(new_left, index), ptr_load(ptr_add(old_left, index)));
+    ptr_store(ptr_add(new_right, index), ptr_load(ptr_add(old_right, index)));
+    ptr_store(ptr_add(new_parent, index), ptr_load(ptr_add(old_parent, index)));
+    ptr_store(ptr_add(new_colors, index), ptr_load(ptr_add(old_colors, index)));
+    index = index + 1;
+  }
+  map.keys = new_keys;
+  map.values = new_values;
+  map.left = new_left;
+  map.right = new_right;
+  map.parent = new_parent;
+  map.colors = new_colors;
+  map.capacity = actual;
+}
+
+fn tree_map_drop_values[K, V](map: ref mut std::collections::TreeMap[K, V]) -> void {
+  var index = 0;
+  while index < map.len {
+    let key = ptr_load(ptr_add(map.keys, index));
+    let value = ptr_load(ptr_add(map.values, index));
+    drop key;
+    drop value;
+    index = index + 1;
+  }
+  map.root = -1;
+  map.len = 0;
+}
+
+pub impl[K, V] std::collections::TreeMap[K, V] {
+  fn new(
+    zone: ref mut Zone,
+    capacity: i64,
+    less: fn(K, K) -> bool
+  ) -> std::collections::TreeMap[K, V] {
+    return std::collections::tree_map<K, V>(zone, capacity, less);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn contains(self: ref Self, key: K) -> bool {
+    return tree_map_find_slot<K, V>(self, key) >= 0;
+  }
+
+  fn try_get(self: ref Self, key: K) -> std::Option[V] {
+    let index = tree_map_find_slot<K, V>(self, key);
+    if index < 0 {
+      return std::None<V>();
+    }
+    return std::Some<V>(ptr_load(ptr_add(self.values, index)));
+  }
+
+  fn get(self: ref Self, key: K) -> V {
+    let index = tree_map_find_slot<K, V>(self, key);
+    std::assert(index >= 0);
+    return ptr_load(ptr_add(self.values, index));
+  }
+
+  fn insert(self: ref mut Self, zone: ref mut Zone, key: K, value: V) -> std::Option[V] {
+    let less = self.less;
+    var parent = -1;
+    var node = self.root;
+    var place_left = false;
+    while node >= 0 {
+      parent = node;
+      let node_key = ptr_load(ptr_add(self.keys, node));
+      if less(key, node_key) {
+        node = ptr_load(ptr_add(self.left, node));
+        place_left = true;
+      } else if less(node_key, key) {
+        node = ptr_load(ptr_add(self.right, node));
+        place_left = false;
+      } else {
+        let old_key = ptr_load(ptr_add(self.keys, node));
+        let previous = ptr_load(ptr_add(self.values, node));
+        drop old_key;
+        ptr_store(ptr_add(self.keys, node), key);
+        ptr_store(ptr_add(self.values, node), value);
+        return std::Some<V>(previous);
+      }
+    }
+    if self.len >= self.capacity {
+      tree_map_grow_to_capacity<K, V>(self, zone, self.capacity * 2);
+    }
+    let index = self.len;
+    ptr_store(ptr_add(self.keys, index), key);
+    ptr_store(ptr_add(self.values, index), value);
+    ptr_store(ptr_add(self.left, index), -1);
+    ptr_store(ptr_add(self.right, index), -1);
+    ptr_store(ptr_add(self.parent, index), parent);
+    ptr_store(ptr_add(self.colors, index), 1);
+    if parent < 0 {
+      self.root = index;
+    } else if place_left {
+      ptr_store(ptr_add(self.left, parent), index);
+    } else {
+      ptr_store(ptr_add(self.right, parent), index);
+    }
+    self.len = self.len + 1;
+    tree_map_fix_insert<K, V>(self, index);
+    return std::None<V>();
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    tree_map_drop_values<K, V>(self);
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    tree_map_grow_to_capacity<K, V>(self, zone, capacity);
+  }
+}
+
+impl[K, V] std::Drop for std::collections::TreeMap[K, V] {
+  fn drop(self) -> void {
+    var dropped = self;
+    tree_map_drop_values<K, V>(ref mut dropped);
+    return;
+  }
+}
+
+fn tree_set_color[T](set: ref mut std::collections::TreeSet[T], node: i64) -> i64 {
+  if node < 0 {
+    return 0;
+  }
+  return ptr_load(ptr_add(set.colors, node));
+}
+
+fn tree_set_set_color[T](set: ref mut std::collections::TreeSet[T], node: i64, color: i64) -> void {
+  if node >= 0 {
+    ptr_store(ptr_add(set.colors, node), color);
+  }
+}
+
+fn tree_set_rotate_left[T](set: ref mut std::collections::TreeSet[T], node: i64) -> void {
+  let pivot = ptr_load(ptr_add(set.right, node));
+  std::assert(pivot >= 0);
+  ptr_store(ptr_add(set.right, node), ptr_load(ptr_add(set.left, pivot)));
+  if ptr_load(ptr_add(set.left, pivot)) >= 0 {
+    ptr_store(ptr_add(set.parent, ptr_load(ptr_add(set.left, pivot))), node);
+  }
+  ptr_store(ptr_add(set.parent, pivot), ptr_load(ptr_add(set.parent, node)));
+  if ptr_load(ptr_add(set.parent, node)) < 0 {
+    set.root = pivot;
+  } else {
+    let parent = ptr_load(ptr_add(set.parent, node));
+    if node == ptr_load(ptr_add(set.left, parent)) {
+      ptr_store(ptr_add(set.left, parent), pivot);
+    } else {
+      ptr_store(ptr_add(set.right, parent), pivot);
+    }
+  }
+  ptr_store(ptr_add(set.left, pivot), node);
+  ptr_store(ptr_add(set.parent, node), pivot);
+}
+
+fn tree_set_rotate_right[T](set: ref mut std::collections::TreeSet[T], node: i64) -> void {
+  let pivot = ptr_load(ptr_add(set.left, node));
+  std::assert(pivot >= 0);
+  ptr_store(ptr_add(set.left, node), ptr_load(ptr_add(set.right, pivot)));
+  if ptr_load(ptr_add(set.right, pivot)) >= 0 {
+    ptr_store(ptr_add(set.parent, ptr_load(ptr_add(set.right, pivot))), node);
+  }
+  ptr_store(ptr_add(set.parent, pivot), ptr_load(ptr_add(set.parent, node)));
+  if ptr_load(ptr_add(set.parent, node)) < 0 {
+    set.root = pivot;
+  } else {
+    let parent = ptr_load(ptr_add(set.parent, node));
+    if node == ptr_load(ptr_add(set.right, parent)) {
+      ptr_store(ptr_add(set.right, parent), pivot);
+    } else {
+      ptr_store(ptr_add(set.left, parent), pivot);
+    }
+  }
+  ptr_store(ptr_add(set.right, pivot), node);
+  ptr_store(ptr_add(set.parent, node), pivot);
+}
+
+fn tree_set_fix_insert[T](set: ref mut std::collections::TreeSet[T], inserted: i64) -> void {
+  var node = inserted;
+  while node != set.root && tree_set_color<T>(set, ptr_load(ptr_add(set.parent, node))) == 1 {
+    let parent = ptr_load(ptr_add(set.parent, node));
+    let grand = ptr_load(ptr_add(set.parent, parent));
+    if parent == ptr_load(ptr_add(set.left, grand)) {
+      let left_uncle = ptr_load(ptr_add(set.right, grand));
+      if tree_set_color<T>(set, left_uncle) == 1 {
+        tree_set_set_color<T>(set, parent, 0);
+        tree_set_set_color<T>(set, left_uncle, 0);
+        tree_set_set_color<T>(set, grand, 1);
+        node = grand;
+      } else {
+        if node == ptr_load(ptr_add(set.right, parent)) {
+          node = parent;
+          tree_set_rotate_left<T>(set, node);
+        }
+        let left_fixed_parent = ptr_load(ptr_add(set.parent, node));
+        let left_fixed_grand = ptr_load(ptr_add(set.parent, left_fixed_parent));
+        tree_set_set_color<T>(set, left_fixed_parent, 0);
+        tree_set_set_color<T>(set, left_fixed_grand, 1);
+        tree_set_rotate_right<T>(set, left_fixed_grand);
+      }
+    } else {
+      let right_uncle = ptr_load(ptr_add(set.left, grand));
+      if tree_set_color<T>(set, right_uncle) == 1 {
+        tree_set_set_color<T>(set, parent, 0);
+        tree_set_set_color<T>(set, right_uncle, 0);
+        tree_set_set_color<T>(set, grand, 1);
+        node = grand;
+      } else {
+        if node == ptr_load(ptr_add(set.left, parent)) {
+          node = parent;
+          tree_set_rotate_right<T>(set, node);
+        }
+        let right_fixed_parent = ptr_load(ptr_add(set.parent, node));
+        let right_fixed_grand = ptr_load(ptr_add(set.parent, right_fixed_parent));
+        tree_set_set_color<T>(set, right_fixed_parent, 0);
+        tree_set_set_color<T>(set, right_fixed_grand, 1);
+        tree_set_rotate_left<T>(set, right_fixed_grand);
+      }
+    }
+  }
+  tree_set_set_color<T>(set, set.root, 0);
+}
+
+fn tree_set_find_slot[T](set: ref std::collections::TreeSet[T], value: T) -> i64 {
+  let less = set.less;
+  var node = set.root;
+  while node >= 0 {
+    let node_value = ptr_load(ptr_add(set.data, node));
+    if less(value, node_value) {
+      node = ptr_load(ptr_add(set.left, node));
+    } else if less(node_value, value) {
+      node = ptr_load(ptr_add(set.right, node));
+    } else {
+      return node;
+    }
+  }
+  return -1;
+}
+
+fn tree_set_find_slot_mut[T](set: ref mut std::collections::TreeSet[T], value: T) -> i64 {
+  let less = set.less;
+  var node = set.root;
+  while node >= 0 {
+    let node_value = ptr_load(ptr_add(set.data, node));
+    if less(value, node_value) {
+      node = ptr_load(ptr_add(set.left, node));
+    } else if less(node_value, value) {
+      node = ptr_load(ptr_add(set.right, node));
+    } else {
+      return node;
+    }
+  }
+  return -1;
+}
+
+fn tree_set_grow_to_capacity[T](
+  set: ref mut std::collections::TreeSet[T],
+  zone: ref mut Zone,
+  capacity: i64
+) -> void {
+  let actual = normalized_tree_capacity(capacity);
+  if actual <= set.capacity {
+    return;
+  }
+  let old_data = set.data;
+  let old_left = set.left;
+  let old_right = set.right;
+  let old_parent = set.parent;
+  let old_colors = set.colors;
+  let new_data = std::zone::alloc_array<T>(zone, actual);
+  let new_left = std::zone::alloc_array<i64>(zone, actual);
+  let new_right = std::zone::alloc_array<i64>(zone, actual);
+  let new_parent = std::zone::alloc_array<i64>(zone, actual);
+  let new_colors = std::zone::alloc_array<i64>(zone, actual);
+  var index = 0;
+  while index < set.len {
+    ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, index)));
+    ptr_store(ptr_add(new_left, index), ptr_load(ptr_add(old_left, index)));
+    ptr_store(ptr_add(new_right, index), ptr_load(ptr_add(old_right, index)));
+    ptr_store(ptr_add(new_parent, index), ptr_load(ptr_add(old_parent, index)));
+    ptr_store(ptr_add(new_colors, index), ptr_load(ptr_add(old_colors, index)));
+    index = index + 1;
+  }
+  set.data = new_data;
+  set.left = new_left;
+  set.right = new_right;
+  set.parent = new_parent;
+  set.colors = new_colors;
+  set.capacity = actual;
+}
+
+fn tree_set_drop_values[T](set: ref mut std::collections::TreeSet[T]) -> void {
+  var index = 0;
+  while index < set.len {
+    let value = ptr_load(ptr_add(set.data, index));
+    drop value;
+    index = index + 1;
+  }
+  set.root = -1;
+  set.len = 0;
+}
+
+pub impl[T] std::collections::TreeSet[T] {
+  fn new(
+    zone: ref mut Zone,
+    capacity: i64,
+    less: fn(T, T) -> bool
+  ) -> std::collections::TreeSet[T] {
+    return std::collections::tree_set<T>(zone, capacity, less);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn contains(self: ref Self, value: T) -> bool {
+    return tree_set_find_slot<T>(self, value) >= 0;
+  }
+
+  fn insert(self: ref mut Self, zone: ref mut Zone, value: T) -> bool {
+    let less = self.less;
+    var parent = -1;
+    var node = self.root;
+    var place_left = false;
+    while node >= 0 {
+      parent = node;
+      let node_value = ptr_load(ptr_add(self.data, node));
+      if less(value, node_value) {
+        node = ptr_load(ptr_add(self.left, node));
+        place_left = true;
+      } else if less(node_value, value) {
+        node = ptr_load(ptr_add(self.right, node));
+        place_left = false;
+      } else {
+        return false;
+      }
+    }
+    if self.len >= self.capacity {
+      tree_set_grow_to_capacity<T>(self, zone, self.capacity * 2);
+    }
+    let index = self.len;
+    ptr_store(ptr_add(self.data, index), value);
+    ptr_store(ptr_add(self.left, index), -1);
+    ptr_store(ptr_add(self.right, index), -1);
+    ptr_store(ptr_add(self.parent, index), parent);
+    ptr_store(ptr_add(self.colors, index), 1);
+    if parent < 0 {
+      self.root = index;
+    } else if place_left {
+      ptr_store(ptr_add(self.left, parent), index);
+    } else {
+      ptr_store(ptr_add(self.right, parent), index);
+    }
+    self.len = self.len + 1;
+    tree_set_fix_insert<T>(self, index);
+    return true;
+  }
+
+  fn replace(self: ref mut Self, zone: ref mut Zone, value: T) -> std::Option[T] {
+    let existing = tree_set_find_slot_mut<T>(self, value);
+    if existing >= 0 {
+      let previous = ptr_load(ptr_add(self.data, existing));
+      ptr_store(ptr_add(self.data, existing), value);
+      return std::Some<T>(previous);
+    }
+    self.insert(zone, value);
+    return std::None<T>();
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    tree_set_drop_values<T>(self);
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    tree_set_grow_to_capacity<T>(self, zone, capacity);
+  }
+}
+
+impl[T] std::Drop for std::collections::TreeSet[T] {
+  fn drop(self) -> void {
+    var dropped = self;
+    tree_set_drop_values<T>(ref mut dropped);
     return;
   }
 }

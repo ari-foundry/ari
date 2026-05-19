@@ -681,6 +681,18 @@ check-prelude: $(TARGET)
 	grep -q 'std__collections__Set_i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-set-iter.ll
 	$(TARGET) tests/cases/standard-library/ok/std-collections-set-iter.ari -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf
 	$(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37
+	$(TARGET) tests/cases/standard-library/ok/std-collections-hash.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-hash.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent6insert' $(BUILD_DIR)/prelude/std-collections-hash.ll
+	grep -q '_ARNv3std11collections36hash_map_grow_to_capacity__G_i64_i64' $(BUILD_DIR)/prelude/std-collections-hash.ll
+	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-hash.ll
+	$(TARGET) tests/cases/standard-library/ok/std-collections-hash.ari -o $(BUILD_DIR)/prelude/std-collections-hash.elf
+	$(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/std-collections-tree.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6insert' $(BUILD_DIR)/prelude/std-collections-tree.ll
+	grep -q '_ARNv3std11collections30tree_map_fix_insert__G_i64_i64' $(BUILD_DIR)/prelude/std-collections-tree.ll
+	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent7replace' $(BUILD_DIR)/prelude/std-collections-tree.ll
+	$(TARGET) tests/cases/standard-library/ok/std-collections-tree.ari -o $(BUILD_DIR)/prelude/std-collections-tree.elf
+	$(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159
 	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
 	$(TARGET) tests/cases/standard-library/ok/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
@@ -882,6 +894,8 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-access.elf; $(BUILD_DIR)/prelude/std-collections-set-access.elf; code=$$?; test $$code -eq 120; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-replace.elf; $(BUILD_DIR)/prelude/std-collections-set-replace.elf; code=$$?; test $$code -eq 127; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf; $(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-hash.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash.elf; $(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-prelude-local-shadow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; code=$$?; test $$code -eq 8; fi
 	$(TARGET) --no-implicit-std --module-path lib tests/cases/standard-library/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
@@ -987,6 +1001,14 @@ check-prelude: $(TARGET)
 	grep -q "std::collections::Set.reserve zone argument must match the set allocation zone" $(BUILD_DIR)/prelude/std-collections-set-reserve-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-reserve-extra-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-reserve-extra-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-reserve-extra-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::collections::Set.reserve_extra zone argument must match the set allocation zone" $(BUILD_DIR)/prelude/std-collections-set-reserve-extra-different-zone.err
+	if $(TARGET) tests/cases/standard-library/errors/std-collections-hash-map-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/std-collections-hash-map-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-insert-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::collections::HashMap.insert zone argument must match the hash map allocation zone" $(BUILD_DIR)/prelude/std-collections-hash-map-insert-different-zone.err
+	if $(TARGET) tests/cases/standard-library/errors/std-collections-tree-map-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/std-collections-tree-set-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::collections::TreeSet.insert zone argument must match the tree set allocation zone" $(BUILD_DIR)/prelude/std-collections-tree-set-insert-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude-slice-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude-slice-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.err 2>&1; then exit 1; fi

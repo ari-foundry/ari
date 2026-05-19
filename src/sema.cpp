@@ -5509,7 +5509,7 @@ private:
              is_std_box_handle_type(receiver_type)) ||
             (fn.module_name == "std::collections" &&
              std_collections_set_method_requires_same_zone_argument(method_name) &&
-             is_std_collections_set_handle_type(receiver_type)) ||
+             is_std_collections_mutable_handle_type(receiver_type)) ||
             (fn.module_name == "std::string" &&
              std_string_method_requires_same_zone_argument(method_name) &&
              is_std_string_handle_type(receiver_type)) ||
@@ -9845,9 +9845,12 @@ private:
             return data_path && path == local_owned_field_path_from_indices(*data_path);
         }
         if (current_module_name_ == "std::collections") {
-            std::optional<std::vector<std::size_t>> data_path =
-                std_collections_set_zone_handle_data_field_path_indices(value_qualified_type(local->type));
-            return data_path && path == local_owned_field_path_from_indices(*data_path);
+            std::vector<std::vector<std::size_t>> data_paths =
+                std_collections_zone_handle_storage_field_path_indices(value_qualified_type(local->type));
+            for (const std::vector<std::size_t>& data_path : data_paths) {
+                if (path == local_owned_field_path_from_indices(data_path)) return true;
+            }
+            return false;
         }
         std::optional<std::vector<std::size_t>> data_path =
             std_vec_zone_handle_data_field_path_indices(value_qualified_type(local->type));
@@ -17334,8 +17337,13 @@ private:
         elements.reserve(struct_type.field_names.size());
         std::optional<std::size_t> std_zone_handle_source_field =
             std_vec_zone_handle_source_field_index(struct_type);
+        std::vector<std::vector<std::size_t>> std_zone_handle_storage_field_paths;
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_collections_set_zone_handle_source_field_index(struct_type);
+            if (std_zone_handle_source_field) {
+                std_zone_handle_storage_field_paths =
+                    std_collections_zone_handle_storage_field_path_indices(struct_type);
+            }
         }
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_box_zone_handle_source_field_index(struct_type);
@@ -17343,12 +17351,19 @@ private:
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_string_zone_handle_source_field_index(struct_type);
         }
+        auto std_zone_handle_field_allows_zone_pointer = [&](std::size_t index) {
+            if (std_zone_handle_source_field && index == *std_zone_handle_source_field) return true;
+            for (const std::vector<std::size_t>& path : std_zone_handle_storage_field_paths) {
+                if (path.size() == 1 && path[0] == index) return true;
+            }
+            return false;
+        };
         for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
             IrExprPtr value = std::move(lowered_values[i]);
             coerce_expr_to_expected(*value, struct_type.field_types[i]);
             require_assignable(expr.loc, struct_type.field_types[i], value->type);
             require_plain_prelude_aggregate_element(expr.loc, value->type, "struct");
-            if (!std_zone_handle_source_field || i != *std_zone_handle_source_field) {
+            if (!std_zone_handle_field_allows_zone_pointer(i)) {
                 require_no_zone_pointer_escape(value->loc, *value, "struct literal");
             }
             elements.push_back(std::move(value));

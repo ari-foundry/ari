@@ -1,37 +1,35 @@
 # std::collections
 
-`std::collections` is the home for source collection handles that go beyond a
-plain growable sequence. The first implemented slice is `Set[T]`: a
-zone-backed, insertion-order, linear set for small unique collections and
-deduplication.
+`std::collections` contains source Ari collection handles that allocate through
+an explicit `Zone`. The module now has three distinct families:
 
-The current `Set[T]` is intentionally not named `HashSet`. It does linear
-search with `==`, so the API is useful today while leaving the future hash
-table policy open.
+| Type | Data Structure | Use It For |
+| --- | --- | --- |
+| `Set[T]` | linear insertion-order buffer | tiny unique lists, stable insertion-order access, iteration |
+| `HashMap[K, V]`, `HashSet[T]` | open-addressed hash table with tombstones | fast average-case lookup when a hash function is available |
+| `TreeMap[K, V]`, `TreeSet[T]` | red-black tree | ordered lookup when a strict less-than comparator is available |
 
-## Naming Policy
+These names are intentionally plain. Method names stay natural: `insert`,
+`contains`, `get`, `try_get`, `remove`, `take`, `replace`, `reserve`, and
+`clear`. Do not add type suffixes such as `insert_i64`; generic type arguments
+and the container type carry that information.
 
-Collection APIs should read naturally:
+Public source signatures still spell return types even when generic arguments
+exist. That keeps docs, diagnostics, and API manifest checks stable.
 
-```ari
-set.insert(ref mut zone, value)
-set.contains(value)
-set.take(value)
-set.replace(ref mut zone, value)
-set.try_get(index)
-set.iter()
-set.reserve(ref mut zone, capacity)
-set.copy_to(ref mut target)
-```
+## Zone Rule
 
-Do not add type suffixes such as `insert_i64`. The type comes from `Set[T]`
-and explicit generic calls such as `collections::new<i64>(...)`.
+Every collection handle is tied to the zone used by its constructor. Ari tracks
+that provenance and rejects:
 
-Generic type parameters do not replace function result types in today's Ari
-source signatures. Public constructors still spell the return type so module
-summaries, docs, and diagnostics have one stable contract to check.
+- using a collection after its zone is reset or destroyed
+- growing or inserting with a different zone than the one that created it
+- storing collection backing pointers into unrelated aggregates
 
-## Constructors
+Growth copies live elements into newly allocated zone storage. Old raw buffers
+remain owned by the zone and are reclaimed when the zone resets or destroys.
+
+## Linear Set
 
 ```ari
 collections::new<T>(ref mut zone, capacity)
@@ -39,14 +37,11 @@ Set::new<T>(ref mut zone, capacity)
 collections::from_slice_in<T>(ref mut zone, values)
 ```
 
-`new` creates an empty set with explicit starting capacity. `Set::new` is the
-same constructor as an associated function. `from_slice_in` copies unique
-values from a borrowed `Slice[T]` into a new target-zone set.
+`Set[T]` keeps values in insertion order and uses linear `==` search. It is
+not a hash set; keep using it when order and small size matter more than hash
+lookup.
 
-The handle is tied to the zone used for construction. Ari rejects use of a
-tracked set after that zone is reset or destroyed.
-
-## Metadata, Search, Views, And Iteration
+Important methods:
 
 ```ari
 set.len()
@@ -60,27 +55,6 @@ set.get(index)
 set.try_get(index)
 set.index_of(value)
 set.contains(value)
-set.as_slice()
-set.iter()
-```
-
-`first`, `last`, and `get` are asserting accessors for cases where absence is a
-programmer error. The `try_*` forms return `Option[T]` for empty or
-out-of-range reads and are the preferred API for ordinary absence. All access
-is insertion-order based.
-
-`index_of` returns the insertion-order index of the value or `-1` when absent.
-`contains` is the usual membership predicate. `as_slice` returns a borrowed
-`Slice[T]` over the current insertion-order elements.
-
-`iter` returns a `std::collections::Iter[T]` cursor over the same
-insertion-order elements. `Iter[T]` implements `Iterator[T]`, and `Set[T]`
-implements `IntoIterator[T]`, so both `for value in set.iter()` and
-`for value in set` use the standard iterator lowering.
-
-## Mutation
-
-```ari
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.remove(value)
@@ -90,58 +64,148 @@ set.try_pop()
 set.clear()
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
-```
-
-`insert` returns `true` when the value was newly inserted and `false` when the
-set already contained it. `replace` returns `Some(previous)` when the set
-already contained an equal value; otherwise it inserts the new value and
-returns `None`. Because insertion and missing-value replacement may grow
-storage, both methods take the same explicit zone used to create the set.
-
-`remove` returns `true` when it found and dropped the value. `take` returns
-`Option[T]` and moves the removed value out instead of dropping it. `pop`
-removes and returns the last insertion-order value, while `try_pop` returns
-`None` for an empty set.
-
-`clear` drops every live value and keeps the allocated capacity for later
-reuse. `reserve` grows to an absolute capacity, and `reserve_extra` grows so
-the set can hold at least `len() + additional` elements. Both reserve methods
-take the same explicit zone as construction because they may allocate new
-backing storage.
-
-## Copies And Lifetimes
-
-```ari
+set.as_slice()
+set.iter()
 set.copy_to(ref mut target)
 ```
 
-`copy_to` creates a new set in the target zone and copies the current live
-values in insertion order. The copied set is independent from the source
-zone, but it is invalidated when the target zone is reset or destroyed.
+`insert` returns `true` only for a newly inserted value. `replace` returns
+`Some(previous)` when an equal value already existed, otherwise it inserts and
+returns `None`. `take` moves the removed value out, while `remove` drops it.
+`iter` yields insertion-order values and `Set[T]` implements
+`IntoIterator[T]`.
 
-## Example
+## HashMap And HashSet
+
+Hash collections are real hash tables, not aliases over `Set`. They use linear
+probing, tombstones for removal, and a load-factor growth rule. Until Ari has a
+standard `Hash` trait with dispatch through generic containers, constructors
+take a hash function explicitly.
+
+```ari
+collections::hash_i64(value)
+collections::hash_map<K, V>(ref mut zone, capacity, hash)
+HashMap::new<K, V>(ref mut zone, capacity, hash)
+collections::hash_set<T>(ref mut zone, capacity, hash)
+HashSet::new<T>(ref mut zone, capacity, hash)
+```
+
+The hash function shape is `fn(K) -> u64` for `HashMap[K, V]` and
+`fn(T) -> u64` for `HashSet[T]`. `collections::hash_i64` is the first built-in
+helper for i64 keys.
+
+```ari
+map.len()
+map.capacity()
+map.is_empty()
+map.contains(key)
+map.get(key)
+map.try_get(key)
+map.insert(ref mut zone, key, value)
+map.remove(key)
+map.clear()
+map.reserve(ref mut zone, capacity)
+```
+
+`HashMap.insert` inserts or replaces and returns `Option[V]`: `Some(previous)`
+on replacement, `None` on a new key. `remove` returns the removed value.
+
+```ari
+set.len()
+set.capacity()
+set.is_empty()
+set.contains(value)
+set.insert(ref mut zone, value)
+set.replace(ref mut zone, value)
+set.take(value)
+set.remove(value)
+set.clear()
+set.reserve(ref mut zone, capacity)
+```
+
+`HashSet.insert` returns whether the value was newly inserted. `replace`
+returns the previous equal value when present. `take` moves a removed value out;
+`remove` drops it.
+
+## TreeMap And TreeSet
+
+Tree collections are red-black trees. They provide ordered lookup without
+needing a hash function. Until trait dispatch is strong enough to use
+`std::cmp::Ord` directly in generic container internals, constructors take a
+strict less-than comparator.
+
+```ari
+collections::less_i64(left, right)
+collections::tree_map<K, V>(ref mut zone, capacity, less)
+TreeMap::new<K, V>(ref mut zone, capacity, less)
+collections::tree_set<T>(ref mut zone, capacity, less)
+TreeSet::new<T>(ref mut zone, capacity, less)
+```
+
+The comparator shape is `fn(K, K) -> bool` for `TreeMap[K, V]` and
+`fn(T, T) -> bool` for `TreeSet[T]`. `collections::less_i64` is the first
+built-in helper for i64 keys.
+
+```ari
+map.len()
+map.capacity()
+map.is_empty()
+map.contains(key)
+map.get(key)
+map.try_get(key)
+map.insert(ref mut zone, key, value)
+map.clear()
+map.reserve(ref mut zone, capacity)
+```
+
+`TreeMap.insert` inserts or replaces and returns `Option[V]`.
+
+```ari
+set.len()
+set.capacity()
+set.is_empty()
+set.contains(value)
+set.insert(ref mut zone, value)
+set.replace(ref mut zone, value)
+set.clear()
+set.reserve(ref mut zone, capacity)
+```
+
+`TreeSet.insert` returns `false` for an equal existing value. `TreeSet.replace`
+returns the previous equal value or inserts a new one.
+
+## Examples
+
+Hash table:
 
 ```ari
 fn main() -> i64 {
-  var zone = zone::create(256);
-  var seen = collections::new<i64>(ref mut zone, 0);
+  var zone = zone::create(2048);
+  var map = HashMap::new<i64, i64>(ref mut zone, 8, collections::hash_i64);
 
-  seen.insert(ref mut zone, 3);
-  seen.insert(ref mut zone, 5);
-  seen.insert(ref mut zone, 3);
-  let replaced = seen.replace(ref mut zone, 5).unwrap_or(0);
-
-  let found = seen.contains(5);
-  let first = seen.try_first().unwrap_or(0);
-  var iter_total = 0;
-  for value in seen.iter() {
-    iter_total = iter_total + value;
-  }
-  let removed = seen.take(3).unwrap_or(0);
-  let total = seen.len() + first + iter_total + replaced + removed + if found { 10 } else { 0 };
+  map.insert(ref mut zone, 7, 70);
+  map.insert(ref mut zone, 11, 110);
+  let value = map.try_get(7).unwrap_or(0);
 
   zone::destroy(zone);
-  return total;
+  return value;
+}
+```
+
+Ordered tree:
+
+```ari
+fn main() -> i64 {
+  var zone = zone::create(2048);
+  var set = TreeSet::new<i64>(ref mut zone, 8, collections::less_i64);
+
+  set.insert(ref mut zone, 4);
+  set.insert(ref mut zone, 2);
+  set.insert(ref mut zone, 8);
+  let found = set.contains(2);
+
+  zone::destroy(zone);
+  return if found { 1 } else { 0 };
 }
 ```
 
@@ -154,6 +218,8 @@ tests/cases/standard-library/ok/std-collections-set.ari
 tests/cases/standard-library/ok/std-collections-set-access.ari
 tests/cases/standard-library/ok/std-collections-set-replace.ari
 tests/cases/standard-library/ok/std-collections-set-iter.ari
+tests/cases/standard-library/ok/std-collections-hash.ari
+tests/cases/standard-library/ok/std-collections-tree.ari
 ```
 
 Focused negative coverage:
@@ -165,29 +231,31 @@ tests/cases/standard-library/errors/std-collections-set-insert-different-zone.ar
 tests/cases/standard-library/errors/std-collections-set-replace-different-zone.ari
 tests/cases/standard-library/errors/std-collections-set-reserve-different-zone.ari
 tests/cases/standard-library/errors/std-collections-set-reserve-extra-different-zone.ari
+tests/cases/standard-library/errors/std-collections-hash-map-after-reset.ari
+tests/cases/standard-library/errors/std-collections-hash-map-insert-different-zone.ari
+tests/cases/standard-library/errors/std-collections-tree-map-after-reset.ari
+tests/cases/standard-library/errors/std-collections-tree-set-insert-different-zone.ari
 ```
 
-`std-collections-set.ari` covers construction, insertion, duplicate rejection,
-membership, removal, borrowed views, copying, and target/source zone behavior.
-`std-collections-set-access.ari` covers insertion-order accessors,
-`Option`-returning reads, explicit reserve growth, `pop`, and `try_pop`.
-`std-collections-set-replace.ari` covers replace-or-insert behavior and the
-same-zone growth rule for missing values.
-`std-collections-set-iter.ari` covers explicit cursors, direct set iteration,
-and insertion-order iterator lowering. The iterator reset test confirms that
-derived cursors preserve the set's allocation-zone provenance.
+`std-collections-hash.ari` forces collisions with a custom hash function so the
+linear-probing and tombstone paths are exercised. `std-collections-tree.ari`
+inserts mixed key order to exercise red-black rotations.
 
 `make check-prelude` compiles the positive tests, checks representative
-monomorphized symbols, runs the executable results, and checks the negative
-zone diagnostics. Public declarations are tracked in
-`tests/std_api_manifest.txt` and checked by `make check-std-api`.
+monomorphized symbols, runs the executables, and checks the negative zone
+diagnostics. Public declarations are tracked in `tests/std_api_manifest.txt`
+and checked by `make check-std-api`.
 
 ## Current Limits
 
-- Operations are linear time.
-- `HashMap` and `HashSet` are future modules. They need hashing and equality
-  traits, table growth policy, collision/tombstone behavior, iterator behavior,
-  and explicit-zone ownership tests.
-- The compiler recognizes `std::collections::Set[T]` and
-  `std::collections::Iter[T]` as zone-backed handles only for provenance
-  checking. The collection behavior itself is Ari source.
+- `Set[T]` is still linear and insertion-order.
+- Hash and tree containers are copy-style value APIs today, matching the
+  current `Set`/`Vec` source style. Use simple copyable keys and values until
+  trait bounds can express copy, hash, equality, and ordering requirements.
+- Hash containers require an explicit hash function. The future API should
+  prefer `HashMap[K: Hash[K], V]` and `HashSet[T: Hash[T]]` once trait
+  dispatch is ready.
+- Tree containers require an explicit comparator. The future API should use
+  `Ord` when generic trait dispatch is strong enough.
+- Tree removal and iterators are not implemented in this slice. They should
+  land with focused red-black deletion and traversal tests.

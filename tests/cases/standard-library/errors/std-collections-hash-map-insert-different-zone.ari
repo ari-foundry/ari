@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var left = zone::create(256);
+  var right = zone::create(256);
+  var map = collections::hash_map<i64, i64>(ref mut left, 1, collections::hash_i64);
+
+  map.insert(ref mut right, 1, 2);
+
+  zone::destroy(right);
+  zone::destroy(left);
+  return 0;
+}

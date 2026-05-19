@@ -1,0 +1,52 @@
+// Covers real hash-table collections: collisions, replacement, tombstones,
+// membership, removal, and explicit-zone growth.
+fn constant_hash(value: i64) -> u64 {
+  return 7;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var map = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  var score = 0;
+
+  if map.is_empty() {
+    score = score + 1;
+  }
+  score = score + map.insert(ref mut zone, 1, 10).unwrap_or(2);
+  score = score + map.insert(ref mut zone, 9, 90).unwrap_or(3);
+  if map.contains(9) {
+    score = score + 5;
+  }
+  score = score + map.get(9);
+  score = score + map.insert(ref mut zone, 9, 91).unwrap_or(0);
+  let missing = map.try_get(7);
+  if missing.is_none() {
+    score = score + 7;
+  }
+  score = score + map.remove(1).unwrap_or(0);
+  if !map.contains(1) {
+    score = score + 11;
+  }
+  map.insert(ref mut zone, 17, 170);
+  if map.len() == 2 {
+    score = score + 13;
+  }
+
+  var set = collections::hash_set<i64>(ref mut zone, 1, constant_hash);
+  if set.insert(ref mut zone, 4) {
+    score = score + 4;
+  }
+  if set.insert(ref mut zone, 12) {
+    score = score + 6;
+  }
+  if !set.insert(ref mut zone, 4) {
+    score = score + 7;
+  }
+  score = score + set.take(4).unwrap_or(0);
+  if !set.contains(4) {
+    score = score + 2;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

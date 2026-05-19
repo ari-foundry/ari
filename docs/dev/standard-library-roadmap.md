@@ -42,10 +42,10 @@ The current `std` package already provides:
 - explicit-zone allocation in `std::zone`, including the source
   `alloc_array<T>` raw buffer helper
 - source handles for `Box`, `String`, and `Vec`
-- source `std::collections::Set[T]` as a linear insertion-order set with
-  explicit-zone growth, insertion-order access, optional access, membership,
-  replacement, removal, `pop`/`try_pop`, direct iteration, copy, and
-  provenance checks
+- source `std::collections` handles: linear insertion-order `Set[T]` with
+  iterator support, open-addressed `HashMap[K,V]`/`HashSet[T]` with explicit
+  hash functions, and red-black-tree `TreeMap[K,V]`/`TreeSet[T]` with explicit
+  comparators; all use explicit-zone growth and provenance checks
 - `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access, and
   `Option`-returning element access helpers
 - `std::string::String` empty-safe byte access, byte search, comparison,
@@ -111,21 +111,21 @@ Likely compiler work:
 - Add collection APIs only when ownership, borrowing, and zone provenance can
   be tested in focused slices.
 - Grow collection families in this order: slice helpers, vector methods,
-  the current linear `Set[T]` access/update and iterator surface, iterator
-  adapters, hash maps/sets/deques.
-- Keep `Set[T]` linear until hashing and equality traits are ready. Its public
-  names should remain natural so a future hash-backed set does not need
-  type-suffixed call sites.
-- Keep `HashMap` and `HashSet` behind a clear policy for hashing, equality,
-  tombstones, capacity growth, and explicit allocation zones. The public names
-  should be natural (`HashMap`, `HashSet`, `insert`, `get`, `contains`) rather
-  than type-suffixed, with trait bounds carrying key and value types.
+  linear `Set[T]`, hash tables, red-black trees, iterators for hash/tree
+  containers, red-black deletion, then deques.
+- Keep `Set[T]` linear and insertion-order. Hash-backed behavior belongs in
+  `HashMap`/`HashSet`, so call sites stay honest and natural.
+- Keep `HashMap`/`HashSet` and `TreeMap`/`TreeSet` on explicit hash/comparator
+  constructors until `Hash`, `Eq`, and `Ord` trait dispatch can drive generic
+  containers directly. Public names should remain natural (`insert`, `get`,
+  `contains`, `remove`) rather than type-suffixed.
 
 Likely compiler work:
 
 - generic aggregate monomorphization for richer collection layouts
 - iterator protocol diagnostics beyond direct `range` and current `Vec` support
 - allocation-zone diagnostics for nested and generic wrapper types
+- trait-driven `Hash`/`Eq`/`Ord` constructor selection
 
 ### Phase 4: Text, Formatting, And Diagnostics
 
@@ -186,7 +186,7 @@ Likely compiler work:
 | `std::process` | Grow from the current `id`/`exit` seed into child process handles. | current `id`, explicit exit status, source status predicates, future spawn/wait result handling, fork platform guards. | Current id/exit use runtime hooks; spawn/wait/fork need runtime wrappers for POSIX/Windows split and handle ownership. |
 | `std::thread` | Spawn/join handles after function pointer and ownership transfer rules are stable. | join success/failure, moved capture rejection, shared state diagnostics. | Runtime thread wrapper, entry trampoline ABI, and send/share trait policy. |
 | `std::sync` | Shared ownership and atomics before locks/channels. | `Shared`/`Weak` upgrade behavior, atomic load/store/CAS, mutex poisoning or no-poison policy. | Reference-counted handle lowering, atomic intrinsics, and thread-safety trait checks. |
-| `std::collections` | Design `HashMap`/`HashSet` policy after the current linear `Set[T]` access/update and iterator surface. | current set insertion/duplicate/replace/access/optional access/reserve/removal/iteration/copy/after-reset/same-zone tests; future lookup, growth, drop, and hash collision behavior. | Current `Set[T]` and `Iter[T]` need zone-handle provenance recognition only; hash tables need generic aggregate monomorphization, hashing/equality traits, and zone-aware table layout. |
+| `std::collections` | Add iterators for `HashMap`/`HashSet` and `TreeMap`/`TreeSet`, then tree deletion and trait-driven constructors. | current set insertion/duplicate/replace/access/optional access/reserve/removal/iteration/copy/after-reset/same-zone tests; hash collision/tombstone tests; tree rotation/replacement tests; future iterator and red-black deletion tests. | Current collection handles have zone provenance recognition; next compiler work is trait-driven `Hash`/`Eq`/`Ord` dispatch and iterator lowering beyond the current cursor slices. |
 | `std::string` | Add signed/checked parsers only after text and numeric policies are documented. | Search, growth, append, copy, ASCII case comparison/search, ASCII trim/parse, prefix parse, owned trim copy, and after-reset tests. | Formatting/string runtime hooks. |
 | `std::ascii` | Add signed parsers only after numeric sign and overflow policy is documented. | Byte classification behavior, case-insensitive comparison/search, slice trimming/parsing, prefix parser consumed-length behavior, source symbol checks, and future parser edge cases. | None for current whole-slice and prefix helpers; signed/checked parsers may need overflow diagnostics. |
 | `std::vec` | Iterator/adaptor growth and root/source Vec unification plan after safe accessors. | Method, `try_*` access, iterator, borrow, owner-drop, and same-zone tests. | Iterator lowering and generic aggregate monomorphization. |

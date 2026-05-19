@@ -70,7 +70,13 @@ fn std::cmp::is_between[T: Ord[T]|std cmp value helper tests; docs/stdlib/api-re
 fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::min[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::collections::from_slice_in[T]|check-prelude std-collections-set source linear set from slice; docs/stdlib/modules/collections.md
+fn std::collections::hash_i64|check-prelude std-collections-hash public i64 hash helper for explicit hasher containers; docs/stdlib/modules/collections.md
+fn std::collections::hash_map[K, V]|check-prelude std-collections-hash explicit-hasher hash map constructor; docs/stdlib/modules/collections.md
+fn std::collections::hash_set[T]|check-prelude std-collections-hash explicit-hasher hash set constructor; docs/stdlib/modules/collections.md
+fn std::collections::less_i64|check-prelude std-collections-tree public i64 ordering helper for explicit comparator containers; docs/stdlib/modules/collections.md
 fn std::collections::new[T]|check-prelude std-collections-set source linear set constructor; docs/stdlib/modules/collections.md
+fn std::collections::tree_map[K, V]|check-prelude std-collections-tree explicit-comparator tree map constructor; docs/stdlib/modules/collections.md
+fn std::collections::tree_set[T]|check-prelude std-collections-tree explicit-comparator tree set constructor; docs/stdlib/modules/collections.md
 fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::context::argc|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::context::has_arg|std context args tests; docs/stdlib/modules/context.md
@@ -231,6 +237,28 @@ method std::boxed::Box[T]::set|check-prelude std-boxed-box and std-boxed-set-dro
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::take|check-prelude std-boxed-take value move-out leaves empty handle; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::try_take|check-prelude std-boxed-try-take Option-returning empty-handle move-out; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::collections::HashMap[K,V]::capacity|check-prelude std-collections-hash hash table capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::clear|check-prelude std-collections-hash drops live hash map entries; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::contains|check-prelude std-collections-hash hash lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::get|check-prelude std-collections-hash asserting hash lookup; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::insert|check-prelude std-collections-hash insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::is_empty|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::len|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::new|check-prelude std-collections-hash associated explicit-hasher constructor; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::remove|check-prelude std-collections-hash tombstone removal; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::reserve|check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::try_get|check-prelude std-collections-hash Option-returning hash lookup; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::capacity|check-prelude std-collections-hash hash set capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::clear|check-prelude std-collections-hash drops live hash set entries; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::contains|check-prelude std-collections-hash hash set lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::insert|check-prelude std-collections-hash hash set insertion with same-zone growth; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::is_empty|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::len|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::new|check-prelude std-collections-hash associated explicit-hasher constructor; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::remove|check-prelude std-collections-hash drop-on-remove membership helper; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::replace|check-prelude std-collections-hash replace-or-insert behavior; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::reserve|check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::take|check-prelude std-collections-hash Option-returning removal; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::as_slice|check-prelude std-collections-set borrowed set storage view; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::capacity|check-prelude std-collections-set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::clear|check-prelude std-collections-set value drop clear; docs/stdlib/modules/collections.md
@@ -255,6 +283,25 @@ method std::collections::Set[T]::try_first|check-prelude std-collections-set-acc
 method std::collections::Set[T]::try_get|check-prelude std-collections-set-access optional indexed accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::try_last|check-prelude std-collections-set-access optional last accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::try_pop|check-prelude std-collections-set-access optional last-value removal; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::capacity|check-prelude std-collections-tree tree map capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::clear|check-prelude std-collections-tree drops live tree map nodes; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::contains|check-prelude std-collections-tree ordered lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::get|check-prelude std-collections-tree asserting ordered lookup; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::insert|check-prelude std-collections-tree red-black insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::try_get|check-prelude std-collections-tree Option-returning ordered lookup; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::capacity|check-prelude std-collections-tree tree set capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::clear|check-prelude std-collections-tree drops live tree set nodes; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::contains|check-prelude std-collections-tree ordered set lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::insert|check-prelude std-collections-tree red-black set insertion with same-zone growth; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
@@ -371,8 +418,12 @@ struct std::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
 struct std::ascii::ParsedInt|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::collections::HashMap[K, V]|std collections hash map tests; docs/stdlib/modules/collections.md
+struct std::collections::HashSet[T]|std collections hash set tests; docs/stdlib/modules/collections.md
 struct std::collections::Iter[T]|std collections iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::Set[T]|std collections linear set tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -435,8 +486,12 @@ trait-method std::fmt::Display::format_in|format_in Display borrowed receiver te
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row
+use std::HashMap|check-prelude std-collections-hash root alias for std::collections::HashMap[K, V]; docs/stdlib/modules/collections.md
+use std::HashSet|check-prelude std-collections-hash root alias for std::collections::HashSet[T]; docs/stdlib/modules/collections.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::TreeMap|check-prelude std-collections-tree root alias for std::collections::TreeMap[K, V]; docs/stdlib/modules/collections.md
+use std::TreeSet|check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md
 use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row
 use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::alloc|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
