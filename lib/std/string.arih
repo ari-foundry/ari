@@ -8,11 +8,55 @@ pub struct String {
   raw: std::string::RawString,
 }
 
+pub struct Utf8 {
+  bytes: std::Slice[u8],
+}
+
+pub struct OsStr {
+  bytes: std::Slice[u8],
+}
+
+pub struct CStr {
+  text: string,
+}
+
 pub extern "ari" fn alloc_buffer(zone: ref mut Zone, capacity: i64) -> ptr u8 = "ari_builtin_string_alloc_buffer";
 pub extern "ari" fn with_capacity(zone: ref mut Zone, capacity: i64) -> RawString = "ari_builtin_string_with_capacity";
 pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::String = "ari_builtin_string_new";
 pub extern "ari" fn from_string(zone: ref mut Zone, text: string) -> std::string::String = "ari_builtin_string_from_string";
 pub extern "ari" fn copy_to(value: ref std::string::String, target: ref mut Zone) -> std::string::String = "ari_builtin_string_copy_to";
+
+fn c_string_len(text: string) -> i64 {
+  let data = text as ptr u8;
+  var len = 0;
+  while ptr_load(ptr_add(data, len)) != (0 as u8) {
+    len = len + 1;
+  }
+  return len;
+}
+
+pub fn utf8(bytes: std::Slice[u8]) -> std::Option[std::string::Utf8] {
+  if !std::encoding::is_utf8(bytes) {
+    return std::None<std::string::Utf8>();
+  }
+  return std::Some<std::string::Utf8>(std::string::Utf8 { bytes: bytes });
+}
+
+pub fn os_str(bytes: std::Slice[u8]) -> std::string::OsStr {
+  return std::string::OsStr { bytes: bytes };
+}
+
+pub fn c_str(text: string) -> std::string::CStr {
+  return std::string::CStr { text: text };
+}
+
+pub fn c_len(text: string) -> i64 {
+  return c_string_len(text);
+}
+
+pub fn c_bytes(text: string) -> std::Slice[u8] {
+  return std::Slice<u8> { data: text as ptr u8, len: c_string_len(text) };
+}
 
 pub fn from_slice_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
   var output = std::string::new(zone, values.len);
@@ -81,6 +125,68 @@ fn append_byte_in(value: ref mut std::string::String, zone: ref mut Zone, byte: 
   ensure_spare_capacity(value, zone);
   ptr_store(ptr_add(value.raw.data, value.raw.len), byte);
   value.raw.len = value.raw.len + 1;
+}
+
+pub impl std::string::Utf8 {
+  fn as_slice(self: ref Self) -> std::Slice[u8] {
+    return self.bytes;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.bytes.len;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.bytes.len == 0;
+  }
+
+  fn codepoint_count(self: ref Self) -> i64 {
+    return std::encoding::utf8_count(self.bytes).unwrap();
+  }
+
+  fn codepoint_at(self: ref Self, byte_index: i64) -> std::Option[std::encoding::Utf8Char] {
+    return std::encoding::utf8_at(self.bytes, byte_index);
+  }
+}
+
+pub impl std::string::OsStr {
+  fn as_slice(self: ref Self) -> std::Slice[u8] {
+    return self.bytes;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.bytes.len;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.bytes.len == 0;
+  }
+
+  fn is_utf8(self: ref Self) -> bool {
+    return std::encoding::is_utf8(self.bytes);
+  }
+
+  fn try_utf8(self: ref Self) -> std::Option[std::string::Utf8] {
+    return std::string::utf8(self.bytes);
+  }
+}
+
+pub impl std::string::CStr {
+  fn as_string(self: ref Self) -> string {
+    return self.text;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return c_string_len(self.text);
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len() == 0;
+  }
+
+  fn as_slice(self: ref Self) -> std::Slice[u8] {
+    return std::string::c_bytes(self.text);
+  }
 }
 
 pub impl std::string::String {

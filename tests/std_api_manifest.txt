@@ -321,9 +321,11 @@ fn std::parse::float|check-prelude std-parse-basic asserting decimal float parse
 fn std::parse::float_or|check-prelude std-parse-basic fallback decimal float parser; docs/stdlib/modules/parse.md
 fn std::parse::integer|check-prelude std-parse-basic ASCII-trimmed signed integer parser; docs/stdlib/modules/parse.md
 fn std::parse::is_float|check-prelude std-parse-basic decimal float validator; docs/stdlib/modules/parse.md
+fn std::path::bytes|check-prelude std-path-bytes typed borrowed path-byte view constructor; docs/stdlib/modules/path.md
 fn std::path::components|check-prelude std-path-components borrowed lexical component iterator; docs/stdlib/modules/path.md
 fn std::path::extension|check-prelude std-path-basic borrowed final-extension view; docs/stdlib/modules/path.md
 fn std::path::file_name|check-prelude std-path-basic borrowed final-component view; docs/stdlib/modules/path.md
+fn std::path::from_os|check-prelude std-path-bytes path-byte view from OS-string bytes; docs/stdlib/modules/path.md
 fn std::path::is_absolute|check-prelude std-path-basic POSIX absolute path predicate; docs/stdlib/modules/path.md
 fn std::path::is_relative|check-prelude std-path-basic POSIX relative path predicate; docs/stdlib/modules/path.md
 fn std::path::is_separator|check-prelude std-path-basic POSIX slash separator predicate; docs/stdlib/modules/path.md
@@ -350,11 +352,16 @@ fn std::process::uid|check-prelude std-process-identity current process user id 
 fn std::process::wait|check-prelude std-process-fork-wait POSIX wait hook and exit-status decode; docs/stdlib/modules/process.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::string::c_bytes|check-prelude std-string-text-kinds borrowed C string byte view without terminator; docs/stdlib/modules/string.md
+fn std::string::c_len|check-prelude std-string-text-kinds C string byte length without terminator; docs/stdlib/modules/string.md
+fn std::string::c_str|check-prelude std-string-text-kinds typed borrowed C string view constructor; docs/stdlib/modules/string.md
 fn std::string::copy_to|check-prelude std-string-from-copy borrowed source and target reset tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::from_slice_in|std string from-slice target-zone copy tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::from_string|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::join_in|check-prelude std-string-split-join allocator-backed byte-slice join helper; docs/stdlib/modules/string.md
 fn std::string::new|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::string::os_str|check-prelude std-string-text-kinds typed borrowed OS-string byte view constructor; docs/stdlib/modules/string.md
+fn std::string::utf8|check-prelude std-string-text-kinds validated borrowed UTF-8 byte view constructor; docs/stdlib/modules/string.md
 fn std::string::with_capacity|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::sync::call_once|check-prelude std-sync-mutex-once source once execution helper; docs/stdlib/modules/sync.md
 fn std::sync::compare_exchange|check-prelude std-sync-atomic-i64 atomic compare-and-exchange hook; docs/stdlib/modules/sync.md
@@ -756,6 +763,28 @@ method std::net::SocketAddr::localhost|check-prelude std-net-addresses socket ad
 method std::net::SocketAddr::new|check-prelude std-net-addresses socket address associated constructor; docs/stdlib/modules/net.md
 method std::net::SocketAddr::port|check-prelude std-net-addresses socket address port accessor; docs/stdlib/modules/net.md
 method std::net::SocketAddr::with_port|check-prelude std-net-addresses socket address port replacement; docs/stdlib/modules/net.md
+method std::path::PathBytes::as_slice|check-prelude std-path-bytes borrowed path-byte view accessor; docs/stdlib/modules/path.md
+method std::path::PathBytes::components|check-prelude std-path-bytes typed path component iterator wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::extension|check-prelude std-path-bytes typed path extension wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::file_name|check-prelude std-path-bytes typed path file-name wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::is_absolute|check-prelude std-path-bytes typed path absolute predicate; docs/stdlib/modules/path.md
+method std::path::PathBytes::is_empty|check-prelude std-path-bytes typed path empty predicate; docs/stdlib/modules/path.md
+method std::path::PathBytes::is_relative|check-prelude std-path-bytes typed path relative predicate; docs/stdlib/modules/path.md
+method std::path::PathBytes::join_in|check-prelude std-path-bytes typed path lexical join wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::len|check-prelude std-path-bytes typed path length accessor; docs/stdlib/modules/path.md
+method std::path::PathBytes::normalize_in|check-prelude std-path-bytes typed path normalization wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::parent|check-prelude std-path-bytes typed path parent wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::stem|check-prelude std-path-bytes typed path stem wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::trim_trailing_separators|check-prelude std-path-bytes typed path trailing separator trim wrapper; docs/stdlib/modules/path.md
+method std::string::CStr::as_slice|check-prelude std-string-text-kinds borrowed C string bytes without terminator; docs/stdlib/modules/string.md
+method std::string::CStr::as_string|check-prelude std-string-text-kinds raw Ari C string accessor; docs/stdlib/modules/string.md
+method std::string::CStr::is_empty|check-prelude std-string-text-kinds C string empty predicate; docs/stdlib/modules/string.md
+method std::string::CStr::len|check-prelude std-string-text-kinds C string byte length; docs/stdlib/modules/string.md
+method std::string::OsStr::as_slice|check-prelude std-string-text-kinds borrowed OS string byte accessor; docs/stdlib/modules/string.md
+method std::string::OsStr::is_empty|check-prelude std-string-text-kinds OS string empty predicate; docs/stdlib/modules/string.md
+method std::string::OsStr::is_utf8|check-prelude std-string-text-kinds OS string UTF-8 validation predicate; docs/stdlib/modules/string.md
+method std::string::OsStr::len|check-prelude std-string-text-kinds OS string byte length; docs/stdlib/modules/string.md
+method std::string::OsStr::try_utf8|check-prelude std-string-text-kinds OS string validated UTF-8 conversion; docs/stdlib/modules/string.md
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
@@ -820,6 +849,11 @@ method std::string::String::try_get|check-prelude std-string-try-byte-access Opt
 method std::string::String::try_last|check-prelude std-string-try-byte-access Option-returning empty-safe byte access; docs/stdlib/modules/string.md
 method std::string::String::try_pop|check-prelude std-string-try-byte-access Option-returning empty pop; docs/stdlib/modules/string.md
 method std::string::String::windows|check-prelude std-string-split-join borrowed byte window iterator; docs/stdlib/modules/string.md
+method std::string::Utf8::as_slice|check-prelude std-string-text-kinds validated UTF-8 bytes accessor; docs/stdlib/modules/string.md
+method std::string::Utf8::codepoint_at|check-prelude std-string-text-kinds validated UTF-8 scalar lookup; docs/stdlib/modules/string.md
+method std::string::Utf8::codepoint_count|check-prelude std-string-text-kinds validated UTF-8 scalar count; docs/stdlib/modules/string.md
+method std::string::Utf8::is_empty|check-prelude std-string-text-kinds UTF-8 byte empty predicate; docs/stdlib/modules/string.md
+method std::string::Utf8::len|check-prelude std-string-text-kinds UTF-8 byte length accessor; docs/stdlib/modules/string.md
 method std::sync::AtomicI64::compare_exchange|check-prelude std-sync-atomic-i64 compare-and-exchange method wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::fetch_add|check-prelude std-sync-atomic-i64 fetch-add method wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::load|check-prelude std-sync-atomic-i64 load method wrapper; docs/stdlib/modules/sync.md
@@ -1011,8 +1045,12 @@ struct std::net::Ipv4Addr|std net IPv4 address tests; docs/stdlib/modules/net.md
 struct std::net::Ipv6Addr|std net IPv6 address tests; docs/stdlib/modules/net.md
 struct std::net::SocketAddr|std net socket address tests; docs/stdlib/modules/net.md
 struct std::path::Components|check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md
+struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md
+struct std::string::CStr|check-prelude std-string-text-kinds typed borrowed C string view; docs/stdlib/modules/string.md
+struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::string::Utf8|check-prelude std-string-text-kinds typed validated UTF-8 byte view; docs/stdlib/modules/string.md
 struct std::sync::AtomicI64|check-prelude std-sync-atomic-i64 atomic primitive value; docs/stdlib/modules/sync.md
 struct std::sync::Mutex|check-prelude std-sync-mutex-once source mutex primitive; docs/stdlib/modules/sync.md
 struct std::sync::Once|check-prelude std-sync-mutex-once source one-time initialization primitive; docs/stdlib/modules/sync.md

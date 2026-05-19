@@ -9,3 +9,5 @@ Current files:
   and lightweight normalization.
 - `std-path-components.ari`: borrowed component iteration over absolute paths,
   repeated separators, trailing separators, and root-only paths.
+- `std-path-bytes.ari`: typed `PathBytes` wrappers around path byte views,
+  including conversion from OS string bytes and method-style path helpers.

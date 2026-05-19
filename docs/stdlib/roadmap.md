@@ -18,7 +18,8 @@ hasher/value/byte-slice helpers, `mem` layout,
 pointer, value, byte memory, and hosted page-size helpers, `zone` raw
 allocation plus source typed array allocation,
 `boxed`, `string` byte access/search/split/chunk/window/join/ASCII helpers
-including case search, prefix parsers, and owned trim copies, `ascii`
+including case search, prefix parsers, owned trim copies, and typed borrowed
+`Utf8`/`OsStr`/`CStr` views, `ascii`
 byte classification, case-insensitive comparison/search, slice helpers, and
 prefix parsers, `vec` source growable sequence handles with direct borrowed
 range/split/subsequence/compare/chunk/window wrappers, `iter` range/trait
@@ -55,8 +56,8 @@ access-permission/open/read/write/append/close/remove hooks plus source
 `create`/`try_create`, whole-file
 `read`/`write`/`append`, `truncate`, streaming `copy`, `rename`,
 single-directory `create_dir`/`remove_dir`, and `read_to_string`,
-`path` POSIX-style lexical separator, component, join, and lightweight
-normalization helpers,
+`path` POSIX-style lexical separator, typed `PathBytes`, component, join, and
+lightweight normalization helpers,
 `collections::Set[T]` as the linear insertion-order set with `try_*`
 accessors, `pop`/`try_pop`, replace-or-insert updates, explicit reserve
 growth, direct iterator support, open-addressed `HashMap`/`HashSet` with
@@ -81,7 +82,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::target` | Report compiler-known target facts without requiring users to parse triples by hand. | Current `triple`, `arch`, `arch_name`, `os`, `os_name`, `env`, `env_name`, `object_format`, `debug_format`, `errno_abi`, `pointer_bits`, `long_bits`, source predicates for Linux/glibc/musl/ELF/DWARF/TLS, Linux syscall ABI classification, and Linux API-family predicates for procfs/sysfs/vDSO/epoll/inotify/eventfd/timerfd/signalfd/memfd plus optional API families; future build-profile facts for static/dynamic/PIE/RELRO/stack-protector only after the driver owns those flags. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, status/root predicates, POSIX `fork`, `wait`, and child/error predicates; future portable `spawn`, `exec`, `kill`, richer status/result values, daemon helpers as optional policy, and process handles. |
 | `std::fs` | Work with files and directories through explicit handles. | Current `File`, `Permissions`, `exists`, access-style `can_read`/`can_write`/`can_execute` and `permissions`, `remove`, `rename`, `hard_link`, `symbolic_link`, single-directory `create_dir`/`remove_dir`, mode-string `open`/`try_open` with `"r"`, `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, and `"a+"`, `create`/`try_create`, compatibility `open_*`/`try_open_*` wrappers, byte `read_byte`/`write_byte`/`write_bytes`, whole-file `read`/`write`/`append`, `truncate`, source streaming `copy`, `read_to_string`, and `close`; future owned resource policy, metadata, permission mutation, directory iteration, recursive directory helpers, canonicalization, temporary files, richer link metadata/platform symlink policy, optional file locking, and an options-style open builder. |
-| `std::path` | Manipulate path bytes without opening the filesystem. | Current POSIX-style `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, borrowed `components`, `file_name`, `parent`, `extension`, `stem`, `join_in`, and `normalize_in`; future platform-specific paths, owned `Path`/`PathBuf`, runtime canonicalization, and richer component kinds. |
+| `std::path` | Manipulate path bytes without opening the filesystem. | Current POSIX-style `PathBytes`, `bytes`, `from_os`, method-style path wrappers, `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, borrowed `components`, `file_name`, `parent`, `extension`, `stem`, `join_in`, and `normalize_in`; future platform-specific paths, owned `Path`/`PathBuf`, runtime canonicalization, and richer component kinds. |
 | `std::net` | Represent network addresses now and sockets later through explicit handles. | Current source-only `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, constructors, family predicates, loopback/unspecified checks, and port helpers; future DNS lookup, `TcpListener`, `TcpStream`, `UdpSocket`, Unix domain sockets, socket options, nonblocking mode, `std::time::Duration` timeouts, shutdown, and owned socket handles. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, user-facing `ThreadLocal[T]`, custom stack-size options, richer status/result values, and `std::sync` integration. |
@@ -95,6 +96,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::math` | Provide arithmetic helpers whose names communicate policy better than raw operators. | Current natural `i64` sign/parity helpers, checked add/sub/neg/abs, wrapping/overflowing/saturating add, saturating sub/neg/abs, powers, floor/ceil division, `gcd`, and `lcm`; future checked multiplication, generic numeric traits, and floating helpers. |
 | `std::parse` | Parse whole byte-slice values with names that read naturally at call sites. | Current ASCII-trimmed `integer`, `boolean`, `is_float`, `float_or`, and panicking `float`; future overflow policy, richer parse errors, and `Option[f64]`/`Result[f64,E]` after float enum payloads are supported. |
 | `std::encoding` | Validate text encodings and convert bytes to portable text forms. | Current `is_ascii`, UTF-8/UTF-16 counts, UTF-8 scalar decode/encode helpers, lowercase hex encode/decode, and standard base64 encode/decode; future URL-safe/MIME base64 variants, fallible `String` decoders after zone-backed enum payloads, normalization/transcoding, and optional compression policy in a separate module. |
+| text/path kinds | Keep byte strings, validated text, OS strings, paths, and C strings from collapsing into one API shape. | Current borrowed `std::string::Utf8`, `OsStr`, `CStr`, and `std::path::PathBytes`; future owned `Utf8String`, `OsString`, `CString`, `PathBuf`, Windows path/OS-string semantics, and fallible owned conversions. |
 | `std::error` | Give recoverable failures a shared vocabulary instead of bools and sentinel integers. | Current `Kind`, compact `Error`, POSIX `from_errno`, `from_raw`, `raw`, `kind`, `code`, predicate helpers, root `Error`/`ErrorKind` aliases, and `Result[T, i64]` bridge; future direct `Result[T, Error]`, Windows error mapping, owned messages, and conversions from fs/io/net/process wrappers. |
 | `std::log` | Emit simple diagnostics without making every tool invent its own stderr prefix format. | Current `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, and `error`; future source locations, structured records, global or scoped filters, test-runner capture, and backtrace integration. |
 | `std::test` | Let library/application tests aggregate checks before returning one final status. | Current `Report`, `report`, `scratch`, `check`, generic `equal`/`not_equal`, pass/fail accessors, `ok`, `finish`, `require`, and method wrappers; future test discovery/runner integration, named tests, source locations, richer assertion messages, log capture, stack/backtrace reporting, optional benchmark helpers, and optional fuzz hooks. |
@@ -134,6 +136,10 @@ work. Each one should land in small tested slices with natural API names.
   constructors after `Hash`/`Eq` dispatch policy is tested.
 - Keep `std::string::String` byte-oriented while exposing explicit UTF-8 scalar
   validation/access/append helpers through `std::encoding`.
+- Keep typed string/path boundary views distinct: C ABI text uses `string` or
+  `CStr`, general owned buffers use byte `String`, validated Unicode scalar
+  work uses `Utf8`, OS boundary bytes use `OsStr`, and path manipulation uses
+  `PathBytes`.
 - Expose small `String` conveniences only when they preserve byte-string
   semantics, such as ASCII case comparison/search, borrowed ASCII trim views,
   owned trim copies, borrowed split/chunk/window views, byte-slice search,
@@ -172,8 +178,9 @@ work. Each one should land in small tested slices with natural API names.
   compile-target facts such as x86_64/aarch64/riscv64, glibc/musl, ELF/DWARF,
   TLS, syscall ABI, errno ABI, and Linux API families; it must not grow into a
   raw syscall wrapper.
-- Grow `std::path` from lexical POSIX-style helpers into platform-aware path
-  values once owned path buffers and canonicalization policy are stable.
+- Grow `std::path` from lexical POSIX-style helpers and borrowed `PathBytes`
+  into platform-aware `Path`/`PathBuf` values once owned path buffers and
+  canonicalization policy are stable.
 - Keep `std::context` as the low-level runtime state boundary: arguments and
   runtime thread identity are implemented now. `std::thread` extends the same
   thread-id slot for spawned Ari threads and exposes hosted available

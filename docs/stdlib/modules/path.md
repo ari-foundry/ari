@@ -11,6 +11,9 @@ to future runtime/path policy work.
 ## API
 
 ```ari
+path::PathBytes
+path::bytes(path) -> PathBytes
+path::from_os(os) -> PathBytes
 path::is_separator(byte) -> bool
 path::is_absolute(path) -> bool
 path::is_relative(path) -> bool
@@ -24,9 +27,31 @@ path::join_in(ref mut zone, base, child) -> String
 path::normalize_in(ref mut zone, path) -> String
 ```
 
+`PathBytes` is the typed borrowed view for bytes that should be interpreted as
+a path. It keeps path logic out of generic byte strings and out of OS string
+handling:
+
+```ari
+let path = path::bytes(bytes);
+let from_os = path::from_os(os);
+path.as_slice()
+path.len()
+path.is_empty()
+path.is_absolute()
+path.is_relative()
+path.components()
+path.file_name()
+path.parent()
+path.extension()
+path.stem()
+path.join_in(ref mut zone, child)
+path.normalize_in(ref mut zone)
+```
+
 Borrowed helpers return views into the original byte slice; they do not
 allocate. Keep the source bytes alive while using returned `Slice[u8]` values
-or a `Components` iterator.
+or a `Components` iterator. `PathBytes` methods are wrappers over the module
+functions, so their boundary behavior is the same.
 
 `trim_trailing_separators` removes trailing `/` bytes while preserving root
 `/`. `file_name` returns the last component after trimming trailing
@@ -78,6 +103,7 @@ fn score(path_bytes: Slice[u8]) -> i64 {
 ```text
 tests/cases/standard-library/ok/path/std-path-basic.ari
 tests/cases/standard-library/ok/path/std-path-components.ari
+tests/cases/standard-library/ok/path/std-path-bytes.ari
 ```
 
 The focused test covers separator policy, absolute/relative checks, trailing

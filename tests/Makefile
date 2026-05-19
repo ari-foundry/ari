@@ -652,6 +652,14 @@ check-prelude: $(TARGET)
 	grep -q 'std__path__Components13std__Iterator4next' $(BUILD_DIR)/prelude/std-path-components.ll
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-components.ari -o $(BUILD_DIR)/prelude/std-path-components.elf
 	$(BUILD_DIR)/prelude/std-path-components.elf; code=$$?; test $$code -eq 111
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-bytes.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-bytes.ll
+	grep -q '_ARNv3std4path5bytes' $(BUILD_DIR)/prelude/std-path-bytes.ll
+	grep -q '_ARNv3std4path7from_os' $(BUILD_DIR)/prelude/std-path-bytes.ll
+	grep -q 'std__path__PathBytes8inherent11is_absolute' $(BUILD_DIR)/prelude/std-path-bytes.ll
+	grep -q 'std__path__PathBytes8inherent12normalize_in' $(BUILD_DIR)/prelude/std-path-bytes.ll
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-bytes.ari -o $(BUILD_DIR)/prelude/std-path-bytes.elf
+	$(BUILD_DIR)/prelude/std-path-bytes.elf; code=$$?; test $$code -eq 0
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/path/std-path-bytes.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-path-bytes.elf; $(BUILD_DIR)/prelude/std-path-bytes.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits6is_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits7any_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
@@ -846,6 +854,16 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari -o $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf
 	$(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; code=$$?; test $$code -eq 7
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; $(BUILD_DIR)/prelude/std-string-unicode-helpers.elf; code=$$?; test $$code -eq 7; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q '_ARNv3std6string4utf8' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q '_ARNv3std6string6os_str' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q '_ARNv3std6string5c_str' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q 'std__string__Utf88inherent15codepoint_count' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q 'std__string__OsStr8inherent8try_utf8' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	grep -q 'std__string__CStr8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-text-kinds.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf
+	$(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf; $(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-trim-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent13trim_start_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent11trim_end_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll

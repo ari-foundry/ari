@@ -33,12 +33,12 @@ hiding allocation, ownership, or backend behavior.
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `Mutex`, `RwLock`, `Once`, atomic `load`/`store`/`swap`/`fetch_add`/`compare_exchange`, mutex helpers, rwlock helpers, `call_once`. |
 | `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
 | `std::fs` | Byte-oriented filesystem handles. | `File`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `remove`, `rename`, `hard_link`, `symbolic_link`, `create_dir`, `remove_dir`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, whole-file `read`, `write`, `append`, `truncate`, `copy`, `read_to_string`, `close`. |
-| `std::path` | Source lexical path manipulation. | `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `components`, `file_name`, `parent`, `extension`, `stem`, `join_in`, `normalize_in`. |
+| `std::path` | Source lexical path manipulation. | `PathBytes`, `bytes`, `from_os`, method-style path-byte helpers, `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `components`, `file_name`, `parent`, `extension`, `stem`, `join_in`, `normalize_in`. |
 | `std::net` | Source network address values. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `ipv4`, `ipv6`, `socket_addr`, `localhost`, family/loopback/unspecified predicates, port helpers. |
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
-| `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `from_slice_in`, `join_in`, `push`, `try_get`, `try_pop`, `find`, `contains_slice`, `split`, `chunks`, `windows`, `append_i64_in`, `push_codepoint_in`, `is_utf8`, `codepoint_count`, `codepoint_at`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
+| `std::string` | Zone-backed owned byte string and typed borrowed text-boundary views. | `String`, `Utf8`, `OsStr`, `CStr`, `utf8`, `os_str`, `c_str`, `c_len`, `c_bytes`, `new`, `from_string`, `from_slice_in`, `join_in`, `push`, `try_get`, `try_pop`, `find`, `contains_slice`, `split`, `chunks`, `windows`, `append_i64_in`, `push_codepoint_in`, `is_utf8`, `codepoint_count`, `codepoint_at`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
 | `std::parse` | Whole-input value parsers over byte slices. | `integer`, `boolean`, `is_float`, `float_or`, `float`. |
 | `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, `utf8_count`, `is_utf8`, `utf8_at`, `utf8_next_index`, `encode_utf8_in`, `utf16_count`, `is_utf16`, `encode_hex_in`, `decode_hex_in`, `encode_base64_in`, `decode_base64_in`. |
@@ -109,9 +109,10 @@ roadmap work.
 `std::string::String` follows the same direction where it can. Its allocation
 constructors and runtime copy hooks still depend on compiler-known zone/string
 primitives, but byte access, empty-safe `try_*` accessors, byte search,
-comparison, ASCII case-insensitive comparison/search, UTF-8 validation and
-scalar helpers, ASCII trim views, owned trim copies, and whole/prefix ASCII
-parsing are plain source methods.
+comparison, typed `Utf8`/`OsStr`/`CStr` borrowed views, ASCII
+case-insensitive comparison/search, UTF-8 validation and scalar helpers, ASCII
+trim views, owned trim copies, and whole/prefix ASCII parsing are plain source
+methods.
 
 `Slice[T]`, `std::vec::Vec[T]`, and byte-oriented `std::string::String` share
 the preferred collection vocabulary where it fits: `is_empty` for length
@@ -201,10 +202,11 @@ raw OS boundary. The handle is a visible value today and should become a
 stronger owned resource when OS resource ownership is modeled by the language.
 
 `std::path` is source-only and deliberately lexical. It works over borrowed
-`Slice[u8]` values, borrowed component iterators, and zone-backed `String`
-outputs, so tools can split, join, iterate, and lightly normalize paths without
-touching the filesystem. The current policy is POSIX-style `/` separators
-only; platform-specific path forms remain future work.
+`Slice[u8]` values, typed `PathBytes` views, borrowed component iterators, and
+zone-backed `String` outputs, so tools can split, join, iterate, and lightly
+normalize paths without touching the filesystem. The current policy is
+POSIX-style `/` separators only; platform-specific path forms remain future
+work.
 
 `std::net` starts with deterministic value types: IPv4, IPv6, generic IP, and
 socket addresses. DNS lookup and TCP/UDP/Unix sockets remain runtime-backed

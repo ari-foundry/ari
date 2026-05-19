@@ -17,6 +17,22 @@ you only need a borrowed view. Use `std::ascii` or the `String` ASCII helpers
 for byte classification, ASCII-only comparison/search, trimming, and integer
 parsing.
 
+Use the typed view helpers when the byte source has a more specific meaning:
+
+```ari
+std::string::utf8(bytes)
+std::string::os_str(bytes)
+std::string::c_str("literal")
+std::string::c_len("literal")
+std::string::c_bytes("literal")
+```
+
+`utf8(bytes)` validates a borrowed `Slice[u8]` and returns
+`Option[std::string::Utf8]`. `os_str(bytes)` keeps operating-system bytes
+distinct from normal text; the current POSIX slice stores raw bytes and may not
+be valid UTF-8. `c_str(text)` wraps Ari's NUL-terminated `string` value, while
+`c_len` and `c_bytes` expose bytes before the trailing NUL.
+
 Avoid using `String` as a general text policy. UTF-8 helpers operate on Unicode
 scalar values and byte offsets. Unicode normalization, grapheme iteration,
 encoding conversion, and locale-sensitive case conversion are future library
@@ -235,6 +251,46 @@ out-of-range indexes. The returned `Utf8Char` has `scalar()`, `len()`, and
 `next_index(byte_index)` accessors. These helpers count Unicode scalar values,
 not grapheme clusters.
 
+Validated borrowed UTF-8 bytes use `Utf8`:
+
+```ari
+let view = std::string::utf8(bytes).unwrap();
+view.as_slice()
+view.len()
+view.is_empty()
+view.codepoint_count()
+view.codepoint_at(byte_index)
+```
+
+`Utf8` records the API intent that the bytes are text. Construct the view with
+`std::string::utf8(bytes)` when invalid UTF-8 is normal input; do not mutate
+the underlying bytes while keeping a validated view.
+
+## OS Strings And C Strings
+
+`OsStr` and `CStr` make boundary data explicit:
+
+```ari
+let os = std::string::os_str(bytes);
+os.as_slice()
+os.len()
+os.is_empty()
+os.is_utf8()
+os.try_utf8()
+
+let c = std::string::c_str("literal");
+c.as_string()
+c.as_slice()
+c.len()
+c.is_empty()
+```
+
+`OsStr` is not text by default. Convert with `try_utf8` only after deciding the
+OS bytes should be interpreted as UTF-8. Use `std::path::from_os(os)` when the
+same bytes should be interpreted as path bytes. `CStr.as_slice()` and
+`std::string::c_bytes(text)` exclude the trailing NUL because Ari byte-slice
+helpers operate on logical content bytes.
+
 ## Example
 
 ```ari
@@ -275,6 +331,7 @@ tests/cases/standard-library/ok/string/std-string-grow.ari
 tests/cases/standard-library/ok/string/std-string-append.ari
 tests/cases/standard-library/ok/string/std-string-from-slice-in.ari
 tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari
+tests/cases/standard-library/ok/string/std-string-text-kinds.ari
 ```
 
 Focused diagnostics include:

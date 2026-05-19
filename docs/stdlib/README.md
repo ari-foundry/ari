@@ -8,6 +8,8 @@ under `lib/std/`.
 
 - [Overview](overview.md): library purpose, module map, and design rules.
 - [API Reference](api-reference.md): current public APIs grouped by module.
+- [Text And Path Kinds](text-kinds.md): when to use byte strings, UTF-8
+  views, OS string bytes, path bytes, and C strings.
 - [Module Guides](modules/README.md): focused notes for individual standard
   library modules.
 - [Platform Notes](platform/README.md): target, ABI, linker, and OS-specific
@@ -49,7 +51,8 @@ append, and read/write access plus access-permission checks, source create,
 read, write, append, truncate, copy, rename, hard/symbolic links,
 single-directory create/remove, and read-to-byte-string helpers, `std::path`
 adds source-only lexical path
-splitting, joining, and lightweight normalization, and `std::net` adds
+splitting, joining, lightweight normalization, and typed `PathBytes` views,
+and `std::net` adds
 source-only IPv4, IPv6,
 generic IP, and socket-address values while DNS and socket handles remain
 runtime roadmap work. Source
@@ -64,7 +67,9 @@ iterators; and red-black-tree `TreeMap`/`TreeSet` handles with sorted
 key/value iteration. Root `Slice[T]` now has borrowed range views, split
 views, subsequence search, lexicographic comparison, lazy chunks/windows, and
 delimiter splitting, while `std::string` mirrors those byte-view operations
-and adds allocator-backed `join_in`. `std::algo` adds source slice algorithms
+and adds allocator-backed `join_in` plus typed borrowed `Utf8`, `OsStr`, and
+`CStr` views so code can distinguish validated UTF-8, OS bytes, and
+NUL-terminated C strings. `std::algo` adds source slice algorithms
 for sorting, binary search, reverse/rotate, partition, min/max/clamp, swap,
 fill, copy, and dedup. `std::parse` adds whole-input integer, bool, and
 decimal float parsing,

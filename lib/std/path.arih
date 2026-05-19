@@ -32,8 +32,20 @@ pub struct Components {
   mut index: i64,
 }
 
+pub struct PathBytes {
+  bytes: std::Slice[u8],
+}
+
 pub fn is_separator(value: u8) -> bool {
   return value == (47 as u8);
+}
+
+pub fn bytes(path: std::Slice[u8]) -> PathBytes {
+  return PathBytes { bytes: path };
+}
+
+pub fn from_os(value: std::string::OsStr) -> PathBytes {
+  return PathBytes { bytes: value.as_slice() };
 }
 
 pub fn is_absolute(path: std::Slice[u8]) -> bool {
@@ -249,4 +261,58 @@ pub fn normalize_in(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::St
     output.push_in(zone, 46 as u8);
   }
   return output;
+}
+
+pub impl std::path::PathBytes {
+  fn as_slice(self: ref Self) -> std::Slice[u8] {
+    return self.bytes;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.bytes.len;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.bytes.len == 0;
+  }
+
+  fn is_absolute(self: ref Self) -> bool {
+    return std::path::is_absolute(self.bytes);
+  }
+
+  fn is_relative(self: ref Self) -> bool {
+    return std::path::is_relative(self.bytes);
+  }
+
+  fn trim_trailing_separators(self: ref Self) -> std::Slice[u8] {
+    return std::path::trim_trailing_separators(self.bytes);
+  }
+
+  fn components(self: ref Self) -> std::path::Components {
+    return std::path::components(self.bytes);
+  }
+
+  fn file_name(self: ref Self) -> std::Option[std::Slice[u8]] {
+    return std::path::file_name(self.bytes);
+  }
+
+  fn parent(self: ref Self) -> std::Option[std::Slice[u8]] {
+    return std::path::parent(self.bytes);
+  }
+
+  fn extension(self: ref Self) -> std::Option[std::Slice[u8]] {
+    return std::path::extension(self.bytes);
+  }
+
+  fn stem(self: ref Self) -> std::Option[std::Slice[u8]] {
+    return std::path::stem(self.bytes);
+  }
+
+  fn join_in(self: ref Self, zone: ref mut Zone, child: std::path::PathBytes) -> std::string::String {
+    return std::path::join_in(zone, self.bytes, child.as_slice());
+  }
+
+  fn normalize_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::path::normalize_in(zone, self.bytes);
+  }
 }

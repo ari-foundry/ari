@@ -33,6 +33,7 @@ std-string-append-u64.ari
 std-string-ascii-helpers.ari
 std-string-ascii-case-helpers.ari
 std-string-unicode-helpers.ari
+std-string-text-kinds.ari
 std-string-prefix-parsers.ari
 std-string-trim-copy.ari
 std-string-trim-to-after-target-reset.ari
@@ -72,6 +73,7 @@ std-encoding-utf8-codepoints.ari
 std-encoding-codec.ari
 std-path-basic.ari
 std-path-components.ari
+std-path-bytes.ari
 std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari

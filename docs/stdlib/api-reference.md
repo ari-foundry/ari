@@ -352,6 +352,9 @@ handles, portable spawn, and detailed status values remain roadmap work.
 `std::path` contains source-only lexical path helpers over `Slice[u8]`:
 
 ```ari
+path::PathBytes
+path::bytes(path)
+path::from_os(os)
 path::is_separator(byte)
 path::is_absolute(path)
 path::is_relative(path)
@@ -363,6 +366,20 @@ path::extension(path)
 path::stem(path)
 path::join_in(ref mut zone, base, child)
 path::normalize_in(ref mut zone, path)
+
+path.as_slice()
+path.len()
+path.is_empty()
+path.is_absolute()
+path.is_relative()
+path.trim_trailing_separators()
+path.components()
+path.file_name()
+path.parent()
+path.extension()
+path.stem()
+path.join_in(ref mut zone, child)
+path.normalize_in(ref mut zone)
 ```
 
 The current separator policy is POSIX-style `/` only. Single-component helpers
@@ -373,6 +390,9 @@ and skips leading, repeated, and trailing separators.
 zone. Normalization collapses repeated separators and removes `.` components,
 but keeps `..` components because resolving them safely depends on stronger
 filesystem and platform policy.
+`PathBytes` is the typed borrowed path-byte view. Use it when a byte slice or
+`std::string::OsStr` should be treated as a path rather than as generic bytes
+or validated text.
 
 Thread helpers live in `std::thread`:
 
@@ -1106,6 +1126,14 @@ set.iter()
 `std::string::String` is an owned byte string:
 
 ```ari
+std::string::Utf8
+std::string::OsStr
+std::string::CStr
+std::string::utf8(bytes)
+std::string::os_str(bytes)
+std::string::c_str(text)
+std::string::c_len(text)
+std::string::c_bytes(text)
 std::string::new(ref mut zone, capacity)
 std::string::from_string(ref mut zone, "text")
 std::string::from_slice_in(ref mut zone, bytes)
@@ -1174,6 +1202,23 @@ text.parse_hex_prefix()
 text.as_slice()
 text.as_ptr()
 text.copy_to(ref mut zone)
+
+utf8.as_slice()
+utf8.len()
+utf8.is_empty()
+utf8.codepoint_count()
+utf8.codepoint_at(byte_index)
+
+os.as_slice()
+os.len()
+os.is_empty()
+os.is_utf8()
+os.try_utf8()
+
+c.as_string()
+c.as_slice()
+c.len()
+c.is_empty()
 ```
 
 `String` stores bytes, so `join_in`, `find`, `contains_slice`, `slice`,
@@ -1198,6 +1243,10 @@ string, `codepoint_count` returns an `Option[i64]` scalar count, and
 `Option[std::encoding::Utf8Char]`. `push_codepoint_in` appends one Unicode
 scalar encoded as UTF-8 and panics for invalid scalar values. These helpers
 work with Unicode scalar values, not grapheme clusters or normalization.
+Use `std::string::utf8(bytes)` to construct a validated borrowed `Utf8` view
+when a function requires UTF-8. Use `OsStr` for operating-system bytes that may
+not be UTF-8, `PathBytes` for path interpretation, and `CStr` or the builtin
+`string` type for NUL-terminated C ABI text.
 
 `std::boxed::Box[T]` is a zone-backed single-value owner:
 

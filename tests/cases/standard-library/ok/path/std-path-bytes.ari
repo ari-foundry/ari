@@ -1,0 +1,49 @@
+// Covers the typed path-byte view used to keep path bytes distinct from
+// generic byte strings and OS string bytes.
+fn expect_slice(values: Slice[u8], expected: Slice[u8]) -> void {
+  assert(values.equals(expected));
+}
+
+fn main() -> i64 {
+  var zone = zone::create(160);
+
+  var base_bytes = [47u8, 116u8, 109u8, 112u8];
+  let base = std::path::bytes(base_bytes.as_slice());
+  assert_eq_i64(base.len(), 4);
+  assert(base.is_absolute());
+  assert(!base.is_relative());
+
+  let raw_os = std::string::os_str(base_bytes.as_slice());
+  let from_os = std::path::from_os(raw_os);
+  expect_slice(from_os.as_slice(), base_bytes.as_slice());
+
+  var file_bytes = [47u8, 116u8, 109u8, 112u8, 47u8, 109u8, 97u8, 105u8, 110u8, 46u8, 97u8, 114u8, 105u8];
+  var file_name = [109u8, 97u8, 105u8, 110u8, 46u8, 97u8, 114u8, 105u8];
+  var stem = [109u8, 97u8, 105u8, 110u8];
+  var extension = [97u8, 114u8, 105u8];
+  let file = std::path::bytes(file_bytes.as_slice());
+  expect_slice(file.file_name().unwrap(), file_name.as_slice());
+  expect_slice(file.stem().unwrap(), stem.as_slice());
+  expect_slice(file.extension().unwrap(), extension.as_slice());
+
+  var child_bytes = [98u8, 105u8, 110u8];
+  var joined_expected = [47u8, 116u8, 109u8, 112u8, 47u8, 98u8, 105u8, 110u8];
+  let joined = base.join_in(ref mut zone, std::path::bytes(child_bytes.as_slice()));
+  assert(joined.equals(joined_expected.as_slice()));
+
+  var messy_bytes = [47u8, 116u8, 109u8, 112u8, 47u8, 46u8, 47u8, 47u8, 98u8, 105u8, 110u8, 47u8];
+  var normalized_expected = [47u8, 116u8, 109u8, 112u8, 47u8, 98u8, 105u8, 110u8];
+  let messy = std::path::bytes(messy_bytes.as_slice());
+  let normalized = messy.normalize_in(ref mut zone);
+  assert(normalized.equals(normalized_expected.as_slice()));
+
+  var components = file.components();
+  var total = 0;
+  for part in ref mut components {
+    total = total + part.len;
+  }
+  assert_eq_i64(total, 11);
+
+  zone::destroy(zone);
+  return 0;
+}

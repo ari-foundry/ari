@@ -45,6 +45,9 @@ identifies the exact case:
   case-insensitive comparison and first-match search helpers.
 - `std-string-unicode-helpers.ari`: source `std::string` UTF-8 validation,
   code-point access, and scalar append convenience methods.
+- `std-string-text-kinds.ari`: source `std::string` typed borrowed
+  `Utf8`/`OsStr`/`CStr` views, C string byte slicing, and OS-to-UTF-8
+  validation behavior.
 - `std-string-prefix-parsers.ari`: source `std::string` prefix parser
   conveniences over the `std::ascii` parser result shape.
 - `std-string-trim-copy.ari`: source `std::string` owned ASCII trim copies
@@ -149,6 +152,8 @@ identifies the exact case:
 - `std-path-components.ari`: source `std::path::components` lazy borrowed
   iterator behavior for absolute paths, repeated separators, trailing
   separators, and root-only paths.
+- `std-path-bytes.ari`: source `std::path::PathBytes` typed path-byte view,
+  conversion from OS string bytes, and method-style path helper wrappers.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

@@ -1,0 +1,47 @@
+// Covers the first explicit text-kind views:
+// UTF-8 bytes, OS string bytes, and NUL-terminated C strings.
+fn expect_char(value: std::Option[std::encoding::Utf8Char], scalar: u32, len: i64, index: i64) -> bool {
+  match value {
+    std::Some(ch) => {
+      return ch.scalar() == scalar && ch.len() == len && ch.next_index(index) == index + len;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  var valid = [65u8, 195u8, 169u8, 226u8, 130u8, 172u8];
+  let utf8 = std::string::utf8(valid.as_slice()).unwrap();
+  assert_eq_i64(utf8.len(), 6);
+  assert_eq_i64(utf8.codepoint_count(), 3);
+  assert(expect_char(utf8.codepoint_at(1), 233u32, 2, 1));
+  assert(expect_char(utf8.codepoint_at(3), 8364u32, 3, 3));
+
+  var invalid = [240u8, 40u8, 140u8, 40u8];
+  let invalid_utf8 = std::string::utf8(invalid.as_slice());
+  assert(invalid_utf8.is_none());
+
+  let raw_os = std::string::os_str(invalid.as_slice());
+  assert_eq_i64(raw_os.len(), 4);
+  assert(!raw_os.is_utf8());
+  let raw_os_utf8 = raw_os.try_utf8();
+  assert(raw_os_utf8.is_none());
+
+  let utf8_os = std::string::os_str(valid.as_slice());
+  assert(utf8_os.is_utf8());
+  let utf8_from_os = utf8_os.try_utf8().unwrap();
+  assert_eq_i64(utf8_from_os.codepoint_count(), 3);
+
+  var hello = [104u8, 101u8, 108u8, 108u8, 111u8];
+  let c = std::string::c_str("hello");
+  assert_eq_i64(c.len(), 5);
+  assert(!c.is_empty());
+  let c_view = c.as_slice();
+  assert(c_view.equals(hello.as_slice()));
+  let c_bytes = std::string::c_bytes("hello");
+  assert(c_bytes.equals(hello.as_slice()));
+  assert_eq_i64(std::string::c_len(""), 0);
+
+  return 0;
+}

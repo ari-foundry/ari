@@ -95,6 +95,10 @@ Omit the semicolon only for the final value expression in a function, block,
 | bool | `bool` | Used by logical operators and normal conditions. |
 | borrowed string pointer | `string` | NUL-terminated pointer-shaped string for literals and C-style text. |
 | owned byte string handle | `String`, `std::string::String` | Zone-backed explicit allocation handle. |
+| validated UTF-8 view | `std::string::Utf8` | Borrowed bytes that passed UTF-8 validation. |
+| OS string byte view | `std::string::OsStr` | Borrowed OS boundary bytes; not necessarily UTF-8. |
+| C string view | `std::string::CStr` | Borrowed wrapper around NUL-terminated `string`. |
+| path byte view | `std::path::PathBytes` | Borrowed bytes interpreted by lexical path helpers. |
 | tuple | `(i64, bool)`, `()` | Single-element tuples are not supported. |
 | fixed array | `[i64, 3]` | Constant length, stack/aggregate storage. |
 | local vector | `Vec[i64]` | Compiler-known local vector surface from list literals. |
