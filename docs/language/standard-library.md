@@ -314,7 +314,9 @@ forms where applicable.
 `pop`, `try_pop`, `set`, `replace`, `insert`, `truncate`, `clear`, `reserve`,
 `reserve_extra`, `append`, `append_byte`, `append_bytes`, `append_string_in`,
 `append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`,
-`append_f64_in`, and the explicit-zone `_in` forms.
+`append_f64_in`, and the explicit-zone `_in` forms. Single-byte text-like
+parameters are spelled `char`, Ari's alias for ASCII `u8`, so call sites can
+prefer `'/'`, `'0'`, and `'!'` over decimal byte literals.
 
 `trim_start`, `trim_end`, and `trim` return borrowed `Slice[u8]` views. Use
 `trimmed_start(ref mut zone)`, `trimmed_end(ref mut zone)`,

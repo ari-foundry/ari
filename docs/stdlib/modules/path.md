@@ -14,7 +14,7 @@ to future runtime/path policy work.
 path::PathBytes
 path::bytes(path) -> PathBytes
 path::from_os(os) -> PathBytes
-path::is_separator(byte) -> bool
+path::is_separator(value: char) -> bool
 path::is_absolute(path) -> bool
 path::is_relative(path) -> bool
 path::trim_trailing_separators(path) -> Slice[u8]
@@ -26,6 +26,9 @@ path::stem(path) -> Option[Slice[u8]]
 path::join_in(ref mut zone, base, child) -> String
 path::normalize_in(ref mut zone, path) -> String
 ```
+
+`is_separator` takes `char` because it checks Ari's ASCII byte character
+literal spelling such as `'/'`; `char` is the root alias for `u8`.
 
 `PathBytes` is the typed borrowed view for bytes that should be interpreted as
 a path. It keeps path logic out of generic byte strings and out of OS string

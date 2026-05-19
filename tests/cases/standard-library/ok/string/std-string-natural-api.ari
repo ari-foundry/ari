@@ -6,6 +6,9 @@ fn main() -> i64 {
   text.append(ref mut zone, "-lang");
   text.append_byte(ref mut zone, '!');
   text.append_bytes(ref mut zone, std::string::bytes(" ok"));
+  assert_eq_i64(text.count('a'), 2);
+  assert_eq_i64(text.index_of('!'), 8);
+  assert(text.contains('o'));
 
   assert(text.equals_text("ari-lang! ok"));
   assert(text.starts_with_text("ari"));
@@ -39,6 +42,14 @@ fn main() -> i64 {
   var empty = std::string::empty(ref mut zone);
   empty.append(ref mut zone, "");
   assert(empty.is_empty());
+
+  var edited = std::string::from(ref mut zone, "ari");
+  edited.set(0, 'A');
+  assert_eq_i64(edited.replace(1, 'R') as i64, 'r' as i64);
+  edited.push_in(ref mut zone, '!');
+  edited.insert_in(ref mut zone, 2, 'I');
+  edited.resize_in(ref mut zone, 3, '.');
+  assert(edited.equals_text("ARI"));
 
   let score = text.len() + copied.len() + trimmed.len() + utf8.codepoint_count();
   zone::destroy(zone);

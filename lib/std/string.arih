@@ -133,7 +133,7 @@ fn ensure_spare_capacity(value: ref mut std::string::String, zone: ref mut Zone)
   }
 }
 
-fn append_byte_in(value: ref mut std::string::String, zone: ref mut Zone, byte: u8) -> void {
+fn append_byte_in(value: ref mut std::string::String, zone: ref mut Zone, byte: char) -> void {
   ensure_spare_capacity(value, zone);
   ptr_store(ptr_add(value.raw.data, value.raw.len), byte);
   value.raw.len = value.raw.len + 1;
@@ -236,13 +236,13 @@ pub impl std::string::String {
     return std::Some<u8>(ptr_load(ptr_add(self.raw.data, index)));
   }
 
-  fn set(self: ref mut Self, index: i64, value: u8) -> void {
+  fn set(self: ref mut Self, index: i64, value: char) -> void {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);
     ptr_store(ptr_add(self.raw.data, index), value);
   }
 
-  fn replace(self: ref mut Self, index: i64, value: u8) -> u8 {
+  fn replace(self: ref mut Self, index: i64, value: char) -> char {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);
     let previous = ptr_load(ptr_add(self.raw.data, index));
@@ -250,17 +250,17 @@ pub impl std::string::String {
     return previous;
   }
 
-  fn push(self: ref mut Self, value: u8) -> void {
+  fn push(self: ref mut Self, value: char) -> void {
     std::assert(self.raw.len < self.raw.capacity);
     ptr_store(ptr_add(self.raw.data, self.raw.len), value);
     self.raw.len = self.raw.len + 1;
   }
 
-  fn push_in(self: ref mut Self, zone: ref mut Zone, value: u8) -> void {
+  fn push_in(self: ref mut Self, zone: ref mut Zone, value: char) -> void {
     append_byte_in(self, zone, value);
   }
 
-  fn append_byte(self: ref mut Self, zone: ref mut Zone, value: u8) -> void {
+  fn append_byte(self: ref mut Self, zone: ref mut Zone, value: char) -> void {
     append_byte_in(self, zone, value);
   }
 
@@ -462,7 +462,7 @@ pub impl std::string::String {
     return std::Some<u8>(self.pop());
   }
 
-  fn insert(self: ref mut Self, index: i64, value: u8) -> void {
+  fn insert(self: ref mut Self, index: i64, value: char) -> void {
     std::assert(index >= 0);
     std::assert(index <= self.raw.len);
     std::assert(self.raw.len < self.raw.capacity);
@@ -475,7 +475,7 @@ pub impl std::string::String {
     self.raw.len = self.raw.len + 1;
   }
 
-  fn insert_in(self: ref mut Self, zone: ref mut Zone, index: i64, value: u8) -> void {
+  fn insert_in(self: ref mut Self, zone: ref mut Zone, index: i64, value: char) -> void {
     std::assert(index >= 0);
     std::assert(index <= self.raw.len);
     ensure_spare_capacity(self, zone);
@@ -490,7 +490,7 @@ pub impl std::string::String {
     }
   }
 
-  fn resize_in(self: ref mut Self, zone: ref mut Zone, length: i64, value: u8) -> void {
+  fn resize_in(self: ref mut Self, zone: ref mut Zone, length: i64, value: char) -> void {
     std::assert(length >= 0);
     if length <= self.raw.len {
       self.raw.len = length;
@@ -521,7 +521,7 @@ pub impl std::string::String {
     self.raw.len = length;
   }
 
-  fn index_of(self: ref Self, value: u8) -> i64 {
+  fn index_of(self: ref Self, value: char) -> i64 {
     var index = 0;
     while index < self.raw.len {
       if ptr_load(ptr_add(self.raw.data, index)) == value {
@@ -532,11 +532,11 @@ pub impl std::string::String {
     return -1;
   }
 
-  fn contains(self: ref Self, value: u8) -> bool {
+  fn contains(self: ref Self, value: char) -> bool {
     return self.index_of(value) >= 0;
   }
 
-  fn count(self: ref Self, value: u8) -> i64 {
+  fn count(self: ref Self, value: char) -> i64 {
     var total = 0;
     var index = 0;
     while index < self.raw.len {
@@ -568,7 +568,7 @@ pub impl std::string::String {
     return view.windows(size);
   }
 
-  fn split(self: ref Self, delimiter: u8) -> super::SliceSplit[u8] {
+  fn split(self: ref Self, delimiter: char) -> super::SliceSplit[u8] {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return view.split(delimiter);
   }

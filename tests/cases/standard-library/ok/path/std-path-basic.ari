@@ -36,8 +36,8 @@ fn main() -> i64 {
   var normalized_input = [47u8, 117u8, 115u8, 114u8, 47u8, 47u8, 46u8, 47u8, 98u8, 105u8, 110u8, 47u8];
   var normalized = [47u8, 117u8, 115u8, 114u8, 47u8, 98u8, 105u8, 110u8];
 
-  assert(path::is_separator(47u8));
-  assert(!path::is_separator(65u8));
+  assert(path::is_separator('/'));
+  assert(!path::is_separator('A'));
   assert(path::is_absolute(usr_bin_slash.as_slice()));
   assert(path::is_relative(source.as_slice()));
   let trimmed_usr_bin = path::trim_trailing_separators(usr_bin_slash.as_slice());

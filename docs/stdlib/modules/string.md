@@ -145,10 +145,12 @@ byte pointer and preserves zone provenance in the checker.
 Fixed-capacity mutation:
 
 ```ari
-text.push(byte)
+text.set(index, char)
+text.replace(index, char)
+text.push(char)
 text.pop()
 text.try_pop()
-text.insert(index, byte)
+text.insert(index, char)
 text.clear()
 text.truncate(length)
 ```
@@ -161,19 +163,22 @@ source-level contract:
 
 ```ari
 text.append(ref mut zone, "text")
-text.append_byte(ref mut zone, byte)
+text.append_byte(ref mut zone, char)
 text.append_bytes(ref mut zone, bytes)
-text.push_in(ref mut zone, byte)
-text.insert_in(ref mut zone, index, byte)
+text.push_in(ref mut zone, char)
+text.insert_in(ref mut zone, index, char)
 text.reserve(ref mut zone, capacity)
 text.reserve_extra(ref mut zone, additional)
 text.extend_from_slice_in(ref mut zone, bytes)
-text.resize_in(ref mut zone, length, byte)
+text.resize_in(ref mut zone, length, char)
 ```
 
-Use `append` for Ari `string` values, `append_byte` for one byte, and
-`append_bytes` for a borrowed `Slice[u8]`. The `_in` forms remain the lower
-level names used by older tests and compiler-assisted formatting.
+Use `append` for Ari `string` values, `append_byte` for one ASCII byte
+character such as `'!'`, and `append_bytes` for a borrowed `Slice[u8]`. `char`
+is a public alias for `u8`, so binary byte buffers can still call these APIs,
+but text-like call sites should prefer single-quoted character literals. The
+`_in` forms remain the lower level names used by older tests and
+compiler-assisted formatting.
 
 For tracked local `String` handles, Ari can infer the same source zone for the
 common non-`_in` convenience calls documented in the language guide. The
