@@ -11,6 +11,7 @@ These cases cover the first `std::fs` slice:
 - create/truncate/copy/read convenience helpers built over mode-string opens
 - runtime-backed rename and single-directory create/remove hooks
 - runtime-backed hard-link and symbolic-link hooks
+- access-style permission queries and the source `Permissions` wrapper
 - append-mode opens that preserve existing bytes and create missing files
 - read/write mode strings such as `"rw"`, plus familiar `"r+"`, `"w+"`,
   and `"a+"` aliases
@@ -32,3 +33,5 @@ Files in this folder:
   `remove_dir` hooks.
 - `std-fs-links.ari`: runtime-backed `hard_link` and `symbolic_link` hooks
   plus read-through behavior.
+- `std-fs-permissions.ari`: `can_read`, `can_write`, `can_execute`, and
+  `permissions` wrapper consistency for files, directories, and missing paths.

@@ -504,6 +504,9 @@ private:
             symbol == "ari_builtin_env_remove" ||
             symbol == "ari_builtin_env_set_current_dir" ||
             symbol == "ari_builtin_fs_exists" ||
+            symbol == "ari_builtin_fs_can_read" ||
+            symbol == "ari_builtin_fs_can_write" ||
+            symbol == "ari_builtin_fs_can_execute" ||
             symbol == "ari_builtin_fs_remove" ||
             symbol == "ari_builtin_fs_rename" ||
             symbol == "ari_builtin_fs_create_dir" ||
@@ -822,6 +825,31 @@ private:
         line("define " + runtime_visibility + "i1 @ari_builtin_fs_exists(ptr %path) {");
         line("entry:");
         line("  %code = call i32 @access(ptr %path, i32 0)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        // POSIX access constants: R_OK=4, W_OK=2, X_OK=1.
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_can_read(ptr %path) {");
+        line("entry:");
+        line("  %code = call i32 @access(ptr %path, i32 4)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_can_write(ptr %path) {");
+        line("entry:");
+        line("  %code = call i32 @access(ptr %path, i32 2)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_can_execute(ptr %path) {");
+        line("entry:");
+        line("  %code = call i32 @access(ptr %path, i32 1)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  ret i1 %ok");
         line("}");

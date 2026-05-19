@@ -85,6 +85,9 @@ identifies the exact case:
   rename failure.
 - `std-fs-links.ari`: runtime-backed `hard_link` and `symbolic_link`,
   read-through behavior, missing-source failure, and duplicate-link failure.
+- `std-fs-permissions.ari`: runtime-backed access permission checks,
+  `Permissions` method wrappers, directory execute/search checks, and
+  missing-path all-false behavior.
 - `std-net-addresses.ari`: source `std::net` IPv4/IPv6 constructors, generic
   IP predicates, socket-address construction, port replacement, loopback, and
   unspecified checks.

@@ -1,0 +1,81 @@
+// Covers access-style filesystem permission queries and the source
+// Permissions value wrapper.
+fn main() -> i64 {
+  let file_path = "build/prelude/std-fs-permissions.tmp";
+  let dir_path = "build/prelude/std-fs-permissions-dir.tmp";
+  let missing_path = "build/prelude/std-fs-permissions-missing.tmp";
+
+  if fs::exists(file_path) {
+    fs::remove(file_path);
+  }
+  if fs::exists(dir_path) {
+    fs::remove_dir(dir_path);
+  }
+
+  var score = 0;
+  let missing = fs::permissions(missing_path);
+  if !fs::can_read(missing_path) {
+    score = score + 1;
+  }
+  if !fs::can_write(missing_path) {
+    score = score + 2;
+  }
+  if !fs::can_execute(missing_path) {
+    score = score + 3;
+  }
+  if !missing.any() {
+    score = score + 4;
+  }
+
+  var data = [65 as u8, 66 as u8, 67 as u8];
+  if fs::write(file_path, data.as_slice()) {
+    score = score + 5;
+  }
+  if fs::exists(file_path) {
+    score = score + 6;
+  }
+  if fs::can_read(file_path) {
+    score = score + 7;
+  }
+  if fs::can_write(file_path) {
+    score = score + 8;
+  }
+
+  let file_permissions = fs::permissions(file_path);
+  if file_permissions.can_read() == fs::can_read(file_path) {
+    score = score + 9;
+  }
+  if file_permissions.can_write() == fs::can_write(file_path) {
+    score = score + 10;
+  }
+  if file_permissions.can_execute() == fs::can_execute(file_path) {
+    score = score + 11;
+  }
+  if file_permissions.any() {
+    score = score + 12;
+  }
+
+  let none = fs::Permissions::none();
+  if !none.any() {
+    score = score + 13;
+  }
+
+  if fs::create_dir(dir_path) {
+    score = score + 14;
+  }
+  if fs::can_execute(dir_path) {
+    score = score + 15;
+  }
+  let dir_permissions = fs::permissions(dir_path);
+  if dir_permissions.can_execute() {
+    score = score + 16;
+  }
+  if fs::remove_dir(dir_path) {
+    score = score + 17;
+  }
+  if fs::remove(file_path) {
+    score = score + 18;
+  }
+
+  return score;
+}

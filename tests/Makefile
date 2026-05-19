@@ -324,6 +324,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari -o $(BUILD_DIR)/prelude/std-fs-links.elf
 	$(BUILD_DIR)/prelude/std-fs-links.elf; code=$$?; test $$code -eq 63
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-links.elf; $(BUILD_DIR)/prelude/std-fs-links.elf; code=$$?; test $$code -eq 63; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-permissions.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-permissions.ll
+	grep -q "@ari_builtin_fs_can_read" $(BUILD_DIR)/prelude/std-fs-permissions.ll
+	grep -q "@ari_builtin_fs_can_write" $(BUILD_DIR)/prelude/std-fs-permissions.ll
+	grep -q "@ari_builtin_fs_can_execute" $(BUILD_DIR)/prelude/std-fs-permissions.ll
+	grep -F -q "std2fs11permissions" $(BUILD_DIR)/prelude/std-fs-permissions.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-permissions.ari -o $(BUILD_DIR)/prelude/std-fs-permissions.elf
+	$(BUILD_DIR)/prelude/std-fs-permissions.elf; code=$$?; test $$code -eq 171
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-permissions.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-permissions.elf; $(BUILD_DIR)/prelude/std-fs-permissions.elf; code=$$?; test $$code -eq 171; fi
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv4" $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv6" $(BUILD_DIR)/prelude/std-net-addresses.ll

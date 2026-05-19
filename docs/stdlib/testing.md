@@ -54,6 +54,7 @@ std-fs-read-write.ari
 std-fs-create-truncate-copy.ari
 std-fs-rename-dir.ari
 std-fs-links.ari
+std-fs-permissions.ari
 std-algo-slice-helpers.ari
 std-hash-basic.ari
 std-parse-basic.ari

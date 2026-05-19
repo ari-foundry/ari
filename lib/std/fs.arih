@@ -6,7 +6,16 @@ pub struct File {
   fd: i64,
 }
 
+pub struct Permissions {
+  readable: bool,
+  writable: bool,
+  executable: bool,
+}
+
 pub extern "ari" fn exists(path: string) -> bool = "ari_builtin_fs_exists";
+pub extern "ari" fn can_read(path: string) -> bool = "ari_builtin_fs_can_read";
+pub extern "ari" fn can_write(path: string) -> bool = "ari_builtin_fs_can_write";
+pub extern "ari" fn can_execute(path: string) -> bool = "ari_builtin_fs_can_execute";
 pub extern "ari" fn remove(path: string) -> bool = "ari_builtin_fs_remove";
 pub extern "ari" fn rename(source: string, target: string) -> bool = "ari_builtin_fs_rename";
 // Relative symbolic-link targets are resolved by the host from the link's
@@ -20,6 +29,14 @@ pub extern "ari" fn open(path: string, mode: string) -> File = "ari_builtin_fs_o
 pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";
 pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
 pub extern "ari" fn write_byte(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
+
+pub fn permissions(path: string) -> Permissions {
+  return Permissions {
+    readable: can_read(path),
+    writable: can_write(path),
+    executable: can_execute(path),
+  };
+}
 
 pub fn try_open(path: string, mode: string) -> std::Option[File] {
   let file = open(path, mode);
@@ -148,6 +165,32 @@ pub fn copy(source: string, target: string) -> bool {
   let read_closed = reader.close();
   let write_closed = writer.close();
   return ok && read_closed && write_closed;
+}
+
+pub impl std::fs::Permissions {
+  fn none() -> Permissions {
+    return Permissions {
+      readable: false,
+      writable: false,
+      executable: false,
+    };
+  }
+
+  fn can_read(self: ref Self) -> bool {
+    return self.readable;
+  }
+
+  fn can_write(self: ref Self) -> bool {
+    return self.writable;
+  }
+
+  fn can_execute(self: ref Self) -> bool {
+    return self.executable;
+  }
+
+  fn any(self: ref Self) -> bool {
+    return self.readable || self.writable || self.executable;
+  }
 }
 
 pub impl std::fs::File {

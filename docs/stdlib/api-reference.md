@@ -332,6 +332,10 @@ Filesystem helpers live in `std::fs`:
 
 ```ari
 fs::exists(path)
+fs::can_read(path)
+fs::can_write(path)
+fs::can_execute(path)
+fs::permissions(path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
@@ -365,6 +369,12 @@ file.close()
 file.read_byte()
 file.write_byte(value)
 file.write_bytes(values)
+
+Permissions::none()
+permissions.can_read()
+permissions.can_write()
+permissions.can_execute()
+permissions.any()
 ```
 
 Use `try_open(path, mode)` for ordinary fallible open operations; it returns
@@ -376,7 +386,10 @@ as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
 `"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
 `try_open_*` variants are compatibility wrappers over those mode strings.
 `create(path)` and `try_create(path)` are the natural create/truncate helpers
-over `"w"` mode.
+over `"w"` mode. `can_read`, `can_write`, and `can_execute` are access-style
+preflight checks for the current process. `permissions(path)` snapshots those
+three checks into a `Permissions` value; still handle later open/read/write
+failures because filesystem access can change after the check.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns whether one byte was written. `write_bytes` writes a
 `Slice[u8]` and returns the count written before the first failed byte write.

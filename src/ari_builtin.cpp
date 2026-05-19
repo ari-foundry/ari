@@ -153,6 +153,12 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::time::sleep_nanos", "ari_builtin_time_sleep_nanos"},
         {"fs::exists", "ari_builtin_fs_exists"},
         {"std::fs::exists", "ari_builtin_fs_exists"},
+        {"fs::can_read", "ari_builtin_fs_can_read"},
+        {"std::fs::can_read", "ari_builtin_fs_can_read"},
+        {"fs::can_write", "ari_builtin_fs_can_write"},
+        {"std::fs::can_write", "ari_builtin_fs_can_write"},
+        {"fs::can_execute", "ari_builtin_fs_can_execute"},
+        {"std::fs::can_execute", "ari_builtin_fs_can_execute"},
         {"fs::remove", "ari_builtin_fs_remove"},
         {"std::fs::remove", "ari_builtin_fs_remove"},
         {"fs::rename", "ari_builtin_fs_rename"},
@@ -309,6 +315,9 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_time_unix_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
+    if (symbol == "ari_builtin_fs_can_read") return builtin_sig({source_string}, boolean);
+    if (symbol == "ari_builtin_fs_can_write") return builtin_sig({source_string}, boolean);
+    if (symbol == "ari_builtin_fs_can_execute") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_remove") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_rename") return builtin_sig({source_string, source_string}, boolean);
     if (symbol == "ari_builtin_fs_hard_link") return builtin_sig({source_string, source_string}, boolean);

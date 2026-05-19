@@ -37,9 +37,10 @@ function-pointer spawn/join, scheduler yield, and per-thread runtime ids,
 monotonic instants, wall-clock timestamps, non-negative
 durations, elapsed-time helpers, and sleep, and `std::fs` adds the first
 byte-oriented file handle slice with mode-string opens for read, write,
-append, and read/write access plus source create, read, write, append,
-truncate, copy, rename, hard/symbolic links, single-directory create/remove, and
-read-to-byte-string helpers, `std::path` adds source-only lexical path
+append, and read/write access plus access-permission checks, source create,
+read, write, append, truncate, copy, rename, hard/symbolic links,
+single-directory create/remove, and read-to-byte-string helpers, `std::path`
+adds source-only lexical path
 splitting, joining, and lightweight normalization, and `std::net` adds
 source-only IPv4, IPv6,
 generic IP, and socket-address values while DNS and socket handles remain

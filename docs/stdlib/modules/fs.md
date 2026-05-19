@@ -3,15 +3,16 @@
 `std::fs` is Ari's portable filesystem module. It exists so ordinary programs
 can work with files without reaching directly for raw syscalls or C ABI
 declarations. The first slices are deliberately small: check whether a path
-exists, open a byte stream with a compact mode string, read and write bytes,
-write or append a byte slice in one call, create/truncate/copy small files,
-read a whole file into Ari's byte-oriented `String`, rename paths, create hard
-or symbolic links, create or remove one empty directory, close the handle, and
-remove a file.
+exists, query access-style read/write/execute permissions, open a byte stream
+with a compact mode string, read and write bytes, write or append a byte slice
+in one call, create/truncate/copy small files, read a whole file into Ari's
+byte-oriented `String`, rename paths, create hard or symbolic links, create or
+remove one empty directory, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
-`read_byte`, `write_byte`, `write_bytes`, `read`, `write`, `append`,
+`can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
+`write_byte`, `write_bytes`, `read`, `write`, `append`,
 `truncate`, `copy`, `rename`, `hard_link`, `symbolic_link`, `create_dir`,
 `remove_dir`, `close`, `exists`, and `remove`, not type-suffixed names.
 
@@ -19,6 +20,10 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 
 ```ari
 fs::exists(path)
+fs::can_read(path)
+fs::can_write(path)
+fs::can_execute(path)
+fs::permissions(path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
@@ -52,6 +57,12 @@ file.close()
 file.read_byte()
 file.write_byte(value)
 file.write_bytes(values)
+
+Permissions::none()
+permissions.can_read()
+permissions.can_write()
+permissions.can_execute()
+permissions.any()
 ```
 
 `File` is a small value handle around the runtime file descriptor. Failed open
@@ -126,6 +137,18 @@ invalid handle returns `false`. The current first slice does not mutate the
 `exists(path)` checks whether the path exists. `remove(path)` removes a file
 path and returns whether the host accepted the request.
 
+`can_read(path)`, `can_write(path)`, and `can_execute(path)` ask the host
+whether the current process can read, write, or execute/search the path. These
+are access checks, not security guarantees: the filesystem can change between
+the check and the later operation. Use them for friendly preflight behavior and
+diagnostics while still handling later open/read/write failures.
+
+`permissions(path)` groups the same three checks into a small `Permissions`
+value. `permissions.can_read()`, `permissions.can_write()`, and
+`permissions.can_execute()` expose the stored booleans, and `permissions.any()`
+is useful for treating a missing or inaccessible path as no visible access.
+`Permissions::none()` creates that all-false value directly.
+
 `rename(source, target)` asks the host to move or rename one path to another.
 On the current Linux/glibc runtime path this follows host `rename` behavior,
 including replacing some existing targets when the OS allows it. Portable
@@ -160,7 +183,7 @@ recursive removal, and directory iteration are separate future slices.
 | append | Current: `"a"`/`"a+"` modes and whole-file `append`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
 | metadata | Roadmap: needs a portable `Metadata` value and runtime `stat`/platform wrappers. |
-| permissions | Roadmap: should be a small permissions value built on metadata/chmod hooks. |
+| permissions | Current: access-style `can_read`, `can_write`, `can_execute`, and `permissions`; mutation/chmod is roadmap. |
 | rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)` and empty directory removal with `remove_dir(path)`. |
 | copy | Current: source streaming `copy(source, target)` for byte files. |
@@ -278,6 +301,18 @@ if fs::symbolic_link(symbolic_target, symbolic) {
 }
 ```
 
+Check current-process access permissions:
+
+```ari
+let access = fs::permissions(path);
+if access.can_read() && access.can_write() {
+  let file = fs::try_open(path, "rw").unwrap_or(fs::File::invalid());
+  if file.is_open() {
+    file.close();
+  }
+}
+```
+
 Open an existing file for both reading and writing:
 
 ```ari
@@ -292,10 +327,10 @@ if file.is_open() {
 ## Current Limits
 
 - This slice is byte-oriented. There is no owned path type, directory
-  iteration, metadata, permissions API, canonicalization, recursive directory
-  API, file locking API, temporary-file API, or text encoding policy yet. Link
-  creation exists, but richer link metadata and platform-specific symlink
-  policy are still future work.
+  iteration, metadata API, permission mutation API, canonicalization,
+  recursive directory API, file locking API, temporary-file API, or text
+  encoding policy yet. Link creation exists, but richer link metadata and
+  platform-specific symlink policy are still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
   `unlink`, `rename`, `link`, `symlink`, `mkdir`, `rmdir`, `open`, `read`,
   `write`, and `close`.
@@ -319,6 +354,7 @@ tests/cases/standard-library/ok/fs/std-fs-read-write.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
+tests/cases/standard-library/ok/fs/std-fs-permissions.ari
 ```
 
 `make check-prelude` emits LLVM for the runtime hooks, checks the C syscall
@@ -335,12 +371,14 @@ rewrite behavior. `std-fs-create-truncate-copy.ari` covers source `create`,
 copy behavior. `std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
-checks.
+checks. `std-fs-permissions.ari` covers access-style readable/writable/
+executable checks, the `Permissions` wrapper methods, and missing-path
+all-false behavior.
 
 ## Next Work
 
-- Add `metadata(path)`, `permissions(path)`, and permission mutation as a
-  separate tested runtime slice.
+- Add `metadata(path)` and permission mutation as a separate tested runtime
+  slice.
 - Add explicit overwrite/platform policy for `rename`.
 - Add canonicalization as an OS-wrapper slice returning an owned Ari string or
   path value.

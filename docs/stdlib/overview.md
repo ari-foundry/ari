@@ -29,7 +29,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::thread` | Function-pointer thread spawn/join and runtime ids. | `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `load`, `store`, `swap`, `fetch_add`, `compare_exchange`. |
 | `std::time` | Monotonic time, wall-clock time, and sleep. | `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`. |
-| `std::fs` | Byte-oriented filesystem handles. | `File`, `exists`, `remove`, `rename`, `hard_link`, `symbolic_link`, `create_dir`, `remove_dir`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, whole-file `read`, `write`, `append`, `truncate`, `copy`, `read_to_string`, `close`. |
+| `std::fs` | Byte-oriented filesystem handles. | `File`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `remove`, `rename`, `hard_link`, `symbolic_link`, `create_dir`, `remove_dir`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, whole-file `read`, `write`, `append`, `truncate`, `copy`, `read_to_string`, `close`. |
 | `std::path` | Source lexical path manipulation. | `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `file_name`, `parent`, `extension`, `stem`, `join_in`, `normalize_in`. |
 | `std::net` | Source network address values. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `ipv4`, `ipv6`, `socket_addr`, `localhost`, family/loopback/unspecified predicates, port helpers. |
 | `std::mem` | Layout, raw pointer, and byte memory operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `replace`, `swap`. |
@@ -161,15 +161,15 @@ atomic operations with sequentially consistent ordering. `Shared`, `Weak`,
 clock and sleep APIs, while `Duration`, `Instant`, `SystemTime`, and the
 constructor/elapsed helpers are ordinary Ari source.
 
-`std::fs` is the first filesystem slice. `exists`, `remove`, mode-string
-`open`, close, and single-byte read/write are runtime-backed because they call
-host file-descriptor APIs. `try_open`, compatibility `try_open_*` wrappers,
-`rename`, `create_dir`, `remove_dir`, `create`/`try_create`, `write_bytes`,
-whole-file `read`, `write`, `append`, `truncate`, `copy`, byte-string
-`read_to_string`, and the `File` methods are ordinary Ari source or thin
-runtime hooks over the raw OS boundary. The handle is a visible value today and
-should become a stronger owned resource when OS resource ownership is modeled
-by the language.
+`std::fs` is the first filesystem slice. `exists`, access-style permission
+checks, `remove`, mode-string `open`, close, and single-byte read/write are
+runtime-backed because they call host file-descriptor APIs. `permissions`,
+`try_open`, compatibility `try_open_*` wrappers, `rename`, `create_dir`,
+`remove_dir`, `create`/`try_create`, `write_bytes`, whole-file `read`, `write`,
+`append`, `truncate`, `copy`, byte-string `read_to_string`, and the `File` and
+`Permissions` methods are ordinary Ari source or thin runtime hooks over the
+raw OS boundary. The handle is a visible value today and should become a
+stronger owned resource when OS resource ownership is modeled by the language.
 
 `std::path` is source-only and deliberately lexical. It works over borrowed
 `Slice[u8]` values and zone-backed `String` outputs, so tools can split, join,
