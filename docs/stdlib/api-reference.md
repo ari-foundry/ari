@@ -1777,10 +1777,11 @@ ascii::parse_hex(bytes)
 ascii::parse_hex_prefix(bytes)
 ```
 
-`is_blank` covers space and tab. `is_whitespace` covers space, tab, line feed,
-and carriage return. `is_printable` includes space; `is_graphic` excludes
+`is_blank` covers `' '` and `'\t'`. `is_whitespace` covers `' '`, `'\t'`,
+`'\n'`, and `'\r'`. `is_printable` includes space; `is_graphic` excludes
 space. `is_punctuation` is true for graphic ASCII bytes that are not letters or
-digits.
+digits. Prefer byte character literals such as `'0'` and `'A'` over decimal
+byte casts for ASCII call sites.
 
 `digit_value` and `hex_value` return `Option[i64]`. Non-digit input returns
 `None<i64>()` where appropriate.

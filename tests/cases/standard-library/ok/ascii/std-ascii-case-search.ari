@@ -1,17 +1,17 @@
 // Covers ASCII-only case-insensitive substring search over borrowed byte slices.
 fn main() -> i64 {
   var text: Vec[u8] = [
-    65u8, 114u8, 105u8, 45u8, 83u8, 116u8, 100u8, 45u8,
-    76u8, 105u8, 98u8, 45u8, 65u8, 114u8, 105u8, 33u8
+    'A', 'r', 'i', '-', 'S', 't', 'd', '-',
+    'L', 'i', 'b', '-', 'A', 'r', 'i', '!'
   ];
-  var std_lower: Vec[u8] = [115u8, 116u8, 100u8];
-  var lib_upper: Vec[u8] = [76u8, 73u8, 66u8];
-  var ari_lower: Vec[u8] = [97u8, 114u8, 105u8];
-  var ari_bang: Vec[u8] = [97u8, 114u8, 105u8, 33u8];
-  var missing: Vec[u8] = [120u8];
+  var std_lower: Vec[u8] = ['s', 't', 'd'];
+  var lib_upper: Vec[u8] = ['L', 'I', 'B'];
+  var ari_lower: Vec[u8] = ['a', 'r', 'i'];
+  var ari_bang: Vec[u8] = ['a', 'r', 'i', '!'];
+  var missing: Vec[u8] = ['x'];
   var too_long: Vec[u8] = [
-    97u8, 114u8, 105u8, 45u8, 115u8, 116u8, 100u8, 45u8,
-    108u8, 105u8, 98u8, 45u8, 97u8, 114u8, 105u8, 33u8, 33u8
+    'a', 'r', 'i', '-', 's', 't', 'd', '-',
+    'l', 'i', 'b', '-', 'a', 'r', 'i', '!', '!'
   ];
   var empty: Vec[u8] = [];
 

@@ -61,7 +61,7 @@ let id_hash = hash::value<i64>(42);
 Hash bytes:
 
 ```ari
-var data = [65u8, 66u8, 67u8];
+var data = ['A', 'B', 'C'];
 let digest = hash::bytes(data.as_slice());
 ```
 

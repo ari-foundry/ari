@@ -34,11 +34,12 @@ ascii::is_punctuation(byte)
 ascii::is_hex_digit(byte)
 ```
 
-`is_blank` accepts space and tab. `is_whitespace` accepts space, tab, line
-feed, and carriage return. `is_control` accepts `0..31` and `127`.
-`is_printable` accepts `32..126`, including space. `is_graphic` accepts
-`33..126`, excluding space. `is_punctuation` accepts printable graphic bytes
-that are not ASCII letters or digits.
+`is_blank` accepts `' '` and `'\t'`. `is_whitespace` accepts `' '`, `'\t'`,
+`'\n'`, and `'\r'`. `is_control` accepts `'\x00'..'\x1f'` and `'\x7f'`.
+`is_printable` accepts `' '..'~'`, including space. `is_graphic` accepts
+`'!'..'~'`, excluding space. `is_punctuation` accepts printable graphic bytes
+that are not ASCII letters or digits. Prefer byte character literals like
+`'0'`, `'A'`, and `'\n'` over decimal byte casts at call sites.
 
 Case helpers return the converted byte when the input is an ASCII letter and
 return the original byte otherwise:
@@ -55,8 +56,8 @@ ascii::digit_value(byte)
 ascii::hex_value(byte)
 ```
 
-`digit_value` accepts `0` through `9`. `hex_value` accepts `0` through `9`,
-`a` through `f`, and `A` through `F`.
+`digit_value` accepts `'0'` through `'9'`. `hex_value` accepts `'0'` through
+`'9'`, `'a'` through `'f'`, and `'A'` through `'F'`.
 
 Prefix parsers return a small named result type:
 
@@ -127,12 +128,12 @@ fn parse_score(bytes: Slice[u8]) -> i64 {
 }
 
 fn has_ari_prefix(bytes: Slice[u8]) -> bool {
-  var prefix: Vec[u8] = [65u8, 82u8, 73u8];
+  var prefix: Vec[u8] = ['A', 'R', 'I'];
   return ascii::starts_with_ignore_case(bytes, prefix.as_slice());
 }
 
 fn find_lib(bytes: Slice[u8]) -> i64 {
-  var needle: Vec[u8] = [108u8, 105u8, 98u8];
+  var needle: Vec[u8] = ['l', 'i', 'b'];
   return ascii::index_of_ignore_case(bytes, needle.as_slice());
 }
 

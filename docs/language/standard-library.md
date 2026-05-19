@@ -351,8 +351,8 @@ fn main() -> i64 {
   numbers.push(5);
 
   var text = std::string::new(ref mut zone, 4);
-  text.push(65u8);
-  text.push(66u8);
+  text.push('A');
+  text.push('B');
 
   var boxed = std::boxed::new<i64>(ref mut zone, 7);
   let score =

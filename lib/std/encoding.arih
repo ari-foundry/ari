@@ -25,45 +25,45 @@ pub impl std::encoding::Utf8Char {
 
 fn hex_digit(value: i64) -> u8 {
   if value < 10 {
-    return (value + 48) as u8;
+    return (value + ('0' as i64)) as u8;
   }
-  return ((value - 10) + 97) as u8;
+  return ((value - 10) + ('a' as i64)) as u8;
 }
 
 fn is_base64_padding(value: u8) -> bool {
-  return value == (61 as u8);
+  return value == '=';
 }
 
 fn base64_digit(value: i64) -> u8 {
   if value < 26 {
-    return (value + 65) as u8;
+    return (value + ('A' as i64)) as u8;
   }
   if value < 52 {
-    return ((value - 26) + 97) as u8;
+    return ((value - 26) + ('a' as i64)) as u8;
   }
   if value < 62 {
-    return ((value - 52) + 48) as u8;
+    return ((value - 52) + ('0' as i64)) as u8;
   }
   if value == 62 {
-    return 43 as u8;
+    return '+';
   }
-  return 47 as u8;
+  return '/';
 }
 
 fn base64_value(value: u8) -> std::Option[i64] {
-  if value >= (65 as u8) && value <= (90 as u8) {
-    return std::Some<i64>((value as i64) - 65);
+  if value >= 'A' && value <= 'Z' {
+    return std::Some<i64>((value as i64) - ('A' as i64));
   }
-  if value >= (97 as u8) && value <= (122 as u8) {
-    return std::Some<i64>(((value as i64) - 97) + 26);
+  if value >= 'a' && value <= 'z' {
+    return std::Some<i64>(((value as i64) - ('a' as i64)) + 26);
   }
-  if value >= (48 as u8) && value <= (57 as u8) {
-    return std::Some<i64>(((value as i64) - 48) + 52);
+  if value >= '0' && value <= '9' {
+    return std::Some<i64>(((value as i64) - ('0' as i64)) + 52);
   }
-  if value == (43 as u8) {
+  if value == '+' {
     return std::Some<i64>(62);
   }
-  if value == (47 as u8) {
+  if value == '/' {
     return std::Some<i64>(63);
   }
   return std::None<i64>();
@@ -499,12 +499,12 @@ pub fn encode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::stri
     if index + 1 < values.len {
       output.push_in(zone, base64_digit(((second % 16) * 4) + (third / 64)));
     } else {
-      output.push_in(zone, 61 as u8);
+      output.push_in(zone, '=');
     }
     if index + 2 < values.len {
       output.push_in(zone, base64_digit(third % 64));
     } else {
-      output.push_in(zone, 61 as u8);
+      output.push_in(zone, '=');
     }
     index = index + 3;
   }

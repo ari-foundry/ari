@@ -111,7 +111,7 @@ is full or when `flush()` is called; there is no implicit drop-time flush yet.
 
 ```ari
 fn main() -> i64 {
-  var input = [65u8, 66u8, 67u8];
+  var input = ['A', 'B', 'C'];
   var cursor = io::cursor(input.as_slice());
   var storage = [0u8, 0u8];
   var reader = io::buf_reader<io::Cursor>(cursor, storage.as_slice());

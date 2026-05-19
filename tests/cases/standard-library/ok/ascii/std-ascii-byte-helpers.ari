@@ -2,58 +2,58 @@
 fn main() -> i64 {
   var score = 0;
 
-  if std::ascii::is_digit(48 as u8) {
+  if std::ascii::is_digit('0') {
     score = score + 1;
   }
-  if ascii::is_digit(57 as u8) {
+  if ascii::is_digit('9') {
     score = score + 2;
   }
-  if !ascii::is_digit(58 as u8) {
+  if !ascii::is_digit(':') {
     score = score + 3;
   }
-  if ascii::is_lower(97 as u8) {
+  if ascii::is_lower('a') {
     score = score + 4;
   }
-  if !ascii::is_lower(65 as u8) {
+  if !ascii::is_lower('A') {
     score = score + 5;
   }
-  if ascii::is_upper(90 as u8) {
+  if ascii::is_upper('Z') {
     score = score + 6;
   }
-  if ascii::is_alpha(113 as u8) {
+  if ascii::is_alpha('q') {
     score = score + 7;
   }
-  if ascii::is_alphanumeric(56 as u8) {
+  if ascii::is_alphanumeric('8') {
     score = score + 8;
   }
-  if !ascii::is_alphanumeric(64 as u8) {
+  if !ascii::is_alphanumeric('@') {
     score = score + 9;
   }
-  if ascii::is_hex_digit(70 as u8) {
+  if ascii::is_hex_digit('F') {
     score = score + 10;
   }
-  if !ascii::is_hex_digit(71 as u8) {
+  if !ascii::is_hex_digit('G') {
     score = score + 11;
   }
-  if ascii::is_whitespace(32 as u8) {
+  if ascii::is_whitespace(' ') {
     score = score + 12;
   }
-  if ascii::is_whitespace(10 as u8) {
+  if ascii::is_whitespace('\n') {
     score = score + 13;
   }
-  if !ascii::is_whitespace(65 as u8) {
+  if !ascii::is_whitespace('A') {
     score = score + 14;
   }
 
-  assert_eq_i64(ascii::to_lower(65 as u8) as i64, 97);
-  assert_eq_i64(ascii::to_upper(122 as u8) as i64, 90);
-  assert_eq_i64(ascii::to_lower(63 as u8) as i64, 63);
-  assert_eq_i64(ascii::to_upper(33 as u8) as i64, 33);
+  assert_eq_i64(ascii::to_lower('A') as i64, 'a' as i64);
+  assert_eq_i64(ascii::to_upper('z') as i64, 'Z' as i64);
+  assert_eq_i64(ascii::to_lower('?') as i64, '?' as i64);
+  assert_eq_i64(ascii::to_upper('!') as i64, '!' as i64);
 
-  let digit = ascii::digit_value(55 as u8).unwrap_or(-1);
-  let hex = ascii::hex_value(70 as u8).unwrap_or(-1);
-  let not_digit = ascii::digit_value(120 as u8).unwrap_or(20);
-  let not_hex = ascii::hex_value(103 as u8).unwrap_or(30);
+  let digit = ascii::digit_value('7').unwrap_or(-1);
+  let hex = ascii::hex_value('F').unwrap_or(-1);
+  let not_digit = ascii::digit_value('x').unwrap_or(20);
+  let not_hex = ascii::hex_value('g').unwrap_or(30);
 
   return score + digit + hex + not_digit + not_hex;
 }

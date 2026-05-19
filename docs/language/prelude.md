@@ -281,8 +281,8 @@ available through that alias, such as `use std as core; core::println("x={}", 1)
 io::write_i64(42)
 io::write_u64(42u64)
 io::write_bool(true)
-io::write_byte(65 as u8)
-var bytes = [65 as u8, 66 as u8]
+io::write_byte('A')
+var bytes = ['A', 'B']
 io::write_bytes(bytes.as_slice())
 io::newline()
 let byte = io::read_byte()
@@ -291,7 +291,7 @@ let byte = io::read_byte()
 For reusable byte code, `std::io` also has source traits and small handles:
 
 ```ari
-var source = [65u8, 66u8]
+var source = ['A', 'B']
 var cursor = io::cursor(source.as_slice())
 var storage = [0u8, 0u8]
 var reader = io::buf_reader<io::Cursor>(cursor, storage.as_slice())
@@ -314,8 +314,8 @@ Unqualified aliases are also available:
 write_i64(42)
 write_u64(42u64)
 write_bool(true)
-write_byte(65 as u8)
-var bytes = [65 as u8, 66 as u8]
+write_byte('A')
+var bytes = ['A', 'B']
 write_bytes(bytes.as_slice())
 newline()
 let byte = read_byte()
@@ -940,9 +940,9 @@ future owned strings:
 ```ari
 var zone = zone::create(64)
 let bytes = std::string::alloc_buffer(ref mut zone, 3)
-ptr_store(bytes, 65 as u8)
-ptr_store(ptr_add(bytes, 1), 66 as u8)
-ptr_store(ptr_add(bytes, 2), 0 as u8)
+ptr_store(bytes, 'A')
+ptr_store(ptr_add(bytes, 1), 'B')
+ptr_store(ptr_add(bytes, 2), '\x00')
 ```
 
 The raw returned pointer is still a `ptr u8`, so callers must manage length,

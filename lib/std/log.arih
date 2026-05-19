@@ -60,7 +60,7 @@ fn write_text(writer: ref mut std::io::Stderr, text: string) -> bool {
   let data = text as ptr u8;
   var index = 0;
   var byte = std::mem::ptr_load(std::mem::ptr_add(data, index));
-  while byte != (0 as u8) {
+  while byte != '\x00' {
     if !writer.write_byte(byte) {
       return false;
     }
@@ -71,20 +71,20 @@ fn write_text(writer: ref mut std::io::Stderr, text: string) -> bool {
 }
 
 fn write_prefix(writer: ref mut std::io::Stderr, level: std::log::Level) -> bool {
-  if !writer.write_byte(91 as u8) {
+  if !writer.write_byte('[') {
     return false;
   }
   if !std::log::write_text(writer, std::log::name(level)) {
     return false;
   }
-  if !writer.write_byte(93 as u8) {
+  if !writer.write_byte(']') {
     return false;
   }
-  return writer.write_byte(32 as u8);
+  return writer.write_byte(' ');
 }
 
 fn write_newline(writer: ref mut std::io::Stderr) -> bool {
-  return writer.write_byte(10 as u8);
+  return writer.write_byte('\n');
 }
 
 pub fn write(level: std::log::Level, values: std::Slice[u8]) -> bool {

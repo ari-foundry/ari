@@ -62,10 +62,10 @@ fn main() -> i64 {
   let source = zone::alloc_array<u8>(ref mut zone, 4);
   let target = zone::alloc_array<u8>(ref mut zone, 4);
 
-  ptr_store(source, 65u8);
-  ptr_store(ptr_add(source, 1), 66u8);
-  ptr_store(ptr_add(source, 2), 67u8);
-  ptr_store(ptr_add(source, 3), 68u8);
+  ptr_store(source, 'A');
+  ptr_store(ptr_add(source, 1), 'B');
+  ptr_store(ptr_add(source, 2), 'C');
+  ptr_store(ptr_add(source, 3), 'D');
 
   mem::set_bytes(target, 0u8, 4);
   mem::copy_bytes(target, source, 4);

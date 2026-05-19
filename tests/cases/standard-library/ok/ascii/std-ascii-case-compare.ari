@@ -1,12 +1,12 @@
 // Covers ASCII-only case-insensitive comparisons over borrowed byte slices.
 fn main() -> i64 {
-  var mixed: Vec[u8] = [65u8, 114u8, 105u8, 45u8, 76u8, 97u8, 110u8, 103u8];
-  var lower: Vec[u8] = [97u8, 114u8, 105u8, 45u8, 108u8, 97u8, 110u8, 103u8];
-  var wrong: Vec[u8] = [97u8, 114u8, 105u8, 45u8, 108u8, 97u8, 110u8, 120u8];
-  var prefix: Vec[u8] = [65u8, 82u8, 73u8];
-  var suffix: Vec[u8] = [76u8, 65u8, 78u8, 71u8];
-  var punct: Vec[u8] = [97u8, 114u8, 105u8, 33u8];
-  var punct_same: Vec[u8] = [65u8, 82u8, 73u8, 33u8];
+  var mixed: Vec[u8] = ['A', 'r', 'i', '-', 'L', 'a', 'n', 'g'];
+  var lower: Vec[u8] = ['a', 'r', 'i', '-', 'l', 'a', 'n', 'g'];
+  var wrong: Vec[u8] = ['a', 'r', 'i', '-', 'l', 'a', 'n', 'x'];
+  var prefix: Vec[u8] = ['A', 'R', 'I'];
+  var suffix: Vec[u8] = ['L', 'A', 'N', 'G'];
+  var punct: Vec[u8] = ['a', 'r', 'i', '!'];
+  var punct_same: Vec[u8] = ['A', 'R', 'I', '!'];
   var empty: Vec[u8] = [];
 
   let all = mixed.as_slice();

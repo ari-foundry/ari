@@ -37,7 +37,7 @@ pub struct PathBytes {
 }
 
 pub fn is_separator(value: u8) -> bool {
-  return value == (47 as u8);
+  return value == '/';
 }
 
 pub fn bytes(path: std::Slice[u8]) -> PathBytes {
@@ -125,7 +125,7 @@ pub fn extension(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
   let start = component_start(trimmed, trimmed.len);
   var index = trimmed.len - 1;
   while index > start {
-    if trimmed[index] == (46 as u8) {
+    if trimmed[index] == '.' {
       if index + 1 >= trimmed.len {
         return std::None<std::Slice[u8]>();
       }
@@ -149,7 +149,7 @@ pub fn stem(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
   var end = trimmed.len;
   var index = trimmed.len - 1;
   while index > start {
-    if trimmed[index] == (46 as u8) {
+    if trimmed[index] == '.' {
       end = index;
       index = start;
     } else {
@@ -173,7 +173,7 @@ pub fn join_in(zone: ref mut Zone, base: std::Slice[u8], child: std::Slice[u8]) 
   var output = std::string::new(zone, base.len + child.len + 1);
   output.extend_from_slice_in(zone, base);
   if !is_separator(base[base.len - 1]) {
-    output.push_in(zone, 47 as u8);
+    output.push_in(zone, '/');
   }
   output.extend_from_slice_in(zone, child);
   return output;
@@ -209,7 +209,7 @@ pub fn normalize_in(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::St
   var wrote_component = false;
 
   if is_absolute(path) {
-    output.push_in(zone, 47 as u8);
+    output.push_in(zone, '/');
     index = 1;
   }
 
@@ -236,21 +236,21 @@ pub fn normalize_in(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::St
     // Drop lexical "." components, but keep ".." because removing it safely
     // requires a stronger path policy than this first source-only slice.
     if len == 1 {
-      if path[start] == (46 as u8) {
+      if path[start] == '.' {
         if !wrote_component && !is_absolute(path) && index >= path.len {
-          output.push_in(zone, 46 as u8);
+          output.push_in(zone, '.');
           wrote_component = true;
         }
       } else {
         if wrote_component {
-          output.push_in(zone, 47 as u8);
+          output.push_in(zone, '/');
         }
         output.extend_from_slice_in(zone, slice_range(path, start, index));
         wrote_component = true;
       }
     } else {
       if wrote_component {
-        output.push_in(zone, 47 as u8);
+        output.push_in(zone, '/');
       }
       output.extend_from_slice_in(zone, slice_range(path, start, index));
       wrote_component = true;
@@ -258,7 +258,7 @@ pub fn normalize_in(zone: ref mut Zone, path: std::Slice[u8]) -> std::string::St
   }
 
   if output.len() == 0 {
-    output.push_in(zone, 46 as u8);
+    output.push_in(zone, '.');
   }
   return output;
 }

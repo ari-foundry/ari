@@ -55,9 +55,9 @@ fn main() -> i64 {
   var zone = test::scratch(128);
 
   var text = std::string::new(ref mut zone, 8);
-  text.push_in(ref mut zone, 65u8);
+  text.push_in(ref mut zone, 'A');
   report.equal(text.len(), 1);
-  report.equal(text.first(), 65u8);
+  report.equal(text.first(), 'A');
 
   let status = report.finish();
   zone::destroy(zone);

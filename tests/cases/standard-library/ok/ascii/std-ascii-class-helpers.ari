@@ -2,62 +2,62 @@
 fn main() -> i64 {
   var score = 0;
 
-  if std::ascii::is_control(0 as u8) {
+  if std::ascii::is_control('\x00') {
     score = score + 1;
   }
-  if ascii::is_control(31 as u8) {
+  if ascii::is_control('\x1f') {
     score = score + 2;
   }
-  if ascii::is_control(127 as u8) {
+  if ascii::is_control('\x7f') {
     score = score + 3;
   }
-  if !ascii::is_control(32 as u8) {
+  if !ascii::is_control(' ') {
     score = score + 4;
   }
 
-  if ascii::is_printable(32 as u8) {
+  if ascii::is_printable(' ') {
     score = score + 5;
   }
-  if ascii::is_printable(126 as u8) {
+  if ascii::is_printable('~') {
     score = score + 6;
   }
-  if !ascii::is_printable(127 as u8) {
+  if !ascii::is_printable('\x7f') {
     score = score + 7;
   }
-  if !ascii::is_printable(10 as u8) {
+  if !ascii::is_printable('\n') {
     score = score + 8;
   }
 
-  if ascii::is_graphic(33 as u8) {
+  if ascii::is_graphic('!') {
     score = score + 9;
   }
-  if ascii::is_graphic(126 as u8) {
+  if ascii::is_graphic('~') {
     score = score + 10;
   }
-  if !ascii::is_graphic(32 as u8) {
+  if !ascii::is_graphic(' ') {
     score = score + 11;
   }
 
-  if ascii::is_punctuation(33 as u8) {
+  if ascii::is_punctuation('!') {
     score = score + 12;
   }
-  if ascii::is_punctuation(64 as u8) {
+  if ascii::is_punctuation('@') {
     score = score + 13;
   }
-  if !ascii::is_punctuation(65 as u8) {
+  if !ascii::is_punctuation('A') {
     score = score + 14;
   }
-  if !ascii::is_punctuation(48 as u8) {
+  if !ascii::is_punctuation('0') {
     score = score + 15;
   }
 
-  if ascii::is_blank(32 as u8) {
+  if ascii::is_blank(' ') {
     score = score + 16;
   }
-  if ascii::is_blank(9 as u8) {
+  if ascii::is_blank('\t') {
     score = score + 17;
   }
-  if !ascii::is_blank(10 as u8) {
+  if !ascii::is_blank('\n') {
     score = score + 18;
   }
 

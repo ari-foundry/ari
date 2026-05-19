@@ -7,15 +7,15 @@ pub struct ParsedInt {
 }
 
 pub fn is_digit(value: u8) -> bool {
-  return value >= (48 as u8) && value <= (57 as u8);
+  return value >= '0' && value <= '9';
 }
 
 pub fn is_lower(value: u8) -> bool {
-  return value >= (97 as u8) && value <= (122 as u8);
+  return value >= 'a' && value <= 'z';
 }
 
 pub fn is_upper(value: u8) -> bool {
-  return value >= (65 as u8) && value <= (90 as u8);
+  return value >= 'A' && value <= 'Z';
 }
 
 pub fn is_alpha(value: u8) -> bool {
@@ -27,25 +27,25 @@ pub fn is_alphanumeric(value: u8) -> bool {
 }
 
 pub fn is_blank(value: u8) -> bool {
-  return value == (32 as u8) || value == (9 as u8);
+  return value == ' ' || value == '\t';
 }
 
 pub fn is_whitespace(value: u8) -> bool {
   return is_blank(value) ||
-         value == (10 as u8) ||
-         value == (13 as u8);
+         value == '\n' ||
+         value == '\r';
 }
 
 pub fn is_control(value: u8) -> bool {
-  return value <= (31 as u8) || value == (127 as u8);
+  return value <= '\x1f' || value == '\x7f';
 }
 
 pub fn is_printable(value: u8) -> bool {
-  return value >= (32 as u8) && value <= (126 as u8);
+  return value >= ' ' && value <= '~';
 }
 
 pub fn is_graphic(value: u8) -> bool {
-  return value >= (33 as u8) && value <= (126 as u8);
+  return value >= '!' && value <= '~';
 }
 
 pub fn is_punctuation(value: u8) -> bool {
@@ -54,27 +54,27 @@ pub fn is_punctuation(value: u8) -> bool {
 
 pub fn is_hex_digit(value: u8) -> bool {
   return is_digit(value) ||
-         (value >= (65 as u8) && value <= (70 as u8)) ||
-         (value >= (97 as u8) && value <= (102 as u8));
+         (value >= 'A' && value <= 'F') ||
+         (value >= 'a' && value <= 'f');
 }
 
 pub fn to_lower(value: u8) -> u8 {
   if is_upper(value) {
-    return ((value as i64) + 32) as u8;
+    return ((value as i64) + (('a' as i64) - ('A' as i64))) as u8;
   }
   return value;
 }
 
 pub fn to_upper(value: u8) -> u8 {
   if is_lower(value) {
-    return ((value as i64) - 32) as u8;
+    return ((value as i64) - (('a' as i64) - ('A' as i64))) as u8;
   }
   return value;
 }
 
 pub fn digit_value(value: u8) -> std::Option[i64] {
   if is_digit(value) {
-    return std::Some<i64>((value as i64) - 48);
+    return std::Some<i64>((value as i64) - ('0' as i64));
   }
   return std::None<i64>();
 }
@@ -83,11 +83,11 @@ pub fn hex_value(value: u8) -> std::Option[i64] {
   if is_digit(value) {
     return digit_value(value);
   }
-  if value >= (65 as u8) && value <= (70 as u8) {
-    return std::Some<i64>(((value as i64) - 65) + 10);
+  if value >= 'A' && value <= 'F' {
+    return std::Some<i64>(((value as i64) - ('A' as i64)) + 10);
   }
-  if value >= (97 as u8) && value <= (102 as u8) {
-    return std::Some<i64>(((value as i64) - 97) + 10);
+  if value >= 'a' && value <= 'f' {
+    return std::Some<i64>(((value as i64) - ('a' as i64)) + 10);
   }
   return std::None<i64>();
 }

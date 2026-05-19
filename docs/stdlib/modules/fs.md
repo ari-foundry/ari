@@ -208,7 +208,7 @@ fn main() -> i64 {
     return 1;
   }
 
-  var data = [65 as u8, 66 as u8, 67 as u8];
+  var data = ['A', 'B', 'C'];
   if writer.write_bytes(data.as_slice()) != 3 {
     writer.close();
     return 2;
@@ -240,7 +240,7 @@ Append to an existing file:
 ```ari
 let appender = fs::try_open(path, "a").unwrap_or(fs::File::invalid());
 if appender.is_open() {
-  appender.write_byte(10 as u8);
+  appender.write_byte('\n');
   appender.close();
 }
 ```
@@ -248,10 +248,10 @@ if appender.is_open() {
 Use the whole-file byte helpers for small files:
 
 ```ari
-var data = [65 as u8, 66 as u8];
+var data = ['A', 'B'];
 fs::write(path, data.as_slice());
 
-var tail = [67 as u8];
+var tail = ['C'];
 fs::append(path, tail.as_slice());
 
 var zone = zone::create(512);

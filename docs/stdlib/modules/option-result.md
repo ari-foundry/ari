@@ -110,7 +110,7 @@ fn parse_digit(byte: u8) -> Result[i64, i64] {
 }
 
 fn main() -> i64 {
-  let value = parse_digit(55 as u8).unwrap_or_else(recover);
+  let value = parse_digit('7').unwrap_or_else(recover);
   return value;
 }
 ```

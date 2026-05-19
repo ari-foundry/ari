@@ -29,7 +29,7 @@ pub extern "ari" fn copy_to(value: ref std::string::String, target: ref mut Zone
 fn c_string_len(text: string) -> i64 {
   let data = text as ptr u8;
   var len = 0;
-  while ptr_load(ptr_add(data, len)) != (0 as u8) {
+  while ptr_load(ptr_add(data, len)) != '\x00' {
     len = len + 1;
   }
   return len;
@@ -274,7 +274,7 @@ pub impl std::string::String {
     let data = value as ptr u8;
     var index = 0;
     var byte = ptr_load(ptr_add(data, index));
-    while byte != (0 as u8) {
+    while byte != '\x00' {
       append_byte_in(self, zone, byte);
       index = index + 1;
       byte = ptr_load(ptr_add(data, index));
@@ -283,13 +283,13 @@ pub impl std::string::String {
 
   fn append_i64_in(self: ref mut Self, zone: ref mut Zone, value: i64) -> void {
     if value == 0 {
-      append_byte_in(self, zone, 48 as u8);
+      append_byte_in(self, zone, '0');
       return;
     }
 
     var remaining = value;
     if remaining < 0 {
-      append_byte_in(self, zone, 45 as u8);
+      append_byte_in(self, zone, '-');
     }
 
     let digit_start = self.raw.len;
@@ -298,7 +298,7 @@ pub impl std::string::String {
       if digit < 0 {
         digit = 0 - digit;
       }
-      append_byte_in(self, zone, (digit + 48) as u8);
+      append_byte_in(self, zone, (digit + ('0' as i64)) as u8);
       remaining = remaining / 10;
     }
 
@@ -315,7 +315,7 @@ pub impl std::string::String {
 
   fn append_u64_in(self: ref mut Self, zone: ref mut Zone, value: u64) -> void {
     if value == 0u64 {
-      append_byte_in(self, zone, 48 as u8);
+      append_byte_in(self, zone, '0');
       return;
     }
 
@@ -323,7 +323,7 @@ pub impl std::string::String {
     let digit_start = self.raw.len;
     while remaining != 0u64 {
       let digit = remaining % 10u64;
-      append_byte_in(self, zone, ((digit as i64) + 48) as u8);
+      append_byte_in(self, zone, ((digit as i64) + ('0' as i64)) as u8);
       remaining = remaining / 10u64;
     }
 
@@ -340,17 +340,17 @@ pub impl std::string::String {
 
   fn append_bool_in(self: ref mut Self, zone: ref mut Zone, value: bool) -> void {
     if value {
-      append_byte_in(self, zone, 116 as u8);
-      append_byte_in(self, zone, 114 as u8);
-      append_byte_in(self, zone, 117 as u8);
-      append_byte_in(self, zone, 101 as u8);
+      append_byte_in(self, zone, 't');
+      append_byte_in(self, zone, 'r');
+      append_byte_in(self, zone, 'u');
+      append_byte_in(self, zone, 'e');
       return;
     }
-    append_byte_in(self, zone, 102 as u8);
-    append_byte_in(self, zone, 97 as u8);
-    append_byte_in(self, zone, 108 as u8);
-    append_byte_in(self, zone, 115 as u8);
-    append_byte_in(self, zone, 101 as u8);
+    append_byte_in(self, zone, 'f');
+    append_byte_in(self, zone, 'a');
+    append_byte_in(self, zone, 'l');
+    append_byte_in(self, zone, 's');
+    append_byte_in(self, zone, 'e');
   }
 
   fn push_codepoint_in(self: ref mut Self, zone: ref mut Zone, value: u32) -> void {
@@ -393,14 +393,14 @@ pub impl std::string::String {
 
     var remaining = value;
     if remaining != remaining {
-      append_byte_in(self, zone, 110 as u8);
-      append_byte_in(self, zone, 97 as u8);
-      append_byte_in(self, zone, 110 as u8);
+      append_byte_in(self, zone, 'n');
+      append_byte_in(self, zone, 'a');
+      append_byte_in(self, zone, 'n');
       return;
     }
 
     if remaining < 0.0f64 {
-      append_byte_in(self, zone, 45 as u8);
+      append_byte_in(self, zone, '-');
       remaining = 0.0f64 - remaining;
     }
 
@@ -418,7 +418,7 @@ pub impl std::string::String {
       return;
     }
 
-    append_byte_in(self, zone, 46 as u8);
+    append_byte_in(self, zone, '.');
     var fraction = remaining - (integer as f64);
     var written = 0;
     while written < precision {
@@ -430,7 +430,7 @@ pub impl std::string::String {
       if digit > 9 {
         digit = 9;
       }
-      append_byte_in(self, zone, (digit + 48) as u8);
+      append_byte_in(self, zone, (digit + ('0' as i64)) as u8);
       fraction = fraction - (digit as f64);
       written = written + 1;
     }

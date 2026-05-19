@@ -147,7 +147,7 @@ fn digit_len(value: u64, base: i64) -> i64 {
 fn append_padding(output: ref mut std::string::String, count: i64) -> void {
   var index = 0;
   while index < count {
-    output.push(32 as u8);
+    output.push(' ');
     index = index + 1;
   }
 }
@@ -155,7 +155,7 @@ fn append_padding(output: ref mut std::string::String, count: i64) -> void {
 fn append_zero_padding(output: ref mut std::string::String, count: i64) -> void {
   var index = 0;
   while index < count {
-    output.push(48 as u8);
+    output.push('0');
     index = index + 1;
   }
 }
@@ -165,35 +165,35 @@ fn append_prefix(output: ref mut std::string::String, spec: std::fmt::FormatSpec
     return;
   }
   if spec.base == 2 {
-    output.push(48 as u8);
-    output.push(98 as u8);
+    output.push('0');
+    output.push('b');
     return;
   }
   if spec.base == 8 {
-    output.push(48 as u8);
-    output.push(111 as u8);
+    output.push('0');
+    output.push('o');
     return;
   }
   if spec.base == 16 {
-    output.push(48 as u8);
+    output.push('0');
     if spec.uppercase {
-      output.push(88 as u8);
+      output.push('X');
       return;
     }
-    output.push(120 as u8);
+    output.push('x');
   }
 }
 
 fn append_digit(output: ref mut std::string::String, digit: i64, uppercase: bool) -> void {
   if digit < 10 {
-    output.push((digit + 48) as u8);
+    output.push((digit + ('0' as i64)) as u8);
     return;
   }
   if uppercase {
-    output.push((digit - 10 + 65) as u8);
+    output.push((digit - 10 + ('A' as i64)) as u8);
     return;
   }
-  output.push((digit - 10 + 97) as u8);
+  output.push((digit - 10 + ('a' as i64)) as u8);
 }
 
 fn append_digits(output: ref mut std::string::String, value: u64, base: i64, uppercase: bool) -> void {
