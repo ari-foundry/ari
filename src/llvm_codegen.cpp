@@ -537,6 +537,7 @@ private:
             symbol == "ari_builtin_mem_set_bytes" ||
             symbol == "ari_builtin_sync_atomic_i64_store" ||
             symbol == "ari_builtin_time_sleep_nanos" ||
+            symbol == "ari_builtin_random_fill" ||
             symbol == "ari_builtin_zone_reset" ||
             symbol == "ari_builtin_zone_destroy") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Void, "void", {}, {}, {}, {}, loc};
@@ -1359,27 +1360,59 @@ private:
         line("}");
         line();
 
-        line("define " + runtime_visibility + "i64 @ari_builtin_random_entropy() {");
+        line("define " + runtime_visibility + "void @ari_builtin_random_fill(ptr %data, i64 %len) {");
         line("entry:");
-        line("  %slot = alloca i64, align 8");
-        line("  %got = call i64 @getrandom(ptr %slot, i64 8, i32 0)");
-        line("  %full = icmp eq i64 %got, 8");
-        line("  br i1 %full, label %load, label %fallback_open");
+        line("  %bad.len = icmp slt i64 %len, 0");
+        line("  br i1 %bad.len, label %fail, label %check_empty");
+        line("check_empty:");
+        line("  %empty = icmp eq i64 %len, 0");
+        line("  br i1 %empty, label %done, label %getrandom_loop");
+        line("getrandom_loop:");
+        line("  %offset = phi i64 [ 0, %check_empty ], [ %next.offset, %advance_getrandom ]");
+        line("  %remaining = sub i64 %len, %offset");
+        line("  %out.ptr = getelementptr i8, ptr %data, i64 %offset");
+        line("  %got = call i64 @getrandom(ptr %out.ptr, i64 %remaining, i32 0)");
+        line("  %made.progress = icmp sgt i64 %got, 0");
+        line("  br i1 %made.progress, label %advance_getrandom, label %fallback_open");
+        line("advance_getrandom:");
+        line("  %next.offset = add i64 %offset, %got");
+        line("  %done.getrandom = icmp uge i64 %next.offset, %len");
+        line("  br i1 %done.getrandom, label %done, label %getrandom_loop");
         line("fallback_open:");
         line("  %fd = call i32 @open(ptr " + dev_urandom + ", i32 0, i32 0)");
         line("  %opened = icmp sge i32 %fd, 0");
-        line("  br i1 %opened, label %fallback_read, label %fail");
-        line("fallback_read:");
-        line("  %read = call i64 @read(i32 %fd, ptr %slot, i64 8)");
+        line("  br i1 %opened, label %fallback_loop, label %fail");
+        line("fallback_loop:");
+        line("  %fallback.offset = phi i64 [ %offset, %fallback_open ], [ %fallback.next, %fallback_advance ]");
+        line("  %fallback.remaining = sub i64 %len, %fallback.offset");
+        line("  %fallback.ptr = getelementptr i8, ptr %data, i64 %fallback.offset");
+        line("  %read = call i64 @read(i32 %fd, ptr %fallback.ptr, i64 %fallback.remaining)");
+        line("  %read.progress = icmp sgt i64 %read, 0");
+        line("  br i1 %read.progress, label %fallback_advance, label %fallback_fail");
+        line("fallback_advance:");
+        line("  %fallback.next = add i64 %fallback.offset, %read");
+        line("  %fallback.done = icmp uge i64 %fallback.next, %len");
+        line("  br i1 %fallback.done, label %fallback_close, label %fallback_loop");
+        line("fallback_close:");
         line("  %ignored.close = call i32 @close(i32 %fd)");
-        line("  %read.full = icmp eq i64 %read, 8");
-        line("  br i1 %read.full, label %load, label %fail");
-        line("load:");
-        line("  %value = load i64, ptr %slot, align 8");
-        line("  ret i64 %value");
+        line("  ret void");
+        line("fallback_fail:");
+        line("  %ignored.close.fail = call i32 @close(i32 %fd)");
+        line("  br label %fail");
+        line("done:");
+        line("  ret void");
         line("fail:");
         line("  call void @exit(i32 1)");
         line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_random_entropy() {");
+        line("entry:");
+        line("  %slot = alloca i64, align 8");
+        line("  call void @ari_builtin_random_fill(ptr %slot, i64 8)");
+        line("  %value = load i64, ptr %slot, align 8");
+        line("  ret i64 %value");
         line("}");
         line();
 

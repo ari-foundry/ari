@@ -96,7 +96,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::iter` | Compose sequence processing without forcing every operation onto each collection type. | Current `range`, `range_inclusive`, `Iterator`, `IntoIterator`, lazy `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed `collect`; future captured closures, richer adapter inference, and collect targets beyond `std::vec::Vec[T]`. |
 | `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting and move-aware algorithm contracts. |
 | `std::hash` | Provide deterministic non-cryptographic hashing without tying hash policy to one collection type. | Current `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers, and `collections::hash_i64` compatibility; future aggregate/derive impls and trait-driven hash collection constructors. |
-| `std::random` | Provide OS seed material and reproducible non-cryptographic random streams without making cryptography promises. | Current `entropy`, OS byte `fill`, deterministic `Prng`, `seed`, `from_entropy`, `seed_from_os`, `next`, `below`, `range`, `float`, PRNG byte fill, and generic `shuffle`; future fallible entropy results, direct OS byte fill, unbiased bounded integers, cryptographic stream policy, and distribution helpers. |
+| `std::random` | Provide OS seed material and reproducible non-cryptographic random streams without making cryptography promises. | Current `entropy`, direct OS byte `fill`, deterministic `Prng`, `seed`, `from_entropy`, `seed_from_os`, `next`, `below`, `range`, `float`, PRNG byte fill, and generic `shuffle`; future fallible entropy results, unbiased bounded integers, cryptographic stream policy, and distribution helpers. |
 | `std::math` | Provide arithmetic helpers whose names communicate policy better than raw operators. | Current natural `i64` sign/parity helpers, checked add/sub/neg/abs, wrapping/overflowing/saturating add, saturating sub/neg/abs, powers, floor/ceil division, `gcd`, and `lcm`; future checked multiplication, generic numeric traits, and floating helpers. |
 | `std::parse` | Parse whole byte-slice values with names that read naturally at call sites. | Current ASCII-trimmed `integer`, `boolean`, `is_float`, `float_or`, and panicking `float`; future overflow policy, richer parse errors, and `Option[f64]`/`Result[f64,E]` after float enum payloads are supported. |
 | `std::encoding` | Validate text encodings and convert bytes to portable text forms. | Current `is_ascii`, UTF-8/UTF-16 counts, UTF-8 scalar decode/encode helpers, lowercase hex encode/decode, and standard base64 encode/decode; future URL-safe/MIME base64 variants, fallible `String` decoders after zone-backed enum payloads, normalization/transcoding, and optional compression policy in a separate module. |
@@ -139,8 +139,8 @@ work. Each one should land in small tested slices with natural API names.
 - Grow `std::hash` toward derived aggregate impls and trait-driven collection
   constructors after `Hash`/`Eq` dispatch policy is tested.
 - Keep `std::random` split between OS entropy and deterministic PRNGs. Add
-  fallible entropy and direct entropy byte filling before exposing any
-  cryptographic stream or distribution-heavy API.
+  fallible entropy before exposing any cryptographic stream or
+  distribution-heavy API.
 - Keep `std::string::String` byte-oriented while exposing explicit UTF-8 scalar
   validation/access/append helpers through `std::encoding`.
 - Keep typed string/path boundary views distinct: C ABI text uses `string` or

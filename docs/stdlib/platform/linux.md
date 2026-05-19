@@ -20,8 +20,8 @@ Implemented now:
   explicit abort, and the first POSIX `fork`/`wait` slice.
 - `std::mem::page_size()` reports the hosted runtime page size for alignment
   and future mapping work.
-- `std::random::entropy()` uses the hosted Linux `getrandom` path first and
-  falls back to `/dev/urandom` for one-word OS seed material.
+- `std::random::entropy()` and `std::random::fill(values)` use the hosted Linux
+  `getrandom` path first and fall back to `/dev/urandom` for OS seed material.
 - `std::net` provides IP and socket-address values, but not sockets yet.
 - Hosted executables currently rely on the platform CRT and dynamic linker;
   Ari emits LLVM IR and lets the LLVM driver link.
@@ -82,8 +82,8 @@ useful for modern systems work.
 | --- | --- | --- |
 | raw syscall wrapper | Not exposed. | Future `std::os::linux::syscall` should return typed error values and stay behind target guards. |
 | errno mapping | `std::target::uses_posix_errno()` reports the ABI family, but no runtime errno accessor exists. | Add `std::os::errno` together with the first fallible descriptor wrappers. |
-| getrandom | `std::random::entropy()` uses the hosted libc/syscall path and hard-fails if entropy cannot be read. | Add fallible entropy and direct byte-buffer filling once standard `Error` results can be returned. |
-| `/dev/urandom` | Used as `std::random::entropy()` fallback when `getrandom` does not provide eight bytes. | Keep as fallback; do not expose raw device reads as portable API. |
+| getrandom | `std::random::entropy()` and `std::random::fill(values)` use the hosted libc/syscall path and hard-fail if entropy cannot be read. | Add fallible entropy once standard `Error` results can be returned. |
+| `/dev/urandom` | Used as the random fallback when `getrandom` cannot make progress. | Keep as fallback; do not expose raw device reads as portable API. |
 | file descriptor abstraction | `std::fs::File` stores an internal descriptor value, but no public raw descriptor type exists. | Add an owned `Fd`/`OwnedFd` plus borrowed descriptor view before exposing `fcntl`, `poll`, or epoll. |
 | close-on-exec | Not exposed. | Add after descriptor ownership exists; default new descriptors to close-on-exec where possible. |
 | nonblocking mode | Not exposed. | Add descriptor methods backed by `fcntl` and document interaction with IO helpers. |

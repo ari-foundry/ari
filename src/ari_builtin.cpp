@@ -332,6 +332,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_time_unix_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);
     if (symbol == "ari_builtin_random_entropy") return builtin_sig({}, u64);
+    if (symbol == "ari_builtin_random_fill") return builtin_sig({ptr_u8, i64}, void_type);
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_read") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_write") return builtin_sig({source_string}, boolean);

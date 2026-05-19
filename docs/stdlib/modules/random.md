@@ -42,10 +42,11 @@ hosted Linux runtime it tries the `getrandom` libc/syscall path first and then
 falls back to reading eight bytes from `/dev/urandom`. If both fail, the
 runtime terminates instead of returning weak entropy.
 
-`fill(values)` fills a `Slice[u8]` with OS entropy by repeatedly calling
-`entropy()`. Use it for seed bytes or small random tokens. A future slice
-should add a direct `fill_entropy(values) -> Result` shape once Ari's error
-and owned-buffer story is stronger.
+`fill(values)` fills a `Slice[u8]` directly from OS entropy. On hosted Linux
+it uses the same `getrandom`-first policy as `entropy()` and falls back to
+`/dev/urandom` only when the first path cannot make progress. Use it for seed
+bytes or small random tokens. A future fallible shape should return `Result`
+once Ari's error and owned-buffer story is stronger.
 
 `Prng` is deterministic and non-cryptographic. `seed(value)` and
 `Prng::seed(value)` create a repeatable generator. `from_entropy()` and
@@ -90,7 +91,7 @@ fn main() -> i64 {
 
 | Need | Status |
 | --- | --- |
-| OS entropy | Current: `entropy()` returns a `u64`; `fill(values)` fills small byte slices. |
+| OS entropy | Current: `entropy()` returns a `u64`; `fill(values)` fills byte slices directly from the host. |
 | `/dev/urandom` | Current Linux runtime fallback when `getrandom` does not return eight bytes. |
 | `getrandom` syscall | Current hosted Linux runtime uses the libc `getrandom` entry point before fallback. |
 | CSPRNG seed | Current: use `entropy()`, `from_entropy()`, or `seed_from_os()` as seed material. |
@@ -126,8 +127,6 @@ deterministic byte filling, OS byte filling, and generic slice shuffling.
 
 - Add a fallible entropy API after `Result[T, Error]` can carry richer error
   values comfortably.
-- Add direct OS byte filling in the runtime instead of repeating `entropy()`
-  for larger slices.
 - Add unbiased bounded integer generation and document the exact distribution
   contract.
 - Keep cryptographic PRNG streams and advanced distributions separate until

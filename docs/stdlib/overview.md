@@ -96,10 +96,12 @@ encodes or decodes hex/base64 into caller-provided zones. The public APIs avoid
 zone-backed or float enum payloads until the compiler can safely lower
 `Option[String]`, `Result[String, E]`, and `Option[f64]`.
 
-`std::random` has one OS-backed hook, `entropy()`, because seed material must
-come from the host. The deterministic `Prng`, bounded integer helpers, unit
-float helper, byte filling from a seeded PRNG, and generic shuffle are source
-Ari. Cryptographic streams and fallible entropy errors remain future work.
+`std::random` has OS-backed hooks for `entropy()` and `fill(values)`, because
+seed material must come from the host and byte slices should be filled without
+round-tripping through one-word entropy calls. The deterministic `Prng`,
+bounded integer helpers, unit float helper, byte filling from a seeded PRNG,
+and generic shuffle are source Ari. Cryptographic streams and fallible entropy
+errors remain future work.
 
 `std::test`, `std::log`, and `std::error` are also source-first.
 `std::test::Report` aggregates checks, generic `equal`/`not_equal` stay

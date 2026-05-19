@@ -10,6 +10,7 @@ pub struct Prng {
 }
 
 pub extern "ari" fn entropy() -> u64 = "ari_builtin_random_entropy";
+extern "ari" fn fill_os(data: ptr u8, len: i64) -> void = "ari_builtin_random_fill";
 
 fn mix(value: u64) -> u64 {
   var mixed = value;
@@ -52,16 +53,7 @@ pub fn float(rng: ref mut std::random::Prng) -> f64 {
 }
 
 pub fn fill(values: std::Slice[u8]) -> void {
-  var index = 0;
-  while index < values.len {
-    let chunk = std::random::entropy();
-    var shift = 0;
-    while index < values.len && shift < 64 {
-      ptr_store(ptr_add(values.data, index), ((chunk >> shift) & 255u64) as u8);
-      index = index + 1;
-      shift = shift + 8;
-    }
-  }
+  fill_os(values.data, values.len);
   return;
 }
 

@@ -563,6 +563,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-hash-basic.elf; $(BUILD_DIR)/prelude/std-hash-basic.elf; code=$$?; test $$code -eq 31; fi
 	$(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-random-basic.ll
 	grep -F -q '@ari_builtin_random_entropy' $(BUILD_DIR)/prelude/std-random-basic.ll
+	grep -F -q '@ari_builtin_random_fill' $(BUILD_DIR)/prelude/std-random-basic.ll
 	grep -F -q 'std6random4seed' $(BUILD_DIR)/prelude/std-random-basic.ll
 	grep -F -q 'std6random4next' $(BUILD_DIR)/prelude/std-random-basic.ll
 	grep -F -q 'std6random14shuffle__G_i64' $(BUILD_DIR)/prelude/std-random-basic.ll

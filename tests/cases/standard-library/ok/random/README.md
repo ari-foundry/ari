@@ -6,4 +6,4 @@ Current files:
 
 - `std-random-basic.ari`: OS entropy hook reachability, deterministic
   non-cryptographic `Prng`, bounded integer generation, unit float generation,
-  PRNG byte filling, and generic slice shuffle.
+  direct OS byte filling, PRNG byte filling, and generic slice shuffle.
