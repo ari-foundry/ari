@@ -455,9 +455,8 @@ void require_cached_impl_call_targets_resolve_stmts(
 
 void require_ir_summary_cached_impl_calls_resolve(
     const std::vector<ModuleCacheIrFunctionSummary>& ir_functions,
+    const std::set<std::string>& lowered_function_names,
     const std::string& path) {
-    std::set<std::string> lowered_function_names;
-    for (const auto& fn : ir_functions) lowered_function_names.insert(fn.name);
     for (const auto& fn : ir_functions) {
         require_cached_impl_call_targets_resolve_stmts(
             fn.body.statements,
@@ -465,6 +464,36 @@ void require_ir_summary_cached_impl_calls_resolve(
             fn.name,
             path);
     }
+}
+
+std::set<std::string> cached_lowered_function_names(
+    const ModuleCache& cache,
+    const std::vector<ModuleCacheIrFunctionSummary>& local_ir_functions,
+    const std::string& path) {
+    std::set<std::string> lowered_function_names;
+    for (const auto& fn : local_ir_functions) lowered_function_names.insert(fn.name);
+    for (const auto& summary : cache.ir_summaries) {
+        for (const auto& fn : materialize_module_cache_ir_summary_functions(summary, path)) {
+            lowered_function_names.insert(fn.name);
+        }
+    }
+    return lowered_function_names;
+}
+
+void require_ir_summary_cached_impl_calls_resolve(
+    const std::vector<ModuleCacheIrFunctionSummary>& ir_functions,
+    const ModuleCache* input_cache,
+    const std::string& path) {
+    if (input_cache) {
+        require_ir_summary_cached_impl_calls_resolve(
+            ir_functions,
+            cached_lowered_function_names(*input_cache, ir_functions, path),
+            path);
+        return;
+    }
+    std::set<std::string> lowered_function_names;
+    for (const auto& fn : ir_functions) lowered_function_names.insert(fn.name);
+    require_ir_summary_cached_impl_calls_resolve(ir_functions, lowered_function_names, path);
 }
 
 bool can_load_module_cache_declarations_with_ir_functions(
@@ -517,7 +546,7 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
                     ir_functions = materialize_module_cache_ir_summary_functions(*ir_summary, path);
                     require_ir_summary_covers_ast_summary_functions(declarations, ir_functions, path);
                     require_ir_summary_specializations_match_ast_summary(declarations, ir_functions, path);
-                    require_ir_summary_cached_impl_calls_resolve(ir_functions, path);
+                    require_ir_summary_cached_impl_calls_resolve(ir_functions, input_cache, path);
                 }
                 if (can_load_module_cache_ast_summary_declarations(declarations) ||
                     can_load_module_cache_declarations_with_ir_functions(declarations, ir_functions)) {
