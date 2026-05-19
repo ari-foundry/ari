@@ -109,22 +109,24 @@ locations, and integrates with the existing repository fixtures.
 
 ## Debugging And Logging Roadmap
 
-Current debug output uses the existing IO and formatting surface:
+Current debug output uses the existing IO, formatting, and logging surface:
 
 - `print`, `println`, `print!`, and `println!` for simple text and formatted
   values.
 - `std::io::stderr()` with `std::io::write_all` for explicit error output.
+- `std::log` for level-prefixed `stderr` diagnostic lines.
 - `std::panic()`, `todo()`, and `unreachable()` for stop-the-program
   diagnostics.
 
-Dedicated `std::debug` or `std::log` modules do not exist yet. Add them only
-after source location and owned formatting policy are clear enough that log
+`std::log` deliberately stays small today: it provides levels, byte-slice
+messages, string messages, and convenience functions. Rich log records should
+wait until source location and owned formatting policy are clear enough that
 records can include stable file, line, function, and optional target metadata.
 
 Backtrace, stack trace, panic payloads, source location values, benchmark
-helpers, and fuzzing hooks are roadmap items. They need runtime support for
-call-frame metadata, stable panic reporting, and test runner ownership before
-they become public API guarantees.
+helpers, and fuzzing hooks are still roadmap items. They need runtime support
+for call-frame metadata, stable panic reporting, and test runner ownership
+before they become public API guarantees.
 
 ## Tests
 

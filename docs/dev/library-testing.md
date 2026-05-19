@@ -201,6 +201,9 @@ identifies the exact case:
 - `std-io-buffered.ari`: source `std::io` `BufReader`/`BufWriter` behavior
   with caller-provided buffers, exact reads, explicit flush, stdout output,
   and generated helper symbol checks.
+- `std-log-basic.ari`: source `std::log` level ordering, threshold checks,
+  byte-slice logging, string-message logging, convenience level helpers, and
+  stderr output format.
 - `std-mem-byte-ops.ari`: `std::mem` byte `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM `memcpy`/`memmove`/`memset` intrinsic
   lowering checks.

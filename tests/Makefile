@@ -187,6 +187,17 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-io-stderr.elf >$(BUILD_DIR)/prelude/std-io-stderr.out 2>$(BUILD_DIR)/prelude/std-io-stderr.err; code=$$?; test $$code -eq 3
 	grep -qx "OK" $(BUILD_DIR)/prelude/std-io-stderr.out
 	grep -qx "ERR" $(BUILD_DIR)/prelude/std-io-stderr.err
+	$(TARGET) tests/cases/standard-library/ok/log/std-log-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-log-basic.ll
+	grep -q '_ARNv3std3log7message' $(BUILD_DIR)/prelude/std-log-basic.ll
+	grep -q '_ARNv3std3log5write' $(BUILD_DIR)/prelude/std-log-basic.ll
+	grep -q "@ari_builtin_write_error_byte" $(BUILD_DIR)/prelude/std-log-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/log/std-log-basic.ari -o $(BUILD_DIR)/prelude/std-log-basic.elf
+	$(BUILD_DIR)/prelude/std-log-basic.elf >$(BUILD_DIR)/prelude/std-log-basic.out 2>$(BUILD_DIR)/prelude/std-log-basic.err; code=$$?; test $$code -eq 8
+	test ! -s $(BUILD_DIR)/prelude/std-log-basic.out
+	grep -qx "\[info\] OK" $(BUILD_DIR)/prelude/std-log-basic.err
+	grep -qx "\[warn\] careful" $(BUILD_DIR)/prelude/std-log-basic.err
+	grep -qx "\[debug\] debugging" $(BUILD_DIR)/prelude/std-log-basic.err
+	grep -qx "\[error\] broken" $(BUILD_DIR)/prelude/std-log-basic.err
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_reader__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_writer__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-buffered.ll

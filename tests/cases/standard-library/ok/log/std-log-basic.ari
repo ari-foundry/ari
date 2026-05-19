@@ -1,0 +1,33 @@
+// Covers source std::log level helpers and stderr-backed line output.
+fn main() -> i64 {
+  var score = 0;
+
+  if log::rank(log::Trace) == 0 {
+    score = score + 1;
+  }
+  if log::rank(log::Error) == 4 {
+    score = score + 1;
+  }
+  if log::enabled(log::Warn, log::Info) {
+    score = score + 1;
+  }
+  if !log::enabled(log::Debug, log::Info) {
+    score = score + 1;
+  }
+
+  var bytes = [79u8, 75u8];
+  if log::write(log::Info, bytes.as_slice()) {
+    score = score + 1;
+  }
+  if log::message(log::Warn, "careful") {
+    score = score + 1;
+  }
+  if log::debug("debugging") {
+    score = score + 1;
+  }
+  if log::error("broken") {
+    score = score + 1;
+  }
+
+  return score;
+}

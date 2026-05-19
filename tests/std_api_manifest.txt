@@ -10,6 +10,7 @@
 
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
+enum std::log::Level|check-prelude std-log-basic source logging level enum; docs/stdlib/modules/log.md
 enum std::target::Arch|check-prelude std-target-basic compiler-known architecture enum; docs/stdlib/modules/target.md
 enum std::target::DebugFormat|check-prelude std-target-basic compiler-known debug format enum; docs/stdlib/modules/target.md
 enum std::target::Env|check-prelude std-target-basic compiler-known target environment enum; docs/stdlib/modules/target.md
@@ -222,6 +223,16 @@ fn std::iter::reduce[T, I: std::Iterator[T]|check-prelude std-iter-adapters eage
 fn std::iter::skip[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy drop-count adapter; docs/stdlib/modules/iter.md
 fn std::iter::take[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy bounded adapter; docs/stdlib/modules/iter.md
 fn std::iter::zip[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy pair adapter; docs/stdlib/modules/iter.md
+fn std::log::debug|check-prelude std-log-basic debug-level string message helper; docs/stdlib/modules/log.md
+fn std::log::enabled|check-prelude std-log-basic level threshold predicate; docs/stdlib/modules/log.md
+fn std::log::error|check-prelude std-log-basic error-level string message helper; docs/stdlib/modules/log.md
+fn std::log::info|check-prelude std-log-basic info-level string message helper; docs/stdlib/modules/log.md
+fn std::log::message|check-prelude std-log-basic level-prefixed string stderr logging; docs/stdlib/modules/log.md
+fn std::log::name|check-prelude std-log-basic level label helper; docs/stdlib/modules/log.md
+fn std::log::rank|check-prelude std-log-basic level ordering helper; docs/stdlib/modules/log.md
+fn std::log::trace|check-prelude std-log-basic trace-level string message helper; docs/stdlib/modules/log.md
+fn std::log::warn|check-prelude std-log-basic warn-level string message helper; docs/stdlib/modules/log.md
+fn std::log::write|check-prelude std-log-basic level-prefixed byte-slice stderr logging; docs/stdlib/modules/log.md
 fn std::math::abs|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::div_ceil|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::div_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
@@ -793,6 +804,7 @@ module std::hash|check-prelude std-hash-basic source deterministic hashing helpe
 module std::input|prelude input tests; docs/dev/test-matrix.md Prelude row
 module std::io|prelude IO tests; docs/dev/test-matrix.md Prelude row
 module std::iter|range and iterator tests; docs/dev/test-matrix.md Control flow row
+module std::log|check-prelude std-log-basic source stderr logging module; docs/stdlib/modules/log.md
 module std::math|std math integer helper tests; docs/stdlib/overview.md module map
 module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
 module std::net|std net address value tests; docs/stdlib/modules/net.md

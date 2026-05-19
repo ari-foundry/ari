@@ -130,8 +130,38 @@ comparison, so the public names stay natural rather than type-suffixed.
 with `zone::destroy(zone)` when the test is done.
 
 Debug printing currently uses `print`, `println`, `print!`, `println!`, and
-the `std::io` writer surface. Dedicated logging, source-location values,
-benchmark helpers, fuzzing hooks, and stack/backtrace APIs are roadmap work.
+the `std::io` writer surface.
+
+Level-prefixed diagnostic logging lives in `std::log`:
+
+```ari
+log::Level
+log::Trace
+log::Debug
+log::Info
+log::Warn
+log::Error
+
+log::rank(level)
+log::name(level)
+log::enabled(level, minimum)
+log::write(level, bytes)
+log::message(level, text)
+log::trace(text)
+log::debug(text)
+log::info(text)
+log::warn(text)
+log::error(text)
+```
+
+`log::write(level, bytes)` writes a `Slice[u8]` to `stderr` as
+`[level] bytes\n`. `log::message(level, text)` writes a null-terminated Ari
+`string` the same way, and the level convenience functions call `message`.
+`enabled(level, minimum)` is an explicit threshold predicate; there is no
+global logging filter today.
+
+Source-location values, structured log records, benchmark helpers, fuzzing
+hooks, and stack/backtrace APIs are roadmap work.
 
 ## Process Context And Environment
 

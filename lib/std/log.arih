@@ -1,0 +1,136 @@
+// Minimal stderr logging helpers.
+//
+// This module is intentionally source-only. It gives tests and small tools a
+// stable logging vocabulary while richer source locations and backtraces stay
+// in the runtime roadmap.
+
+pub enum Level {
+  Trace,
+  Debug,
+  Info,
+  Warn,
+  Error,
+}
+
+pub fn rank(level: std::log::Level) -> i64 {
+  match level {
+    Trace => {
+      return 0;
+    }
+    Debug => {
+      return 1;
+    }
+    Info => {
+      return 2;
+    }
+    Warn => {
+      return 3;
+    }
+    Error => {
+      return 4;
+    }
+  }
+}
+
+pub fn name(level: std::log::Level) -> string {
+  match level {
+    Trace => {
+      return "trace";
+    }
+    Debug => {
+      return "debug";
+    }
+    Info => {
+      return "info";
+    }
+    Warn => {
+      return "warn";
+    }
+    Error => {
+      return "error";
+    }
+  }
+}
+
+pub fn enabled(level: std::log::Level, minimum: std::log::Level) -> bool {
+  return std::log::rank(level) >= std::log::rank(minimum);
+}
+
+fn write_text(writer: ref mut std::io::Stderr, text: string) -> bool {
+  let data = text as ptr u8;
+  var index = 0;
+  var byte = std::mem::ptr_load(std::mem::ptr_add(data, index));
+  while byte != (0 as u8) {
+    if !writer.write_byte(byte) {
+      return false;
+    }
+    index = index + 1;
+    byte = std::mem::ptr_load(std::mem::ptr_add(data, index));
+  }
+  return true;
+}
+
+fn write_prefix(writer: ref mut std::io::Stderr, level: std::log::Level) -> bool {
+  if !writer.write_byte(91 as u8) {
+    return false;
+  }
+  if !std::log::write_text(writer, std::log::name(level)) {
+    return false;
+  }
+  if !writer.write_byte(93 as u8) {
+    return false;
+  }
+  return writer.write_byte(32 as u8);
+}
+
+fn write_newline(writer: ref mut std::io::Stderr) -> bool {
+  return writer.write_byte(10 as u8);
+}
+
+pub fn write(level: std::log::Level, values: std::Slice[u8]) -> bool {
+  var stderr = std::io::stderr();
+  if !std::log::write_prefix(ref mut stderr, level) {
+    return false;
+  }
+  if !std::io::write_all<std::io::Stderr>(ref mut stderr, values) {
+    return false;
+  }
+  if !std::log::write_newline(ref mut stderr) {
+    return false;
+  }
+  return std::io::flush<std::io::Stderr>(ref mut stderr);
+}
+
+pub fn message(level: std::log::Level, text: string) -> bool {
+  var stderr = std::io::stderr();
+  if !std::log::write_prefix(ref mut stderr, level) {
+    return false;
+  }
+  if !std::log::write_text(ref mut stderr, text) {
+    return false;
+  }
+  if !std::log::write_newline(ref mut stderr) {
+    return false;
+  }
+  return std::io::flush<std::io::Stderr>(ref mut stderr);
+}
+
+pub fn trace(text: string) -> bool {
+  return std::log::message(Trace, text);
+}
+
+pub fn debug(text: string) -> bool {
+  return std::log::message(Debug, text);
+}
+
+pub fn info(text: string) -> bool {
+  return std::log::message(Info, text);
+}
+
+pub fn warn(text: string) -> bool {
+  return std::log::message(Warn, text);
+}
+
+pub fn error(text: string) -> bool {
+  return std::log::message(Error, text);
+}
