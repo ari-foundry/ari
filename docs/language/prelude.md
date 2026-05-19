@@ -251,6 +251,12 @@ On the LLVM backend, formatted `f32` and `f64` values use the
 same `{}` default precision and `{:.N}` fixed decimal precision surface as the
 LLVM host backend.
 
+For source-controlled integer formatting, use `std::fmt::FormatSpec` helpers
+instead of adding new type-suffixed print routines. For example,
+`fmt::unsigned_in(ref mut zone, 255u64, fmt::uppercase(fmt::hex()))` builds
+`"FF"`, and `fmt::write_unsigned<W>(ref mut writer, ref mut zone, value, spec)`
+writes the same formatting through any `std::io::Writer`.
+
 ## Qualified Formatting Names
 
 These forms are accepted:
@@ -949,6 +955,8 @@ var other_zone = zone::create(64)
 let copied_from_view = std::string::from_slice_in(ref mut other_zone, view)
 let copied = text.copy_to(ref mut other_zone)
 let copied_by_function = std::string::copy_to(ref text, ref mut other_zone)
+let hex = fmt::unsigned_in(ref mut zone, 255u64, fmt::alternate(fmt::hex()))
+let padded = fmt::unsigned_in(ref mut zone, 7u64, fmt::with_precision(fmt::octal(), 3))
 ```
 
 The handle tracks `len` separately from `capacity` and does not append a NUL
@@ -968,6 +976,10 @@ append dispatch.
 For user-defined value types, `format_in!` calls `Display::format_in` or
 `fmt::Display::format_in` with a shared borrow of the value and the same
 explicit zone, then appends the returned source string into the final output.
+`std::fmt::FormatSpec` is the source-library path for binary/octal/decimal/hex
+unsigned integers, width, integer precision, left/right/center alignment,
+uppercase digits, alternate prefixes, explicit-zone scalar text, debug text
+quoting, and writer-backed formatting helpers.
 These growth and append methods must receive the same explicit zone that
 created the handle, so provenance continues to match reset/destroy invalidation.
 Use

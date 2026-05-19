@@ -83,7 +83,11 @@ The current `std` package already provides:
   helpers, and whole/prefix ASCII parsing helpers
 - range/iterator traits and the `std::vec::Iter` implementation
 - comparison, formatting, and conversion trait surfaces, plus source
-  comparison value helpers: `min`, `max`, `clamp`, and `is_between`
+  comparison value helpers: `min`, `max`, `clamp`, and `is_between`; the
+  first `std::fmt` source helper slice covers `FormatSpec`, unsigned
+  integer binary/octal/decimal/hex formatting, width, integer precision,
+  left/right/center alignment, debug text quoting, explicit-zone string
+  helpers, and `std::io::Writer` helpers
 - `std::convert` source helpers: `identity`, `from`, and `into`
 - `std::math` integer helpers implemented in Ari source with natural names:
   `abs`, `sign`, `is_positive`, `is_negative`, `is_zero`, `is_even`,
@@ -261,7 +265,7 @@ Likely compiler work:
 | `std::test` | Grow from report aggregation into first-class test execution and diagnostics. | current `std-test-report` report counts, generic equality checks, method wrappers, scratch-zone creation, and finish status; future test discovery, per-test names/statuses, source location, richer assert messages, log capture, backtrace/stack trace, optional benchmark, and optional fuzzing hooks. | Current helpers are pure source Ari over `Report` and `Zone`. Future source locations, backtraces, and runner integration need driver/runtime metadata and panic reporting policy. |
 | `std::vec` | Iterator collection support and root/source Vec unification plan after safe accessors. | Method, `try_*` access, iterator, borrow, owner-drop, same-zone, and `std::vec::collect` tests. | Iterator lowering, generic aggregate monomorphization, and explicit-zone provenance. |
 | `std::iter` | Lazy adapter and eager consumer layer over the canonical `std::Iterator[T]` protocol. | `std-iter-adapters` covers `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, and `collect` over `Vec` cursors. | Function-pointer callback typing, declaring-module field type resolution, and general iterator protocol lowering. |
-| `std::fmt` | Source trait impls for common values. | `format_in!`, `Display`, unsupported-type diagnostics. | Macro-to-trait lowering cleanup. |
+| `std::fmt` | Source trait impls for common values, full custom formatter objects, derived/debug formatting, direct writer streaming without temporary strings, allocator-returning `format!` once default-zone policy exists. | `format_in!`, `Display`, unsupported-type diagnostics, source `FormatSpec` helpers for unsigned radix/width/precision/alignment and writer-backed formatting. | Macro-to-trait lowering cleanup and richer trait dispatch. |
 | `std::cmp` | Derived comparison impl coverage for more aggregate shapes. | Generic helper, inclusive range predicate, and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
 | `std::convert` | Concrete `From`/`Into` impl patterns and fallible conversion policy. | Identity/from/into behavior, explicit associated calls, and residual conversions. | Trait coherence and inference diagnostics. |
 | `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Sign predicate behavior, integer helper behavior, signed division rounding, checked/saturating add/sub/neg/abs behavior, and future wrapping/checked-multiply helpers. | Current checked/saturating helpers are pure source Ari; future wrapping and cross-width helpers likely need compiler intrinsics. |

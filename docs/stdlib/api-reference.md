@@ -1165,11 +1165,47 @@ operation. `collect` builds a `std::vec::Vec[T]` in the caller-provided zone.
 fmt::Debug
 fmt::Display
 Display::format_in(self: ref Self, zone: ref mut Zone)
+fmt::FormatSpec
+fmt::decimal()
+fmt::hex()
+fmt::binary()
+fmt::octal()
+fmt::with_width(spec, width)
+fmt::with_precision(spec, precision)
+fmt::left(spec)
+fmt::right(spec)
+fmt::center(spec)
+fmt::uppercase(spec)
+fmt::alternate(spec)
+fmt::unsigned_in(ref mut zone, value, spec)
+fmt::integer_in(ref mut zone, value)
+fmt::boolean_in(ref mut zone, value)
+fmt::text_in(ref mut zone, value)
+fmt::debug_text_in(ref mut zone, value)
+fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
+fmt::write_integer<W: io::Writer>(ref mut writer, ref mut zone, value)
+fmt::write_boolean<W: io::Writer>(ref mut writer, ref mut zone, value)
+fmt::write_text<W: io::Writer>(ref mut writer, ref mut zone, value)
 ```
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 and `format_in!(ref mut zone, "...", values...)`. Use `format_in!` for owned
 formatted strings because Ari does not hide a default allocation zone.
+
+`FormatSpec` is the source-controlled formatting path for unsigned integer
+bases, width, integer precision, alignment, uppercase digits, and alternate
+prefixes. Build a spec from a base helper and modifiers:
+
+```ari
+let spec = fmt::alternate(fmt::uppercase(fmt::with_width(fmt::hex(), 6)));
+let text = fmt::unsigned_in(ref mut zone, 255u64, spec);
+```
+
+`integer_in`, `boolean_in`, `text_in`, and `debug_text_in` are small
+allocator-backed helpers for common scalar/text values. `write_*` helpers
+format through an explicit temporary zone and then write to any `io::Writer`.
+Full custom formatter objects, derived debug output, and direct streaming
+formatters remain roadmap work.
 
 ## Comparison
 

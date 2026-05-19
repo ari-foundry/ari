@@ -1,0 +1,72 @@
+// Covers source std::fmt FormatSpec helpers, allocator-backed formatting, and
+// Writer-backed formatting without relying on compiler format macro lowering.
+struct MemoryWriter {
+  data: Slice[u8],
+  mut position: i64,
+}
+
+impl io::Writer for MemoryWriter {
+  fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if self.position >= self.data.len {
+      return false;
+    }
+    ptr_store(ptr_add(self.data.as_ptr(), self.position), value);
+    self.position = self.position + 1;
+    return true;
+  }
+
+  fn flush(self: ref mut Self) -> bool {
+    return true;
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var score = 0;
+
+  var padded = fmt::unsigned_in(ref mut zone, 255u64, fmt::with_width(fmt::hex(), 4));
+  if padded.len() == 4 && padded.get(0) == 32u8 && padded.get(2) == 102u8 && padded.get(3) == 102u8 {
+    score = score + 1;
+  }
+
+  var binary = fmt::unsigned_in(ref mut zone, 10u64, fmt::alternate(fmt::binary()));
+  if binary.len() == 6 && binary.get(0) == 48u8 && binary.get(1) == 98u8 && binary.get(5) == 48u8 {
+    score = score + 1;
+  }
+
+  var upper = fmt::unsigned_in(ref mut zone, 255u64, fmt::uppercase(fmt::hex()));
+  if upper.len() == 2 && upper.get(0) == 70u8 && upper.get(1) == 70u8 {
+    score = score + 1;
+  }
+
+  var precise = fmt::unsigned_in(ref mut zone, 7u64, fmt::with_precision(fmt::octal(), 3));
+  if precise.len() == 3 && precise.get(0) == 48u8 && precise.get(1) == 48u8 && precise.get(2) == 55u8 {
+    score = score + 1;
+  }
+
+  var left = fmt::unsigned_in(ref mut zone, 7u64, fmt::left(fmt::with_width(fmt::decimal(), 3)));
+  if left.len() == 3 && left.get(0) == 55u8 && left.get(1) == 32u8 && left.get(2) == 32u8 {
+    score = score + 1;
+  }
+
+  var integer = fmt::integer_in(ref mut zone, -42);
+  if integer.len() == 3 && integer.get(0) == 45u8 && integer.get(2) == 50u8 {
+    score = score + 1;
+  }
+
+  var quoted = fmt::debug_text_in(ref mut zone, "ari");
+  if quoted.len() == 5 && quoted.get(0) == 34u8 && quoted.get(4) == 34u8 {
+    score = score + 1;
+  }
+
+  var buffer = [0u8, 0u8, 0u8, 0u8];
+  var writer = MemoryWriter { data: buffer.as_slice(), position: 0 };
+  if fmt::write_unsigned<MemoryWriter>(ref mut writer, ref mut zone, 31u64, fmt::uppercase(fmt::hex())) {
+    if buffer[0] == 49u8 && buffer[1] == 70u8 && writer.position == 2 {
+      score = score + 1;
+    }
+  }
+
+  zone::destroy(zone);
+  return score;
+}

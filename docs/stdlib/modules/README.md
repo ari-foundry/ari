@@ -32,8 +32,10 @@ limits, examples, and test files for one module.
   explicit-zone provenance.
 - [std::iter](iter.md): range constructors plus the minimal iterator traits
   used by `for` loops and collection cursors.
-- [std::fmt](fmt.md): `Debug` and `Display` trait surface, plus the current
-  split between `format_in!` macro lowering and source formatting traits.
+- [std::fmt](fmt.md): `Debug` and `Display` trait surface, source
+  `FormatSpec` helpers for radix/width/precision/alignment, explicit-zone
+  scalar text helpers, writer-backed formatting, and the current split between
+  `format_in!` macro lowering and source formatting APIs.
 - [std::cmp](cmp.md): source comparison traits, generic value selection,
   inclusive clamping, and inclusive range predicates.
 - [std::algo](algo.md): source slice algorithms for sorting, binary search,

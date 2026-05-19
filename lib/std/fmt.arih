@@ -4,3 +4,289 @@ pub trait Debug {
 pub trait Display {
   fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String;
 }
+
+pub struct FormatSpec {
+  base: i64,
+  width: i64,
+  precision: i64,
+  // Alignment uses small source constants until enum field access is more
+  // ergonomic: 0 = right, 1 = left, 2 = center.
+  align: i64,
+  uppercase: bool,
+  alternate: bool,
+}
+
+fn make_spec(base: i64) -> std::fmt::FormatSpec {
+  std::assert(base == 2 || base == 8 || base == 10 || base == 16);
+  return std::fmt::FormatSpec {
+    base: base,
+    width: 0,
+    precision: -1,
+    align: 0,
+    uppercase: false,
+    alternate: false,
+  };
+}
+
+pub fn decimal() -> std::fmt::FormatSpec {
+  return make_spec(10);
+}
+
+pub fn hex() -> std::fmt::FormatSpec {
+  return make_spec(16);
+}
+
+pub fn binary() -> std::fmt::FormatSpec {
+  return make_spec(2);
+}
+
+pub fn octal() -> std::fmt::FormatSpec {
+  return make_spec(8);
+}
+
+pub fn with_width(spec: std::fmt::FormatSpec, width: i64) -> std::fmt::FormatSpec {
+  std::assert(width >= 0);
+  return std::fmt::FormatSpec {
+    base: spec.base,
+    width: width,
+    precision: spec.precision,
+    align: spec.align,
+    uppercase: spec.uppercase,
+    alternate: spec.alternate,
+  };
+}
+
+pub fn with_precision(spec: std::fmt::FormatSpec, precision: i64) -> std::fmt::FormatSpec {
+  std::assert(precision >= 0);
+  return std::fmt::FormatSpec {
+    base: spec.base,
+    width: spec.width,
+    precision: precision,
+    align: spec.align,
+    uppercase: spec.uppercase,
+    alternate: spec.alternate,
+  };
+}
+
+pub fn left(spec: std::fmt::FormatSpec) -> std::fmt::FormatSpec {
+  return std::fmt::FormatSpec {
+    base: spec.base,
+    width: spec.width,
+    precision: spec.precision,
+    align: 1,
+    uppercase: spec.uppercase,
+    alternate: spec.alternate,
+  };
+}
+
+pub fn right(spec: std::fmt::FormatSpec) -> std::fmt::FormatSpec {
+  return std::fmt::FormatSpec {
+    base: spec.base,
+    width: spec.width,
+    precision: spec.precision,
+    align: 0,
+    uppercase: spec.uppercase,
+    alternate: spec.alternate,
+  };
+}
+
+pub fn center(spec: std::fmt::FormatSpec) -> std::fmt::FormatSpec {
+  return std::fmt::FormatSpec {
+    base: spec.base,
+    width: spec.width,
+    precision: spec.precision,
+    align: 2,
+    uppercase: spec.uppercase,
+    alternate: spec.alternate,
+  };
+}
+
+pub fn uppercase(spec: std::fmt::FormatSpec) -> std::fmt::FormatSpec {
+  return std::fmt::FormatSpec {
+    base: spec.base,
+    width: spec.width,
+    precision: spec.precision,
+    align: spec.align,
+    uppercase: true,
+    alternate: spec.alternate,
+  };
+}
+
+pub fn alternate(spec: std::fmt::FormatSpec) -> std::fmt::FormatSpec {
+  return std::fmt::FormatSpec {
+    base: spec.base,
+    width: spec.width,
+    precision: spec.precision,
+    align: spec.align,
+    uppercase: spec.uppercase,
+    alternate: true,
+  };
+}
+
+fn prefix_len(spec: std::fmt::FormatSpec) -> i64 {
+  if !spec.alternate {
+    return 0;
+  }
+  if spec.base == 2 || spec.base == 8 || spec.base == 16 {
+    return 2;
+  }
+  return 0;
+}
+
+fn digit_len(value: u64, base: i64) -> i64 {
+  let radix = base as u64;
+  var remaining = value;
+  var count = 1;
+  while remaining >= radix {
+    remaining = remaining / radix;
+    count = count + 1;
+  }
+  return count;
+}
+
+fn append_padding(output: ref mut std::string::String, count: i64) -> void {
+  var index = 0;
+  while index < count {
+    output.push(32 as u8);
+    index = index + 1;
+  }
+}
+
+fn append_zero_padding(output: ref mut std::string::String, count: i64) -> void {
+  var index = 0;
+  while index < count {
+    output.push(48 as u8);
+    index = index + 1;
+  }
+}
+
+fn append_prefix(output: ref mut std::string::String, spec: std::fmt::FormatSpec) -> void {
+  if !spec.alternate {
+    return;
+  }
+  if spec.base == 2 {
+    output.push(48 as u8);
+    output.push(98 as u8);
+    return;
+  }
+  if spec.base == 8 {
+    output.push(48 as u8);
+    output.push(111 as u8);
+    return;
+  }
+  if spec.base == 16 {
+    output.push(48 as u8);
+    if spec.uppercase {
+      output.push(88 as u8);
+      return;
+    }
+    output.push(120 as u8);
+  }
+}
+
+fn append_digit(output: ref mut std::string::String, digit: i64, uppercase: bool) -> void {
+  if digit < 10 {
+    output.push((digit + 48) as u8);
+    return;
+  }
+  if uppercase {
+    output.push((digit - 10 + 65) as u8);
+    return;
+  }
+  output.push((digit - 10 + 97) as u8);
+}
+
+fn append_digits(output: ref mut std::string::String, value: u64, base: i64, uppercase: bool) -> void {
+  let radix = base as u64;
+  if value >= radix {
+    append_digits(output, value / radix, base, uppercase);
+  }
+  append_digit(output, (value % radix) as i64, uppercase);
+}
+
+pub fn unsigned_in(zone: ref mut Zone, value: u64, spec: std::fmt::FormatSpec) -> std::string::String {
+  std::assert(spec.base == 2 || spec.base == 8 || spec.base == 10 || spec.base == 16);
+  std::assert(spec.width >= 0);
+  std::assert(spec.precision >= -1);
+  std::assert(spec.align >= 0);
+  std::assert(spec.align <= 2);
+
+  let digits = digit_len(value, spec.base);
+  var zero_padding = 0;
+  if spec.precision > digits {
+    zero_padding = spec.precision - digits;
+  }
+
+  let body_width = prefix_len(spec) + zero_padding + digits;
+  var outer_padding = 0;
+  if spec.width > body_width {
+    outer_padding = spec.width - body_width;
+  }
+
+  var left_padding = outer_padding;
+  var right_padding = 0;
+  if spec.align == 1 {
+    left_padding = 0;
+    right_padding = outer_padding;
+  }
+  if spec.align == 2 {
+    left_padding = outer_padding / 2;
+    right_padding = outer_padding - left_padding;
+  }
+
+  var capacity = body_width;
+  if spec.width > capacity {
+    capacity = spec.width;
+  }
+  var output = std::string::new(zone, capacity);
+  append_padding(ref mut output, left_padding);
+  append_prefix(ref mut output, spec);
+  append_zero_padding(ref mut output, zero_padding);
+  append_digits(ref mut output, value, spec.base, spec.uppercase);
+  append_padding(ref mut output, right_padding);
+  return output;
+}
+
+pub fn integer_in(zone: ref mut Zone, value: i64) -> std::string::String {
+  var output = std::string::new(zone, 20);
+  output.append_i64_in(zone, value);
+  return output;
+}
+
+pub fn boolean_in(zone: ref mut Zone, value: bool) -> std::string::String {
+  var output = std::string::new(zone, 5);
+  output.append_bool_in(zone, value);
+  return output;
+}
+
+pub fn text_in(zone: ref mut Zone, value: string) -> std::string::String {
+  return std::string::from_string(zone, value);
+}
+
+pub fn debug_text_in(zone: ref mut Zone, value: string) -> std::string::String {
+  var output = std::string::new(zone, 2);
+  output.append_string_in(zone, "\"");
+  output.append_string_in(zone, value);
+  output.append_string_in(zone, "\"");
+  return output;
+}
+
+pub fn write_unsigned[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: std::fmt::FormatSpec) -> bool {
+  var text = std::fmt::unsigned_in(zone, value, spec);
+  return std::io::write_all<W>(writer, text.as_slice());
+}
+
+pub fn write_integer[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> bool {
+  var text = std::fmt::integer_in(zone, value);
+  return std::io::write_all<W>(writer, text.as_slice());
+}
+
+pub fn write_boolean[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: bool) -> bool {
+  var text = std::fmt::boolean_in(zone, value);
+  return std::io::write_all<W>(writer, text.as_slice());
+}
+
+pub fn write_text[W: std::io::Writer](writer: ref mut W, zone: ref mut Zone, value: string) -> bool {
+  var text = std::fmt::text_in(zone, value);
+  return std::io::write_all<W>(writer, text.as_slice());
+}

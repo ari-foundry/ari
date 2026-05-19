@@ -43,6 +43,9 @@ identifies the exact case:
   provenance diagnostic for copied trim results.
 - `std-string-try-byte-access.ari`: source `std::string` Option-returning
   byte access and empty pop behavior.
+- `std-fmt-format-spec.ari`: source `std::fmt::FormatSpec` helper behavior,
+  unsigned radix/width/precision/alignment formatting, debug text quoting,
+  explicit-zone strings, and `io::Writer` output.
 - `std-context-args.ari`: runtime-backed `std::context` argument and thread-id
   access, source context predicates, and root alias behavior.
 - `std-test-report.ari`: source `std::test::Report` aggregation, generic
