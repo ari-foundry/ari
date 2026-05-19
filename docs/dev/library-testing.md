@@ -35,6 +35,8 @@ identifies the exact case:
   views and whole-string parsing behavior.
 - `std-string-ascii-case-helpers.ari`: source `std::string` ASCII-only
   case-insensitive comparison and first-match search helpers.
+- `std-string-unicode-helpers.ari`: source `std::string` UTF-8 validation,
+  code-point access, and scalar append convenience methods.
 - `std-string-prefix-parsers.ari`: source `std::string` prefix parser
   conveniences over the `std::ascii` parser result shape.
 - `std-string-trim-copy.ari`: source `std::string` owned ASCII trim copies
@@ -128,6 +130,9 @@ identifies the exact case:
   whole-input behavior.
 - `std-encoding-text.ari`: source `std::encoding` ASCII, UTF-8, and UTF-16
   validation/counting behavior.
+- `std-encoding-utf8-codepoints.ari`: source `std::encoding` UTF-8 lead-byte
+  width, Unicode scalar validation, byte-offset decoding, next-index, and
+  scalar encoding behavior.
 - `std-encoding-codec.ari`: source `std::encoding` hex/base64 length,
   encode, decode, and invalid-input guard behavior.
 - `std-path-basic.ari`: source `std::path` POSIX-style separator policy,

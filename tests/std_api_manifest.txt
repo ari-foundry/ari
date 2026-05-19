@@ -130,13 +130,19 @@ fn std::encoding::decode_base64_in|check-prelude std-encoding-codec standard bas
 fn std::encoding::decode_hex_in|check-prelude std-encoding-codec hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_base64_in|check-prelude std-encoding-codec standard base64 zone-backed encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_hex_in|check-prelude std-encoding-codec lowercase hexadecimal zone-backed encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_utf8_in|check-prelude std-encoding-utf8-codepoints UTF-8 scalar encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::hex_decoded_len|check-prelude std-encoding-codec hexadecimal decoded length validator; docs/stdlib/modules/encoding.md
 fn std::encoding::hex_encoded_len|check-prelude std-encoding-codec hexadecimal encoded length helper; docs/stdlib/modules/encoding.md
 fn std::encoding::is_ascii|check-prelude std-encoding-text ASCII byte-slice validation; docs/stdlib/modules/encoding.md
+fn std::encoding::is_unicode_scalar|check-prelude std-encoding-utf8-codepoints Unicode scalar value predicate; docs/stdlib/modules/encoding.md
 fn std::encoding::is_utf16|check-prelude std-encoding-text UTF-16 boolean validation; docs/stdlib/modules/encoding.md
 fn std::encoding::is_utf8|check-prelude std-encoding-text UTF-8 boolean validation; docs/stdlib/modules/encoding.md
 fn std::encoding::utf16_count|check-prelude std-encoding-text UTF-16 code-point count validator; docs/stdlib/modules/encoding.md
+fn std::encoding::utf8_at|check-prelude std-encoding-utf8-codepoints UTF-8 scalar decode at byte offset; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_count|check-prelude std-encoding-text UTF-8 code-point count validator; docs/stdlib/modules/encoding.md
+fn std::encoding::utf8_encoded_len|check-prelude std-encoding-utf8-codepoints UTF-8 scalar encoded length helper; docs/stdlib/modules/encoding.md
+fn std::encoding::utf8_next_index|check-prelude std-encoding-utf8-codepoints UTF-8 next byte offset helper; docs/stdlib/modules/encoding.md
+fn std::encoding::utf8_width|check-prelude std-encoding-utf8-codepoints UTF-8 lead-byte width helper; docs/stdlib/modules/encoding.md
 fn std::env::arg|check-prelude std-env-args argument wrapper; docs/stdlib/modules/env.md
 fn std::env::arg_count|check-prelude std-env-args argument count wrapper; docs/stdlib/modules/env.md
 fn std::env::current_dir|check-prelude std-env-paths current directory hook; docs/stdlib/modules/env.md
@@ -677,6 +683,9 @@ method std::collections::TreeSet[T]::len|check-prelude std-collections-tree meta
 method std::collections::TreeSet[T]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
+method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Char::next_index|check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Char::scalar|check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md
 method std::error::Error::code|check-prelude std-error-basic error platform code method; docs/stdlib/modules/error.md
 method std::error::Error::is_interrupted|check-prelude std-error-basic interrupted predicate method; docs/stdlib/modules/error.md
 method std::error::Error::is_kind|check-prelude std-error-basic error-kind predicate method; docs/stdlib/modules/error.md
@@ -746,6 +755,8 @@ method std::string::String::as_ptr|check-prelude std-string-handle borrowed rece
 method std::string::String::as_slice|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::capacity|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::clear|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::codepoint_at|check-prelude std-string-unicode-helpers UTF-8 scalar decode at byte offset; docs/stdlib/modules/string.md
+method std::string::String::codepoint_count|check-prelude std-string-unicode-helpers UTF-8 scalar count validator; docs/stdlib/modules/string.md
 method std::string::String::contains|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::contains_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only search; docs/stdlib/api-reference.md String section
 method std::string::String::copy_to|check-prelude std-string-copy-to-method borrowed receiver and target reset tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -762,6 +773,7 @@ method std::string::String::index_of_ignore_case|check-prelude std-string-ascii-
 method std::string::String::insert|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::insert_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::is_empty|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::is_utf8|check-prelude std-string-unicode-helpers UTF-8 validation convenience method; docs/stdlib/modules/string.md
 method std::string::String::last|check-prelude std-string-first-last borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::len|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::parse_decimal|check-prelude std-string-ascii-helpers whole-string ASCII decimal parser; docs/stdlib/api-reference.md String section
@@ -770,6 +782,7 @@ method std::string::String::parse_hex|check-prelude std-string-ascii-helpers who
 method std::string::String::parse_hex_prefix|check-prelude std-string-prefix-parsers leading ASCII hexadecimal parser; docs/stdlib/api-reference.md String section
 method std::string::String::pop|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::push_codepoint_in|check-prelude std-string-unicode-helpers UTF-8 scalar append convenience method; docs/stdlib/modules/string.md
 method std::string::String::push_in|check-prelude std-string-grow and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::replace|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::reserve|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
@@ -940,6 +953,7 @@ struct std::collections::TreeMapValues[V]|std collections tree iterator tests; d
 struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSetIter[T]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
+struct std::encoding::Utf8Char|check-prelude std-encoding-utf8-codepoints decoded UTF-8 scalar value; docs/stdlib/modules/encoding.md
 struct std::error::Error|check-prelude std-error-basic compact shared error value; docs/stdlib/modules/error.md
 struct std::fmt::FormatSpec|check-prelude std-fmt-format-spec source formatting options; docs/stdlib/modules/fmt.md
 struct std::fs::File|std fs file handle tests; docs/stdlib/modules/fs.md

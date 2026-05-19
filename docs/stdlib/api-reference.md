@@ -1118,6 +1118,10 @@ text.append_u64_in(ref mut zone, value)
 text.append_bool_in(ref mut zone, value)
 text.append_f32_in(ref mut zone, value, precision)
 text.append_f64_in(ref mut zone, value, precision)
+text.push_codepoint_in(ref mut zone, scalar)
+text.is_utf8()
+text.codepoint_count()
+text.codepoint_at(byte_index)
 text.trim_start()
 text.trim_start_to(ref mut zone)
 text.trim_end()
@@ -1144,6 +1148,13 @@ target zone and return owned `String` handles. The whole parse methods require
 the whole string to be valid and return `Option[i64]`; prefix parsers return
 `Option[std::ascii::ParsedInt]` and stop before the first invalid byte. Trim
 first when leading or trailing ASCII whitespace should be ignored.
+
+The UTF-8 helpers reuse `std::encoding`. `is_utf8` validates the whole byte
+string, `codepoint_count` returns an `Option[i64]` scalar count, and
+`codepoint_at` decodes one scalar at a byte offset into
+`Option[std::encoding::Utf8Char]`. `push_codepoint_in` appends one Unicode
+scalar encoded as UTF-8 and panics for invalid scalar values. These helpers
+work with Unicode scalar values, not grapheme clusters or normalization.
 
 `std::boxed::Box[T]` is a zone-backed single-value owner:
 
@@ -1525,8 +1536,14 @@ compiler does not lower float enum payloads yet.
 
 ```ari
 encoding::is_ascii(bytes)
+encoding::is_unicode_scalar(scalar)
 encoding::utf8_count(bytes)
 encoding::is_utf8(bytes)
+encoding::utf8_width(first_byte)
+encoding::utf8_encoded_len(scalar)
+encoding::utf8_at(bytes, byte_index)
+encoding::utf8_next_index(bytes, byte_index)
+encoding::encode_utf8_in(ref mut zone, scalar)
 encoding::utf16_count(words)
 encoding::is_utf16(words)
 encoding::hex_encoded_len(bytes)
@@ -1542,13 +1559,16 @@ encoding::decode_base64_in(ref mut zone, bytes)
 ```
 
 `utf8_count` and `utf16_count` validate and return code-point counts through
-`Option[i64]`; the `is_*` forms return only a bool. Hex encoding emits
-lowercase digits and decoding accepts ASCII hex digits. Base64 uses the
-standard `+`/`/` alphabet with `=` padding. Decoders panic on invalid input, so
-call `can_decode_hex`, `hex_decoded_len`, `can_decode_base64`, or
-`base64_decoded_len` before decoding untrusted input. `Option[String]` and
-`Result[String, E]` decoder wrappers are future work because zone-backed enum
-payloads are not supported yet.
+`Option[i64]`; the `is_*` forms return only a bool. `Utf8Char` is the decoded
+UTF-8 scalar wrapper with `scalar()`, `len()`, and `next_index(byte_index)`.
+`utf8_at` validates at one byte offset, while `utf8_width` only classifies a
+lead byte. `encode_utf8_in` returns an owned byte `String` for one Unicode
+scalar. Hex encoding emits lowercase digits and decoding accepts ASCII hex
+digits. Base64 uses the standard `+`/`/` alphabet with `=` padding. Decoders
+panic on invalid input, so call `can_decode_hex`, `hex_decoded_len`,
+`can_decode_base64`, or `base64_decoded_len` before decoding untrusted input.
+`Option[String]` and `Result[String, E]` decoder wrappers are future work
+because zone-backed enum payloads are not supported yet.
 
 ## Choosing The Right Collection
 

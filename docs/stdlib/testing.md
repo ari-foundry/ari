@@ -32,6 +32,7 @@ prelude-slice-option-access.ari
 std-string-append-u64.ari
 std-string-ascii-helpers.ari
 std-string-ascii-case-helpers.ari
+std-string-unicode-helpers.ari
 std-string-prefix-parsers.ari
 std-string-trim-copy.ari
 std-string-trim-to-after-target-reset.ari
@@ -67,6 +68,7 @@ std-algo-slice-helpers.ari
 std-hash-basic.ari
 std-parse-basic.ari
 std-encoding-text.ari
+std-encoding-utf8-codepoints.ari
 std-encoding-codec.ari
 std-path-basic.ari
 std-path-components.ari

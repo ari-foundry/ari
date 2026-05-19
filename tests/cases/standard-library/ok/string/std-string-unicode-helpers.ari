@@ -1,0 +1,72 @@
+// Covers String convenience methods that reuse std::encoding's UTF-8 policy.
+fn expect_char(value: std::Option[std::encoding::Utf8Char], scalar: u32, len: i64, index: i64) -> bool {
+  match value {
+    std::Some(ch) => {
+      return ch.scalar() == scalar && ch.len() == len && ch.next_index(index) == index + len;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn expect_no_char(value: std::Option[std::encoding::Utf8Char]) -> bool {
+  match value {
+    std::Some(_) => {}
+    std::None => {
+      return true;
+    }
+  }
+  return false;
+}
+
+fn expect_no_i64(value: std::Option[i64]) -> bool {
+  match value {
+    std::Some(_) => {}
+    std::None => {
+      return true;
+    }
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(48);
+  var bytes = [65u8, 195u8, 169u8, 226u8, 130u8, 172u8, 240u8, 159u8, 152u8, 128u8];
+  var text = std::string::from_slice_in(ref mut zone, bytes.as_slice());
+
+  var score = 0;
+  if text.is_utf8() {
+    score = score + 1;
+  }
+  if text.codepoint_count().unwrap_or(0) == 4 {
+    score = score + 1;
+  }
+  if expect_char(text.codepoint_at(1), 233u32, 2, 1) {
+    score = score + 1;
+  }
+  if expect_char(text.codepoint_at(6), 128512u32, 4, 6) {
+    score = score + 1;
+  }
+
+  var built = std::string::new(ref mut zone, 1);
+  built.push_codepoint_in(ref mut zone, 65u32);
+  built.push_codepoint_in(ref mut zone, 233u32);
+  built.push_codepoint_in(ref mut zone, 8364u32);
+  built.push_codepoint_in(ref mut zone, 128512u32);
+  if built.equals(bytes.as_slice()) {
+    score = score + 1;
+  }
+
+  var invalid_bytes = [240u8, 40u8, 140u8, 40u8];
+  var invalid = std::string::from_slice_in(ref mut zone, invalid_bytes.as_slice());
+  if !invalid.is_utf8() && expect_no_i64(invalid.codepoint_count()) {
+    score = score + 1;
+  }
+  if expect_no_char(invalid.codepoint_at(0)) && expect_no_char(text.codepoint_at(2)) {
+    score = score + 1;
+  }
+
+  zone::destroy(zone);
+  assert_eq_i64(score, 7);
+  return score;
+}

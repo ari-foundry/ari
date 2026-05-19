@@ -4,6 +4,25 @@
 // The validation routines avoid allocation and return Option counts when a
 // caller needs both validation and decoded code-point length.
 
+pub struct Utf8Char {
+  scalar: u32,
+  len: i64,
+}
+
+pub impl std::encoding::Utf8Char {
+  fn scalar(self: ref Self) -> u32 {
+    return self.scalar;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn next_index(self: ref Self, index: i64) -> i64 {
+    return index + self.len;
+  }
+}
+
 fn hex_digit(value: i64) -> u8 {
   if value < 10 {
     return (value + 48) as u8;
@@ -57,6 +76,13 @@ fn is_utf8_continuation(value: u8) -> bool {
   return value <= (191 as u8);
 }
 
+fn is_surrogate_scalar(value: u32) -> bool {
+  if value < 55296u32 {
+    return false;
+  }
+  return value <= 57343u32;
+}
+
 fn is_high_surrogate(value: u16) -> bool {
   if value < (55296 as u16) {
     return false;
@@ -80,6 +106,143 @@ pub fn is_ascii(values: std::Slice[u8]) -> bool {
     index = index + 1;
   }
   return true;
+}
+
+pub fn is_unicode_scalar(value: u32) -> bool {
+  return value <= 1114111u32 && !is_surrogate_scalar(value);
+}
+
+pub fn utf8_width(first: u8) -> std::Option[i64] {
+  if first <= (127 as u8) {
+    return std::Some<i64>(1);
+  }
+  if first >= (194 as u8) && first <= (223 as u8) {
+    return std::Some<i64>(2);
+  }
+  if first >= (224 as u8) && first <= (239 as u8) {
+    return std::Some<i64>(3);
+  }
+  if first >= (240 as u8) && first <= (244 as u8) {
+    return std::Some<i64>(4);
+  }
+  return std::None<i64>();
+}
+
+pub fn utf8_encoded_len(value: u32) -> std::Option[i64] {
+  if !is_unicode_scalar(value) {
+    return std::None<i64>();
+  }
+  if value <= 127u32 {
+    return std::Some<i64>(1);
+  }
+  if value <= 2047u32 {
+    return std::Some<i64>(2);
+  }
+  if value <= 65535u32 {
+    return std::Some<i64>(3);
+  }
+  return std::Some<i64>(4);
+}
+
+pub fn utf8_at(values: std::Slice[u8], index: i64) -> std::Option[std::encoding::Utf8Char] {
+  if index < 0 {
+    return std::None<std::encoding::Utf8Char>();
+  }
+  if index >= values.len {
+    return std::None<std::encoding::Utf8Char>();
+  }
+
+  let first = values[index];
+  if first <= (127 as u8) {
+    return std::Some<std::encoding::Utf8Char>(Utf8Char { scalar: first as u32, len: 1 });
+  }
+
+  if first >= (194 as u8) && first <= (223 as u8) {
+    if index + 1 >= values.len {
+      return std::None<std::encoding::Utf8Char>();
+    }
+    let second2 = values[index + 1];
+    if !is_utf8_continuation(second2) {
+      return std::None<std::encoding::Utf8Char>();
+    }
+    let scalar2 = (((first as u32) - 192u32) * 64u32) + ((second2 as u32) - 128u32);
+    return std::Some<std::encoding::Utf8Char>(Utf8Char { scalar: scalar2, len: 2 });
+  }
+
+  if first >= (224 as u8) && first <= (239 as u8) {
+    if index + 2 >= values.len {
+      return std::None<std::encoding::Utf8Char>();
+    }
+    let second3 = values[index + 1];
+    let third3 = values[index + 2];
+    if !is_utf8_continuation(second3) {
+      return std::None<std::encoding::Utf8Char>();
+    }
+    if !is_utf8_continuation(third3) {
+      return std::None<std::encoding::Utf8Char>();
+    }
+    if first == (224 as u8) {
+      if second3 < (160 as u8) {
+        return std::None<std::encoding::Utf8Char>();
+      }
+    }
+    if first == (237 as u8) {
+      if second3 >= (160 as u8) {
+        return std::None<std::encoding::Utf8Char>();
+      }
+    }
+    let scalar3 =
+      (((first as u32) - 224u32) * 4096u32) +
+      (((second3 as u32) - 128u32) * 64u32) +
+      ((third3 as u32) - 128u32);
+    return std::Some<std::encoding::Utf8Char>(Utf8Char { scalar: scalar3, len: 3 });
+  }
+
+  if first >= (240 as u8) && first <= (244 as u8) {
+    if index + 3 >= values.len {
+      return std::None<std::encoding::Utf8Char>();
+    }
+    let second4 = values[index + 1];
+    let third4 = values[index + 2];
+    let fourth4 = values[index + 3];
+    if !is_utf8_continuation(second4) {
+      return std::None<std::encoding::Utf8Char>();
+    }
+    if !is_utf8_continuation(third4) {
+      return std::None<std::encoding::Utf8Char>();
+    }
+    if !is_utf8_continuation(fourth4) {
+      return std::None<std::encoding::Utf8Char>();
+    }
+    if first == (240 as u8) {
+      if second4 < (144 as u8) {
+        return std::None<std::encoding::Utf8Char>();
+      }
+    }
+    if first == (244 as u8) {
+      if second4 >= (144 as u8) {
+        return std::None<std::encoding::Utf8Char>();
+      }
+    }
+    let scalar4 =
+      (((first as u32) - 240u32) * 262144u32) +
+      (((second4 as u32) - 128u32) * 4096u32) +
+      (((third4 as u32) - 128u32) * 64u32) +
+      ((fourth4 as u32) - 128u32);
+    return std::Some<std::encoding::Utf8Char>(Utf8Char { scalar: scalar4, len: 4 });
+  }
+
+  return std::None<std::encoding::Utf8Char>();
+}
+
+pub fn utf8_next_index(values: std::Slice[u8], index: i64) -> std::Option[i64] {
+  match utf8_at(values, index) {
+    std::Some(value) => {
+      return std::Some<i64>(value.next_index(index));
+    }
+    std::None => {}
+  }
+  return std::None<i64>();
 }
 
 pub fn utf8_count(values: std::Slice[u8]) -> std::Option[i64] {
@@ -202,6 +365,41 @@ pub fn is_utf16(values: std::Slice[u16]) -> bool {
       return false;
     }
   }
+}
+
+pub fn encode_utf8_in(zone: ref mut Zone, value: u32) -> std::string::String {
+  var length = 0;
+  match utf8_encoded_len(value) {
+    std::Some(width) => {
+      length = width;
+    }
+    std::None => {
+      std::panic();
+    }
+  }
+
+  var output = std::string::new(zone, length);
+  if value <= 127u32 {
+    output.push_in(zone, value as u8);
+    return output;
+  }
+  if value <= 2047u32 {
+    output.push_in(zone, ((value / 64u32) + 192u32) as u8);
+    output.push_in(zone, ((value % 64u32) + 128u32) as u8);
+    return output;
+  }
+  if value <= 65535u32 {
+    output.push_in(zone, ((value / 4096u32) + 224u32) as u8);
+    output.push_in(zone, (((value / 64u32) % 64u32) + 128u32) as u8);
+    output.push_in(zone, ((value % 64u32) + 128u32) as u8);
+    return output;
+  }
+
+  output.push_in(zone, ((value / 262144u32) + 240u32) as u8);
+  output.push_in(zone, (((value / 4096u32) % 64u32) + 128u32) as u8);
+  output.push_in(zone, (((value / 64u32) % 64u32) + 128u32) as u8);
+  output.push_in(zone, ((value % 64u32) + 128u32) as u8);
+  return output;
 }
 
 pub fn hex_encoded_len(values: std::Slice[u8]) -> i64 {

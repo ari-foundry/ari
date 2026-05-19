@@ -9,8 +9,8 @@ limits, examples, and test files for one module.
 - [std::option and std::result](option-result.md): ADT helpers for absence,
   failure, conversion, and lazy fallback.
 - [std::string](string.md): zone-backed owned byte-string handles, growth,
-  borrowed views, byte search, ASCII case search, trim views/copies, and
-  whole/prefix parsing helpers.
+  borrowed views, byte search, ASCII case search, UTF-8 scalar helpers, trim
+  views/copies, and whole/prefix parsing helpers.
 - [std::io](io.md): low-level process IO hooks plus `Reader`/`Writer`/`Seek`,
   `stdin`/`stdout`/`stderr`, `Cursor`, caller-buffered
   `BufReader`/`BufWriter`, exact reads, whole-slice writes, and current
@@ -86,7 +86,8 @@ limits, examples, and test files for one module.
 - [std::parse](parse.md): whole-input ASCII-trimmed integer, bool, and
   decimal float parsers with natural validation/fallback helpers.
 - [std::encoding](encoding.md): ASCII, UTF-8, and UTF-16 validation/counting
-  plus lowercase hex and standard base64 encode/decode helpers.
+  plus UTF-8 scalar decode/encode, lowercase hex, and standard base64
+  encode/decode helpers.
 - [std::math](math.md): source-only `i64` arithmetic helpers for signs,
   predicates, checked/wrapping/overflowing/saturating overflow policy, powers,
   division rounding, greatest common divisor, and least common multiple.

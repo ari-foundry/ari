@@ -122,7 +122,9 @@ grow-on-demand `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in`, plus `append_string_in`,
 `append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`,
 `append_f64_in`, `truncate`, `clear`,
-byte search with `contains`, `index_of`, and `count`, `as_ptr`, `as_slice`,
+byte search with `contains`, `index_of`, and `count`, UTF-8 validation and
+scalar helpers with `is_utf8`, `codepoint_count`, `codepoint_at(byte_index)`,
+and `push_codepoint_in(ref mut Zone, scalar)`, `as_ptr`, `as_slice`,
 `equals(Slice[u8])`, `starts_with(Slice[u8])`, `ends_with(Slice[u8])`,
 method-style `copy_to(ref mut Zone)`, and top-level
 `std::string::copy_to(ref value, ref mut Zone)`. The zone argument passed to a
@@ -136,10 +138,12 @@ growth and append calls: `push(byte)`, `insert(index, byte)`,
 methods. The explicit `_in` forms remain available when code should name the
 capability directly or when a handle was assembled without tracked provenance.
 Metadata, checked byte `first`/`last`/`get`, byte search, exact/prefix/suffix
-checks, `as_ptr`, and target-zone copy borrow the string handle instead of
-copying it. `String` is still an
-explicit-zone handle: `zone::reset` or `zone::destroy` releases the bytes, and
-dropping the handle only ends that binding.
+checks, UTF-8 scalar inspection, `as_ptr`, and target-zone copy borrow the
+string handle instead of copying it. `String` is still an explicit-zone handle:
+`zone::reset` or `zone::destroy` releases the bytes, and dropping the handle
+only ends that binding. UTF-8 helpers count Unicode scalar values at byte
+offsets; grapheme clusters, normalization, and locale-sensitive case
+conversion are deliberately future text policy.
 
 ## Tuples
 

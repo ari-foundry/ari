@@ -1,0 +1,96 @@
+// Covers UTF-8 scalar validation, code-point decoding, and scalar encoding.
+fn expect_char(value: std::Option[std::encoding::Utf8Char], scalar: u32, len: i64, index: i64) -> bool {
+  match value {
+    std::Some(ch) => {
+      return ch.scalar() == scalar && ch.len() == len && ch.next_index(index) == index + len;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn expect_no_char(value: std::Option[std::encoding::Utf8Char]) -> bool {
+  match value {
+    std::Some(_) => {}
+    std::None => {
+      return true;
+    }
+  }
+  return false;
+}
+
+fn expect_no_i64(value: std::Option[i64]) -> bool {
+  match value {
+    std::Some(_) => {}
+    std::None => {
+      return true;
+    }
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  var text = [65u8, 195u8, 169u8, 226u8, 130u8, 172u8, 240u8, 159u8, 152u8, 128u8];
+  var overlong = [192u8, 128u8];
+  var surrogate = [237u8, 160u8, 128u8];
+
+  var score = 0;
+  if encoding::is_unicode_scalar(65u32) &&
+     encoding::is_unicode_scalar(1114111u32) &&
+     !encoding::is_unicode_scalar(55296u32) &&
+     !encoding::is_unicode_scalar(1114112u32) {
+    score = score + 1;
+  }
+
+  if encoding::utf8_width(65u8).unwrap_or(0) == 1 &&
+     encoding::utf8_width(195u8).unwrap_or(0) == 2 &&
+     encoding::utf8_width(226u8).unwrap_or(0) == 3 &&
+     encoding::utf8_width(240u8).unwrap_or(0) == 4 &&
+     expect_no_i64(encoding::utf8_width(128u8)) {
+    score = score + 1;
+  }
+
+  if encoding::utf8_count(text.as_slice()).unwrap_or(0) == 4 {
+    score = score + 1;
+  }
+
+  if expect_char(encoding::utf8_at(text.as_slice(), 0), 65u32, 1, 0) {
+    score = score + 1;
+  }
+  if expect_char(encoding::utf8_at(text.as_slice(), 1), 233u32, 2, 1) {
+    score = score + 1;
+  }
+  if expect_char(encoding::utf8_at(text.as_slice(), 3), 8364u32, 3, 3) {
+    score = score + 1;
+  }
+  if expect_char(encoding::utf8_at(text.as_slice(), 6), 128512u32, 4, 6) {
+    score = score + 1;
+  }
+
+  if encoding::utf8_next_index(text.as_slice(), 3).unwrap_or(0) == 6 {
+    score = score + 1;
+  }
+
+  if expect_no_char(encoding::utf8_at(text.as_slice(), 2)) &&
+     expect_no_char(encoding::utf8_at(text.as_slice(), 99)) &&
+     expect_no_char(encoding::utf8_at(overlong.as_slice(), 0)) &&
+     expect_no_char(encoding::utf8_at(surrogate.as_slice(), 0)) {
+    score = score + 1;
+  }
+
+  if encoding::utf8_encoded_len(128512u32).unwrap_or(0) == 4 &&
+     expect_no_i64(encoding::utf8_encoded_len(55296u32)) {
+    score = score + 1;
+  }
+
+  var zone = zone::create(32);
+  var euro = encoding::encode_utf8_in(ref mut zone, 8364u32);
+  if euro.len() == 3 && euro.get(0) == 226u8 && euro.get(1) == 130u8 && euro.get(2) == 172u8 {
+    score = score + 1;
+  }
+
+  zone::destroy(zone);
+
+  assert_eq_i64(score, 11);
+  return score;
+}

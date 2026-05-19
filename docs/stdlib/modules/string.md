@@ -6,7 +6,8 @@ into an explicit allocation `Zone` without introducing a hidden global heap.
 
 Today's `String` is intentionally a byte string. It is useful for compiler
 tests, CLI-style output, simple parser buffers, and ASCII-oriented text work.
-It is not a Unicode text abstraction yet.
+It now has UTF-8 validation and scalar helpers, but it is not a Unicode
+normalization, grapheme, or locale-aware text abstraction yet.
 
 ## When To Use It
 
@@ -16,9 +17,10 @@ you only need a borrowed view. Use `std::ascii` or the `String` ASCII helpers
 for byte classification, ASCII-only comparison/search, trimming, and integer
 parsing.
 
-Avoid using `String` as a general text policy. Unicode normalization, grapheme
-iteration, encoding conversion, and locale-sensitive case conversion are future
-library work.
+Avoid using `String` as a general text policy. UTF-8 helpers operate on Unicode
+scalar values and byte offsets. Unicode normalization, grapheme iteration,
+encoding conversion, and locale-sensitive case conversion are future library
+work.
 
 ## Constructors And Copies
 
@@ -125,10 +127,13 @@ text.append_u64_in(ref mut zone, value)
 text.append_bool_in(ref mut zone, value)
 text.append_f32_in(ref mut zone, value, precision)
 text.append_f64_in(ref mut zone, value, precision)
+text.push_codepoint_in(ref mut zone, scalar)
 ```
 
 These helpers are the current source-side building blocks used by owned
-formatting paths.
+formatting paths. `push_codepoint_in` validates `scalar` with
+`std::encoding::utf8_encoded_len` and appends its UTF-8 bytes, panicking for an
+invalid Unicode scalar value.
 
 ## Search And Comparison
 
@@ -193,6 +198,26 @@ let value = std::ascii::parse_decimal(view).unwrap_or(0);
 
 Overflow behavior is not promised yet.
 
+## UTF-8 Helpers
+
+`String` remains byte-oriented, but it can validate and inspect UTF-8 through
+`std::encoding`:
+
+```ari
+text.is_utf8()
+text.codepoint_count()
+text.codepoint_at(byte_index)
+text.push_codepoint_in(ref mut zone, scalar)
+```
+
+`is_utf8` is the boolean validation form. `codepoint_count` returns
+`Option[i64]`, with `None<i64>()` for invalid UTF-8. `codepoint_at` decodes one
+Unicode scalar at a byte offset and returns `Option[std::encoding::Utf8Char]`.
+It returns `None` for continuation-byte offsets, invalid sequences, and
+out-of-range indexes. The returned `Utf8Char` has `scalar()`, `len()`, and
+`next_index(byte_index)` accessors. These helpers count Unicode scalar values,
+not grapheme clusters.
+
 ## Example
 
 ```ari
@@ -231,6 +256,7 @@ tests/cases/standard-library/ok/string/std-string-trim-copy.ari
 tests/cases/standard-library/ok/string/std-string-grow.ari
 tests/cases/standard-library/ok/string/std-string-append.ari
 tests/cases/standard-library/ok/string/std-string-from-slice-in.ari
+tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari
 ```
 
 Focused diagnostics include:
@@ -249,5 +275,6 @@ methods are tracked in `tests/std_api_manifest.txt` and checked by
 Potential next slices:
 
 - signed and overflow-checked parsers after numeric policy is documented
-- a deliberate text/Unicode module beyond the explicit ASCII byte helpers
+- a deliberate text/Unicode module for normalization, grapheme clusters, and
+  transcoding beyond the UTF-8 scalar helpers
 - broader formatter integration as `Display` and `Debug` dispatch mature

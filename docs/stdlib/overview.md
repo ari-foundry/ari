@@ -38,10 +38,10 @@ hiding allocation, ownership, or backend behavior.
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
-| `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
+| `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `push_codepoint_in`, `is_utf8`, `codepoint_count`, `codepoint_at`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
 | `std::parse` | Whole-input value parsers over byte slices. | `integer`, `boolean`, `is_float`, `float_or`, `float`. |
-| `std::encoding` | Text validation and byte codecs. | `is_ascii`, `utf8_count`, `is_utf8`, `utf16_count`, `is_utf16`, `encode_hex_in`, `decode_hex_in`, `encode_base64_in`, `decode_base64_in`. |
+| `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, `utf8_count`, `is_utf8`, `utf8_at`, `utf8_next_index`, `encode_utf8_in`, `utf16_count`, `is_utf16`, `encode_hex_in`, `decode_hex_in`, `encode_base64_in`, `decode_base64_in`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers. |
 | `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
@@ -109,8 +109,9 @@ roadmap work.
 `std::string::String` follows the same direction where it can. Its allocation
 constructors and runtime copy hooks still depend on compiler-known zone/string
 primitives, but byte access, empty-safe `try_*` accessors, byte search,
-comparison, ASCII case-insensitive comparison/search, ASCII trim views, owned
-trim copies, and whole/prefix ASCII parsing are plain source methods.
+comparison, ASCII case-insensitive comparison/search, UTF-8 validation and
+scalar helpers, ASCII trim views, owned trim copies, and whole/prefix ASCII
+parsing are plain source methods.
 
 `Slice[T]`, `std::vec::Vec[T]`, and byte-oriented `std::string::String` share
 the preferred collection vocabulary where it fits: `is_empty` for length

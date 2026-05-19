@@ -216,6 +216,36 @@ pub impl std::string::String {
     append_byte_in(self, zone, 101 as u8);
   }
 
+  fn push_codepoint_in(self: ref mut Self, zone: ref mut Zone, value: u32) -> void {
+    match std::encoding::utf8_encoded_len(value) {
+      std::Some(_) => {}
+      std::None => {
+        std::panic();
+      }
+    }
+
+    if value <= 127u32 {
+      append_byte_in(self, zone, value as u8);
+      return;
+    }
+    if value <= 2047u32 {
+      append_byte_in(self, zone, ((value / 64u32) + 192u32) as u8);
+      append_byte_in(self, zone, ((value % 64u32) + 128u32) as u8);
+      return;
+    }
+    if value <= 65535u32 {
+      append_byte_in(self, zone, ((value / 4096u32) + 224u32) as u8);
+      append_byte_in(self, zone, (((value / 64u32) % 64u32) + 128u32) as u8);
+      append_byte_in(self, zone, ((value % 64u32) + 128u32) as u8);
+      return;
+    }
+
+    append_byte_in(self, zone, ((value / 262144u32) + 240u32) as u8);
+    append_byte_in(self, zone, (((value / 4096u32) % 64u32) + 128u32) as u8);
+    append_byte_in(self, zone, (((value / 64u32) % 64u32) + 128u32) as u8);
+    append_byte_in(self, zone, ((value % 64u32) + 128u32) as u8);
+  }
+
   fn append_f32_in(self: ref mut Self, zone: ref mut Zone, value: f32, precision: i64) -> void {
     self.append_f64_in(zone, value as f64, precision);
   }
@@ -434,6 +464,21 @@ pub impl std::string::String {
   fn contains_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::contains_ignore_case(view, values);
+  }
+
+  fn is_utf8(self: ref Self) -> bool {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::encoding::is_utf8(view);
+  }
+
+  fn codepoint_count(self: ref Self) -> std::Option[i64] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::encoding::utf8_count(view);
+  }
+
+  fn codepoint_at(self: ref Self, byte_index: i64) -> std::Option[std::encoding::Utf8Char] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::encoding::utf8_at(view, byte_index);
   }
 
   fn trim_start(self: ref Self) -> super::Slice[u8] {

@@ -13,6 +13,7 @@ Validation helpers:
 
 ```ari
 encoding::is_ascii(bytes) -> bool
+encoding::is_unicode_scalar(value) -> bool
 encoding::utf8_count(bytes) -> Option[i64]
 encoding::is_utf8(bytes) -> bool
 encoding::utf16_count(words) -> Option[i64]
@@ -27,6 +28,26 @@ bytes, and values above `U+10FFFF`. `is_utf8` is the boolean form.
 `utf16_count` validates `Slice[u16]` input and counts code points, treating a
 valid surrogate pair as one code point. It rejects lone high surrogates, lone
 low surrogates, and broken pairs. `is_utf16` is the boolean form.
+
+UTF-8 scalar helpers:
+
+```ari
+encoding::Utf8Char
+encoding::utf8_width(first_byte) -> Option[i64]
+encoding::utf8_encoded_len(scalar) -> Option[i64]
+encoding::utf8_at(bytes, byte_index) -> Option[Utf8Char]
+encoding::utf8_next_index(bytes, byte_index) -> Option[i64]
+encoding::encode_utf8_in(ref mut zone, scalar) -> String
+```
+
+`Utf8Char` stores one decoded Unicode scalar value and the number of bytes
+consumed. Use `scalar()`, `len()`, and `next_index(byte_index)` to inspect it.
+`utf8_width` classifies a UTF-8 lead byte only; it does not validate following
+continuation bytes. `utf8_at` validates and decodes at a byte offset, returning
+`None<Utf8Char>()` for out-of-range indexes, continuation-byte offsets,
+overlong encodings, surrogate scalar values, truncated sequences, or values
+above `U+10FFFF`. `encode_utf8_in` panics for invalid scalars; call
+`utf8_encoded_len` first when invalid scalar input is ordinary.
 
 Hex helpers:
 
@@ -91,19 +112,22 @@ fn decode_known_base64(zone: ref mut Zone, text: Slice[u8]) -> String {
 
 ```text
 tests/cases/standard-library/ok/encoding/std-encoding-text.ari
+tests/cases/standard-library/ok/encoding/std-encoding-utf8-codepoints.ari
 tests/cases/standard-library/ok/encoding/std-encoding-codec.ari
 ```
 
 `std-encoding-text.ari` covers ASCII, UTF-8, and UTF-16 validation/counting.
+`std-encoding-utf8-codepoints.ari` covers scalar validation, UTF-8 lead-byte
+width, byte-offset decoding, next-index helpers, and scalar encoding.
 `std-encoding-codec.ari` covers hex/base64 length helpers, encoding, decoding,
-and invalid input guards. Both are wired into `make check-prelude` with LLVM
-symbol checks.
+and invalid input guards. These tests are wired into `make check-prelude` with
+LLVM symbol checks.
 
 ## Future Work
 
 - URL-safe base64 and optional line-wrapped MIME base64
 - richer decode errors after `Result[String, E]` can carry zone-backed values
-- text normalization and transcoding only after Ari has a deliberate Unicode
-  string policy
+- Unicode normalization, grapheme clusters, and transcoding only after Ari has
+  a deliberate text policy beyond byte strings
 - optional compression helpers in a separate module once byte-buffer ownership
   and error handling are stronger
