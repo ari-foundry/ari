@@ -496,6 +496,16 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-timeout.ari -o $(BUILD_DIR)/prelude/std-time-timeout.elf
 	$(BUILD_DIR)/prelude/std-time-timeout.elf; code=$$?; test $$code -eq 0
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-timeout.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-timeout.elf; $(BUILD_DIR)/prelude/std-time-timeout.elf; code=$$?; test $$code -eq 0; fi
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-utc-calendar.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-utc-calendar.ll
+	grep -F -q "std4time13utc_from_unix" $(BUILD_DIR)/prelude/std-time-utc-calendar.ll
+	grep -F -q "std4time16system_from_unix" $(BUILD_DIR)/prelude/std-time-utc-calendar.ll
+	grep -F -q "std4time13days_in_month" $(BUILD_DIR)/prelude/std-time-utc-calendar.ll
+	grep -F -q "std4time12is_leap_year" $(BUILD_DIR)/prelude/std-time-utc-calendar.ll
+	grep -F -q "std__time__SystemTime8inherent6to_utc" $(BUILD_DIR)/prelude/std-time-utc-calendar.ll
+	grep -F -q "std__time__UtcDateTime8inherent4year" $(BUILD_DIR)/prelude/std-time-utc-calendar.ll
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-utc-calendar.ari -o $(BUILD_DIR)/prelude/std-time-utc-calendar.elf
+	$(BUILD_DIR)/prelude/std-time-utc-calendar.elf; code=$$?; test $$code -eq 0
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-utc-calendar.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-utc-calendar.elf; $(BUILD_DIR)/prelude/std-time-utc-calendar.elf; code=$$?; test $$code -eq 0; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 1)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 3)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll

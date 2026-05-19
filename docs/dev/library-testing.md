@@ -109,6 +109,8 @@ identifies the exact case:
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
 - `std-time-timeout.ari`: source monotonic `Deadline`/timeout helpers,
   remaining-time checks, and zero-duration sleep-until behavior.
+- `std-time-utc-calendar.ari`: UTC-only Unix timestamp conversion,
+  leap-year/month-length policy, and `SystemTime::to_utc` accessors.
 - `std-fs-basic.ari`: runtime-backed file existence, mode-string
   creation/truncating write, byte reads/writes, close, removal, and
   `Option[File]` open helpers.

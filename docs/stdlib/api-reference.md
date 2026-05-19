@@ -532,6 +532,10 @@ time::milliseconds(value)
 time::seconds(value)
 time::now()
 time::system_now()
+time::system_from_unix(seconds, nanosecond)
+time::is_leap_year(year)
+time::days_in_month(year, month)
+time::utc_from_unix(seconds, nanosecond)
 time::elapsed(start)
 time::sleep(duration)
 time::deadline_at(instant)
@@ -556,8 +560,12 @@ instant.elapsed()
 instant.add(duration)
 
 SystemTime::now()
+SystemTime::from_unix(seconds, nanosecond)
 system_time.as_unix_nanos()
+system_time.as_unix_seconds()
+system_time.subsec_nanos()
 system_time.duration_since_unix_epoch()
+system_time.to_utc()
 
 Deadline::at(instant)
 Deadline::after(duration)
@@ -565,6 +573,15 @@ deadline.instant()
 deadline.has_expired()
 deadline.remaining()
 deadline.sleep()
+
+utc.year()
+utc.month()
+utc.day()
+utc.hour()
+utc.minute()
+utc.second()
+utc.nanosecond()
+utc.is_leap_year()
 ```
 
 Use `Instant` for elapsed time and `SystemTime` for Unix wall-clock
@@ -572,8 +589,9 @@ timestamps. `Duration` constructors assert on negative values. The raw
 `*_nanos` functions are exposed for low-level code, but ordinary code should
 prefer `now`, `system_now`, `elapsed`, and `sleep`. Use `Deadline` plus
 `timeout(duration)` or `deadline_at(instant)` when an API needs timeout policy
-without depending on wall-clock time. Calendar conversion is roadmap work and
-timezone databases are outside the first standard-library slice.
+without depending on wall-clock time. `utc_from_unix` and `SystemTime::to_utc`
+provide deterministic UTC calendar conversion for non-negative Unix
+timestamps. Timezone databases are outside the first standard-library slice.
 
 Filesystem helpers live in `std::fs`:
 

@@ -46,7 +46,8 @@ parallelism, and per-thread runtime ids,
 `std::sync` adds the first concrete atomic integer primitive plus source
 `Mutex`, `RwLock`, and `Once` helpers, `std::time` adds monotonic instants,
 wall-clock timestamps, non-negative
-durations, elapsed-time helpers, monotonic deadlines, and sleep, and `std::fs` adds the first
+durations, elapsed-time helpers, monotonic deadlines, UTC calendar conversion,
+and sleep, and `std::fs` adds the first
 byte-oriented file handle slice with mode-string opens for read, write,
 append, and read/write access plus access-permission checks, source create,
 read, write, append, truncate, copy, rename, hard/symbolic links,

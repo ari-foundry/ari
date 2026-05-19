@@ -12,6 +12,7 @@ struct Duration
 struct Instant
 struct SystemTime
 struct Deadline
+struct UtcDateTime
 
 time::monotonic_nanos()
 time::unix_nanos()
@@ -23,6 +24,10 @@ time::milliseconds(value)
 time::seconds(value)
 time::now()
 time::system_now()
+time::system_from_unix(seconds, nanosecond)
+time::is_leap_year(year)
+time::days_in_month(year, month)
+time::utc_from_unix(seconds, nanosecond)
 time::elapsed(start)
 time::sleep(duration)
 time::deadline_at(instant)
@@ -47,8 +52,12 @@ instant.elapsed()
 instant.add(duration)
 
 SystemTime::now()
+SystemTime::from_unix(seconds, nanosecond)
 system_time.as_unix_nanos()
+system_time.as_unix_seconds()
+system_time.subsec_nanos()
 system_time.duration_since_unix_epoch()
+system_time.to_utc()
 
 Deadline::at(instant)
 Deadline::after(duration)
@@ -56,6 +65,15 @@ deadline.instant()
 deadline.has_expired()
 deadline.remaining()
 deadline.sleep()
+
+utc.year()
+utc.month()
+utc.day()
+utc.hour()
+utc.minute()
+utc.second()
+utc.nanosecond()
+utc.is_leap_year()
 ```
 
 `Duration` values are non-negative. The constructor helpers assert if given a
@@ -71,7 +89,17 @@ for deadline calculations.
 
 `SystemTime` reads wall-clock Unix time in nanoseconds. Use it for timestamps,
 not elapsed-time measurement. Wall-clock time can move if the host clock is
-changed.
+changed. `system_from_unix(seconds, nanosecond)` and
+`SystemTime::from_unix(seconds, nanosecond)` build deterministic wall-clock
+values from non-negative Unix timestamps for tests, parsers, and protocol
+code.
+
+`UtcDateTime` is a plain UTC calendar value using the proleptic Gregorian
+calendar and Unix epoch rules. `utc_from_unix(seconds, nanosecond)` converts a
+non-negative Unix timestamp into year/month/day/hour/minute/second/nanosecond
+fields. `SystemTime::to_utc()` is the method form. `is_leap_year(year)` and
+`days_in_month(year, month)` expose the same calendar policy for validation
+and tests.
 
 `Deadline` is the current timeout value. `timeout(duration)` and
 `timeout_after(duration)` create a deadline relative to `Instant::now()`;
@@ -86,11 +114,11 @@ also re-exports this behavior as `thread::sleep(duration)` for thread-oriented
 code. The first runtime hook is intentionally thin and best-effort; it does not
 expose interruption or remaining-time details yet.
 
-Calendar conversion and timezone handling are deliberately not in the current
-source API. Future calendar helpers should start with UTC-only conversion from
-`SystemTime` to a plain date/time value. Full timezone databases usually belong
-outside a tiny systems-language standard library, or behind a separate,
-platform-backed package with explicit data-version policy.
+Timezone handling is deliberately not in the current source API. UTC calendar
+conversion is deterministic and portable; local time, daylight-saving rules,
+and named timezone databases usually belong outside a tiny systems-language
+standard library, or behind a separate platform-backed package with explicit
+data-version policy.
 
 ## Example
 
@@ -113,6 +141,20 @@ Wall-clock timestamp:
 fn main() -> i64 {
   let stamp = time::system_now();
   if stamp.as_unix_nanos() > 0 {
+    return 0;
+  }
+  return 1;
+}
+```
+
+UTC calendar conversion:
+
+```ari
+fn main() -> i64 {
+  let stamp = time::SystemTime::from_unix(1704067200, 0);
+  let utc = stamp.to_utc();
+
+  if utc.year() == 2024 && utc.month() == 1 && utc.day() == 1 {
     return 0;
   }
   return 1;
@@ -144,10 +186,11 @@ fn main() -> i64 {
 - `sleep` does not report interruption or partial sleep.
 - `Deadline` is monotonic and process-local. It does not cancel work by
   itself; IO/process/thread APIs must opt into accepting it.
+- `UtcDateTime` only supports non-negative Unix timestamps for now. Dates
+  before 1970 and leap seconds are future policy work.
 - Overflow checks for very large duration arithmetic are not designed yet.
-- No calendar, timezone, formatting, timerfd, or async integration exists yet.
-  Calendar conversion is roadmap work; timezone databases are intentionally
-  outside the first standard library slice.
+- No timezone, formatting, timerfd, or async integration exists yet. Timezone
+  databases are intentionally outside the first standard library slice.
 
 ## Tests
 
@@ -156,10 +199,11 @@ Focused positive coverage:
 ```text
 tests/cases/standard-library/ok/time/std-time-basic.ari
 tests/cases/standard-library/ok/time/std-time-timeout.ari
+tests/cases/standard-library/ok/time/std-time-utc-calendar.ari
 ```
 
 `make check-prelude` emits LLVM for the runtime hooks, checks the
 `clock_gettime`/`nanosleep` declarations, and runs the executable with a
-deterministic exit-code score. It also checks timeout/deadline helper symbols.
-Public declarations are tracked in `tests/std_api_manifest.txt` and checked by
-`make check-std-api`.
+deterministic exit-code score. It also checks timeout/deadline and UTC
+calendar helper symbols. Public declarations are tracked in
+`tests/std_api_manifest.txt` and checked by `make check-std-api`.

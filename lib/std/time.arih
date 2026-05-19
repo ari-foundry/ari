@@ -19,6 +19,16 @@ pub struct Deadline {
   at: std::time::Instant,
 }
 
+pub struct UtcDateTime {
+  year: i64,
+  month: i64,
+  day: i64,
+  hour: i64,
+  minute: i64,
+  second: i64,
+  nanosecond: i64,
+}
+
 pub extern "ari" fn monotonic_nanos() -> i64 = "ari_builtin_time_monotonic_nanos";
 pub extern "ari" fn unix_nanos() -> i64 = "ari_builtin_time_unix_nanos";
 pub extern "ari" fn sleep_nanos(nanos: i64) -> void = "ari_builtin_time_sleep_nanos";
@@ -26,6 +36,19 @@ pub extern "ari" fn sleep_nanos(nanos: i64) -> void = "ari_builtin_time_sleep_na
 fn checked_nanos(value: i64) -> i64 {
   std::assert(value >= 0);
   return value;
+}
+
+fn checked_subsecond_nanos(value: i64) -> i64 {
+  std::assert(value >= 0);
+  std::assert(value < 1000000000);
+  return value;
+}
+
+fn year_days(year: i64) -> i64 {
+  if is_leap_year(year) {
+    return 366;
+  }
+  return 365;
 }
 
 pub fn nanoseconds(value: i64) -> Duration {
@@ -50,6 +73,70 @@ pub fn now() -> Instant {
 
 pub fn system_now() -> SystemTime {
   return SystemTime { nanos: unix_nanos() };
+}
+
+pub fn system_from_unix(seconds: i64, nanosecond: i64) -> SystemTime {
+  std::assert(seconds >= 0);
+  return SystemTime {
+    nanos: seconds * 1000000000 + checked_subsecond_nanos(nanosecond),
+  };
+}
+
+pub fn is_leap_year(year: i64) -> bool {
+  if year % 4 != 0 {
+    return false;
+  }
+  if year % 100 != 0 {
+    return true;
+  }
+  return year % 400 == 0;
+}
+
+pub fn days_in_month(year: i64, month: i64) -> i64 {
+  std::assert(month >= 1);
+  std::assert(month <= 12);
+  if month == 2 {
+    if is_leap_year(year) {
+      return 29;
+    }
+    return 28;
+  }
+  if month == 4 || month == 6 || month == 9 || month == 11 {
+    return 30;
+  }
+  return 31;
+}
+
+pub fn utc_from_unix(seconds: i64, nanosecond: i64) -> UtcDateTime {
+  std::assert(seconds >= 0);
+  let checked_nano = checked_subsecond_nanos(nanosecond);
+  var days = seconds / 86400;
+  var seconds_in_day = seconds % 86400;
+  var year = 1970;
+  while days >= year_days(year) {
+    days = days - year_days(year);
+    year = year + 1;
+  }
+
+  var month = 1;
+  while days >= days_in_month(year, month) {
+    days = days - days_in_month(year, month);
+    month = month + 1;
+  }
+
+  let hour = seconds_in_day / 3600;
+  seconds_in_day = seconds_in_day % 3600;
+  let minute = seconds_in_day / 60;
+  let second = seconds_in_day % 60;
+  return UtcDateTime {
+    year: year,
+    month: month,
+    day: days + 1,
+    hour: hour,
+    minute: minute,
+    second: second,
+    nanosecond: checked_nano,
+  };
 }
 
 pub fn elapsed(start: Instant) -> Duration {
@@ -150,6 +237,10 @@ pub impl std::time::Instant {
 }
 
 pub impl std::time::SystemTime {
+  fn from_unix(seconds: i64, nanosecond: i64) -> SystemTime {
+    return system_from_unix(seconds, nanosecond);
+  }
+
   fn now() -> SystemTime {
     return system_now();
   }
@@ -158,8 +249,20 @@ pub impl std::time::SystemTime {
     return self.nanos;
   }
 
+  fn as_unix_seconds(self) -> i64 {
+    return self.nanos / 1000000000;
+  }
+
+  fn subsec_nanos(self) -> i64 {
+    return self.nanos % 1000000000;
+  }
+
   fn duration_since_unix_epoch(self) -> Duration {
     return Duration { nanos: self.nanos };
+  }
+
+  fn to_utc(self) -> std::time::UtcDateTime {
+    return utc_from_unix(self.as_unix_seconds(), self.subsec_nanos());
   }
 }
 
@@ -190,5 +293,39 @@ pub impl std::time::Deadline {
       sleep(wait);
     }
     return;
+  }
+}
+
+pub impl std::time::UtcDateTime {
+  fn year(self) -> i64 {
+    return self.year;
+  }
+
+  fn month(self) -> i64 {
+    return self.month;
+  }
+
+  fn day(self) -> i64 {
+    return self.day;
+  }
+
+  fn hour(self) -> i64 {
+    return self.hour;
+  }
+
+  fn minute(self) -> i64 {
+    return self.minute;
+  }
+
+  fn second(self) -> i64 {
+    return self.second;
+  }
+
+  fn nanosecond(self) -> i64 {
+    return self.nanosecond;
+  }
+
+  fn is_leap_year(self) -> bool {
+    return std::time::is_leap_year(self.year);
   }
 }
