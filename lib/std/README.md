@@ -7,3 +7,6 @@ such as `target`, `env`, `process`, `thread`, `sync`, `time`, and `fs`, and publ
 mirrored in the stdlib docs and API manifest.
 Source-only algorithm helpers live in `algo` so slice operations can grow
 without bloating `Slice[T]` itself.
+OS entropy and deterministic non-cryptographic PRNG helpers live in `random`;
+keep cryptographic streams and richer distribution APIs out of this first
+slice until error/result and byte-buffer policies are stronger.

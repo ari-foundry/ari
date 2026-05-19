@@ -1,0 +1,114 @@
+// Covers std::random's OS entropy hook and deterministic non-crypto PRNG.
+impl cmp::Ord[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+fn same_bytes(left: Slice[u8], right: Slice[u8]) -> bool {
+  if left.len != right.len {
+    return false;
+  }
+  var index = 0;
+  while index < left.len {
+    if left[index] != right[index] {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+fn same_i64(left: Slice[i64], right: Slice[i64]) -> bool {
+  if left.len != right.len {
+    return false;
+  }
+  var index = 0;
+  while index < left.len {
+    if left[index] != right[index] {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  let os_seed = random::entropy();
+  if os_seed == os_seed {
+    score = score + 1;
+  }
+
+  var from_os = random::from_entropy();
+  let from_os_value = from_os.next();
+  if from_os_value == from_os_value {
+    score = score + 1;
+  }
+
+  var first = random::seed(123u64);
+  var second = random::Prng::seed(123u64);
+  let first_a = first.next();
+  let second_a = second.next();
+  let first_b = first.next();
+  let second_b = second.next();
+  if first_a == second_a && first_b == second_b && first_a != first_b {
+    score = score + 1;
+  }
+
+  var bounded = random::seed(9u64);
+  var count = 0;
+  var in_range = true;
+  while count < 32 {
+    let value = bounded.range(-5, 7);
+    if value < -5 || value >= 7 {
+      in_range = false;
+    }
+    let small = bounded.below(4);
+    if small < 0 || small >= 4 {
+      in_range = false;
+    }
+    count = count + 1;
+  }
+  if in_range {
+    score = score + 1;
+  }
+
+  let unit = bounded.float();
+  if unit >= 0.0f64 && unit < 1.0f64 {
+    score = score + 1;
+  }
+
+  var bytes_a = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var bytes_b = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var fill_a = random::seed(55u64);
+  var fill_b = random::seed(55u64);
+  fill_a.fill(bytes_a.as_slice());
+  random::fill_from(ref mut fill_b, bytes_b.as_slice());
+  if same_bytes(bytes_a.as_slice(), bytes_b.as_slice()) {
+    score = score + 1;
+  }
+
+  var os_bytes = [0u8, 0u8, 0u8, 0u8];
+  random::fill(os_bytes.as_slice());
+  score = score + 1;
+
+  var shuffled_a = [1, 2, 3, 4, 5, 6];
+  var shuffled_b = [1, 2, 3, 4, 5, 6];
+  var shuffle_a = random::seed(77u64);
+  var shuffle_b = random::seed(77u64);
+  shuffle_a.shuffle<i64>(shuffled_a.as_slice());
+  random::shuffle<i64>(ref mut shuffle_b, shuffled_b.as_slice());
+  if same_i64(shuffled_a.as_slice(), shuffled_b.as_slice()) {
+    score = score + 1;
+  }
+
+  algo::sort<i64>(shuffled_a.as_slice());
+  var sorted = [1, 2, 3, 4, 5, 6];
+  if same_i64(shuffled_a.as_slice(), sorted.as_slice()) {
+    score = score + 1;
+  }
+
+  return score;
+}

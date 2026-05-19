@@ -561,6 +561,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari -o $(BUILD_DIR)/prelude/std-hash-basic.elf
 	$(BUILD_DIR)/prelude/std-hash-basic.elf; code=$$?; test $$code -eq 31
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-hash-basic.elf; $(BUILD_DIR)/prelude/std-hash-basic.elf; code=$$?; test $$code -eq 31; fi
+	$(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-random-basic.ll
+	grep -F -q '@ari_builtin_random_entropy' $(BUILD_DIR)/prelude/std-random-basic.ll
+	grep -F -q 'std6random4seed' $(BUILD_DIR)/prelude/std-random-basic.ll
+	grep -F -q 'std6random4next' $(BUILD_DIR)/prelude/std-random-basic.ll
+	grep -F -q 'std6random14shuffle__G_i64' $(BUILD_DIR)/prelude/std-random-basic.ll
+	grep -F -q 'std__random__Prng8inherent5float' $(BUILD_DIR)/prelude/std-random-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari -o $(BUILD_DIR)/prelude/std-random-basic.elf
+	$(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 9
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-basic.elf; $(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 9; fi
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3abs' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math4sign' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll

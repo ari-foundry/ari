@@ -70,6 +70,7 @@ std-fs-links.ari
 std-fs-permissions.ari
 std-algo-slice-helpers.ari
 std-hash-basic.ari
+std-random-basic.ari
 std-parse-basic.ari
 std-encoding-text.ari
 std-encoding-utf8-codepoints.ari

@@ -419,6 +419,9 @@ pub mod encoding;
 
 pub mod bits;
 
+pub mod random;
+pub use random::Prng;
+
 pub struct Range[T] {
   start: T,
   end: T,

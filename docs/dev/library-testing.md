@@ -142,6 +142,9 @@ identifies the exact case:
   construction/reset/finalization, byte-slice hashing, generic `Hash[T]`
   dispatch for primitive values, primitive write helpers, and the
   `collections::hash_i64` compatibility wrapper.
+- `std-random-basic.ari`: runtime-backed OS entropy hook reachability,
+  deterministic non-cryptographic `Prng` behavior, bounded integers, unit
+  floats, PRNG byte filling, OS byte filling, and generic slice shuffle.
 - `std-parse-basic.ari`: source `std::parse` ASCII-trimmed signed integer,
   bool, decimal float validation/conversion, fallback, and invalid
   whole-input behavior.

@@ -361,6 +361,17 @@ fn std::process::is_wait_error|check-prelude std-process-fork-wait source wait f
 fn std::process::success|check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md
 fn std::process::uid|check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md
 fn std::process::wait|check-prelude std-process-fork-wait POSIX wait hook and exit-status decode; docs/stdlib/modules/process.md
+fn std::random::below|check-prelude std-random-basic bounded non-crypto PRNG integer helper; docs/stdlib/modules/random.md
+fn std::random::entropy|check-prelude std-random-basic OS entropy hook; docs/stdlib/modules/random.md
+fn std::random::fill|check-prelude std-random-basic OS entropy byte fill helper; docs/stdlib/modules/random.md
+fn std::random::fill_from|check-prelude std-random-basic deterministic PRNG byte fill helper; docs/stdlib/modules/random.md
+fn std::random::float|check-prelude std-random-basic unit f64 PRNG helper; docs/stdlib/modules/random.md
+fn std::random::from_entropy|check-prelude std-random-basic OS-seeded PRNG constructor; docs/stdlib/modules/random.md
+fn std::random::next|check-prelude std-random-basic raw PRNG word helper; docs/stdlib/modules/random.md
+fn std::random::range|check-prelude std-random-basic bounded PRNG range helper; docs/stdlib/modules/random.md
+fn std::random::seed|check-prelude std-random-basic deterministic PRNG seed constructor; docs/stdlib/modules/random.md
+fn std::random::seed_from_os|check-prelude std-random-basic OS-seeded PRNG constructor alias; docs/stdlib/modules/random.md
+fn std::random::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle; docs/stdlib/modules/random.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::c_bytes|check-prelude std-string-text-kinds borrowed C string byte view without terminator; docs/stdlib/modules/string.md
@@ -794,6 +805,15 @@ method std::path::PathBytes::normalize_in|check-prelude std-path-bytes typed pat
 method std::path::PathBytes::parent|check-prelude std-path-bytes typed path parent wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::stem|check-prelude std-path-bytes typed path stem wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::trim_trailing_separators|check-prelude std-path-bytes typed path trailing separator trim wrapper; docs/stdlib/modules/path.md
+method std::random::Prng::below|check-prelude std-random-basic bounded non-crypto PRNG integer method; docs/stdlib/modules/random.md
+method std::random::Prng::fill|check-prelude std-random-basic deterministic PRNG byte fill method; docs/stdlib/modules/random.md
+method std::random::Prng::float|check-prelude std-random-basic unit f64 PRNG method; docs/stdlib/modules/random.md
+method std::random::Prng::from_entropy|check-prelude std-random-basic OS-seeded PRNG associated constructor; docs/stdlib/modules/random.md
+method std::random::Prng::next|check-prelude std-random-basic raw PRNG word method; docs/stdlib/modules/random.md
+method std::random::Prng::range|check-prelude std-random-basic bounded PRNG range method; docs/stdlib/modules/random.md
+method std::random::Prng::seed|check-prelude std-random-basic deterministic PRNG associated seed constructor; docs/stdlib/modules/random.md
+method std::random::Prng::seed_from_os|check-prelude std-random-basic OS-seeded PRNG associated constructor alias; docs/stdlib/modules/random.md
+method std::random::Prng::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle method; docs/stdlib/modules/random.md
 method std::string::CStr::as_slice|check-prelude std-string-text-kinds borrowed C string bytes without terminator; docs/stdlib/modules/string.md
 method std::string::CStr::as_string|check-prelude std-string-text-kinds raw Ari C string accessor; docs/stdlib/modules/string.md
 method std::string::CStr::is_empty|check-prelude std-string-text-kinds C string empty predicate; docs/stdlib/modules/string.md
@@ -1017,6 +1037,7 @@ module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude 
 module std::parse|check-prelude std-parse-basic whole-input parser helpers; docs/stdlib/modules/parse.md
 module std::path|check-prelude std-path-basic source lexical path helpers; docs/stdlib/modules/path.md
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
+module std::random|check-prelude std-random-basic OS entropy and deterministic non-crypto PRNG helpers; docs/stdlib/modules/random.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::sync|check-prelude std-sync-atomic-i64 atomic primitive module; docs/stdlib/modules/sync.md
@@ -1084,6 +1105,7 @@ struct std::net::Ipv6Addr|std net IPv6 address tests; docs/stdlib/modules/net.md
 struct std::net::SocketAddr|std net socket address tests; docs/stdlib/modules/net.md
 struct std::path::Components|check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md
 struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md
+struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
 struct std::string::CStr|check-prelude std-string-text-kinds typed borrowed C string view; docs/stdlib/modules/string.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -1179,6 +1201,7 @@ use std::LinkedList|check-prelude std-collections-linked-list root alias for std
 use std::Mutex|check-prelude std-sync-mutex-once root alias for std::sync::Mutex; docs/stdlib/modules/sync.md
 use std::Once|check-prelude std-sync-mutex-once root alias for std::sync::Once; docs/stdlib/modules/sync.md
 use std::PriorityQueue|check-prelude std-collections-heap root alias for std::collections::PriorityQueue[T]; docs/stdlib/modules/collections.md
+use std::Prng|check-prelude std-random-basic root alias for std::random::Prng; docs/stdlib/modules/random.md
 use std::RingBuffer|check-prelude std-collections-ring-buffer root alias for std::collections::RingBuffer[T]; docs/stdlib/modules/collections.md
 use std::RwLock|check-prelude std-sync-rwlock root alias for std::sync::RwLock; docs/stdlib/modules/sync.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md

@@ -469,6 +469,7 @@ private:
                symbol == "sysconf" ||
                symbol == "clock_gettime" ||
                symbol == "nanosleep" ||
+               symbol == "getrandom" ||
                symbol == "access" ||
                symbol == "unlink" ||
                symbol == "rename" ||
@@ -495,6 +496,9 @@ private:
         }
         if (symbol == "ari_builtin_zone_allocation_zone") {
             return IrType{TypeQualifier::Ptr, IrPrimitiveKind::Void, "void", {}, {}, {}, {}, loc};
+        }
+        if (symbol == "ari_builtin_random_entropy") {
+            return IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_context_arg" ||
             symbol == "ari_builtin_target_triple" ||
@@ -576,6 +580,7 @@ private:
         declarations_ << "declare i64 @sysconf(i32)\n";
         declarations_ << "declare i32 @clock_gettime(i32, ptr)\n";
         declarations_ << "declare i32 @nanosleep(ptr, ptr)\n";
+        declarations_ << "declare i64 @getrandom(ptr, i64, i32)\n";
         declarations_ << "declare i32 @access(ptr, i32)\n";
         declarations_ << "declare i32 @unlink(ptr)\n";
         declarations_ << "declare i32 @rename(ptr, ptr)\n";
@@ -625,6 +630,7 @@ private:
         std::string fs_mode_write = string_ptr("w");
         std::string fs_mode_append = string_ptr("a");
         std::string proc_self_exe = string_ptr("/proc/self/exe");
+        std::string dev_urandom = string_ptr("/dev/urandom");
         TargetInfo target = resolve_target_info(options_.target_triple);
         std::string target_triple = string_ptr(target.triple);
         std::string target_arch = string_ptr(target.arch);
@@ -1347,6 +1353,30 @@ private:
         line("  store i64 %nsec, ptr %nsec.ptr");
         line("  call i32 @nanosleep(ptr %ts, ptr null)");
         line("  ret void");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_random_entropy() {");
+        line("entry:");
+        line("  %slot = alloca i64, align 8");
+        line("  %got = call i64 @getrandom(ptr %slot, i64 8, i32 0)");
+        line("  %full = icmp eq i64 %got, 8");
+        line("  br i1 %full, label %load, label %fallback_open");
+        line("fallback_open:");
+        line("  %fd = call i32 @open(ptr " + dev_urandom + ", i32 0, i32 0)");
+        line("  %opened = icmp sge i32 %fd, 0");
+        line("  br i1 %opened, label %fallback_read, label %fail");
+        line("fallback_read:");
+        line("  %read = call i64 @read(i32 %fd, ptr %slot, i64 8)");
+        line("  %ignored.close = call i32 @close(i32 %fd)");
+        line("  %read.full = icmp eq i64 %read, 8");
+        line("  br i1 %read.full, label %load, label %fail");
+        line("load:");
+        line("  %value = load i64, ptr %slot, align 8");
+        line("  ret i64 %value");
         line("fail:");
         line("  call void @exit(i32 1)");
         line("  unreachable");

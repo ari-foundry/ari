@@ -1481,6 +1481,41 @@ Use `hash::value<T>` for a single value with a `Hash[T]` impl, `hash::bytes`
 for a borrowed `Slice[u8]`, and `Hasher` plus `write` calls for incremental
 hashing. Current built-in impls cover `i64`, `u64`, `u8`, and `bool`.
 
+## Random
+
+`std::random` contains OS entropy and deterministic non-cryptographic PRNG
+helpers:
+
+```ari
+random::Prng
+random::entropy()
+random::fill(values)
+random::seed(value)
+random::from_entropy()
+random::seed_from_os()
+random::next(ref mut rng)
+random::below(ref mut rng, upper)
+random::range(ref mut rng, start, end)
+random::float(ref mut rng)
+random::fill_from(ref mut rng, values)
+random::shuffle<T>(ref mut rng, values)
+
+Prng::seed(value)
+Prng::from_entropy()
+Prng::seed_from_os()
+rng.next()
+rng.below(upper)
+rng.range(start, end)
+rng.float()
+rng.fill(values)
+rng.shuffle<T>(values)
+```
+
+Use `entropy()` or `fill(values)` when seed material must come from the host
+OS. On hosted Linux, `entropy()` uses `getrandom` first and falls back to
+`/dev/urandom`. Use `Prng` for reproducible random streams, tests, games,
+randomized algorithms, and shuffling. `Prng` is not cryptographic.
+
 ## Conversion
 
 `std::convert` contains explicit conversion trait names and source helper

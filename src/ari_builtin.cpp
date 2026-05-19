@@ -159,6 +159,8 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::time::unix_nanos", "ari_builtin_time_unix_nanos"},
         {"time::sleep_nanos", "ari_builtin_time_sleep_nanos"},
         {"std::time::sleep_nanos", "ari_builtin_time_sleep_nanos"},
+        {"random::entropy", "ari_builtin_random_entropy"},
+        {"std::random::entropy", "ari_builtin_random_entropy"},
         {"fs::exists", "ari_builtin_fs_exists"},
         {"std::fs::exists", "ari_builtin_fs_exists"},
         {"fs::can_read", "ari_builtin_fs_can_read"},
@@ -329,6 +331,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_time_monotonic_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_unix_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);
+    if (symbol == "ari_builtin_random_entropy") return builtin_sig({}, u64);
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_read") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_write") return builtin_sig({source_string}, boolean);

@@ -1,0 +1,130 @@
+// Randomness helpers.
+//
+// `entropy()` is OS-backed and suitable for seeding. `Prng` is deterministic
+// and deliberately not cryptographic; use it when repeatability matters.
+
+const STEP: u64 = 11400714819323198485u64;
+
+pub struct Prng {
+  mut state: u64,
+}
+
+pub extern "ari" fn entropy() -> u64 = "ari_builtin_random_entropy";
+
+fn mix(value: u64) -> u64 {
+  var mixed = value;
+  mixed = (mixed ^ (mixed >> 30)) * 13787848793156543929u64;
+  mixed = (mixed ^ (mixed >> 27)) * 10723151780598845931u64;
+  return mixed ^ (mixed >> 31);
+}
+
+pub fn seed(value: u64) -> std::random::Prng {
+  return Prng { state: value };
+}
+
+pub fn from_entropy() -> std::random::Prng {
+  return seed(std::random::entropy());
+}
+
+pub fn seed_from_os() -> std::random::Prng {
+  return from_entropy();
+}
+
+pub fn next(rng: ref mut std::random::Prng) -> u64 {
+  rng.state = rng.state + STEP;
+  return mix(rng.state);
+}
+
+pub fn below(rng: ref mut std::random::Prng, upper: i64) -> i64 {
+  std::assert(upper > 0);
+  return (std::random::next(rng) % (upper as u64)) as i64;
+}
+
+pub fn range(rng: ref mut std::random::Prng, start: i64, end: i64) -> i64 {
+  std::assert(end > start);
+  return start + std::random::below(rng, end - start);
+}
+
+pub fn float(rng: ref mut std::random::Prng) -> f64 {
+  // Keep the top 53 bits so the result can round-trip through f64 mantissas.
+  let bits = std::random::next(rng) >> 11;
+  return (bits as f64) / 9007199254740992.0f64;
+}
+
+pub fn fill(values: std::Slice[u8]) -> void {
+  var index = 0;
+  while index < values.len {
+    let chunk = std::random::entropy();
+    var shift = 0;
+    while index < values.len && shift < 64 {
+      ptr_store(ptr_add(values.data, index), ((chunk >> shift) & 255u64) as u8);
+      index = index + 1;
+      shift = shift + 8;
+    }
+  }
+  return;
+}
+
+pub fn fill_from(rng: ref mut std::random::Prng, values: std::Slice[u8]) -> void {
+  var index = 0;
+  while index < values.len {
+    let chunk = std::random::next(rng);
+    var shift = 0;
+    while index < values.len && shift < 64 {
+      ptr_store(ptr_add(values.data, index), ((chunk >> shift) & 255u64) as u8);
+      index = index + 1;
+      shift = shift + 8;
+    }
+  }
+  return;
+}
+
+pub fn shuffle[T](rng: ref mut std::random::Prng, values: std::Slice[T]) -> void {
+  var remaining = values.len;
+  while remaining > 1 {
+    let index = std::random::below(rng, remaining);
+    remaining = remaining - 1;
+    std::algo::swap<T>(values, remaining, index);
+  }
+  return;
+}
+
+pub impl std::random::Prng {
+  fn seed(value: u64) -> std::random::Prng {
+    return std::random::seed(value);
+  }
+
+  fn from_entropy() -> std::random::Prng {
+    return std::random::from_entropy();
+  }
+
+  fn seed_from_os() -> std::random::Prng {
+    return std::random::seed_from_os();
+  }
+
+  fn next(self: ref mut Self) -> u64 {
+    return std::random::next(self);
+  }
+
+  fn below(self: ref mut Self, upper: i64) -> i64 {
+    return std::random::below(self, upper);
+  }
+
+  fn range(self: ref mut Self, start: i64, end: i64) -> i64 {
+    return std::random::range(self, start, end);
+  }
+
+  fn float(self: ref mut Self) -> f64 {
+    return std::random::float(self);
+  }
+
+  fn fill(self: ref mut Self, values: std::Slice[u8]) -> void {
+    std::random::fill_from(self, values);
+    return;
+  }
+
+  fn shuffle[T](self: ref mut Self, values: std::Slice[T]) -> void {
+    std::random::shuffle<T>(self, values);
+    return;
+  }
+}

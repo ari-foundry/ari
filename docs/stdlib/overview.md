@@ -44,6 +44,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, `utf8_count`, `is_utf8`, `utf8_at`, `utf8_next_index`, `encode_utf8_in`, `utf16_count`, `is_utf16`, `encode_hex_in`, `decode_hex_in`, `encode_base64_in`, `decode_base64_in`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `slice`, `split_at`, `find`, `contains_slice`, `compare`, `chunks`, `windows`, `split`, `as_slice`, `iter`. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers. |
+| `std::random` | OS entropy and deterministic non-cryptographic PRNG helpers. | `Prng`, `entropy`, `fill`, `seed`, `from_entropy`, `seed_from_os`, `next`, `below`, `range`, `float`, `fill_from`, `shuffle`. |
 | `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
 | `std::iter` | Range, iterator traits, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, `collect`. |
 | `std::fmt` | Formatting traits plus explicit-zone and writer formatting helpers. | `Display::format_in`, `Debug`, `FormatSpec`, `decimal`, `hex`, `binary`, `octal`, `with_width`, `with_precision`, `left`, `right`, `center`, `uppercase`, `alternate`, `unsigned_in`, `integer_in`, `boolean_in`, `text_in`, `debug_text_in`, `write_unsigned`, `write_integer`, `write_boolean`, `write_text`. |
@@ -76,8 +77,8 @@ invalid after `reset` or `destroy`, and sema rejects later use.
 Most helper methods are plain Ari source. Compiler hooks remain for primitives
 that need backend or checker knowledge:
 
-- `extern "ari"` IO, panic, environment, process, thread, sync, string
-  allocation, and zone runtime hooks.
+- `extern "ari"` IO, panic, environment, process, thread, sync, random
+  entropy, string allocation, and zone runtime hooks.
 - layout queries, typed pointer operations, and byte memory intrinsics in
   `std::mem`.
 - formatting macros, because they inspect literal format strings.
@@ -94,6 +95,11 @@ individual call sites. `std::encoding` validates ASCII/UTF-8/UTF-16 and
 encodes or decodes hex/base64 into caller-provided zones. The public APIs avoid
 zone-backed or float enum payloads until the compiler can safely lower
 `Option[String]`, `Result[String, E]`, and `Option[f64]`.
+
+`std::random` has one OS-backed hook, `entropy()`, because seed material must
+come from the host. The deterministic `Prng`, bounded integer helpers, unit
+float helper, byte filling from a seeded PRNG, and generic shuffle are source
+Ari. Cryptographic streams and fallible entropy errors remain future work.
 
 `std::test`, `std::log`, and `std::error` are also source-first.
 `std::test::Report` aggregates checks, generic `equal`/`not_equal` stay

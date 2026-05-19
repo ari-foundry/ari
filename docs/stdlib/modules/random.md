@@ -1,0 +1,134 @@
+# std::random
+
+`std::random` separates two jobs that should not be confused:
+
+- OS entropy for seeds and security-sensitive randomness sources.
+- A deterministic, seedable non-cryptographic PRNG for simulations, tests,
+  randomized algorithms, and reproducible shuffling.
+
+The public names stay short because the module path already says the domain:
+write `random::entropy()`, `random::seed(123u64)`, and `rng.range(0, 10)`.
+
+## API
+
+```ari
+struct Prng
+
+random::entropy()
+random::seed(value)
+random::from_entropy()
+random::seed_from_os()
+random::next(ref mut rng)
+random::below(ref mut rng, upper)
+random::range(ref mut rng, start, end)
+random::float(ref mut rng)
+random::fill(values)
+random::fill_from(ref mut rng, values)
+random::shuffle<T>(ref mut rng, values)
+
+Prng::seed(value)
+Prng::from_entropy()
+Prng::seed_from_os()
+rng.next()
+rng.below(upper)
+rng.range(start, end)
+rng.float()
+rng.fill(values)
+rng.shuffle<T>(values)
+```
+
+`entropy()` returns one `u64` from the operating system. On the current
+hosted Linux runtime it tries the `getrandom` libc/syscall path first and then
+falls back to reading eight bytes from `/dev/urandom`. If both fail, the
+runtime terminates instead of returning weak entropy.
+
+`fill(values)` fills a `Slice[u8]` with OS entropy by repeatedly calling
+`entropy()`. Use it for seed bytes or small random tokens. A future slice
+should add a direct `fill_entropy(values) -> Result` shape once Ari's error
+and owned-buffer story is stronger.
+
+`Prng` is deterministic and non-cryptographic. `seed(value)` and
+`Prng::seed(value)` create a repeatable generator. `from_entropy()` and
+`seed_from_os()` seed that generator from OS entropy, which is useful for
+games, randomized algorithms, and tests that do not need reproducibility.
+
+`next()` returns the next raw `u64`. `below(upper)` returns an `i64` in
+`0..upper`; `range(start, end)` returns an `i64` in `start..end`; both assert
+on invalid bounds. `float()` returns an `f64` in `[0.0, 1.0)`. `fill_from`
+and `rng.fill(values)` fill bytes from the deterministic PRNG.
+
+`shuffle(rng, values)` implements an in-place Fisher-Yates shuffle over a
+borrowed `Slice[T]`.
+
+## Examples
+
+Repeatable random integers:
+
+```ari
+fn main() -> i64 {
+  var rng = random::seed(42u64);
+  let value = rng.range(10, 20);
+  if value >= 10 && value < 20 {
+    return 0;
+  }
+  return 1;
+}
+```
+
+OS-seeded shuffle:
+
+```ari
+fn main() -> i64 {
+  var rng = random::from_entropy();
+  var values = [1, 2, 3, 4];
+  rng.shuffle<i64>(values.as_slice());
+  return 0;
+}
+```
+
+## Feature Status
+
+| Need | Status |
+| --- | --- |
+| OS entropy | Current: `entropy()` returns a `u64`; `fill(values)` fills small byte slices. |
+| `/dev/urandom` | Current Linux runtime fallback when `getrandom` does not return eight bytes. |
+| `getrandom` syscall | Current hosted Linux runtime uses the libc `getrandom` entry point before fallback. |
+| CSPRNG seed | Current: use `entropy()`, `from_entropy()`, or `seed_from_os()` as seed material. |
+| CSPRNG stream | Roadmap: not exposed yet; do not use `Prng` for cryptography. |
+| non-crypto PRNG | Current: deterministic `Prng` with `seed`, `next`, `below`, `range`, and `float`. |
+| shuffle | Current: `shuffle<T>(ref mut rng, values)` and `rng.shuffle<T>(values)`. |
+| random int | Current: `below` and `range` over `i64` bounds. |
+| random float | Current: `float() -> f64` in `[0.0, 1.0)`. |
+
+## Current Limits
+
+- `Prng` is not cryptographically secure. It is for reproducible and ordinary
+  randomized behavior only.
+- `below` and `range` use the current simple bounded integer policy. A future
+  implementation can switch to rejection sampling without changing the public
+  names.
+- OS entropy currently has a hard-fail runtime shape. A fallible
+  `Result`-returning API belongs with richer standard error values.
+- No distribution helpers exist yet. Normal/exponential/weighted sampling
+  should probably live outside the first core stdlib slice.
+
+## Tests
+
+```text
+tests/cases/standard-library/ok/random/std-random-basic.ari
+```
+
+The focused test covers runtime entropy hook reachability, deterministic
+seeded PRNG behavior, bounded integer generation, unit float generation,
+deterministic byte filling, OS byte filling, and generic slice shuffling.
+
+## Next Work
+
+- Add a fallible entropy API after `Result[T, Error]` can carry richer error
+  values comfortably.
+- Add direct OS byte filling in the runtime instead of repeating `entropy()`
+  for larger slices.
+- Add unbiased bounded integer generation and document the exact distribution
+  contract.
+- Keep cryptographic PRNG streams and advanced distributions separate until
+  Ari has a clear crypto/package policy.
