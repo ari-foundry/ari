@@ -1,0 +1,45 @@
+fn same_bytes(left: Slice[u8], right: Slice[u8]) -> bool {
+  if left.len != right.len {
+    return false;
+  }
+  var index = 0;
+  while index < left.len {
+    if left[index] != right[index] {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  let letter: u8 = 'c';
+  assert_eq_i64(letter as i64, 99);
+  assert('c' == 99u8);
+  assert('A' == '\x41');
+  assert('\101' == 'A');
+  assert('\u{41}' == 'A');
+  score = score + 1;
+
+  assert_eq_i64('\n' as i64, 10);
+  assert_eq_i64('\t' as i64, 9);
+  assert_eq_i64('\'' as i64, 39);
+  assert_eq_i64('\\' as i64, 92);
+  score = score + 1;
+
+  var truth = ['t', 'r', 'u', 'e'];
+  let borrowed = std::string::bytes("true");
+  assert(same_bytes(borrowed, truth.as_slice()));
+  assert(same_bytes(std::string::c_bytes("true"), borrowed));
+  score = score + 1;
+
+  var zone = zone::create(16);
+  var owned = std::string::from_slice_in(ref mut zone, borrowed);
+  assert(owned.equals(truth.as_slice()));
+  zone::destroy(zone);
+  score = score + 1;
+
+  return score;
+}

@@ -24,6 +24,19 @@ let delta: i32 = -10
 
 `256` is rejected for `u8`, and `-129` is rejected for `i8`.
 
+Single-quoted byte character literals are `u8` values:
+
+```ari
+let c: u8 = 'c'
+let newline = '\n'
+let raw = '\x7f'
+let bytes = ['t', 'r', 'u', 'e']
+```
+
+These literals are byte-oriented, not full Unicode scalar values. Plain
+single-quoted characters must be ASCII. Use `'\xNN'` for arbitrary byte values
+and string literals for Unicode text.
+
 Both executable backends preserve the declared integer width when scalar locals
 are read or written. On the LLVM backend this includes narrow
 local reloads after explicit raw-pointer writes, so an `i8`, `i16`, or `i32`
@@ -115,6 +128,9 @@ The source prelude already has the allocator-backed seed under `std::string`.
 `std::string::String` handle with separate `len` and `capacity` metadata over
 zone-backed bytes, and `std::string::from_string(ref mut zone, text)` copies a
 borrowed lowercase `string` into that handle.
+`std::string::bytes(text)` returns a borrowed `Slice[u8]` over a lowercase
+`string` without the trailing NUL, so `"true"` can be passed to byte parsers or
+compared with a local byte vector like `['t', 'r', 'u', 'e']`.
 `std::string::from_slice_in(ref mut Zone, Slice[u8])` copies a borrowed byte
 slice into a new target-zone string handle. It supports checked byte
 `first`/`last`/`get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone

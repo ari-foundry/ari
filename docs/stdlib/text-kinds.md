@@ -27,8 +27,8 @@ together. Use this page when deciding which API a library should accept.
   module, and `std::c::from_string(text)` when the value is headed to C ABI
   helpers. Use `std::c::from_slice_in(ref mut zone, bytes)` when owned
   NUL-terminated storage is required.
-- Use `cstr.as_slice()` or `std::string::c_bytes(text)` when byte helpers
-  should ignore the trailing NUL.
+- Use `cstr.as_slice()`, `std::string::c_bytes(text)`, or the natural alias
+  `std::string::bytes(text)` when byte helpers should ignore the trailing NUL.
 
 ## Current Limits
 

@@ -58,6 +58,10 @@ pub fn c_bytes(text: string) -> std::Slice[u8] {
   return std::Slice<u8> { data: text as ptr u8, len: c_string_len(text) };
 }
 
+pub fn bytes(text: string) -> std::Slice[u8] {
+  return std::string::c_bytes(text);
+}
+
 pub fn from_slice_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
   var output = std::string::new(zone, values.len);
   output.extend_from_slice_in(zone, values);

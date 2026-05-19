@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let value = '\u{80}';
+  return value as i64;
+}

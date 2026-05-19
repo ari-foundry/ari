@@ -385,6 +385,9 @@ Checklist:
 - [x] `std::string::from_slice_in(ref mut Zone, Slice[u8])` copies a borrowed
       byte slice into independent source `std::string::String` storage tied to
       the target zone
+- [x] byte character literals such as `'c'`, `'\n'`, and `'\x63'` lower as
+      `u8`, and `std::string::bytes(string)` exposes borrowed literal bytes as
+      `Slice[u8]` without the trailing NUL
 - [x] source `std::string::String` exposes borrowed-receiver endpoint byte
       reads through `first` and `last`
 - [x] source `std::string::String` exposes `try_first`, `try_last`,

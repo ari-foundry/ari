@@ -26,6 +26,8 @@ checks.
 - `std-string-append-f32.ari`: f32 formatting append helper.
 - `std-string-append-u64.ari`: u64 formatting append helper.
 - `std-string-from-slice-in.ari`: owned copies from borrowed byte slices.
+- `std-string-byte-literals.ari`: byte character literals and literal string
+  byte views.
 - `std-string-unicode-helpers.ari`: UTF-8 validation, code-point access, and
   scalar append convenience methods.
 - `std-string-text-kinds.ari`: typed borrowed views for validated UTF-8 bytes,

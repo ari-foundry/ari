@@ -25,13 +25,16 @@ std::string::os_str(bytes)
 std::string::c_str("literal")
 std::string::c_len("literal")
 std::string::c_bytes("literal")
+std::string::bytes("literal")
 ```
 
 `utf8(bytes)` validates a borrowed `Slice[u8]` and returns
 `Option[std::string::Utf8]`. `os_str(bytes)` keeps operating-system bytes
 distinct from normal text; the current POSIX slice stores raw bytes and may not
 be valid UTF-8. `c_str(text)` wraps Ari's NUL-terminated `string` value, while
-`c_len` and `c_bytes` expose bytes before the trailing NUL.
+`c_len` and `c_bytes` expose bytes before the trailing NUL. `bytes(text)` is
+the natural alias for `c_bytes(text)` when a string literal should be treated
+as a `Slice[u8]`, for example `std::string::bytes("true")`.
 
 Avoid using `String` as a general text policy. UTF-8 helpers operate on Unicode
 scalar values and byte offsets. Unicode normalization, grapheme iteration,
@@ -332,6 +335,7 @@ tests/cases/standard-library/ok/string/std-string-trim-copy.ari
 tests/cases/standard-library/ok/string/std-string-grow.ari
 tests/cases/standard-library/ok/string/std-string-append.ari
 tests/cases/standard-library/ok/string/std-string-from-slice-in.ari
+tests/cases/standard-library/ok/string/std-string-byte-literals.ari
 tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari
 tests/cases/standard-library/ok/string/std-string-text-kinds.ari
 ```

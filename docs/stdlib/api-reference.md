@@ -1273,6 +1273,7 @@ std::string::os_str(bytes)
 std::string::c_str(text)
 std::string::c_len(text)
 std::string::c_bytes(text)
+std::string::bytes(text)
 std::string::new(ref mut zone, capacity)
 std::string::from_string(ref mut zone, "text")
 std::string::from_slice_in(ref mut zone, bytes)
@@ -1359,6 +1360,12 @@ c.as_slice()
 c.len()
 c.is_empty()
 ```
+
+`std::string::bytes(text)` returns a borrowed `Slice[u8]` over a lowercase
+`string` without the trailing NUL, which is the easiest way to feed parsers or
+compare a literal like `"true"` against byte slices. Single-quoted byte
+character literals such as `'t'`, `'\n'`, and `'\x74'` are `u8`, so local byte
+vectors can be written as `['t', 'r', 'u', 'e']`.
 
 `String` stores bytes, so `join_in`, `find`, `contains_slice`, `slice`,
 `split_at`, `chunks`, `windows`, and delimiter `split` operate on byte offsets

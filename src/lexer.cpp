@@ -89,6 +89,7 @@ public:
                     else tokens.push_back(simple(TokenKind::Slash, "/", loc));
                     break;
                 case '"': tokens.push_back(string(loc)); break;
+                case '\'': tokens.push_back(byte_char(loc)); break;
                 case '-':
                     if (match('>')) tokens.push_back(simple(TokenKind::Arrow, "->", loc));
                     else if (match('=')) tokens.push_back(simple(TokenKind::MinusEqual, "-=", loc));
@@ -384,6 +385,60 @@ private:
         }
     }
 
+    Token byte_char(SourceLocation loc) {
+        std::uint64_t value = byte_char_value(loc);
+        if (!match('\'')) {
+            fail(loc, "byte character literal must contain exactly one byte");
+        }
+        Token token{TokenKind::Integer, "", value, loc, 0.0, ""};
+        token.literal_suffix = "u8";
+        return token;
+    }
+
+    std::uint64_t byte_char_value(SourceLocation literal_loc) {
+        SourceLocation loc{line_, column_};
+        char c = advance();
+        if (c == '\0' || c == '\n') fail(literal_loc, "unterminated byte character literal");
+        if (c == '\'') fail(literal_loc, "empty byte character literal");
+        if (c == '\\') return byte_char_escape(literal_loc);
+
+        unsigned char byte = static_cast<unsigned char>(c);
+        if (byte > 0x7f) {
+            fail(loc, "byte character literal must be ASCII; use a string literal for Unicode text");
+        }
+        return byte;
+    }
+
+    std::uint64_t byte_char_escape(SourceLocation literal_loc) {
+        SourceLocation escape_loc{line_, column_};
+        char escaped = advance();
+        switch (escaped) {
+            case 'a': return '\a';
+            case 'b': return '\b';
+            case 'e': return 0x1b;
+            case 'f': return '\f';
+            case 'n': return '\n';
+            case 'r': return '\r';
+            case 't': return '\t';
+            case 'v': return '\v';
+            case '"': return '"';
+            case '\'': return '\'';
+            case '?': return '?';
+            case '\\': return '\\';
+            case 'x': return read_byte_escape_value(escape_loc, "\\x");
+            case 'u': return read_ascii_unicode_escape_value(escape_loc, 4);
+            case 'U': return read_ascii_unicode_escape_value(escape_loc, 8);
+            case '\0':
+            case '\n':
+                fail(literal_loc, "unterminated byte character literal");
+            default:
+                if (is_octal_digit(escaped)) {
+                    return read_octal_escape_value(escape_loc, escaped);
+                }
+                fail(escape_loc, "unsupported byte character escape");
+        }
+    }
+
     void append_string_escape(std::string& text, SourceLocation string_loc) {
         SourceLocation escape_loc{line_, column_};
         char escaped = advance();
@@ -423,20 +478,52 @@ private:
         return digits;
     }
 
-    void append_hex_byte_escape(std::string& text, SourceLocation loc) {
-        std::string digits = read_digits_for_escape(loc, 16, "\\x", true);
-        std::uint64_t value = parse_integer_digits(loc, digits, 16, "hex escape");
-        if (value > 0xff) fail(loc, "\\x escape value must fit in one byte");
-        text.push_back(static_cast<char>(value));
+    std::uint64_t read_byte_escape_value(SourceLocation loc, const std::string& kind) {
+        std::string digits = read_digits_for_escape(loc, 16, kind, true);
+        std::uint64_t value = parse_integer_digits(loc, digits, 16, "byte escape");
+        if (value > 0xff) fail(loc, kind + " escape value must fit in one byte");
+        return value;
     }
 
-    void append_octal_escape(std::string& text, SourceLocation loc, char first) {
+    std::uint64_t read_octal_escape_value(SourceLocation loc, char first) {
         std::string digits;
         digits.push_back(first);
         while (is_octal_digit(peek())) digits.push_back(advance());
         std::uint64_t value = parse_integer_digits(loc, digits, 8, "octal escape");
         if (value > 0xff) fail(loc, "octal escape value must fit in one byte");
-        text.push_back(static_cast<char>(value));
+        return value;
+    }
+
+    std::uint64_t read_ascii_unicode_escape_value(SourceLocation loc, int fixed_digits) {
+        std::string digits;
+        if (fixed_digits == 4 && match('{')) {
+            while (peek() != '}') {
+                if (peek() == '\0' || peek() == '\n') fail(loc, "unterminated Unicode escape");
+                if (!is_digit_for_base(peek(), 16)) fail(SourceLocation{line_, column_}, "invalid digit in Unicode escape");
+                digits.push_back(advance());
+            }
+            advance();
+            if (digits.empty()) fail(loc, "\\u{} escape requires at least one digit");
+        } else {
+            for (int i = 0; i < fixed_digits; ++i) {
+                if (!is_digit_for_base(peek(), 16)) {
+                    fail(loc, fixed_digits == 4 ? "\\u escape requires exactly 4 hex digits" : "\\U escape requires exactly 8 hex digits");
+                }
+                digits.push_back(advance());
+            }
+        }
+
+        std::uint64_t value = parse_integer_digits(loc, digits, 16, "Unicode escape");
+        if (value > 0x7f) fail(loc, "Unicode escape in byte character literal must fit in ASCII");
+        return value;
+    }
+
+    void append_hex_byte_escape(std::string& text, SourceLocation loc) {
+        text.push_back(static_cast<char>(read_byte_escape_value(loc, "\\x")));
+    }
+
+    void append_octal_escape(std::string& text, SourceLocation loc, char first) {
+        text.push_back(static_cast<char>(read_octal_escape_value(loc, first)));
     }
 
     void append_unicode_escape(std::string& text, SourceLocation loc, int fixed_digits) {

@@ -903,6 +903,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf
 	$(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-text-kinds.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-text-kinds.elf; $(BUILD_DIR)/prelude/std-string-text-kinds.elf; code=$$?; test $$code -eq 0; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-byte-literals.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-byte-literals.ll
+	grep -q '_ARNv3std6string5bytes' $(BUILD_DIR)/prelude/std-string-byte-literals.ll
+	grep -q 'store i8 99' $(BUILD_DIR)/prelude/std-string-byte-literals.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-byte-literals.ari -o $(BUILD_DIR)/prelude/std-string-byte-literals.elf
+	$(BUILD_DIR)/prelude/std-string-byte-literals.elf; code=$$?; test $$code -eq 4
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-byte-literals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-byte-literals.elf; $(BUILD_DIR)/prelude/std-string-byte-literals.elf; code=$$?; test $$code -eq 4; fi
 	$(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari --emit-llvm $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q 'declare ptr @"dlopen"' $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q 'declare ptr @"dlsym"' $(BUILD_DIR)/prelude/std-c-interop.ll
@@ -4627,6 +4633,10 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "integer literal -129 is out of range for i8" $(BUILD_DIR)/errors/i8-literal-range.err
 	if $(TARGET) tests/cases/literals/errors/integer-literal-too-large.ari -o $(BUILD_DIR)/errors/integer-literal-too-large.elf >$(BUILD_DIR)/errors/integer-literal-too-large.err 2>&1; then exit 1; fi
 	grep -q "integer literal is too large" $(BUILD_DIR)/errors/integer-literal-too-large.err
+	if $(TARGET) tests/cases/literals/errors/byte-char-too-long.ari -o $(BUILD_DIR)/errors/byte-char-too-long.elf >$(BUILD_DIR)/errors/byte-char-too-long.err 2>&1; then exit 1; fi
+	grep -q "byte character literal must contain exactly one byte" $(BUILD_DIR)/errors/byte-char-too-long.err
+	if $(TARGET) tests/cases/literals/errors/byte-char-unicode.ari -o $(BUILD_DIR)/errors/byte-char-unicode.elf >$(BUILD_DIR)/errors/byte-char-unicode.err 2>&1; then exit 1; fi
+	grep -q "Unicode escape in byte character literal must fit in ASCII" $(BUILD_DIR)/errors/byte-char-unicode.err
 	if $(TARGET) tests/cases/literals/errors/class-removed.ari -o $(BUILD_DIR)/errors/class-removed.elf >$(BUILD_DIR)/errors/class-removed.err 2>&1; then exit 1; fi
 	grep -q "expected top-level declaration" $(BUILD_DIR)/errors/class-removed.err
 	if $(TARGET) tests/cases/literals/errors/interface-removed.ari -o $(BUILD_DIR)/errors/interface-removed.elf >$(BUILD_DIR)/errors/interface-removed.err 2>&1; then exit 1; fi

@@ -90,7 +90,7 @@ Omit the semicolon only for the final value expression in a function, block,
 | Family | Examples | Notes |
 | --- | --- | --- |
 | signed integers | `i8`, `i16`, `i32`, `i64` | No implicit width casts. |
-| unsigned integers | `u8`, `u16`, `u32`, `u64` | Suffix literals like `255u8`. |
+| unsigned integers | `u8`, `u16`, `u32`, `u64` | Suffix literals like `255u8`; byte literals like `'A'`, `'\n'`, and `'\x41'` are `u8`. |
 | floats | `f32`, `f64`, `f128` | `f32`/`f64` arithmetic lowers today; `f128` storage is limited. |
 | bool | `bool` | Used by logical operators and normal conditions. |
 | borrowed string pointer | `string` | NUL-terminated pointer-shaped string for literals and C-style text. |
@@ -190,7 +190,7 @@ skipped.
 | Pattern | Example |
 | --- | --- |
 | wildcard | `_` |
-| literal | `0`, `true` |
+| literal | `0`, `true`, `'x'` |
 | range | `10..=20` |
 | enum case | `Some(value)` |
 | or-pattern | `Left(value) \| Right(value)` |
@@ -250,7 +250,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | explicit allocation | `zone::create`, `zone::alloc<T>`, `zone::alloc_array<T>`, `zone::new<T>`, `zone::reset`, `zone::destroy` |
 | temporary allocation | `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |
 | single-value handle | `std::boxed::Box[T]`, `Box!(T, ref mut zone, value)` |
-| owned byte string | `std::string::String`, `std::string::from_string(ref mut zone, "text")`, `std::string::join_in(ref mut zone, parts, separator)`, `.try_get(index)`, `.find(bytes)`, `.split(delimiter)`, `.chunks(size)`, `.windows(size)`, `.is_utf8()`, `.codepoint_at(byte_index)`, `.push_codepoint_in(ref mut zone, scalar)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.trim_to(ref mut zone)` |
+| owned byte string | `std::string::String`, `std::string::bytes("text")`, `std::string::from_string(ref mut zone, "text")`, `std::string::join_in(ref mut zone, parts, separator)`, `.try_get(index)`, `.find(bytes)`, `.split(delimiter)`, `.chunks(size)`, `.windows(size)`, `.is_utf8()`, `.codepoint_at(byte_index)`, `.push_codepoint_in(ref mut zone, scalar)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.trim_to(ref mut zone)` |
 | unique linear set | `collections::new<T>(ref mut zone, capacity)`, `Set::new<T>(ref mut zone, capacity)`, `.insert(ref mut zone, value)`, `.replace(ref mut zone, value)`, `.try_get(index)`, `.try_pop()`, `.reserve(ref mut zone, capacity)`, `.iter()`, `.contains(value)` |
 | ASCII byte helpers | `ascii::is_digit`, `ascii::equals_ignore_case`, `ascii::index_of_ignore_case`, `ascii::trim`, `ascii::parse_decimal`, `ascii::parse_decimal_prefix` |
 | integer math helpers | `math::abs`, `math::is_positive`, `math::is_zero`, `math::div_floor`, `math::div_ceil`, `math::mod_floor`, `math::gcd` |

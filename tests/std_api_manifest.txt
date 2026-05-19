@@ -391,6 +391,7 @@ fn std::random::seed_from_os|check-prelude std-random-basic OS-seeded PRNG const
 fn std::random::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle; docs/stdlib/modules/random.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::string::bytes|check-prelude std-string-byte-literals natural borrowed byte view over string literals; docs/stdlib/modules/string.md
 fn std::string::c_bytes|check-prelude std-string-text-kinds borrowed C string byte view without terminator; docs/stdlib/modules/string.md
 fn std::string::c_len|check-prelude std-string-text-kinds C string byte length without terminator; docs/stdlib/modules/string.md
 fn std::string::c_str|check-prelude std-string-text-kinds typed borrowed C string view constructor; docs/stdlib/modules/string.md
