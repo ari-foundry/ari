@@ -7,3 +7,6 @@ before Ari has full shared ownership, send/share traits, or channel support.
   module functions, method wrappers, root aliasing, and LLVM atomic lowering.
 - `std-sync-mutex-once.ari`: checks source `Mutex` try/lock/unlock helpers,
   source `Once` call-once state transitions, root aliases, and method wrappers.
+- `std-sync-rwlock.ari`: checks source `RwLock` read/write lock transitions,
+  reader counts, root aliasing, method wrappers, and atomic lowering through
+  compare-exchange/fetch-add.

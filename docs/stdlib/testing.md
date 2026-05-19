@@ -51,6 +51,7 @@ std-thread-basic.ari
 std-thread-runtime-helpers.ari
 std-sync-atomic-i64.ari
 std-sync-mutex-once.ari
+std-sync-rwlock.ari
 std-time-basic.ari
 std-fs-basic.ari
 std-fs-append.ari

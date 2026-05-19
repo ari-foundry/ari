@@ -437,6 +437,9 @@ Checklist:
 - [x] runtime-backed `std::thread` exposes function-pointer spawn/join,
       cooperative yield, duration sleep, hosted available parallelism, runtime
       thread ids, invalid-handle checks, and source handle wrappers
+- [x] source `std::sync` exposes primitive `RwLock` read/write lock helpers,
+      reader-count diagnostics, root aliasing, and atomic compare-exchange /
+      fetch-add-backed lowering
 - [x] source `std::string::String.copy_to(ref mut Zone)` mirrors the
       top-level target-zone copy helper while preserving reset/destroy
       provenance on the returned handle

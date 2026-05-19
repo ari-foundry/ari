@@ -452,6 +452,14 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_sync_atomic_i64_compare_exchange" $(BUILD_DIR)/prelude/std-sync-mutex-once.ll
 	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-mutex-once.ari -o $(BUILD_DIR)/prelude/std-sync-mutex-once.elf
 	$(BUILD_DIR)/prelude/std-sync-mutex-once.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-rwlock.ari --emit-llvm $(BUILD_DIR)/prelude/std-sync-rwlock.ll
+	grep -q '_ARNv3std4sync13try_read_lock' $(BUILD_DIR)/prelude/std-sync-rwlock.ll
+	grep -q '_ARNv3std4sync14try_write_lock' $(BUILD_DIR)/prelude/std-sync-rwlock.ll
+	grep -q '_ARNv3std4sync12reader_count' $(BUILD_DIR)/prelude/std-sync-rwlock.ll
+	grep -q "@ari_builtin_sync_atomic_i64_compare_exchange" $(BUILD_DIR)/prelude/std-sync-rwlock.ll
+	grep -q "@ari_builtin_sync_atomic_i64_fetch_add" $(BUILD_DIR)/prelude/std-sync-rwlock.ll
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-rwlock.ari -o $(BUILD_DIR)/prelude/std-sync-rwlock.elf
+	$(BUILD_DIR)/prelude/std-sync-rwlock.elf; code=$$?; test $$code -eq 43
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_monotonic_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_unix_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll

@@ -58,8 +58,9 @@ limits, examples, and test files for one module.
 - [std::thread](thread.md): function-pointer thread spawn/join, runtime thread
   ids, invalid-handle sentinels, cooperative sleep/yield, available
   parallelism, and thread-local/stack-size roadmap notes.
-- [std::sync](sync.md): concrete `AtomicI64` operations, source `Mutex` and
-  `Once` helpers, current memory-order policy, and lock/channel roadmap.
+- [std::sync](sync.md): concrete `AtomicI64` operations, source `Mutex`,
+  `RwLock`, and `Once` helpers, current memory-order policy, and lock/channel
+  roadmap.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock
   timestamps, non-negative durations, elapsed-time helpers, and sleep.
 - [std::fs](fs.md): runtime-backed file existence, mode-string open calls,

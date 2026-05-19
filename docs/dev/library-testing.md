@@ -81,6 +81,9 @@ identifies the exact case:
 - `std-sync-mutex-once.ari`: source `std::sync::Mutex` try/lock/unlock
   behavior, source `std::sync::Once` call-once state transitions, method
   wrappers, root aliases, and compare-exchange-backed lowering.
+- `std-sync-rwlock.ari`: source `std::sync::RwLock` read/write lock
+  transitions, reader-count diagnostics, method wrappers, root alias, and
+  compare-exchange/fetch-add-backed lowering.
 - `std-time-basic.ari`: runtime-backed monotonic and wall-clock nanosecond
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
 - `std-fs-basic.ari`: runtime-backed file existence, mode-string

@@ -1,0 +1,82 @@
+// Covers the first source RwLock primitive: explicit read/write lock states.
+fn main() -> i64 {
+  var lock = RwLock::new();
+  if lock.is_locked() {
+    return 1;
+  }
+  if lock.reader_count() != 0 {
+    return 2;
+  }
+
+  if !lock.try_read_lock() {
+    return 3;
+  }
+  if !lock.is_read_locked() {
+    return 4;
+  }
+  if lock.is_write_locked() {
+    return 5;
+  }
+  if lock.reader_count() != 1 {
+    return 6;
+  }
+
+  if !lock.try_read_lock() {
+    return 7;
+  }
+  if lock.reader_count() != 2 {
+    return 8;
+  }
+  if lock.try_write_lock() {
+    return 9;
+  }
+
+  lock.read_unlock();
+  if lock.reader_count() != 1 {
+    return 10;
+  }
+  sync::read_unlock(ref mut lock);
+  if lock.is_locked() {
+    return 11;
+  }
+
+  if !lock.try_write_lock() {
+    return 12;
+  }
+  if !lock.is_write_locked() {
+    return 13;
+  }
+  if lock.is_read_locked() {
+    return 14;
+  }
+  if lock.try_read_lock() {
+    return 15;
+  }
+  if sync::try_write_lock(ref mut lock) {
+    return 16;
+  }
+  lock.write_unlock();
+  if lock.is_locked() {
+    return 17;
+  }
+
+  sync::read_lock(ref mut lock);
+  if !sync::is_read_locked(ref lock) {
+    return 18;
+  }
+  sync::read_unlock(ref mut lock);
+
+  sync::write_lock(ref mut lock);
+  if !sync::is_write_locked(ref lock) {
+    return 19;
+  }
+  sync::write_unlock(ref mut lock);
+
+  var qualified = std::sync::RwLock::new();
+  if !std::sync::try_read_lock(ref mut qualified) {
+    return 20;
+  }
+  std::sync::read_unlock(ref mut qualified);
+
+  return 43;
+}

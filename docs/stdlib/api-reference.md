@@ -371,6 +371,7 @@ Synchronization helpers live in `std::sync`:
 ```ari
 AtomicI64::new(value)
 Mutex::new()
+RwLock::new()
 Once::new()
 
 sync::load(ref value)
@@ -382,6 +383,15 @@ sync::try_lock(ref mut mutex)
 sync::lock(ref mut mutex)
 sync::unlock(ref mut mutex)
 sync::is_locked(ref mutex)
+sync::try_read_lock(ref mut rwlock)
+sync::read_lock(ref mut rwlock)
+sync::read_unlock(ref mut rwlock)
+sync::try_write_lock(ref mut rwlock)
+sync::write_lock(ref mut rwlock)
+sync::write_unlock(ref mut rwlock)
+sync::reader_count(ref rwlock)
+sync::is_read_locked(ref rwlock)
+sync::is_write_locked(ref rwlock)
 sync::call_once(ref mut once, action)
 sync::is_completed(ref once)
 
@@ -396,6 +406,17 @@ mutex.lock()
 mutex.unlock()
 mutex.is_locked()
 
+rwlock.try_read_lock()
+rwlock.read_lock()
+rwlock.read_unlock()
+rwlock.try_write_lock()
+rwlock.write_lock()
+rwlock.write_unlock()
+rwlock.reader_count()
+rwlock.is_read_locked()
+rwlock.is_write_locked()
+rwlock.is_locked()
+
 once.call_once(action)
 once.is_completed()
 ```
@@ -407,12 +428,15 @@ value; `compare_exchange` returns whether the replacement happened.
 
 `Mutex` is a source spin/yield lock built on `AtomicI64`. It is not a
 value-protecting `Mutex[T]` and has no guard type yet, so keep lock/unlock
-scopes explicit and small. `Once` runs a plain `fn() -> void` at most once and
-reports whether the current caller ran it.
+scopes explicit and small. `RwLock` is a source reader/writer primitive built
+on the same atomic. It allows multiple readers or one writer, but it is not a
+value-protecting `RwLock[T]` and has no read/write guards yet. `Once` runs a
+plain `fn() -> void` at most once and reports whether the current caller ran
+it.
 
-`Shared`, `Weak`, `RwLock`, `Condvar`, `OnceLock`, `LazyLock`, barriers,
-semaphores, MPSC channels, futex-backed blocking locks, and weaker
-memory-order options remain future concurrency work.
+`Shared`, `Weak`, `Condvar`, `OnceLock`, `LazyLock`, barriers, semaphores,
+MPSC channels, futex-backed blocking locks, and weaker memory-order options
+remain future concurrency work.
 
 Runtime-backed time helpers live in `std::time`:
 

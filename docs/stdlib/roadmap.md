@@ -40,7 +40,8 @@ fork/wait slice, `thread`
 function-pointer spawn/join/sleep/yield hooks plus runtime ids, available
 parallelism, and source handle helpers, `sync` concrete `AtomicI64`
 sequentially consistent load/store/swap/
-fetch-add/compare-exchange hooks plus source `Mutex` and `Once` helpers,
+fetch-add/compare-exchange hooks plus source `Mutex`, `RwLock`, and `Once`
+helpers,
 `time`
 monotonic/wall-clock/sleep hooks plus source
 `Duration`/`Instant`/`SystemTime` helpers, `fs` byte-oriented file existence,
@@ -78,7 +79,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::net` | Represent network addresses now and sockets later through explicit handles. | Current source-only `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, constructors, family predicates, loopback/unspecified checks, and port helpers; future DNS lookup, `TcpListener`, `TcpStream`, `UdpSocket`, Unix domain sockets, socket options, nonblocking mode, `std::time::Duration` timeouts, shutdown, and owned socket handles. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Current `Duration`, `Instant`, `SystemTime`, `nanoseconds`, `microseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `elapsed`, `sleep`; future timers, interruption-aware sleep, and calendar formatting. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, user-facing `ThreadLocal[T]`, custom stack-size options, richer status/result values, and `std::sync` integration. |
-| `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`, plus source primitive `Mutex` and `Once`; future generic atomics, memory-order parameters, value-protecting `Mutex[T]`, `RwLock`, `Condvar`, `OnceLock`, `LazyLock`, `Barrier`, optional `Semaphore`, `Shared`, `Weak`, MPSC channels, and Linux futex-backed internals after ownership rules are stable. |
+| `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`, plus source primitive `Mutex`, `RwLock`, and `Once`; future generic atomics, memory-order parameters, value-protecting `Mutex[T]`/`RwLock[T]`, `Condvar`, `OnceLock`, `LazyLock`, `Barrier`, optional `Semaphore`, `Shared`, `Weak`, MPSC channels, and Linux futex-backed internals after ownership rules are stable. |
 | `std::collections` | Store keyed, queue-like, linked, and priority data beyond vectors. | Current linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, FIFO/linked/heap tests, live-bucket hash iterators, sorted tree iterators; future tree deletion and trait-driven constructors. |
 | `std::iter` | Compose sequence processing without forcing every operation onto each collection type. | Current `range`, `range_inclusive`, `Iterator`, `IntoIterator`, lazy `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed `collect`; future captured closures, richer adapter inference, and collect targets beyond `std::vec::Vec[T]`. |
 | `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting and move-aware algorithm contracts. |
@@ -169,10 +170,10 @@ work. Each one should land in small tested slices with natural API names.
   richer link metadata/platform symlink policy, and optional locking.
   `std::thread` now has its first function-pointer spawn/join wrapper, sleep
   convenience, and available-parallelism hook, and `std::sync` has a first
-  concrete atomic integer primitive plus source `Mutex` and `Once` helpers.
-  Grow them toward explicit ownership transfer, user-facing TLS, stack-size
-  options, richer statuses, generic atomics, value-protecting locks, blocking
-  waits, channels, and safer shared-state policy.
+  concrete atomic integer primitive plus source `Mutex`, `RwLock`, and `Once`
+  helpers. Grow them toward explicit ownership transfer, user-facing TLS,
+  stack-size options, richer statuses, generic atomics, value-protecting locks,
+  blocking waits, channels, and safer shared-state policy.
 - Keep syscall-facing helpers minimal and modern: process arguments and
   environment, current directory, file descriptors/handles, time, process
   spawn/fork where the platform supports it, thread creation/join, atomics or

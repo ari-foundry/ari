@@ -316,12 +316,21 @@ fn std::sync::compare_exchange|check-prelude std-sync-atomic-i64 atomic compare-
 fn std::sync::fetch_add|check-prelude std-sync-atomic-i64 atomic fetch-add hook; docs/stdlib/modules/sync.md
 fn std::sync::is_completed|check-prelude std-sync-mutex-once source once completion predicate; docs/stdlib/modules/sync.md
 fn std::sync::is_locked|check-prelude std-sync-mutex-once source mutex state predicate; docs/stdlib/modules/sync.md
+fn std::sync::is_read_locked|check-prelude std-sync-rwlock source read-lock diagnostic predicate; docs/stdlib/modules/sync.md
+fn std::sync::is_write_locked|check-prelude std-sync-rwlock source write-lock diagnostic predicate; docs/stdlib/modules/sync.md
 fn std::sync::load|check-prelude std-sync-atomic-i64 atomic load hook; docs/stdlib/modules/sync.md
 fn std::sync::lock|check-prelude std-sync-mutex-once source mutex spin lock helper; docs/stdlib/modules/sync.md
+fn std::sync::read_lock|check-prelude std-sync-rwlock source read lock helper; docs/stdlib/modules/sync.md
+fn std::sync::read_unlock|check-prelude std-sync-rwlock source read unlock helper; docs/stdlib/modules/sync.md
+fn std::sync::reader_count|check-prelude std-sync-rwlock source reader count helper; docs/stdlib/modules/sync.md
 fn std::sync::store|check-prelude std-sync-atomic-i64 atomic store hook; docs/stdlib/modules/sync.md
 fn std::sync::swap|check-prelude std-sync-atomic-i64 atomic exchange hook; docs/stdlib/modules/sync.md
 fn std::sync::try_lock|check-prelude std-sync-mutex-once source mutex nonblocking lock helper; docs/stdlib/modules/sync.md
+fn std::sync::try_read_lock|check-prelude std-sync-rwlock source nonblocking read lock helper; docs/stdlib/modules/sync.md
+fn std::sync::try_write_lock|check-prelude std-sync-rwlock source nonblocking write lock helper; docs/stdlib/modules/sync.md
 fn std::sync::unlock|check-prelude std-sync-mutex-once source mutex unlock helper; docs/stdlib/modules/sync.md
+fn std::sync::write_lock|check-prelude std-sync-rwlock source write lock helper; docs/stdlib/modules/sync.md
+fn std::sync::write_unlock|check-prelude std-sync-rwlock source write unlock helper; docs/stdlib/modules/sync.md
 fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
 fn std::target::arch|check-prelude std-target-basic compiler-known target architecture enum hook; docs/stdlib/modules/target.md
 fn std::target::arch_name|check-prelude std-target-basic compiler-known target architecture string hook; docs/stdlib/modules/target.md
@@ -745,6 +754,17 @@ method std::sync::Mutex::unlock|check-prelude std-sync-mutex-once mutex method u
 method std::sync::Once::call_once|check-prelude std-sync-mutex-once once method execution helper; docs/stdlib/modules/sync.md
 method std::sync::Once::is_completed|check-prelude std-sync-mutex-once once method completion predicate; docs/stdlib/modules/sync.md
 method std::sync::Once::new|check-prelude std-sync-mutex-once once associated constructor; docs/stdlib/modules/sync.md
+method std::sync::RwLock::is_locked|check-prelude std-sync-rwlock rwlock method any-lock predicate; docs/stdlib/modules/sync.md
+method std::sync::RwLock::is_read_locked|check-prelude std-sync-rwlock rwlock method read-lock predicate; docs/stdlib/modules/sync.md
+method std::sync::RwLock::is_write_locked|check-prelude std-sync-rwlock rwlock method write-lock predicate; docs/stdlib/modules/sync.md
+method std::sync::RwLock::new|check-prelude std-sync-rwlock rwlock associated constructor; docs/stdlib/modules/sync.md
+method std::sync::RwLock::read_lock|check-prelude std-sync-rwlock rwlock method read lock helper; docs/stdlib/modules/sync.md
+method std::sync::RwLock::read_unlock|check-prelude std-sync-rwlock rwlock method read unlock helper; docs/stdlib/modules/sync.md
+method std::sync::RwLock::reader_count|check-prelude std-sync-rwlock rwlock method reader count helper; docs/stdlib/modules/sync.md
+method std::sync::RwLock::try_read_lock|check-prelude std-sync-rwlock rwlock method nonblocking read lock helper; docs/stdlib/modules/sync.md
+method std::sync::RwLock::try_write_lock|check-prelude std-sync-rwlock rwlock method nonblocking write lock helper; docs/stdlib/modules/sync.md
+method std::sync::RwLock::write_lock|check-prelude std-sync-rwlock rwlock method write lock helper; docs/stdlib/modules/sync.md
+method std::sync::RwLock::write_unlock|check-prelude std-sync-rwlock rwlock method write unlock helper; docs/stdlib/modules/sync.md
 method std::test::Report::check|check-prelude std-test-report method condition aggregation; docs/stdlib/modules/test.md
 method std::test::Report::equal[T]|check-prelude std-test-report method generic equality aggregation; docs/stdlib/modules/test.md
 method std::test::Report::failed|check-prelude std-test-report method failed-count accessor; docs/stdlib/modules/test.md
@@ -899,6 +919,7 @@ struct std::string::String|std string handle tests; docs/dev/test-matrix.md Expl
 struct std::sync::AtomicI64|check-prelude std-sync-atomic-i64 atomic primitive value; docs/stdlib/modules/sync.md
 struct std::sync::Mutex|check-prelude std-sync-mutex-once source mutex primitive; docs/stdlib/modules/sync.md
 struct std::sync::Once|check-prelude std-sync-mutex-once source one-time initialization primitive; docs/stdlib/modules/sync.md
+struct std::sync::RwLock|check-prelude std-sync-rwlock source reader-writer lock primitive; docs/stdlib/modules/sync.md
 struct std::test::Report|check-prelude std-test-report unit-test report counts; docs/stdlib/modules/test.md
 struct std::thread::Thread|check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md
 struct std::time::Duration|std time duration helper tests; docs/stdlib/modules/time.md
@@ -982,6 +1003,7 @@ use std::Mutex|check-prelude std-sync-mutex-once root alias for std::sync::Mutex
 use std::Once|check-prelude std-sync-mutex-once root alias for std::sync::Once; docs/stdlib/modules/sync.md
 use std::PriorityQueue|check-prelude std-collections-heap root alias for std::collections::PriorityQueue[T]; docs/stdlib/modules/collections.md
 use std::RingBuffer|check-prelude std-collections-ring-buffer root alias for std::collections::RingBuffer[T]; docs/stdlib/modules/collections.md
+use std::RwLock|check-prelude std-sync-rwlock root alias for std::sync::RwLock; docs/stdlib/modules/sync.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::Thread|check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md

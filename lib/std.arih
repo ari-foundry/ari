@@ -92,6 +92,7 @@ pub use collections::TreeSet;
 pub use sync::AtomicI64;
 pub use sync::Mutex;
 pub use sync::Once;
+pub use sync::RwLock;
 pub use thread::Thread;
 
 pub impl[T] Slice[T] {

@@ -11,6 +11,10 @@ pub struct Mutex {
   mut state: AtomicI64,
 }
 
+pub struct RwLock {
+  mut state: AtomicI64,
+}
+
 pub struct Once {
   mut state: AtomicI64,
 }
@@ -37,6 +41,59 @@ pub fn unlock(lock: ref mut std::sync::Mutex) -> void {
 
 pub fn is_locked(lock: ref std::sync::Mutex) -> bool {
   return lock.state.load() != 0;
+}
+
+pub fn try_read_lock(lock: ref mut std::sync::RwLock) -> bool {
+  let current = lock.state.load();
+  if current < 0 {
+    return false;
+  }
+  return lock.state.compare_exchange(current, current + 1);
+}
+
+pub fn read_lock(lock: ref mut std::sync::RwLock) -> void {
+  while !std::sync::try_read_lock(lock) {
+    std::thread::yield_now();
+  }
+}
+
+pub fn read_unlock(lock: ref mut std::sync::RwLock) -> void {
+  let previous = lock.state.fetch_add(-1);
+  if previous <= 0 {
+    lock.state.fetch_add(1);
+    std::assert(false);
+  }
+}
+
+pub fn try_write_lock(lock: ref mut std::sync::RwLock) -> bool {
+  return lock.state.compare_exchange(0, -1);
+}
+
+pub fn write_lock(lock: ref mut std::sync::RwLock) -> void {
+  while !std::sync::try_write_lock(lock) {
+    std::thread::yield_now();
+  }
+}
+
+pub fn write_unlock(lock: ref mut std::sync::RwLock) -> void {
+  std::assert(lock.state.load() < 0);
+  lock.state.store(0);
+}
+
+pub fn reader_count(lock: ref std::sync::RwLock) -> i64 {
+  let current = lock.state.load();
+  if current < 0 {
+    return 0;
+  }
+  return current;
+}
+
+pub fn is_read_locked(lock: ref std::sync::RwLock) -> bool {
+  return lock.state.load() > 0;
+}
+
+pub fn is_write_locked(lock: ref std::sync::RwLock) -> bool {
+  return lock.state.load() < 0;
 }
 
 pub fn call_once(once: ref mut std::sync::Once, action: fn() -> void) -> bool {
@@ -103,6 +160,52 @@ pub impl std::sync::Mutex {
 
   fn is_locked(self: ref Self) -> bool {
     return std::sync::is_locked(self);
+  }
+}
+
+pub impl std::sync::RwLock {
+  fn new() -> RwLock {
+    return RwLock { state: AtomicI64::new(0) };
+  }
+
+  fn try_read_lock(self: ref mut Self) -> bool {
+    return std::sync::try_read_lock(self);
+  }
+
+  fn read_lock(self: ref mut Self) -> void {
+    std::sync::read_lock(self);
+  }
+
+  fn read_unlock(self: ref mut Self) -> void {
+    std::sync::read_unlock(self);
+  }
+
+  fn try_write_lock(self: ref mut Self) -> bool {
+    return std::sync::try_write_lock(self);
+  }
+
+  fn write_lock(self: ref mut Self) -> void {
+    std::sync::write_lock(self);
+  }
+
+  fn write_unlock(self: ref mut Self) -> void {
+    std::sync::write_unlock(self);
+  }
+
+  fn reader_count(self: ref Self) -> i64 {
+    return std::sync::reader_count(self);
+  }
+
+  fn is_read_locked(self: ref Self) -> bool {
+    return std::sync::is_read_locked(self);
+  }
+
+  fn is_write_locked(self: ref Self) -> bool {
+    return std::sync::is_write_locked(self);
+  }
+
+  fn is_locked(self: ref Self) -> bool {
+    return self.state.load() != 0;
   }
 }
 
