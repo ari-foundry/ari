@@ -509,6 +509,29 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5ascii20contains_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-search.ll
 	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-case-search.ari -o $(BUILD_DIR)/prelude/std-ascii-case-search.elf
 	$(BUILD_DIR)/prelude/std-ascii-case-search.elf; code=$$?; test $$code -eq 167
+	$(TARGET) tests/cases/standard-library/ok/parse/std-parse-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse7integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse7boolean' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse8is_float' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse8float_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse5float' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/parse/std-parse-basic.ari -o $(BUILD_DIR)/prelude/std-parse-basic.elf
+	$(BUILD_DIR)/prelude/std-parse-basic.elf; code=$$?; test $$code -eq 9
+	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-text.ari --emit-llvm $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding8is_ascii' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding10utf8_count' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding7is_utf8' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding11utf16_count' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding8is_utf16' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-text.ari -o $(BUILD_DIR)/prelude/std-encoding-text.elf
+	$(BUILD_DIR)/prelude/std-encoding-text.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-codec.ari --emit-llvm $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding13encode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding13decode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding16encode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding16decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-codec.ari -o $(BUILD_DIR)/prelude/std-encoding-codec.elf
+	$(BUILD_DIR)/prelude/std-encoding-codec.elf; code=$$?; test $$code -eq 13
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits6is_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits7any_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll

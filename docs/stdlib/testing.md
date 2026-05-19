@@ -54,6 +54,9 @@ std-fs-rename-dir.ari
 std-fs-links.ari
 std-algo-slice-helpers.ari
 std-hash-basic.ari
+std-parse-basic.ari
+std-encoding-text.ari
+std-encoding-codec.ari
 std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari

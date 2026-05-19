@@ -111,6 +111,21 @@ fn std::convert::from[T, U: From[T]|std convert value helper tests; docs/stdlib/
 fn std::convert::identity[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::convert::into[T, U: Into[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
+fn std::encoding::base64_decoded_len|check-prelude std-encoding-codec standard base64 decoded length validator; docs/stdlib/modules/encoding.md
+fn std::encoding::base64_encoded_len|check-prelude std-encoding-codec standard base64 encoded length helper; docs/stdlib/modules/encoding.md
+fn std::encoding::can_decode_base64|check-prelude std-encoding-codec standard base64 validation guard; docs/stdlib/modules/encoding.md
+fn std::encoding::can_decode_hex|check-prelude std-encoding-codec hexadecimal validation guard; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_in|check-prelude std-encoding-codec standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_hex_in|check-prelude std-encoding-codec hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_base64_in|check-prelude std-encoding-codec standard base64 zone-backed encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_hex_in|check-prelude std-encoding-codec lowercase hexadecimal zone-backed encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::hex_decoded_len|check-prelude std-encoding-codec hexadecimal decoded length validator; docs/stdlib/modules/encoding.md
+fn std::encoding::hex_encoded_len|check-prelude std-encoding-codec hexadecimal encoded length helper; docs/stdlib/modules/encoding.md
+fn std::encoding::is_ascii|check-prelude std-encoding-text ASCII byte-slice validation; docs/stdlib/modules/encoding.md
+fn std::encoding::is_utf16|check-prelude std-encoding-text UTF-16 boolean validation; docs/stdlib/modules/encoding.md
+fn std::encoding::is_utf8|check-prelude std-encoding-text UTF-8 boolean validation; docs/stdlib/modules/encoding.md
+fn std::encoding::utf16_count|check-prelude std-encoding-text UTF-16 code-point count validator; docs/stdlib/modules/encoding.md
+fn std::encoding::utf8_count|check-prelude std-encoding-text UTF-8 code-point count validator; docs/stdlib/modules/encoding.md
 fn std::env::arg|check-prelude std-env-args argument wrapper; docs/stdlib/modules/env.md
 fn std::env::arg_count|check-prelude std-env-args argument count wrapper; docs/stdlib/modules/env.md
 fn std::env::current_dir|check-prelude std-env-paths current directory hook; docs/stdlib/modules/env.md
@@ -218,6 +233,11 @@ fn std::net::ipv6|check-prelude std-net-addresses source IPv6 constructor; docs/
 fn std::net::localhost|check-prelude std-net-addresses source loopback socket address constructor; docs/stdlib/modules/net.md
 fn std::net::socket_addr|check-prelude std-net-addresses source socket address constructor; docs/stdlib/modules/net.md
 fn std::panic|prelude panic helpers; docs/dev/test-matrix.md Prelude row
+fn std::parse::boolean|check-prelude std-parse-basic ASCII-trimmed lowercase bool parser; docs/stdlib/modules/parse.md
+fn std::parse::float|check-prelude std-parse-basic asserting decimal float parser; docs/stdlib/modules/parse.md
+fn std::parse::float_or|check-prelude std-parse-basic fallback decimal float parser; docs/stdlib/modules/parse.md
+fn std::parse::integer|check-prelude std-parse-basic ASCII-trimmed signed integer parser; docs/stdlib/modules/parse.md
+fn std::parse::is_float|check-prelude std-parse-basic decimal float validator; docs/stdlib/modules/parse.md
 fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
 fn std::process::failure|check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md
 fn std::process::fork|check-prelude std-process-fork-wait POSIX fork hook; docs/stdlib/modules/process.md
@@ -658,6 +678,7 @@ module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end s
 module std::collections|std collections linear set tests; docs/stdlib/modules/collections.md
 module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row
 module std::convert|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+module std::encoding|check-prelude std-encoding-text/std-encoding-codec validation and codec helpers; docs/stdlib/modules/encoding.md
 module std::env|std env argument helper tests; docs/stdlib/modules/env.md
 module std::fmt|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::fs|std fs file handle tests; docs/stdlib/modules/fs.md
@@ -669,6 +690,7 @@ module std::math|std math integer helper tests; docs/stdlib/overview.md module m
 module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
 module std::net|std net address value tests; docs/stdlib/modules/net.md
 module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude row
+module std::parse|check-prelude std-parse-basic whole-input parser helpers; docs/stdlib/modules/parse.md
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows

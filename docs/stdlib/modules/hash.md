@@ -100,8 +100,8 @@ impl hash::Hash[Pair] for Pair {
 - `HashMap` and `HashSet` still take explicit hash functions. Future
   trait-driven constructors can use `Hash[T]` once trait dispatch and equality
   policy are stronger.
-- There is no `std::encoding` yet. Hex/base64 encoding belongs there rather
-  than in `std::hash`.
+- Hex/base64 encoding lives in `std::encoding`; keep `std::hash` focused on
+  deterministic non-cryptographic hash values.
 
 ## Tests
 
@@ -119,4 +119,4 @@ compatibility.
   trait policy are settled.
 - Add `HashMap`/`HashSet` constructors that use `Hash[T]` and `Eq[T]` instead
   of explicit hash functions.
-- Add a separate `std::encoding` module for hex and optional base64 helpers.
+- Add more `Hash` impls after aggregate/derive policy is settled.

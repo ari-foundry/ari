@@ -90,6 +90,13 @@ identifies the exact case:
   construction/reset/finalization, byte-slice hashing, generic `Hash[T]`
   dispatch for primitive values, primitive write helpers, and the
   `collections::hash_i64` compatibility wrapper.
+- `std-parse-basic.ari`: source `std::parse` ASCII-trimmed signed integer,
+  bool, decimal float validation/conversion, fallback, and invalid
+  whole-input behavior.
+- `std-encoding-text.ari`: source `std::encoding` ASCII, UTF-8, and UTF-16
+  validation/counting behavior.
+- `std-encoding-codec.ari`: source `std::encoding` hex/base64 length,
+  encode, decode, and invalid-input guard behavior.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

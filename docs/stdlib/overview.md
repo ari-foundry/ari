@@ -35,6 +35,8 @@ hiding allocation, ownership, or backend behavior.
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
+| `std::parse` | Whole-input value parsers over byte slices. | `integer`, `boolean`, `is_float`, `float_or`, `float`. |
+| `std::encoding` | Text validation and byte codecs. | `is_ascii`, `utf8_count`, `is_utf8`, `utf16_count`, `is_utf16`, `encode_hex_in`, `decode_hex_in`, `encode_base64_in`, `decode_base64_in`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers. |
 | `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
@@ -80,6 +82,13 @@ that need backend or checker knowledge:
 because byte classification, printable/control predicates, case conversion,
 borrowed-slice case-insensitive comparison/search, trimming, whole-slice
 integer parsing, and prefix integer parsing need no compiler knowledge.
+
+`std::parse` and `std::encoding` continue that source-first pattern.
+`std::parse` keeps whole-input integer, bool, and decimal float parsing out of
+individual call sites. `std::encoding` validates ASCII/UTF-8/UTF-16 and
+encodes or decodes hex/base64 into caller-provided zones. The public APIs avoid
+zone-backed or float enum payloads until the compiler can safely lower
+`Option[String]`, `Result[String, E]`, and `Option[f64]`.
 
 `std::string::String` follows the same direction where it can. Its allocation
 constructors and runtime copy hooks still depend on compiler-known zone/string

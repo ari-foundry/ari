@@ -218,6 +218,10 @@ pub mod math;
 
 pub mod ascii;
 
+pub mod parse;
+
+pub mod encoding;
+
 pub mod bits;
 
 pub struct Range[T] {

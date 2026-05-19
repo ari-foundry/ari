@@ -1147,6 +1147,57 @@ stop before the first invalid byte, and return `None<ParsedInt>()` when the
 first byte is empty or invalid. They do not trim, parse signs, or recognize
 hexadecimal prefixes such as `0x`.
 
+## Parsing
+
+`std::parse` contains whole-input parsers over ASCII-trimmed `Slice[u8]`
+values:
+
+```ari
+parse::integer(bytes)
+parse::boolean(bytes)
+parse::is_float(bytes)
+parse::float_or(bytes, fallback)
+parse::float(bytes)
+```
+
+`integer` returns `Option[i64]` and accepts optional `+` or `-` signs.
+`boolean` returns `Option[bool]` and accepts only lowercase `true` and
+`false`. `is_float` validates a decimal float shape with optional sign,
+fraction, and exponent. `float_or` returns a fallback for invalid input, while
+`float` panics on invalid input. `Option[f64]` is future work because the
+compiler does not lower float enum payloads yet.
+
+## Encoding
+
+`std::encoding` contains text validation and byte codecs:
+
+```ari
+encoding::is_ascii(bytes)
+encoding::utf8_count(bytes)
+encoding::is_utf8(bytes)
+encoding::utf16_count(words)
+encoding::is_utf16(words)
+encoding::hex_encoded_len(bytes)
+encoding::encode_hex_in(ref mut zone, bytes)
+encoding::hex_decoded_len(bytes)
+encoding::can_decode_hex(bytes)
+encoding::decode_hex_in(ref mut zone, bytes)
+encoding::base64_encoded_len(bytes)
+encoding::encode_base64_in(ref mut zone, bytes)
+encoding::base64_decoded_len(bytes)
+encoding::can_decode_base64(bytes)
+encoding::decode_base64_in(ref mut zone, bytes)
+```
+
+`utf8_count` and `utf16_count` validate and return code-point counts through
+`Option[i64]`; the `is_*` forms return only a bool. Hex encoding emits
+lowercase digits and decoding accepts ASCII hex digits. Base64 uses the
+standard `+`/`/` alphabet with `=` padding. Decoders panic on invalid input, so
+call `can_decode_hex`, `hex_decoded_len`, `can_decode_base64`, or
+`base64_decoded_len` before decoding untrusted input. `Option[String]` and
+`Result[String, E]` decoder wrappers are future work because zone-backed enum
+payloads are not supported yet.
+
 ## Choosing The Right Collection
 
 Use bare `Vec[T]` literals like `[1, 2, 3]` for small local compiler-known

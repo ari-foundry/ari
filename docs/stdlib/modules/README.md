@@ -65,6 +65,10 @@ limits, examples, and test files for one module.
   printable/control predicates, case conversion, borrowed-slice
   case-insensitive comparison/search, trimming, and digit/prefix parsing
   helpers.
+- [std::parse](parse.md): whole-input ASCII-trimmed integer, bool, and
+  decimal float parsers with natural validation/fallback helpers.
+- [std::encoding](encoding.md): ASCII, UTF-8, and UTF-16 validation/counting
+  plus lowercase hex and standard base64 encode/decode helpers.
 - [std::math](math.md): source-only `i64` arithmetic helpers for signs, sign
   predicates, parity, powers, division rounding, greatest common divisor, and
   least common multiple.

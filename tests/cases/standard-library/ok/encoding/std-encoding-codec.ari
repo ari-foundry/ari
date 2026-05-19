@@ -1,0 +1,139 @@
+// Covers hex/base64 encoding helpers that allocate into an explicit zone.
+fn check_hex(zone: ref mut Zone) -> bool {
+  var bytes = [65u8, 66u8, 255u8];
+  var hex_text = [52u8, 49u8, 52u8, 50u8, 102u8, 102u8];
+  var invalid_hex = [52u8, 49u8, 122u8];
+
+  var encoded = encoding::encode_hex_in(zone, bytes.as_slice());
+  if encoded.len() != 6 {
+    return false;
+  }
+  if encoded.get(0) != (52 as u8) {
+    return false;
+  }
+  if encoded.get(1) != (49 as u8) {
+    return false;
+  }
+  if encoded.get(4) != (102 as u8) {
+    return false;
+  }
+  if encoded.get(5) != (102 as u8) {
+    return false;
+  }
+  if encoding::hex_encoded_len(bytes.as_slice()) != 6 {
+    return false;
+  }
+  if encoding::hex_decoded_len(hex_text.as_slice()).unwrap_or(0) != 3 {
+    return false;
+  }
+
+  var decoded = encoding::decode_hex_in(zone, hex_text.as_slice());
+  if decoded.len() != 3 {
+    return false;
+  }
+  if decoded.get(0) != (65 as u8) {
+    return false;
+  }
+  if decoded.get(1) != (66 as u8) {
+    return false;
+  }
+  if decoded.get(2) != (255 as u8) {
+    return false;
+  }
+  if encoding::can_decode_hex(invalid_hex.as_slice()) {
+    return false;
+  }
+  return true;
+}
+
+fn check_base64(zone: ref mut Zone) -> bool {
+  var man = [77u8, 97u8, 110u8];
+  var ma = [77u8, 97u8];
+  var m = [77u8];
+  var base64_man = [84u8, 87u8, 70u8, 117u8];
+  var base64_ma = [84u8, 87u8, 69u8, 61u8];
+  var base64_m = [84u8, 81u8, 61u8, 61u8];
+  var invalid_base64 = [84u8, 61u8, 70u8, 117u8];
+
+  var encoded_man = encoding::encode_base64_in(zone, man.as_slice());
+  var encoded_ma = encoding::encode_base64_in(zone, ma.as_slice());
+  var encoded_m = encoding::encode_base64_in(zone, m.as_slice());
+  if encoded_man.len() != 4 {
+    return false;
+  }
+  if encoded_man.get(0) != (84 as u8) {
+    return false;
+  }
+  if encoded_man.get(1) != (87 as u8) {
+    return false;
+  }
+  if encoded_man.get(2) != (70 as u8) {
+    return false;
+  }
+  if encoded_man.get(3) != (117 as u8) {
+    return false;
+  }
+  if encoded_ma.get(2) != (69 as u8) {
+    return false;
+  }
+  if encoded_ma.get(3) != (61 as u8) {
+    return false;
+  }
+  if encoded_m.get(1) != (81 as u8) {
+    return false;
+  }
+  if encoded_m.get(2) != (61 as u8) {
+    return false;
+  }
+  if encoded_m.get(3) != (61 as u8) {
+    return false;
+  }
+  if encoding::base64_encoded_len(m.as_slice()) != 4 {
+    return false;
+  }
+  if encoding::base64_decoded_len(base64_m.as_slice()).unwrap_or(0) != 1 {
+    return false;
+  }
+
+  var decoded_man = encoding::decode_base64_in(zone, base64_man.as_slice());
+  var decoded_ma = encoding::decode_base64_in(zone, base64_ma.as_slice());
+  if decoded_man.len() != 3 {
+    return false;
+  }
+  if decoded_man.get(0) != (77 as u8) {
+    return false;
+  }
+  if decoded_man.get(1) != (97 as u8) {
+    return false;
+  }
+  if decoded_man.get(2) != (110 as u8) {
+    return false;
+  }
+  if decoded_ma.len() != 2 {
+    return false;
+  }
+  if decoded_ma.get(0) != (77 as u8) {
+    return false;
+  }
+  if decoded_ma.get(1) != (97 as u8) {
+    return false;
+  }
+  if encoding::can_decode_base64(invalid_base64.as_slice()) {
+    return false;
+  }
+  return true;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(256);
+  if check_hex(ref mut zone) {
+    if check_base64(ref mut zone) {
+      zone::destroy(zone);
+      return 13;
+    }
+    zone::destroy(zone);
+    return 2;
+  }
+  zone::destroy(zone);
+  return 1;
+}

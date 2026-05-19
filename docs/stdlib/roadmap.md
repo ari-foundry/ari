@@ -44,8 +44,10 @@ growth, direct iterator support, open-addressed `HashMap`/`HashSet` with
 tombstones and live-bucket iterators, red-black-tree `TreeMap`/`TreeSet` with
 sorted iterators, growable `Deque`, fixed `RingBuffer`, zone-backed
 `LinkedList`, and `BinaryHeap`/`PriorityQueue` priority containers, and the
-first `math` sign predicate/arithmetic/division-rounding and `bits` numeric
-helper slices, including zero/one-run bit scans.
+first `parse` whole-input integer/bool/decimal-float parsers, `encoding`
+ASCII/UTF-8/UTF-16 validation plus hex/base64 codecs, and `math` sign
+predicate/arithmetic/division-rounding and `bits` numeric helper slices,
+including zero/one-run bit scans.
 
 ## Essential Library Families
 
@@ -63,8 +65,10 @@ work. Each one should land in small tested slices with natural API names.
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `id`, `is_main`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, richer status/result values, and `std::sync` integration. |
 | `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`; future generic atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
 | `std::collections` | Store keyed, queue-like, linked, and priority data beyond vectors. | Current linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, FIFO/linked/heap tests, live-bucket hash iterators, sorted tree iterators; future tree deletion and trait-driven constructors. |
-| `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting, move-aware algorithm contracts, `std::encoding` hex/base64 helpers, and optional compression policy. |
+| `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting and move-aware algorithm contracts. |
 | `std::hash` | Provide deterministic non-cryptographic hashing without tying hash policy to one collection type. | Current `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers, and `collections::hash_i64` compatibility; future aggregate/derive impls and trait-driven hash collection constructors. |
+| `std::parse` | Parse whole byte-slice values with names that read naturally at call sites. | Current ASCII-trimmed `integer`, `boolean`, `is_float`, `float_or`, and panicking `float`; future overflow policy, richer parse errors, and `Option[f64]`/`Result[f64,E]` after float enum payloads are supported. |
+| `std::encoding` | Validate text encodings and convert bytes to portable text forms. | Current `is_ascii`, `utf8_count`, `is_utf8`, `utf16_count`, `is_utf16`, lowercase hex encode/decode, and standard base64 encode/decode; future URL-safe/MIME base64 variants, fallible `String` decoders after zone-backed enum payloads, and optional compression policy in a separate module. |
 | `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, error-code translation. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
@@ -100,6 +104,12 @@ work. Each one should land in small tested slices with natural API names.
   owned trim copies, and whole/prefix ASCII parsers.
 - Keep ASCII-only helpers in `std::ascii` so byte-oriented classification,
   comparison, search, trimming, and parsing behavior is explicit at call sites.
+- Keep whole-input value parsing in `std::parse` so application code does not
+  scatter ad hoc integer/bool/float parsers. Preserve natural names without
+  type suffixes; the module path already carries the parsing policy.
+- Keep validation and byte codecs in `std::encoding`, not in `std::hash` or
+  `std::algo`. Hex/base64 are implemented now; compression remains optional
+  future work after byte-buffer ownership and error values improve.
 
 ## Phase 4: Numerics
 

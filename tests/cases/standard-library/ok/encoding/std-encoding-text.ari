@@ -1,0 +1,63 @@
+// Covers encoding validation helpers that do not allocate.
+fn check_ascii() -> bool {
+  var ascii_text = [65u8, 90u8, 48u8, 127u8];
+  var not_ascii = [65u8, 128u8];
+  if encoding::is_ascii(ascii_text.as_slice()) {
+    if encoding::is_ascii(not_ascii.as_slice()) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+fn check_utf8() -> bool {
+  var utf8_text = [65u8, 195u8, 169u8, 240u8, 159u8, 152u8, 128u8];
+  var overlong = [192u8, 128u8];
+  var surrogate = [237u8, 160u8, 128u8];
+  if encoding::is_utf8(utf8_text.as_slice()) {
+    if encoding::utf8_count(utf8_text.as_slice()).unwrap_or(0) != 3 {
+      return false;
+    }
+    if encoding::is_utf8(overlong.as_slice()) {
+      return false;
+    }
+    if encoding::is_utf8(surrogate.as_slice()) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+fn check_utf16() -> bool {
+  var utf16_text = [65u16, 55357u16, 56832u16, 66u16];
+  var utf16_lone_high = [55357u16];
+  var utf16_lone_low = [56832u16];
+  if encoding::is_utf16(utf16_text.as_slice()) {
+    if encoding::utf16_count(utf16_text.as_slice()).unwrap_or(0) != 3 {
+      return false;
+    }
+    if encoding::is_utf16(utf16_lone_high.as_slice()) {
+      return false;
+    }
+    if encoding::is_utf16(utf16_lone_low.as_slice()) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  if check_ascii() {
+    if check_utf8() {
+      if check_utf16() {
+        return 10;
+      }
+      return 3;
+    }
+    return 2;
+  }
+  return 1;
+}

@@ -70,8 +70,8 @@ array or vector; use the returned length as the prefix boundary.
 | copy | Current: `copy(target, source) -> copied_count`. |
 | dedup | Current: consecutive in-place compaction returning logical length. |
 | hashing | Current: `std::hash` has `Hasher`, `Hash[T]`, primitive hashing, byte-slice hashing, and `collections::hash_i64` compatibility. |
-| base64 | Optional roadmap: encoding/decoding module after byte-string allocation and error policy are settled. |
-| hex encoding | Roadmap: add `std::encoding::hex_encode`/decode helpers; current `std::ascii` has hex digit parsing helpers. |
+| base64 | Current: `std::encoding` has standard base64 length, encode, decode, and validation guards. |
+| hex encoding | Current: `std::encoding` has lowercase hex length, encode, decode, and validation guards; `std::ascii` still owns scalar hex digit parsing. |
 | compression | Optional roadmap: likely package/extension boundary before becoming core std. |
 
 ## Examples
@@ -145,7 +145,7 @@ and swap over `Slice[i64]`.
   move-aware temporary storage policy are stronger.
 - Grow `std::hash` with trait-driven collection constructors once `Hash`/`Eq`
   dispatch policy is stronger.
-- Add `std::encoding` for hex and optional base64 once owned byte-string error
-  handling is documented.
+- Grow `std::encoding` with URL-safe base64 or fallible owned decoders after
+  zone-backed enum payloads and richer error values are supported.
 - Keep compression optional unless Ari decides that a specific codec belongs
   in the core distribution.

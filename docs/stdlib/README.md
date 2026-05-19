@@ -48,7 +48,8 @@ handles; real hash-table `HashMap`/`HashSet` handles with live-bucket
 iterators; and red-black-tree `TreeMap`/`TreeSet` handles with sorted
 key/value iteration. `std::algo` adds source slice algorithms for sorting,
 binary search, reverse/rotate, partition, min/max/clamp, swap, fill, copy, and
-dedup.
+dedup. `std::parse` adds whole-input integer, bool, and decimal float parsing,
+and `std::encoding` adds ASCII/UTF-8/UTF-16 validation plus hex/base64 codecs.
 A few declarations are still compiler-known because the
 current language cannot express them directly: layout queries, typed raw
 pointer operations, byte memory intrinsics, runtime IO hooks, explicit zone
