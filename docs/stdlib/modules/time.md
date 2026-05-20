@@ -32,6 +32,7 @@ time::system_from_unix(seconds, nanosecond)
 time::try_system_from_unix(seconds, nanosecond)
 time::is_leap_year(year)
 time::days_in_month(year, month)
+time::try_days_in_month(year, month)
 time::utc_from_unix(seconds, nanosecond)
 time::try_utc_from_unix(seconds, nanosecond)
 time::elapsed(start)
@@ -121,7 +122,9 @@ fields. `UtcDateTime::from_unix` is the associated constructor, and
 for invalid negative seconds or out-of-range subsecond nanoseconds.
 `SystemTime::to_utc()` is the method form for already-validated system times.
 `is_leap_year(year)` and `days_in_month(year, month)` expose the same calendar
-policy for validation and tests.
+policy for validation and tests. `days_in_month` is strict and asserts for
+invalid month numbers; `try_days_in_month` returns `None` for values outside
+1 through 12.
 
 `Deadline` is the current timeout value. `timeout(duration)` and
 `timeout_after(duration)` create a deadline relative to `Instant::now()`;
@@ -200,6 +203,22 @@ fn main() -> i64 {
 }
 ```
 
+Fallible month validation:
+
+```ari
+fn main() -> i64 {
+  match time::try_days_in_month(2024, 2) {
+    std::Some(days) => {
+      if days == 29 {
+        return process::success();
+      }
+    }
+    std::None => {}
+  }
+  return process::failure();
+}
+```
+
 Fallible Unix timestamp conversion:
 
 ```ari
@@ -258,6 +277,7 @@ Focused positive coverage:
 tests/cases/standard-library/ok/time/std-time-basic.ari
 tests/cases/standard-library/ok/time/std-time-try-duration.ari
 tests/cases/standard-library/ok/time/std-time-try-unix.ari
+tests/cases/standard-library/ok/time/std-time-calendar-validation.ari
 tests/cases/standard-library/ok/time/std-time-timeout.ari
 tests/cases/standard-library/ok/time/std-time-utc-calendar.ari
 ```
@@ -268,5 +288,7 @@ deterministic exit-code score. It also checks timeout/deadline and UTC
 calendar helper symbols. `std-time-try-duration.ari` covers fallible
 constructor behavior for both module functions and `Duration::try_*`
 associated helpers. `std-time-try-unix.ari` covers fallible Unix timestamp
-construction for `SystemTime` and `UtcDateTime`. Public declarations are
-tracked in `tests/std_api_manifest.txt` and checked by `make check-std-api`.
+construction for `SystemTime` and `UtcDateTime`.
+`std-time-calendar-validation.ari` covers strict and fallible month-length
+validation. Public declarations are tracked in `tests/std_api_manifest.txt`
+and checked by `make check-std-api`.

@@ -645,6 +645,7 @@ time::system_from_unix(seconds, nanosecond)
 time::try_system_from_unix(seconds, nanosecond)
 time::is_leap_year(year)
 time::days_in_month(year, month)
+time::try_days_in_month(year, month)
 time::utc_from_unix(seconds, nanosecond)
 time::try_utc_from_unix(seconds, nanosecond)
 time::elapsed(start)
@@ -712,8 +713,9 @@ functions are exposed for low-level code, but ordinary code should prefer
 without depending on wall-clock time. `utc_from_unix` and
 `SystemTime::to_utc` provide deterministic UTC calendar conversion for
 non-negative Unix timestamps; `try_system_from_unix` and `try_utc_from_unix`
-validate timestamp parts as `Option` before constructing values. Timezone
-databases are outside the first standard-library slice.
+validate timestamp parts as `Option` before constructing values.
+`try_days_in_month` validates user-provided month numbers before returning a
+month length. Timezone databases are outside the first standard-library slice.
 
 Filesystem helpers live in `std::fs`:
 

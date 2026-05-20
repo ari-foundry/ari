@@ -146,6 +146,13 @@ pub fn days_in_month(year: i64, month: i64) -> i64 {
   return 31;
 }
 
+pub fn try_days_in_month(year: i64, month: i64) -> std::Option[i64] {
+  if month < 1 || month > 12 {
+    return std::None<i64>();
+  }
+  return std::Some<i64>(days_in_month(year, month));
+}
+
 pub fn utc_from_unix(seconds: i64, nanosecond: i64) -> UtcDateTime {
   std::assert(seconds >= 0);
   let checked_nano = checked_subsecond_nanos(nanosecond);

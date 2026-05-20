@@ -589,6 +589,7 @@ fn std::time::system_from_unix|check-prelude std-time-utc-calendar deterministic
 fn std::time::system_now|check-prelude std-time-basic source wall-clock helper; docs/stdlib/modules/time.md
 fn std::time::timeout|check-prelude std-time-timeout timeout deadline constructor; docs/stdlib/modules/time.md
 fn std::time::timeout_after|check-prelude std-time-timeout named timeout deadline constructor; docs/stdlib/modules/time.md
+fn std::time::try_days_in_month|check-prelude std-time-calendar-validation Option-returning month-length helper; docs/stdlib/modules/time.md
 fn std::time::try_microseconds|check-prelude std-time-try-duration Option-returning duration constructor; docs/stdlib/modules/time.md
 fn std::time::try_milliseconds|check-prelude std-time-try-duration Option-returning duration constructor; docs/stdlib/modules/time.md
 fn std::time::try_nanoseconds|check-prelude std-time-try-duration Option-returning duration constructor; docs/stdlib/modules/time.md

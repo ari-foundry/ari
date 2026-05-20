@@ -599,6 +599,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-try-unix.ari -o $(BUILD_DIR)/prelude/std-time-try-unix.elf
 	$(BUILD_DIR)/prelude/std-time-try-unix.elf; code=$$?; test $$code -eq 66
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-try-unix.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-try-unix.elf; $(BUILD_DIR)/prelude/std-time-try-unix.elf; code=$$?; test $$code -eq 66; fi
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-calendar-validation.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-calendar-validation.ll
+	grep -F -q "std4time17try_days_in_month" $(BUILD_DIR)/prelude/std-time-calendar-validation.ll
+	grep -F -q "std4time13days_in_month" $(BUILD_DIR)/prelude/std-time-calendar-validation.ll
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-calendar-validation.ari -o $(BUILD_DIR)/prelude/std-time-calendar-validation.elf
+	$(BUILD_DIR)/prelude/std-time-calendar-validation.elf; code=$$?; test $$code -eq 21
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-calendar-validation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-calendar-validation.elf; $(BUILD_DIR)/prelude/std-time-calendar-validation.elf; code=$$?; test $$code -eq 21; fi
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-timeout.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-timeout.ll
 	grep -F -q "std4time7timeout" $(BUILD_DIR)/prelude/std-time-timeout.ll
 	grep -F -q "std4time13timeout_after" $(BUILD_DIR)/prelude/std-time-timeout.ll
