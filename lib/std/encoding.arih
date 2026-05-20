@@ -402,6 +402,13 @@ pub fn encode_utf8_in(zone: ref mut Zone, value: u32) -> std::string::String {
   return output;
 }
 
+pub fn try_encode_utf8_in(zone: ref mut Zone, value: u32) -> std::Option[std::string::String] {
+  if !is_unicode_scalar(value) {
+    return std::None<std::string::String>();
+  }
+  return std::Some<std::string::String>(encode_utf8_in(zone, value));
+}
+
 pub fn hex_encoded_len(values: std::Slice[u8]) -> i64 {
   return values.len * 2;
 }

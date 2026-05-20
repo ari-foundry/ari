@@ -38,6 +38,7 @@ encoding::utf8_encoded_len(scalar) -> Option[i64]
 encoding::utf8_at(bytes, byte_index) -> Option[Utf8Char]
 encoding::utf8_next_index(bytes, byte_index) -> Option[i64]
 encoding::encode_utf8_in(ref mut zone, scalar) -> String
+encoding::try_encode_utf8_in(ref mut zone, scalar) -> Option[String]
 ```
 
 `Utf8Char` stores one decoded Unicode scalar value and the number of bytes
@@ -46,8 +47,8 @@ consumed. Use `scalar()`, `len()`, and `next_index(byte_index)` to inspect it.
 continuation bytes. `utf8_at` validates and decodes at a byte offset, returning
 `None<Utf8Char>()` for out-of-range indexes, continuation-byte offsets,
 overlong encodings, surrogate scalar values, truncated sequences, or values
-above `U+10FFFF`. `encode_utf8_in` panics for invalid scalars; call
-`utf8_encoded_len` first when invalid scalar input is ordinary.
+above `U+10FFFF`. `try_encode_utf8_in` returns `None` for invalid scalars.
+`encode_utf8_in` is the asserting form and panics for invalid scalars.
 
 Hex helpers:
 
@@ -123,7 +124,8 @@ tests/cases/standard-library/ok/encoding/std-encoding-codec.ari
 
 `std-encoding-text.ari` covers ASCII, UTF-8, and UTF-16 validation/counting.
 `std-encoding-utf8-codepoints.ari` covers scalar validation, UTF-8 lead-byte
-width, byte-offset decoding, next-index helpers, and scalar encoding.
+width, byte-offset decoding, next-index helpers, asserting scalar encoding,
+and fallible scalar encoding.
 `std-encoding-codec.ari` covers hex/base64 length helpers, encoding, decoding,
 fallible decoding, and invalid input guards. These tests are wired into
 `make check-prelude` with LLVM symbol checks.

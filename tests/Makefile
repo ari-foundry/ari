@@ -689,10 +689,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding10utf8_width' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding7utf8_at' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding14encode_utf8_in' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
+	grep -q '_ARNv3std8encoding18try_encode_utf8_in' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q 'std__encoding__Utf8Char' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-utf8-codepoints.ari -o $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf
-	$(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf; code=$$?; test $$code -eq 11
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-utf8-codepoints.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf; $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf; code=$$?; test $$code -eq 11; fi
+	$(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf; code=$$?; test $$code -eq 13
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-utf8-codepoints.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf; $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf; code=$$?; test $$code -eq 13; fi
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-codec.ari --emit-llvm $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding13encode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding13decode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll

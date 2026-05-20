@@ -169,6 +169,7 @@ fn std::encoding::is_utf16|check-prelude std-encoding-text UTF-16 boolean valida
 fn std::encoding::is_utf8|check-prelude std-encoding-text UTF-8 boolean validation; docs/stdlib/modules/encoding.md
 fn std::encoding::try_decode_base64_in|check-prelude std-encoding-codec fallible standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::try_decode_hex_in|check-prelude std-encoding-codec fallible hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::try_encode_utf8_in|check-prelude std-encoding-utf8-codepoints fallible UTF-8 scalar encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::utf16_count|check-prelude std-encoding-text UTF-16 code-point count validator; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_at|check-prelude std-encoding-utf8-codepoints UTF-8 scalar decode at byte offset; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_count|check-prelude std-encoding-text UTF-8 code-point count validator; docs/stdlib/modules/encoding.md

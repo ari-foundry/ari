@@ -89,8 +89,25 @@ fn main() -> i64 {
     score = score + 1;
   }
 
+  match encoding::try_encode_utf8_in(ref mut zone, 128512u32) {
+    std::Some(smile) => {
+      if smile.len() == 4 && smile.get(0) == 240u8 && smile.get(1) == 159u8 &&
+         smile.get(2) == 152u8 && smile.get(3) == 128u8 {
+        score = score + 1;
+      }
+    }
+    std::None => {}
+  }
+
+  match encoding::try_encode_utf8_in(ref mut zone, 55296u32) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 1;
+    }
+  }
+
   zone::destroy(zone);
 
-  assert_eq_i64(score, 11);
+  assert_eq_i64(score, 13);
   return score;
 }
