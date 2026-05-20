@@ -44,6 +44,7 @@ pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
 pub extern "ari" fn write_byte(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
 extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadata_size";
 extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
+extern "ari" fn canonicalize_raw(path: string) -> string = "ari_builtin_fs_canonicalize";
 
 pub fn permissions(path: string) -> Permissions {
   return Permissions {
@@ -95,6 +96,25 @@ pub fn metadata(path: string) -> Metadata {
     kind: Other,
     permissions: Permissions::none(),
   };
+}
+
+pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
+  let resolved = canonicalize_raw(path);
+  if std::string::c_len(resolved) == 0 {
+    return std::None<std::string::String>();
+  }
+  return std::Some<std::string::String>(std::string::from(zone, resolved));
+}
+
+pub fn canonicalize(zone: ref mut Zone, path: string) -> std::string::String {
+  match try_canonicalize(zone, path) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+  std::panic();
+  return std::string::empty(zone);
 }
 
 pub fn try_open(path: string, mode: string) -> std::Option[File] {

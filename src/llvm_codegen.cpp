@@ -251,6 +251,7 @@ public:
         out << "@ari_next_thread_id = internal global i64 1\n\n";
         out << "@ari_cwd_buffer = internal global [4096 x i8] zeroinitializer, align 16\n";
         out << "@ari_executable_path_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
+        out << "@ari_realpath_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_line_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         for (const auto& item : strings_) {
             out << item.name << " = private unnamed_addr constant [" << item.size << " x i8] c\"" << item.bytes << "\", align 1\n";
@@ -512,6 +513,7 @@ private:
             symbol == "ari_builtin_env_get" ||
             symbol == "ari_builtin_env_current_dir" ||
             symbol == "ari_builtin_env_executable_path" ||
+            symbol == "ari_builtin_fs_canonicalize" ||
             symbol == "ari_builtin_read_line") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
         }
@@ -573,6 +575,7 @@ private:
         declarations_ << "declare ptr @getcwd(ptr, i64)\n";
         declarations_ << "declare i32 @chdir(ptr)\n";
         declarations_ << "declare i64 @readlink(ptr, ptr, i64)\n";
+        declarations_ << "declare ptr @realpath(ptr, ptr)\n";
         declarations_ << "declare i32 @getpid()\n";
         declarations_ << "declare i32 @getuid()\n";
         declarations_ << "declare i32 @getgid()\n";
@@ -646,6 +649,8 @@ private:
         std::string target_env = string_ptr(target_env_name(target));
         std::string line_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_line_buffer, i64 0, i64 0)";
         std::string cwd_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_cwd_buffer, i64 0, i64 0)";
+        std::string realpath_buffer =
+            "getelementptr inbounds ([4096 x i8], ptr @ari_realpath_buffer, i64 0, i64 0)";
         std::string context_cwd_buffer =
             "getelementptr inbounds ([4096 x i8], ptr @ari_context_cwd_buffer, i64 0, i64 0)";
         std::string executable_path_buffer =
@@ -957,6 +962,18 @@ private:
         line("  ret i64 %kind");
         line("fail:");
         line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_fs_canonicalize(ptr %path) {");
+        line("entry:");
+        line("  %resolved = call ptr @realpath(ptr %path, ptr " + realpath_buffer + ")");
+        line("  %missing = icmp eq ptr %resolved, null");
+        line("  br i1 %missing, label %empty, label %found");
+        line("found:");
+        line("  ret ptr " + realpath_buffer);
+        line("empty:");
+        line("  ret ptr " + empty);
         line("}");
         line();
 

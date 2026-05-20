@@ -166,6 +166,8 @@ identifies the exact case:
   missing-path all-false behavior.
 - `std-fs-metadata.ari`: runtime-backed `stat` metadata checks, missing-path
   `None`, regular-file length/kind, directory kind, and `Metadata` methods.
+- `std-fs-canonicalize.ari`: runtime-backed `realpath` canonicalization,
+  absolute owned paths, filename preservation, and missing-path `None`.
 - `std-net-addresses.ari`: source `std::net` IPv4/IPv6 constructors, generic
   IP predicates, socket-address construction, port replacement, loopback, and
   unspecified checks.

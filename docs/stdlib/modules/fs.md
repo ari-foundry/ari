@@ -8,16 +8,17 @@ with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
 byte-oriented `String` with either compatibility or `Option`-returning absence
 behavior, rename paths, create hard or symbolic links, create or remove one
-empty directory, query basic file metadata, close the handle, and remove a
-file.
+empty directory, query basic file metadata, resolve an existing path to an
+absolute canonical path, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
 `write_byte`, `write_bytes`, `read`, `try_read`, `write`, `append`,
 `try_write`, `try_append`, `truncate`, `copy`, `try_copy`, `metadata`,
-`try_metadata`, `rename`, `hard_link`, `symbolic_link`, `create_dir`,
-`remove_dir`, `close`, `exists`, and `remove`, not type-suffixed names.
+`try_metadata`, `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
+`symbolic_link`, `create_dir`, `remove_dir`, `close`, `exists`, and `remove`,
+not type-suffixed names.
 
 ## API
 
@@ -29,6 +30,8 @@ fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
 fs::try_metadata(path)
+fs::canonicalize(ref mut zone, path)
+fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
@@ -193,6 +196,14 @@ predicates `is_file`, `is_dir`, `is_symlink`, and `is_other` cover common
 branches. The current Linux/glibc runtime uses `stat`, so `metadata` follows
 symbolic links; a separate no-follow `symlink_metadata` helper is future work.
 
+`try_canonicalize(ref mut zone, path)` resolves an existing path through the
+host filesystem and returns an owned absolute `String` in the caller-provided
+zone. Missing paths, permission failures, and paths that cannot be resolved
+return `None`. `canonicalize(ref mut zone, path)` is the asserting convenience
+wrapper for code that treats an unresolvable path as a programmer error. The
+current Linux/glibc runtime uses `realpath`, so it follows symbolic links and
+requires the path to exist.
+
 `rename(source, target)` asks the host to move or rename one path to another.
 On the current Linux/glibc runtime path this follows host `rename` behavior,
 including replacing some existing targets when the OS allows it. Portable
@@ -233,7 +244,7 @@ recursive removal, and directory iteration are separate future slices.
 | copy | Current: source streaming `copy(source, target)` and byte-counting `try_copy(source, target)` for byte files. |
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)` runtime hook on the Linux/glibc path; Windows split is roadmap. |
-| canonicalize | Roadmap: runtime path resolution returning an owned Ari string/path. |
+| canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
 | read directory | Roadmap: `DirEntry`/iterator handle and OS-resource ownership policy. |
 | create directory | Current: single-directory `create_dir(path)`; recursive creation is roadmap. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
@@ -371,14 +382,14 @@ if file.is_open() {
 ## Current Limits
 
 - This slice is byte-oriented. There is no owned path type, directory
-  iteration, permission mutation API, canonicalization,
-  recursive directory API, file locking API, temporary-file API, or text
-  encoding policy yet. Basic `stat` metadata exists, but richer timestamps,
-  no-follow symlink metadata, link metadata, and platform-specific symlink
-  policy are still future work.
+  iteration, permission mutation API, recursive directory API, file locking
+  API, temporary-file API, or text encoding policy yet. Basic `stat` metadata
+  and existing-path canonicalization exist, but richer timestamps, no-follow
+  symlink metadata, link metadata, and platform-specific symlink policy are
+  still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
-  `stat`, `unlink`, `rename`, `link`, `symlink`, `mkdir`, `rmdir`, `open`,
-  `read`, `write`, and `close`.
+  `stat`, `realpath`, `unlink`, `rename`, `link`, `symlink`, `mkdir`,
+  `rmdir`, `open`, `read`, `write`, and `close`.
 - `File` is not a tracked `own` resource yet. The caller must close each
   successful handle exactly once by convention. Future ownership work should
   make OS resources harder to copy and accidentally double-close.
@@ -404,6 +415,7 @@ tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
 tests/cases/standard-library/ok/fs/std-fs-permissions.ari
 tests/cases/standard-library/ok/fs/std-fs-metadata.ari
+tests/cases/standard-library/ok/fs/std-fs-canonicalize.ari
 ```
 
 `make check-prelude` emits LLVM for the runtime hooks, checks the C syscall
@@ -428,14 +440,14 @@ checks. `std-fs-permissions.ari` covers access-style readable/writable/
 executable checks, the `Permissions` wrapper methods, and missing-path
 all-false behavior. `std-fs-metadata.ari` covers `Option[Metadata]`,
 regular-file byte length, `FileKind`, directory predicates, and missing-path
-`None`.
+`None`. `std-fs-canonicalize.ari` covers `Option[String]` path resolution,
+absolute canonical paths, filename preservation, and missing-path `None`.
 
 ## Next Work
 
 - Add permission mutation as a separate tested runtime slice.
 - Add explicit overwrite/platform policy for `rename`.
-- Add canonicalization as an OS-wrapper slice returning an owned Ari string or
-  path value.
+- Grow canonicalization toward owned path values and platform-specific policy.
 - Expand link support with metadata/readlink helpers and clearer
   platform-specific symlink policy.
 - Expand metadata with modified/accessed/created timestamps and a no-follow

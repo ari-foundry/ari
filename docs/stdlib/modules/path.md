@@ -6,7 +6,8 @@ without opening the filesystem or depending on host state.
 
 This first slice is deliberately POSIX-style: `/` is the only separator.
 Windows drive prefixes, UNC paths, and platform-specific normalization belong
-to future runtime/path policy work.
+to future runtime/path policy work. Filesystem-backed existing-path
+canonicalization lives in `std::fs::try_canonicalize`.
 
 ## API
 
@@ -131,6 +132,7 @@ results.
 - platform-specific separators and Windows drive/UNC rules
 - owned `Path`/`PathBuf` values after the string/path ownership policy is
   stronger
-- canonicalization through `std::fs` runtime hooks
+- deeper integration with `std::fs::try_canonicalize` once owned `PathBuf`
+  exists
 - richer component kinds such as root, current directory, and parent directory
   if Ari later adds an owned `Path` model

@@ -117,7 +117,7 @@ useful for modern systems work.
 | exec | Not exposed. | Add after argument/environment vector ownership and error reporting are stable. |
 | wait | `std::process::wait` returns normal child exit status or `-1`. | Replace sentinel-only status with a richer status/result value. |
 | kill | Not exposed. | Add with signal constants and permission/error mapping. |
-| working directory | `std::env::current_dir` and `set_current_dir` exist. | Owned path values and canonicalization should live with `std::path`/`std::fs`. |
+| working directory | `std::env::current_dir`, `set_current_dir`, and `std::fs::try_canonicalize` exist. | Owned path values should wrap the existing `std::path`/`std::fs` split. |
 | daemon helpers | Not exposed. | Optional; should be policy-heavy and probably separate from core process APIs. |
 | signal mask | Not exposed. | Future `std::os::signal` with mask values and clear thread/process scope. |
 | sigaction | Not exposed. | Needs function-pointer ABI, signal-safe restrictions, and handler lifetime policy. |

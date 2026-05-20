@@ -707,6 +707,8 @@ fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
 fs::try_metadata(path)
+fs::canonicalize(ref mut zone, path)
+fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
@@ -782,6 +784,11 @@ unstatable paths. `metadata(path)` asserts that metadata is available.
 `is_file`, `is_dir`, `is_symlink`, and `is_other` are convenience predicates.
 The first runtime implementation uses Linux/glibc `stat`, so symbolic links
 are followed; no-follow symlink metadata and richer timestamps are future work.
+`try_canonicalize(ref mut zone, path)` returns `Option[String]`, using `None`
+when the host cannot resolve the path. The returned string is absolute, owned
+by the provided zone, and follows the host `realpath` policy. `canonicalize(ref
+mut zone, path)` is the asserting wrapper for code that treats failed
+resolution as a programmer error.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns whether one byte was written. `write_bytes` writes a
 `Slice[u8]` and returns the count written before the first failed byte write.

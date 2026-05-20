@@ -1,0 +1,62 @@
+// Covers realpath-backed filesystem canonicalization: existing paths resolve
+// to absolute owned strings, lexical "." is removed by the host, and missing
+// paths return None through the fallible helper.
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-canonicalize.tmp";
+  let dotted = "build/prelude/./std-fs-canonicalize.tmp";
+  let missing = "build/prelude/std-fs-canonicalize-missing.tmp";
+
+  if fs::exists(path) {
+    fs::remove(path);
+  }
+  if fs::exists(missing) {
+    fs::remove(missing);
+  }
+
+  var zone = zone::create(2048);
+  var score = 0;
+  var bytes = ['C', 'A', 'N'];
+
+  if fs::write(path, bytes.as_slice()) {
+    score = score + 1;
+  }
+
+  match fs::try_canonicalize(ref mut zone, dotted) {
+    std::Some(resolved) => {
+      if path::is_absolute(resolved.as_slice()) {
+        score = score + 2;
+      }
+      if resolved.ends_with("build/prelude/std-fs-canonicalize.tmp") {
+        score = score + 3;
+      }
+      match path::file_name(resolved.as_slice()) {
+        std::Some(name) => {
+          if name.equals("std-fs-canonicalize.tmp") {
+            score = score + 4;
+          }
+        }
+        std::None => {}
+      }
+
+      let direct = fs::canonicalize(ref mut zone, dotted);
+      if direct.equals(resolved.as_slice()) {
+        score = score + 5;
+      }
+    }
+    std::None => {}
+  }
+
+  match fs::try_canonicalize(ref mut zone, missing) {
+    std::Some(_missing_path) => {}
+    std::None => {
+      score = score + 6;
+    }
+  }
+
+  if fs::remove(path) {
+    score = score + 7;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

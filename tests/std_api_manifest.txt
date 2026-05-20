@@ -250,6 +250,7 @@ fn std::fs::append|check-prelude std-fs-read-write source whole-file append help
 fn std::fs::can_execute|check-prelude std-fs-permissions execute/search access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_read|check-prelude std-fs-permissions read access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_write|check-prelude std-fs-permissions write access hook; docs/stdlib/modules/fs.md
+fn std::fs::canonicalize|check-prelude std-fs-canonicalize asserting realpath-backed canonicalization helper; docs/stdlib/modules/fs.md
 fn std::fs::close|check-prelude std-fs-basic file close hook; docs/stdlib/modules/fs.md
 fn std::fs::copy|check-prelude std-fs-create-truncate-copy source streaming copy helper; docs/stdlib/modules/fs.md
 fn std::fs::create|check-prelude std-fs-create-truncate-copy source create/truncate open helper; docs/stdlib/modules/fs.md
@@ -271,6 +272,7 @@ fn std::fs::rename|check-prelude std-fs-rename-dir runtime-backed file rename ho
 fn std::fs::symbolic_link|check-prelude std-fs-links runtime-backed symbolic-link hook; docs/stdlib/modules/fs.md
 fn std::fs::truncate|check-prelude std-fs-create-truncate-copy source create/truncate helper; docs/stdlib/modules/fs.md
 fn std::fs::try_append|check-prelude std-fs-read-write Option-returning append byte-count helper; docs/stdlib/modules/fs.md
+fn std::fs::try_canonicalize|check-prelude std-fs-canonicalize Option-returning realpath-backed canonicalization helper; docs/stdlib/modules/fs.md
 fn std::fs::try_copy|check-prelude std-fs-create-truncate-copy Option-returning copy byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::try_create|check-prelude std-fs-create-truncate-copy Option-returning create helper; docs/stdlib/modules/fs.md
 fn std::fs::try_metadata|check-prelude std-fs-metadata Option-returning stat-backed metadata helper; docs/stdlib/modules/fs.md
