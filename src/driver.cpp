@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "c_header.hpp"
 #include "compiler_summary_dump.hpp"
+#include "declaration_index_dump.hpp"
 #include "diagnostic_dump.hpp"
 #include "ir_dump.hpp"
 #include "lexer.hpp"
@@ -69,8 +70,8 @@ static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
                  "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
                  "           [--emit-diagnostics path] [--emit-source-map path]\n"
-                 "           [--emit-module-graph path] [--emit-typed-ir path]\n"
-                 "           [--emit-pass-summary path]\n"
+                 "           [--emit-module-graph path] [--emit-declaration-index path]\n"
+                 "           [--emit-typed-ir path] [--emit-pass-summary path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -96,6 +97,7 @@ int run(int argc, char** argv) {
     std::string diagnostic_output;
     std::string source_map_output;
     std::string module_graph_output;
+    std::string declaration_index_output;
     std::string typed_ir_output;
     std::string pass_summary_output;
     std::string c_header_output;
@@ -160,6 +162,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-module-graph") {
             if (i + 1 >= argc) throw CompileError("--emit-module-graph expects a path");
             module_graph_output = argv[++i];
+        } else if (arg == "--emit-declaration-index") {
+            if (i + 1 >= argc) throw CompileError("--emit-declaration-index expects a path");
+            declaration_index_output = argv[++i];
         } else if (arg == "--emit-typed-ir") {
             if (i + 1 >= argc) throw CompileError("--emit-typed-ir expects a path");
             typed_ir_output = argv[++i];
@@ -221,7 +226,7 @@ int run(int argc, char** argv) {
     if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
                        !c_header_output.empty() || !source_map_output.empty() ||
-                       !module_graph_output.empty() ||
+                       !module_graph_output.empty() || !declaration_index_output.empty() ||
                        !typed_ir_output.empty() ||
                        !pass_summary_output.empty() ||
                        llvm_compiler_explicit || !link_args.empty())) {
@@ -235,6 +240,7 @@ int run(int argc, char** argv) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
     if ((!source_map_output.empty() || !module_graph_output.empty() ||
+         !declaration_index_output.empty() ||
          !typed_ir_output.empty() || !pass_summary_output.empty()) &&
         (output_explicit || emit_llvm_only || !object_output.empty() ||
          !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
@@ -248,6 +254,7 @@ int run(int argc, char** argv) {
     if (!diagnostic_output.empty()) ++artifact_output_count;
     if (!source_map_output.empty()) ++artifact_output_count;
     if (!module_graph_output.empty()) ++artifact_output_count;
+    if (!declaration_index_output.empty()) ++artifact_output_count;
     if (!typed_ir_output.empty()) ++artifact_output_count;
     if (!pass_summary_output.empty()) ++artifact_output_count;
     if (artifact_output_count > 1) {
@@ -359,6 +366,11 @@ int run(int argc, char** argv) {
         return 0;
     }
     Program program = std::move(loaded.program);
+    if (!declaration_index_output.empty()) {
+        write_text_file(declaration_index_output, dump_declaration_index(program, loaded.metadata, input));
+        std::cout << "wrote " << declaration_index_output << " (declaration index dump)\n";
+        return 0;
+    }
     SemaOptions sema_options;
     sema_options.require_main = !shared_library && !test_mode && !check_only && object_output.empty();
     sema_options.test_mode = test_mode;

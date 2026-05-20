@@ -84,6 +84,8 @@ check-compiler-artifacts: $(TARGET)
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/source-map-file-module.map $(BUILD_DIR)/compiler-development/artifact/source-map-file-module.map
 	$(TARGET) tests/cases/modules/ok/file-module-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
+	$(TARGET) tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-declaration-index $(BUILD_DIR)/compiler-development/artifact/declaration-index-basic.decls
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls $(BUILD_DIR)/compiler-development/artifact/declaration-index-basic.decls
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-pass-summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary

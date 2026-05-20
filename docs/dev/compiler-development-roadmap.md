@@ -91,6 +91,9 @@ they are compiler engineering scale:
   patterns, generics, and meta syntax.
 - Keep `--emit-source-map` deterministic so byte offsets, line lookup, newline
   policy, and source snippets are checked before lexer/parser behavior changes.
+- Keep `--emit-declaration-index` deterministic so declaration names,
+  signatures, visibility, and source locations are checked before sema behavior
+  changes.
 - Add negative tests for malformed but likely user-written code.
 - Keep grammar docs and quick reference aligned with parser behavior.
 
@@ -156,8 +159,8 @@ Exit criteria:
 ### Phase 6: IR And Backend Artifacts
 
 - Keep `--emit-source-map`, `--emit-tokens`, `--emit-syntax`,
-  `--emit-diagnostics`, and `--emit-typed-ir` as the first detailed artifact
-  producers.
+  `--emit-diagnostics`, `--emit-declaration-index`, and `--emit-typed-ir` as
+  the first detailed artifact producers.
 - Use `--emit-pass-summary` for quick stage-boundary counts while extending the
   same golden comparison pattern to module graphs, structured diagnostics, HIR,
   and richer typed IR.

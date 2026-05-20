@@ -26,6 +26,8 @@ the same language surface that normal Ari users get.
   normalization fixture for future golden artifact checks.
 - `artifact/ok/source-map-file-module.map`: source byte, line, newline, and
   snippet golden seed for root plus file-backed child module sources.
+- `artifact/ok/declaration-index-basic.*`: declaration signature, visibility,
+  module, and source-location golden seed before semantic lowering.
 - `artifact/ok/token-dump-basic.*`: lexer, parser, and typed-IR golden seed
   generated from one tiny source file.
 - `artifact/ok/module-graph-file-module.graph`: file-backed module graph

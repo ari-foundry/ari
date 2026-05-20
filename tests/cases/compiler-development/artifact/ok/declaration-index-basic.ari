@@ -1,0 +1,27 @@
+pub type SourceId = i64;
+
+pub struct Span {
+  start: i64,
+  end: i64,
+}
+
+pub enum Severity {
+  Error,
+  Warning,
+}
+
+pub trait Named {
+  fn name(value: Span) -> i64
+}
+
+pub impl Named for Span {
+  fn name(value: Span) -> i64 {
+    return value.start;
+  }
+}
+
+extern "C" fn puts(text: string) -> i32;
+
+fn main() -> i64 {
+  return 0;
+}

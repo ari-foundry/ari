@@ -148,15 +148,17 @@ These slices are safe compiler-development work before any self-hosting effort:
 2. Syntax dump: expose AST shape and source spans without type facts.
 3. Module graph dump: expose module ids, resolved paths, imports, visibility,
    and cache hits.
-4. Declaration table split: move duplicate/name collection toward a separate
+4. Declaration index dump: expose declaration signatures, visibility, module
+   names, and source locations before type checking.
+5. Declaration table split: move duplicate/name collection toward a separate
    helper while leaving body checking in sema.
-5. HIR sketch: define the minimal lowered node vocabulary before implementing
+6. HIR sketch: define the minimal lowered node vocabulary before implementing
    a full HIR pass.
-6. Typed fact dump: expose selected type, layout, trait, and generic
+7. Typed fact dump: expose selected type, layout, trait, and generic
    specialization facts after sema.
-7. Ownership fact dump: add an ownership fact dump that exposes owner states,
+8. Ownership fact dump: add an ownership fact dump that exposes owner states,
    borrow sources, and inserted drop actions for focused tests.
-8. IR contract audit: find places where `src/llvm_codegen.cpp` re-derives
+9. IR contract audit: find places where `src/llvm_codegen.cpp` re-derives
    source facts and move those facts into `src/ir.hpp`.
 
 These are not bootstrap tasks. They make the compiler easier to test and review
