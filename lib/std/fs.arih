@@ -6,6 +6,10 @@ pub struct File {
   fd: i64,
 }
 
+pub struct Dir {
+  handle: ptr c_void,
+}
+
 pub struct Permissions {
   readable: bool,
   writable: bool,
@@ -37,6 +41,8 @@ pub extern "ari" fn hard_link(existing: string, link_path: string) -> bool = "ar
 pub extern "ari" fn symbolic_link(target: string, link_path: string) -> bool = "ari_builtin_fs_symbolic_link";
 pub extern "ari" fn create_dir(path: string) -> bool = "ari_builtin_fs_create_dir";
 pub extern "ari" fn remove_dir(path: string) -> bool = "ari_builtin_fs_remove_dir";
+pub extern "ari" fn open_dir(path: string) -> Dir = "ari_builtin_fs_open_dir";
+pub extern "ari" fn close_dir(dir: Dir) -> bool = "ari_builtin_fs_close_dir";
 // Modes: "r", "w", "a", "rw", "r+", "w+", and "a+".
 pub extern "ari" fn open(path: string, mode: string) -> File = "ari_builtin_fs_open";
 pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";
@@ -46,6 +52,7 @@ extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadat
 extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
 extern "ari" fn metadata_mode_raw(path: string) -> i64 = "ari_builtin_fs_metadata_mode";
 extern "ari" fn set_mode_raw(path: string, mode: i64) -> bool = "ari_builtin_fs_set_mode";
+extern "ari" fn read_dir_next_raw(dir: Dir) -> string = "ari_builtin_fs_read_dir_next";
 extern "ari" fn canonicalize_raw(path: string) -> string = "ari_builtin_fs_canonicalize";
 
 pub fn permissions(path: string) -> Permissions {
@@ -128,6 +135,22 @@ pub fn set_mode(path: string, mode: i64) -> bool {
 
 pub fn set_permissions(path: string, permissions: Permissions) -> bool {
   return set_mode(path, permissions.to_mode());
+}
+
+pub fn try_open_dir(path: string) -> std::Option[Dir] {
+  let dir = open_dir(path);
+  if dir.is_open() {
+    return std::Some<Dir>(dir);
+  }
+  return std::None<Dir>();
+}
+
+pub fn read_dir_next(zone: ref mut Zone, dir: Dir) -> std::Option[std::string::String] {
+  let name = read_dir_next_raw(dir);
+  if std::string::c_len(name) == 0 {
+    return std::None<std::string::String>();
+  }
+  return std::Some<std::string::String>(std::string::from(zone, name));
 }
 
 pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
@@ -455,5 +478,24 @@ pub impl std::fs::File {
 
   fn write_bytes(self, values: std::Slice[u8]) -> i64 {
     return write_bytes(self, values);
+  }
+}
+
+pub impl std::fs::Dir {
+  fn invalid() -> Dir {
+    let handle: ptr c_void = null;
+    return Dir { handle: handle };
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return (self.handle as u64) != 0u64;
+  }
+
+  fn close(self) -> bool {
+    return close_dir(self);
+  }
+
+  fn next(self, zone: ref mut Zone) -> std::Option[std::string::String] {
+    return read_dir_next(zone, self);
   }
 }

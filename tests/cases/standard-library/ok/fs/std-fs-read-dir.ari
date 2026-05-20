@@ -1,0 +1,108 @@
+// Covers explicit directory handles: open a directory, read names one by one,
+// skip host "."/".." entries, close the handle, and clean up.
+fn mark_entry(name: ref std::string::String) -> i64 {
+  if name.equals_text("alpha.txt") {
+    return 1;
+  }
+  if name.equals_text("beta.txt") {
+    return 2;
+  }
+  return 0;
+}
+
+fn main() -> i64 {
+  let dir_path = "build/prelude/std-fs-read-dir.tmp";
+  let alpha_path = "build/prelude/std-fs-read-dir.tmp/alpha.txt";
+  let beta_path = "build/prelude/std-fs-read-dir.tmp/beta.txt";
+  if fs::exists(alpha_path) {
+    fs::remove(alpha_path);
+  }
+  if fs::exists(beta_path) {
+    fs::remove(beta_path);
+  }
+  if fs::exists(dir_path) {
+    fs::remove_dir(dir_path);
+  }
+
+  var score = 0;
+  var zone = zone::create(512);
+
+  if fs::create_dir(dir_path) {
+    score = score + 1;
+  }
+  var alpha = ['A'];
+  if fs::write(alpha_path, alpha.as_slice()) {
+    score = score + 2;
+  }
+  var beta = ['B'];
+  if fs::write(beta_path, beta.as_slice()) {
+    score = score + 3;
+  }
+  if fs::try_open_dir("build/prelude/std-fs-read-dir-missing.tmp").is_none() {
+    score = score + 4;
+  }
+
+  let dir = fs::try_open_dir(dir_path).unwrap_or(fs::Dir::invalid());
+  if dir.is_open() {
+    score = score + 5;
+  }
+
+  var seen_alpha = false;
+  var seen_beta = false;
+  var entries = 0;
+  var reading = true;
+  while reading {
+    match dir.next(ref mut zone) {
+      std::Some(name) => {
+        entries = entries + 1;
+        let mark = mark_entry(ref name);
+        if mark == 1 {
+          seen_alpha = true;
+        }
+        if mark == 2 {
+          seen_beta = true;
+        }
+      }
+      std::None => {
+        reading = false;
+      }
+    }
+  }
+
+  if seen_alpha {
+    score = score + 6;
+  }
+  if seen_beta {
+    score = score + 7;
+  }
+  if entries == 2 {
+    score = score + 8;
+  }
+  if dir.close() {
+    score = score + 9;
+  }
+
+  let invalid = fs::Dir::invalid();
+  match invalid.next(ref mut zone) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 10;
+    }
+  }
+
+  if fs::remove(alpha_path) {
+    score = score + 11;
+  }
+  if fs::remove(beta_path) {
+    score = score + 12;
+  }
+  if fs::remove_dir(dir_path) {
+    score = score + 13;
+  }
+  if !fs::exists(dir_path) {
+    score = score + 14;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

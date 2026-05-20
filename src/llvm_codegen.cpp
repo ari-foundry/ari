@@ -481,6 +481,9 @@ private:
                symbol == "mkdir" ||
                symbol == "rmdir" ||
                symbol == "chmod" ||
+               symbol == "opendir" ||
+               symbol == "readdir" ||
+               symbol == "closedir" ||
                symbol == "open" ||
                symbol == "read" ||
                symbol == "write" ||
@@ -515,6 +518,7 @@ private:
             symbol == "ari_builtin_env_current_dir" ||
             symbol == "ari_builtin_env_executable_path" ||
             symbol == "ari_builtin_fs_canonicalize" ||
+            symbol == "ari_builtin_fs_read_dir_next" ||
             symbol == "ari_builtin_read_line") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
         }
@@ -531,6 +535,7 @@ private:
             symbol == "ari_builtin_fs_create_dir" ||
             symbol == "ari_builtin_fs_remove_dir" ||
             symbol == "ari_builtin_fs_set_mode" ||
+            symbol == "ari_builtin_fs_close_dir" ||
             symbol == "ari_builtin_fs_close" ||
             symbol == "ari_builtin_fs_write_byte" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
@@ -600,6 +605,9 @@ private:
         declarations_ << "declare i32 @mkdir(ptr, i32)\n";
         declarations_ << "declare i32 @rmdir(ptr)\n";
         declarations_ << "declare i32 @chmod(ptr, i32)\n";
+        declarations_ << "declare ptr @opendir(ptr)\n";
+        declarations_ << "declare ptr @readdir(ptr)\n";
+        declarations_ << "declare i32 @closedir(ptr)\n";
         declarations_ << "declare i32 @open(ptr, i32, i32)\n";
         declarations_ << "declare i64 @read(i32, ptr, i64)\n";
         declarations_ << "declare i64 @write(i32, ptr, i64)\n";
@@ -1044,6 +1052,61 @@ private:
         line("  %code = call i32 @rmdir(ptr %path)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ ptr } @ari_builtin_fs_open_dir(ptr %path) {");
+        line("entry:");
+        line("  %handle = call ptr @opendir(ptr %path)");
+        line("  %dir = insertvalue { ptr } undef, ptr %handle, 0");
+        line("  ret { ptr } %dir");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_close_dir({ ptr } %dir) {");
+        line("entry:");
+        line("  %handle = extractvalue { ptr } %dir, 0");
+        line("  %invalid = icmp eq ptr %handle, null");
+        line("  br i1 %invalid, label %fail, label %do_close");
+        line("do_close:");
+        line("  %code = call i32 @closedir(ptr %handle)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_fs_read_dir_next({ ptr } %dir) {");
+        line("entry:");
+        line("  %handle = extractvalue { ptr } %dir, 0");
+        line("  %invalid = icmp eq ptr %handle, null");
+        line("  br i1 %invalid, label %empty, label %next");
+        line("next:");
+        line("  %entry.ptr = call ptr @readdir(ptr %handle)");
+        line("  %done = icmp eq ptr %entry.ptr, null");
+        line("  br i1 %done, label %empty, label %name");
+        line("name:");
+        // Linux/glibc x86_64 dirent layout: d_name starts at byte offset 19.
+        line("  %name.ptr = getelementptr inbounds i8, ptr %entry.ptr, i64 19");
+        line("  %b0 = load i8, ptr %name.ptr, align 1");
+        line("  %b1.ptr = getelementptr inbounds i8, ptr %name.ptr, i64 1");
+        line("  %b1 = load i8, ptr %b1.ptr, align 1");
+        line("  %b2.ptr = getelementptr inbounds i8, ptr %name.ptr, i64 2");
+        line("  %b2 = load i8, ptr %b2.ptr, align 1");
+        line("  %b0.dot = icmp eq i8 %b0, 46");
+        line("  %b1.nul = icmp eq i8 %b1, 0");
+        line("  %single.dot = and i1 %b0.dot, %b1.nul");
+        line("  %b1.dot = icmp eq i8 %b1, 46");
+        line("  %b2.nul = icmp eq i8 %b2, 0");
+        line("  %dotdot.prefix = and i1 %b0.dot, %b1.dot");
+        line("  %double.dot = and i1 %dotdot.prefix, %b2.nul");
+        line("  %skip = or i1 %single.dot, %double.dot");
+        line("  br i1 %skip, label %next, label %found");
+        line("found:");
+        line("  ret ptr %name.ptr");
+        line("empty:");
+        line("  ret ptr " + empty);
         line("}");
         line();
 

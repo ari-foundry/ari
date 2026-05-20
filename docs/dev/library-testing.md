@@ -159,6 +159,8 @@ identifies the exact case:
 - `std-fs-rename-dir.ari`: runtime-backed `rename`, single-directory
   `create_dir`/`remove_dir`, duplicate-create failure, and missing-source
   rename failure.
+- `std-fs-read-dir.ari`: runtime-backed `Dir` open/next/close, dot-entry skip,
+  missing-directory failure, invalid-handle `None`, and cleanup.
 - `std-fs-links.ari`: runtime-backed `hard_link` and `symbolic_link`,
   read-through behavior, missing-source failure, and duplicate-link failure.
 - `std-fs-permissions.ari`: runtime-backed access permission checks,

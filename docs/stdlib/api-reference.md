@@ -719,6 +719,10 @@ fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::create_dir(path)
 fs::remove_dir(path)
+fs::open_dir(path)
+fs::try_open_dir(path)
+fs::read_dir_next(ref mut zone, dir)
+fs::close_dir(dir)
 fs::open(path, mode)
 fs::create(path)
 fs::open_read(path)
@@ -751,6 +755,11 @@ file.close()
 file.read_byte()
 file.write_byte(value)
 file.write_bytes(values)
+
+Dir::invalid()
+dir.is_open()
+dir.next(ref mut zone)
+dir.close()
 
 Permissions::none()
 Permissions::read_only()
@@ -820,12 +829,15 @@ absence matters. `truncate(path)` creates or empties a file. `try_copy(source,
 target)` streams bytes from the source handle into the target opened with
 truncating semantics and returns `Some(byte_count)` on success or `None` on
 open/write/close failure. `copy(source, target)` is the boolean compatibility
-wrapper over `try_copy`. `rename(source, target)` moves or renames one path according to the
-host runtime's current behavior. `create_dir(path)` creates one directory and
-`remove_dir(path)` removes one empty directory; recursive directory helpers and
-directory iteration are future work.
-The current `File` value is not an owned resource yet, so close each successful
-handle once and do not reuse copied handles after closing.
+wrapper over `try_copy`. `rename(source, target)` moves or renames one path
+according to the host runtime's current behavior. `create_dir(path)` creates
+one directory and `remove_dir(path)` removes one empty directory.
+`try_open_dir(path)` returns `Option[Dir]`, `dir.next(ref mut zone)` returns
+the next entry name while skipping `"."` and `".."`, and `dir.close()` closes
+the handle. Recursive directory helpers, richer `DirEntry` metadata, and owned
+resource policy are future work.
+The current `File` and `Dir` values are not owned resources yet, so close each
+successful handle once and do not reuse copied handles after closing.
 
 Network address helpers live in `std::net`:
 

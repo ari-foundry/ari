@@ -8,9 +8,10 @@ with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
 byte-oriented `String` with either compatibility or `Option`-returning absence
 behavior, rename paths, create hard or symbolic links, create or remove one
-empty directory, query basic file metadata, read and change POSIX permission
-bits, resolve an existing path to an absolute canonical path, close the
-handle, and remove a file.
+empty directory, read directory entry names through an explicit `Dir` handle,
+query basic file metadata, read and change POSIX permission bits, resolve an
+existing path to an absolute canonical path, close the handle, and remove a
+file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
@@ -19,8 +20,9 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `try_write`, `try_append`, `truncate`, `copy`, `try_copy`, `metadata`,
 `try_metadata`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
-`symbolic_link`, `create_dir`, `remove_dir`, `close`, `exists`, and `remove`,
-not type-suffixed names.
+`symbolic_link`, `create_dir`, `remove_dir`, `try_open_dir`,
+`read_dir_next`, `close_dir`, `close`, `exists`, and `remove`, not
+type-suffixed names.
 
 ## API
 
@@ -44,6 +46,10 @@ fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::create_dir(path)
 fs::remove_dir(path)
+fs::open_dir(path)
+fs::try_open_dir(path)
+fs::read_dir_next(ref mut zone, dir)
+fs::close_dir(dir)
 fs::open(path, mode)
 fs::create(path)
 fs::open_read(path)
@@ -76,6 +82,11 @@ file.close()
 file.read_byte()
 file.write_byte(value)
 file.write_bytes(values)
+
+Dir::invalid()
+dir.is_open()
+dir.next(ref mut zone)
+dir.close()
 
 Permissions::none()
 Permissions::read_only()
@@ -247,8 +258,16 @@ behavior remains future platform work.
 
 `create_dir(path)` creates one directory with the current default permission
 mode used by Ari's runtime shim. It does not create parent directories.
-`remove_dir(path)` removes one empty directory. Recursive directory creation,
-recursive removal, and directory iteration are separate future slices.
+`remove_dir(path)` removes one empty directory.
+
+`try_open_dir(path)` opens one directory and returns `Option[Dir]`.
+`dir.next(ref mut zone)` returns the next entry name as `Option[String]`,
+skipping the host `"."` and `".."` entries. `dir.close()` closes the directory
+handle. The low-level `open_dir`, `read_dir_next`, and `close_dir` names exist
+for direct runtime-hook coverage, but ordinary code should prefer
+`try_open_dir` plus the `Dir` methods. Current directory reads return names
+only; richer `DirEntry` metadata, recursive helpers, and owned resource
+tracking are future slices.
 
 ## Feature Status
 
@@ -268,7 +287,7 @@ recursive removal, and directory iteration are separate future slices.
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)` runtime hook on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
-| read directory | Roadmap: `DirEntry`/iterator handle and OS-resource ownership policy. |
+| read directory | Current: `try_open_dir(path)`, `Dir`, `dir.next(ref mut zone)`, and `dir.close()` for entry names; richer `DirEntry` metadata and owned OS-resource policy are roadmap. |
 | create directory | Current: single-directory `create_dir(path)`; recursive creation is roadmap. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
@@ -365,6 +384,30 @@ if fs::create_dir(dir) {
 }
 ```
 
+Read the names in one directory:
+
+```ari
+var zone = zone::create(512);
+let dir = fs::try_open_dir("build/prelude").unwrap_or(fs::Dir::invalid());
+if dir.is_open() {
+  var reading = true;
+  while reading {
+    match dir.next(ref mut zone) {
+      std::Some(name) => {
+        if name.equals_text("example-fs.tmp") {
+          reading = false;
+        }
+      }
+      std::None => {
+        reading = false;
+      }
+    }
+  }
+  dir.close();
+}
+zone::destroy(zone);
+```
+
 Create hard and symbolic links to a file:
 
 ```ari
@@ -416,18 +459,20 @@ if file.is_open() {
 
 ## Current Limits
 
-- This slice is byte-oriented. There is no owned path type, directory
-  iteration, recursive directory API, file locking API, temporary-file API, or
-  text encoding policy yet. Basic `stat` metadata, permission-bit lookup and
+- This slice is byte-oriented. There is no owned path type, recursive directory
+  API, file locking API, temporary-file API, or text encoding policy yet.
+  Directory reads currently return entry names only and do not expose metadata
+  or per-entry errors. Basic `stat` metadata, permission-bit lookup and
   mutation, and existing-path canonicalization exist, but richer timestamps,
   owner/group/ACL policy, no-follow symlink metadata, link metadata, and
   platform-specific symlink policy are still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
   `stat`, `chmod`, `realpath`, `unlink`, `rename`, `link`, `symlink`,
-  `mkdir`, `rmdir`, `open`, `read`, `write`, and `close`.
-- `File` is not a tracked `own` resource yet. The caller must close each
-  successful handle exactly once by convention. Future ownership work should
-  make OS resources harder to copy and accidentally double-close.
+  `mkdir`, `rmdir`, `opendir`, `readdir`, `closedir`, `open`, `read`,
+  `write`, and `close`.
+- `File` and `Dir` are not tracked `own` resources yet. The caller must close
+  each successful handle exactly once by convention. Future ownership work
+  should make OS resources harder to copy and accidentally double-close.
 - The mode-string surface is intentionally small. Use `"rw"` or `"r+"` for
   existing read/write files, `"w+"` for create/truncate read/write, and `"a+"`
   for read/append. More detailed flags belong in a future options API.
@@ -447,6 +492,7 @@ tests/cases/standard-library/ok/fs/std-fs-read-write.ari
 tests/cases/standard-library/ok/fs/std-fs-try-read.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
+tests/cases/standard-library/ok/fs/std-fs-read-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
 tests/cases/standard-library/ok/fs/std-fs-permissions.ari
 tests/cases/standard-library/ok/fs/std-fs-mode.ari
@@ -470,7 +516,9 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 `read`, `truncate`, missing-source copy failure, whole-file copy behavior, and
 `try_copy` byte counts.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
-`create_dir`, and `remove_dir` behavior. `std-fs-links.ari` covers
+`create_dir`, and `remove_dir` behavior. `std-fs-read-dir.ari` covers
+runtime-backed `Dir` open/next/close behavior, missing-directory failure, dot
+entry skipping, invalid-handle `None`, and cleanup. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
 checks. `std-fs-permissions.ari` covers access-style readable/writable/
 executable checks, the `Permissions` wrapper methods, and missing-path
@@ -492,8 +540,8 @@ absolute canonical paths, filename preservation, and missing-path `None`.
   platform-specific symlink policy.
 - Expand metadata with modified/accessed/created timestamps and a no-follow
   `symlink_metadata` helper.
-- Add directory iteration after Ari can represent owned OS-resource iterator
-  handles.
+- Expand directory reads with `DirEntry` metadata, richer error reporting, and
+  owned OS-resource iterator handles.
 - Add recursive directory creation/removal after the single-directory hooks
   have stable policy.
 - Grow `std::path` from lexical helpers into owned path values after Ari has a

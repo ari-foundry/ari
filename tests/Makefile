@@ -372,6 +372,18 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf
 	$(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -q "@ari_builtin_fs_open_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -q "@ari_builtin_fs_read_dir_next" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -q "@ari_builtin_fs_close_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -q "declare ptr @opendir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -q "declare ptr @readdir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -q "declare i32 @closedir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -F -q "std2fs12try_open_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -F -q "std2fs13read_dir_next" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari -o $(BUILD_DIR)/prelude/std-fs-read-dir.elf
+	$(BUILD_DIR)/prelude/std-fs-read-dir.elf; code=$$?; test $$code -eq 105
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-dir.elf; $(BUILD_DIR)/prelude/std-fs-read-dir.elf; code=$$?; test $$code -eq 105; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-links.ll
 	grep -q "@ari_builtin_fs_hard_link" $(BUILD_DIR)/prelude/std-fs-links.ll
 	grep -q "@ari_builtin_fs_symbolic_link" $(BUILD_DIR)/prelude/std-fs-links.ll
