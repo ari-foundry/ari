@@ -2038,16 +2038,17 @@ parse::float(bytes)
 
 `integer` returns `Option[i64]` and accepts optional `+` or `-` signs.
 `is_integer` validates the same shape, and `integer_or` returns a caller
-fallback on invalid input. `integer_radix` accepts bases `2` through `36` with
-ASCII alphanumeric digits, and `hex_integer` / `binary_integer` are readable
-wrappers for the common bases. These radix parsers trim whitespace but do not
-recognize prefixes such as `0x` or `0b`. `boolean` returns `Option[bool]` and
-accepts only lowercase `true` and `false`; `is_boolean` and `boolean_or`
-provide the same validator/fallback pattern. `is_float` validates a decimal
-float shape with optional sign, fraction, and exponent. `float_or` returns a
-fallback for invalid input, while `float` panics on invalid input.
-`Option[f64]` is future work because the compiler does not lower float enum
-payloads yet.
+fallback on invalid input. Decimal and radix integer parsers reject values
+outside the `i64` range instead of wrapping. `integer_radix` accepts bases `2`
+through `36` with ASCII alphanumeric digits, and `hex_integer` /
+`binary_integer` are readable wrappers for the common bases. These radix parsers
+trim whitespace but do not recognize prefixes such as `0x` or `0b`. `boolean`
+returns `Option[bool]` and accepts only lowercase `true` and `false`;
+`is_boolean` and `boolean_or` provide the same validator/fallback pattern.
+`is_float` validates a decimal float shape with optional sign, fraction, and
+exponent. `float_or` returns a fallback for invalid input, while `float` panics
+on invalid input. `Option[f64]` is future work because the compiler does not
+lower float enum payloads yet.
 
 ## Encoding
 

@@ -33,15 +33,16 @@ parse::float(bytes) -> f64
 
 `integer` trims ASCII whitespace, accepts an optional `+` or `-`, then requires
 at least one decimal digit and no trailing garbage. It returns `None<i64>()`
-for empty, sign-only, or non-decimal input. Overflow behavior is not promised
-yet, matching the current numeric parsing policy in `std::ascii`.
+for empty, sign-only, non-decimal input, or values outside the `i64` range.
 `is_integer` is the validation-only form, and `integer_or` returns the parsed
 value or the caller's fallback.
 
 `integer_radix` parses the same signed whole-input shape in bases `2` through
 `36`, using ASCII `0-9`, `A-Z`, and `a-z` digit spellings. It trims ASCII
 whitespace and rejects invalid bases, sign-only values, invalid digits, and
-trailing garbage with `None<i64>()`. It intentionally does not recognize
+trailing garbage with `None<i64>()`. Overflow is checked in the target radix:
+`9223372036854775807` and `-9223372036854775808` are accepted in base 10, while
+the next value on either side is rejected. It intentionally does not recognize
 prefixes such as `0x` or `0b`; callers can strip those policies before calling
 the parser. `hex_integer` and `binary_integer` are readable wrappers for bases
 `16` and `2`, with matching `is_*` and `*_or` forms.
@@ -114,6 +115,5 @@ into `make check-prelude` with LLVM symbol checks for the public helpers.
 
 ## Future Work
 
-- overflow policy for integer parsing
 - `ParseError` once richer error values are worth the API weight
 - `Option[f64]` or `Result[f64, E]` after float enum payloads are supported

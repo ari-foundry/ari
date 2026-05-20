@@ -1,5 +1,7 @@
 // Covers std::parse whole-value parsers over borrowed byte slices.
 fn main() -> i64 {
+  let min = -9223372036854775807 - 1;
+  let max = 9223372036854775807;
   var signed = [32u8, 45u8, 49u8, 50u8, 51u8, 32u8];
   var plus = [43u8, 52u8, 50u8];
   var invalid_integer = [49u8, 50u8, 120u8];
@@ -9,6 +11,10 @@ fn main() -> i64 {
   assert(!parse::is_integer("12x"));
   assert(parse::integer_or("88", 0) == 88);
   assert(parse::integer_or("nope", 5) == 5);
+  assert(parse::integer("9223372036854775807").unwrap_or(0) == max);
+  assert(parse::integer("-9223372036854775808").unwrap_or(0) == min);
+  assert(parse::integer("9223372036854775808").is_none());
+  assert(parse::integer("-9223372036854775809").is_none());
   assert(parse::integer_radix("7f", 16).unwrap_or(0) == 127);
   assert(parse::integer_radix("-101", 2).unwrap_or(0) == -5);
   assert(parse::integer_radix("z", 36).unwrap_or(0) == 35);
@@ -20,6 +26,9 @@ fn main() -> i64 {
   assert(parse::hex_integer("-F").unwrap_or(0) == -15);
   assert(parse::hex_integer_or("gg", 7) == 7);
   assert(parse::is_hex_integer("Ab"));
+  assert(parse::hex_integer("7fffffffffffffff").unwrap_or(0) == max);
+  assert(parse::hex_integer("-8000000000000000").unwrap_or(0) == min);
+  assert(parse::hex_integer("8000000000000000").is_none());
   assert(parse::binary_integer("1010").unwrap_or(0) == 10);
   assert(parse::binary_integer_or("102", 4) == 4);
   assert(!parse::is_binary_integer("102"));
