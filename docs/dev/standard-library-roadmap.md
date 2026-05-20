@@ -123,14 +123,9 @@ The current `std` package already provides:
   scratch-zone construction, and finish/require status helpers
 - `std::log` source stderr logging levels, threshold predicates, byte-slice
   and string-message logging, and convenience level helpers
-- `std::diag` source diagnostic severities, labels, one borrowed note,
-  diagnostic values, `SourceFile`/`SourceMap` source-location lookup, and
-  first stderr summary output
-- `std::source` source-coordinate values for compiler tools: `FileId`,
-  half-open byte `Span`, one-based `LineCol`, `Location`, borrowed
-  `SourceFile` text lookup, explicit-zone `LineMap` cached line tables,
-  bounded `SourceMap` registration over borrowed source files, and natural
-  containment, boundary, line, same-file, merge, and ordering helpers
+- `std::diag` source diagnostic severity/code/message/note values and first
+  stderr summary output; source spans, labels, and source maps are intentionally
+  left for compiler/tooling packages rather than runtime `std`
 - `std::error` source recoverable error categories, compact error values,
   POSIX errno mapping, predicate helpers, root `Error`/`ErrorKind` aliases,
   and a raw scalar bridge for `Result[T, i64]` while mixed `Result[T, Error]`
@@ -269,14 +264,13 @@ Likely compiler work:
 ### Phase 6: Library Developer Experience
 
 - Grow the current source-level `std::test::Report` helpers into a real test
-  runner when discovery, per-test isolation, and source-map diagnostics are
-  stable.
+  runner when discovery, per-test isolation, and diagnostics are stable.
 - Build a library test runner around existing `@test` support when stable.
 - Grow the current `std::log` line helpers toward structured logging after
-  source-map, formatting, and capture policy are testable.
-- Build owned source text, filenames, and diagnostic labels on top of
-  `std::source` before adding stack/backtrace, optional benchmark, and optional
-  fuzzing APIs.
+  formatting and capture policy are testable.
+- Build owned source text, filenames, and diagnostic labels in a
+  compiler/tooling package before adding stack/backtrace, optional benchmark,
+  and optional fuzzing APIs.
 - Keep docs and test names readable enough that a new contributor can copy a
   nearby pattern.
 
@@ -309,10 +303,9 @@ Likely compiler work:
 | `std::parse` | Grow from the current whole-input integer/bool/decimal-float slice into richer parse errors and overflow policy. | current `std-parse-basic` signed integer, bool, float validation/conversion, fallback, and invalid whole-input cases; future overflow, exponent edge, and locale-rejection tests. | Current helpers are pure source Ari. Future `Option[f64]` or `Result[f64,E]` needs float enum payload lowering. |
 | `std::encoding` | Grow from validation plus hex/base64 into variants and richer fallible decoders. | current `std-encoding-text` ASCII/UTF-8/UTF-16 validation/counting, `std-encoding-utf8-codepoints` UTF-8 scalar decode/asserting-encode/fallible-encode behavior, and `std-encoding-codec` hex/base64 length/encode/decode/fallible-decode/invalid-input guard tests; future URL-safe base64, MIME line wrapping, richer decode errors, normalization/transcoding, and optional compression tests. | Current helpers are pure source Ari over `Slice`, `String`, and `Option[String]`. Future `Result[String,E]` decoders and richer text values need stronger error payload policy. |
 | `std::error` | Grow from compact shared error values into direct `Result[T, Error]`, platform-specific mappings, and richer diagnostic payloads. | current `std-error-basic` error-kind predicates, POSIX errno mapping, root aliases, string names, compact raw bridge, and Result raw-error flow; future Windows last-error mapping, filesystem/network/process conversion tests, mixed-payload `Result[T, Error]`, and structured diagnostic fields. | Current helpers are pure source Ari with a one-word `Error`. Direct `Result[T, Error]` for scalar success values needs mixed enum payload storage; richer messages need owned strings or formatter integration. |
-| `std::log` | Grow from level-prefixed stderr lines into structured diagnostics. | current `std-log-basic` level ordering, threshold checks, byte-slice logging, string-message logging, convenience level helpers, and stderr output checks; future source-map labels, target/module fields, thread ids, capture policy, and backtrace integration. | Current helpers are pure source Ari over `std::io::Stderr`. Future source-map rendering and backtraces need driver/runtime metadata and formatting policy. |
-| `std::diag` | Grow from a single-label, single-note diagnostic value into a source-map-backed diagnostic builder and renderer. | current `std-diag-basic` severity helpers, label construction, diagnostic construction, label attachment, note attachment, source-file location lookup, and method wrapper checks; current `std-diag-source-map` diagnostic and label location lookup through `std::source::SourceMap`; current SourceMap lifetime negative fixture; current `std-diag-write` stderr summary output; current `std-diag-write-note` summary output with an attached note; future multi-label builders, multiple notes, fix-its, owned messages, JSON output, golden renderer tests, and full source-map rendering. | Current helpers are pure source Ari over borrowed byte slices, `std::source`, and `std::log`. Future renderers mainly need owned source maps, richer `String` ergonomics, and golden-test tooling. |
-| `std::source` | Grow from value coordinates, borrowed text lookup, cached line maps, and bounded borrowed source maps into an owned source-map layer for compiler diagnostics. | current `std-source-location` file id, half-open span, one-based line/column, location, containment, touch, same-file merge, ordering, and method wrapper checks; current `std-source-text` borrowed source text, line counts, line starts/ends, line spans, byte-offset locations, EOF locations, and method wrapper checks; current `std-source-line-map` explicit-zone cached line starts, binary-search offset lookup, line spans, empty-file behavior, and method wrapper checks; current `std-source-map` multi-file borrowed source registration, cached line lookup, source lookup, and method wrapper checks; current reset-negative fixtures for `LineMap` and `SourceMap`; future file-name ownership, source-text ownership, labels, notes, and golden diagnostic rendering tests. | Current helpers are pure source Ari plus a small compiler-known zone-handle classification for `LineMap` and `SourceMap`. Future owned source maps mainly need `Vec`/`String` ergonomics and diagnostic formatting. |
-| `std::test` | Grow from report aggregation into first-class test execution and diagnostics. | current `std-test-report` report counts, generic equality checks, method wrappers, scratch-zone creation, and finish status; future test discovery, per-test names/statuses, source-map labels, richer assert messages, log capture, backtrace/stack trace, optional benchmark, and optional fuzzing hooks. | Current helpers are pure source Ari over `Report` and `Zone`. Future source-map diagnostics, backtraces, and runner integration need driver/runtime metadata and panic reporting policy. |
+| `std::log` | Grow from level-prefixed stderr lines into structured diagnostics. | current `std-log-basic` level ordering, threshold checks, byte-slice logging, string-message logging, convenience level helpers, and stderr output checks; future target/module fields, thread ids, capture policy, and backtrace integration. | Current helpers are pure source Ari over `std::io::Stderr`. Future backtraces need driver/runtime metadata and formatting policy. |
+| `std::diag` | Keep runtime diagnostics small while compiler tools grow their own source-aware renderer. | current `std-diag-basic` severity helpers, diagnostic construction, note attachment, accessors, and method wrapper checks; current `std-diag-write` stderr summary output; current `std-diag-write-note` summary output with an attached note; future owned messages if they stay generally useful. Multi-label builders, source spans, fix-its, JSON output, golden renderer tests, and source maps belong in compiler/tooling packages. | Current helpers are pure source Ari over borrowed byte slices and `std::log`. Future source-aware renderers mainly need owned source maps, richer `String` ergonomics, and golden-test tooling outside runtime `std`. |
+| `std::test` | Grow from report aggregation into first-class test execution and diagnostics. | current `std-test-report` report counts, generic equality checks, method wrappers, scratch-zone creation, and finish status; future test discovery, per-test names/statuses, richer assert messages, log capture, backtrace/stack trace, optional benchmark, and optional fuzzing hooks. | Current helpers are pure source Ari over `Report` and `Zone`. Future backtraces and runner integration need driver/runtime metadata and panic reporting policy. |
 | `std::vec` | Grow from the current safe access/growth/iterator and direct borrowed sequence wrappers toward root/source Vec unification. | Method, `try_*` access, direct `slice`/`split_at`/`find`/`compare`/`chunks`/`windows`/`split`, iterator, borrow, owner-drop, same-zone, and `std::vec::collect` tests. | Iterator lowering, generic aggregate monomorphization, and explicit-zone provenance. |
 | `std::iter` | Lazy adapter and eager consumer layer over the canonical `std::Iterator[T]` protocol. | `std-iter-adapters` covers `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, and `collect` over `Vec` cursors. | Function-pointer callback typing, declaring-module field type resolution, and general iterator protocol lowering. |
 | `std::fmt` | Source trait impls for common values, full custom formatter objects, derived/debug formatting, direct writer streaming without temporary strings, allocator-returning `format!` once default-zone policy exists. | `format_in!`, `Display`, unsupported-type diagnostics, source `FormatSpec` helpers for unsigned radix/width/precision/alignment and writer-backed formatting. | Macro-to-trait lowering cleanup and richer trait dispatch. |

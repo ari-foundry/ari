@@ -1,9 +1,6 @@
-// Covers std::diag severity, label, diagnostic, and std::source location glue.
+// Covers std::diag severity, lightweight diagnostics, notes, and methods.
 fn main() -> i64 {
-  let file_id = source::file_id(7);
-  let input = source::file(file_id, "first\nbad\n");
-  let span = input.line_span(2);
-  let diagnostic = diag::error("E0001", "bad token", span);
+  let diagnostic = diag::error("E0001", "bad token");
   var score = 0;
 
   if diag::severity_rank(diag::Error) == 3 {
@@ -24,55 +21,36 @@ fn main() -> i64 {
   if diagnostic.code().len() == 5 && diagnostic.message().get(0) == 'b' {
     score = score + 5;
   }
-  if diagnostic.span().start() == 6 && diagnostic.span().end() == 9 {
+  if !diagnostic.has_note() {
     score = score + 6;
   }
 
-  let location = diagnostic.location(ref input);
-  if location.line() == 2 && location.column() == 1 {
+  let noted = diagnostic.with_note("try another token");
+  if noted.has_note() {
     score = score + 7;
   }
-
-  let primary = diag::primary(span, "unexpected token");
-  if primary.is_primary() && !primary.is_secondary() {
+  if noted.note_message().len() == 17 {
     score = score + 8;
   }
 
-  let labeled = diagnostic.with_label(primary);
-  if labeled.has_label() {
+  let warning = diag::warning("W0001", "be careful");
+  if warning.severity() == diag::Warning && warning.message().len() == 10 {
     score = score + 9;
   }
 
-  let label = labeled.label();
-  if label.message().len() == 16 {
+  let note = diag::note("N0001", "plain note");
+  if note.severity() == diag::Note && !note.has_note() {
     score = score + 10;
   }
 
-  let label_span = label.span();
-  if label_span.same_file(ref span) && label_span.start() == span.start() {
+  let help = diag::help("H0001", "plain help");
+  if help.severity() == diag::Help && help.code().get(0) == 'H' {
     score = score + 11;
   }
 
-  let label_location = label.location(ref input);
-  if label_location.line() == 2 && label_location.column() == 1 {
+  let generic = diag::new(diag::Error, "E0002", "generic error");
+  if generic.severity() == diag::Error && generic.message().len() == 13 {
     score = score + 12;
-  }
-
-  let secondary = diag::secondary(source::empty_span(file_id, 0), "note");
-  if secondary.is_secondary() {
-    score = score + 13;
-  }
-
-  let noted = labeled.with_note("try adding a name");
-  if noted.has_label() && noted.has_note() {
-    score = score + 14;
-  }
-  if noted.note_message().len() == 17 {
-    score = score + 15;
-  }
-  let relabeled = noted.with_label(diag::secondary(span, "still here"));
-  if relabeled.has_note() && relabeled.note_message().get(0) == 't' {
-    score = score + 16;
   }
 
   return score;

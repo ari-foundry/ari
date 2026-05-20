@@ -1,8 +1,6 @@
 // Covers the first stable std::diag stderr summary output hook.
 fn main() -> i64 {
-  let file_id = source::root_file();
-  let input = source::file(file_id, "bad\n");
-  let diagnostic = diag::error("E0001", "bad token", input.line_span(1));
+  let diagnostic = diag::error("E0001", "bad token");
   if diagnostic.write() {
     return 7;
   }

@@ -3,7 +3,6 @@
 #include "std_box_semantics.hpp"
 #include "std_collections_semantics.hpp"
 #include "std_fs_semantics.hpp"
-#include "std_source_semantics.hpp"
 #include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 
@@ -53,7 +52,6 @@ bool is_zone_pointer_return_type(const IrType& type) {
            is_std_box_handle_type(value_type) ||
            is_std_collections_zone_handle_type(value_type) ||
            is_std_fs_dir_entry_zone_handle_type(value_type) ||
-           is_std_source_zone_handle_type(value_type) ||
            is_std_string_zone_handle_type(value_type) ||
            is_std_vec_zone_handle_type(value_type) ||
            std::any_of(value_type.args.begin(), value_type.args.end(), is_zone_pointer_return_type) ||

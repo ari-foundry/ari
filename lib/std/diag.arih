@@ -1,9 +1,8 @@
-// Small diagnostic values for bootstrap compiler tools.
+// Small diagnostic values for tools and libraries.
 //
-// This module intentionally starts as a value layer. It can describe a primary
-// source span, one label, one note, and a stable severity vocabulary without
-// allocating. Rich multi-label rendering should build on top once owned source
-// maps land.
+// Keep this module source-only and lightweight. Source-code spans, line maps,
+// and renderers belong in compiler/tooling libraries instead of the production
+// standard library surface.
 pub enum Severity {
   Note,
   Help,
@@ -11,38 +10,16 @@ pub enum Severity {
   Error,
 }
 
-pub enum LabelStyle {
-  Primary,
-  Secondary,
-}
-
-pub struct Label {
-  style: std::diag::LabelStyle,
-  span: std::source::Span,
-  message: std::Slice[u8],
-}
-
 pub struct Diagnostic {
   severity: std::diag::Severity,
   code: std::Slice[u8],
   message: std::Slice[u8],
-  span: std::source::Span,
-  label: std::diag::Label,
-  has_label: bool,
   note_message: std::Slice[u8],
   has_note: bool,
 }
 
 fn empty_message() -> std::Slice[u8] {
   return "";
-}
-
-fn empty_label(span: std::source::Span) -> std::diag::Label {
-  return std::diag::Label {
-    style: Secondary,
-    span: span,
-    message: std::diag::empty_message(),
-  };
 }
 
 pub fn severity_rank(severity: std::diag::Severity) -> i64 {
@@ -71,86 +48,34 @@ pub fn is_warning(severity: std::diag::Severity) -> bool {
   return std::diag::severity_rank(severity) == std::diag::severity_rank(Warning);
 }
 
-pub fn label(
-  style: std::diag::LabelStyle,
-  span: std::source::Span,
-  message: std::Slice[u8]
-) -> std::diag::Label {
-  return std::diag::Label { style: style, span: span, message: message };
-}
-
-pub fn primary(span: std::source::Span, message: std::Slice[u8]) -> std::diag::Label {
-  return std::diag::label(Primary, span, message);
-}
-
-pub fn secondary(span: std::source::Span, message: std::Slice[u8]) -> std::diag::Label {
-  return std::diag::label(Secondary, span, message);
-}
-
 pub fn new(
   severity: std::diag::Severity,
   code: std::Slice[u8],
-  message: std::Slice[u8],
-  span: std::source::Span
+  message: std::Slice[u8]
 ) -> std::diag::Diagnostic {
   return std::diag::Diagnostic {
     severity: severity,
     code: code,
     message: message,
-    span: span,
-    label: std::diag::empty_label(span),
-    has_label: false,
     note_message: std::diag::empty_message(),
     has_note: false,
   };
 }
 
-pub fn error(
-  code: std::Slice[u8],
-  message: std::Slice[u8],
-  span: std::source::Span
-) -> std::diag::Diagnostic {
-  return std::diag::new(Error, code, message, span);
+pub fn error(code: std::Slice[u8], message: std::Slice[u8]) -> std::diag::Diagnostic {
+  return std::diag::new(Error, code, message);
 }
 
-pub fn warning(
-  code: std::Slice[u8],
-  message: std::Slice[u8],
-  span: std::source::Span
-) -> std::diag::Diagnostic {
-  return std::diag::new(Warning, code, message, span);
+pub fn warning(code: std::Slice[u8], message: std::Slice[u8]) -> std::diag::Diagnostic {
+  return std::diag::new(Warning, code, message);
 }
 
-pub fn note(
-  code: std::Slice[u8],
-  message: std::Slice[u8],
-  span: std::source::Span
-) -> std::diag::Diagnostic {
-  return std::diag::new(Note, code, message, span);
+pub fn note(code: std::Slice[u8], message: std::Slice[u8]) -> std::diag::Diagnostic {
+  return std::diag::new(Note, code, message);
 }
 
-pub fn help(
-  code: std::Slice[u8],
-  message: std::Slice[u8],
-  span: std::source::Span
-) -> std::diag::Diagnostic {
-  return std::diag::new(Help, code, message, span);
-}
-
-pub fn with_label(
-  value: ref std::diag::Diagnostic,
-  label: std::diag::Label
-) -> std::diag::Diagnostic {
-  return std::diag::Diagnostic {
-    severity: value.severity,
-    code: value.code,
-    message: value.message,
-    span: value.span,
-    label: label,
-    has_label: true,
-    note_message: value.note_message,
-    has_note: value.has_note,
-  };
+pub fn help(code: std::Slice[u8], message: std::Slice[u8]) -> std::diag::Diagnostic {
+  return std::diag::new(Help, code, message);
 }
 
 pub fn with_note(
@@ -161,42 +86,9 @@ pub fn with_note(
     severity: value.severity,
     code: value.code,
     message: value.message,
-    span: value.span,
-    label: value.label,
-    has_label: value.has_label,
     note_message: message,
     has_note: true,
   };
-}
-
-pub fn location(
-  value: ref std::diag::Diagnostic,
-  file: ref std::source::SourceFile
-) -> std::source::Location {
-  std::assert(value.span.file().equals(file.id()));
-  return file.locate(value.span.start());
-}
-
-pub fn label_location(
-  value: ref std::diag::Label,
-  file: ref std::source::SourceFile
-) -> std::source::Location {
-  std::assert(value.span.file().equals(file.id()));
-  return file.locate(value.span.start());
-}
-
-pub fn source_location(
-  value: ref std::diag::Diagnostic,
-  sources: ref std::source::SourceMap
-) -> std::source::Location {
-  return sources.locate(value.span);
-}
-
-pub fn label_source_location(
-  value: ref std::diag::Label,
-  sources: ref std::source::SourceMap
-) -> std::source::Location {
-  return sources.locate(value.span);
 }
 
 fn log_level(severity: std::diag::Severity) -> std::log::Level {
@@ -218,36 +110,6 @@ pub fn write(value: ref std::diag::Diagnostic) -> bool {
   return true;
 }
 
-pub impl std::diag::Label {
-  fn style(self: ref Self) -> std::diag::LabelStyle {
-    return self.style;
-  }
-
-  fn span(self: ref Self) -> std::source::Span {
-    return self.span;
-  }
-
-  fn message(self: ref Self) -> std::Slice[u8] {
-    return self.message;
-  }
-
-  fn is_primary(self: ref Self) -> bool {
-    return self.style == Primary;
-  }
-
-  fn is_secondary(self: ref Self) -> bool {
-    return self.style == Secondary;
-  }
-
-  fn location(self: ref Self, file: ref std::source::SourceFile) -> std::source::Location {
-    return std::diag::label_location(ref self, file);
-  }
-
-  fn source_location(self: ref Self, sources: ref std::source::SourceMap) -> std::source::Location {
-    return std::diag::label_source_location(ref self, sources);
-  }
-}
-
 pub impl std::diag::Diagnostic {
   fn severity(self: ref Self) -> std::diag::Severity {
     return self.severity;
@@ -261,14 +123,6 @@ pub impl std::diag::Diagnostic {
     return self.message;
   }
 
-  fn span(self: ref Self) -> std::source::Span {
-    return self.span;
-  }
-
-  fn has_label(self: ref Self) -> bool {
-    return self.has_label;
-  }
-
   fn has_note(self: ref Self) -> bool {
     return self.has_note;
   }
@@ -278,25 +132,8 @@ pub impl std::diag::Diagnostic {
     return self.note_message;
   }
 
-  fn label(self: ref Self) -> std::diag::Label {
-    std::assert(self.has_label);
-    return self.label;
-  }
-
-  fn with_label(self: ref Self, label: std::diag::Label) -> std::diag::Diagnostic {
-    return std::diag::with_label(ref self, label);
-  }
-
   fn with_note(self: ref Self, message: std::Slice[u8]) -> std::diag::Diagnostic {
     return std::diag::with_note(ref self, message);
-  }
-
-  fn location(self: ref Self, file: ref std::source::SourceFile) -> std::source::Location {
-    return std::diag::location(ref self, file);
-  }
-
-  fn source_location(self: ref Self, sources: ref std::source::SourceMap) -> std::source::Location {
-    return std::diag::source_location(ref self, sources);
   }
 
   fn write(self: ref Self) -> bool {

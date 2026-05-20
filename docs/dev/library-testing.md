@@ -291,38 +291,13 @@ identifies the exact case:
 - `std-log-basic.ari`: source `std::log` level ordering, threshold checks,
   byte-slice logging, string-message logging, convenience level helpers, and
   stderr output format.
-- `std-diag-basic.ari`: source `std::diag` severity helpers, diagnostic and
-  label constructors, label attachment, note attachment, source location
-  lookup, method wrappers, and the dedicated `make check-diag` target.
+- `std-diag-basic.ari`: source `std::diag` severity helpers, diagnostic
+  constructors, note attachment, accessors, method wrappers, and the dedicated
+  `make check-diag` target.
 - `std-diag-write.ari`: source `std::diag` first stable stderr summary output
   and the dedicated `make check-diag` target.
 - `std-diag-write-note.ari`: source `std::diag` stable stderr summary output
   with an attached note line and the dedicated `make check-diag` target.
-- `std-diag-source-map.ari`: source `std::diag` diagnostic and label
-  location lookup through `std::source::SourceMap` plus method wrappers.
-- `std-diag-source-map-after-reset.ari`: source `std::diag` negative fixture
-  proving `SourceMap` lookup in diagnostics respects zone lifetime checks.
-- `std-source-location.ari`: source `std::source` file id, half-open byte
-  span, one-based line/column, location, containment, boundary, same-file
-  merge, ordering, method wrapper behavior, and the dedicated
-  `make check-source` target.
-- `std-source-text.ari`: source `std::source` borrowed `SourceFile` text,
-  line counts, line start/end offsets, line spans, byte-offset to line/column
-  lookup, EOF location behavior, and the dedicated `make check-source` target.
-- `std-source-line-map.ari`: source `std::source` explicit-zone `LineMap`
-  construction, cached line starts, binary-search location lookup, line spans,
-  empty-file behavior, `SourceFile::line_map`, and the dedicated
-  `make check-source` target.
-- `std-source-line-map-after-reset.ari`: source `std::source` negative
-  fixture proving `LineMap` is tracked as a zone-backed handle and is rejected
-  after its zone is reset.
-- `std-source-map.ari`: source `std::source` bounded `SourceMap`
-  registration, file-id assignment, source lookup, cached `LineMap` lookup,
-  span location lookup, free-function helpers, method wrappers, and the
-  dedicated `make check-source` target.
-- `std-source-map-after-reset.ari`: source `std::source` negative fixture
-  proving `SourceMap` storage is tracked as a zone-backed handle and is
-  rejected after its zone is reset.
 - `std-mem-byte-ops.ari`: `std::mem` byte `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM `memcpy`/`memmove`/`memset` intrinsic
   lowering checks.

@@ -213,86 +213,27 @@ Diagnostic values live in `std::diag`:
 
 ```ari
 diag::Severity
-diag::LabelStyle
-diag::Label
 diag::Diagnostic
 
 diag::severity_rank(severity)
 diag::severity_name(severity)
 diag::is_error(severity)
 diag::is_warning(severity)
-diag::primary(span, message)
-diag::secondary(span, message)
-diag::error(code, message, span)
-diag::warning(code, message, span)
-diag::note(code, message, span)
-diag::help(code, message, span)
-diag::with_label(ref diagnostic, label)
+diag::new(severity, code, message)
+diag::error(code, message)
+diag::warning(code, message)
+diag::note(code, message)
+diag::help(code, message)
 diag::with_note(ref diagnostic, message)
-diag::location(ref diagnostic, ref source_file)
-diag::label_location(ref label, ref source_file)
-diag::source_location(ref diagnostic, ref source_map)
-diag::label_source_location(ref label, ref source_map)
 diag::write(ref diagnostic)
 ```
 
-`Diagnostic` stores borrowed byte-slice code/message text and a primary
-`std::source::Span`. `Label` stores a style, span, and borrowed message. A
-diagnostic can also carry one borrowed note message through `with_note`.
-Use `location` with a single `SourceFile`, or `source_location` with a
-`SourceMap` when the span should resolve through a multi-file source registry.
-`write` emits the summary through `std::log`, and emits the note as an
-additional `[info]` line when present; full source-map rendering is roadmap
-work.
-
-Source-coordinate values live in `std::source`:
-
-```ari
-source::FileId
-source::Span
-source::LineCol
-source::Location
-source::SourceFile
-source::LineMap
-source::SourceMap
-
-source::file_id(value)
-source::root_file()
-source::file(id, text)
-source::span(file, start, end)
-source::empty_span(file, offset)
-source::line_col(line, column)
-source::location(file, line, column)
-source::full_span(file, text)
-source::line_count(text)
-source::line_start(text, line)
-source::line_end(text, line)
-source::line_span(file, text, line)
-source::locate(file, text, offset)
-source::line_map(ref mut zone, file)
-source::source_map(ref mut zone, capacity)
-source::source_count(ref map)
-source::source_capacity(ref map)
-source::source_add(ref mut map, ref mut zone, text)
-source::source_file(ref map, id)
-source::source_lines(ref map, id)
-source::source_locate(ref map, span)
-source::len(ref span)
-source::is_empty(ref span)
-source::contains(ref span, offset)
-source::touches(ref span, offset)
-source::same_file(ref left, ref right)
-source::before(ref left, ref right)
-source::merge(ref left, ref right)
-```
-
-`Span` uses half-open byte offsets. `LineCol` and `Location` use one-based
-human coordinates. `SourceFile` is a borrowed text view for line starts, line
-spans, and byte-offset lookup. `LineMap` is the explicit-zone cached form for
-repeated line lookup in one file. `SourceMap` is the bounded explicit-zone
-registry for multiple borrowed files and their cached line maps. Owned filename
-and source-text storage, structured log records, benchmark helpers, fuzzing
-hooks, and stack/backtrace APIs are roadmap work.
+`Diagnostic` stores borrowed byte-slice code/message text and can carry one
+borrowed note message through `with_note`. `write` emits a stable summary
+through `std::log`, and emits the note as an additional `[info]` line when
+present. Source spans, labels, source maps, JSON renderers, and golden compiler
+diagnostic output belong in a future compiler/tooling package rather than the
+production standard library.
 
 ## C Interop
 

@@ -10,7 +10,6 @@
 
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
-enum std::diag::LabelStyle|check-diag std-diag-basic primary/secondary label styles; docs/stdlib/modules/diag.md
 enum std::diag::Severity|check-diag std-diag-basic diagnostic severity vocabulary; docs/stdlib/modules/diag.md
 enum std::error::Kind|check-prelude std-error-basic shared recoverable error categories; docs/stdlib/modules/error.md
 enum std::fs::FileKind|check-prelude std-fs-metadata file/directory/symlink/other metadata classifier; docs/stdlib/modules/fs.md
@@ -159,19 +158,11 @@ fn std::diag::error|check-diag std-diag-basic error diagnostic constructor; docs
 fn std::diag::help|check-diag std-diag-basic help diagnostic constructor; docs/stdlib/modules/diag.md
 fn std::diag::is_error|check-diag std-diag-basic severity error predicate; docs/stdlib/modules/diag.md
 fn std::diag::is_warning|check-diag std-diag-basic severity warning predicate; docs/stdlib/modules/diag.md
-fn std::diag::label|check-diag std-diag-basic diagnostic label constructor; docs/stdlib/modules/diag.md
-fn std::diag::label_location|check-diag std-diag-basic label source location lookup; docs/stdlib/modules/diag.md
-fn std::diag::label_source_location|check-diag std-diag-source-map label SourceMap location lookup; docs/stdlib/modules/diag.md
-fn std::diag::location|check-diag std-diag-basic diagnostic primary source location lookup; docs/stdlib/modules/diag.md
 fn std::diag::new|check-diag std-diag-basic generic diagnostic constructor; docs/stdlib/modules/diag.md
 fn std::diag::note|check-diag std-diag-basic note diagnostic constructor; docs/stdlib/modules/diag.md
-fn std::diag::primary|check-diag std-diag-basic primary label constructor; docs/stdlib/modules/diag.md
-fn std::diag::secondary|check-diag std-diag-basic secondary label constructor; docs/stdlib/modules/diag.md
 fn std::diag::severity_name|check-diag std-diag-basic severity name helper; docs/stdlib/modules/diag.md
 fn std::diag::severity_rank|check-diag std-diag-basic severity ordering helper; docs/stdlib/modules/diag.md
-fn std::diag::source_location|check-diag std-diag-source-map diagnostic SourceMap location lookup; docs/stdlib/modules/diag.md
 fn std::diag::warning|check-diag std-diag-basic warning diagnostic constructor; docs/stdlib/modules/diag.md
-fn std::diag::with_label|check-diag std-diag-basic diagnostic label attachment helper; docs/stdlib/modules/diag.md
 fn std::diag::with_note|check-diag std-diag-basic diagnostic note attachment helper; docs/stdlib/modules/diag.md
 fn std::diag::write|check-diag std-diag-write stderr diagnostic summary output; docs/stdlib/modules/diag.md
 fn std::encoding::base64_decoded_len|check-prelude std-encoding-codec standard base64 decoded length validator; docs/stdlib/modules/encoding.md
@@ -468,34 +459,6 @@ fn std::random::seed|check-prelude std-random-basic deterministic PRNG seed cons
 fn std::random::seed_from_os|check-prelude std-random-basic OS-seeded PRNG constructor alias; docs/stdlib/modules/random.md
 fn std::random::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle; docs/stdlib/modules/random.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
-fn std::source::before|check-source std-source-location byte span ordering predicate; docs/stdlib/modules/source.md
-fn std::source::contains|check-source std-source-location half-open byte span containment; docs/stdlib/modules/source.md
-fn std::source::empty_span|check-source std-source-location empty byte span constructor; docs/stdlib/modules/source.md
-fn std::source::file|check-source std-source-text borrowed SourceFile constructor; docs/stdlib/modules/source.md
-fn std::source::file_id|check-source std-source-location compiler source file id constructor; docs/stdlib/modules/source.md
-fn std::source::full_span|check-source std-source-text full source text span helper; docs/stdlib/modules/source.md
-fn std::source::is_empty|check-source std-source-location empty byte span predicate; docs/stdlib/modules/source.md
-fn std::source::len|check-source std-source-location byte span length helper; docs/stdlib/modules/source.md
-fn std::source::line_col|check-source std-source-location one-based line/column constructor; docs/stdlib/modules/source.md
-fn std::source::line_count|check-source std-source-text one-based source line count helper; docs/stdlib/modules/source.md
-fn std::source::line_end|check-source std-source-text source line end byte offset helper; docs/stdlib/modules/source.md
-fn std::source::line_map|check-source std-source-line-map cached source line-start table constructor; docs/stdlib/modules/source.md
-fn std::source::line_span|check-source std-source-text source line span helper; docs/stdlib/modules/source.md
-fn std::source::line_start|check-source std-source-text source line start byte offset helper; docs/stdlib/modules/source.md
-fn std::source::locate|check-source std-source-text byte offset to line/column helper; docs/stdlib/modules/source.md
-fn std::source::location|check-source std-source-location file/line/column constructor; docs/stdlib/modules/source.md
-fn std::source::merge|check-source std-source-location same-file byte span merge; docs/stdlib/modules/source.md
-fn std::source::root_file|check-source std-source-location root file id constructor; docs/stdlib/modules/source.md
-fn std::source::same_file|check-source std-source-location byte span file predicate; docs/stdlib/modules/source.md
-fn std::source::source_add|check-source std-source-map SourceMap file registration helper; docs/stdlib/modules/source.md
-fn std::source::source_capacity|check-source std-source-map SourceMap capacity helper; docs/stdlib/modules/source.md
-fn std::source::source_count|check-source std-source-map SourceMap file count helper; docs/stdlib/modules/source.md
-fn std::source::source_file|check-source std-source-map SourceMap SourceFile lookup; docs/stdlib/modules/source.md
-fn std::source::source_lines|check-source std-source-map SourceMap cached LineMap lookup; docs/stdlib/modules/source.md
-fn std::source::source_locate|check-source std-source-map SourceMap span location lookup; docs/stdlib/modules/source.md
-fn std::source::source_map|check-source std-source-map SourceMap constructor; docs/stdlib/modules/source.md
-fn std::source::span|check-source std-source-location half-open byte span constructor; docs/stdlib/modules/source.md
-fn std::source::touches|check-source std-source-location inclusive byte span boundary predicate; docs/stdlib/modules/source.md
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::bytes|check-prelude std-string-byte-literals natural borrowed byte view over string literals; docs/stdlib/modules/string.md
 fn std::string::c_bytes|check-prelude std-string-text-kinds borrowed C string byte view without terminator; docs/stdlib/modules/string.md
@@ -645,7 +608,7 @@ method Slice[T]::get|check-prelude prelude-slice-methods borrowed receiver tests
 method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::is_empty|check-prelude prelude-slice-metadata borrowed receiver metadata helper; docs/stdlib/api-reference.md Slice section
 method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
-method Slice[T]::len|check-prelude prelude-slice-metadata and check-source std-source-text natural borrowed length helper; docs/stdlib/api-reference.md Slice section
+method Slice[T]::len|check-prelude prelude-slice-metadata natural borrowed length helper; docs/stdlib/api-reference.md Slice section
 method Slice[T]::slice|check-prelude prelude-slice-sequence borrowed range view helper; docs/stdlib/modules/slice.md
 method Slice[T]::split|check-prelude prelude-slice-sequence lazy borrowed delimiter split iterator; docs/stdlib/modules/slice.md
 method Slice[T]::split_at|check-prelude prelude-slice-sequence borrowed left/right split helper; docs/stdlib/modules/slice.md
@@ -877,25 +840,12 @@ method std::collections::TreeSet[T]::new|check-prelude std-collections-tree asso
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::diag::Diagnostic::code|check-diag std-diag-basic diagnostic code accessor; docs/stdlib/modules/diag.md
-method std::diag::Diagnostic::has_label|check-diag std-diag-basic diagnostic label presence predicate; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::has_note|check-diag std-diag-basic diagnostic note presence predicate; docs/stdlib/modules/diag.md
-method std::diag::Diagnostic::label|check-diag std-diag-basic diagnostic label accessor; docs/stdlib/modules/diag.md
-method std::diag::Diagnostic::location|check-diag std-diag-basic diagnostic primary location method; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::message|check-diag std-diag-basic diagnostic message accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::note_message|check-diag std-diag-basic diagnostic note message accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::severity|check-diag std-diag-basic diagnostic severity accessor; docs/stdlib/modules/diag.md
-method std::diag::Diagnostic::source_location|check-diag std-diag-source-map diagnostic SourceMap location method; docs/stdlib/modules/diag.md
-method std::diag::Diagnostic::span|check-diag std-diag-basic diagnostic span accessor; docs/stdlib/modules/diag.md
-method std::diag::Diagnostic::with_label|check-diag std-diag-basic diagnostic label attachment method; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::with_note|check-diag std-diag-basic diagnostic note attachment method; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::write|check-diag std-diag-write diagnostic stderr summary method; docs/stdlib/modules/diag.md
-method std::diag::Label::is_primary|check-diag std-diag-basic label primary predicate; docs/stdlib/modules/diag.md
-method std::diag::Label::is_secondary|check-diag std-diag-basic label secondary predicate; docs/stdlib/modules/diag.md
-method std::diag::Label::location|check-diag std-diag-basic label source location method; docs/stdlib/modules/diag.md
-method std::diag::Label::message|check-diag std-diag-basic label message accessor; docs/stdlib/modules/diag.md
-method std::diag::Label::source_location|check-diag std-diag-source-map label SourceMap location method; docs/stdlib/modules/diag.md
-method std::diag::Label::span|check-diag std-diag-basic label span accessor; docs/stdlib/modules/diag.md
-method std::diag::Label::style|check-diag std-diag-basic label style accessor; docs/stdlib/modules/diag.md
 method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::next_index|check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::scalar|check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md
@@ -992,49 +942,6 @@ method std::random::Prng::range|check-prelude std-random-basic bounded PRNG rang
 method std::random::Prng::seed|check-prelude std-random-basic deterministic PRNG associated seed constructor; docs/stdlib/modules/random.md
 method std::random::Prng::seed_from_os|check-prelude std-random-basic OS-seeded PRNG associated constructor alias; docs/stdlib/modules/random.md
 method std::random::Prng::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle method; docs/stdlib/modules/random.md
-method std::source::FileId::equals|check-source std-source-location file id equality helper; docs/stdlib/modules/source.md
-method std::source::FileId::value|check-source std-source-location file id scalar accessor; docs/stdlib/modules/source.md
-method std::source::LineCol::column|check-source std-source-location one-based column accessor; docs/stdlib/modules/source.md
-method std::source::LineCol::line|check-source std-source-location one-based line accessor; docs/stdlib/modules/source.md
-method std::source::LineMap::file|check-source std-source-line-map cached map SourceFile accessor; docs/stdlib/modules/source.md
-method std::source::LineMap::full_span|check-source std-source-line-map cached map full span method; docs/stdlib/modules/source.md
-method std::source::LineMap::id|check-source std-source-line-map cached map file id accessor; docs/stdlib/modules/source.md
-method std::source::LineMap::line_count|check-source std-source-line-map cached map line count method; docs/stdlib/modules/source.md
-method std::source::LineMap::line_end|check-source std-source-line-map cached map line end offset method; docs/stdlib/modules/source.md
-method std::source::LineMap::line_span|check-source std-source-line-map cached map line span method; docs/stdlib/modules/source.md
-method std::source::LineMap::line_start|check-source std-source-line-map cached map line start offset method; docs/stdlib/modules/source.md
-method std::source::LineMap::locate|check-source std-source-line-map cached map offset to location method; docs/stdlib/modules/source.md
-method std::source::Location::column|check-source std-source-location one-based location column accessor; docs/stdlib/modules/source.md
-method std::source::Location::file|check-source std-source-location location file accessor; docs/stdlib/modules/source.md
-method std::source::Location::line|check-source std-source-location one-based location line accessor; docs/stdlib/modules/source.md
-method std::source::SourceFile::full_span|check-source std-source-text SourceFile full span method; docs/stdlib/modules/source.md
-method std::source::SourceFile::id|check-source std-source-text SourceFile id accessor; docs/stdlib/modules/source.md
-method std::source::SourceFile::is_empty|check-source std-source-text SourceFile text empty predicate; docs/stdlib/modules/source.md
-method std::source::SourceFile::len|check-source std-source-text SourceFile text byte length; docs/stdlib/modules/source.md
-method std::source::SourceFile::line_count|check-source std-source-text SourceFile line count method; docs/stdlib/modules/source.md
-method std::source::SourceFile::line_end|check-source std-source-text SourceFile line end offset method; docs/stdlib/modules/source.md
-method std::source::SourceFile::line_map|check-source std-source-line-map SourceFile cached line map constructor method; docs/stdlib/modules/source.md
-method std::source::SourceFile::line_span|check-source std-source-text SourceFile line span method; docs/stdlib/modules/source.md
-method std::source::SourceFile::line_start|check-source std-source-text SourceFile line start offset method; docs/stdlib/modules/source.md
-method std::source::SourceFile::locate|check-source std-source-text SourceFile offset to location method; docs/stdlib/modules/source.md
-method std::source::SourceFile::text|check-source std-source-text SourceFile borrowed text accessor; docs/stdlib/modules/source.md
-method std::source::SourceMap::add|check-source std-source-map SourceMap file registration method; docs/stdlib/modules/source.md
-method std::source::SourceMap::capacity|check-source std-source-map SourceMap capacity method; docs/stdlib/modules/source.md
-method std::source::SourceMap::file|check-source std-source-map SourceMap SourceFile lookup method; docs/stdlib/modules/source.md
-method std::source::SourceMap::is_empty|check-source std-source-map SourceMap empty predicate method; docs/stdlib/modules/source.md
-method std::source::SourceMap::len|check-source std-source-map SourceMap file count method; docs/stdlib/modules/source.md
-method std::source::SourceMap::lines|check-source std-source-map SourceMap cached LineMap lookup method; docs/stdlib/modules/source.md
-method std::source::SourceMap::locate|check-source std-source-map SourceMap span location method; docs/stdlib/modules/source.md
-method std::source::Span::before|check-source std-source-location span method ordering predicate; docs/stdlib/modules/source.md
-method std::source::Span::contains|check-source std-source-location span method containment predicate; docs/stdlib/modules/source.md
-method std::source::Span::end|check-source std-source-location span end-byte accessor; docs/stdlib/modules/source.md
-method std::source::Span::file|check-source std-source-location span file accessor; docs/stdlib/modules/source.md
-method std::source::Span::is_empty|check-source std-source-location span method empty predicate; docs/stdlib/modules/source.md
-method std::source::Span::len|check-source std-source-location span method byte length; docs/stdlib/modules/source.md
-method std::source::Span::merge|check-source std-source-location span method same-file merge; docs/stdlib/modules/source.md
-method std::source::Span::same_file|check-source std-source-location span method file predicate; docs/stdlib/modules/source.md
-method std::source::Span::start|check-source std-source-location span start-byte accessor; docs/stdlib/modules/source.md
-method std::source::Span::touches|check-source std-source-location span method inclusive boundary predicate; docs/stdlib/modules/source.md
 method std::string::OsStr::as_slice|check-prelude std-string-text-kinds borrowed OS string byte accessor; docs/stdlib/modules/string.md
 method std::string::OsStr::is_empty|check-prelude std-string-text-kinds OS string empty predicate; docs/stdlib/modules/string.md
 method std::string::OsStr::is_utf8|check-prelude std-string-text-kinds OS string UTF-8 validation predicate; docs/stdlib/modules/string.md
@@ -1278,7 +1185,6 @@ module std::path|check-prelude std-path-basic source lexical path helpers; docs/
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
 module std::random|check-prelude std-random-basic OS entropy and deterministic non-crypto PRNG helpers; docs/stdlib/modules/random.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
-module std::source|check-source std-source-location source coordinate value helpers; docs/stdlib/modules/source.md
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::sync|check-prelude std-sync-atomic-i64 atomic primitive module; docs/stdlib/modules/sync.md
 module std::target|check-prelude std-target-basic compiler-known target fact module; docs/stdlib/modules/target.md
@@ -1321,7 +1227,6 @@ struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdl
 struct std::collections::TreeSetIter[T]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
 struct std::diag::Diagnostic|check-diag std-diag-basic source diagnostic value; docs/stdlib/modules/diag.md
-struct std::diag::Label|check-diag std-diag-basic source diagnostic label value; docs/stdlib/modules/diag.md
 struct std::encoding::Utf8Char|check-prelude std-encoding-utf8-codepoints decoded UTF-8 scalar value; docs/stdlib/modules/encoding.md
 struct std::error::Error|check-prelude std-error-basic compact shared error value; docs/stdlib/modules/error.md
 struct std::fmt::FormatSpec|check-prelude std-fmt-format-spec source formatting options; docs/stdlib/modules/fmt.md
@@ -1352,13 +1257,6 @@ struct std::net::SocketAddr|std net socket address tests; docs/stdlib/modules/ne
 struct std::path::Components|check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md
 struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
-struct std::source::FileId|check-source std-source-location source file identity value; docs/stdlib/modules/source.md
-struct std::source::LineCol|check-source std-source-location one-based human source coordinate value; docs/stdlib/modules/source.md
-struct std::source::LineMap|check-source std-source-line-map cached source line-start table; docs/stdlib/modules/source.md
-struct std::source::Location|check-source std-source-location file/line/column coordinate value; docs/stdlib/modules/source.md
-struct std::source::SourceFile|check-source std-source-text borrowed source text value; docs/stdlib/modules/source.md
-struct std::source::SourceMap|check-source std-source-map bounded source file registry with cached line maps; docs/stdlib/modules/source.md
-struct std::source::Span|check-source std-source-location half-open byte span value; docs/stdlib/modules/source.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row

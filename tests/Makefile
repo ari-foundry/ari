@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-std-api check-bootstrap-docs check-cli check-tools check-source check-diag check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-std-api check-bootstrap-docs check-cli check-tools check-diag check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -12,7 +12,7 @@ check-sanitize: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_o
 check-sanitize: TOOL_ARI := $(SANITIZE_TARGET)
 check-sanitize: $(SANITIZE_TARGET) check
 
-check: check-std-api check-bootstrap-docs $(TARGET) check-cli check-tools check-source check-diag check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
+check: check-std-api check-bootstrap-docs $(TARGET) check-cli check-tools check-diag check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
 	mkdir -p $(BUILD_DIR)/ir
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/ir/count.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/ir/count.ll
@@ -60,53 +60,14 @@ check-std-api:
 check-bootstrap-docs:
 	python3 tests/check_bootstrap_readiness_docs.py
 
-check-source: $(TARGET)
-	mkdir -p $(BUILD_DIR)/source
-	$(TARGET) tests/cases/standard-library/ok/source/std-source-location.ari --emit-llvm $(BUILD_DIR)/source/std-source-location.ll
-	grep -q '_ARNv3std6source4span' $(BUILD_DIR)/source/std-source-location.ll
-	grep -q '_ARNv3std6source8line_col' $(BUILD_DIR)/source/std-source-location.ll
-	grep -q 'std__source__Span8inherent5merge' $(BUILD_DIR)/source/std-source-location.ll
-	$(TARGET) tests/cases/standard-library/ok/source/std-source-location.ari -o $(BUILD_DIR)/source/std-source-location.elf
-	$(BUILD_DIR)/source/std-source-location.elf; code=$$?; test $$code -eq 78
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/source/std-source-location.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/source/std-source-location.elf; $(BUILD_DIR)/source/std-source-location.elf; code=$$?; test $$code -eq 78; fi
-	$(TARGET) tests/cases/standard-library/ok/source/std-source-text.ari --emit-llvm $(BUILD_DIR)/source/std-source-text.ll
-	grep -q '_ARNv3std6source4file' $(BUILD_DIR)/source/std-source-text.ll
-	grep -q '_ARNv3std6source6locate' $(BUILD_DIR)/source/std-source-text.ll
-	grep -q 'std__source__SourceFile8inherent6locate' $(BUILD_DIR)/source/std-source-text.ll
-	$(TARGET) tests/cases/standard-library/ok/source/std-source-text.ari -o $(BUILD_DIR)/source/std-source-text.elf
-	$(BUILD_DIR)/source/std-source-text.elf; code=$$?; test $$code -eq 120
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/source/std-source-text.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/source/std-source-text.elf; $(BUILD_DIR)/source/std-source-text.elf; code=$$?; test $$code -eq 120; fi
-	$(TARGET) tests/cases/standard-library/ok/source/std-source-line-map.ari --emit-llvm $(BUILD_DIR)/source/std-source-line-map.ll
-	grep -q '_ARNv3std6source8line_map' $(BUILD_DIR)/source/std-source-line-map.ll
-	grep -q 'std__source__LineMap8inherent6locate' $(BUILD_DIR)/source/std-source-line-map.ll
-	$(TARGET) tests/cases/standard-library/ok/source/std-source-line-map.ari -o $(BUILD_DIR)/source/std-source-line-map.elf
-	$(BUILD_DIR)/source/std-source-line-map.elf; code=$$?; test $$code -eq 91
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/source/std-source-line-map.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/source/std-source-line-map.elf; $(BUILD_DIR)/source/std-source-line-map.elf; code=$$?; test $$code -eq 91; fi
-	$(TARGET) tests/cases/standard-library/ok/source/std-source-map.ari --emit-llvm $(BUILD_DIR)/source/std-source-map.ll
-	grep -q '_ARNv3std6source10source_map' $(BUILD_DIR)/source/std-source-map.ll
-	grep -q 'std__source__SourceMap8inherent6locate' $(BUILD_DIR)/source/std-source-map.ll
-	$(TARGET) tests/cases/standard-library/ok/source/std-source-map.ari -o $(BUILD_DIR)/source/std-source-map.elf
-	$(BUILD_DIR)/source/std-source-map.elf; code=$$?; test $$code -eq 36
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/source/std-source-map.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/source/std-source-map.elf; $(BUILD_DIR)/source/std-source-map.elf; code=$$?; test $$code -eq 36; fi
-	if $(TARGET) tests/cases/standard-library/errors/source/std-source-line-map-after-reset.ari -o $(BUILD_DIR)/source/std-source-line-map-after-reset.elf >$(BUILD_DIR)/source/std-source-line-map-after-reset.err 2>&1; then exit 1; fi
-	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/source/std-source-line-map-after-reset.err
-	if $(TARGET) tests/cases/standard-library/errors/source/std-source-map-after-reset.ari -o $(BUILD_DIR)/source/std-source-map-after-reset.elf >$(BUILD_DIR)/source/std-source-map-after-reset.err 2>&1; then exit 1; fi
-	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/source/std-source-map-after-reset.err
-
 check-diag: $(TARGET)
 	mkdir -p $(BUILD_DIR)/diag
 	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-basic.ari --emit-llvm $(BUILD_DIR)/diag/std-diag-basic.ll
 	grep -q '_ARNv3std4diag5error' $(BUILD_DIR)/diag/std-diag-basic.ll
-	grep -q '_ARNv3std4diag14label_location' $(BUILD_DIR)/diag/std-diag-basic.ll
-	grep -q 'std__diag__Diagnostic8inherent10with_label' $(BUILD_DIR)/diag/std-diag-basic.ll
+	grep -q '_ARNv3std4diag9with_note' $(BUILD_DIR)/diag/std-diag-basic.ll
 	grep -q 'std__diag__Diagnostic8inherent9with_note' $(BUILD_DIR)/diag/std-diag-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-basic.ari -o $(BUILD_DIR)/diag/std-diag-basic.elf
-	$(BUILD_DIR)/diag/std-diag-basic.elf; code=$$?; test $$code -eq 136
-	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-source-map.ari --emit-llvm $(BUILD_DIR)/diag/std-diag-source-map.ll
-	grep -q '_ARNv3std4diag15source_location' $(BUILD_DIR)/diag/std-diag-source-map.ll
-	grep -q 'std__diag__Diagnostic8inherent15source_location' $(BUILD_DIR)/diag/std-diag-source-map.ll
-	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-source-map.ari -o $(BUILD_DIR)/diag/std-diag-source-map.elf
-	$(BUILD_DIR)/diag/std-diag-source-map.elf; code=$$?; test $$code -eq 10
+	$(BUILD_DIR)/diag/std-diag-basic.elf; code=$$?; test $$code -eq 78
 	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-write.ari -o $(BUILD_DIR)/diag/std-diag-write.elf
 	$(BUILD_DIR)/diag/std-diag-write.elf >$(BUILD_DIR)/diag/std-diag-write.out 2>$(BUILD_DIR)/diag/std-diag-write.err; code=$$?; test $$code -eq 7
 	test ! -s $(BUILD_DIR)/diag/std-diag-write.out
@@ -116,8 +77,6 @@ check-diag: $(TARGET)
 	test ! -s $(BUILD_DIR)/diag/std-diag-write-note.out
 	grep -qx "\[error\] expected identifier" $(BUILD_DIR)/diag/std-diag-write-note.err
 	grep -qx "\[info\] names must appear after let" $(BUILD_DIR)/diag/std-diag-write-note.err
-	if $(TARGET) tests/cases/standard-library/errors/diag/std-diag-source-map-after-reset.ari -o $(BUILD_DIR)/diag/std-diag-source-map-after-reset.elf >$(BUILD_DIR)/diag/std-diag-source-map-after-reset.err 2>&1; then exit 1; fi
-	grep -q "cannot use zone pointer 'sources' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/diag/std-diag-source-map-after-reset.err
 
 check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	mkdir -p $(BUILD_DIR)/tools

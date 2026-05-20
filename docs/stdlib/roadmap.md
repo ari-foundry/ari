@@ -35,9 +35,7 @@ path-state helpers `current_dir`/`try_current_dir`/`current_dir_path`/
 `test` source executable `Report` helpers, generic equality checks, and
 scratch zone construction, `log` source stderr levels, threshold predicates,
 byte-slice logging, string-message logging, and convenience level functions,
-`source` allocation-free source-coordinate values with `FileId`, half-open
-byte `Span`, one-based `LineCol`, `Location`, plus borrowed `SourceFile` and
-explicit-zone `LineMap` line/column lookup helpers for compiler tools,
+`diag` lightweight severity/code/message/note values and stderr summaries,
 `error` shared recoverable error categories, compact error values, POSIX errno
 mapping, predicate helpers, and raw scalar Result bridging,
 `input` runtime hooks plus the source `try_read_byte` EOF helper,
@@ -110,10 +108,9 @@ work. Each one should land in small tested slices with natural API names.
 | `std::encoding` | Validate text encodings and convert bytes to portable text forms. | Current `is_ascii`, UTF-8/UTF-16 counts, UTF-8 scalar decode/encode helpers, lowercase hex encode/decode, fallible hex decode, standard base64 encode/decode, and fallible base64 decode; future URL-safe/MIME base64 variants, richer decode errors, normalization/transcoding, and optional compression policy in a separate module. |
 | text/path kinds | Keep byte strings, validated text, OS strings, paths, and C strings from collapsing into one API shape. | Current borrowed `std::string::Utf8`, `OsStr`, borrowed `std::c::CStr`, owned `std::c::CString`, `std::path::PathBytes`, and direct string-literal coercion into expected borrowed boundary views; future owned `Utf8String`, `OsString`, `PathBuf`, Windows path/OS-string semantics, fallible owned conversions, and richer C string handoff policy. |
 | `std::error` | Give recoverable failures a shared vocabulary instead of bools and sentinel integers. | Current `Kind`, compact `Error`, POSIX `from_errno`, `from_raw`, `raw`, `kind`, `code`, predicate helpers, root `Error`/`ErrorKind` aliases, and `Result[T, i64]` bridge; future direct `Result[T, Error]`, Windows error mapping, owned messages, and conversions from fs/io/net/process wrappers. |
-| `std::log` | Emit simple diagnostics without making every tool invent its own stderr prefix format. | Current `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, and `error`; future source-map labels, structured records, global or scoped filters, test-runner capture, and backtrace integration. |
-| `std::diag` | Share diagnostic values across Ari-written lexers, parsers, and test tools. | Current `Severity`, `LabelStyle`, `Label`, `Diagnostic`, borrowed code/message/note slices, primary span, single label attachment, single note attachment, source location lookup, and stderr summary output; future multi-label builders, multiple notes, fix-its, owned messages, JSON/golden renderers, and source-map integration. |
-| `std::source` | Share source-coordinate values and source text lookup across lexers, parsers, diagnostics, and golden-test tools. | Current `FileId`, half-open byte `Span`, one-based `LineCol`, `Location`, borrowed `SourceFile`, explicit-zone cached `LineMap`, natural constructors/accessors, span containment, boundary checks, same-file merge, line counts, line spans, byte-offset location lookup, and ordering; future owned source-map tables, filename/text storage, and diagnostic labels. |
-| `std::test` | Let library/application tests aggregate checks before returning one final status. | Current `Report`, `report`, `scratch`, `check`, generic `equal`/`not_equal`, pass/fail accessors, `ok`, `finish`, `require`, and method wrappers; future test discovery/runner integration, named tests, source-map labels, richer assertion messages, log capture, stack/backtrace reporting, optional benchmark helpers, and optional fuzz hooks. |
+| `std::log` | Emit simple diagnostics without making every tool invent its own stderr prefix format. | Current `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, and `error`; future structured records, global or scoped filters, test-runner capture, and backtrace integration. |
+| `std::diag` | Share lightweight diagnostic summaries without pulling compiler source-position machinery into runtime std. | Current `Severity`, `Diagnostic`, borrowed code/message/note slices, single note attachment, and stderr summary output; future owned messages and richer builders if they stay generally useful. Source spans, labels, fix-its, JSON/golden renderers, and source maps belong in compiler/tooling packages. |
+| `std::test` | Let library/application tests aggregate checks before returning one final status. | Current `Report`, `report`, `scratch`, `check`, generic `equal`/`not_equal`, pass/fail accessors, `ok`, `finish`, `require`, and method wrappers; future test discovery/runner integration, named tests, richer assertion messages, log capture, stack/backtrace reporting, optional benchmark helpers, and optional fuzz hooks. |
 | `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, errno mapping, `syscall`, close-on-exec/nonblocking descriptor flags, `fcntl`, `ioctl`, `poll`, `select`, Linux `epoll`/`eventfd`/`timerfd`/`signalfd`, optional `pidfd`/`memfd`, signals, and memory mapping. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
@@ -237,12 +234,11 @@ work. Each one should land in small tested slices with natural API names.
 ## Phase 6: Library Developer Experience
 
 - Grow the current source-level `std::test::Report` helpers into a real test
-  runner when discovery, per-test isolation, and source-map diagnostics are
-  stable.
+  runner when discovery, per-test isolation, and diagnostics are stable.
 - Add richer `@test` or `ari test` integration around library test cases.
 - Grow the current `std::log` line helpers toward structured logging only
-  after source-map, formatting, and capture policy are documented.
-- Build source maps and diagnostic labels on top of `std::source`; add
-  stack/backtrace, optional benchmark, and optional fuzzing APIs only after
-  their runtime and driver contracts are documented.
+  after formatting and capture policy are documented.
+- Build compiler-tooling source maps and diagnostic labels outside runtime
+  `std`; add stack/backtrace, optional benchmark, and optional fuzzing APIs
+  only after their runtime and driver contracts are documented.
 - Keep examples short enough to serve as contributor templates.
