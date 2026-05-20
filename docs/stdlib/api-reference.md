@@ -1581,11 +1581,13 @@ output should use that policy.
 The executable formatting path is still macro-based: `print!`, `println!`,
 and `format_in!(ref mut zone, "...", values...)`. `{}` uses display
 formatting, `{:.N}` gives float precision, and `{:?}` uses debug formatting.
-`{name}`, `{name:.N}`, and `{name:?}` capture a plain local binding without
-passing it again as a separate argument. Use ordinary `{}` placeholders for
-fields, paths, method calls, or computed expressions. Use `format_in!` for
-owned formatted strings because Ari does not hide a default allocation zone;
-this is also the macro path that can call custom `Debug::debug_in` impls.
+`{name}`, `{name.field}`, and `{name.0}` capture a local binding, named field,
+or tuple field without passing it again as a separate argument; `:?` and `:.N`
+can be attached to those named captures too. Use ordinary `{}` placeholders
+for module paths, indexing, method calls, or computed expressions. Use
+`format_in!` for owned formatted strings because Ari does not hide a default
+allocation zone; this is also the macro path that can call custom
+`Debug::debug_in` impls.
 
 `FormatSpec` is the source-controlled formatting path for unsigned integer
 bases, width, integer precision, alignment, uppercase digits, and alternate

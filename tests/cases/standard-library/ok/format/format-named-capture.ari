@@ -1,4 +1,9 @@
 // Covers named format capture for print!/println! and explicit-zone format_in!.
+struct Point {
+  x: i64,
+  y: i64,
+}
+
 fn main() -> i64 {
   var zone = zone::create(192);
   let str = "asdf";
@@ -6,16 +11,22 @@ fn main() -> i64 {
   let ok = true;
   let letter = 'Z';
   let pi = 3.14159f64;
+  let point = Point { x: 7, y: 8 };
+  let pair = (5, "six");
 
   println!("{str} {value} {ok} {letter} {pi:.2} {str:?}");
+  println!("point={point.x},{point.y} pair={pair.0},{pair.1:?}");
 
   var rendered: String = format_in!(ref mut zone, "{str}:{value}:{ok}:{letter}:{pi:.1}:{str:?}");
   assert_equal[bool](rendered.equals_text("asdf:42:true:Z:3.1:\"asdf\""), true);
 
+  var fielded: String = format_in!(ref mut zone, "{point.x}:{point.y}:{pair.0}:{pair.1}");
+  assert_equal[bool](fielded.equals_text("7:8:5:six"), true);
+
   var mixed: String = format_in!(ref mut zone, "{}-{str}-{}", "left", 9);
   assert_equal[bool](mixed.equals_text("left-asdf-9"), true);
 
-  let total = rendered.len() + mixed.len();
+  let total = rendered.len() + fielded.len() + mixed.len();
   zone::destroy(zone);
   return total;
 }

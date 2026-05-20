@@ -25,6 +25,28 @@ bool is_capture_continue(char c) {
     return std::isalnum(value) || c == '_';
 }
 
+std::size_t parse_format_capture_segment(SourceLocation loc,
+                                         const std::string& text,
+                                         std::size_t pos,
+                                         bool first_segment) {
+    if (pos >= text.size()) {
+        fail(loc, "format named captures cannot end after .");
+    }
+    if (std::isdigit(static_cast<unsigned char>(text[pos]))) {
+        if (first_segment) {
+            fail(loc, "format named captures must start with a local name such as {value}");
+        }
+        while (pos < text.size() && std::isdigit(static_cast<unsigned char>(text[pos]))) ++pos;
+        return pos;
+    }
+    if (!is_capture_start(text[pos])) {
+        fail(loc, "format named captures support local fields and tuple indexes such as {value.name} or {value.0}");
+    }
+    ++pos;
+    while (pos < text.size() && is_capture_continue(text[pos])) ++pos;
+    return pos;
+}
+
 IrFormatSpec parse_format_spec(SourceLocation loc, const std::string& text) {
     if (text.empty()) return IrFormatSpec{};
     if (text == ":?") return IrFormatSpec{-1, true};
@@ -55,14 +77,13 @@ ParsedPlaceholder parse_format_placeholder(SourceLocation loc, const std::string
     if (text.empty() || text[0] == ':') {
         return ParsedPlaceholder{"", parse_format_spec(loc, text)};
     }
-    if (!is_capture_start(text[0])) {
-        fail(loc, "format named captures must start with a local name such as {value}");
-    }
 
-    std::size_t pos = 1;
-    while (pos < text.size() && is_capture_continue(text[pos])) ++pos;
+    std::size_t pos = parse_format_capture_segment(loc, text, 0, true);
+    while (pos < text.size() && text[pos] == '.') {
+        pos = parse_format_capture_segment(loc, text, pos + 1, false);
+    }
     if (pos < text.size() && text[pos] != ':') {
-        fail(loc, "format named captures support {name}, {name:?}, and {name:.N}; field and path captures are not supported yet");
+        fail(loc, "format named captures support {name}, {name.field}, {name.0}, and optional :? or :.N specs");
     }
 
     return ParsedPlaceholder{text.substr(0, pos), parse_format_spec(loc, text.substr(pos))};

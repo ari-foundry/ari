@@ -20042,7 +20042,7 @@ private:
             if (format_string.captures.at(i).empty()) {
                 source_arg = expr.args[explicit_arg_index++].get();
             } else {
-                capture_expr = make_ast_name_expr(format.loc, format_string.captures.at(i));
+                capture_expr = make_format_capture_expr(format.loc, format_string.captures.at(i));
                 source_arg = capture_expr.get();
             }
 
@@ -20240,6 +20240,31 @@ private:
             std::move(args));
     }
 
+    static ExprPtr make_format_capture_expr(SourceLocation loc, const std::string& capture) {
+        std::size_t pos = 0;
+        while (pos < capture.size() && capture[pos] != '.') ++pos;
+        ExprPtr expr = make_ast_name_expr(loc, capture.substr(0, pos));
+        while (pos < capture.size()) {
+            ++pos;
+            std::size_t start = pos;
+            while (pos < capture.size() && capture[pos] != '.') ++pos;
+            std::string segment = capture.substr(start, pos - start);
+            bool numeric = !segment.empty();
+            for (char c : segment) {
+                if (!std::isdigit(static_cast<unsigned char>(c))) {
+                    numeric = false;
+                    break;
+                }
+            }
+            if (numeric) {
+                expr = make_ast_tuple_index_expr(loc, std::move(expr), std::stoull(segment));
+            } else {
+                expr = make_ast_field_access_expr(loc, std::move(expr), std::move(segment));
+            }
+        }
+        return expr;
+    }
+
     void append_format_in_statement(SourceLocation loc, StmtPtr stmt, std::vector<IrStmtPtr>& statements) {
         CheckedStatement checked = check_statement(*stmt);
         if (checked.flow != Flow::Continues) {
@@ -20287,7 +20312,7 @@ private:
             if (format_string.captures.at(i).empty()) {
                 source_arg = args[explicit_arg_index++].get();
             } else {
-                capture_expr = make_ast_name_expr(format.loc, format_string.captures.at(i));
+                capture_expr = make_format_capture_expr(format.loc, format_string.captures.at(i));
                 source_arg = capture_expr.get();
             }
             const std::string value_name = make_hidden_local("$format_value");

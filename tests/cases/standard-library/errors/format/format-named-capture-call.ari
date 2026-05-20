@@ -1,0 +1,15 @@
+struct Point {
+  x: i64,
+}
+
+impl Point {
+  fn value(self: ref Self) -> i64 {
+    return self.x;
+  }
+}
+
+fn main() -> i64 {
+  let point = Point { x: 4 };
+  println!("{point.value()}");
+  return 0;
+}

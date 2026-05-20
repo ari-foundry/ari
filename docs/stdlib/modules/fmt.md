@@ -135,6 +135,7 @@ The executable formatting surface today is still macro-based:
 print!("value={}", value)
 println!("value={}", value)
 println!("value={value}")
+println!("point={point.x} pair={pair.0}")
 println!("debug={:?}", value)
 println!("debug={value:?}")
 format_in!(ref mut zone, "value={}", value)
@@ -144,11 +145,12 @@ format_in!(ref mut zone, "debug={:?}", value)
 
 Format strings must be literals. The macros currently support strings,
 integers, bools, `f32`, `f64`, and values accepted through the compiler's
-current `Display` path for `{}`. Use `{name}` to capture a plain local binding
-without passing it again as a separate argument; `{name:?}` and `{name:.N}` are
-the named forms of `{:?}` and `{:.N}`. Named captures are deliberately local
-only for now, so use ordinary `{}` arguments for fields, paths, method calls,
-and computed expressions. `{:?}` is the debug placeholder: `format_in!`
+current `Display` path for `{}`. Use `{name}`, `{name.field}`, or `{name.0}`
+to capture a local binding, named field, or tuple field without passing it
+again as a separate argument; `{name:?}` and `{name:.N}` are the named forms of
+`{:?}` and `{:.N}`. Named captures still start from a local binding, so use
+ordinary `{}` arguments for module paths, indexing, method calls, and computed
+expressions. `{:?}` is the debug placeholder: `format_in!`
 dispatches it through `Debug::debug_in`, while direct stdout `print!` and
 `println!` support it for built-in printable values and lowercase `string`
 without requiring a temporary zone at the call site. For custom debug output to

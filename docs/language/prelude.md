@@ -248,8 +248,9 @@ Formatting rules:
 - `{:?}` consumes one debug value argument
 - `{:.N}` consumes one `f32` or `f64` value and prints it with `N` digits
   after the decimal point; `N` must be between `0` and `64`
-- `{name}`, `{name:?}`, and `{name:.N}` capture a local binding by name instead
-  of consuming a separate value argument
+- `{name}`, `{name.field}`, and `{name.0}` capture a local binding, named
+  field, or tuple field instead of consuming a separate value argument; these
+  captures also accept `:?` and `:.N` specs
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
 - the positional placeholder count is checked at compile time
@@ -448,8 +449,9 @@ value)`. `{:.N}` placeholders format
 surface; precision placeholders do not dispatch through `Display`. Each value
 expression is evaluated once before the type-directed append call is selected,
 so function calls and computed bool/integer expressions work the same as local
-bindings. Named captures read plain local bindings only; use ordinary `{}` with
-an explicit argument for fields, paths, method calls, and other expressions.
+bindings. Named captures can follow local fields and tuple indexes, such as
+`{point.x}` or `{pair.0}`. Use ordinary `{}` with an explicit argument for
+module paths, indexing, method calls, and other computed expressions.
 Ari does not provide an implicit allocation zone in the 0.x language surface,
 so `format!` is a reserved spelling with a targeted diagnostic that points to
 `format_in!`.
