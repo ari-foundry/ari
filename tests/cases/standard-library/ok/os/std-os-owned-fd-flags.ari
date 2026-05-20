@@ -1,0 +1,41 @@
+// Covers the first descriptor flag policy on OwnedFd. The test keeps the raw
+// fcntl details behind std::os and verifies the Ari API can toggle and read
+// close-on-exec without exposing loose integer flags.
+fn main() -> i64 {
+  let path = "build/std-os-owned-fd-flags.tmp";
+  let wrote = std::fs::write(path, "flags");
+  let file = std::fs::open(path, "r");
+  var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
+  let invalid = std::os::OwnedFd::invalid();
+
+  var score = 0;
+  if wrote {
+    score = score + 1;
+  }
+  if owned.is_open() {
+    score = score + 2;
+  }
+  if invalid.close_on_exec().is_none() {
+    score = score + 4;
+  }
+  if !invalid.set_close_on_exec(true) {
+    score = score + 8;
+  }
+
+  if owned.set_close_on_exec(true) {
+    score = score + 16;
+  }
+  if owned.close_on_exec().unwrap_or(false) {
+    score = score + 32;
+  }
+  if owned.set_close_on_exec(false) {
+    score = score + 64;
+  }
+  if !owned.close_on_exec().unwrap_or(true) {
+    score = score + 128;
+  }
+
+  owned.close();
+  std::fs::remove(path);
+  return score;
+}

@@ -489,6 +489,7 @@ private:
                symbol == "write" ||
                symbol == "close" ||
                symbol == "dup" ||
+               symbol == "fcntl" ||
                symbol == "malloc" ||
                symbol == "free" ||
                symbol == "exit" ||
@@ -540,6 +541,7 @@ private:
             symbol == "ari_builtin_fs_close" ||
             symbol == "ari_builtin_fs_write_byte" ||
             symbol == "ari_builtin_os_close" ||
+            symbol == "ari_builtin_os_set_close_on_exec" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
         }
@@ -615,6 +617,7 @@ private:
         declarations_ << "declare i64 @write(i32, ptr, i64)\n";
         declarations_ << "declare i32 @close(i32)\n";
         declarations_ << "declare i32 @dup(i32)\n";
+        declarations_ << "declare i32 @fcntl(i32, i32, ...)\n";
         declarations_ << "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memmove.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memset.p0.i64(ptr, i8, i64, i1)\n";
@@ -1255,6 +1258,46 @@ private:
         line("  ret i64 %wide");
         line("fail:");
         line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_os_close_on_exec(i64 %fd) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %query");
+        line("query:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %flags = call i32 (i32, i32, ...) @fcntl(i32 %fd32, i32 1)");
+        line("  %bad = icmp slt i32 %flags, 0");
+        line("  br i1 %bad, label %fail, label %ok");
+        line("ok:");
+        line("  %masked = and i32 %flags, 1");
+        line("  %enabled = icmp ne i32 %masked, 0");
+        line("  %wide = zext i1 %enabled to i64");
+        line("  ret i64 %wide");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_os_set_close_on_exec(i64 %fd, i1 %enabled) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %query");
+        line("query:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %flags = call i32 (i32, i32, ...) @fcntl(i32 %fd32, i32 1)");
+        line("  %bad = icmp slt i32 %flags, 0");
+        line("  br i1 %bad, label %fail, label %set");
+        line("set:");
+        line("  %with = or i32 %flags, 1");
+        line("  %without = and i32 %flags, -2");
+        line("  %next = select i1 %enabled, i32 %with, i32 %without");
+        line("  %code = call i32 (i32, i32, ...) @fcntl(i32 %fd32, i32 2, i32 %next)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
         line("}");
         line();
 

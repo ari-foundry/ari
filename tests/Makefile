@@ -529,6 +529,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd-duplicate.ari -o $(BUILD_DIR)/prelude/std-os-owned-fd-duplicate.elf
 	$(BUILD_DIR)/prelude/std-os-owned-fd-duplicate.elf; code=$$?; test $$code -eq 255
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd-duplicate.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-os-owned-fd-duplicate.elf; $(BUILD_DIR)/prelude/std-os-owned-fd-duplicate.elf; code=$$?; test $$code -eq 255; fi
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd-flags.ari --emit-llvm $(BUILD_DIR)/prelude/std-os-owned-fd-flags.ll
+	grep -q "@ari_builtin_os_close_on_exec" $(BUILD_DIR)/prelude/std-os-owned-fd-flags.ll
+	grep -q "@ari_builtin_os_set_close_on_exec" $(BUILD_DIR)/prelude/std-os-owned-fd-flags.ll
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd-flags.ari -o $(BUILD_DIR)/prelude/std-os-owned-fd-flags.elf
+	$(BUILD_DIR)/prelude/std-os-owned-fd-flags.elf; code=$$?; test $$code -eq 255
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd-flags.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-os-owned-fd-flags.elf; $(BUILD_DIR)/prelude/std-os-owned-fd-flags.elf; code=$$?; test $$code -eq 255; fi
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv4" $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv6" $(BUILD_DIR)/prelude/std-net-addresses.ll

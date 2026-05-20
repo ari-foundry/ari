@@ -14,6 +14,8 @@ pub struct OwnedFd {
 
 extern "ari" fn close_raw(raw: i64) -> bool = "ari_builtin_os_close";
 extern "ari" fn duplicate_raw(raw: i64) -> i64 = "ari_builtin_os_dup";
+extern "ari" fn close_on_exec_raw(raw: i64) -> i64 = "ari_builtin_os_close_on_exec";
+extern "ari" fn set_close_on_exec_raw(raw: i64, enabled: bool) -> bool = "ari_builtin_os_set_close_on_exec";
 
 pub fn fd(raw: i64) -> std::os::Fd {
   return std::os::Fd { raw_value: raw };
@@ -110,6 +112,25 @@ pub impl std::os::OwnedFd {
       return std::None<std::os::OwnedFd>();
     }
     return std::Some<std::os::OwnedFd>(std::os::OwnedFd::from_raw(raw));
+  }
+
+  fn close_on_exec(self: ref Self) -> std::Option[bool] {
+    if self.is_closed() {
+      return std::None<bool>();
+    }
+
+    let state = close_on_exec_raw(self.raw_value);
+    if state < 0 {
+      return std::None<bool>();
+    }
+    return std::Some<bool>(state != 0);
+  }
+
+  fn set_close_on_exec(self: ref Self, enabled: bool) -> bool {
+    if self.is_closed() {
+      return false;
+    }
+    return set_close_on_exec_raw(self.raw_value, enabled);
   }
 
   fn close(self: ref mut Self) -> bool {

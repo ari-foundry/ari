@@ -977,11 +977,13 @@ method std::os::Fd::is_valid|check-prelude std-os-fd valid descriptor predicate;
 method std::os::Fd::raw|check-prelude std-os-fd raw descriptor accessor; docs/stdlib/modules/os.md
 method std::os::OwnedFd::as_fd|check-prelude std-os-owned-fd borrowed descriptor view from owned handle; docs/stdlib/modules/os.md
 method std::os::OwnedFd::close|check-prelude std-os-owned-fd explicit owned descriptor close and disarm helper; docs/stdlib/modules/os.md
+method std::os::OwnedFd::close_on_exec|check-prelude std-os-owned-fd-flags close-on-exec descriptor flag query; docs/stdlib/modules/os.md
 method std::os::OwnedFd::from_raw|check-prelude std-os-owned-fd raw descriptor ownership handoff constructor; docs/stdlib/modules/os.md
 method std::os::OwnedFd::invalid|check-prelude std-os-owned-fd invalid owned descriptor constructor; docs/stdlib/modules/os.md
 method std::os::OwnedFd::is_closed|check-prelude std-os-owned-fd owned descriptor closed predicate; docs/stdlib/modules/os.md
 method std::os::OwnedFd::is_open|check-prelude std-os-owned-fd owned descriptor open predicate; docs/stdlib/modules/os.md
 method std::os::OwnedFd::raw|check-prelude std-os-owned-fd owned descriptor raw accessor; docs/stdlib/modules/os.md
+method std::os::OwnedFd::set_close_on_exec|check-prelude std-os-owned-fd-flags close-on-exec descriptor flag setter; docs/stdlib/modules/os.md
 method std::os::OwnedFd::take|check-prelude std-os-owned-fd disarming raw descriptor take helper; docs/stdlib/modules/os.md
 method std::os::OwnedFd::try_clone|check-prelude std-os-owned-fd-duplicate fallible owned descriptor duplication helper; docs/stdlib/modules/os.md
 method std::path::PathBytes::as_slice|check-prelude std-path-bytes borrowed path-byte view accessor; docs/stdlib/modules/path.md
@@ -1262,7 +1264,7 @@ module std::math|std math integer helper tests; docs/stdlib/overview.md module m
 module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
 module std::net|std net address value tests; docs/stdlib/modules/net.md
 module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude row
-module std::os|check-prelude std-os-fd/std-os-owned-fd/std-os-owned-fd-duplicate OS descriptor view and owner module; docs/stdlib/modules/os.md
+module std::os|check-prelude std-os-fd/std-os-owned-fd/std-os-owned-fd-duplicate/std-os-owned-fd-flags OS descriptor view and owner module; docs/stdlib/modules/os.md
 module std::parse|check-prelude std-parse-basic whole-input parser helpers; docs/stdlib/modules/parse.md
 module std::path|check-prelude std-path-basic source lexical path helpers; docs/stdlib/modules/path.md
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
