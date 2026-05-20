@@ -538,6 +538,7 @@ private:
             symbol == "ari_builtin_fs_close_dir" ||
             symbol == "ari_builtin_fs_close" ||
             symbol == "ari_builtin_fs_write_byte" ||
+            symbol == "ari_builtin_os_close" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
         }
@@ -1215,6 +1216,20 @@ private:
         line("define " + runtime_visibility + "i1 @ari_builtin_fs_close({ i64 } %file) {");
         line("entry:");
         line("  %fd = extractvalue { i64 } %file, 0");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %do_close");
+        line("do_close:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %code = call i32 @close(i32 %fd32)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_os_close(i64 %fd) {");
+        line("entry:");
         line("  %invalid = icmp slt i64 %fd, 0");
         line("  br i1 %invalid, label %fail, label %do_close");
         line("do_close:");

@@ -50,8 +50,8 @@ ones depend on a hosted OS or a specific platform family.
 | core | `option`, `result`, `cmp`, `convert`, `math`, `bits`, `ascii`, `parse`, `encoding`, root `Slice[T]` | Source-first APIs that should stay portable and easy to test without OS state. |
 | alloc | `zone`, `boxed`, `string`, `vec`, `collections`, `iter`, `algo`, `hash`, `random::Prng` | APIs that need explicit `Zone` allocation or collection invariants. They must document provenance and reset/destroy behavior. |
 | hosted | `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time`, `random::entropy`, `random::fill` | APIs that require a hosted runtime, libc, OS handles, clocks, threads, or entropy. They must document handle ownership and failure behavior. |
-| platform | `target`, `c`, future `os`, future socket handles in `net` | APIs that expose ABI, loader, errno, syscall, descriptor, or target-specific behavior. They must say which target family they describe. |
-| experimental | future `net` sockets, future `os`, backtrace, benchmark, fuzzing, async, compression | APIs that should remain roadmap work until ownership, error, and platform policies are tested. |
+| platform | `target`, `c`, `os`, future socket handles in `net` | APIs that expose ABI, loader, errno, syscall, descriptor, or target-specific behavior. They must say which target family they describe. |
+| experimental | future `net` sockets, future raw `os` wrappers, backtrace, benchmark, fuzzing, async, compression | APIs that should remain roadmap work until ownership, error, and platform policies are tested. |
 
 Moving an API from experimental to usable requires docs, manifest coverage,
 focused tests, and a short note explaining the failure and ownership policy.
@@ -133,7 +133,7 @@ compiler, tooling, platform, or optional packages instead:
   report builders
 - bootstrap-only helpers that ordinary Ari programs would never use
 - hidden global heaps or hidden allocation in convenience functions
-- raw syscall collections without owned descriptor/error policy
+- raw syscall collections without descriptor ownership and error policy
 - platform probes that contradict compile-time `std::target` facts
 - kernel/freestanding startup internals before the runtime contract is stable
 
@@ -159,5 +159,5 @@ This is a coarse map for planning, not a replacement for the API manifest:
 | `Option`/`Result`, `cmp`, `convert`, `math`, `bits`, `ascii`, `parse`, `encoding` | usable | More negative tests around trait bounds, overflow, and malformed encodings. |
 | `zone`, `boxed`, `string`, `vec`, `collections`, `iter`, `algo`, `hash`, `random::Prng` | usable | More same-zone, reset/destroy, iterator invalidation, and trait-driven constructor tests. |
 | `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time` | seed to usable | Stronger owned handle policy, richer `Result` error values, and platform notes. |
-| `target`, `c`, `os`, future socket handles in `net` | seed | Split portable facts from raw platform handles and document ABI constraints. |
+| `target`, `c`, `os`, future socket handles in `net` | seed | Grow descriptor duplication/error policy before readiness, signal, mmap, or socket handles. |
 | backtrace, benchmark, fuzzing, async, compression | planned | Keep out of runtime `std` until runtime, driver, and error contracts are ready. |

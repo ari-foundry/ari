@@ -130,7 +130,10 @@ operations return an invalid handle where `file.is_open()` is false. Prefer
 `try_open(path, mode)` for normal control flow; it returns `Option[File]` and
 avoids making callers remember the invalid-handle sentinel. Use
 `file.descriptor()` when code needs a non-owning `std::os::Fd` view over the
-handle. That view does not close or extend the lifetime of the file.
+handle. That view does not close or extend the lifetime of the file. If code
+intentionally takes over close responsibility from a file descriptor, wrap the
+raw value with `std::os::OwnedFd::from_raw(file.descriptor().raw())` and do not
+also close the original `File` value.
 
 `open(path, mode)` takes a small mode string. Ari follows the familiar C/Python
 shape for common modes while also accepting the direct `"rw"` spelling:

@@ -486,6 +486,7 @@ portable code:
 
 ```ari
 os::Fd
+os::OwnedFd
 os::fd(raw)
 os::invalid()
 os::stdin()
@@ -500,13 +501,28 @@ fd.is_stdout()
 fd.is_stderr()
 fd.is_standard()
 fd.equals(other)
+
+OwnedFd::from_raw(raw)
+OwnedFd::invalid()
+owned.raw()
+owned.as_fd()
+owned.is_open()
+owned.is_closed()
+owned.take()
+owned.close()
 ```
 
 `Fd` is non-owning. It identifies a descriptor but does not close, duplicate,
 or mutate it. `std::fs::File.descriptor()` returns an `Fd` view over a file
-handle without transferring ownership. Owned descriptors, close-on-exec,
-nonblocking mode, readiness APIs, raw syscalls, signals, and memory mapping are
-future `std::os` work after resource and error policy are stable.
+handle without transferring ownership.
+
+`OwnedFd` owns close responsibility for a raw descriptor. Construct it with
+`OwnedFd::from_raw(raw)` only when the caller is taking ownership of exactly
+one close. `as_fd()` borrows the descriptor as `Fd`, `take()` disarms the owner
+without closing, and `close()` disarms before calling the runtime close hook so
+the same handle cannot close twice. Descriptor duplication, close-on-exec,
+nonblocking mode, readiness APIs, raw syscalls, signals, and memory mapping
+remain future `std::os` work after richer error policy is stable.
 
 ## Paths
 

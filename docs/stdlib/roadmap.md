@@ -114,7 +114,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::error` | Give recoverable failures a shared vocabulary instead of bools and sentinel integers. | Current `Kind`, compact `Error`, strict and fallible constructors, POSIX `from_errno`, `from_raw`, `raw`, `kind`, `code`, predicate helpers, root `Error`/`ErrorKind` aliases, and `Result[T, i64]` bridge; future direct `Result[T, Error]`, Windows error mapping, owned messages, and conversions from fs/io/net/process wrappers. |
 | `std::log` | Emit simple diagnostics without making every tool invent its own stderr prefix format. | Current `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, and `error`; future structured records, global or scoped filters, test-runner capture, and backtrace integration. |
 | `std::test` | Let library/application tests aggregate checks before returning one final status. | Current `Report`, `report`, `scratch`, `check`, generic `equal`/`not_equal`, pass/fail accessors, `ok`, `finish`, `require`, and method wrappers; future test discovery/runner integration, named tests, richer assertion messages, log capture, stack/backtrace reporting, optional benchmark helpers, and optional fuzz hooks. |
-| `std::os` | Hold platform-specific values and syscall wrappers that are too sharp for portable modules. | Current non-owning `Fd` view, `fd`, `invalid`, `stdin`, `stdout`, `stderr`, descriptor predicates, equality, and `std::fs::File.descriptor`; future owned descriptors/handles, errno mapping, `syscall`, close-on-exec/nonblocking descriptor flags, `fcntl`, `ioctl`, `poll`, `select`, Linux `epoll`/`eventfd`/`timerfd`/`signalfd`, optional `pidfd`/`memfd`, signals, and memory mapping. |
+| `std::os` | Hold platform-specific values and syscall wrappers that are too sharp for portable modules. | Current non-owning `Fd` view, owning `OwnedFd`, `fd`, `invalid`, `stdin`, `stdout`, `stderr`, descriptor predicates, equality, `OwnedFd::from_raw`, `as_fd`, `take`, `close`, and `std::fs::File.descriptor`; future descriptor duplication, errno mapping, `syscall`, close-on-exec/nonblocking descriptor flags, `fcntl`, `ioctl`, `poll`, `select`, Linux `epoll`/`eventfd`/`timerfd`/`signalfd`, optional `pidfd`/`memfd`, signals, and memory mapping. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
 
@@ -227,7 +227,7 @@ work. Each one should land in small tested slices with natural API names.
 - Track Linux-specific epoll, inotify, eventfd, timerfd, signalfd, pidfd,
   memfd, optional fanotify, optional io_uring, procfs, sysfs, cgroups,
   namespaces, seccomp, and capabilities under `docs/stdlib/platform/` until
-  `std::os` has an owned descriptor and error policy.
+  `std::os` has descriptor duplication and a richer error policy.
 - Keep handles visible and owned; do not hide OS resources behind global state.
 - Track runtime ABI foundations separately in `docs/dev/runtime-support.md`:
   `_start`, `crt0`, init/fini arrays, TLS setup, stack protector hooks,

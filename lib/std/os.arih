@@ -1,11 +1,18 @@
 // Portable OS boundary helpers.
 //
 // This module starts with a non-owning file-descriptor view. It deliberately
-// does not close, duplicate, or mutate descriptors yet; those operations need
-// an owned descriptor and richer error policy before they are production-safe.
+// separates borrowed descriptor identity (`Fd`) from descriptor ownership
+// (`OwnedFd`) so future poll, epoll, pipe, socket, and mmap wrappers can keep
+// lifetime rules visible.
 pub struct Fd {
   raw_value: i64,
 }
+
+pub struct OwnedFd {
+  mut raw_value: i64,
+}
+
+extern "ari" fn close_raw(raw: i64) -> bool = "ari_builtin_os_close";
 
 pub fn fd(raw: i64) -> std::os::Fd {
   return std::os::Fd { raw_value: raw };
@@ -58,5 +65,49 @@ pub impl std::os::Fd {
 
   fn equals(self: ref Self, other: std::os::Fd) -> bool {
     return self.raw_value == other.raw();
+  }
+}
+
+pub impl std::os::OwnedFd {
+  fn from_raw(raw: i64) -> std::os::OwnedFd {
+    return std::os::OwnedFd { raw_value: raw };
+  }
+
+  fn invalid() -> std::os::OwnedFd {
+    return std::os::OwnedFd::from_raw(-1);
+  }
+
+  fn raw(self: ref Self) -> i64 {
+    return self.raw_value;
+  }
+
+  fn as_fd(self: ref Self) -> std::os::Fd {
+    return std::os::fd(self.raw_value);
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.as_fd().is_valid();
+  }
+
+  fn is_closed(self: ref Self) -> bool {
+    return !self.is_open();
+  }
+
+  fn take(self: ref mut Self) -> std::os::Fd {
+    let raw = self.raw_value;
+    self.raw_value = -1;
+    return std::os::fd(raw);
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    if self.is_closed() {
+      return false;
+    }
+
+    // Disarm before calling close so the same OwnedFd cannot close twice even
+    // if the platform reports a close error.
+    let raw = self.raw_value;
+    self.raw_value = -1;
+    return close_raw(raw);
   }
 }

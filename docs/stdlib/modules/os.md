@@ -2,14 +2,15 @@
 
 `std::os` is the boundary for operating-system concepts that are too sharp for
 portable modules to expose as loose integers. The current slice introduces a
-small non-owning file-descriptor view. It is useful for code that needs to
-identify standard descriptors or carry a descriptor value through an API
-without making that value look like an ordinary counter.
+small descriptor model with two shapes:
+
+- `Fd`: a non-owning descriptor identity view.
+- `OwnedFd`: a descriptor owner that has the responsibility to close once.
 
 This module is intentionally not a raw syscall collection. Closing, duplicating,
 setting close-on-exec, nonblocking mode, `fcntl`, `poll`, Linux `epoll`,
-signals, and memory mapping all need owned handle and error policies before
-they become stable public APIs.
+signals, and memory mapping are added in small layers after descriptor
+ownership is stable.
 
 ## API
 
@@ -29,6 +30,15 @@ fd.is_stderr()
 fd.is_standard()
 fd.equals(other)
 
+OwnedFd::from_raw(raw)
+OwnedFd::invalid()
+owned.raw()
+owned.as_fd()
+owned.is_open()
+owned.is_closed()
+owned.take()
+owned.close()
+
 file.descriptor()
 ```
 
@@ -46,6 +56,13 @@ It does not transfer ownership and it does not keep the file open if the
 original `File` is later closed. This shape keeps `std::fs` readable today and
 leaves room for a future `OwnedFd`/borrowed-descriptor split.
 
+`OwnedFd::from_raw(raw)` creates an owner around an existing descriptor. Use it
+only when the caller is taking responsibility for exactly one close. `as_fd()`
+borrows the descriptor as `Fd`; `take()` disarms the owner and returns the
+borrowed view without closing. `close()` disarms the owner before invoking the
+runtime close hook, so calling `close()` twice on the same `OwnedFd` will not
+close a reused descriptor accidentally.
+
 ## Example
 
 ```ari
@@ -62,20 +79,32 @@ fn main() -> i64 {
 }
 ```
 
+```ari
+fn main() -> i64 {
+  let file = std::fs::open("build/output.tmp", "w");
+  var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
+  if owned.close() {
+    return 0;
+  }
+  return 1;
+}
+```
+
 ## Tests
 
 Focused tests:
 
 ```text
 tests/cases/standard-library/ok/os/std-os-fd.ari
+tests/cases/standard-library/ok/os/std-os-owned-fd.ari
 ```
 
 `make check-std-api` tracks the public declarations. `make check-prelude`
-compiles and runs the focused descriptor-view fixture.
+compiles and runs the focused descriptor fixtures.
 
 ## Future Work
 
-- Add an owned descriptor type that closes exactly once.
+- Add descriptor duplication and explicit ownership transfer helpers.
 - Add fallible descriptor operations returning `std::error::Error` once
   `Result[T, Error]` is directly representable.
 - Add close-on-exec and nonblocking setters before exposing readiness APIs.

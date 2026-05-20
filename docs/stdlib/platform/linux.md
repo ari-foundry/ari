@@ -88,8 +88,8 @@ useful for modern systems work.
 | errno mapping | `std::target::uses_posix_errno()` reports the ABI family, and `std::c::errno()`/`std::c::error()` provide the first hosted runtime accessor and `std::error` bridge. | Add portable `std::os::errno` together with the first fallible descriptor wrappers and non-glibc tests. |
 | getrandom | `std::random::entropy()` and `std::random::fill(values)` use the hosted libc/syscall path and hard-fail if entropy cannot be read. | Add fallible entropy once standard `Error` results can be returned. |
 | `/dev/urandom` | Used as the random fallback when `getrandom` cannot make progress. | Keep as fallback; do not expose raw device reads as portable API. |
-| file descriptor abstraction | `std::os::Fd` is a public non-owning descriptor view, and `std::fs::File.descriptor()` exposes file handles through that view. | Add an owned descriptor type plus close/dup/error policy before exposing `fcntl`, `poll`, or epoll. |
-| close-on-exec | Not exposed. | Add after descriptor ownership exists; default new descriptors to close-on-exec where possible. |
+| file descriptor abstraction | `std::os::Fd` is a public non-owning descriptor view, `std::os::OwnedFd` owns exactly-one-close responsibility, and `std::fs::File.descriptor()` exposes file handles through the borrowed view. | Add descriptor duplication and richer error policy before exposing `fcntl`, `poll`, or epoll. |
+| close-on-exec | Not exposed. | Add after descriptor duplication and error policy are stable; default new descriptors to close-on-exec where possible. |
 | nonblocking mode | Not exposed. | Add descriptor methods backed by `fcntl` and document interaction with IO helpers. |
 | fcntl | Not exposed. | Future low-level descriptor module with typed flag helpers. |
 | ioctl | Not exposed. | Keep optional and narrow; prefer typed wrappers for common devices over a raw catch-all. |
@@ -134,7 +134,7 @@ useful for modern systems work.
 
 1. Keep `std::target` current with compiler target support.
 2. Add explicit `std::os` docs before adding raw wrappers.
-3. Introduce a small owned descriptor type and `errno`/error policy.
+3. Grow `OwnedFd` with duplication and `errno`/error policy.
 4. Add process expansion in order: richer wait status, `kill`, `exec`, then
    portable `spawn`.
 5. Implement descriptor readiness primitives in order: `poll`, then Linux

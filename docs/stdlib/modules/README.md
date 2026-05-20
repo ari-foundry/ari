@@ -76,9 +76,8 @@ limits, examples, and test files for one module.
 - [std::process](process.md): current process id, uid/gid, explicit exit and
   abort hooks, status helper functions, and the first POSIX fork/wait
   child-process slice.
-- [std::os](os.md): non-owning file-descriptor views for standard descriptors
-  and filesystem handles, plus the roadmap for owned descriptors and raw OS
-  primitives.
+- [std::os](os.md): non-owning file-descriptor views, owning descriptor close
+  responsibility, and the roadmap for raw OS primitives.
 - [std::thread](thread.md): function-pointer thread spawn/join, runtime thread
   ids, invalid-handle sentinels, cooperative sleep/yield, available
   parallelism, and thread-local/stack-size roadmap notes.

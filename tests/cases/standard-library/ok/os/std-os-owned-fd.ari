@@ -1,0 +1,39 @@
+// Covers the owned descriptor boundary. OwnedFd owns the close responsibility,
+// while Fd remains only a borrowed descriptor identity view.
+fn main() -> i64 {
+  let path = "build/std-os-owned-fd.tmp";
+  let wrote = std::fs::write(path, "owned-fd");
+  let file = std::fs::open(path, "r");
+  var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
+  var invalid = std::os::OwnedFd::invalid();
+
+  var score = 0;
+  if wrote {
+    score = score + 1;
+  }
+  if owned.is_open() && owned.as_fd().is_valid() {
+    score = score + 2;
+  }
+  if owned.raw() == file.descriptor().raw() {
+    score = score + 4;
+  }
+  if invalid.is_closed() && invalid.as_fd().is_invalid() {
+    score = score + 8;
+  }
+  if !invalid.close() && invalid.is_closed() {
+    score = score + 16;
+  }
+  if owned.close() && owned.is_closed() {
+    score = score + 32;
+  }
+  if !owned.close() {
+    score = score + 64;
+  }
+
+  let removed = std::fs::remove(path);
+  if removed {
+    score = score + 128;
+  }
+
+  return score;
+}

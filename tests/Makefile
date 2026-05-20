@@ -517,6 +517,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/os/std-os-fd.ari -o $(BUILD_DIR)/prelude/std-os-fd.elf
 	$(BUILD_DIR)/prelude/std-os-fd.elf; code=$$?; test $$code -eq 63
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/os/std-os-fd.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-os-fd.elf; $(BUILD_DIR)/prelude/std-os-fd.elf; code=$$?; test $$code -eq 63; fi
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd.ari --emit-llvm $(BUILD_DIR)/prelude/std-os-owned-fd.ll
+	grep -F -q "std__os__OwnedFd" $(BUILD_DIR)/prelude/std-os-owned-fd.ll
+	grep -q "@ari_builtin_os_close" $(BUILD_DIR)/prelude/std-os-owned-fd.ll
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd.ari -o $(BUILD_DIR)/prelude/std-os-owned-fd.elf
+	$(BUILD_DIR)/prelude/std-os-owned-fd.elf; code=$$?; test $$code -eq 255
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-os-owned-fd.elf; $(BUILD_DIR)/prelude/std-os-owned-fd.elf; code=$$?; test $$code -eq 255; fi
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv4" $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv6" $(BUILD_DIR)/prelude/std-net-addresses.ll
