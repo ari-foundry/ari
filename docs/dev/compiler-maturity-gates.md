@@ -12,6 +12,8 @@ Use this page with:
   day-to-day development order.
 - [Compiler Contributor Guide](compiler-contributor-guide.md) for the practical
   edit map, test categories, and small-check loop.
+- [Compiler Readiness Inventory](compiler-readiness-inventory.md) for the
+  current strengths, blocking gaps, backlog, and start gate.
 - [Compiler Pass Contracts](compiler-pass-contracts.md) for lexer, parser,
   resolver, sema, IR, and backend boundary rules.
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) for the

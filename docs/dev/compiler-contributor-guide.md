@@ -16,12 +16,14 @@ For a compiler change, read these in order:
 
 1. [Compiler Development Roadmap](compiler-development-roadmap.md): current
    development phases and non-goals.
-2. [Compiler Pipeline](compiler-pipeline.md): how source becomes LLVM output.
-3. [Compiler Pass Contracts](compiler-pass-contracts.md): what each pass owns
+2. [Compiler Readiness Inventory](compiler-readiness-inventory.md): current
+   strengths, blocking gaps, backlog, and the later start gate.
+3. [Compiler Pipeline](compiler-pipeline.md): how source becomes LLVM output.
+4. [Compiler Pass Contracts](compiler-pass-contracts.md): what each pass owns
    and what data it may hand to the next pass.
-4. [Feature Test Matrix](test-matrix.md): which feature families already have
+5. [Feature Test Matrix](test-matrix.md): which feature families already have
    ok, error, IR, and executable coverage.
-5. [Build And Test](build-test.md): focused Make targets and direct
+6. [Build And Test](build-test.md): focused Make targets and direct
    `build/ari` commands.
 
 Use [Compiler Maturity Gates](compiler-maturity-gates.md) only as the health
@@ -138,4 +140,3 @@ The current practical readiness remains about **38-42% ready** to begin a
 serious compiler-in-Ari track, with **58-62% remaining** before full
 self-hosting work is likely to be productive. Treat that number as a health
 metric. The work itself is normal compiler development.
-

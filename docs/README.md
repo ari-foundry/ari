@@ -47,6 +47,7 @@ Use these when changing the compiler:
 - [Architecture](dev/architecture.md)
 - [Compiler Pipeline](dev/compiler-pipeline.md)
 - [Compiler Contributor Guide](dev/compiler-contributor-guide.md)
+- [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)
 - [Compiler Pass Contracts](dev/compiler-pass-contracts.md)
 - [Build And Test](dev/build-test.md)
 - [Aggregate ABI Classification](dev/aggregate-abi.md)

@@ -1,0 +1,105 @@
+// Covers compiler-development diagnostic data as ordinary Ari values. This is
+// a normal compiler model fixture, not runtime stdlib or bootstrap code.
+type SourceId = i64;
+type ByteOffset = i64;
+type ErrorCode = i64;
+
+struct Span {
+  source: SourceId,
+  start: ByteOffset,
+  end: ByteOffset,
+}
+
+enum Severity {
+  Error,
+  Warning,
+  Note,
+}
+
+enum DiagnosticBuildError {
+  BadSpan(ByteOffset),
+  MissingCode,
+}
+
+struct Diagnostic {
+  severity: Severity,
+  code: ErrorCode,
+  primary: Span,
+  marker: char,
+}
+
+fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}
+
+fn severity_score(severity: Severity) -> i64 {
+  match severity {
+    Error => 10,
+    Warning => 20,
+    Note => 30,
+  }
+}
+
+fn marker_score(marker: char) -> i64 {
+  if marker == 'E' {
+    return 1;
+  }
+  if marker == 'W' {
+    return 2;
+  }
+  return 3;
+}
+
+fn validate_span(span: Span) -> Result[i64, DiagnosticBuildError] {
+  if span.end < span.start {
+    return Err(BadSpan(span.start - span.end));
+  }
+  return Ok(span_len(span));
+}
+
+fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
+  return severity_score(diagnostic.severity) +
+    diagnostic.code +
+    span_len(diagnostic.primary) +
+    marker_score(diagnostic.marker);
+}
+
+fn build_error_score(error: DiagnosticBuildError) -> i64 {
+  match error {
+    BadSpan(width) => 40 + width,
+    MissingCode => 50,
+  }
+}
+
+fn span_result_score(result: Result[i64, DiagnosticBuildError]) -> i64 {
+  match result {
+    Ok(width) => width,
+    Err(error) => build_error_score(error),
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(1024);
+  var diagnostics = std::vec::new<Diagnostic>(ref mut zone, 2);
+
+  diagnostics.push(Diagnostic {
+    severity: Error,
+    code: 7,
+    primary: Span { source: 1, start: 2, end: 6 },
+    marker: 'E',
+  });
+  diagnostics.push(Diagnostic {
+    severity: Warning,
+    code: 3,
+    primary: Span { source: 1, start: 2, end: 5 },
+    marker: 'W',
+  });
+
+  let first = diagnostic_score(diagnostics.get(0));
+  let second = diagnostic_score(diagnostics.get(1));
+  let invalid = span_result_score(validate_span(Span { source: 1, start: 9, end: 4 }));
+  let total = first + second + invalid + diagnostics.len();
+
+  zone::destroy(zone);
+  return total;
+}

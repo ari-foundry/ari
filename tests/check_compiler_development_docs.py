@@ -30,6 +30,8 @@ def main() -> int:
     gates = read(gates_path)
     contributor_path = "docs/dev/compiler-contributor-guide.md"
     contributor = read(contributor_path)
+    readiness_path = "docs/dev/compiler-readiness-inventory.md"
+    readiness = read(readiness_path)
     pass_contracts_path = "docs/dev/compiler-pass-contracts.md"
     pass_contracts = read(pass_contracts_path)
     project_model_path = "docs/dev/compiler-project-model.md"
@@ -66,6 +68,7 @@ def main() -> int:
         "Improve Ari as a general language",
         "Compiler Maturity Gates",
         "Compiler Contributor Guide",
+        "Compiler Readiness Inventory",
         "Compiler Pass Contracts",
         "Compiler Project Model",
         "Compiler Source And Diagnostics",
@@ -120,6 +123,7 @@ def main() -> int:
     require(gates, "Compiler Source And Diagnostics", gates_path)
     require(gates, "Compiler Pass Contracts", gates_path)
     require(gates, "Compiler Contributor Guide", gates_path)
+    require(gates, "Compiler Readiness Inventory", gates_path)
     require(gates, "Compiler Project Model", gates_path)
     require(gates, "Compiler Artifact Testing", gates_path)
 
@@ -141,6 +145,7 @@ def main() -> int:
     for needle in [
         "not a bootstrap implementation plan",
         "Compiler Development Roadmap",
+        "Compiler Readiness Inventory",
         "Compiler Pipeline",
         "Compiler Pass Contracts",
         "Feature Test Matrix",
@@ -158,6 +163,42 @@ def main() -> int:
         "58-62% remaining",
     ]:
         require(contributor, needle, contributor_path)
+
+    for heading in [
+        "# Compiler Readiness Inventory",
+        "## Current Readiness",
+        "## Already Strong",
+        "## Blocking Gaps",
+        "## Development Backlog",
+        "## Start Gate",
+        "## Natural Syntax Pressure",
+        "## Test Inventory",
+    ]:
+        require(readiness, heading, readiness_path)
+
+    for needle in [
+        "not a bootstrap implementation plan",
+        "normal compiler development",
+        "38-42% ready",
+        "58-62% remaining",
+        "Hosted LLVM backend",
+        "Core executable language",
+        "Generic calls and ADTs",
+        "Source identity",
+        "Diagnostics",
+        "File-backed projects",
+        "Generic aggregate scale",
+        "Trait selection",
+        "Pass artifacts",
+        "SourceFile",
+        "SourceId",
+        "Span",
+        "Result[T, E]",
+        "tests/cases/compiler-development/ok/model/compiler-pass-worklist.ari",
+        "tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari",
+        "make check-compiler-development",
+    ]:
+        require(readiness, needle, readiness_path)
 
     for heading in [
         "# Compiler Pass Contracts",
@@ -322,6 +363,7 @@ def main() -> int:
     gate_labels = {
         "frontend-grammar": "Frontend grammar",
         "contributor-guide": "Compiler Contributor Guide",
+        "readiness-inventory": "Compiler Readiness Inventory",
         "source-identity": "Source identity",
         "diagnostics": "Diagnostics",
         "pass-contracts": "Compiler Pass Contracts",
@@ -342,6 +384,8 @@ def main() -> int:
         require(manifest, entry, manifest_path)
         if entry == "contributor-guide":
             require(contributor, label, contributor_path)
+        elif entry == "readiness-inventory":
+            require(readiness, label, readiness_path)
         elif entry == "source-diagnostics-layer":
             require(source_diagnostics, label, source_diagnostics_path)
         elif entry == "pass-contracts":
@@ -357,6 +401,7 @@ def main() -> int:
         index = read(index_path)
         require(index, "Compiler Development Roadmap", index_path)
         require(index, "Compiler Contributor Guide", index_path)
+        require(index, "Compiler Readiness Inventory", index_path)
         require(index, "Compiler Maturity Gates", index_path)
         require(index, "Compiler Pass Contracts", index_path)
         require(index, "Compiler Project Model", index_path)

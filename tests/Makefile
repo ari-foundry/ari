@@ -69,6 +69,10 @@ check-compiler-development: $(TARGET)
 	$(TARGET) tests/cases/compiler-development/ok/model/compiler-pass-worklist.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-pass-worklist.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-pass-worklist.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-pass-worklist.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-pass-worklist.elf; $(BUILD_DIR)/compiler-development/compiler-pass-worklist.elf; code=$$?; test $$code -eq 80; fi
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari --check
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-diagnostic-workflow.ll
+	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-diagnostic-workflow.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-diagnostic-workflow.elf; $(BUILD_DIR)/compiler-development/compiler-diagnostic-workflow.elf; code=$$?; test $$code -eq 97; fi
 
 check-bootstrap-docs:
 	python3 tests/check_bootstrap_readiness_docs.py
