@@ -1,0 +1,45 @@
+// Covers linear Set[T] relationship predicates. These APIs compare set
+// membership, not insertion order, and borrow the other set explicitly.
+fn main() -> i64 {
+  var zone = zone::create(1024);
+  var left = collections::new<i64>(ref mut zone, 4);
+  var same = collections::new<i64>(ref mut zone, 4);
+  var superset = collections::new<i64>(ref mut zone, 4);
+  var disjoint = collections::new<i64>(ref mut zone, 4);
+
+  left.insert(ref mut zone, 3);
+  left.insert(ref mut zone, 7);
+  same.insert(ref mut zone, 7);
+  same.insert(ref mut zone, 3);
+  superset.insert(ref mut zone, 3);
+  superset.insert(ref mut zone, 7);
+  superset.insert(ref mut zone, 9);
+  disjoint.insert(ref mut zone, 1);
+  disjoint.insert(ref mut zone, 2);
+
+  var score = 0;
+  if left.equals(ref same) {
+    score = score + 3;
+  }
+  if same.equals(ref left) {
+    score = score + 5;
+  }
+  if left.is_subset(ref superset) {
+    score = score + 7;
+  }
+  if superset.is_superset(ref left) {
+    score = score + 11;
+  }
+  if !superset.equals(ref left) {
+    score = score + 13;
+  }
+  if left.is_disjoint(ref disjoint) {
+    score = score + 17;
+  }
+  if !left.is_disjoint(ref same) {
+    score = score + 19;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

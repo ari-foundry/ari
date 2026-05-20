@@ -869,11 +869,15 @@ method std::collections::Set[T]::capacity|check-prelude std-collections-set capa
 method std::collections::Set[T]::clear|check-prelude std-collections-set value drop clear; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::contains|check-prelude std-collections-set linear membership lookup; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::copy_to|check-prelude std-collections-set target-zone copy; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::equals|check-prelude std-collections-set-relations membership equality predicate; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::first|check-prelude std-collections-set-access insertion-order first accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::get|check-prelude std-collections-set-access insertion-order indexed accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::index_of|check-prelude std-collections-set stable insertion-order index lookup; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::insert|check-prelude std-collections-set same-zone insertion and duplicate rejection; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::is_disjoint|check-prelude std-collections-set-relations membership disjointness predicate; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::is_empty|check-prelude std-collections-set metadata helper; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::is_subset|check-prelude std-collections-set-relations membership subset predicate; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::is_superset|check-prelude std-collections-set-relations membership superset predicate; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::iter|check-prelude std-collections-set-iter standard iterator cursor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::last|check-prelude std-collections-set-access insertion-order last accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::len|check-prelude std-collections-set metadata helper; docs/stdlib/modules/collections.md

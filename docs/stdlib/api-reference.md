@@ -1351,6 +1351,10 @@ set.get(index)
 set.try_get(index)
 set.index_of(value)
 set.contains(value)
+set.equals(ref other)
+set.is_subset(ref other)
+set.is_superset(ref other)
+set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.remove(value)
@@ -1368,10 +1372,11 @@ set.copy_to(ref mut zone)
 `insert` returns `true` only for newly inserted values. `replace` returns
 `Some(previous)` for an equal existing value, or inserts the missing value and
 returns `None`. `remove` drops the removed value and reports whether it was
-present; `take` returns `Option[T]`. `first`/`last`/`get` assert that the
-requested element exists,
-while `try_first`/`try_last`/`try_get` return `Option[T]`. `pop` removes the
-last insertion-order value, and `try_pop` returns `None` on an empty set.
+present; `take` returns `Option[T]`. Relationship methods compare membership
+instead of insertion order and borrow the other set explicitly. `first`,
+`last`, and `get` assert that the requested element exists, while
+`try_first`/`try_last`/`try_get` return `Option[T]`. `pop` removes the last
+insertion-order value, and `try_pop` returns `None` on an empty set.
 `reserve` and `reserve_extra` keep growth explicit through the same source
 zone. The set preserves insertion order in accessors, `index_of`, `as_slice`,
 `iter`, and `copy_to`. `std::collections::Iter[T]` implements `Iterator[T]`,

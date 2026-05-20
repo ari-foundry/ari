@@ -60,6 +60,10 @@ set.get(index)
 set.try_get(index)
 set.index_of(value)
 set.contains(value)
+set.equals(ref other)
+set.is_subset(ref other)
+set.is_superset(ref other)
+set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.remove(value)
@@ -77,6 +81,8 @@ set.copy_to(ref mut target)
 `insert` returns `true` only for a newly inserted value. `replace` returns
 `Some(previous)` when an equal value already existed, otherwise it inserts and
 returns `None`. `take` moves the removed value out, while `remove` drops it.
+`equals`, `is_subset`, `is_superset`, and `is_disjoint` compare membership,
+not insertion order, and borrow the other set explicitly.
 `iter` yields insertion-order values and `Set[T]` implements
 `IntoIterator[T]`.
 
