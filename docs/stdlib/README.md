@@ -44,6 +44,8 @@ handles over `dlopen`/`dlsym`.
 `std::process`
 starts the OS-facing surface with current
 process id, explicit exit helpers, and the first POSIX fork/wait slice,
+`std::os` introduces a non-owning `Fd` descriptor view used by standard
+descriptors and `std::fs::File.descriptor()`,
 `std::target` reports compiler-known target, object/debug format, libc/env,
 errno, syscall, and Linux API-family facts,
 `std::thread` adds

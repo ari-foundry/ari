@@ -159,5 +159,5 @@ This is a coarse map for planning, not a replacement for the API manifest:
 | `Option`/`Result`, `cmp`, `convert`, `math`, `bits`, `ascii`, `parse`, `encoding` | usable | More negative tests around trait bounds, overflow, and malformed encodings. |
 | `zone`, `boxed`, `string`, `vec`, `collections`, `iter`, `algo`, `hash`, `random::Prng` | usable | More same-zone, reset/destroy, iterator invalidation, and trait-driven constructor tests. |
 | `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time` | seed to usable | Stronger owned handle policy, richer `Result` error values, and platform notes. |
-| `target`, `c`, future `os`, future socket handles in `net` | seed | Split portable facts from raw platform handles and document ABI constraints. |
+| `target`, `c`, `os`, future socket handles in `net` | seed | Split portable facts from raw platform handles and document ABI constraints. |
 | backtrace, benchmark, fuzzing, async, compression | planned | Keep out of runtime `std` until runtime, driver, and error contracts are ready. |

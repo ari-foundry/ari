@@ -191,6 +191,13 @@ code. The readable predicates around those hooks are source Ari. Linux
 API-family helpers describe target availability; live kernel probing and
 fallible descriptor creation belong in future `std::os` wrappers.
 
+`std::os` now owns the first raw OS value boundary with a non-owning `Fd`
+descriptor view. `std::os::stdin()`, `stdout()`, `stderr()`, `invalid()`, and
+`fd(raw)` make descriptor identity explicit, while `std::fs::File.descriptor()`
+bridges file handles into that view without transferring ownership. Raw
+syscalls, close-on-exec/nonblocking mutation, readiness APIs, signals, and
+memory mapping still wait for owned descriptors and richer error results.
+
 `std::env` wraps the context hooks with the names application code should use
 and adds `Option`-based argument access through `try_arg` and `program_name`.
 `arg_os`, `try_arg_os`, and `program_name_os` expose the same startup data as

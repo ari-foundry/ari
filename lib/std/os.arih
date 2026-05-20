@@ -1,0 +1,62 @@
+// Portable OS boundary helpers.
+//
+// This module starts with a non-owning file-descriptor view. It deliberately
+// does not close, duplicate, or mutate descriptors yet; those operations need
+// an owned descriptor and richer error policy before they are production-safe.
+pub struct Fd {
+  raw_value: i64,
+}
+
+pub fn fd(raw: i64) -> std::os::Fd {
+  return std::os::Fd { raw_value: raw };
+}
+
+pub fn invalid() -> std::os::Fd {
+  return std::os::fd(-1);
+}
+
+pub fn stdin() -> std::os::Fd {
+  return std::os::fd(0);
+}
+
+pub fn stdout() -> std::os::Fd {
+  return std::os::fd(1);
+}
+
+pub fn stderr() -> std::os::Fd {
+  return std::os::fd(2);
+}
+
+pub impl std::os::Fd {
+  fn raw(self: ref Self) -> i64 {
+    return self.raw_value;
+  }
+
+  fn is_valid(self: ref Self) -> bool {
+    return self.raw_value >= 0;
+  }
+
+  fn is_invalid(self: ref Self) -> bool {
+    return !self.is_valid();
+  }
+
+  fn is_stdin(self: ref Self) -> bool {
+    return self.raw_value == 0;
+  }
+
+  fn is_stdout(self: ref Self) -> bool {
+    return self.raw_value == 1;
+  }
+
+  fn is_stderr(self: ref Self) -> bool {
+    return self.raw_value == 2;
+  }
+
+  fn is_standard(self: ref Self) -> bool {
+    return self.is_stdin() || self.is_stdout() || self.is_stderr();
+  }
+
+  fn equals(self: ref Self, other: std::os::Fd) -> bool {
+    return self.raw_value == other.raw();
+  }
+}

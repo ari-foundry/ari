@@ -511,6 +511,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-canonicalize.ari -o $(BUILD_DIR)/prelude/std-fs-canonicalize.elf
 	$(BUILD_DIR)/prelude/std-fs-canonicalize.elf; code=$$?; test $$code -eq 28
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-canonicalize.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-canonicalize.elf; $(BUILD_DIR)/prelude/std-fs-canonicalize.elf; code=$$?; test $$code -eq 28; fi
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-fd.ari --emit-llvm $(BUILD_DIR)/prelude/std-os-fd.ll
+	grep -F -q "std2os2fd" $(BUILD_DIR)/prelude/std-os-fd.ll
+	grep -F -q "std__os__Fd" $(BUILD_DIR)/prelude/std-os-fd.ll
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-fd.ari -o $(BUILD_DIR)/prelude/std-os-fd.elf
+	$(BUILD_DIR)/prelude/std-os-fd.elf; code=$$?; test $$code -eq 63
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/os/std-os-fd.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-os-fd.elf; $(BUILD_DIR)/prelude/std-os-fd.elf; code=$$?; test $$code -eq 63; fi
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv4" $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv6" $(BUILD_DIR)/prelude/std-net-addresses.ll

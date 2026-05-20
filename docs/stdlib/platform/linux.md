@@ -88,7 +88,7 @@ useful for modern systems work.
 | errno mapping | `std::target::uses_posix_errno()` reports the ABI family, and `std::c::errno()`/`std::c::error()` provide the first hosted runtime accessor and `std::error` bridge. | Add portable `std::os::errno` together with the first fallible descriptor wrappers and non-glibc tests. |
 | getrandom | `std::random::entropy()` and `std::random::fill(values)` use the hosted libc/syscall path and hard-fail if entropy cannot be read. | Add fallible entropy once standard `Error` results can be returned. |
 | `/dev/urandom` | Used as the random fallback when `getrandom` cannot make progress. | Keep as fallback; do not expose raw device reads as portable API. |
-| file descriptor abstraction | `std::fs::File` stores an internal descriptor value, but no public raw descriptor type exists. | Add an owned `Fd`/`OwnedFd` plus borrowed descriptor view before exposing `fcntl`, `poll`, or epoll. |
+| file descriptor abstraction | `std::os::Fd` is a public non-owning descriptor view, and `std::fs::File.descriptor()` exposes file handles through that view. | Add an owned descriptor type plus close/dup/error policy before exposing `fcntl`, `poll`, or epoll. |
 | close-on-exec | Not exposed. | Add after descriptor ownership exists; default new descriptors to close-on-exec where possible. |
 | nonblocking mode | Not exposed. | Add descriptor methods backed by `fcntl` and document interaction with IO helpers. |
 | fcntl | Not exposed. | Future low-level descriptor module with typed flag helpers. |

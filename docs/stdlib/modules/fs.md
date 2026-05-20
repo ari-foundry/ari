@@ -89,6 +89,7 @@ fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
 File::invalid()
+file.descriptor()
 file.is_open()
 file.close()
 file.read_byte()
@@ -127,7 +128,9 @@ metadata.is_other()
 `File` is a small value handle around the runtime file descriptor. Failed open
 operations return an invalid handle where `file.is_open()` is false. Prefer
 `try_open(path, mode)` for normal control flow; it returns `Option[File]` and
-avoids making callers remember the invalid-handle sentinel.
+avoids making callers remember the invalid-handle sentinel. Use
+`file.descriptor()` when code needs a non-owning `std::os::Fd` view over the
+handle. That view does not close or extend the lifetime of the file.
 
 `open(path, mode)` takes a small mode string. Ari follows the familiar C/Python
 shape for common modes while also accepting the direct `"rw"` spelling:

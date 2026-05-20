@@ -1,0 +1,34 @@
+// Covers the first std::os descriptor view. Fd is intentionally non-owning:
+// it lets portable code inspect descriptor identity before owned descriptors,
+// fcntl, poll, or epoll are exposed.
+fn main() -> i64 {
+  let invalid = std::os::invalid();
+  let stdin = std::os::stdin();
+  let stdout = std::os::stdout();
+  let stderr = std::os::stderr();
+  let custom = std::os::fd(42);
+  let file = std::fs::File::invalid();
+  let file_fd = file.descriptor();
+
+  var score = 0;
+  if invalid.is_invalid() && !invalid.is_valid() {
+    score = score + 1;
+  }
+  if stdin.raw() == 0 && stdin.is_stdin() && stdin.is_standard() {
+    score = score + 2;
+  }
+  if stdout.raw() == 1 && stdout.is_stdout() && stdout.is_standard() {
+    score = score + 4;
+  }
+  if stderr.raw() == 2 && stderr.is_stderr() && stderr.is_standard() {
+    score = score + 8;
+  }
+  if custom.is_valid() && !custom.is_standard() && custom.equals(std::os::fd(42)) {
+    score = score + 16;
+  }
+  if file_fd.is_invalid() && file_fd.equals(invalid) {
+    score = score + 32;
+  }
+
+  return score;
+}

@@ -624,6 +624,10 @@ pub impl std::fs::File {
     return File { fd: -1 };
   }
 
+  fn descriptor(self: ref Self) -> std::os::Fd {
+    return std::os::fd(self.fd);
+  }
+
   fn is_open(self) -> bool {
     return self.fd >= 0;
   }

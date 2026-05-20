@@ -479,6 +479,35 @@ and `is_fork_error` to make that branch readable. `wait(pid)` returns a normal
 child exit status or `-1`; use `is_wait_error` for that sentinel. Rich process
 handles, portable spawn, and detailed status values remain roadmap work.
 
+## OS Descriptor Views
+
+`std::os` contains low-level OS values that should not remain loose integers in
+portable code:
+
+```ari
+os::Fd
+os::fd(raw)
+os::invalid()
+os::stdin()
+os::stdout()
+os::stderr()
+
+fd.raw()
+fd.is_valid()
+fd.is_invalid()
+fd.is_stdin()
+fd.is_stdout()
+fd.is_stderr()
+fd.is_standard()
+fd.equals(other)
+```
+
+`Fd` is non-owning. It identifies a descriptor but does not close, duplicate,
+or mutate it. `std::fs::File.descriptor()` returns an `Fd` view over a file
+handle without transferring ownership. Owned descriptors, close-on-exec,
+nonblocking mode, readiness APIs, raw syscalls, signals, and memory mapping are
+future `std::os` work after resource and error policy are stable.
+
 ## Paths
 
 `std::path` contains source-only lexical path helpers over `Slice[u8]`:
