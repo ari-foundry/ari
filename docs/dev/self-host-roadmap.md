@@ -5,8 +5,9 @@ plan to rewrite the current C++ compiler in place. The C++ compiler should act
 as `stage0`: a trusted bootstrap compiler used to compile and test the new Ari
 implementation until Ari can compile itself.
 
-Use [Production Compiler Design](production-compiler-design.md) for the
-ordinary language/compiler contract,
+Use [Compiler Development Roadmap](compiler-development-roadmap.md) for active
+compiler work, [Production Compiler Design](production-compiler-design.md) for
+the ordinary language/compiler contract,
 [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md) for the
 pre-bootstrap test groups, and
 [Bootstrap Readiness](bootstrap-readiness.md) as the practical start gate. The
@@ -19,8 +20,8 @@ Ari is not ready for full self-hosting yet.
 
 Current practical estimate:
 
-- **35-40% ready** to begin full compiler bootstrapping
-- **60-65% remaining** before a self-host attempt is likely to be productive
+- **38-42% ready** to begin full compiler bootstrapping
+- **58-62% remaining** before a self-host attempt is likely to be productive
 
 The language and standard library are mature enough to start isolated
 compiler-component experiments in Ari, especially lexing, byte-oriented source

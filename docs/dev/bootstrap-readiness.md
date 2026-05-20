@@ -11,12 +11,16 @@ pre-bootstrap test groups; the self-host roadmap explains the long path from
 stage0 to stage2; this page is the entry gate for starting that work without
 turning the current C++ compiler into a second rewrite project.
 
+For active compiler work, use
+[Compiler Development Roadmap](compiler-development-roadmap.md). This page is a
+readiness gauge, not a request to implement bootstrapping now.
+
 ## Current Estimate
 
 As of the current hosted compiler and standard library, Ari is roughly:
 
-- **35-40% ready to start full compiler bootstrapping**
-- **60-65% remaining before a self-host attempt is likely to be productive**
+- **38-42% ready to start full compiler bootstrapping**
+- **58-62% remaining before a self-host attempt is likely to be productive**
 
 This estimate is about practical implementation readiness, not language
 ambition. Ari already has many pieces needed by a compiler: modules, structs,

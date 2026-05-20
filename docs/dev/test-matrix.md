@@ -41,12 +41,16 @@ macros, and `std-library-smoke.ari` for cross-library integration. Zone and
 pointer provenance hooks live under `tests/cases/memory/`. See
 [Library Testing](library-testing.md) for the full policy.
 
-## Bootstrap Documentation Coverage Note
+## Compiler And Bootstrap Documentation Coverage Note
 
-Bootstrapping is not implemented yet, but the start gate is checked by
-`make check-bootstrap-docs`, and the first compiler-shaped Ari fixtures are
+Compiler development is tracked before bootstrapping work starts. The general
+compiler roadmap is checked by `make check-compiler-dev-docs`, the later
+bootstrap start gate is checked by `make check-bootstrap-docs`, and the first
+compiler-shaped Ari fixtures are
 checked by `make check-bootstrap-readiness`. The docs target runs
+`tests/check_compiler_development_docs.py` and
 `tests/check_bootstrap_readiness_docs.py` and verifies that
+[Compiler Development Roadmap](compiler-development-roadmap.md),
 [Production Compiler Design](production-compiler-design.md),
 [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
 [Bootstrap Readiness](bootstrap-readiness.md),

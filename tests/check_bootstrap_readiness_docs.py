@@ -55,8 +55,8 @@ def main() -> int:
     ]:
         require(design, heading, design_path)
     for needle in [
-        "35-40% ready",
-        "60-65% remaining",
+        "38-42% ready",
+        "58-62% remaining",
         "not a bootstrap-only checklist",
         "ordinary production Ari program",
         "[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)",
@@ -131,21 +131,23 @@ def main() -> int:
     ]:
         require(readiness, heading, readiness_path)
 
-    if not re.search(r"35-40% ready", readiness):
+    if not re.search(r"38-42% ready", readiness):
         print(f"{readiness_path}: missing ready percentage", file=sys.stderr)
         return 1
-    if not re.search(r"60-65% remaining", readiness):
+    if not re.search(r"58-62% remaining", readiness):
         print(f"{readiness_path}: missing remaining percentage", file=sys.stderr)
         return 1
 
     self_host_path = "docs/dev/self-host-roadmap.md"
     self_host = read(self_host_path)
+    require(self_host, "[Compiler Development Roadmap](compiler-development-roadmap.md)", self_host_path)
     require(self_host, "[Production Compiler Design](production-compiler-design.md)", self_host_path)
     require(self_host, "[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)", self_host_path)
     require(self_host, "[Bootstrap Readiness](bootstrap-readiness.md)", self_host_path)
 
     for index_path in ["docs/README.md", "docs/dev/README.md"]:
         index = read(index_path)
+        require(index, "Compiler Development Roadmap", index_path)
         require(index, "Production Compiler Design", index_path)
         require(index, "Compiler Bootstrap Fixture Plan", index_path)
         require(index, "Bootstrap Readiness", index_path)

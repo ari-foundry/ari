@@ -13,6 +13,7 @@ This folder is for people changing the compiler.
 - [Runtime Support Roadmap](runtime-support.md)
 - [Symbol Mangling](symbol-mangling.md)
 - [Standard Library Roadmap](standard-library-roadmap.md)
+- [Compiler Development Roadmap](compiler-development-roadmap.md)
 - [Production Compiler Design](production-compiler-design.md)
 - [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)
 - [Bootstrap Readiness](bootstrap-readiness.md)

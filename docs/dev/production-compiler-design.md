@@ -8,6 +8,11 @@ Ari-written compiler to be an ordinary production Ari program: multi-file,
 well-tested, explicit about allocation, pleasant to read, and built from public
 language features that other Ari programs can use too.
 
+For current work, start with
+[Compiler Development Roadmap](compiler-development-roadmap.md). Ari is
+developing the compiler now; bootstrapping is a later readiness milestone, not
+the implementation task for this page.
+
 Read this page with [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
 [Bootstrap Readiness](bootstrap-readiness.md), and
 [Self-Host Roadmap](self-host-roadmap.md):
@@ -21,8 +26,8 @@ Read this page with [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)
 
 Current practical estimate:
 
-- **35-40% ready** to begin full compiler bootstrapping
-- **60-65% remaining** before a self-host attempt is likely to be productive
+- **38-42% ready** to begin full compiler bootstrapping
+- **58-62% remaining** before a self-host attempt is likely to be productive
 
 This is not a judgment on Ari's ambition. Ari already has a large hosted
 systems-language surface: LLVM output, modules, structs, enums, traits,
@@ -43,7 +48,7 @@ the start bar below is green.
 
 ## Readiness Scorecard
 
-The 35-40% number comes from Ari having a real hosted systems-language
+The 38-42% number comes from Ari having a real hosted systems-language
 substrate, not from having an Ari compiler implementation already underway.
 The missing percent is mostly about scale, project shape, and compiler-quality
 tooling.
