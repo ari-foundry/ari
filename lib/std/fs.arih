@@ -12,6 +12,19 @@ pub struct Permissions {
   executable: bool,
 }
 
+pub enum FileKind {
+  Regular,
+  Directory,
+  Symlink,
+  Other,
+}
+
+pub struct Metadata {
+  byte_len: i64,
+  kind: FileKind,
+  permissions: Permissions,
+}
+
 pub extern "ari" fn exists(path: string) -> bool = "ari_builtin_fs_exists";
 pub extern "ari" fn can_read(path: string) -> bool = "ari_builtin_fs_can_read";
 pub extern "ari" fn can_write(path: string) -> bool = "ari_builtin_fs_can_write";
@@ -29,12 +42,58 @@ pub extern "ari" fn open(path: string, mode: string) -> File = "ari_builtin_fs_o
 pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";
 pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
 pub extern "ari" fn write_byte(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
+extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadata_size";
+extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
 
 pub fn permissions(path: string) -> Permissions {
   return Permissions {
     readable: can_read(path),
     writable: can_write(path),
     executable: can_execute(path),
+  };
+}
+
+fn file_kind_from_raw(kind: i64) -> FileKind {
+  if kind == 1 {
+    return Regular;
+  }
+  if kind == 2 {
+    return Directory;
+  }
+  if kind == 3 {
+    return Symlink;
+  }
+  return Other;
+}
+
+pub fn try_metadata(path: string) -> std::Option[Metadata] {
+  let kind = metadata_kind_raw(path);
+  if kind < 0 {
+    return std::None<Metadata>();
+  }
+  let size = metadata_size_raw(path);
+  if size < 0 {
+    return std::None<Metadata>();
+  }
+  return std::Some<Metadata>(Metadata {
+    byte_len: size,
+    kind: file_kind_from_raw(kind),
+    permissions: permissions(path),
+  });
+}
+
+pub fn metadata(path: string) -> Metadata {
+  match try_metadata(path) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+  std::panic();
+  return Metadata {
+    byte_len: 0,
+    kind: Other,
+    permissions: Permissions::none(),
   };
 }
 
@@ -230,6 +289,64 @@ pub impl std::fs::Permissions {
 
   fn any(self: ref Self) -> bool {
     return self.readable || self.writable || self.executable;
+  }
+}
+
+pub impl std::fs::Metadata {
+  fn len(self: ref Self) -> i64 {
+    return self.byte_len;
+  }
+
+  fn file_type(self: ref Self) -> FileKind {
+    return self.kind;
+  }
+
+  fn permissions(self: ref Self) -> Permissions {
+    return self.permissions;
+  }
+
+  fn is_file(self: ref Self) -> bool {
+    match self.kind {
+      Regular => {
+        return true;
+      }
+      _ => {
+        return false;
+      }
+    }
+  }
+
+  fn is_dir(self: ref Self) -> bool {
+    match self.kind {
+      Directory => {
+        return true;
+      }
+      _ => {
+        return false;
+      }
+    }
+  }
+
+  fn is_symlink(self: ref Self) -> bool {
+    match self.kind {
+      Symlink => {
+        return true;
+      }
+      _ => {
+        return false;
+      }
+    }
+  }
+
+  fn is_other(self: ref Self) -> bool {
+    match self.kind {
+      Other => {
+        return true;
+      }
+      _ => {
+        return false;
+      }
+    }
   }
 }
 

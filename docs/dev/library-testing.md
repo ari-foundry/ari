@@ -164,6 +164,8 @@ identifies the exact case:
 - `std-fs-permissions.ari`: runtime-backed access permission checks,
   `Permissions` method wrappers, directory execute/search checks, and
   missing-path all-false behavior.
+- `std-fs-metadata.ari`: runtime-backed `stat` metadata checks, missing-path
+  `None`, regular-file length/kind, directory kind, and `Metadata` methods.
 - `std-net-addresses.ari`: source `std::net` IPv4/IPv6 constructors, generic
   IP predicates, socket-address construction, port replacement, loopback, and
   unspecified checks.

@@ -705,6 +705,8 @@ fs::can_read(path)
 fs::can_write(path)
 fs::can_execute(path)
 fs::permissions(path)
+fs::metadata(path)
+fs::try_metadata(path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
@@ -749,6 +751,14 @@ permissions.can_read()
 permissions.can_write()
 permissions.can_execute()
 permissions.any()
+
+metadata.len()
+metadata.file_type()
+metadata.permissions()
+metadata.is_file()
+metadata.is_dir()
+metadata.is_symlink()
+metadata.is_other()
 ```
 
 Use `try_open(path, mode)` for ordinary fallible open operations; it returns
@@ -764,6 +774,14 @@ over `"w"` mode. `can_read`, `can_write`, and `can_execute` are access-style
 preflight checks for the current process. `permissions(path)` snapshots those
 three checks into a `Permissions` value; still handle later open/read/write
 failures because filesystem access can change after the check.
+`try_metadata(path)` returns `Option[Metadata]`, using `None` for missing or
+unstatable paths. `metadata(path)` asserts that metadata is available.
+`Metadata::len` reports host byte length, `Metadata::file_type` returns
+`FileKind` (`Regular`, `Directory`, `Symlink`, or `Other`), and
+`Metadata::permissions` carries the access-style permission snapshot.
+`is_file`, `is_dir`, `is_symlink`, and `is_other` are convenience predicates.
+The first runtime implementation uses Linux/glibc `stat`, so symbolic links
+are followed; no-follow symlink metadata and richer timestamps are future work.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns whether one byte was written. `write_bytes` writes a
 `Slice[u8]` and returns the count written before the first failed byte write.

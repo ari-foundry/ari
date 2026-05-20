@@ -1,0 +1,89 @@
+// Covers stat-backed filesystem metadata: missing paths return None,
+// files report byte length and kind, and directories report directory kind.
+fn main() -> i64 {
+  let file_path = "build/prelude/std-fs-metadata.tmp";
+  let dir_path = "build/prelude/std-fs-metadata-dir.tmp";
+  let missing_path = "build/prelude/std-fs-metadata-missing.tmp";
+
+  if fs::exists(file_path) {
+    fs::remove(file_path);
+  }
+  if fs::exists(dir_path) {
+    fs::remove_dir(dir_path);
+  }
+
+  var score = 0;
+  match fs::try_metadata(missing_path) {
+    std::Some(_missing) => {}
+    std::None => {
+      score = score + 1;
+    }
+  }
+
+  var bytes = ['M', 'E', 'T', 'A'];
+  if fs::write(file_path, bytes.as_slice()) {
+    score = score + 2;
+  }
+
+  match fs::try_metadata(file_path) {
+    std::Some(info) => {
+      if info.len() == 4 {
+        score = score + 3;
+      }
+      if info.is_file() {
+        score = score + 4;
+      }
+      if !info.is_dir() {
+        score = score + 5;
+      }
+      if !info.is_symlink() {
+        score = score + 6;
+      }
+      if info.permissions().any() {
+        score = score + 7;
+      }
+      match info.file_type() {
+        fs::Regular => {
+          score = score + 8;
+        }
+        _ => {}
+      }
+    }
+    std::None => {}
+  }
+
+  let direct = fs::metadata(file_path);
+  if direct.len() == 4 {
+    score = score + 9;
+  }
+
+  if fs::create_dir(dir_path) {
+    score = score + 10;
+  }
+  match fs::try_metadata(dir_path) {
+    std::Some(dir_meta) => {
+      if dir_meta.is_dir() {
+        score = score + 11;
+      }
+      if !dir_meta.is_file() {
+        score = score + 12;
+      }
+      match dir_meta.file_type() {
+        fs::Directory => {
+          score = score + 13;
+        }
+        _ => {}
+      }
+    }
+    std::None => {}
+  }
+
+  if fs::remove_dir(dir_path) {
+    score = score + 14;
+  }
+  if fs::remove(file_path) {
+    score = score + 15;
+  }
+
+  return score;
+}

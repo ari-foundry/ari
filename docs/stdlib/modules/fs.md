@@ -8,13 +8,15 @@ with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
 byte-oriented `String` with either compatibility or `Option`-returning absence
 behavior, rename paths, create hard or symbolic links, create or remove one
-empty directory, close the handle, and remove a file.
+empty directory, query basic file metadata, close the handle, and remove a
+file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
 `write_byte`, `write_bytes`, `read`, `try_read`, `write`, `append`,
-`truncate`, `copy`, `rename`, `hard_link`, `symbolic_link`, `create_dir`,
+`try_write`, `try_append`, `truncate`, `copy`, `try_copy`, `metadata`,
+`try_metadata`, `rename`, `hard_link`, `symbolic_link`, `create_dir`,
 `remove_dir`, `close`, `exists`, and `remove`, not type-suffixed names.
 
 ## API
@@ -25,6 +27,8 @@ fs::can_read(path)
 fs::can_write(path)
 fs::can_execute(path)
 fs::permissions(path)
+fs::metadata(path)
+fs::try_metadata(path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
@@ -69,6 +73,14 @@ permissions.can_read()
 permissions.can_write()
 permissions.can_execute()
 permissions.any()
+
+metadata.len()
+metadata.file_type()
+metadata.permissions()
+metadata.is_file()
+metadata.is_dir()
+metadata.is_symlink()
+metadata.is_other()
 ```
 
 `File` is a small value handle around the runtime file descriptor. Failed open
@@ -167,6 +179,20 @@ value. `permissions.can_read()`, `permissions.can_write()`, and
 is useful for treating a missing or inaccessible path as no visible access.
 `Permissions::none()` creates that all-false value directly.
 
+`try_metadata(path)` returns `Option[Metadata]`. Missing paths and failed host
+metadata lookups return `None`; successful calls snapshot the byte length,
+`FileKind`, and the same access-style `Permissions` used by
+`permissions(path)`. `metadata(path)` is the asserting convenience wrapper for
+programs that treat a missing path as a programmer error.
+
+`Metadata::len()` returns the byte length reported by the host. Directories and
+special files can have host-specific sizes; only regular-file sizes should be
+used as portable byte counts. `metadata.file_type()` returns a `FileKind` enum
+with `Regular`, `Directory`, `Symlink`, and `Other` variants. The convenience
+predicates `is_file`, `is_dir`, `is_symlink`, and `is_other` cover common
+branches. The current Linux/glibc runtime uses `stat`, so `metadata` follows
+symbolic links; a separate no-follow `symlink_metadata` helper is future work.
+
 `rename(source, target)` asks the host to move or rename one path to another.
 On the current Linux/glibc runtime path this follows host `rename` behavior,
 including replacing some existing targets when the OS allows it. Portable
@@ -200,7 +226,7 @@ recursive removal, and directory iteration are separate future slices.
 | write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, and byte-counting `try_write`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, and byte-counting `try_append`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
-| metadata | Roadmap: needs a portable `Metadata` value and runtime `stat`/platform wrappers. |
+| metadata | Current: `try_metadata(path)`/`metadata(path)`, `Metadata`, and `FileKind` over the Linux/glibc `stat` runtime path; no-follow symlink metadata and richer timestamps are roadmap. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, and `permissions`; mutation/chmod is roadmap. |
 | rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)` and empty directory removal with `remove_dir(path)`. |
@@ -345,13 +371,14 @@ if file.is_open() {
 ## Current Limits
 
 - This slice is byte-oriented. There is no owned path type, directory
-  iteration, metadata API, permission mutation API, canonicalization,
+  iteration, permission mutation API, canonicalization,
   recursive directory API, file locking API, temporary-file API, or text
-  encoding policy yet. Link creation exists, but richer link metadata and
-  platform-specific symlink policy are still future work.
+  encoding policy yet. Basic `stat` metadata exists, but richer timestamps,
+  no-follow symlink metadata, link metadata, and platform-specific symlink
+  policy are still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
-  `unlink`, `rename`, `link`, `symlink`, `mkdir`, `rmdir`, `open`, `read`,
-  `write`, and `close`.
+  `stat`, `unlink`, `rename`, `link`, `symlink`, `mkdir`, `rmdir`, `open`,
+  `read`, `write`, and `close`.
 - `File` is not a tracked `own` resource yet. The caller must close each
   successful handle exactly once by convention. Future ownership work should
   make OS resources harder to copy and accidentally double-close.
@@ -376,6 +403,7 @@ tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
 tests/cases/standard-library/ok/fs/std-fs-permissions.ari
+tests/cases/standard-library/ok/fs/std-fs-metadata.ari
 ```
 
 `make check-prelude` emits LLVM for the runtime hooks, checks the C syscall
@@ -398,17 +426,20 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
 checks. `std-fs-permissions.ari` covers access-style readable/writable/
 executable checks, the `Permissions` wrapper methods, and missing-path
-all-false behavior.
+all-false behavior. `std-fs-metadata.ari` covers `Option[Metadata]`,
+regular-file byte length, `FileKind`, directory predicates, and missing-path
+`None`.
 
 ## Next Work
 
-- Add `metadata(path)` and permission mutation as a separate tested runtime
-  slice.
+- Add permission mutation as a separate tested runtime slice.
 - Add explicit overwrite/platform policy for `rename`.
 - Add canonicalization as an OS-wrapper slice returning an owned Ari string or
   path value.
 - Expand link support with metadata/readlink helpers and clearer
   platform-specific symlink policy.
+- Expand metadata with modified/accessed/created timestamps and a no-follow
+  `symlink_metadata` helper.
 - Add directory iteration after Ari can represent owned OS-resource iterator
   handles.
 - Add recursive directory creation/removal after the single-directory hooks
