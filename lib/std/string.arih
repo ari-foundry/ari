@@ -371,6 +371,11 @@ pub impl std::string::String {
     self.append_bytes(zone, rendered.as_slice());
   }
 
+  fn append_debug_in[T: std::fmt::Debug](self: ref mut Self, zone: ref mut Zone, value: T) -> void {
+    let rendered = value.debug_in(zone);
+    self.append_bytes(zone, rendered.as_slice());
+  }
+
   fn push_codepoint_in(self: ref mut Self, zone: ref mut Zone, value: u32) -> void {
     match std::encoding::utf8_encoded_len(value) {
       std::Some(_) => {}

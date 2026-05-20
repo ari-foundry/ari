@@ -152,7 +152,8 @@ work. Each one should land in small tested slices with natural API names.
 - Expose small `String` conveniences only when they preserve byte-string
   semantics, such as ASCII case comparison/search, borrowed ASCII trim views,
   owned trim copies, borrowed split/chunk/window views, byte-slice search,
-  allocator-backed `join_in`, and whole/prefix ASCII parsers.
+  allocator-backed `join_in`, Display/Debug appends, and whole/prefix ASCII
+  parsers.
 - Keep ASCII-only helpers in `std::ascii` so byte-oriented classification,
   comparison, search, trimming, and parsing behavior is explicit at call sites.
 - Keep whole-input value parsing in `std::parse` so application code does not

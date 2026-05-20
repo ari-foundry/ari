@@ -151,6 +151,8 @@ The source helpers complement the macros:
   that participate in `{}`.
 - Use `Debug::debug_in`, `{:?}`, and `debug_value` for diagnostic output that
   should be quoted or otherwise distinguished from user-facing display text.
+- Use `String.append_debug(value)` when building an owned byte string in a
+  tracked local zone and the value already implements `Debug`.
 - Use `write_value` when a `std::io::Writer` should receive any `Display`
   value without choosing a type-suffixed writer helper.
 - Use `write_debug` when a `std::io::Writer` should receive any `Debug` value.

@@ -477,14 +477,14 @@ Checklist:
       rejecting a mismatched zone argument
 - [x] source `std::string::String` same-zone `append_string_in`,
       `append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`,
-      `append_f64_in`, and generic `append_value_in[T: std::fmt::Display]`
-      build explicit-zone owned text through that same private byte-append
-      growth path
+      `append_f64_in`, generic `append_value_in[T: std::fmt::Display]`, and
+      generic `append_debug_in[T: std::fmt::Debug]` build explicit-zone owned
+      text through that same private byte-append growth path
 - [x] tracked source `std::string::String` receiver locals infer the same
       source zone for `push`, `insert`, one-argument `reserve`/`reserve_extra`,
       `extend_from_slice`, `resize`, and the non-`_in` append helpers including
-      `append_value(value)`, while untracked receivers get a targeted diagnostic
-      instead of a hidden
+      `append_value(value)` and `append_debug(value)`, while untracked
+      receivers get a targeted diagnostic instead of a hidden
       allocation capability
 - [x] expose the source `std::string::String` handle as root `String` and
       `std::String` while preserving zone reset/destroy invalidation

@@ -192,6 +192,7 @@ text.append_i64_in(ref mut zone, value)
 text.append_u64_in(ref mut zone, value)
 text.append_bool_in(ref mut zone, value)
 text.append_value_in(ref mut zone, display_value)
+text.append_debug_in(ref mut zone, debug_value)
 text.append_f32_in(ref mut zone, value, precision)
 text.append_f64_in(ref mut zone, value, precision)
 text.push_codepoint_in(ref mut zone, scalar)
@@ -201,11 +202,13 @@ These helpers are the current source-side building blocks used by owned
 formatting paths. `append_value_in[T: std::fmt::Display]` calls
 `value.format_in(ref mut zone)` and appends the rendered bytes, so standard
 display values and user-defined types can participate without adding names such
-as `append_point_in`.
+as `append_point_in`. `append_debug_in[T: std::fmt::Debug]` mirrors that shape
+for diagnostic text and calls `value.debug_in(ref mut zone)`.
 Tracked local strings can call the natural convenience form:
 
 ```ari
 text.append_value(point)
+text.append_debug(point)
 ```
 
 The compiler lowers that call to the explicit same-zone form, just like
@@ -401,8 +404,9 @@ fn main() -> i64 {
   text.append_string_in(ref mut zone, "score=");
   text.append_i64_in(ref mut zone, value);
 
-  // For user-defined display types, prefer text.append_value(value) at call
-  // sites where the String receiver came from a tracked local zone.
+  // For user-defined Display/Debug types, prefer text.append_value(value) or
+  // text.append_debug(value) at call sites where the String receiver came from
+  // a tracked local zone.
 
   let answer = text.len() + value;
   zone::destroy(zone);
@@ -429,6 +433,7 @@ tests/cases/standard-library/ok/string/std-string-prefix-parsers.ari
 tests/cases/standard-library/ok/string/std-string-trim-copy.ari
 tests/cases/standard-library/ok/string/std-string-grow.ari
 tests/cases/standard-library/ok/string/std-string-append.ari
+tests/cases/standard-library/ok/string/std-string-append-debug.ari
 tests/cases/standard-library/ok/string/std-string-from-slice-in.ari
 tests/cases/standard-library/ok/string/std-string-byte-literals.ari
 tests/cases/standard-library/ok/string/std-string-unicode-helpers.ari
@@ -439,6 +444,7 @@ Focused diagnostics include:
 
 ```text
 tests/cases/standard-library/errors/string/std-string-trim-to-after-target-reset.ari
+tests/cases/standard-library/errors/string/std-string-append-debug-different-zone.ari
 ```
 
 `make check-prelude` compiles these to LLVM, checks representative symbols and

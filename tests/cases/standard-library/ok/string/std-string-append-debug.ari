@@ -1,0 +1,52 @@
+// Covers natural Debug appends on zone-tracked String handles. The explicit
+// `_in` form is still available for library internals, while call sites can
+// use append_debug(value) when the receiver's allocation zone is known.
+struct Pair {
+  left: i64,
+  right: bool,
+}
+
+impl fmt::Debug for Pair {
+  fn debug_in(self: ref Self, zone: ref mut Zone) -> String {
+    var output = std::string::new(zone, 16);
+    output.append_string_in(zone, "Pair(");
+    output.append_value(self.left);
+    output.append_string_in(zone, ",");
+    output.append_value(self.right);
+    output.append_string_in(zone, ")");
+    return output;
+  }
+}
+
+fn build(zone: ref mut Zone) -> String {
+  var text = std::string::from(zone, "dbg=");
+  let pair = Pair { left: 4, right: false };
+  text.append_debug(pair);
+  text.push('|');
+  text.append_debug("ari");
+  return text;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(256);
+  let text = build(ref mut zone);
+
+  assert_eq_i64(text.len(), 23);
+  assert_equal[char](text.get(0), 'd');
+  assert_equal[char](text.get(4), 'P');
+  assert_equal[char](text.get(9), '4');
+  assert_equal[char](text.get(11), 'f');
+  assert_equal[char](text.get(17), '|');
+  assert_equal[char](text.get(18), '"');
+  assert_equal[char](text.get(22), '"');
+
+  let total = text.len()
+    + (text.get(4) as i64)
+    + (text.get(9) as i64)
+    + (text.get(11) as i64)
+    + (text.get(17) as i64)
+    + (text.get(18) as i64)
+    + (text.get(22) as i64);
+  zone::destroy(zone);
+  return total % 256;
+}

@@ -37,6 +37,8 @@ identifies the exact case:
   `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed
   `collect` behavior over `std::vec::Iter[T]`.
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
+- `std-string-append-debug.ari`: source `std::string` generic Debug append
+  helper, implicit same-zone lowering, and quoted built-in debug text.
 - `std-string-split-join.ari`: source `std::string` byte-slice search,
   borrowed split/chunk/window views, and allocator-backed `join_in`.
 - `std-string-natural-api.ari`: source `std::string` literal-oriented
@@ -61,6 +63,8 @@ identifies the exact case:
   into a target zone, including source-zone reset behavior.
 - `std-string-trim-to-after-target-reset.ari`: negative target-zone
   provenance diagnostic for copied trim results.
+- `std-string-append-debug-different-zone.ari`: negative same-zone diagnostic
+  for explicit Debug string appends.
 - `std-string-try-byte-access.ari`: source `std::string` Option-returning
   byte access and empty pop behavior.
 - `std-fmt-format-spec.ari`: source `std::fmt::FormatSpec` helper behavior,
