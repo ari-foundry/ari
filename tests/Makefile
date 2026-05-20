@@ -91,12 +91,18 @@ check-diag: $(TARGET)
 	grep -q '_ARNv3std4diag5error' $(BUILD_DIR)/diag/std-diag-basic.ll
 	grep -q '_ARNv3std4diag14label_location' $(BUILD_DIR)/diag/std-diag-basic.ll
 	grep -q 'std__diag__Diagnostic8inherent10with_label' $(BUILD_DIR)/diag/std-diag-basic.ll
+	grep -q 'std__diag__Diagnostic8inherent9with_note' $(BUILD_DIR)/diag/std-diag-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-basic.ari -o $(BUILD_DIR)/diag/std-diag-basic.elf
-	$(BUILD_DIR)/diag/std-diag-basic.elf; code=$$?; test $$code -eq 91
+	$(BUILD_DIR)/diag/std-diag-basic.elf; code=$$?; test $$code -eq 136
 	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-write.ari -o $(BUILD_DIR)/diag/std-diag-write.elf
 	$(BUILD_DIR)/diag/std-diag-write.elf >$(BUILD_DIR)/diag/std-diag-write.out 2>$(BUILD_DIR)/diag/std-diag-write.err; code=$$?; test $$code -eq 7
 	test ! -s $(BUILD_DIR)/diag/std-diag-write.out
 	grep -qx "\[error\] bad token" $(BUILD_DIR)/diag/std-diag-write.err
+	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-write-note.ari -o $(BUILD_DIR)/diag/std-diag-write-note.elf
+	$(BUILD_DIR)/diag/std-diag-write-note.elf >$(BUILD_DIR)/diag/std-diag-write-note.out 2>$(BUILD_DIR)/diag/std-diag-write-note.err; code=$$?; test $$code -eq 9
+	test ! -s $(BUILD_DIR)/diag/std-diag-write-note.out
+	grep -qx "\[error\] expected identifier" $(BUILD_DIR)/diag/std-diag-write-note.err
+	grep -qx "\[info\] names must appear after let" $(BUILD_DIR)/diag/std-diag-write-note.err
 
 check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	mkdir -p $(BUILD_DIR)/tools

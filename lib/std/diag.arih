@@ -1,8 +1,9 @@
 // Small diagnostic values for bootstrap compiler tools.
 //
 // This module intentionally starts as a value layer. It can describe a primary
-// source span, one label, and a stable severity vocabulary without allocating.
-// Rich multi-label rendering should build on top once owned source maps land.
+// source span, one label, one note, and a stable severity vocabulary without
+// allocating. Rich multi-label rendering should build on top once owned source
+// maps land.
 pub enum Severity {
   Note,
   Help,
@@ -28,6 +29,8 @@ pub struct Diagnostic {
   span: std::source::Span,
   label: std::diag::Label,
   has_label: bool,
+  note_message: std::Slice[u8],
+  has_note: bool,
 }
 
 fn empty_message() -> std::Slice[u8] {
@@ -97,6 +100,8 @@ pub fn new(
     span: span,
     label: std::diag::empty_label(span),
     has_label: false,
+    note_message: std::diag::empty_message(),
+    has_note: false,
   };
 }
 
@@ -143,6 +148,24 @@ pub fn with_label(
     span: value.span,
     label: label,
     has_label: true,
+    note_message: value.note_message,
+    has_note: value.has_note,
+  };
+}
+
+pub fn with_note(
+  value: ref std::diag::Diagnostic,
+  message: std::Slice[u8]
+) -> std::diag::Diagnostic {
+  return std::diag::Diagnostic {
+    severity: value.severity,
+    code: value.code,
+    message: value.message,
+    span: value.span,
+    label: value.label,
+    has_label: value.has_label,
+    note_message: message,
+    has_note: true,
   };
 }
 
@@ -172,7 +195,13 @@ fn log_level(severity: std::diag::Severity) -> std::log::Level {
 }
 
 pub fn write(value: ref std::diag::Diagnostic) -> bool {
-  return std::log::write(std::diag::log_level(value.severity), value.message);
+  if !std::log::write(std::diag::log_level(value.severity), value.message) {
+    return false;
+  }
+  if value.has_note {
+    return std::log::write(std::log::Info, value.note_message);
+  }
+  return true;
 }
 
 pub impl std::diag::Label {
@@ -222,6 +251,15 @@ pub impl std::diag::Diagnostic {
     return self.has_label;
   }
 
+  fn has_note(self: ref Self) -> bool {
+    return self.has_note;
+  }
+
+  fn note_message(self: ref Self) -> std::Slice[u8] {
+    std::assert(self.has_note);
+    return self.note_message;
+  }
+
   fn label(self: ref Self) -> std::diag::Label {
     std::assert(self.has_label);
     return self.label;
@@ -229,6 +267,10 @@ pub impl std::diag::Diagnostic {
 
   fn with_label(self: ref Self, label: std::diag::Label) -> std::diag::Diagnostic {
     return std::diag::with_label(ref self, label);
+  }
+
+  fn with_note(self: ref Self, message: std::Slice[u8]) -> std::diag::Diagnostic {
+    return std::diag::with_note(ref self, message);
   }
 
   fn location(self: ref Self, file: ref std::source::SourceFile) -> std::source::Location {

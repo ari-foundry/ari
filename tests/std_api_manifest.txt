@@ -170,6 +170,7 @@ fn std::diag::severity_name|check-diag std-diag-basic severity name helper; docs
 fn std::diag::severity_rank|check-diag std-diag-basic severity ordering helper; docs/stdlib/modules/diag.md
 fn std::diag::warning|check-diag std-diag-basic warning diagnostic constructor; docs/stdlib/modules/diag.md
 fn std::diag::with_label|check-diag std-diag-basic diagnostic label attachment helper; docs/stdlib/modules/diag.md
+fn std::diag::with_note|check-diag std-diag-basic diagnostic note attachment helper; docs/stdlib/modules/diag.md
 fn std::diag::write|check-diag std-diag-write stderr diagnostic summary output; docs/stdlib/modules/diag.md
 fn std::encoding::base64_decoded_len|check-prelude std-encoding-codec standard base64 decoded length validator; docs/stdlib/modules/encoding.md
 fn std::encoding::base64_encoded_len|check-prelude std-encoding-codec standard base64 encoded length helper; docs/stdlib/modules/encoding.md
@@ -868,12 +869,15 @@ method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree 
 method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::diag::Diagnostic::code|check-diag std-diag-basic diagnostic code accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::has_label|check-diag std-diag-basic diagnostic label presence predicate; docs/stdlib/modules/diag.md
+method std::diag::Diagnostic::has_note|check-diag std-diag-basic diagnostic note presence predicate; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::label|check-diag std-diag-basic diagnostic label accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::location|check-diag std-diag-basic diagnostic primary location method; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::message|check-diag std-diag-basic diagnostic message accessor; docs/stdlib/modules/diag.md
+method std::diag::Diagnostic::note_message|check-diag std-diag-basic diagnostic note message accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::severity|check-diag std-diag-basic diagnostic severity accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::span|check-diag std-diag-basic diagnostic span accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::with_label|check-diag std-diag-basic diagnostic label attachment method; docs/stdlib/modules/diag.md
+method std::diag::Diagnostic::with_note|check-diag std-diag-basic diagnostic note attachment method; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::write|check-diag std-diag-write diagnostic stderr summary method; docs/stdlib/modules/diag.md
 method std::diag::Label::is_primary|check-diag std-diag-basic label primary predicate; docs/stdlib/modules/diag.md
 method std::diag::Label::is_secondary|check-diag std-diag-basic label secondary predicate; docs/stdlib/modules/diag.md
@@ -1236,7 +1240,7 @@ module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end s
 module std::collections|std collections linear set tests; docs/stdlib/modules/collections.md
 module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row
 module std::convert|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
-module std::diag|check-diag std-diag-basic/std-diag-write diagnostic values and summary output; docs/stdlib/modules/diag.md
+module std::diag|check-diag std-diag-basic/std-diag-write/std-diag-write-note diagnostic values and summary output; docs/stdlib/modules/diag.md
 module std::encoding|check-prelude std-encoding-text/std-encoding-codec validation and codec helpers; docs/stdlib/modules/encoding.md
 module std::env|std env argument helper tests; docs/stdlib/modules/env.md
 module std::error|check-prelude std-error-basic shared recoverable error module; docs/stdlib/modules/error.md

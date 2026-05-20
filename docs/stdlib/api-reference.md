@@ -228,15 +228,18 @@ diag::warning(code, message, span)
 diag::note(code, message, span)
 diag::help(code, message, span)
 diag::with_label(ref diagnostic, label)
+diag::with_note(ref diagnostic, message)
 diag::location(ref diagnostic, ref source_file)
 diag::label_location(ref label, ref source_file)
 diag::write(ref diagnostic)
 ```
 
 `Diagnostic` stores borrowed byte-slice code/message text and a primary
-`std::source::Span`. `Label` stores a style, span, and borrowed message.
-`write` currently emits a single stderr summary through `std::log`; full
-source-map rendering is roadmap work.
+`std::source::Span`. `Label` stores a style, span, and borrowed message. A
+diagnostic can also carry one borrowed note message through `with_note`.
+`write` emits the summary through `std::log`, and emits the note as an
+additional `[info]` line when present; full source-map rendering is roadmap
+work.
 
 Source-coordinate values live in `std::source`:
 

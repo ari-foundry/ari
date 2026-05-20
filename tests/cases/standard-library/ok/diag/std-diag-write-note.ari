@@ -1,0 +1,15 @@
+// Covers std::diag stderr summary output when a diagnostic carries a note.
+fn main() -> i64 {
+  let file_id = source::root_file();
+  let input = source::file(file_id, "let = 1\n");
+  let diagnostic = diag::error(
+    "E0002",
+    "expected identifier",
+    input.line_span(1)
+  ).with_note("names must appear after let");
+
+  if diagnostic.write() {
+    return 9;
+  }
+  return 1;
+}

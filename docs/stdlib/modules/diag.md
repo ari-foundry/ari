@@ -2,9 +2,10 @@
 
 `std::diag` provides the first shared diagnostic vocabulary for Ari-written
 compiler tools. It is intentionally small: a diagnostic has a severity, a code,
-a message, a primary source span, and at most one attached label. That is
-enough for lexer/parser pilots to stop passing loose tuples around while the
-owned source-map and rich renderer are still roadmap work.
+a message, a primary source span, at most one attached label, and one borrowed
+note message. That is enough for lexer/parser pilots to stop passing loose
+tuples around while the owned source-map and rich renderer are still roadmap
+work.
 
 The module is source-only. It does not allocate and it stores borrowed
 `Slice[u8]` message/code views.
@@ -32,6 +33,7 @@ diag::warning(code, message, span)
 diag::note(code, message, span)
 diag::help(code, message, span)
 diag::with_label(ref diagnostic, label)
+diag::with_note(ref diagnostic, message)
 diag::location(ref diagnostic, ref source_file)
 diag::label_location(ref label, ref source_file)
 diag::write(ref diagnostic)
@@ -45,7 +47,9 @@ let input = source::file(file, "let = 1\n");
 let span = input.line_span(1);
 
 let base = diag::error("E0001", "expected identifier", span);
-let diagnostic = base.with_label(diag::primary(span, "name goes here"));
+let diagnostic = base
+  .with_label(diag::primary(span, "name goes here"))
+  .with_note("identifiers start with a letter or underscore");
 
 let place = diagnostic.location(ref input);
 if place.line() == 1 {
@@ -68,8 +72,9 @@ thresholds and tests, not for serialization compatibility. Use
 
 `write(ref diagnostic)` currently emits a single stderr summary through
 `std::log`: `[error] message`, `[warn] message`, or `[info] message` for note
-and help. It is a temporary stable summary for small tools, not the final
-source-code renderer.
+and help. If a diagnostic carries a note, `write` emits the note as a second
+`[info] note` line. It is a temporary stable summary for small tools, not the
+final source-code renderer.
 
 ## Source Locations
 
@@ -84,7 +89,8 @@ widths must decode UTF-8 separately through `std::encoding`.
 ## Current Limits
 
 - Only one attached label is stored.
-- Notes, related spans, fix-it edits, and multi-line rendering are future work.
+- Multiple notes, related spans, fix-it edits, and multi-line rendering are
+  future work.
 - Messages and codes are borrowed byte slices; owned diagnostic messages should
   use `std::string::String` in a future owned builder.
 - There is no JSON renderer yet. LSP/lint tooling still uses host-side
@@ -93,9 +99,11 @@ widths must decode UTF-8 separately through `std::encoding`.
 ## Tests
 
 - `tests/cases/standard-library/ok/diag/std-diag-basic.ari` checks severity
-  helpers, label construction, label attachment, source location lookup, and
-  method wrappers.
+  helpers, label construction, label attachment, note attachment, source
+  location lookup, and method wrappers.
 - `tests/cases/standard-library/ok/diag/std-diag-write.ari` checks the first
   stable stderr summary output.
+- `tests/cases/standard-library/ok/diag/std-diag-write-note.ari` checks
+  summary output with an attached note line.
 - `make check-diag` compiles the focused fixtures, inspects generated symbols,
   and runs the executables.

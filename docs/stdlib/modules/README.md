@@ -55,7 +55,7 @@ limits, examples, and test files for one module.
   checks, scratch zones for tests, and diagnostics/test-runner roadmap notes.
 - [std::log](log.md): source-only stderr logging levels, byte-slice messages,
   string messages, convenience level functions, and diagnostics roadmap notes.
-- [std::diag](diag.md): source-only diagnostic severities, labels,
+- [std::diag](diag.md): source-only diagnostic severities, labels, notes,
   diagnostics, source-location glue, and first stderr summary output.
 - [std::source](source.md): source-only `FileId`, half-open byte `Span`,
   one-based `LineCol`, file/line/column `Location`, borrowed `SourceFile`

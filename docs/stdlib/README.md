@@ -33,7 +33,7 @@ low-level runtime context layer.
 `read_exact`, `write_all`, and `flush` on top of the raw process IO hooks.
 `std::test` adds source executable unit-test reports, generic equality checks,
 and scratch-zone helpers, `std::log` adds level-prefixed `stderr` diagnostic
-lines, `std::diag` adds severity/label/diagnostic values and first summary
+lines, `std::diag` adds severity/label/note/diagnostic values and first summary
 output for compiler tools, `std::source` adds `FileId`, half-open byte `Span`,
 one-based `LineCol`, `Location`, borrowed `SourceFile` line/column lookup, and
 explicit-zone `LineMap` caching,

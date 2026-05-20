@@ -63,5 +63,17 @@ fn main() -> i64 {
     score = score + 13;
   }
 
+  let noted = labeled.with_note("try adding a name");
+  if noted.has_label() && noted.has_note() {
+    score = score + 14;
+  }
+  if noted.note_message().len() == 17 {
+    score = score + 15;
+  }
+  let relabeled = noted.with_label(diag::secondary(span, "still here"));
+  if relabeled.has_note() && relabeled.note_message().get(0) == 't' {
+    score = score + 16;
+  }
+
   return score;
 }
