@@ -69,6 +69,27 @@ they are compiler engineering scale:
 - Keep allocation explicit and capability-oriented.
 - Treat bootstrapping percentage as a health metric, not as the current task.
 
+## Immediate Compiler Work Queue
+
+Use this queue when the request is "make Ari a real compiler" rather than
+"start bootstrapping". Each slice is useful for ordinary Ari users and also
+moves the later compiler-in-Ari start gate.
+
+| Slice | Build | Focused Check | Done When |
+| --- | --- | --- | --- |
+| Source identity | Stable source ownership, source ids, byte spans, line/column lookup, and snippet extraction as compiler/tooling data. | `make check-compiler-development` and source-map artifact checks. | Lexer/parser diagnostics can name files and spans without runtime `std` carrying compiler-only APIs. |
+| Diagnostic data | Diagnostic codes, severity, labels, notes, normalized paths, and golden rendering. | `make check-compiler-artifacts` for `--emit-diagnostics`. | Expected compiler failures are reviewed as deterministic text artifacts. |
+| Project flow | File-backed modules, package roots, `.ari`/`.arih` policy, module metadata, and cache validation. | Module ok/error fixtures plus `--emit-module-graph`. | A multi-directory Ari tool builds from Make without hidden bootstrap flags. |
+| Compiler data models | Structs, enum payloads, type aliases, nested generics, tuple returns, and `Result[T, E]` in compiler-shaped code. | `tests/cases/compiler-development/ok/model/compiler-stage-gates.ari`. | Tokens, syntax nodes, pass states, and diagnostics can be expressed naturally in Ari. |
+| Pass artifacts | Token, syntax, HIR, typed IR, LLVM text, object symbols, and executable behavior in comparison order. | `make check-compiler-artifacts`. | Regressions fail near the compiler layer that changed. |
+| Backend contract | LLVM/object/shared output, ABI facts, runtime hooks, and symbol mangling stay deterministic. | Focused `--emit-llvm`, object, and shared-library checks. | Codegen consumes resolved IR facts instead of re-resolving source-level names. |
+
+When a slice exposes ugly Ari code, fix the public language/compiler surface:
+type aliases for intent, `char` literals for character data, tuple returns for
+always-present products, `Option`/`Result` for absence and failure, and named
+formatting captures for artifact text. Do not solve those problems with
+bootstrap-only syntax or hidden runtime hooks.
+
 ## Compiler Areas
 
 | Area | Goal | Current Direction |

@@ -152,6 +152,9 @@ Current readiness tests:
 - `tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari`:
   normal source identity, span validation, line/column lookup, structured
   source errors, and tuple return flow as Ari values.
+- `tests/cases/compiler-development/ok/model/compiler-stage-gates.ari`:
+  compiler-development readiness gates, percent windows, enum state payloads,
+  tuple returns, and `Result`-based not-ready flow as normal Ari data.
 - `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari`:
   lexer artifact fixture checked through `--emit-tokens`.
 - `tests/cases/compiler-development/artifact/ok/source-map-file-module.map`:

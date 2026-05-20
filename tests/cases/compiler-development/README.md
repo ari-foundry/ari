@@ -22,6 +22,9 @@ the same language surface that normal Ari users get.
   source spans, rich enum error payloads, and explicit vectors.
 - `ok/model/compiler-source-map-workflow.ari`: source ids, byte spans,
   line/column lookup, structured source errors, and tuple return flow.
+- `ok/model/compiler-stage-gates.ari`: readiness gates, percent windows,
+  enum state payloads, and `Result`-based not-ready flow for normal compiler
+  development planning.
 - `artifact/ok/normalize-paths.*.txt`: seed path, temp-name, and pointer
   normalization fixture for future golden artifact checks.
 - `artifact/ok/source-map-file-module.map`: source byte, line, newline, and

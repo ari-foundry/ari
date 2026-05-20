@@ -105,6 +105,10 @@ check-compiler-development: $(TARGET)
 	$(TARGET) tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-source-map-workflow.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-source-map-workflow.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-source-map-workflow.elf; $(BUILD_DIR)/compiler-development/compiler-source-map-workflow.elf; code=$$?; test $$code -eq 114; fi
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-stage-gates.ari --check
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-stage-gates.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-stage-gates.ll
+	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-stage-gates.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-stage-gates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-stage-gates.elf; $(BUILD_DIR)/compiler-development/compiler-stage-gates.elf; code=$$?; test $$code -eq 193; fi
 
 check-bootstrap-docs:
 	python3 tests/check_bootstrap_readiness_docs.py
