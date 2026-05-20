@@ -22,6 +22,29 @@ compiler is a large program with hard requirements: stable diagnostics,
 multi-file project flow, data-heavy generic models, deterministic artifacts,
 and tests that fail near the layer that regressed.
 
+## Readiness Scorecard
+
+The 38-42% estimate is a weighted engineering score, not a promise that
+self-hosting is almost ready. The current seed fixture
+`tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari`
+models the same shape and returns `40`, keeping the estimate executable as
+ordinary Ari data.
+
+| Gate | Weight | Current Score | What Moves It |
+| --- | --- | --- | --- |
+| Frontend reliability | 10 | 55 | Span-aware lexer/parser errors, recovery fixtures, and syntax docs that match parser behavior. |
+| Source identity | 12 | 30 | Owned source files, stable `SourceId`, byte spans, line/column lookup, and snippets. |
+| Diagnostics | 13 | 30 | Diagnostic codes, labels, notes, source rendering, and normalized golden output. |
+| Module projects | 12 | 45 | Predictable package roots, `.ari`/`.arih` policy, visibility errors, metadata, and cache invalidation. |
+| Compiler data models | 15 | 50 | Nested generic aggregates, `Result` payloads, vectors/maps/sets, and compiler-shaped ownership patterns. |
+| Trait selection | 12 | 35 | Deterministic `Drop`, `Debug`, formatting, `Eq`, `Ord`, `Hash`, and iterator dispatch. |
+| Artifact comparison | 16 | 45 | Token, syntax, diagnostic, module graph, declaration, typed IR, HIR, LLVM, object, and executable comparison order. |
+| Tool build flow | 10 | 35 | Focused Make targets for one Ari tool, fixture roots, and golden comparison without hidden flags. |
+
+Weighted together, this lands at roughly 40%. Treat each row as normal compiler
+development: a row moves when ordinary Ari programs, diagnostics, or artifacts
+get more reliable, not when a private bootstrap shortcut is added.
+
 ## Already Strong
 
 | Area | Current Strength | Why It Matters |
@@ -137,6 +160,33 @@ that ordinary Ari programs cannot use.
 
 Current readiness tests:
 
+- `tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari`:
+  one-page compiler-development dashboard status, next-action categories, and
+  the 40% readiness seed as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari`:
+  compiler layer concepts, review vocabulary, and artifact ownership as normal
+  Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-layer-map.ari`:
+  compiler source-layer ownership, first artifact, and focused-check routing as
+  normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-triage-guide.ari`:
+  symptom-to-layer routing, first artifact choice, and smallest-check selection
+  as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-source-identity.ari`:
+  source kinds, stable source ids, byte span states, and source-map policy as
+  normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-module-project-authoring.ari`:
+  module surfaces, file-backed project state, metadata, cache, and module graph
+  policy as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-artifact-authoring.ari`:
+  artifact stage order, golden policy, handoff boundary, and executable-last
+  review policy as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-diagnostic-authoring.ari`:
+  diagnostic code families, labels, notes, source spans, and golden-test policy
+  as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-test-authoring.ari`:
+  compiler test bucket selection, expected results, and focused-check policy as
+  normal Ari data.
 - `tests/cases/bootstrap-readiness/ok/model/model-token-span.ari`: token/span
   model seed fixture.
 - `tests/cases/bootstrap-readiness/ok/source/source-line-column.ari`: source
@@ -149,12 +199,38 @@ Current readiness tests:
   normal compiler pass/worklist data model.
 - `tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari`:
   normal diagnostic data flow as Ari values.
+- `tests/cases/compiler-development/ok/model/compiler-change-checklist.ari`:
+  review checklist areas, focused-test choice, and non-goal tracking as normal
+  Ari data.
 - `tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari`:
   normal source identity, span validation, line/column lookup, structured
   source errors, and tuple return flow as Ari values.
+- `tests/cases/compiler-development/ok/model/compiler-implementation-slices.ari`:
+  implementation playbook slices, first-check selection, artifact choice, and
+  review readiness as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-next-slices.ari`:
+  near-term compiler-development queue, readiness blockers, and first artifact
+  choices as normal Ari data.
 - `tests/cases/compiler-development/ok/model/compiler-stage-gates.ari`:
   compiler-development readiness gates, percent windows, enum state payloads,
   tuple returns, and `Result`-based not-ready flow as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari`:
+  weighted readiness gates, current percentage scoring, and start-gate pressure
+  as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-test-classification.ari`:
+  compiler test categories, artifact families, backend/runtime distinction, and
+  fixture naming policy as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-doc-crosswalk.ari`:
+  language docs-to-tests navigation, focused checks, and feature-family
+  coverage as normal Ari data.
+- `tests/cases/compiler-development/errors/bootstrap-class-keyword.ari`:
+  compiler-development policy fixture proving `class` is rejected instead of
+  becoming a bootstrap-only abstraction shortcut.
+- `tests/cases/compiler-development/errors/bootstrap-interface-keyword.ari`:
+  compiler-development policy fixture proving `interface` is rejected and
+  compiler abstraction boundaries should use `trait`.
+  Together these prove class/interface bootstrap-only syntax stays rejected in
+  ordinary compiler-development fixtures.
 - `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari`:
   lexer artifact fixture checked through `--emit-tokens`.
 - `tests/cases/compiler-development/artifact/ok/source-map-file-module.map`:

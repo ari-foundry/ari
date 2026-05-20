@@ -18,12 +18,16 @@ For a compiler change, read these in order:
    development phases and non-goals.
 2. [Compiler Readiness Inventory](compiler-readiness-inventory.md): current
    strengths, blocking gaps, backlog, and the later start gate.
-3. [Compiler Pipeline](compiler-pipeline.md): how source becomes LLVM output.
-4. [Compiler Pass Contracts](compiler-pass-contracts.md): what each pass owns
+3. [Compiler Layer Map](compiler-layer-map.md): which `src/` files own each
+   compiler layer and which small check to run first.
+4. [Compiler Triage Guide](compiler-triage-guide.md): how to route a symptom
+   to the earliest layer, closest test bucket, and smallest check.
+5. [Compiler Pipeline](compiler-pipeline.md): how source becomes LLVM output.
+6. [Compiler Pass Contracts](compiler-pass-contracts.md): what each pass owns
    and what data it may hand to the next pass.
-5. [Feature Test Matrix](test-matrix.md): which feature families already have
+7. [Feature Test Matrix](test-matrix.md): which feature families already have
    ok, error, IR, and executable coverage.
-6. [Build And Test](build-test.md): focused Make targets and direct
+8. [Build And Test](build-test.md): focused Make targets and direct
    `build/ari` commands.
 
 Use [Compiler Maturity Gates](compiler-maturity-gates.md) only as the health
@@ -47,6 +51,23 @@ when a compiler-in-Ari track can begin later.
 If a backend change needs information that sema already knows, add that fact to
 IR instead of making codegen re-resolve source names.
 
+## Target Picker
+
+Choose the smallest target that observes the behavior you changed:
+
+| Change Shape | First Check |
+| --- | --- |
+| User-facing language docs or navigation | `make check-language-docs` |
+| Compiler roadmap, maturity gates, pass contracts, or readiness docs | `make check-compiler-dev-docs` |
+| Bootstrap start-gate wording or fixture groups | `make check-bootstrap-docs` |
+| Token, source-map, syntax, diagnostic, module-graph, declaration, typed-IR, or pass-summary artifacts | `make check-compiler-artifacts` |
+| Compiler-shaped Ari model fixtures | `make check-compiler-development` |
+| One ordinary Ari program | `build/ari path/to/case.ari --check` |
+| One backend lowering shape | `build/ari path/to/case.ari --emit-llvm build/focused/name.ll` |
+
+Do not jump to the full suite while the change is still local. Broad checks are
+for handoff or for changes that cross multiple compiler boundaries.
+
 ## Development Loop
 
 Use small checks while iterating:
@@ -55,6 +76,7 @@ Use small checks while iterating:
 build/ari tests/cases/<area>/ok/<case>.ari --check
 build/ari tests/cases/<area>/ok/<case>.ari --emit-llvm build/focused/<case>.ll
 build/ari tests/cases/<area>/ok/<case>.ari -o build/focused/<case>.elf
+make check-language-docs
 make check-compiler-dev-docs
 make check-compiler-development
 ```
@@ -81,8 +103,8 @@ Tests should explain what they protect from the path alone:
 tests/cases/<feature>/ok/
 tests/cases/<feature>/errors/
 tests/cases/compiler-development/ok/model/
-tests/cases/compiler-development/ok/artifact/
-tests/cases/compiler-development/errors/
+tests/cases/compiler-development/artifact/ok/
+tests/cases/compiler-development/artifact/errors/
 tests/cases/bootstrap-readiness/
 ```
 
@@ -91,12 +113,18 @@ compiler-shaped data without starting a bootstrap tree. Use
 `bootstrap-readiness` for the later start-gate fixtures that measure whether
 the project is close enough to begin compiler-in-Ari work.
 
+Use `artifact/ok` and `artifact/errors` for text artifacts and comparison
+reports. Use ordinary feature folders such as `modules`, `generics`, `traits`,
+`ownership`, or `ffi` when the fixture primarily protects a language feature
+instead of compiler-development infrastructure.
+
 Prefer names like:
 
 - `compiler-pass-worklist.ari`
 - `source-line-column.ari`
 - `errors-result-flow.ari`
 - `formatting-artifact-line.ari`
+- `compiler-test-classification.ari`
 
 Each test should have one reason to exist. If a file starts proving lexer,
 parser, generics, ownership, and backend behavior all at once, split it.

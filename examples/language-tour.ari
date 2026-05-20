@@ -1,45 +1,59 @@
-@derive(Debug)
+mod Math {
+  pub fn double(value: i64) -> i64 {
+    return value * 2;
+  }
+}
+
+trait Score {
+  fn score(self) -> i64;
+}
+
 struct Point {
   x: i64,
   y: i64,
 }
 
-enum Option[T] {
-  None,
-  Some(T),
-}
-
-impl Eq[i64] for i64 {
-  fn eq(self, other: i64) -> bool {
-    return self == other;
-  }
+enum ScoreResult {
+  Missing,
+  Value(i64),
 }
 
 fn identity[T](value: T) -> T {
   return value;
 }
 
-fn score(point: Point) -> i64 {
-  return point.x + point.y;
+impl Score for Point {
+  fn score(self) -> i64 {
+    return self.x + self.y;
+  }
 }
 
-fn maybe_score(flag: bool, value: i64) -> Option[i64] {
-  if flag {
-    return Some(value);
+fn classify(score: i64) -> ScoreResult {
+  if score > 0 {
+    return Value(score);
   }
-  return None<i64>();
+  return Missing;
+}
+
+fn range_bonus(limit: i64) -> i64 {
+  var total = 0;
+  for value in 0..limit {
+    total += value;
+  }
+  return total;
 }
 
 fn main() -> i64 {
   let point = Point { x: 2, y: 3 };
-  let value = identity(score(point));
+  let base = identity(point.score());
+  let value = Math::double(base) + range_bonus(4);
   var total = 0;
 
-  match maybe_score(value.eq(5), value) {
-    Some(inner) => {
+  match classify(value) {
+    Value(inner) => {
       total = inner;
     },
-    None => {
+    Missing => {
       total = 1;
     },
   }

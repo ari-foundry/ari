@@ -7,6 +7,7 @@ ordinary Ari tools as much as any future compiler-in-Ari tree.
 
 Use this page with [Compiler Development Roadmap](compiler-development-roadmap.md),
 [Compiler Maturity Gates](compiler-maturity-gates.md),
+[Compiler Module Project Authoring](compiler-module-project-authoring.md),
 [Compiler Source And Diagnostics](compiler-source-diagnostics.md),
 [Compiler Artifact Testing](compiler-artifact-testing.md),
 [Production Compiler Design](production-compiler-design.md), and

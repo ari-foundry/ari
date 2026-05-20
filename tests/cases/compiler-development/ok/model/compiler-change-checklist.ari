@@ -1,0 +1,100 @@
+// Covers the compiler change checklist as ordinary Ari data. It models review
+// readiness for normal compiler work, not bootstrap implementation.
+type ReviewWeight = i64;
+
+enum ReviewArea {
+  Docs,
+  Tests,
+  Diagnostics,
+  Sema,
+  Ir,
+  NonGoals,
+}
+
+enum ReviewState {
+  Pass(i64),
+  Warn(i64),
+  Fail(i64),
+}
+
+struct ReviewItem {
+  weight: ReviewWeight,
+  area: ReviewArea,
+  state: ReviewState,
+  marker: char,
+}
+
+fn area_rank(area: ReviewArea) -> i64 {
+  match area {
+    Docs => 2,
+    Tests => 3,
+    Diagnostics => 5,
+    Sema => 7,
+    Ir => 11,
+    NonGoals => 13,
+  }
+}
+
+fn state_score(state: ReviewState) -> i64 {
+  match state {
+    Pass(pass_score) => pass_score,
+    Warn(warn_score) => warn_score,
+    Fail(fail_score) => fail_score,
+  }
+}
+
+fn marker_score(marker: char) -> i64 {
+  if marker == 'D' {
+    return 5;
+  }
+  if marker == 'T' {
+    return 7;
+  }
+  if marker == 'G' {
+    return 11;
+  }
+  if marker == 'S' {
+    return 13;
+  }
+  if marker == 'I' {
+    return 17;
+  }
+  if marker == 'N' {
+    return 20;
+  }
+  return 1;
+}
+
+fn review_score(item: ReviewItem) -> i64 {
+  return item.weight + area_rank(item.area) + state_score(item.state) +
+    marker_score(item.marker);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(1024);
+  var items = std::vec::new<ReviewItem>(ref mut zone, 6);
+
+  items.push(ReviewItem { weight: 1, area: Docs, state: Pass(10), marker: 'D' });
+  items.push(ReviewItem { weight: 2, area: Tests, state: Pass(12), marker: 'T' });
+  items.push(ReviewItem {
+    weight: 3,
+    area: Diagnostics,
+    state: Warn(8),
+    marker: 'G',
+  });
+  items.push(ReviewItem { weight: 5, area: Sema, state: Pass(9), marker: 'S' });
+  items.push(ReviewItem { weight: 8, area: Ir, state: Warn(6), marker: 'I' });
+  items.push(ReviewItem {
+    weight: 13,
+    area: NonGoals,
+    state: Pass(4),
+    marker: 'N',
+  });
+
+  let total = review_score(items.get(0)) + review_score(items.get(1)) +
+    review_score(items.get(2)) + review_score(items.get(3)) +
+    review_score(items.get(4)) + review_score(items.get(5)) + items.len();
+
+  zone::destroy(zone);
+  return total;
+}

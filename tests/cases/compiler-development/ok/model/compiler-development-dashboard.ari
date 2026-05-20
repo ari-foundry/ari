@@ -1,0 +1,123 @@
+// Covers the one-page compiler-development dashboard as ordinary Ari data.
+// This is a normal hosted-compiler planning model, not bootstrap code.
+type Percent = i64;
+type DashboardWeight = i64;
+
+enum DashboardArea {
+  SourceIdentity,
+  DiagnosticData,
+  ProjectFlow,
+  CompilerModels,
+  ArtifactOrder,
+  DeveloperLoop,
+}
+
+enum DashboardState {
+  DoNow(i64),
+  DoNext(i64),
+  NotYet(i64),
+}
+
+struct DashboardItem {
+  area: DashboardArea,
+  state: DashboardState,
+  weight: DashboardWeight,
+  marker: char,
+}
+
+fn area_rank(area: DashboardArea) -> i64 {
+  match area {
+    SourceIdentity => 2,
+    DiagnosticData => 3,
+    ProjectFlow => 5,
+    CompilerModels => 7,
+    ArtifactOrder => 11,
+    DeveloperLoop => 13,
+  }
+}
+
+fn state_score(state: DashboardState) -> i64 {
+  match state {
+    DoNow(now_score) => now_score,
+    DoNext(next_score) => next_score,
+    NotYet(not_yet_score) => not_yet_score,
+  }
+}
+
+fn marker_score(marker: char) -> i64 {
+  if marker == 'S' {
+    return 5;
+  }
+  if marker == 'D' {
+    return 7;
+  }
+  if marker == 'P' {
+    return 11;
+  }
+  if marker == 'M' {
+    return 13;
+  }
+  if marker == 'A' {
+    return 17;
+  }
+  if marker == 'L' {
+    return 19;
+  }
+  return 1;
+}
+
+fn dashboard_score(item: DashboardItem) -> i64 {
+  return item.weight + area_rank(item.area) + state_score(item.state) +
+    marker_score(item.marker);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(1024);
+  var items = std::vec::new<DashboardItem>(ref mut zone, 6);
+
+  items.push(DashboardItem {
+    area: SourceIdentity,
+    state: DoNow(10),
+    weight: 1,
+    marker: 'S',
+  });
+  items.push(DashboardItem {
+    area: DiagnosticData,
+    state: DoNow(12),
+    weight: 2,
+    marker: 'D',
+  });
+  items.push(DashboardItem {
+    area: ProjectFlow,
+    state: DoNext(8),
+    weight: 3,
+    marker: 'P',
+  });
+  items.push(DashboardItem {
+    area: CompilerModels,
+    state: DoNext(9),
+    weight: 5,
+    marker: 'M',
+  });
+  items.push(DashboardItem {
+    area: ArtifactOrder,
+    state: DoNow(11),
+    weight: 8,
+    marker: 'A',
+  });
+  items.push(DashboardItem {
+    area: DeveloperLoop,
+    state: NotYet(6),
+    weight: 13,
+    marker: 'L',
+  });
+
+  let readiness_seed: Percent = 40;
+  let total = dashboard_score(items.get(0)) + dashboard_score(items.get(1)) +
+    dashboard_score(items.get(2)) + dashboard_score(items.get(3)) +
+    dashboard_score(items.get(4)) + dashboard_score(items.get(5)) +
+    items.len() + readiness_seed;
+
+  zone::destroy(zone);
+  return total;
+}

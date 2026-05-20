@@ -169,20 +169,18 @@ now.
 Compiler pass tests should say which pass they protect:
 
 ```text
-tests/cases/lexer/ok/
-tests/cases/lexer/errors/
-tests/cases/parser/ok/
-tests/cases/parser/errors/
 tests/cases/modules/ok/
 tests/cases/modules/errors/
-tests/cases/sema/ok/
-tests/cases/sema/errors/
 tests/cases/ir/ok/
-tests/artifacts/tokens/
-tests/artifacts/syntax/
-tests/artifacts/modules/
-tests/artifacts/typed-ir/
+tests/cases/compiler-development/ok/model/
+tests/cases/compiler-development/artifact/ok/
+tests/cases/compiler-development/artifact/errors/
 ```
+
+Future Ari-written compiler tools can split into dedicated `lex`, `parse`,
+`hir`, and `ir` folders under their own tool tree. Until then, keep current
+compiler artifacts in `tests/cases/compiler-development/artifact/` and ordinary
+language behavior in the feature folder that owns it.
 
 Use names that encode the behavior:
 

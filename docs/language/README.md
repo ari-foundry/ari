@@ -11,23 +11,50 @@ Ari is still a compiler prototype, so each page separates three states:
 ## Reading Order
 
 1. [Getting Started](getting-started.md)
-2. [Quick Reference](quick-reference.md)
-3. [Cookbook](cookbook.md)
-4. [Functions](functions.md)
-5. [Variables](variables.md)
-6. [Literals](literals.md)
-7. [Types](types.md)
-8. [Operators](operators.md)
-9. [Control Flow](control-flow.md)
-10. [Attributes](attributes.md)
-11. [Modules](modules.md)
-12. [Enums And Pattern Matching](enums-patterns.md)
-13. [Traits](traits.md)
-14. [Prelude And Formatting](prelude.md)
-15. [Standard Library](standard-library.md)
-16. [C FFI And Libraries](ffi.md)
-17. [Memory And Ownership](memory.md)
-18. [Front-End Only Syntax](front-end-only.md)
+2. [Language Tour](language-tour.md)
+3. [Quick Reference](quick-reference.md)
+4. [Cookbook](cookbook.md)
+5. [Feature Status](feature-status.md)
+6. [Feature Crosswalk](feature-crosswalk.md)
+7. [Examples And Tests](examples-and-tests.md)
+8. [Functions](functions.md)
+9. [Variables](variables.md)
+10. [Literals](literals.md)
+11. [Types](types.md)
+12. [Operators](operators.md)
+13. [Control Flow](control-flow.md)
+14. [Attributes](attributes.md)
+15. [Modules](modules.md)
+16. [Enums And Pattern Matching](enums-patterns.md)
+17. [Traits](traits.md)
+18. [Prelude And Formatting](prelude.md)
+19. [Standard Library](standard-library.md)
+20. [C FFI And Libraries](ffi.md)
+21. [Memory And Ownership](memory.md)
+22. [Front-End Only Syntax](front-end-only.md)
+
+## First-Hour Path
+
+If you are new to Ari, start with a tiny executable before reading every
+feature page:
+
+1. Build `build/ari` with `make`.
+2. Compile the first program from [Getting Started](getting-started.md).
+3. Run the cross-feature [Language Tour](language-tour.md) example.
+4. Run `./build/ari your-file.ari --check` after each small edit.
+5. Keep [Quick Reference](quick-reference.md) open for current spellings.
+6. Check [Feature Status](feature-status.md) when you are unsure whether a
+   feature is executable, partial, front-end only, or planned.
+7. Use [Feature Crosswalk](feature-crosswalk.md) to connect a feature to the
+   exact docs, example, tests, and small check that protect it.
+8. Use [Examples And Tests](examples-and-tests.md) to find runnable examples
+   and the feature test family that protects a behavior.
+9. Copy a complete pattern from [Cookbook](cookbook.md) when you need modules,
+   ownership, zones, iterators, FFI, or tests.
+
+That path is intentionally executable-first. Ari still has front-end-only and
+planned surfaces, so always check the focused page before assuming parsed
+syntax already lowers to LLVM.
 
 ## Docs-Only Workflow
 
@@ -35,11 +62,21 @@ When you need to write Ari code from documentation alone, use this path:
 
 1. Open [Quick Reference](quick-reference.md) to choose the current syntax,
    standard-library entry point, and known gotchas.
-2. Copy a nearby pattern from [Cookbook](cookbook.md).
-3. Use the focused page for the feature you are changing when the short form is
+2. Read [Language Tour](language-tour.md) when you need the main executable
+   features in one narrative.
+3. Check [Feature Status](feature-status.md) to confirm the feature state and
+   matching test family.
+4. Use [Feature Crosswalk](feature-crosswalk.md) to find the focused docs,
+   example, tests, and small check for that feature.
+5. Use [Examples And Tests](examples-and-tests.md) to find a runnable example
+   or a focused compiler test.
+6. Copy a nearby pattern from [Cookbook](cookbook.md).
+7. Use the focused page for the feature you are changing when the short form is
    not enough.
-4. Check [Front-End Only Syntax](front-end-only.md) before assuming a parsed
+8. Check [Front-End Only Syntax](front-end-only.md) before assuming a parsed
    feature lowers to executable code.
+9. Use [Getting Started](getting-started.md#common-first-errors) when a small
+   program fails in a way that looks like syntax, ownership, or module setup.
 
 ## Small Program
 

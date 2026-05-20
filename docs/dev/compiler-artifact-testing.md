@@ -11,6 +11,7 @@ changed. Executable behavior should be the last signal, not the first one.
 Read this page with:
 
 - [Compiler Maturity Gates](compiler-maturity-gates.md)
+- [Compiler Artifact Authoring](compiler-artifact-authoring.md)
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md)
 - [Compiler Development Roadmap](compiler-development-roadmap.md)
 - [Bootstrap Readiness](bootstrap-readiness.md)
@@ -150,12 +151,16 @@ remain visible.
 Golden files are committed text outputs. They should be small and local to the
 feature they protect.
 
-Recommended layout before a real compiler tool exists:
+Current compiler-development layout before a real Ari compiler tool exists:
 
 ```text
-tests/cases/bootstrap-readiness/ok/artifacts/
-tests/cases/bootstrap-readiness/golden/
+tests/cases/compiler-development/artifact/ok/
+tests/cases/compiler-development/artifact/errors/
 ```
+
+`artifact/ok` stores fixtures and committed outputs that should compare
+cleanly. `artifact/errors` stores expected compiler diagnostic artifacts and
+seed mismatch reports for the text comparator.
 
 Recommended layout for future Ari compiler tools:
 

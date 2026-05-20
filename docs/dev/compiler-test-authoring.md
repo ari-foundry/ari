@@ -1,0 +1,113 @@
+# Compiler Test Authoring
+
+This page explains how to add tests for Ari compiler work. It is for
+contributors who are changing the hosted compiler, developer docs, artifacts,
+or compiler-shaped Ari fixtures.
+
+This is not a bootstrap implementation plan. The goal is to keep ordinary
+compiler development testable in small pieces before any future compiler-in-Ari
+track starts.
+
+## Choose The Test Bucket
+
+Pick the bucket by behavior, not by the source file you edited.
+
+| Bucket | Use When | Example |
+| --- | --- | --- |
+| `tests/cases/<feature>/ok/` | The language behavior should compile, emit LLVM, link, or run. | `tests/cases/control-flow/ok/for-vector-llvm.ari` |
+| `tests/cases/<feature>/errors/` | The source should be rejected with a stable diagnostic. | `tests/cases/functions/errors/return-type.ari` |
+| `tests/cases/compiler-development/ok/model/` | Ari code models compiler-shaped data, pass state, readiness, or test policy. | `compiler-test-classification.ari` |
+| `tests/cases/compiler-development/artifact/ok/` | A compiler stage emits deterministic text that should match a golden file. | `token-dump-basic.tokens` |
+| `tests/cases/compiler-development/artifact/errors/` | A diagnostic artifact or artifact-comparison report should match. | `diagnostic-parser-expected.diagnostic` |
+| `tests/cases/compiler-development/errors/` | A compiler-development source case should be rejected. | `bootstrap-class-keyword.ari` |
+
+If a test could fit two buckets, choose the one closest to the first layer that
+can fail. A lexer artifact should not wait for LLVM. A type error should not be
+hidden behind an executable test.
+
+## Name The File
+
+Use behavior names:
+
+- `compiler-readiness-scorecard.ari`
+- `compiler-test-classification.ari`
+- `bootstrap-class-keyword.ari`
+- `diagnostic-parser-expected.diagnostic`
+- `module-graph-file-module.graph`
+- `typed-ir-basic.ir`
+
+Avoid helper names that only make sense inside the current implementation. The
+next contributor should know why the test exists before opening compiler code.
+
+## Pick The Small Check
+
+| Test Shape | First Check |
+| --- | --- |
+| One valid Ari source | `build/ari path/to/case.ari --check` |
+| LLVM smoke | `build/ari path/to/case.ari --emit-llvm build/focused/case.ll` |
+| Executable behavior | Link one case and compare its exit code or output. |
+| Compiler-development model | `make check-compiler-development` |
+| Compiler artifact or golden text | `make check-compiler-artifacts` |
+| Developer docs only | `make check-compiler-dev-docs` |
+| Language docs only | `make check-language-docs` |
+
+Full `make check` belongs at handoff for broad changes. Sanitizer checks are
+intentionally separate and are not part of this focused authoring loop.
+
+## Expected Results
+
+For executable model fixtures, keep the expected exit code in `tests/Makefile`
+near the command that builds and runs the fixture. The source fixture should
+compute that value from meaningful model data, not return a magic constant.
+
+For artifact fixtures, commit the expected text under
+`tests/cases/compiler-development/artifact/ok/` or
+`tests/cases/compiler-development/artifact/errors/`. Prefer normalized text over
+raw paths, temp names, or pointer-shaped values.
+
+For error fixtures, assert the diagnostic phrase or code that proves the
+intended layer rejected the source.
+
+## Comments In Tests
+
+Use one short comment at the top of compiler-development model fixtures:
+
+```ari
+// Covers test authoring policy as ordinary Ari data. This is not bootstrap
+// code; it models normal compiler-development checks.
+```
+
+Keep comments useful:
+
+- Say which behavior the fixture protects.
+- Say when a fixture is not bootstrap code.
+- Do not narrate obvious assignment or arithmetic.
+- Put longer rationale in docs, not inside tiny test sources.
+
+## Artifact Update Rule
+
+When an artifact changes:
+
+1. Confirm the compiler behavior change is intentional.
+2. Regenerate only the affected artifact.
+3. Review the text diff before accepting it.
+4. Update the doc or roadmap entry if the artifact format changed.
+5. Run the narrow artifact target.
+
+Artifact tests should make compiler stages reviewable. They should not become a
+large pile of opaque snapshots.
+
+## Review Checklist
+
+Before handing off a compiler test change, answer:
+
+- Which compiler layer owns this behavior?
+- Is the file in the closest `ok`, `errors`, `artifact/ok`, or
+  `artifact/errors` bucket?
+- Does the filename name the behavior?
+- Is the smallest check documented or wired into `tests/Makefile`?
+- Did docs change when a new user-facing rule became clearer?
+- Is the non-goal clear when the request mentions bootstrapping?
+
+This keeps tests useful for the hosted compiler now and for a later bootstrap
+start gate without creating a private bootstrap-only test world.

@@ -1,0 +1,138 @@
+// Covers source identity policy as ordinary Ari data. It models stable source
+// ids and byte spans for hosted compiler work, not bootstrap implementation.
+type BytePos = i64;
+type SourceScore = i64;
+
+enum SourceKind {
+  File(i64),
+  Generated(i64),
+  Virtual(i64),
+}
+
+enum SpanState {
+  Valid(i64),
+  Empty(i64),
+  OutOfBounds(i64),
+}
+
+struct SourceIdentityRule {
+  source: SourceKind,
+  state: SpanState,
+  start: BytePos,
+  end: BytePos,
+  weight: SourceScore,
+  marker: char,
+}
+
+fn source_rank(source: SourceKind) -> i64 {
+  match source {
+    File(file_score) => file_score + 1,
+    Generated(generated_score) => generated_score + 2,
+    Virtual(virtual_score) => virtual_score + 3,
+  }
+}
+
+fn state_score(state: SpanState) -> i64 {
+  match state {
+    Valid(valid_score) => valid_score,
+    Empty(empty_score) => empty_score,
+    OutOfBounds(out_of_bounds_score) => out_of_bounds_score,
+  }
+}
+
+fn span_width(start: BytePos, end: BytePos) -> i64 {
+  if end <= start {
+    return 0;
+  }
+  return end - start;
+}
+
+fn marker_score(marker: char) -> i64 {
+  if marker == 'F' {
+    return 3;
+  }
+  if marker == 'G' {
+    return 5;
+  }
+  if marker == 'V' {
+    return 7;
+  }
+  if marker == 'L' {
+    return 11;
+  }
+  if marker == 'C' {
+    return 13;
+  }
+  if marker == 'S' {
+    return 17;
+  }
+  return 0;
+}
+
+fn rule_score(rule: SourceIdentityRule) -> i64 {
+  return source_rank(rule.source) + state_score(rule.state) +
+    span_width(rule.start, rule.end) + rule.weight + marker_score(rule.marker);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(1024);
+  var rules = std::vec::new<SourceIdentityRule>(ref mut zone, 6);
+
+  rules.push(SourceIdentityRule {
+    source: File(10),
+    state: Valid(8),
+    start: 0,
+    end: 5,
+    weight: 0,
+    marker: 'F',
+  });
+  rules.push(SourceIdentityRule {
+    source: Generated(7),
+    state: Empty(4),
+    start: 12,
+    end: 12,
+    weight: 0,
+    marker: 'G',
+  });
+  rules.push(SourceIdentityRule {
+    source: Virtual(5),
+    state: OutOfBounds(2),
+    start: 20,
+    end: 18,
+    weight: 0,
+    marker: 'V',
+  });
+  rules.push(SourceIdentityRule {
+    source: File(6),
+    state: Valid(9),
+    start: 3,
+    end: 9,
+    weight: 0,
+    marker: 'L',
+  });
+  rules.push(SourceIdentityRule {
+    source: Generated(4),
+    state: Valid(5),
+    start: 1,
+    end: 4,
+    weight: 0,
+    marker: 'C',
+  });
+  rules.push(SourceIdentityRule {
+    source: Virtual(3),
+    state: Empty(6),
+    start: 6,
+    end: 6,
+    weight: 0,
+    marker: 'S',
+  });
+
+  let readiness_seed = 40;
+  let total = rule_score(rules.get(0)) + rule_score(rules.get(1)) +
+    rule_score(rules.get(2)) + rule_score(rules.get(3)) +
+    rule_score(rules.get(4)) + rule_score(rules.get(5)) + rules.len() +
+    readiness_seed;
+
+  zone::destroy(zone);
+  return total;
+}

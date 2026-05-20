@@ -2,14 +2,47 @@
 
 The docs are split by audience.
 
+## Start Here
+
+- New Ari user: [Getting Started](language/getting-started.md), then
+  [Language Tour](language/language-tour.md), then
+  [Quick Reference](language/quick-reference.md), then
+  [Cookbook](language/cookbook.md), then
+  [Feature Crosswalk](language/feature-crosswalk.md).
+- New compiler contributor:
+  [Compiler Development Dashboard](dev/compiler-development-dashboard.md), then
+  [Compiler Contributor Guide](dev/compiler-contributor-guide.md), then
+  [Compiler Concepts Glossary](dev/compiler-concepts-glossary.md), then
+  [Compiler Layer Map](dev/compiler-layer-map.md), then
+  [Compiler Triage Guide](dev/compiler-triage-guide.md), then
+  [Compiler Source Identity](dev/compiler-source-identity.md), then
+  [Compiler Module Project Authoring](dev/compiler-module-project-authoring.md),
+  then
+  [Compiler Artifact Authoring](dev/compiler-artifact-authoring.md), then
+  [Compiler Diagnostic Authoring](dev/compiler-diagnostic-authoring.md), then
+  [Compiler Test Authoring](dev/compiler-test-authoring.md), then
+  [Compiler Development Roadmap](dev/compiler-development-roadmap.md), then
+  [Compiler Implementation Playbook](dev/compiler-implementation-playbook.md),
+  then [Compiler Next Slices](dev/compiler-next-slices.md), then
+  [Compiler Change Checklist](dev/compiler-change-checklist.md), then
+  [Build And Test](dev/build-test.md).
+- Bootstrap readiness question:
+  [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md) and
+  [Bootstrap Readiness](dev/bootstrap-readiness.md). These are readiness
+  gauges, not instructions to start bootstrapping now.
+
 ## Language Docs
 
 Use these when writing Ari code:
 
 - [Language Overview](language/README.md)
 - [Getting Started](language/getting-started.md)
+- [Language Tour](language/language-tour.md)
 - [Quick Reference](language/quick-reference.md)
 - [Cookbook](language/cookbook.md)
+- [Feature Status](language/feature-status.md)
+- [Feature Crosswalk](language/feature-crosswalk.md)
+- [Examples And Tests](language/examples-and-tests.md)
 - [Functions](language/functions.md)
 - [Variables](language/variables.md)
 - [Literals](language/literals.md)
@@ -46,7 +79,19 @@ Use these when changing the compiler:
 - [Developer Overview](dev/README.md)
 - [Architecture](dev/architecture.md)
 - [Compiler Pipeline](dev/compiler-pipeline.md)
+- [Compiler Development Dashboard](dev/compiler-development-dashboard.md)
 - [Compiler Contributor Guide](dev/compiler-contributor-guide.md)
+- [Compiler Concepts Glossary](dev/compiler-concepts-glossary.md)
+- [Compiler Layer Map](dev/compiler-layer-map.md)
+- [Compiler Triage Guide](dev/compiler-triage-guide.md)
+- [Compiler Source Identity](dev/compiler-source-identity.md)
+- [Compiler Module Project Authoring](dev/compiler-module-project-authoring.md)
+- [Compiler Artifact Authoring](dev/compiler-artifact-authoring.md)
+- [Compiler Diagnostic Authoring](dev/compiler-diagnostic-authoring.md)
+- [Compiler Test Authoring](dev/compiler-test-authoring.md)
+- [Compiler Implementation Playbook](dev/compiler-implementation-playbook.md)
+- [Compiler Next Slices](dev/compiler-next-slices.md)
+- [Compiler Change Checklist](dev/compiler-change-checklist.md)
 - [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)
 - [Compiler Pass Contracts](dev/compiler-pass-contracts.md)
 - [Build And Test](dev/build-test.md)

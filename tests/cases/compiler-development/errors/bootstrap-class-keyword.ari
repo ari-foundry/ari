@@ -1,0 +1,8 @@
+// Covers compiler-development policy: Ari compiler work must use normal
+// language constructs, not a bootstrap-only `class` keyword.
+class CompilerPass {
+}
+
+fn main() -> i64 {
+  return 0;
+}

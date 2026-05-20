@@ -45,13 +45,21 @@ provenance hooks live under `tests/cases/memory/`. See
 ## Compiler And Bootstrap Documentation Coverage Note
 
 Compiler development is tracked before bootstrapping work starts. The general
+language-docs entry path is checked by `make check-language-docs`, the general
 compiler roadmap is checked by `make check-compiler-dev-docs`, the later
 bootstrap start gate is checked by `make check-bootstrap-docs`, and the first
 compiler-shaped Ari fixtures are
 checked by `make check-bootstrap-readiness`. The docs target runs
+`tests/check_language_docs.py`,
 `tests/check_compiler_development_docs.py` and
 `tests/check_bootstrap_readiness_docs.py` and verifies that
+[Getting Started](../language/getting-started.md),
+[Quick Reference](../language/quick-reference.md),
+[Cookbook](../language/cookbook.md),
 [Compiler Development Roadmap](compiler-development-roadmap.md),
+[Compiler Implementation Playbook](compiler-implementation-playbook.md),
+[Compiler Next Slices](compiler-next-slices.md),
+[Compiler Change Checklist](compiler-change-checklist.md),
 [Compiler Maturity Gates](compiler-maturity-gates.md),
 [Compiler Pass Contracts](compiler-pass-contracts.md),
 [Compiler Project Model](compiler-project-model.md),

@@ -174,6 +174,7 @@ Small checks should stay narrow while developing:
 ```text
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/generics/ok/generic-function.ari --emit-llvm build/focused/generic.ll
+make check-language-docs
 make check-compiler-dev-docs
 make check-bootstrap-readiness
 ```

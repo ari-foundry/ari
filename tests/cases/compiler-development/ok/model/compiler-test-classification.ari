@@ -1,0 +1,115 @@
+// Covers compiler test classification as ordinary Ari data. This keeps test
+// layout policy executable without turning it into a bootstrap implementation.
+type CoverageWeight = i64;
+
+enum TestOutcome {
+  Ok,
+  Error,
+  Artifact,
+  Tooling,
+}
+
+enum ArtifactKind {
+  None,
+  TokenDump,
+  SyntaxDump,
+  DiagnosticDump,
+  TypedIrDump,
+  LlvmText,
+  Executable,
+}
+
+struct CompilerTest {
+  weight: CoverageWeight,
+  outcome: TestOutcome,
+  artifact: ArtifactKind,
+  needs_backend: bool,
+  marker: char,
+}
+
+fn outcome_score(outcome: TestOutcome) -> i64 {
+  match outcome {
+    Ok => 1,
+    Error => 2,
+    Artifact => 3,
+    Tooling => 4,
+  }
+}
+
+fn artifact_score(kind: ArtifactKind) -> i64 {
+  match kind {
+    None => 0,
+    TokenDump => 10,
+    SyntaxDump => 20,
+    DiagnosticDump => 30,
+    TypedIrDump => 40,
+    LlvmText => 50,
+    Executable => 60,
+  }
+}
+
+fn marker_score(marker: char) -> i64 {
+  if marker == 'F' {
+    return 7;
+  }
+  if marker == 'D' {
+    return 11;
+  }
+  if marker == 'A' {
+    return 13;
+  }
+  return 1;
+}
+
+fn backend_score(needs_backend: bool) -> i64 {
+  if needs_backend {
+    return 5;
+  }
+  return 0;
+}
+
+fn classify(test: CompilerTest) -> i64 {
+  return test.weight + outcome_score(test.outcome) +
+    artifact_score(test.artifact) + backend_score(test.needs_backend) +
+    marker_score(test.marker);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(1024);
+  var tests = std::vec::new<CompilerTest>(ref mut zone, 4);
+
+  tests.push(CompilerTest {
+    weight: 2,
+    outcome: Ok,
+    artifact: None,
+    needs_backend: false,
+    marker: 'F',
+  });
+  tests.push(CompilerTest {
+    weight: 3,
+    outcome: Error,
+    artifact: DiagnosticDump,
+    needs_backend: false,
+    marker: 'D',
+  });
+  tests.push(CompilerTest {
+    weight: 4,
+    outcome: Artifact,
+    artifact: TypedIrDump,
+    needs_backend: true,
+    marker: 'A',
+  });
+  tests.push(CompilerTest {
+    weight: 5,
+    outcome: Tooling,
+    artifact: Executable,
+    needs_backend: true,
+    marker: 'T',
+  });
+
+  let total = classify(tests.get(0)) + classify(tests.get(1)) +
+    classify(tests.get(2)) + classify(tests.get(3)) + tests.len();
+
+  zone::destroy(zone);
+  return total;
+}

@@ -6,6 +6,10 @@ The test suite is grouped by feature first, then by expected outcome.
 | --- | --- |
 | `tests/cases/<feature>/ok/` | Valid Ari programs. Makefile targets compile them, run them, or inspect generated LLVM. |
 | `tests/cases/<feature>/errors/` | Invalid Ari programs. Makefile targets assert the expected diagnostic text. |
+| `tests/cases/compiler-development/ok/model/` | Normal Ari programs that model compiler data, pass flow, readiness gates, and test classification. |
+| `tests/cases/compiler-development/artifact/ok/` | Golden text artifacts and source fixtures that should compare cleanly. |
+| `tests/cases/compiler-development/artifact/errors/` | Expected diagnostic artifacts and text-comparator mismatch reports. |
+| `tests/cases/compiler-development/errors/` | Invalid compiler-development source fixtures, such as bootstrap-only syntax that must stay rejected. |
 | `tests/cases/bootstrap-readiness/` | Compiler-shaped Ari fixtures used before a real `bootstrap/` tree exists. |
 | `tests/packages/` | File-backed module and module-cache fixtures. |
 | `tests/ffi/` | C helper sources used by FFI and object-linking tests. |
@@ -13,6 +17,8 @@ The test suite is grouped by feature first, then by expected outcome.
 | `tests/tools/` | LSP, lint, and editor integration smoke checks. |
 | `tests/std_api_manifest.txt` | Public `lib/std` API manifest with coverage notes. |
 | `tests/bootstrap_readiness_manifest.txt` | Planned compiler-bootstrap readiness fixture groups. |
+| `tests/compiler_development_manifest.txt` | General compiler-development gates and the test style expected for each gate. |
+| `tests/check_language_docs.py` | User-facing documentation smoke check for docs-only Ari usage and test navigation. |
 | `tests/check_bootstrap_readiness_docs.py` | Documentation smoke check for the production compiler design, bootstrap start-gate, and self-host roadmap links. |
 
 Feature case directories:
@@ -46,8 +52,27 @@ Within each feature directory, tests still use readable file prefixes:
 - `prelude-<feature>.ari` for implicit root aliases, macros, and root ADTs.
 - `zone-<feature>.ari` for allocation, lifetime, and provenance hooks.
 - `std-library-smoke.ari` for a small cross-library integration test.
+- `compiler-<model-or-artifact>.ari` for compiler-development fixtures that
+  model normal compiler data, pass flow, test classification, or artifact
+  behavior without creating a `bootstrap/` tree.
+  Examples: `compiler-readiness-scorecard.ari`,
+  `compiler-development-dashboard.ari`, `compiler-test-classification.ari`,
+  `bootstrap-class-keyword.ari`.
 
 See `docs/dev/library-testing.md` for the full standard library testing policy.
+
+## Focused Targets
+
+Use the narrowest target that matches the changed surface:
+
+| Target | Scope |
+| --- | --- |
+| `make check-language-docs` | Language docs, docs-only reading path, and test-layout navigation. |
+| `make check-compiler-dev-docs` | Compiler roadmap, maturity gates, pass contracts, project model, source diagnostics, and artifact-testing docs. |
+| `make check-compiler-artifacts` | Deterministic source-map, token, syntax, diagnostic, module graph, declaration index, typed IR, and pass-summary artifacts. |
+| `make check-compiler-development` | Ari fixtures that model compiler pass worklists, diagnostics, source maps, readiness gates, and test classification as ordinary language code. |
+| `make check-bootstrap-docs` | Later bootstrap start-gate docs and fixture-group manifest. |
+| `make check-bootstrap-readiness` | Small pre-bootstrap Ari fixtures under `tests/cases/bootstrap-readiness/`. |
 
 Documentation checks are intentionally small. For example,
 `make check-bootstrap-docs` only verifies that the bootstrap readiness guide
@@ -59,6 +84,12 @@ sections linked from the developer docs.
 fixtures under `tests/cases/bootstrap-readiness/`. It is meant to stay fast and
 focused; it should prove one compiler-shaped pressure point at a time, not run
 the whole test suite.
+
+`make check-compiler-development` is different from
+`make check-bootstrap-readiness`: it protects normal compiler-development
+language pressure, not a bootstrap implementation. Add fixtures there when a
+large Ari tool would need clearer data modeling, error flow, artifact
+classification, or pass-state representation.
 
 ## README Placement
 

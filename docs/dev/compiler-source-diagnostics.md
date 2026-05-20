@@ -16,6 +16,8 @@ Read this page with:
 
 - [Compiler Maturity Gates](compiler-maturity-gates.md)
 - [Compiler Development Roadmap](compiler-development-roadmap.md)
+- [Compiler Source Identity](compiler-source-identity.md)
+- [Compiler Diagnostic Authoring](compiler-diagnostic-authoring.md)
 - [Production Compiler Design](production-compiler-design.md)
 - [Bootstrap Readiness](bootstrap-readiness.md)
 

@@ -51,6 +51,7 @@ and each focused `check-*` target still run from the repository root.
 ```sh
 make check
 make check-std-api
+make check-language-docs
 make check-tools
 make check-debug
 make check-sanitize
@@ -66,6 +67,10 @@ make check-functions
 
 `make check` builds the compiler, runs negative tests, compiles positive tests,
 executes generated ELF files, and checks exit codes or stdout where needed.
+
+`make check-language-docs` keeps the user-facing language documentation usable
+as a docs-only entry point. It verifies the beginner path, quick reference,
+cookbook, front-end-only warnings, and test-layout navigation.
 
 `make check-std-api` extracts the public source `std` surface from
 `lib/std.arih` and `lib/std/*.arih`, then compares it with
@@ -262,14 +267,21 @@ but stable enough that tests do not need constant wording churn.
 
 ## Before Committing Code Changes
 
-Run:
+For documentation or small compiler-development fixture changes, run the
+focused target that owns the changed surface first:
+
+```sh
+make check-language-docs
+make check-compiler-dev-docs
+make check-compiler-development
+```
+
+For larger compiler code changes, run:
 
 ```sh
 make check
 ```
 
-For semantic, ownership, parser, or codegen work, also run:
-
-```sh
-make check-sanitize
-```
+Sanitizer checks are useful for parser, semantic checker, ownership, and
+codegen internals, but they are intentionally treated as a separate heavy pass
+rather than part of every small documentation or model-fixture loop.
