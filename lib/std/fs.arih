@@ -379,6 +379,14 @@ pub fn write_bytes(file: File, values: std::Slice[u8]) -> i64 {
   return index;
 }
 
+pub fn try_read_byte(file: File) -> std::Option[u8] {
+  let byte = read_byte(file);
+  if byte < 0 {
+    return std::None<u8>();
+  }
+  return std::Some<u8>(byte as u8);
+}
+
 fn try_write_all_with_mode(path: string, mode: string, values: std::Slice[u8]) -> std::Option[i64] {
   let file = try_open(path, mode).unwrap_or(File::invalid());
   if !file.is_open() {
@@ -626,6 +634,10 @@ pub impl std::fs::File {
 
   fn read_byte(self) -> i64 {
     return read_byte(self);
+  }
+
+  fn try_read_byte(self) -> std::Option[u8] {
+    return try_read_byte(self);
   }
 
   fn write_byte(self, value: u8) -> bool {

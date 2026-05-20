@@ -17,7 +17,7 @@ canonical path, close the handle, and remove a file.
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
-`write_byte`, `write_bytes`, `read`, `try_read`, `write`, `append`,
+`try_read_byte`, `write_byte`, `write_bytes`, `read`, `try_read`, `write`, `append`,
 `try_write`, `try_append`, `truncate`, `copy`, `try_copy`, `metadata`,
 `try_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
 `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
@@ -73,6 +73,7 @@ fs::try_open_write(path)
 fs::try_open_append(path)
 fs::close(file)
 fs::read_byte(file)
+fs::try_read_byte(file)
 fs::write_byte(file, value)
 fs::write_bytes(file, values)
 fs::read(ref mut zone, path)
@@ -91,6 +92,7 @@ File::invalid()
 file.is_open()
 file.close()
 file.read_byte()
+file.try_read_byte()
 file.write_byte(value)
 file.write_bytes(values)
 
@@ -156,6 +158,8 @@ compatibility wrappers over `open(path, "r")`, `open(path, "w")`, and
 form or `create`/`try_create` when creating a file.
 
 `read_byte(file)` returns the next byte as `i64` or `-1` at EOF or on failure.
+Use `try_read_byte(file)` or `file.try_read_byte()` when EOF is ordinary
+control flow; they return `Option[u8]` and hide the sentinel from call sites.
 `write_byte(file, value)` returns whether exactly one byte was written.
 `write_bytes(file, values)` writes each byte in a `Slice[u8]` until one write
 fails and returns the number of bytes written before that failure.
@@ -560,6 +564,7 @@ if file.is_open() {
 
 ```text
 tests/cases/standard-library/ok/fs/std-fs-basic.ari
+tests/cases/standard-library/ok/fs/std-fs-try-byte.ari
 tests/cases/standard-library/ok/fs/std-fs-append.ari
 tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
 tests/cases/standard-library/ok/fs/std-fs-read-write.ari
@@ -578,6 +583,8 @@ tests/cases/standard-library/ok/fs/std-fs-canonicalize.ari
 declarations, runs the executable, and cleans up the temporary file under
 `build/prelude/`. `std-fs-basic.ari` covers existence, create/truncate writes,
 reads, byte-slice writes, close, removal, and `Option[File]` read/write opens.
+`std-fs-try-byte.ari` covers `Option[u8]` byte reads for module and `File`
+method forms, EOF, invalid handles, and character-literal byte writes.
 `std-fs-append.ari` covers append-mode open, preservation of existing bytes,
 and failed append opens through `Option[File]`. `std-fs-open-modes.ari` covers
 the mode-string contract, including `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes,

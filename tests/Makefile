@@ -345,6 +345,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-basic.ari -o $(BUILD_DIR)/prelude/std-fs-basic.elf
 	$(BUILD_DIR)/prelude/std-fs-basic.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-basic.elf; $(BUILD_DIR)/prelude/std-fs-basic.elf; code=$$?; test $$code -eq 120; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-try-byte.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-try-byte.ll
+	grep -F -q "std2fs13try_read_byte" $(BUILD_DIR)/prelude/std-fs-try-byte.ll
+	grep -F -q "std__fs__File8inherent13try_read_byte" $(BUILD_DIR)/prelude/std-fs-try-byte.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-try-byte.ari -o $(BUILD_DIR)/prelude/std-fs-try-byte.elf
+	$(BUILD_DIR)/prelude/std-fs-try-byte.elf; code=$$?; test $$code -eq 55
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-try-byte.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-try-byte.elf; $(BUILD_DIR)/prelude/std-fs-try-byte.elf; code=$$?; test $$code -eq 55; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-append.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-append.ll
 	grep -q "@ari_builtin_fs_open" $(BUILD_DIR)/prelude/std-fs-append.ll
 	grep -q "declare i32 @open" $(BUILD_DIR)/prelude/std-fs-append.ll

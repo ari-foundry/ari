@@ -1,0 +1,44 @@
+// Covers Option-returning byte reads so callers can avoid EOF sentinels.
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-try-byte.tmp";
+  if fs::exists(path) {
+    fs::remove(path);
+  }
+
+  var score = 0;
+  let writer = fs::try_open(path, "w").unwrap_or(fs::File::invalid());
+  if writer.is_open() {
+    score = score + 1;
+  }
+  if writer.write_byte('A') {
+    score = score + 2;
+  }
+  if writer.write_byte('B') {
+    score = score + 3;
+  }
+  if writer.close() {
+    score = score + 4;
+  }
+
+  let reader = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
+  if fs::try_read_byte(reader).unwrap_or('?') == 'A' {
+    score = score + 5;
+  }
+  if reader.try_read_byte().unwrap_or('?') == 'B' {
+    score = score + 6;
+  }
+  if reader.try_read_byte().is_none() {
+    score = score + 7;
+  }
+  if reader.close() {
+    score = score + 8;
+  }
+  if fs::File::invalid().try_read_byte().is_none() {
+    score = score + 9;
+  }
+  if fs::remove(path) {
+    score = score + 10;
+  }
+
+  return score;
+}

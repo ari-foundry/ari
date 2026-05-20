@@ -296,6 +296,7 @@ fn std::fs::try_open_dir|check-prelude std-fs-read-dir Option-returning director
 fn std::fs::try_open_read|check-prelude std-fs-basic compatibility Option-returning read helper; docs/stdlib/modules/fs.md
 fn std::fs::try_open_write|check-prelude std-fs-basic compatibility Option-returning write helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read|check-prelude std-fs-try-read Option-returning natural whole-file read alias; docs/stdlib/modules/fs.md
+fn std::fs::try_read_byte|check-prelude std-fs-try-byte Option-returning file byte read helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read_dir|check-prelude std-fs-read-dir Option-returning directory name-list helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read_dir_entries|check-prelude std-fs-read-dir Option-returning directory entry-list helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read_to_string|check-prelude std-fs-try-read Option-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
@@ -878,6 +879,7 @@ method std::fs::File::close|check-prelude std-fs-basic value file handle close m
 method std::fs::File::invalid|check-prelude std-fs-basic invalid file fallback constructor; docs/stdlib/modules/fs.md
 method std::fs::File::is_open|check-prelude std-fs-basic open-handle predicate; docs/stdlib/modules/fs.md
 method std::fs::File::read_byte|check-prelude std-fs-basic value file handle byte read method; docs/stdlib/modules/fs.md
+method std::fs::File::try_read_byte|check-prelude std-fs-try-byte value file handle Option-returning byte read method; docs/stdlib/modules/fs.md
 method std::fs::File::write_byte|check-prelude std-fs-basic value file handle byte write method; docs/stdlib/modules/fs.md
 method std::fs::File::write_bytes|check-prelude std-fs-basic value file handle slice write method; docs/stdlib/modules/fs.md
 method std::fs::Metadata::file_type|check-prelude std-fs-metadata file kind accessor; docs/stdlib/modules/fs.md
