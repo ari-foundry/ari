@@ -97,6 +97,74 @@ pub fn try_metadata(path: string) -> std::Option[Metadata] {
   });
 }
 
+pub fn try_file_type(path: string) -> std::Option[FileKind] {
+  let kind = metadata_kind_raw(path);
+  if kind < 0 {
+    return std::None<FileKind>();
+  }
+  return std::Some<FileKind>(file_kind_from_raw(kind));
+}
+
+pub fn is_file(path: string) -> bool {
+  match try_file_type(path) {
+    std::Some(kind) => {
+      match kind {
+        Regular => {
+          return true;
+        }
+        _ => {}
+      }
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+pub fn is_dir(path: string) -> bool {
+  match try_file_type(path) {
+    std::Some(kind) => {
+      match kind {
+        Directory => {
+          return true;
+        }
+        _ => {}
+      }
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+pub fn is_symlink(path: string) -> bool {
+  match try_file_type(path) {
+    std::Some(kind) => {
+      match kind {
+        Symlink => {
+          return true;
+        }
+        _ => {}
+      }
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+pub fn is_other(path: string) -> bool {
+  match try_file_type(path) {
+    std::Some(kind) => {
+      match kind {
+        Other => {
+          return true;
+        }
+        _ => {}
+      }
+    }
+    std::None => {}
+  }
+  return false;
+}
+
 pub fn metadata(path: string) -> Metadata {
   match try_metadata(path) {
     std::Some(value) => {

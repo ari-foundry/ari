@@ -708,6 +708,11 @@ fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
 fs::try_metadata(path)
+fs::try_file_type(path)
+fs::is_file(path)
+fs::is_dir(path)
+fs::is_symlink(path)
+fs::is_other(path)
 fs::mode(path)
 fs::try_mode(path)
 fs::set_mode(path, mode)
@@ -807,9 +812,14 @@ unstatable paths. `metadata(path)` asserts that metadata is available.
 `Metadata::len` reports host byte length, `Metadata::file_type` returns
 `FileKind` (`Regular`, `Directory`, `Symlink`, or `Other`), and
 `Metadata::permissions` carries the access-style permission snapshot.
-`is_file`, `is_dir`, `is_symlink`, and `is_other` are convenience predicates.
-The first runtime implementation uses Linux/glibc `stat`, so symbolic links
-are followed; no-follow symlink metadata and richer timestamps are future work.
+`try_file_type(path)` returns just `Option[FileKind]` without building the full
+metadata/permission snapshot.
+`fs::is_file(path)`, `fs::is_dir(path)`, `fs::is_symlink(path)`, and
+`fs::is_other(path)` are direct path predicates that return `false` for
+missing or unstatable paths. The matching `metadata.is_*()` methods are the
+right choice when code already has a `Metadata` value. The first runtime
+implementation uses Linux/glibc `stat`, so symbolic links are followed;
+no-follow symlink metadata and richer timestamps are future work.
 `try_mode(path)` returns `Option[i64]` containing the low POSIX `0777`
 permission bits, and `mode(path)` is the asserting wrapper. Use `set_mode(path,
 mode)` for direct chmod-style updates, or `set_permissions(path, permissions)`

@@ -19,6 +19,12 @@ fn main() -> i64 {
       score = score + 1;
     }
   }
+  if fs::try_file_type(missing_path).is_none() {
+    score = score + 1;
+  }
+  if !fs::is_file(missing_path) && !fs::is_dir(missing_path) {
+    score = score + 1;
+  }
 
   var bytes = ['M', 'E', 'T', 'A'];
   if fs::write(file_path, bytes.as_slice()) {
@@ -42,6 +48,15 @@ fn main() -> i64 {
       if info.permissions().any() {
         score = score + 7;
       }
+      if fs::is_file(file_path) {
+        score = score + 1;
+      }
+      if !fs::is_dir(file_path) {
+        score = score + 1;
+      }
+      if !fs::is_symlink(file_path) {
+        score = score + 1;
+      }
       match info.file_type() {
         fs::Regular => {
           score = score + 8;
@@ -56,6 +71,17 @@ fn main() -> i64 {
   if direct.len() == 4 {
     score = score + 9;
   }
+  match fs::try_file_type(file_path) {
+    std::Some(kind) => {
+      match kind {
+        fs::Regular => {
+          score = score + 1;
+        }
+        _ => {}
+      }
+    }
+    std::None => {}
+  }
 
   if fs::create_dir(dir_path) {
     score = score + 10;
@@ -67,6 +93,15 @@ fn main() -> i64 {
       }
       if !dir_meta.is_file() {
         score = score + 12;
+      }
+      if fs::is_dir(dir_path) {
+        score = score + 1;
+      }
+      if !fs::is_file(dir_path) {
+        score = score + 1;
+      }
+      if !fs::is_other(dir_path) {
+        score = score + 1;
       }
       match dir_meta.file_type() {
         fs::Directory => {

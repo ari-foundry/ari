@@ -423,10 +423,12 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_fs_metadata_kind" $(BUILD_DIR)/prelude/std-fs-metadata.ll
 	grep -q "declare i32 @stat" $(BUILD_DIR)/prelude/std-fs-metadata.ll
 	grep -F -q "std2fs12try_metadata" $(BUILD_DIR)/prelude/std-fs-metadata.ll
+	grep -F -q "std2fs13try_file_type" $(BUILD_DIR)/prelude/std-fs-metadata.ll
+	grep -F -q "std2fs7is_file" $(BUILD_DIR)/prelude/std-fs-metadata.ll
 	grep -F -q "std2fs8metadata" $(BUILD_DIR)/prelude/std-fs-metadata.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari -o $(BUILD_DIR)/prelude/std-fs-metadata.elf
-	$(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 120
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-metadata.elf; $(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 120; fi
+	$(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 129
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-metadata.elf; $(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 129; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-canonicalize.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-canonicalize.ll
 	grep -q "@ari_builtin_fs_canonicalize" $(BUILD_DIR)/prelude/std-fs-canonicalize.ll
 	grep -q "declare ptr @realpath" $(BUILD_DIR)/prelude/std-fs-canonicalize.ll

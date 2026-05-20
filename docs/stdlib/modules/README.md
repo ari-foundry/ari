@@ -82,8 +82,9 @@ limits, examples, and test files for one module.
   deadlines/timeouts, UTC calendar conversion, and sleep.
 - [std::fs](fs.md): runtime-backed file existence, mode-string open calls,
   close, removal, `File` value handles, `Option[File]` open helpers, and
-  source byte create/read/write/append/truncate/copy plus rename,
-  hard/symbolic links, and single-directory create/remove helpers.
+  source byte create/read/write/append/truncate/copy plus metadata,
+  path-kind predicates, rename, hard/symbolic links, and single-directory
+  create/remove helpers.
 - [std::path](path.md): source-only POSIX-style lexical path helpers for
   separators, absolute/relative checks, typed `PathBytes` views including
   direct literal coercion, borrowed components, join, and lightweight

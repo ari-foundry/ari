@@ -10,15 +10,17 @@ byte-oriented `String` with either compatibility or `Option`-returning absence
 behavior, rename paths, create hard or symbolic links, create or remove one
 empty directory, read directory entry names through an explicit `Dir` handle,
 collect lightweight `DirEntry` values with names and joined paths, query basic
-file metadata, read and change POSIX permission bits, resolve an existing path
-to an absolute canonical path, close the handle, and remove a file.
+file metadata, ask direct path-kind predicates such as `is_file` and `is_dir`,
+read and change POSIX permission bits, resolve an existing path to an absolute
+canonical path, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
 `write_byte`, `write_bytes`, `read`, `try_read`, `write`, `append`,
 `try_write`, `try_append`, `truncate`, `copy`, `try_copy`, `metadata`,
-`try_metadata`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
+`try_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
+`is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
 `symbolic_link`, `create_dir`, `remove_dir`, `try_open_dir`, `read_dir`,
 `try_read_dir`, `read_dir_entries`, `try_read_dir_entries`, `read_dir_next`,
@@ -34,6 +36,11 @@ fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
 fs::try_metadata(path)
+fs::try_file_type(path)
+fs::is_file(path)
+fs::is_dir(path)
+fs::is_symlink(path)
+fs::is_other(path)
 fs::mode(path)
 fs::try_mode(path)
 fs::set_mode(path, mode)
@@ -222,12 +229,21 @@ metadata lookups return `None`; successful calls snapshot the byte length,
 `permissions(path)`. `metadata(path)` is the asserting convenience wrapper for
 programs that treat a missing path as a programmer error.
 
+`try_file_type(path)` is the lightweight `Option[FileKind]` helper for code
+that only needs the path kind without building the full metadata/permission
+snapshot. `is_file(path)`, `is_dir(path)`,
+`is_symlink(path)`, and `is_other(path)` are direct path predicates over the
+same metadata policy; missing or unstatable paths return `false`. Prefer these
+predicates at call sites that only branch on the kind, and keep
+`metadata(path)` for code that also needs size or permissions.
+
 `Metadata::len()` returns the byte length reported by the host. Directories and
 special files can have host-specific sizes; only regular-file sizes should be
 used as portable byte counts. `metadata.file_type()` returns a `FileKind` enum
 with `Regular`, `Directory`, `Symlink`, and `Other` variants. The convenience
-predicates `is_file`, `is_dir`, `is_symlink`, and `is_other` cover common
-branches. The current Linux/glibc runtime uses `stat`, so `metadata` follows
+methods `metadata.is_file()`, `metadata.is_dir()`, `metadata.is_symlink()`, and
+`metadata.is_other()` cover common branches when you already have metadata.
+The current Linux/glibc runtime uses `stat`, so `metadata` follows
 symbolic links; a separate no-follow `symlink_metadata` helper is future work.
 
 `try_mode(path)` returns the current POSIX permission bits as
@@ -298,7 +314,7 @@ owned/path-to-OS-string boundary slice.
 | write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, and byte-counting `try_write`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, and byte-counting `try_append`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
-| metadata | Current: `try_metadata(path)`/`metadata(path)`, `Metadata`, and `FileKind` over the Linux/glibc `stat` runtime path; no-follow symlink metadata and richer timestamps are roadmap. |
+| metadata | Current: `try_metadata(path)`/`metadata(path)`, `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_symlink(path)`, `is_other(path)`, `Metadata`, and `FileKind` over the Linux/glibc `stat` runtime path; no-follow symlink metadata and richer timestamps are roadmap. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
 | rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)` and empty directory removal with `remove_dir(path)`. |
@@ -587,9 +603,10 @@ all-false behavior. `std-fs-mode.ari` covers stat-backed mode lookup,
 chmod-backed mutation calls, `Permissions` constructors, mode conversion,
 invalid mode rejection, missing-path failure, and cleanup restoration without
 depending on exact chmod effects from the host filesystem.
-`std-fs-metadata.ari` covers `Option[Metadata]`,
-regular-file byte length, `FileKind`, directory predicates, and missing-path
-`None`. `std-fs-canonicalize.ari` covers `Option[String]` path resolution,
+`std-fs-metadata.ari` covers `Option[Metadata]`, `Option[FileKind]`,
+direct path-kind predicates, regular-file byte length, `FileKind`, metadata
+methods, directory predicates, and missing-path `None`.
+`std-fs-canonicalize.ari` covers `Option[String]` path resolution,
 absolute canonical paths, filename preservation, and missing-path `None`.
 
 ## Next Work
