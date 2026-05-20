@@ -47,10 +47,12 @@ Bootstrapping is not implemented yet, but the start gate is checked by
 `make check-bootstrap-docs`. That target runs
 `tests/check_bootstrap_readiness_docs.py` and verifies that
 [Production Compiler Design](production-compiler-design.md),
+[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
 [Bootstrap Readiness](bootstrap-readiness.md),
 [Self-Host Roadmap](self-host-roadmap.md), and the docs indexes stay linked and
 keep the production-language contract, readiness scorecard, start gate, first
-implementation slices, roadmap, estimate, and test-plan sections.
+implementation slices, fixture groups, roadmap, estimate, and test-plan
+sections.
 
 ## Feature Plan
 

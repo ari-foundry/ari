@@ -8,10 +8,12 @@ Ari-written compiler to be an ordinary production Ari program: multi-file,
 well-tested, explicit about allocation, pleasant to read, and built from public
 language features that other Ari programs can use too.
 
-Read this page with [Bootstrap Readiness](bootstrap-readiness.md) and
+Read this page with [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
+[Bootstrap Readiness](bootstrap-readiness.md), and
 [Self-Host Roadmap](self-host-roadmap.md):
 
 - this page defines the production language and compiler contract
+- Compiler Bootstrap Fixture Plan defines pre-bootstrap fixture groups
 - Bootstrap Readiness defines the start gate
 - Self-Host Roadmap defines the stage0, stage1, and stage2 path
 

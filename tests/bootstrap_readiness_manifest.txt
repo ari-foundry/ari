@@ -1,0 +1,16 @@
+# Bootstrap readiness fixture manifest
+#
+# This manifest is intentionally documentation-like. It records the fixture
+# groups that must stay represented before a real bootstrap/ tree starts. The
+# check-bootstrap-docs target verifies these group names so the readiness plan
+# does not silently collapse into one vague "self-host" bucket.
+
+modules: file-backed package roots, imports, visibility, module cache
+source: source ownership, byte spans, line lookup, char and UTF-8 text
+model: tokens, syntax nodes, diagnostics, HIR, symbols, aliases
+generics: nested compiler data, Vec/map/set/result payloads
+traits: debug, display, hash, equality, ordering, drop selection
+errors: Result-based expected failures and recovery without panic
+zones: explicit arenas for source, tokens, trees, diagnostics, tests
+formatting: named captures, debug output, buffer-backed artifact text
+artifacts: token, syntax, diagnostic, HIR, typed IR, LLVM text comparison

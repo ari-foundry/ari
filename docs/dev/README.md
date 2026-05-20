@@ -14,6 +14,7 @@ This folder is for people changing the compiler.
 - [Symbol Mangling](symbol-mangling.md)
 - [Standard Library Roadmap](standard-library-roadmap.md)
 - [Production Compiler Design](production-compiler-design.md)
+- [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)
 - [Bootstrap Readiness](bootstrap-readiness.md)
 - [Self-Host Roadmap](self-host-roadmap.md)
 - [Library Testing](library-testing.md)

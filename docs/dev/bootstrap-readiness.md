@@ -3,12 +3,13 @@
 This page answers one practical question: when can Ari start a real
 compiler-in-Ari bootstrap track?
 
-It complements [Production Compiler Design](production-compiler-design.md) and
+It complements [Production Compiler Design](production-compiler-design.md),
+[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md), and
 [Self-Host Roadmap](self-host-roadmap.md). The production design page defines
-the ordinary language/compiler contract Ari needs; the self-host roadmap
-explains the long path from stage0 to stage2; this page is the entry gate for
-starting that work without turning the current C++ compiler into a second
-rewrite project.
+the ordinary language/compiler contract Ari needs; the fixture plan defines the
+pre-bootstrap test groups; the self-host roadmap explains the long path from
+stage0 to stage2; this page is the entry gate for starting that work without
+turning the current C++ compiler into a second rewrite project.
 
 ## Current Estimate
 

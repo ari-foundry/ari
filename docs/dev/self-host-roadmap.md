@@ -6,7 +6,9 @@ as `stage0`: a trusted bootstrap compiler used to compile and test the new Ari
 implementation until Ari can compile itself.
 
 Use [Production Compiler Design](production-compiler-design.md) for the
-ordinary language/compiler contract, and use
+ordinary language/compiler contract,
+[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md) for the
+pre-bootstrap test groups, and
 [Bootstrap Readiness](bootstrap-readiness.md) as the practical start gate. The
 readiness page tracks the current estimate, the minimum language and standard
 library surface, the first test layout, and the "do not start yet" boundaries.

@@ -11,6 +11,7 @@ The test suite is grouped by feature first, then by expected outcome.
 | `tests/fixtures/` | Alternate module roots and intentionally incomplete fixtures. |
 | `tests/tools/` | LSP, lint, and editor integration smoke checks. |
 | `tests/std_api_manifest.txt` | Public `lib/std` API manifest with coverage notes. |
+| `tests/bootstrap_readiness_manifest.txt` | Planned compiler-bootstrap readiness fixture groups. |
 | `tests/check_bootstrap_readiness_docs.py` | Documentation smoke check for the production compiler design, bootstrap start-gate, and self-host roadmap links. |
 
 Feature case directories:
@@ -49,8 +50,8 @@ See `docs/dev/library-testing.md` for the full standard library testing policy.
 Documentation checks are intentionally small. For example,
 `make check-bootstrap-docs` only verifies that the bootstrap readiness guide
 keeps its production-language contract, readiness scorecard, start gate, first
-implementation slices, roadmap, estimate, and test-plan sections linked from
-the developer docs.
+implementation slices, fixture groups, roadmap, estimate, and test-plan
+sections linked from the developer docs.
 
 ## README Placement
 

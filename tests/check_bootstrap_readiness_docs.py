@@ -13,6 +13,17 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
+FIXTURE_GROUPS = [
+    "modules",
+    "source",
+    "model",
+    "generics",
+    "traits",
+    "errors",
+    "zones",
+    "formatting",
+    "artifacts",
+]
 
 
 def read(path: str) -> str:
@@ -48,6 +59,7 @@ def main() -> int:
         "60-65% remaining",
         "not a bootstrap-only checklist",
         "ordinary production Ari program",
+        "[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)",
         "general language",
         "compiler/tooling package",
         "SourceId",
@@ -59,11 +71,47 @@ def main() -> int:
     ]:
         require(design, needle, design_path)
 
+    fixture_plan_path = "docs/dev/bootstrap-fixture-plan.md"
+    fixture_plan = read(fixture_plan_path)
+    for heading in [
+        "# Compiler Bootstrap Fixture Plan",
+        "## Goal",
+        "## Placement",
+        "## Fixture Groups",
+        "## Naming Rules",
+        "## Focused Targets",
+        "## Artifact Policy",
+        "## Start Gate",
+    ]:
+        require(fixture_plan, heading, fixture_plan_path)
+    for needle in [
+        "[Production Compiler Design](production-compiler-design.md)",
+        "normal Ari programs",
+        "tests/cases/bootstrap-readiness/",
+        "token dumps",
+        "syntax dumps",
+        "diagnostic reports",
+        "not in runtime `std`",
+    ]:
+        require(fixture_plan, needle, fixture_plan_path)
+    for group in FIXTURE_GROUPS:
+        require(fixture_plan, f"| `{group}` |", fixture_plan_path)
+
+    manifest_path = "tests/bootstrap_readiness_manifest.txt"
+    manifest = read(manifest_path)
+    for group in FIXTURE_GROUPS:
+        require(manifest, f"{group}:", manifest_path)
+
     readiness_path = "docs/dev/bootstrap-readiness.md"
     readiness = read(readiness_path)
     require(
         readiness,
         "[Production Compiler Design](production-compiler-design.md)",
+        readiness_path,
+    )
+    require(
+        readiness,
+        "[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)",
         readiness_path,
     )
     for heading in [
@@ -89,11 +137,14 @@ def main() -> int:
     self_host_path = "docs/dev/self-host-roadmap.md"
     self_host = read(self_host_path)
     require(self_host, "[Production Compiler Design](production-compiler-design.md)", self_host_path)
+    require(self_host, "[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)", self_host_path)
     require(self_host, "[Bootstrap Readiness](bootstrap-readiness.md)", self_host_path)
 
     for index_path in ["docs/README.md", "docs/dev/README.md"]:
-        require(read(index_path), "Production Compiler Design", index_path)
-        require(read(index_path), "Bootstrap Readiness", index_path)
+        index = read(index_path)
+        require(index, "Production Compiler Design", index_path)
+        require(index, "Compiler Bootstrap Fixture Plan", index_path)
+        require(index, "Bootstrap Readiness", index_path)
 
     return 0
 
