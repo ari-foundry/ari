@@ -61,8 +61,11 @@ check-bootstrap-docs:
 	python3 tests/check_bootstrap_readiness_docs.py
 
 check-bootstrap-readiness: $(TARGET)
+	mkdir -p $(BUILD_DIR)/bootstrap-readiness
 	$(TARGET) tests/cases/bootstrap-readiness/ok/model/model-token-span.ari --check
 	$(TARGET) tests/cases/bootstrap-readiness/ok/errors/errors-result-flow.ari --check
+	$(TARGET) tests/cases/bootstrap-readiness/ok/errors/errors-result-flow.ari --emit-llvm $(BUILD_DIR)/bootstrap-readiness/errors-result-flow.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/bootstrap-readiness/ok/errors/errors-result-flow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/bootstrap-readiness/errors-result-flow.elf; $(BUILD_DIR)/bootstrap-readiness/errors-result-flow.elf; code=$$?; test $$code -eq 122; fi
 	$(TARGET) tests/cases/bootstrap-readiness/ok/formatting/formatting-artifact-line.ari --check
 
 check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)

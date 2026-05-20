@@ -295,6 +295,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   struct, and explicit fixed-capacity `Vec[T; N]` payload values inline. Match
   payload bindings and direct payload slot access expose the full aggregate
   value.
+- Aggregate enum payload slots can mix payload-word values with one plain
+  aggregate slot whose first field is an `i64`/`u64` scalar lane. This keeps
+  compiler-shaped generic enums such as `Result[Token, LexError]` representable
+  when the aggregate payload starts with a tag or kind word.
 - Enum patterns can destructure inline plain-aggregate payload slots with
   tuple, fixed-array, and struct subpatterns for value bindings, aliases,
   wildcards, and nested product subpatterns.

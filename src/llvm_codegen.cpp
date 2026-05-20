@@ -3659,11 +3659,13 @@ private:
 
     Value emit_enum_payload_scalar_lane(SourceLocation loc, const Value& payload) {
         const IrType* lane_type = enum_payload_slot_scalar_lane_type(payload.ir_type);
-        if (!lane_type) {
+        std::optional<std::uint32_t> lane_index = enum_payload_slot_scalar_lane_index(payload.ir_type);
+        if (!lane_type || !lane_index) {
             throw CompileError(where(loc) + ": enum payload slot has no scalar storage lane during LLVM lowering");
         }
         std::string lane = temp();
-        line("  " + lane + " = extractvalue " + payload.type + " " + payload.name + ", 1");
+        line("  " + lane + " = extractvalue " + payload.type + " " + payload.name +
+             ", " + std::to_string(*lane_index));
         return Value{llvm_type(*lane_type), lane, *lane_type};
     }
 
@@ -3673,14 +3675,15 @@ private:
         }
 
         const IrType* lane_type = enum_payload_slot_scalar_lane_type(slot_type);
-        if (!lane_type) {
+        std::optional<std::uint32_t> lane_index = enum_payload_slot_scalar_lane_index(slot_type);
+        if (!lane_type || !lane_index) {
             throw CompileError(where(loc) + ": enum payload slot has no scalar storage lane during LLVM lowering");
         }
         Value lane = cast_value(payload, *lane_type);
         std::string slot_value = temp();
         std::string slot_llvm_type = llvm_type(slot_type);
         line("  " + slot_value + " = insertvalue " + slot_llvm_type + " zeroinitializer, " +
-             lane.type + " " + lane.name + ", 1");
+             lane.type + " " + lane.name + ", " + std::to_string(*lane_index));
         return Value{slot_llvm_type, slot_value, slot_type};
     }
 

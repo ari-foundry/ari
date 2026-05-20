@@ -1,20 +1,34 @@
-// Covers expected compiler failures as Result values instead of panic paths.
-// Keep the payloads scalar for this first readiness fixture; aggregate
-// Result payloads are tracked as a later generic aggregate stress point.
-type TokenScore = i64;
-type LexErrorCode = i64;
-
-fn scan_digit(value: char) -> Result[TokenScore, LexErrorCode] {
-  if value >= '0' && value <= '9' {
-    return Ok(2);
-  }
-  return Err(value as i64);
+// Covers expected compiler failures as aggregate Result values instead of
+// panic paths.
+struct Token {
+  kind: i64,
+  start: i64,
+  end: i64,
 }
 
-fn score(result: Result[TokenScore, LexErrorCode]) -> i64 {
+enum LexError {
+  Unexpected(char),
+  EndOfInput,
+}
+
+fn scan_digit(value: char) -> Result[Token, LexError] {
+  if value >= '0' && value <= '9' {
+    return Ok(Token { kind: 1, start: 0, end: 1 });
+  }
+  return Err(Unexpected(value));
+}
+
+fn score_error(error: LexError) -> i64 {
+  match error {
+    Unexpected(value) => value as i64,
+    EndOfInput => -1,
+  }
+}
+
+fn score(result: Result[Token, LexError]) -> i64 {
   match result {
-    Ok(token) => token,
-    Err(error) => error,
+    Ok(token) => token.kind + token.end,
+    Err(error) => score_error(error),
   }
 }
 

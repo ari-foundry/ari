@@ -140,13 +140,15 @@ destructured with
 exact array-style element patterns such as `Values([first, second])`; the match
 arm checks the vector's current runtime length before extracting the inline data
 slots. If one payload position mixes
-payload-word values with one nested aggregate enum type, the slot uses the
-nested enum layout. Payload-word cases zero-initialize that nested storage and
-write the payload word into the nested enum's first payload slot, while nested
-enum cases store the full nested value. This mixed-slot rule covers ordinary
-scalar, pointer-shaped, and one-word enum payloads, but it does not allow
-bare root `Vec[T]`, fixed-capacity vectors or plain aggregates mixed with other
-slot shapes, or multiple different nested aggregate enum types to share a slot.
+payload-word values with one nested aggregate enum type, or with one plain
+aggregate whose first field is an `i64`/`u64` scalar lane, the slot uses that
+aggregate layout. Payload-word cases zero-initialize that storage and write the
+payload word into the scalar lane, while aggregate cases store the full value.
+This mixed-slot rule covers ordinary scalar, pointer-shaped, one-word enum
+payloads, and compiler-shaped `Result[Token, LexError]` values where the token
+record starts with an integer kind lane. It does not allow bare root `Vec[T]`,
+fixed-capacity vectors without a scalar lane, or multiple different aggregate
+slot shapes to share a slot.
 The LLVM backend
 can store and copy local
 aggregate enum values, then match local values by tag with positional payload

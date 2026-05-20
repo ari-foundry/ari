@@ -7491,7 +7491,11 @@ private:
         if (same_type(slot_type, payload_type)) return payload_path;
         if (enum_payload_slot_uses_scalar_lane(slot_type, payload_type) &&
             is_enum_payload_word_reference_type(payload_type)) {
-            return local_owned_field_path(payload_path, 1);
+            std::optional<std::uint32_t> lane_index = enum_payload_slot_scalar_lane_index(slot_type);
+            if (!lane_index) {
+                throw CompileError(where(loc) + ": internal error: enum payload scalar lane is missing");
+            }
+            return local_owned_field_path(payload_path, *lane_index);
         }
         if (same_type(slot_type, enum_payload_storage_type(loc)) &&
             is_enum_payload_word_reference_type(payload_type)) {

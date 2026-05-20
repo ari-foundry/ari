@@ -18,6 +18,12 @@ bool is_payload_word_storage(const IrType& type) {
     return same_type(type, enum_payload_storage_type(type.loc));
 }
 
+bool is_payload_word_lane_storage(const IrType& type) {
+    if (is_payload_word_storage(type)) return true;
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::I64;
+}
+
 bool is_inline_payload_storage_type(const IrType& type) {
     if (has_aggregate_enum_layout(type)) return true;
     return type.qualifier == TypeQualifier::Value &&
@@ -44,9 +50,26 @@ IrType enum_payload_slot_storage_type(SourceLocation loc, const IrType& payload_
 }
 
 const IrType* enum_payload_slot_scalar_lane_type(const IrType& slot_type) {
-    if (!has_aggregate_enum_layout(slot_type) || slot_type.field_types.size() < 2) return nullptr;
-    const IrType& lane_type = slot_type.field_types[1];
-    return is_payload_word_storage(lane_type) ? &lane_type : nullptr;
+    std::optional<std::uint32_t> index = enum_payload_slot_scalar_lane_index(slot_type);
+    if (!index) return nullptr;
+    return &slot_type.field_types[*index];
+}
+
+std::optional<std::uint32_t> enum_payload_slot_scalar_lane_index(const IrType& slot_type) {
+    if (slot_type.field_types.empty()) return std::nullopt;
+    // Mixed payload slots store compact payload words inside a larger
+    // aggregate's first word lane, keeping the full aggregate available for
+    // the cases that need it.
+    if (has_aggregate_enum_layout(slot_type)) {
+        if (slot_type.field_types.size() < 2) return std::nullopt;
+        return is_payload_word_lane_storage(slot_type.field_types[1])
+            ? std::optional<std::uint32_t>{1}
+            : std::nullopt;
+    }
+    if (!is_inline_payload_storage_type(slot_type)) return std::nullopt;
+    return is_payload_word_lane_storage(slot_type.field_types[0])
+        ? std::optional<std::uint32_t>{0}
+        : std::nullopt;
 }
 
 bool enum_payload_slot_uses_scalar_lane(const IrType& slot_type, const IrType& payload_type) {
@@ -66,7 +89,6 @@ bool merge_enum_payload_slot_storage_type(SourceLocation loc,
     if (enum_payload_slot_uses_scalar_lane(slot_type, payload_type)) return true;
 
     if (is_payload_word_storage(slot_type) &&
-        has_aggregate_enum_layout(incoming) &&
         enum_payload_slot_scalar_lane_type(incoming)) {
         slot_type = incoming;
         return true;
