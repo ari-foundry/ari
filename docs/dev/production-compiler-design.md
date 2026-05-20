@@ -13,6 +13,9 @@ For current work, start with
 developing the compiler now; bootstrapping is a later readiness milestone, not
 the implementation task for this page.
 
+[Compiler Pass Contracts](compiler-pass-contracts.md) defines the pass
+boundaries that keep lexer, parser, resolver, sema, IR, and backend work
+reviewable as the compiler grows.
 [Compiler Maturity Gates](compiler-maturity-gates.md) is the concise checklist
 for deciding whether ordinary compiler work is moving Ari toward that later
 start gate.

@@ -30,6 +30,9 @@ source text
   -> Linux executable or shared library
 ```
 
+See [Compiler Pass Contracts](compiler-pass-contracts.md) for the detailed
+input/output boundary expected between these layers.
+
 ## Front End
 
 The front end accepts more syntax than the backend can lower. This is

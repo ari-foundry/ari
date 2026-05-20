@@ -8,6 +8,7 @@
 frontend-grammar: ok and error fixtures for lexer/parser syntax surfaces
 source-identity: SourceId, SourceFile, Span, byte range, line and column lookup
 diagnostics: diagnostic codes, labels, notes, stable golden rendering
+pass-contracts: lexer, parser, resolver, HIR, sema, typed IR, backend boundaries
 source-diagnostics-layer: compiler/source and compiler/report packages outside runtime std
 module-projects: file-backed modules, roots, visibility, cache invalidation
 project-module-model: file-backed modules, project roots, search paths, metadata, module cache policy

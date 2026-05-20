@@ -28,6 +28,8 @@ def main() -> int:
     roadmap = read(roadmap_path)
     gates_path = "docs/dev/compiler-maturity-gates.md"
     gates = read(gates_path)
+    pass_contracts_path = "docs/dev/compiler-pass-contracts.md"
+    pass_contracts = read(pass_contracts_path)
     project_model_path = "docs/dev/compiler-project-model.md"
     project_model = read(project_model_path)
     source_diagnostics_path = "docs/dev/compiler-source-diagnostics.md"
@@ -61,6 +63,7 @@ def main() -> int:
         "readiness signal",
         "Improve Ari as a general language",
         "Compiler Maturity Gates",
+        "Compiler Pass Contracts",
         "Compiler Project Model",
         "Compiler Source And Diagnostics",
         "Compiler Artifact Testing",
@@ -112,12 +115,56 @@ def main() -> int:
         require(gates, needle, gates_path)
 
     require(gates, "Compiler Source And Diagnostics", gates_path)
+    require(gates, "Compiler Pass Contracts", gates_path)
     require(gates, "Compiler Project Model", gates_path)
     require(gates, "Compiler Artifact Testing", gates_path)
 
     if not re.search(r"\|\s*Gate\s*\|\s*Required State\s*\|\s*Test Shape\s*\|\s*Status\s*\|", gates):
         print(f"{gates_path}: missing maturity gate table", file=sys.stderr)
         return 1
+
+    for heading in [
+        "# Compiler Pass Contracts",
+        "## Goals",
+        "## Pass Map",
+        "## Boundary Rules",
+        "## Data Ownership",
+        "## Diagnostic Contract",
+        "## Artifact Contract",
+        "## Implementation Slices",
+        "## Test Layout",
+        "## Review Checklist",
+        "## Readiness Impact",
+    ]:
+        require(pass_contracts, heading, pass_contracts_path)
+
+    for needle in [
+        "not bootstrap implementation",
+        "lexer produces tokens with spans",
+        "parser produces source-shaped AST",
+        "resolver owns module paths",
+        "semantic checking owns types",
+        "typed IR carries resolved facts",
+        "backend codegen emits target artifacts",
+        "codegen stays mechanical",
+        "SourceFile",
+        "Token",
+        "AstNode",
+        "SymbolId",
+        "HirNode",
+        "TypeId",
+        "OwnershipFact",
+        "IrFunction",
+        "LLVM text",
+        "module graph dump",
+        "typed fact dump",
+        "ownership fact dump",
+        "src/llvm_codegen.cpp",
+        "src/ir.hpp",
+        "38-42% ready",
+        "58-62%",
+    ]:
+        require(pass_contracts, needle, pass_contracts_path)
 
     for heading in [
         "# Compiler Project Model",
@@ -240,6 +287,7 @@ def main() -> int:
         "frontend-grammar": "Frontend grammar",
         "source-identity": "Source identity",
         "diagnostics": "Diagnostics",
+        "pass-contracts": "Compiler Pass Contracts",
         "source-diagnostics-layer": "Compiler Source And Diagnostics",
         "module-projects": "Module projects",
         "project-module-model": "Compiler Project Model",
@@ -257,6 +305,8 @@ def main() -> int:
         require(manifest, entry, manifest_path)
         if entry == "source-diagnostics-layer":
             require(source_diagnostics, label, source_diagnostics_path)
+        elif entry == "pass-contracts":
+            require(pass_contracts, label, pass_contracts_path)
         elif entry == "project-module-model":
             require(project_model, label, project_model_path)
         elif entry == "artifact-testing":
@@ -268,6 +318,7 @@ def main() -> int:
         index = read(index_path)
         require(index, "Compiler Development Roadmap", index_path)
         require(index, "Compiler Maturity Gates", index_path)
+        require(index, "Compiler Pass Contracts", index_path)
         require(index, "Compiler Project Model", index_path)
         require(index, "Compiler Source And Diagnostics", index_path)
         require(index, "Compiler Artifact Testing", index_path)

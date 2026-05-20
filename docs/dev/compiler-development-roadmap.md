@@ -12,6 +12,8 @@ Read this page before the bootstrap-specific pages:
 
 - [Architecture](architecture.md) explains the current C++ compiler shape.
 - [Compiler Pipeline](compiler-pipeline.md) explains the source-to-LLVM path.
+- [Compiler Pass Contracts](compiler-pass-contracts.md) defines the pass
+  input/output boundaries and review rules that keep compiler code maintainable.
 - [Feature Test Matrix](test-matrix.md) tracks feature coverage.
 - [Compiler Maturity Gates](compiler-maturity-gates.md) tracks the general
   compiler-development gates that remain before an Ari compiler tree is

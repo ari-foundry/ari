@@ -10,6 +10,8 @@ Use this page with:
 
 - [Compiler Development Roadmap](compiler-development-roadmap.md) for the
   day-to-day development order.
+- [Compiler Pass Contracts](compiler-pass-contracts.md) for lexer, parser,
+  resolver, sema, IR, and backend boundary rules.
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) for the
   source-map and diagnostic tooling layer.
 - [Compiler Project Model](compiler-project-model.md) for file-backed modules,

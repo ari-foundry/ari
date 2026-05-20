@@ -46,6 +46,7 @@ Use these when changing the compiler:
 - [Developer Overview](dev/README.md)
 - [Architecture](dev/architecture.md)
 - [Compiler Pipeline](dev/compiler-pipeline.md)
+- [Compiler Pass Contracts](dev/compiler-pass-contracts.md)
 - [Build And Test](dev/build-test.md)
 - [Aggregate ABI Classification](dev/aggregate-abi.md)
 - [Symbol Mangling](dev/symbol-mangling.md)

@@ -6,6 +6,7 @@ This folder is for people changing the compiler.
 
 - [Architecture](architecture.md)
 - [Compiler Pipeline](compiler-pipeline.md)
+- [Compiler Pass Contracts](compiler-pass-contracts.md)
 - [Build And Test](build-test.md)
 - [Aggregate ABI Classification](aggregate-abi.md)
 - [Feature Test Matrix](test-matrix.md)

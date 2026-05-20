@@ -5,13 +5,15 @@ compiler-in-Ari bootstrap track?
 
 It complements [Production Compiler Design](production-compiler-design.md),
 [Compiler Maturity Gates](compiler-maturity-gates.md),
+[Compiler Pass Contracts](compiler-pass-contracts.md),
 [Compiler Project Model](compiler-project-model.md),
 [Compiler Source And Diagnostics](compiler-source-diagnostics.md),
 [Compiler Artifact Testing](compiler-artifact-testing.md),
 [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md), and
 [Self-Host Roadmap](self-host-roadmap.md). The production design page defines
 the ordinary language/compiler contract Ari needs; the maturity gates define
-the active compiler-development checklist; the project model defines the
+the active compiler-development checklist; the pass contracts define the
+lexer/parser/resolver/sema/IR/backend boundaries; the project model defines the
 file-backed module, package-root, metadata, cache, and Makefile shape; the
 source/diagnostic page defines the tooling layer that blocks good lexer and
 parser work; the artifact testing page defines comparison order and

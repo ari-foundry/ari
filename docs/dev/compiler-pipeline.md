@@ -1,5 +1,10 @@
 # Compiler Pipeline
 
+This page describes the current hosted pipeline. See
+[Compiler Pass Contracts](compiler-pass-contracts.md) for the long-term
+input/output boundary rules between lexer, parser, resolver, sema, IR, and
+backend codegen.
+
 ## Driver
 
 `src/driver.cpp` implements:

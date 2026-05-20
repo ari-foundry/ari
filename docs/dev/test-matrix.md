@@ -52,6 +52,7 @@ checked by `make check-bootstrap-readiness`. The docs target runs
 `tests/check_bootstrap_readiness_docs.py` and verifies that
 [Compiler Development Roadmap](compiler-development-roadmap.md),
 [Compiler Maturity Gates](compiler-maturity-gates.md),
+[Compiler Pass Contracts](compiler-pass-contracts.md),
 [Compiler Project Model](compiler-project-model.md),
 [Compiler Source And Diagnostics](compiler-source-diagnostics.md),
 [Compiler Artifact Testing](compiler-artifact-testing.md),
