@@ -1756,6 +1756,8 @@ math::is_odd(value)
 math::checked_add(left, right)
 math::checked_sub(left, right)
 math::checked_mul(left, right)
+math::checked_div(left, right)
+math::checked_rem(left, right)
 math::checked_neg(value)
 math::checked_abs(value)
 math::wrapping_add(left, right)
@@ -1765,6 +1767,7 @@ math::overflowing_sub(left, right)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
 math::saturating_mul(left, right)
+math::saturating_div(left, right)
 math::saturating_neg(value)
 math::saturating_abs(value)
 math::pow(base, exponent)
@@ -1780,14 +1783,18 @@ sign policy as `sign`. `pow` requires a non-negative exponent and asserts that
 precondition at runtime. `div_floor` rounds signed division toward negative
 infinity, `div_ceil` rounds toward positive infinity, and `mod_floor` returns
 the matching floor remainder. The division helpers assert that
-`denominator != 0`. `gcd` and `lcm` normalize negative inputs through absolute
-values. `lcm` returns `0` when either input is `0`.
+`denominator != 0` and that the quotient is representable. `gcd` and `lcm`
+normalize negative inputs through absolute values. `lcm` returns `0` when
+either input is `0`.
 
-`checked_add`, `checked_sub`, `checked_mul`, `checked_neg`, and `checked_abs`
-return `Option[i64]`, using `None<i64>()` for overflow or underflow. Their
-`saturating_*` counterparts clamp to the nearest `i64` bound. `checked_mul`
-guards with division before multiplying so the successful branch is defined.
-`wrapping_add` and `wrapping_sub` return the two's-complement wrapped result.
+`checked_add`, `checked_sub`, `checked_mul`, `checked_div`, `checked_rem`,
+`checked_neg`, and `checked_abs` return `Option[i64]`, using `None<i64>()` for
+overflow, underflow, division by zero, or the unrepresentable signed-minimum
+division edge. Their `saturating_*` counterparts clamp to the nearest `i64`
+bound where that policy is meaningful. `checked_mul` guards with division
+before multiplying so the successful branch is defined. `saturating_div`
+asserts a non-zero divisor and saturates only `i64_min / -1`. `wrapping_add`
+and `wrapping_sub` return the two's-complement wrapped result.
 `overflowing_add` and `overflowing_sub` return an `(i64, bool)` tuple whose
 first slot is the wrapped result and whose second slot is the overflow flag.
 This keeps `Option` reserved for absent values and uses tuples for

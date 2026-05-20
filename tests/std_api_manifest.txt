@@ -329,8 +329,10 @@ fn std::log::write|check-prelude std-log-basic level-prefixed byte-slice stderr 
 fn std::math::abs|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::checked_abs|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::checked_add|std math checked/saturating tests; docs/stdlib/modules/math.md
+fn std::math::checked_div|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::checked_mul|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::checked_neg|std math checked/saturating tests; docs/stdlib/modules/math.md
+fn std::math::checked_rem|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::checked_sub|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::div_ceil|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::div_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
@@ -347,6 +349,7 @@ fn std::math::overflowing_sub|std math wrapping/overflowing tests; tuple return 
 fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::saturating_abs|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::saturating_add|std math checked/saturating tests; docs/stdlib/modules/math.md
+fn std::math::saturating_div|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::saturating_mul|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::saturating_neg|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::saturating_sub|std math checked/saturating tests; docs/stdlib/modules/math.md

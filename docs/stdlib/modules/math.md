@@ -35,6 +35,8 @@ Overflow-policy helpers:
 math::checked_add(left, right)
 math::checked_sub(left, right)
 math::checked_mul(left, right)
+math::checked_div(left, right)
+math::checked_rem(left, right)
 math::checked_neg(value)
 math::checked_abs(value)
 math::wrapping_add(left, right)
@@ -44,6 +46,7 @@ math::overflowing_sub(left, right)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
 math::saturating_mul(left, right)
+math::saturating_div(left, right)
 math::saturating_neg(value)
 math::saturating_abs(value)
 ```
@@ -54,9 +57,13 @@ underflow. The `saturating_*` helpers clamp to the nearest `i64` bound instead:
 positive overflow becomes `9223372036854775807`, and negative overflow becomes
 `-9223372036854775808`.
 
-`checked_mul` and `saturating_mul` follow the same policy for multiplication.
-They use guarded division checks before multiplying so the successful branch
-does not rely on signed overflow behavior.
+`checked_mul` and `saturating_mul` follow the same policy for multiplication,
+using guarded division checks before multiplying so the successful branch does
+not rely on signed overflow behavior. `checked_div` and `checked_rem` return
+`None<i64>()` for division by zero and the unrepresentable
+`-9223372036854775808 / -1` edge. `saturating_div` asserts that the divisor is
+non-zero and clamps only that signed-minimum overflow edge to
+`9223372036854775807`.
 
 `wrapping_add` and `wrapping_sub` return the two's-complement wrapped result.
 `overflowing_add` and `overflowing_sub` return `(value, overflowed)`, a tuple
@@ -94,9 +101,10 @@ toward positive infinity, and `mod_floor` returns the paired floor remainder:
 numerator == div_floor(numerator, denominator) * denominator + mod_floor(numerator, denominator)
 ```
 
-The division helpers assert that `denominator != 0`. `gcd` normalizes negative
-inputs through `abs` and returns the greatest common divisor. `lcm` also
-normalizes negative inputs and returns `0` when either input is `0`.
+The division helpers assert that `denominator != 0` and that
+`numerator / denominator` is representable. `gcd` normalizes negative inputs
+through `abs` and returns the greatest common divisor. `lcm` also normalizes
+negative inputs and returns `0` when either input is `0`.
 
 ## Limits
 

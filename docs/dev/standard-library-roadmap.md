@@ -106,8 +106,9 @@ The current `std` package already provides:
 - `std::convert` source helpers: `identity`, `from`, and `into`
 - `std::math` integer helpers implemented in Ari source with natural names:
   `abs`, `sign`, `is_positive`, `is_negative`, `is_zero`, `is_even`,
-  `is_odd`, checked/saturating add/sub/mul/neg/abs, wrapping/overflowing
-  add/sub, `pow`, `div_floor`, `div_ceil`, `mod_floor`, `gcd`, and `lcm`
+  `is_odd`, checked add/sub/mul/div/rem/neg/abs, saturating
+  add/sub/mul/div/neg/abs, wrapping/overflowing add/sub, `pow`,
+  `div_floor`, `div_ceil`, `mod_floor`, `gcd`, and `lcm`
 - `std::ascii` byte classification, printable/control predicates, case
   conversion, borrowed-slice case-insensitive comparison/search, trimming,
   whole-slice digit parsing, and prefix digit parsing helpers
@@ -304,7 +305,7 @@ Likely compiler work:
 | `std::fmt` | Source trait impls for common values, full custom formatter objects, derived/debug formatting, direct writer streaming without temporary strings, allocator-returning `format!` once default-zone policy exists. | `format_in!`, `Display`, unsupported-type diagnostics, source `FormatSpec` helpers for unsigned radix/width/precision/alignment and writer-backed formatting. | Macro-to-trait lowering cleanup and richer trait dispatch. |
 | `std::cmp` | Derived comparison impl coverage for more aggregate shapes. | Generic helper, inclusive range predicate, and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
 | `std::convert` | Concrete `From`/`Into` impl patterns and fallible conversion policy. | Identity/from/into behavior, explicit associated calls, and residual conversions. | Trait coherence and inference diagnostics. |
-| `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Sign predicate behavior, integer helper behavior, signed division rounding, checked/saturating add/sub/mul/neg/abs behavior, wrapping add/sub behavior, and overflowing add/sub tuple-result behavior. | Current checked/wrapping/overflowing/saturating helpers are pure source Ari; wrapping/overflowing multiplication and cross-width helpers likely need compiler intrinsics. |
+| `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Sign predicate behavior, integer helper behavior, signed division rounding, checked add/sub/mul/div/rem/neg/abs behavior, saturating add/sub/mul/div/neg/abs behavior, wrapping add/sub behavior, and overflowing add/sub tuple-result behavior. | Current checked/wrapping/overflowing/saturating helpers are pure source Ari; wrapping/overflowing multiplication and cross-width helpers likely need compiler intrinsics. |
 | `std::bits` | Grow natural helper names from u64 signatures into generic integer helpers. | Mask behavior, rotate count handling, power-of-two rounding, low-mask widths, alignment preconditions, byte-swap behavior, population-count aliasing, zero/one-run scan edge cases, and future overflow-policy diagnostics. | Optional bit-scan/byte-swap intrinsics only after the source policy is stable. |
 
 ## API Landing Checklist

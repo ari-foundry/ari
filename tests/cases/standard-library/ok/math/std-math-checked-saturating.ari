@@ -42,6 +42,17 @@ fn main() -> i64 {
   score = score + expect_none(math::checked_mul(min, 2));
   score = score + expect_none(math::checked_mul(min, -1));
 
+  score = score + expect_some(math::checked_div(84, 2), 42);
+  score = score + expect_some(math::checked_div(min, 1), min);
+  score = score + expect_some(math::checked_div(-84, 2), -42);
+  score = score + expect_none(math::checked_div(42, 0));
+  score = score + expect_none(math::checked_div(min, -1));
+
+  score = score + expect_some(math::checked_rem(85, 43), 42);
+  score = score + expect_some(math::checked_rem(min, 2), 0);
+  score = score + expect_none(math::checked_rem(42, 0));
+  score = score + expect_none(math::checked_rem(min, -1));
+
   score = score + expect_some(math::checked_neg(-42), 42);
   score = score + expect_none(math::checked_neg(min));
   score = score + expect_some(math::checked_abs(-42), 42);
@@ -83,6 +94,19 @@ fn main() -> i64 {
     score = score + 1;
   }
 
+  if math::saturating_div(84, 2) == 42 {
+    score = score + 1;
+  }
+  if math::saturating_div(-84, 2) == -42 {
+    score = score + 1;
+  }
+  if math::saturating_div(min, 1) == min {
+    score = score + 1;
+  }
+  if math::saturating_div(min, -1) == max {
+    score = score + 1;
+  }
+
   if math::saturating_neg(-42) == 42 {
     score = score + 1;
   }
@@ -96,6 +120,6 @@ fn main() -> i64 {
     score = score + 1;
   }
 
-  assert_eq_i64(score, 32);
+  assert_eq_i64(score, 45);
   return score;
 }
