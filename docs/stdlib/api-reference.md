@@ -1762,8 +1762,10 @@ math::checked_neg(value)
 math::checked_abs(value)
 math::wrapping_add(left, right)
 math::wrapping_sub(left, right)
+math::wrapping_mul(left, right)
 math::overflowing_add(left, right)
 math::overflowing_sub(left, right)
+math::overflowing_mul(left, right)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
 math::saturating_mul(left, right)
@@ -1794,13 +1796,14 @@ division edge. Their `saturating_*` counterparts clamp to the nearest `i64`
 bound where that policy is meaningful. `checked_mul` guards with division
 before multiplying so the successful branch is defined. `saturating_div`
 asserts a non-zero divisor and saturates only `i64_min / -1`. `wrapping_add`
-and `wrapping_sub` return the two's-complement wrapped result.
-`overflowing_add` and `overflowing_sub` return an `(i64, bool)` tuple whose
-first slot is the wrapped result and whose second slot is the overflow flag.
-This keeps `Option` reserved for absent values and uses tuples for
-always-present paired values. Other math helpers still use ordinary `i64`
-arithmetic internally, so wrapping/overflowing multiplication and generic
-cross-width helpers remain future numeric-policy work.
+`wrapping_sub`, and `wrapping_mul` return the two's-complement wrapped result.
+`wrapping_mul` routes through `u64` so the modulo behavior is explicit.
+`overflowing_add`, `overflowing_sub`, and `overflowing_mul` return an
+`(i64, bool)` tuple whose first slot is the wrapped result and whose second
+slot is the overflow flag. This keeps `Option` reserved for absent values and
+uses tuples for always-present paired values. Other math helpers still use
+ordinary `i64` arithmetic internally, so generic cross-width helpers remain
+future numeric-policy work.
 
 ## Bits
 

@@ -69,7 +69,7 @@ sorted iterators, growable `Deque`, fixed `RingBuffer`, zone-backed
 `LinkedList`, and `BinaryHeap`/`PriorityQueue` priority containers, and the
 first `parse` whole-input integer/bool/decimal-float parsers, `encoding`
 ASCII/UTF-8/UTF-16 validation plus hex/base64 codecs, and `math` sign,
-checked add/sub/mul/div/rem, wrapping/overflowing add/sub, saturating
+checked add/sub/mul/div/rem, wrapping/overflowing add/sub/mul, saturating
 arithmetic, division-rounding and
 `bits` numeric helper slices, including byte-swap, population-count, and
 zero/one-run bit scans.
@@ -99,7 +99,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting and move-aware algorithm contracts. |
 | `std::hash` | Provide deterministic non-cryptographic hashing without tying hash policy to one collection type. | Current `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers, and `collections::hash_i64` compatibility; future aggregate/derive impls and trait-driven hash collection constructors. |
 | `std::random` | Provide OS seed material and reproducible non-cryptographic random streams without making cryptography promises. | Current `entropy`, direct OS byte `fill`, deterministic `Prng`, `seed`, `from_entropy`, `seed_from_os`, `next`, `below`, `range`, `float`, PRNG byte fill, and generic `shuffle`; future fallible entropy results, unbiased bounded integers, cryptographic stream policy, and distribution helpers. |
-| `std::math` | Provide arithmetic helpers whose names communicate policy better than raw operators. | Current natural `i64` sign/parity helpers, checked add/sub/mul/div/rem/neg/abs, wrapping/overflowing add/sub, saturating add/sub/mul/div/neg/abs, powers, floor/ceil division, `gcd`, and `lcm`; future wrapping/overflowing multiplication, generic numeric traits, and floating helpers. |
+| `std::math` | Provide arithmetic helpers whose names communicate policy better than raw operators. | Current natural `i64` sign/parity helpers, checked add/sub/mul/div/rem/neg/abs, wrapping/overflowing add/sub/mul, saturating add/sub/mul/div/neg/abs, powers, floor/ceil division, `gcd`, and `lcm`; future generic numeric traits and floating helpers. |
 | `std::parse` | Parse whole byte-slice values with names that read naturally at call sites. | Current ASCII-trimmed `integer`, `boolean`, `is_float`, `float_or`, and panicking `float`; future overflow policy, richer parse errors, and `Option[f64]`/`Result[f64,E]` after float enum payloads are supported. |
 | `std::encoding` | Validate text encodings and convert bytes to portable text forms. | Current `is_ascii`, UTF-8/UTF-16 counts, UTF-8 scalar decode/encode helpers, lowercase hex encode/decode, and standard base64 encode/decode; future URL-safe/MIME base64 variants, fallible `String` decoders after zone-backed enum payloads, normalization/transcoding, and optional compression policy in a separate module. |
 | text/path kinds | Keep byte strings, validated text, OS strings, paths, and C strings from collapsing into one API shape. | Current borrowed `std::string::Utf8`, `OsStr`, borrowed `std::c::CStr`, owned `std::c::CString`, `std::path::PathBytes`, and direct string-literal coercion into expected borrowed boundary views; future owned `Utf8String`, `OsString`, `PathBuf`, Windows path/OS-string semantics, fallible owned conversions, and richer C string handoff policy. |
@@ -171,13 +171,12 @@ work. Each one should land in small tested slices with natural API names.
   language has the right trait vocabulary. Preserve the existing natural names
   for signs, sign predicates, parity,
   checked add/sub/mul/div/rem/neg/abs, saturating add/sub/mul/div/neg/abs,
-  wrapping/overflowing add/sub, powers, division rounding, and divisor helpers.
+  wrapping/overflowing add/sub/mul, powers, division rounding, and divisor helpers.
 - Expand `std::bits` from u64 signatures to generic integer mask, rotation,
   power-of-two, low-mask, byte-swap, population-count, and bit-scan helpers
   when the same trait vocabulary exists.
-- Add wrapping/overflowing multiplication and policy-specific parser overflow
-  handling after compiler intrinsics and diagnostics make those operations
-  reliable across integer widths.
+- Add policy-specific parser overflow handling after compiler diagnostics make
+  those operations reliable across integer widths.
 - Add floating helpers only where LLVM lowering and runtime behavior are
   stable.
 

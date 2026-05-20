@@ -461,9 +461,8 @@ Checklist:
 - [x] source `std::math` exposes checked add/sub/mul/div/rem/neg/abs and
       saturating add/sub/mul/div/neg/abs helpers
       with `Option[i64]` overflow reporting and edge-case saturation behavior
-- [x] source `std::math` exposes wrapping add/sub and overflowing add/sub
-      tuple-result
-      helpers without adding public type suffixes
+- [x] source `std::math` exposes wrapping add/sub/mul and overflowing
+      add/sub/mul tuple-result helpers without adding public type suffixes
 - [x] runtime-backed `std::thread` exposes function-pointer spawn/join,
       cooperative yield, duration sleep, hosted available parallelism, runtime
       thread ids, invalid-handle checks, and source handle wrappers

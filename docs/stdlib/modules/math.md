@@ -41,8 +41,10 @@ math::checked_neg(value)
 math::checked_abs(value)
 math::wrapping_add(left, right)
 math::wrapping_sub(left, right)
+math::wrapping_mul(left, right)
 math::overflowing_add(left, right)
 math::overflowing_sub(left, right)
+math::overflowing_mul(left, right)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
 math::saturating_mul(left, right)
@@ -65,10 +67,12 @@ not rely on signed overflow behavior. `checked_div` and `checked_rem` return
 non-zero and clamps only that signed-minimum overflow edge to
 `9223372036854775807`.
 
-`wrapping_add` and `wrapping_sub` return the two's-complement wrapped result.
-`overflowing_add` and `overflowing_sub` return `(value, overflowed)`, a tuple
-whose first slot is the wrapped result and whose second slot is the overflow
-flag:
+`wrapping_add`, `wrapping_sub`, and `wrapping_mul` return the
+two's-complement wrapped result. `wrapping_mul` routes through `u64` so the
+source code says "modulo 2^64" directly instead of depending on signed
+multiplication overflow. `overflowing_add`, `overflowing_sub`, and
+`overflowing_mul` return `(value, overflowed)`, a tuple whose first slot is the
+wrapped result and whose second slot is the overflow flag:
 
 ```ari
 let (sum, overflowed) = math::overflowing_add(left, right);
@@ -111,11 +115,9 @@ negative inputs and returns `0` when either input is `0`.
 The checked, wrapping, overflowing, and saturating helpers define their `i64`
 overflow behavior. Other helpers still use ordinary `i64` arithmetic
 internally, so keep their inputs in a range where intermediate values are
-meaningful for your program. `wrapping_mul` and `overflowing_mul` remain future
-work because they need a reliable wrapped multiplication result, ideally from
-compiler intrinsics for every integer width. The existing natural names should
-then widen through numeric traits once the compiler has a stronger intrinsic
-story.
+meaningful for your program. The existing natural names should widen through
+numeric traits once the compiler has a stronger intrinsic story for every
+integer width.
 
 Use `std::bits` for bit masks, rotations, power-of-two rounding, low-bit masks,
 alignment helpers, and bit scans. Use plain operators for ordinary arithmetic

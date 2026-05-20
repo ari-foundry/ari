@@ -1,4 +1,4 @@
-// Covers the wrapping and overflowing add/sub policy slice in std::math.
+// Covers the wrapping and overflowing add/sub/mul policy slice in std::math.
 fn main() -> i64 {
   let min = -9223372036854775807 - 1;
   let max = 9223372036854775807;
@@ -23,6 +23,21 @@ fn main() -> i64 {
     score = score + 1;
   }
   if math::wrapping_sub(0, min) == min {
+    score = score + 1;
+  }
+  if math::wrapping_mul(6, 7) == 42 {
+    score = score + 1;
+  }
+  if math::wrapping_mul(max, 2) == -2 {
+    score = score + 1;
+  }
+  if math::wrapping_mul(min, 2) == 0 {
+    score = score + 1;
+  }
+  if math::wrapping_mul(min, -1) == min {
+    score = score + 1;
+  }
+  if math::wrapping_mul(-3, 14) == -42 {
     score = score + 1;
   }
 
@@ -61,6 +76,31 @@ fn main() -> i64 {
     score = score + 1;
   }
 
-  assert_eq_i64(score, 14);
+  let normal_mul = math::overflowing_mul(6, 7);
+  if normal_mul.0 == 42 && !normal_mul.1 {
+    score = score + 1;
+  }
+
+  let positive_mul = math::overflowing_mul(max, 2);
+  if positive_mul.0 == -2 && positive_mul.1 {
+    score = score + 1;
+  }
+
+  let negative_mul = math::overflowing_mul(min, 2);
+  if negative_mul.0 == 0 && negative_mul.1 {
+    score = score + 1;
+  }
+
+  let min_neg_mul = math::overflowing_mul(min, -1);
+  if min_neg_mul.0 == min && min_neg_mul.1 {
+    score = score + 1;
+  }
+
+  let (small_mul_value, small_mul_overflowed) = math::overflowing_mul(-3, 14);
+  if small_mul_value == -42 && !small_mul_overflowed {
+    score = score + 1;
+  }
+
+  assert_eq_i64(score, 24);
   return score;
 }

@@ -292,8 +292,8 @@ identifies the exact case:
 - `std-math-checked-saturating.ari`: source `std::math` checked
   add/sub/mul/div/rem/neg/abs and saturating add/sub/mul/div/neg/abs overflow
   policy behavior.
-- `std-math-wrapping-overflowing.ari`: source `std::math` wrapping add and
-  overflowing add tuple-result behavior.
+- `std-math-wrapping-overflowing.ari`: source `std::math` wrapping
+  add/sub/mul and overflowing add/sub/mul tuple-result behavior.
 - `std-ascii-class-helpers.ari`: source `std::ascii` extended byte
   classification behavior.
 - `std-ascii-case-compare.ari`: source `std::ascii` borrowed-slice

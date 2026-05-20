@@ -183,6 +183,11 @@ pub fn wrapping_sub(left: i64, right: i64) -> i64 {
   return i64_min() + (magnitude - (i64_max() - left) - 1);
 }
 
+pub fn wrapping_mul(left: i64, right: i64) -> i64 {
+  // Route through u64 so the operation is explicitly modulo 2^64.
+  return ((left as u64) * (right as u64)) as i64;
+}
+
 pub fn overflowing_add(left: i64, right: i64) -> (i64, bool) {
   match checked_add(left, right) {
     std::Some(value) => {
@@ -203,6 +208,17 @@ pub fn overflowing_sub(left: i64, right: i64) -> (i64, bool) {
   }
 
   return (wrapping_sub(left, right), true);
+}
+
+pub fn overflowing_mul(left: i64, right: i64) -> (i64, bool) {
+  match checked_mul(left, right) {
+    std::Some(value) => {
+      return (value, false);
+    }
+    std::None => {}
+  }
+
+  return (wrapping_mul(left, right), true);
 }
 
 pub fn saturating_add(left: i64, right: i64) -> i64 {

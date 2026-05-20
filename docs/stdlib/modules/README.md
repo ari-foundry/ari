@@ -103,7 +103,7 @@ limits, examples, and test files for one module.
   encode/decode helpers.
 - [std::math](math.md): source-only `i64` arithmetic helpers for signs,
   predicates, checked add/sub/mul/div/rem/neg/abs, saturating
-  add/sub/mul/div/neg/abs, wrapping/overflowing add/sub, powers, division
+  add/sub/mul/div/neg/abs, wrapping/overflowing add/sub/mul, powers, division
   rounding, greatest common divisor, and least common multiple.
 - [std::bits](bits.md): source-only `u64` bit-mask, rotation, power-of-two,
   low-mask, alignment, byte-swap, population-count, and zero/one-run bit-scan
