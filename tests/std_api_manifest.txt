@@ -485,6 +485,13 @@ fn std::source::location|check-source std-source-location file/line/column const
 fn std::source::merge|check-source std-source-location same-file byte span merge; docs/stdlib/modules/source.md
 fn std::source::root_file|check-source std-source-location root file id constructor; docs/stdlib/modules/source.md
 fn std::source::same_file|check-source std-source-location byte span file predicate; docs/stdlib/modules/source.md
+fn std::source::source_add|check-source std-source-map SourceMap file registration helper; docs/stdlib/modules/source.md
+fn std::source::source_capacity|check-source std-source-map SourceMap capacity helper; docs/stdlib/modules/source.md
+fn std::source::source_count|check-source std-source-map SourceMap file count helper; docs/stdlib/modules/source.md
+fn std::source::source_file|check-source std-source-map SourceMap SourceFile lookup; docs/stdlib/modules/source.md
+fn std::source::source_lines|check-source std-source-map SourceMap cached LineMap lookup; docs/stdlib/modules/source.md
+fn std::source::source_locate|check-source std-source-map SourceMap span location lookup; docs/stdlib/modules/source.md
+fn std::source::source_map|check-source std-source-map SourceMap constructor; docs/stdlib/modules/source.md
 fn std::source::span|check-source std-source-location half-open byte span constructor; docs/stdlib/modules/source.md
 fn std::source::touches|check-source std-source-location inclusive byte span boundary predicate; docs/stdlib/modules/source.md
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -1007,6 +1014,13 @@ method std::source::SourceFile::line_span|check-source std-source-text SourceFil
 method std::source::SourceFile::line_start|check-source std-source-text SourceFile line start offset method; docs/stdlib/modules/source.md
 method std::source::SourceFile::locate|check-source std-source-text SourceFile offset to location method; docs/stdlib/modules/source.md
 method std::source::SourceFile::text|check-source std-source-text SourceFile borrowed text accessor; docs/stdlib/modules/source.md
+method std::source::SourceMap::add|check-source std-source-map SourceMap file registration method; docs/stdlib/modules/source.md
+method std::source::SourceMap::capacity|check-source std-source-map SourceMap capacity method; docs/stdlib/modules/source.md
+method std::source::SourceMap::file|check-source std-source-map SourceMap SourceFile lookup method; docs/stdlib/modules/source.md
+method std::source::SourceMap::is_empty|check-source std-source-map SourceMap empty predicate method; docs/stdlib/modules/source.md
+method std::source::SourceMap::len|check-source std-source-map SourceMap file count method; docs/stdlib/modules/source.md
+method std::source::SourceMap::lines|check-source std-source-map SourceMap cached LineMap lookup method; docs/stdlib/modules/source.md
+method std::source::SourceMap::locate|check-source std-source-map SourceMap span location method; docs/stdlib/modules/source.md
 method std::source::Span::before|check-source std-source-location span method ordering predicate; docs/stdlib/modules/source.md
 method std::source::Span::contains|check-source std-source-location span method containment predicate; docs/stdlib/modules/source.md
 method std::source::Span::end|check-source std-source-location span end-byte accessor; docs/stdlib/modules/source.md
@@ -1339,6 +1353,7 @@ struct std::source::LineCol|check-source std-source-location one-based human sou
 struct std::source::LineMap|check-source std-source-line-map cached source line-start table; docs/stdlib/modules/source.md
 struct std::source::Location|check-source std-source-location file/line/column coordinate value; docs/stdlib/modules/source.md
 struct std::source::SourceFile|check-source std-source-text borrowed source text value; docs/stdlib/modules/source.md
+struct std::source::SourceMap|check-source std-source-map bounded source file registry with cached line maps; docs/stdlib/modules/source.md
 struct std::source::Span|check-source std-source-location half-open byte span value; docs/stdlib/modules/source.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row

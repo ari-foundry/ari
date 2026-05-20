@@ -82,8 +82,16 @@ check-source: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/source/std-source-line-map.ari -o $(BUILD_DIR)/source/std-source-line-map.elf
 	$(BUILD_DIR)/source/std-source-line-map.elf; code=$$?; test $$code -eq 91
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/source/std-source-line-map.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/source/std-source-line-map.elf; $(BUILD_DIR)/source/std-source-line-map.elf; code=$$?; test $$code -eq 91; fi
+	$(TARGET) tests/cases/standard-library/ok/source/std-source-map.ari --emit-llvm $(BUILD_DIR)/source/std-source-map.ll
+	grep -q '_ARNv3std6source10source_map' $(BUILD_DIR)/source/std-source-map.ll
+	grep -q 'std__source__SourceMap8inherent6locate' $(BUILD_DIR)/source/std-source-map.ll
+	$(TARGET) tests/cases/standard-library/ok/source/std-source-map.ari -o $(BUILD_DIR)/source/std-source-map.elf
+	$(BUILD_DIR)/source/std-source-map.elf; code=$$?; test $$code -eq 36
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/source/std-source-map.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/source/std-source-map.elf; $(BUILD_DIR)/source/std-source-map.elf; code=$$?; test $$code -eq 36; fi
 	if $(TARGET) tests/cases/standard-library/errors/source/std-source-line-map-after-reset.ari -o $(BUILD_DIR)/source/std-source-line-map-after-reset.elf >$(BUILD_DIR)/source/std-source-line-map-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/source/std-source-line-map-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/source/std-source-map-after-reset.ari -o $(BUILD_DIR)/source/std-source-map-after-reset.elf >$(BUILD_DIR)/source/std-source-map-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/source/std-source-map-after-reset.err
 
 check-diag: $(TARGET)
 	mkdir -p $(BUILD_DIR)/diag

@@ -312,6 +312,13 @@ identifies the exact case:
 - `std-source-line-map-after-reset.ari`: source `std::source` negative
   fixture proving `LineMap` is tracked as a zone-backed handle and is rejected
   after its zone is reset.
+- `std-source-map.ari`: source `std::source` bounded `SourceMap`
+  registration, file-id assignment, source lookup, cached `LineMap` lookup,
+  span location lookup, free-function helpers, method wrappers, and the
+  dedicated `make check-source` target.
+- `std-source-map-after-reset.ari`: source `std::source` negative fixture
+  proving `SourceMap` storage is tracked as a zone-backed handle and is
+  rejected after its zone is reset.
 - `std-mem-byte-ops.ari`: `std::mem` byte `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM `memcpy`/`memmove`/`memset` intrinsic
   lowering checks.

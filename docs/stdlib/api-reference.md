@@ -250,6 +250,7 @@ source::LineCol
 source::Location
 source::SourceFile
 source::LineMap
+source::SourceMap
 
 source::file_id(value)
 source::root_file()
@@ -265,6 +266,13 @@ source::line_end(text, line)
 source::line_span(file, text, line)
 source::locate(file, text, offset)
 source::line_map(ref mut zone, file)
+source::source_map(ref mut zone, capacity)
+source::source_count(ref map)
+source::source_capacity(ref map)
+source::source_add(ref mut map, ref mut zone, text)
+source::source_file(ref map, id)
+source::source_lines(ref map, id)
+source::source_locate(ref map, span)
 source::len(ref span)
 source::is_empty(ref span)
 source::contains(ref span, offset)
@@ -277,9 +285,10 @@ source::merge(ref left, ref right)
 `Span` uses half-open byte offsets. `LineCol` and `Location` use one-based
 human coordinates. `SourceFile` is a borrowed text view for line starts, line
 spans, and byte-offset lookup. `LineMap` is the explicit-zone cached form for
-repeated line lookup in lexers, parsers, and diagnostic renderers. Owned
-source-map storage, structured log records, benchmark helpers, fuzzing hooks,
-and stack/backtrace APIs are roadmap work.
+repeated line lookup in one file. `SourceMap` is the bounded explicit-zone
+registry for multiple borrowed files and their cached line maps. Owned filename
+and source-text storage, structured log records, benchmark helpers, fuzzing
+hooks, and stack/backtrace APIs are roadmap work.
 
 ## C Interop
 

@@ -17826,7 +17826,11 @@ private:
         }
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field =
-                std_source_line_map_zone_handle_source_field_index(struct_type);
+                std_source_zone_handle_source_field_index(struct_type);
+            if (std_zone_handle_source_field) {
+                std_zone_handle_storage_field_paths =
+                    std_source_zone_handle_storage_field_path_indices(struct_type);
+            }
         }
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_string_zone_handle_source_field_index(struct_type);
@@ -17839,7 +17843,8 @@ private:
             return false;
         };
         const bool std_zone_handle_requires_single_source =
-            is_std_fs_dir_entry_zone_handle_type(struct_type);
+            is_std_fs_dir_entry_zone_handle_type(struct_type) ||
+            is_std_source_source_map_handle_type(struct_type);
         bool std_zone_handle_has_source = false;
         std::string std_zone_handle_source;
         for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {

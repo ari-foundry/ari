@@ -35,6 +35,13 @@ pub struct LineMap {
   lines: i64,
 }
 
+pub struct SourceMap {
+  files: ptr SourceFile,
+  maps: ptr LineMap,
+  mut len: i64,
+  capacity: i64,
+}
+
 fn checked_file(value: i64) -> i64 {
   std::assert(value >= 0);
   return value;
@@ -53,6 +60,18 @@ fn checked_line(value: i64) -> i64 {
 fn checked_column(value: i64) -> i64 {
   std::assert(value >= 1);
   return value;
+}
+
+fn checked_capacity(value: i64) -> i64 {
+  std::assert(value >= 0);
+  return value;
+}
+
+fn checked_source_index(value: ref SourceMap, id: FileId) -> i64 {
+  let index = id.value();
+  std::assert(index >= 0);
+  std::assert(index < value.len);
+  return index;
 }
 
 pub fn file_id(value: i64) -> FileId {
@@ -178,6 +197,49 @@ pub fn line_map(zone: ref mut Zone, file: SourceFile) -> LineMap {
   }
 
   return LineMap { file: file, starts: starts, lines: lines };
+}
+
+pub fn source_map(zone: ref mut Zone, capacity: i64) -> SourceMap {
+  let actual = checked_capacity(capacity);
+  return SourceMap {
+    files: std::zone::alloc_array<SourceFile>(zone, actual),
+    maps: std::zone::alloc_array<LineMap>(zone, actual),
+    len: 0,
+    capacity: actual,
+  };
+}
+
+pub fn source_count(value: ref SourceMap) -> i64 {
+  return value.len;
+}
+
+pub fn source_capacity(value: ref SourceMap) -> i64 {
+  return value.capacity;
+}
+
+pub fn source_add(value: ref mut SourceMap, zone: ref mut Zone, text: std::Slice[u8]) -> FileId {
+  std::assert(value.len < value.capacity);
+  let id = file_id(value.len);
+  let source_file = file(id, text);
+  let lines = line_map(zone, source_file);
+  ptr_store(ptr_add(value.files, value.len), source_file);
+  ptr_store(ptr_add(value.maps, value.len), lines);
+  value.len = value.len + 1;
+  return id;
+}
+
+pub fn source_file(value: ref SourceMap, id: FileId) -> SourceFile {
+  let index = checked_source_index(ref value, id);
+  return ptr_load(ptr_add(value.files, index));
+}
+
+pub fn source_lines(value: ref SourceMap, id: FileId) -> LineMap {
+  let index = checked_source_index(ref value, id);
+  return ptr_load(ptr_add(value.maps, index));
+}
+
+pub fn source_locate(value: ref SourceMap, span: Span) -> Location {
+  return source_lines(ref value, span.file()).locate(span.start());
 }
 
 fn checked_map_line(value: ref LineMap, line: i64) -> i64 {
@@ -376,6 +438,36 @@ pub impl std::source::LineMap {
     let line_index = line_index_for_offset(ref self, offset);
     let start = ptr_load(ptr_add(self.starts, line_index));
     return location(self.file.id(), line_index + 1, (offset - start) + 1);
+  }
+}
+
+pub impl std::source::SourceMap {
+  fn len(self: ref Self) -> i64 {
+    return std::source::source_count(ref self);
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return std::source::source_capacity(ref self);
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn add(self: ref mut Self, zone: ref mut Zone, text: std::Slice[u8]) -> FileId {
+    return std::source::source_add(ref mut self, zone, text);
+  }
+
+  fn file(self: ref Self, id: FileId) -> SourceFile {
+    return std::source::source_file(ref self, id);
+  }
+
+  fn lines(self: ref Self, id: FileId) -> LineMap {
+    return std::source::source_lines(ref self, id);
+  }
+
+  fn locate(self: ref Self, span: Span) -> Location {
+    return std::source::source_locate(ref self, span);
   }
 }
 
