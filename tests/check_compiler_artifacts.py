@@ -82,7 +82,30 @@ def require_report(expected_report: str, expected: str, actual: str, label: str)
     require_equal(expected_report, report, label + " report")
 
 
-def main() -> int:
+def resolve_user_path(value: str) -> Path:
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    return ROOT / path
+
+
+def compare_artifact_files(expected_path: str, actual_path: str, normalize: bool) -> int:
+    expected_file = resolve_user_path(expected_path)
+    actual_file = resolve_user_path(actual_path)
+    expected = expected_file.read_text(encoding="utf-8")
+    actual = actual_file.read_text(encoding="utf-8")
+    if normalize:
+        expected = normalize_artifact_text(expand_fixture_paths(expected))
+        actual = normalize_artifact_text(expand_fixture_paths(actual))
+    try:
+        label = str(expected_file.relative_to(ROOT))
+    except ValueError:
+        label = str(expected_file)
+    require_equal(expected, actual, label)
+    return 0
+
+
+def run_seed_checks() -> int:
     require_equal(
         read_fixture("ok/text-equal.expected.txt"),
         read_fixture("ok/text-equal.actual.txt"),
@@ -104,5 +127,22 @@ def main() -> int:
     return 0
 
 
+def main(argv: list[str]) -> int:
+    if len(argv) == 1:
+        return run_seed_checks()
+    normalize = False
+    args = argv[1:]
+    if args and args[0] == "--normalize":
+        normalize = True
+        args = args[1:]
+    if len(args) == 2:
+        return compare_artifact_files(args[0], args[1], normalize)
+    print(
+        "usage: check_compiler_artifacts.py [--normalize] expected actual",
+        file=sys.stderr,
+    )
+    return 2
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv))

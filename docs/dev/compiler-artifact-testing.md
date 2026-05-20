@@ -61,9 +61,9 @@ Text artifacts should be line-oriented and deterministic.
 Token dump example:
 
 ```text
-token Ident "main" @ source.ari:1:4..1:8
-token LeftParen "(" @ source.ari:1:8..1:9
-token RightParen ")" @ source.ari:1:9..1:10
+token Identifier "main" @ source.ari:1:4
+token LParen "(" @ source.ari:1:8
+token RParen ")" @ source.ari:1:9
 ```
 
 Syntax dump example:
@@ -194,31 +194,37 @@ mismatch fixture when the behavior can fail.
 
 ## Current Seed Implementation
 
-The current repository has a tiny artifact comparison seed before real token,
-diagnostic, syntax, HIR, and typed-IR dump producers exist:
+The current repository has a tiny artifact comparison seed plus the first real
+frontend producer:
 
 ```text
 tests/check_compiler_artifacts.py
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
+tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
+tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
+ari --emit-tokens path
 make check-compiler-artifacts
 ```
 
-It currently proves three low-level contracts:
+It currently proves four low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
   normalize to stable placeholders
 - a line mismatch produces a small report naming the fixture and line
+- `--emit-tokens` writes deterministic lexer output for a small Ari source file
 
-This is deliberately small. Future artifact producers should plug into the
-same shape instead of inventing unrelated golden comparison rules.
+This is deliberately small. Future diagnostic, syntax, HIR, typed-IR, and
+backend artifact producers should plug into the same shape instead of inventing
+unrelated golden comparison rules.
 
 ## Current Compiler Integration
 
 The current compiler already has useful artifact checks:
 
 - `--check` for frontend and sema diagnostics
+- `--emit-tokens` for stable lexer token text and start locations
 - `--emit-llvm` for LLVM text
 - `--emit-obj` for object files
 - `--shared` for shared-library visibility

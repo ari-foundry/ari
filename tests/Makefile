@@ -63,8 +63,11 @@ check-stdlib-docs:
 check-compiler-dev-docs:
 	python3 tests/check_compiler_development_docs.py
 
-check-compiler-artifacts:
+check-compiler-artifacts: $(TARGET)
+	mkdir -p $(BUILD_DIR)/compiler-development/artifact
 	python3 tests/check_compiler_artifacts.py
+	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
 
 check-compiler-development: $(TARGET)
 	mkdir -p $(BUILD_DIR)/compiler-development

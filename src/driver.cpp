@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "c_header.hpp"
+#include "lexer.hpp"
 #include "llvm_codegen.hpp"
 #include "module_cache.hpp"
 #include "module_ir_replay.hpp"
@@ -11,6 +12,7 @@
 #include "parser.hpp"
 #include "sema.hpp"
 #include "target.hpp"
+#include "token_dump.hpp"
 #include "toolchain.hpp"
 
 #include <cerrno>
@@ -19,6 +21,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <set>
 #include <string>
 #include <utility>
@@ -40,6 +43,12 @@ static void write_text_file(const std::string& path, const std::string& data) {
     out << data;
 }
 
+static std::string read_text_file(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) throw CompileError("cannot open input file '" + path + "'");
+    return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+}
+
 static std::string shell_quote(const std::string& text) {
     std::string quoted = "'";
     for (char c : text) {
@@ -52,7 +61,7 @@ static std::string shell_quote(const std::string& text) {
 
 static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
-                 "           [--emit-obj path]\n"
+                 "           [--emit-obj path] [--emit-tokens path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -73,6 +82,7 @@ int run(int argc, char** argv) {
     std::string output = "a.out";
     std::string llvm_output;
     std::string object_output;
+    std::string token_output;
     std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
@@ -120,6 +130,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-obj" || arg == "--emit-object") {
             if (i + 1 >= argc) throw CompileError(arg + " expects a path");
             object_output = argv[++i];
+        } else if (arg == "--emit-tokens") {
+            if (i + 1 >= argc) throw CompileError("--emit-tokens expects a path");
+            token_output = argv[++i];
         } else if (arg == "--emit-c-header") {
             if (i + 1 >= argc) throw CompileError("--emit-c-header expects a path");
             c_header_output = argv[++i];
@@ -183,6 +196,18 @@ int run(int argc, char** argv) {
     }
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
+    }
+    if (!token_output.empty()) {
+        if (check_only || output_explicit || emit_llvm_only || !object_output.empty() ||
+            !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
+            !metadata_output.empty() || !metadata_check.empty() ||
+            !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty()) {
+            throw CompileError("--emit-tokens cannot be combined with checking, backend, module, or linking options");
+        }
+        std::vector<Token> tokens = lex_source(read_text_file(input));
+        write_text_file(token_output, dump_tokens(tokens, input));
+        std::cout << "wrote " << token_output << " (token dump)\n";
+        return 0;
     }
 
     ModuleLoadOptions load_options;
