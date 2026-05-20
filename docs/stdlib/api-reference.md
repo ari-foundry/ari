@@ -1851,6 +1851,7 @@ math::checked_div(left, right)
 math::checked_rem(left, right)
 math::checked_neg(value)
 math::checked_abs(value)
+math::checked_pow(base, exponent)
 math::wrapping_add(left, right)
 math::wrapping_sub(left, right)
 math::wrapping_mul(left, right)
@@ -1863,6 +1864,7 @@ math::saturating_mul(left, right)
 math::saturating_div(left, right)
 math::saturating_neg(value)
 math::saturating_abs(value)
+math::saturating_pow(base, exponent)
 math::pow(base, exponent)
 math::div_floor(numerator, denominator)
 math::div_ceil(numerator, denominator)
@@ -1873,8 +1875,9 @@ math::lcm(left, right)
 
 `min_value` and `max_value` return the current signed `i64` bounds without
 making callers repeat long sentinel literals. `is_positive`, `is_negative`, and
-`is_zero` are predicate forms for the same sign policy as `sign`. `pow`
-requires a non-negative exponent and asserts that precondition at runtime.
+`is_zero` are predicate forms for the same sign policy as `sign`. `pow` is the
+strict convenience spelling: it panics when the exponent is negative or the
+result cannot fit in `i64`.
 `div_floor` rounds signed division toward negative infinity, `div_ceil` rounds
 toward positive infinity, and `mod_floor` returns the matching floor remainder.
 The division helpers assert that
@@ -1883,13 +1886,15 @@ normalize negative inputs through absolute values. `lcm` returns `0` when
 either input is `0`.
 
 `checked_add`, `checked_sub`, `checked_mul`, `checked_div`, `checked_rem`,
-`checked_neg`, and `checked_abs` return `Option[i64]`, using `None<i64>()` for
-overflow, underflow, division by zero, or the unrepresentable signed-minimum
-division edge. Their `saturating_*` counterparts clamp to the nearest `i64`
-bound where that policy is meaningful. `checked_mul` guards with division
-before multiplying so the successful branch is defined. `saturating_div`
-asserts a non-zero divisor and saturates only `i64_min / -1`. `wrapping_add`
-`wrapping_sub`, and `wrapping_mul` return the two's-complement wrapped result.
+`checked_neg`, `checked_abs`, and `checked_pow` return `Option[i64]`, using
+`None<i64>()` for overflow, underflow, division by zero, a negative exponent,
+or the unrepresentable signed-minimum division edge. Their `saturating_*`
+counterparts clamp to the nearest `i64` bound where that policy is meaningful.
+`checked_mul` guards with division before multiplying so the successful branch
+is defined. `saturating_div` asserts a non-zero divisor and saturates only
+`i64_min / -1`; `saturating_pow` asserts a non-negative exponent and clamps
+overflow according to the final sign. `wrapping_add` `wrapping_sub`, and
+`wrapping_mul` return the two's-complement wrapped result.
 `wrapping_mul` routes through `u64` so the modulo behavior is explicit.
 `overflowing_add`, `overflowing_sub`, and `overflowing_mul` return an
 `(i64, bool)` tuple whose first slot is the wrapped result and whose second

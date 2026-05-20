@@ -144,6 +144,27 @@ pub fn checked_abs(value: i64) -> std::Option[i64] {
   return std::Some<i64>(abs(value));
 }
 
+pub fn checked_pow(base: i64, exponent: i64) -> std::Option[i64] {
+  if exponent < 0 {
+    return std::None<i64>();
+  }
+
+  var result = 1;
+  var remaining = exponent;
+  while remaining > 0 {
+    match checked_mul(result, base) {
+      std::Some(value) => {
+        result = value;
+      }
+      std::None => {
+        return std::None<i64>();
+      }
+    }
+    remaining = remaining - 1;
+  }
+  return std::Some<i64>(result);
+}
+
 pub fn wrapping_add(left: i64, right: i64) -> i64 {
   match checked_add(left, right) {
     std::Some(value) => {
@@ -291,16 +312,37 @@ pub fn saturating_abs(value: i64) -> i64 {
   return max_value();
 }
 
-pub fn pow(base: i64, exponent: i64) -> i64 {
+pub fn saturating_pow(base: i64, exponent: i64) -> i64 {
   std::assert(exponent >= 0);
 
   var result = 1;
   var remaining = exponent;
   while remaining > 0 {
-    result = result * base;
+    match checked_mul(result, base) {
+      std::Some(value) => {
+        result = value;
+      }
+      std::None => {
+        if base < 0 && is_odd(exponent) {
+          return min_value();
+        }
+        return max_value();
+      }
+    }
     remaining = remaining - 1;
   }
   return result;
+}
+
+pub fn pow(base: i64, exponent: i64) -> i64 {
+  match checked_pow(base, exponent) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {
+      std::panic();
+    }
+  }
 }
 
 pub fn div_floor(numerator: i64, denominator: i64) -> i64 {

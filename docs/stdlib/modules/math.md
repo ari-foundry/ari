@@ -43,6 +43,7 @@ math::checked_div(left, right)
 math::checked_rem(left, right)
 math::checked_neg(value)
 math::checked_abs(value)
+math::checked_pow(base, exponent)
 math::wrapping_add(left, right)
 math::wrapping_sub(left, right)
 math::wrapping_mul(left, right)
@@ -55,6 +56,7 @@ math::saturating_mul(left, right)
 math::saturating_div(left, right)
 math::saturating_neg(value)
 math::saturating_abs(value)
+math::saturating_pow(base, exponent)
 ```
 
 The `checked_*` helpers return `std::Option[i64]`: `Some(value)` when the
@@ -69,6 +71,9 @@ not rely on signed overflow behavior. `checked_div` and `checked_rem` return
 `None<i64>()` for division by zero and the unrepresentable
 `min_value() / -1` edge. `saturating_div` asserts that the divisor is non-zero
 and clamps only that signed-minimum overflow edge to `max_value()`.
+`checked_pow` returns `None<i64>()` for negative exponents or overflow.
+`saturating_pow` asserts that the exponent is non-negative, then clamps
+overflow to `min_value()` or `max_value()` according to the final sign.
 
 `wrapping_add`, `wrapping_sub`, and `wrapping_mul` return the
 two's-complement wrapped result. `wrapping_mul` routes through `u64` so the
@@ -100,7 +105,8 @@ math::gcd(left, right)
 math::lcm(left, right)
 ```
 
-`pow` multiplies in a source loop and asserts that `exponent >= 0`.
+`pow` is the strict convenience spelling: it uses `checked_pow` and panics when
+the exponent is negative or the result cannot fit in `i64`.
 `div_floor` rounds signed division toward negative infinity, `div_ceil` rounds
 toward positive infinity, and `mod_floor` returns the paired floor remainder:
 
@@ -116,7 +122,7 @@ negative inputs and returns `0` when either input is `0`.
 ## Limits
 
 The checked, wrapping, overflowing, and saturating helpers define their `i64`
-overflow behavior. Other helpers still use ordinary `i64` arithmetic
+overflow behavior. The remaining non-policy helpers still use ordinary `i64` arithmetic
 internally, so keep their inputs in a range where intermediate values are
 meaningful for your program. The existing natural names should widen through
 numeric traits once the compiler has a stronger intrinsic story for every
