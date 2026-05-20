@@ -57,12 +57,13 @@ encoding::encode_hex_in(ref mut zone, bytes) -> String
 encoding::hex_decoded_len(bytes) -> Option[i64]
 encoding::can_decode_hex(bytes) -> bool
 encoding::decode_hex_in(ref mut zone, bytes) -> String
+encoding::try_decode_hex_in(ref mut zone, bytes) -> Option[String]
 ```
 
 Hex encoding uses lowercase `a..f`. Decoding accepts the same ASCII hex
 digits accepted by `std::ascii::hex_value`, so uppercase input is valid.
-`decode_hex_in` panics for invalid input; call `can_decode_hex` or
-`hex_decoded_len` first when invalid input is ordinary.
+`try_decode_hex_in` returns `None` for invalid input. `decode_hex_in` is the
+asserting form and panics for invalid input.
 
 Base64 helpers:
 
@@ -72,6 +73,7 @@ encoding::encode_base64_in(ref mut zone, bytes) -> String
 encoding::base64_decoded_len(bytes) -> Option[i64]
 encoding::can_decode_base64(bytes) -> bool
 encoding::decode_base64_in(ref mut zone, bytes) -> String
+encoding::try_decode_base64_in(ref mut zone, bytes) -> Option[String]
 ```
 
 Base64 uses the standard `A-Z`, `a-z`, `0-9`, `+`, `/`, and `=` alphabet. The
@@ -79,21 +81,24 @@ decoder requires length to be a multiple of four and padding to appear only at
 the end. Line-wrapped MIME base64 and URL-safe base64 are future variants, not
 accepted by this first slice.
 
-## Why Decoders Do Not Return `Option[String]` Yet
+## Fallible Decoding
 
-The natural future API is `decode_hex_in(...) -> Option[String]` or
-`Result[String, DecodeError]`. Today's checker rejects zone-backed strings
-escaping through enum payloads because the payload would carry a zone pointer
-through `Option`. The current API therefore separates validation from decoding:
+Use the `try_decode_*_in` helpers for untrusted input:
 
 ```ari
-if encoding::can_decode_hex(input) {
-  let text = encoding::decode_hex_in(ref mut zone, input);
+match encoding::try_decode_hex_in(ref mut zone, input) {
+  std::Some(text) => {
+    // use text
+  }
+  std::None => {
+    // reject input
+  }
 }
 ```
 
-When zone-backed enum payloads are supported, the public API can grow a
-fallible decoding wrapper without changing the lower-level validating helpers.
+The lower-level `*_decoded_len` and `can_decode_*` helpers remain useful when a
+caller wants to validate before reserving storage or report a simpler boolean
+failure.
 
 ## Example
 
@@ -120,13 +125,13 @@ tests/cases/standard-library/ok/encoding/std-encoding-codec.ari
 `std-encoding-utf8-codepoints.ari` covers scalar validation, UTF-8 lead-byte
 width, byte-offset decoding, next-index helpers, and scalar encoding.
 `std-encoding-codec.ari` covers hex/base64 length helpers, encoding, decoding,
-and invalid input guards. These tests are wired into `make check-prelude` with
-LLVM symbol checks.
+fallible decoding, and invalid input guards. These tests are wired into
+`make check-prelude` with LLVM symbol checks.
 
 ## Future Work
 
 - URL-safe base64 and optional line-wrapped MIME base64
-- richer decode errors after `Result[String, E]` can carry zone-backed values
+- richer decode errors through `Result[String, E]`
 - Unicode normalization, grapheme clusters, and transcoding only after Ari has
   a deliberate text policy beyond byte strings
 - optional compression helpers in a separate module once byte-buffer ownership

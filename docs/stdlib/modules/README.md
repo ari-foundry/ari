@@ -99,8 +99,8 @@ limits, examples, and test files for one module.
 - [std::parse](parse.md): whole-input ASCII-trimmed integer, bool, and
   decimal float parsers with natural validation/fallback helpers.
 - [std::encoding](encoding.md): ASCII, UTF-8, and UTF-16 validation/counting
-  plus UTF-8 scalar decode/encode, lowercase hex, and standard base64
-  encode/decode helpers.
+  plus UTF-8 scalar decode/encode, lowercase hex, standard base64, and
+  fallible owned decode helpers.
 - [std::math](math.md): source-only `i64` arithmetic helpers for signs,
   predicates, checked add/sub/mul/div/rem/neg/abs, saturating
   add/sub/mul/div/neg/abs, wrapping/overflowing add/sub/mul, powers, division

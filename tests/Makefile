@@ -696,8 +696,10 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-codec.ari --emit-llvm $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding13encode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding13decode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding17try_decode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding16encode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding16decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding20try_decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-codec.ari -o $(BUILD_DIR)/prelude/std-encoding-codec.elf
 	$(BUILD_DIR)/prelude/std-encoding-codec.elf; code=$$?; test $$code -eq 13
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-basic.ll
@@ -4336,6 +4338,8 @@ check-ffi: $(TARGET)
 	grep -q "zone::new<T> cannot place ownership- or borrow-valued types yet" $(BUILD_DIR)/ffi/zone-new-own-aggregate.err
 	if $(TARGET) tests/cases/memory/errors/zone-pointer-after-reset.ari -o $(BUILD_DIR)/ffi/zone-pointer-after-reset.elf >$(BUILD_DIR)/ffi/zone-pointer-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'item' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/ffi/zone-pointer-after-reset.err
+	if $(TARGET) tests/cases/memory/errors/zone-pointer-enum-payload-after-reset.ari -o $(BUILD_DIR)/ffi/zone-pointer-enum-payload-after-reset.elf >$(BUILD_DIR)/ffi/zone-pointer-enum-payload-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'maybe' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/ffi/zone-pointer-enum-payload-after-reset.err
 	if $(TARGET) tests/cases/memory/errors/zone-pointer-after-borrowed-reset.ari -o $(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.elf >$(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'item' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.err
 	if $(TARGET) tests/cases/memory/errors/zone-pointer-after-destroy.ari -o $(BUILD_DIR)/ffi/zone-pointer-after-destroy.elf >$(BUILD_DIR)/ffi/zone-pointer-after-destroy.err 2>&1; then exit 1; fi

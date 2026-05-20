@@ -56,7 +56,7 @@ API evolution.
 | `std::string` | Zone-backed owned byte string and typed borrowed text-boundary views. | `String`, `Utf8`, `OsStr`, direct string-literal coercion to `Slice[u8]` / `Vec[u8]` / `[u8, N]` / `Utf8` / `OsStr` / `PathBytes` / `CStr`, `utf8`, `os_str`, `c_str`, `c_len`, `c_bytes`, `bytes`, `new`, `empty`, `from`, `copy`, `from_string`, `from_slice_in`, `join_in`, `push`, `try_get`, `try_pop`, `append`, `append_byte`, `append_bytes`, `find_text`, `contains_text`, `split`, `chunks`, `windows`, `push_codepoint_in`, `try_utf8`, `is_utf8`, `codepoint_count`, `codepoint_at`, `equals_text`, `equals_text_ignore_case`, `trim`, `trimmed`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. `c_str` returns the shared `std::c::CStr` type. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
 | `std::parse` | Whole-input value parsers over byte slices. | `integer`, `boolean`, `is_float`, `float_or`, `float`. |
-| `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, `utf8_count`, `is_utf8`, `utf8_at`, `utf8_next_index`, `encode_utf8_in`, `utf16_count`, `is_utf16`, `encode_hex_in`, `decode_hex_in`, `encode_base64_in`, `decode_base64_in`. |
+| `std::encoding` | Text validation, UTF-8 scalar helpers, and byte codecs. | `is_ascii`, `is_unicode_scalar`, `utf8_count`, `is_utf8`, `utf8_at`, `utf8_next_index`, `encode_utf8_in`, `utf16_count`, `is_utf16`, `encode_hex_in`, `decode_hex_in`, `try_decode_hex_in`, `encode_base64_in`, `decode_base64_in`, `try_decode_base64_in`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `slice`, `split_at`, `find`, `contains_slice`, `compare`, `chunks`, `windows`, `split`, `as_slice`, `iter`. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers. |
 | `std::random` | OS entropy and deterministic non-cryptographic PRNG helpers. | `Prng`, `entropy`, `fill`, `seed`, `from_entropy`, `seed_from_os`, `next`, `below`, `range`, `float`, `fill_from`, `shuffle`. |
@@ -107,9 +107,10 @@ integer parsing, and prefix integer parsing need no compiler knowledge.
 `std::parse` and `std::encoding` continue that source-first pattern.
 `std::parse` keeps whole-input integer, bool, and decimal float parsing out of
 individual call sites. `std::encoding` validates ASCII/UTF-8/UTF-16 and
-encodes or decodes hex/base64 into caller-provided zones. The public APIs avoid
-zone-backed or float enum payloads until the compiler can safely lower
-`Option[String]`, `Result[String, E]`, and `Option[f64]`.
+encodes or decodes hex/base64 into caller-provided zones. Fallible hex/base64
+decoders now return `Option[String]`; richer `Result[String, E]` error
+payloads and `Option[f64]` still wait on the broader error/float payload
+roadmap.
 
 `std::random` has OS-backed hooks for `entropy()` and `fill(values)`, because
 seed material must come from the host and byte slices should be filled without

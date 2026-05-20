@@ -12,6 +12,7 @@
 #include "type_semantics.hpp"
 #include "zone_return_semantics.hpp"
 
+#include <algorithm>
 #include <map>
 #include <utility>
 
@@ -51,7 +52,9 @@ bool is_zone_pointer_trackable_type(const IrType& type) {
            is_std_collections_zone_handle_type(value_type) ||
            is_std_string_zone_handle_type(value_type) ||
            is_std_vec_zone_handle_type(value_type) ||
-           is_prelude_slice_type(value_type);
+           is_prelude_slice_type(value_type) ||
+           std::any_of(value_type.args.begin(), value_type.args.end(), is_zone_pointer_trackable_type) ||
+           std::any_of(value_type.field_types.begin(), value_type.field_types.end(), is_zone_pointer_trackable_type);
 }
 
 bool zone_source_name_from_arg(const IrExpr& zone_arg,
@@ -123,6 +126,14 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
     if (source.kind == IrExprKind::Tuple && is_prelude_slice_type(source.type)) {
         if (source.args.empty()) return false;
         return zone_pointer_source_name_from_expr(*source.args[0], resolver, out);
+    }
+    if (source.kind == IrExprKind::EnumConstruct) {
+        bool found_any = false;
+        merge_source(ir_expr_payload(source), found_any);
+        for (const auto& arg : source.args) {
+            merge_source(arg, found_any);
+        }
+        return found_any;
     }
     if (source.kind == IrExprKind::TupleIndex && ir_expr_operand(source)) {
         const IrExpr& operand = *ir_expr_operand(source);

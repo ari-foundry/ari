@@ -35,6 +35,7 @@ Use these when writing or changing Ari libraries:
 - [Standard Library API Reference](stdlib/api-reference.md)
 - [Standard Library Platform Notes](stdlib/platform/README.md)
 - [Standard Library Development](stdlib/library-development.md)
+- [Standard Library Production Readiness](stdlib/production-readiness.md)
 - [Standard Library Testing](stdlib/testing.md)
 - [Standard Library Roadmap](stdlib/roadmap.md)
 

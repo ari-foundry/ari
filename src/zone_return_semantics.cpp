@@ -5,6 +5,8 @@
 #include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 
+#include <algorithm>
+
 namespace ari {
 
 bool is_zone_value_type(const IrType& type) {
@@ -25,11 +27,7 @@ bool is_zone_source_type(const IrType& type) {
 
 std::optional<std::size_t> zone_pointer_return_param_index(const std::vector<IrType>& params,
                                                            const IrType& result) {
-    if (result.qualifier != TypeQualifier::Ptr &&
-        !is_std_box_handle_type(result) &&
-        !is_std_collections_zone_handle_type(result) &&
-        !is_std_string_zone_handle_type(result) &&
-        !is_std_vec_zone_handle_type(result)) {
+    if (!is_zone_pointer_return_type(result)) {
         return std::nullopt;
     }
 
@@ -40,6 +38,22 @@ std::optional<std::size_t> zone_pointer_return_param_index(const std::vector<IrT
         index = i;
     }
     return index;
+}
+
+bool is_zone_pointer_return_type(const IrType& type) {
+    IrType value_type = type;
+    if (value_type.qualifier == TypeQualifier::Ref ||
+        value_type.qualifier == TypeQualifier::MutRef) {
+        value_type.qualifier = TypeQualifier::Value;
+    }
+
+    return type.qualifier == TypeQualifier::Ptr ||
+           is_std_box_handle_type(value_type) ||
+           is_std_collections_zone_handle_type(value_type) ||
+           is_std_string_zone_handle_type(value_type) ||
+           is_std_vec_zone_handle_type(value_type) ||
+           std::any_of(value_type.args.begin(), value_type.args.end(), is_zone_pointer_return_type) ||
+           std::any_of(value_type.field_types.begin(), value_type.field_types.end(), is_zone_pointer_return_type);
 }
 
 } // namespace ari

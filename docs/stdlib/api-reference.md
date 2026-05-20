@@ -1962,11 +1962,13 @@ encoding::encode_hex_in(ref mut zone, bytes)
 encoding::hex_decoded_len(bytes)
 encoding::can_decode_hex(bytes)
 encoding::decode_hex_in(ref mut zone, bytes)
+encoding::try_decode_hex_in(ref mut zone, bytes)
 encoding::base64_encoded_len(bytes)
 encoding::encode_base64_in(ref mut zone, bytes)
 encoding::base64_decoded_len(bytes)
 encoding::can_decode_base64(bytes)
 encoding::decode_base64_in(ref mut zone, bytes)
+encoding::try_decode_base64_in(ref mut zone, bytes)
 ```
 
 `utf8_count` and `utf16_count` validate and return code-point counts through
@@ -1976,10 +1978,8 @@ UTF-8 scalar wrapper with `scalar()`, `len()`, and `next_index(byte_index)`.
 lead byte. `encode_utf8_in` returns an owned byte `String` for one Unicode
 scalar. Hex encoding emits lowercase digits and decoding accepts ASCII hex
 digits. Base64 uses the standard `+`/`/` alphabet with `=` padding. Decoders
-panic on invalid input, so call `can_decode_hex`, `hex_decoded_len`,
-`can_decode_base64`, or `base64_decoded_len` before decoding untrusted input.
-`Option[String]` and `Result[String, E]` decoder wrappers are future work
-because zone-backed enum payloads are not supported yet.
+have `try_decode_*_in` forms that return `Option[String]` for untrusted input.
+The plain `decode_*_in` helpers are asserting forms and panic on invalid input.
 
 ## Choosing The Right Collection
 

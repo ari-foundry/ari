@@ -1,0 +1,20 @@
+fn decoded(zone: ref mut Zone) -> std::Option[String] {
+  return encoding::try_decode_hex_in(zone, "4142");
+}
+
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var maybe = decoded(ref mut zone);
+  zone::reset(ref mut zone);
+
+  match maybe {
+    std::Some(text) => {
+      zone::destroy(zone);
+      return text.len();
+    }
+    std::None => {}
+  }
+
+  zone::destroy(zone);
+  return 0;
+}

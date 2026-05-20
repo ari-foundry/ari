@@ -476,6 +476,13 @@ pub fn decode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string:
   return output;
 }
 
+pub fn try_decode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
+  if !can_decode_hex(values) {
+    return std::None<std::string::String>();
+  }
+  return std::Some<std::string::String>(decode_hex_in(zone, values));
+}
+
 pub fn base64_encoded_len(values: std::Slice[u8]) -> i64 {
   return ((values.len + 2) / 3) * 4;
 }
@@ -604,4 +611,11 @@ pub fn decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::stri
     index = index + 4;
   }
   return output;
+}
+
+pub fn try_decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
+  if !can_decode_base64(values) {
+    return std::None<std::string::String>();
+  }
+  return std::Some<std::string::String>(decode_base64_in(zone, values));
 }

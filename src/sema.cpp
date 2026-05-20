@@ -19337,7 +19337,6 @@ private:
         payloads.reserve(args.size());
         for (std::size_t i = 0; i < args.size(); ++i) {
             IrExprPtr payload = std::move(args[i]);
-            require_no_zone_pointer_escape(payload->loc, *payload, "enum payload");
             coerce_expr_to_expected(*payload, info.payloads[i]);
             require_assignable(loc, info.payloads[i], payload->type);
             payloads.push_back(std::move(payload));
