@@ -35,7 +35,7 @@ void bind_generic_type(SourceLocation loc,
         substitutions.emplace(name, binding);
         return;
     }
-    if (!same_type(found->second, binding)) {
+    if (!same_type_or_char_u8_boundary(found->second, binding)) {
         fail(loc,
              "generic type '" + name + "' inferred as both " +
                  type_name(found->second) + " and " + type_name(binding));
@@ -52,7 +52,7 @@ bool try_bind_inferred_type(const std::string& name,
         substitutions.emplace(name, binding);
         return true;
     }
-    return same_type(found->second, binding);
+    return same_type_or_char_u8_boundary(found->second, binding);
 }
 
 } // namespace

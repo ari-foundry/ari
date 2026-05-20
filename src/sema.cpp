@@ -4500,6 +4500,13 @@ private:
             return type;
         }
 
+        if (ast_type.name == "char" && ast_type.args.empty()) {
+            IrType type = integer_type(IrPrimitiveKind::U8, ast_type.loc);
+            type.name = "char";
+            type.qualifier = ast_type.qualifier;
+            return type;
+        }
+
         if (const TypeAliasInfo* alias = find_type_alias_application(ast_type)) {
             return resolve_type_alias_application(ast_type, *alias);
         }

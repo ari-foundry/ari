@@ -1,6 +1,6 @@
 // Covers byte-character formatting through Display, Debug, and format_in!.
-// `char` is still a u8 alias, but text-shaped APIs should treat byte character
-// literals as characters instead of forcing numeric formatting everywhere.
+// `char` keeps the same runtime width as u8, while text-shaped APIs preserve
+// the source-level character intent for literals and char-typed values.
 fn main() -> i64 {
   var zone = zone::create(256);
 
@@ -11,7 +11,7 @@ fn main() -> i64 {
   assert_equal[bool](text.equals_text("A-'B'"), true);
 
   var rendered = format_in!(ref mut zone, "c={} dbg={:?} raw={}", 'C', 'D', 65u8);
-  assert_equal[bool](rendered.equals_text("c=C dbg='D' raw=A"), true);
+  assert_equal[bool](rendered.equals_text("c=C dbg='D' raw=65"), true);
 
   var newline = fmt::debug_char_in(ref mut zone, '\n');
   assert_equal[bool](newline.equals_text("'\\n'"), true);

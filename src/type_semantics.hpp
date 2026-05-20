@@ -9,6 +9,7 @@
 namespace ari {
 
 bool same_type(const IrType& left, const IrType& right);
+bool same_type_or_char_u8_boundary(const IrType& left, const IrType& right);
 bool is_copy_type(const IrType& type);
 bool is_owner_type(const IrType& type);
 bool is_borrow_type(const IrType& type);

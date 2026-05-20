@@ -54,19 +54,24 @@ and `char` have the same executable representation as `u8`. Generic aliases use
 the same declaration-side generic list as structs and functions, and type
 applications may use either `Alias[T]` or `Alias<T>` in annotations.
 
-The standard prelude exports:
+The standard prelude exports the readable name:
 
 ```ari
 type char = u8;
 ```
 
-`char` is intentionally an ASCII byte alias today. Use it for APIs such as
+`char` is intentionally an ASCII byte-shaped source type today. It has the same
+runtime width as `u8`, but the type checker preserves the source-level `char`
+name for character literals and spelled `char` annotations. That preserved name
+carries formatting intent. Use `char` for APIs such as
 `ascii::is_digit(value: char)` or character literals like `'0'`. Keep `u8` for
 raw buffers, hashes, encoded bytes, and memory-oriented APIs where the value is
-not text.
-Text-shaped formatting treats `char` values as byte characters:
-`String.append_value('A')` and `format_in!(ref mut zone, "{}", 'A')` write
-`A`, while `String.append_debug('A')` and `{:?}` write `'A'`.
+not text. Text-shaped formatting treats `char` values as byte characters:
+`String.append_value('A')` and `format_in!(ref mut zone, "{}", 'A')` write `A`,
+while `String.append_debug('A')` and `{:?}` write `'A'`. Plain `u8` values format
+numerically, so `7u8` writes `7` instead of a control byte. Assigning,
+comparing, or passing a `char` where a byte is required is allowed when the
+underlying representation is still exactly `u8`.
 
 Both executable backends preserve the declared integer width when scalar locals
 are read or written. On the LLVM backend this includes narrow

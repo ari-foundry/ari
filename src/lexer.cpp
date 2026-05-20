@@ -391,7 +391,7 @@ private:
             fail(loc, "byte character literal must contain exactly one byte");
         }
         Token token{TokenKind::Integer, "", value, loc, 0.0, ""};
-        token.literal_suffix = "u8";
+        token.literal_suffix = "char";
         return token;
     }
 

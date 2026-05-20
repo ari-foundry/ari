@@ -99,7 +99,8 @@ std::optional<FormatInAppendTarget> builtin_format_in_append_target_from_type(co
         return FormatInAppendTarget{FormatInAppendKind::Bool, {}};
     }
     if (type.qualifier == TypeQualifier::Value &&
-        (type.primitive == IrPrimitiveKind::U8 || type.primitive == IrPrimitiveKind::I8)) {
+        type.primitive == IrPrimitiveKind::U8 &&
+        type.name == "char") {
         return FormatInAppendTarget{FormatInAppendKind::Char, {}};
     }
     if (is_value_integer_type(type) && is_unsigned_integer_primitive(type.primitive)) {

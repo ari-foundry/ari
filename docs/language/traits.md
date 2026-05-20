@@ -409,7 +409,8 @@ fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String
 ```
 
 `format_in!(ref mut zone, "{}", value)` calls this hook for user-defined value
-types that are not one of the built-in string, integer, bool, or float cases.
+types that are not one of the built-in string, char, integer, bool, or float
+cases.
 The macro evaluates the value once, passes a shared borrow to the hook, then
 appends the returned source `String` into the final output. Struct display impls
 can read fields through the shared receiver, for example `self.x`, without

@@ -1122,7 +1122,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std3fmt7char_in' $(BUILD_DIR)/prelude/std-fmt-char-values.ll
 	grep -q '_ARNv3std3fmt13debug_char_in' $(BUILD_DIR)/prelude/std-fmt-char-values.ll
 	grep -q 'append_byte' $(BUILD_DIR)/prelude/std-fmt-char-values.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-char-values.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-char-values.elf; $(BUILD_DIR)/prelude/std-fmt-char-values.elf; code=$$?; test $$code -eq 26; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-char-values.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-char-values.elf; $(BUILD_DIR)/prelude/std-fmt-char-values.elf; code=$$?; test $$code -eq 27; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-print-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-print-value.ll
 	grep -q 'print_value' $(BUILD_DIR)/prelude/std-fmt-print-value.ll
 	grep -q 'println_value' $(BUILD_DIR)/prelude/std-fmt-print-value.ll
@@ -1780,9 +1780,9 @@ check-prelude: $(TARGET)
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-macro-format-qualified-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err 2>&1; then exit 1; fi
 	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-f128.ari -o $(BUILD_DIR)/prelude/prelude-format-in-f128.elf >$(BUILD_DIR)/prelude/prelude-format-in-f128.err 2>&1; then exit 1; fi
-	grep -q "format_in! currently supports string, integer, bool, f32, f64, and Display values, got f128" $(BUILD_DIR)/prelude/prelude-format-in-f128.err
+	grep -q "format_in! currently supports string, char, integer, bool, f32, f64, and Display values, got f128" $(BUILD_DIR)/prelude/prelude-format-in-f128.err
 	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-no-display.ari -o $(BUILD_DIR)/prelude/prelude-format-in-no-display.elf >$(BUILD_DIR)/prelude/prelude-format-in-no-display.err 2>&1; then exit 1; fi
-	grep -q "format_in! currently supports string, integer, bool, f32, f64, and Display values, got Point" $(BUILD_DIR)/prelude/prelude-format-in-no-display.err
+	grep -q "format_in! currently supports string, char, integer, bool, f32, f64, and Display values, got Point" $(BUILD_DIR)/prelude/prelude-format-in-no-display.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-macro-nonprelude-qualified.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'other::format!'" $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-macro-nonprelude-matches.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err 2>&1; then exit 1; fi

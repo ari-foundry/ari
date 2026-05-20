@@ -22,6 +22,13 @@ IrType integer_type(IrPrimitiveKind primitive, SourceLocation loc) {
     return primitive_type(primitive, primitive_name(primitive), loc);
 }
 
+bool is_char_u8_boundary(const IrType& left, const IrType& right) {
+    return left.primitive == IrPrimitiveKind::U8 &&
+           right.primitive == IrPrimitiveKind::U8 &&
+           ((left.name == "char" && right.name == "u8") ||
+            (left.name == "u8" && right.name == "char"));
+}
+
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
     throw CompileError(where(loc) + ": " + message);
 }
@@ -36,6 +43,24 @@ bool same_type(const IrType& left, const IrType& right) {
     if (left.args.size() != right.args.size()) return false;
     for (std::size_t i = 0; i < left.args.size(); ++i) {
         if (!same_type(left.args[i], right.args[i])) return false;
+    }
+    return true;
+}
+
+bool same_type_or_char_u8_boundary(const IrType& left, const IrType& right) {
+    if (left.qualifier != right.qualifier) return false;
+    if (is_char_u8_boundary(left, right) &&
+        left.args.empty() &&
+        right.args.empty() &&
+        left.array_size == right.array_size) {
+        return true;
+    }
+    if (left.primitive != right.primitive) return false;
+    if (left.name != right.name) return false;
+    if (left.array_size != right.array_size) return false;
+    if (left.args.size() != right.args.size()) return false;
+    for (std::size_t i = 0; i < left.args.size(); ++i) {
+        if (!same_type_or_char_u8_boundary(left.args[i], right.args[i])) return false;
     }
     return true;
 }
@@ -365,6 +390,7 @@ std::string type_ref_key(const TypeRef& type) {
 }
 
 IrType integer_literal_suffix_type(const std::string& suffix, SourceLocation loc) {
+    if (suffix == "char") return primitive_type(IrPrimitiveKind::U8, "char", loc);
     if (suffix == "i8") return integer_type(IrPrimitiveKind::I8, loc);
     if (suffix == "i16") return integer_type(IrPrimitiveKind::I16, loc);
     if (suffix == "i32") return integer_type(IrPrimitiveKind::I32, loc);
@@ -559,6 +585,11 @@ void require_comparable_operands(SourceLocation loc, const IrType& left, const I
     if ((has_aggregate_enum_layout(left) || has_aggregate_enum_layout(right)) && same_type(left, right)) {
         fail(loc, "comparison for aggregate enum layouts is planned but is not supported yet");
     }
+    if (same_type_or_char_u8_boundary(left, right) &&
+        is_value_integer_type(left) &&
+        is_value_integer_type(right)) {
+        return;
+    }
     if (same_type(left, right) &&
         (is_value_integer_type(left) ||
          is_value_float_type(left) ||
@@ -587,6 +618,9 @@ void require_boolish(SourceLocation loc, const IrType& type) {
 
 void require_assignable(SourceLocation loc, const IrType& expected, const IrType& actual) {
     if (same_type(expected, actual)) return;
+    if (same_type_or_char_u8_boundary(expected, actual)) {
+        return;
+    }
     if (expected.qualifier == TypeQualifier::Ptr &&
         actual.qualifier == TypeQualifier::Value &&
         actual.primitive == IrPrimitiveKind::String &&
