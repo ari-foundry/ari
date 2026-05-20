@@ -1835,6 +1835,8 @@ signatures. The names intentionally avoid type suffixes so they can grow into
 generic numeric APIs later without changing call sites:
 
 ```ari
+math::min_value()
+math::max_value()
 math::abs(value)
 math::sign(value)
 math::is_positive(value)
@@ -1869,11 +1871,13 @@ math::gcd(left, right)
 math::lcm(left, right)
 ```
 
-`is_positive`, `is_negative`, and `is_zero` are predicate forms for the same
-sign policy as `sign`. `pow` requires a non-negative exponent and asserts that
-precondition at runtime. `div_floor` rounds signed division toward negative
-infinity, `div_ceil` rounds toward positive infinity, and `mod_floor` returns
-the matching floor remainder. The division helpers assert that
+`min_value` and `max_value` return the current signed `i64` bounds without
+making callers repeat long sentinel literals. `is_positive`, `is_negative`, and
+`is_zero` are predicate forms for the same sign policy as `sign`. `pow`
+requires a non-negative exponent and asserts that precondition at runtime.
+`div_floor` rounds signed division toward negative infinity, `div_ceil` rounds
+toward positive infinity, and `mod_floor` returns the matching floor remainder.
+The division helpers assert that
 `denominator != 0` and that the quotient is representable. `gcd` and `lcm`
 normalize negative inputs through absolute values. `lcm` returns `0` when
 either input is `0`.

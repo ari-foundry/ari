@@ -1,7 +1,7 @@
 // Covers the wrapping and overflowing add/sub/mul policy slice in std::math.
 fn main() -> i64 {
-  let min = -9223372036854775807 - 1;
-  let max = 9223372036854775807;
+  let min = math::min_value();
+  let max = math::max_value();
 
   var score = 0;
   if math::wrapping_add(40, 2) == 42 {

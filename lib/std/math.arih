@@ -1,10 +1,10 @@
 // Source-only integer helpers. The public names stay natural; the current
 // signatures are i64-only until Ari has generic numeric traits.
-fn i64_min() -> i64 {
+pub fn min_value() -> i64 {
   return -9223372036854775807 - 1;
 }
 
-fn i64_max() -> i64 {
+pub fn max_value() -> i64 {
   return 9223372036854775807;
 }
 
@@ -47,12 +47,12 @@ pub fn is_odd(value: i64) -> bool {
 
 pub fn checked_add(left: i64, right: i64) -> std::Option[i64] {
   if right > 0 {
-    if left > i64_max() - right {
+    if left > max_value() - right {
       return std::None<i64>();
     }
   }
   if right < 0 {
-    if left < i64_min() - right {
+    if left < min_value() - right {
       return std::None<i64>();
     }
   }
@@ -61,12 +61,12 @@ pub fn checked_add(left: i64, right: i64) -> std::Option[i64] {
 
 pub fn checked_sub(left: i64, right: i64) -> std::Option[i64] {
   if right > 0 {
-    if left < i64_min() + right {
+    if left < min_value() + right {
       return std::None<i64>();
     }
   }
   if right < 0 {
-    if left > i64_max() + right {
+    if left > max_value() + right {
       return std::None<i64>();
     }
   }
@@ -78,30 +78,30 @@ pub fn checked_mul(left: i64, right: i64) -> std::Option[i64] {
     return std::Some<i64>(0);
   }
 
-  if left == -1 && right == i64_min() {
+  if left == -1 && right == min_value() {
     return std::None<i64>();
   }
-  if right == -1 && left == i64_min() {
+  if right == -1 && left == min_value() {
     return std::None<i64>();
   }
 
   if left > 0 {
     if right > 0 {
-      if left > i64_max() / right {
+      if left > max_value() / right {
         return std::None<i64>();
       }
     } else {
-      if right < i64_min() / left {
+      if right < min_value() / left {
         return std::None<i64>();
       }
     }
   } else {
     if right > 0 {
-      if left < i64_min() / right {
+      if left < min_value() / right {
         return std::None<i64>();
       }
     } else {
-      if left < i64_max() / right {
+      if left < max_value() / right {
         return std::None<i64>();
       }
     }
@@ -114,7 +114,7 @@ pub fn checked_div(left: i64, right: i64) -> std::Option[i64] {
   if right == 0 {
     return std::None<i64>();
   }
-  if left == i64_min() && right == -1 {
+  if left == min_value() && right == -1 {
     return std::None<i64>();
   }
   return std::Some<i64>(left / right);
@@ -124,21 +124,21 @@ pub fn checked_rem(left: i64, right: i64) -> std::Option[i64] {
   if right == 0 {
     return std::None<i64>();
   }
-  if left == i64_min() && right == -1 {
+  if left == min_value() && right == -1 {
     return std::None<i64>();
   }
   return std::Some<i64>(left % right);
 }
 
 pub fn checked_neg(value: i64) -> std::Option[i64] {
-  if value == i64_min() {
+  if value == min_value() {
     return std::None<i64>();
   }
   return std::Some<i64>(0 - value);
 }
 
 pub fn checked_abs(value: i64) -> std::Option[i64] {
-  if value == i64_min() {
+  if value == min_value() {
     return std::None<i64>();
   }
   return std::Some<i64>(abs(value));
@@ -154,9 +154,9 @@ pub fn wrapping_add(left: i64, right: i64) -> i64 {
 
   // Compute the wrapped result without depending on undefined signed overflow.
   if right > 0 {
-    return i64_min() + (right - (i64_max() - left) - 1);
+    return min_value() + (right - (max_value() - left) - 1);
   }
-  return i64_max() - ((i64_min() - left) - right - 1);
+  return max_value() - ((min_value() - left) - right - 1);
 }
 
 pub fn wrapping_sub(left: i64, right: i64) -> i64 {
@@ -167,20 +167,20 @@ pub fn wrapping_sub(left: i64, right: i64) -> i64 {
     std::None => {}
   }
 
-  // Avoid negating `right`: `i64_min()` cannot be represented as positive i64.
-  if right == i64_min() {
+  // Avoid negating `right`: `min_value()` cannot be represented as positive i64.
+  if right == min_value() {
     if left < 0 {
-      return left - i64_min();
+      return left - min_value();
     }
-    return i64_min() + left;
+    return min_value() + left;
   }
 
   if right > 0 {
-    return i64_max() - (right - (left - i64_min()) - 1);
+    return max_value() - (right - (left - min_value()) - 1);
   }
 
   let magnitude = 0 - right;
-  return i64_min() + (magnitude - (i64_max() - left) - 1);
+  return min_value() + (magnitude - (max_value() - left) - 1);
 }
 
 pub fn wrapping_mul(left: i64, right: i64) -> i64 {
@@ -230,9 +230,9 @@ pub fn saturating_add(left: i64, right: i64) -> i64 {
   }
 
   if right > 0 {
-    return i64_max();
+    return max_value();
   }
-  return i64_min();
+  return min_value();
 }
 
 pub fn saturating_sub(left: i64, right: i64) -> i64 {
@@ -244,9 +244,9 @@ pub fn saturating_sub(left: i64, right: i64) -> i64 {
   }
 
   if right > 0 {
-    return i64_min();
+    return min_value();
   }
-  return i64_max();
+  return max_value();
 }
 
 pub fn saturating_neg(value: i64) -> i64 {
@@ -256,7 +256,7 @@ pub fn saturating_neg(value: i64) -> i64 {
     }
     std::None => {}
   }
-  return i64_max();
+  return max_value();
 }
 
 pub fn saturating_mul(left: i64, right: i64) -> i64 {
@@ -268,15 +268,15 @@ pub fn saturating_mul(left: i64, right: i64) -> i64 {
   }
 
   if (left < 0 && right < 0) || (left > 0 && right > 0) {
-    return i64_max();
+    return max_value();
   }
-  return i64_min();
+  return min_value();
 }
 
 pub fn saturating_div(left: i64, right: i64) -> i64 {
   std::assert(right != 0);
-  if left == i64_min() && right == -1 {
-    return i64_max();
+  if left == min_value() && right == -1 {
+    return max_value();
   }
   return left / right;
 }
@@ -288,7 +288,7 @@ pub fn saturating_abs(value: i64) -> i64 {
     }
     std::None => {}
   }
-  return i64_max();
+  return max_value();
 }
 
 pub fn pow(base: i64, exponent: i64) -> i64 {
@@ -305,7 +305,7 @@ pub fn pow(base: i64, exponent: i64) -> i64 {
 
 pub fn div_floor(numerator: i64, denominator: i64) -> i64 {
   std::assert(denominator != 0);
-  std::assert(numerator != i64_min() || denominator != -1);
+  std::assert(numerator != min_value() || denominator != -1);
 
   let quotient = numerator / denominator;
   let remainder = numerator % denominator;
@@ -319,7 +319,7 @@ pub fn div_floor(numerator: i64, denominator: i64) -> i64 {
 
 pub fn div_ceil(numerator: i64, denominator: i64) -> i64 {
   std::assert(denominator != 0);
-  std::assert(numerator != i64_min() || denominator != -1);
+  std::assert(numerator != min_value() || denominator != -1);
 
   let quotient = numerator / denominator;
   let remainder = numerator % denominator;

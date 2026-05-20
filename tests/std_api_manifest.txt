@@ -373,6 +373,8 @@ fn std::math::is_odd|std math integer helper tests; docs/stdlib/api-reference.md
 fn std::math::is_positive|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::is_zero|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::lcm|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::max_value|std math integer helper tests; docs/stdlib/modules/math.md
+fn std::math::min_value|std math integer helper tests; docs/stdlib/modules/math.md
 fn std::math::mod_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::overflowing_add|std math wrapping/overflowing tests; tuple return keeps wrapped value and overflow flag; docs/stdlib/modules/math.md
 fn std::math::overflowing_mul|std math wrapping/overflowing tests; tuple return keeps wrapped value and overflow flag; docs/stdlib/modules/math.md

@@ -660,6 +660,8 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-basic.elf; $(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 9; fi
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3abs' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math9min_value' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math9max_value' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math4sign' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math11is_positive' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math11is_negative' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
@@ -670,7 +672,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4math3gcd' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3lcm' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-integer-helpers.ari -o $(BUILD_DIR)/prelude/std-math-integer-helpers.elf
-	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 71
+	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 139
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-division-rounding.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-division-rounding.ll
 	grep -q '_ARNv3std4math9div_floor' $(BUILD_DIR)/prelude/std-math-division-rounding.ll
 	grep -q '_ARNv3std4math8div_ceil' $(BUILD_DIR)/prelude/std-math-division-rounding.ll

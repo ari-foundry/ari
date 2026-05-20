@@ -22,8 +22,8 @@ fn expect_none(value: std::Option[i64]) -> i64 {
 }
 
 fn main() -> i64 {
-  let min = -9223372036854775807 - 1;
-  let max = 9223372036854775807;
+  let min = math::min_value();
+  let max = math::max_value();
 
   var score = 0;
   score = score + expect_some(std::math::checked_add(40, 2), 42);

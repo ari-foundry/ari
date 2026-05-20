@@ -1,5 +1,13 @@
 // Covers the first source-only std::math slice: signed i64 helper functions.
 fn main() -> i64 {
+  var bounds = 0;
+  if math::min_value() == (-9223372036854775807 - 1) {
+    bounds = bounds + 31;
+  }
+  if math::max_value() == 9223372036854775807 {
+    bounds = bounds + 37;
+  }
+
   let absolute = std::math::abs(-9) + math::abs(0) + math::abs(8);
   let sign_score = math::sign(-10) + math::sign(0) + math::sign(10);
 
@@ -51,7 +59,7 @@ fn main() -> i64 {
   let lcms = math::lcm(12, 18) + math::lcm(-6, 8) + math::lcm(0, 10);
 
   let total =
-    absolute + sign_score + sign_predicates + parity + powers + gcds + lcms;
-  assert_eq_i64(total, 327);
+    bounds + absolute + sign_score + sign_predicates + parity + powers + gcds + lcms;
+  assert_eq_i64(total, 395);
   return total % 256;
 }

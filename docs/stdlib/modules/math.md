@@ -13,6 +13,8 @@ the helpers later grow into generic numeric APIs.
 Basic signed integer helpers:
 
 ```ari
+math::min_value()
+math::max_value()
 math::abs(value)
 math::sign(value)
 math::is_positive(value)
@@ -22,12 +24,14 @@ math::is_even(value)
 math::is_odd(value)
 ```
 
-`abs` returns the non-negative magnitude of the input. `sign` returns `-1`,
-`0`, or `1`. `is_positive`, `is_negative`, and `is_zero` are small predicate
-forms for the same sign policy. The parity helpers use integer remainder and
-work for negative values too. `abs` is the simple arithmetic spelling; use
-`checked_abs` or `saturating_abs` below when the minimum `i64` value is a
-possible input.
+`min_value` and `max_value` return the current signed `i64` lower and upper
+bounds. They keep user code from spelling long sentinel literals by hand while
+the module is still `i64`-only. `abs` returns the non-negative magnitude of the
+input. `sign` returns `-1`, `0`, or `1`. `is_positive`, `is_negative`, and
+`is_zero` are small predicate forms for the same sign policy. The parity
+helpers use integer remainder and work for negative values too. `abs` is the
+simple arithmetic spelling; use `checked_abs` or `saturating_abs` below when
+the minimum value is a possible input.
 
 Overflow-policy helpers:
 
@@ -56,16 +60,15 @@ math::saturating_abs(value)
 The `checked_*` helpers return `std::Option[i64]`: `Some(value)` when the
 operation is representable, and `None<i64>()` when it would overflow or
 underflow. The `saturating_*` helpers clamp to the nearest `i64` bound instead:
-positive overflow becomes `9223372036854775807`, and negative overflow becomes
-`-9223372036854775808`.
+positive overflow becomes `max_value()`, and negative overflow becomes
+`min_value()`.
 
 `checked_mul` and `saturating_mul` follow the same policy for multiplication,
 using guarded division checks before multiplying so the successful branch does
 not rely on signed overflow behavior. `checked_div` and `checked_rem` return
 `None<i64>()` for division by zero and the unrepresentable
-`-9223372036854775808 / -1` edge. `saturating_div` asserts that the divisor is
-non-zero and clamps only that signed-minimum overflow edge to
-`9223372036854775807`.
+`min_value() / -1` edge. `saturating_div` asserts that the divisor is non-zero
+and clamps only that signed-minimum overflow edge to `max_value()`.
 
 `wrapping_add`, `wrapping_sub`, and `wrapping_mul` return the
 two's-complement wrapped result. `wrapping_mul` routes through `u64` so the
