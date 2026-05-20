@@ -161,6 +161,7 @@ fn std::diag::is_error|check-diag std-diag-basic severity error predicate; docs/
 fn std::diag::is_warning|check-diag std-diag-basic severity warning predicate; docs/stdlib/modules/diag.md
 fn std::diag::label|check-diag std-diag-basic diagnostic label constructor; docs/stdlib/modules/diag.md
 fn std::diag::label_location|check-diag std-diag-basic label source location lookup; docs/stdlib/modules/diag.md
+fn std::diag::label_source_location|check-diag std-diag-source-map label SourceMap location lookup; docs/stdlib/modules/diag.md
 fn std::diag::location|check-diag std-diag-basic diagnostic primary source location lookup; docs/stdlib/modules/diag.md
 fn std::diag::new|check-diag std-diag-basic generic diagnostic constructor; docs/stdlib/modules/diag.md
 fn std::diag::note|check-diag std-diag-basic note diagnostic constructor; docs/stdlib/modules/diag.md
@@ -168,6 +169,7 @@ fn std::diag::primary|check-diag std-diag-basic primary label constructor; docs/
 fn std::diag::secondary|check-diag std-diag-basic secondary label constructor; docs/stdlib/modules/diag.md
 fn std::diag::severity_name|check-diag std-diag-basic severity name helper; docs/stdlib/modules/diag.md
 fn std::diag::severity_rank|check-diag std-diag-basic severity ordering helper; docs/stdlib/modules/diag.md
+fn std::diag::source_location|check-diag std-diag-source-map diagnostic SourceMap location lookup; docs/stdlib/modules/diag.md
 fn std::diag::warning|check-diag std-diag-basic warning diagnostic constructor; docs/stdlib/modules/diag.md
 fn std::diag::with_label|check-diag std-diag-basic diagnostic label attachment helper; docs/stdlib/modules/diag.md
 fn std::diag::with_note|check-diag std-diag-basic diagnostic note attachment helper; docs/stdlib/modules/diag.md
@@ -882,6 +884,7 @@ method std::diag::Diagnostic::location|check-diag std-diag-basic diagnostic prim
 method std::diag::Diagnostic::message|check-diag std-diag-basic diagnostic message accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::note_message|check-diag std-diag-basic diagnostic note message accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::severity|check-diag std-diag-basic diagnostic severity accessor; docs/stdlib/modules/diag.md
+method std::diag::Diagnostic::source_location|check-diag std-diag-source-map diagnostic SourceMap location method; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::span|check-diag std-diag-basic diagnostic span accessor; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::with_label|check-diag std-diag-basic diagnostic label attachment method; docs/stdlib/modules/diag.md
 method std::diag::Diagnostic::with_note|check-diag std-diag-basic diagnostic note attachment method; docs/stdlib/modules/diag.md
@@ -890,6 +893,7 @@ method std::diag::Label::is_primary|check-diag std-diag-basic label primary pred
 method std::diag::Label::is_secondary|check-diag std-diag-basic label secondary predicate; docs/stdlib/modules/diag.md
 method std::diag::Label::location|check-diag std-diag-basic label source location method; docs/stdlib/modules/diag.md
 method std::diag::Label::message|check-diag std-diag-basic label message accessor; docs/stdlib/modules/diag.md
+method std::diag::Label::source_location|check-diag std-diag-source-map label SourceMap location method; docs/stdlib/modules/diag.md
 method std::diag::Label::span|check-diag std-diag-basic label span accessor; docs/stdlib/modules/diag.md
 method std::diag::Label::style|check-diag std-diag-basic label style accessor; docs/stdlib/modules/diag.md
 method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md

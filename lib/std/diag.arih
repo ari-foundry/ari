@@ -185,6 +185,20 @@ pub fn label_location(
   return file.locate(value.span.start());
 }
 
+pub fn source_location(
+  value: ref std::diag::Diagnostic,
+  sources: ref std::source::SourceMap
+) -> std::source::Location {
+  return sources.locate(value.span);
+}
+
+pub fn label_source_location(
+  value: ref std::diag::Label,
+  sources: ref std::source::SourceMap
+) -> std::source::Location {
+  return sources.locate(value.span);
+}
+
 fn log_level(severity: std::diag::Severity) -> std::log::Level {
   match severity {
     Note => { return std::log::Info; }
@@ -227,6 +241,10 @@ pub impl std::diag::Label {
 
   fn location(self: ref Self, file: ref std::source::SourceFile) -> std::source::Location {
     return std::diag::label_location(ref self, file);
+  }
+
+  fn source_location(self: ref Self, sources: ref std::source::SourceMap) -> std::source::Location {
+    return std::diag::label_source_location(ref self, sources);
   }
 }
 
@@ -275,6 +293,10 @@ pub impl std::diag::Diagnostic {
 
   fn location(self: ref Self, file: ref std::source::SourceFile) -> std::source::Location {
     return std::diag::location(ref self, file);
+  }
+
+  fn source_location(self: ref Self, sources: ref std::source::SourceMap) -> std::source::Location {
+    return std::diag::source_location(ref self, sources);
   }
 
   fn write(self: ref Self) -> bool {

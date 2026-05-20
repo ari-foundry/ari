@@ -298,6 +298,10 @@ identifies the exact case:
   and the dedicated `make check-diag` target.
 - `std-diag-write-note.ari`: source `std::diag` stable stderr summary output
   with an attached note line and the dedicated `make check-diag` target.
+- `std-diag-source-map.ari`: source `std::diag` diagnostic and label
+  location lookup through `std::source::SourceMap` plus method wrappers.
+- `std-diag-source-map-after-reset.ari`: source `std::diag` negative fixture
+  proving `SourceMap` lookup in diagnostics respects zone lifetime checks.
 - `std-source-location.ari`: source `std::source` file id, half-open byte
   span, one-based line/column, location, containment, boundary, same-file
   merge, ordering, method wrapper behavior, and the dedicated

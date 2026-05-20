@@ -102,6 +102,11 @@ check-diag: $(TARGET)
 	grep -q 'std__diag__Diagnostic8inherent9with_note' $(BUILD_DIR)/diag/std-diag-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-basic.ari -o $(BUILD_DIR)/diag/std-diag-basic.elf
 	$(BUILD_DIR)/diag/std-diag-basic.elf; code=$$?; test $$code -eq 136
+	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-source-map.ari --emit-llvm $(BUILD_DIR)/diag/std-diag-source-map.ll
+	grep -q '_ARNv3std4diag15source_location' $(BUILD_DIR)/diag/std-diag-source-map.ll
+	grep -q 'std__diag__Diagnostic8inherent15source_location' $(BUILD_DIR)/diag/std-diag-source-map.ll
+	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-source-map.ari -o $(BUILD_DIR)/diag/std-diag-source-map.elf
+	$(BUILD_DIR)/diag/std-diag-source-map.elf; code=$$?; test $$code -eq 10
 	$(TARGET) tests/cases/standard-library/ok/diag/std-diag-write.ari -o $(BUILD_DIR)/diag/std-diag-write.elf
 	$(BUILD_DIR)/diag/std-diag-write.elf >$(BUILD_DIR)/diag/std-diag-write.out 2>$(BUILD_DIR)/diag/std-diag-write.err; code=$$?; test $$code -eq 7
 	test ! -s $(BUILD_DIR)/diag/std-diag-write.out
@@ -111,6 +116,8 @@ check-diag: $(TARGET)
 	test ! -s $(BUILD_DIR)/diag/std-diag-write-note.out
 	grep -qx "\[error\] expected identifier" $(BUILD_DIR)/diag/std-diag-write-note.err
 	grep -qx "\[info\] names must appear after let" $(BUILD_DIR)/diag/std-diag-write-note.err
+	if $(TARGET) tests/cases/standard-library/errors/diag/std-diag-source-map-after-reset.ari -o $(BUILD_DIR)/diag/std-diag-source-map-after-reset.elf >$(BUILD_DIR)/diag/std-diag-source-map-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'sources' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/diag/std-diag-source-map-after-reset.err
 
 check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	mkdir -p $(BUILD_DIR)/tools

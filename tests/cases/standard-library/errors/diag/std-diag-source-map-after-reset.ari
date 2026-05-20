@@ -1,0 +1,11 @@
+// Ensures diagnostic SourceMap lookup respects zone lifetime checks.
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var sources = source::source_map(ref mut zone, 1);
+  let file = sources.add(ref mut zone, "bad\n");
+  let diagnostic = diag::error("E0003", "bad token", sources.lines(file).line_span(1));
+
+  zone::reset(ref mut zone);
+
+  return diagnostic.source_location(ref sources).line();
+}
