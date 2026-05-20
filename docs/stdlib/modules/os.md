@@ -8,10 +8,10 @@ small descriptor model with two shapes:
 - `OwnedFd`: a descriptor owner that has the responsibility to close once.
 
 This module is intentionally not a raw syscall collection. Close, duplicate,
-and close-on-exec are the first owner operations because they define descriptor
-lifetime and inheritance. Nonblocking mode, `fcntl`, `poll`, Linux `epoll`,
-signals, and memory mapping are added in small layers after descriptor error
-policy is stable.
+close-on-exec, and nonblocking mode are the first owner operations because they
+define descriptor lifetime, inheritance, and blocking behavior. Broad `fcntl`,
+`poll`, Linux `epoll`, signals, and memory mapping are added in small layers
+after descriptor error policy is stable.
 
 ## API
 
@@ -41,6 +41,8 @@ owned.take()
 owned.try_clone()
 owned.close_on_exec()
 owned.set_close_on_exec(enabled)
+owned.is_nonblocking()
+owned.set_nonblocking(enabled)
 owned.close()
 
 file.descriptor()
@@ -77,6 +79,12 @@ returns `Option[bool]`. `set_close_on_exec(enabled)` updates that flag and
 returns whether the platform accepted the change. Both methods live on
 `OwnedFd` first so flag mutation stays near the code that owns the descriptor.
 
+`is_nonblocking()` reads whether the descriptor has nonblocking mode enabled.
+`set_nonblocking(enabled)` toggles that flag and returns whether the platform
+accepted the change. The API intentionally avoids exposing raw flag integers;
+future socket and readiness wrappers can build on this owned-descriptor
+policy.
+
 ## Example
 
 ```ari
@@ -98,6 +106,7 @@ fn main() -> i64 {
   let file = std::fs::open("build/output.tmp", "w");
   var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
   owned.set_close_on_exec(true);
+  owned.set_nonblocking(true);
   var copy = owned.try_clone().unwrap();
   copy.close();
   if owned.close() {
@@ -116,6 +125,7 @@ tests/cases/standard-library/ok/os/std-os-fd.ari
 tests/cases/standard-library/ok/os/std-os-owned-fd.ari
 tests/cases/standard-library/ok/os/std-os-owned-fd-duplicate.ari
 tests/cases/standard-library/ok/os/std-os-owned-fd-flags.ari
+tests/cases/standard-library/ok/os/std-os-owned-fd-nonblocking.ari
 ```
 
 `make check-std-api` tracks the public declarations. `make check-prelude`
@@ -125,9 +135,9 @@ compiles and runs the focused descriptor fixtures.
 
 - Add fallible descriptor operations returning `std::error::Error` once
   `Result[T, Error]` is directly representable.
-- Add nonblocking setters before exposing readiness APIs.
 - Add duplication flags such as close-on-exec-on-dup when the API shape is
   stable.
+- Add richer descriptor flag tests on sockets, pipes, and terminals.
 - Add `poll` as the first portable readiness primitive.
 - Add Linux-only `epoll`, `eventfd`, `timerfd`, `signalfd`, `pidfd`, and
   `memfd` under target-guarded APIs after owned descriptors are stable.

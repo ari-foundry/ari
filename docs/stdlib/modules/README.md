@@ -77,7 +77,7 @@ limits, examples, and test files for one module.
   abort hooks, status helper functions, and the first POSIX fork/wait
   child-process slice.
 - [std::os](os.md): non-owning file-descriptor views, `OwnedFd` close,
-  duplicate, and close-on-exec ownership, and the roadmap for raw OS
+  duplicate, close-on-exec, and nonblocking policy, and the roadmap for raw OS
   primitives.
 - [std::thread](thread.md): function-pointer thread spawn/join, runtime thread
   ids, invalid-handle sentinels, cooperative sleep/yield, available

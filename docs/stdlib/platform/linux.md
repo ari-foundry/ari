@@ -90,7 +90,7 @@ useful for modern systems work.
 | `/dev/urandom` | Used as the random fallback when `getrandom` cannot make progress. | Keep as fallback; do not expose raw device reads as portable API. |
 | file descriptor abstraction | `std::os::Fd` is a public non-owning descriptor view, `std::os::OwnedFd` owns exactly-one-close responsibility, `OwnedFd::try_clone()` duplicates that ownership through `dup`, and `std::fs::File.descriptor()` exposes file handles through the borrowed view. | Add duplicate-with-flags and richer error policy before exposing broad `fcntl`, `poll`, or epoll. |
 | close-on-exec | `OwnedFd::close_on_exec()` and `set_close_on_exec(enabled)` are backed by hosted `fcntl(F_GETFD/F_SETFD)`. | Add close-on-exec-at-creation/dup where host APIs support it, then default new descriptors to close-on-exec where possible. |
-| nonblocking mode | Not exposed. | Add descriptor methods backed by `fcntl` and document interaction with IO helpers. |
+| nonblocking mode | `OwnedFd::is_nonblocking()` and `set_nonblocking(enabled)` are backed by hosted `fcntl(F_GETFL/F_SETFL)`. | Add socket/pipe-specific tests and document interaction with IO helpers before readiness APIs. |
 | fcntl | Not exposed. | Future low-level descriptor module with typed flag helpers. |
 | ioctl | Not exposed. | Keep optional and narrow; prefer typed wrappers for common devices over a raw catch-all. |
 | poll/select | Not exposed. | `poll` can be a portable readiness seed; `select` is legacy and should stay compatibility-oriented. |

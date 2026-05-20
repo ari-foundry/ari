@@ -542,6 +542,7 @@ private:
             symbol == "ari_builtin_fs_write_byte" ||
             symbol == "ari_builtin_os_close" ||
             symbol == "ari_builtin_os_set_close_on_exec" ||
+            symbol == "ari_builtin_os_set_nonblocking" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
         }
@@ -1294,6 +1295,46 @@ private:
         line("  %without = and i32 %flags, -2");
         line("  %next = select i1 %enabled, i32 %with, i32 %without");
         line("  %code = call i32 (i32, i32, ...) @fcntl(i32 %fd32, i32 2, i32 %next)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_os_nonblocking(i64 %fd) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %query");
+        line("query:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %flags = call i32 (i32, i32, ...) @fcntl(i32 %fd32, i32 3)");
+        line("  %bad = icmp slt i32 %flags, 0");
+        line("  br i1 %bad, label %fail, label %ok");
+        line("ok:");
+        line("  %masked = and i32 %flags, 2048");
+        line("  %enabled = icmp ne i32 %masked, 0");
+        line("  %wide = zext i1 %enabled to i64");
+        line("  ret i64 %wide");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_os_set_nonblocking(i64 %fd, i1 %enabled) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %query");
+        line("query:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %flags = call i32 (i32, i32, ...) @fcntl(i32 %fd32, i32 3)");
+        line("  %bad = icmp slt i32 %flags, 0");
+        line("  br i1 %bad, label %fail, label %set");
+        line("set:");
+        line("  %with = or i32 %flags, 2048");
+        line("  %without = and i32 %flags, -2049");
+        line("  %next = select i1 %enabled, i32 %with, i32 %without");
+        line("  %code = call i32 (i32, i32, ...) @fcntl(i32 %fd32, i32 4, i32 %next)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  ret i1 %ok");
         line("fail:");

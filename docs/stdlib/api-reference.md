@@ -512,6 +512,8 @@ owned.take()
 owned.try_clone()
 owned.close_on_exec()
 owned.set_close_on_exec(enabled)
+owned.is_nonblocking()
+owned.set_nonblocking(enabled)
 owned.close()
 ```
 
@@ -527,8 +529,10 @@ the same handle cannot close twice. `try_clone()` duplicates the descriptor and
 returns `Option[OwnedFd]`; the original and cloned owners close independently.
 `close_on_exec()` returns `Option[bool]`, and `set_close_on_exec(enabled)`
 updates descriptor inheritance policy without exposing raw `fcntl` constants.
-Nonblocking mode, readiness APIs, raw syscalls, signals, and memory mapping
-remain future `std::os` work after richer error policy is stable.
+`is_nonblocking()` returns `Option[bool]`, and `set_nonblocking(enabled)`
+updates blocking behavior with the same owned-descriptor policy. Readiness APIs,
+raw syscalls, signals, and memory mapping remain future `std::os` work after
+richer error policy is stable.
 
 ## Paths
 

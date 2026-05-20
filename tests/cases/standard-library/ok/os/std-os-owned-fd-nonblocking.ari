@@ -1,0 +1,40 @@
+// Covers nonblocking descriptor flag helpers on OwnedFd. This keeps the
+// O_NONBLOCK/fcntl details inside std::os while exposing natural Ari methods.
+fn main() -> i64 {
+  let path = "build/std-os-owned-fd-nonblocking.tmp";
+  let wrote = std::fs::write(path, "nonblocking");
+  let file = std::fs::open(path, "r");
+  var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
+  let invalid = std::os::OwnedFd::invalid();
+
+  var score = 0;
+  if wrote {
+    score = score + 1;
+  }
+  if owned.is_open() {
+    score = score + 2;
+  }
+  if invalid.is_nonblocking().is_none() {
+    score = score + 4;
+  }
+  if !invalid.set_nonblocking(true) {
+    score = score + 8;
+  }
+
+  if owned.set_nonblocking(true) {
+    score = score + 16;
+  }
+  if owned.is_nonblocking().unwrap_or(false) {
+    score = score + 32;
+  }
+  if owned.set_nonblocking(false) {
+    score = score + 64;
+  }
+  if !owned.is_nonblocking().unwrap_or(true) {
+    score = score + 128;
+  }
+
+  owned.close();
+  std::fs::remove(path);
+  return score;
+}

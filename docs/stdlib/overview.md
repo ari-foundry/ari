@@ -200,9 +200,10 @@ ownership handoff for exactly-one-close responsibility, and
 `OwnedFd::try_clone()` creates an independent owner around a duplicated
 descriptor. `OwnedFd::close_on_exec()` and `set_close_on_exec(enabled)` cover
 the first descriptor inheritance flag without making callers pass raw `fcntl`
-constants. Raw syscalls, nonblocking mutation, readiness APIs, signals, and
-memory mapping still wait for duplicate-with-flags policy and richer error
-results.
+constants. `OwnedFd::is_nonblocking()` and `set_nonblocking(enabled)` cover
+blocking behavior with the same owned-descriptor shape. Raw syscalls, readiness
+APIs, signals, and memory mapping still wait for duplicate-with-flags policy
+and richer error results.
 
 `std::env` wraps the context hooks with the names application code should use
 and adds `Option`-based argument access through `try_arg` and `program_name`.
