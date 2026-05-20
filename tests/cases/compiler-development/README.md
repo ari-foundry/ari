@@ -26,6 +26,8 @@ the same language surface that normal Ari users get.
   normalization fixture for future golden artifact checks.
 - `artifact/ok/token-dump-basic.*`: lexer, parser, and typed-IR golden seed
   generated from one tiny source file.
+- `artifact/ok/module-graph-file-module.graph`: file-backed module graph
+  golden seed for resolved sources, imports, and item surfaces.
 - `artifact/ok/pass-summary-basic.summary`: driver-level stage count seed for
   lexer, syntax, module loading, and sema boundaries.
 - `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module, type/trait,

@@ -67,9 +67,10 @@ written in Ari.
 
 The hosted compiler now also has the first artifact producers:
 `--emit-tokens path`, `--emit-syntax path`, `--emit-diagnostics path`,
-`--emit-typed-ir path`, and `--emit-pass-summary path`. They write
-deterministic lexer token text, parser tree text, expected-failure diagnostic
-text, sema-lowered typed IR, and stage-boundary counts, all checked by
+`--emit-module-graph path`, `--emit-typed-ir path`, and
+`--emit-pass-summary path`. They write deterministic lexer token text, parser
+tree text, expected-failure diagnostic text, file-backed source/import/item
+graph text, sema-lowered typed IR, and stage-boundary counts, all checked by
 `make check-compiler-artifacts`. This is the first small stage-comparison step
 for normal compiler development: when lexer, parser, diagnostic, module, or
 typed lowering behavior changes, reviewers can inspect a tiny golden diff
@@ -152,6 +153,9 @@ Current readiness tests:
   lexer artifact fixture checked through `--emit-tokens`.
 - `tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax`:
   parser artifact golden checked through `--emit-syntax`.
+- `tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph`:
+  file-backed source/import/item graph golden checked through
+  `--emit-module-graph`.
 - `tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir`: sema and
   typed-IR artifact golden checked through `--emit-typed-ir`.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:

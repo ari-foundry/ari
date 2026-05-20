@@ -8,6 +8,7 @@
 #include "lexer.hpp"
 #include "llvm_codegen.hpp"
 #include "module_cache.hpp"
+#include "module_graph_dump.hpp"
 #include "module_ir_replay.hpp"
 #include "module_ir_summary.hpp"
 #include "module_loader.hpp"
@@ -67,7 +68,7 @@ static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
                  "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
                  "           [--emit-diagnostics path] [--emit-typed-ir path]\n"
-                 "           [--emit-pass-summary path]\n"
+                 "           [--emit-module-graph path] [--emit-pass-summary path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -91,6 +92,7 @@ int run(int argc, char** argv) {
     std::string token_output;
     std::string syntax_output;
     std::string diagnostic_output;
+    std::string module_graph_output;
     std::string typed_ir_output;
     std::string pass_summary_output;
     std::string c_header_output;
@@ -149,6 +151,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-diagnostics") {
             if (i + 1 >= argc) throw CompileError("--emit-diagnostics expects a path");
             diagnostic_output = argv[++i];
+        } else if (arg == "--emit-module-graph") {
+            if (i + 1 >= argc) throw CompileError("--emit-module-graph expects a path");
+            module_graph_output = argv[++i];
         } else if (arg == "--emit-typed-ir") {
             if (i + 1 >= argc) throw CompileError("--emit-typed-ir expects a path");
             typed_ir_output = argv[++i];
@@ -209,7 +214,8 @@ int run(int argc, char** argv) {
     }
     if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
-                       !c_header_output.empty() || !typed_ir_output.empty() ||
+                       !c_header_output.empty() || !module_graph_output.empty() ||
+                       !typed_ir_output.empty() ||
                        !pass_summary_output.empty() ||
                        llvm_compiler_explicit || !link_args.empty())) {
         throw CompileError("--check cannot be combined with backend output or linking options");
@@ -221,17 +227,18 @@ int run(int argc, char** argv) {
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
-    if ((!typed_ir_output.empty() || !pass_summary_output.empty()) &&
+    if ((!module_graph_output.empty() || !typed_ir_output.empty() || !pass_summary_output.empty()) &&
         (output_explicit || emit_llvm_only || !object_output.empty() ||
          !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
          !metadata_output.empty() || !metadata_check.empty() ||
          !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty())) {
-        throw CompileError("sema artifact outputs cannot be combined with backend, module-cache, or linking options");
+        throw CompileError("compiler artifact outputs cannot be combined with backend, module-cache, or linking options");
     }
     int artifact_output_count = 0;
     if (!token_output.empty()) ++artifact_output_count;
     if (!syntax_output.empty()) ++artifact_output_count;
     if (!diagnostic_output.empty()) ++artifact_output_count;
+    if (!module_graph_output.empty()) ++artifact_output_count;
     if (!typed_ir_output.empty()) ++artifact_output_count;
     if (!pass_summary_output.empty()) ++artifact_output_count;
     if (artifact_output_count > 1) {
@@ -322,6 +329,11 @@ int run(int argc, char** argv) {
     if (!metadata_output.empty()) {
         write_text_file(metadata_output, serialize_module_metadata(loaded.metadata));
         std::cout << "wrote " << metadata_output << " (module metadata)\n";
+    }
+    if (!module_graph_output.empty()) {
+        write_text_file(module_graph_output, dump_module_graph(loaded.metadata, input));
+        std::cout << "wrote " << module_graph_output << " (module graph dump)\n";
+        return 0;
     }
     Program program = std::move(loaded.program);
     SemaOptions sema_options;

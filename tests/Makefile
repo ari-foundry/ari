@@ -80,6 +80,8 @@ check-compiler-artifacts: $(TARGET)
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
+	$(TARGET) tests/cases/modules/ok/file-module-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-pass-summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary

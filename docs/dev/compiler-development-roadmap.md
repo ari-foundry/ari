@@ -127,6 +127,8 @@ Exit criteria:
 
 - Stabilize file-backed modules, package roots, module search paths, and module
   cache invalidation.
+- Keep `--emit-module-graph` deterministic so project layout, imports, and
+  item surfaces can be reviewed before sema or backend output changes.
 - Improve diagnostics for missing files, private items, duplicate modules, and
   stale cache summaries.
 - Document the expected layout for large Ari projects before a package manager
@@ -154,8 +156,8 @@ Exit criteria:
 - Keep `--emit-tokens`, `--emit-syntax`, `--emit-diagnostics`, and
   `--emit-typed-ir` as the first detailed artifact producers.
 - Use `--emit-pass-summary` for quick stage-boundary counts while extending the
-  same golden comparison pattern to structured diagnostics, HIR, and richer
-  typed IR.
+  same golden comparison pattern to module graphs, structured diagnostics, HIR,
+  and richer typed IR.
 - Emit resolved IR facts so LLVM codegen stays mechanical.
 - Add normalized LLVM IR checks for ABI, visibility, runtime hooks, and symbols.
 - Keep object/shared-library tests focused on actual exported or relocated

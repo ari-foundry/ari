@@ -125,6 +125,11 @@ rules are easy to explain. The existing flags `--emit-module-metadata`,
 `--check-module-metadata`, `--emit-module-cache`, and `--use-module-cache`
 should converge on one contract.
 
+`--emit-module-graph` is the review-friendly companion artifact. It does not
+replace metadata or cache files; it writes the resolved source files, imports,
+and visible item surfaces in deterministic text so a project-layout change can
+be reviewed before sema or LLVM output are involved.
+
 Each metadata or cache artifact should include:
 
 - cache format version
@@ -186,10 +191,11 @@ These slices are normal compiler work, not a request to start a bootstrap tree:
    implementing automatic pairing.
 6. Multi-file tool smoke: compile a small tool with `source`, `report`, `lex`,
    and `syntax` modules from Make.
-7. Module graph dump: add a deterministic module graph dump artifact for tests.
+7. Module graph dump: extend the current deterministic `--emit-module-graph`
+   artifact with search-path, cfg, stale-cache, and visibility-edge fixtures.
 
 The module graph dump is especially useful because it gives reviewers a compact
-view of imports, resolved files, visibility edges, and cache hits.
+view of imports, resolved files, visibility edges, and eventually cache hits.
 
 ## Test Layout
 

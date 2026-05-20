@@ -44,12 +44,13 @@ Compare artifacts in this order:
 | 1 | Token dump | Prove lexing and source spans are stable. | lexer |
 | 2 | Diagnostic dump | Prove source maps and error rendering are stable. | lexer/parser/sema |
 | 3 | Syntax dump | Prove parsing and recovery are stable. | parser |
-| 4 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
-| 5 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
-| 6 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
-| 7 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
-| 8 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
-| 9 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
+| 4 | Module graph dump | Prove file-backed module loading, imports, and public item surfaces are stable. | module loader |
+| 5 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
+| 6 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
+| 7 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
+| 8 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
+| 9 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
+| 10 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
 
 Do not skip directly to executable comparison for compiler frontend work. A
 binary exit code can say "something changed"; it cannot say which compiler
@@ -81,6 +82,17 @@ Typed IR dump example:
 ```text
 fn main() -> i64 symbol=_ARNv4main
   ret i64 0
+```
+
+Module graph dump example:
+
+```text
+ModuleGraph source=src/main.ari target=x86_64-pc-linux-gnu implicit_std=false
+  Sources count=2
+    Source module=<root> root=true path=src/main.ari
+    Source module=math root=false path=src/math.ari
+  Imports count=1
+    Import owner=<root> module=math local=math visibility=private source=src/math.ari
 ```
 
 Diagnostic dump example:
@@ -186,6 +198,7 @@ Land artifact testing in slices:
 | Token dump format | Stable lexer output for identifiers, literals, comments, and invalid tokens. | `token-basic`, `token-string-escapes`, `token-invalid-char`. |
 | Diagnostic dump format | Stable report output using source maps and labels. | `diagnostic-single-label`, `diagnostic-note-order`. |
 | Syntax dump format | Stable parser tree output. | `syntax-function`, `syntax-match`, `syntax-recovery`. |
+| Module graph dump format | Stable file-backed sources, imports, and item surfaces. | `module-graph-file`, `module-graph-search-path`, `module-graph-cfg`. |
 | HIR dump format | Stable lowered structure and symbol ids. | `hir-module-path`, `hir-patterns`, `hir-imports`. |
 | Typed IR dump format | Stable typed facts after sema. | `ir-types`, `ir-ownership`, `ir-trait-call`. |
 | LLVM normalizer | Normalize paths and harmless temporary symbol noise. | `llvm-symbols`, `llvm-aggregate-layout`. |
@@ -204,6 +217,7 @@ tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
+tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph
 tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary
 tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
 tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
@@ -216,12 +230,13 @@ tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagno
 ari --emit-tokens path
 ari --emit-syntax path
 ari --emit-diagnostics path
+ari --emit-module-graph path
 ari --emit-pass-summary path
 ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves nine low-level contracts:
+It currently proves ten low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -234,6 +249,8 @@ It currently proves nine low-level contracts:
   compiler failure
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,
   and ownership failures with stable diagnostic-code families
+- `--emit-module-graph` writes deterministic file-backed source, import, and
+  item-surface facts without running sema or LLVM codegen
 - `--emit-typed-ir` writes deterministic sema-lowered IR for a small Ari source
   file without involving LLVM codegen
 - `--emit-pass-summary` writes deterministic stage counts for lexing, syntax,
@@ -257,6 +274,8 @@ The current compiler already has useful artifact checks:
 - `--emit-syntax` for stable parser tree text before semantic analysis
 - `--emit-diagnostics` for stable expected-failure text before a full
   multi-label diagnostic model exists
+- `--emit-module-graph` for stable file-backed source, import, and item-surface
+  text before sema or backend behavior are involved
 - `--emit-typed-ir` for stable sema output before LLVM lowering
 - `--emit-pass-summary` for quick stage-boundary counts in compiler-development
   tests
