@@ -189,8 +189,8 @@ identifies the exact case:
   `collections::hash_i64` compatibility wrapper.
 - `std-random-basic.ari`: runtime-backed OS entropy hook reachability, direct
   runtime OS byte filling, deterministic non-cryptographic `Prng` behavior,
-  unbiased bounded integers including a wide upper bound, unit floats, PRNG
-  byte filling, and generic slice shuffle.
+  deterministic booleans, unbiased bounded integers including a wide upper
+  bound, unit floats, PRNG byte filling, and generic slice shuffle.
 - `std-parse-basic.ari`: source `std::parse` ASCII-trimmed signed
   decimal/radix/hex/binary/octal integer, bool, decimal float
   validation/conversion, fallback, and invalid whole-input behavior.

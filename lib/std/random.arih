@@ -49,6 +49,10 @@ pub fn next(rng: ref mut std::random::Prng) -> u64 {
   return mix(rng.state);
 }
 
+pub fn boolean(rng: ref mut std::random::Prng) -> bool {
+  return (std::random::next(rng) & 1u64) == 1u64;
+}
+
 pub fn below(rng: ref mut std::random::Prng, upper: i64) -> i64 {
   std::assert(upper > 0);
   return bounded_u64(rng, upper as u64) as i64;
@@ -123,6 +127,10 @@ pub impl std::random::Prng {
 
   fn next(self: ref mut Self) -> u64 {
     return std::random::next(self);
+  }
+
+  fn boolean(self: ref mut Self) -> bool {
+    return std::random::boolean(self);
   }
 
   fn below(self: ref mut Self, upper: i64) -> i64 {

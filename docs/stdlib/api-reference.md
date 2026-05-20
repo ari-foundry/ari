@@ -1822,6 +1822,7 @@ random::seed(value)
 random::from_entropy()
 random::seed_from_os()
 random::next(ref mut rng)
+random::boolean(ref mut rng)
 random::below(ref mut rng, upper)
 random::try_below(ref mut rng, upper)
 random::range(ref mut rng, start, end)
@@ -1834,6 +1835,7 @@ Prng::seed(value)
 Prng::from_entropy()
 Prng::seed_from_os()
 rng.next()
+rng.boolean()
 rng.below(upper)
 rng.try_below(upper)
 rng.range(start, end)
@@ -1846,10 +1848,10 @@ rng.shuffle<T>(values)
 Use `entropy()` or `fill(values)` when seed material must come from the host
 OS. On hosted Linux, both use `getrandom` first and fall back to
 `/dev/urandom`; `fill(values)` writes the caller's byte slice directly instead
-of looping through `entropy()` words. Use `Prng` for reproducible random
-streams, tests, games, randomized algorithms, and shuffling. `below` and
-`range` use rejection sampling instead of raw modulo so bounded integer results
-are not biased. `Prng` is not cryptographic.
+of looping through `entropy()` words. Use `Prng` for reproducible booleans,
+integers, floats, tests, games, randomized algorithms, and shuffling.
+`below` and `range` use rejection sampling instead of raw modulo so bounded
+integer results are not biased. `Prng` is not cryptographic.
 
 ## Conversion
 

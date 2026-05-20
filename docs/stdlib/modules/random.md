@@ -19,6 +19,7 @@ random::seed(value)
 random::from_entropy()
 random::seed_from_os()
 random::next(ref mut rng)
+random::boolean(ref mut rng)
 random::below(ref mut rng, upper)
 random::try_below(ref mut rng, upper)
 random::range(ref mut rng, start, end)
@@ -32,6 +33,7 @@ Prng::seed(value)
 Prng::from_entropy()
 Prng::seed_from_os()
 rng.next()
+rng.boolean()
 rng.below(upper)
 rng.try_below(upper)
 rng.range(start, end)
@@ -57,15 +59,15 @@ once Ari's error and owned-buffer story is stronger.
 `seed_from_os()` seed that generator from OS entropy, which is useful for
 games, randomized algorithms, and tests that do not need reproducibility.
 
-`next()` returns the next raw `u64`. `below(upper)` returns an `i64` in
-`0..upper`; `range(start, end)` returns an `i64` in `start..end`; both assert
-on invalid bounds. The bounded integer path redraws rejected values instead of
-using raw modulo, so every result in the requested range has the same
-probability. Use `try_below(upper)` and `try_range(start, end)` when bounds
-come from user input; they return `None` for invalid bounds and advance the
-generator only when they return `Some(value)`. `float()` returns an `f64` in
-`[0.0, 1.0)`. `fill_from` and `rng.fill(values)` fill bytes from the
-deterministic PRNG.
+`next()` returns the next raw `u64`. `boolean()` consumes one raw word and
+returns a deterministic `bool`. `below(upper)` returns an `i64` in `0..upper`;
+`range(start, end)` returns an `i64` in `start..end`; both assert on invalid
+bounds. The bounded integer path redraws rejected values instead of using raw
+modulo, so every result in the requested range has the same probability. Use
+`try_below(upper)` and `try_range(start, end)` when bounds come from user
+input; they return `None` for invalid bounds and advance the generator only
+when they return `Some(value)`. `float()` returns an `f64` in `[0.0, 1.0)`.
+`fill_from` and `rng.fill(values)` fill bytes from the deterministic PRNG.
 
 `shuffle(rng, values)` implements an in-place Fisher-Yates shuffle over a
 borrowed `Slice[T]`.
@@ -105,8 +107,9 @@ fn main() -> i64 {
 | `getrandom` syscall | Current hosted Linux runtime uses the libc `getrandom` entry point before fallback. |
 | CSPRNG seed | Current: use `entropy()`, `from_entropy()`, or `seed_from_os()` as seed material. |
 | CSPRNG stream | Roadmap: not exposed yet; do not use `Prng` for cryptography. |
-| non-crypto PRNG | Current: deterministic `Prng` with `seed`, `next`, `below`, `range`, and `float`. |
+| non-crypto PRNG | Current: deterministic `Prng` with `seed`, `next`, `boolean`, `below`, `range`, and `float`. |
 | shuffle | Current: `shuffle<T>(ref mut rng, values)` and `rng.shuffle<T>(values)`. |
+| random bool | Current: `boolean()` and `rng.boolean()` from the deterministic PRNG stream. |
 | random int | Current: unbiased `below`/`range` asserting helpers and `try_below`/`try_range` fallible helpers over `i64` bounds. |
 | random float | Current: `float() -> f64` in `[0.0, 1.0)`. |
 
@@ -131,7 +134,8 @@ tests/cases/standard-library/ok/random/std-random-try-bounds.ari
 
 The focused test covers runtime entropy hook reachability, deterministic
 seeded PRNG behavior, bounded integer generation, unit float generation,
-deterministic byte filling, OS byte filling, and generic slice shuffling.
+deterministic boolean generation, deterministic byte filling, OS byte filling,
+and generic slice shuffling.
 The bound test covers `Option`-returning invalid-bound handling for both module
 functions and `Prng` methods.
 

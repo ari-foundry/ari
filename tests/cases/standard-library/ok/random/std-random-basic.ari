@@ -57,6 +57,14 @@ fn main() -> i64 {
     score = score + 1;
   }
 
+  var bool_a = random::seed(321u64);
+  var bool_b = random::Prng::seed(321u64);
+  let first_bool = bool_a.boolean();
+  let second_bool = random::boolean(ref mut bool_b);
+  if first_bool == second_bool {
+    score = score + 1;
+  }
+
   var bounded = random::seed(9u64);
   var count = 0;
   var in_range = true;

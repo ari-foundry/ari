@@ -469,6 +469,7 @@ fn std::process::success|check-prelude std-process-basic source success status h
 fn std::process::uid|check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md
 fn std::process::wait|check-prelude std-process-fork-wait POSIX wait hook and exit-status decode; docs/stdlib/modules/process.md
 fn std::random::below|check-prelude std-random-basic unbiased bounded non-crypto PRNG integer helper; docs/stdlib/modules/random.md
+fn std::random::boolean|check-prelude std-random-basic deterministic PRNG boolean helper; docs/stdlib/modules/random.md
 fn std::random::entropy|check-prelude std-random-basic OS entropy hook; docs/stdlib/modules/random.md
 fn std::random::fill|check-prelude std-random-basic OS entropy byte fill helper; docs/stdlib/modules/random.md
 fn std::random::fill_from|check-prelude std-random-basic deterministic PRNG byte fill helper; docs/stdlib/modules/random.md
@@ -961,6 +962,7 @@ method std::path::PathBytes::parent|check-prelude std-path-bytes typed path pare
 method std::path::PathBytes::stem|check-prelude std-path-bytes typed path stem wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::trim_trailing_separators|check-prelude std-path-bytes typed path trailing separator trim wrapper; docs/stdlib/modules/path.md
 method std::random::Prng::below|check-prelude std-random-basic unbiased bounded non-crypto PRNG integer method; docs/stdlib/modules/random.md
+method std::random::Prng::boolean|check-prelude std-random-basic deterministic PRNG boolean method; docs/stdlib/modules/random.md
 method std::random::Prng::fill|check-prelude std-random-basic deterministic PRNG byte fill method; docs/stdlib/modules/random.md
 method std::random::Prng::float|check-prelude std-random-basic unit f64 PRNG method; docs/stdlib/modules/random.md
 method std::random::Prng::from_entropy|check-prelude std-random-basic OS-seeded PRNG associated constructor; docs/stdlib/modules/random.md

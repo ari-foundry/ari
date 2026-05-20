@@ -66,10 +66,10 @@ generic IP, and socket-address values while DNS and socket handles remain
 runtime roadmap work. Source
 `std::hash` adds deterministic non-cryptographic `Hasher`/`Hash[T]` helpers
 for primitive values and byte slices, and `std::random` adds OS entropy plus a
-deterministic non-cryptographic `Prng` with unbiased bounded integers, unit
-floats, byte filling, and shuffling. Source collection work includes
-`std::collections::Set[T]` as a linear explicit-zone
-set with insertion-order access, optional access, replace-or-insert updates,
+deterministic non-cryptographic `Prng` with booleans, unbiased bounded
+integers, unit floats, byte filling, and shuffling. Source collection work
+includes `std::collections::Set[T]` as a linear explicit-zone set with
+insertion-order access, optional access, replace-or-insert updates,
 iterator support, and reserve growth; growable `Deque`, bounded `RingBuffer`,
 zone-backed `LinkedList`, and comparator-driven `BinaryHeap`/`PriorityQueue`
 handles; real hash-table `HashMap`/`HashSet` handles with live-bucket
