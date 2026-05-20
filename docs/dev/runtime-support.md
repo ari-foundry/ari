@@ -31,6 +31,32 @@ Implemented runtime support today:
 - hosted page-size query: `std::mem::page_size` lowers to the platform runtime
   page-size hook
 
+## Freestanding And Kernel-Scale Direction
+
+Freestanding support is a long-term runtime track. It should begin with a
+minimal target-specific assembly entry and a linker script, then port the
+startup path into Ari only after the compiler can model the required ABI pieces
+without relying on libc or the host CRT. This keeps the early boot boundary
+honest while still giving Ari a path toward kernel-scale systems.
+
+The first freestanding profile should prove:
+
+- no-libc object and executable/image emission through explicit driver flags
+- assembly startup that passes a documented machine state into Ari code
+- Ari runtime initialization that does not assume `argc`, `argv`, envp, TLS, or
+  pthreads exist
+- panic and assertion behavior that can call a platform hook or halt
+- compiler runtime helpers for memory builtins, integer helpers, atomics, and
+  stack-protector hooks when the target requires them
+- volatile/MMIO pointer operations and memory fences with clear ownership and
+  aliasing rules
+- allocator hooks that let a kernel provide bootstrap, page, slab, or zone
+  allocation without an ambient global heap
+- a `core`-like library subset that excludes hosted process, filesystem,
+  network, and thread APIs
+- focused tests for LLVM IR, object output, linker behavior, and emulator smoke
+  boot once the toolchain path exists
+
 ## Required Runtime Families
 
 | Area | Purpose | Current Status | Roadmap |
