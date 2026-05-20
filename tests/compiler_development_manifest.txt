@@ -1,0 +1,19 @@
+# Compiler development gate manifest
+#
+# This manifest is checked by tests/check_compiler_development_docs.py. It keeps
+# Ari's compiler-development work split by layer instead of collapsing into one
+# vague "bootstrap" task. Entries name the gate and the test style that should
+# eventually protect it.
+
+frontend-grammar: ok and error fixtures for lexer/parser syntax surfaces
+source-identity: SourceId, SourceFile, Span, byte range, line and column lookup
+diagnostics: diagnostic codes, labels, notes, stable golden rendering
+module-projects: file-backed modules, roots, visibility, cache invalidation
+generic-models: nested structs, enums, Vec, maps, sets, Result payloads
+trait-selection: Drop, Debug, formatting, Eq, Ord, Hash dispatch
+error-flow: Result-based expected failures without panic-heavy paths
+allocation-model: zones, scratch arenas, ownership, drop, borrow diagnostics
+ir-contract: resolved sema facts lowered into typed IR
+backend-artifacts: LLVM IR, object, executable, shared-library artifact checks
+tool-build-flow: focused Make targets for one Ari tool and its fixtures
+stage-comparison: token, syntax, HIR, typed IR, LLVM text comparison order

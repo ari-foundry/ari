@@ -51,6 +51,7 @@ checked by `make check-bootstrap-readiness`. The docs target runs
 `tests/check_compiler_development_docs.py` and
 `tests/check_bootstrap_readiness_docs.py` and verifies that
 [Compiler Development Roadmap](compiler-development-roadmap.md),
+[Compiler Maturity Gates](compiler-maturity-gates.md),
 [Production Compiler Design](production-compiler-design.md),
 [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
 [Bootstrap Readiness](bootstrap-readiness.md),

@@ -13,6 +13,9 @@ Read this page before the bootstrap-specific pages:
 - [Architecture](architecture.md) explains the current C++ compiler shape.
 - [Compiler Pipeline](compiler-pipeline.md) explains the source-to-LLVM path.
 - [Feature Test Matrix](test-matrix.md) tracks feature coverage.
+- [Compiler Maturity Gates](compiler-maturity-gates.md) tracks the general
+  compiler-development gates that remain before an Ari compiler tree is
+  productive.
 - [Production Compiler Design](production-compiler-design.md) explains the
   language contract a future Ari-written compiler would also rely on.
 - [Bootstrap Readiness](bootstrap-readiness.md) tracks how close Ari is to
@@ -24,6 +27,11 @@ Ari is a hosted C++17 compiler prototype with an LLVM backend. It can already
 compile a meaningful systems-language subset, link normal Linux/glibc
 executables, build shared libraries, emit LLVM IR and objects, and run a broad
 test suite.
+
+The active work is compiler development, not bootstrapping. Use
+[Compiler Maturity Gates](compiler-maturity-gates.md) to judge whether a change
+improves the normal compiler and language surface enough to move the later
+bootstrap start gate.
 
 The compiler is still not production-grade. The main gaps are not ambition;
 they are compiler engineering scale:

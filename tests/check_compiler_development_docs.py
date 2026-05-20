@@ -26,6 +26,10 @@ def require(text: str, needle: str, path: str) -> None:
 def main() -> int:
     roadmap_path = "docs/dev/compiler-development-roadmap.md"
     roadmap = read(roadmap_path)
+    gates_path = "docs/dev/compiler-maturity-gates.md"
+    gates = read(gates_path)
+    manifest_path = "tests/compiler_development_manifest.txt"
+    manifest = read(manifest_path)
 
     for heading in [
         "# Compiler Development Roadmap",
@@ -50,6 +54,7 @@ def main() -> int:
         "not a plan to start bootstrapping today",
         "readiness signal",
         "Improve Ari as a general language",
+        "Compiler Maturity Gates",
         "stage0 changes",
         "Sema",
         "LLVM backend",
@@ -66,9 +71,63 @@ def main() -> int:
         print(f"{roadmap_path}: missing compiler area table", file=sys.stderr)
         return 1
 
+    for heading in [
+        "# Compiler Maturity Gates",
+        "## Current Estimate",
+        "## How To Read The Gates",
+        "## Maturity Gates",
+        "## Implementation Order",
+        "## Test Classification",
+        "## Natural Language Design Rules",
+        "## Readiness Formula",
+        "## Non-Goals For Now",
+    ]:
+        require(gates, heading, gates_path)
+
+    for needle in [
+        "not a request to implement bootstrapping now",
+        "ordinary compiler development",
+        "38-42% ready",
+        "58-62% remaining",
+        "compiler/tooling package",
+        "SourceId",
+        "Diagnostic",
+        "stable golden rendering",
+        "file-backed modules",
+        "Generic data models",
+        "Trait selection",
+        "Result[T, E]",
+        "Stage comparison",
+        "Do not create a `bootstrap/` tree",
+    ]:
+        require(gates, needle, gates_path)
+
+    if not re.search(r"\|\s*Gate\s*\|\s*Required State\s*\|\s*Test Shape\s*\|\s*Status\s*\|", gates):
+        print(f"{gates_path}: missing maturity gate table", file=sys.stderr)
+        return 1
+
+    gate_labels = {
+        "frontend-grammar": "Frontend grammar",
+        "source-identity": "Source identity",
+        "diagnostics": "Diagnostics",
+        "module-projects": "Module projects",
+        "generic-models": "Generic data models",
+        "trait-selection": "Trait selection",
+        "error-flow": "Error flow",
+        "allocation-model": "Allocation model",
+        "ir-contract": "IR contract",
+        "backend-artifacts": "Backend artifacts",
+        "tool-build-flow": "Tool build flow",
+        "stage-comparison": "Stage comparison",
+    }
+    for entry, label in gate_labels.items():
+        require(manifest, entry, manifest_path)
+        require(gates, label, gates_path)
+
     for index_path in ["docs/README.md", "docs/dev/README.md"]:
         index = read(index_path)
         require(index, "Compiler Development Roadmap", index_path)
+        require(index, "Compiler Maturity Gates", index_path)
 
     return 0
 

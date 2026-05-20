@@ -13,6 +13,10 @@ For current work, start with
 developing the compiler now; bootstrapping is a later readiness milestone, not
 the implementation task for this page.
 
+[Compiler Maturity Gates](compiler-maturity-gates.md) is the concise checklist
+for deciding whether ordinary compiler work is moving Ari toward that later
+start gate.
+
 Read this page with [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
 [Bootstrap Readiness](bootstrap-readiness.md), and
 [Self-Host Roadmap](self-host-roadmap.md):
