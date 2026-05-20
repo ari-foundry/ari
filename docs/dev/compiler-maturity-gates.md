@@ -62,7 +62,7 @@ The healthiest order is:
 | --- | --- | --- | --- |
 | Frontend grammar | Lexer and parser rules are documented, boring, and reject malformed syntax with useful spans. | `tests/cases/<feature>/ok` and `errors` plus parser-focused diagnostics. | Partial |
 | Source identity | A compiler/tooling package can own files, `SourceId`, byte spans, line/column lookup, and snippets. | `source/ok/source-line-column`, span edge cases, multi-file source maps. | Seed fixture only |
-| Diagnostics | Compiler errors have stable codes, labels, notes, and stable golden rendering outside runtime `std`. | Golden text tests for single-label, multi-label, note order, and recovery. | Planned |
+| Diagnostics | Compiler errors have stable codes, labels, notes, and stable golden rendering outside runtime `std`. | Golden text tests for single-label, multi-label, note order, and recovery. | Seeded |
 | Module projects | File-backed modules, roots, search paths, visibility, and module cache invalidation are predictable. | Missing/private/stale-cache diagnostics plus multi-file ok fixtures. | Partial |
 | Generic data models | Nested structs, enums, tuples, vectors, maps, sets, and `Result` payloads monomorphize cleanly. | Compiler-shaped token, AST, symbol-table, and error-model fixtures. | Partial |
 | Trait selection | `Drop`, `Debug`, formatting, `Eq`, `Ord`, and `Hash` dispatch are deterministic and diagnosable. | Static dispatch tests, trait-object tests where supported, ambiguous impl errors. | Partial |

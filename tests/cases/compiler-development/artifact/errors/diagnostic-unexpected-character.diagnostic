@@ -1,1 +1,1 @@
-diagnostic error code=ari/compiler message="unexpected character '$'" @ tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari:1:1
+diagnostic error code=L0001 message="unexpected character '$'" @ tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari:1:1

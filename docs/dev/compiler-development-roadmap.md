@@ -139,7 +139,9 @@ Exit criteria:
 
 ### Phase 5: Diagnostic Infrastructure
 
-- Add stable compiler diagnostic codes.
+- Expand the current `--emit-diagnostics` code-family bridge into explicit
+  diagnostic codes at lexer, parser, module, type, ownership, IR, and backend
+  throw sites.
 - Attach source spans and source snippets to frontend and sema errors.
 - Add golden tests for single-label, multi-label, note, and recovery messages.
 

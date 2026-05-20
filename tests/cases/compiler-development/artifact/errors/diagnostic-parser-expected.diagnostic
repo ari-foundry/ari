@@ -1,0 +1,1 @@
+diagnostic error code=P0001 message="unterminated function body" @ tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.ari:3:1

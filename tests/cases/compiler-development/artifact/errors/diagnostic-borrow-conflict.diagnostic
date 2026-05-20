@@ -1,0 +1,1 @@
+diagnostic error code=O0001 message="cannot immutably borrow mutably borrowed binding 'value'" @ tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari:7:36

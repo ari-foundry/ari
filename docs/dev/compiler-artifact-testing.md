@@ -205,8 +205,12 @@ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
 tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
 tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
+tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic
 ari --emit-tokens path
 ari --emit-syntax path
 ari --emit-diagnostics path
@@ -214,7 +218,7 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves seven low-level contracts:
+It currently proves eight low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -225,6 +229,8 @@ It currently proves seven low-level contracts:
   behavior are involved
 - `--emit-diagnostics` writes a normalized diagnostic artifact for an expected
   compiler failure
+- `--emit-diagnostics` classifies representative lexer, parser, module, type,
+  and ownership failures with stable diagnostic-code families
 - `--emit-typed-ir` writes deterministic sema-lowered IR for a small Ari source
   file without involving LLVM codegen
 

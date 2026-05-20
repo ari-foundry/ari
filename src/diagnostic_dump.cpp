@@ -62,7 +62,55 @@ static bool parse_location_prefix(const std::string& message,
     return true;
 }
 
+static bool contains(const std::string& text, const std::string& needle) {
+    return text.find(needle) != std::string::npos;
+}
+
 } // namespace
+
+std::string classify_diagnostic_code(const std::string& message) {
+    int line = 0;
+    int column = 0;
+    std::string diagnostic = message;
+    (void)parse_location_prefix(message, line, column, diagnostic);
+
+    // This classifier is intentionally conservative while Ari still reports
+    // CompileError as text. New structured diagnostics should replace these
+    // patterns with explicit codes at the throw site.
+    if (contains(diagnostic, "unexpected character")) return "L0001";
+    if (contains(diagnostic, "cannot find module file") ||
+        contains(diagnostic, "module cache") ||
+        contains(diagnostic, "module metadata")) {
+        return "M0001";
+    }
+    if (contains(diagnostic, "borrow") ||
+        contains(diagnostic, "moved binding") ||
+        contains(diagnostic, "use after move") ||
+        contains(diagnostic, "drop")) {
+        return "O0001";
+    }
+    if (contains(diagnostic, "unknown type") ||
+        contains(diagnostic, "unknown trait") ||
+        contains(diagnostic, "trait bound") ||
+        contains(diagnostic, "cannot infer") ||
+        contains(diagnostic, "type mismatch") ||
+        contains(diagnostic, "no matching") ||
+        contains(diagnostic, "ambiguous")) {
+        return "T0001";
+    }
+    if (contains(diagnostic, "expected") ||
+        contains(diagnostic, "unexpected token") ||
+        contains(diagnostic, "unterminated")) {
+        return "P0001";
+    }
+    if (contains(diagnostic, "IR") || contains(diagnostic, "lowering")) return "I0001";
+    if (contains(diagnostic, "LLVM backend") ||
+        contains(diagnostic, "artifact") ||
+        contains(diagnostic, "object")) {
+        return "B0001";
+    }
+    return "ari/compiler";
+}
 
 std::string dump_diagnostic_message(const std::string& severity,
                                     const std::string& code,

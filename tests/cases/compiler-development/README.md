@@ -24,5 +24,9 @@ the same language surface that normal Ari users get.
   line/column lookup, structured source errors, and tuple return flow.
 - `artifact/ok/normalize-paths.*.txt`: seed path, temp-name, and pointer
   normalization fixture for future golden artifact checks.
+- `artifact/ok/token-dump-basic.*`: lexer, parser, and typed-IR golden seed
+  generated from one tiny source file.
+- `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module, type/trait,
+  and ownership diagnostic-code golden seeds.
 - `artifact/errors/text-line-mismatch.*.txt`: seed mismatch-report fixture for
   text artifact comparisons.

@@ -279,7 +279,8 @@ int run(int argc, char** argv) {
             sema_options.target_triple = target.triple;
             (void)check_program(program, std::move(sema_options));
         } catch (const CompileError& error) {
-            diagnostic_artifact = dump_diagnostic_message("error", "ari/compiler", error.what(), input);
+            diagnostic_artifact =
+                dump_diagnostic_message("error", classify_diagnostic_code(error.what()), error.what(), input);
         }
         write_text_file(diagnostic_output, diagnostic_artifact);
         std::cout << "wrote " << diagnostic_output << " (diagnostic dump)\n";

@@ -154,7 +154,15 @@ Current readiness tests:
 - `tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir`: sema and
   typed-IR artifact golden checked through `--emit-typed-ir`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic`:
-  expected-failure diagnostic golden checked through `--emit-diagnostics`.
+  lexer diagnostic golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic`:
+  parser diagnostic-code golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic`:
+  module diagnostic-code golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic`:
+  type and trait diagnostic-code golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic`:
+  ownership diagnostic-code golden checked through `--emit-diagnostics`.
 
 The first command to run after changing this area is:
 

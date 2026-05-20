@@ -1,0 +1,1 @@
+diagnostic error code=T0001 message="unknown trait bound 'MissingTrait'" @ tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari:1:19
