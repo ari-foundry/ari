@@ -6,6 +6,7 @@ The test suite is grouped by feature first, then by expected outcome.
 | --- | --- |
 | `tests/cases/<feature>/ok/` | Valid Ari programs. Makefile targets compile them, run them, or inspect generated LLVM. |
 | `tests/cases/<feature>/errors/` | Invalid Ari programs. Makefile targets assert the expected diagnostic text. |
+| `tests/cases/bootstrap-readiness/` | Compiler-shaped Ari fixtures used before a real `bootstrap/` tree exists. |
 | `tests/packages/` | File-backed module and module-cache fixtures. |
 | `tests/ffi/` | C helper sources used by FFI and object-linking tests. |
 | `tests/fixtures/` | Alternate module roots and intentionally incomplete fixtures. |
@@ -17,6 +18,7 @@ The test suite is grouped by feature first, then by expected outcome.
 Feature case directories:
 
 - `attributes`
+- `bootstrap-readiness`
 - `borrowing`
 - `constants`
 - `control-flow`
@@ -52,6 +54,11 @@ Documentation checks are intentionally small. For example,
 keeps its production-language contract, readiness scorecard, start gate, first
 implementation slices, fixture groups, roadmap, estimate, and test-plan
 sections linked from the developer docs.
+
+`make check-bootstrap-readiness` compiles only the small pre-bootstrap Ari
+fixtures under `tests/cases/bootstrap-readiness/`. It is meant to stay fast and
+focused; it should prove one compiler-shaped pressure point at a time, not run
+the whole test suite.
 
 ## README Placement
 

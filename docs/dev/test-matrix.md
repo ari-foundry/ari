@@ -44,7 +44,8 @@ pointer provenance hooks live under `tests/cases/memory/`. See
 ## Bootstrap Documentation Coverage Note
 
 Bootstrapping is not implemented yet, but the start gate is checked by
-`make check-bootstrap-docs`. That target runs
+`make check-bootstrap-docs`, and the first compiler-shaped Ari fixtures are
+checked by `make check-bootstrap-readiness`. The docs target runs
 `tests/check_bootstrap_readiness_docs.py` and verifies that
 [Production Compiler Design](production-compiler-design.md),
 [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),

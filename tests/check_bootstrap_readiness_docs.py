@@ -91,6 +91,8 @@ def main() -> int:
         "token dumps",
         "syntax dumps",
         "diagnostic reports",
+        "make check-bootstrap-readiness",
+        "Result[Token, LexError]",
         "not in runtime `std`",
     ]:
         require(fixture_plan, needle, fixture_plan_path)

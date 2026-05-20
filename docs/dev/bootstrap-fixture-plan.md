@@ -109,14 +109,24 @@ unrelated helpers, split it.
 Keep targets small. Do not make early readiness checks depend on a full
 `make check` run.
 
-Recommended future targets:
+Current and recommended targets:
 
 ```text
 make check-bootstrap-docs
+make check-bootstrap-readiness
 make check-bootstrap-readiness-model
 make check-bootstrap-readiness-modules
 make check-bootstrap-readiness-artifacts
 ```
+
+`check-bootstrap-readiness` is the first concrete target. It should stay tiny:
+compile a few normal Ari programs that model compiler-shaped data, then grow
+only when a new readiness fixture proves a specific pressure point.
+
+The initial `errors` fixture intentionally keeps `Result` payloads scalar.
+Nested aggregate `Result` payloads such as `Result[Token, LexError]` belong in
+the later generic-aggregate stress set, because that area is still a
+bootstrap-readiness blocker.
 
 Once the lexer pilot starts and the real `bootstrap/` tree exists, move from
 readiness fixtures to stage tool checks:

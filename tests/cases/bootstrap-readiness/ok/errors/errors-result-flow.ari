@@ -1,0 +1,23 @@
+// Covers expected compiler failures as Result values instead of panic paths.
+// Keep the payloads scalar for this first readiness fixture; aggregate
+// Result payloads are tracked as a later generic aggregate stress point.
+type TokenScore = i64;
+type LexErrorCode = i64;
+
+fn scan_digit(value: char) -> Result[TokenScore, LexErrorCode] {
+  if value >= '0' && value <= '9' {
+    return Ok(2);
+  }
+  return Err(value as i64);
+}
+
+fn score(result: Result[TokenScore, LexErrorCode]) -> i64 {
+  match result {
+    Ok(token) => token,
+    Err(error) => error,
+  }
+}
+
+fn main() -> i64 {
+  return score(scan_digit('7')) + score(scan_digit('x'));
+}

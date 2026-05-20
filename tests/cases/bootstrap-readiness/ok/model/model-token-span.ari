@@ -1,0 +1,41 @@
+// Covers compiler-shaped token/span modeling with aliases, structs, generic
+// wrappers, enum payloads, and char literals.
+type SourceId = i64;
+type ByteOffset = i64;
+
+struct Span {
+  source: SourceId,
+  start: ByteOffset,
+  end: ByteOffset,
+}
+
+struct Spanned[T] {
+  value: T,
+  span: Span,
+}
+
+enum TokenKind {
+  Ident,
+  Number,
+  Character(char),
+  Eof,
+}
+
+fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}
+
+fn token_score(kind: TokenKind) -> i64 {
+  match kind {
+    Ident => 1,
+    Number => 2,
+    Character(value) => if value == 'x' { 3 } else { 4 },
+    Eof => 0,
+  }
+}
+
+fn main() -> i64 {
+  let span = Span { source: 1, start: 2, end: 6 };
+  let token = Spanned<TokenKind> { value: Character('x'), span: span };
+  return span_len(token.span) + token_score(token.value);
+}
