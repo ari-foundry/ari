@@ -66,7 +66,7 @@ API evolution.
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
 | `std::algo` | Source algorithms over borrowed slices. | `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, `dedup`. |
 | `std::convert` | Explicit conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. |
-| `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked/wrapping/overflowing add/sub policy, saturating add/sub/neg/abs, checked neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. |
+| `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked add/sub/mul/neg/abs, wrapping/overflowing add/sub, saturating add/sub/mul/neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. |
 | `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, byte-swap, population-count, and zero/one-run bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`, `byte_swap`, `population_count`, `leading_ones`. |
 
 ## Allocation Rules

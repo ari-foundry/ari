@@ -1755,6 +1755,7 @@ math::is_even(value)
 math::is_odd(value)
 math::checked_add(left, right)
 math::checked_sub(left, right)
+math::checked_mul(left, right)
 math::checked_neg(value)
 math::checked_abs(value)
 math::wrapping_add(left, right)
@@ -1763,6 +1764,7 @@ math::overflowing_add(left, right)
 math::overflowing_sub(left, right)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
+math::saturating_mul(left, right)
 math::saturating_neg(value)
 math::saturating_abs(value)
 math::pow(base, exponent)
@@ -1781,16 +1783,17 @@ the matching floor remainder. The division helpers assert that
 `denominator != 0`. `gcd` and `lcm` normalize negative inputs through absolute
 values. `lcm` returns `0` when either input is `0`.
 
-`checked_add`, `checked_sub`, `checked_neg`, and `checked_abs` return
-`Option[i64]`, using `None<i64>()` for overflow or underflow. Their
-`saturating_*` counterparts clamp to the nearest `i64` bound. `wrapping_add`
-and `wrapping_sub` return the two's-complement wrapped result.
+`checked_add`, `checked_sub`, `checked_mul`, `checked_neg`, and `checked_abs`
+return `Option[i64]`, using `None<i64>()` for overflow or underflow. Their
+`saturating_*` counterparts clamp to the nearest `i64` bound. `checked_mul`
+guards with division before multiplying so the successful branch is defined.
+`wrapping_add` and `wrapping_sub` return the two's-complement wrapped result.
 `overflowing_add` and `overflowing_sub` return an `(i64, bool)` tuple whose
 first slot is the wrapped result and whose second slot is the overflow flag.
 This keeps `Option` reserved for absent values and uses tuples for
-always-present product values. Other math helpers still use ordinary `i64`
-arithmetic internally, so checked multiplication and generic cross-width
-helpers remain future numeric-policy work.
+always-present paired values. Other math helpers still use ordinary `i64`
+arithmetic internally, so wrapping/overflowing multiplication and generic
+cross-width helpers remain future numeric-policy work.
 
 ## Bits
 

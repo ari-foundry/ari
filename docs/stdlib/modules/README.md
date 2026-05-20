@@ -102,8 +102,9 @@ limits, examples, and test files for one module.
   plus UTF-8 scalar decode/encode, lowercase hex, and standard base64
   encode/decode helpers.
 - [std::math](math.md): source-only `i64` arithmetic helpers for signs,
-  predicates, checked/wrapping/overflowing/saturating overflow policy, powers,
-  division rounding, greatest common divisor, and least common multiple.
+  predicates, checked/saturating add/sub/mul/neg/abs,
+  wrapping/overflowing add/sub, powers, division rounding, greatest common
+  divisor, and least common multiple.
 - [std::bits](bits.md): source-only `u64` bit-mask, rotation, power-of-two,
   low-mask, alignment, byte-swap, population-count, and zero/one-run bit-scan
   helpers.

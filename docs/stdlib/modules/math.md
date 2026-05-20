@@ -34,6 +34,7 @@ Overflow-policy helpers:
 ```ari
 math::checked_add(left, right)
 math::checked_sub(left, right)
+math::checked_mul(left, right)
 math::checked_neg(value)
 math::checked_abs(value)
 math::wrapping_add(left, right)
@@ -42,6 +43,7 @@ math::overflowing_add(left, right)
 math::overflowing_sub(left, right)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
+math::saturating_mul(left, right)
 math::saturating_neg(value)
 math::saturating_abs(value)
 ```
@@ -51,6 +53,10 @@ operation is representable, and `None<i64>()` when it would overflow or
 underflow. The `saturating_*` helpers clamp to the nearest `i64` bound instead:
 positive overflow becomes `9223372036854775807`, and negative overflow becomes
 `-9223372036854775808`.
+
+`checked_mul` and `saturating_mul` follow the same policy for multiplication.
+They use guarded division checks before multiplying so the successful branch
+does not rely on signed overflow behavior.
 
 `wrapping_add` and `wrapping_sub` return the two's-complement wrapped result.
 `overflowing_add` and `overflowing_sub` return `(value, overflowed)`, a tuple
@@ -97,9 +103,11 @@ normalizes negative inputs and returns `0` when either input is `0`.
 The checked, wrapping, overflowing, and saturating helpers define their `i64`
 overflow behavior. Other helpers still use ordinary `i64` arithmetic
 internally, so keep their inputs in a range where intermediate values are
-meaningful for your program. Future slices should add checked multiplication
-and then widen these natural names through numeric traits once the compiler has
-a stronger intrinsic story.
+meaningful for your program. `wrapping_mul` and `overflowing_mul` remain future
+work because they need a reliable wrapped multiplication result, ideally from
+compiler intrinsics for every integer width. The existing natural names should
+then widen through numeric traits once the compiler has a stronger intrinsic
+story.
 
 Use `std::bits` for bit masks, rotations, power-of-two rounding, low-bit masks,
 alignment helpers, and bit scans. Use plain operators for ordinary arithmetic

@@ -73,6 +73,43 @@ pub fn checked_sub(left: i64, right: i64) -> std::Option[i64] {
   return std::Some<i64>(left - right);
 }
 
+pub fn checked_mul(left: i64, right: i64) -> std::Option[i64] {
+  if left == 0 || right == 0 {
+    return std::Some<i64>(0);
+  }
+
+  if left == -1 && right == i64_min() {
+    return std::None<i64>();
+  }
+  if right == -1 && left == i64_min() {
+    return std::None<i64>();
+  }
+
+  if left > 0 {
+    if right > 0 {
+      if left > i64_max() / right {
+        return std::None<i64>();
+      }
+    } else {
+      if right < i64_min() / left {
+        return std::None<i64>();
+      }
+    }
+  } else {
+    if right > 0 {
+      if left < i64_min() / right {
+        return std::None<i64>();
+      }
+    } else {
+      if left < i64_max() / right {
+        return std::None<i64>();
+      }
+    }
+  }
+
+  return std::Some<i64>(left * right);
+}
+
 pub fn checked_neg(value: i64) -> std::Option[i64] {
   if value == i64_min() {
     return std::None<i64>();
@@ -184,6 +221,20 @@ pub fn saturating_neg(value: i64) -> i64 {
     std::None => {}
   }
   return i64_max();
+}
+
+pub fn saturating_mul(left: i64, right: i64) -> i64 {
+  match checked_mul(left, right) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+
+  if (left < 0 && right < 0) || (left > 0 && right > 0) {
+    return i64_max();
+  }
+  return i64_min();
 }
 
 pub fn saturating_abs(value: i64) -> i64 {

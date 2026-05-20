@@ -607,14 +607,16 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-checked-saturating.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	grep -q '_ARNv3std4math11checked_add' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	grep -q '_ARNv3std4math11checked_sub' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math11checked_mul' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	grep -q '_ARNv3std4math11checked_neg' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	grep -q '_ARNv3std4math11checked_abs' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	grep -q '_ARNv3std4math14saturating_add' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	grep -q '_ARNv3std4math14saturating_sub' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
+	grep -q '_ARNv3std4math14saturating_mul' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	grep -q '_ARNv3std4math14saturating_neg' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	grep -q '_ARNv3std4math14saturating_abs' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-checked-saturating.ari -o $(BUILD_DIR)/prelude/std-math-checked-saturating.elf
-	$(BUILD_DIR)/prelude/std-math-checked-saturating.elf; code=$$?; test $$code -eq 20
+	$(BUILD_DIR)/prelude/std-math-checked-saturating.elf; code=$$?; test $$code -eq 32
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-wrapping-overflowing.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
 	grep -q '_ARNv3std4math12wrapping_add' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
 	grep -q '_ARNv3std4math12wrapping_sub' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll

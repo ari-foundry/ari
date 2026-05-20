@@ -290,7 +290,8 @@ identifies the exact case:
 - `std-math-division-rounding.ari`: source `std::math` signed division
   rounding and paired floor remainder behavior.
 - `std-math-checked-saturating.ari`: source `std::math` checked
-  add/sub/neg/abs and saturating add/sub/neg/abs overflow policy behavior.
+  add/sub/mul/neg/abs and saturating add/sub/mul/neg/abs overflow policy
+  behavior.
 - `std-math-wrapping-overflowing.ari`: source `std::math` wrapping add and
   overflowing add tuple-result behavior.
 - `std-ascii-class-helpers.ari`: source `std::ascii` extended byte
