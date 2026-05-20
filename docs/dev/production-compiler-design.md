@@ -39,6 +39,32 @@ The gap is mostly production compiler scale:
 Small Ari tools can be written now. A full compiler bootstrap should wait until
 the start bar below is green.
 
+## Readiness Scorecard
+
+The 35-40% number comes from Ari having a real hosted systems-language
+substrate, not from having an Ari compiler implementation already underway.
+The missing percent is mostly about scale, project shape, and compiler-quality
+tooling.
+
+| Area | Current State | Bootstrap Impact |
+| --- | --- | --- |
+| Hosted executable pipeline | Usable. The current compiler emits LLVM IR, links through an LLVM driver, and runs Linux/glibc executables. | Good enough for stage0-built tools. |
+| Core language model | Usable but still maturing. Functions, control flow, structs, enums, traits, generics, ownership, zones, C FFI, formatting, and modules exist. | Enough for small tools; large compiler code will stress generic aggregates and trait dispatch. |
+| File-backed projects | Partial. File-backed modules and module cache work exist, but large project ergonomics and diagnostics need hardening. | Start blocker for a multi-directory compiler project. |
+| Text and bytes | Partial. `char`, byte strings, string slices, ASCII, UTF-8 validation, formatting, and file reads exist. | Good for a lexer pilot; source-map ownership and diagnostic snippets are still missing. |
+| Compiler diagnostics | Missing as a reusable Ari layer. Runtime `std` has logging, panic, and formatting, but not compiler source maps, labels, reports, or golden renderers. | Hard blocker before parser-scale work. |
+| Data structures | Partial. Vectors, slices, maps, sets, trees, heaps, and iterators exist, but nested generic aggregate behavior needs more stress coverage. | Hard blocker before AST/HIR/symbol tables are comfortable. |
+| Error flow | Partial. `Option`, `Result`, and compact errors exist, but large expected-failure workflows still need ergonomic pressure testing. | Soft blocker for lexer; hard blocker for parser/sema. |
+| Build/test flow | Partial. `make` and focused compiler/std checks exist. Bootstrap-specific fixtures and stage comparison do not exist yet. | Hard blocker before claiming self-host progress. |
+| Stage comparison | Not started. Token, syntax, HIR, typed IR, LLVM text, and executable comparison policy is documented but not implemented. | Hard blocker before stage1/stage2 comparison. |
+
+The practical interpretation:
+
+- Ari can start experimental compiler components now.
+- Ari should not start a full self-hosting tree until source maps,
+  diagnostics, multi-file project flow, and stage artifact comparison have
+  their first focused tests.
+
 ## Design Goal
 
 The Ari compiler written in Ari should look like a normal Ari project, not like
@@ -110,6 +136,44 @@ behavior before the Ari compiler itself can move comfortably into Ari.
 | Memory | Explicit zones, typed allocation, ownership, drops, and borrow diagnostics scale to long-lived compiler graphs. | AST/HIR ownership needs to be obvious to readers and maintainers. |
 | FFI and backend | C ABI, LLVM IR emission, object output, target ABI facts, and runtime hooks remain documented and testable. | Stage1 should reuse the same public backend contract as other Ari tools. |
 
+## General Language Design Work
+
+This work should improve Ari as a general language, not just make the future
+stage1 compiler easier to write.
+
+Use this rule for every proposed compiler change:
+
+```text
+If ordinary Ari programs benefit from the feature, it belongs on the normal
+language/compiler roadmap.
+
+If only the bootstrap compiler benefits, redesign the stage1 code or keep the
+need in the compiler/tooling package instead of changing the language.
+```
+
+The near-term language design priorities are:
+
+1. Natural type intent: keep `type` aliases such as `char` visible enough in
+   diagnostics, avoid forcing numeric casts for character code, and keep layout
+   lowering explicit.
+2. Natural call sites: prefer names such as `open(path, "rw")`,
+   `is_file(path)`, `try_get(index)`, and `format_in!(...)` over type-suffixed
+   helper names when generics, module paths, or expected types carry the
+   meaning.
+3. File-backed modules: make project roots, imports, visibility, cache
+   invalidation, and missing/private/ambiguous module diagnostics predictable.
+4. Generic aggregate scale: nested `Vec`, maps, `Result`, AST node enums, and
+   symbol-table values should monomorphize without special C++-side escape
+   hatches.
+5. Trait coherence: `Hash`, `Eq`, `Ord`, `Debug`, `Display`, and `Drop`
+   should have deterministic selection rules and diagnostics before stage1
+   depends on them heavily.
+6. Error ergonomics: expected failure paths should read as ordinary data flow
+   with `Option`/`Result`, not as panic-heavy control flow.
+7. Compiler tooling as Ari packages: source spans, source maps, diagnostics,
+   labels, fix-its, and golden renderers belong in Ari tooling modules, not in
+   runtime `std` and not in hidden stage0 builtins.
+
 ## Compiler Tooling Layer
 
 Source-coordinate and diagnostic APIs should not be added to production `std`
@@ -153,6 +217,19 @@ Exit criteria:
 
 - A new contributor can explain why Ari is not self-hosting yet and which
   public language/compiler features block it.
+
+### Phase 0.5: Readiness Fixtures
+
+- Add small compiler-facing fixtures that compile with today's Ari and stress
+  the public language surface a future stage1 compiler would use.
+- Keep them outside a real `bootstrap/` tree until the lexer pilot starts.
+- Group fixtures by language pressure point: modules, generic aggregates,
+  traits, formatting, source-text bytes, zones, and error values.
+
+Exit criteria:
+
+- The project has focused tests that reveal whether Ari can express
+  compiler-shaped data before any Ari-written compiler implementation exists.
 
 ### Phase 1: Project And Module Ergonomics
 
@@ -237,6 +314,24 @@ Exit criteria:
 
 - Stage0-built stage1 and stage1-built stage2 can compare token, syntax, HIR,
   typed IR, and later LLVM text outputs.
+
+## First Implementation Slices
+
+These are the next small, reviewable compiler-design slices. Each should land
+with docs and focused tests before a broad bootstrap tree appears.
+
+| Slice | Deliverable | Focused Tests |
+| --- | --- | --- |
+| Source identity model | Ari tooling structs for `SourceId`, byte `Span`, and owned `SourceFile` handles. | `source-id-stability`, `span-byte-range`, `line-column-lookup`. |
+| Diagnostic renderer | Ari tooling values for diagnostic severity, labels, notes, and deterministic text output. | `report-single-label`, `report-multiline-span`, `report-note-order`. |
+| File module hardening | Better package-root and module-cache diagnostics in the current compiler. | `module-missing-file`, `module-private-item`, `module-cache-stale`. |
+| Generic aggregate stress | Compiler-shaped structs/enums using nested vectors, maps, and results. | `generic-ast-node`, `generic-symbol-map`, `result-error-payload`. |
+| Trait selection stress | Deterministic dispatch for formatting, equality, ordering, hashing, and drop hooks. | `trait-debug-node`, `trait-hash-key`, `trait-ord-symbol`. |
+| Stage artifact runner | A tiny runner that compares text artifacts with normalized paths and symbol names. | `compare-token-dump`, `compare-syntax-dump`, `compare-ir-normalized`. |
+
+Do not implement all of these inside `std`; source and diagnostic work is not in runtime `std`.
+The source and diagnostic slices are compiler/tooling packages. The module,
+aggregate, trait, and artifact slices are compiler/language/test work.
 
 ## Test Strategy
 

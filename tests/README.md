@@ -48,8 +48,9 @@ See `docs/dev/library-testing.md` for the full standard library testing policy.
 
 Documentation checks are intentionally small. For example,
 `make check-bootstrap-docs` only verifies that the bootstrap readiness guide
-keeps its production-language contract, estimate, start gate, roadmap, and
-test-plan sections linked from the developer docs.
+keeps its production-language contract, readiness scorecard, start gate, first
+implementation slices, roadmap, estimate, and test-plan sections linked from
+the developer docs.
 
 ## README Placement
 

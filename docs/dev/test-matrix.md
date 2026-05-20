@@ -49,8 +49,8 @@ Bootstrapping is not implemented yet, but the start gate is checked by
 [Production Compiler Design](production-compiler-design.md),
 [Bootstrap Readiness](bootstrap-readiness.md),
 [Self-Host Roadmap](self-host-roadmap.md), and the docs indexes stay linked and
-keep the production-language contract, estimate, gate, roadmap, and test-plan
-sections.
+keep the production-language contract, readiness scorecard, start gate, first
+implementation slices, roadmap, estimate, and test-plan sections.
 
 ## Feature Plan
 
