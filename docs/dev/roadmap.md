@@ -78,12 +78,18 @@ Non-goals for the early part of this track:
 
 ## Bootstrap Direction
 
-1. Keep the C++ implementation compact while the language design stabilizes.
-2. Reimplement isolated front-end pieces in Ari once structs, strings, and
-   vectors lower.
-3. Reimplement parser and semantic passes in Ari.
-4. Compile the Ari compiler with Ari.
-5. Compare outputs from the current compiler and self-hosted compiler.
+The detailed plan lives in [Self-Host Roadmap](self-host-roadmap.md).
+The short version is:
+
+1. Treat the current C++ compiler as `stage0`, not as the codebase to rewrite
+   in place.
+2. Build a separate Ari-written `stage1` compiler project.
+3. Start with isolated frontend pieces: lexer, spans, diagnostics, parser
+   dumps, and module graph fixtures.
+4. Add HIR, name resolution, type checking, ownership checks, and backend
+   output only after each previous layer has golden tests.
+5. Count Ari as self-hosted only when `stage0` builds `stage1`, `stage1` builds
+   `stage2`, and stage outputs match under a documented comparison policy.
 
 ## Non-Goals For The Current Milestone
 
