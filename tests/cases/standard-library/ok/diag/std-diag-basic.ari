@@ -1,0 +1,67 @@
+// Covers std::diag severity, label, diagnostic, and std::source location glue.
+fn main() -> i64 {
+  let file_id = source::file_id(7);
+  let input = source::file(file_id, "first\nbad\n");
+  let span = input.line_span(2);
+  let diagnostic = diag::error("E0001", "bad token", span);
+  var score = 0;
+
+  if diag::severity_rank(diag::Error) == 3 {
+    score = score + 1;
+  }
+  if diag::is_error(diagnostic.severity()) {
+    score = score + 2;
+  }
+  if diag::is_warning(diag::Warning) {
+    score = score + 3;
+  }
+
+  let warning_name = diag::severity_name(diag::Warning) as ptr u8;
+  if ptr_load(warning_name) == 'w' {
+    score = score + 4;
+  }
+
+  if diagnostic.code().len() == 5 && diagnostic.message().get(0) == 'b' {
+    score = score + 5;
+  }
+  if diagnostic.span().start() == 6 && diagnostic.span().end() == 9 {
+    score = score + 6;
+  }
+
+  let location = diagnostic.location(ref input);
+  if location.line() == 2 && location.column() == 1 {
+    score = score + 7;
+  }
+
+  let primary = diag::primary(span, "unexpected token");
+  if primary.is_primary() && !primary.is_secondary() {
+    score = score + 8;
+  }
+
+  let labeled = diagnostic.with_label(primary);
+  if labeled.has_label() {
+    score = score + 9;
+  }
+
+  let label = labeled.label();
+  if label.message().len() == 16 {
+    score = score + 10;
+  }
+
+  let label_span = label.span();
+  if label_span.same_file(ref span) && label_span.start() == span.start() {
+    score = score + 11;
+  }
+
+  let label_location = label.location(ref input);
+  if label_location.line() == 2 && label_location.column() == 1 {
+    score = score + 12;
+  }
+
+  let secondary = diag::secondary(source::empty_span(file_id, 0), "note");
+  if secondary.is_secondary() {
+    score = score + 13;
+  }
+
+  return score;
+}

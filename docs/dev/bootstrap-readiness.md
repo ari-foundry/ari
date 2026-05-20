@@ -12,19 +12,19 @@ project.
 
 As of the current hosted compiler and standard library, Ari is roughly:
 
-- **34-39% ready to start full compiler bootstrapping**
-- **61-66% remaining before a self-host attempt is likely to be productive**
+- **35-40% ready to start full compiler bootstrapping**
+- **60-65% remaining before a self-host attempt is likely to be productive**
 
 This estimate is about practical implementation readiness, not language
 ambition. Ari already has many pieces needed by a compiler: modules, structs,
 enums, traits, generics, zones, strings, vectors, maps/sets, formatting,
 filesystem IO, process/environment helpers, and an LLVM-backed executable
 pipeline. Ari now also has source-coordinate values (`FileId`, `Span`,
-`LineCol`, and `Location`) plus a borrowed `SourceFile` view that can convert
-byte offsets into line/column locations for lexer/parser diagnostics. The
-missing work is mostly around scale, ergonomics, owned source maps, diagnostic
-rendering, stable compiler data structures, multi-file project flow, and
-comparison tooling.
+`LineCol`, and `Location`), a borrowed `SourceFile` view that can convert byte
+offsets into line/column locations, and the first `std::diag` diagnostic values
+for lexer/parser diagnostics. The missing work is mostly around scale,
+ergonomics, owned source maps, diagnostic rendering, stable compiler data
+structures, multi-file project flow, and comparison tooling.
 
 Small Ari-written compiler components can start now. A complete self-hosting
 compiler should wait until the start gate below is green.
@@ -36,7 +36,7 @@ Start the first real `bootstrap/` tree only when these are all true:
 | Gate | Required State | Why It Matters |
 | --- | --- | --- |
 | Source text | Ari can read source files, preserve byte offsets, validate UTF-8, carry `std::source::Span` values, and report line/column locations. | Lexer/parser diagnostics need exact source spans. |
-| Diagnostics | There is a source-level diagnostic builder with severity, primary span, labels, notes, and stable text output. | Golden tests need comparable errors before the parser grows. |
+| Diagnostics | There is a source-level diagnostic builder with severity, primary span, labels, notes, and stable text output. `std::diag` now covers the first severity/label/diagnostic value layer. | Golden tests need comparable errors before the parser grows. |
 | Strings | `String`, string slices, ASCII, UTF-8, split/search/join, and C/OS/path string boundaries are documented and tested. | Compiler frontend code is mostly text handling. |
 | Collections | `Vec`, `Slice`, maps, sets, iterators, and common algorithms are stable enough for syntax trees and symbol tables. | AST/HIR and name resolution need predictable containers. |
 | File modules | Ari can load file-backed modules in a predictable project shape without special one-off flags. | A compiler cannot stay a single file for long. |
@@ -70,8 +70,9 @@ bootstrapping:
    span-to-line/column conversion on top of `std::source::FileId`,
    `std::source::Span`, `std::source::LineCol`, and the borrowed
    `std::source::SourceFile` lookup helpers.
-5. Error values: compact compiler-facing `Error`, `Diagnostic`, and
-   `Result[T, E]` workflows that avoid panic in expected failure paths.
+5. Error values: grow the current compact `Error` and `std::diag::Diagnostic`
+   values into `Result[T, E]` workflows that avoid panic in expected failure
+   paths.
 6. More natural text APIs: keep reducing awkward casts and helper suffixes in
    code that manipulates source bytes, chars, and Unicode boundaries.
 7. Better build surfaces: Makefile support is fine for now, but stage1 needs a
@@ -86,7 +87,7 @@ The stage1 compiler should start with a conservative hosted subset:
 | Text | `String`, `Slice[u8]`, `char`, ASCII helpers, UTF-8 validation/decode, split/search/join, trim, parse integer/bool/float. |
 | Collections | `Vec`, `Slice`, `HashMap`, `HashSet`, `TreeMap`, `TreeSet`, iterators, sort, binary search, dedup, copy/fill, and stable comparison helpers. |
 | IO/FS | `read`, `try_read`, `write`, `try_write`, `read_dir`, `read_dir_entries`, path join/normalize/canonicalize, current directory, env args. |
-| Diagnostics | formatting, debug formatting, log output, `std::source` source-coordinate and borrowed text lookup helpers, panic/unreachable messages, test report helpers. |
+| Diagnostics | formatting, debug formatting, log output, `std::diag` diagnostic values, `std::source` source-coordinate and borrowed text lookup helpers, panic/unreachable messages, test report helpers. |
 | Memory | explicit `Zone`, temporary zones, copy-to-zone helpers, same-zone container growth, and reset/destroy invalidation checks. |
 | Process | command-line args and exit codes; do not require spawn/fork for the first lexer/parser stage. |
 | Platform | target facts, pointer sizes, errno policy, and hosted Linux/glibc assumptions documented for stage0. |
@@ -152,7 +153,8 @@ Exit criteria:
 
 - Build source-map storage and cached line/column conversion on top of
   `std::source`.
-- Add a diagnostic builder and stable renderer.
+- Grow `std::diag` from the current single-label value layer into a diagnostic
+  builder and stable renderer.
 - Add golden tests for line/column rendering, notes, and labels.
 
 Exit criteria:

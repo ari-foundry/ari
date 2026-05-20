@@ -33,11 +33,12 @@ low-level runtime context layer.
 `read_exact`, `write_all`, and `flush` on top of the raw process IO hooks.
 `std::test` adds source executable unit-test reports, generic equality checks,
 and scratch-zone helpers, `std::log` adds level-prefixed `stderr` diagnostic
-lines, `std::source` adds `FileId`, half-open byte `Span`, one-based
-`LineCol`, `Location`, and borrowed `SourceFile` line/column lookup for
-compiler tools, and `std::error` adds shared recoverable error categories,
-compact error values, and POSIX errno mapping while richer runner, owned source
-maps, structured diagnostics/logging, direct `Result[T, Error]`, and backtrace
+lines, `std::diag` adds severity/label/diagnostic values and first summary
+output for compiler tools, `std::source` adds `FileId`, half-open byte `Span`,
+one-based `LineCol`, `Location`, and borrowed `SourceFile` line/column lookup,
+and `std::error` adds shared recoverable error categories, compact error
+values, and POSIX errno mapping while richer runner, owned source maps,
+structured diagnostics/logging, direct `Result[T, Error]`, and backtrace
 support remain roadmap work.
 `std::c` adds the narrow C ABI boundary layer with borrowed
 `CStr`, zone-backed `CString`, POSIX `errno`, and hosted dynamic loading

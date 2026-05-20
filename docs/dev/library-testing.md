@@ -291,6 +291,11 @@ identifies the exact case:
 - `std-log-basic.ari`: source `std::log` level ordering, threshold checks,
   byte-slice logging, string-message logging, convenience level helpers, and
   stderr output format.
+- `std-diag-basic.ari`: source `std::diag` severity helpers, diagnostic and
+  label constructors, label attachment, source location lookup, method
+  wrappers, and the dedicated `make check-diag` target.
+- `std-diag-write.ari`: source `std::diag` first stable stderr summary output
+  and the dedicated `make check-diag` target.
 - `std-source-location.ari`: source `std::source` file id, half-open byte
   span, one-based line/column, location, containment, boundary, same-file
   merge, ordering, method wrapper behavior, and the dedicated

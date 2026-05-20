@@ -209,6 +209,35 @@ log::error(text)
 `enabled(level, minimum)` is an explicit threshold predicate; there is no
 global logging filter today.
 
+Diagnostic values live in `std::diag`:
+
+```ari
+diag::Severity
+diag::LabelStyle
+diag::Label
+diag::Diagnostic
+
+diag::severity_rank(severity)
+diag::severity_name(severity)
+diag::is_error(severity)
+diag::is_warning(severity)
+diag::primary(span, message)
+diag::secondary(span, message)
+diag::error(code, message, span)
+diag::warning(code, message, span)
+diag::note(code, message, span)
+diag::help(code, message, span)
+diag::with_label(ref diagnostic, label)
+diag::location(ref diagnostic, ref source_file)
+diag::label_location(ref label, ref source_file)
+diag::write(ref diagnostic)
+```
+
+`Diagnostic` stores borrowed byte-slice code/message text and a primary
+`std::source::Span`. `Label` stores a style, span, and borrowed message.
+`write` currently emits a single stderr summary through `std::log`; full
+source-map rendering is roadmap work.
+
 Source-coordinate values live in `std::source`:
 
 ```ari
