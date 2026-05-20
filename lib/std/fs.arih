@@ -89,22 +89,33 @@ pub fn write_bytes(file: File, values: std::Slice[u8]) -> i64 {
   return index;
 }
 
-fn write_all_with_mode(path: string, mode: string, values: std::Slice[u8]) -> bool {
+fn try_write_all_with_mode(path: string, mode: string, values: std::Slice[u8]) -> std::Option[i64] {
   let file = try_open(path, mode).unwrap_or(File::invalid());
   if !file.is_open() {
-    return false;
+    return std::None<i64>();
   }
   let written = file.write_bytes(values);
   let closed = file.close();
-  return written == values.len && closed;
+  if written == values.len && closed {
+    return std::Some<i64>(written);
+  }
+  return std::None<i64>();
 }
 
 pub fn write(path: string, values: std::Slice[u8]) -> bool {
-  return write_all_with_mode(path, "w", values);
+  return try_write(path, values).is_some();
 }
 
 pub fn append(path: string, values: std::Slice[u8]) -> bool {
-  return write_all_with_mode(path, "a", values);
+  return try_append(path, values).is_some();
+}
+
+pub fn try_write(path: string, values: std::Slice[u8]) -> std::Option[i64] {
+  return try_write_all_with_mode(path, "w", values);
+}
+
+pub fn try_append(path: string, values: std::Slice[u8]) -> std::Option[i64] {
+  return try_write_all_with_mode(path, "a", values);
 }
 
 pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {

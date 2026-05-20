@@ -1,5 +1,6 @@
 // Covers source std::fs whole-file conveniences: byte-slice write, append,
-// read-to-byte-string, missing-file empty reads, and truncating rewrite.
+// Option-returning byte counts, read-to-byte-string, missing-file empty reads,
+// and truncating rewrite.
 fn main() -> i64 {
   let path = "build/prelude/std-fs-read-write.tmp";
   let missing_path = "build/prelude/std-fs-read-write-missing.tmp";
@@ -22,17 +23,33 @@ fn main() -> i64 {
   if fs::write(path, first.as_slice()) {
     score = score + 2;
   }
+  match fs::try_write(path, first.as_slice()) {
+    std::Some(first_count) => {
+      if first_count == 2 {
+        score = score + 13;
+      }
+    }
+    std::None => {}
+  }
 
   var tail = [67 as u8, 68 as u8];
   if fs::append(path, tail.as_slice()) {
     score = score + 3;
+  }
+  match fs::try_append(path, tail.as_slice()) {
+    std::Some(tail_count) => {
+      if tail_count == 2 {
+        score = score + 14;
+      }
+    }
+    std::None => {}
   }
 
   let text = fs::read_to_string(ref mut zone, path);
   if !text.is_empty() {
     score = score + 4;
   }
-  if text.len() == 4 {
+  if text.len() == 6 {
     score = score + 5;
   }
   if text.get(0) == 65 as u8 {
@@ -41,10 +58,18 @@ fn main() -> i64 {
   if text.get(3) == 68 as u8 {
     score = score + 7;
   }
+  if text.get(5) == 68 as u8 {
+    score = score + 15;
+  }
 
   var replacement = [90 as u8];
-  if fs::write(path, replacement.as_slice()) {
-    score = score + 8;
+  match fs::try_write(path, replacement.as_slice()) {
+    std::Some(replacement_count) => {
+      if replacement_count == 1 {
+        score = score + 8;
+      }
+    }
+    std::None => {}
   }
   let after = fs::read_to_string(ref mut zone, path);
   if after.len() == 1 {
@@ -59,6 +84,12 @@ fn main() -> i64 {
   }
   if !fs::exists(path) {
     score = score + 12;
+  }
+  match fs::try_append("build/prelude/std-fs-read-write-no-such-dir/file.tmp", tail.as_slice()) {
+    std::Some(_missing_count) => {}
+    std::None => {
+      score = score + 16;
+    }
   }
 
   zone::destroy(zone);

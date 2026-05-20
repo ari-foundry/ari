@@ -268,6 +268,7 @@ fn std::fs::remove_dir|check-prelude std-fs-rename-dir runtime-backed single-dir
 fn std::fs::rename|check-prelude std-fs-rename-dir runtime-backed file rename hook; docs/stdlib/modules/fs.md
 fn std::fs::symbolic_link|check-prelude std-fs-links runtime-backed symbolic-link hook; docs/stdlib/modules/fs.md
 fn std::fs::truncate|check-prelude std-fs-create-truncate-copy source create/truncate helper; docs/stdlib/modules/fs.md
+fn std::fs::try_append|check-prelude std-fs-read-write Option-returning append byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::try_copy|check-prelude std-fs-create-truncate-copy Option-returning copy byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::try_create|check-prelude std-fs-create-truncate-copy Option-returning create helper; docs/stdlib/modules/fs.md
 fn std::fs::try_open|check-prelude std-fs-open-modes Option-returning mode-string open helper; docs/stdlib/modules/fs.md
@@ -276,6 +277,7 @@ fn std::fs::try_open_read|check-prelude std-fs-basic compatibility Option-return
 fn std::fs::try_open_write|check-prelude std-fs-basic compatibility Option-returning write helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read|check-prelude std-fs-try-read Option-returning natural whole-file read alias; docs/stdlib/modules/fs.md
 fn std::fs::try_read_to_string|check-prelude std-fs-try-read Option-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
+fn std::fs::try_write|check-prelude std-fs-read-write Option-returning write byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::write|check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md
 fn std::fs::write_byte|check-prelude std-fs-basic file byte write hook; docs/stdlib/modules/fs.md
 fn std::fs::write_bytes|check-prelude std-fs-basic source byte-slice write helper; docs/stdlib/modules/fs.md

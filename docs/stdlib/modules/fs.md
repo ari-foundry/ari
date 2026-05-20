@@ -48,7 +48,9 @@ fs::write_bytes(file, values)
 fs::read(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
+fs::try_write(path, values)
 fs::append(path, values)
+fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
 fs::try_copy(source, target)
@@ -107,10 +109,13 @@ form or `create`/`try_create` when creating a file.
 `write_bytes(file, values)` writes each byte in a `Slice[u8]` until one write
 fails and returns the number of bytes written before that failure.
 
-`write(path, values)` opens `path` with `"w"`, writes the whole `Slice[u8]`,
-closes the handle, and returns whether the complete write and close succeeded.
-`append(path, values)` does the same with `"a"` mode. Both helpers are source
-Ari over `try_open`, `File.write_bytes`, and `File.close`.
+`try_write(path, values)` opens `path` with `"w"`, writes the whole
+`Slice[u8]`, closes the handle, and returns `Some(byte_count)` when the
+complete write and close succeeded. `try_append(path, values)` does the same
+with `"a"` mode. Failed opens, short writes, or failed closes return `None`.
+
+`write(path, values)` and `append(path, values)` are compatibility boolean
+wrappers over `try_write` and `try_append`.
 
 `try_read_to_string(ref mut zone, path)` opens `path` with `"r"`, reads bytes
 until the current `read_byte` EOF/failure sentinel, closes the handle, and
@@ -192,8 +197,8 @@ recursive removal, and directory iteration are separate future slices.
 | open | Current: `open(path, mode)`, `try_open(path, mode)`, and wrappers. |
 | create | Current: `create(path)` and `try_create(path)` over `"w"` mode. |
 | read | Current: byte `read_byte`, whole-file `read`/`read_to_string`, and fallible `try_read`/`try_read_to_string`. |
-| write | Current: byte `write_byte`, `write_bytes`, and whole-file `write`. |
-| append | Current: `"a"`/`"a+"` modes and whole-file `append`. |
+| write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, and byte-counting `try_write`. |
+| append | Current: `"a"`/`"a+"` modes, whole-file `append`, and byte-counting `try_append`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
 | metadata | Roadmap: needs a portable `Metadata` value and runtime `stat`/platform wrappers. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, and `permissions`; mutation/chmod is roadmap. |
@@ -381,8 +386,9 @@ reads, byte-slice writes, close, removal, and `Option[File]` read/write opens.
 and failed append opens through `Option[File]`. `std-fs-open-modes.ari` covers
 the mode-string contract, including `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes,
 and invalid mode strings. `std-fs-read-write.ari` covers source whole-file
-write, append, read-to-byte-string, missing-file empty reads, and truncating
-rewrite behavior. `std-fs-try-read.ari` covers `Option[String]` whole-file
+write/append compatibility wrappers, `try_write`/`try_append` byte counts,
+read-to-byte-string, missing-file empty reads, and truncating rewrite behavior.
+`std-fs-try-read.ari` covers `Option[String]` whole-file
 reads where missing files become `None` and empty files stay `Some(empty)`.
 `std-fs-create-truncate-copy.ari` covers source `create`, `try_create`,
 `read`, `truncate`, missing-source copy failure, whole-file copy behavior, and

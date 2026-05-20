@@ -728,7 +728,9 @@ fs::write_bytes(file, values)
 fs::read(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
+fs::try_write(path, values)
 fs::append(path, values)
+fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
 fs::try_copy(source, target)
@@ -765,9 +767,12 @@ failures because filesystem access can change after the check.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns whether one byte was written. `write_bytes` writes a
 `Slice[u8]` and returns the count written before the first failed byte write.
-`write(path, values)` truncates or creates a small byte file and writes the
-whole `Slice[u8]`; `append(path, values)` creates if needed and appends the
-whole slice. `try_read_to_string(ref mut zone, path)` and its short alias
+`try_write(path, values)` truncates or creates a small byte file, writes the
+whole `Slice[u8]`, and returns `Some(byte_count)` when the write and close
+succeed. `try_append(path, values)` creates if needed and appends the whole
+slice with the same `Option[i64]` result policy. `write(path, values)` and
+`append(path, values)` are boolean compatibility wrappers over those fallible
+helpers. `try_read_to_string(ref mut zone, path)` and its short alias
 `try_read(ref mut zone, path)` return `Option[String]`, using `None` for a
 missing or unopenable file and `Some(empty)` for an empty file. `read(ref mut
 zone, path)` is the short compatibility alias for `read_to_string(ref mut zone,

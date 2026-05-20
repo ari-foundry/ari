@@ -341,10 +341,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	grep -F -q "std2fs5write" $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	grep -F -q "std2fs6append" $(BUILD_DIR)/prelude/std-fs-read-write.ll
+	grep -F -q "std2fs9try_write" $(BUILD_DIR)/prelude/std-fs-read-write.ll
+	grep -F -q "std2fs10try_append" $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	grep -F -q "std2fs14read_to_string" $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari -o $(BUILD_DIR)/prelude/std-fs-read-write.elf
-	$(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 78
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-write.elf; $(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 78; fi
+	$(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 136
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-write.elf; $(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 136; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-try-read.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-try-read.ll
 	grep -F -q "std2fs18try_read_to_string" $(BUILD_DIR)/prelude/std-fs-try-read.ll
 	grep -F -q "std2fs8try_read" $(BUILD_DIR)/prelude/std-fs-try-read.ll

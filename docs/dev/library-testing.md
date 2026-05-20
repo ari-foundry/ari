@@ -148,8 +148,9 @@ identifies the exact case:
 - `std-fs-open-modes.ari`: mode-string `open`/`try_open` behavior for `"r"`,
   `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes, and invalid
   mode strings.
-- `std-fs-read-write.ari`: source whole-file `write`, `append`,
-  `read_to_string`, missing-file empty reads, and truncating rewrite behavior.
+- `std-fs-read-write.ari`: source whole-file `write`/`try_write`,
+  `append`/`try_append`, `read_to_string`, missing-file empty reads,
+  byte-count checks, and truncating rewrite behavior.
 - `std-fs-try-read.ari`: `Option[String]` whole-file reads that distinguish
   missing files from empty files.
 - `std-fs-create-truncate-copy.ari`: source `create`, `try_create`, natural
