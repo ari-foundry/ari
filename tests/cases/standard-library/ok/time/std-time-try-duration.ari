@@ -1,0 +1,48 @@
+// Covers Option-returning Duration constructors. These helpers are meant for
+// user-provided values where rejecting invalid input is better than asserting.
+fn has_nanos(value: std::Option[time::Duration], expected: i64) -> bool {
+  match value {
+    std::Some(duration) => {
+      return duration.as_nanos() == expected;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  if time::try_nanoseconds(-1).is_none() {
+    score = score + 1;
+  }
+  if has_nanos(time::try_nanoseconds(3), 3) {
+    score = score + 2;
+  }
+  if time::try_microseconds(-2).is_none() {
+    score = score + 3;
+  }
+  if has_nanos(time::try_microseconds(4), 4000) {
+    score = score + 4;
+  }
+  if time::try_milliseconds(-3).is_none() {
+    score = score + 5;
+  }
+  if has_nanos(time::try_milliseconds(5), 5000000) {
+    score = score + 6;
+  }
+  if time::try_seconds(-4).is_none() {
+    score = score + 7;
+  }
+  if has_nanos(time::try_seconds(6), 6000000000) {
+    score = score + 8;
+  }
+  if time::Duration::try_seconds(-1).is_none() {
+    score = score + 9;
+  }
+  if has_nanos(time::Duration::try_milliseconds(7), 7000000) {
+    score = score + 10;
+  }
+
+  return score;
+}

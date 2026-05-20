@@ -632,9 +632,13 @@ time::unix_nanos()
 time::sleep_nanos(nanos)
 
 time::nanoseconds(value)
+time::try_nanoseconds(value)
 time::microseconds(value)
+time::try_microseconds(value)
 time::milliseconds(value)
+time::try_milliseconds(value)
 time::seconds(value)
+time::try_seconds(value)
 time::now()
 time::system_now()
 time::system_from_unix(seconds, nanosecond)
@@ -648,6 +652,10 @@ time::timeout_after(duration)
 time::timeout(duration)
 
 Duration::zero()
+Duration::try_nanoseconds(value)
+Duration::try_microseconds(value)
+Duration::try_milliseconds(value)
+Duration::try_seconds(value)
 duration.as_nanos()
 duration.as_micros()
 duration.as_millis()
@@ -690,13 +698,16 @@ utc.is_leap_year()
 ```
 
 Use `Instant` for elapsed time and `SystemTime` for Unix wall-clock
-timestamps. `Duration` constructors assert on negative values. The raw
-`*_nanos` functions are exposed for low-level code, but ordinary code should
-prefer `now`, `system_now`, `elapsed`, and `sleep`. Use `Deadline` plus
+timestamps. Direct `Duration` constructors assert on negative values; use
+`try_nanoseconds`, `try_microseconds`, `try_milliseconds`, or `try_seconds`
+when input should be validated as `Option[Duration]`. The raw `*_nanos`
+functions are exposed for low-level code, but ordinary code should prefer
+`now`, `system_now`, `elapsed`, and `sleep`. Use `Deadline` plus
 `timeout(duration)` or `deadline_at(instant)` when an API needs timeout policy
-without depending on wall-clock time. `utc_from_unix` and `SystemTime::to_utc`
-provide deterministic UTC calendar conversion for non-negative Unix
-timestamps. Timezone databases are outside the first standard-library slice.
+without depending on wall-clock time. `utc_from_unix` and
+`SystemTime::to_utc` provide deterministic UTC calendar conversion for
+non-negative Unix timestamps. Timezone databases are outside the first
+standard-library slice.
 
 Filesystem helpers live in `std::fs`:
 

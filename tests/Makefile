@@ -583,6 +583,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari -o $(BUILD_DIR)/prelude/std-time-basic.elf
 	$(BUILD_DIR)/prelude/std-time-basic.elf; code=$$?; test $$code -eq 105
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-basic.elf; $(BUILD_DIR)/prelude/std-time-basic.elf; code=$$?; test $$code -eq 105; fi
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-try-duration.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-try-duration.ll
+	grep -F -q "std4time15try_nanoseconds" $(BUILD_DIR)/prelude/std-time-try-duration.ll
+	grep -F -q "std4time16try_milliseconds" $(BUILD_DIR)/prelude/std-time-try-duration.ll
+	grep -F -q "std__time__Duration8inherent11try_seconds" $(BUILD_DIR)/prelude/std-time-try-duration.ll
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-try-duration.ari -o $(BUILD_DIR)/prelude/std-time-try-duration.elf
+	$(BUILD_DIR)/prelude/std-time-try-duration.elf; code=$$?; test $$code -eq 55
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-try-duration.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-try-duration.elf; $(BUILD_DIR)/prelude/std-time-try-duration.elf; code=$$?; test $$code -eq 55; fi
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-timeout.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-timeout.ll
 	grep -F -q "std4time7timeout" $(BUILD_DIR)/prelude/std-time-timeout.ll
 	grep -F -q "std4time13timeout_after" $(BUILD_DIR)/prelude/std-time-timeout.ll

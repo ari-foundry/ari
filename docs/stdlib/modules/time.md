@@ -19,9 +19,13 @@ time::unix_nanos()
 time::sleep_nanos(nanos)
 
 time::nanoseconds(value)
+time::try_nanoseconds(value)
 time::microseconds(value)
+time::try_microseconds(value)
 time::milliseconds(value)
+time::try_milliseconds(value)
 time::seconds(value)
+time::try_seconds(value)
 time::now()
 time::system_now()
 time::system_from_unix(seconds, nanosecond)
@@ -35,6 +39,10 @@ time::timeout_after(duration)
 time::timeout(duration)
 
 Duration::zero()
+Duration::try_nanoseconds(value)
+Duration::try_microseconds(value)
+Duration::try_milliseconds(value)
+Duration::try_seconds(value)
 duration.as_nanos()
 duration.as_micros()
 duration.as_millis()
@@ -76,9 +84,14 @@ utc.nanosecond()
 utc.is_leap_year()
 ```
 
-`Duration` values are non-negative. The constructor helpers assert if given a
-negative value. `as_micros`, `as_millis`, and `as_seconds` truncate toward
-zero, which keeps them useful for status checks and coarse timing.
+`Duration` values are non-negative. The direct constructor helpers
+`nanoseconds`, `microseconds`, `milliseconds`, and `seconds` assert if given a
+negative value, which is appropriate for constants and programmer-owned values.
+Use the `try_*` forms for user input, config files, protocol fields, or any
+branch where invalid input should become `None` instead of aborting the
+program. The associated `Duration::try_*` forms are aliases for the same
+policy. `as_micros`, `as_millis`, and `as_seconds` truncate toward zero, which
+keeps them useful for status checks and coarse timing.
 
 `Instant` is monotonic and should be used for measuring elapsed time. Use
 `now()` or `Instant::now()` to read it. `duration_since` asserts when the
@@ -130,6 +143,23 @@ fn main() -> i64 {
 
   if took.as_nanos() >= 0 {
     return process::success();
+  }
+  return process::failure();
+}
+```
+
+Fallible duration construction:
+
+```ari
+fn main() -> i64 {
+  match time::try_seconds(30) {
+    std::Some(timeout) => {
+      let deadline = time::timeout(timeout);
+      if !deadline.has_expired() {
+        return process::success();
+      }
+    }
+    std::None => {}
   }
   return process::failure();
 }
@@ -188,7 +218,8 @@ fn main() -> i64 {
   itself; IO/process/thread APIs must opt into accepting it.
 - `UtcDateTime` only supports non-negative Unix timestamps for now. Dates
   before 1970 and leap seconds are future policy work.
-- Overflow checks for very large duration arithmetic are not designed yet.
+- The `try_*` duration constructors reject negative inputs today. Overflow
+  checks for very large duration arithmetic are not designed yet.
 - No timezone, formatting, timerfd, or async integration exists yet. Timezone
   databases are intentionally outside the first standard library slice.
 
@@ -198,6 +229,7 @@ Focused positive coverage:
 
 ```text
 tests/cases/standard-library/ok/time/std-time-basic.ari
+tests/cases/standard-library/ok/time/std-time-try-duration.ari
 tests/cases/standard-library/ok/time/std-time-timeout.ari
 tests/cases/standard-library/ok/time/std-time-utc-calendar.ari
 ```
@@ -205,5 +237,7 @@ tests/cases/standard-library/ok/time/std-time-utc-calendar.ari
 `make check-prelude` emits LLVM for the runtime hooks, checks the
 `clock_gettime`/`nanosleep` declarations, and runs the executable with a
 deterministic exit-code score. It also checks timeout/deadline and UTC
-calendar helper symbols. Public declarations are tracked in
+calendar helper symbols. `std-time-try-duration.ari` covers fallible
+constructor behavior for both module functions and `Duration::try_*`
+associated helpers. Public declarations are tracked in
 `tests/std_api_manifest.txt` and checked by `make check-std-api`.

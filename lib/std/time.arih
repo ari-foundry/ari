@@ -55,16 +55,44 @@ pub fn nanoseconds(value: i64) -> Duration {
   return Duration { nanos: checked_nanos(value) };
 }
 
+pub fn try_nanoseconds(value: i64) -> std::Option[Duration] {
+  if value < 0 {
+    return std::None<Duration>();
+  }
+  return std::Some<Duration>(Duration { nanos: value });
+}
+
 pub fn microseconds(value: i64) -> Duration {
   return nanoseconds(checked_nanos(value) * 1000);
+}
+
+pub fn try_microseconds(value: i64) -> std::Option[Duration] {
+  if value < 0 {
+    return std::None<Duration>();
+  }
+  return std::Some<Duration>(microseconds(value));
 }
 
 pub fn milliseconds(value: i64) -> Duration {
   return nanoseconds(checked_nanos(value) * 1000000);
 }
 
+pub fn try_milliseconds(value: i64) -> std::Option[Duration] {
+  if value < 0 {
+    return std::None<Duration>();
+  }
+  return std::Some<Duration>(milliseconds(value));
+}
+
 pub fn seconds(value: i64) -> Duration {
   return nanoseconds(checked_nanos(value) * 1000000000);
+}
+
+pub fn try_seconds(value: i64) -> std::Option[Duration] {
+  if value < 0 {
+    return std::None<Duration>();
+  }
+  return std::Some<Duration>(seconds(value));
 }
 
 pub fn now() -> Instant {
@@ -164,6 +192,22 @@ pub fn timeout(duration: Duration) -> Deadline {
 pub impl std::time::Duration {
   fn zero() -> Duration {
     return Duration { nanos: 0 };
+  }
+
+  fn try_nanoseconds(value: i64) -> std::Option[Duration] {
+    return std::time::try_nanoseconds(value);
+  }
+
+  fn try_microseconds(value: i64) -> std::Option[Duration] {
+    return std::time::try_microseconds(value);
+  }
+
+  fn try_milliseconds(value: i64) -> std::Option[Duration] {
+    return std::time::try_milliseconds(value);
+  }
+
+  fn try_seconds(value: i64) -> std::Option[Duration] {
+    return std::time::try_seconds(value);
   }
 
   fn as_nanos(self) -> i64 {
