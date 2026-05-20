@@ -35,7 +35,8 @@ low-level runtime context layer.
 and scratch-zone helpers, `std::log` adds level-prefixed `stderr` diagnostic
 lines, `std::diag` adds severity/label/diagnostic values and first summary
 output for compiler tools, `std::source` adds `FileId`, half-open byte `Span`,
-one-based `LineCol`, `Location`, and borrowed `SourceFile` line/column lookup,
+one-based `LineCol`, `Location`, borrowed `SourceFile` line/column lookup, and
+explicit-zone `LineMap` caching,
 and `std::error` adds shared recoverable error categories, compact error
 values, and POSIX errno mapping while richer runner, owned source maps,
 structured diagnostics/logging, direct `Result[T, Error]`, and backtrace

@@ -12,8 +12,8 @@ project.
 
 As of the current hosted compiler and standard library, Ari is roughly:
 
-- **35-40% ready to start full compiler bootstrapping**
-- **60-65% remaining before a self-host attempt is likely to be productive**
+- **36-41% ready to start full compiler bootstrapping**
+- **59-64% remaining before a self-host attempt is likely to be productive**
 
 This estimate is about practical implementation readiness, not language
 ambition. Ari already has many pieces needed by a compiler: modules, structs,
@@ -21,8 +21,9 @@ enums, traits, generics, zones, strings, vectors, maps/sets, formatting,
 filesystem IO, process/environment helpers, and an LLVM-backed executable
 pipeline. Ari now also has source-coordinate values (`FileId`, `Span`,
 `LineCol`, and `Location`), a borrowed `SourceFile` view that can convert byte
-offsets into line/column locations, and the first `std::diag` diagnostic values
-for lexer/parser diagnostics. The missing work is mostly around scale,
+offsets into line/column locations, an explicit-zone cached `LineMap` for
+repeated lexer/parser/diagnostic lookup, and the first `std::diag` diagnostic
+values for lexer/parser diagnostics. The missing work is mostly around scale,
 ergonomics, owned source maps, diagnostic rendering, stable compiler data
 structures, multi-file project flow, and comparison tooling.
 
@@ -66,10 +67,10 @@ bootstrapping:
    enums, vectors, maps, and Result-like payloads.
 3. Trait ergonomics: predictable static dispatch for formatting, hashing,
    equality, ordering, and collection defaults.
-4. Source maps: build filename/text storage, cached line-start tables, and
-   span-to-line/column conversion on top of `std::source::FileId`,
-   `std::source::Span`, `std::source::LineCol`, and the borrowed
-   `std::source::SourceFile` lookup helpers.
+4. Source maps: build filename/text storage and a persistent source-map owner
+   on top of `std::source::FileId`, `std::source::Span`,
+   `std::source::LineCol`, borrowed `std::source::SourceFile`, and cached
+   `std::source::LineMap` lookup helpers.
 5. Error values: grow the current compact `Error` and `std::diag::Diagnostic`
    values into `Result[T, E]` workflows that avoid panic in expected failure
    paths.
@@ -87,7 +88,7 @@ The stage1 compiler should start with a conservative hosted subset:
 | Text | `String`, `Slice[u8]`, `char`, ASCII helpers, UTF-8 validation/decode, split/search/join, trim, parse integer/bool/float. |
 | Collections | `Vec`, `Slice`, `HashMap`, `HashSet`, `TreeMap`, `TreeSet`, iterators, sort, binary search, dedup, copy/fill, and stable comparison helpers. |
 | IO/FS | `read`, `try_read`, `write`, `try_write`, `read_dir`, `read_dir_entries`, path join/normalize/canonicalize, current directory, env args. |
-| Diagnostics | formatting, debug formatting, log output, `std::diag` diagnostic values, `std::source` source-coordinate and borrowed text lookup helpers, panic/unreachable messages, test report helpers. |
+| Diagnostics | formatting, debug formatting, log output, `std::diag` diagnostic values, `std::source` source-coordinate, borrowed text, and cached line-map lookup helpers, panic/unreachable messages, test report helpers. |
 | Memory | explicit `Zone`, temporary zones, copy-to-zone helpers, same-zone container growth, and reset/destroy invalidation checks. |
 | Process | command-line args and exit codes; do not require spawn/fork for the first lexer/parser stage. |
 | Platform | target facts, pointer sizes, errno policy, and hosted Linux/glibc assumptions documented for stage0. |
@@ -151,8 +152,8 @@ Exit criteria:
 
 ### Phase B: Source And Diagnostic Foundations
 
-- Build source-map storage and cached line/column conversion on top of
-  `std::source`.
+- Build source-map storage on top of `std::source` values and cached
+  `LineMap` lookups.
 - Grow `std::diag` from the current single-label value layer into a diagnostic
   builder and stable renderer.
 - Add golden tests for line/column rendering, notes, and labels.

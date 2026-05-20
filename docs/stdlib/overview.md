@@ -40,7 +40,7 @@ API evolution.
 | `std::test` | Executable unit-test helpers. | `Report`, `report`, `scratch`, `check`, `equal`, `not_equal`, `passed`, `failed`, `ok`, `finish`, `require`. |
 | `std::log` | Level-prefixed stderr diagnostics. | `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, `error`. |
 | `std::diag` | Source diagnostic values for compiler tools. | `Severity`, `LabelStyle`, `Label`, `Diagnostic`, `error`, `warning`, `note`, `help`, `primary`, `secondary`, `with_label`, `location`, `label_location`, `write`. |
-| `std::source` | Source-coordinate values and borrowed source text lookup for tools and diagnostics. | `FileId`, `Span`, `LineCol`, `Location`, `SourceFile`, `file_id`, `file`, `span`, `empty_span`, `line_col`, `location`, `full_span`, `line_count`, `line_start`, `line_end`, `line_span`, `locate`, `contains`, `touches`, `merge`. |
+| `std::source` | Source-coordinate values, borrowed source text lookup, and cached line maps for tools and diagnostics. | `FileId`, `Span`, `LineCol`, `Location`, `SourceFile`, `LineMap`, `file_id`, `file`, `span`, `empty_span`, `line_col`, `location`, `full_span`, `line_count`, `line_start`, `line_end`, `line_span`, `locate`, `line_map`, `contains`, `touches`, `merge`. |
 | `std::error` | Shared recoverable error values. | `Kind`, `Error`, `new`, `with_code`, `from_errno`, `from_raw`, `kind`, `code`, `raw`, `is_kind`, `is_not_found`, `is_interrupted`, `is_retryable`, `name`, `message`. |
 | `std::c` | C ABI boundary helpers. | `CStr`, `CString`, `Library`, `Symbol`, `from_string`, `from_ptr`, `from_slice_in`, `from_cstr_in`, `is_null`, `errno`, `error`, `open`, `main_program`, `symbol`, `function`, `close`, `last_error`, `lazy`, `now`, `local`, `global`. |
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
@@ -127,8 +127,8 @@ naturally named, and `scratch` simply creates an explicit `Zone` for tests.
 `std::log` writes level-prefixed diagnostic lines to `stderr` through
 `std::io::Stderr`. `std::diag` defines the first shared severity, label, and
 diagnostic values for Ari-written tools. `std::source` defines allocation-free
-`FileId`, `Span`, `LineCol`, and `Location` values plus a borrowed
-`SourceFile` view for line/column lookup in compiler tools. `std::error`
+`FileId`, `Span`, `LineCol`, and `Location` values plus borrowed `SourceFile`
+lookup and explicit-zone `LineMap` caching for compiler tools. `std::error`
 defines compact recoverable error values, stable error categories, POSIX errno
 mapping, and a raw scalar bridge for today's `Result[T, i64]` storage limits.
 Rich test discovery, owned source-map storage, structured diagnostic records,

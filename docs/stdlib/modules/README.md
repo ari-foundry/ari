@@ -58,8 +58,9 @@ limits, examples, and test files for one module.
 - [std::diag](diag.md): source-only diagnostic severities, labels,
   diagnostics, source-location glue, and first stderr summary output.
 - [std::source](source.md): source-only `FileId`, half-open byte `Span`,
-  one-based `LineCol`, file/line/column `Location`, and borrowed `SourceFile`
-  line/column lookup for compiler tools and diagnostics.
+  one-based `LineCol`, file/line/column `Location`, borrowed `SourceFile`
+  line/column lookup, and explicit-zone `LineMap` caching for compiler tools
+  and diagnostics.
 - [std::error](error.md): shared recoverable error categories, compact error
   values, POSIX errno mapping, root aliases, and the current raw-error bridge
   for `Result[T, i64]`.

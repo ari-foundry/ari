@@ -303,6 +303,13 @@ identifies the exact case:
 - `std-source-text.ari`: source `std::source` borrowed `SourceFile` text,
   line counts, line start/end offsets, line spans, byte-offset to line/column
   lookup, EOF location behavior, and the dedicated `make check-source` target.
+- `std-source-line-map.ari`: source `std::source` explicit-zone `LineMap`
+  construction, cached line starts, binary-search location lookup, line spans,
+  empty-file behavior, `SourceFile::line_map`, and the dedicated
+  `make check-source` target.
+- `std-source-line-map-after-reset.ari`: source `std::source` negative
+  fixture proving `LineMap` is tracked as a zone-backed handle and is rejected
+  after its zone is reset.
 - `std-mem-byte-ops.ari`: `std::mem` byte `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM `memcpy`/`memmove`/`memset` intrinsic
   lowering checks.

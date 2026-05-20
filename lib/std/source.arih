@@ -29,6 +29,12 @@ pub struct SourceFile {
   text: std::Slice[u8],
 }
 
+pub struct LineMap {
+  file: SourceFile,
+  starts: ptr i64,
+  lines: i64,
+}
+
 fn checked_file(value: i64) -> i64 {
   std::assert(value >= 0);
   return value;
@@ -153,6 +159,48 @@ pub fn locate(file: FileId, text: std::Slice[u8], offset: i64) -> Location {
   }
 
   return location(file, line, column);
+}
+
+pub fn line_map(zone: ref mut Zone, file: SourceFile) -> LineMap {
+  let text = file.text();
+  let lines = line_count(text);
+  let starts = std::zone::alloc_array<i64>(zone, lines);
+  ptr_store(starts, 0);
+
+  var line = 1;
+  var index = 0;
+  while index < text.len() {
+    if text.get(index) == '\n' {
+      ptr_store(ptr_add(starts, line), index + 1);
+      line = line + 1;
+    }
+    index = index + 1;
+  }
+
+  return LineMap { file: file, starts: starts, lines: lines };
+}
+
+fn checked_map_line(value: ref LineMap, line: i64) -> i64 {
+  let wanted = checked_line(line);
+  std::assert(wanted <= value.lines);
+  return wanted;
+}
+
+fn line_index_for_offset(value: ref LineMap, offset: i64) -> i64 {
+  std::assert(offset >= 0);
+  std::assert(offset <= value.file.len());
+
+  var low = 0;
+  var high = value.lines;
+  while low + 1 < high {
+    let middle = (low + high) / 2;
+    if ptr_load(ptr_add(value.starts, middle)) <= offset {
+      low = middle;
+    } else {
+      high = middle;
+    }
+  }
+  return low;
 }
 
 pub fn len(value: ref Span) -> i64 {
@@ -283,6 +331,51 @@ pub impl std::source::SourceFile {
 
   fn locate(self: ref Self, offset: i64) -> Location {
     return std::source::locate(self.id, self.text, offset);
+  }
+
+  fn line_map(self: ref Self, zone: ref mut Zone) -> LineMap {
+    return std::source::line_map(zone, SourceFile { id: self.id, text: self.text });
+  }
+}
+
+pub impl std::source::LineMap {
+  fn file(self: ref Self) -> SourceFile {
+    return self.file;
+  }
+
+  fn id(self: ref Self) -> FileId {
+    return self.file.id();
+  }
+
+  fn full_span(self: ref Self) -> Span {
+    return self.file.full_span();
+  }
+
+  fn line_count(self: ref Self) -> i64 {
+    return self.lines;
+  }
+
+  fn line_start(self: ref Self, line: i64) -> i64 {
+    let wanted = checked_map_line(ref self, line);
+    return ptr_load(ptr_add(self.starts, wanted - 1));
+  }
+
+  fn line_end(self: ref Self, line: i64) -> i64 {
+    let wanted = checked_map_line(ref self, line);
+    if wanted < self.lines {
+      return ptr_load(ptr_add(self.starts, wanted)) - 1;
+    }
+    return self.file.len();
+  }
+
+  fn line_span(self: ref Self, line: i64) -> Span {
+    return span(self.file.id(), self.line_start(line), self.line_end(line));
+  }
+
+  fn locate(self: ref Self, offset: i64) -> Location {
+    let line_index = line_index_for_offset(ref self, offset);
+    let start = ptr_load(ptr_add(self.starts, line_index));
+    return location(self.file.id(), line_index + 1, (offset - start) + 1);
   }
 }
 

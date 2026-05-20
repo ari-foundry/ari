@@ -476,6 +476,7 @@ fn std::source::len|check-source std-source-location byte span length helper; do
 fn std::source::line_col|check-source std-source-location one-based line/column constructor; docs/stdlib/modules/source.md
 fn std::source::line_count|check-source std-source-text one-based source line count helper; docs/stdlib/modules/source.md
 fn std::source::line_end|check-source std-source-text source line end byte offset helper; docs/stdlib/modules/source.md
+fn std::source::line_map|check-source std-source-line-map cached source line-start table constructor; docs/stdlib/modules/source.md
 fn std::source::line_span|check-source std-source-text source line span helper; docs/stdlib/modules/source.md
 fn std::source::line_start|check-source std-source-text source line start byte offset helper; docs/stdlib/modules/source.md
 fn std::source::locate|check-source std-source-text byte offset to line/column helper; docs/stdlib/modules/source.md
@@ -980,6 +981,14 @@ method std::source::FileId::equals|check-source std-source-location file id equa
 method std::source::FileId::value|check-source std-source-location file id scalar accessor; docs/stdlib/modules/source.md
 method std::source::LineCol::column|check-source std-source-location one-based column accessor; docs/stdlib/modules/source.md
 method std::source::LineCol::line|check-source std-source-location one-based line accessor; docs/stdlib/modules/source.md
+method std::source::LineMap::file|check-source std-source-line-map cached map SourceFile accessor; docs/stdlib/modules/source.md
+method std::source::LineMap::full_span|check-source std-source-line-map cached map full span method; docs/stdlib/modules/source.md
+method std::source::LineMap::id|check-source std-source-line-map cached map file id accessor; docs/stdlib/modules/source.md
+method std::source::LineMap::line_count|check-source std-source-line-map cached map line count method; docs/stdlib/modules/source.md
+method std::source::LineMap::line_end|check-source std-source-line-map cached map line end offset method; docs/stdlib/modules/source.md
+method std::source::LineMap::line_span|check-source std-source-line-map cached map line span method; docs/stdlib/modules/source.md
+method std::source::LineMap::line_start|check-source std-source-line-map cached map line start offset method; docs/stdlib/modules/source.md
+method std::source::LineMap::locate|check-source std-source-line-map cached map offset to location method; docs/stdlib/modules/source.md
 method std::source::Location::column|check-source std-source-location one-based location column accessor; docs/stdlib/modules/source.md
 method std::source::Location::file|check-source std-source-location location file accessor; docs/stdlib/modules/source.md
 method std::source::Location::line|check-source std-source-location one-based location line accessor; docs/stdlib/modules/source.md
@@ -989,6 +998,7 @@ method std::source::SourceFile::is_empty|check-source std-source-text SourceFile
 method std::source::SourceFile::len|check-source std-source-text SourceFile text byte length; docs/stdlib/modules/source.md
 method std::source::SourceFile::line_count|check-source std-source-text SourceFile line count method; docs/stdlib/modules/source.md
 method std::source::SourceFile::line_end|check-source std-source-text SourceFile line end offset method; docs/stdlib/modules/source.md
+method std::source::SourceFile::line_map|check-source std-source-line-map SourceFile cached line map constructor method; docs/stdlib/modules/source.md
 method std::source::SourceFile::line_span|check-source std-source-text SourceFile line span method; docs/stdlib/modules/source.md
 method std::source::SourceFile::line_start|check-source std-source-text SourceFile line start offset method; docs/stdlib/modules/source.md
 method std::source::SourceFile::locate|check-source std-source-text SourceFile offset to location method; docs/stdlib/modules/source.md
@@ -1322,6 +1332,7 @@ struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byt
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
 struct std::source::FileId|check-source std-source-location source file identity value; docs/stdlib/modules/source.md
 struct std::source::LineCol|check-source std-source-location one-based human source coordinate value; docs/stdlib/modules/source.md
+struct std::source::LineMap|check-source std-source-line-map cached source line-start table; docs/stdlib/modules/source.md
 struct std::source::Location|check-source std-source-location file/line/column coordinate value; docs/stdlib/modules/source.md
 struct std::source::SourceFile|check-source std-source-text borrowed source text value; docs/stdlib/modules/source.md
 struct std::source::Span|check-source std-source-location half-open byte span value; docs/stdlib/modules/source.md

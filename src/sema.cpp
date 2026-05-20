@@ -39,6 +39,7 @@
 #include "std_collections_semantics.hpp"
 #include "std_enum_probe_semantics.hpp"
 #include "std_fs_semantics.hpp"
+#include "std_source_semantics.hpp"
 #include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 #include "symbol_mangle.hpp"
@@ -17822,6 +17823,10 @@ private:
                 std_zone_handle_storage_field_paths =
                     std_fs_dir_entry_zone_handle_storage_field_path_indices(struct_type);
             }
+        }
+        if (!std_zone_handle_source_field) {
+            std_zone_handle_source_field =
+                std_source_line_map_zone_handle_source_field_index(struct_type);
         }
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_string_zone_handle_source_field_index(struct_type);

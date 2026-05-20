@@ -1,0 +1,8 @@
+// Ensures cached LineMap handles cannot be used after their source Zone reset.
+fn main() -> i64 {
+  var zone = zone::create(128);
+  let file = source::file(source::file_id(1), "a\nb");
+  let map = source::line_map(ref mut zone, file);
+  zone::reset(ref mut zone);
+  return map.line_count();
+}

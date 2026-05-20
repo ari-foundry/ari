@@ -2,11 +2,15 @@
 
 `std::source` contains the small value types used to describe where something
 came from in source code. It also provides a borrowed `SourceFile` view that can
-convert byte offsets into one-based line/column locations. It is a
-bootstrap-facing module: lexer, parser, diagnostic, and test tools can share
-the same coordinate vocabulary without inventing ad hoc tuples everywhere.
+convert byte offsets into one-based line/column locations. It also provides a
+cached `LineMap` for compiler-style code that performs many lookups in the same
+file. It is a bootstrap-facing module: lexer, parser, diagnostic, and test
+tools can share the same coordinate vocabulary without inventing ad hoc tuples
+everywhere.
 
-The module is source-only. It does not read files and does not allocate.
+The module is source-only and does not read files. Plain coordinate helpers are
+allocation-free. `line_map(ref mut zone, file)` explicitly allocates its cached
+line-start table in the caller's `Zone`.
 
 ## Coordinate Policy
 
@@ -15,10 +19,14 @@ The module is source-only. It does not read files and does not allocate.
 - `Span::touches(offset)` is inclusive at the end for cursor and caret logic.
 - `LineCol` and `Location` use one-based human coordinates.
 - `SourceFile` borrows a `Slice[u8]`; it does not own or copy source text.
+- `LineMap` borrows the same `SourceFile` text and carries a cached newline
+  table allocated in an explicit zone.
 - `line_count(text)` returns at least `1`, so an empty file still has line 1.
 - `line_start`, `line_end`, and `line_span` take one-based line numbers.
 - `locate(file, text, offset)` accepts `offset == text.len()` for EOF
   diagnostics.
+- `LineMap::locate(offset)` accepts the same EOF offset and uses a binary
+  search over cached line starts instead of rescanning from byte zero.
 - Byte offsets are not Unicode scalar indexes. Decode UTF-8 through
   `std::encoding` when a tool needs character-level behavior.
 
@@ -30,6 +38,7 @@ source::Span
 source::LineCol
 source::Location
 source::SourceFile
+source::LineMap
 
 source::file_id(value)
 source::root_file()
@@ -44,6 +53,7 @@ source::line_start(text, line)
 source::line_end(text, line)
 source::line_span(file, text, line)
 source::locate(file, text, offset)
+source::line_map(ref mut zone, file)
 source::len(ref span)
 source::is_empty(ref span)
 source::contains(ref span, offset)
@@ -74,6 +84,24 @@ if place.line() == 2 && place.column() == 1 {
 }
 ```
 
+Build a `LineMap` when a tool will ask many location questions for the same
+file:
+
+```ari
+var scratch = zone::create(4096);
+let input = source::file(source::file_id(7), "let x = 1;\nreturn x;\n");
+let map = input.line_map(ref mut scratch);
+let token = map.line_span(2);
+let where = map.locate(token.start());
+
+if where.line() == 2 {
+  log::debug("token starts on line two");
+}
+```
+
+Use the direct `SourceFile` methods for one-off checks and `LineMap` for lexer,
+parser, formatter, and diagnostic loops.
+
 ## Invariants
 
 `file_id(value)` asserts that `value >= 0`.
@@ -92,6 +120,10 @@ line exists in `text`.
 
 `merge(ref left, ref right)` asserts that both spans point at the same file.
 
+`line_map(ref mut zone, file)` stores one entry per source line. Its line
+methods assert that the requested line exists, and `LineMap::locate(offset)`
+asserts that `0 <= offset <= file.len()`.
+
 ## Why This Exists
 
 Compiler code needs many source coordinates:
@@ -108,9 +140,9 @@ end)` is compact, but it does not carry invariants or methods. `Span` does.
 ## Current Limits
 
 `std::source` does not yet include an owned source map that stores file names or
-caches line-start tables. `SourceFile` is a small borrowed view, so repeated
-line lookups scan the text. A future source-map layer should cache line starts,
-own file names/text, and feed a diagnostic builder.
+source text. `SourceFile` and `LineMap` are borrowed views over caller-owned
+text. A future source-map layer should own file names/text, keep one cached
+`LineMap` per file, and feed a diagnostic builder.
 
 `Location` is just a file/line/column value. Use `SourceFile::locate(offset)`
 or `source::locate(file, text, offset)` when converting a byte offset to a
@@ -125,6 +157,9 @@ human coordinate.
 - `tests/cases/standard-library/ok/source/std-source-text.ari` checks borrowed
   source text, line counts, line starts/ends, line spans, EOF locations, and
   method wrappers.
+- `tests/cases/standard-library/ok/source/std-source-line-map.ari` checks
+  explicit-zone cached line maps, binary-search location lookup, line spans,
+  empty-file behavior, and the `SourceFile::line_map` method wrapper.
 - `make check-source` compiles the focused fixtures, inspects the generated
   source helper symbols, and runs the executables.
 - `make check-std-api` tracks every public declaration in
