@@ -204,12 +204,15 @@ tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
 tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
+tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari
+tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic
 ari --emit-tokens path
 ari --emit-syntax path
+ari --emit-diagnostics path
 make check-compiler-artifacts
 ```
 
-It currently proves five low-level contracts:
+It currently proves six low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -218,9 +221,11 @@ It currently proves five low-level contracts:
 - `--emit-tokens` writes deterministic lexer output for a small Ari source file
 - `--emit-syntax` writes deterministic parser output before sema and backend
   behavior are involved
+- `--emit-diagnostics` writes a normalized diagnostic artifact for an expected
+  compiler failure
 
-This is deliberately small. Future diagnostic, HIR, typed-IR, and backend
-artifact producers should plug into the same shape instead of inventing
+This is deliberately small. Future structured diagnostic, HIR, typed-IR, and
+backend artifact producers should plug into the same shape instead of inventing
 unrelated golden comparison rules.
 
 ## Current Compiler Integration
@@ -230,6 +235,8 @@ The current compiler already has useful artifact checks:
 - `--check` for frontend and sema diagnostics
 - `--emit-tokens` for stable lexer token text and start locations
 - `--emit-syntax` for stable parser tree text before semantic analysis
+- `--emit-diagnostics` for stable expected-failure text before a full
+  multi-label diagnostic model exists
 - `--emit-llvm` for LLVM text
 - `--emit-obj` for object files
 - `--shared` for shared-library visibility

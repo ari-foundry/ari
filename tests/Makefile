@@ -70,6 +70,8 @@ check-compiler-artifacts: $(TARGET)
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-dump-basic.syntax
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-dump-basic.syntax
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-unexpected-character.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unexpected-character.diagnostic
 
 check-compiler-development: $(TARGET)
 	mkdir -p $(BUILD_DIR)/compiler-development

@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "c_header.hpp"
+#include "diagnostic_dump.hpp"
 #include "lexer.hpp"
 #include "llvm_codegen.hpp"
 #include "module_cache.hpp"
@@ -63,6 +64,7 @@ static std::string shell_quote(const std::string& text) {
 static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
                  "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
+                 "           [--emit-diagnostics path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -85,6 +87,7 @@ int run(int argc, char** argv) {
     std::string object_output;
     std::string token_output;
     std::string syntax_output;
+    std::string diagnostic_output;
     std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
@@ -138,6 +141,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-syntax") {
             if (i + 1 >= argc) throw CompileError("--emit-syntax expects a path");
             syntax_output = argv[++i];
+        } else if (arg == "--emit-diagnostics") {
+            if (i + 1 >= argc) throw CompileError("--emit-diagnostics expects a path");
+            diagnostic_output = argv[++i];
         } else if (arg == "--emit-c-header") {
             if (i + 1 >= argc) throw CompileError("--emit-c-header expects a path");
             c_header_output = argv[++i];
@@ -202,8 +208,12 @@ int run(int argc, char** argv) {
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
-    if (!token_output.empty() && !syntax_output.empty()) {
-        throw CompileError("--emit-tokens cannot be combined with --emit-syntax");
+    int frontend_artifact_count = 0;
+    if (!token_output.empty()) ++frontend_artifact_count;
+    if (!syntax_output.empty()) ++frontend_artifact_count;
+    if (!diagnostic_output.empty()) ++frontend_artifact_count;
+    if (frontend_artifact_count > 1) {
+        throw CompileError("frontend artifact outputs cannot be combined");
     }
     if (!token_output.empty()) {
         if (check_only || output_explicit || emit_llvm_only || !object_output.empty() ||
@@ -230,6 +240,35 @@ int run(int argc, char** argv) {
         Program syntax = parse_tokens(std::move(tokens), cfg_features, target.triple);
         write_text_file(syntax_output, dump_syntax(syntax, input));
         std::cout << "wrote " << syntax_output << " (syntax dump)\n";
+        return 0;
+    }
+    if (!diagnostic_output.empty()) {
+        if (check_only || output_explicit || emit_llvm_only || !object_output.empty() ||
+            !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
+            !metadata_output.empty() || !metadata_check.empty() ||
+            !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty()) {
+            throw CompileError("--emit-diagnostics cannot be combined with checking, backend, module-cache, or linking options");
+        }
+        std::string diagnostic_artifact = "diagnostic ok\n";
+        try {
+            ModuleLoadOptions diagnostic_load_options;
+            diagnostic_load_options.module_search_paths = std::move(module_search_paths);
+            diagnostic_load_options.cfg_features = cfg_features;
+            diagnostic_load_options.target_triple = target.triple;
+            diagnostic_load_options.implicit_std = implicit_std;
+            ModuleLoadResult loaded = parse_file_with_module_metadata(input, std::move(diagnostic_load_options));
+            Program program = std::move(loaded.program);
+            SemaOptions sema_options;
+            sema_options.require_main = true;
+            sema_options.implicit_std = implicit_std;
+            sema_options.cfg_features = cfg_features;
+            sema_options.target_triple = target.triple;
+            (void)check_program(program, std::move(sema_options));
+        } catch (const CompileError& error) {
+            diagnostic_artifact = dump_diagnostic_message("error", "ari/compiler", error.what(), input);
+        }
+        write_text_file(diagnostic_output, diagnostic_artifact);
+        std::cout << "wrote " << diagnostic_output << " (diagnostic dump)\n";
         return 0;
     }
 
