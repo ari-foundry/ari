@@ -66,15 +66,16 @@ Ari program that returns structured errors, not only for a future compiler
 written in Ari.
 
 The hosted compiler now also has the first artifact producers:
-`--emit-tokens path`, `--emit-syntax path`, `--emit-diagnostics path`,
-`--emit-module-graph path`, `--emit-typed-ir path`, and
-`--emit-pass-summary path`. They write deterministic lexer token text, parser
-tree text, expected-failure diagnostic text, file-backed source/import/item
-graph text, sema-lowered typed IR, and stage-boundary counts, all checked by
-`make check-compiler-artifacts`. This is the first small stage-comparison step
-for normal compiler development: when lexer, parser, diagnostic, module, or
-typed lowering behavior changes, reviewers can inspect a tiny golden diff
-before LLVM or executable behavior changes are involved.
+`--emit-source-map path`, `--emit-tokens path`, `--emit-syntax path`,
+`--emit-diagnostics path`, `--emit-module-graph path`, `--emit-typed-ir path`,
+and `--emit-pass-summary path`. They write deterministic source byte/line
+tables, lexer token text, parser tree text, expected-failure diagnostic text,
+file-backed source/import/item graph text, sema-lowered typed IR, and
+stage-boundary counts, all checked by `make check-compiler-artifacts`. This is
+the first small stage-comparison step for normal compiler development: when
+source loading, lexer, parser, diagnostic, module, or typed lowering behavior
+changes, reviewers can inspect a tiny golden diff before LLVM or executable
+behavior changes are involved.
 
 ## Development Backlog
 
@@ -151,6 +152,8 @@ Current readiness tests:
   source errors, and tuple return flow as Ari values.
 - `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari`:
   lexer artifact fixture checked through `--emit-tokens`.
+- `tests/cases/compiler-development/artifact/ok/source-map-file-module.map`:
+  source byte/line table golden checked through `--emit-source-map`.
 - `tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax`:
   parser artifact golden checked through `--emit-syntax`.
 - `tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph`:

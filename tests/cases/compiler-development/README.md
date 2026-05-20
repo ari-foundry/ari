@@ -24,6 +24,8 @@ the same language surface that normal Ari users get.
   line/column lookup, structured source errors, and tuple return flow.
 - `artifact/ok/normalize-paths.*.txt`: seed path, temp-name, and pointer
   normalization fixture for future golden artifact checks.
+- `artifact/ok/source-map-file-module.map`: source byte, line, newline, and
+  snippet golden seed for root plus file-backed child module sources.
 - `artifact/ok/token-dump-basic.*`: lexer, parser, and typed-IR golden seed
   generated from one tiny source file.
 - `artifact/ok/module-graph-file-module.graph`: file-backed module graph

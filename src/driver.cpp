@@ -15,6 +15,7 @@
 #include "module_metadata.hpp"
 #include "parser.hpp"
 #include "sema.hpp"
+#include "source_map_dump.hpp"
 #include "syntax_dump.hpp"
 #include "target.hpp"
 #include "token_dump.hpp"
@@ -67,8 +68,9 @@ static std::string shell_quote(const std::string& text) {
 static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
                  "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
-                 "           [--emit-diagnostics path] [--emit-typed-ir path]\n"
-                 "           [--emit-module-graph path] [--emit-pass-summary path]\n"
+                 "           [--emit-diagnostics path] [--emit-source-map path]\n"
+                 "           [--emit-module-graph path] [--emit-typed-ir path]\n"
+                 "           [--emit-pass-summary path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -92,6 +94,7 @@ int run(int argc, char** argv) {
     std::string token_output;
     std::string syntax_output;
     std::string diagnostic_output;
+    std::string source_map_output;
     std::string module_graph_output;
     std::string typed_ir_output;
     std::string pass_summary_output;
@@ -151,6 +154,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-diagnostics") {
             if (i + 1 >= argc) throw CompileError("--emit-diagnostics expects a path");
             diagnostic_output = argv[++i];
+        } else if (arg == "--emit-source-map") {
+            if (i + 1 >= argc) throw CompileError("--emit-source-map expects a path");
+            source_map_output = argv[++i];
         } else if (arg == "--emit-module-graph") {
             if (i + 1 >= argc) throw CompileError("--emit-module-graph expects a path");
             module_graph_output = argv[++i];
@@ -214,7 +220,8 @@ int run(int argc, char** argv) {
     }
     if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
-                       !c_header_output.empty() || !module_graph_output.empty() ||
+                       !c_header_output.empty() || !source_map_output.empty() ||
+                       !module_graph_output.empty() ||
                        !typed_ir_output.empty() ||
                        !pass_summary_output.empty() ||
                        llvm_compiler_explicit || !link_args.empty())) {
@@ -227,7 +234,8 @@ int run(int argc, char** argv) {
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
-    if ((!module_graph_output.empty() || !typed_ir_output.empty() || !pass_summary_output.empty()) &&
+    if ((!source_map_output.empty() || !module_graph_output.empty() ||
+         !typed_ir_output.empty() || !pass_summary_output.empty()) &&
         (output_explicit || emit_llvm_only || !object_output.empty() ||
          !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
          !metadata_output.empty() || !metadata_check.empty() ||
@@ -238,6 +246,7 @@ int run(int argc, char** argv) {
     if (!token_output.empty()) ++artifact_output_count;
     if (!syntax_output.empty()) ++artifact_output_count;
     if (!diagnostic_output.empty()) ++artifact_output_count;
+    if (!source_map_output.empty()) ++artifact_output_count;
     if (!module_graph_output.empty()) ++artifact_output_count;
     if (!typed_ir_output.empty()) ++artifact_output_count;
     if (!pass_summary_output.empty()) ++artifact_output_count;
@@ -329,6 +338,20 @@ int run(int argc, char** argv) {
     if (!metadata_output.empty()) {
         write_text_file(metadata_output, serialize_module_metadata(loaded.metadata));
         std::cout << "wrote " << metadata_output << " (module metadata)\n";
+    }
+    if (!source_map_output.empty()) {
+        std::vector<SourceMapDumpFile> files;
+        for (const auto& source : loaded.metadata.sources) {
+            files.push_back(SourceMapDumpFile{
+                source.module_name,
+                source.path,
+                read_text_file(source.path),
+                source.is_root,
+            });
+        }
+        write_text_file(source_map_output, dump_source_map(input, std::move(files)));
+        std::cout << "wrote " << source_map_output << " (source map dump)\n";
+        return 0;
     }
     if (!module_graph_output.empty()) {
         write_text_file(module_graph_output, dump_module_graph(loaded.metadata, input));

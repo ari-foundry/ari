@@ -247,6 +247,7 @@ Land this layer in small slices:
 | SourceId | Stable source ids and file registration. | `source-id-stability`, duplicate path handling. |
 | Span | Byte range construction and validation. | empty span, single-byte span, end-before-start rejection. |
 | Line lookup | Byte offset to line/column mapping. | start, middle, newline, EOF, CRLF policy. |
+| Source map artifact | Deterministic file, byte, line, and snippet text. | `source-map-file-module.map`, CRLF policy. |
 | Snippets | Extract source line and underline span. | single-line, empty span, tab policy, EOF span. |
 | Diagnostic values | Severity, code, label, note data structures. | label ordering, note ordering, optional code. |
 | Renderer | Stable plain-text diagnostic rendering. | single label, multi-label, notes, path normalization. |
@@ -290,6 +291,8 @@ Test names should describe behavior:
 
 The current C++ compiler should improve in parallel:
 
+- use `--emit-source-map` to review source files, byte offsets, line lengths,
+  newline kind, and snippets before lexer or parser output is involved
 - keep frontend diagnostics specific
 - avoid backend diagnostics for source-level mistakes
 - move repeated diagnostic spelling into helpers

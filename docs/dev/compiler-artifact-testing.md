@@ -41,16 +41,17 @@ Compare artifacts in this order:
 
 | Order | Artifact | Purpose | Producer |
 | --- | --- | --- | --- |
-| 1 | Token dump | Prove lexing and source spans are stable. | lexer |
-| 2 | Diagnostic dump | Prove source maps and error rendering are stable. | lexer/parser/sema |
-| 3 | Syntax dump | Prove parsing and recovery are stable. | parser |
-| 4 | Module graph dump | Prove file-backed module loading, imports, and public item surfaces are stable. | module loader |
-| 5 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
-| 6 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
-| 7 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
-| 8 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
-| 9 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
-| 10 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
+| 1 | Source map dump | Prove file text, byte offsets, line tables, and newline policy are stable. | source loader |
+| 2 | Token dump | Prove lexing and source spans are stable. | lexer |
+| 3 | Diagnostic dump | Prove source maps and error rendering are stable. | lexer/parser/sema |
+| 4 | Syntax dump | Prove parsing and recovery are stable. | parser |
+| 5 | Module graph dump | Prove file-backed module loading, imports, and public item surfaces are stable. | module loader |
+| 6 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
+| 7 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
+| 8 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
+| 9 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
+| 10 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
+| 11 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
 
 Do not skip directly to executable comparison for compiler frontend work. A
 binary exit code can say "something changed"; it cannot say which compiler
@@ -59,6 +60,14 @@ layer changed.
 ## Artifact Formats
 
 Text artifacts should be line-oriented and deterministic.
+
+Source map dump example:
+
+```text
+SourceMap source=src/main.ari files=1
+  File module=<root> root=true path=src/main.ari bytes=20 lines=1 trailing_newline=true
+    Line number=1 byte_start=0 byte_len=19 newline=lf text="fn main() -> i64 {}"
+```
 
 Token dump example:
 
@@ -195,6 +204,7 @@ Land artifact testing in slices:
 | --- | --- | --- |
 | Text comparator | Compare expected/actual text with a useful mismatch report. | `compare-equal`, `compare-line-mismatch`, `compare-extra-line`. |
 | Path normalizer | Replace repo, build, and temporary paths. | `normalize-repo-path`, `normalize-build-path`, `normalize-temp-path`. |
+| Source map dump format | Stable byte offsets, line lengths, newline policy, and source snippets. | `source-map-file`, `source-map-crlf`, `source-map-empty`. |
 | Token dump format | Stable lexer output for identifiers, literals, comments, and invalid tokens. | `token-basic`, `token-string-escapes`, `token-invalid-char`. |
 | Diagnostic dump format | Stable report output using source maps and labels. | `diagnostic-single-label`, `diagnostic-note-order`. |
 | Syntax dump format | Stable parser tree output. | `syntax-function`, `syntax-match`, `syntax-recovery`. |
@@ -215,6 +225,7 @@ frontend producer:
 tests/check_compiler_artifacts.py
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
+tests/cases/compiler-development/artifact/ok/source-map-file-module.map
 tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
 tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph
@@ -228,6 +239,7 @@ tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic
 ari --emit-tokens path
+ari --emit-source-map path
 ari --emit-syntax path
 ari --emit-diagnostics path
 ari --emit-module-graph path
@@ -236,12 +248,14 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves ten low-level contracts:
+It currently proves eleven low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
   normalize to stable placeholders
 - a line mismatch produces a small report naming the fixture and line
+- `--emit-source-map` writes deterministic source file, byte offset, line, and
+  newline-policy text for root and file-backed modules
 - `--emit-tokens` writes deterministic lexer output for a small Ari source file
 - `--emit-syntax` writes deterministic parser output before sema and backend
   behavior are involved
@@ -270,6 +284,7 @@ inventing unrelated golden comparison rules.
 The current compiler already has useful artifact checks:
 
 - `--check` for frontend and sema diagnostics
+- `--emit-source-map` for stable byte offset, line table, and snippet text
 - `--emit-tokens` for stable lexer token text and start locations
 - `--emit-syntax` for stable parser tree text before semantic analysis
 - `--emit-diagnostics` for stable expected-failure text before a full
