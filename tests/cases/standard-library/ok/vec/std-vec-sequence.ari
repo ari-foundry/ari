@@ -67,6 +67,17 @@ fn main() -> i64 {
   let no_more = split.next();
   assert(no_more.is_none());
 
+  var reversed = [2, 4, 2, 3, 2, 1];
+  values.reverse();
+  expect_slice(values.as_slice(), reversed.as_slice());
+
+  var rotated_left = [2, 3, 2, 1, 2, 4];
+  values.rotate_left(2);
+  expect_slice(values.as_slice(), rotated_left.as_slice());
+
+  values.rotate_right(2);
+  expect_slice(values.as_slice(), reversed.as_slice());
+
   zone::destroy(zone);
   return 0;
 }

@@ -353,6 +353,21 @@ pub impl[T] std::vec::Vec[T] {
     return view.split(delimiter);
   }
 
+  fn reverse(self: ref mut Self) -> void {
+    std::algo::reverse<T>(self.as_slice());
+    return;
+  }
+
+  fn rotate_left(self: ref mut Self, count: i64) -> void {
+    std::algo::rotate_left<T>(self.as_slice(), count);
+    return;
+  }
+
+  fn rotate_right(self: ref mut Self, count: i64) -> void {
+    std::algo::rotate_right<T>(self.as_slice(), count);
+    return;
+  }
+
   fn find(self: ref Self, values: super::Slice[T]) -> i64 {
     let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
     return view.find(values);

@@ -106,7 +106,7 @@ Omit the semicolon only for the final value expression in a function, block,
 | tuple | `(i64, bool)`, `()` | Single-element tuples are not supported. |
 | fixed array | `[i64, 3]` | Constant length, stack/aggregate storage. |
 | local vector | `Vec<i64>`, `Vec[i64]` | Compiler-known local vector surface from list literals. |
-| source vector handle | `std::vec::Vec<i64>`, `std::Vec<i64>` | Zone-backed growable handle with direct borrowed `slice`, `split_at`, `find`, `chunks`, `windows`, and `split` helpers. |
+| source vector handle | `std::vec::Vec<i64>`, `std::Vec<i64>` | Zone-backed growable handle with direct borrowed `slice`, `split_at`, `find`, `chunks`, `windows`, `split`, and in-place `reverse`/rotation helpers. |
 | source set handle | `std::collections::Set<i64>`, `Set<i64>` | Zone-backed linear insertion-order set. |
 | source deque handle | `Deque<i64>`, `std::collections::Deque<i64>` | Zone-backed growable double-ended queue. |
 | source ring buffer handle | `RingBuffer<i64>`, `std::collections::RingBuffer<i64>` | Zone-backed fixed-capacity FIFO buffer. |
@@ -259,7 +259,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | integer math helpers | `math::abs`, `math::is_positive`, `math::is_zero`, `math::div_floor`, `math::div_ceil`, `math::mod_floor`, `math::gcd` |
 | bit helpers | `bits::is_set`, `bits::rotate_left`, `bits::bit_width`, `bits::leading_zeros`, `bits::leading_ones` |
 | random helpers | `random::entropy`, `random::seed`, `random::from_entropy`, `rng.next()`, `rng.boolean()`, `rng.below(upper)`, `rng.range(start, end)`, `rng.float()`, `rng.fill(bytes)`, `rng.shuffle<T>(values)` |
-| source growable vector | `std::vec::Vec<T>`, `std::vec::new<T>(&mut zone, capacity)` |
+| source growable vector | `std::vec::Vec<T>`, `std::vec::new<T>(&mut zone, capacity)`, `.reverse()`, `.rotate_left(count)` |
 | borrowed view | `Slice<T>`, `.as_slice()`, `slice(data, len)`, `.slice(start, end)`, `.find(needle)`, `.chunks(size)`, `.windows(size)`, `.split(delimiter)` |
 | comparison helpers | `cmp::min`, `cmp::max`, `cmp::clamp` with `Ord` impls |
 | iteration traits | `Iterator[T]`, `IntoIterator[T]`, `iter::range`, `iter::range_inclusive` |

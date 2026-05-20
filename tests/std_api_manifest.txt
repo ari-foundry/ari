@@ -1182,6 +1182,9 @@ method std::vec::Vec[T]::replace|check-prelude std-vec-replace; docs/dev/test-ma
 method std::vec::Vec[T]::reserve|check-prelude std-vec-reserve; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::reserve_extra|check-prelude std-vec-reserve-extra; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::resize_in|check-prelude std-vec-resize-in; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::reverse|check-prelude std-vec-sequence in-place sequence reversal wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::rotate_left|check-prelude std-vec-sequence in-place sequence rotation wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::rotate_right|check-prelude std-vec-sequence in-place sequence rotation wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::set|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::slice|check-prelude std-vec-sequence borrowed range view wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::split|check-prelude std-vec-sequence borrowed delimiter split iterator wrapper; docs/stdlib/modules/vec.md

@@ -544,6 +544,9 @@ Checklist:
 - [x] source `std::vec::Vec<T>` exposes `equals(Slice<T>)`,
       `starts_with(Slice<T>)`, and `ends_with(Slice<T>)` over borrowed
       Slice views with borrowed receiver lowering
+- [x] source `std::vec::Vec<T>` exposes in-place `reverse`,
+      `rotate_left(count)`, and `rotate_right(count)` wrappers over its live
+      element storage
 - [x] source `std::vec::Vec<T>.reserve(ref mut Zone, capacity)` grows the handle
       with a larger same-zone allocation and rejects different-zone reserve
       calls
