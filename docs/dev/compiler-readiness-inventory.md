@@ -53,6 +53,14 @@ payloads with numeric sentinels. The LLVM backend materializes those slots by
 storing the source payload into scratch byte storage and loading the active
 payload type back out only after the enum tag has selected the case.
 
+Postfix `?` can now propagate residual payloads through aggregate enum layouts.
+This lets compiler-shaped functions keep natural code such as
+`let checked = validate_span(file, span)?;` even when the success payload type
+changes between `Result[Span, E]` and `Result[LineColumnRange, E]`. The backend
+extracts the active residual payload from the operand enum slot, re-materializes
+the function return enum, and uses the same byte-storage cast path as match
+payload bindings.
+
 This is deliberately a general language feature. It is useful for any large
 Ari program that returns structured errors, not only for a future compiler
 written in Ari.

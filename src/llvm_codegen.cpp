@@ -4333,60 +4333,71 @@ private:
     }
 
     Value emit_enum_construct(const IrExpr& expr) {
+        std::vector<Value> payloads;
         if (has_aggregate_enum_layout(expr.type)) {
-            std::string enum_type = llvm_type(expr.type);
+            payloads.reserve(expr.args.size());
+            for (const auto& arg : expr.args) {
+                payloads.push_back(emit_expr(*arg));
+            }
+        } else if (ir_expr_has_enum_payload(expr)) {
+            payloads.push_back(emit_expr(*ir_expr_payload(expr)));
+        }
+        return emit_enum_value_from_payloads(expr.loc, expr.type, ir_expr_enum_tag(expr), std::move(payloads));
+    }
+
+    Value emit_enum_value_from_payloads(SourceLocation loc,
+                                        const IrType& enum_type,
+                                        std::uint32_t tag,
+                                        std::vector<Value> payloads) {
+        if (has_aggregate_enum_layout(enum_type)) {
+            std::string llvm_enum_type = llvm_type(enum_type);
             std::string value = "zeroinitializer";
             std::string with_tag = temp();
-            line("  " + with_tag + " = insertvalue " + enum_type + " " + value +
-                 ", i32 " + std::to_string(ir_expr_enum_tag(expr)) + ", 0");
+            line("  " + with_tag + " = insertvalue " + llvm_enum_type + " " + value +
+                 ", i32 " + std::to_string(tag) + ", 0");
             value = with_tag;
-            for (std::size_t i = 0; i < expr.args.size(); ++i) {
-                IrType slot_type = expr.type.field_types.at(i + 1);
-                Value payload = materialize_enum_payload_for_slot(expr.args[i]->loc, emit_expr(*expr.args[i]), slot_type);
+            for (std::size_t i = 0; i < payloads.size(); ++i) {
+                IrType slot_type = enum_type.field_types.at(i + 1);
+                Value payload = materialize_enum_payload_for_slot(loc, std::move(payloads[i]), slot_type);
                 std::string next = temp();
-                line("  " + next + " = insertvalue " + enum_type + " " + value +
+                line("  " + next + " = insertvalue " + llvm_enum_type + " " + value +
                      ", " + payload.type + " " + payload.name + ", " + std::to_string(i + 1));
                 value = next;
             }
-            return Value{enum_type, value, expr.type};
+            return Value{llvm_enum_type, value, enum_type};
         }
-        if (!ir_expr_has_enum_payload(expr)) {
-            return Value{"i64", std::to_string(ir_expr_enum_tag(expr)), expr.type};
+        if (payloads.empty()) {
+            return Value{llvm_type(enum_type), std::to_string(tag), enum_type};
         }
-        Value payload = cast_value(emit_expr(*ir_expr_payload(expr)), ir_expr_enum_payload_type(expr));
-        payload = cast_value(payload, IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, expr.loc});
+        if (payloads.size() != 1) {
+            throw CompileError(where(loc) + ": compact enum construction received multiple payloads during LLVM lowering");
+        }
+        Value payload = cast_value(
+            std::move(payloads[0]),
+            IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, loc});
         std::string shifted = temp();
         line("  " + shifted + " = shl i64 " + payload.name + ", 32");
         std::string out = temp();
-        line("  " + out + " = or i64 " + shifted + ", " + std::to_string(ir_expr_enum_tag(expr)));
-        return Value{"i64", out, expr.type};
+        line("  " + out + " = or i64 " + shifted + ", " + std::to_string(tag));
+        return Value{llvm_type(enum_type), out, enum_type};
     }
 
     Value emit_try_residual_return_value(const IrExpr& expr, const Value& value) {
         if (!ir_expr_try_converts_residual(expr)) return cast_value(value, current_return_);
-        if (!ir_expr_try_residual_has_payload(expr)) {
-            return Value{
-                llvm_type(current_return_),
-                std::to_string(ir_expr_try_return_residual_tag(expr)),
-                current_return_
-            };
+        std::vector<Value> payloads;
+        if (ir_expr_try_residual_has_payload(expr)) {
+            Value payload = emit_enum_payload_slot(expr.loc, value, 0);
+            payload = cast_enum_payload_slot_to_type(
+                expr.loc,
+                std::move(payload),
+                ir_expr_try_return_residual_payload_type(expr));
+            payloads.push_back(std::move(payload));
         }
-
-        std::string shifted_down = temp();
-        line("  " + shifted_down + " = lshr " + value.type + " " + value.name + ", 32");
-        Value payload{
-            value.type,
-            shifted_down,
-            IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, expr.loc}
-        };
-        payload = cast_value(payload, ir_expr_try_return_residual_payload_type(expr));
-        payload = cast_value(payload, IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, expr.loc});
-        std::string shifted_up = temp();
-        line("  " + shifted_up + " = shl i64 " + payload.name + ", 32");
-        std::string out = temp();
-        line("  " + out + " = or i64 " + shifted_up + ", " +
-             std::to_string(ir_expr_try_return_residual_tag(expr)));
-        return Value{llvm_type(current_return_), out, current_return_};
+        return emit_enum_value_from_payloads(
+            expr.loc,
+            current_return_,
+            ir_expr_try_return_residual_tag(expr),
+            std::move(payloads));
     }
 
     Value emit_try(const IrExpr& expr) {
@@ -4406,7 +4417,7 @@ private:
 
         emit_label(ok);
         Value payload = emit_enum_payload_slot(expr.loc, value, 0);
-        payload = cast_value(payload, ir_expr_enum_payload_type(expr));
+        payload = cast_enum_payload_slot_to_type(expr.loc, std::move(payload), ir_expr_enum_payload_type(expr));
         line("  br label %" + cont);
 
         emit_label(cont);

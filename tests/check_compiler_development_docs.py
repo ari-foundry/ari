@@ -194,6 +194,8 @@ def main() -> int:
         "Mixed aggregate enum payload slots",
         "Result[Span, DiagnosticBuildError]",
         "scratch byte storage",
+        "Postfix `?` can now propagate residual payloads through aggregate enum layouts",
+        "Result[LineColumnRange, E]",
         "SourceFile",
         "SourceId",
         "Span",

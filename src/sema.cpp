@@ -19805,9 +19805,6 @@ private:
         TryEnumShape return_shape = shape;
         bool converts_residual = !same_type(current_return_, operand->type);
         if (converts_residual) {
-            if (has_aggregate_enum_layout(operand->type) || has_aggregate_enum_layout(current_return_)) {
-                fail(expr.loc, "postfix ? residual conversion for aggregate enum layouts is planned but is not supported yet");
-            }
             auto return_enum = enums_.find(current_return_.name);
             if (return_enum == enums_.end()) {
                 fail(expr.loc, "unknown enum type '" + current_return_.name + "'");

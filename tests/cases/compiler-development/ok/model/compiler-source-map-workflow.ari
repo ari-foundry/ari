@@ -69,23 +69,10 @@ fn validate_span(file: SourceFile, span: Span) -> Result[Span, SourceError] {
 }
 
 fn span_range(file: SourceFile, span: Span) -> Result[LineColumnRange, SourceError] {
-  let checked_result = validate_span(file, span);
-  return match checked_result {
-    Ok(checked) => {
-      let start_result = locate(file, checked.start);
-      match start_result {
-        Ok(start) => {
-          let end_result = locate(file, checked.end);
-          match end_result {
-            Ok(end) => Ok(LineColumnRange { start: start, end: end }),
-            Err(end_error) => Err(end_error),
-          }
-        },
-        Err(start_error) => Err(start_error),
-      }
-    },
-    Err(validate_error) => Err(validate_error),
-  };
+  let checked = validate_span(file, span)?;
+  let start = locate(file, checked.start)?;
+  let end = locate(file, checked.end)?;
+  return Ok(LineColumnRange { start: start, end: end });
 }
 
 fn error_score(error: SourceError) -> i64 {
