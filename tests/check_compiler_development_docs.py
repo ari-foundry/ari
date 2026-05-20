@@ -200,6 +200,7 @@ def main() -> int:
         "Result[T, E]",
         "tests/cases/compiler-development/ok/model/compiler-pass-worklist.ari",
         "tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari",
+        "tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari",
         "make check-compiler-development",
     ]:
         require(readiness, needle, readiness_path)

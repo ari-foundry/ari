@@ -14,3 +14,11 @@ the same language surface that normal Ari users get.
   object, executable, or shared-library output.
 - `errors/`: focused compiler diagnostics for unsupported or invalid surfaces.
 
+## Current Fixtures
+
+- `ok/model/compiler-pass-worklist.ari`: pass ids, work items, dependency
+  state, and `Result`-based pass errors.
+- `ok/model/compiler-diagnostic-workflow.ari`: diagnostic values, severities,
+  source spans, rich enum error payloads, and explicit vectors.
+- `ok/model/compiler-source-map-workflow.ari`: source ids, byte spans,
+  line/column lookup, structured source errors, and tuple return flow.

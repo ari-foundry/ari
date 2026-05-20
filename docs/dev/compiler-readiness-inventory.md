@@ -127,6 +127,9 @@ Current readiness tests:
   normal compiler pass/worklist data model.
 - `tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari`:
   normal diagnostic data flow as Ari values.
+- `tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari`:
+  normal source identity, span validation, line/column lookup, structured
+  source errors, and tuple return flow as Ari values.
 
 The first command to run after changing this area is:
 
