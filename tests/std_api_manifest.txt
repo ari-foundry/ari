@@ -923,6 +923,7 @@ method std::net::Ipv4Addr::is_unspecified|check-prelude std-net-addresses IPv4 u
 method std::net::Ipv4Addr::localhost|check-prelude std-net-addresses IPv4 loopback constructor; docs/stdlib/modules/net.md
 method std::net::Ipv4Addr::new|check-prelude std-net-addresses IPv4 associated constructor; docs/stdlib/modules/net.md
 method std::net::Ipv4Addr::octet|check-prelude std-net-addresses IPv4 octet accessor; docs/stdlib/modules/net.md
+method std::net::Ipv4Addr::try_octet|check-prelude std-net-address-validation Option-returning IPv4 octet accessor; docs/stdlib/modules/net.md
 method std::net::Ipv6Addr::any|check-prelude std-net-addresses IPv6 unspecified constructor; docs/stdlib/modules/net.md
 method std::net::Ipv6Addr::as_ip|check-prelude std-net-addresses IPv6 to generic IP conversion; docs/stdlib/modules/net.md
 method std::net::Ipv6Addr::is_loopback|check-prelude std-net-addresses IPv6 loopback predicate; docs/stdlib/modules/net.md
@@ -930,6 +931,7 @@ method std::net::Ipv6Addr::is_unspecified|check-prelude std-net-addresses IPv6 u
 method std::net::Ipv6Addr::localhost|check-prelude std-net-addresses IPv6 loopback constructor; docs/stdlib/modules/net.md
 method std::net::Ipv6Addr::new|check-prelude std-net-addresses IPv6 associated constructor; docs/stdlib/modules/net.md
 method std::net::Ipv6Addr::segment|check-prelude std-net-addresses IPv6 segment accessor; docs/stdlib/modules/net.md
+method std::net::Ipv6Addr::try_segment|check-prelude std-net-address-validation Option-returning IPv6 segment accessor; docs/stdlib/modules/net.md
 method std::net::SocketAddr::ip|check-prelude std-net-addresses socket address IP accessor; docs/stdlib/modules/net.md
 method std::net::SocketAddr::is_loopback|check-prelude std-net-addresses socket address loopback predicate; docs/stdlib/modules/net.md
 method std::net::SocketAddr::is_unspecified|check-prelude std-net-addresses socket address unspecified predicate; docs/stdlib/modules/net.md

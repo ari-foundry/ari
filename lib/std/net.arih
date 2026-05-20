@@ -82,6 +82,13 @@ pub impl std::net::Ipv4Addr {
     return self.d;
   }
 
+  fn try_octet(self: ref Self, index: i64) -> std::Option[u8] {
+    if index < 0 || index >= 4 {
+      return std::None<u8>();
+    }
+    return std::Some<u8>(self.octet(index));
+  }
+
   fn is_unspecified(self: ref Self) -> bool {
     return self.a == 0 as u8 && self.b == 0 as u8 && self.c == 0 as u8 && self.d == 0 as u8;
   }
@@ -143,6 +150,13 @@ pub impl std::net::Ipv6Addr {
       return self.s6;
     }
     return self.s7;
+  }
+
+  fn try_segment(self: ref Self, index: i64) -> std::Option[u16] {
+    if index < 0 || index >= 8 {
+      return std::None<u16>();
+    }
+    return std::Some<u16>(self.segment(index));
   }
 
   fn is_unspecified(self: ref Self) -> bool {

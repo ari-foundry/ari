@@ -469,6 +469,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari -o $(BUILD_DIR)/prelude/std-net-addresses.elf
 	$(BUILD_DIR)/prelude/std-net-addresses.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-net-addresses.elf; $(BUILD_DIR)/prelude/std-net-addresses.elf; code=$$?; test $$code -eq 120; fi
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-address-validation.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-address-validation.ll
+	grep -F -q "std__net__Ipv4Addr8inherent9try_octet" $(BUILD_DIR)/prelude/std-net-address-validation.ll
+	grep -F -q "std__net__Ipv6Addr8inherent11try_segment" $(BUILD_DIR)/prelude/std-net-address-validation.ll
+	grep -F -q "std__net__Ipv4Addr8inherent5octet" $(BUILD_DIR)/prelude/std-net-address-validation.ll
+	grep -F -q "std__net__Ipv6Addr8inherent7segment" $(BUILD_DIR)/prelude/std-net-address-validation.ll
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-address-validation.ari -o $(BUILD_DIR)/prelude/std-net-address-validation.elf
+	$(BUILD_DIR)/prelude/std-net-address-validation.elf; code=$$?; test $$code -eq 55
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/net/std-net-address-validation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-net-address-validation.elf; $(BUILD_DIR)/prelude/std-net-address-validation.elf; code=$$?; test $$code -eq 55; fi
 	$(TARGET) tests/cases/standard-library/ok/target/std-target-basic.ari --target x86_64-pc-linux-gnu --emit-llvm $(BUILD_DIR)/prelude/std-target-basic.ll
 	grep -q 'target triple = "x86_64-pc-linux-gnu"' $(BUILD_DIR)/prelude/std-target-basic.ll
 	grep -q "@ari_builtin_target_triple" $(BUILD_DIR)/prelude/std-target-basic.ll

@@ -903,6 +903,7 @@ Ipv4Addr::new(a, b, c, d)
 Ipv4Addr::any()
 Ipv4Addr::localhost()
 ipv4.octet(index)
+ipv4.try_octet(index)
 ipv4.is_unspecified()
 ipv4.is_loopback()
 ipv4.as_ip()
@@ -911,6 +912,7 @@ Ipv6Addr::new(s0, s1, s2, s3, s4, s5, s6, s7)
 Ipv6Addr::any()
 Ipv6Addr::localhost()
 ipv6.segment(index)
+ipv6.try_segment(index)
 ipv6.is_unspecified()
 ipv6.is_loopback()
 ipv6.as_ip()
@@ -930,9 +932,11 @@ addr.is_loopback()
 ```
 
 The current network slice is source-only and deterministic. It does not do DNS
-lookup, open sockets, or touch the host network. TCP listeners/streams, UDP
-sockets, Unix domain sockets, socket options, nonblocking mode, timeouts, and
-shutdown are roadmap work for the runtime-backed `std::net` handle layer.
+lookup, open sockets, or touch the host network. Use `octet`/`segment` for
+known-good indexes and `try_octet`/`try_segment` when validating parsed input.
+TCP listeners/streams, UDP sockets, Unix domain sockets, socket options,
+nonblocking mode, timeouts, and shutdown are roadmap work for the
+runtime-backed `std::net` handle layer.
 
 ## IO And Input
 

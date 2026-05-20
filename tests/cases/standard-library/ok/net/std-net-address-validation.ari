@@ -1,0 +1,61 @@
+// Covers fallible indexed address accessors. Strict octet/segment accessors
+// remain useful for known-good indexes; try_* accessors are for parsed input.
+fn has_octet(value: std::Option[u8], expected: u8) -> bool {
+  match value {
+    std::Some(octet) => {
+      return octet == expected;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn has_segment(value: std::Option[u16], expected: u16) -> bool {
+  match value {
+    std::Some(segment) => {
+      return segment == expected;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  let ip4 = net::Ipv4Addr::new(10 as u8, 20 as u8, 30 as u8, 40 as u8);
+  let ip6 = net::Ipv6Addr::new(1 as u16, 2 as u16, 3 as u16, 4 as u16, 5 as u16, 6 as u16, 7 as u16, 8 as u16);
+  var score = 0;
+
+  if ip4.try_octet(-1).is_none() {
+    score = score + 1;
+  }
+  if ip4.try_octet(4).is_none() {
+    score = score + 2;
+  }
+  if has_octet(ip4.try_octet(0), 10 as u8) {
+    score = score + 3;
+  }
+  if has_octet(ip4.try_octet(3), 40 as u8) {
+    score = score + 4;
+  }
+  if ip4.octet(2) == 30 as u8 {
+    score = score + 5;
+  }
+
+  if ip6.try_segment(-1).is_none() {
+    score = score + 6;
+  }
+  if ip6.try_segment(8).is_none() {
+    score = score + 7;
+  }
+  if has_segment(ip6.try_segment(0), 1 as u16) {
+    score = score + 8;
+  }
+  if has_segment(ip6.try_segment(7), 8 as u16) {
+    score = score + 9;
+  }
+  if ip6.segment(5) == 6 as u16 {
+    score = score + 10;
+  }
+
+  return score;
+}

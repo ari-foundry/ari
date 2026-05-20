@@ -27,6 +27,7 @@ Ipv4Addr::new(a, b, c, d)
 Ipv4Addr::any()
 Ipv4Addr::localhost()
 addr.octet(index)
+addr.try_octet(index)
 addr.is_unspecified()
 addr.is_loopback()
 addr.as_ip()
@@ -35,6 +36,7 @@ Ipv6Addr::new(s0, s1, s2, s3, s4, s5, s6, s7)
 Ipv6Addr::any()
 Ipv6Addr::localhost()
 addr.segment(index)
+addr.try_segment(index)
 addr.is_unspecified()
 addr.is_loopback()
 addr.as_ip()
@@ -55,11 +57,14 @@ addr.is_loopback()
 
 `Ipv4Addr` stores four `u8` octets. `Ipv4Addr::any()` returns `0.0.0.0`,
 `Ipv4Addr::localhost()` returns `127.0.0.1`, and `octet(index)` reads octets
-`0..3`.
+`0..3`. Use `octet(index)` when the index is a known constant or already
+validated; use `try_octet(index)` when the index came from parsed input and
+out-of-range values should become `None`.
 
 `Ipv6Addr` stores eight `u16` segments. `Ipv6Addr::any()` returns `::`,
 `Ipv6Addr::localhost()` returns `::1`, and `segment(index)` reads segments
-`0..7`.
+`0..7`. Use `segment(index)` for known-good indexes and
+`try_segment(index)` for fallible input validation.
 
 `IpAddr` is the generic address value. It is represented as a small tagged
 struct instead of an enum today because Ari's current aggregate-enum storage
@@ -93,6 +98,19 @@ if any.is_unspecified() {
 }
 ```
 
+Validate parsed address indexes:
+
+```ari
+let addr = net::Ipv4Addr::localhost();
+match addr.try_octet(3) {
+  std::Some(value) => {
+    return value as i64;
+  }
+  std::None => {}
+}
+return 1;
+```
+
 Change only the port:
 
 ```ari
@@ -104,7 +122,7 @@ let https = local.with_port(443 as u16);
 
 | Need | Status |
 | --- | --- |
-| IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, family predicates, loopback/unspecified checks. |
+| IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
 | DNS lookup | Roadmap: `lookup(host, service)` or `resolve(host, port)` over `getaddrinfo` with owned result storage and error values. |
 | TCP listener | Roadmap: `TcpListener::bind(addr)`, `accept`, local address, nonblocking and timeout hooks. |
@@ -134,11 +152,14 @@ let https = local.with_port(443 as u16);
 
 ```text
 tests/cases/standard-library/ok/net/std-net-addresses.ari
+tests/cases/standard-library/ok/net/std-net-address-validation.ari
 ```
 
 `std-net-addresses.ari` covers IPv4/IPv6 constructors, generic `IpAddr`
 family predicates, loopback/unspecified checks, socket-address construction,
 port replacement, and associated/module constructor forms.
+`std-net-address-validation.ari` covers strict and fallible IPv4 octet and
+IPv6 segment accessors.
 
 ## Next Work
 
