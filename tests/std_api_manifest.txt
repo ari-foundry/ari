@@ -215,6 +215,9 @@ fn std::error::message|check-prelude std-error-basic stable generic message help
 fn std::error::name|check-prelude std-error-basic error-kind name helper; docs/stdlib/modules/error.md
 fn std::error::new|check-prelude std-error-basic error constructor without platform code; docs/stdlib/modules/error.md
 fn std::error::raw|check-prelude std-error-basic compact raw error representation helper; docs/stdlib/modules/error.md
+fn std::error::try_from_errno|check-prelude std-error-validation Option-returning POSIX errno mapping helper; docs/stdlib/modules/error.md
+fn std::error::try_from_raw|check-prelude std-error-validation Option-returning raw error reconstruction; docs/stdlib/modules/error.md
+fn std::error::try_with_code|check-prelude std-error-validation Option-returning error constructor with platform code; docs/stdlib/modules/error.md
 fn std::error::with_code|check-prelude std-error-basic error constructor with platform code; docs/stdlib/modules/error.md
 fn std::fmt::alternate|check-prelude std-fmt-format-spec alternate integer prefix spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::binary|check-prelude std-fmt-format-spec binary integer spec helper; docs/stdlib/modules/fmt.md

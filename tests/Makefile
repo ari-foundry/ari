@@ -234,6 +234,13 @@ check-prelude: $(TARGET)
 	grep -q 'std__error__Error8inherent12is_retryable' $(BUILD_DIR)/prelude/std-error-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-basic.ari -o $(BUILD_DIR)/prelude/std-error-basic.elf
 	$(BUILD_DIR)/prelude/std-error-basic.elf; code=$$?; test $$code -eq 8
+	$(TARGET) tests/cases/standard-library/ok/error/std-error-validation.ari --emit-llvm $(BUILD_DIR)/prelude/std-error-validation.ll
+	grep -q '_ARNv3std5error13try_with_code' $(BUILD_DIR)/prelude/std-error-validation.ll
+	grep -q '_ARNv3std5error12try_from_raw' $(BUILD_DIR)/prelude/std-error-validation.ll
+	grep -q '_ARNv3std5error14try_from_errno' $(BUILD_DIR)/prelude/std-error-validation.ll
+	$(TARGET) tests/cases/standard-library/ok/error/std-error-validation.ari -o $(BUILD_DIR)/prelude/std-error-validation.elf
+	$(BUILD_DIR)/prelude/std-error-validation.elf; code=$$?; test $$code -eq 45
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/error/std-error-validation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-error-validation.elf; $(BUILD_DIR)/prelude/std-error-validation.elf; code=$$?; test $$code -eq 45; fi
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_reader__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_writer__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-buffered.ll

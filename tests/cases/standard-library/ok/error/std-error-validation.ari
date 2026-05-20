@@ -1,0 +1,57 @@
+// Covers fallible error constructors. Strict constructors are for trusted
+// internal values; try_* constructors are for OS, FFI, and serialized input.
+fn has_error(value: std::Option[error::Error], kind: error::Kind, code: i64) -> bool {
+  match value {
+    std::Some(reason) => {
+      return reason.is_kind(kind) && reason.code() == code;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn has_raw(value: std::Option[error::Error], raw: i64) -> bool {
+  match value {
+    std::Some(reason) => {
+      return reason.raw() == raw;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  if error::try_with_code(error::InvalidInput, -1).is_none() {
+    score = score + 1;
+  }
+  if error::try_with_code(error::InvalidInput, 1000000).is_none() {
+    score = score + 2;
+  }
+  if has_error(error::try_with_code(error::TimedOut, 110), error::TimedOut, 110) {
+    score = score + 3;
+  }
+
+  if error::try_from_raw(-1).is_none() {
+    score = score + 4;
+  }
+  if has_raw(error::try_from_raw(error::with_code(error::NotFound, 2).raw()), 1000002) {
+    score = score + 5;
+  }
+
+  if error::try_from_errno(-1).is_none() {
+    score = score + 6;
+  }
+  if error::try_from_errno(1000000).is_none() {
+    score = score + 7;
+  }
+  if has_error(error::try_from_errno(2), error::NotFound, 2) {
+    score = score + 8;
+  }
+  if has_error(error::try_from_errno(9999), error::Other, 9999) {
+    score = score + 9;
+  }
+
+  return score;
+}

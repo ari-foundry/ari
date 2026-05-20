@@ -35,8 +35,11 @@ struct Error
 
 new(kind: Kind) -> Error
 with_code(kind: Kind, code: i64) -> Error
+try_with_code(kind: Kind, code: i64) -> Option[Error]
 from_errno(code: i64) -> Error
+try_from_errno(code: i64) -> Option[Error]
 from_raw(raw: i64) -> Error
+try_from_raw(raw: i64) -> Option[Error]
 
 kind(ref Error) -> Kind
 code(ref Error) -> i64
@@ -61,6 +64,11 @@ today's generic enum payload storage can carry scalar success values and scalar
 error values together, so `raw()` and `from_raw()` are the bridge for
 `Result[T, i64]` until `Result[T, Error]` can carry mixed aggregate payloads
 directly.
+Use strict constructors such as `with_code`, `from_errno`, and `from_raw`
+when values are trusted or produced by Ari itself. Use `try_with_code`,
+`try_from_errno`, and `try_from_raw` at FFI, OS, serialized-data, and test
+fixture boundaries where invalid negative or out-of-range codes should become
+`None`.
 
 ```ari
 fn open_like() -> Result[i64, i64] {
@@ -75,6 +83,21 @@ match open_like() {
     if reason.is_not_found() {
       /* recover */
     }
+  }
+}
+```
+
+Fallible error reconstruction:
+
+```ari
+match error::try_from_errno(code_from_c) {
+  std::Some(reason) => {
+    if reason.is_retryable() {
+      /* try again */
+    }
+  }
+  std::None => {
+    /* invalid error code from the boundary */
   }
 }
 ```
@@ -100,6 +123,8 @@ work.
 - Use `Option[T]` when absence is expected and has no extra information.
 - Use `Result[T, E]` when callers must inspect or propagate failure.
 - Use `std::error::Error` or its `raw()` form for OS/runtime/library errors.
+- Use `try_*` constructors at untrusted boundaries instead of asserting on
+  malformed codes.
 - Use `assert`, `panic`, `todo`, and `unreachable` only for programmer errors
   or intentionally aborting paths.
 - Avoid bool-only APIs for operations where callers need to distinguish
@@ -124,8 +149,10 @@ Focused positive coverage:
 
 ```text
 tests/cases/standard-library/ok/error/std-error-basic.ari
+tests/cases/standard-library/ok/error/std-error-validation.ari
 ```
 
 The test covers `Kind`, compact `Error` values, `from_errno`, root aliases,
 predicate helpers, message names, method wrappers, and the current
-`Result[T, i64]` raw-error bridge.
+`Result[T, i64]` raw-error bridge. `std-error-validation.ari` covers
+`try_with_code`, `try_from_raw`, and `try_from_errno` invalid-input handling.

@@ -153,8 +153,11 @@ error::Error
 
 error::new(kind)
 error::with_code(kind, code)
+error::try_with_code(kind, code)
 error::from_errno(code)
+error::try_from_errno(code)
 error::from_raw(raw)
+error::try_from_raw(raw)
 error::kind(ref error)
 error::code(ref error)
 error::raw(ref error)
@@ -179,7 +182,9 @@ reason.message()
 Use `Error` for OS/runtime/library failures, and use `ErrorKind` for the root
 alias of `std::error::Kind`. Current `Error` values have a compact raw scalar
 representation so they can pass through `Result[T, i64]` while mixed
-`Result[T, Error]` payload storage is still roadmap work.
+`Result[T, Error]` payload storage is still roadmap work. The strict
+constructors are for trusted values; use `try_with_code`, `try_from_errno`,
+and `try_from_raw` when validating untrusted boundary data.
 
 Level-prefixed diagnostic logging lives in `std::log`:
 

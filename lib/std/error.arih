@@ -84,9 +84,12 @@ fn kind_from_id(id: i64) -> std::error::Kind {
   return Other;
 }
 
+fn valid_code(code: i64) -> bool {
+  return code >= 0 && code < 1000000;
+}
+
 fn pack(kind: std::error::Kind, code: i64) -> std::error::Error {
-  std::assert(code >= 0);
-  std::assert(code < 1000000);
+  std::assert(valid_code(code));
   return std::error::Error { raw: (kind_id(kind) * 1000000) + code };
 }
 
@@ -98,12 +101,27 @@ pub fn with_code(kind: std::error::Kind, code: i64) -> std::error::Error {
   return pack(kind, code);
 }
 
+pub fn try_with_code(kind: std::error::Kind, code: i64) -> std::Option[std::error::Error] {
+  if !valid_code(code) {
+    return std::None<std::error::Error>();
+  }
+  return std::Some<std::error::Error>(std::error::with_code(kind, code));
+}
+
 pub fn from_raw(raw: i64) -> std::error::Error {
   std::assert(raw >= 0);
   return std::error::Error { raw: raw };
 }
 
+pub fn try_from_raw(raw: i64) -> std::Option[std::error::Error] {
+  if raw < 0 {
+    return std::None<std::error::Error>();
+  }
+  return std::Some<std::error::Error>(std::error::from_raw(raw));
+}
+
 pub fn from_errno(code: i64) -> std::error::Error {
+  std::assert(valid_code(code));
   if code == 2 {
     return std::error::with_code(NotFound, code);
   }
@@ -159,6 +177,13 @@ pub fn from_errno(code: i64) -> std::error::Error {
     return std::error::with_code(CrossDevice, code);
   }
   return std::error::with_code(Other, code);
+}
+
+pub fn try_from_errno(code: i64) -> std::Option[std::error::Error] {
+  if !valid_code(code) {
+    return std::None<std::error::Error>();
+  }
+  return std::Some<std::error::Error>(std::error::from_errno(code));
 }
 
 pub fn kind(value: ref std::error::Error) -> std::error::Kind {
