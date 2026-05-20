@@ -12,6 +12,8 @@ Use this page with:
   day-to-day development order.
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) for the
   source-map and diagnostic tooling layer.
+- [Compiler Project Model](compiler-project-model.md) for file-backed modules,
+  package roots, module search paths, metadata, cache policy, and Make targets.
 - [Compiler Artifact Testing](compiler-artifact-testing.md) for stage output,
   normalization, and golden comparison policy.
 - [Production Compiler Design](production-compiler-design.md) for the

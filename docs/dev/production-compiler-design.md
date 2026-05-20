@@ -16,6 +16,9 @@ the implementation task for this page.
 [Compiler Maturity Gates](compiler-maturity-gates.md) is the concise checklist
 for deciding whether ordinary compiler work is moving Ari toward that later
 start gate.
+[Compiler Project Model](compiler-project-model.md) defines the multi-file
+project, module search, metadata, cache, and Makefile contract that large Ari
+tools need before bootstrapping matters.
 [Compiler Source And Diagnostics](compiler-source-diagnostics.md) expands the
 hardest current blocker: source ownership, spans, labels, reports, and golden
 rendering outside runtime `std`.

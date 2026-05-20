@@ -16,6 +16,8 @@ Read this page before the bootstrap-specific pages:
 - [Compiler Maturity Gates](compiler-maturity-gates.md) tracks the general
   compiler-development gates that remain before an Ari compiler tree is
   productive.
+- [Compiler Project Model](compiler-project-model.md) defines the file-backed
+  module, project-root, metadata, cache, and Makefile flow for large Ari tools.
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) defines
   the source-map and diagnostic tooling layer that should stay outside runtime
   `std`.

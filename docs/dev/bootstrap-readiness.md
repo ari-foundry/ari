@@ -5,17 +5,20 @@ compiler-in-Ari bootstrap track?
 
 It complements [Production Compiler Design](production-compiler-design.md),
 [Compiler Maturity Gates](compiler-maturity-gates.md),
+[Compiler Project Model](compiler-project-model.md),
 [Compiler Source And Diagnostics](compiler-source-diagnostics.md),
 [Compiler Artifact Testing](compiler-artifact-testing.md),
 [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md), and
 [Self-Host Roadmap](self-host-roadmap.md). The production design page defines
 the ordinary language/compiler contract Ari needs; the maturity gates define
-the active compiler-development checklist; the source/diagnostic page defines
-the tooling layer that blocks good lexer and parser work; the artifact testing
-page defines comparison order and normalization policy; the fixture plan
-defines the pre-bootstrap test groups; the self-host roadmap explains the long
-path from stage0 to stage2; this page is the entry gate for starting that work
-without turning the current C++ compiler into a second rewrite project.
+the active compiler-development checklist; the project model defines the
+file-backed module, package-root, metadata, cache, and Makefile shape; the
+source/diagnostic page defines the tooling layer that blocks good lexer and
+parser work; the artifact testing page defines comparison order and
+normalization policy; the fixture plan defines the pre-bootstrap test groups;
+the self-host roadmap explains the long path from stage0 to stage2; this page
+is the entry gate for starting that work without turning the current C++
+compiler into a second rewrite project.
 
 For active compiler work, use
 [Compiler Development Roadmap](compiler-development-roadmap.md). This page is a

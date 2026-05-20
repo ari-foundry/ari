@@ -10,6 +10,7 @@ source-identity: SourceId, SourceFile, Span, byte range, line and column lookup
 diagnostics: diagnostic codes, labels, notes, stable golden rendering
 source-diagnostics-layer: compiler/source and compiler/report packages outside runtime std
 module-projects: file-backed modules, roots, visibility, cache invalidation
+project-module-model: file-backed modules, project roots, search paths, metadata, module cache policy
 generic-models: nested structs, enums, Vec, maps, sets, Result payloads
 trait-selection: Drop, Debug, formatting, Eq, Ord, Hash dispatch
 error-flow: Result-based expected failures without panic-heavy paths

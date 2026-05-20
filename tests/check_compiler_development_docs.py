@@ -28,6 +28,8 @@ def main() -> int:
     roadmap = read(roadmap_path)
     gates_path = "docs/dev/compiler-maturity-gates.md"
     gates = read(gates_path)
+    project_model_path = "docs/dev/compiler-project-model.md"
+    project_model = read(project_model_path)
     source_diagnostics_path = "docs/dev/compiler-source-diagnostics.md"
     source_diagnostics = read(source_diagnostics_path)
     artifact_testing_path = "docs/dev/compiler-artifact-testing.md"
@@ -59,6 +61,7 @@ def main() -> int:
         "readiness signal",
         "Improve Ari as a general language",
         "Compiler Maturity Gates",
+        "Compiler Project Model",
         "Compiler Source And Diagnostics",
         "Compiler Artifact Testing",
         "stage0 changes",
@@ -109,11 +112,50 @@ def main() -> int:
         require(gates, needle, gates_path)
 
     require(gates, "Compiler Source And Diagnostics", gates_path)
+    require(gates, "Compiler Project Model", gates_path)
     require(gates, "Compiler Artifact Testing", gates_path)
 
     if not re.search(r"\|\s*Gate\s*\|\s*Required State\s*\|\s*Test Shape\s*\|\s*Status\s*\|", gates):
         print(f"{gates_path}: missing maturity gate table", file=sys.stderr)
         return 1
+
+    for heading in [
+        "# Compiler Project Model",
+        "## Goals",
+        "## Current Module Contract",
+        "## Recommended Project Layout",
+        "## Module Ownership Rules",
+        "## Header And Source Policy",
+        "## Metadata And Cache Policy",
+        "## Build Flow",
+        "## Implementation Slices",
+        "## Test Layout",
+        "## Review Checklist",
+        "## Readiness Impact",
+    ]:
+        require(project_model, heading, project_model_path)
+
+    for needle in [
+        "not bootstrap implementation",
+        "file-backed modules",
+        "package roots",
+        "module search paths",
+        "name.ari",
+        "name.arih",
+        "name/mod.ari",
+        "name/mod.arih",
+        "--module-path",
+        "-I",
+        ".arih",
+        "--emit-module-metadata",
+        "--check-module-metadata",
+        "--emit-module-cache",
+        "--use-module-cache",
+        "module graph dump",
+        "Makefile",
+        "38-42% ready",
+    ]:
+        require(project_model, needle, project_model_path)
 
     for heading in [
         "# Compiler Source And Diagnostics",
@@ -200,6 +242,7 @@ def main() -> int:
         "diagnostics": "Diagnostics",
         "source-diagnostics-layer": "Compiler Source And Diagnostics",
         "module-projects": "Module projects",
+        "project-module-model": "Compiler Project Model",
         "generic-models": "Generic data models",
         "trait-selection": "Trait selection",
         "error-flow": "Error flow",
@@ -214,6 +257,8 @@ def main() -> int:
         require(manifest, entry, manifest_path)
         if entry == "source-diagnostics-layer":
             require(source_diagnostics, label, source_diagnostics_path)
+        elif entry == "project-module-model":
+            require(project_model, label, project_model_path)
         elif entry == "artifact-testing":
             require(artifact_testing, label, artifact_testing_path)
         else:
@@ -223,6 +268,7 @@ def main() -> int:
         index = read(index_path)
         require(index, "Compiler Development Roadmap", index_path)
         require(index, "Compiler Maturity Gates", index_path)
+        require(index, "Compiler Project Model", index_path)
         require(index, "Compiler Source And Diagnostics", index_path)
         require(index, "Compiler Artifact Testing", index_path)
 

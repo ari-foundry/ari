@@ -15,6 +15,7 @@ This folder is for people changing the compiler.
 - [Standard Library Roadmap](standard-library-roadmap.md)
 - [Compiler Development Roadmap](compiler-development-roadmap.md)
 - [Compiler Maturity Gates](compiler-maturity-gates.md)
+- [Compiler Project Model](compiler-project-model.md)
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md)
 - [Compiler Artifact Testing](compiler-artifact-testing.md)
 - [Production Compiler Design](production-compiler-design.md)
