@@ -20,7 +20,9 @@ random::from_entropy()
 random::seed_from_os()
 random::next(ref mut rng)
 random::below(ref mut rng, upper)
+random::try_below(ref mut rng, upper)
 random::range(ref mut rng, start, end)
+random::try_range(ref mut rng, start, end)
 random::float(ref mut rng)
 random::fill(values)
 random::fill_from(ref mut rng, values)
@@ -31,7 +33,9 @@ Prng::from_entropy()
 Prng::seed_from_os()
 rng.next()
 rng.below(upper)
+rng.try_below(upper)
 rng.range(start, end)
+rng.try_range(start, end)
 rng.float()
 rng.fill(values)
 rng.shuffle<T>(values)
@@ -55,8 +59,11 @@ games, randomized algorithms, and tests that do not need reproducibility.
 
 `next()` returns the next raw `u64`. `below(upper)` returns an `i64` in
 `0..upper`; `range(start, end)` returns an `i64` in `start..end`; both assert
-on invalid bounds. `float()` returns an `f64` in `[0.0, 1.0)`. `fill_from`
-and `rng.fill(values)` fill bytes from the deterministic PRNG.
+on invalid bounds. Use `try_below(upper)` and `try_range(start, end)` when
+bounds come from user input; they return `None` for invalid bounds and advance
+the generator only when they return `Some(value)`. `float()` returns an `f64`
+in `[0.0, 1.0)`. `fill_from` and `rng.fill(values)` fill bytes from the
+deterministic PRNG.
 
 `shuffle(rng, values)` implements an in-place Fisher-Yates shuffle over a
 borrowed `Slice[T]`.
@@ -98,16 +105,16 @@ fn main() -> i64 {
 | CSPRNG stream | Roadmap: not exposed yet; do not use `Prng` for cryptography. |
 | non-crypto PRNG | Current: deterministic `Prng` with `seed`, `next`, `below`, `range`, and `float`. |
 | shuffle | Current: `shuffle<T>(ref mut rng, values)` and `rng.shuffle<T>(values)`. |
-| random int | Current: `below` and `range` over `i64` bounds. |
+| random int | Current: `below`/`range` asserting helpers and `try_below`/`try_range` fallible helpers over `i64` bounds. |
 | random float | Current: `float() -> f64` in `[0.0, 1.0)`. |
 
 ## Current Limits
 
 - `Prng` is not cryptographically secure. It is for reproducible and ordinary
   randomized behavior only.
-- `below` and `range` use the current simple bounded integer policy. A future
-  implementation can switch to rejection sampling without changing the public
-  names.
+- `below`, `try_below`, `range`, and `try_range` use the current simple
+  bounded integer policy. A future implementation can switch to rejection
+  sampling without changing the public names.
 - OS entropy currently has a hard-fail runtime shape. A fallible
   `Result`-returning API belongs with richer standard error values.
 - No distribution helpers exist yet. Normal/exponential/weighted sampling
@@ -117,11 +124,14 @@ fn main() -> i64 {
 
 ```text
 tests/cases/standard-library/ok/random/std-random-basic.ari
+tests/cases/standard-library/ok/random/std-random-try-bounds.ari
 ```
 
 The focused test covers runtime entropy hook reachability, deterministic
 seeded PRNG behavior, bounded integer generation, unit float generation,
 deterministic byte filling, OS byte filling, and generic slice shuffling.
+The bound test covers `Option`-returning invalid-bound handling for both module
+functions and `Prng` methods.
 
 ## Next Work
 

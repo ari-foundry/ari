@@ -41,9 +41,23 @@ pub fn below(rng: ref mut std::random::Prng, upper: i64) -> i64 {
   return (std::random::next(rng) % (upper as u64)) as i64;
 }
 
+pub fn try_below(rng: ref mut std::random::Prng, upper: i64) -> std::Option[i64] {
+  if upper <= 0 {
+    return std::None<i64>();
+  }
+  return std::Some<i64>(std::random::below(rng, upper));
+}
+
 pub fn range(rng: ref mut std::random::Prng, start: i64, end: i64) -> i64 {
   std::assert(end > start);
   return start + std::random::below(rng, end - start);
+}
+
+pub fn try_range(rng: ref mut std::random::Prng, start: i64, end: i64) -> std::Option[i64] {
+  if end <= start {
+    return std::None<i64>();
+  }
+  return std::Some<i64>(std::random::range(rng, start, end));
 }
 
 pub fn float(rng: ref mut std::random::Prng) -> f64 {
@@ -102,8 +116,16 @@ pub impl std::random::Prng {
     return std::random::below(self, upper);
   }
 
+  fn try_below(self: ref mut Self, upper: i64) -> std::Option[i64] {
+    return std::random::try_below(self, upper);
+  }
+
   fn range(self: ref mut Self, start: i64, end: i64) -> i64 {
     return std::random::range(self, start, end);
+  }
+
+  fn try_range(self: ref mut Self, start: i64, end: i64) -> std::Option[i64] {
+    return std::random::try_range(self, start, end);
   }
 
   fn float(self: ref mut Self) -> f64 {

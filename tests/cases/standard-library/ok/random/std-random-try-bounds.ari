@@ -1,0 +1,32 @@
+// Covers Option-returning random bound helpers for user-supplied limits.
+fn main() -> i64 {
+  var score = 0;
+  var rng = random::seed(17u64);
+
+  let invalid_below = random::try_below(ref mut rng, 0).unwrap_or(31);
+  if invalid_below == 31 {
+    score = score + 1;
+  }
+
+  let valid_below = random::try_below(ref mut rng, 6).unwrap_or(-1);
+  if valid_below >= 0 && valid_below < 6 {
+    score = score + 1;
+  }
+
+  let invalid_range = rng.try_range(9, 9).unwrap_or(23);
+  if invalid_range == 23 {
+    score = score + 1;
+  }
+
+  let valid_range = rng.try_range(-3, 4).unwrap_or(99);
+  if valid_range >= -3 && valid_range < 4 {
+    score = score + 1;
+  }
+
+  let method_below = rng.try_below(3).unwrap_or(-1);
+  if method_below >= 0 && method_below < 3 {
+    score = score + 1;
+  }
+
+  return score;
+}

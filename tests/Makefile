@@ -661,6 +661,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari -o $(BUILD_DIR)/prelude/std-random-basic.elf
 	$(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 9
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-basic.elf; $(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 9; fi
+	$(TARGET) tests/cases/standard-library/ok/random/std-random-try-bounds.ari --emit-llvm $(BUILD_DIR)/prelude/std-random-try-bounds.ll
+	grep -F -q 'std6random9try_below' $(BUILD_DIR)/prelude/std-random-try-bounds.ll
+	grep -F -q 'std6random9try_range' $(BUILD_DIR)/prelude/std-random-try-bounds.ll
+	$(TARGET) tests/cases/standard-library/ok/random/std-random-try-bounds.ari -o $(BUILD_DIR)/prelude/std-random-try-bounds.elf
+	$(BUILD_DIR)/prelude/std-random-try-bounds.elf; code=$$?; test $$code -eq 5
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-try-bounds.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-try-bounds.elf; $(BUILD_DIR)/prelude/std-random-try-bounds.elf; code=$$?; test $$code -eq 5; fi
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3abs' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math9min_value' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll

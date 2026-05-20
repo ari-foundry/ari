@@ -470,6 +470,8 @@ fn std::random::range|check-prelude std-random-basic bounded PRNG range helper; 
 fn std::random::seed|check-prelude std-random-basic deterministic PRNG seed constructor; docs/stdlib/modules/random.md
 fn std::random::seed_from_os|check-prelude std-random-basic OS-seeded PRNG constructor alias; docs/stdlib/modules/random.md
 fn std::random::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle; docs/stdlib/modules/random.md
+fn std::random::try_below|check-prelude std-random-try-bounds Option-returning bounded PRNG integer helper; docs/stdlib/modules/random.md
+fn std::random::try_range|check-prelude std-random-try-bounds Option-returning PRNG range helper; docs/stdlib/modules/random.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::bytes|check-prelude std-string-byte-literals natural borrowed byte view over string literals; docs/stdlib/modules/string.md
@@ -948,6 +950,8 @@ method std::random::Prng::range|check-prelude std-random-basic bounded PRNG rang
 method std::random::Prng::seed|check-prelude std-random-basic deterministic PRNG associated seed constructor; docs/stdlib/modules/random.md
 method std::random::Prng::seed_from_os|check-prelude std-random-basic OS-seeded PRNG associated constructor alias; docs/stdlib/modules/random.md
 method std::random::Prng::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle method; docs/stdlib/modules/random.md
+method std::random::Prng::try_below|check-prelude std-random-try-bounds Option-returning bounded PRNG integer method; docs/stdlib/modules/random.md
+method std::random::Prng::try_range|check-prelude std-random-try-bounds Option-returning PRNG range method; docs/stdlib/modules/random.md
 method std::string::OsStr::as_slice|check-prelude std-string-text-kinds borrowed OS string byte accessor; docs/stdlib/modules/string.md
 method std::string::OsStr::is_empty|check-prelude std-string-text-kinds OS string empty predicate; docs/stdlib/modules/string.md
 method std::string::OsStr::is_utf8|check-prelude std-string-text-kinds OS string UTF-8 validation predicate; docs/stdlib/modules/string.md
