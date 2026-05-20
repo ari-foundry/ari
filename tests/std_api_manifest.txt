@@ -379,6 +379,7 @@ fn std::math::min_value|std math integer helper tests; docs/stdlib/modules/math.
 fn std::math::mod_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::overflowing_add|std math wrapping/overflowing tests; tuple return keeps wrapped value and overflow flag; docs/stdlib/modules/math.md
 fn std::math::overflowing_mul|std math wrapping/overflowing tests; tuple return keeps wrapped value and overflow flag; docs/stdlib/modules/math.md
+fn std::math::overflowing_pow|std math wrapping/overflowing tests; tuple return keeps wrapped value and overflow flag; docs/stdlib/modules/math.md
 fn std::math::overflowing_sub|std math wrapping/overflowing tests; tuple return keeps wrapped value and overflow flag; docs/stdlib/modules/math.md
 fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::saturating_abs|std math checked/saturating tests; docs/stdlib/modules/math.md
@@ -391,6 +392,7 @@ fn std::math::saturating_sub|std math checked/saturating tests; docs/stdlib/modu
 fn std::math::sign|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::wrapping_add|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
 fn std::math::wrapping_mul|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
+fn std::math::wrapping_pow|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
 fn std::math::wrapping_sub|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
 fn std::mem::align_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::copy_bytes|std mem byte operation tests; docs/stdlib/modules/mem.md

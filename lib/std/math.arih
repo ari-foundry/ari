@@ -209,6 +209,18 @@ pub fn wrapping_mul(left: i64, right: i64) -> i64 {
   return ((left as u64) * (right as u64)) as i64;
 }
 
+pub fn wrapping_pow(base: i64, exponent: i64) -> i64 {
+  std::assert(exponent >= 0);
+
+  var result = 1;
+  var remaining = exponent;
+  while remaining > 0 {
+    result = wrapping_mul(result, base);
+    remaining = remaining - 1;
+  }
+  return result;
+}
+
 pub fn overflowing_add(left: i64, right: i64) -> (i64, bool) {
   match checked_add(left, right) {
     std::Some(value) => {
@@ -240,6 +252,23 @@ pub fn overflowing_mul(left: i64, right: i64) -> (i64, bool) {
   }
 
   return (wrapping_mul(left, right), true);
+}
+
+pub fn overflowing_pow(base: i64, exponent: i64) -> (i64, bool) {
+  std::assert(exponent >= 0);
+
+  var result = 1;
+  var overflowed = false;
+  var remaining = exponent;
+  while remaining > 0 {
+    let step = overflowing_mul(result, base);
+    result = step.0;
+    if step.1 {
+      overflowed = true;
+    }
+    remaining = remaining - 1;
+  }
+  return (result, overflowed);
 }
 
 pub fn saturating_add(left: i64, right: i64) -> i64 {

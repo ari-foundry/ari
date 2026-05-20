@@ -1855,9 +1855,11 @@ math::checked_pow(base, exponent)
 math::wrapping_add(left, right)
 math::wrapping_sub(left, right)
 math::wrapping_mul(left, right)
+math::wrapping_pow(base, exponent)
 math::overflowing_add(left, right)
 math::overflowing_sub(left, right)
 math::overflowing_mul(left, right)
+math::overflowing_pow(base, exponent)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
 math::saturating_mul(left, right)
@@ -1893,10 +1895,11 @@ counterparts clamp to the nearest `i64` bound where that policy is meaningful.
 `checked_mul` guards with division before multiplying so the successful branch
 is defined. `saturating_div` asserts a non-zero divisor and saturates only
 `i64_min / -1`; `saturating_pow` asserts a non-negative exponent and clamps
-overflow according to the final sign. `wrapping_add` `wrapping_sub`, and
-`wrapping_mul` return the two's-complement wrapped result.
-`wrapping_mul` routes through `u64` so the modulo behavior is explicit.
-`overflowing_add`, `overflowing_sub`, and `overflowing_mul` return an
+overflow according to the final sign. `wrapping_add`, `wrapping_sub`,
+`wrapping_mul`, and `wrapping_pow` return the two's-complement wrapped result.
+`wrapping_mul` routes through `u64` so the modulo behavior is explicit, and
+`wrapping_pow` repeats that same multiplication policy. `overflowing_add`,
+`overflowing_sub`, `overflowing_mul`, and `overflowing_pow` return an
 `(i64, bool)` tuple whose first slot is the wrapped result and whose second
 slot is the overflow flag. This keeps `Option` reserved for absent values and
 uses tuples for always-present paired values. Other math helpers still use

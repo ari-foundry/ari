@@ -47,9 +47,11 @@ math::checked_pow(base, exponent)
 math::wrapping_add(left, right)
 math::wrapping_sub(left, right)
 math::wrapping_mul(left, right)
+math::wrapping_pow(base, exponent)
 math::overflowing_add(left, right)
 math::overflowing_sub(left, right)
 math::overflowing_mul(left, right)
+math::overflowing_pow(base, exponent)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
 math::saturating_mul(left, right)
@@ -75,12 +77,14 @@ and clamps only that signed-minimum overflow edge to `max_value()`.
 `saturating_pow` asserts that the exponent is non-negative, then clamps
 overflow to `min_value()` or `max_value()` according to the final sign.
 
-`wrapping_add`, `wrapping_sub`, and `wrapping_mul` return the
+`wrapping_add`, `wrapping_sub`, `wrapping_mul`, and `wrapping_pow` return the
 two's-complement wrapped result. `wrapping_mul` routes through `u64` so the
 source code says "modulo 2^64" directly instead of depending on signed
-multiplication overflow. `overflowing_add`, `overflowing_sub`, and
-`overflowing_mul` return `(value, overflowed)`, a tuple whose first slot is the
-wrapped result and whose second slot is the overflow flag:
+multiplication overflow. `wrapping_pow` asserts that the exponent is
+non-negative, then repeatedly applies the same wrapping multiplication policy.
+`overflowing_add`, `overflowing_sub`, `overflowing_mul`, and `overflowing_pow`
+return `(value, overflowed)`, a tuple whose first slot is the wrapped result
+and whose second slot is the overflow flag:
 
 ```ari
 let (sum, overflowed) = math::overflowing_add(left, right);
