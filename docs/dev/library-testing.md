@@ -75,6 +75,9 @@ identifies the exact case:
   helpers.
 - `std-fmt-char-values.ari`: source `char` Display/Debug formatting,
   `format_in!` byte-character append lowering, and debug escape behavior.
+- `format-named-capture.ari`: compiler formatting named local capture for
+  direct stdout formatting and explicit-zone `format_in!`, including mixed
+  named and positional placeholders.
 - `prelude-format-in-debug.ari`: `format_in!` `{:?}` placeholder lowering,
   custom `Debug::debug_in` dispatch, built-in debug values, and one-evaluation
   string assembly behavior.

@@ -1,0 +1,21 @@
+// Covers named format capture for print!/println! and explicit-zone format_in!.
+fn main() -> i64 {
+  var zone = zone::create(192);
+  let str = "asdf";
+  let value = 42;
+  let ok = true;
+  let letter = 'Z';
+  let pi = 3.14159f64;
+
+  println!("{str} {value} {ok} {letter} {pi:.2} {str:?}");
+
+  var rendered: String = format_in!(ref mut zone, "{str}:{value}:{ok}:{letter}:{pi:.1}:{str:?}");
+  assert_equal[bool](rendered.equals_text("asdf:42:true:Z:3.1:\"asdf\""), true);
+
+  var mixed: String = format_in!(ref mut zone, "{}-{str}-{}", "left", 9);
+  assert_equal[bool](mixed.equals_text("left-asdf-9"), true);
+
+  let total = rendered.len() + mixed.len();
+  zone::destroy(zone);
+  return total;
+}

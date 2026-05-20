@@ -50,7 +50,8 @@ fn helper(value: i64) -> i64 {
 }
 
 fn main() -> i64 {
-  println("value={}", helper(41));
+  let value = helper(41);
+  println("value={value}");
   return 0;
 }
 ```

@@ -1,0 +1,9 @@
+struct Point {
+  x: i64,
+}
+
+fn main() -> i64 {
+  let point = Point { x: 4 };
+  println!("{point.x}");
+  return 0;
+}

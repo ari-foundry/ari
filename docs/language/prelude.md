@@ -230,7 +230,9 @@ Compile it with a module search path that can find `lib/std.arih`, for example
 
 ```ari
 fn main() -> i64 {
+  let name = "ari"
   println("value={} ok={}", 42, true)
+  println!("hello {name}")
   println("pi={:.2}", 3.14159f64)
   println("debug={:?}", "ari")
   print("escaped braces: {{}}")
@@ -246,9 +248,11 @@ Formatting rules:
 - `{:?}` consumes one debug value argument
 - `{:.N}` consumes one `f32` or `f64` value and prints it with `N` digits
   after the decimal point; `N` must be between `0` and `64`
+- `{name}`, `{name:?}`, and `{name:.N}` capture a local binding by name instead
+  of consuming a separate value argument
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
-- the placeholder count is checked at compile time
+- the positional placeholder count is checked at compile time
 - formatted print values currently support lowercase `string`, `char`/byte
   characters, integers, bool, `f32`, and `f64`
 - `println` appends one newline
@@ -426,11 +430,12 @@ checking, so unsupported equality types still produce ordinary type errors.
 bool-valued pattern test using the same pattern engine as `match`, so enum,
 scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow
 the same rules. `format_in!(ref mut zone, "...", values...)` builds a source
-`String` in the explicit zone and lowers `{}` placeholders for lowercase
-`string`, signed/unsigned integer, bool, `f32`, and `f64` values through the
-same checked append helpers as manual text construction. `{:?}` placeholders
-dispatch through borrowed-receiver `Debug::debug_in`, so custom diagnostic
-formatting can use the same syntax when the value implements `fmt::Debug`.
+`String` in the explicit zone and lowers `{}` or `{name}` placeholders for
+lowercase `string`, `char`, signed/unsigned integer, bool, `f32`, and `f64`
+values through the same checked append helpers as manual text construction.
+`{:?}` and `{name:?}` placeholders dispatch through borrowed-receiver
+`Debug::debug_in`, so custom diagnostic formatting can use the same syntax when
+the value implements `fmt::Debug`.
 User-defined display value types can participate in `{}` by implementing
 borrowed-receiver `Display::format_in`; `Display` and `Debug` are root aliases
 for `fmt::Display` and `fmt::Debug`, so either spelling names the same traits.
@@ -443,7 +448,8 @@ value)`. `{:.N}` placeholders format
 surface; precision placeholders do not dispatch through `Display`. Each value
 expression is evaluated once before the type-directed append call is selected,
 so function calls and computed bool/integer expressions work the same as local
-bindings.
+bindings. Named captures read plain local bindings only; use ordinary `{}` with
+an explicit argument for fields, paths, method calls, and other expressions.
 Ari does not provide an implicit allocation zone in the 0.x language surface,
 so `format!` is a reserved spelling with a targeted diagnostic that points to
 `format_in!`.

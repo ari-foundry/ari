@@ -20033,16 +20033,26 @@ private:
 
         ParsedFormatString format_string = parse_format_string(format.loc, format.string_value, expr.args.size() - 1);
         std::vector<IrExprPtr> args;
-        args.reserve(expr.args.size() - 1);
+        args.reserve(format_string.specs.size());
+        std::size_t explicit_arg_index = 1;
 
-        for (std::size_t i = 1; i < expr.args.size(); ++i) {
-            IrExprPtr arg = check_expr(*expr.args[i]);
-            const IrFormatSpec& spec = format_string.specs.at(i - 1);
+        for (std::size_t i = 0; i < format_string.specs.size(); ++i) {
+            ExprPtr capture_expr;
+            const Expr* source_arg = nullptr;
+            if (format_string.captures.at(i).empty()) {
+                source_arg = expr.args[explicit_arg_index++].get();
+            } else {
+                capture_expr = make_ast_name_expr(format.loc, format_string.captures.at(i));
+                source_arg = capture_expr.get();
+            }
+
+            IrExprPtr arg = check_expr(*source_arg);
+            const IrFormatSpec& spec = format_string.specs.at(i);
             if (is_borrow_type(arg->type)) {
-                fail(expr.args[i]->loc, "format arguments cannot be borrow values");
+                fail(source_arg->loc, "format arguments cannot be borrow values");
             }
             if (is_owner_type(arg->type)) {
-                fail(expr.args[i]->loc, "format arguments cannot move owning values yet");
+                fail(source_arg->loc, "format arguments cannot move owning values yet");
             }
             bool is_bool = arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::Bool;
             bool is_string = arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::String;
@@ -20050,16 +20060,16 @@ private:
                 arg->type.qualifier == TypeQualifier::Value &&
                 (arg->type.primitive == IrPrimitiveKind::F32 || arg->type.primitive == IrPrimitiveKind::F64);
             if (spec.precision >= 0 && !is_supported_float) {
-                fail(expr.args[i]->loc, "format precision placeholders require f32 or f64 arguments, got " + type_name(arg->type));
+                fail(source_arg->loc, "format precision placeholders require f32 or f64 arguments, got " + type_name(arg->type));
             }
             if (is_value_float_type(arg->type) && !is_supported_float) {
-                fail(expr.args[i]->loc, "format arguments do not support " + type_name(arg->type) + " yet");
+                fail(source_arg->loc, "format arguments do not support " + type_name(arg->type) + " yet");
             }
             if (!is_value_integer_type(arg->type) && !is_bool && !is_string && !is_supported_float) {
                 if (spec.debug) {
-                    fail(expr.args[i]->loc, "print debug placeholders currently support string, integer, bool, f32, and f64 values; use fmt::println_debug(ref mut zone, value) for Debug types");
+                    fail(source_arg->loc, "print debug placeholders currently support string, char, integer, bool, f32, and f64 values; use fmt::println_debug(ref mut zone, value) for Debug types");
                 }
-                fail(expr.args[i]->loc, "format arguments currently support string, integer, bool, f32, and f64 values, got " + type_name(arg->type));
+                fail(source_arg->loc, "format arguments currently support string, char, integer, bool, f32, and f64 values, got " + type_name(arg->type));
             }
             args.push_back(std::move(arg));
         }
@@ -20264,6 +20274,7 @@ private:
             true
         ), statements);
 
+        std::size_t explicit_arg_index = 2;
         for (std::size_t i = 0; i < format_string.specs.size(); ++i) {
             if (!format_string.parts[i].empty()) {
                 append_format_in_statement(expr.loc, make_format_in_expr_stmt(
@@ -20271,37 +20282,45 @@ private:
                     make_format_in_append_call(expr.loc, result_name, zone_arg, format_string.parts[i])
                 ), statements);
             }
+            ExprPtr capture_expr;
+            const Expr* source_arg = nullptr;
+            if (format_string.captures.at(i).empty()) {
+                source_arg = args[explicit_arg_index++].get();
+            } else {
+                capture_expr = make_ast_name_expr(format.loc, format_string.captures.at(i));
+                source_arg = capture_expr.get();
+            }
             const std::string value_name = make_hidden_local("$format_value");
-            append_format_in_statement(args[i + 2]->loc, make_format_in_var_decl(
-                args[i + 2]->loc,
+            append_format_in_statement(source_arg->loc, make_format_in_var_decl(
+                source_arg->loc,
                 value_name,
-                clone_expression_tree(*args[i + 2]),
+                clone_expression_tree(*source_arg),
                 false
             ), statements);
-            FormatInAppendTarget target = format_in_append_target_for_local(args[i + 2]->loc, value_name, format_string.specs[i]);
+            FormatInAppendTarget target = format_in_append_target_for_local(source_arg->loc, value_name, format_string.specs[i]);
             if (format_string.specs[i].precision >= 0 && !format_in_append_target_is_float(target)) {
                 const LocalInfo* local = find_local_slot(value_name);
                 if (!local) throw CompileError("internal error: missing format_in! value local '" + value_name + "'");
-                fail(args[i + 2]->loc,
+                fail(source_arg->loc,
                      "format precision placeholders require f32 or f64 arguments, got " + type_name(local->type));
             }
-            ExprPtr value = make_ast_name_expr(args[i + 2]->loc, value_name);
+            ExprPtr value = make_ast_name_expr(source_arg->loc, value_name);
             if (format_in_append_target_is_display(target) || format_in_append_target_is_debug(target)) {
                 const std::string display_name = make_hidden_local("$format_display");
-                append_format_in_statement(args[i + 2]->loc, make_format_in_var_decl(
-                    args[i + 2]->loc,
+                append_format_in_statement(source_arg->loc, make_format_in_var_decl(
+                    source_arg->loc,
                     display_name,
                     make_format_in_trait_call(
-                        args[i + 2]->loc,
+                        source_arg->loc,
                         zone_arg,
                         target,
                         std::move(value)),
                     true
                 ), statements);
-                append_format_in_statement(args[i + 2]->loc, make_format_in_expr_stmt(
-                    args[i + 2]->loc,
+                append_format_in_statement(source_arg->loc, make_format_in_expr_stmt(
+                    source_arg->loc,
                     make_format_in_extend_from_string_call(
-                        args[i + 2]->loc,
+                        source_arg->loc,
                         result_name,
                         zone_arg,
                         display_name)
@@ -20309,14 +20328,14 @@ private:
                 continue;
             }
             ExprPtr append_call = make_format_in_append_call(
-                args[i + 2]->loc,
+                source_arg->loc,
                 result_name,
                 zone_arg,
                 target,
                 std::move(value),
                 format_string.specs[i]);
-            append_format_in_statement(args[i + 2]->loc, make_format_in_expr_stmt(
-                args[i + 2]->loc,
+            append_format_in_statement(source_arg->loc, make_format_in_expr_stmt(
+                source_arg->loc,
                 std::move(append_call)
             ), statements);
         }

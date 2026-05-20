@@ -171,6 +171,10 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/format-print-u64.elf >$(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/prelude/format-print-u64.out
+	$(TARGET) tests/cases/standard-library/ok/format/format-named-capture.ari --emit-llvm $(BUILD_DIR)/prelude/format-named-capture.ll
+	grep -q '@ari_builtin_write_i64' $(BUILD_DIR)/prelude/format-named-capture.ll
+	grep -q 'append_string_in' $(BUILD_DIR)/prelude/format-named-capture.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-named-capture.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/format-named-capture.elf; $(BUILD_DIR)/prelude/format-named-capture.elf >$(BUILD_DIR)/prelude/format-named-capture.out; code=$$?; test $$code -eq 36; grep -qx 'asdf 42 true Z 3.14 "asdf"' $(BUILD_DIR)/prelude/format-named-capture.out; fi
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-byte-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-byte-slice.ll
 	grep -q '_ARNv3std2io11write_bytes' $(BUILD_DIR)/prelude/std-io-byte-slice.ll
 	grep -q "@ari_builtin_write_byte" $(BUILD_DIR)/prelude/std-io-byte-slice.ll
@@ -4776,6 +4780,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "format string has 2 placeholders but 1 values were provided" $(BUILD_DIR)/errors/format-placeholder-count.err
 	if $(TARGET) tests/cases/standard-library/errors/format/format-nonliteral.ari -o $(BUILD_DIR)/errors/format-nonliteral.elf >$(BUILD_DIR)/errors/format-nonliteral.err 2>&1; then exit 1; fi
 	grep -q "expects a string literal format argument" $(BUILD_DIR)/errors/format-nonliteral.err
+	if $(TARGET) tests/cases/standard-library/errors/format/format-named-capture-field.ari -o $(BUILD_DIR)/errors/format-named-capture-field.elf >$(BUILD_DIR)/errors/format-named-capture-field.err 2>&1; then exit 1; fi
+	grep -q "field and path captures are not supported yet" $(BUILD_DIR)/errors/format-named-capture-field.err
 	if $(TARGET) tests/cases/standard-library/errors/format/format-precision-nonfloat.ari -o $(BUILD_DIR)/errors/format-precision-nonfloat.elf >$(BUILD_DIR)/errors/format-precision-nonfloat.err 2>&1; then exit 1; fi
 	grep -q "format precision placeholders require f32 or f64 arguments" $(BUILD_DIR)/errors/format-precision-nonfloat.err
 	if $(TARGET) tests/cases/standard-library/errors/format/format-precision-syntax.ari -o $(BUILD_DIR)/errors/format-precision-syntax.elf >$(BUILD_DIR)/errors/format-precision-syntax.err 2>&1; then exit 1; fi

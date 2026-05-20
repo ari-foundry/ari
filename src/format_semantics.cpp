@@ -15,18 +15,28 @@ namespace {
     throw CompileError(where(loc) + ": " + message);
 }
 
-IrFormatSpec parse_format_placeholder(SourceLocation loc, const std::string& text) {
+bool is_capture_start(char c) {
+    unsigned char value = static_cast<unsigned char>(c);
+    return std::isalpha(value) || c == '_';
+}
+
+bool is_capture_continue(char c) {
+    unsigned char value = static_cast<unsigned char>(c);
+    return std::isalnum(value) || c == '_';
+}
+
+IrFormatSpec parse_format_spec(SourceLocation loc, const std::string& text) {
     if (text.empty()) return IrFormatSpec{};
     if (text == ":?") return IrFormatSpec{-1, true};
     if (text.size() < 2 || text[0] != ':' || text[1] != '.') {
-        fail(loc, "format string only supports {}, {:?}, and {:.N} placeholders; escape literal { as {{");
+        fail(loc, "format string only supports {}, {name}, {:?}, {name:?}, {:.N}, and {name:.N} placeholders; escape literal { as {{");
     }
     int precision = 0;
     bool has_digit = false;
     for (std::size_t i = 2; i < text.size(); ++i) {
         unsigned char c = static_cast<unsigned char>(text[i]);
         if (!std::isdigit(c)) {
-            fail(loc, "format string only supports {}, {:?}, and {:.N} placeholders; escape literal { as {{");
+            fail(loc, "format string only supports {}, {name}, {:?}, {name:?}, {:.N}, and {name:.N} placeholders; escape literal { as {{");
         }
         has_digit = true;
         precision = precision * 10 + static_cast<int>(text[i] - '0');
@@ -34,6 +44,28 @@ IrFormatSpec parse_format_placeholder(SourceLocation loc, const std::string& tex
     }
     if (!has_digit) fail(loc, "format precision placeholder expects digits after colon-dot");
     return IrFormatSpec{precision, false};
+}
+
+struct ParsedPlaceholder {
+    std::string capture;
+    IrFormatSpec spec;
+};
+
+ParsedPlaceholder parse_format_placeholder(SourceLocation loc, const std::string& text) {
+    if (text.empty() || text[0] == ':') {
+        return ParsedPlaceholder{"", parse_format_spec(loc, text)};
+    }
+    if (!is_capture_start(text[0])) {
+        fail(loc, "format named captures must start with a local name such as {value}");
+    }
+
+    std::size_t pos = 1;
+    while (pos < text.size() && is_capture_continue(text[pos])) ++pos;
+    if (pos < text.size() && text[pos] != ':') {
+        fail(loc, "format named captures support {name}, {name:?}, and {name:.N}; field and path captures are not supported yet");
+    }
+
+    return ParsedPlaceholder{text.substr(0, pos), parse_format_spec(loc, text.substr(pos))};
 }
 
 } // namespace
@@ -101,14 +133,16 @@ const char* format_in_builtin_append_method_name(const FormatInAppendTarget& tar
 }
 
 std::string unsupported_format_in_value_message(const IrType& type) {
-    return "format_in! currently supports string, integer, bool, f32, f64, and Display values, got " +
+    return "format_in! currently supports string, char, integer, bool, f32, f64, and Display values, got " +
            type_name(type);
 }
 
 ParsedFormatString parse_format_string(SourceLocation loc, const std::string& text, std::size_t arg_count) {
     ParsedFormatString parsed;
     std::string current;
-    std::size_t placeholders = 0;
+    std::size_t positional_placeholders = 0;
+    std::size_t total_placeholders = 0;
+    bool has_named_capture = false;
     for (std::size_t i = 0; i < text.size(); ++i) {
         char c = text[i];
         if (c == '{') {
@@ -123,8 +157,15 @@ ParsedFormatString parse_format_string(SourceLocation loc, const std::string& te
             }
             parsed.parts.push_back(current);
             current.clear();
-            parsed.specs.push_back(parse_format_placeholder(loc, text.substr(i + 1, close - i - 1)));
-            ++placeholders;
+            ParsedPlaceholder placeholder = parse_format_placeholder(loc, text.substr(i + 1, close - i - 1));
+            if (placeholder.capture.empty()) {
+                ++positional_placeholders;
+            } else {
+                has_named_capture = true;
+            }
+            parsed.captures.push_back(std::move(placeholder.capture));
+            parsed.specs.push_back(placeholder.spec);
+            ++total_placeholders;
             i = close;
             continue;
         }
@@ -139,8 +180,13 @@ ParsedFormatString parse_format_string(SourceLocation loc, const std::string& te
         current.push_back(c);
     }
     parsed.parts.push_back(current);
-    if (placeholders != arg_count) {
-        fail(loc, "format string has " + std::to_string(placeholders) +
+    if (positional_placeholders != arg_count) {
+        if (has_named_capture) {
+            fail(loc, "format string has " + std::to_string(positional_placeholders) +
+                      " positional placeholders but " + std::to_string(arg_count) +
+                      " values were provided");
+        }
+        fail(loc, "format string has " + std::to_string(total_placeholders) +
                   " placeholders but " + std::to_string(arg_count) + " values were provided");
     }
     return parsed;

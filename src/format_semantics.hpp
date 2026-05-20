@@ -30,6 +30,7 @@ struct FormatInAppendTarget {
 struct ParsedFormatString {
     std::vector<std::string> parts;
     std::vector<IrFormatSpec> specs;
+    std::vector<std::string> captures;
 };
 
 std::optional<FormatInAppendTarget> builtin_format_in_append_target_from_type(const IrType& type);
