@@ -770,8 +770,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-ordering.ll
 	grep -F -q 'then_compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-ordering.ll
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari -o $(BUILD_DIR)/prelude/std-cmp-ordering.elf
-	$(BUILD_DIR)/prelude/std-cmp-ordering.elf; code=$$?; test $$code -eq 179
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-ordering.elf; $(BUILD_DIR)/prelude/std-cmp-ordering.elf; code=$$?; test $$code -eq 179; fi
+	$(BUILD_DIR)/prelude/std-cmp-ordering.elf; code=$$?; test $$code -eq 233
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-ordering.elf; $(BUILD_DIR)/prelude/std-cmp-ordering.elf; code=$$?; test $$code -eq 233; fi
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	grep -F -q 'std4algo11sort__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	grep -F -q 'std4algo18stable_sort__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll

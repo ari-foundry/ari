@@ -74,6 +74,27 @@ fn main() -> i64 {
   total = total + score(cmp::then_compare<i64>(cmp::Equal, 4, 9));
   total = total + score(cmp::then_compare<i64>(cmp::Less, 9, 4));
 
+  if cmp::Less.is_less() {
+    total = total + 2;
+  }
+  if cmp::Equal.is_equal() {
+    total = total + 4;
+  }
+  if cmp::Greater.is_greater() {
+    total = total + 6;
+  }
+  if cmp::Less.is_less_or_equal() {
+    total = total + 8;
+  }
+  if cmp::Greater.is_greater_or_equal() {
+    total = total + 10;
+  }
+
+  total = total + score(cmp::Less.reverse());
+  total = total + score(cmp::Equal.then(cmp::Greater));
+  total = total + score(cmp::Equal.then_compare<i64>(8, 8));
+  total = total + score(cmp::Greater.then_compare<i64>(1, 9));
+
   total = total + score(cmp::compare<Pair>(
     Pair { left: 1, right: 9 },
     Pair { left: 2, right: 0 }));

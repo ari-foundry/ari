@@ -640,6 +640,14 @@ fn std::zone::destroy|zone lifecycle and invalidation tests; docs/dev/test-matri
 fn std::zone::new[T]|placement construction tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::promote[T]|scratch promotion tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::reset|zone reset invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
+method Ordering::is_equal|check-prelude std-cmp-ordering natural Ordering equality method; docs/stdlib/modules/cmp.md
+method Ordering::is_greater|check-prelude std-cmp-ordering natural Ordering greater-than method; docs/stdlib/modules/cmp.md
+method Ordering::is_greater_or_equal|check-prelude std-cmp-ordering natural Ordering greater-or-equal method; docs/stdlib/modules/cmp.md
+method Ordering::is_less|check-prelude std-cmp-ordering natural Ordering less-than method; docs/stdlib/modules/cmp.md
+method Ordering::is_less_or_equal|check-prelude std-cmp-ordering natural Ordering less-or-equal method; docs/stdlib/modules/cmp.md
+method Ordering::reverse|check-prelude std-cmp-ordering natural Ordering reverse method; docs/stdlib/modules/cmp.md
+method Ordering::then|check-prelude std-cmp-ordering natural Ordering chain method; docs/stdlib/modules/cmp.md
+method Ordering::then_compare[T: Ord[T]|check-prelude std-cmp-ordering natural generic Ordering chain method; docs/stdlib/modules/cmp.md
 method SlicePair[T]::left|check-prelude prelude-slice-sequence split_at left half accessor; docs/stdlib/modules/slice.md
 method SlicePair[T]::right|check-prelude prelude-slice-sequence split_at right half accessor; docs/stdlib/modules/slice.md
 method Slice[T]::as_ptr|check-prelude prelude-slice-as-ptr borrowed receiver and provenance tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows

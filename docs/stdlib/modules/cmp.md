@@ -67,6 +67,20 @@ lexicographic comparison. `then_compare` performs the second comparison only as
 part of this source helper shape; once lazy closures land, a future `then_with`
 style API can avoid computing fallback comparisons eagerly.
 
+`Ordering` also has method wrappers with the same names, which is the preferred
+style for new code once a comparison result is already in hand:
+
+```ari
+ordering.reverse()
+ordering.then(next)
+ordering.then_compare<T>(left, right)
+ordering.is_less()
+ordering.is_equal()
+ordering.is_greater()
+ordering.is_less_or_equal()
+ordering.is_greater_or_equal()
+```
+
 Value helpers:
 
 ```ari
@@ -140,7 +154,7 @@ fn main() -> i64 {
     let ordering = cmp::compare<Point>(
       Point { x: 1, y: 9 },
       Point { x: 1, y: 4 });
-    if cmp::is_greater(ordering) {
+    if ordering.is_greater() {
       return cmp::max<i64>(value, 9);
     }
   }

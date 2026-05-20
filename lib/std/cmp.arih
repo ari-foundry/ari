@@ -21,6 +21,40 @@ pub enum Ordering {
   Greater,
 }
 
+pub impl Ordering {
+  fn reverse(self) -> Ordering {
+    return reverse(self);
+  }
+
+  fn then(self, ordering: Ordering) -> Ordering {
+    return then(self, ordering);
+  }
+
+  fn then_compare[T: Ord[T]](self, left: T, right: T) -> Ordering {
+    return then_compare<T>(self, left, right);
+  }
+
+  fn is_less(self) -> bool {
+    return is_less(self);
+  }
+
+  fn is_equal(self) -> bool {
+    return is_equal(self);
+  }
+
+  fn is_greater(self) -> bool {
+    return is_greater(self);
+  }
+
+  fn is_less_or_equal(self) -> bool {
+    return is_less_or_equal(self);
+  }
+
+  fn is_greater_or_equal(self) -> bool {
+    return is_greater_or_equal(self);
+  }
+}
+
 pub fn compare[T: Ord[T]](left: T, right: T) -> Ordering {
   if left.lt(right) {
     return Less;
