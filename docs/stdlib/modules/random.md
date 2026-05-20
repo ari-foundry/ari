@@ -59,10 +59,12 @@ games, randomized algorithms, and tests that do not need reproducibility.
 
 `next()` returns the next raw `u64`. `below(upper)` returns an `i64` in
 `0..upper`; `range(start, end)` returns an `i64` in `start..end`; both assert
-on invalid bounds. Use `try_below(upper)` and `try_range(start, end)` when
-bounds come from user input; they return `None` for invalid bounds and advance
-the generator only when they return `Some(value)`. `float()` returns an `f64`
-in `[0.0, 1.0)`. `fill_from` and `rng.fill(values)` fill bytes from the
+on invalid bounds. The bounded integer path redraws rejected values instead of
+using raw modulo, so every result in the requested range has the same
+probability. Use `try_below(upper)` and `try_range(start, end)` when bounds
+come from user input; they return `None` for invalid bounds and advance the
+generator only when they return `Some(value)`. `float()` returns an `f64` in
+`[0.0, 1.0)`. `fill_from` and `rng.fill(values)` fill bytes from the
 deterministic PRNG.
 
 `shuffle(rng, values)` implements an in-place Fisher-Yates shuffle over a
@@ -105,16 +107,16 @@ fn main() -> i64 {
 | CSPRNG stream | Roadmap: not exposed yet; do not use `Prng` for cryptography. |
 | non-crypto PRNG | Current: deterministic `Prng` with `seed`, `next`, `below`, `range`, and `float`. |
 | shuffle | Current: `shuffle<T>(ref mut rng, values)` and `rng.shuffle<T>(values)`. |
-| random int | Current: `below`/`range` asserting helpers and `try_below`/`try_range` fallible helpers over `i64` bounds. |
+| random int | Current: unbiased `below`/`range` asserting helpers and `try_below`/`try_range` fallible helpers over `i64` bounds. |
 | random float | Current: `float() -> f64` in `[0.0, 1.0)`. |
 
 ## Current Limits
 
 - `Prng` is not cryptographically secure. It is for reproducible and ordinary
   randomized behavior only.
-- `below`, `try_below`, `range`, and `try_range` use the current simple
-  bounded integer policy. A future implementation can switch to rejection
-  sampling without changing the public names.
+- Bounded integer helpers use rejection sampling over the raw `u64` stream.
+  The exact sequence may still change if the PRNG core changes, so tests should
+  assert range and repeatability properties rather than pin every value.
 - OS entropy currently has a hard-fail runtime shape. A fallible
   `Result`-returning API belongs with richer standard error values.
 - No distribution helpers exist yet. Normal/exponential/weighted sampling
@@ -137,7 +139,7 @@ functions and `Prng` methods.
 
 - Add a fallible entropy API after `Result[T, Error]` can carry richer error
   values comfortably.
-- Add unbiased bounded integer generation and document the exact distribution
-  contract.
+- Add larger distribution tests once Ari has a property-test or statistical
+  test harness.
 - Keep cryptographic PRNG streams and advanced distributions separate until
   Ari has a clear crypto/package policy.

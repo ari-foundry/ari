@@ -1847,8 +1847,9 @@ Use `entropy()` or `fill(values)` when seed material must come from the host
 OS. On hosted Linux, both use `getrandom` first and fall back to
 `/dev/urandom`; `fill(values)` writes the caller's byte slice directly instead
 of looping through `entropy()` words. Use `Prng` for reproducible random
-streams, tests, games, randomized algorithms, and shuffling. `Prng` is not
-cryptographic.
+streams, tests, games, randomized algorithms, and shuffling. `below` and
+`range` use rejection sampling instead of raw modulo so bounded integer results
+are not biased. `Prng` is not cryptographic.
 
 ## Conversion
 

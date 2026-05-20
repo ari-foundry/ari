@@ -32,7 +32,8 @@ limits, examples, and test files for one module.
   `Hash[T]`, primitive hashing, byte-slice hashing, and collection hash
   compatibility notes.
 - [std::random](random.md): OS entropy, deterministic non-cryptographic
-  `Prng`, bounded integers, unit floats, byte filling, and slice shuffling.
+  `Prng`, unbiased bounded integers, unit floats, byte filling, and slice
+  shuffling.
 - [std::collections](collections.md): source `Set[T]`, `Deque[T]`,
   `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`,
   hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree

@@ -702,8 +702,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'std6random14shuffle__G_i64' $(BUILD_DIR)/prelude/std-random-basic.ll
 	grep -F -q 'std__random__Prng8inherent5float' $(BUILD_DIR)/prelude/std-random-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari -o $(BUILD_DIR)/prelude/std-random-basic.elf
-	$(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 9
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-basic.elf; $(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 9; fi
+	$(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 10
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-basic.elf; $(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 10; fi
 	$(TARGET) tests/cases/standard-library/ok/random/std-random-try-bounds.ari --emit-llvm $(BUILD_DIR)/prelude/std-random-try-bounds.ll
 	grep -F -q 'std6random9try_below' $(BUILD_DIR)/prelude/std-random-try-bounds.ll
 	grep -F -q 'std6random9try_range' $(BUILD_DIR)/prelude/std-random-try-bounds.ll

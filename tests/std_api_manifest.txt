@@ -465,19 +465,19 @@ fn std::process::is_wait_error|check-prelude std-process-fork-wait source wait f
 fn std::process::success|check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md
 fn std::process::uid|check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md
 fn std::process::wait|check-prelude std-process-fork-wait POSIX wait hook and exit-status decode; docs/stdlib/modules/process.md
-fn std::random::below|check-prelude std-random-basic bounded non-crypto PRNG integer helper; docs/stdlib/modules/random.md
+fn std::random::below|check-prelude std-random-basic unbiased bounded non-crypto PRNG integer helper; docs/stdlib/modules/random.md
 fn std::random::entropy|check-prelude std-random-basic OS entropy hook; docs/stdlib/modules/random.md
 fn std::random::fill|check-prelude std-random-basic OS entropy byte fill helper; docs/stdlib/modules/random.md
 fn std::random::fill_from|check-prelude std-random-basic deterministic PRNG byte fill helper; docs/stdlib/modules/random.md
 fn std::random::float|check-prelude std-random-basic unit f64 PRNG helper; docs/stdlib/modules/random.md
 fn std::random::from_entropy|check-prelude std-random-basic OS-seeded PRNG constructor; docs/stdlib/modules/random.md
 fn std::random::next|check-prelude std-random-basic raw PRNG word helper; docs/stdlib/modules/random.md
-fn std::random::range|check-prelude std-random-basic bounded PRNG range helper; docs/stdlib/modules/random.md
+fn std::random::range|check-prelude std-random-basic unbiased bounded PRNG range helper; docs/stdlib/modules/random.md
 fn std::random::seed|check-prelude std-random-basic deterministic PRNG seed constructor; docs/stdlib/modules/random.md
 fn std::random::seed_from_os|check-prelude std-random-basic OS-seeded PRNG constructor alias; docs/stdlib/modules/random.md
 fn std::random::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle; docs/stdlib/modules/random.md
-fn std::random::try_below|check-prelude std-random-try-bounds Option-returning bounded PRNG integer helper; docs/stdlib/modules/random.md
-fn std::random::try_range|check-prelude std-random-try-bounds Option-returning PRNG range helper; docs/stdlib/modules/random.md
+fn std::random::try_below|check-prelude std-random-try-bounds Option-returning unbiased bounded PRNG integer helper; docs/stdlib/modules/random.md
+fn std::random::try_range|check-prelude std-random-try-bounds Option-returning unbiased PRNG range helper; docs/stdlib/modules/random.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::bytes|check-prelude std-string-byte-literals natural borrowed byte view over string literals; docs/stdlib/modules/string.md
@@ -957,17 +957,17 @@ method std::path::PathBytes::normalize_in|check-prelude std-path-bytes typed pat
 method std::path::PathBytes::parent|check-prelude std-path-bytes typed path parent wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::stem|check-prelude std-path-bytes typed path stem wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::trim_trailing_separators|check-prelude std-path-bytes typed path trailing separator trim wrapper; docs/stdlib/modules/path.md
-method std::random::Prng::below|check-prelude std-random-basic bounded non-crypto PRNG integer method; docs/stdlib/modules/random.md
+method std::random::Prng::below|check-prelude std-random-basic unbiased bounded non-crypto PRNG integer method; docs/stdlib/modules/random.md
 method std::random::Prng::fill|check-prelude std-random-basic deterministic PRNG byte fill method; docs/stdlib/modules/random.md
 method std::random::Prng::float|check-prelude std-random-basic unit f64 PRNG method; docs/stdlib/modules/random.md
 method std::random::Prng::from_entropy|check-prelude std-random-basic OS-seeded PRNG associated constructor; docs/stdlib/modules/random.md
 method std::random::Prng::next|check-prelude std-random-basic raw PRNG word method; docs/stdlib/modules/random.md
-method std::random::Prng::range|check-prelude std-random-basic bounded PRNG range method; docs/stdlib/modules/random.md
+method std::random::Prng::range|check-prelude std-random-basic unbiased bounded PRNG range method; docs/stdlib/modules/random.md
 method std::random::Prng::seed|check-prelude std-random-basic deterministic PRNG associated seed constructor; docs/stdlib/modules/random.md
 method std::random::Prng::seed_from_os|check-prelude std-random-basic OS-seeded PRNG associated constructor alias; docs/stdlib/modules/random.md
 method std::random::Prng::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle method; docs/stdlib/modules/random.md
-method std::random::Prng::try_below|check-prelude std-random-try-bounds Option-returning bounded PRNG integer method; docs/stdlib/modules/random.md
-method std::random::Prng::try_range|check-prelude std-random-try-bounds Option-returning PRNG range method; docs/stdlib/modules/random.md
+method std::random::Prng::try_below|check-prelude std-random-try-bounds Option-returning unbiased bounded PRNG integer method; docs/stdlib/modules/random.md
+method std::random::Prng::try_range|check-prelude std-random-try-bounds Option-returning unbiased PRNG range method; docs/stdlib/modules/random.md
 method std::string::OsStr::as_slice|check-prelude std-string-text-kinds borrowed OS string byte accessor; docs/stdlib/modules/string.md
 method std::string::OsStr::is_empty|check-prelude std-string-text-kinds OS string empty predicate; docs/stdlib/modules/string.md
 method std::string::OsStr::is_utf8|check-prelude std-string-text-kinds OS string UTF-8 validation predicate; docs/stdlib/modules/string.md
