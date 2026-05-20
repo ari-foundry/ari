@@ -44,6 +44,19 @@ and tests that fail near the layer that regressed.
 | Pass artifacts | Token, syntax, HIR, typed IR, LLVM, object, executable, and shared outputs need a comparison order. | Add normalized text dumps before broad executable checks. |
 | Build ergonomics | Large Ari tools need boring Make targets before a package manager exists. | Keep `make check-compiler-development` small and add one target per compiler slice. |
 
+## Recent Compiler Support
+
+Mixed aggregate enum payload slots now use byte storage when no single payload
+type can safely represent every case. This lets normal compiler-shaped values
+such as `Result[Span, DiagnosticBuildError]` compile without replacing rich
+payloads with numeric sentinels. The LLVM backend materializes those slots by
+storing the source payload into scratch byte storage and loading the active
+payload type back out only after the enum tag has selected the case.
+
+This is deliberately a general language feature. It is useful for any large
+Ari program that returns structured errors, not only for a future compiler
+written in Ari.
+
 ## Development Backlog
 
 Use this order for general compiler development:

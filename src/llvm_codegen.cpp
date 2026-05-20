@@ -3670,6 +3670,9 @@ private:
     }
 
     Value materialize_enum_payload_for_slot(SourceLocation loc, Value payload, const IrType& slot_type) {
+        if (enum_payload_slot_uses_byte_storage(slot_type, payload.ir_type)) {
+            return reinterpret_payload_storage(loc, std::move(payload), slot_type);
+        }
         if (!enum_payload_slot_uses_scalar_lane(slot_type, payload.ir_type)) {
             return cast_value(payload, slot_type);
         }
@@ -3688,10 +3691,50 @@ private:
     }
 
     Value cast_enum_payload_slot_to_type(SourceLocation loc, Value payload, const IrType& target) {
+        if (enum_payload_slot_uses_byte_storage(payload.ir_type, target)) {
+            return reinterpret_payload_storage(loc, std::move(payload), target);
+        }
         if (enum_payload_slot_uses_scalar_lane(payload.ir_type, target)) {
             payload = emit_enum_payload_scalar_lane(loc, payload);
         }
         return cast_value(payload, target);
+    }
+
+    Value reinterpret_payload_storage(SourceLocation loc, Value value, const IrType& target) {
+        std::string target_type = llvm_type(target);
+        if (value.type == target_type) {
+            value.ir_type = target;
+            return value;
+        }
+
+        std::uint64_t source_size = 0;
+        std::uint64_t target_size = 0;
+        std::uint64_t source_align = 0;
+        std::uint64_t target_align = 0;
+        if (!ari_layout_size_bytes(value.ir_type, source_size) ||
+            !ari_layout_size_bytes(target, target_size) ||
+            !ari_layout_align_bytes(value.ir_type, source_align) ||
+            !ari_layout_align_bytes(target, target_align)) {
+            throw CompileError(where(loc) + ": LLVM backend cannot reinterpret enum payload storage from " +
+                               type_name(value.ir_type) + " to " + type_name(target));
+        }
+
+        std::uint64_t scratch_size = std::max(source_size, target_size);
+        std::uint64_t scratch_align = std::max(source_align, target_align);
+        IrType scratch_type = enum_payload_byte_storage_type(loc, scratch_size);
+        std::string scratch_llvm_type = llvm_type(scratch_type);
+        std::string scratch = temp();
+        line("  " + scratch + " = alloca " + scratch_llvm_type + ", align " + std::to_string(scratch_align));
+        if (target_size > source_size) {
+            line("  store " + scratch_llvm_type + " zeroinitializer, ptr " + scratch +
+                 ", align " + std::to_string(scratch_align));
+        }
+        line("  store " + value.type + " " + value.name + ", ptr " + scratch +
+             ", align " + std::to_string(source_align));
+        std::string out = temp();
+        line("  " + out + " = load " + target_type + ", ptr " + scratch +
+             ", align " + std::to_string(target_align));
+        return Value{target_type, out, target};
     }
 
     Value emit_payload_binding_field_path(SourceLocation loc,

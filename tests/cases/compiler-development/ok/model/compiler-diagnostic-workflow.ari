@@ -17,7 +17,7 @@ enum Severity {
 }
 
 enum DiagnosticBuildError {
-  BadSpan(ByteOffset),
+  BadSpan(Span),
   MissingCode,
 }
 
@@ -50,11 +50,11 @@ fn marker_score(marker: char) -> i64 {
   return 3;
 }
 
-fn validate_span(span: Span) -> Result[i64, DiagnosticBuildError] {
+fn validate_span(span: Span) -> Result[Span, DiagnosticBuildError] {
   if span.end < span.start {
-    return Err(BadSpan(span.start - span.end));
+    return Err(BadSpan(span));
   }
-  return Ok(span_len(span));
+  return Ok(span);
 }
 
 fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
@@ -66,14 +66,14 @@ fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
 
 fn build_error_score(error: DiagnosticBuildError) -> i64 {
   match error {
-    BadSpan(width) => 40 + width,
+    BadSpan(span) => 40 + span.start - span.end,
     MissingCode => 50,
   }
 }
 
-fn span_result_score(result: Result[i64, DiagnosticBuildError]) -> i64 {
+fn span_result_score(result: Result[Span, DiagnosticBuildError]) -> i64 {
   match result {
-    Ok(width) => width,
+    Ok(span) => span_len(span),
     Err(error) => build_error_score(error),
   }
 }

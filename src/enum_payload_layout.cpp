@@ -1,5 +1,6 @@
 #include "enum_payload_layout.hpp"
 
+#include "layout.hpp"
 #include "type_semantics.hpp"
 
 namespace ari {
@@ -33,6 +34,18 @@ bool is_inline_payload_storage_type(const IrType& type) {
             type.primitive == IrPrimitiveKind::Struct);
 }
 
+bool layout_size_bytes(const IrType& type, std::uint64_t& out) {
+    return ari_layout_size_bytes(type, out);
+}
+
+bool is_enum_payload_byte_storage_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Array &&
+           type.args.size() == 1 &&
+           type.args[0].qualifier == TypeQualifier::Value &&
+           type.args[0].primitive == IrPrimitiveKind::U8;
+}
+
 } // namespace
 
 IrType enum_tag_storage_type(SourceLocation loc) {
@@ -41,6 +54,17 @@ IrType enum_tag_storage_type(SourceLocation loc) {
 
 IrType enum_payload_storage_type(SourceLocation loc) {
     return primitive_type(IrPrimitiveKind::U64, "u64", loc);
+}
+
+IrType enum_payload_byte_storage_type(SourceLocation loc, std::uint64_t size_bytes) {
+    IrType type;
+    type.qualifier = TypeQualifier::Value;
+    type.primitive = IrPrimitiveKind::Array;
+    type.name = "$enum_payload_bytes";
+    type.args.push_back(primitive_type(IrPrimitiveKind::U8, "u8", loc));
+    type.loc = loc;
+    type.array_size = size_bytes;
+    return type;
 }
 
 IrType enum_payload_slot_storage_type(SourceLocation loc, const IrType& payload_type) {
@@ -79,6 +103,14 @@ bool enum_payload_slot_uses_scalar_lane(const IrType& slot_type, const IrType& p
                      enum_payload_storage_type(payload_type.loc));
 }
 
+bool enum_payload_slot_uses_byte_storage(const IrType& slot_type, const IrType& payload_type) {
+    if (same_type(slot_type, enum_payload_slot_storage_type(payload_type.loc, payload_type))) return false;
+    if (!is_enum_payload_byte_storage_type(slot_type)) return false;
+    std::uint64_t payload_size = 0;
+    if (!layout_size_bytes(payload_type, payload_size)) return false;
+    return payload_size <= slot_type.array_size;
+}
+
 bool merge_enum_payload_slot_storage_type(SourceLocation loc,
                                           IrType& slot_type,
                                           const IrType& payload_type,
@@ -87,10 +119,19 @@ bool merge_enum_payload_slot_storage_type(SourceLocation loc,
     if (same_type(slot_type, incoming)) return true;
 
     if (enum_payload_slot_uses_scalar_lane(slot_type, payload_type)) return true;
+    if (enum_payload_slot_uses_byte_storage(slot_type, payload_type)) return true;
 
     if (is_payload_word_storage(slot_type) &&
         enum_payload_slot_scalar_lane_type(incoming)) {
         slot_type = incoming;
+        return true;
+    }
+
+    std::uint64_t slot_size = 0;
+    std::uint64_t incoming_size = 0;
+    if (layout_size_bytes(slot_type, slot_size) &&
+        layout_size_bytes(incoming, incoming_size)) {
+        slot_type = enum_payload_byte_storage_type(loc, std::max(slot_size, incoming_size));
         return true;
     }
 
