@@ -82,6 +82,8 @@ check-compiler-artifacts: $(TARGET)
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
+	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-pass-summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
 
 check-compiler-development: $(TARGET)
 	mkdir -p $(BUILD_DIR)/compiler-development

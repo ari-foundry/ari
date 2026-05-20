@@ -152,8 +152,10 @@ Exit criteria:
 ### Phase 6: IR And Backend Artifacts
 
 - Keep `--emit-tokens`, `--emit-syntax`, `--emit-diagnostics`, and
-  `--emit-typed-ir` as the first artifact producers and extend the same golden
-  comparison pattern to structured diagnostics, HIR, and richer typed IR.
+  `--emit-typed-ir` as the first detailed artifact producers.
+- Use `--emit-pass-summary` for quick stage-boundary counts while extending the
+  same golden comparison pattern to structured diagnostics, HIR, and richer
+  typed IR.
 - Emit resolved IR facts so LLVM codegen stays mechanical.
 - Add normalized LLVM IR checks for ABI, visibility, runtime hooks, and symbols.
 - Keep object/shared-library tests focused on actual exported or relocated

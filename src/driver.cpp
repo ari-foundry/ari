@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "c_header.hpp"
+#include "compiler_summary_dump.hpp"
 #include "diagnostic_dump.hpp"
 #include "ir_dump.hpp"
 #include "lexer.hpp"
@@ -66,6 +67,7 @@ static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
                  "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
                  "           [--emit-diagnostics path] [--emit-typed-ir path]\n"
+                 "           [--emit-pass-summary path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -90,6 +92,7 @@ int run(int argc, char** argv) {
     std::string syntax_output;
     std::string diagnostic_output;
     std::string typed_ir_output;
+    std::string pass_summary_output;
     std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
@@ -149,6 +152,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-typed-ir") {
             if (i + 1 >= argc) throw CompileError("--emit-typed-ir expects a path");
             typed_ir_output = argv[++i];
+        } else if (arg == "--emit-pass-summary") {
+            if (i + 1 >= argc) throw CompileError("--emit-pass-summary expects a path");
+            pass_summary_output = argv[++i];
         } else if (arg == "--emit-c-header") {
             if (i + 1 >= argc) throw CompileError("--emit-c-header expects a path");
             c_header_output = argv[++i];
@@ -204,6 +210,7 @@ int run(int argc, char** argv) {
     if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
                        !c_header_output.empty() || !typed_ir_output.empty() ||
+                       !pass_summary_output.empty() ||
                        llvm_compiler_explicit || !link_args.empty())) {
         throw CompileError("--check cannot be combined with backend output or linking options");
     }
@@ -214,18 +221,19 @@ int run(int argc, char** argv) {
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
-    if (!typed_ir_output.empty() &&
+    if ((!typed_ir_output.empty() || !pass_summary_output.empty()) &&
         (output_explicit || emit_llvm_only || !object_output.empty() ||
          !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
          !metadata_output.empty() || !metadata_check.empty() ||
          !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty())) {
-        throw CompileError("--emit-typed-ir cannot be combined with backend, module-cache, or linking options");
+        throw CompileError("sema artifact outputs cannot be combined with backend, module-cache, or linking options");
     }
     int artifact_output_count = 0;
     if (!token_output.empty()) ++artifact_output_count;
     if (!syntax_output.empty()) ++artifact_output_count;
     if (!diagnostic_output.empty()) ++artifact_output_count;
     if (!typed_ir_output.empty()) ++artifact_output_count;
+    if (!pass_summary_output.empty()) ++artifact_output_count;
     if (artifact_output_count > 1) {
         throw CompileError("artifact outputs cannot be combined");
     }
@@ -287,6 +295,11 @@ int run(int argc, char** argv) {
         return 0;
     }
 
+    std::size_t pass_summary_token_count = 0;
+    if (!pass_summary_output.empty()) {
+        pass_summary_token_count = lex_source(read_text_file(input)).size();
+    }
+
     ModuleLoadOptions load_options;
     load_options.module_search_paths = std::move(module_search_paths);
     load_options.cfg_features = cfg_features;
@@ -329,6 +342,12 @@ int run(int argc, char** argv) {
     if (!typed_ir_output.empty()) {
         write_text_file(typed_ir_output, dump_ir_program(ir, input));
         std::cout << "wrote " << typed_ir_output << " (typed IR dump)\n";
+        return 0;
+    }
+    if (!pass_summary_output.empty()) {
+        write_text_file(pass_summary_output,
+                        dump_compiler_pass_summary(input, pass_summary_token_count, program, loaded.metadata, ir));
+        std::cout << "wrote " << pass_summary_output << " (compiler pass summary)\n";
         return 0;
     }
     if (!module_cache_output.empty()) {

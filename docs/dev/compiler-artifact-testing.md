@@ -46,9 +46,10 @@ Compare artifacts in this order:
 | 3 | Syntax dump | Prove parsing and recovery are stable. | parser |
 | 4 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
 | 5 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
-| 6 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
-| 7 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
-| 8 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
+| 6 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
+| 7 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
+| 8 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
+| 9 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
 
 Do not skip directly to executable comparison for compiler frontend work. A
 binary exit code can say "something changed"; it cannot say which compiler
@@ -203,6 +204,7 @@ tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
+tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary
 tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
 tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic
@@ -214,11 +216,12 @@ tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagno
 ari --emit-tokens path
 ari --emit-syntax path
 ari --emit-diagnostics path
+ari --emit-pass-summary path
 ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves eight low-level contracts:
+It currently proves nine low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -233,6 +236,8 @@ It currently proves eight low-level contracts:
   and ownership failures with stable diagnostic-code families
 - `--emit-typed-ir` writes deterministic sema-lowered IR for a small Ari source
   file without involving LLVM codegen
+- `--emit-pass-summary` writes deterministic stage counts for lexing, syntax,
+  module loading, and sema
 
 The first typed-IR golden uses `--no-implicit-std` so the fixture protects the
 source file's lowered facts instead of recording every implicit prelude
@@ -253,6 +258,8 @@ The current compiler already has useful artifact checks:
 - `--emit-diagnostics` for stable expected-failure text before a full
   multi-label diagnostic model exists
 - `--emit-typed-ir` for stable sema output before LLVM lowering
+- `--emit-pass-summary` for quick stage-boundary counts in compiler-development
+  tests
 - `--emit-llvm` for LLVM text
 - `--emit-obj` for object files
 - `--shared` for shared-library visibility

@@ -66,13 +66,14 @@ Ari program that returns structured errors, not only for a future compiler
 written in Ari.
 
 The hosted compiler now also has the first artifact producers:
-`--emit-tokens path`, `--emit-syntax path`, `--emit-diagnostics path`, and
-`--emit-typed-ir path`. They write deterministic lexer token text, parser tree
-text, expected-failure diagnostic text, and sema-lowered typed IR, all checked
-by `make check-compiler-artifacts`. This is the first small stage-comparison
-step for normal compiler development: when lexer, parser, diagnostic, or typed
-lowering behavior changes, reviewers can inspect a tiny golden diff before LLVM
-or executable behavior changes are involved.
+`--emit-tokens path`, `--emit-syntax path`, `--emit-diagnostics path`,
+`--emit-typed-ir path`, and `--emit-pass-summary path`. They write
+deterministic lexer token text, parser tree text, expected-failure diagnostic
+text, sema-lowered typed IR, and stage-boundary counts, all checked by
+`make check-compiler-artifacts`. This is the first small stage-comparison step
+for normal compiler development: when lexer, parser, diagnostic, module, or
+typed lowering behavior changes, reviewers can inspect a tiny golden diff
+before LLVM or executable behavior changes are involved.
 
 ## Development Backlog
 
@@ -153,6 +154,8 @@ Current readiness tests:
   parser artifact golden checked through `--emit-syntax`.
 - `tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir`: sema and
   typed-IR artifact golden checked through `--emit-typed-ir`.
+- `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
+  pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic`:
   lexer diagnostic golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic`:
