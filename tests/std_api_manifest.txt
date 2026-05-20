@@ -268,6 +268,7 @@ fn std::fs::open_write|check-prelude std-fs-basic compatibility write wrapper ov
 fn std::fs::permissions|check-prelude std-fs-permissions access permission wrapper; docs/stdlib/modules/fs.md
 fn std::fs::read|check-prelude std-fs-create-truncate-copy natural read alias for read_to_string; docs/stdlib/modules/fs.md
 fn std::fs::read_byte|check-prelude std-fs-basic file byte read hook; docs/stdlib/modules/fs.md
+fn std::fs::read_dir|check-prelude std-fs-read-dir asserting directory name-list helper; docs/stdlib/modules/fs.md
 fn std::fs::read_dir_next|check-prelude std-fs-read-dir Option-returning directory entry name helper; docs/stdlib/modules/fs.md
 fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byte-string read helper; docs/stdlib/modules/fs.md
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
@@ -289,6 +290,7 @@ fn std::fs::try_open_dir|check-prelude std-fs-read-dir Option-returning director
 fn std::fs::try_open_read|check-prelude std-fs-basic compatibility Option-returning read helper; docs/stdlib/modules/fs.md
 fn std::fs::try_open_write|check-prelude std-fs-basic compatibility Option-returning write helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read|check-prelude std-fs-try-read Option-returning natural whole-file read alias; docs/stdlib/modules/fs.md
+fn std::fs::try_read_dir|check-prelude std-fs-read-dir Option-returning directory name-list helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read_to_string|check-prelude std-fs-try-read Option-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
 fn std::fs::try_write|check-prelude std-fs-read-write Option-returning write byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::write|check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md

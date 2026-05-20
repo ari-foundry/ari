@@ -20,9 +20,9 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `try_write`, `try_append`, `truncate`, `copy`, `try_copy`, `metadata`,
 `try_metadata`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
-`symbolic_link`, `create_dir`, `remove_dir`, `try_open_dir`,
-`read_dir_next`, `close_dir`, `close`, `exists`, and `remove`, not
-type-suffixed names.
+`symbolic_link`, `create_dir`, `remove_dir`, `try_open_dir`, `read_dir`,
+`try_read_dir`, `read_dir_next`, `close_dir`, `close`, `exists`, and
+`remove`, not type-suffixed names.
 
 ## API
 
@@ -48,6 +48,8 @@ fs::create_dir(path)
 fs::remove_dir(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
+fs::read_dir(ref mut zone, path)
+fs::try_read_dir(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::open(path, mode)
@@ -263,11 +265,16 @@ mode used by Ari's runtime shim. It does not create parent directories.
 `try_open_dir(path)` opens one directory and returns `Option[Dir]`.
 `dir.next(ref mut zone)` returns the next entry name as `Option[String]`,
 skipping the host `"."` and `".."` entries. `dir.close()` closes the directory
-handle. The low-level `open_dir`, `read_dir_next`, and `close_dir` names exist
-for direct runtime-hook coverage, but ordinary code should prefer
-`try_open_dir` plus the `Dir` methods. Current directory reads return names
-only; richer `DirEntry` metadata, recursive helpers, and owned resource
-tracking are future slices.
+handle. `try_read_dir(ref mut zone, path)` is the convenient one-shot helper:
+it opens the directory, collects names into `std::vec::Vec[String]`, closes the
+handle, and returns `None` when the directory cannot be opened or closed.
+`read_dir(ref mut zone, path)` is the asserting wrapper for code that treats a
+failed directory read as a programmer error. The low-level `open_dir`,
+`read_dir_next`, and `close_dir` names exist for direct runtime-hook coverage,
+but ordinary code should prefer `try_read_dir` for collection-style reads or
+`try_open_dir` plus the `Dir` methods for manual streaming. Current directory
+reads return names only; richer `DirEntry` metadata, recursive helpers, and
+owned resource tracking are future slices.
 
 ## Feature Status
 
@@ -287,7 +294,7 @@ tracking are future slices.
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)` runtime hook on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
-| read directory | Current: `try_open_dir(path)`, `Dir`, `dir.next(ref mut zone)`, and `dir.close()` for entry names; richer `DirEntry` metadata and owned OS-resource policy are roadmap. |
+| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `dir.next(ref mut zone)`, and `dir.close()` for entry names; richer `DirEntry` metadata and owned OS-resource policy are roadmap. |
 | create directory | Current: single-directory `create_dir(path)`; recursive creation is roadmap. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
@@ -388,6 +395,25 @@ Read the names in one directory:
 
 ```ari
 var zone = zone::create(512);
+let names = fs::try_read_dir(ref mut zone, "build/prelude").unwrap_or(
+  std::vec::new<std::string::String>(ref mut zone, 0)
+);
+
+var index = 0;
+while index < names.len() {
+  let name = names.get(index);
+  if name.equals_text("example-fs.tmp") {
+    index = names.len();
+  }
+  index = index + 1;
+}
+zone::destroy(zone);
+```
+
+Manually stream a directory when you do not want to collect every name:
+
+```ari
+var zone = zone::create(512);
 let dir = fs::try_open_dir("build/prelude").unwrap_or(fs::Dir::invalid());
 if dir.is_open() {
   var reading = true;
@@ -469,7 +495,8 @@ if file.is_open() {
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
   `stat`, `chmod`, `realpath`, `unlink`, `rename`, `link`, `symlink`,
   `mkdir`, `rmdir`, `opendir`, `readdir`, `closedir`, `open`, `read`,
-  `write`, and `close`.
+  `write`, and `close`; the one-shot `read_dir` helpers are source Ari over
+  those hooks.
 - `File` and `Dir` are not tracked `own` resources yet. The caller must close
   each successful handle exactly once by convention. Future ownership work
   should make OS resources harder to copy and accidentally double-close.
@@ -517,7 +544,8 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 `try_copy` byte counts.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-read-dir.ari` covers
-runtime-backed `Dir` open/next/close behavior, missing-directory failure, dot
+runtime-backed `Dir` open/next/close behavior, one-shot
+`try_read_dir`/`read_dir` name-list helpers, missing-directory failure, dot
 entry skipping, invalid-handle `None`, and cleanup. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
 checks. `std-fs-permissions.ari` covers access-style readable/writable/

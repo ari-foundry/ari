@@ -153,6 +153,43 @@ pub fn read_dir_next(zone: ref mut Zone, dir: Dir) -> std::Option[std::string::S
   return std::Some<std::string::String>(std::string::from(zone, name));
 }
 
+pub fn try_read_dir(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[std::string::String]] {
+  match try_open_dir(path) {
+    std::Some(dir) => {
+      var entries = std::vec::new<std::string::String>(zone, 8);
+      var reading = true;
+      while reading {
+        match dir.next(zone) {
+          std::Some(name) => {
+            entries.push_in(zone, name);
+          }
+          std::None => {
+            reading = false;
+          }
+        }
+      }
+
+      if !dir.close() {
+        return std::None<std::vec::Vec[std::string::String]>();
+      }
+      return std::Some<std::vec::Vec[std::string::String]>(entries);
+    }
+    std::None => {}
+  }
+  return std::None<std::vec::Vec[std::string::String]>();
+}
+
+pub fn read_dir(zone: ref mut Zone, path: string) -> std::vec::Vec[std::string::String] {
+  match try_read_dir(zone, path) {
+    std::Some(entries) => {
+      return entries;
+    }
+    std::None => {}
+  }
+  std::panic();
+  return std::vec::new<std::string::String>(zone, 0);
+}
+
 pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
   let resolved = canonicalize_raw(path);
   if std::string::c_len(resolved) == 0 {

@@ -721,6 +721,8 @@ fs::create_dir(path)
 fs::remove_dir(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
+fs::read_dir(ref mut zone, path)
+fs::try_read_dir(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::open(path, mode)
@@ -834,8 +836,10 @@ according to the host runtime's current behavior. `create_dir(path)` creates
 one directory and `remove_dir(path)` removes one empty directory.
 `try_open_dir(path)` returns `Option[Dir]`, `dir.next(ref mut zone)` returns
 the next entry name while skipping `"."` and `".."`, and `dir.close()` closes
-the handle. Recursive directory helpers, richer `DirEntry` metadata, and owned
-resource policy are future work.
+the handle. `try_read_dir(ref mut zone, path)` opens, collects names into
+`std::vec::Vec[String]`, closes, and returns `None` on open/close failure.
+`read_dir(ref mut zone, path)` is the asserting wrapper. Recursive directory
+helpers, richer `DirEntry` metadata, and owned resource policy are future work.
 The current `File` and `Dir` values are not owned resources yet, so close each
 successful handle once and do not reuse copied handles after closing.
 
