@@ -7,10 +7,11 @@ small descriptor model with two shapes:
 - `Fd`: a non-owning descriptor identity view.
 - `OwnedFd`: a descriptor owner that has the responsibility to close once.
 
-This module is intentionally not a raw syscall collection. Closing, duplicating,
-setting close-on-exec, nonblocking mode, `fcntl`, `poll`, Linux `epoll`,
-signals, and memory mapping are added in small layers after descriptor
-ownership is stable.
+This module is intentionally not a raw syscall collection. Close and duplicate
+are the first owner operations because they define descriptor lifetime.
+Close-on-exec, nonblocking mode, `fcntl`, `poll`, Linux `epoll`, signals, and
+memory mapping are added in small layers after descriptor error policy is
+stable.
 
 ## API
 
@@ -37,6 +38,7 @@ owned.as_fd()
 owned.is_open()
 owned.is_closed()
 owned.take()
+owned.try_clone()
 owned.close()
 
 file.descriptor()
@@ -63,6 +65,11 @@ borrowed view without closing. `close()` disarms the owner before invoking the
 runtime close hook, so calling `close()` twice on the same `OwnedFd` will not
 close a reused descriptor accidentally.
 
+`try_clone()` duplicates the underlying descriptor and returns a new `OwnedFd`
+when the host accepts the operation. It returns `None` for closed descriptors
+or OS-level duplicate failures. The original and cloned owners must be closed
+independently.
+
 ## Example
 
 ```ari
@@ -83,6 +90,8 @@ fn main() -> i64 {
 fn main() -> i64 {
   let file = std::fs::open("build/output.tmp", "w");
   var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
+  var copy = owned.try_clone().unwrap();
+  copy.close();
   if owned.close() {
     return 0;
   }
@@ -97,6 +106,7 @@ Focused tests:
 ```text
 tests/cases/standard-library/ok/os/std-os-fd.ari
 tests/cases/standard-library/ok/os/std-os-owned-fd.ari
+tests/cases/standard-library/ok/os/std-os-owned-fd-duplicate.ari
 ```
 
 `make check-std-api` tracks the public declarations. `make check-prelude`
@@ -104,10 +114,11 @@ compiles and runs the focused descriptor fixtures.
 
 ## Future Work
 
-- Add descriptor duplication and explicit ownership transfer helpers.
 - Add fallible descriptor operations returning `std::error::Error` once
   `Result[T, Error]` is directly representable.
 - Add close-on-exec and nonblocking setters before exposing readiness APIs.
+- Add duplication flags such as close-on-exec-on-dup when the API shape is
+  stable.
 - Add `poll` as the first portable readiness primitive.
 - Add Linux-only `epoll`, `eventfd`, `timerfd`, `signalfd`, `pidfd`, and
   `memfd` under target-guarded APIs after owned descriptors are stable.

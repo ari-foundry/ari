@@ -13,6 +13,7 @@ pub struct OwnedFd {
 }
 
 extern "ari" fn close_raw(raw: i64) -> bool = "ari_builtin_os_close";
+extern "ari" fn duplicate_raw(raw: i64) -> i64 = "ari_builtin_os_dup";
 
 pub fn fd(raw: i64) -> std::os::Fd {
   return std::os::Fd { raw_value: raw };
@@ -97,6 +98,18 @@ pub impl std::os::OwnedFd {
     let raw = self.raw_value;
     self.raw_value = -1;
     return std::os::fd(raw);
+  }
+
+  fn try_clone(self: ref Self) -> std::Option[std::os::OwnedFd] {
+    if self.is_closed() {
+      return std::None<std::os::OwnedFd>();
+    }
+
+    let raw = duplicate_raw(self.raw_value);
+    if raw < 0 {
+      return std::None<std::os::OwnedFd>();
+    }
+    return std::Some<std::os::OwnedFd>(std::os::OwnedFd::from_raw(raw));
   }
 
   fn close(self: ref mut Self) -> bool {

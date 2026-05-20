@@ -44,8 +44,8 @@ handles over `dlopen`/`dlsym`.
 `std::process`
 starts the OS-facing surface with current
 process id, explicit exit helpers, and the first POSIX fork/wait slice,
-`std::os` introduces non-owning `Fd` descriptor views and owning `OwnedFd`
-close responsibility for raw descriptor handoff,
+`std::os` introduces non-owning `Fd` descriptor views and `OwnedFd` wrappers
+for raw descriptor close and duplicate ownership,
 `std::target` reports compiler-known target, object/debug format, libc/env,
 errno, syscall, and Linux API-family facts,
 `std::thread` adds

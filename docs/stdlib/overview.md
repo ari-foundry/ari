@@ -196,9 +196,11 @@ descriptor view and an owning `OwnedFd` wrapper. `std::os::stdin()`,
 `stdout()`, `stderr()`, `invalid()`, and `fd(raw)` make descriptor identity
 explicit, while `std::fs::File.descriptor()` bridges file handles into that
 view without transferring ownership. `OwnedFd::from_raw(raw)` is the explicit
-ownership handoff for exactly-one-close responsibility. Raw syscalls,
-close-on-exec/nonblocking mutation, readiness APIs, signals, and memory mapping
-still wait for descriptor duplication policy and richer error results.
+ownership handoff for exactly-one-close responsibility, and
+`OwnedFd::try_clone()` creates an independent owner around a duplicated
+descriptor. Raw syscalls, close-on-exec/nonblocking mutation, readiness APIs,
+signals, and memory mapping still wait for duplicate-with-flags policy and
+richer error results.
 
 `std::env` wraps the context hooks with the names application code should use
 and adds `Option`-based argument access through `try_arg` and `program_name`.

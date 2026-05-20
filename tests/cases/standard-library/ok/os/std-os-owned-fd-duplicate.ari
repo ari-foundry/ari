@@ -1,0 +1,42 @@
+// Covers owned descriptor duplication. try_clone returns a second OwnedFd
+// owner, so both descriptors can be closed independently.
+fn main() -> i64 {
+  let path = "build/std-os-owned-fd-duplicate.tmp";
+  let wrote = std::fs::write(path, "duplicate");
+  let file = std::fs::open(path, "r");
+  var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
+  var invalid = std::os::OwnedFd::invalid();
+
+  var score = 0;
+  if wrote {
+    score = score + 1;
+  }
+  if owned.is_open() {
+    score = score + 2;
+  }
+  if invalid.try_clone().is_none() {
+    score = score + 4;
+  }
+
+  let maybe_copy = owned.try_clone();
+  if maybe_copy.is_some() {
+    score = score + 8;
+  }
+
+  var copy = maybe_copy.unwrap();
+  if copy.is_open() && copy.raw() != owned.raw() {
+    score = score + 16;
+  }
+  if copy.as_fd().is_valid() {
+    score = score + 32;
+  }
+  if copy.close() && copy.is_closed() {
+    score = score + 64;
+  }
+  if owned.close() && owned.is_closed() {
+    score = score + 128;
+  }
+
+  std::fs::remove(path);
+  return score;
+}

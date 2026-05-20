@@ -509,6 +509,7 @@ owned.as_fd()
 owned.is_open()
 owned.is_closed()
 owned.take()
+owned.try_clone()
 owned.close()
 ```
 
@@ -520,9 +521,10 @@ handle without transferring ownership.
 `OwnedFd::from_raw(raw)` only when the caller is taking ownership of exactly
 one close. `as_fd()` borrows the descriptor as `Fd`, `take()` disarms the owner
 without closing, and `close()` disarms before calling the runtime close hook so
-the same handle cannot close twice. Descriptor duplication, close-on-exec,
-nonblocking mode, readiness APIs, raw syscalls, signals, and memory mapping
-remain future `std::os` work after richer error policy is stable.
+the same handle cannot close twice. `try_clone()` duplicates the descriptor and
+returns `Option[OwnedFd]`; the original and cloned owners close independently.
+Close-on-exec, nonblocking mode, readiness APIs, raw syscalls, signals, and
+memory mapping remain future `std::os` work after richer error policy is stable.
 
 ## Paths
 

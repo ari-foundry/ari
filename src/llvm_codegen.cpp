@@ -488,6 +488,7 @@ private:
                symbol == "read" ||
                symbol == "write" ||
                symbol == "close" ||
+               symbol == "dup" ||
                symbol == "malloc" ||
                symbol == "free" ||
                symbol == "exit" ||
@@ -613,6 +614,7 @@ private:
         declarations_ << "declare i64 @read(i32, ptr, i64)\n";
         declarations_ << "declare i64 @write(i32, ptr, i64)\n";
         declarations_ << "declare i32 @close(i32)\n";
+        declarations_ << "declare i32 @dup(i32)\n";
         declarations_ << "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memmove.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memset.p0.i64(ptr, i8, i64, i1)\n";
@@ -1239,6 +1241,20 @@ private:
         line("  ret i1 %ok");
         line("fail:");
         line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_os_dup(i64 %fd) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %do_dup");
+        line("do_dup:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %copy = call i32 @dup(i32 %fd32)");
+        line("  %wide = sext i32 %copy to i64");
+        line("  ret i64 %wide");
+        line("fail:");
+        line("  ret i64 -1");
         line("}");
         line();
 
