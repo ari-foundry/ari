@@ -71,7 +71,7 @@ The healthiest order is:
 | IR contract | Sema lowers resolved facts into IR so backend codegen stays mechanical. | IR text checks for names, layouts, ABI, runtime hooks, and symbols. | Partial |
 | Backend artifacts | LLVM IR, object, executable, and shared library output are deterministic enough to inspect. | Focused `--emit-llvm`, `--emit-obj`, symbol, relocation, and exit-code checks. | Good first pass |
 | Tool build flow | A Makefile can build one Ari tool, run its fixtures, and compare outputs without hidden flags. | `make -C tool check-lex`, `check-parse`, `check-report` style targets. | Planned |
-| Stage comparison | Token, syntax, HIR, typed IR, LLVM text, and executable behavior have a comparison order. | Normalized text artifact checks, then executable checks only after earlier layers match. | Planned |
+| Stage comparison | Token, syntax, HIR, typed IR, LLVM text, and executable behavior have a comparison order. | Normalized text artifact checks, then executable checks only after earlier layers match. | Seeded |
 
 ## Implementation Order
 

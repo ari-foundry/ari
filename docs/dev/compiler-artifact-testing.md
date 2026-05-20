@@ -204,15 +204,17 @@ tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
 tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
+tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic
 ari --emit-tokens path
 ari --emit-syntax path
 ari --emit-diagnostics path
+ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves six low-level contracts:
+It currently proves seven low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -223,10 +225,17 @@ It currently proves six low-level contracts:
   behavior are involved
 - `--emit-diagnostics` writes a normalized diagnostic artifact for an expected
   compiler failure
+- `--emit-typed-ir` writes deterministic sema-lowered IR for a small Ari source
+  file without involving LLVM codegen
 
-This is deliberately small. Future structured diagnostic, HIR, typed-IR, and
-backend artifact producers should plug into the same shape instead of inventing
-unrelated golden comparison rules.
+The first typed-IR golden uses `--no-implicit-std` so the fixture protects the
+source file's lowered facts instead of recording every implicit prelude
+declaration. Add separate std/prelude IR fixtures only when that behavior is
+the thing being tested.
+
+This is deliberately small. Future structured diagnostic, HIR, richer typed-IR,
+and backend artifact producers should plug into the same shape instead of
+inventing unrelated golden comparison rules.
 
 ## Current Compiler Integration
 
@@ -237,6 +246,7 @@ The current compiler already has useful artifact checks:
 - `--emit-syntax` for stable parser tree text before semantic analysis
 - `--emit-diagnostics` for stable expected-failure text before a full
   multi-label diagnostic model exists
+- `--emit-typed-ir` for stable sema output before LLVM lowering
 - `--emit-llvm` for LLVM text
 - `--emit-obj` for object files
 - `--shared` for shared-library visibility
@@ -264,6 +274,7 @@ end test.
 ## Readiness Impact
 
 Stage comparison remains a major blocker. Ari should stay around the current
-**38-42% ready** estimate until token, diagnostic, syntax, HIR, typed IR, and
-LLVM text artifact comparison are implemented enough that a future stage1 and
-stage2 can disagree in a useful, localized way.
+**38-42% ready** estimate until the current token, diagnostic, syntax, and
+typed-IR seeds grow into broader coverage, and HIR plus LLVM text comparison
+exist enough that a future stage1 and stage2 can disagree in a useful,
+localized way.

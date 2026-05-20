@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "c_header.hpp"
 #include "diagnostic_dump.hpp"
+#include "ir_dump.hpp"
 #include "lexer.hpp"
 #include "llvm_codegen.hpp"
 #include "module_cache.hpp"
@@ -64,7 +65,7 @@ static std::string shell_quote(const std::string& text) {
 static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
                  "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
-                 "           [--emit-diagnostics path]\n"
+                 "           [--emit-diagnostics path] [--emit-typed-ir path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -88,6 +89,7 @@ int run(int argc, char** argv) {
     std::string token_output;
     std::string syntax_output;
     std::string diagnostic_output;
+    std::string typed_ir_output;
     std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
@@ -144,6 +146,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-diagnostics") {
             if (i + 1 >= argc) throw CompileError("--emit-diagnostics expects a path");
             diagnostic_output = argv[++i];
+        } else if (arg == "--emit-typed-ir") {
+            if (i + 1 >= argc) throw CompileError("--emit-typed-ir expects a path");
+            typed_ir_output = argv[++i];
         } else if (arg == "--emit-c-header") {
             if (i + 1 >= argc) throw CompileError("--emit-c-header expects a path");
             c_header_output = argv[++i];
@@ -198,7 +203,8 @@ int run(int argc, char** argv) {
     }
     if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
-                       !c_header_output.empty() || llvm_compiler_explicit || !link_args.empty())) {
+                       !c_header_output.empty() || !typed_ir_output.empty() ||
+                       llvm_compiler_explicit || !link_args.empty())) {
         throw CompileError("--check cannot be combined with backend output or linking options");
     }
     TargetInfo target = resolve_target_info(target_triple);
@@ -208,12 +214,20 @@ int run(int argc, char** argv) {
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
-    int frontend_artifact_count = 0;
-    if (!token_output.empty()) ++frontend_artifact_count;
-    if (!syntax_output.empty()) ++frontend_artifact_count;
-    if (!diagnostic_output.empty()) ++frontend_artifact_count;
-    if (frontend_artifact_count > 1) {
-        throw CompileError("frontend artifact outputs cannot be combined");
+    if (!typed_ir_output.empty() &&
+        (output_explicit || emit_llvm_only || !object_output.empty() ||
+         !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
+         !metadata_output.empty() || !metadata_check.empty() ||
+         !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty())) {
+        throw CompileError("--emit-typed-ir cannot be combined with backend, module-cache, or linking options");
+    }
+    int artifact_output_count = 0;
+    if (!token_output.empty()) ++artifact_output_count;
+    if (!syntax_output.empty()) ++artifact_output_count;
+    if (!diagnostic_output.empty()) ++artifact_output_count;
+    if (!typed_ir_output.empty()) ++artifact_output_count;
+    if (artifact_output_count > 1) {
+        throw CompileError("artifact outputs cannot be combined");
     }
     if (!token_output.empty()) {
         if (check_only || output_explicit || emit_llvm_only || !object_output.empty() ||
@@ -310,6 +324,11 @@ int run(int argc, char** argv) {
     for (auto& fn : cached_ir_functions) ir.functions.push_back(std::move(fn));
     for (const auto& warning : ir.warnings) {
         std::cerr << warning << "\n";
+    }
+    if (!typed_ir_output.empty()) {
+        write_text_file(typed_ir_output, dump_ir_program(ir, input));
+        std::cout << "wrote " << typed_ir_output << " (typed IR dump)\n";
+        return 0;
     }
     if (!module_cache_output.empty()) {
         attach_module_cache_ir_summaries(loaded.cache, ir);

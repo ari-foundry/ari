@@ -79,7 +79,7 @@ tooling.
 | Data structures | Partial. Vectors, slices, maps, sets, trees, heaps, and iterators exist, but nested generic aggregate behavior needs more stress coverage. | Hard blocker before AST/HIR/symbol tables are comfortable. |
 | Error flow | Partial. `Option`, `Result`, and compact errors exist, but large expected-failure workflows still need ergonomic pressure testing. | Soft blocker for lexer; hard blocker for parser/sema. |
 | Build/test flow | Partial. `make` and focused compiler/std checks exist. Bootstrap-specific fixtures and stage comparison do not exist yet. | Hard blocker before claiming self-host progress. |
-| Stage comparison | Not started. Token, syntax, HIR, typed IR, LLVM text, and executable comparison policy is documented but not implemented. | Hard blocker before stage1/stage2 comparison. |
+| Stage comparison | Seeded. Token, syntax, diagnostic, and basic typed IR artifact checks exist; HIR, richer typed IR, LLVM text, and stage comparison still need implementation. | Hard blocker before stage1/stage2 comparison. |
 
 The practical interpretation:
 
@@ -329,7 +329,8 @@ Exit criteria:
 
 ### Phase 7: Backend Artifact And Stage Comparison
 
-- Emit normalized HIR or IR text first.
+- Extend the current normalized typed IR text and add HIR text before backend
+  stage comparison.
 - Add LLVM text only after frontend artifacts are stable.
 - Define artifact normalization before comparing stage1 and stage2.
 
