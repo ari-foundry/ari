@@ -336,6 +336,7 @@ def main() -> int:
         "## Golden File Policy",
         "## Focused Make Targets",
         "## First Implementation Slices",
+        "## Current Seed Implementation",
         "## Current Compiler Integration",
         "## Review Checklist",
         "## Readiness Impact",
@@ -354,6 +355,7 @@ def main() -> int:
         "Executable behavior",
         "normalize repository-local paths",
         "Golden files are committed text outputs",
+        "make check-compiler-artifacts",
         "make -C bootstrap check-lex",
         "Text comparator",
         "Path normalizer",
@@ -363,6 +365,9 @@ def main() -> int:
         "HIR dump format",
         "Typed IR dump format",
         "LLVM normalizer",
+        "tests/check_compiler_artifacts.py",
+        "tests/cases/compiler-development/artifact/ok/",
+        "tests/cases/compiler-development/artifact/errors/",
         "38-42% ready",
     ]:
         require(artifact_testing, needle, artifact_testing_path)

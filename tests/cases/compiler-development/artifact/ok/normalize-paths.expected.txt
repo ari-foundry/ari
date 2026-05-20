@@ -1,0 +1,5 @@
+artifact path=<build>/compiler-development/output.ll
+source path=<repo>/tests/cases/compiler-development/source.ari
+temp path=<tmp1>
+again temp=<tmp2>
+ptr=<ptr>

@@ -1,0 +1,5 @@
+artifact path=$BUILD/compiler-development/output.ll
+source path=$ROOT/tests/cases/compiler-development/source.ari
+temp path=$BUILD/tmp/ari-alpha-123.tmp
+again temp=$BUILD/tmp/ari-beta-456.tmp
+ptr=0x7ffeABCD

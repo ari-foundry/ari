@@ -1,0 +1,4 @@
+artifact mismatch: tests/cases/compiler-development/artifact/errors/text-line-mismatch
+line 2:
+  expected: line two expected
+    actual: line two actual

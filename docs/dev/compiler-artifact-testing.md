@@ -155,6 +155,7 @@ Small targets should compare one artifact family at a time:
 
 ```text
 make check-compiler-dev-docs
+make check-compiler-artifacts
 make check-bootstrap-readiness
 make -C bootstrap check-lex
 make -C bootstrap check-parse
@@ -190,6 +191,28 @@ Land artifact testing in slices:
 
 Each slice should have one positive fixture and at least one negative or
 mismatch fixture when the behavior can fail.
+
+## Current Seed Implementation
+
+The current repository has a tiny artifact comparison seed before real token,
+diagnostic, syntax, HIR, and typed-IR dump producers exist:
+
+```text
+tests/check_compiler_artifacts.py
+tests/cases/compiler-development/artifact/ok/
+tests/cases/compiler-development/artifact/errors/
+make check-compiler-artifacts
+```
+
+It currently proves three low-level contracts:
+
+- equal expected/actual text passes without output
+- repository paths, build paths, temporary names, and pointer addresses
+  normalize to stable placeholders
+- a line mismatch produces a small report naming the fixture and line
+
+This is deliberately small. Future artifact producers should plug into the
+same shape instead of inventing unrelated golden comparison rules.
 
 ## Current Compiler Integration
 

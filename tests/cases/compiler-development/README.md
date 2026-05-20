@@ -10,8 +10,8 @@ the same language surface that normal Ari users get.
 ## Layout
 
 - `ok/model/`: data-model and pass-flow fixtures.
-- `ok/artifact/`: backend or artifact fixtures that should compile to LLVM,
-  object, executable, or shared-library output.
+- `artifact/ok/`: expected/actual artifact pairs that should compare cleanly.
+- `artifact/errors/`: expected mismatches and report shapes for artifact tools.
 - `errors/`: focused compiler diagnostics for unsupported or invalid surfaces.
 
 ## Current Fixtures
@@ -22,3 +22,7 @@ the same language surface that normal Ari users get.
   source spans, rich enum error payloads, and explicit vectors.
 - `ok/model/compiler-source-map-workflow.ari`: source ids, byte spans,
   line/column lookup, structured source errors, and tuple return flow.
+- `artifact/ok/normalize-paths.*.txt`: seed path, temp-name, and pointer
+  normalization fixture for future golden artifact checks.
+- `artifact/errors/text-line-mismatch.*.txt`: seed mismatch-report fixture for
+  text artifact comparisons.
