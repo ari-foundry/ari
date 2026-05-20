@@ -41,6 +41,15 @@ macros, and `std-library-smoke.ari` for cross-library integration. Zone and
 pointer provenance hooks live under `tests/cases/memory/`. See
 [Library Testing](library-testing.md) for the full policy.
 
+## Bootstrap Documentation Coverage Note
+
+Bootstrapping is not implemented yet, but the start gate is checked by
+`make check-bootstrap-docs`. That target runs
+`tests/check_bootstrap_readiness_docs.py` and verifies that
+[Bootstrap Readiness](bootstrap-readiness.md), [Self-Host Roadmap](self-host-roadmap.md),
+and the docs indexes stay linked and keep the estimate, gate, roadmap, and test
+plan sections.
+
 ## Feature Plan
 
 | Feature | Positive Directions | Negative Directions | Backend Directions | Status |

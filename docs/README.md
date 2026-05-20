@@ -53,6 +53,7 @@ Use these when changing the compiler:
 - [Runtime And Backend](dev/runtime-backend.md)
 - [Runtime Support Roadmap](dev/runtime-support.md)
 - [Standard Library Roadmap](dev/standard-library-roadmap.md)
+- [Bootstrap Readiness](dev/bootstrap-readiness.md)
 - [Self-Host Roadmap](dev/self-host-roadmap.md)
 - [Library Testing](dev/library-testing.md)
 - [Roadmap](dev/roadmap.md)

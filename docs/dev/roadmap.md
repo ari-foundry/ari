@@ -78,7 +78,9 @@ Non-goals for the early part of this track:
 
 ## Bootstrap Direction
 
-The detailed plan lives in [Self-Host Roadmap](self-host-roadmap.md).
+The practical start gate lives in
+[Bootstrap Readiness](bootstrap-readiness.md), and the detailed path lives in
+[Self-Host Roadmap](self-host-roadmap.md).
 The short version is:
 
 1. Treat the current C++ compiler as `stage0`, not as the codebase to rewrite
