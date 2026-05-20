@@ -1566,6 +1566,7 @@ such as `len`, `is_empty`, `find`, and `starts_with` still use the direct
 std::boxed::new<T>(ref mut zone, value)
 Box!(T, ref mut zone, value)
 box.get()
+box.try_get()
 box.set(value)
 box.replace(value)
 box.take()

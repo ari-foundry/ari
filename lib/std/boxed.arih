@@ -28,6 +28,13 @@ pub impl[T] std::boxed::Box[T] {
     return ptr_load(self.data);
   }
 
+  fn try_get(self: ref Self) -> std::Option[T] {
+    if self.is_empty() {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(self.data));
+  }
+
   fn set(self: ref mut Self, value: T) -> void {
     std::assert(!self.is_empty());
     let previous = ptr_load(self.data);

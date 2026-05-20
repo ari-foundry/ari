@@ -11,6 +11,7 @@ heap.
 
 - allocation is explicit through `ref mut Zone`
 - the handle owns at most one value
+- `try_get` reports an empty handle with `Option[T]`
 - `take` moves the value out and leaves an empty handle
 - `try_take` reports an empty handle with `Option[T]`
 - `clear` drops the contained value and leaves the handle empty
@@ -36,6 +37,7 @@ Read and update the value with natural method names:
 
 ```ari
 let before = value.get();
+let optional_before = value.try_get();
 value.set(9);
 let previous = value.replace(13);
 ```
@@ -54,6 +56,15 @@ Use `try_take` when an empty handle is an ordinary case:
 ```ari
 let maybe_value = value.try_take();
 let fallback = maybe_value.unwrap_or(0);
+```
+
+Use `try_get` when reading from an empty handle is an ordinary branch. It
+returns `Some(value)` while the handle contains a value and `None` after
+`take` or `clear`:
+
+```ari
+let maybe_current = value.try_get();
+let current_or_zero = maybe_current.unwrap_or(0);
 ```
 
 Borrow or expose raw pointers only when the caller needs that shape:
@@ -83,7 +94,8 @@ An empty handle can still be dropped safely.
 - Empty boxes exist only through operations such as `take` or `clear`; users
   should not construct invalid raw `data` fields directly.
 - Raw pointer methods are sharp edges for low-level code. Prefer `as_ref`,
-  `as_mut`, `get`, `set`, `replace`, `take`, and `try_take` in ordinary code.
+  `as_mut`, `get`, `try_get`, `set`, `replace`, `take`, and `try_take` in
+  ordinary code.
 - The current handle does not free zone memory early; zones reclaim memory on
   reset or destroy.
 
@@ -96,6 +108,7 @@ Representative ok tests:
 
 - `std-boxed-box.ari`: construction, `get`, and `set`
 - `std-boxed-take.ari`: move-out and empty-handle state
+- `std-boxed-try-get.ari`: `Option`-returning empty-handle read
 - `std-boxed-try-take.ari`: `Option`-returning empty-handle flow
 - `std-boxed-put-in.ari`: refill after `take`
 - `std-boxed-copy-to.ari`: target-zone copy behavior

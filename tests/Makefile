@@ -930,6 +930,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-try-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-try-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent8try_take' $(BUILD_DIR)/prelude/std-boxed-try-take.ll
 	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-boxed-try-take.ll
+	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-try-get.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-try-get.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent7try_get' $(BUILD_DIR)/prelude/std-boxed-try-get.ll
+	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-boxed-try-get.ll
 	$(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-clear.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-clear.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent5clear' $(BUILD_DIR)/prelude/std-boxed-clear.ll
 	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-boxed-clear.ll
@@ -1514,6 +1517,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-as-mut-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; code=$$?; test $$code -eq 38; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-take.elf; $(BUILD_DIR)/prelude/std-boxed-take.elf; code=$$?; test $$code -eq 24; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-try-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-try-take.elf; $(BUILD_DIR)/prelude/std-boxed-try-take.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-try-get.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-try-get.elf; $(BUILD_DIR)/prelude/std-boxed-try-get.elf; code=$$?; test $$code -eq 60; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-clear.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-clear.elf; $(BUILD_DIR)/prelude/std-boxed-clear.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-put-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-put-in.elf; $(BUILD_DIR)/prelude/std-boxed-put-in.elf; code=$$?; test $$code -eq 110; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/boxed/std-boxed-drop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-drop.elf; $(BUILD_DIR)/prelude/std-boxed-drop.elf; code=$$?; test $$code -eq 0; fi

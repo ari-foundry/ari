@@ -1005,8 +1005,9 @@ Meanings:
   and releases the backing bytes. `set(value)` drops the previous value after
   storing the new one. `take()` moves the value out and leaves the handle empty,
   so a later handle drop does not drop that value again.
-  `try_take()` returns `Some(value)` for the same move-out path or `None` when
-  the handle is empty.
+  `try_get()` returns `Some(value)` without clearing the handle or `None` when
+  it is empty. `try_take()` returns `Some(value)` for the same move-out path or
+  `None` when the handle is empty.
   `clear()` drops the value if one is present and leaves the handle empty.
   `put_in(ref mut Zone, value)` refills an empty handle using the same tracked
   source zone. `as_ref()` and `as_mut()` borrow the stored value directly;

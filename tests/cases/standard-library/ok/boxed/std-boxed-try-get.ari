@@ -1,0 +1,15 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var boxed = Box::new<i64>(ref mut zone, 21);
+
+  let before = boxed.try_get().unwrap_or(0);
+  let moved = boxed.take();
+  let empty = boxed.try_get().unwrap_or(7);
+
+  boxed.put_in(ref mut zone, 11);
+  let after = boxed.try_get().unwrap_or(0);
+
+  drop boxed;
+  zone::destroy(zone);
+  return before + moved + empty + after;
+}

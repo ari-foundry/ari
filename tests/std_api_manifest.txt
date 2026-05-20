@@ -680,6 +680,7 @@ method std::boxed::Box[T]::replace|check-prelude std-boxed-replace; docs/dev/tes
 method std::boxed::Box[T]::set|check-prelude std-boxed-box and std-boxed-set-drop-value overwrite drop; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::take|check-prelude std-boxed-take value move-out leaves empty handle; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::try_get|check-prelude std-boxed-try-get Option-returning empty-handle read; docs/stdlib/modules/boxed.md
 method std::boxed::Box[T]::try_take|check-prelude std-boxed-try-take Option-returning empty-handle move-out; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::c::CStr::as_ptr|check-prelude std-c-interop borrowed raw C pointer accessor; docs/stdlib/modules/c.md
 method std::c::CStr::as_slice|check-prelude std-c-interop borrowed bytes without trailing NUL; docs/stdlib/modules/c.md

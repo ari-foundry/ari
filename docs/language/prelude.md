@@ -125,7 +125,7 @@ the root `Box[T]` / `std::Box[T]` alias. The handle also has associated
 constructors through `Box::new<T>(ref mut zone, value)` and
 `std::Box::new<T>(ref mut zone, value)`, and
 `Box!(T, ref mut zone, value)` is shorthand for the same source handle
-constructor. It exposes `get()`, `set(value)`,
+constructor. It exposes `get()`, `try_get()`, `set(value)`,
 `replace(value)`, `take()`, `try_take()`, `clear()`,
 `put_in(ref mut zone, value)`, `is_empty()`, `copy_to(ref mut zone)`,
 `as_ref()`, `as_mut()`, `swap(ref mut other)`, `as_ptr()`, and
@@ -133,8 +133,9 @@ constructor. It exposes `get()`, `set(value)`,
 the previous value after storing the new one. `replace(value)` stores a new
 value and returns the previous one.
 `take()` moves the current value out of the handle and leaves the handle empty;
-`try_take()` returns `Some(value)` for that same move-out path or `None` when
-the handle is already empty;
+`try_get()` returns `Some(value)` without clearing the handle or `None` when it
+is empty, and `try_take()` returns `Some(value)` for the move-out path or
+`None` when the handle is already empty;
 `clear()` drops the current value if one is present and leaves the handle empty;
 `is_empty()` reports that state, and `put_in(ref mut zone, value)` can refill
 that empty handle only with the same tracked zone that originally owns the box
@@ -950,6 +951,7 @@ var zone = zone::create(64)
 var other_zone = zone::create(64)
 var boxed = Box!(i64, ref mut zone, 21)
 let before = boxed.get()
+let maybe_before = boxed.try_get()
 boxed.set(9)
 let after = boxed.get()
 let replaced = boxed.replace(12)
@@ -975,8 +977,10 @@ also takes a mutable borrow: it loads the pointed-to value and clears the
 handle's data pointer so `drop boxed` will not drop the same value again.
 `clear()` takes the same empty-handle path but drops the current value instead
 of returning it; calling `clear()` on an already empty handle is a no-op.
-`try_take()` wraps the move-out path in `Option<T>` and
-returns `None` when the handle is empty. Explicit `drop boxed` consumes the
+`try_get()` and `try_take()` keep empty-handle branches in `Option<T>`:
+`try_get()` reads the current value without clearing the handle, while
+`try_take()` wraps the move-out path and returns `None` when the handle is
+empty. Explicit `drop boxed` consumes the
 handle binding and loads the pointed-to value through the normal `Drop` path
 when the handle is not empty, so a stored type with a `Drop` impl gets its
 destructor call. The zone still owns the backing bytes; memory is released with
