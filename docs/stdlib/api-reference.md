@@ -1144,6 +1144,19 @@ view.split_at(index)
 view.chunks(size)
 view.windows(size)
 view.split(delimiter)
+view.reverse()
+view.rotate_left(count)
+view.rotate_right(count)
+view.fill(value)
+view.copy_from(source)
+view.partition(keep)
+view.dedup()
+view.sort()
+view.stable_sort()
+view.is_sorted()
+view.binary_search(value)
+view.min()
+view.max()
 view.copy_to(ref mut zone)
 ```
 
@@ -1155,7 +1168,9 @@ subslice and returns an index or `-1`; an empty needle matches at `0`.
 `contains_slice` is the boolean wrapper. `compare` is lexicographic and
 returns `-1`, `0`, or `1`. `slice` and `split_at` return borrowed views into
 the same storage. `chunks`, `windows`, and delimiter `split` are lazy
-iterators that yield borrowed `Slice[T]` views.
+iterators that yield borrowed `Slice[T]` views. The reordering, fill/copy,
+partition/dedup, sort/search, and min/max receiver methods forward to
+`std::algo`; ordered methods require `T: std::cmp::Ord[T]`.
 
 `std::vec::Vec[T]` is the source growable sequence:
 

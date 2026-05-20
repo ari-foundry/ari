@@ -23,7 +23,7 @@ limits, examples, and test files for one module.
   routines, hosted page-size lookup, and value `replace`/`swap`.
 - [Slice[T]](slice.md): root borrowed contiguous views, indexing, subslicing,
   subsequence search, comparison, lazy chunks/windows, delimiter splitting,
-  and copy-to-vector behavior.
+  copy-to-vector behavior, and direct algorithm wrappers.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,
   safe accessors, growth, in-place reordering, ordered search, copy, and
   iterator entry points.
@@ -49,8 +49,9 @@ limits, examples, and test files for one module.
   between `format_in!` macro lowering and source formatting APIs.
 - [std::cmp](cmp.md): source comparison traits, generic value selection,
   inclusive clamping, and inclusive range predicates.
-- [std::algo](algo.md): source slice algorithms for sorting, binary search,
-  reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup.
+- [std::algo](algo.md): source slice algorithms behind both free functions
+  and `Slice[T]` receiver wrappers for sorting, binary search, reverse/rotate,
+  partition, min/max/clamp, swap, fill, copy, and dedup.
 - [std::convert](convert.md): explicit conversion traits plus source
   `identity`, `from`, and `into` helper calls for generic code.
 - [std::context](context.md): runtime-backed program argument, startup path,

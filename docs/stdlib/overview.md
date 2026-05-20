@@ -31,7 +31,7 @@ API evolution.
 
 | Module | Purpose | First Things To Use |
 | --- | --- | --- |
-| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `char`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `CStr`, `CString`, `Library`, `Symbol`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. Root `char` is an ASCII `u8` alias; root `Slice[T]` includes `len`, access, subslicing, subsequence search, compare, chunks, windows, split, and copy helpers. |
+| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `char`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `CStr`, `CString`, `Library`, `Symbol`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. Root `char` is an ASCII `u8` alias; root `Slice[T]` includes `len`, access, subslicing, subsequence search, compare, chunks, windows, split, copy helpers, and direct algorithm wrappers. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `filter`, `flatten`, `transpose`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
 | `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, `write_bytes`, `read_line`. |
@@ -64,7 +64,7 @@ API evolution.
 | `std::iter` | Range, iterator traits, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, `collect`. |
 | `std::fmt` | Formatting traits plus explicit-zone, writer, and stdout formatting helpers. Root `Display`/`Debug` re-export these traits. | `Display::format_in`, `Debug::debug_in`, `FormatSpec`, `decimal`, `hex`, `binary`, `octal`, strict `with_width`/`with_precision`, fallible `try_with_width`/`try_with_precision`, `left`, `right`, `center`, `uppercase`, `alternate`, `unsigned_in`, `integer_in`, `boolean_in`, `float_in`, `text_in`, `debug_text_in`, `debug_value`, `write_unsigned`, `write_integer`, `write_boolean`, `write_text`, `write_value`, `write_debug`, `print_value`, `println_value`, `print_debug`, `println_debug`. |
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
-| `std::algo` | Source algorithms over borrowed slices. | `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, `dedup`. |
+| `std::algo` | Source algorithms over borrowed slices. | `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, `dedup`, plus receiver-form `Slice[T]` wrappers for common call sites. |
 | `std::convert` | Explicit conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked add/sub/mul/div/rem/neg/abs, wrapping/overflowing add/sub/mul, saturating add/sub/mul/div/neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. |
 | `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, byte-swap, population-count, and zero/one-run bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`, `byte_swap`, `population_count`, `leading_ones`. |
@@ -157,9 +157,9 @@ metadata, asserting `first`/`last`/`get` for programmer errors, and
 `try_first`/`try_last`/`try_get` for ordinary absence handled through
 `Option`. `Slice[T]` and `std::vec::Vec[T]` also share borrowed-view
 operations such as `slice`, `split_at`, subsequence `find`, `contains_slice`,
-lexicographic `compare`, lazy `chunks`, lazy `windows`, and delimiter `split`;
-`std::vec::Vec[T]` also adds in-place `reverse`, rotation, sorting, and ordered
-search wrappers for owned sequence storage. `Vec[T]` returns views over its
+lexicographic `compare`, lazy `chunks`, lazy `windows`, delimiter `split`,
+in-place reordering, copying/filling, partition/dedup, sorting, ordered
+search, and min/max wrappers. `Vec[T]` returns views over its
 live element storage, and `String` exposes the same byte-view shape plus
 allocator-backed `join_in`.
 

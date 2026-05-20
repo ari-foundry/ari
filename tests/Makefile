@@ -1465,6 +1465,19 @@ check-prelude: $(TARGET)
 	grep -F -q 'Slice_i64_8inherent7compare' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent6chunks' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent7windows' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent7reverse' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent11rotate_left' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent12rotate_right' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent4fill' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent9copy_from' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent9partition' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent5dedup' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent4sort' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent11stable_sort' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent9is_sorted' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent13binary_search' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent3min' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent3max' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-metadata.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent8is_empty"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-metadata.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-option-access.ll

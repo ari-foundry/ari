@@ -8,6 +8,9 @@ predicate, finding min/max values, and compacting consecutive duplicates.
 The API names stay short because the module path already says the domain:
 write `algo::sort(values)`, `algo::binary_search(values, target)`, and
 `algo::reverse(values)`, not type-suffixed names.
+For everyday slice call sites, the same common policies are also exposed as
+receiver methods such as `values.sort()`, `values.binary_search(target)`,
+`values.copy_from(source)`, and `values.dedup()`.
 
 ## API
 
@@ -88,6 +91,10 @@ impl cmp::Ord[i64] for i64 {
 var values = [5, 1, 4, 1, 3];
 algo::sort<i64>(values.as_slice());
 let found = algo::binary_search<i64>(values.as_slice(), 4);
+
+let view = values.as_slice();
+view.sort();
+let again = view.binary_search(4);
 ```
 
 Partition and compact:
@@ -133,11 +140,13 @@ algo::fill<i64>(target.as_slice()[copied..target.len()], -1);
 
 ```text
 tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari
+tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
 ```
 
 The focused test covers sorting, stable sorting, comparator-based sorting,
 binary search, min/max/clamp, reverse, rotation, partition, fill, copy, dedup,
-and swap over `Slice[i64]`.
+and swap over `Slice[i64]`. `prelude-slice-sequence.ari` covers the natural
+receiver wrappers over the same algorithms.
 
 ## Next Work
 

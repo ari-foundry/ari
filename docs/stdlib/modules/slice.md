@@ -95,17 +95,34 @@ view.copy_to(ref mut zone)
 
 This returns `std::vec::Vec[T]` tied to the target zone.
 
-Use `std::algo` for in-place algorithms over mutable slice views:
+Common in-place algorithms are available directly on the borrowed view:
 
 ```ari
-algo::sort<T>(view)
-algo::binary_search<T>(view, target)
-algo::reverse<T>(view)
-algo::copy<T>(target, source)
+view.reverse()
+view.rotate_left(count)
+view.rotate_right(count)
+view.fill(value)
+view.copy_from(source)
+view.partition(keep)
+view.dedup()
+view.sort()
+view.stable_sort()
+view.is_sorted()
+view.binary_search(target)
+view.min()
+view.max()
 ```
 
-`Slice[T]` owns view operations. `std::algo` owns mutating algorithms and
-ordered searches so the root slice type does not become a dumping ground.
+These methods forward to `std::algo`, so the algorithm policy still lives in
+one module while call sites can use the natural receiver form. `copy_from`
+copies the common prefix from `source` into the receiver and returns the number
+of elements written. `dedup` compacts consecutive duplicate values in place and
+returns the logical unique length; callers decide whether to truncate an owning
+container. `partition` accepts a borrowed predicate and returns the split index.
+The ordered methods require `T: std::cmp::Ord[T]`.
+
+The free functions remain useful for generic utility code and for cases where
+the target/source role is clearer as `algo::copy(target, source)`.
 
 ## Tests
 
@@ -119,7 +136,9 @@ tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
 ```
 
 `prelude-slice-sequence.ari` covers `slice`, `split_at`, `find`,
-`contains_slice`, `compare`, `chunks`, `windows`, and delimiter `split`.
+`contains_slice`, `compare`, `chunks`, `windows`, delimiter `split`, in-place
+reordering, copying/filling, partition/dedup, sorting, binary search, and
+min/max wrappers.
 
 ## Limits And Roadmap
 

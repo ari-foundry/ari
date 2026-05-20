@@ -90,6 +90,79 @@ pub impl[T] std::Slice[T] {
     let current = super::Slice<T> { data: self.data, len: self.len };
     return std::vec::from_slice_in<T>(target, current);
   }
+
+  fn reverse(self: ref Self) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::reverse<T>(current);
+    return;
+  }
+
+  fn rotate_left(self: ref Self, count: i64) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::rotate_left<T>(current, count);
+    return;
+  }
+
+  fn rotate_right(self: ref Self, count: i64) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::rotate_right<T>(current, count);
+    return;
+  }
+
+  fn fill(self: ref Self, value: T) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::fill<T>(current, value);
+    return;
+  }
+
+  fn copy_from(self: ref Self, source: super::Slice[T]) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::copy<T>(current, source);
+  }
+
+  fn partition(self: ref Self, keep: fn(ref T) -> bool) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::partition<T>(current, keep);
+  }
+
+  fn dedup(self: ref Self) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::dedup<T>(current);
+  }
+}
+
+pub impl[T: std::cmp::Ord[T]] std::Slice[T] {
+  fn sort(self: ref Self) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::sort<T>(current);
+    return;
+  }
+
+  fn stable_sort(self: ref Self) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::stable_sort<T>(current);
+    return;
+  }
+
+  fn is_sorted(self: ref Self) -> bool {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::is_sorted<T>(current);
+  }
+
+  fn binary_search(self: ref Self, target: T) -> super::Option[i64] {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::binary_search<T>(current, target);
+  }
+
+  fn min(self: ref Self) -> super::Option[T] {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::min<T>(current);
+  }
+
+  fn max(self: ref Self) -> super::Option[T] {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::max<T>(current);
+  }
 }
 
 pub impl[T] std::vec::Vec[T] {

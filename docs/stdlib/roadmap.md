@@ -13,7 +13,7 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 
 Current source families: `option`, `result`, root `Slice[T]` access,
 subslice, split, subsequence search, compare, chunk/window, copy helpers,
-`algo` slice sort/search/reorder helpers, `hash` deterministic
+direct algorithm wrappers, `algo` slice sort/search/reorder helpers, `hash` deterministic
 hasher/value/byte-slice helpers, `random` OS entropy plus deterministic
 non-cryptographic PRNG helpers, `mem` layout,
 pointer, value, byte memory, and hosted page-size helpers, `zone` raw
@@ -101,10 +101,10 @@ work. Each one should land in small tested slices with natural API names.
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Current `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, and `is_join_error` for plain `fn() -> i64` entries; future captured/capability entries, user-facing `ThreadLocal[T]`, custom stack-size options, richer status/result values, and `std::sync` integration. |
 | `std::sync` | Share state between threads deliberately. | Current concrete `AtomicI64` with `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`, plus source primitive `Mutex`, `RwLock`, and `Once`; future generic atomics, memory-order parameters, value-protecting `Mutex[T]`/`RwLock[T]`, `Condvar`, `OnceLock`, `LazyLock`, `Barrier`, optional `Semaphore`, `Shared`, `Weak`, MPSC channels, and Linux futex-backed internals after ownership rules are stable. |
 | `std::collections` | Store keyed, queue-like, linked, and priority data beyond vectors. | Current linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed `HashMap`/`HashSet`, red-black-tree `TreeMap`/`TreeSet`, explicit hash/comparator constructors, lookup/update/removal where implemented, FIFO/linked/heap tests, live-bucket hash iterators, sorted tree iterators; future tree deletion and trait-driven constructors. |
-| root `Slice[T]` | Borrow contiguous storage without owning or allocating. | Current length/indexing/access, `try_*` access, `slice`, `split_at`, `find`, `contains_slice`, `compare`, prefix/suffix/equality, `chunks`, `windows`, delimiter `split`, and copy-to-vector; future predicate split and stronger trait-bound diagnostics for generic comparison. |
+| root `Slice[T]` | Borrow contiguous storage without owning or allocating. | Current length/indexing/access, `try_*` access, `slice`, `split_at`, `find`, `contains_slice`, `compare`, prefix/suffix/equality, `chunks`, `windows`, delimiter `split`, copy-to-vector, and receiver-form algorithm wrappers for reverse/rotate/fill/copy_from/partition/dedup/sort/stable_sort/is_sorted/binary_search/min/max; future predicate split and stronger trait-bound diagnostics for generic comparison. |
 | `std::vec` | Own growable contiguous storage while keeping borrowed sequence work allocation-free. | Current explicit-zone `Vec[T]`, metadata, `try_*` accessors, mutation/growth, copy, iteration, raw pointer access, direct `slice`, `split_at`, `find`, `contains_slice`, `compare`, `chunks`, `windows`, and delimiter `split` wrappers over live storage, plus in-place `reverse`, rotation, sorting, sortedness, binary search, and min/max wrappers; future root/source vector unification and stronger trait-driven collection constructors. |
 | `std::iter` | Compose sequence processing without forcing every operation onto each collection type. | Current `range`, `range_inclusive`, `Iterator`, `IntoIterator`, lazy `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed `collect`; future captured closures, richer adapter inference, and collect targets beyond `std::vec::Vec[T]`. |
-| `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting and move-aware algorithm contracts. |
+| `std::algo` | Provide familiar algorithms over borrowed slices and back the natural receiver methods. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting and move-aware algorithm contracts. |
 | `std::hash` | Provide deterministic non-cryptographic hashing without tying hash policy to one collection type. | Current `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers, and `collections::hash_i64` compatibility; future aggregate/derive impls and trait-driven hash collection constructors. |
 | `std::random` | Provide OS seed material and reproducible non-cryptographic random streams without making cryptography promises. | Current `entropy`, direct OS byte `fill`, deterministic `Prng`, `seed`, `from_entropy`, `seed_from_os`, `next`, `boolean`, unbiased `below`/`range` plus fallible bound checks, `float`, PRNG byte fill, and generic `shuffle`; future fallible entropy results, larger distribution tests, cryptographic stream policy, and distribution helpers. |
 | `std::math` | Provide arithmetic helpers whose names communicate policy better than raw operators. | Current natural `i64` bound, sign/parity helpers, checked add/sub/mul/div/rem/neg/abs/pow, wrapping/overflowing add/sub/mul/pow, saturating add/sub/mul/div/neg/abs/pow, strict `pow`, floor/ceil division, `gcd`, and `lcm`; future generic numeric traits and floating helpers. |
@@ -131,7 +131,9 @@ work. Each one should land in small tested slices with natural API names.
   `std::vec::Vec[T]`, including `try_*` methods for `Option`-based absence.
 - Keep borrowed sequence operations on `Slice[T]`: range views, split views,
   subsequence search, lexicographic compare, chunks, windows, and delimiter
-  split should stay allocation-free and return views.
+  split should stay allocation-free and return views. Receiver-form algorithm
+  wrappers should mutate the borrowed storage in place or return scalar/Option
+  answers without allocating.
 - Keep the same borrowed sequence vocabulary available directly on
   `std::vec::Vec[T]` when the vector owns the backing storage and the operation
   can return views without allocation.

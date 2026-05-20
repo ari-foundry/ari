@@ -32,8 +32,8 @@ identifies the exact case:
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access
   behavior.
 - `prelude-slice-sequence.ari`: root `Slice[T]` range views, split views,
-  subsequence search, lexicographic compare, chunks, windows, and delimiter
-  splitting.
+  subsequence search, lexicographic compare, chunks, windows, delimiter
+  splitting, and receiver-form algorithm wrappers.
 - `std-iter-adapters.ari`: source `std::iter` lazy `map`, `filter`, `take`,
   `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed
   `collect` behavior over `std::vec::Iter[T]`.

@@ -260,7 +260,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | bit helpers | `bits::is_set`, `bits::rotate_left`, `bits::bit_width`, `bits::leading_zeros`, `bits::leading_ones` |
 | random helpers | `random::entropy`, `random::seed`, `random::from_entropy`, `rng.next()`, `rng.boolean()`, `rng.below(upper)`, `rng.range(start, end)`, `rng.float()`, `rng.fill(bytes)`, `rng.shuffle<T>(values)` |
 | source growable vector | `std::vec::Vec<T>`, `std::vec::new<T>(&mut zone, capacity)`, `.reverse()`, `.rotate_left(count)`, `.sort()`, `.binary_search(value)` |
-| borrowed view | `Slice<T>`, `.as_slice()`, `slice(data, len)`, `.slice(start, end)`, `.find(needle)`, `.chunks(size)`, `.windows(size)`, `.split(delimiter)` |
+| borrowed view | `Slice<T>`, `.as_slice()`, `slice(data, len)`, `.slice(start, end)`, `.find(needle)`, `.chunks(size)`, `.windows(size)`, `.split(delimiter)`, `.sort()`, `.binary_search(value)` |
 | comparison helpers | `cmp::min`, `cmp::max`, `cmp::clamp` with `Ord` impls |
 | iteration traits | `Iterator[T]`, `IntoIterator[T]`, `iter::range`, `iter::range_inclusive` |
 
