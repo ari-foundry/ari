@@ -60,7 +60,7 @@ Choose the smallest target that observes the behavior you changed:
 | User-facing language docs or navigation | `make check-language-docs` |
 | Compiler roadmap, maturity gates, pass contracts, or readiness docs | `make check-compiler-dev-docs` |
 | Bootstrap start-gate wording or fixture groups | `make check-bootstrap-docs` |
-| Token, source-map, syntax, diagnostic, module-graph, declaration, typed-IR, or pass-summary artifacts | `make check-compiler-artifacts` |
+| Stage-plan, token, source-map, syntax, diagnostic, module-graph, declaration, typed-IR, or pass-summary artifacts | `make check-compiler-artifacts` |
 | Compiler-shaped Ari model fixtures | `make check-compiler-development` |
 | One ordinary Ari program | `build/ari path/to/case.ari --check` |
 | One backend lowering shape | `build/ari path/to/case.ari --emit-llvm build/focused/name.ll` |

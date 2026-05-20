@@ -42,18 +42,19 @@ Compare artifacts in this order:
 
 | Order | Artifact | Purpose | Producer |
 | --- | --- | --- | --- |
-| 1 | Source map dump | Prove file text, byte offsets, line tables, and newline policy are stable. | source loader |
-| 2 | Token dump | Prove lexing and source spans are stable. | lexer |
-| 3 | Diagnostic dump | Prove source maps and error rendering are stable. | lexer/parser/sema |
-| 4 | Syntax dump | Prove parsing and recovery are stable. | parser |
-| 5 | Module graph dump | Prove file-backed module loading, imports, and public item surfaces are stable. | module loader |
-| 6 | Declaration index dump | Prove parsed declaration signatures, visibility, and source locations are stable. | parser/module loader |
-| 7 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
-| 8 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
-| 9 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
-| 10 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
-| 11 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
-| 12 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
+| 1 | Stage plan | Prove artifact order, owners, and first checks are visible from the compiler. | driver |
+| 2 | Source map dump | Prove file text, byte offsets, line tables, and newline policy are stable. | source loader |
+| 3 | Token dump | Prove lexing and source spans are stable. | lexer |
+| 4 | Diagnostic dump | Prove source maps and error rendering are stable. | lexer/parser/sema |
+| 5 | Syntax dump | Prove parsing and recovery are stable. | parser |
+| 6 | Module graph dump | Prove file-backed module loading, imports, and public item surfaces are stable. | module loader |
+| 7 | Declaration index dump | Prove parsed declaration signatures, visibility, and source locations are stable. | parser/module loader |
+| 8 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
+| 9 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
+| 10 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
+| 11 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
+| 12 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
+| 13 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
 
 Do not skip directly to executable comparison for compiler frontend work. A
 binary exit code can say "something changed"; it cannot say which compiler
@@ -247,6 +248,7 @@ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
 tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph
 tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary
+tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan
 tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
 tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic
@@ -261,17 +263,20 @@ ari --emit-syntax path
 ari --emit-diagnostics path
 ari --emit-module-graph path
 ari --emit-declaration-index path
+ari --emit-stage-plan path
 ari --emit-pass-summary path
 ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves twelve low-level contracts:
+It currently proves thirteen low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
   normalize to stable placeholders
 - a line mismatch produces a small report naming the fixture and line
+- `--emit-stage-plan` writes deterministic artifact order, owner, first-check,
+  and start-gate text directly from the compiler driver
 - `--emit-source-map` writes deterministic source file, byte offset, line, and
   newline-policy text for root and file-backed modules
 - `--emit-tokens` writes deterministic lexer output for a small Ari source file
@@ -305,6 +310,8 @@ The current compiler already has useful artifact checks:
 
 - `--check` for frontend and sema diagnostics
 - `--emit-source-map` for stable byte offset, line table, and snippet text
+- `--emit-stage-plan` for stable stage-order and first-check routing from the
+  compiler binary
 - `--emit-tokens` for stable lexer token text and start locations
 - `--emit-syntax` for stable parser tree text before semantic analysis
 - `--emit-diagnostics` for stable expected-failure text before a full

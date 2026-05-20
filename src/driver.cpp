@@ -72,6 +72,7 @@ static void usage() {
                  "           [--emit-diagnostics path] [--emit-source-map path]\n"
                  "           [--emit-module-graph path] [--emit-declaration-index path]\n"
                  "           [--emit-typed-ir path] [--emit-pass-summary path]\n"
+                 "           [--emit-stage-plan path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -100,6 +101,7 @@ int run(int argc, char** argv) {
     std::string declaration_index_output;
     std::string typed_ir_output;
     std::string pass_summary_output;
+    std::string stage_plan_output;
     std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
@@ -171,6 +173,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-pass-summary") {
             if (i + 1 >= argc) throw CompileError("--emit-pass-summary expects a path");
             pass_summary_output = argv[++i];
+        } else if (arg == "--emit-stage-plan") {
+            if (i + 1 >= argc) throw CompileError("--emit-stage-plan expects a path");
+            stage_plan_output = argv[++i];
         } else if (arg == "--emit-c-header") {
             if (i + 1 >= argc) throw CompileError("--emit-c-header expects a path");
             c_header_output = argv[++i];
@@ -228,7 +233,7 @@ int run(int argc, char** argv) {
                        !c_header_output.empty() || !source_map_output.empty() ||
                        !module_graph_output.empty() || !declaration_index_output.empty() ||
                        !typed_ir_output.empty() ||
-                       !pass_summary_output.empty() ||
+                       !pass_summary_output.empty() || !stage_plan_output.empty() ||
                        llvm_compiler_explicit || !link_args.empty())) {
         throw CompileError("--check cannot be combined with backend output or linking options");
     }
@@ -241,7 +246,8 @@ int run(int argc, char** argv) {
     }
     if ((!source_map_output.empty() || !module_graph_output.empty() ||
          !declaration_index_output.empty() ||
-         !typed_ir_output.empty() || !pass_summary_output.empty()) &&
+         !typed_ir_output.empty() || !pass_summary_output.empty() ||
+         !stage_plan_output.empty()) &&
         (output_explicit || emit_llvm_only || !object_output.empty() ||
          !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
          !metadata_output.empty() || !metadata_check.empty() ||
@@ -257,8 +263,16 @@ int run(int argc, char** argv) {
     if (!declaration_index_output.empty()) ++artifact_output_count;
     if (!typed_ir_output.empty()) ++artifact_output_count;
     if (!pass_summary_output.empty()) ++artifact_output_count;
+    if (!stage_plan_output.empty()) ++artifact_output_count;
     if (artifact_output_count > 1) {
         throw CompileError("artifact outputs cannot be combined");
+    }
+    if (!stage_plan_output.empty()) {
+        write_text_file(stage_plan_output,
+                        dump_compiler_stage_plan(input, target.triple, implicit_std,
+                                                 module_search_paths.size(), cfg_features.size()));
+        std::cout << "wrote " << stage_plan_output << " (compiler stage plan)\n";
+        return 0;
     }
     if (!token_output.empty()) {
         if (check_only || output_explicit || emit_llvm_only || !object_output.empty() ||

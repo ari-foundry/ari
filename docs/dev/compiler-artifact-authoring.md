@@ -25,18 +25,19 @@ Use this order when choosing a new artifact or golden:
 
 | Order | Artifact | First Use |
 | --- | --- | --- |
-| 1 | `--emit-source-map` | Source files, bytes, line starts, and paths. |
-| 2 | `--emit-tokens` | Lexer output and token spans. |
-| 3 | `--emit-diagnostics` | Expected failures, labels, notes, and path normalization. |
-| 4 | `--emit-syntax` | Parser tree and recovery shape. |
-| 5 | `--emit-module-graph` | File-backed modules, imports, and item surfaces. |
-| 6 | `--emit-declaration-index` | Declaration names, visibility, signatures, and source locations. |
-| 7 | Future HIR dump | Lowered syntax and resolver-facing node shapes. |
-| 8 | `--emit-typed-ir` | Type, ownership, trait, and lowering facts. |
-| 9 | `--emit-pass-summary` | Stage counts and pass boundaries. |
-| 10 | `--emit-llvm` | Backend lowering once earlier layers are stable. |
-| 11 | Object/shared symbol checks | ABI, exported names, relocation, and shared-library surfaces. |
-| 12 | Executable behavior | Final runtime behavior after earlier artifacts match. |
+| 1 | `--emit-stage-plan` | Artifact ladder, owners, and first checks. |
+| 2 | `--emit-source-map` | Source files, bytes, line starts, and paths. |
+| 3 | `--emit-tokens` | Lexer output and token spans. |
+| 4 | `--emit-diagnostics` | Expected failures, labels, notes, and path normalization. |
+| 5 | `--emit-syntax` | Parser tree and recovery shape. |
+| 6 | `--emit-module-graph` | File-backed modules, imports, and item surfaces. |
+| 7 | `--emit-declaration-index` | Declaration names, visibility, signatures, and source locations. |
+| 8 | Future HIR dump | Lowered syntax and resolver-facing node shapes. |
+| 9 | `--emit-typed-ir` | Type, ownership, trait, and lowering facts. |
+| 10 | `--emit-pass-summary` | Stage counts and pass boundaries. |
+| 11 | `--emit-llvm` | Backend lowering once earlier layers are stable. |
+| 12 | Object/shared symbol checks | ABI, exported names, relocation, and shared-library surfaces. |
+| 13 | Executable behavior | Final runtime behavior after earlier artifacts match. |
 
 The order is not bureaucracy. It keeps failures near the layer that changed.
 
@@ -105,6 +106,7 @@ Keep fixture names behavior-based:
 - `syntax-dump-basic.syntax`
 - `module-graph-file-module.graph`
 - `declaration-index-basic.decls`
+- `stage-plan-basic.plan`
 - `typed-ir-basic.ir`
 - `diagnostic-parser-expected.diagnostic`
 

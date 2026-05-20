@@ -89,11 +89,11 @@ Ari program that returns structured errors, not only for a future compiler
 written in Ari.
 
 The hosted compiler now also has the first artifact producers:
-`--emit-source-map path`, `--emit-tokens path`, `--emit-syntax path`,
+`--emit-stage-plan path`, `--emit-source-map path`, `--emit-tokens path`, `--emit-syntax path`,
 `--emit-diagnostics path`, `--emit-module-graph path`,
 `--emit-declaration-index path`, `--emit-typed-ir path`, and
-`--emit-pass-summary path`. They write deterministic source byte/line tables,
-lexer token text, parser tree text, expected-failure diagnostic text,
+`--emit-pass-summary path`. They write deterministic stage order and first-check
+routing, source byte/line tables, lexer token text, parser tree text, expected-failure diagnostic text,
 file-backed source/import/item graph text, declaration signature text,
 sema-lowered typed IR, and stage-boundary counts, all checked by
 `make check-compiler-artifacts`. This is the first small stage-comparison step
@@ -243,6 +243,9 @@ Current readiness tests:
 - `tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls`:
   declaration signature, visibility, and source-location golden checked through
   `--emit-declaration-index`.
+- `tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan`:
+  stage order, owner, first-check, and start-gate golden checked through
+  `--emit-stage-plan`.
 - `tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir`: sema and
   typed-IR artifact golden checked through `--emit-typed-ir`.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:

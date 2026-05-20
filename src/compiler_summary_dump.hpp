@@ -17,4 +17,13 @@ std::string dump_compiler_pass_summary(const std::string& source_name,
                                        const ModuleMetadata& metadata,
                                        const IrProgram& ir);
 
+// Deterministic stage-order artifact for compiler-development triage. This
+// keeps the artifact ladder visible from the compiler binary itself, before a
+// reviewer has to inspect LLVM or linked executable behavior.
+std::string dump_compiler_stage_plan(const std::string& source_name,
+                                     const std::string& target_triple,
+                                     bool implicit_std,
+                                     std::size_t module_search_path_count,
+                                     std::size_t cfg_feature_count);
+
 } // namespace ari
