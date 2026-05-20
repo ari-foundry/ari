@@ -12,6 +12,8 @@ Read this page before the bootstrap-specific pages:
 
 - [Architecture](architecture.md) explains the current C++ compiler shape.
 - [Compiler Pipeline](compiler-pipeline.md) explains the source-to-LLVM path.
+- [Compiler Contributor Guide](compiler-contributor-guide.md) is the practical
+  edit map and small-test loop for day-to-day compiler changes.
 - [Compiler Pass Contracts](compiler-pass-contracts.md) defines the pass
   input/output boundaries and review rules that keep compiler code maintainable.
 - [Feature Test Matrix](test-matrix.md) tracks feature coverage.

@@ -28,6 +28,8 @@ def main() -> int:
     roadmap = read(roadmap_path)
     gates_path = "docs/dev/compiler-maturity-gates.md"
     gates = read(gates_path)
+    contributor_path = "docs/dev/compiler-contributor-guide.md"
+    contributor = read(contributor_path)
     pass_contracts_path = "docs/dev/compiler-pass-contracts.md"
     pass_contracts = read(pass_contracts_path)
     project_model_path = "docs/dev/compiler-project-model.md"
@@ -63,6 +65,7 @@ def main() -> int:
         "readiness signal",
         "Improve Ari as a general language",
         "Compiler Maturity Gates",
+        "Compiler Contributor Guide",
         "Compiler Pass Contracts",
         "Compiler Project Model",
         "Compiler Source And Diagnostics",
@@ -116,12 +119,45 @@ def main() -> int:
 
     require(gates, "Compiler Source And Diagnostics", gates_path)
     require(gates, "Compiler Pass Contracts", gates_path)
+    require(gates, "Compiler Contributor Guide", gates_path)
     require(gates, "Compiler Project Model", gates_path)
     require(gates, "Compiler Artifact Testing", gates_path)
 
     if not re.search(r"\|\s*Gate\s*\|\s*Required State\s*\|\s*Test Shape\s*\|\s*Status\s*\|", gates):
         print(f"{gates_path}: missing maturity gate table", file=sys.stderr)
         return 1
+
+    for heading in [
+        "# Compiler Contributor Guide",
+        "## Start Here",
+        "## Edit Map",
+        "## Development Loop",
+        "## Test Categories",
+        "## Natural Design Rule",
+        "## What Counts As Progress",
+    ]:
+        require(contributor, heading, contributor_path)
+
+    for needle in [
+        "not a bootstrap implementation plan",
+        "Compiler Development Roadmap",
+        "Compiler Pipeline",
+        "Compiler Pass Contracts",
+        "Feature Test Matrix",
+        "Build And Test",
+        "src/lexer.cpp",
+        "src/parser.cpp",
+        "src/sema.cpp",
+        "src/ir.hpp",
+        "src/llvm_codegen.cpp",
+        "make check-compiler-development",
+        "tests/cases/compiler-development/ok/model/",
+        "bootstrap-readiness",
+        "Result[T, E]",
+        "38-42% ready",
+        "58-62% remaining",
+    ]:
+        require(contributor, needle, contributor_path)
 
     for heading in [
         "# Compiler Pass Contracts",
@@ -285,6 +321,7 @@ def main() -> int:
 
     gate_labels = {
         "frontend-grammar": "Frontend grammar",
+        "contributor-guide": "Compiler Contributor Guide",
         "source-identity": "Source identity",
         "diagnostics": "Diagnostics",
         "pass-contracts": "Compiler Pass Contracts",
@@ -303,7 +340,9 @@ def main() -> int:
     }
     for entry, label in gate_labels.items():
         require(manifest, entry, manifest_path)
-        if entry == "source-diagnostics-layer":
+        if entry == "contributor-guide":
+            require(contributor, label, contributor_path)
+        elif entry == "source-diagnostics-layer":
             require(source_diagnostics, label, source_diagnostics_path)
         elif entry == "pass-contracts":
             require(pass_contracts, label, pass_contracts_path)
@@ -317,6 +356,7 @@ def main() -> int:
     for index_path in ["docs/README.md", "docs/dev/README.md"]:
         index = read(index_path)
         require(index, "Compiler Development Roadmap", index_path)
+        require(index, "Compiler Contributor Guide", index_path)
         require(index, "Compiler Maturity Gates", index_path)
         require(index, "Compiler Pass Contracts", index_path)
         require(index, "Compiler Project Model", index_path)

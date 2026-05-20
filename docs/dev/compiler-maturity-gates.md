@@ -10,6 +10,8 @@ Use this page with:
 
 - [Compiler Development Roadmap](compiler-development-roadmap.md) for the
   day-to-day development order.
+- [Compiler Contributor Guide](compiler-contributor-guide.md) for the practical
+  edit map, test categories, and small-check loop.
 - [Compiler Pass Contracts](compiler-pass-contracts.md) for lexer, parser,
   resolver, sema, IR, and backend boundary rules.
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) for the

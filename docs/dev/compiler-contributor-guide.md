@@ -1,0 +1,141 @@
+# Compiler Contributor Guide
+
+This page is the practical entry point for people developing the Ari compiler.
+It is not a bootstrap implementation plan. The job today is to make Ari a
+reliable, pleasant, general-purpose language implementation. A future compiler
+written in Ari should be a normal Ari program that benefits from the same
+language, diagnostics, modules, and artifacts as every other large Ari tool.
+
+Use this guide when you are about to change compiler behavior and need to know
+where to edit, what to test, and how the change moves Ari toward the later
+bootstrap start gate.
+
+## Start Here
+
+For a compiler change, read these in order:
+
+1. [Compiler Development Roadmap](compiler-development-roadmap.md): current
+   development phases and non-goals.
+2. [Compiler Pipeline](compiler-pipeline.md): how source becomes LLVM output.
+3. [Compiler Pass Contracts](compiler-pass-contracts.md): what each pass owns
+   and what data it may hand to the next pass.
+4. [Feature Test Matrix](test-matrix.md): which feature families already have
+   ok, error, IR, and executable coverage.
+5. [Build And Test](build-test.md): focused Make targets and direct
+   `build/ari` commands.
+
+Use [Compiler Maturity Gates](compiler-maturity-gates.md) only as the health
+scorecard. Use [Bootstrap Readiness](bootstrap-readiness.md) only to judge
+when a compiler-in-Ari track can begin later.
+
+## Edit Map
+
+| Change | First Files To Read | Usual Tests |
+| --- | --- | --- |
+| Tokens, literals, comments, escapes | `src/lexer.cpp`, `src/literal.cpp`, `src/token.hpp` | lexer/parser ok and error fixtures, then `--check` |
+| Grammar or AST shape | `src/parser.cpp`, `src/ast.hpp`, `src/ast_builders.cpp` | parser/control-flow/struct/module fixtures, malformed syntax diagnostics |
+| Names, modules, visibility | `src/module_loader.cpp`, `src/module_path.cpp`, `src/sema.cpp` | `make check-modules` or one module fixture |
+| Types, inference, generics | `src/type_semantics.cpp`, `src/type_inference.cpp`, `src/trait_semantics.cpp` | `make check-generics`, `make check-traits`, focused `--emit-llvm` |
+| Ownership and borrowing | `src/ownership_semantics.cpp`, `src/borrow_semantics.cpp`, `src/move_semantics.cpp` | focused ownership/borrowing error fixtures |
+| Patterns and control flow | `src/pattern_semantics.cpp`, `src/control_flow_semantics.cpp`, `src/loop_state_semantics.cpp` | `make check-control-flow`, `make check-match` |
+| IR facts | `src/ir.hpp`, `src/ir_builders.cpp`, `src/sema.cpp` | focused `--emit-llvm` plus IR text checks |
+| LLVM output and artifacts | `src/llvm_codegen.cpp`, `src/toolchain.cpp`, `src/driver.cpp` | `--emit-llvm`, `--emit-obj`, linked executable or shared object |
+| Source docs and gates | `docs/dev/*.md`, `tests/*manifest*.txt` | `make check-compiler-dev-docs` |
+
+If a backend change needs information that sema already knows, add that fact to
+IR instead of making codegen re-resolve source names.
+
+## Development Loop
+
+Use small checks while iterating:
+
+```text
+build/ari tests/cases/<area>/ok/<case>.ari --check
+build/ari tests/cases/<area>/ok/<case>.ari --emit-llvm build/focused/<case>.ll
+build/ari tests/cases/<area>/ok/<case>.ari -o build/focused/<case>.elf
+make check-compiler-dev-docs
+make check-compiler-development
+```
+
+Run broader targets before handoff only when the change crosses a boundary:
+
+- `make check-modules` for module loading, metadata, cache, and visibility
+- `make check-generics` for generic calls, impls, and monomorphization
+- `make check-traits` for trait dispatch, associated items, and trait objects
+- `make check-control-flow` and `make check-match` for ownership flow,
+  patterns, loops, and expression-valued control flow
+- `make check-cli` for driver, artifact, object, shared-library, and toolchain
+  behavior
+
+Sanitizer runs are useful for parser, sema, ownership, and codegen internals,
+but they are a separate heavy check and are not required for every small
+documentation or fixture slice.
+
+## Test Categories
+
+Tests should explain what they protect from the path alone:
+
+```text
+tests/cases/<feature>/ok/
+tests/cases/<feature>/errors/
+tests/cases/compiler-development/ok/model/
+tests/cases/compiler-development/ok/artifact/
+tests/cases/compiler-development/errors/
+tests/cases/bootstrap-readiness/
+```
+
+Use `compiler-development` for fixtures that prove normal Ari can model
+compiler-shaped data without starting a bootstrap tree. Use
+`bootstrap-readiness` for the later start-gate fixtures that measure whether
+the project is close enough to begin compiler-in-Ari work.
+
+Prefer names like:
+
+- `compiler-pass-worklist.ari`
+- `source-line-column.ari`
+- `errors-result-flow.ari`
+- `formatting-artifact-line.ari`
+
+Each test should have one reason to exist. If a file starts proving lexer,
+parser, generics, ownership, and backend behavior all at once, split it.
+
+## Natural Design Rule
+
+When compiler work exposes awkward Ari code, fix the normal language or public
+library surface. Do not add private compiler-only syntax or runtime hooks.
+
+Good examples:
+
+- use `char` and character literals like `'0'` for byte character intent
+- use type aliases for domain types such as `SourceId` and `ByteOffset`
+- use `Option[T]` when a value may be absent
+- use `Result[T, E]` when a pass may fail normally
+- use tuple returns for always-present product values such as
+  `(value, overflowed)`
+- use named formatting captures for stable artifact text
+
+Bad examples:
+
+- bootstrap-only keywords
+- hidden global compiler allocation
+- source-map APIs in runtime `std`
+- codegen rediscovering names that sema resolved
+- one giant self-host test as the first signal of progress
+
+## What Counts As Progress
+
+A compiler change is healthy when it:
+
+- keeps pass ownership clear
+- improves ordinary Ari users, not only a future stage1 compiler
+- adds a focused ok or error test
+- adds an IR/object/executable check when behavior reaches the backend
+- updates docs when it changes language, ABI, module, diagnostic, or artifact
+  behavior
+- leaves unsupported features rejected with clear diagnostics
+
+The current practical readiness remains about **38-42% ready** to begin a
+serious compiler-in-Ari track, with **58-62% remaining** before full
+self-hosting work is likely to be productive. Treat that number as a health
+metric. The work itself is normal compiler development.
+
