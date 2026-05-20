@@ -6,12 +6,14 @@ small descriptor model with two shapes:
 
 - `Fd`: a non-owning descriptor identity view.
 - `OwnedFd`: a descriptor owner that has the responsibility to close once.
+- `Pipe`: a pair of owned read/write descriptors created by `pipe()`.
 
 This module is intentionally not a raw syscall collection. Close, duplicate,
-close-on-exec, and nonblocking mode are the first owner operations because they
-define descriptor lifetime, inheritance, and blocking behavior. Broad `fcntl`,
-`poll`, Linux `epoll`, signals, and memory mapping are added in small layers
-after descriptor error policy is stable.
+pipe creation, close-on-exec, and nonblocking mode are the first owner
+operations because they define descriptor lifetime, inheritance, data-flow
+edges, and blocking behavior. Broad `fcntl`, `poll`, Linux `epoll`, signals,
+and memory mapping are added in small layers after descriptor error policy is
+stable.
 
 ## API
 
@@ -21,6 +23,7 @@ os::invalid()
 os::stdin()
 os::stdout()
 os::stderr()
+os::pipe()
 
 fd.raw()
 fd.is_valid()
@@ -44,6 +47,14 @@ owned.set_close_on_exec(enabled)
 owned.is_nonblocking()
 owned.set_nonblocking(enabled)
 owned.close()
+
+pipe.read_end()
+pipe.write_end()
+pipe.take_read_end()
+pipe.take_write_end()
+pipe.close_read_end()
+pipe.close_write_end()
+pipe.close()
 
 file.descriptor()
 ```
@@ -85,6 +96,13 @@ accepted the change. The API intentionally avoids exposing raw flag integers;
 future socket and readiness wrappers can build on this owned-descriptor
 policy.
 
+`pipe()` returns `Option[Pipe]`. A successful `Pipe` owns both ends of the
+host pipe: `read_end()` and `write_end()` borrow descriptor views, `take_*`
+methods move one owned end out and leave that side invalid inside the pair,
+and the `close_*`/`close()` methods explicitly release the remaining owned
+ends. This is the OS-level ownership layer; `std::io` `Reader`/`Writer`
+adapters over pipes are still roadmap work.
+
 ## Example
 
 ```ari
@@ -116,6 +134,20 @@ fn main() -> i64 {
 }
 ```
 
+```ari
+fn main() -> i64 {
+  var pipe = std::os::pipe().unwrap();
+  if !pipe.write_end().is_valid() {
+    return 1;
+  }
+  var reader = pipe.take_read_end();
+  var writer = pipe.take_write_end();
+  reader.close();
+  writer.close();
+  return 0;
+}
+```
+
 ## Tests
 
 Focused tests:
@@ -126,6 +158,7 @@ tests/cases/standard-library/ok/os/std-os-owned-fd.ari
 tests/cases/standard-library/ok/os/std-os-owned-fd-duplicate.ari
 tests/cases/standard-library/ok/os/std-os-owned-fd-flags.ari
 tests/cases/standard-library/ok/os/std-os-owned-fd-nonblocking.ari
+tests/cases/standard-library/ok/os/std-os-pipe.ari
 ```
 
 `make check-std-api` tracks the public declarations. `make check-prelude`
@@ -137,7 +170,7 @@ compiles and runs the focused descriptor fixtures.
   `Result[T, Error]` is directly representable.
 - Add duplication flags such as close-on-exec-on-dup when the API shape is
   stable.
-- Add richer descriptor flag tests on sockets, pipes, and terminals.
+- Add richer descriptor flag tests on sockets and terminals.
 - Add `poll` as the first portable readiness primitive.
 - Add Linux-only `epoll`, `eventfd`, `timerfd`, `signalfd`, `pidfd`, and
   `memfd` under target-guarded APIs after owned descriptors are stable.

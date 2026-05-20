@@ -487,11 +487,13 @@ portable code:
 ```ari
 os::Fd
 os::OwnedFd
+os::Pipe
 os::fd(raw)
 os::invalid()
 os::stdin()
 os::stdout()
 os::stderr()
+os::pipe()
 
 fd.raw()
 fd.is_valid()
@@ -515,6 +517,14 @@ owned.set_close_on_exec(enabled)
 owned.is_nonblocking()
 owned.set_nonblocking(enabled)
 owned.close()
+
+pipe.read_end()
+pipe.write_end()
+pipe.take_read_end()
+pipe.take_write_end()
+pipe.close_read_end()
+pipe.close_write_end()
+pipe.close()
 ```
 
 `Fd` is non-owning. It identifies a descriptor but does not close, duplicate,
@@ -533,6 +543,13 @@ updates descriptor inheritance policy without exposing raw `fcntl` constants.
 updates blocking behavior with the same owned-descriptor policy. Readiness APIs,
 raw syscalls, signals, and memory mapping remain future `std::os` work after
 richer error policy is stable.
+
+`Pipe` owns the read and write descriptors returned by `os::pipe()`.
+`read_end()` and `write_end()` borrow non-owning `Fd` views, `take_read_end()`
+and `take_write_end()` move individual owned ends out of the pair, and
+`close_read_end()`, `close_write_end()`, or `close()` explicitly release the
+remaining descriptors. `os::pipe()` returns `None` if the hosted pipe call
+fails.
 
 ## Paths
 
@@ -1049,9 +1066,9 @@ the line must survive later input reads.
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit
 caller-provided `Slice[u8]` buffer, so allocation and buffer lifetime stay
-visible. `pipe`, file adapters, zone-owning buffered constructors, and
-drop-time writer flush remain roadmap items until owned OS handles and generic
-resource policy are specified.
+visible. Pipe `Reader`/`Writer` adapters over `std::os::Pipe`, file adapters,
+zone-owning buffered constructors, and drop-time writer flush remain roadmap
+items until generic resource policy is specified.
 
 ## Memory And Zones
 

@@ -192,7 +192,8 @@ API-family helpers describe target availability; live kernel probing and
 fallible descriptor creation belong in future `std::os` wrappers.
 
 `std::os` now owns the first raw OS value boundary with a non-owning `Fd`
-descriptor view and an owning `OwnedFd` wrapper. `std::os::stdin()`,
+descriptor view, an owning `OwnedFd` wrapper, and an owning `Pipe` pair.
+`std::os::stdin()`,
 `stdout()`, `stderr()`, `invalid()`, and `fd(raw)` make descriptor identity
 explicit, while `std::fs::File.descriptor()` bridges file handles into that
 view without transferring ownership. `OwnedFd::from_raw(raw)` is the explicit
@@ -201,9 +202,11 @@ ownership handoff for exactly-one-close responsibility, and
 descriptor. `OwnedFd::close_on_exec()` and `set_close_on_exec(enabled)` cover
 the first descriptor inheritance flag without making callers pass raw `fcntl`
 constants. `OwnedFd::is_nonblocking()` and `set_nonblocking(enabled)` cover
-blocking behavior with the same owned-descriptor shape. Raw syscalls, readiness
-APIs, signals, and memory mapping still wait for duplicate-with-flags policy
-and richer error results.
+blocking behavior with the same owned-descriptor shape. `std::os::pipe()`
+returns `Option[Pipe]`, where each successful pair owns its read and write
+ends until they are taken or closed. Raw syscalls, readiness APIs, signals, and
+memory mapping still wait for duplicate-with-flags policy and richer error
+results.
 
 `std::env` wraps the context hooks with the names application code should use
 and adds `Option`-based argument access through `try_arg` and `program_name`.
@@ -314,9 +317,10 @@ the raw `-1` EOF sentinel into `Option[u8]`.
 Scalar and line operations are runtime hooks. `write_bytes`, `read_exact`,
 `write_all`, `flush`, `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, and
 `BufWriter` are source Ari over `Slice[u8]`, raw pointers, explicit
-caller-provided buffers, and the process stream hooks. `pipe`, file adapters,
-and zone-owning buffered constructors stay on the roadmap until owned OS
-handles and resource flush/drop rules are explicit.
+caller-provided buffers, and the process stream hooks. The next IO roadmap
+items are pipe `Reader`/`Writer` adapters over the implemented
+`std::os::Pipe`, file adapters, zone-owning buffered constructors, and resource
+flush/drop rules.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

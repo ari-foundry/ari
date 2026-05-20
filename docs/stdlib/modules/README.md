@@ -16,7 +16,7 @@ limits, examples, and test files for one module.
 - [std::io](io.md): low-level process IO hooks plus `Reader`/`Writer`/`Seek`,
   `stdin`/`stdout`/`stderr`, `Cursor`, caller-buffered
   `BufReader`/`BufWriter`, exact reads, whole-slice writes, and current
-  `pipe` roadmap notes.
+  pipe-adapter roadmap notes.
 - [std::input](input.md): stdin-facing byte and line input, including
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::mem](mem.md): layout queries, raw pointer helpers, byte memory
@@ -77,8 +77,8 @@ limits, examples, and test files for one module.
   abort hooks, status helper functions, and the first POSIX fork/wait
   child-process slice.
 - [std::os](os.md): non-owning file-descriptor views, `OwnedFd` close,
-  duplicate, close-on-exec, and nonblocking policy, and the roadmap for raw OS
-  primitives.
+  duplicate, close-on-exec, nonblocking policy, owned `Pipe` pairs, and the
+  roadmap for raw OS primitives.
 - [std::thread](thread.md): function-pointer thread spawn/join, runtime thread
   ids, invalid-handle sentinels, cooperative sleep/yield, available
   parallelism, and thread-local/stack-size roadmap notes.

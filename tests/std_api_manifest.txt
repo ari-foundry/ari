@@ -419,6 +419,7 @@ fn std::net::localhost|check-prelude std-net-addresses source loopback socket ad
 fn std::net::socket_addr|check-prelude std-net-addresses source socket address constructor; docs/stdlib/modules/net.md
 fn std::os::fd|check-prelude std-os-fd non-owning descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::invalid|check-prelude std-os-fd invalid descriptor view constructor; docs/stdlib/modules/os.md
+fn std::os::pipe|check-prelude std-os-pipe owned OS pipe descriptor pair constructor; docs/stdlib/modules/os.md
 fn std::os::stderr|check-prelude std-os-fd stderr descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::stdin|check-prelude std-os-fd stdin descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::stdout|check-prelude std-os-fd stdout descriptor view constructor; docs/stdlib/modules/os.md
@@ -988,6 +989,13 @@ method std::os::OwnedFd::set_close_on_exec|check-prelude std-os-owned-fd-flags c
 method std::os::OwnedFd::set_nonblocking|check-prelude std-os-owned-fd-nonblocking nonblocking descriptor flag setter; docs/stdlib/modules/os.md
 method std::os::OwnedFd::take|check-prelude std-os-owned-fd disarming raw descriptor take helper; docs/stdlib/modules/os.md
 method std::os::OwnedFd::try_clone|check-prelude std-os-owned-fd-duplicate fallible owned descriptor duplication helper; docs/stdlib/modules/os.md
+method std::os::Pipe::close|check-prelude std-os-pipe close both owned pipe ends; docs/stdlib/modules/os.md
+method std::os::Pipe::close_read_end|check-prelude std-os-pipe close owned pipe read end; docs/stdlib/modules/os.md
+method std::os::Pipe::close_write_end|check-prelude std-os-pipe close owned pipe write end; docs/stdlib/modules/os.md
+method std::os::Pipe::read_end|check-prelude std-os-pipe borrowed pipe read descriptor view; docs/stdlib/modules/os.md
+method std::os::Pipe::take_read_end|check-prelude std-os-pipe take pipe read end ownership; docs/stdlib/modules/os.md
+method std::os::Pipe::take_write_end|check-prelude std-os-pipe take pipe write end ownership; docs/stdlib/modules/os.md
+method std::os::Pipe::write_end|check-prelude std-os-pipe borrowed pipe write descriptor view; docs/stdlib/modules/os.md
 method std::path::PathBytes::as_slice|check-prelude std-path-bytes borrowed path-byte view accessor; docs/stdlib/modules/path.md
 method std::path::PathBytes::components|check-prelude std-path-bytes typed path component iterator wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::extension|check-prelude std-path-bytes typed path extension wrapper; docs/stdlib/modules/path.md
@@ -1266,7 +1274,7 @@ module std::math|std math integer helper tests; docs/stdlib/overview.md module m
 module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
 module std::net|std net address value tests; docs/stdlib/modules/net.md
 module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude row
-module std::os|check-prelude std-os-fd/std-os-owned-fd/std-os-owned-fd-duplicate/std-os-owned-fd-flags/std-os-owned-fd-nonblocking OS descriptor view and owner module; docs/stdlib/modules/os.md
+module std::os|check-prelude std-os-fd/std-os-owned-fd/std-os-owned-fd-duplicate/std-os-owned-fd-flags/std-os-owned-fd-nonblocking/std-os-pipe OS descriptor view and owner module; docs/stdlib/modules/os.md
 module std::parse|check-prelude std-parse-basic whole-input parser helpers; docs/stdlib/modules/parse.md
 module std::path|check-prelude std-path-basic source lexical path helpers; docs/stdlib/modules/path.md
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
@@ -1342,6 +1350,7 @@ struct std::net::Ipv6Addr|std net IPv6 address tests; docs/stdlib/modules/net.md
 struct std::net::SocketAddr|std net socket address tests; docs/stdlib/modules/net.md
 struct std::os::Fd|check-prelude std-os-fd non-owning file descriptor view; docs/stdlib/modules/os.md
 struct std::os::OwnedFd|check-prelude std-os-owned-fd owning file descriptor close wrapper; docs/stdlib/modules/os.md
+struct std::os::Pipe|check-prelude std-os-pipe owning pipe descriptor pair; docs/stdlib/modules/os.md
 struct std::path::Components|check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md
 struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md

@@ -541,6 +541,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd-nonblocking.ari -o $(BUILD_DIR)/prelude/std-os-owned-fd-nonblocking.elf
 	$(BUILD_DIR)/prelude/std-os-owned-fd-nonblocking.elf; code=$$?; test $$code -eq 255
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/os/std-os-owned-fd-nonblocking.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-os-owned-fd-nonblocking.elf; $(BUILD_DIR)/prelude/std-os-owned-fd-nonblocking.elf; code=$$?; test $$code -eq 255; fi
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-pipe.ari --emit-llvm $(BUILD_DIR)/prelude/std-os-pipe.ll
+	grep -F -q "std__os__Pipe" $(BUILD_DIR)/prelude/std-os-pipe.ll
+	grep -q "@ari_builtin_os_pipe" $(BUILD_DIR)/prelude/std-os-pipe.ll
+	$(TARGET) tests/cases/standard-library/ok/os/std-os-pipe.ari -o $(BUILD_DIR)/prelude/std-os-pipe.elf
+	$(BUILD_DIR)/prelude/std-os-pipe.elf; code=$$?; test $$code -eq 255
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/os/std-os-pipe.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-os-pipe.elf; $(BUILD_DIR)/prelude/std-os-pipe.elf; code=$$?; test $$code -eq 255; fi
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-addresses.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv4" $(BUILD_DIR)/prelude/std-net-addresses.ll
 	grep -F -q "std3net4ipv6" $(BUILD_DIR)/prelude/std-net-addresses.ll

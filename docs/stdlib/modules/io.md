@@ -23,8 +23,9 @@ Implemented now:
 
 Roadmap, not implemented yet:
 
-- `pipe()`: needs explicit read/write handle ownership, close behavior, and
-  platform split.
+- `Pipe` as `Reader`/`Writer`: `std::os::pipe()` already owns the raw
+  read/write descriptors; this module still needs byte-reader/writer adapters,
+  EOF behavior, and close/flush interaction policy.
 - `File` as `Reader`/`Writer`/`Seek`: should land with the owned file-resource
   policy so copied handles cannot accidentally double-close.
 - zone-owning buffered constructors and drop-time writer flush: need compiler

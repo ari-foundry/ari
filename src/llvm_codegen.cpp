@@ -490,6 +490,7 @@ private:
                symbol == "close" ||
                symbol == "dup" ||
                symbol == "fcntl" ||
+               symbol == "pipe" ||
                symbol == "malloc" ||
                symbol == "free" ||
                symbol == "exit" ||
@@ -619,6 +620,7 @@ private:
         declarations_ << "declare i32 @close(i32)\n";
         declarations_ << "declare i32 @dup(i32)\n";
         declarations_ << "declare i32 @fcntl(i32, i32, ...)\n";
+        declarations_ << "declare i32 @pipe(ptr)\n";
         declarations_ << "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memmove.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memset.p0.i64(ptr, i8, i64, i1)\n";
@@ -1339,6 +1341,27 @@ private:
         line("  ret i1 %ok");
         line("fail:");
         line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_os_pipe() {");
+        line("entry:");
+        line("  %fds = alloca [2 x i32], align 4");
+        line("  %read_ptr = getelementptr inbounds [2 x i32], ptr %fds, i64 0, i64 0");
+        line("  %code = call i32 @pipe(ptr %read_ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %pack, label %fail");
+        line("pack:");
+        line("  %write_ptr = getelementptr inbounds [2 x i32], ptr %fds, i64 0, i64 1");
+        line("  %read_fd = load i32, ptr %read_ptr, align 4");
+        line("  %write_fd = load i32, ptr %write_ptr, align 4");
+        line("  %read64 = zext i32 %read_fd to i64");
+        line("  %write64 = zext i32 %write_fd to i64");
+        line("  %shifted = shl i64 %write64, 32");
+        line("  %packed = or i64 %shifted, %read64");
+        line("  ret i64 %packed");
+        line("fail:");
+        line("  ret i64 -1");
         line("}");
         line();
 

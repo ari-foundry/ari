@@ -1,0 +1,38 @@
+// Covers OS pipe ownership. pipe() returns a pair of owned descriptor ends;
+// callers can inspect borrowed views, take the ends apart, and close them
+// independently.
+fn main() -> i64 {
+  let maybe_pipe = std::os::pipe();
+  var score = 0;
+  if maybe_pipe.is_some() {
+    score = score + 1;
+  }
+
+  var pipe = maybe_pipe.unwrap();
+  if pipe.read_end().is_valid() {
+    score = score + 2;
+  }
+  if pipe.write_end().is_valid() {
+    score = score + 4;
+  }
+  if !pipe.read_end().equals(pipe.write_end()) {
+    score = score + 8;
+  }
+
+  var reader = pipe.take_read_end();
+  var writer = pipe.take_write_end();
+  if pipe.read_end().is_invalid() && pipe.write_end().is_invalid() {
+    score = score + 16;
+  }
+  if reader.set_nonblocking(true) {
+    score = score + 32;
+  }
+  if writer.set_close_on_exec(true) {
+    score = score + 64;
+  }
+  if reader.close() && writer.close() {
+    score = score + 128;
+  }
+
+  return score;
+}
