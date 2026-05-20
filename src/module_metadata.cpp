@@ -291,6 +291,23 @@ std::string type_ref_summary(const TypeRef& type) {
     return name;
 }
 
+std::string generic_params_summary(const std::vector<GenericParam>& generics) {
+    if (generics.empty()) return "";
+
+    std::string text = "[";
+    for (std::size_t i = 0; i < generics.size(); ++i) {
+        if (i > 0) text += ", ";
+        const GenericParam& generic = generics[i];
+        text += generic.name;
+        if (generic.has_constraint) {
+            text += ": ";
+            text += type_ref_summary(generic.constraint);
+        }
+    }
+    text += "] ";
+    return text;
+}
+
 void add_item(ModuleMetadata& metadata,
               std::string module_name,
               std::string kind,
@@ -350,7 +367,8 @@ void collect_module_metadata_source(ModuleMetadata& metadata,
         add_item(metadata, decl.module_name, "trait", decl.name, decl.is_public);
     }
     for (const auto& decl : program.impls) {
-        std::string name = decl.has_trait
+        std::string name = generic_params_summary(decl.generics);
+        name += decl.has_trait
             ? type_ref_summary(decl.trait_type) + " for " + type_ref_summary(decl.for_type)
             : type_ref_summary(decl.for_type);
         add_item(metadata, decl.module_name, decl.has_trait ? "trait-impl" : "impl", std::move(name), decl.is_public);

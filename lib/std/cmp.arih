@@ -14,6 +14,100 @@ pub trait PartialOrd[T] {
   fn lt(self, other: T) -> bool;
 }
 
+// A stable three-way comparison result for generic ordering code.
+pub enum Ordering {
+  Less,
+  Equal,
+  Greater,
+}
+
+pub fn compare[T: Ord[T]](left: T, right: T) -> Ordering {
+  if left.lt(right) {
+    return Less;
+  }
+  if right.lt(left) {
+    return Greater;
+  }
+  return Equal;
+}
+
+pub fn reverse(ordering: Ordering) -> Ordering {
+  match ordering {
+    Less => {
+      return Greater;
+    }
+    Equal => {
+      return Equal;
+    }
+    Greater => {
+      return Less;
+    }
+  }
+}
+
+pub fn then(first: Ordering, second: Ordering) -> Ordering {
+  match first {
+    Equal => {
+      return second;
+    }
+    _ => {
+      return first;
+    }
+  }
+}
+
+pub fn then_compare[T: Ord[T]](ordering: Ordering, left: T, right: T) -> Ordering {
+  match ordering {
+    Equal => {
+      return compare<T>(left, right);
+    }
+    _ => {
+      return ordering;
+    }
+  }
+}
+
+pub fn is_less(ordering: Ordering) -> bool {
+  match ordering {
+    Less => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_equal(ordering: Ordering) -> bool {
+  match ordering {
+    Equal => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_greater(ordering: Ordering) -> bool {
+  match ordering {
+    Greater => {
+      return true;
+    }
+    _ => {
+      return false;
+    }
+  }
+}
+
+pub fn is_less_or_equal(ordering: Ordering) -> bool {
+  return !is_greater(ordering);
+}
+
+pub fn is_greater_or_equal(ordering: Ordering) -> bool {
+  return !is_less(ordering);
+}
+
 pub fn min[T: Ord[T]](left: T, right: T) -> T {
   if right.lt(left) {
     return right;

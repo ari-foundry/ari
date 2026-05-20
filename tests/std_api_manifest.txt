@@ -10,6 +10,7 @@
 
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
+enum std::cmp::Ordering|check-prelude std-cmp-ordering three-way comparison result; docs/stdlib/modules/cmp.md
 enum std::error::Kind|check-prelude std-error-basic shared recoverable error categories; docs/stdlib/modules/error.md
 enum std::fs::FileKind|check-prelude std-fs-metadata file/directory/symlink/other metadata classifier; docs/stdlib/modules/fs.md
 enum std::log::Level|check-prelude std-log-basic source logging level enum; docs/stdlib/modules/log.md
@@ -114,9 +115,18 @@ fn std::c::now|check-prelude std-c-interop dynamic loader flag helper; docs/stdl
 fn std::c::open|check-prelude std-c-interop dynamic library open wrapper; docs/stdlib/modules/c.md
 fn std::c::symbol|check-prelude std-c-interop dynamic symbol lookup wrapper; docs/stdlib/modules/c.md
 fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::cmp::compare[T: Ord[T]|check-prelude std-cmp-ordering generic three-way comparison; docs/stdlib/modules/cmp.md
 fn std::cmp::is_between[T: Ord[T]|std cmp value helper tests; docs/stdlib/api-reference.md Comparison section
+fn std::cmp::is_equal|check-prelude std-cmp-ordering Ordering equality predicate; docs/stdlib/modules/cmp.md
+fn std::cmp::is_greater|check-prelude std-cmp-ordering Ordering greater-than predicate; docs/stdlib/modules/cmp.md
+fn std::cmp::is_greater_or_equal|check-prelude std-cmp-ordering Ordering greater-or-equal predicate; docs/stdlib/modules/cmp.md
+fn std::cmp::is_less|check-prelude std-cmp-ordering Ordering less-than predicate; docs/stdlib/modules/cmp.md
+fn std::cmp::is_less_or_equal|check-prelude std-cmp-ordering Ordering less-or-equal predicate; docs/stdlib/modules/cmp.md
 fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::min[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::cmp::reverse|check-prelude std-cmp-ordering reverse comparison result helper; docs/stdlib/modules/cmp.md
+fn std::cmp::then|check-prelude std-cmp-ordering lexicographic comparison chaining helper; docs/stdlib/modules/cmp.md
+fn std::cmp::then_compare[T: Ord[T]|check-prelude std-cmp-ordering lazy-ish generic compare chaining helper; docs/stdlib/modules/cmp.md
 fn std::collections::binary_heap[T]|check-prelude std-collections-heap explicit-comparator binary heap constructor; docs/stdlib/modules/collections.md
 fn std::collections::deque[T]|check-prelude std-collections-deque growable double-ended queue constructor; docs/stdlib/modules/collections.md
 fn std::collections::from_slice_in[T]|check-prelude std-collections-set source linear set from slice; docs/stdlib/modules/collections.md

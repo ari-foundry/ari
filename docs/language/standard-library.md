@@ -57,7 +57,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::collections` | Zone-backed collection handles beyond sequences. | Linear `Set[T]`/`Iter[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, queue/list/heap operations, lookup, insertion, replacement, removal, reserve, clear, hash bucket iterators, and sorted tree iterators. | Implemented in source Ari with compiler provenance recognition for reset/destroy and same-zone growth checks. |
 | `std::iter` | Iteration traits, range constructors, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, `collect`. | Adapter callbacks are plain function pointers today; closures and richer inference remain future work. |
 | `std::fmt` | Formatting traits and explicit formatting helpers. Root `Display`/`Debug` are aliases for these traits. | `Debug::debug_in`, `Display::format_in`, `FormatSpec`, `decimal`, `hex`, `binary`, `octal`, width/precision/alignment modifiers, allocator-backed `*_in` helpers including `float_in`, `debug_value`, `write_value`, `write_debug`, `print_value`, `println_value`, `print_debug`, `println_debug`, and type-specific `write_*` helpers for `io::Writer`. | Formatting macros still use compiler lowering. `{}` maps to Display, `{:?}` maps to Debug where an explicit zone is available, and `FormatSpec` covers source hex/binary/octal, width, precision, and alignment for unsigned integers. |
-| `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`, `is_between`. | Implemented for source-level trait-bound static dispatch. |
+| `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `Ordering`, `compare`, `then_compare`, `min`, `max`, `clamp`, `is_between`. | Implemented for source-level trait-bound static dispatch. |
 | `std::algo` | Slice algorithms. | `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, `dedup`. | Source-only first slice over borrowed `Slice[T]` views. Faster sorts, move-aware contracts, hex/base64 encoding, and compression policy remain roadmap work. |
 | `std::convert` | Conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. | First source helper slice; broad conversion impls and fallible conversion methods are future work. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked add/sub/mul/div/rem/neg/abs, wrapping/overflowing add/sub/mul, saturating add/sub/mul/div/neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. | Current i64-signature helper slices with natural names; generic numeric traits remain future work. |
@@ -149,7 +149,7 @@ Use this table when writing code from docs alone:
 | Store one zone-backed value. | `std::boxed::new<T>(ref mut zone, value)` or `Box!(T, ref mut zone, value)` | `take()` empties the handle; `try_take()` returns `Option[T]`. |
 | Allocate raw memory. | `zone::alloc`, `zone::alloc<T>`, `zone::alloc_array<T>`, `zone::new<T>` | Raw allocation does not run destructors or make memory safe by itself. `alloc_array<T>` returns uninitialized contiguous storage for `count` values. |
 | Inspect layout or raw memory. | `size_of<T>`, `align_of<T>`, `ptr_add`, `ptr_load`, `ptr_store`, `mem::copy_bytes`, `mem::move_bytes`, `mem::set_bytes`, `mem::page_size()` | Use typed helpers only for scalar and supported Ari-layout aggregate values. Use byte helpers for raw `ptr u8` regions where you own initialization, overlap, and length invariants. `page_size` reports the hosted runtime page size for alignment and future mapping work. |
-| Compare values generically. | `cmp::min`, `cmp::max`, `cmp::clamp`, `cmp::is_between` | Requires an `Ord[T]` impl for the compared type. `is_between` is inclusive and `clamp`/`is_between` assert that `low <= high`. |
+| Compare values generically. | `cmp::compare`, `cmp::then_compare`, `cmp::min`, `cmp::max`, `cmp::clamp`, `cmp::is_between` | Requires an `Ord[T]` impl for the compared type. `compare` returns `Less`, `Equal`, or `Greater`; `then_compare` chains lexicographic comparisons. `is_between` is inclusive and `clamp`/`is_between` assert that `low <= high`. |
 | Convert values generically. | `convert::identity`, `convert::from`, `convert::into` | `from<T, U>` uses `convert::From[T]` for destination `U`; `into<T, U>` uses `convert::Into[T]` on source `U`. |
 | Iterate ranges. | `range(start, end)`, `range_inclusive(start, end)`, `start..end`, `start..=end` | Works directly in `for` loops and stores as `Range[T]`/`RangeInclusive[T]`. |
 | Transform iterators lazily. | `iter::map`, `iter::filter`, `iter::take`, `iter::skip`, `iter::enumerate`, `iter::zip` | Store the adapter in a mutable local and iterate with `for value in ref mut adapter` when it tracks progress. `skip` is the drop-count adapter name because `drop` is a language operation. |
@@ -384,7 +384,12 @@ fn main() -> i64 {
     text.len() +
     (text.first() as i64) +
     boxed.get() +
-    cmp::max<i64>(4, 9);
+    cmp::max<i64>(4, 9) +
+    match cmp::compare<i64>(2, 7) {
+      cmp::Less => 1,
+      cmp::Equal => 2,
+      cmp::Greater => 3;
+    };
 
   zone::destroy(zone);
   return score;

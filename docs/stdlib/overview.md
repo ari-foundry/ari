@@ -63,7 +63,7 @@ API evolution.
 | `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
 | `std::iter` | Range, iterator traits, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, `collect`. |
 | `std::fmt` | Formatting traits plus explicit-zone, writer, and stdout formatting helpers. Root `Display`/`Debug` re-export these traits. | `Display::format_in`, `Debug::debug_in`, `FormatSpec`, `decimal`, `hex`, `binary`, `octal`, strict `with_width`/`with_precision`, fallible `try_with_width`/`try_with_precision`, `left`, `right`, `center`, `uppercase`, `alternate`, `unsigned_in`, `integer_in`, `boolean_in`, `float_in`, `text_in`, `debug_text_in`, `debug_value`, `write_unsigned`, `write_integer`, `write_boolean`, `write_text`, `write_value`, `write_debug`, `print_value`, `println_value`, `print_debug`, `println_debug`. |
-| `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
+| `std::cmp` | Comparison traits and helpers. | `Ord`, `Ordering`, `compare`, `then_compare`, `min`, `max`, `clamp`, `is_between`. |
 | `std::algo` | Source algorithms over borrowed slices. | `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, `dedup`, plus receiver-form `Slice[T]` wrappers for common call sites. |
 | `std::convert` | Explicit conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked add/sub/mul/div/rem/neg/abs, wrapping/overflowing add/sub/mul, saturating add/sub/mul/div/neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. |
@@ -170,8 +170,9 @@ need compiler support, but the public edge-case behavior should stay
 source-defined.
 
 `std::cmp` is also source-first. Its current helpers build on the minimal
-`Ord[T]::lt` method so generic code can select, clamp, or range-check values
-without compiler-known comparison intrinsics.
+`Ord[T]::lt` method so generic code can compare, chain lexicographic ordering,
+select, clamp, or range-check values without compiler-known comparison
+intrinsics.
 
 `std::convert` follows the same source-first path for generic conversion
 helpers. `identity`, `from`, and `into` are plain Ari functions over the

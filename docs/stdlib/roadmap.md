@@ -25,8 +25,8 @@ byte classification, case-insensitive comparison/search, slice helpers, and
 prefix parsers, `vec` source growable sequence handles with direct borrowed
 range/split/subsequence/compare/chunk/window wrappers, `iter` range/trait
 support plus lazy adapters and eager consumers, `fmt` formatting traits plus
-strict and fallible `FormatSpec` builders, `cmp` comparison helpers, `convert`
-identity/from/into helpers, `context` runtime hooks plus the source
+strict and fallible `FormatSpec` builders, `cmp` three-way ordering and value
+comparison helpers, `convert` identity/from/into helpers, `context` runtime hooks plus the source
 `has_arg` helper, `env` source argument wrappers with `try_arg` and
 `program_name` plus current-process environment `get`/`has`/`try_get`/`set`/
 `remove`, OS-string views for arguments/environment/path-like values, and

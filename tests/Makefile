@@ -766,6 +766,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf
 	$(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 235
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 235; fi
+	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-ordering.ll
+	grep -F -q 'compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-ordering.ll
+	grep -F -q 'then_compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-ordering.ll
+	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari -o $(BUILD_DIR)/prelude/std-cmp-ordering.elf
+	$(BUILD_DIR)/prelude/std-cmp-ordering.elf; code=$$?; test $$code -eq 179
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-ordering.elf; $(BUILD_DIR)/prelude/std-cmp-ordering.elf; code=$$?; test $$code -eq 179; fi
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	grep -F -q 'std4algo11sort__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	grep -F -q 'std4algo18stable_sort__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
@@ -2667,6 +2673,12 @@ check-modules: $(TARGET)
 	grep -q "import.*package_math::nested.*tests/packages/nested/mod.ari" $(BUILD_DIR)/modules/package-module-main.arimeta
 	grep -q "item.*fn.*package_math::value" $(BUILD_DIR)/modules/package-module-main.arimeta
 	$(TARGET) -Itests/packages tests/cases/modules/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-metadata-check.ll
+	$(TARGET) tests/cases/modules/ok/module-metadata-impl-generics.ari --emit-module-metadata $(BUILD_DIR)/modules/module-metadata-impl-generics.arimeta --emit-llvm $(BUILD_DIR)/modules/module-metadata-impl-generics.ll
+	grep -q "item.*impl.*\\[T\\] Boxed\\[T\\]" $(BUILD_DIR)/modules/module-metadata-impl-generics.arimeta
+	grep -q "item.*impl.*\\[T: Ordered\\[T\\]\\] Boxed\\[T\\]" $(BUILD_DIR)/modules/module-metadata-impl-generics.arimeta
+	$(TARGET) tests/cases/modules/ok/module-metadata-impl-generics.ari --check-module-metadata $(BUILD_DIR)/modules/module-metadata-impl-generics.arimeta --check
+	$(TARGET) tests/cases/modules/ok/module-metadata-impl-generics.ari -o $(BUILD_DIR)/modules/module-metadata-impl-generics.elf
+	$(BUILD_DIR)/modules/module-metadata-impl-generics.elf; code=$$?; test $$code -eq 10
 	awk 'BEGIN { done = 0 } { print; if (!done && $$1 == "import") { print; done = 1 } }' $(BUILD_DIR)/modules/package-module-main.arimeta >$(BUILD_DIR)/modules/package-module-main-duplicate-import.arimeta
 	if $(TARGET) -Itests/packages tests/cases/modules/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-duplicate-import.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-duplicate-import.ll >$(BUILD_DIR)/modules/package-module-main-duplicate-import.err 2>&1; then exit 1; fi
 	grep -q "duplicate import record" $(BUILD_DIR)/modules/package-module-main-duplicate-import.err

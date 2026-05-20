@@ -1,0 +1,33 @@
+pub trait Ordered[T] {
+  fn lt(self, other: T) -> bool;
+}
+
+pub struct Boxed[T] {
+  value: T,
+}
+
+pub impl[T] Boxed[T] {
+  fn get(self: ref Self) -> T {
+    return self.value;
+  }
+}
+
+pub impl[T: Ordered[T]] Boxed[T] {
+  fn min(self: ref Self, other: T) -> T {
+    if self.value.lt(other) {
+      return self.value;
+    }
+    return other;
+  }
+}
+
+impl Ordered[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+fn main() -> i64 {
+  let boxed = Boxed<i64> { value: 7 };
+  return boxed.get() + boxed.min(3);
+}

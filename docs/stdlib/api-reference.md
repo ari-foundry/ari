@@ -1854,16 +1854,29 @@ cmp::Eq[T]
 cmp::PartialEq[T]
 cmp::Ord[T]
 cmp::PartialOrd[T]
+cmp::Ordering
+cmp::compare<T>(left, right)
+cmp::reverse(ordering)
+cmp::then(first, second)
+cmp::then_compare<T>(ordering, left, right)
+cmp::is_less(ordering)
+cmp::is_equal(ordering)
+cmp::is_greater(ordering)
+cmp::is_less_or_equal(ordering)
+cmp::is_greater_or_equal(ordering)
 cmp::min<T>(left, right)
 cmp::max<T>(left, right)
 cmp::clamp<T>(value, low, high)
 cmp::is_between<T>(value, low, high)
 ```
 
-`Ord[T]` currently requires `lt(self, other: T) -> bool`. `min`, `max`,
-`clamp`, and `is_between` use that trait bound, so custom ordered values need
-an `impl cmp::Ord[T] for T`. `clamp` and `is_between` assert that
-`low <= high`; `is_between` is inclusive at both ends.
+`Ord[T]` currently requires `lt(self, other: T) -> bool`. `compare`, `min`,
+`max`, `clamp`, and `is_between` use that trait bound, so custom ordered values
+need an `impl cmp::Ord[T] for T`. `Ordering` has `Less`, `Equal`, and
+`Greater` cases. Use `then` or `then_compare` to build lexicographic
+comparisons without inventing numeric sentinel values. `clamp` and
+`is_between` assert that `low <= high`; `is_between` is inclusive at both
+ends.
 
 The root prelude re-exports the value helpers as `min<T>`, `max<T>`,
 `clamp<T>`, and `is_between<T>`.

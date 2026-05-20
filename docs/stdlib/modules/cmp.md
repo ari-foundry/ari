@@ -15,6 +15,7 @@ Use `std::cmp` when code needs to choose or test values by order:
 - pick the smaller or larger value
 - clamp a value into an inclusive range
 - check whether a value is inside an inclusive range
+- return or chain a stable three-way comparison result
 - write generic helpers over a custom ordered type
 
 For one-off primitive comparisons, plain operators such as `<`, `>`, `==`,
@@ -41,6 +42,30 @@ fn lt(self, other: T) -> bool
 `Ord[T]::lt` is enough for the current value helpers. The compiler does not
 enforce ordering laws such as transitivity; trait impl authors are responsible
 for making the comparison meaningful.
+
+Three-way ordering:
+
+```ari
+cmp::Ordering
+cmp::Less
+cmp::Equal
+cmp::Greater
+cmp::compare<T>(left, right)
+cmp::reverse(ordering)
+cmp::then(first, second)
+cmp::then_compare<T>(ordering, left, right)
+cmp::is_less(ordering)
+cmp::is_equal(ordering)
+cmp::is_greater(ordering)
+cmp::is_less_or_equal(ordering)
+cmp::is_greater_or_equal(ordering)
+```
+
+`compare` returns `Less`, `Equal`, or `Greater` by calling `lt` in both
+directions. `then` keeps the first non-`Equal` result, which is useful for
+lexicographic comparison. `then_compare` performs the second comparison only as
+part of this source helper shape; once lazy closures land, a future `then_with`
+style API can avoid computing fallback comparisons eagerly.
 
 Value helpers:
 
@@ -81,6 +106,27 @@ impl cmp::Ord[Score] for Score {
   }
 }
 
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+impl cmp::Ord[Point] for Point {
+  fn lt(self, other: Point) -> bool {
+    match cmp::compare<i64>(self.x, other.x) {
+      cmp::Less => {
+        return true;
+      }
+      cmp::Greater => {
+        return false;
+      }
+      cmp::Equal => {
+        return self.y < other.y;
+      }
+    }
+  }
+}
+
 fn bounded_score(score: Score) -> Score {
   return cmp::clamp<Score>(
     score,
@@ -91,7 +137,12 @@ fn bounded_score(score: Score) -> Score {
 fn main() -> i64 {
   let value = cmp::min<i64>(12, 7);
   if cmp::is_between<i64>(value, 5, 10) {
-    return cmp::max<i64>(value, 9);
+    let ordering = cmp::compare<Point>(
+      Point { x: 1, y: 9 },
+      Point { x: 1, y: 4 });
+    if cmp::is_greater(ordering) {
+      return cmp::max<i64>(value, 9);
+    }
   }
   return 0;
 }
@@ -103,9 +154,9 @@ Primitive and aggregate comparison impl coverage is still growing. If a
 generic helper reports that an `Ord[T]` impl is missing, add a focused impl for
 that type or use direct primitive operators in non-generic code.
 
-The current comparison traits do not yet provide a richer `compare` result,
-derived ordering for every aggregate shape, or separate checked handling for
-partial orders. Those belong in later trait and derive slices.
+The current comparison traits still do not provide derived ordering for every
+aggregate shape or separate checked handling for partial orders. Those belong
+in later trait and derive slices.
 
 ## Tests
 
@@ -113,6 +164,7 @@ The focused positive behavior test is:
 
 ```text
 tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari
+tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari
 ```
 
 `make check-prelude` emits LLVM for that file, checks representative public

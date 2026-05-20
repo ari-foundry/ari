@@ -1,0 +1,85 @@
+impl cmp::Ord[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+struct Pair {
+  left: i64,
+  right: i64,
+}
+
+impl cmp::Ord[Pair] for Pair {
+  fn lt(self, other: Pair) -> bool {
+    match cmp::compare<i64>(self.left, other.left) {
+      cmp::Less => {
+        return true;
+      }
+      cmp::Greater => {
+        return false;
+      }
+      cmp::Equal => {
+        return self.right < other.right;
+      }
+    }
+  }
+}
+
+fn score(ordering: cmp::Ordering) -> i64 {
+  match ordering {
+    cmp::Less => {
+      return 1;
+    }
+    cmp::Equal => {
+      return 3;
+    }
+    cmp::Greater => {
+      return 7;
+    }
+  }
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  total = total + score(cmp::compare<i64>(1, 2));
+  total = total + score(cmp::compare<i64>(2, 2));
+  total = total + score(cmp::compare<i64>(3, 2));
+
+  if cmp::is_less(cmp::compare<i64>(-4, 9)) {
+    total = total + 11;
+  }
+  if cmp::is_equal(cmp::compare<i64>(5, 5)) {
+    total = total + 13;
+  }
+  if cmp::is_greater(cmp::compare<i64>(9, 5)) {
+    total = total + 17;
+  }
+  if cmp::is_less_or_equal(cmp::Less) {
+    total = total + 19;
+  }
+  if cmp::is_less_or_equal(cmp::Equal) {
+    total = total + 23;
+  }
+  if cmp::is_greater_or_equal(cmp::Greater) {
+    total = total + 29;
+  }
+  if cmp::is_greater_or_equal(cmp::Equal) {
+    total = total + 31;
+  }
+
+  total = total + score(cmp::reverse(cmp::Less));
+  total = total + score(cmp::then(cmp::Equal, cmp::Less));
+  total = total + score(cmp::then(cmp::Greater, cmp::Less));
+  total = total + score(cmp::then_compare<i64>(cmp::Equal, 4, 9));
+  total = total + score(cmp::then_compare<i64>(cmp::Less, 9, 4));
+
+  total = total + score(cmp::compare<Pair>(
+    Pair { left: 1, right: 9 },
+    Pair { left: 2, right: 0 }));
+  total = total + score(cmp::compare<Pair>(
+    Pair { left: 2, right: 9 },
+    Pair { left: 2, right: 0 }));
+
+  return total;
+}
