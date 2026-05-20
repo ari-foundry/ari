@@ -100,8 +100,8 @@ policy.
 host pipe: `read_end()` and `write_end()` borrow descriptor views, `take_*`
 methods move one owned end out and leave that side invalid inside the pair,
 and the `close_*`/`close()` methods explicitly release the remaining owned
-ends. This is the OS-level ownership layer; `std::io` `Reader`/`Writer`
-adapters over pipes are still roadmap work.
+ends. This is the OS-level ownership layer; use `std::io::pipe()` when the
+same pipe should be split into `Reader`/`Writer` adapters.
 
 ## Example
 

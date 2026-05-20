@@ -260,6 +260,13 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-io-stderr.elf >$(BUILD_DIR)/prelude/std-io-stderr.out 2>$(BUILD_DIR)/prelude/std-io-stderr.err; code=$$?; test $$code -eq 3
 	grep -qx "OK" $(BUILD_DIR)/prelude/std-io-stderr.out
 	grep -qx "ERR" $(BUILD_DIR)/prelude/std-io-stderr.err
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-pipe.ll
+	grep -F -q "std__io__PipeReader" $(BUILD_DIR)/prelude/std-io-pipe.ll
+	grep -q "@ari_builtin_os_read_byte" $(BUILD_DIR)/prelude/std-io-pipe.ll
+	grep -q "@ari_builtin_os_write_byte" $(BUILD_DIR)/prelude/std-io-pipe.ll
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari -o $(BUILD_DIR)/prelude/std-io-pipe.elf
+	$(BUILD_DIR)/prelude/std-io-pipe.elf; code=$$?; test $$code -eq 11
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-io-pipe.elf; $(BUILD_DIR)/prelude/std-io-pipe.elf; code=$$?; test $$code -eq 11; fi
 	$(TARGET) tests/cases/standard-library/ok/log/std-log-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-log-basic.ll
 	grep -q '_ARNv3std3log7message' $(BUILD_DIR)/prelude/std-log-basic.ll
 	grep -q '_ARNv3std3log5write' $(BUILD_DIR)/prelude/std-log-basic.ll

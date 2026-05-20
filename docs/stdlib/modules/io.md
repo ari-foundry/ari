@@ -16,16 +16,14 @@ Implemented now:
   `write_byte`, `write_bytes`, `newline`
 - raw stdin/line hooks: `read_byte`, `read_line`, `read_line_owned`
 - source traits: `Reader`, `Writer`, `Seek`
-- source handles: `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, `BufWriter`
-- source constructors and adapters: `stdin`, `stdout`, `stderr`, `cursor`,
-  `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
+- source handles: `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`,
+  `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`
+- source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
+  `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
 - source helpers: `read_exact`, `write_all`, `flush`
 
 Roadmap, not implemented yet:
 
-- `Pipe` as `Reader`/`Writer`: `std::os::pipe()` already owns the raw
-  read/write descriptors; this module still needs byte-reader/writer adapters,
-  EOF behavior, and close/flush interaction policy.
 - `File` as `Reader`/`Writer`/`Seek`: should land with the owned file-resource
   policy so copied handles cannot accidentally double-close.
 - zone-owning buffered constructors and drop-time writer flush: need compiler
@@ -54,9 +52,24 @@ io::BufWriter[W]
 io::Stdin
 io::Stdout
 io::Stderr
+io::Pipe
+io::PipeReader
+io::PipeWriter
 io::stdin() -> io::Stdin
 io::stdout() -> io::Stdout
 io::stderr() -> io::Stderr
+io::pipe() -> Option[io::Pipe]
+pipe.read_end()
+pipe.write_end()
+pipe.take_reader()
+pipe.take_writer()
+pipe.close()
+pipe_reader.as_fd()
+pipe_reader.is_open()
+pipe_reader.close()
+pipe_writer.as_fd()
+pipe_writer.is_open()
+pipe_writer.close()
 io::cursor(values: Slice[u8]) -> io::Cursor
 io::buf_reader[R: Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::buf_writer[W: Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
@@ -102,6 +115,14 @@ future OS handles.
 so it is useful for tests, parsers, and examples that should not depend on
 host stdin.
 
+`io::pipe()` returns `Option[io::Pipe]`. A successful pipe owns the raw
+descriptor pair through `std::os::Pipe`, then `take_reader()` and
+`take_writer()` split it into a `PipeReader` and `PipeWriter`.
+`PipeReader` implements `Reader`, `PipeWriter` implements `Writer`, and both
+ends expose `as_fd()`, `is_open()`, and explicit `close()` helpers. A pipe
+writer flush succeeds while its descriptor is open because writes go directly
+to the descriptor; use `BufWriter[PipeWriter]` for caller-managed buffering.
+
 `BufReader[R]` and `BufWriter[W]` wrap any `Reader` or `Writer` with an
 explicit caller-provided `Slice[u8]` buffer. This keeps allocation visible and
 lets the wrappers be implemented in Ari source today. The buffer slice must
@@ -130,6 +151,23 @@ fn main() -> i64 {
   io::write_all<io::BufWriter[io::Stdout]>(ref mut writer, output.as_slice());
   io::flush<io::BufWriter[io::Stdout]>(ref mut writer);
   return reader.buffered_len();
+}
+```
+
+```ari
+fn main() -> i64 {
+  var pipe = io::pipe().unwrap();
+  var reader = pipe.take_reader();
+  var writer = pipe.take_writer();
+  io::write_all<io::PipeWriter>(ref mut writer, "ok");
+  writer.close();
+
+  var bytes = [0u8, 0u8];
+  if !io::read_exact<io::PipeReader>(ref mut reader, bytes.as_slice().as_ptr(), 2) {
+    return 1;
+  }
+  reader.close();
+  return 0;
 }
 ```
 
@@ -167,6 +205,10 @@ enough to explain close, copy, drop, and seek behavior consistently.
 - `tests/cases/standard-library/ok/io/std-io-stderr.ari` checks `Stderr`,
   stderr routing, explicit flush success, generated helper symbols, and
   stdout/stderr stream separation.
+- `tests/cases/standard-library/ok/io/std-io-pipe.ari` checks `Pipe`,
+  `PipeReader`, `PipeWriter`, `std::os::Pipe` ownership splitting, trait-based
+  whole-slice writes, exact reads, EOF after writer close, explicit closes,
+  and runtime read/write hook lowering.
 - `tests/cases/standard-library/ok/io/std-io-buffered.ari` checks
   `BufReader`, `BufWriter`, caller-provided buffers, associated constructors,
   exact reads through a buffered reader, whole-slice writes through a buffered

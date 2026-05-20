@@ -47,6 +47,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::io::write_byte", "ari_builtin_write_byte"},
         {"io::write_error_byte", "ari_builtin_write_error_byte"},
         {"std::io::write_error_byte", "ari_builtin_write_error_byte"},
+        {"io::read_fd_byte", "ari_builtin_os_read_byte"},
+        {"std::io::read_fd_byte", "ari_builtin_os_read_byte"},
+        {"io::write_fd_byte", "ari_builtin_os_write_byte"},
+        {"std::io::write_fd_byte", "ari_builtin_os_write_byte"},
         {"newline", "ari_builtin_newline"},
         {"std::newline", "ari_builtin_newline"},
         {"io::newline", "ari_builtin_newline"},
@@ -365,6 +369,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_os_nonblocking") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_os_set_nonblocking") return builtin_sig({i64, boolean}, boolean);
     if (symbol == "ari_builtin_os_pipe") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_os_read_byte") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_os_write_byte") return builtin_sig({i64, u8}, boolean);
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_read") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_write") return builtin_sig({source_string}, boolean);

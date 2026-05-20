@@ -14,9 +14,8 @@ limits, examples, and test files for one module.
   views, direct literal boundary coercions, shared `std::c::CStr`
   construction, trim views/copies, and whole/prefix parsing helpers.
 - [std::io](io.md): low-level process IO hooks plus `Reader`/`Writer`/`Seek`,
-  `stdin`/`stdout`/`stderr`, `Cursor`, caller-buffered
-  `BufReader`/`BufWriter`, exact reads, whole-slice writes, and current
-  pipe-adapter roadmap notes.
+  `stdin`/`stdout`/`stderr`, pipe `Reader`/`Writer` adapters, `Cursor`,
+  caller-buffered `BufReader`/`BufWriter`, exact reads, and whole-slice writes.
 - [std::input](input.md): stdin-facing byte and line input, including
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::mem](mem.md): layout queries, raw pointer helpers, byte memory

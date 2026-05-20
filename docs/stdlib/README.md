@@ -30,8 +30,9 @@ environment-variable, current-directory, executable-path, OS-string, and
 path-byte helpers now live in `std::env`, while `std::context` stays the
 low-level runtime context layer.
 `std::io` now has source `Reader`/`Writer`/`Seek` contracts, `Stdin`,
-`Stdout`, `Stderr`, `Cursor`, caller-buffered `BufReader`/`BufWriter`,
-`read_exact`, `write_all`, and `flush` on top of the raw process IO hooks.
+`Stdout`, `Stderr`, `PipeReader`/`PipeWriter`, `Cursor`, caller-buffered
+`BufReader`/`BufWriter`, `read_exact`, `write_all`, and `flush` on top of the
+raw process IO and descriptor hooks.
 `std::test` adds source executable unit-test reports, generic equality checks,
 and scratch-zone helpers, `std::log` adds level-prefixed `stderr` diagnostic
 lines, and `std::error` adds shared recoverable error categories,

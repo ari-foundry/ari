@@ -1027,12 +1027,27 @@ io::Seek
 io::Stdin
 io::Stdout
 io::Stderr
+io::Pipe
+io::PipeReader
+io::PipeWriter
 io::Cursor
 io::BufReader[R]
 io::BufWriter[W]
 io::stdin()
 io::stdout()
 io::stderr()
+io::pipe()
+pipe.read_end()
+pipe.write_end()
+pipe.take_reader()
+pipe.take_writer()
+pipe.close()
+pipe_reader.as_fd()
+pipe_reader.is_open()
+pipe_reader.close()
+pipe_writer.as_fd()
+pipe_writer.is_open()
+pipe_writer.close()
 io::cursor(values)
 io::buf_reader[R: Reader](inner, buffer)
 io::buf_writer[W: Writer](inner, buffer)
@@ -1066,9 +1081,11 @@ the line must survive later input reads.
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit
 caller-provided `Slice[u8]` buffer, so allocation and buffer lifetime stay
-visible. Pipe `Reader`/`Writer` adapters over `std::os::Pipe`, file adapters,
-zone-owning buffered constructors, and drop-time writer flush remain roadmap
-items until generic resource policy is specified.
+visible. `io::pipe()` wraps `std::os::Pipe` in `PipeReader` and `PipeWriter`
+adapters. The reader implements `Reader`, the writer implements `Writer`, and
+both expose explicit close helpers. File adapters, zone-owning buffered
+constructors, and drop-time writer flush remain roadmap items until generic
+resource policy is specified.
 
 ## Memory And Zones
 

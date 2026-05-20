@@ -1,0 +1,58 @@
+// Covers std::io pipe adapters. The OS pipe owns raw descriptors, while
+// PipeReader/PipeWriter implement the byte-oriented Reader/Writer traits.
+fn main() -> i64 {
+  let maybe_pipe = std::io::pipe();
+  var score = 0;
+  if maybe_pipe.is_some() {
+    score = score + 1;
+  }
+
+  var pipe = maybe_pipe.unwrap();
+  if pipe.read_end().is_valid() {
+    score = score + 1;
+  }
+  if pipe.write_end().is_valid() {
+    score = score + 1;
+  }
+  if !pipe.read_end().equals(pipe.write_end()) {
+    score = score + 1;
+  }
+
+  var reader = pipe.take_reader();
+  var writer = pipe.take_writer();
+  if pipe.read_end().is_invalid() && pipe.write_end().is_invalid() {
+    score = score + 1;
+  }
+
+  var payload = [112u8, 105u8, 112u8, 101u8];
+  if std::io::write_all<std::io::PipeWriter>(ref mut writer, payload.as_slice()) {
+    score = score + 1;
+  }
+  if std::io::flush<std::io::PipeWriter>(ref mut writer) {
+    score = score + 1;
+  }
+  if writer.close() {
+    score = score + 1;
+  }
+
+  var output = [0u8, 0u8, 0u8, 0u8];
+  let view = output.as_slice();
+  let raw = view.as_ptr();
+  if std::io::read_exact<std::io::PipeReader>(ref mut reader, raw, 4) {
+    if ptr_load(raw) == 112u8 &&
+       ptr_load(ptr_add(raw, 1)) == 105u8 &&
+       ptr_load(ptr_add(raw, 2)) == 112u8 &&
+       ptr_load(ptr_add(raw, 3)) == 101u8 {
+      score = score + 1;
+    }
+  }
+
+  if reader.read_byte() < 0 {
+    score = score + 1;
+  }
+  if reader.close() {
+    score = score + 1;
+  }
+
+  return score;
+}

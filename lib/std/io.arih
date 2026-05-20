@@ -9,6 +9,8 @@ pub extern "ari" fn newline() -> i64 = "ari_builtin_newline";
 pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
 pub extern "ari" fn read_line() -> string = "ari_builtin_read_line";
 pub extern "ari" fn read_line_owned(zone: ref mut Zone) -> std::string::String = "ari_builtin_read_line_owned";
+extern "ari" fn read_fd_byte(raw: i64) -> i64 = "ari_builtin_os_read_byte";
+extern "ari" fn write_fd_byte(raw: i64, value: u8) -> bool = "ari_builtin_os_write_byte";
 
 pub struct Stdin {
 }
@@ -17,6 +19,18 @@ pub struct Stdout {
 }
 
 pub struct Stderr {
+}
+
+pub struct Pipe {
+  mut raw: std::os::Pipe,
+}
+
+pub struct PipeReader {
+  mut handle: std::os::OwnedFd,
+}
+
+pub struct PipeWriter {
+  mut handle: std::os::OwnedFd,
 }
 
 pub struct Cursor {
@@ -61,6 +75,14 @@ pub fn stdout() -> std::io::Stdout {
 
 pub fn stderr() -> std::io::Stderr {
   return std::io::Stderr {};
+}
+
+pub fn pipe() -> std::Option[std::io::Pipe] {
+  let raw = std::os::pipe();
+  if raw.is_none() {
+    return std::None<std::io::Pipe>();
+  }
+  return std::Some<std::io::Pipe>(std::io::Pipe { raw: raw.unwrap() });
 }
 
 pub fn cursor(values: std::Slice[u8]) -> std::io::Cursor {
@@ -186,6 +208,56 @@ pub impl[W: Writer] std::io::BufWriter[W] {
   }
 }
 
+pub impl std::io::Pipe {
+  fn read_end(self: ref Self) -> std::os::Fd {
+    return self.raw.read_end();
+  }
+
+  fn write_end(self: ref Self) -> std::os::Fd {
+    return self.raw.write_end();
+  }
+
+  fn take_reader(self: ref mut Self) -> std::io::PipeReader {
+    return std::io::PipeReader { handle: self.raw.take_read_end() };
+  }
+
+  fn take_writer(self: ref mut Self) -> std::io::PipeWriter {
+    return std::io::PipeWriter { handle: self.raw.take_write_end() };
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return self.raw.close();
+  }
+}
+
+pub impl std::io::PipeReader {
+  fn as_fd(self: ref Self) -> std::os::Fd {
+    return self.handle.as_fd();
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.handle.is_open();
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return self.handle.close();
+  }
+}
+
+pub impl std::io::PipeWriter {
+  fn as_fd(self: ref Self) -> std::os::Fd {
+    return self.handle.as_fd();
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.handle.is_open();
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return self.handle.close();
+  }
+}
+
 impl std::io::Reader for std::io::Stdin {
   pub fn read_byte(self: ref mut Self) -> i64 {
     return std::io::read_byte();
@@ -213,6 +285,30 @@ impl std::io::Writer for std::io::Stderr {
     // Stderr currently writes through the host descriptor immediately. A real
     // flush hook belongs with future owned OS handles.
     return true;
+  }
+}
+
+impl std::io::Reader for std::io::PipeReader {
+  pub fn read_byte(self: ref mut Self) -> i64 {
+    if !self.handle.is_open() {
+      return -1;
+    }
+    return std::io::read_fd_byte(self.handle.raw());
+  }
+}
+
+impl std::io::Writer for std::io::PipeWriter {
+  pub fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if !self.handle.is_open() {
+      return false;
+    }
+    return std::io::write_fd_byte(self.handle.raw(), value);
+  }
+
+  pub fn flush(self: ref mut Self) -> bool {
+    // Pipe writes go straight to the descriptor. Use BufWriter[PipeWriter]
+    // when a caller wants explicit buffering.
+    return self.handle.is_open();
   }
 }
 

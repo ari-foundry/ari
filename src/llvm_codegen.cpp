@@ -544,6 +544,7 @@ private:
             symbol == "ari_builtin_os_close" ||
             symbol == "ari_builtin_os_set_close_on_exec" ||
             symbol == "ari_builtin_os_set_nonblocking" ||
+            symbol == "ari_builtin_os_write_byte" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
         }
@@ -1362,6 +1363,41 @@ private:
         line("  ret i64 %packed");
         line("fail:");
         line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_os_read_byte(i64 %fd) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %do_read");
+        line("do_read:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %byte.ptr = alloca i8, align 1");
+        line("  %count = call i64 @read(i32 %fd32, ptr %byte.ptr, i64 1)");
+        line("  %one = icmp eq i64 %count, 1");
+        line("  br i1 %one, label %load, label %fail");
+        line("load:");
+        line("  %byte = load i8, ptr %byte.ptr, align 1");
+        line("  %wide = zext i8 %byte to i64");
+        line("  ret i64 %wide");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_os_write_byte(i64 %fd, i8 %value) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %do_write");
+        line("do_write:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %byte.ptr = alloca i8, align 1");
+        line("  store i8 %value, ptr %byte.ptr, align 1");
+        line("  %count = call i64 @write(i32 %fd32, ptr %byte.ptr, i64 1)");
+        line("  %ok = icmp eq i64 %count, 1");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
         line("}");
         line();
 
