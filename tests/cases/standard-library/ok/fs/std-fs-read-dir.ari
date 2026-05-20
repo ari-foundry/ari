@@ -22,6 +22,18 @@ fn has_entry(entries: ref std::vec::Vec[std::string::String], expected: string) 
   return false;
 }
 
+fn has_dir_entry(entries: ref std::vec::Vec[std::fs::DirEntry], expected_name: string, expected_path: string) -> bool {
+  var index = 0;
+  while index < entries.len() {
+    let entry = entries.get(index);
+    if entry.name_equals(expected_name) && entry.path_equals(expected_path) {
+      return true;
+    }
+    index = index + 1;
+  }
+  return false;
+}
+
 fn main() -> i64 {
   let dir_path = "build/prelude/std-fs-read-dir.tmp";
   let alpha_path = "build/prelude/std-fs-read-dir.tmp/alpha.txt";
@@ -37,7 +49,7 @@ fn main() -> i64 {
   }
 
   var score = 0;
-  var zone = zone::create(512);
+  var zone = zone::create(4096);
 
   if fs::create_dir(dir_path) {
     score = score + 1;
@@ -116,6 +128,25 @@ fn main() -> i64 {
   let listed = fs::read_dir(ref mut zone, dir_path);
   if listed.len() == 2 {
     score = score + 19;
+  }
+
+  if fs::try_read_dir_entries(ref mut zone, "build/prelude/std-fs-read-dir-missing.tmp").is_none() {
+    score = score + 20;
+  }
+
+  match fs::try_read_dir_entries(ref mut zone, dir_path) {
+    std::Some(detail) => {
+      if detail.len() == 2 {
+        score = score + 21;
+      }
+    }
+    std::None => {}
+  }
+
+  let detailed = fs::read_dir_entries(ref mut zone, dir_path);
+  if has_dir_entry(ref detailed, "alpha.txt", alpha_path) &&
+     has_dir_entry(ref detailed, "beta.txt", beta_path) {
+    score = score + 22;
   }
 
   let invalid = fs::Dir::invalid();

@@ -383,9 +383,11 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs13read_dir_next" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -F -q "std2fs12try_read_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -F -q "std2fs8read_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -F -q "std2fs20try_read_dir_entries" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -F -q "std2fs16read_dir_entries" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari -o $(BUILD_DIR)/prelude/std-fs-read-dir.elf
-	$(BUILD_DIR)/prelude/std-fs-read-dir.elf; code=$$?; test $$code -eq 190
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-dir.elf; $(BUILD_DIR)/prelude/std-fs-read-dir.elf; code=$$?; test $$code -eq 190; fi
+	$(BUILD_DIR)/prelude/std-fs-read-dir.elf; code=$$?; test $$code -eq 253
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-dir.elf; $(BUILD_DIR)/prelude/std-fs-read-dir.elf; code=$$?; test $$code -eq 253; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-links.ll
 	grep -q "@ari_builtin_fs_hard_link" $(BUILD_DIR)/prelude/std-fs-links.ll
 	grep -q "@ari_builtin_fs_symbolic_link" $(BUILD_DIR)/prelude/std-fs-links.ll
@@ -1582,6 +1584,8 @@ check-prelude: $(TARGET)
 	grep -q "unknown function or enum case 'io::write_i64'" $(BUILD_DIR)/prelude/prelude-path-without-std.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-maybe-removed.ari -o $(BUILD_DIR)/prelude/prelude-maybe-removed.elf >$(BUILD_DIR)/prelude/prelude-maybe-removed.err 2>&1; then exit 1; fi
 	grep -q "unsupported executable type 'Maybe'" $(BUILD_DIR)/prelude/prelude-maybe-removed.err
+	if $(TARGET) tests/cases/standard-library/errors/fs/std-fs-dir-entry-different-zone.ari -o $(BUILD_DIR)/prelude/std-fs-dir-entry-different-zone.elf >$(BUILD_DIR)/prelude/std-fs-dir-entry-different-zone.err 2>&1; then exit 1; fi
+	grep -q "zone-backed struct literal fields must come from the same zone" $(BUILD_DIR)/prelude/std-fs-dir-entry-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-alloc-buffer-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'data' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-with-capacity-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-with-capacity-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-with-capacity-after-reset.err 2>&1; then exit 1; fi

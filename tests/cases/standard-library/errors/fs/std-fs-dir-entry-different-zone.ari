@@ -1,0 +1,10 @@
+fn main() -> i64 {
+  var left = zone::create(128);
+  var right = zone::create(128);
+  let name = std::string::from(ref mut left, "name");
+  let path = std::string::from(ref mut right, "path");
+  let entry = std::fs::DirEntry { name_value: name, path_value: path };
+  zone::destroy(right);
+  zone::destroy(left);
+  return entry.name().len();
+}

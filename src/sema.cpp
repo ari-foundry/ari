@@ -38,6 +38,7 @@
 #include "std_box_semantics.hpp"
 #include "std_collections_semantics.hpp"
 #include "std_enum_probe_semantics.hpp"
+#include "std_fs_semantics.hpp"
 #include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 #include "symbol_mangle.hpp"
@@ -17815,6 +17816,14 @@ private:
             std_zone_handle_source_field = std_box_zone_handle_source_field_index(struct_type);
         }
         if (!std_zone_handle_source_field) {
+            std_zone_handle_source_field =
+                std_fs_dir_entry_zone_handle_source_field_index(struct_type);
+            if (std_zone_handle_source_field) {
+                std_zone_handle_storage_field_paths =
+                    std_fs_dir_entry_zone_handle_storage_field_path_indices(struct_type);
+            }
+        }
+        if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_string_zone_handle_source_field_index(struct_type);
         }
         auto std_zone_handle_field_allows_zone_pointer = [&](std::size_t index) {
@@ -17824,6 +17833,10 @@ private:
             }
             return false;
         };
+        const bool std_zone_handle_requires_single_source =
+            is_std_fs_dir_entry_zone_handle_type(struct_type);
+        bool std_zone_handle_has_source = false;
+        std::string std_zone_handle_source;
         for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
             IrExprPtr value = std::move(lowered_values[i]);
             coerce_expr_to_expected(*value, struct_type.field_types[i]);
@@ -17831,6 +17844,23 @@ private:
             require_plain_prelude_aggregate_element(expr.loc, value->type, "struct");
             if (!std_zone_handle_field_allows_zone_pointer(i)) {
                 require_no_zone_pointer_escape(value->loc, *value, "struct literal");
+            } else {
+                std::string field_zone_source;
+                const bool has_field_zone_source =
+                    zone_pointer_source_name_from_expr(*value, field_zone_source);
+                if (has_field_zone_source && field_zone_source == "<multiple zones>") {
+                    fail(value->loc,
+                         "zone-backed struct literal fields must come from one zone");
+                }
+                if (std_zone_handle_requires_single_source && has_field_zone_source) {
+                    if (!std_zone_handle_has_source) {
+                        std_zone_handle_source = field_zone_source;
+                        std_zone_handle_has_source = true;
+                    } else if (std_zone_handle_source != field_zone_source) {
+                        fail(value->loc,
+                             "zone-backed struct literal fields must come from the same zone");
+                    }
+                }
             }
             elements.push_back(std::move(value));
         }

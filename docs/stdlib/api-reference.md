@@ -723,6 +723,8 @@ fs::open_dir(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
 fs::try_read_dir(ref mut zone, path)
+fs::read_dir_entries(ref mut zone, path)
+fs::try_read_dir_entries(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::open(path, mode)
@@ -762,6 +764,11 @@ Dir::invalid()
 dir.is_open()
 dir.next(ref mut zone)
 dir.close()
+
+entry.name()
+entry.path()
+entry.name_equals(value)
+entry.path_equals(value)
 
 Permissions::none()
 Permissions::read_only()
@@ -838,8 +845,12 @@ one directory and `remove_dir(path)` removes one empty directory.
 the next entry name while skipping `"."` and `".."`, and `dir.close()` closes
 the handle. `try_read_dir(ref mut zone, path)` opens, collects names into
 `std::vec::Vec[String]`, closes, and returns `None` on open/close failure.
-`read_dir(ref mut zone, path)` is the asserting wrapper. Recursive directory
-helpers, richer `DirEntry` metadata, and owned resource policy are future work.
+`read_dir(ref mut zone, path)` is the asserting wrapper. Use
+`try_read_dir_entries(ref mut zone, path)` or
+`read_dir_entries(ref mut zone, path)` when callers need lightweight
+`DirEntry` values with both `entry.name()` and `entry.path()`. Recursive
+directory helpers, metadata-bearing `DirEntry` values, and owned resource
+policy are future work.
 The current `File` and `Dir` values are not owned resources yet, so close each
 successful handle once and do not reuse copied handles after closing.
 

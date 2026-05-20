@@ -10,6 +10,11 @@ pub struct Dir {
   handle: ptr c_void,
 }
 
+pub struct DirEntry {
+  name_value: std::string::String,
+  path_value: std::string::String,
+}
+
 pub struct Permissions {
   readable: bool,
   writable: bool,
@@ -188,6 +193,52 @@ pub fn read_dir(zone: ref mut Zone, path: string) -> std::vec::Vec[std::string::
   }
   std::panic();
   return std::vec::new<std::string::String>(zone, 0);
+}
+
+// DirEntry stores both strings in the caller's zone so listing results stay
+// valid until that zone is reset or destroyed.
+fn make_dir_entry(zone: ref mut Zone, base: string, name: std::string::String) -> DirEntry {
+  let full_path = std::path::join_in(zone, std::string::bytes(base), name.as_slice());
+  let entry_name = name;
+  let entry_path = full_path;
+  return DirEntry { name_value: entry_name, path_value: entry_path };
+}
+
+pub fn try_read_dir_entries(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[DirEntry]] {
+  match try_open_dir(path) {
+    std::Some(dir) => {
+      var entries = std::vec::new<DirEntry>(zone, 8);
+      var reading = true;
+      while reading {
+        match dir.next(zone) {
+          std::Some(name) => {
+            entries.push_in(zone, make_dir_entry(zone, path, name));
+          }
+          std::None => {
+            reading = false;
+          }
+        }
+      }
+
+      if !dir.close() {
+        return std::None<std::vec::Vec[DirEntry]>();
+      }
+      return std::Some<std::vec::Vec[DirEntry]>(entries);
+    }
+    std::None => {}
+  }
+  return std::None<std::vec::Vec[DirEntry]>();
+}
+
+pub fn read_dir_entries(zone: ref mut Zone, path: string) -> std::vec::Vec[DirEntry] {
+  match try_read_dir_entries(zone, path) {
+    std::Some(entries) => {
+      return entries;
+    }
+    std::None => {}
+  }
+  std::panic();
+  return std::vec::new<DirEntry>(zone, 0);
 }
 
 pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
@@ -534,5 +585,23 @@ pub impl std::fs::Dir {
 
   fn next(self, zone: ref mut Zone) -> std::Option[std::string::String] {
     return read_dir_next(zone, self);
+  }
+}
+
+pub impl std::fs::DirEntry {
+  fn name(self: ref Self) -> ref std::string::String {
+    return ref self.name_value;
+  }
+
+  fn path(self: ref Self) -> ref std::string::String {
+    return ref self.path_value;
+  }
+
+  fn name_equals(self: ref Self, value: string) -> bool {
+    return self.name_value.equals_text(value);
+  }
+
+  fn path_equals(self: ref Self, value: string) -> bool {
+    return self.path_value.equals_text(value);
   }
 }

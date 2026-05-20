@@ -116,7 +116,7 @@ Use this table when writing code from docs alone:
 | Convert Unix time to UTC calendar fields. | `time::utc_from_unix(seconds, nanos)`, `time::SystemTime::from_unix(seconds, nanos)`, `system_time.to_utc()`, `utc.year()`, `utc.month()`, `utc.day()` | The current calendar API is UTC-only, non-negative Unix timestamp only, and does not include timezone databases or local time conversion. |
 | Work with small byte files. | `fs::try_write(path, bytes)`, `fs::try_append(path, bytes)`, `fs::write(path, bytes)`, `fs::append(path, bytes)`, `fs::try_read(ref mut zone, path)`, `fs::read(ref mut zone, path)`, `fs::try_copy(source, target)`, `fs::copy(source, target)`, `fs::rename(source, target)`, `fs::truncate(path)`, `fs::try_create(path)`, `fs::try_open(path, "r")`, `file.read_byte()`, `file.write_bytes(slice)`, `file.close()`, `fs::exists(path)`, `fs::permissions(path)`, `fs::remove(path)` | Prefer `try_read` when absence must be different from an empty file; it returns `None` for missing/unopenable paths and `Some(empty)` for empty files. `try_write`, `try_append`, and `try_copy` return successful byte counts. `read`/`read_to_string`, `write`, `append`, and `copy` keep compatibility fallback shapes. `"w"` creates or truncates, `"a"` creates or appends, and `"rw"` opens an existing file for reading/writing. `permissions` is a preflight access snapshot, not a replacement for handling later file errors. The current `File` is a value handle, so close successful handles once and do not reuse copies after closing. |
 | Split or join lexical paths. | `path::bytes(bytes)`, `path::from_os(os)`, `path::components(bytes)`, `path::file_name(bytes)`, `path::parent(bytes)`, `path::stem(bytes)`, `path::extension(bytes)`, `path::join_in(ref mut zone, base, child)`, `path::normalize_in(ref mut zone, bytes)` | Prefer `PathBytes` when a value should be treated as a path rather than a generic byte string. These helpers do not query the filesystem. Borrowed component helpers return views into the original bytes. `components` is a lazy iterator over non-empty path parts. Current separator policy is POSIX-style `/` only. |
-| Create, remove, or read one directory. | `fs::create_dir(path)`, `fs::remove_dir(path)`, `fs::try_read_dir(ref mut zone, path)`, `fs::read_dir(ref mut zone, path)`, `fs::try_open_dir(path)`, `dir.next(ref mut zone)`, `dir.close()`, `fs::exists(path)` | Create/remove are single-directory helpers. They do not create parents or remove non-empty directories. `try_read_dir` is the convenient name-list helper; `try_open_dir` plus `Dir::next` is the streaming shape. Directory reads skip `"."`/`".."`; richer `DirEntry` metadata and recursive directory helpers are future work. |
+| Create, remove, or read one directory. | `fs::create_dir(path)`, `fs::remove_dir(path)`, `fs::try_read_dir(ref mut zone, path)`, `fs::read_dir(ref mut zone, path)`, `fs::try_read_dir_entries(ref mut zone, path)`, `fs::read_dir_entries(ref mut zone, path)`, `fs::try_open_dir(path)`, `dir.next(ref mut zone)`, `dir.close()`, `fs::exists(path)` | Create/remove are single-directory helpers. They do not create parents or remove non-empty directories. `try_read_dir` is the convenient name-list helper; `try_read_dir_entries` returns lightweight entries with names and joined paths; `try_open_dir` plus `Dir::next` is the streaming shape. Directory reads skip `"."`/`".."`; metadata-bearing entries and recursive directory helpers are future work. |
 | Represent network addresses. | `net::Ipv4Addr::localhost()`, `net::Ipv6Addr::any()`, `addr.as_ip()`, `net::socket_addr(ip, port)`, `net::SocketAddr::localhost(port)` | This is value-only and does not open sockets. DNS lookup, TCP/UDP/Unix sockets, socket options, nonblocking mode, timeouts, and shutdown are future runtime slices. |
 | Inspect the target/platform contract. | `target::triple()`, `target::arch()`, `target::is_linux()`, `target::uses_glibc()`, `target::uses_elf()`, `target::syscall_abi()`, `target::has_epoll()` | These are compile-target facts, not live kernel probes. Static/dynamic linking, PIE, RELRO, stack protector, and raw descriptor APIs are platform roadmap items. |
 | Read stdin. | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` | `try_read_byte` returns `Option[u8]` instead of the raw `-1` EOF sentinel. Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
@@ -276,12 +276,14 @@ buckets; tree set iteration walks ascending comparator order.
 create/truncate case. Supported modes are `"r"`, `"w"`, `"a"`, `"rw"`,
 `"r+"`, `"w+"`, and `"a+"`. `std::fs::Dir` mirrors the same explicit handle
 style for directories. Use `fs::try_read_dir(ref mut zone, path)` when you want
-a `std::vec::Vec[String]` of names, or use `fs::try_open_dir(path)`, call
-`dir.next(ref mut zone)` until it returns `None`, then call `dir.close()` when
-streaming is better. Current directory reads return names only and skip
-`"."`/`".."`. The current handles are copyable source data, so closing is a
-caller convention until the language has a stronger OS-resource ownership
-model.
+a `std::vec::Vec[String]` of names, use
+`fs::try_read_dir_entries(ref mut zone, path)` when you want lightweight
+`DirEntry` values with `entry.name()` and `entry.path()`, or use
+`fs::try_open_dir(path)`, call `dir.next(ref mut zone)` until it returns
+`None`, then call `dir.close()` when streaming is better. Current directory
+reads skip `"."`/`".."`. The current handles are copyable source data, so
+closing is a caller convention until the language has a stronger OS-resource
+ownership model.
 
 `std::fs::Permissions` is a small access snapshot. Use
 `fs::can_read(path)`, `fs::can_write(path)`, and `fs::can_execute(path)` for
@@ -303,8 +305,8 @@ missing-file cases must be separated.
 For path-level changes, `fs::rename(source, target)` moves or renames one path
 using the host runtime policy. For directories, `fs::create_dir(path)` creates
 one directory and `fs::remove_dir(path)` removes one empty directory. Parent
-creation, recursive removal, and richer `DirEntry` metadata are still roadmap
-work.
+creation, recursive removal, and metadata-bearing `DirEntry` values are still
+roadmap work.
 
 `std::net` address values are ordinary source structs. Use
 `net::Ipv4Addr::localhost()`, `net::Ipv6Addr::any()`, `addr.as_ip()`, and

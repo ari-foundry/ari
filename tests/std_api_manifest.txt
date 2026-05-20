@@ -269,6 +269,7 @@ fn std::fs::permissions|check-prelude std-fs-permissions access permission wrapp
 fn std::fs::read|check-prelude std-fs-create-truncate-copy natural read alias for read_to_string; docs/stdlib/modules/fs.md
 fn std::fs::read_byte|check-prelude std-fs-basic file byte read hook; docs/stdlib/modules/fs.md
 fn std::fs::read_dir|check-prelude std-fs-read-dir asserting directory name-list helper; docs/stdlib/modules/fs.md
+fn std::fs::read_dir_entries|check-prelude std-fs-read-dir asserting directory entry-list helper; docs/stdlib/modules/fs.md
 fn std::fs::read_dir_next|check-prelude std-fs-read-dir Option-returning directory entry name helper; docs/stdlib/modules/fs.md
 fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byte-string read helper; docs/stdlib/modules/fs.md
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
@@ -291,6 +292,7 @@ fn std::fs::try_open_read|check-prelude std-fs-basic compatibility Option-return
 fn std::fs::try_open_write|check-prelude std-fs-basic compatibility Option-returning write helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read|check-prelude std-fs-try-read Option-returning natural whole-file read alias; docs/stdlib/modules/fs.md
 fn std::fs::try_read_dir|check-prelude std-fs-read-dir Option-returning directory name-list helper; docs/stdlib/modules/fs.md
+fn std::fs::try_read_dir_entries|check-prelude std-fs-read-dir Option-returning directory entry-list helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read_to_string|check-prelude std-fs-try-read Option-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
 fn std::fs::try_write|check-prelude std-fs-read-write Option-returning write byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::write|check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md
@@ -840,6 +842,10 @@ method std::fs::Dir::close|check-prelude std-fs-read-dir value directory handle 
 method std::fs::Dir::invalid|check-prelude std-fs-read-dir invalid directory fallback constructor; docs/stdlib/modules/fs.md
 method std::fs::Dir::is_open|check-prelude std-fs-read-dir open directory handle predicate; docs/stdlib/modules/fs.md
 method std::fs::Dir::next|check-prelude std-fs-read-dir value directory handle next-name method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::name|check-prelude std-fs-read-dir borrowed directory entry name method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::name_equals|check-prelude std-fs-read-dir directory entry name comparison helper; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::path|check-prelude std-fs-read-dir borrowed joined directory entry path method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::path_equals|check-prelude std-fs-read-dir directory entry path comparison helper; docs/stdlib/modules/fs.md
 method std::fs::File::close|check-prelude std-fs-basic value file handle close method; docs/stdlib/modules/fs.md
 method std::fs::File::invalid|check-prelude std-fs-basic invalid file fallback constructor; docs/stdlib/modules/fs.md
 method std::fs::File::is_open|check-prelude std-fs-basic open-handle predicate; docs/stdlib/modules/fs.md
@@ -1203,6 +1209,7 @@ struct std::encoding::Utf8Char|check-prelude std-encoding-utf8-codepoints decode
 struct std::error::Error|check-prelude std-error-basic compact shared error value; docs/stdlib/modules/error.md
 struct std::fmt::FormatSpec|check-prelude std-fmt-format-spec source formatting options; docs/stdlib/modules/fmt.md
 struct std::fs::Dir|std fs directory handle tests; docs/stdlib/modules/fs.md
+struct std::fs::DirEntry|std fs directory entry tests; docs/stdlib/modules/fs.md
 struct std::fs::File|std fs file handle tests; docs/stdlib/modules/fs.md
 struct std::fs::Metadata|std fs metadata tests; docs/stdlib/modules/fs.md
 struct std::fs::Permissions|std fs permission query tests; docs/stdlib/modules/fs.md

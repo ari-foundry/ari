@@ -160,8 +160,11 @@ identifies the exact case:
   `create_dir`/`remove_dir`, duplicate-create failure, and missing-source
   rename failure.
 - `std-fs-read-dir.ari`: runtime-backed `Dir` open/next/close, one-shot
-  `try_read_dir`/`read_dir`, dot-entry skip, missing-directory failure,
-  invalid-handle `None`, and cleanup.
+  `try_read_dir`/`read_dir`, lightweight `DirEntry` name/path helpers,
+  dot-entry skip, missing-directory failure, invalid-handle `None`, and
+  cleanup.
+- `errors/fs/std-fs-dir-entry-different-zone.ari`: rejects manually constructed
+  `DirEntry` values whose zone-backed name and path come from different zones.
 - `std-fs-links.ari`: runtime-backed `hard_link` and `symbolic_link`,
   read-through behavior, missing-source failure, and duplicate-link failure.
 - `std-fs-permissions.ari`: runtime-backed access permission checks,

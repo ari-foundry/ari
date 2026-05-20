@@ -9,9 +9,9 @@ in one call, create/truncate/copy small files, read a whole file into Ari's
 byte-oriented `String` with either compatibility or `Option`-returning absence
 behavior, rename paths, create hard or symbolic links, create or remove one
 empty directory, read directory entry names through an explicit `Dir` handle,
-query basic file metadata, read and change POSIX permission bits, resolve an
-existing path to an absolute canonical path, close the handle, and remove a
-file.
+collect lightweight `DirEntry` values with names and joined paths, query basic
+file metadata, read and change POSIX permission bits, resolve an existing path
+to an absolute canonical path, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
@@ -21,8 +21,8 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `try_metadata`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
 `symbolic_link`, `create_dir`, `remove_dir`, `try_open_dir`, `read_dir`,
-`try_read_dir`, `read_dir_next`, `close_dir`, `close`, `exists`, and
-`remove`, not type-suffixed names.
+`try_read_dir`, `read_dir_entries`, `try_read_dir_entries`, `read_dir_next`,
+`close_dir`, `close`, `exists`, and `remove`, not type-suffixed names.
 
 ## API
 
@@ -50,6 +50,8 @@ fs::open_dir(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
 fs::try_read_dir(ref mut zone, path)
+fs::read_dir_entries(ref mut zone, path)
+fs::try_read_dir_entries(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::open(path, mode)
@@ -89,6 +91,11 @@ Dir::invalid()
 dir.is_open()
 dir.next(ref mut zone)
 dir.close()
+
+entry.name()
+entry.path()
+entry.name_equals(value)
+entry.path_equals(value)
 
 Permissions::none()
 Permissions::read_only()
@@ -269,12 +276,17 @@ handle. `try_read_dir(ref mut zone, path)` is the convenient one-shot helper:
 it opens the directory, collects names into `std::vec::Vec[String]`, closes the
 handle, and returns `None` when the directory cannot be opened or closed.
 `read_dir(ref mut zone, path)` is the asserting wrapper for code that treats a
-failed directory read as a programmer error. The low-level `open_dir`,
-`read_dir_next`, and `close_dir` names exist for direct runtime-hook coverage,
-but ordinary code should prefer `try_read_dir` for collection-style reads or
-`try_open_dir` plus the `Dir` methods for manual streaming. Current directory
-reads return names only; richer `DirEntry` metadata, recursive helpers, and
-owned resource tracking are future slices.
+failed directory read as a programmer error. Use
+`try_read_dir_entries(ref mut zone, path)` or
+`read_dir_entries(ref mut zone, path)` when the call site needs both the entry
+name and the joined child path. `DirEntry::name()` and `DirEntry::path()`
+return borrowed `String` references; the `*_equals` helpers keep common tests
+short. The low-level `open_dir`, `read_dir_next`, and `close_dir` names exist
+for direct runtime-hook coverage, but ordinary code should prefer
+`try_read_dir`/`try_read_dir_entries` for collection-style reads or
+`try_open_dir` plus the `Dir` methods for manual streaming. Current
+`DirEntry` values do not carry metadata yet; metadata-by-entry needs the next
+owned/path-to-OS-string boundary slice.
 
 ## Feature Status
 
@@ -294,7 +306,7 @@ owned resource tracking are future slices.
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)` runtime hook on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
-| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `dir.next(ref mut zone)`, and `dir.close()` for entry names; richer `DirEntry` metadata and owned OS-resource policy are roadmap. |
+| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, and `dir.close()` for entry names and joined paths; richer metadata-bearing entries and owned OS-resource policy are roadmap. |
 | create directory | Current: single-directory `create_dir(path)`; recursive creation is roadmap. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
@@ -358,7 +370,7 @@ fs::write(path, data.as_slice());
 var tail = ['C'];
 fs::append(path, tail.as_slice());
 
-var zone = zone::create(512);
+var zone = zone::create(4096);
 let text = fs::read(ref mut zone, path);
 let first = text.get(0);
 zone::destroy(zone);
@@ -434,6 +446,25 @@ if dir.is_open() {
 zone::destroy(zone);
 ```
 
+Read entries with joined paths:
+
+```ari
+var zone = zone::create(512);
+let entries = fs::read_dir_entries(ref mut zone, "build/prelude");
+var index = 0;
+while index < entries.len() {
+  let entry = entries.get(index);
+  if entry.name_equals("example-fs.tmp") {
+    let path = entry.path();
+    if path.equals_text("build/prelude/example-fs.tmp") {
+      index = entries.len();
+    }
+  }
+  index = index + 1;
+}
+zone::destroy(zone);
+```
+
 Create hard and symbolic links to a file:
 
 ```ari
@@ -487,11 +518,11 @@ if file.is_open() {
 
 - This slice is byte-oriented. There is no owned path type, recursive directory
   API, file locking API, temporary-file API, or text encoding policy yet.
-  Directory reads currently return entry names only and do not expose metadata
-  or per-entry errors. Basic `stat` metadata, permission-bit lookup and
-  mutation, and existing-path canonicalization exist, but richer timestamps,
-  owner/group/ACL policy, no-follow symlink metadata, link metadata, and
-  platform-specific symlink policy are still future work.
+  Directory reads currently return names and joined child paths only; they do
+  not expose per-entry metadata or per-entry errors. Basic `stat` metadata,
+  permission-bit lookup and mutation, and existing-path canonicalization exist,
+  but richer timestamps, owner/group/ACL policy, no-follow symlink metadata,
+  link metadata, and platform-specific symlink policy are still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
   `stat`, `chmod`, `realpath`, `unlink`, `rename`, `link`, `symlink`,
   `mkdir`, `rmdir`, `opendir`, `readdir`, `closedir`, `open`, `read`,
@@ -545,8 +576,10 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-read-dir.ari` covers
 runtime-backed `Dir` open/next/close behavior, one-shot
-`try_read_dir`/`read_dir` name-list helpers, missing-directory failure, dot
-entry skipping, invalid-handle `None`, and cleanup. `std-fs-links.ari` covers
+`try_read_dir`/`read_dir` name-list helpers,
+`try_read_dir_entries`/`read_dir_entries` entry-list helpers, joined paths,
+missing-directory failure, dot entry skipping, invalid-handle `None`, and
+cleanup. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
 checks. `std-fs-permissions.ari` covers access-style readable/writable/
 executable checks, the `Permissions` wrapper methods, and missing-path
