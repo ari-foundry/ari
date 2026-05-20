@@ -10,6 +10,8 @@ Use this page with:
 
 - [Compiler Development Roadmap](compiler-development-roadmap.md) for the
   day-to-day development order.
+- [Compiler Source And Diagnostics](compiler-source-diagnostics.md) for the
+  source-map and diagnostic tooling layer.
 - [Production Compiler Design](production-compiler-design.md) for the
   long-term language contract.
 - [Bootstrap Readiness](bootstrap-readiness.md) for the later self-host start

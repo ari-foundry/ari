@@ -16,6 +16,9 @@ Read this page before the bootstrap-specific pages:
 - [Compiler Maturity Gates](compiler-maturity-gates.md) tracks the general
   compiler-development gates that remain before an Ari compiler tree is
   productive.
+- [Compiler Source And Diagnostics](compiler-source-diagnostics.md) defines
+  the source-map and diagnostic tooling layer that should stay outside runtime
+  `std`.
 - [Production Compiler Design](production-compiler-design.md) explains the
   language contract a future Ari-written compiler would also rely on.
 - [Bootstrap Readiness](bootstrap-readiness.md) tracks how close Ari is to

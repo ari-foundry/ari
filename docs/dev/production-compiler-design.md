@@ -16,6 +16,9 @@ the implementation task for this page.
 [Compiler Maturity Gates](compiler-maturity-gates.md) is the concise checklist
 for deciding whether ordinary compiler work is moving Ari toward that later
 start gate.
+[Compiler Source And Diagnostics](compiler-source-diagnostics.md) expands the
+hardest current blocker: source ownership, spans, labels, reports, and golden
+rendering outside runtime `std`.
 
 Read this page with [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
 [Bootstrap Readiness](bootstrap-readiness.md), and

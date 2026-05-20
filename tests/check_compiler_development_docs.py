@@ -28,6 +28,8 @@ def main() -> int:
     roadmap = read(roadmap_path)
     gates_path = "docs/dev/compiler-maturity-gates.md"
     gates = read(gates_path)
+    source_diagnostics_path = "docs/dev/compiler-source-diagnostics.md"
+    source_diagnostics = read(source_diagnostics_path)
     manifest_path = "tests/compiler_development_manifest.txt"
     manifest = read(manifest_path)
 
@@ -55,6 +57,7 @@ def main() -> int:
         "readiness signal",
         "Improve Ari as a general language",
         "Compiler Maturity Gates",
+        "Compiler Source And Diagnostics",
         "stage0 changes",
         "Sema",
         "LLVM backend",
@@ -102,14 +105,56 @@ def main() -> int:
     ]:
         require(gates, needle, gates_path)
 
+    require(gates, "Compiler Source And Diagnostics", gates_path)
+
     if not re.search(r"\|\s*Gate\s*\|\s*Required State\s*\|\s*Test Shape\s*\|\s*Status\s*\|", gates):
         print(f"{gates_path}: missing maturity gate table", file=sys.stderr)
         return 1
+
+    for heading in [
+        "# Compiler Source And Diagnostics",
+        "## Goals",
+        "## Package Shape",
+        "## Core Types",
+        "## Diagnostic Values",
+        "## Rendering Policy",
+        "## Error Code Policy",
+        "## Ownership And Allocation",
+        "## Implementation Slices",
+        "## Test Layout",
+        "## Integration With The Current Compiler",
+        "## Readiness Impact",
+    ]:
+        require(source_diagnostics, heading, source_diagnostics_path)
+
+    for needle in [
+        "not bootstrap implementation",
+        "Do not put these APIs into runtime `std`",
+        "SourceId",
+        "SourceFile",
+        "Span",
+        "DiagnosticCode",
+        "Label",
+        "Diagnostic",
+        "stable golden rendering",
+        "compiler/source",
+        "compiler/report",
+        "Span.start",
+        "Span.end",
+        "diagnostics should be data first",
+        "normalize repository-local paths",
+        "L0001 lexer",
+        "explicit ownership",
+        "source-id-stability",
+        "report-single-label.ari",
+    ]:
+        require(source_diagnostics, needle, source_diagnostics_path)
 
     gate_labels = {
         "frontend-grammar": "Frontend grammar",
         "source-identity": "Source identity",
         "diagnostics": "Diagnostics",
+        "source-diagnostics-layer": "Compiler Source And Diagnostics",
         "module-projects": "Module projects",
         "generic-models": "Generic data models",
         "trait-selection": "Trait selection",
@@ -122,12 +167,16 @@ def main() -> int:
     }
     for entry, label in gate_labels.items():
         require(manifest, entry, manifest_path)
-        require(gates, label, gates_path)
+        if entry == "source-diagnostics-layer":
+            require(source_diagnostics, label, source_diagnostics_path)
+        else:
+            require(gates, label, gates_path)
 
     for index_path in ["docs/README.md", "docs/dev/README.md"]:
         index = read(index_path)
         require(index, "Compiler Development Roadmap", index_path)
         require(index, "Compiler Maturity Gates", index_path)
+        require(index, "Compiler Source And Diagnostics", index_path)
 
     return 0
 
