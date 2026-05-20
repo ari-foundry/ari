@@ -1263,6 +1263,12 @@ check-prelude: $(TARGET)
 	grep -F -q 'std__vec__Vec_i64_8inherent7reverse' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent11rotate_left' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent12rotate_right' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent4sort' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent11stable_sort' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent9is_sorted' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent13binary_search' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent3min' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent3max' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-slice.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8as_slice' $(BUILD_DIR)/prelude/std-vec-as-slice.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-reserve.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-reserve.ll

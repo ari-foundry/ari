@@ -1151,6 +1151,7 @@ method std::time::UtcDateTime::year|check-prelude std-time-utc-calendar UTC year
 method std::vec::Vec[T]::as_mut_ptr|check-prelude std-vec-as-mut-ptr mutable borrowed receiver with reset invalidation; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_slice|check-prelude std-vec-as-slice; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::binary_search|check-prelude std-vec-sequence ordered sequence binary search wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::capacity|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::chunks|check-prelude std-vec-sequence borrowed chunk iterator wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::clear|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
@@ -1171,9 +1172,12 @@ method std::vec::Vec[T]::index_of|check-prelude std-vec-fixed-ops borrowed recei
 method std::vec::Vec[T]::insert|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::insert_in|check-prelude std-vec-insert-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::is_empty|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::is_sorted|check-prelude std-vec-sequence ordered sequence sortedness wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::iter|check-prelude std-vec-iter borrowed receiver and Iterator lowering; docs/dev/test-matrix.md Explicit memory zones and Control flow rows
 method std::vec::Vec[T]::last|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::len|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::max|check-prelude std-vec-sequence ordered sequence maximum wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::min|check-prelude std-vec-sequence ordered sequence minimum wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::pop|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push_in|check-prelude std-vec-push-in; docs/dev/test-matrix.md Explicit memory zones row
@@ -1187,8 +1191,10 @@ method std::vec::Vec[T]::rotate_left|check-prelude std-vec-sequence in-place seq
 method std::vec::Vec[T]::rotate_right|check-prelude std-vec-sequence in-place sequence rotation wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::set|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::slice|check-prelude std-vec-sequence borrowed range view wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::sort|check-prelude std-vec-sequence ordered in-place sort wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::split|check-prelude std-vec-sequence borrowed delimiter split iterator wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::split_at|check-prelude std-vec-sequence borrowed split view wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::stable_sort|check-prelude std-vec-sequence ordered in-place stable sort wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::starts_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row

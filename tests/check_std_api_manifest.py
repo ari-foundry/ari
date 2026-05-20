@@ -20,7 +20,6 @@ MODULE_RE = re.compile(rf"^pub\s+mod\s+({IDENT})\s*;")
 TYPE_RE = re.compile(rf"^pub\s+(struct|enum|trait|type)\s+({IDENT}){GENERIC}")
 CONST_RE = re.compile(rf"^pub\s+const\s+({IDENT})")
 FN_RE = re.compile(rf"^pub\s+(?:extern\s+\"[^\"]+\"\s+)?fn\s+({IDENT}){GENERIC}")
-IMPL_RE = re.compile(r"^pub\s+impl(?:\[[^\]]+\])?\s+([^{]+)\{")
 METHOD_RE = re.compile(rf"^\s*(?:pub\s+)?fn\s+({IDENT}){GENERIC}")
 USE_GROUP_RE = re.compile(rf"^pub\s+use\s+({IDENT}(?:::{IDENT})*)::\{{([^}}]+)\}}\s*;")
 USE_SINGLE_RE = re.compile(
@@ -44,6 +43,32 @@ def strip_line_comment(line: str) -> str:
 
 def brace_delta(line: str) -> int:
     return line.count("{") - line.count("}")
+
+
+def parse_impl_target(line: str) -> str | None:
+    stripped = line.strip()
+    if not stripped.startswith("pub impl"):
+        return None
+
+    rest = stripped[len("pub impl") :].lstrip()
+    if rest.startswith("["):
+        depth = 0
+        end = None
+        for index, ch in enumerate(rest):
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth -= 1
+                if depth == 0:
+                    end = index + 1
+                    break
+        if end is None:
+            return None
+        rest = rest[end:].lstrip()
+
+    if "{" not in rest:
+        return None
+    return rest.split("{", 1)[0].strip()
 
 
 def exported_alias(item: str) -> str:
@@ -118,10 +143,10 @@ def api_surface() -> list[str]:
                 apis.add(f"const {module}::{const_match.group(1)}")
                 continue
 
-            impl_match = IMPL_RE.match(line)
-            if impl_match:
+            impl_target = parse_impl_target(line)
+            if impl_target:
                 context_kind = "impl"
-                context_name = normalize_type_ref(impl_match.group(1))
+                context_name = normalize_type_ref(impl_target)
                 depth = brace_delta(line)
                 if depth <= 0:
                     context_kind = None

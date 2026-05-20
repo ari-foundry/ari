@@ -142,6 +142,12 @@ vec.split(delimiter)
 vec.reverse()
 vec.rotate_left(count)
 vec.rotate_right(count)
+vec.sort()
+vec.stable_sort()
+vec.is_sorted()
+vec.binary_search(value)
+vec.min()
+vec.max()
 vec.as_slice()
 vec.as_ptr()
 vec.as_mut_ptr()
@@ -149,10 +155,12 @@ vec.as_mut_ptr()
 
 `slice` and `split_at` return borrowed `Slice[T]` views into the live vector
 storage. `chunks`, `windows`, and delimiter `split` return lazy iterators that
-yield borrowed `Slice[T]` views, so they do not allocate. `reverse` and the
-rotation helpers mutate the existing storage in place through the same
-algorithm module helpers used for borrowed slices. `as_slice` is the
-whole-vector view. The pointer helpers preserve zone provenance in the checker.
+yield borrowed `Slice[T]` views, so they do not allocate. `reverse`, the
+rotation helpers, `sort`, and `stable_sort` mutate the existing storage in
+place through the same algorithm module helpers used for borrowed slices.
+`is_sorted`, `binary_search`, `min`, and `max` are available when `T`
+implements `Ord[T]`. `as_slice` is the whole-vector view. The pointer helpers
+preserve zone provenance in the checker.
 
 Iterator entry point:
 

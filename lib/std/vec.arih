@@ -431,6 +431,38 @@ pub impl[T] std::vec::Vec[T] {
   }
 }
 
+pub impl[T: std::cmp::Ord[T]] std::vec::Vec[T] {
+  fn sort(self: ref mut Self) -> void {
+    std::algo::sort<T>(self.as_slice());
+    return;
+  }
+
+  fn stable_sort(self: ref mut Self) -> void {
+    std::algo::stable_sort<T>(self.as_slice());
+    return;
+  }
+
+  fn is_sorted(self: ref Self) -> bool {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::is_sorted<T>(view);
+  }
+
+  fn binary_search(self: ref Self, target: T) -> super::Option[i64] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::binary_search<T>(view, target);
+  }
+
+  fn min(self: ref Self) -> super::Option[T] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::min<T>(view);
+  }
+
+  fn max(self: ref Self) -> super::Option[T] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::max<T>(view);
+  }
+}
+
 impl[T] super::Iterator[T] for std::vec::Iter[T] {
   pub fn next(self: ref mut Self) -> super::Option[T] {
     if self.index >= self.len {

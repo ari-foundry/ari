@@ -547,6 +547,9 @@ Checklist:
 - [x] source `std::vec::Vec<T>` exposes in-place `reverse`,
       `rotate_left(count)`, and `rotate_right(count)` wrappers over its live
       element storage
+- [x] source `std::vec::Vec<T>` exposes `Ord[T]`-bounded `sort`,
+      `stable_sort`, `is_sorted`, `binary_search`, `min`, and `max` wrappers
+      over its live element storage
 - [x] source `std::vec::Vec<T>.reserve(ref mut Zone, capacity)` grows the handle
       with a larger same-zone allocation and rejects different-zone reserve
       calls
