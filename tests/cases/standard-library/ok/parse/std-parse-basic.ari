@@ -9,6 +9,20 @@ fn main() -> i64 {
   assert(!parse::is_integer("12x"));
   assert(parse::integer_or("88", 0) == 88);
   assert(parse::integer_or("nope", 5) == 5);
+  assert(parse::integer_radix("7f", 16).unwrap_or(0) == 127);
+  assert(parse::integer_radix("-101", 2).unwrap_or(0) == -5);
+  assert(parse::integer_radix("z", 36).unwrap_or(0) == 35);
+  assert(parse::integer_radix_or("zz", 36, 0) == 1295);
+  assert(parse::integer_radix_or("bad", 10, 6) == 6);
+  assert(parse::integer_radix("10", 1).is_none());
+  assert(parse::integer_radix("2", 2).is_none());
+  assert(parse::hex_integer("ff").unwrap_or(0) == 255);
+  assert(parse::hex_integer("-F").unwrap_or(0) == -15);
+  assert(parse::hex_integer_or("gg", 7) == 7);
+  assert(parse::is_hex_integer("Ab"));
+  assert(parse::binary_integer("1010").unwrap_or(0) == 10);
+  assert(parse::binary_integer_or("102", 4) == 4);
+  assert(!parse::is_binary_integer("102"));
   match parse::integer(invalid_integer.as_slice()) {
     std::Some(_) => { panic(); }
     std::None => {}

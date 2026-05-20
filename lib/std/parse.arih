@@ -23,9 +23,32 @@ fn pow10(exponent: i64) -> f64 {
   return result;
 }
 
-pub fn integer(values: std::Slice[u8]) -> std::Option[i64] {
+fn radix_digit_value(value: char, radix: i64) -> std::Option[i64] {
+  if radix < 2 || radix > 36 {
+    return std::None<i64>();
+  }
+
+  var digit = -1;
+  if value >= '0' && value <= '9' {
+    digit = (value as i64) - ('0' as i64);
+  } else if value >= 'A' && value <= 'Z' {
+    digit = ((value as i64) - ('A' as i64)) + 10;
+  } else if value >= 'a' && value <= 'z' {
+    digit = ((value as i64) - ('a' as i64)) + 10;
+  }
+
+  if digit >= 0 && digit < radix {
+    return std::Some<i64>(digit);
+  }
+  return std::None<i64>();
+}
+
+pub fn integer_radix(values: std::Slice[u8], radix: i64) -> std::Option[i64] {
   let input = std::ascii::trim(values);
   if input.len == 0 {
+    return std::None<i64>();
+  }
+  if radix < 2 || radix > 36 {
     return std::None<i64>();
   }
 
@@ -44,9 +67,9 @@ pub fn integer(values: std::Slice[u8]) -> std::Option[i64] {
 
   var result = 0;
   while index < input.len {
-    match std::ascii::digit_value(input[index]) {
+    match radix_digit_value(input[index], radix) {
       std::Some(value) => {
-        result = (result * 10) + value;
+        result = (result * radix) + value;
       }
       std::None => {
         return std::None<i64>();
@@ -55,6 +78,32 @@ pub fn integer(values: std::Slice[u8]) -> std::Option[i64] {
     index = index + 1;
   }
   return std::Some<i64>(result * sign);
+}
+
+pub fn is_integer_radix(values: std::Slice[u8], radix: i64) -> bool {
+  match integer_radix(values, radix) {
+    std::Some(_) => {
+      return true;
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+pub fn integer_radix_or(values: std::Slice[u8], radix: i64, fallback: i64) -> i64 {
+  match integer_radix(values, radix) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {
+      return fallback;
+    }
+  }
+}
+
+pub fn integer(values: std::Slice[u8]) -> std::Option[i64] {
+  return integer_radix(values, 10);
 }
 
 pub fn is_integer(values: std::Slice[u8]) -> bool {
@@ -77,6 +126,30 @@ pub fn integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
       return fallback;
     }
   }
+}
+
+pub fn hex_integer(values: std::Slice[u8]) -> std::Option[i64] {
+  return integer_radix(values, 16);
+}
+
+pub fn is_hex_integer(values: std::Slice[u8]) -> bool {
+  return is_integer_radix(values, 16);
+}
+
+pub fn hex_integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
+  return integer_radix_or(values, 16, fallback);
+}
+
+pub fn binary_integer(values: std::Slice[u8]) -> std::Option[i64] {
+  return integer_radix(values, 2);
+}
+
+pub fn is_binary_integer(values: std::Slice[u8]) -> bool {
+  return is_integer_radix(values, 2);
+}
+
+pub fn binary_integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
+  return integer_radix_or(values, 2, fallback);
 }
 
 pub fn boolean(values: std::Slice[u8]) -> std::Option[bool] {

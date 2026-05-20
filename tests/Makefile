@@ -740,9 +740,18 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-case-search.ari -o $(BUILD_DIR)/prelude/std-ascii-case-search.elf
 	$(BUILD_DIR)/prelude/std-ascii-case-search.elf; code=$$?; test $$code -eq 167
 	$(TARGET) tests/cases/standard-library/ok/parse/std-parse-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse13integer_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse16is_integer_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse16integer_radix_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse7integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10is_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse11hex_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse14is_hex_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse14hex_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse14binary_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse17is_binary_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse17binary_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse7boolean' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10is_boolean' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10boolean_or' $(BUILD_DIR)/prelude/std-parse-basic.ll

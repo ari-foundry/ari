@@ -14,6 +14,15 @@ to consume only a leading digit run and leave the rest of the bytes alone.
 parse::integer(bytes) -> Option[i64]
 parse::is_integer(bytes) -> bool
 parse::integer_or(bytes, fallback) -> i64
+parse::integer_radix(bytes, radix) -> Option[i64]
+parse::is_integer_radix(bytes, radix) -> bool
+parse::integer_radix_or(bytes, radix, fallback) -> i64
+parse::hex_integer(bytes) -> Option[i64]
+parse::is_hex_integer(bytes) -> bool
+parse::hex_integer_or(bytes, fallback) -> i64
+parse::binary_integer(bytes) -> Option[i64]
+parse::is_binary_integer(bytes) -> bool
+parse::binary_integer_or(bytes, fallback) -> i64
 parse::boolean(bytes) -> Option[bool]
 parse::is_boolean(bytes) -> bool
 parse::boolean_or(bytes, fallback) -> bool
@@ -28,6 +37,14 @@ for empty, sign-only, or non-decimal input. Overflow behavior is not promised
 yet, matching the current numeric parsing policy in `std::ascii`.
 `is_integer` is the validation-only form, and `integer_or` returns the parsed
 value or the caller's fallback.
+
+`integer_radix` parses the same signed whole-input shape in bases `2` through
+`36`, using ASCII `0-9`, `A-Z`, and `a-z` digit spellings. It trims ASCII
+whitespace and rejects invalid bases, sign-only values, invalid digits, and
+trailing garbage with `None<i64>()`. It intentionally does not recognize
+prefixes such as `0x` or `0b`; callers can strip those policies before calling
+the parser. `hex_integer` and `binary_integer` are readable wrappers for bases
+`16` and `2`, with matching `is_*` and `*_or` forms.
 
 `boolean` trims ASCII whitespace and accepts only lowercase `true` or `false`.
 It intentionally does not accept titlecase, uppercase, `1`, `0`, `yes`, or
@@ -72,6 +89,10 @@ fn read_count(bytes: Slice[u8]) -> i64 {
   return parse::integer_or(bytes, 0);
 }
 
+fn read_hex_color(bytes: Slice[u8]) -> i64 {
+  return parse::hex_integer_or(bytes, 0);
+}
+
 fn read_flag(bytes: Slice[u8]) -> bool {
   return parse::boolean_or(bytes, false);
 }
@@ -96,5 +117,3 @@ into `make check-prelude` with LLVM symbol checks for the public helpers.
 - overflow policy for integer parsing
 - `ParseError` once richer error values are worth the API weight
 - `Option[f64]` or `Result[f64, E]` after float enum payloads are supported
-- hexadecimal and binary integer parsing at this level if whole-input policy
-  should move beyond `std::ascii`
