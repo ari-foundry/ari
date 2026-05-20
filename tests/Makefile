@@ -69,6 +69,13 @@ check-source: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/source/std-source-location.ari -o $(BUILD_DIR)/source/std-source-location.elf
 	$(BUILD_DIR)/source/std-source-location.elf; code=$$?; test $$code -eq 78
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/source/std-source-location.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/source/std-source-location.elf; $(BUILD_DIR)/source/std-source-location.elf; code=$$?; test $$code -eq 78; fi
+	$(TARGET) tests/cases/standard-library/ok/source/std-source-text.ari --emit-llvm $(BUILD_DIR)/source/std-source-text.ll
+	grep -q '_ARNv3std6source4file' $(BUILD_DIR)/source/std-source-text.ll
+	grep -q '_ARNv3std6source6locate' $(BUILD_DIR)/source/std-source-text.ll
+	grep -q 'std__source__SourceFile8inherent6locate' $(BUILD_DIR)/source/std-source-text.ll
+	$(TARGET) tests/cases/standard-library/ok/source/std-source-text.ari -o $(BUILD_DIR)/source/std-source-text.elf
+	$(BUILD_DIR)/source/std-source-text.elf; code=$$?; test $$code -eq 120
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/source/std-source-text.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/source/std-source-text.elf; $(BUILD_DIR)/source/std-source-text.elf; code=$$?; test $$code -eq 120; fi
 
 check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	mkdir -p $(BUILD_DIR)/tools
@@ -1383,7 +1390,7 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari -o $(BUILD_DIR)/prelude/prelude-slice-sequence.elf
 	$(BUILD_DIR)/prelude/prelude-slice-sequence.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari -o $(BUILD_DIR)/prelude/prelude-slice-metadata.elf
-	$(BUILD_DIR)/prelude/prelude-slice-metadata.elf; code=$$?; test $$code -eq 23
+	$(BUILD_DIR)/prelude/prelude-slice-metadata.elf; code=$$?; test $$code -eq 72
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari -o $(BUILD_DIR)/prelude/prelude-slice-option-access.elf
 	$(BUILD_DIR)/prelude/prelude-slice-option-access.elf; code=$$?; test $$code -eq 77
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-methods.ll

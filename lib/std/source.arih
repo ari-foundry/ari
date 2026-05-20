@@ -24,6 +24,11 @@ pub struct Location {
   column: i64,
 }
 
+pub struct SourceFile {
+  id: FileId,
+  text: std::Slice[u8],
+}
+
 fn checked_file(value: i64) -> i64 {
   std::assert(value >= 0);
   return value;
@@ -52,6 +57,10 @@ pub fn root_file() -> FileId {
   return file_id(0);
 }
 
+pub fn file(id: FileId, text: std::Slice[u8]) -> SourceFile {
+  return SourceFile { id: id, text: text };
+}
+
 pub fn span(file: FileId, start: i64, end: i64) -> Span {
   let first = checked_offset(start);
   let last = checked_offset(end);
@@ -71,6 +80,79 @@ pub fn line_col(line: i64, column: i64) -> LineCol {
 pub fn location(file: FileId, line: i64, column: i64) -> Location {
   let place = line_col(line, column);
   return Location { file: file, line: place.line(), column: place.column() };
+}
+
+pub fn full_span(file: FileId, text: std::Slice[u8]) -> Span {
+  return span(file, 0, text.len());
+}
+
+pub fn line_count(text: std::Slice[u8]) -> i64 {
+  var count = 1;
+  var index = 0;
+  while index < text.len() {
+    if text.get(index) == '\n' {
+      count = count + 1;
+    }
+    index = index + 1;
+  }
+  return count;
+}
+
+pub fn line_start(text: std::Slice[u8], line: i64) -> i64 {
+  let wanted = checked_line(line);
+  if wanted == 1 {
+    return 0;
+  }
+
+  var current = 1;
+  var index = 0;
+  while index < text.len() {
+    if text.get(index) == '\n' {
+      current = current + 1;
+      if current == wanted {
+        return index + 1;
+      }
+    }
+    index = index + 1;
+  }
+
+  std::assert(false);
+  return text.len();
+}
+
+pub fn line_end(text: std::Slice[u8], line: i64) -> i64 {
+  var index = line_start(text, line);
+  while index < text.len() {
+    if text.get(index) == '\n' {
+      return index;
+    }
+    index = index + 1;
+  }
+  return text.len();
+}
+
+pub fn line_span(file: FileId, text: std::Slice[u8], line: i64) -> Span {
+  return span(file, line_start(text, line), line_end(text, line));
+}
+
+pub fn locate(file: FileId, text: std::Slice[u8], offset: i64) -> Location {
+  std::assert(offset >= 0);
+  std::assert(offset <= text.len());
+
+  var line = 1;
+  var column = 1;
+  var index = 0;
+  while index < offset {
+    if text.get(index) == '\n' {
+      line = line + 1;
+      column = 1;
+    } else {
+      column = column + 1;
+    }
+    index = index + 1;
+  }
+
+  return location(file, line, column);
 }
 
 pub fn len(value: ref Span) -> i64 {
@@ -159,6 +241,48 @@ pub impl std::source::Span {
 
   fn merge(self: ref Self, other: ref Span) -> Span {
     return std::source::merge(ref self, ref other);
+  }
+}
+
+pub impl std::source::SourceFile {
+  fn id(self: ref Self) -> FileId {
+    return self.id;
+  }
+
+  fn text(self: ref Self) -> std::Slice[u8] {
+    return self.text;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.text.len();
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.text.len() == 0;
+  }
+
+  fn full_span(self: ref Self) -> Span {
+    return std::source::full_span(self.id, self.text);
+  }
+
+  fn line_count(self: ref Self) -> i64 {
+    return std::source::line_count(self.text);
+  }
+
+  fn line_start(self: ref Self, line: i64) -> i64 {
+    return std::source::line_start(self.text, line);
+  }
+
+  fn line_end(self: ref Self, line: i64) -> i64 {
+    return std::source::line_end(self.text, line);
+  }
+
+  fn line_span(self: ref Self, line: i64) -> Span {
+    return std::source::line_span(self.id, self.text, line);
+  }
+
+  fn locate(self: ref Self, offset: i64) -> Location {
+    return std::source::locate(self.id, self.text, offset);
   }
 }
 

@@ -216,13 +216,21 @@ source::FileId
 source::Span
 source::LineCol
 source::Location
+source::SourceFile
 
 source::file_id(value)
 source::root_file()
+source::file(id, text)
 source::span(file, start, end)
 source::empty_span(file, offset)
 source::line_col(line, column)
 source::location(file, line, column)
+source::full_span(file, text)
+source::line_count(text)
+source::line_start(text, line)
+source::line_end(text, line)
+source::line_span(file, text, line)
+source::locate(file, text, offset)
 source::len(ref span)
 source::is_empty(ref span)
 source::contains(ref span, offset)
@@ -233,8 +241,9 @@ source::merge(ref left, ref right)
 ```
 
 `Span` uses half-open byte offsets. `LineCol` and `Location` use one-based
-human coordinates. Source-map storage, structured log records, benchmark
-helpers, fuzzing hooks, and stack/backtrace APIs are roadmap work.
+human coordinates. `SourceFile` is a borrowed text view for line starts, line
+spans, and byte-offset lookup. Owned source-map storage, structured log records,
+benchmark helpers, fuzzing hooks, and stack/backtrace APIs are roadmap work.
 
 ## C Interop
 

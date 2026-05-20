@@ -8,6 +8,9 @@ fn main() -> i64 {
   let a = if empty.is_empty() { 5 } else { 0 };
   let b = if !one.is_empty() { 7 } else { 0 };
   let c = if !view.is_empty() { 11 } else { 0 };
+  let d = if view.len() == 3 { 13 } else { 0 };
+  let e = if empty.len() == 0 { 17 } else { 0 };
+  let f = if one.len() == 1 { 19 } else { 0 };
 
-  return a + b + c;
+  return a + b + c + d + e + f;
 }

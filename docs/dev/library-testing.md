@@ -295,6 +295,9 @@ identifies the exact case:
   span, one-based line/column, location, containment, boundary, same-file
   merge, ordering, method wrapper behavior, and the dedicated
   `make check-source` target.
+- `std-source-text.ari`: source `std::source` borrowed `SourceFile` text,
+  line counts, line start/end offsets, line spans, byte-offset to line/column
+  lookup, EOF location behavior, and the dedicated `make check-source` target.
 - `std-mem-byte-ops.ari`: `std::mem` byte `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM `memcpy`/`memmove`/`memset` intrinsic
   lowering checks.

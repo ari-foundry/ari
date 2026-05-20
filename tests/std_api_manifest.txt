@@ -450,10 +450,17 @@ fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::source::before|check-source std-source-location byte span ordering predicate; docs/stdlib/modules/source.md
 fn std::source::contains|check-source std-source-location half-open byte span containment; docs/stdlib/modules/source.md
 fn std::source::empty_span|check-source std-source-location empty byte span constructor; docs/stdlib/modules/source.md
+fn std::source::file|check-source std-source-text borrowed SourceFile constructor; docs/stdlib/modules/source.md
 fn std::source::file_id|check-source std-source-location compiler source file id constructor; docs/stdlib/modules/source.md
+fn std::source::full_span|check-source std-source-text full source text span helper; docs/stdlib/modules/source.md
 fn std::source::is_empty|check-source std-source-location empty byte span predicate; docs/stdlib/modules/source.md
 fn std::source::len|check-source std-source-location byte span length helper; docs/stdlib/modules/source.md
 fn std::source::line_col|check-source std-source-location one-based line/column constructor; docs/stdlib/modules/source.md
+fn std::source::line_count|check-source std-source-text one-based source line count helper; docs/stdlib/modules/source.md
+fn std::source::line_end|check-source std-source-text source line end byte offset helper; docs/stdlib/modules/source.md
+fn std::source::line_span|check-source std-source-text source line span helper; docs/stdlib/modules/source.md
+fn std::source::line_start|check-source std-source-text source line start byte offset helper; docs/stdlib/modules/source.md
+fn std::source::locate|check-source std-source-text byte offset to line/column helper; docs/stdlib/modules/source.md
 fn std::source::location|check-source std-source-location file/line/column constructor; docs/stdlib/modules/source.md
 fn std::source::merge|check-source std-source-location same-file byte span merge; docs/stdlib/modules/source.md
 fn std::source::root_file|check-source std-source-location root file id constructor; docs/stdlib/modules/source.md
@@ -609,6 +616,7 @@ method Slice[T]::get|check-prelude prelude-slice-methods borrowed receiver tests
 method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::is_empty|check-prelude prelude-slice-metadata borrowed receiver metadata helper; docs/stdlib/api-reference.md Slice section
 method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::len|check-prelude prelude-slice-metadata and check-source std-source-text natural borrowed length helper; docs/stdlib/api-reference.md Slice section
 method Slice[T]::slice|check-prelude prelude-slice-sequence borrowed range view helper; docs/stdlib/modules/slice.md
 method Slice[T]::split|check-prelude prelude-slice-sequence lazy borrowed delimiter split iterator; docs/stdlib/modules/slice.md
 method Slice[T]::split_at|check-prelude prelude-slice-sequence borrowed left/right split helper; docs/stdlib/modules/slice.md
@@ -942,6 +950,16 @@ method std::source::LineCol::line|check-source std-source-location one-based lin
 method std::source::Location::column|check-source std-source-location one-based location column accessor; docs/stdlib/modules/source.md
 method std::source::Location::file|check-source std-source-location location file accessor; docs/stdlib/modules/source.md
 method std::source::Location::line|check-source std-source-location one-based location line accessor; docs/stdlib/modules/source.md
+method std::source::SourceFile::full_span|check-source std-source-text SourceFile full span method; docs/stdlib/modules/source.md
+method std::source::SourceFile::id|check-source std-source-text SourceFile id accessor; docs/stdlib/modules/source.md
+method std::source::SourceFile::is_empty|check-source std-source-text SourceFile text empty predicate; docs/stdlib/modules/source.md
+method std::source::SourceFile::len|check-source std-source-text SourceFile text byte length; docs/stdlib/modules/source.md
+method std::source::SourceFile::line_count|check-source std-source-text SourceFile line count method; docs/stdlib/modules/source.md
+method std::source::SourceFile::line_end|check-source std-source-text SourceFile line end offset method; docs/stdlib/modules/source.md
+method std::source::SourceFile::line_span|check-source std-source-text SourceFile line span method; docs/stdlib/modules/source.md
+method std::source::SourceFile::line_start|check-source std-source-text SourceFile line start offset method; docs/stdlib/modules/source.md
+method std::source::SourceFile::locate|check-source std-source-text SourceFile offset to location method; docs/stdlib/modules/source.md
+method std::source::SourceFile::text|check-source std-source-text SourceFile borrowed text accessor; docs/stdlib/modules/source.md
 method std::source::Span::before|check-source std-source-location span method ordering predicate; docs/stdlib/modules/source.md
 method std::source::Span::contains|check-source std-source-location span method containment predicate; docs/stdlib/modules/source.md
 method std::source::Span::end|check-source std-source-location span end-byte accessor; docs/stdlib/modules/source.md
@@ -1269,6 +1287,7 @@ struct std::random::Prng|check-prelude std-random-basic deterministic non-crypto
 struct std::source::FileId|check-source std-source-location source file identity value; docs/stdlib/modules/source.md
 struct std::source::LineCol|check-source std-source-location one-based human source coordinate value; docs/stdlib/modules/source.md
 struct std::source::Location|check-source std-source-location file/line/column coordinate value; docs/stdlib/modules/source.md
+struct std::source::SourceFile|check-source std-source-text borrowed source text value; docs/stdlib/modules/source.md
 struct std::source::Span|check-source std-source-location half-open byte span value; docs/stdlib/modules/source.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
