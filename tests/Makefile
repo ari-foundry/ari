@@ -356,9 +356,10 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs4read" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	grep -F -q "std2fs8truncate" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	grep -F -q "std2fs4copy" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
+	grep -F -q "std2fs8try_copy" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf
-	$(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 91
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 91; fi
+	$(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 171
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 171; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
 	grep -q "@ari_builtin_fs_rename" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
 	grep -q "@ari_builtin_fs_create_dir" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll

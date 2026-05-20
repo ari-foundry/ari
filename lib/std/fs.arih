@@ -152,33 +152,48 @@ pub fn truncate(path: string) -> bool {
 }
 
 pub fn copy(source: string, target: string) -> bool {
+  match try_copy(source, target) {
+    std::Some(_bytes) => {
+      return true;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+pub fn try_copy(source: string, target: string) -> std::Option[i64] {
   let reader = try_open(source, "r").unwrap_or(File::invalid());
   if !reader.is_open() {
-    return false;
+    return std::None<i64>();
   }
 
   let writer = try_open(target, "w").unwrap_or(File::invalid());
   if !writer.is_open() {
     reader.close();
-    return false;
+    return std::None<i64>();
   }
 
   // Keep copy source-only for now. The current byte API has one EOF/failure
   // sentinel, so detailed read errors remain future std::io/std::os work.
-  var ok = true;
+  var copied = 0;
   var byte = reader.read_byte();
   while byte >= 0 {
     if !writer.write_byte(byte as u8) {
-      ok = false;
-      byte = -1;
+      reader.close();
+      writer.close();
+      return std::None<i64>();
     } else {
+      copied = copied + 1;
       byte = reader.read_byte();
     }
   }
 
   let read_closed = reader.close();
   let write_closed = writer.close();
-  return ok && read_closed && write_closed;
+  if read_closed && write_closed {
+    return std::Some<i64>(copied);
+  }
+  return std::None<i64>();
 }
 
 pub impl std::fs::Permissions {

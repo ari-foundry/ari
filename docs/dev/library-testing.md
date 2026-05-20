@@ -153,7 +153,8 @@ identifies the exact case:
 - `std-fs-try-read.ari`: `Option[String]` whole-file reads that distinguish
   missing files from empty files.
 - `std-fs-create-truncate-copy.ari`: source `create`, `try_create`, natural
-  `read`, `truncate`, streaming `copy`, and missing-source copy failure.
+  `read`, `truncate`, streaming `copy`/`try_copy`, byte-count checks, and
+  missing-source copy failure.
 - `std-fs-rename-dir.ari`: runtime-backed `rename`, single-directory
   `create_dir`/`remove_dir`, duplicate-create failure, and missing-source
   rename failure.

@@ -51,6 +51,7 @@ fs::write(path, values)
 fs::append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
+fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
@@ -133,12 +134,14 @@ same `std::string::String` handle.
 `truncate(path)` creates the file if needed, truncates it to empty, closes the
 handle, and returns whether the operation and close succeeded.
 
-`copy(source, target)` opens `source` for reading, opens `target` with
+`try_copy(source, target)` opens `source` for reading, opens `target` with
 truncating `"w"` semantics, streams bytes from one handle to the other, closes
-both handles, and returns whether the copy and both closes succeeded. It is
-source Ari over the current byte APIs. Detailed read/write error reporting is
-future `std::io` or `std::os` work because `read_byte` still uses one
-EOF/failure sentinel.
+both handles, and returns `Some(byte_count)` when the copy and both closes
+succeeded. Missing sources, failed target opens, failed byte writes, and failed
+closes return `None`. Detailed read error reporting remains future `std::io` or
+`std::os` work because `read_byte` still uses one EOF/failure sentinel.
+
+`copy(source, target)` is the compatibility boolean wrapper over `try_copy`.
 
 `close(file)` returns whether the host accepted the close request. Closing an
 invalid handle returns `false`. The current first slice does not mutate the
@@ -196,7 +199,7 @@ recursive removal, and directory iteration are separate future slices.
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, and `permissions`; mutation/chmod is roadmap. |
 | rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)` and empty directory removal with `remove_dir(path)`. |
-| copy | Current: source streaming `copy(source, target)` for byte files. |
+| copy | Current: source streaming `copy(source, target)` and byte-counting `try_copy(source, target)` for byte files. |
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)` runtime hook on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Roadmap: runtime path resolution returning an owned Ari string/path. |
@@ -382,7 +385,8 @@ write, append, read-to-byte-string, missing-file empty reads, and truncating
 rewrite behavior. `std-fs-try-read.ari` covers `Option[String]` whole-file
 reads where missing files become `None` and empty files stay `Some(empty)`.
 `std-fs-create-truncate-copy.ari` covers source `create`, `try_create`,
-`read`, `truncate`, missing-source copy failure, and whole-file copy behavior.
+`read`, `truncate`, missing-source copy failure, whole-file copy behavior, and
+`try_copy` byte counts.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through

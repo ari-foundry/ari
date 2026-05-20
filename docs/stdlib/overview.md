@@ -47,7 +47,7 @@ API evolution.
 | `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `Mutex`, `RwLock`, `Once`, atomic `load`/`store`/`swap`/`fetch_add`/`compare_exchange`, mutex helpers, rwlock helpers, `call_once`. |
 | `std::time` | Monotonic time, wall-clock time, sleep, deadlines, and UTC calendar values. | `Duration`, `Instant`, `SystemTime`, `Deadline`, `UtcDateTime`, `nanoseconds`, `milliseconds`, `seconds`, `now`, `system_now`, `system_from_unix`, `utc_from_unix`, `elapsed`, `sleep`, `timeout`, `timeout_after`, `deadline_at`. |
-| `std::fs` | Byte-oriented filesystem handles. | `File`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `remove`, `rename`, `hard_link`, `symbolic_link`, `create_dir`, `remove_dir`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, whole-file `read`, `try_read`, `write`, `append`, `truncate`, `copy`, `read_to_string`, `try_read_to_string`, `close`. |
+| `std::fs` | Byte-oriented filesystem handles. | `File`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `remove`, `rename`, `hard_link`, `symbolic_link`, `create_dir`, `remove_dir`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `write_byte`, `write_bytes`, whole-file `read`, `try_read`, `write`, `append`, `truncate`, `copy`, `try_copy`, `read_to_string`, `try_read_to_string`, `close`. |
 | `std::path` | Source lexical path manipulation. | `PathBytes`, `bytes`, `from_os`, method-style path-byte helpers, `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `components`, `file_name`, `parent`, `extension`, `stem`, `join_in`, `normalize_in`. |
 | `std::net` | Source network address values. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `ipv4`, `ipv6`, `socket_addr`, `localhost`, family/loopback/unspecified predicates, port helpers. |
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
@@ -240,8 +240,8 @@ checks, `remove`, mode-string `open`, close, and single-byte read/write are
 runtime-backed because they call host file-descriptor APIs. `permissions`,
 `try_open`, compatibility `try_open_*` wrappers, `rename`, `create_dir`,
 `remove_dir`, `create`/`try_create`, `write_bytes`, whole-file `read`, `write`,
-`try_read`, `append`, `truncate`, `copy`, byte-string `read_to_string`,
-fallible `try_read_to_string`, and the `File` and `Permissions` methods are
+`try_read`, `append`, `truncate`, `copy`, byte-counting `try_copy`, byte-string
+`read_to_string`, fallible `try_read_to_string`, and the `File` and `Permissions` methods are
 ordinary Ari source or thin runtime hooks over the raw OS boundary. The handle
 is a visible value today and should become a
 stronger owned resource when OS resource ownership is modeled by the language.

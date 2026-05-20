@@ -1,14 +1,19 @@
 // Covers source std::fs convenience helpers that build on mode-string opens:
-// create/try_create, read aliasing read_to_string, truncate, and streaming copy.
+// create/try_create, read aliasing read_to_string, truncate, streaming copy,
+// and Option-returning copy byte counts.
 fn main() -> i64 {
   let source_path = "build/prelude/std-fs-create-truncate-copy-src.tmp";
   let copy_path = "build/prelude/std-fs-create-truncate-copy-dst.tmp";
+  let counted_path = "build/prelude/std-fs-create-truncate-copy-counted.tmp";
   let missing_path = "build/prelude/std-fs-create-truncate-copy-missing.tmp";
   if fs::exists(source_path) {
     fs::remove(source_path);
   }
   if fs::exists(copy_path) {
     fs::remove(copy_path);
+  }
+  if fs::exists(counted_path) {
+    fs::remove(counted_path);
   }
   if fs::exists(missing_path) {
     fs::remove(missing_path);
@@ -47,6 +52,19 @@ fn main() -> i64 {
     score = score + 8;
   }
 
+  match fs::try_copy(source_path, counted_path) {
+    std::Some(byte_count) => {
+      if byte_count == 2 {
+        score = score + 14;
+      }
+    }
+    std::None => {}
+  }
+  let counted = fs::read(ref mut zone, counted_path);
+  if counted.len() == 2 {
+    score = score + 15;
+  }
+
   if fs::truncate(source_path) {
     score = score + 9;
   }
@@ -54,8 +72,22 @@ fn main() -> i64 {
   if truncated.is_empty() {
     score = score + 10;
   }
+  match fs::try_copy(source_path, counted_path) {
+    std::Some(empty_count) => {
+      if empty_count == 0 {
+        score = score + 16;
+      }
+    }
+    std::None => {}
+  }
   if !fs::copy(missing_path, copy_path) {
     score = score + 11;
+  }
+  match fs::try_copy(missing_path, counted_path) {
+    std::Some(_missing_count) => {}
+    std::None => {
+      score = score + 17;
+    }
   }
 
   if fs::remove(source_path) {
@@ -63,6 +95,9 @@ fn main() -> i64 {
   }
   if fs::remove(copy_path) {
     score = score + 13;
+  }
+  if fs::remove(counted_path) {
+    score = score + 18;
   }
 
   zone::destroy(zone);

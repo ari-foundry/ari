@@ -731,6 +731,7 @@ fs::write(path, values)
 fs::append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
+fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
@@ -772,9 +773,11 @@ missing or unopenable file and `Some(empty)` for an empty file. `read(ref mut
 zone, path)` is the short compatibility alias for `read_to_string(ref mut zone,
 path)`, returning a zone-backed byte-oriented `std::string::String` and using
 an empty `String` when the file cannot be opened. Prefer `try_read` when
-absence matters. `truncate(path)` creates or empties a file. `copy(source, target)`
-streams bytes from the source handle into the target opened with truncating
-semantics. `rename(source, target)` moves or renames one path according to the
+absence matters. `truncate(path)` creates or empties a file. `try_copy(source,
+target)` streams bytes from the source handle into the target opened with
+truncating semantics and returns `Some(byte_count)` on success or `None` on
+open/write/close failure. `copy(source, target)` is the boolean compatibility
+wrapper over `try_copy`. `rename(source, target)` moves or renames one path according to the
 host runtime's current behavior. `create_dir(path)` creates one directory and
 `remove_dir(path)` removes one empty directory; recursive directory helpers and
 directory iteration are future work.
