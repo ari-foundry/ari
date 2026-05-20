@@ -94,6 +94,10 @@ Every tier decision should be reflected in `docs/stdlib/production-readiness.md`
 or the focused module guide. If the answer is "only a future compiler would use
 this", it is probably not a runtime `std` API.
 
+Every public child module in `lib/std/*.arih` needs a focused guide under
+`docs/stdlib/modules/`. `std::option` and `std::result` intentionally share
+`option-result.md`; other modules should have a guide named after the module.
+
 ## Source Comments
 
 Use comments for invariants that are not obvious from the code, especially:

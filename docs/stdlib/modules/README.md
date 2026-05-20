@@ -26,6 +26,8 @@ limits, examples, and test files for one module.
   and copy-to-vector behavior.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,
   safe accessors, growth, copy, and iterator entry points.
+- [std::boxed](boxed.md): zone-backed single-value owner with explicit
+  allocation, move-out, refill, copy-to-zone, borrow, and raw pointer helpers.
 - [std::hash](hash.md): deterministic non-cryptographic `Hasher`,
   `Hash[T]`, primitive hashing, byte-slice hashing, and collection hash
   compatibility notes.

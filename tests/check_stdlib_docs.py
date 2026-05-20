@@ -7,6 +7,10 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MODULE_GUIDE_EXCEPTIONS = {
+    "option": "option-result.md",
+    "result": "option-result.md",
+}
 
 
 def read(path: str) -> str:
@@ -40,6 +44,8 @@ def main() -> int:
     tests_makefile = read(tests_makefile_path)
     lib_makefile_path = "lib/Makefile"
     lib_makefile = read(lib_makefile_path)
+    modules_readme_path = "docs/stdlib/modules/README.md"
+    modules_readme = read(modules_readme_path)
 
     for heading in [
         "# Standard Library Production Readiness",
@@ -100,11 +106,42 @@ def main() -> int:
     require(readme, "module tiers", readme_path)
     require(readme, "failure policy", readme_path)
     require(readme, "non-goals", readme_path)
+    require(modules_readme, "Guide Shape", modules_readme_path)
 
     require(tests_makefile, "check-stdlib-docs", tests_makefile_path)
     require(tests_makefile, "python3 tests/check_stdlib_docs.py", tests_makefile_path)
     require(lib_makefile, "check-docs", lib_makefile_path)
     require(lib_makefile, "tests/check_stdlib_docs.py", lib_makefile_path)
+
+    std_modules = sorted(path.stem for path in (ROOT / "lib" / "std").glob("*.arih"))
+    for module in std_modules:
+        guide_name = MODULE_GUIDE_EXCEPTIONS.get(module, f"{module}.md")
+        guide_path = ROOT / "docs" / "stdlib" / "modules" / guide_name
+        if not guide_path.exists():
+            print(
+                f"docs/stdlib/modules: missing guide for std::{module} "
+                f"(expected {guide_name})",
+                file=sys.stderr,
+            )
+            return 1
+        require(modules_readme, guide_name, modules_readme_path)
+
+    boxed_guide_path = "docs/stdlib/modules/boxed.md"
+    boxed_guide = read(boxed_guide_path)
+    for needle in [
+        "# std::boxed",
+        "zone-backed owner",
+        "Box[T]",
+        "try_take",
+        "Option[T]",
+        "copy_to",
+        "put_in",
+        "zone::destroy",
+        "std-boxed-box.ari",
+        "std-boxed-try-take.ari",
+        "std-boxed-put-in-different-zone.ari",
+    ]:
+        require(boxed_guide, needle, boxed_guide_path)
 
     # Runtime std should have log/error/test helpers, but no dedicated
     # compiler-diagnostic std module. That belongs in compiler/tooling packages.
