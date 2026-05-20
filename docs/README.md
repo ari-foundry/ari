@@ -56,6 +56,7 @@ Use these when changing the compiler:
 - [Compiler Development Roadmap](dev/compiler-development-roadmap.md)
 - [Compiler Maturity Gates](dev/compiler-maturity-gates.md)
 - [Compiler Source And Diagnostics](dev/compiler-source-diagnostics.md)
+- [Compiler Artifact Testing](dev/compiler-artifact-testing.md)
 - [Production Compiler Design](dev/production-compiler-design.md)
 - [Compiler Bootstrap Fixture Plan](dev/bootstrap-fixture-plan.md)
 - [Bootstrap Readiness](dev/bootstrap-readiness.md)

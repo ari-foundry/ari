@@ -12,6 +12,8 @@ Use this page with:
   day-to-day development order.
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) for the
   source-map and diagnostic tooling layer.
+- [Compiler Artifact Testing](compiler-artifact-testing.md) for stage output,
+  normalization, and golden comparison policy.
 - [Production Compiler Design](production-compiler-design.md) for the
   long-term language contract.
 - [Bootstrap Readiness](bootstrap-readiness.md) for the later self-host start

@@ -19,6 +19,9 @@ start gate.
 [Compiler Source And Diagnostics](compiler-source-diagnostics.md) expands the
 hardest current blocker: source ownership, spans, labels, reports, and golden
 rendering outside runtime `std`.
+[Compiler Artifact Testing](compiler-artifact-testing.md) defines the stage
+output comparison policy so regressions fail near the compiler layer that
+changed.
 
 Read this page with [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
 [Bootstrap Readiness](bootstrap-readiness.md), and

@@ -53,6 +53,7 @@ checked by `make check-bootstrap-readiness`. The docs target runs
 [Compiler Development Roadmap](compiler-development-roadmap.md),
 [Compiler Maturity Gates](compiler-maturity-gates.md),
 [Compiler Source And Diagnostics](compiler-source-diagnostics.md),
+[Compiler Artifact Testing](compiler-artifact-testing.md),
 [Production Compiler Design](production-compiler-design.md),
 [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
 [Bootstrap Readiness](bootstrap-readiness.md),

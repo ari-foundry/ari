@@ -30,6 +30,8 @@ def main() -> int:
     gates = read(gates_path)
     source_diagnostics_path = "docs/dev/compiler-source-diagnostics.md"
     source_diagnostics = read(source_diagnostics_path)
+    artifact_testing_path = "docs/dev/compiler-artifact-testing.md"
+    artifact_testing = read(artifact_testing_path)
     manifest_path = "tests/compiler_development_manifest.txt"
     manifest = read(manifest_path)
 
@@ -58,6 +60,7 @@ def main() -> int:
         "Improve Ari as a general language",
         "Compiler Maturity Gates",
         "Compiler Source And Diagnostics",
+        "Compiler Artifact Testing",
         "stage0 changes",
         "Sema",
         "LLVM backend",
@@ -106,6 +109,7 @@ def main() -> int:
         require(gates, needle, gates_path)
 
     require(gates, "Compiler Source And Diagnostics", gates_path)
+    require(gates, "Compiler Artifact Testing", gates_path)
 
     if not re.search(r"\|\s*Gate\s*\|\s*Required State\s*\|\s*Test Shape\s*\|\s*Status\s*\|", gates):
         print(f"{gates_path}: missing maturity gate table", file=sys.stderr)
@@ -150,6 +154,46 @@ def main() -> int:
     ]:
         require(source_diagnostics, needle, source_diagnostics_path)
 
+    for heading in [
+        "# Compiler Artifact Testing",
+        "## Goals",
+        "## Artifact Order",
+        "## Artifact Formats",
+        "## Normalization Rules",
+        "## Golden File Policy",
+        "## Focused Make Targets",
+        "## First Implementation Slices",
+        "## Current Compiler Integration",
+        "## Review Checklist",
+        "## Readiness Impact",
+    ]:
+        require(artifact_testing, heading, artifact_testing_path)
+
+    for needle in [
+        "compiler-development infrastructure",
+        "Token dump",
+        "Diagnostic dump",
+        "Syntax dump",
+        "HIR dump",
+        "Typed IR dump",
+        "LLVM text",
+        "Object/shared symbols",
+        "Executable behavior",
+        "normalize repository-local paths",
+        "Golden files are committed text outputs",
+        "make -C bootstrap check-lex",
+        "Text comparator",
+        "Path normalizer",
+        "Token dump format",
+        "Diagnostic dump format",
+        "Syntax dump format",
+        "HIR dump format",
+        "Typed IR dump format",
+        "LLVM normalizer",
+        "38-42% ready",
+    ]:
+        require(artifact_testing, needle, artifact_testing_path)
+
     gate_labels = {
         "frontend-grammar": "Frontend grammar",
         "source-identity": "Source identity",
@@ -163,12 +207,15 @@ def main() -> int:
         "ir-contract": "IR contract",
         "backend-artifacts": "Backend artifacts",
         "tool-build-flow": "Tool build flow",
+        "artifact-testing": "Compiler Artifact Testing",
         "stage-comparison": "Stage comparison",
     }
     for entry, label in gate_labels.items():
         require(manifest, entry, manifest_path)
         if entry == "source-diagnostics-layer":
             require(source_diagnostics, label, source_diagnostics_path)
+        elif entry == "artifact-testing":
+            require(artifact_testing, label, artifact_testing_path)
         else:
             require(gates, label, gates_path)
 
@@ -177,6 +224,7 @@ def main() -> int:
         require(index, "Compiler Development Roadmap", index_path)
         require(index, "Compiler Maturity Gates", index_path)
         require(index, "Compiler Source And Diagnostics", index_path)
+        require(index, "Compiler Artifact Testing", index_path)
 
     return 0
 

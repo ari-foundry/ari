@@ -17,4 +17,5 @@ allocation-model: zones, scratch arenas, ownership, drop, borrow diagnostics
 ir-contract: resolved sema facts lowered into typed IR
 backend-artifacts: LLVM IR, object, executable, shared-library artifact checks
 tool-build-flow: focused Make targets for one Ari tool and its fixtures
+artifact-testing: token, diagnostic, syntax, HIR, typed IR, LLVM, object, executable comparison policy
 stage-comparison: token, syntax, HIR, typed IR, LLVM text comparison order

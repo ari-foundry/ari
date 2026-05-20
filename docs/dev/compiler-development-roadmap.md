@@ -19,6 +19,9 @@ Read this page before the bootstrap-specific pages:
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) defines
   the source-map and diagnostic tooling layer that should stay outside runtime
   `std`.
+- [Compiler Artifact Testing](compiler-artifact-testing.md) defines how token,
+  diagnostic, syntax, HIR, typed IR, LLVM, object, and executable artifacts are
+  compared.
 - [Production Compiler Design](production-compiler-design.md) explains the
   language contract a future Ari-written compiler would also rely on.
 - [Bootstrap Readiness](bootstrap-readiness.md) tracks how close Ari is to
