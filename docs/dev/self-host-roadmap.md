@@ -5,8 +5,10 @@ plan to rewrite the current C++ compiler in place. The C++ compiler should act
 as `stage0`: a trusted bootstrap compiler used to compile and test the new Ari
 implementation until Ari can compile itself.
 
-Use [Bootstrap Readiness](bootstrap-readiness.md) as the practical start gate.
-That page tracks the current estimate, the minimum language and standard
+Use [Production Compiler Design](production-compiler-design.md) for the
+ordinary language/compiler contract, and use
+[Bootstrap Readiness](bootstrap-readiness.md) as the practical start gate. The
+readiness page tracks the current estimate, the minimum language and standard
 library surface, the first test layout, and the "do not start yet" boundaries.
 
 ## Current Verdict
@@ -24,6 +26,8 @@ text processing, logging/error helpers, formatting, small parser utilities, and
 golden-test tools. Source-coordinate values, source maps, structured
 compiler-error reports, labels, and rich renderers need to live in a
 compiler/tooling package rather than production `std`.
+Any C++ compiler work on this path should still be normal production Ari
+language/compiler work, not a private feature for the bootstrap compiler.
 They are not yet mature enough to build the whole compiler, type checker,
 ownership checker, module graph, and backend in Ari without repeatedly falling
 back to C++ changes.

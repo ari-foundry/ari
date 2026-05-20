@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Keep the bootstrap readiness docs linked and useful.
+"""Keep the compiler bootstrap design docs linked and useful.
 
 This is intentionally a small documentation smoke check. It does not prove
-bootstrapping works; it prevents the entry-gate document from losing the
-sections that contributors need before the first Ari-written compiler component
-lands.
+bootstrapping works; it prevents the production-design and entry-gate documents
+from losing the sections that contributors need before the first Ari-written
+compiler component lands.
 """
 
 from pathlib import Path
@@ -26,8 +26,39 @@ def require(text: str, needle: str, path: str) -> None:
 
 
 def main() -> int:
+    design_path = "docs/dev/production-compiler-design.md"
+    design = read(design_path)
+    for heading in [
+        "# Production Compiler Design",
+        "## Current Bootstrap Readiness",
+        "## Design Goal",
+        "## Bootstrap Start Bar",
+        "## Production Language Contract",
+        "## Compiler Tooling Layer",
+        "## Implementation Roadmap",
+        "## Test Strategy",
+        "## What To Avoid",
+    ]:
+        require(design, heading, design_path)
+    for needle in [
+        "35-40% ready",
+        "60-65% remaining",
+        "not a bootstrap-only checklist",
+        "ordinary production Ari program",
+        "compiler/tooling package",
+        "stage0",
+        "stage1",
+        "stage2",
+    ]:
+        require(design, needle, design_path)
+
     readiness_path = "docs/dev/bootstrap-readiness.md"
     readiness = read(readiness_path)
+    require(
+        readiness,
+        "[Production Compiler Design](production-compiler-design.md)",
+        readiness_path,
+    )
     for heading in [
         "# Bootstrap Readiness",
         "## Current Estimate",
@@ -50,9 +81,11 @@ def main() -> int:
 
     self_host_path = "docs/dev/self-host-roadmap.md"
     self_host = read(self_host_path)
+    require(self_host, "[Production Compiler Design](production-compiler-design.md)", self_host_path)
     require(self_host, "[Bootstrap Readiness](bootstrap-readiness.md)", self_host_path)
 
     for index_path in ["docs/README.md", "docs/dev/README.md"]:
+        require(read(index_path), "Production Compiler Design", index_path)
         require(read(index_path), "Bootstrap Readiness", index_path)
 
     return 0

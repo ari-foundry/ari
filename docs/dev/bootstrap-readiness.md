@@ -3,10 +3,12 @@
 This page answers one practical question: when can Ari start a real
 compiler-in-Ari bootstrap track?
 
-It complements [Self-Host Roadmap](self-host-roadmap.md). The roadmap explains
-the long path from stage0 to stage2; this page is the entry gate for starting
-that work without turning the current C++ compiler into a second rewrite
-project.
+It complements [Production Compiler Design](production-compiler-design.md) and
+[Self-Host Roadmap](self-host-roadmap.md). The production design page defines
+the ordinary language/compiler contract Ari needs; the self-host roadmap
+explains the long path from stage0 to stage2; this page is the entry gate for
+starting that work without turning the current C++ compiler into a second
+rewrite project.
 
 ## Current Estimate
 
@@ -19,12 +21,14 @@ This estimate is about practical implementation readiness, not language
 ambition. Ari already has many pieces needed by a compiler: modules, structs,
 enums, traits, generics, zones, strings, vectors, maps/sets, formatting,
 filesystem IO, process/environment helpers, logging/error helpers, and an
-LLVM-backed executable pipeline. Source-coordinate, source-map, and diagnostic
-builder APIs do not belong in production `std`; they need to exist as a
-compiler/tooling-local layer before the lexer/parser bootstrap track starts.
-The missing work is mostly around scale, ergonomics, owned source text maps,
-diagnostic rendering, stable compiler data structures, multi-file project flow,
-and comparison tooling.
+LLVM-backed executable pipeline. The remaining work should be treated as
+general production language and compiler design, not as bootstrap-only
+exceptions. Source-coordinate, source-map, and diagnostic builder APIs do not
+belong in production `std`; they need to exist as a compiler/tooling-local
+layer before the lexer/parser bootstrap track starts. The missing work is
+mostly around scale, ergonomics, owned source text maps, diagnostic rendering,
+stable compiler data structures, multi-file project flow, and comparison
+tooling.
 
 Small Ari-written compiler components can start now. A complete self-hosting
 compiler should wait until the start gate below is green.
@@ -76,6 +80,9 @@ bootstrapping:
    code that manipulates source bytes, chars, and Unicode boundaries.
 7. Better build surfaces: Makefile support is fine for now, but stage1 needs a
    repeatable project layout and per-component fixture targets.
+8. Production compiler contract: keep the language changes public and useful to
+   ordinary Ari projects, as described in
+   [Production Compiler Design](production-compiler-design.md).
 
 ## Needed Standard Library Work
 

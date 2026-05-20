@@ -21,8 +21,22 @@ Source standard library planning is tracked in
 only when a library slice needs parser, semantic checker, IR, runtime, or
 backend changes that cannot be expressed in Ari source.
 
-No active near-term compiler work is queued right now. Add the next concrete
-0.x-sized compiler slice here when it is ready to implement.
+Active near-term compiler design slices are tracked in
+[Production Compiler Design](production-compiler-design.md). Keep these as
+ordinary production language/compiler work, not bootstrap-only shortcuts:
+
+1. File-backed project ergonomics: package roots, search paths, module-cache
+   summaries, and diagnostics for missing/private/ambiguous modules.
+2. Compiler-scale data modeling: generic aggregate monomorphization, readable
+   type aliases, and stable diagnostics for nested compiler data structures.
+3. Trait and formatting maturity: predictable `Hash`, `Eq`, `Ord`, `Debug`,
+   static dispatch, named formatting captures, and buffer-backed formatting.
+4. Tooling source and diagnostics: source maps, spans, labels, notes, and
+   golden diagnostic renderers in a compiler/tooling package outside runtime
+   `std`.
+5. Bootstrap artifact discipline: focused lexer/parser/report tests first,
+   then ordered stage comparisons for syntax, HIR, typed IR, LLVM text, and
+   executable behavior.
 
 ## Backend Work
 
@@ -78,9 +92,10 @@ Non-goals for the early part of this track:
 
 ## Bootstrap Direction
 
-The practical start gate lives in
-[Bootstrap Readiness](bootstrap-readiness.md), and the detailed path lives in
-[Self-Host Roadmap](self-host-roadmap.md).
+The production language/compiler contract lives in
+[Production Compiler Design](production-compiler-design.md), the practical
+start gate lives in [Bootstrap Readiness](bootstrap-readiness.md), and the
+detailed path lives in [Self-Host Roadmap](self-host-roadmap.md).
 The short version is:
 
 1. Treat the current C++ compiler as `stage0`, not as the codebase to rewrite
