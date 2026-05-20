@@ -209,8 +209,32 @@ log::error(text)
 `enabled(level, minimum)` is an explicit threshold predicate; there is no
 global logging filter today.
 
-Source-location values, structured log records, benchmark helpers, fuzzing
-hooks, and stack/backtrace APIs are roadmap work.
+Source-coordinate values live in `std::source`:
+
+```ari
+source::FileId
+source::Span
+source::LineCol
+source::Location
+
+source::file_id(value)
+source::root_file()
+source::span(file, start, end)
+source::empty_span(file, offset)
+source::line_col(line, column)
+source::location(file, line, column)
+source::len(ref span)
+source::is_empty(ref span)
+source::contains(ref span, offset)
+source::touches(ref span, offset)
+source::same_file(ref left, ref right)
+source::before(ref left, ref right)
+source::merge(ref left, ref right)
+```
+
+`Span` uses half-open byte offsets. `LineCol` and `Location` use one-based
+human coordinates. Source-map storage, structured log records, benchmark
+helpers, fuzzing hooks, and stack/backtrace APIs are roadmap work.
 
 ## C Interop
 

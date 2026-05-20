@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-std-api check-bootstrap-docs check-cli check-tools check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-std-api check-bootstrap-docs check-cli check-tools check-source check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -12,7 +12,7 @@ check-sanitize: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_o
 check-sanitize: TOOL_ARI := $(SANITIZE_TARGET)
 check-sanitize: $(SANITIZE_TARGET) check
 
-check: check-std-api check-bootstrap-docs $(TARGET) check-cli check-tools check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
+check: check-std-api check-bootstrap-docs $(TARGET) check-cli check-tools check-source check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
 	mkdir -p $(BUILD_DIR)/ir
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/ir/count.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/ir/count.ll
@@ -59,6 +59,16 @@ check-std-api:
 
 check-bootstrap-docs:
 	python3 tests/check_bootstrap_readiness_docs.py
+
+check-source: $(TARGET)
+	mkdir -p $(BUILD_DIR)/source
+	$(TARGET) tests/cases/standard-library/ok/source/std-source-location.ari --emit-llvm $(BUILD_DIR)/source/std-source-location.ll
+	grep -q '_ARNv3std6source4span' $(BUILD_DIR)/source/std-source-location.ll
+	grep -q '_ARNv3std6source8line_col' $(BUILD_DIR)/source/std-source-location.ll
+	grep -q 'std__source__Span8inherent5merge' $(BUILD_DIR)/source/std-source-location.ll
+	$(TARGET) tests/cases/standard-library/ok/source/std-source-location.ari -o $(BUILD_DIR)/source/std-source-location.elf
+	$(BUILD_DIR)/source/std-source-location.elf; code=$$?; test $$code -eq 78
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/source/std-source-location.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/source/std-source-location.elf; $(BUILD_DIR)/source/std-source-location.elf; code=$$?; test $$code -eq 78; fi
 
 check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	mkdir -p $(BUILD_DIR)/tools

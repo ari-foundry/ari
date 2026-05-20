@@ -12,15 +12,18 @@ project.
 
 As of the current hosted compiler and standard library, Ari is roughly:
 
-- **30-35% ready to start full compiler bootstrapping**
-- **65-70% remaining before a self-host attempt is likely to be productive**
+- **32-37% ready to start full compiler bootstrapping**
+- **63-68% remaining before a self-host attempt is likely to be productive**
 
 This estimate is about practical implementation readiness, not language
 ambition. Ari already has many pieces needed by a compiler: modules, structs,
 enums, traits, generics, zones, strings, vectors, maps/sets, formatting,
 filesystem IO, process/environment helpers, and an LLVM-backed executable
-pipeline. The missing work is mostly around scale, ergonomics, stable compiler
-data structures, multi-file project flow, and comparison tooling.
+pipeline. Ari now also has the first source-coordinate values (`FileId`,
+`Span`, `LineCol`, and `Location`) needed by lexer/parser diagnostics. The
+missing work is mostly around scale, ergonomics, source maps, diagnostic
+rendering, stable compiler data structures, multi-file project flow, and
+comparison tooling.
 
 Small Ari-written compiler components can start now. A complete self-hosting
 compiler should wait until the start gate below is green.
@@ -31,7 +34,7 @@ Start the first real `bootstrap/` tree only when these are all true:
 
 | Gate | Required State | Why It Matters |
 | --- | --- | --- |
-| Source text | Ari can read source files, preserve byte offsets, validate UTF-8, and report line/column locations. | Lexer/parser diagnostics need exact source spans. |
+| Source text | Ari can read source files, preserve byte offsets, validate UTF-8, carry `std::source::Span` values, and report line/column locations. | Lexer/parser diagnostics need exact source spans. |
 | Diagnostics | There is a source-level diagnostic builder with severity, primary span, labels, notes, and stable text output. | Golden tests need comparable errors before the parser grows. |
 | Strings | `String`, string slices, ASCII, UTF-8, split/search/join, and C/OS/path string boundaries are documented and tested. | Compiler frontend code is mostly text handling. |
 | Collections | `Vec`, `Slice`, maps, sets, iterators, and common algorithms are stable enough for syntax trees and symbol tables. | AST/HIR and name resolution need predictable containers. |
@@ -62,8 +65,9 @@ bootstrapping:
    enums, vectors, maps, and Result-like payloads.
 3. Trait ergonomics: predictable static dispatch for formatting, hashing,
    equality, ordering, and collection defaults.
-4. Source locations: first-class `Span`, `FileId`, `LineCol`, and source map
-   helpers exposed through the standard library or bootstrap library.
+4. Source maps: build filename/text storage, line-start tables, and
+   span-to-line/column conversion on top of `std::source::FileId`,
+   `std::source::Span`, and `std::source::LineCol`.
 5. Error values: compact compiler-facing `Error`, `Diagnostic`, and
    `Result[T, E]` workflows that avoid panic in expected failure paths.
 6. More natural text APIs: keep reducing awkward casts and helper suffixes in
@@ -80,7 +84,7 @@ The stage1 compiler should start with a conservative hosted subset:
 | Text | `String`, `Slice[u8]`, `char`, ASCII helpers, UTF-8 validation/decode, split/search/join, trim, parse integer/bool/float. |
 | Collections | `Vec`, `Slice`, `HashMap`, `HashSet`, `TreeMap`, `TreeSet`, iterators, sort, binary search, dedup, copy/fill, and stable comparison helpers. |
 | IO/FS | `read`, `try_read`, `write`, `try_write`, `read_dir`, `read_dir_entries`, path join/normalize/canonicalize, current directory, env args. |
-| Diagnostics | formatting, debug formatting, log output, source-location helpers, panic/unreachable messages, test report helpers. |
+| Diagnostics | formatting, debug formatting, log output, `std::source` source-coordinate helpers, panic/unreachable messages, test report helpers. |
 | Memory | explicit `Zone`, temporary zones, copy-to-zone helpers, same-zone container growth, and reset/destroy invalidation checks. |
 | Process | command-line args and exit codes; do not require spawn/fork for the first lexer/parser stage. |
 | Platform | target facts, pointer sizes, errno policy, and hosted Linux/glibc assumptions documented for stage0. |
@@ -144,7 +148,7 @@ Exit criteria:
 
 ### Phase B: Source And Diagnostic Foundations
 
-- Add source-map structs and helper APIs.
+- Build source-map storage and line/column conversion on top of `std::source`.
 - Add a diagnostic builder and stable renderer.
 - Add golden tests for line/column rendering, notes, and labels.
 

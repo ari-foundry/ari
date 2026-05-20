@@ -6,7 +6,7 @@ small tools and tests can report progress without inventing one-off debug
 printing functions.
 
 The module is intentionally narrow. It does not own global filters, structured
-records, source locations, stack traces, or backtraces yet.
+records, source-map labels, stack traces, or backtraces yet.
 
 ## Current APIs
 
@@ -88,8 +88,8 @@ when a human-readable progress or failure breadcrumb should go to `stderr`.
 
 Future logging and diagnostics work should grow in this order:
 
-1. Source-location values once the driver/runtime can provide stable file,
-   line, column, and function metadata.
+1. Source-map labels once diagnostic rendering can combine `std::source`
+   spans with file text, line, column, and function metadata.
 2. Optional log records with target/module fields and thread ids.
 3. Panic/assert messages that can reuse the same formatting path.
 4. Stack trace and backtrace support after runtime frame metadata and

@@ -41,10 +41,10 @@ def main() -> int:
     ]:
         require(readiness, heading, readiness_path)
 
-    if not re.search(r"30-35% ready", readiness):
+    if not re.search(r"32-37% ready", readiness):
         print(f"{readiness_path}: missing ready percentage", file=sys.stderr)
         return 1
-    if not re.search(r"65-70% remaining", readiness):
+    if not re.search(r"63-68% remaining", readiness):
         print(f"{readiness_path}: missing remaining percentage", file=sys.stderr)
         return 1
 

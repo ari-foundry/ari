@@ -447,6 +447,19 @@ fn std::random::seed|check-prelude std-random-basic deterministic PRNG seed cons
 fn std::random::seed_from_os|check-prelude std-random-basic OS-seeded PRNG constructor alias; docs/stdlib/modules/random.md
 fn std::random::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle; docs/stdlib/modules/random.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
+fn std::source::before|check-source std-source-location byte span ordering predicate; docs/stdlib/modules/source.md
+fn std::source::contains|check-source std-source-location half-open byte span containment; docs/stdlib/modules/source.md
+fn std::source::empty_span|check-source std-source-location empty byte span constructor; docs/stdlib/modules/source.md
+fn std::source::file_id|check-source std-source-location compiler source file id constructor; docs/stdlib/modules/source.md
+fn std::source::is_empty|check-source std-source-location empty byte span predicate; docs/stdlib/modules/source.md
+fn std::source::len|check-source std-source-location byte span length helper; docs/stdlib/modules/source.md
+fn std::source::line_col|check-source std-source-location one-based line/column constructor; docs/stdlib/modules/source.md
+fn std::source::location|check-source std-source-location file/line/column constructor; docs/stdlib/modules/source.md
+fn std::source::merge|check-source std-source-location same-file byte span merge; docs/stdlib/modules/source.md
+fn std::source::root_file|check-source std-source-location root file id constructor; docs/stdlib/modules/source.md
+fn std::source::same_file|check-source std-source-location byte span file predicate; docs/stdlib/modules/source.md
+fn std::source::span|check-source std-source-location half-open byte span constructor; docs/stdlib/modules/source.md
+fn std::source::touches|check-source std-source-location inclusive byte span boundary predicate; docs/stdlib/modules/source.md
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::bytes|check-prelude std-string-byte-literals natural borrowed byte view over string literals; docs/stdlib/modules/string.md
 fn std::string::c_bytes|check-prelude std-string-text-kinds borrowed C string byte view without terminator; docs/stdlib/modules/string.md
@@ -922,6 +935,23 @@ method std::random::Prng::range|check-prelude std-random-basic bounded PRNG rang
 method std::random::Prng::seed|check-prelude std-random-basic deterministic PRNG associated seed constructor; docs/stdlib/modules/random.md
 method std::random::Prng::seed_from_os|check-prelude std-random-basic OS-seeded PRNG associated constructor alias; docs/stdlib/modules/random.md
 method std::random::Prng::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle method; docs/stdlib/modules/random.md
+method std::source::FileId::equals|check-source std-source-location file id equality helper; docs/stdlib/modules/source.md
+method std::source::FileId::value|check-source std-source-location file id scalar accessor; docs/stdlib/modules/source.md
+method std::source::LineCol::column|check-source std-source-location one-based column accessor; docs/stdlib/modules/source.md
+method std::source::LineCol::line|check-source std-source-location one-based line accessor; docs/stdlib/modules/source.md
+method std::source::Location::column|check-source std-source-location one-based location column accessor; docs/stdlib/modules/source.md
+method std::source::Location::file|check-source std-source-location location file accessor; docs/stdlib/modules/source.md
+method std::source::Location::line|check-source std-source-location one-based location line accessor; docs/stdlib/modules/source.md
+method std::source::Span::before|check-source std-source-location span method ordering predicate; docs/stdlib/modules/source.md
+method std::source::Span::contains|check-source std-source-location span method containment predicate; docs/stdlib/modules/source.md
+method std::source::Span::end|check-source std-source-location span end-byte accessor; docs/stdlib/modules/source.md
+method std::source::Span::file|check-source std-source-location span file accessor; docs/stdlib/modules/source.md
+method std::source::Span::is_empty|check-source std-source-location span method empty predicate; docs/stdlib/modules/source.md
+method std::source::Span::len|check-source std-source-location span method byte length; docs/stdlib/modules/source.md
+method std::source::Span::merge|check-source std-source-location span method same-file merge; docs/stdlib/modules/source.md
+method std::source::Span::same_file|check-source std-source-location span method file predicate; docs/stdlib/modules/source.md
+method std::source::Span::start|check-source std-source-location span start-byte accessor; docs/stdlib/modules/source.md
+method std::source::Span::touches|check-source std-source-location span method inclusive boundary predicate; docs/stdlib/modules/source.md
 method std::string::OsStr::as_slice|check-prelude std-string-text-kinds borrowed OS string byte accessor; docs/stdlib/modules/string.md
 method std::string::OsStr::is_empty|check-prelude std-string-text-kinds OS string empty predicate; docs/stdlib/modules/string.md
 method std::string::OsStr::is_utf8|check-prelude std-string-text-kinds OS string UTF-8 validation predicate; docs/stdlib/modules/string.md
@@ -1164,6 +1194,7 @@ module std::path|check-prelude std-path-basic source lexical path helpers; docs/
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
 module std::random|check-prelude std-random-basic OS entropy and deterministic non-crypto PRNG helpers; docs/stdlib/modules/random.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
+module std::source|check-source std-source-location source coordinate value helpers; docs/stdlib/modules/source.md
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::sync|check-prelude std-sync-atomic-i64 atomic primitive module; docs/stdlib/modules/sync.md
 module std::target|check-prelude std-target-basic compiler-known target fact module; docs/stdlib/modules/target.md
@@ -1235,6 +1266,10 @@ struct std::net::SocketAddr|std net socket address tests; docs/stdlib/modules/ne
 struct std::path::Components|check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md
 struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
+struct std::source::FileId|check-source std-source-location source file identity value; docs/stdlib/modules/source.md
+struct std::source::LineCol|check-source std-source-location one-based human source coordinate value; docs/stdlib/modules/source.md
+struct std::source::Location|check-source std-source-location file/line/column coordinate value; docs/stdlib/modules/source.md
+struct std::source::Span|check-source std-source-location half-open byte span value; docs/stdlib/modules/source.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row

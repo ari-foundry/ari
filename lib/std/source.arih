@@ -1,0 +1,187 @@
+// Source-coordinate value helpers.
+//
+// A compiler frontend needs stable file ids and byte spans before it can
+// render useful diagnostics. These types are intentionally tiny value structs
+// so lexer/parser tools can use them without allocation or runtime hooks.
+pub struct FileId {
+  value: i64,
+}
+
+pub struct Span {
+  file: FileId,
+  start: i64,
+  end: i64,
+}
+
+pub struct LineCol {
+  line: i64,
+  column: i64,
+}
+
+pub struct Location {
+  file: FileId,
+  line: i64,
+  column: i64,
+}
+
+fn checked_file(value: i64) -> i64 {
+  std::assert(value >= 0);
+  return value;
+}
+
+fn checked_offset(value: i64) -> i64 {
+  std::assert(value >= 0);
+  return value;
+}
+
+fn checked_line(value: i64) -> i64 {
+  std::assert(value >= 1);
+  return value;
+}
+
+fn checked_column(value: i64) -> i64 {
+  std::assert(value >= 1);
+  return value;
+}
+
+pub fn file_id(value: i64) -> FileId {
+  return FileId { value: checked_file(value) };
+}
+
+pub fn root_file() -> FileId {
+  return file_id(0);
+}
+
+pub fn span(file: FileId, start: i64, end: i64) -> Span {
+  let first = checked_offset(start);
+  let last = checked_offset(end);
+  std::assert(last >= first);
+  return Span { file: file, start: first, end: last };
+}
+
+pub fn empty_span(file: FileId, offset: i64) -> Span {
+  let position = checked_offset(offset);
+  return span(file, position, position);
+}
+
+pub fn line_col(line: i64, column: i64) -> LineCol {
+  return LineCol { line: checked_line(line), column: checked_column(column) };
+}
+
+pub fn location(file: FileId, line: i64, column: i64) -> Location {
+  let place = line_col(line, column);
+  return Location { file: file, line: place.line(), column: place.column() };
+}
+
+pub fn len(value: ref Span) -> i64 {
+  return value.end - value.start;
+}
+
+pub fn is_empty(value: ref Span) -> bool {
+  return len(ref value) == 0;
+}
+
+pub fn contains(value: ref Span, offset: i64) -> bool {
+  return offset >= value.start && offset < value.end;
+}
+
+pub fn touches(value: ref Span, offset: i64) -> bool {
+  return offset >= value.start && offset <= value.end;
+}
+
+pub fn same_file(left: ref Span, right: ref Span) -> bool {
+  return left.file.value() == right.file.value();
+}
+
+pub fn before(left: ref Span, right: ref Span) -> bool {
+  return same_file(ref left, ref right) && left.end <= right.start;
+}
+
+pub fn merge(left: ref Span, right: ref Span) -> Span {
+  std::assert(same_file(ref left, ref right));
+  var start = left.start;
+  if right.start < start {
+    start = right.start;
+  }
+  var end = left.end;
+  if right.end > end {
+    end = right.end;
+  }
+  return span(left.file, start, end);
+}
+
+pub impl std::source::FileId {
+  fn value(self: ref Self) -> i64 {
+    return self.value;
+  }
+
+  fn equals(self: ref Self, other: FileId) -> bool {
+    return self.value == other.value();
+  }
+}
+
+pub impl std::source::Span {
+  fn file(self: ref Self) -> FileId {
+    return self.file;
+  }
+
+  fn start(self: ref Self) -> i64 {
+    return self.start;
+  }
+
+  fn end(self: ref Self) -> i64 {
+    return self.end;
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return std::source::len(ref self);
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return std::source::is_empty(ref self);
+  }
+
+  fn contains(self: ref Self, offset: i64) -> bool {
+    return std::source::contains(ref self, offset);
+  }
+
+  fn touches(self: ref Self, offset: i64) -> bool {
+    return std::source::touches(ref self, offset);
+  }
+
+  fn same_file(self: ref Self, other: ref Span) -> bool {
+    return std::source::same_file(ref self, ref other);
+  }
+
+  fn before(self: ref Self, other: ref Span) -> bool {
+    return std::source::before(ref self, ref other);
+  }
+
+  fn merge(self: ref Self, other: ref Span) -> Span {
+    return std::source::merge(ref self, ref other);
+  }
+}
+
+pub impl std::source::LineCol {
+  fn line(self: ref Self) -> i64 {
+    return self.line;
+  }
+
+  fn column(self: ref Self) -> i64 {
+    return self.column;
+  }
+}
+
+pub impl std::source::Location {
+  fn file(self: ref Self) -> FileId {
+    return self.file;
+  }
+
+  fn line(self: ref Self) -> i64 {
+    return self.line;
+  }
+
+  fn column(self: ref Self) -> i64 {
+    return self.column;
+  }
+}

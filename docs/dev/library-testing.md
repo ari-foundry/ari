@@ -291,6 +291,10 @@ identifies the exact case:
 - `std-log-basic.ari`: source `std::log` level ordering, threshold checks,
   byte-slice logging, string-message logging, convenience level helpers, and
   stderr output format.
+- `std-source-location.ari`: source `std::source` file id, half-open byte
+  span, one-based line/column, location, containment, boundary, same-file
+  merge, ordering, method wrapper behavior, and the dedicated
+  `make check-source` target.
 - `std-mem-byte-ops.ari`: `std::mem` byte `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM `memcpy`/`memmove`/`memset` intrinsic
   lowering checks.
