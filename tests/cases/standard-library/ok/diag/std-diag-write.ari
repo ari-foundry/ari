@@ -1,8 +1,0 @@
-// Covers the first stable std::diag stderr summary output hook.
-fn main() -> i64 {
-  let diagnostic = diag::error("E0001", "bad token");
-  if diagnostic.write() {
-    return 7;
-  }
-  return 1;
-}

@@ -12,15 +12,15 @@ project.
 
 As of the current hosted compiler and standard library, Ari is roughly:
 
-- **37-42% ready to start full compiler bootstrapping**
-- **58-63% remaining before a self-host attempt is likely to be productive**
+- **35-40% ready to start full compiler bootstrapping**
+- **60-65% remaining before a self-host attempt is likely to be productive**
 
 This estimate is about practical implementation readiness, not language
 ambition. Ari already has many pieces needed by a compiler: modules, structs,
 enums, traits, generics, zones, strings, vectors, maps/sets, formatting,
-filesystem IO, process/environment helpers, lightweight diagnostic summaries,
-and an LLVM-backed executable pipeline. Source-coordinate and source-map APIs
-were removed from production `std`; they now need to return as a
+filesystem IO, process/environment helpers, logging/error helpers, and an
+LLVM-backed executable pipeline. Source-coordinate, source-map, and diagnostic
+builder APIs do not belong in production `std`; they need to exist as a
 compiler/tooling-local layer before the lexer/parser bootstrap track starts.
 The missing work is mostly around scale, ergonomics, owned source text maps,
 diagnostic rendering, stable compiler data structures, multi-file project flow,
@@ -36,7 +36,7 @@ Start the first real `bootstrap/` tree only when these are all true:
 | Gate | Required State | Why It Matters |
 | --- | --- | --- |
 | Source text | Ari can read source files and validate UTF-8; a compiler/tooling-local source-map layer still needs byte spans and line/column lookup. | Lexer/parser diagnostics need exact source spans. |
-| Diagnostics | `std::diag` covers lightweight severity/code/message/note summaries; compiler tools still need source spans, labels, and stable golden renderers outside runtime `std`. | Golden tests need comparable errors before the parser grows. |
+| Error reporting | Runtime `std` only supplies logging, panic, formatting, errors, and test helpers; compiler tools still need their own source spans, labels, report builders, and stable golden renderers. | Golden tests need comparable errors before the parser grows. |
 | Strings | `String`, string slices, ASCII, UTF-8, split/search/join, and C/OS/path string boundaries are documented and tested. | Compiler frontend code is mostly text handling. |
 | Collections | `Vec`, `Slice`, maps, sets, iterators, and common algorithms are stable enough for syntax trees and symbol tables. | AST/HIR and name resolution need predictable containers. |
 | File modules | Ari can load file-backed modules in a predictable project shape without special one-off flags. | A compiler cannot stay a single file for long. |
@@ -69,9 +69,9 @@ bootstrapping:
 4. Source maps: build filename/text ownership, byte spans, line/column lookup,
    and a persistent source-map owner in a compiler/tooling package instead of
    runtime `std`.
-5. Error values: grow the current compact `Error` and borrowed-note
-   `std::diag::Diagnostic` values into `Result[T, E]` workflows that avoid
-   panic in expected failure paths.
+5. Error values: grow the current compact `Error` values into `Result[T, E]`
+   workflows that avoid panic in expected failure paths, and keep compiler
+   error-report values in compiler/tooling packages rather than runtime `std`.
 6. More natural text APIs: keep reducing awkward casts and helper suffixes in
    code that manipulates source bytes, chars, and Unicode boundaries.
 7. Better build surfaces: Makefile support is fine for now, but stage1 needs a
@@ -86,7 +86,7 @@ The stage1 compiler should start with a conservative hosted subset:
 | Text | `String`, `Slice[u8]`, `char`, ASCII helpers, UTF-8 validation/decode, split/search/join, trim, parse integer/bool/float. |
 | Collections | `Vec`, `Slice`, `HashMap`, `HashSet`, `TreeMap`, `TreeSet`, iterators, sort, binary search, dedup, copy/fill, and stable comparison helpers. |
 | IO/FS | `read`, `try_read`, `write`, `try_write`, `read_dir`, `read_dir_entries`, path join/normalize/canonicalize, current directory, env args. |
-| Diagnostics | formatting, debug formatting, log output, lightweight `std::diag` values, compiler-tooling source spans/maps/renderers, panic/unreachable messages, test report helpers. |
+| Error reporting | formatting, debug formatting, log output, panic/unreachable messages, test report helpers, and compiler-tooling source spans/maps/report builders/renderers outside production `std`. |
 | Memory | explicit `Zone`, temporary zones, copy-to-zone helpers, same-zone container growth, and reset/destroy invalidation checks. |
 | Process | command-line args and exit codes; do not require spawn/fork for the first lexer/parser stage. |
 | Platform | target facts, pointer sizes, errno policy, and hosted Linux/glibc assumptions documented for stage0. |
@@ -114,7 +114,7 @@ bootstrap/
       main.ari
       source/
       lex/
-      diag/
+      report/
       syntax/
       parse/
       hir/
@@ -126,7 +126,7 @@ bootstrap/
       fixtures/
       lex/
       parse/
-      diag/
+      report/
       hir/
       golden/
 ```
@@ -148,12 +148,12 @@ Exit criteria:
 - New contributors can tell the difference between "can write Ari tools now"
   and "can self-host now".
 
-### Phase B: Source And Diagnostic Foundations
+### Phase B: Source And Error Reporting Foundations
 
 - Build owned source-map storage in a compiler/tooling package with byte spans,
   line/column lookup, and filename/text ownership.
-- Keep `std::diag` lightweight, then build compiler diagnostics as a separate
-  builder and stable renderer.
+- Build compiler error reporting as a separate builder and stable renderer
+  instead of adding bootstrap-only APIs to `std`.
 - Add golden tests for line/column rendering, multiple notes, and labels.
 
 Exit criteria:
@@ -226,7 +226,7 @@ alone:
 | `bootstrap/stage1/tests/lex/errors/` | Invalid source files and expected lexical diagnostics. |
 | `bootstrap/stage1/tests/parse/ok/` | Valid source files and expected syntax dumps. |
 | `bootstrap/stage1/tests/parse/errors/` | Invalid source files and expected parser diagnostics. |
-| `bootstrap/stage1/tests/diag/` | Source-map and diagnostic rendering fixtures. |
+| `bootstrap/stage1/tests/report/` | Source-map and error rendering fixtures. |
 | `bootstrap/stage1/tests/golden/` | Checked text outputs committed for review. |
 
 Each test should say what it covers in the filename:
@@ -235,7 +235,7 @@ Each test should say what it covers in the filename:
 - `lex-nested-comments.ari`
 - `parse-function-decls.ari`
 - `parse-match-patterns.ari`
-- `diag-multiline-span.ari`
+- `report-multiline-span.ari`
 
 Do not begin with a single giant "compile Ari" test. The first tests should
 compile and run in seconds.

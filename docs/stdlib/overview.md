@@ -39,7 +39,6 @@ API evolution.
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, startup `cwd`, startup `executable_path`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::test` | Executable unit-test helpers. | `Report`, `report`, `scratch`, `check`, `equal`, `not_equal`, `passed`, `failed`, `ok`, `finish`, `require`. |
 | `std::log` | Level-prefixed stderr diagnostics. | `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, `error`. |
-| `std::diag` | Lightweight diagnostic values for libraries and small tools. | `Severity`, `Diagnostic`, `error`, `warning`, `note`, `help`, `with_note`, `write`, and accessors for severity/code/message/note. |
 | `std::error` | Shared recoverable error values. | `Kind`, `Error`, `new`, `with_code`, `from_errno`, `from_raw`, `kind`, `code`, `raw`, `is_kind`, `is_not_found`, `is_interrupted`, `is_retryable`, `name`, `message`. |
 | `std::c` | C ABI boundary helpers. | `CStr`, `CString`, `Library`, `Symbol`, `from_string`, `from_ptr`, `from_slice_in`, `from_cstr_in`, `is_null`, `errno`, `error`, `open`, `main_program`, `symbol`, `function`, `close`, `last_error`, `lazy`, `now`, `local`, `global`. |
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
@@ -120,18 +119,15 @@ bounded integer helpers, unit float helper, byte filling from a seeded PRNG,
 and generic shuffle are source Ari. Cryptographic streams and fallible entropy
 errors remain future work.
 
-`std::test`, `std::log`, `std::diag`, and `std::error` are also source-first.
+`std::test`, `std::log`, and `std::error` are also source-first.
 `std::test::Report` aggregates checks, generic `equal`/`not_equal` stay
 naturally named, and `scratch` simply creates an explicit `Zone` for tests.
 `std::log` writes level-prefixed diagnostic lines to `stderr` through
-`std::io::Stderr`. `std::diag` defines small severity/code/message/note
-diagnostic values and a stable summary writer without carrying compiler
-source-position APIs in the production runtime library. `std::error`
+`std::io::Stderr`. `std::error`
 defines compact recoverable error values, stable error categories, POSIX errno
 mapping, and a raw scalar bridge for today's `Result[T, i64]` storage limits.
-Rich test discovery, compiler-owned source text and filename storage, structured diagnostic records,
-structured
-logging, stack traces, backtraces, and direct
+Rich test discovery, compiler-owned source text and filename storage,
+structured logging, stack traces, backtraces, and direct
 `Result[T, Error]` mixed-payload storage remain runtime, driver, and compiler
 roadmap work.
 

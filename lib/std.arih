@@ -8,8 +8,6 @@ pub mod test;
 
 pub mod log;
 
-pub mod diag;
-
 pub mod error;
 
 pub mod target;

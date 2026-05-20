@@ -91,9 +91,9 @@ Use `is_retryable` when an operation may be worth trying again. It currently
 returns true for `Interrupted`, `WouldBlock`, `TimedOut`, and `InProgress`.
 
 `name(kind)` and `message(ref error)` return stable lowercase messages for
-diagnostics. They are intentionally plain borrowed `string` values today;
-localized text, structured diagnostic fields, and formatter integration are
-future work.
+failure reports. They are intentionally plain borrowed `string` values today;
+localized text, structured error fields, and formatter integration are future
+work.
 
 ## Error Handling Policy
 

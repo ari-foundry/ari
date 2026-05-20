@@ -87,7 +87,7 @@ range(start, end)
 range_inclusive(start, end)
 ```
 
-## Test Support And Diagnostics
+## Test Support, Logging, And Errors
 
 Immediate assertion and panic helpers are available from the root prelude:
 
@@ -209,30 +209,8 @@ log::error(text)
 `enabled(level, minimum)` is an explicit threshold predicate; there is no
 global logging filter today.
 
-Diagnostic values live in `std::diag`:
-
-```ari
-diag::Severity
-diag::Diagnostic
-
-diag::severity_rank(severity)
-diag::severity_name(severity)
-diag::is_error(severity)
-diag::is_warning(severity)
-diag::new(severity, code, message)
-diag::error(code, message)
-diag::warning(code, message)
-diag::note(code, message)
-diag::help(code, message)
-diag::with_note(ref diagnostic, message)
-diag::write(ref diagnostic)
-```
-
-`Diagnostic` stores borrowed byte-slice code/message text and can carry one
-borrowed note message through `with_note`. `write` emits a stable summary
-through `std::log`, and emits the note as an additional `[info]` line when
-present. Source spans, labels, source maps, JSON renderers, and golden compiler
-diagnostic output belong in a future compiler/tooling package rather than the
+Compiler error reports, source spans, labels, JSON renderers, and golden
+output belong in compiler/tooling packages rather than the
 production standard library.
 
 ## C Interop

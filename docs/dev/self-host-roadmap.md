@@ -15,14 +15,14 @@ Ari is not ready for full self-hosting yet.
 
 Current practical estimate:
 
-- **37-42% ready** to begin full compiler bootstrapping
-- **58-63% remaining** before a self-host attempt is likely to be productive
+- **35-40% ready** to begin full compiler bootstrapping
+- **60-65% remaining** before a self-host attempt is likely to be productive
 
 The language and standard library are mature enough to start isolated
 compiler-component experiments in Ari, especially lexing, byte-oriented source
-text processing, first diagnostic summary values with notes, diagnostic
-formatting, small parser utilities, and golden-test tools. Source-coordinate
-values, source maps, labels, and rich renderers now need to live in a
+text processing, logging/error helpers, formatting, small parser utilities, and
+golden-test tools. Source-coordinate values, source maps, structured
+compiler-error reports, labels, and rich renderers need to live in a
 compiler/tooling package rather than production `std`.
 They are not yet mature enough to build the whole compiler, type checker,
 ownership checker, module graph, and backend in Ari without repeatedly falling
@@ -94,7 +94,7 @@ bootstrap/
       main.ari
       lex/
       parse/
-      diag/
+      report/
       syntax/
       hir/
       sema/
@@ -103,7 +103,7 @@ bootstrap/
     tests/
       lex/
       parse/
-      diag/
+      report/
       fixtures/
 ```
 
@@ -118,7 +118,7 @@ bootstrap path should not wait for one.
 | Source IO | Good enough for small tools through `std::fs`, `std::path`, `std::env`, and `std::io`. | Directory walking, richer metadata, canonical paths, stable owned path buffers, and better file errors. |
 | Text | Good enough for byte strings, UTF-8 validation, C strings, OS string views, formatting, and encoding helpers. | Owned UTF-8/OS/path string policies, richer parse errors, and less special-case formatting lowering. |
 | Collections | Good first pass: `Vec`, `Slice`, hash/tree maps and sets, queues, lists, heaps, and iterators exist. | Trait-driven `Hash`/`Eq`/`Ord`, deletion/comparator policy completion, stress tests, and cleaner nested generic aggregate behavior. |
-| Diagnostics | Basic logging, panic, formatting, test helpers, and lightweight `std::diag` diagnostic summaries with one borrowed note exist. | Compiler/tooling source spans, owned filename/source-text maps, multi-label diagnostic builders, multiple notes, fix-it text, and stable golden output. |
+| Error reporting | Basic logging, panic, formatting, errors, and test helpers exist in runtime `std`. | Compiler/tooling source spans, owned filename/source-text maps, structured report values, multi-label builders, multiple notes, fix-it text, and stable golden output. |
 | Parser support | Ari can express basic parser code with structs, enums, loops, functions, modules, and collections. | More ergonomic strings, file-backed modules, better generic aggregate diagnostics, and parser-specific tests. |
 | Semantic model | Current compiler supports many front-end surfaces, but not all are comfortable to reimplement in Ari. | Stable generic aggregates, trait dispatch, associated-type ergonomics, richer `Result[T, Error]`, and clearer ownership errors. |
 | Memory model | Explicit zones, provenance checks, source `String`/`Vec`, and low-level memory helpers exist. | Stronger long-lived arena policy, escape rules for compiler-owned graphs, drop policy for nested structures, and allocation profiling hooks. |

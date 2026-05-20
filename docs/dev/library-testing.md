@@ -291,13 +291,6 @@ identifies the exact case:
 - `std-log-basic.ari`: source `std::log` level ordering, threshold checks,
   byte-slice logging, string-message logging, convenience level helpers, and
   stderr output format.
-- `std-diag-basic.ari`: source `std::diag` severity helpers, diagnostic
-  constructors, note attachment, accessors, method wrappers, and the dedicated
-  `make check-diag` target.
-- `std-diag-write.ari`: source `std::diag` first stable stderr summary output
-  and the dedicated `make check-diag` target.
-- `std-diag-write-note.ari`: source `std::diag` stable stderr summary output
-  with an attached note line and the dedicated `make check-diag` target.
 - `std-mem-byte-ops.ari`: `std::mem` byte `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM `memcpy`/`memmove`/`memset` intrinsic
   lowering checks.
