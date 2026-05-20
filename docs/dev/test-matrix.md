@@ -938,9 +938,9 @@ Checklist:
       `Debug::debug_in`
 - [x] add source `std::fmt::FormatSpec` helpers for unsigned
       binary/octal/decimal/hex formatting, width, integer precision,
-      left/right/center alignment, alternate prefixes, debug text quoting,
-      explicit-zone strings, generic Display `write_value`, and
-      `std::io::Writer` output plus generic Display stdout
+      fallible width/precision validation, left/right/center alignment,
+      alternate prefixes, debug text quoting, explicit-zone strings, generic
+      Display `write_value`, and `std::io::Writer` output plus generic Display stdout
       `print_value`/`println_value`
 - [x] source `std::fmt::Debug` has built-in impl coverage for `i64`, `u64`,
       `char`, `bool`, `f32`, `f64`, lowercase `string`, and owned

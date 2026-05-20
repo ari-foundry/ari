@@ -1,0 +1,49 @@
+// Covers fallible FormatSpec builders for values that arrive from config,
+// command-line flags, or other untrusted runtime input.
+fn has_width_text(zone: ref mut Zone, value: std::Option[std::fmt::FormatSpec]) -> bool {
+  match value {
+    std::Some(spec) => {
+      let text = fmt::unsigned_in(zone, 7u64, spec);
+      return text.len() == 4 && text.get(0) == ' ' && text.get(3) == '7';
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn has_precision_text(zone: ref mut Zone, value: std::Option[std::fmt::FormatSpec]) -> bool {
+  match value {
+    std::Some(spec) => {
+      let text = fmt::unsigned_in(zone, 7u64, spec);
+      return text.len() == 3 && text.get(0) == '0' && text.get(2) == '7';
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var score = 0;
+
+  if fmt::try_with_width(fmt::decimal(), -1).is_none() {
+    score = score + 1;
+  }
+  if has_width_text(ref mut zone, fmt::try_with_width(fmt::decimal(), 4)) {
+    score = score + 2;
+  }
+  if fmt::try_with_precision(fmt::decimal(), -1).is_none() {
+    score = score + 3;
+  }
+  if has_precision_text(ref mut zone, fmt::try_with_precision(fmt::decimal(), 3)) {
+    score = score + 4;
+  }
+
+  let strict = fmt::unsigned_in(ref mut zone, 7u64, fmt::with_width(fmt::decimal(), 2));
+  if strict.len() == 2 && strict.get(1) == '7' {
+    score = score + 5;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

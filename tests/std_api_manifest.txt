@@ -239,6 +239,8 @@ fn std::fmt::println_debug[T: std::fmt::Debug]|check-prelude std-fmt-debug-value
 fn std::fmt::println_value[T: std::fmt::Display]|check-prelude std-fmt-print-value generic stdout Display line formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::right|check-prelude std-fmt-format-spec right alignment spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::text_in|check-prelude std-fmt-format-spec allocator-backed text copy helper; docs/stdlib/modules/fmt.md
+fn std::fmt::try_with_precision|check-prelude std-fmt-format-validation fallible integer precision spec helper for runtime input; docs/stdlib/modules/fmt.md
+fn std::fmt::try_with_width|check-prelude std-fmt-format-validation fallible width spec helper for runtime input; docs/stdlib/modules/fmt.md
 fn std::fmt::unsigned_in|check-prelude std-fmt-format-spec allocator-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::uppercase|check-prelude std-fmt-format-spec uppercase digit spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::with_precision|check-prelude std-fmt-format-spec integer precision spec helper; docs/stdlib/modules/fmt.md

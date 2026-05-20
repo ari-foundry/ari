@@ -1657,7 +1657,9 @@ fmt::hex()
 fmt::binary()
 fmt::octal()
 fmt::with_width(spec, width)
+fmt::try_with_width(spec, width)
 fmt::with_precision(spec, precision)
+fmt::try_with_precision(spec, precision)
 fmt::left(spec)
 fmt::right(spec)
 fmt::center(spec)
@@ -1717,6 +1719,11 @@ prefixes. Build a spec from a base helper and modifiers:
 let spec = fmt::alternate(fmt::uppercase(fmt::with_width(fmt::hex(), 6)));
 let text = fmt::unsigned_in(ref mut zone, 255u64, spec);
 ```
+
+`with_width` and `with_precision` are strict builders for already-validated
+values. `try_with_width` and `try_with_precision` return `Option[FormatSpec]`
+for runtime input so callers can reject invalid negative width or precision
+without panicking.
 
 `integer_in`, `boolean_in`, `text_in`, `char_in`, `debug_text_in`, and
 `debug_char_in` are small

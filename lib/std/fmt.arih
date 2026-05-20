@@ -57,6 +57,13 @@ pub fn with_width(spec: std::fmt::FormatSpec, width: i64) -> std::fmt::FormatSpe
   };
 }
 
+pub fn try_with_width(spec: std::fmt::FormatSpec, width: i64) -> std::Option[std::fmt::FormatSpec] {
+  if width < 0 {
+    return std::None<std::fmt::FormatSpec>();
+  }
+  return std::Some<std::fmt::FormatSpec>(std::fmt::with_width(spec, width));
+}
+
 pub fn with_precision(spec: std::fmt::FormatSpec, precision: i64) -> std::fmt::FormatSpec {
   std::assert(precision >= 0);
   return std::fmt::FormatSpec {
@@ -67,6 +74,13 @@ pub fn with_precision(spec: std::fmt::FormatSpec, precision: i64) -> std::fmt::F
     uppercase: spec.uppercase,
     alternate: spec.alternate,
   };
+}
+
+pub fn try_with_precision(spec: std::fmt::FormatSpec, precision: i64) -> std::Option[std::fmt::FormatSpec] {
+  if precision < 0 {
+    return std::None<std::fmt::FormatSpec>();
+  }
+  return std::Some<std::fmt::FormatSpec>(std::fmt::with_precision(spec, precision));
 }
 
 pub fn left(spec: std::fmt::FormatSpec) -> std::fmt::FormatSpec {

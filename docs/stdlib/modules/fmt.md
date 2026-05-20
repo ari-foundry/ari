@@ -28,7 +28,9 @@ binary() -> FormatSpec
 octal() -> FormatSpec
 
 with_width(spec: FormatSpec, width: i64) -> FormatSpec
+try_with_width(spec: FormatSpec, width: i64) -> Option[FormatSpec]
 with_precision(spec: FormatSpec, precision: i64) -> FormatSpec
+try_with_precision(spec: FormatSpec, precision: i64) -> Option[FormatSpec]
 left(spec: FormatSpec) -> FormatSpec
 right(spec: FormatSpec) -> FormatSpec
 center(spec: FormatSpec) -> FormatSpec
@@ -88,6 +90,21 @@ Integer precision means "minimum digit count" for `unsigned_in`, so
 `fmt::with_precision(fmt::octal(), 3)` renders `7u64` as `007`. Width and
 alignment apply after prefix and precision padding. `alternate` adds `0b`,
 `0o`, `0x`, or `0X` for binary, octal, and hexadecimal specs.
+`with_width` and `with_precision` are strict builders: they assert that the
+chosen number is non-negative. Use `try_with_width` and `try_with_precision`
+when the number came from configuration, command-line parsing, or another
+runtime input path:
+
+```ari
+match fmt::try_with_width(fmt::decimal(), parsed_width) {
+  std::Some(spec) => {
+    let text = fmt::unsigned_in(ref mut zone, value, spec);
+  }
+  std::None => {
+    // Reject or report the invalid width.
+  }
+}
+```
 
 Use the `write_*` helpers when the destination is a buffer, file-like handle,
 or other type implementing `std::io::Writer`. The helper still takes a zone
@@ -177,6 +194,9 @@ The source helpers complement the macros:
 - Use `FormatSpec` plus `unsigned_in` or `write_unsigned` when code needs
   explicit binary, octal, hexadecimal, width, precision, or alignment control
   without adding more compiler lowering.
+- Use `try_with_width` and `try_with_precision` before formatting values from
+  untrusted input; use strict `with_*` builders once the value is already
+  validated.
 
 ## Current Limits
 
@@ -205,6 +225,7 @@ Representative coverage lives in:
 
 ```text
 tests/cases/standard-library/ok/format/std-fmt-format-spec.ari
+tests/cases/standard-library/ok/format/std-fmt-format-validation.ari
 tests/cases/standard-library/ok/format/std-fmt-debug-values.ari
 tests/cases/standard-library/ok/format/std-fmt-char-values.ari
 tests/cases/standard-library/ok/format/std-fmt-print-value.ari
