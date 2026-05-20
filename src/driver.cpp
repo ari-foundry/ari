@@ -11,6 +11,7 @@
 #include "module_metadata.hpp"
 #include "parser.hpp"
 #include "sema.hpp"
+#include "syntax_dump.hpp"
 #include "target.hpp"
 #include "token_dump.hpp"
 #include "toolchain.hpp"
@@ -61,7 +62,7 @@ static std::string shell_quote(const std::string& text) {
 
 static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
-                 "           [--emit-obj path] [--emit-tokens path]\n"
+                 "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -83,6 +84,7 @@ int run(int argc, char** argv) {
     std::string llvm_output;
     std::string object_output;
     std::string token_output;
+    std::string syntax_output;
     std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
@@ -133,6 +135,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-tokens") {
             if (i + 1 >= argc) throw CompileError("--emit-tokens expects a path");
             token_output = argv[++i];
+        } else if (arg == "--emit-syntax") {
+            if (i + 1 >= argc) throw CompileError("--emit-syntax expects a path");
+            syntax_output = argv[++i];
         } else if (arg == "--emit-c-header") {
             if (i + 1 >= argc) throw CompileError("--emit-c-header expects a path");
             c_header_output = argv[++i];
@@ -197,16 +202,34 @@ int run(int argc, char** argv) {
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
+    if (!token_output.empty() && !syntax_output.empty()) {
+        throw CompileError("--emit-tokens cannot be combined with --emit-syntax");
+    }
     if (!token_output.empty()) {
         if (check_only || output_explicit || emit_llvm_only || !object_output.empty() ||
             !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
             !metadata_output.empty() || !metadata_check.empty() ||
-            !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty()) {
+            !module_cache_output.empty() || !module_cache_input.empty() ||
+            !module_search_paths.empty() || !link_args.empty()) {
             throw CompileError("--emit-tokens cannot be combined with checking, backend, module, or linking options");
         }
         std::vector<Token> tokens = lex_source(read_text_file(input));
         write_text_file(token_output, dump_tokens(tokens, input));
         std::cout << "wrote " << token_output << " (token dump)\n";
+        return 0;
+    }
+    if (!syntax_output.empty()) {
+        if (check_only || output_explicit || emit_llvm_only || !object_output.empty() ||
+            !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
+            !metadata_output.empty() || !metadata_check.empty() ||
+            !module_cache_output.empty() || !module_cache_input.empty() ||
+            !module_search_paths.empty() || !link_args.empty()) {
+            throw CompileError("--emit-syntax cannot be combined with checking, backend, module, or linking options");
+        }
+        std::vector<Token> tokens = lex_source(read_text_file(input));
+        Program syntax = parse_tokens(std::move(tokens), cfg_features, target.triple);
+        write_text_file(syntax_output, dump_syntax(syntax, input));
+        std::cout << "wrote " << syntax_output << " (syntax dump)\n";
         return 0;
     }
 

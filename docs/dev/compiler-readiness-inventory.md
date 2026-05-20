@@ -65,12 +65,13 @@ This is deliberately a general language feature. It is useful for any large
 Ari program that returns structured errors, not only for a future compiler
 written in Ari.
 
-The hosted compiler now also has a first real frontend artifact producer:
-`--emit-tokens path`. It writes deterministic lexer token text with source
-locations and is checked by `make check-compiler-artifacts`. This is the first
-small stage-comparison step for normal compiler development: when lexer
-behavior changes, reviewers can inspect a tiny golden diff before any parser,
-sema, LLVM, or executable behavior changes are involved.
+The hosted compiler now also has the first two real frontend artifact
+producers: `--emit-tokens path` and `--emit-syntax path`. They write
+deterministic lexer token text and parser tree text, both checked by
+`make check-compiler-artifacts`. This is the first small stage-comparison step
+for normal compiler development: when lexer or parser behavior changes,
+reviewers can inspect a tiny golden diff before sema, LLVM, or executable
+behavior changes are involved.
 
 ## Development Backlog
 
@@ -147,6 +148,8 @@ Current readiness tests:
   source errors, and tuple return flow as Ari values.
 - `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari`:
   lexer artifact fixture checked through `--emit-tokens`.
+- `tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax`:
+  parser artifact golden checked through `--emit-syntax`.
 
 The first command to run after changing this area is:
 

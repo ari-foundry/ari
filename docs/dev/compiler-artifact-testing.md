@@ -203,20 +203,24 @@ tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
+tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
 ari --emit-tokens path
+ari --emit-syntax path
 make check-compiler-artifacts
 ```
 
-It currently proves four low-level contracts:
+It currently proves five low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
   normalize to stable placeholders
 - a line mismatch produces a small report naming the fixture and line
 - `--emit-tokens` writes deterministic lexer output for a small Ari source file
+- `--emit-syntax` writes deterministic parser output before sema and backend
+  behavior are involved
 
-This is deliberately small. Future diagnostic, syntax, HIR, typed-IR, and
-backend artifact producers should plug into the same shape instead of inventing
+This is deliberately small. Future diagnostic, HIR, typed-IR, and backend
+artifact producers should plug into the same shape instead of inventing
 unrelated golden comparison rules.
 
 ## Current Compiler Integration
@@ -225,6 +229,7 @@ The current compiler already has useful artifact checks:
 
 - `--check` for frontend and sema diagnostics
 - `--emit-tokens` for stable lexer token text and start locations
+- `--emit-syntax` for stable parser tree text before semantic analysis
 - `--emit-llvm` for LLVM text
 - `--emit-obj` for object files
 - `--shared` for shared-library visibility
