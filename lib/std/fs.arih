@@ -44,6 +44,8 @@ pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
 pub extern "ari" fn write_byte(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
 extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadata_size";
 extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
+extern "ari" fn metadata_mode_raw(path: string) -> i64 = "ari_builtin_fs_metadata_mode";
+extern "ari" fn set_mode_raw(path: string, mode: i64) -> bool = "ari_builtin_fs_set_mode";
 extern "ari" fn canonicalize_raw(path: string) -> string = "ari_builtin_fs_canonicalize";
 
 pub fn permissions(path: string) -> Permissions {
@@ -96,6 +98,36 @@ pub fn metadata(path: string) -> Metadata {
     kind: Other,
     permissions: Permissions::none(),
   };
+}
+
+pub fn try_mode(path: string) -> std::Option[i64] {
+  let mode = metadata_mode_raw(path);
+  if mode < 0 {
+    return std::None<i64>();
+  }
+  return std::Some<i64>(mode & 511);
+}
+
+pub fn mode(path: string) -> i64 {
+  match try_mode(path) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+  std::panic();
+  return -1;
+}
+
+pub fn set_mode(path: string, mode: i64) -> bool {
+  if mode < 0 || mode > 511 {
+    return false;
+  }
+  return set_mode_raw(path, mode);
+}
+
+pub fn set_permissions(path: string, permissions: Permissions) -> bool {
+  return set_mode(path, permissions.to_mode());
 }
 
 pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
@@ -287,9 +319,25 @@ pub fn try_copy(source: string, target: string) -> std::Option[i64] {
 }
 
 pub impl std::fs::Permissions {
+  fn all() -> Permissions {
+    return Permissions {
+      readable: true,
+      writable: true,
+      executable: true,
+    };
+  }
+
   fn none() -> Permissions {
     return Permissions {
       readable: false,
+      writable: false,
+      executable: false,
+    };
+  }
+
+  fn read_only() -> Permissions {
+    return Permissions {
+      readable: true,
       writable: false,
       executable: false,
     };
@@ -309,6 +357,20 @@ pub impl std::fs::Permissions {
 
   fn any(self: ref Self) -> bool {
     return self.readable || self.writable || self.executable;
+  }
+
+  fn to_mode(self: ref Self) -> i64 {
+    var mode = 0;
+    if self.readable {
+      mode = mode + 292;
+    }
+    if self.writable {
+      mode = mode + 146;
+    }
+    if self.executable {
+      mode = mode + 73;
+    }
+    return mode;
   }
 }
 

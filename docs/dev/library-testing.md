@@ -164,6 +164,9 @@ identifies the exact case:
 - `std-fs-permissions.ari`: runtime-backed access permission checks,
   `Permissions` method wrappers, directory execute/search checks, and
   missing-path all-false behavior.
+- `std-fs-mode.ari`: runtime-backed permission mode lookup, chmod mutation call,
+  structured `Permissions` constructors/conversion, invalid-mode rejection,
+  missing-path failure, and host-filesystem-independent cleanup.
 - `std-fs-metadata.ari`: runtime-backed `stat` metadata checks, missing-path
   `None`, regular-file length/kind, directory kind, and `Metadata` methods.
 - `std-fs-canonicalize.ari`: runtime-backed `realpath` canonicalization,

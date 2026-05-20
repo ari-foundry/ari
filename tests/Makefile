@@ -388,6 +388,17 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-permissions.ari -o $(BUILD_DIR)/prelude/std-fs-permissions.elf
 	$(BUILD_DIR)/prelude/std-fs-permissions.elf; code=$$?; test $$code -eq 171
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-permissions.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-permissions.elf; $(BUILD_DIR)/prelude/std-fs-permissions.elf; code=$$?; test $$code -eq 171; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mode.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-mode.ll
+	grep -q "@ari_builtin_fs_metadata_mode" $(BUILD_DIR)/prelude/std-fs-mode.ll
+	grep -q "@ari_builtin_fs_set_mode" $(BUILD_DIR)/prelude/std-fs-mode.ll
+	grep -q "declare i32 @chmod" $(BUILD_DIR)/prelude/std-fs-mode.ll
+	grep -F -q "std2fs8try_mode" $(BUILD_DIR)/prelude/std-fs-mode.ll
+	grep -F -q "std2fs4mode" $(BUILD_DIR)/prelude/std-fs-mode.ll
+	grep -F -q "std2fs8set_mode" $(BUILD_DIR)/prelude/std-fs-mode.ll
+	grep -F -q "std2fs15set_permissions" $(BUILD_DIR)/prelude/std-fs-mode.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mode.ari -o $(BUILD_DIR)/prelude/std-fs-mode.elf
+	$(BUILD_DIR)/prelude/std-fs-mode.elf; code=$$?; test $$code -eq 91
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-mode.elf; $(BUILD_DIR)/prelude/std-fs-mode.elf; code=$$?; test $$code -eq 91; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-metadata.ll
 	grep -q "@ari_builtin_fs_metadata_size" $(BUILD_DIR)/prelude/std-fs-metadata.ll
 	grep -q "@ari_builtin_fs_metadata_kind" $(BUILD_DIR)/prelude/std-fs-metadata.ll

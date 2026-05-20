@@ -480,6 +480,7 @@ private:
                symbol == "symlink" ||
                symbol == "mkdir" ||
                symbol == "rmdir" ||
+               symbol == "chmod" ||
                symbol == "open" ||
                symbol == "read" ||
                symbol == "write" ||
@@ -529,6 +530,7 @@ private:
             symbol == "ari_builtin_fs_rename" ||
             symbol == "ari_builtin_fs_create_dir" ||
             symbol == "ari_builtin_fs_remove_dir" ||
+            symbol == "ari_builtin_fs_set_mode" ||
             symbol == "ari_builtin_fs_close" ||
             symbol == "ari_builtin_fs_write_byte" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
@@ -597,6 +599,7 @@ private:
         declarations_ << "declare i32 @symlink(ptr, ptr)\n";
         declarations_ << "declare i32 @mkdir(ptr, i32)\n";
         declarations_ << "declare i32 @rmdir(ptr)\n";
+        declarations_ << "declare i32 @chmod(ptr, i32)\n";
         declarations_ << "declare i32 @open(ptr, i32, i32)\n";
         declarations_ << "declare i64 @read(i32, ptr, i64)\n";
         declarations_ << "declare i64 @write(i32, ptr, i64)\n";
@@ -965,6 +968,24 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_metadata_mode(ptr %path) {");
+        line("entry:");
+        line("  %stat.storage = alloca [144 x i8], align 8");
+        line("  %stat.ptr = getelementptr inbounds [144 x i8], ptr %stat.storage, i64 0, i64 0");
+        line("  %code = call i32 @stat(ptr %path, ptr %stat.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        // Linux/glibc x86_64 stat layout: st_mode is an i32 at byte offset 24.
+        line("  %mode.ptr = getelementptr inbounds i8, ptr %stat.ptr, i64 24");
+        line("  %mode32 = load i32, ptr %mode.ptr, align 4");
+        line("  %mode = zext i32 %mode32 to i64");
+        line("  ret i64 %mode");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "ptr @ari_builtin_fs_canonicalize(ptr %path) {");
         line("entry:");
         line("  %resolved = call ptr @realpath(ptr %path, ptr " + realpath_buffer + ")");
@@ -1023,6 +1044,22 @@ private:
         line("  %code = call i32 @rmdir(ptr %path)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_set_mode(ptr %path, i64 %mode) {");
+        line("entry:");
+        line("  %too_low = icmp slt i64 %mode, 0");
+        line("  %too_high = icmp sgt i64 %mode, 511");
+        line("  %bad = or i1 %too_low, %too_high");
+        line("  br i1 %bad, label %fail, label %set");
+        line("set:");
+        line("  %mode32 = trunc i64 %mode to i32");
+        line("  %code = call i32 @chmod(ptr %path, i32 %mode32)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
         line("}");
         line();
 

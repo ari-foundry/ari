@@ -707,6 +707,10 @@ fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
 fs::try_metadata(path)
+fs::mode(path)
+fs::try_mode(path)
+fs::set_mode(path, mode)
+fs::set_permissions(path, permissions)
 fs::canonicalize(ref mut zone, path)
 fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
@@ -749,10 +753,13 @@ file.write_byte(value)
 file.write_bytes(values)
 
 Permissions::none()
+Permissions::read_only()
+Permissions::all()
 permissions.can_read()
 permissions.can_write()
 permissions.can_execute()
 permissions.any()
+permissions.to_mode()
 
 metadata.len()
 metadata.file_type()
@@ -784,6 +791,12 @@ unstatable paths. `metadata(path)` asserts that metadata is available.
 `is_file`, `is_dir`, `is_symlink`, and `is_other` are convenience predicates.
 The first runtime implementation uses Linux/glibc `stat`, so symbolic links
 are followed; no-follow symlink metadata and richer timestamps are future work.
+`try_mode(path)` returns `Option[i64]` containing the low POSIX `0777`
+permission bits, and `mode(path)` is the asserting wrapper. Use `set_mode(path,
+mode)` for direct chmod-style updates, or `set_permissions(path, permissions)`
+when a `Permissions` value is clearer at the call site. `Permissions::to_mode`
+maps the three booleans to user/group/other bits, so `read_only()` maps to
+`0444` and `all()` maps to `0777`.
 `try_canonicalize(ref mut zone, path)` returns `Option[String]`, using `None`
 when the host cannot resolve the path. The returned string is absolute, owned
 by the provided zone, and follows the host `realpath` policy. `canonicalize(ref

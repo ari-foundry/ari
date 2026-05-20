@@ -258,6 +258,7 @@ fn std::fs::create_dir|check-prelude std-fs-rename-dir runtime-backed single-dir
 fn std::fs::exists|check-prelude std-fs-basic file existence hook; docs/stdlib/modules/fs.md
 fn std::fs::hard_link|check-prelude std-fs-links runtime-backed hard-link hook; docs/stdlib/modules/fs.md
 fn std::fs::metadata|check-prelude std-fs-metadata asserting metadata convenience wrapper; docs/stdlib/modules/fs.md
+fn std::fs::mode|check-prelude std-fs-mode asserting POSIX permission-mode helper; docs/stdlib/modules/fs.md
 fn std::fs::open|check-prelude std-fs-open-modes mode-string open hook; docs/stdlib/modules/fs.md
 fn std::fs::open_append|check-prelude std-fs-append compatibility append wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::open_read|check-prelude std-fs-basic compatibility read wrapper over mode-string open; docs/stdlib/modules/fs.md
@@ -269,6 +270,8 @@ fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byt
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir|check-prelude std-fs-rename-dir runtime-backed single-directory removal hook; docs/stdlib/modules/fs.md
 fn std::fs::rename|check-prelude std-fs-rename-dir runtime-backed file rename hook; docs/stdlib/modules/fs.md
+fn std::fs::set_mode|check-prelude std-fs-mode chmod-backed permission-mode mutation helper; docs/stdlib/modules/fs.md
+fn std::fs::set_permissions|check-prelude std-fs-mode Permissions-to-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::symbolic_link|check-prelude std-fs-links runtime-backed symbolic-link hook; docs/stdlib/modules/fs.md
 fn std::fs::truncate|check-prelude std-fs-create-truncate-copy source create/truncate helper; docs/stdlib/modules/fs.md
 fn std::fs::try_append|check-prelude std-fs-read-write Option-returning append byte-count helper; docs/stdlib/modules/fs.md
@@ -276,6 +279,7 @@ fn std::fs::try_canonicalize|check-prelude std-fs-canonicalize Option-returning 
 fn std::fs::try_copy|check-prelude std-fs-create-truncate-copy Option-returning copy byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::try_create|check-prelude std-fs-create-truncate-copy Option-returning create helper; docs/stdlib/modules/fs.md
 fn std::fs::try_metadata|check-prelude std-fs-metadata Option-returning stat-backed metadata helper; docs/stdlib/modules/fs.md
+fn std::fs::try_mode|check-prelude std-fs-mode Option-returning permission-mode helper; docs/stdlib/modules/fs.md
 fn std::fs::try_open|check-prelude std-fs-open-modes Option-returning mode-string open helper; docs/stdlib/modules/fs.md
 fn std::fs::try_open_append|check-prelude std-fs-append compatibility Option-returning append helper; docs/stdlib/modules/fs.md
 fn std::fs::try_open_read|check-prelude std-fs-basic compatibility Option-returning read helper; docs/stdlib/modules/fs.md
@@ -839,11 +843,14 @@ method std::fs::Metadata::is_other|check-prelude std-fs-metadata non-file/non-di
 method std::fs::Metadata::is_symlink|check-prelude std-fs-metadata symlink kind predicate; docs/stdlib/modules/fs.md
 method std::fs::Metadata::len|check-prelude std-fs-metadata byte length accessor; docs/stdlib/modules/fs.md
 method std::fs::Metadata::permissions|check-prelude std-fs-metadata permission snapshot accessor; docs/stdlib/modules/fs.md
+method std::fs::Permissions::all|check-prelude std-fs-mode all-permission constructor for mode mutation; docs/stdlib/modules/fs.md
 method std::fs::Permissions::any|check-prelude std-fs-permissions any-access predicate; docs/stdlib/modules/fs.md
 method std::fs::Permissions::can_execute|check-prelude std-fs-permissions executable/searchable access method; docs/stdlib/modules/fs.md
 method std::fs::Permissions::can_read|check-prelude std-fs-permissions readable access method; docs/stdlib/modules/fs.md
 method std::fs::Permissions::can_write|check-prelude std-fs-permissions writable access method; docs/stdlib/modules/fs.md
 method std::fs::Permissions::none|check-prelude std-fs-permissions all-false permissions constructor; docs/stdlib/modules/fs.md
+method std::fs::Permissions::read_only|check-prelude std-fs-mode readable-only constructor for mode mutation; docs/stdlib/modules/fs.md
+method std::fs::Permissions::to_mode|check-prelude std-fs-mode POSIX permission-mode conversion helper; docs/stdlib/modules/fs.md
 method std::io::BufReader[R]::buffered_len|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufReader[R]::capacity|std io buffered tests; docs/stdlib/modules/io.md
 method std::io::BufReader[R]::is_empty|std io buffered tests; docs/stdlib/modules/io.md

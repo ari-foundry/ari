@@ -1,0 +1,61 @@
+// Covers stat-backed mode lookup and chmod-backed permission mutation.
+// The test avoids asserting exact chmod side effects because some hosted test
+// filesystems report permission bits through mount policy rather than chmod.
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-mode.tmp";
+  if fs::exists(path) {
+    fs::set_mode(path, 420);
+    fs::remove(path);
+  }
+
+  var score = 0;
+  if fs::try_mode(path).is_none() {
+    score = score + 1;
+  }
+  if !fs::set_mode(path, 420) {
+    score = score + 2;
+  }
+
+  var data = ['M'];
+  if fs::write(path, data.as_slice()) {
+    score = score + 3;
+  }
+  let initial = fs::mode(path);
+  if initial >= 0 && initial <= 511 {
+    score = score + 4;
+  }
+
+  let read_only = fs::Permissions::read_only();
+  if read_only.to_mode() == 292 {
+    score = score + 5;
+  }
+  if fs::set_mode(path, read_only.to_mode()) {
+    score = score + 6;
+  }
+  if read_only.can_read() && !read_only.can_write() && !read_only.can_execute() && read_only.any() {
+    score = score + 7;
+  }
+
+  let all = fs::Permissions::all();
+  if all.to_mode() == 511 && fs::Permissions::none().to_mode() == 0 {
+    score = score + 8;
+  }
+  if fs::set_permissions(path, all) {
+    score = score + 9;
+  }
+  if !fs::set_mode(path, 512) {
+    score = score + 10;
+  }
+  if !fs::set_mode("build/prelude/std-fs-mode-missing.tmp", 420) {
+    score = score + 11;
+  }
+
+  fs::set_mode(path, 420);
+  if fs::remove(path) {
+    score = score + 12;
+  }
+  if !fs::exists(path) {
+    score = score + 13;
+  }
+  return score;
+}

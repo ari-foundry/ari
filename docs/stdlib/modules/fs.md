@@ -8,15 +8,17 @@ with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
 byte-oriented `String` with either compatibility or `Option`-returning absence
 behavior, rename paths, create hard or symbolic links, create or remove one
-empty directory, query basic file metadata, resolve an existing path to an
-absolute canonical path, close the handle, and remove a file.
+empty directory, query basic file metadata, read and change POSIX permission
+bits, resolve an existing path to an absolute canonical path, close the
+handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
 `write_byte`, `write_bytes`, `read`, `try_read`, `write`, `append`,
 `try_write`, `try_append`, `truncate`, `copy`, `try_copy`, `metadata`,
-`try_metadata`, `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
+`try_metadata`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
+`canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
 `symbolic_link`, `create_dir`, `remove_dir`, `close`, `exists`, and `remove`,
 not type-suffixed names.
 
@@ -30,6 +32,10 @@ fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
 fs::try_metadata(path)
+fs::mode(path)
+fs::try_mode(path)
+fs::set_mode(path, mode)
+fs::set_permissions(path, permissions)
 fs::canonicalize(ref mut zone, path)
 fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
@@ -72,10 +78,13 @@ file.write_byte(value)
 file.write_bytes(values)
 
 Permissions::none()
+Permissions::read_only()
+Permissions::all()
 permissions.can_read()
 permissions.can_write()
 permissions.can_execute()
 permissions.any()
+permissions.to_mode()
 
 metadata.len()
 metadata.file_type()
@@ -181,6 +190,11 @@ value. `permissions.can_read()`, `permissions.can_write()`, and
 `permissions.can_execute()` expose the stored booleans, and `permissions.any()`
 is useful for treating a missing or inaccessible path as no visible access.
 `Permissions::none()` creates that all-false value directly.
+`Permissions::read_only()` and `Permissions::all()` are convenience
+constructors for common chmod-style updates, and `permissions.to_mode()`
+converts the three booleans into POSIX permission bits. The conversion applies
+the same read/write/execute choice to user, group, and other bits, so
+read-only becomes `0444` and all-permissions becomes `0777`.
 
 `try_metadata(path)` returns `Option[Metadata]`. Missing paths and failed host
 metadata lookups return `None`; successful calls snapshot the byte length,
@@ -195,6 +209,15 @@ with `Regular`, `Directory`, `Symlink`, and `Other` variants. The convenience
 predicates `is_file`, `is_dir`, `is_symlink`, and `is_other` cover common
 branches. The current Linux/glibc runtime uses `stat`, so `metadata` follows
 symbolic links; a separate no-follow `symlink_metadata` helper is future work.
+
+`try_mode(path)` returns the current POSIX permission bits as
+`Option[i64]`. The value is already masked to the low `0777` permission bits,
+so code can compare it directly with familiar octal-style values written as
+decimal literals today: `420` for `0644`, `292` for `0444`, and `511` for
+`0777`. `mode(path)` is the asserting convenience wrapper. `set_mode(path,
+mode)` uses the host `chmod` path and rejects values outside `0..511`.
+`set_permissions(path, permissions)` is the structured version for code that
+already has a `Permissions` value.
 
 `try_canonicalize(ref mut zone, path)` resolves an existing path through the
 host filesystem and returns an owned absolute `String` in the caller-provided
@@ -238,7 +261,7 @@ recursive removal, and directory iteration are separate future slices.
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, and byte-counting `try_append`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
 | metadata | Current: `try_metadata(path)`/`metadata(path)`, `Metadata`, and `FileKind` over the Linux/glibc `stat` runtime path; no-follow symlink metadata and richer timestamps are roadmap. |
-| permissions | Current: access-style `can_read`, `can_write`, `can_execute`, and `permissions`; mutation/chmod is roadmap. |
+| permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
 | rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)` and empty directory removal with `remove_dir(path)`. |
 | copy | Current: source streaming `copy(source, target)` and byte-counting `try_copy(source, target)` for byte files. |
@@ -368,6 +391,18 @@ if access.can_read() && access.can_write() {
 }
 ```
 
+Change POSIX permission bits:
+
+```ari
+let read_only = fs::Permissions::read_only();
+if fs::set_permissions(path, read_only) {
+  let bits = fs::mode(path);
+  if bits == 292 {
+    return 0;
+  }
+}
+```
+
 Open an existing file for both reading and writing:
 
 ```ari
@@ -382,14 +417,14 @@ if file.is_open() {
 ## Current Limits
 
 - This slice is byte-oriented. There is no owned path type, directory
-  iteration, permission mutation API, recursive directory API, file locking
-  API, temporary-file API, or text encoding policy yet. Basic `stat` metadata
-  and existing-path canonicalization exist, but richer timestamps, no-follow
-  symlink metadata, link metadata, and platform-specific symlink policy are
-  still future work.
+  iteration, recursive directory API, file locking API, temporary-file API, or
+  text encoding policy yet. Basic `stat` metadata, permission-bit lookup and
+  mutation, and existing-path canonicalization exist, but richer timestamps,
+  owner/group/ACL policy, no-follow symlink metadata, link metadata, and
+  platform-specific symlink policy are still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
-  `stat`, `realpath`, `unlink`, `rename`, `link`, `symlink`, `mkdir`,
-  `rmdir`, `open`, `read`, `write`, and `close`.
+  `stat`, `chmod`, `realpath`, `unlink`, `rename`, `link`, `symlink`,
+  `mkdir`, `rmdir`, `open`, `read`, `write`, and `close`.
 - `File` is not a tracked `own` resource yet. The caller must close each
   successful handle exactly once by convention. Future ownership work should
   make OS resources harder to copy and accidentally double-close.
@@ -414,6 +449,7 @@ tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
 tests/cases/standard-library/ok/fs/std-fs-permissions.ari
+tests/cases/standard-library/ok/fs/std-fs-mode.ari
 tests/cases/standard-library/ok/fs/std-fs-metadata.ari
 tests/cases/standard-library/ok/fs/std-fs-canonicalize.ari
 ```
@@ -438,14 +474,18 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
 checks. `std-fs-permissions.ari` covers access-style readable/writable/
 executable checks, the `Permissions` wrapper methods, and missing-path
-all-false behavior. `std-fs-metadata.ari` covers `Option[Metadata]`,
+all-false behavior. `std-fs-mode.ari` covers stat-backed mode lookup,
+chmod-backed mutation calls, `Permissions` constructors, mode conversion,
+invalid mode rejection, missing-path failure, and cleanup restoration without
+depending on exact chmod effects from the host filesystem.
+`std-fs-metadata.ari` covers `Option[Metadata]`,
 regular-file byte length, `FileKind`, directory predicates, and missing-path
 `None`. `std-fs-canonicalize.ari` covers `Option[String]` path resolution,
 absolute canonical paths, filename preservation, and missing-path `None`.
 
 ## Next Work
 
-- Add permission mutation as a separate tested runtime slice.
+- Add richer permission metadata for owner/group/ACL policy.
 - Add explicit overwrite/platform policy for `rename`.
 - Grow canonicalization toward owned path values and platform-specific policy.
 - Expand link support with metadata/readlink helpers and clearer
