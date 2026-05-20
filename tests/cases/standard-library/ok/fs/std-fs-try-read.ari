@@ -1,0 +1,79 @@
+// Covers Option-returning whole-file reads. Missing files should be `None`,
+// while empty files should still be `Some(String)` with length zero.
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-try-read.tmp";
+  let empty_path = "build/prelude/std-fs-try-read-empty.tmp";
+  let missing_path = "build/prelude/std-fs-try-read-missing.tmp";
+  if fs::exists(path) {
+    fs::remove(path);
+  }
+  if fs::exists(empty_path) {
+    fs::remove(empty_path);
+  }
+  if fs::exists(missing_path) {
+    fs::remove(missing_path);
+  }
+
+  var zone = zone::create(1024);
+  var score = 0;
+
+  var bytes = ['A', 'r', 'i'];
+  if fs::write(path, bytes.as_slice()) {
+    score = score + 1;
+  }
+
+  match fs::try_read_to_string(ref mut zone, path) {
+    std::Some(text) => {
+      score = score + 2;
+      if text.len() == 3 {
+        score = score + 3;
+      }
+      if text.get(0) == 'A' {
+        score = score + 4;
+      }
+      if text.get(2) == 'i' {
+        score = score + 5;
+      }
+    }
+    std::None => {}
+  }
+
+  match fs::try_read(ref mut zone, missing_path) {
+    std::Some(missing_text) => {
+      if missing_text.len() == -1 {
+        score = score + 99;
+      }
+    }
+    std::None => {
+      score = score + 6;
+    }
+  }
+
+  var empty_bytes: Vec[u8] = [];
+  if fs::write(empty_path, empty_bytes.as_slice()) {
+    score = score + 7;
+  }
+
+  match fs::try_read(ref mut zone, empty_path) {
+    std::Some(empty) => {
+      score = score + 8;
+      if empty.len() == 0 {
+        score = score + 9;
+      }
+    }
+    std::None => {}
+  }
+
+  if fs::remove(path) {
+    score = score + 10;
+  }
+  if fs::remove(empty_path) {
+    score = score + 11;
+  }
+  if !fs::exists(missing_path) {
+    score = score + 12;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

@@ -67,6 +67,7 @@ std-fs-basic.ari
 std-fs-append.ari
 std-fs-open-modes.ari
 std-fs-read-write.ari
+std-fs-try-read.ari
 std-fs-create-truncate-copy.ari
 std-fs-rename-dir.ari
 std-fs-links.ari

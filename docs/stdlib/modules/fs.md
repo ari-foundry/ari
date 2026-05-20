@@ -6,13 +6,14 @@ declarations. The first slices are deliberately small: check whether a path
 exists, query access-style read/write/execute permissions, open a byte stream
 with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
-byte-oriented `String`, rename paths, create hard or symbolic links, create or
-remove one empty directory, close the handle, and remove a file.
+byte-oriented `String` with either compatibility or `Option`-returning absence
+behavior, rename paths, create hard or symbolic links, create or remove one
+empty directory, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
-`write_byte`, `write_bytes`, `read`, `write`, `append`,
+`write_byte`, `write_bytes`, `read`, `try_read`, `write`, `append`,
 `truncate`, `copy`, `rename`, `hard_link`, `symbolic_link`, `create_dir`,
 `remove_dir`, `close`, `exists`, and `remove`, not type-suffixed names.
 
@@ -45,11 +46,13 @@ fs::read_byte(file)
 fs::write_byte(file, value)
 fs::write_bytes(file, values)
 fs::read(ref mut zone, path)
+fs::try_read(ref mut zone, path)
 fs::write(path, values)
 fs::append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
 fs::read_to_string(ref mut zone, path)
+fs::try_read_to_string(ref mut zone, path)
 
 File::invalid()
 file.is_open()
@@ -108,13 +111,20 @@ closes the handle, and returns whether the complete write and close succeeded.
 `append(path, values)` does the same with `"a"` mode. Both helpers are source
 Ari over `try_open`, `File.write_bytes`, and `File.close`.
 
-`read_to_string(ref mut zone, path)` opens `path` with `"r"`, reads bytes until
-the current `read_byte` EOF/failure sentinel, closes the handle, and returns a
-zone-backed `std::string::String`. The current Ari `String` is byte-oriented;
-this helper does not validate UTF-8 or any other text encoding. A missing or
-unopenable file returns an empty `String`, so use `fs::exists(path)` or
-`fs::try_open(path, "r")` first when absence must be distinguished from an
-empty file.
+`try_read_to_string(ref mut zone, path)` opens `path` with `"r"`, reads bytes
+until the current `read_byte` EOF/failure sentinel, closes the handle, and
+returns `Some[String]`. Missing or unopenable files return `None`, so this is
+the preferred whole-file helper when absence must be distinguished from an empty
+file. The current Ari `String` is byte-oriented; this helper does not validate
+UTF-8 or any other text encoding.
+
+`try_read(ref mut zone, path)` is the short natural alias for
+`try_read_to_string(ref mut zone, path)`.
+
+`read_to_string(ref mut zone, path)` keeps the original compatibility behavior:
+it returns the file bytes on success and an empty `String` when the file cannot
+be opened. Prefer `try_read_to_string` for new code that handles ordinary
+filesystem failure.
 
 `read(ref mut zone, path)` is the short natural alias for
 `read_to_string(ref mut zone, path)`. It is still byte-oriented and returns the
@@ -178,7 +188,7 @@ recursive removal, and directory iteration are separate future slices.
 | --- | --- |
 | open | Current: `open(path, mode)`, `try_open(path, mode)`, and wrappers. |
 | create | Current: `create(path)` and `try_create(path)` over `"w"` mode. |
-| read | Current: byte `read_byte`, whole-file `read`, and `read_to_string`. |
+| read | Current: byte `read_byte`, whole-file `read`/`read_to_string`, and fallible `try_read`/`try_read_to_string`. |
 | write | Current: byte `write_byte`, `write_bytes`, and whole-file `write`. |
 | append | Current: `"a"`/`"a+"` modes and whole-file `append`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
@@ -341,9 +351,10 @@ if file.is_open() {
   existing read/write files, `"w+"` for create/truncate read/write, and `"a+"`
   for read/append. More detailed flags belong in a future options API.
 - Error details are not surfaced from `std::fs` yet. Current APIs expose
-  boolean success, an empty-string read fallback, or a `-1` read sentinel.
-  New richer APIs should use `std::error::Error` instead of growing more
-  sentinel conventions.
+  boolean success, `Option` for fallible whole-file reads and opens, an
+  empty-string read fallback for compatibility, or a `-1` read sentinel. New
+  richer APIs should use `std::error::Error` instead of growing more sentinel
+  conventions.
 
 ## Tests
 
@@ -352,6 +363,7 @@ tests/cases/standard-library/ok/fs/std-fs-basic.ari
 tests/cases/standard-library/ok/fs/std-fs-append.ari
 tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
 tests/cases/standard-library/ok/fs/std-fs-read-write.ari
+tests/cases/standard-library/ok/fs/std-fs-try-read.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
@@ -367,9 +379,11 @@ and failed append opens through `Option[File]`. `std-fs-open-modes.ari` covers
 the mode-string contract, including `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes,
 and invalid mode strings. `std-fs-read-write.ari` covers source whole-file
 write, append, read-to-byte-string, missing-file empty reads, and truncating
-rewrite behavior. `std-fs-create-truncate-copy.ari` covers source `create`,
-`try_create`, `read`, `truncate`, missing-source copy failure, and whole-file
-copy behavior. `std-fs-rename-dir.ari` covers runtime-backed `rename`,
+rewrite behavior. `std-fs-try-read.ari` covers `Option[String]` whole-file
+reads where missing files become `None` and empty files stay `Some(empty)`.
+`std-fs-create-truncate-copy.ari` covers source `create`, `try_create`,
+`read`, `truncate`, missing-source copy failure, and whole-file copy behavior.
+`std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
 checks. `std-fs-permissions.ari` covers access-style readable/writable/

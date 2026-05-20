@@ -108,10 +108,20 @@ pub fn append(path: string, values: std::Slice[u8]) -> bool {
 }
 
 pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {
+  match try_read_to_string(zone, path) {
+    std::Some(output) => {
+      return output;
+    }
+    std::None => {}
+  }
+  return std::string::new(zone, 64);
+}
+
+pub fn try_read_to_string(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
   var output = std::string::new(zone, 64);
   let file = try_open(path, "r").unwrap_or(File::invalid());
   if !file.is_open() {
-    return output;
+    return std::None<std::string::String>();
   }
 
   // The current String is byte-oriented; this helper preserves bytes and stops
@@ -122,11 +132,15 @@ pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {
     byte = file.read_byte();
   }
   file.close();
-  return output;
+  return std::Some<std::string::String>(output);
 }
 
 pub fn read(zone: ref mut Zone, path: string) -> std::string::String {
   return read_to_string(zone, path);
+}
+
+pub fn try_read(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
+  return try_read_to_string(zone, path);
 }
 
 pub fn truncate(path: string) -> bool {

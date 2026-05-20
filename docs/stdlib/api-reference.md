@@ -726,11 +726,13 @@ fs::read_byte(file)
 fs::write_byte(file, value)
 fs::write_bytes(file, values)
 fs::read(ref mut zone, path)
+fs::try_read(ref mut zone, path)
 fs::write(path, values)
 fs::append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
 fs::read_to_string(ref mut zone, path)
+fs::try_read_to_string(ref mut zone, path)
 
 File::invalid()
 file.is_open()
@@ -764,10 +766,13 @@ failures because filesystem access can change after the check.
 `Slice[u8]` and returns the count written before the first failed byte write.
 `write(path, values)` truncates or creates a small byte file and writes the
 whole `Slice[u8]`; `append(path, values)` creates if needed and appends the
-whole slice. `read(ref mut zone, path)` is the short alias for
-`read_to_string(ref mut zone, path)`, returning a zone-backed byte-oriented
-`std::string::String` and using an empty `String` when the file cannot be
-opened. `truncate(path)` creates or empties a file. `copy(source, target)`
+whole slice. `try_read_to_string(ref mut zone, path)` and its short alias
+`try_read(ref mut zone, path)` return `Option[String]`, using `None` for a
+missing or unopenable file and `Some(empty)` for an empty file. `read(ref mut
+zone, path)` is the short compatibility alias for `read_to_string(ref mut zone,
+path)`, returning a zone-backed byte-oriented `std::string::String` and using
+an empty `String` when the file cannot be opened. Prefer `try_read` when
+absence matters. `truncate(path)` creates or empties a file. `copy(source, target)`
 streams bytes from the source handle into the target opened with truncating
 semantics. `rename(source, target)` moves or renames one path according to the
 host runtime's current behavior. `create_dir(path)` creates one directory and
