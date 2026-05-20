@@ -5,6 +5,10 @@ fn main() -> i64 {
   var invalid_integer = [49u8, 50u8, 120u8];
   assert(parse::integer(signed.as_slice()).unwrap_or(0) == -123);
   assert(parse::integer(plus.as_slice()).unwrap_or(0) == 42);
+  assert(parse::is_integer(" 77 "));
+  assert(!parse::is_integer("12x"));
+  assert(parse::integer_or("88", 0) == 88);
+  assert(parse::integer_or("nope", 5) == 5);
   match parse::integer(invalid_integer.as_slice()) {
     std::Some(_) => { panic(); }
     std::None => {}
@@ -15,6 +19,10 @@ fn main() -> i64 {
   var invalid_bool = [84u8, 114u8, 117u8, 101u8];
   assert(parse::boolean(true_text.as_slice()).unwrap_or(false));
   assert(!parse::boolean(false_text.as_slice()).unwrap_or(true));
+  assert(parse::is_boolean("true"));
+  assert(!parse::is_boolean("True"));
+  assert(parse::boolean_or("false", true) == false);
+  assert(parse::boolean_or("missing", true));
   match parse::boolean(invalid_bool.as_slice()) {
     std::Some(_) => { panic(); }
     std::None => {}

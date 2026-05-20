@@ -12,7 +12,11 @@ to consume only a leading digit run and leave the rest of the bytes alone.
 
 ```ari
 parse::integer(bytes) -> Option[i64]
+parse::is_integer(bytes) -> bool
+parse::integer_or(bytes, fallback) -> i64
 parse::boolean(bytes) -> Option[bool]
+parse::is_boolean(bytes) -> bool
+parse::boolean_or(bytes, fallback) -> bool
 parse::is_float(bytes) -> bool
 parse::float_or(bytes, fallback) -> f64
 parse::float(bytes) -> f64
@@ -22,10 +26,14 @@ parse::float(bytes) -> f64
 at least one decimal digit and no trailing garbage. It returns `None<i64>()`
 for empty, sign-only, or non-decimal input. Overflow behavior is not promised
 yet, matching the current numeric parsing policy in `std::ascii`.
+`is_integer` is the validation-only form, and `integer_or` returns the parsed
+value or the caller's fallback.
 
 `boolean` trims ASCII whitespace and accepts only lowercase `true` or `false`.
 It intentionally does not accept titlecase, uppercase, `1`, `0`, `yes`, or
-`no`; those policies should be explicit at the call site.
+`no`; those policies should be explicit at the call site. `is_boolean` checks
+the same shape without exposing the parsed value, and `boolean_or` returns a
+fallback when the input is not one of the accepted boolean spellings.
 
 `is_float` validates the accepted decimal float shape without allocating:
 
@@ -61,11 +69,11 @@ changing the public API.
 
 ```ari
 fn read_count(bytes: Slice[u8]) -> i64 {
-  return parse::integer(bytes).unwrap_or(0);
+  return parse::integer_or(bytes, 0);
 }
 
 fn read_flag(bytes: Slice[u8]) -> bool {
-  return parse::boolean(bytes).unwrap_or(false);
+  return parse::boolean_or(bytes, false);
 }
 
 fn read_ratio(bytes: Slice[u8]) -> f64 {

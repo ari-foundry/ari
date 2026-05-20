@@ -57,6 +57,28 @@ pub fn integer(values: std::Slice[u8]) -> std::Option[i64] {
   return std::Some<i64>(result * sign);
 }
 
+pub fn is_integer(values: std::Slice[u8]) -> bool {
+  match integer(values) {
+    std::Some(_) => {
+      return true;
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+pub fn integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
+  match integer(values) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {
+      return fallback;
+    }
+  }
+}
+
 pub fn boolean(values: std::Slice[u8]) -> std::Option[bool] {
   let input = std::ascii::trim(values);
   var true_bytes = ['t', 'r', 'u', 'e'];
@@ -69,6 +91,28 @@ pub fn boolean(values: std::Slice[u8]) -> std::Option[bool] {
     return std::Some<bool>(false);
   }
   return std::None<bool>();
+}
+
+pub fn is_boolean(values: std::Slice[u8]) -> bool {
+  match boolean(values) {
+    std::Some(_) => {
+      return true;
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+pub fn boolean_or(values: std::Slice[u8], fallback: bool) -> bool {
+  match boolean(values) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {
+      return fallback;
+    }
+  }
 }
 
 pub fn is_float(values: std::Slice[u8]) -> bool {

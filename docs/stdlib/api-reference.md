@@ -2017,18 +2017,24 @@ values:
 
 ```ari
 parse::integer(bytes)
+parse::is_integer(bytes)
+parse::integer_or(bytes, fallback)
 parse::boolean(bytes)
+parse::is_boolean(bytes)
+parse::boolean_or(bytes, fallback)
 parse::is_float(bytes)
 parse::float_or(bytes, fallback)
 parse::float(bytes)
 ```
 
 `integer` returns `Option[i64]` and accepts optional `+` or `-` signs.
-`boolean` returns `Option[bool]` and accepts only lowercase `true` and
-`false`. `is_float` validates a decimal float shape with optional sign,
-fraction, and exponent. `float_or` returns a fallback for invalid input, while
-`float` panics on invalid input. `Option[f64]` is future work because the
-compiler does not lower float enum payloads yet.
+`is_integer` validates the same shape, and `integer_or` returns a caller
+fallback on invalid input. `boolean` returns `Option[bool]` and accepts only
+lowercase `true` and `false`; `is_boolean` and `boolean_or` provide the same
+validator/fallback pattern. `is_float` validates a decimal float shape with
+optional sign, fraction, and exponent. `float_or` returns a fallback for
+invalid input, while `float` panics on invalid input. `Option[f64]` is future
+work because the compiler does not lower float enum payloads yet.
 
 ## Encoding
 
