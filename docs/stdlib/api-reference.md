@@ -1228,6 +1228,7 @@ view.starts_with(other)
 view.ends_with(other)
 view.equals(other)
 view.compare(other)
+view.ordering(other)
 view.slice(start, end)
 view.split_at(index)
 view.chunks(size)
@@ -1255,8 +1256,9 @@ they return `Option[T]`. `is_empty` is a source method that borrows the view
 and checks whether the stored length is zero. `find` searches for a borrowed
 subslice and returns an index or `-1`; an empty needle matches at `0`.
 `contains_slice` is the boolean wrapper. `compare` is lexicographic and
-returns `-1`, `0`, or `1`. `slice` and `split_at` return borrowed views into
-the same storage. `chunks`, `windows`, and delimiter `split` are lazy
+returns `-1`, `0`, or `1` for compatibility; prefer `ordering` in new code
+because it returns `cmp::Ordering`. `slice` and `split_at` return borrowed
+views into the same storage. `chunks`, `windows`, and delimiter `split` are lazy
 iterators that yield borrowed `Slice[T]` views. The reordering, fill/copy,
 partition/dedup, sort/search, and min/max receiver methods forward to
 `std::algo`; ordered methods require `T: std::cmp::Ord[T]`.
@@ -1302,6 +1304,7 @@ vec.starts_with(values)
 vec.ends_with(values)
 vec.equals(values)
 vec.compare(values)
+vec.ordering(values)
 vec.slice(start, end)
 vec.split_at(index)
 vec.chunks(size)
@@ -1328,8 +1331,8 @@ Use the non-`try` forms when absence is a programmer error and an assertion is
 the desired behavior. The borrowed sequence helpers mirror the root `Slice[T]`
 vocabulary: `slice` and `split_at` create views over live vector storage,
 `find` and `contains_slice` search for borrowed subsequences, `compare` is
-lexicographic, and `chunks`, `windows`, and delimiter `split` are lazy
-allocation-free view iterators.
+lexicographic, `ordering` returns typed `cmp::Ordering`, and `chunks`,
+`windows`, and delimiter `split` are lazy allocation-free view iterators.
 
 `std::collections::Set[T]` is a zone-backed linear set:
 

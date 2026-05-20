@@ -125,11 +125,14 @@ vec.starts_with(values)
 vec.ends_with(values)
 vec.equals(values)
 vec.compare(values)
+vec.ordering(values)
 ```
 
 `find` searches for a borrowed `Slice[T]` inside the vector and returns the
 first index or `-1`; an empty needle matches at `0`. `contains_slice` is the
-boolean wrapper. `compare` is lexicographic and returns `-1`, `0`, or `1`.
+boolean wrapper. `compare` is lexicographic and returns `-1`, `0`, or `1` for
+compatibility; prefer `ordering` in new code because it returns the typed
+`cmp::Ordering` values used by the comparison helpers.
 
 Borrowed views and raw pointers:
 
@@ -193,6 +196,7 @@ view.starts_with(other)
 view.ends_with(other)
 view.equals(other)
 view.compare(other)
+view.ordering(other)
 view.copy_to(ref mut zone)
 ```
 

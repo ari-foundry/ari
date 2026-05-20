@@ -456,6 +456,11 @@ pub impl[T] std::vec::Vec[T] {
     return view.compare(values);
   }
 
+  fn ordering(self: ref Self, values: super::Slice[T]) -> std::cmp::Ordering {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return view.ordering(values);
+  }
+
   fn starts_with(self: ref Self, values: super::Slice[T]) -> bool {
     if values.len > self.raw.len {
       return false;

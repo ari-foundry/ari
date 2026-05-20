@@ -7,7 +7,7 @@ vector, a `std::vec::Vec[T]`, or a byte-oriented `String`.
 
 The API is intentionally natural and unsuffixed. The type parameter tells Ari
 which element type is being used, so call sites should read like
-`view.find(needle)`, `view.chunks(4)`, and `view.compare(other)`.
+`view.find(needle)`, `view.chunks(4)`, and `view.ordering(other)`.
 For byte-oriented APIs, a string literal can be used directly as a
 `Slice[u8]` value or receiver:
 
@@ -51,12 +51,15 @@ view.starts_with(prefix)
 view.ends_with(suffix)
 view.equals(other)
 view.compare(other)
+view.ordering(other)
 ```
 
 `index_of` and `contains` search for one value. `find` searches for a borrowed
 subslice and returns the first index or `-1`; an empty needle matches at `0`.
 `contains_slice` is the boolean wrapper. `compare` is lexicographic and returns
-`-1`, `0`, or `1`.
+`-1`, `0`, or `1` for compatibility with existing code. Prefer `ordering` in
+new code; it returns `cmp::Less`, `cmp::Equal`, or `cmp::Greater`, which
+composes with `cmp::Ordering` helpers such as `is_less` and `then`.
 
 ## Views And Lazy Splitting
 
@@ -136,7 +139,7 @@ tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
 ```
 
 `prelude-slice-sequence.ari` covers `slice`, `split_at`, `find`,
-`contains_slice`, `compare`, `chunks`, `windows`, delimiter `split`, in-place
+`contains_slice`, `compare`, `ordering`, `chunks`, `windows`, delimiter `split`, in-place
 reordering, copying/filling, partition/dedup, sorting, binary search, and
 min/max wrappers.
 
@@ -146,7 +149,7 @@ min/max wrappers.
   subject to Ari's usual provenance and borrow checks.
 - `split` currently splits by one delimiter value. Predicate-based splitting
   should wait for richer closure/capture support.
-- `compare` relies on the element type having an `lt` method/`Ord`-style
-  behavior at monomorphization time. Generic trait diagnostics around this
-  will improve with the broader trait-bound roadmap.
+- `compare` and `ordering` rely on the element type having an `lt`
+  method/`Ord`-style behavior at monomorphization time. Generic trait
+  diagnostics around this will improve with the broader trait-bound roadmap.
 - Chunk and window iterators yield borrowed views, not owning vectors.

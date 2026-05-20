@@ -665,6 +665,7 @@ method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver 
 method Slice[T]::is_empty|check-prelude prelude-slice-metadata borrowed receiver metadata helper; docs/stdlib/api-reference.md Slice section
 method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::len|check-prelude prelude-slice-metadata natural borrowed length helper; docs/stdlib/api-reference.md Slice section
+method Slice[T]::ordering|check-prelude prelude-slice-sequence lexicographic Ordering comparison; docs/stdlib/modules/slice.md
 method Slice[T]::slice|check-prelude prelude-slice-sequence borrowed range view helper; docs/stdlib/modules/slice.md
 method Slice[T]::split|check-prelude prelude-slice-sequence lazy borrowed delimiter split iterator; docs/stdlib/modules/slice.md
 method Slice[T]::split_at|check-prelude prelude-slice-sequence borrowed left/right split helper; docs/stdlib/modules/slice.md
@@ -1256,6 +1257,7 @@ method std::vec::Vec[T]::last|check-prelude std-vec-fixed-ops borrowed receiver;
 method std::vec::Vec[T]::len|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::max|check-prelude std-vec-sequence ordered sequence maximum wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::min|check-prelude std-vec-sequence ordered sequence minimum wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::ordering|check-prelude std-vec-sequence lexicographic Ordering comparison wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::pop|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push_in|check-prelude std-vec-push-in; docs/dev/test-matrix.md Explicit memory zones row

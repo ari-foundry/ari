@@ -1354,6 +1354,7 @@ check-prelude: $(TARGET)
 	grep -F -q 'std__vec__Vec_i64_8inherent8split_at' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent4find' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent7compare' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent8ordering' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent6chunks' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent7windows' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent7reverse' $(BUILD_DIR)/prelude/std-vec-sequence.ll
@@ -1559,6 +1560,7 @@ check-prelude: $(TARGET)
 	grep -F -q 'Slice_i64_8inherent8split_at' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent4find' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent7compare' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent8ordering' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent6chunks' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent7windows' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent7reverse' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll

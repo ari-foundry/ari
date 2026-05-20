@@ -1,5 +1,7 @@
 // Covers std::vec::Vec[T] wrappers around borrowed Slice[T] sequence helpers.
-// Vec owns the storage; these APIs return or iterate borrowed views.
+// Vec owns the storage; these APIs return or iterate borrowed views. The
+// compare() wrapper is kept for compatibility, while ordering() is the
+// preferred cmp::Ordering shape for new lexicographic checks.
 impl cmp::Ord[i64] for i64 {
   fn lt(self, other: i64) -> bool {
     return self < other;
@@ -44,6 +46,9 @@ fn main() -> i64 {
   assert_eq_i64(values.compare(same.as_slice()), 0);
   assert_eq_i64(values.compare(shorter.as_slice()), 1);
   assert_eq_i64(values.compare(larger_at_index.as_slice()), -1);
+  assert(values.ordering(same.as_slice()).is_equal());
+  assert(values.ordering(shorter.as_slice()).is_greater());
+  assert(values.ordering(larger_at_index.as_slice()).is_less());
 
   var chunks = values.chunks(2);
   var chunk_score = 0;

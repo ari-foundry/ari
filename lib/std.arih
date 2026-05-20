@@ -121,6 +121,8 @@ pub use c::CString;
 pub use c::Library;
 pub use c::Symbol;
 
+pub mod cmp;
+
 pub mod vec;
 pub use vec::Vec;
 
@@ -315,6 +317,29 @@ pub impl[T] Slice[T] {
     return 0;
   }
 
+  fn ordering(self: ref Self, values: Slice[T]) -> std::cmp::Ordering {
+    var index = 0;
+    while index < self.len && index < values.len {
+      let left = ptr_load(ptr_add(self.data, index));
+      let right = values[index];
+      if left.lt(right) {
+        return std::cmp::Less;
+      }
+      if right.lt(left) {
+        return std::cmp::Greater;
+      }
+      index = index + 1;
+    }
+
+    if self.len < values.len {
+      return std::cmp::Less;
+    }
+    if self.len > values.len {
+      return std::cmp::Greater;
+    }
+    return std::cmp::Equal;
+  }
+
   fn starts_with(self: ref Self, values: Slice[T]) -> bool {
     if values.len > self.len {
       return false;
@@ -427,8 +452,6 @@ impl[T] Iterator[Slice[T]] for SliceSplit[T] {
 pub mod fmt;
 pub use fmt::Debug;
 pub use fmt::Display;
-
-pub mod cmp;
 
 pub mod algo;
 

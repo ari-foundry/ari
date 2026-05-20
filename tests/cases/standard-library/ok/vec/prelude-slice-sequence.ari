@@ -1,5 +1,7 @@
 // Covers borrowed Slice[T] sequence helpers: range views, split views,
 // subsequence search, lexicographic comparison, and lazy chunk/window iterators.
+// Both compare() and ordering() are covered so the compatibility integer API
+// and the preferred cmp::Ordering API stay in sync.
 impl cmp::Ord[i64] for i64 {
   fn lt(self, other: i64) -> bool {
     return self < other;
@@ -60,6 +62,9 @@ fn main() -> i64 {
   assert_eq_i64(view.compare(same.as_slice()), 0);
   assert_eq_i64(view.compare(shorter.as_slice()), 1);
   assert_eq_i64(view.compare(larger_at_index.as_slice()), -1);
+  assert(view.ordering(same.as_slice()).is_equal());
+  assert(view.ordering(shorter.as_slice()).is_greater());
+  assert(view.ordering(larger_at_index.as_slice()).is_less());
 
   var chunks = view.chunks(2);
   var chunk_score = 0;
