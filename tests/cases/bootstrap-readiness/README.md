@@ -6,8 +6,11 @@ before the real `bootstrap/` tree exists.
 Keep files grouped by the pressure point they exercise:
 
 - `ok/model/`: token, span, syntax, symbol, and diagnostic data shapes.
+- `ok/source/`: source ids, byte offsets, line/column lookup, and source-map
+  result values.
 - `ok/errors/`: `Result[T, E]`-style expected compiler failures.
-- `ok/formatting/`: deterministic text output for compiler artifacts.
+- `ok/formatting/`: deterministic text output and named captures for compiler
+  artifacts.
 - `errors/`: rejected programs with diagnostics that matter for compiler-scale
   code.
 - `golden/`: future checked text outputs for token, syntax, report, HIR, and

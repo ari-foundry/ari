@@ -92,6 +92,8 @@ def main() -> int:
         "syntax dumps",
         "diagnostic reports",
         "make check-bootstrap-readiness",
+        "source line/column lookup",
+        "named-capture artifact formatting",
         "Result[Token, LexError]",
         "not in runtime `std`",
     ]:

@@ -63,10 +63,14 @@ check-bootstrap-docs:
 check-bootstrap-readiness: $(TARGET)
 	mkdir -p $(BUILD_DIR)/bootstrap-readiness
 	$(TARGET) tests/cases/bootstrap-readiness/ok/model/model-token-span.ari --check
+	$(TARGET) tests/cases/bootstrap-readiness/ok/source/source-line-column.ari --check
+	$(TARGET) tests/cases/bootstrap-readiness/ok/source/source-line-column.ari --emit-llvm $(BUILD_DIR)/bootstrap-readiness/source-line-column.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/bootstrap-readiness/ok/source/source-line-column.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/bootstrap-readiness/source-line-column.elf; $(BUILD_DIR)/bootstrap-readiness/source-line-column.elf; code=$$?; test $$code -eq 122; fi
 	$(TARGET) tests/cases/bootstrap-readiness/ok/errors/errors-result-flow.ari --check
 	$(TARGET) tests/cases/bootstrap-readiness/ok/errors/errors-result-flow.ari --emit-llvm $(BUILD_DIR)/bootstrap-readiness/errors-result-flow.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/bootstrap-readiness/ok/errors/errors-result-flow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/bootstrap-readiness/errors-result-flow.elf; $(BUILD_DIR)/bootstrap-readiness/errors-result-flow.elf; code=$$?; test $$code -eq 122; fi
 	$(TARGET) tests/cases/bootstrap-readiness/ok/formatting/formatting-artifact-line.ari --check
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/bootstrap-readiness/ok/formatting/formatting-artifact-line.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/bootstrap-readiness/formatting-artifact-line.elf; $(BUILD_DIR)/bootstrap-readiness/formatting-artifact-line.elf >$(BUILD_DIR)/bootstrap-readiness/formatting-artifact-line.out; grep -qx "token=character value=x span=4:5" $(BUILD_DIR)/bootstrap-readiness/formatting-artifact-line.out; fi
 
 check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	mkdir -p $(BUILD_DIR)/tools

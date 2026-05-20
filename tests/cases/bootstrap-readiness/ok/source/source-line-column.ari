@@ -1,0 +1,40 @@
+// Covers source-map-shaped values: source ids, byte offsets, and line/column
+// lookup results represented with public structs and Result payloads.
+type SourceId = i64;
+type ByteOffset = i64;
+type Line = i64;
+type Column = i64;
+
+struct SourceFile {
+  id: SourceId,
+  byte_len: i64,
+  line0: ByteOffset,
+  line1: ByteOffset,
+}
+
+struct Location {
+  line: Line,
+  column: Column,
+}
+
+fn locate(file: SourceFile, byte: ByteOffset) -> Result[Location, i64] {
+  if byte < 0 || byte > file.byte_len {
+    return Err(byte);
+  }
+  if byte >= file.line1 {
+    return Ok(Location { line: 2, column: byte - file.line1 + 1 });
+  }
+  return Ok(Location { line: 1, column: byte - file.line0 + 1 });
+}
+
+fn score(result: Result[Location, i64]) -> i64 {
+  match result {
+    Ok(location) => location.line * 10 + location.column,
+    Err(byte) => byte,
+  }
+}
+
+fn main() -> i64 {
+  let file = SourceFile { id: 7, byte_len: 16, line0: 0, line1: 8 };
+  return score(locate(file, 10)) + score(locate(file, 99));
+}

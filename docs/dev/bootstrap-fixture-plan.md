@@ -121,8 +121,9 @@ make check-bootstrap-readiness-artifacts
 
 `check-bootstrap-readiness` is the first concrete target. It should stay tiny:
 compile a few normal Ari programs that model compiler-shaped data, including
-aggregate `Result[Token, LexError]` failure values, then grow only when a new
-readiness fixture proves a specific pressure point.
+source line/column lookup, aggregate `Result[Token, LexError]` failure values,
+and named-capture artifact formatting, then grow only when a new readiness
+fixture proves a specific pressure point.
 
 Once the lexer pilot starts and the real `bootstrap/` tree exists, move from
 readiness fixtures to stage tool checks:

@@ -6,7 +6,7 @@ struct Span {
 }
 
 fn dump_token(name: string, value: char, span: Span) {
-  println("token={} value={} span={}:{}", name, value, span.start, span.end);
+  println("token={name} value={value} span={span.start}:{span.end}");
 }
 
 fn main() -> i64 {
