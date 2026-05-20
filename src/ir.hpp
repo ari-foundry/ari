@@ -256,6 +256,7 @@ struct IrExprMatchPayload {
 
 struct IrFormatSpec {
     int precision = -1;
+    bool debug = false;
 };
 
 struct IrExprFormatPrintPayload {

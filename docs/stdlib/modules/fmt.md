@@ -129,21 +129,28 @@ The executable formatting surface today is still macro-based:
 ```ari
 print!("value={}", value)
 println!("value={}", value)
+println!("debug={:?}", value)
 format_in!(ref mut zone, "value={}", value)
+format_in!(ref mut zone, "debug={:?}", value)
 ```
 
 Format strings must be literals. The macros currently support strings,
 integers, bools, `f32`, `f64`, and values accepted through the compiler's
-current `Display` path. `format!` without an explicit zone is intentionally
-not executable yet; use `format_in!` so the allocation zone is clear.
+current `Display` path for `{}`. `{:?}` is the debug placeholder: `format_in!`
+dispatches it through `Debug::debug_in`, while direct stdout `print!` and
+`println!` support it for built-in printable values and lowercase `string`
+without requiring a temporary zone at the call site. For custom debug output
+to stdout, use `fmt::print_debug` or `fmt::println_debug` with an explicit
+zone. `format!` without an explicit zone is intentionally not executable yet;
+use `format_in!` so the allocation zone is clear.
 
 The source helpers complement the macros:
 
 - Use `format_in!` for mixed literal templates and type-safe argument counting.
 - Use `Display::format_in` for standard display values and user-defined values
   that participate in `{}`.
-- Use `Debug::debug_in` and `debug_value` for diagnostic output that should be
-  quoted or otherwise distinguished from user-facing display text.
+- Use `Debug::debug_in`, `{:?}`, and `debug_value` for diagnostic output that
+  should be quoted or otherwise distinguished from user-facing display text.
 - Use `write_value` when a `std::io::Writer` should receive any `Display`
   value without choosing a type-suffixed writer helper.
 - Use `write_debug` when a `std::io::Writer` should receive any `Debug` value.
@@ -157,8 +164,8 @@ The source helpers complement the macros:
 
 ## Current Limits
 
-- `Debug` is real source dispatch now, but derived debug and custom formatter
-  objects are still future work.
+- `Debug` is real source dispatch now, including `{:?}` for `format_in!`.
+  Custom formatter objects are still future work.
 - `Display` is intentionally small first: signed/unsigned 64-bit integers,
   floats, bools, literal `string`, owned `String`, and user-defined impls.
   `char`/`u8` needs a distinct text-vs-number policy before getting a default
@@ -186,6 +193,8 @@ tests/cases/standard-library/ok/format/std-fmt-print-value.ari
 tests/cases/standard-library/ok/format/format-print.ari
 tests/cases/standard-library/ok/format/format-print-u64.ari
 tests/cases/standard-library/ok/prelude/prelude-format-in.ari
+tests/cases/standard-library/ok/prelude/prelude-format-in-debug.ari
 tests/cases/standard-library/errors/format/prelude-macro-format-no-default-zone.ari
 tests/cases/standard-library/errors/format/prelude-format-in-no-display.ari
+tests/cases/standard-library/errors/format/prelude-format-in-no-debug.ari
 ```

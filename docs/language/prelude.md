@@ -232,6 +232,7 @@ Compile it with a module search path that can find `lib/std.arih`, for example
 fn main() -> i64 {
   println("value={} ok={}", 42, true)
   println("pi={:.2}", 3.14159f64)
+  println("debug={:?}", "ari")
   print("escaped braces: {{}}")
   newline()
   return 0
@@ -242,16 +243,22 @@ Formatting rules:
 
 - the first argument must be a string literal
 - `{}` consumes one value argument
+- `{:?}` consumes one debug value argument
 - `{:.N}` consumes one `f32` or `f64` value and prints it with `N` digits
   after the decimal point; `N` must be between `0` and `64`
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
 - the placeholder count is checked at compile time
-- formatted print values currently support integers, bool, `f32`, and `f64`
+- formatted print values currently support lowercase `string`, integers, bool,
+  `f32`, and `f64`
 - `println` appends one newline
 - `print` does not append a newline
 
-`bool` prints as lowercase `true` or `false`.
+`bool` prints as lowercase `true` or `false`. `{}` prints lowercase `string`
+values as raw text, while `{:?}` quotes them for diagnostics.
+For user-defined `Debug` values, use `format_in!(ref mut zone, "{:?}", value)`
+or `std::fmt::println_debug(ref mut zone, value)` so the temporary string's
+allocation zone is explicit.
 On the LLVM backend, formatted `f32` and `f64` values use the
 same `{}` default precision and `{:.N}` fixed decimal precision surface as the
 LLVM host backend.
@@ -419,13 +426,17 @@ scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow
 the same rules. `format_in!(ref mut zone, "...", values...)` builds a source
 `String` in the explicit zone and lowers `{}` placeholders for lowercase
 `string`, signed/unsigned integer, bool, `f32`, and `f64` values through the
-same checked append helpers as manual text construction. User-defined value
-types can participate by implementing borrowed-receiver `Display::format_in`;
-`Display` is the root alias for `fmt::Display`, so either spelling names the
-same trait. The impl returns a source `String` in the same explicit zone. The
-standard `fmt::Display` impls for `i64`, `u64`, `bool`, `f32`, `f64`, `string`,
-and `std::string::String` are also available to generic source APIs such as
-`String.append_value(value)`. `{:.N}` placeholders format
+same checked append helpers as manual text construction. `{:?}` placeholders
+dispatch through borrowed-receiver `Debug::debug_in`, so custom diagnostic
+formatting can use the same syntax when the value implements `fmt::Debug`.
+User-defined display value types can participate in `{}` by implementing
+borrowed-receiver `Display::format_in`; `Display` and `Debug` are root aliases
+for `fmt::Display` and `fmt::Debug`, so either spelling names the same traits.
+These impls return a source `String` in the same explicit zone. The standard
+`fmt::Display` and `fmt::Debug` impls for `i64`, `u64`, `bool`, `f32`, `f64`,
+`string`, and `std::string::String` are also available to generic source APIs
+such as `String.append_value(value)` and `fmt::debug_value(ref mut zone,
+value)`. `{:.N}` placeholders format
 `f32`/`f64` values with `N` decimal digits, matching the print formatting
 surface; precision placeholders do not dispatch through `Display`. Each value
 expression is evaluated once before the type-directed append call is selected,
@@ -581,6 +592,18 @@ fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String
 For struct values, the shared receiver can be read through ordinary field
 projection such as `self.field`; no raw-pointer load is needed just to inspect
 fields while formatting.
+
+`Debug` is the root prelude alias for `fmt::Debug`. It defines the
+explicit-zone diagnostic formatting hook used by `format_in!` for `{:?}`
+placeholders and by generic helpers such as `fmt::debug_value`,
+`fmt::write_debug`, and `fmt::println_debug`:
+
+```ari
+fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String
+```
+
+Debug output is for developers and diagnostics. Built-in text debug output is
+quoted, while display output stays user-facing and unquoted.
 
 `Drop` has one required method:
 
@@ -996,11 +1019,11 @@ additional)` for explicit growth, `push_in(ref mut Zone, byte)` and
 scalar and user-defined values needed by explicit formatting, and
 `format_in!(ref mut Zone, "...", values...)` wraps those helpers in a single
 expression for `{}` string/signed and unsigned integer/bool/float formatting
-plus `{:.N}` float precision, with each formatted value evaluated once before
-append dispatch.
-For user-defined value types, `format_in!` calls `Display::format_in` with a
-shared borrow of the value and the same explicit zone, then appends the
-returned source string into the final output.
+plus `{:.N}` float precision and `{:?}` debug formatting, with each formatted
+value evaluated once before append dispatch.
+For user-defined value types, `format_in!` calls `Display::format_in` for `{}`
+or `Debug::debug_in` for `{:?}` with a shared borrow of the value and the same
+explicit zone, then appends the returned source string into the final output.
 `std::fmt::FormatSpec` is the source-library path for binary/octal/decimal/hex
 unsigned integers, width, integer precision, left/right/center alignment,
 uppercase digits, alternate prefixes, explicit-zone scalar text, debug text

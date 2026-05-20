@@ -4252,7 +4252,16 @@ private:
             }
             if (i < expr.args.size()) {
                 Value arg = emit_expr(*expr.args[i]);
-                if (arg.ir_type.primitive == IrPrimitiveKind::Bool) {
+                const IrFormatSpec& spec = i < format_specs.size() ? format_specs[i] : IrFormatSpec{};
+                if (arg.ir_type.primitive == IrPrimitiveKind::String) {
+                    if (spec.debug) {
+                        line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + string_ptr("\"") + ")");
+                    }
+                    line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + arg.name + ")");
+                    if (spec.debug) {
+                        line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + string_ptr("\"") + ")");
+                    }
+                } else if (arg.ir_type.primitive == IrPrimitiveKind::Bool) {
                     line("  call i64 @ari_builtin_write_bool(i1 " + arg.name + ")");
                 } else if (arg.ir_type.primitive == IrPrimitiveKind::F32 ||
                            arg.ir_type.primitive == IrPrimitiveKind::F64) {
@@ -4263,7 +4272,7 @@ private:
                         IrType double_type{TypeQualifier::Value, IrPrimitiveKind::F64, "f64", {}, {}, {}, {}, expr.loc};
                         wide = Value{"double", out, double_type};
                     }
-                    int precision = i < format_specs.size() ? format_specs[i].precision : -1;
+                    int precision = spec.precision;
                     std::string printf_format = precision >= 0 ? "%." + std::to_string(precision) + "f" : "%f";
                     line("  call i32 (ptr, ...) @printf(ptr " + string_ptr(printf_format) + ", double " + wide.name + ")");
                 } else if (arg.ir_type.primitive == IrPrimitiveKind::U8 || arg.ir_type.primitive == IrPrimitiveKind::I8) {

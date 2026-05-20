@@ -17,22 +17,23 @@ namespace {
 
 IrFormatSpec parse_format_placeholder(SourceLocation loc, const std::string& text) {
     if (text.empty()) return IrFormatSpec{};
+    if (text == ":?") return IrFormatSpec{-1, true};
     if (text.size() < 2 || text[0] != ':' || text[1] != '.') {
-        fail(loc, "format string only supports {} and {:.N} placeholders; escape literal { as {{");
+        fail(loc, "format string only supports {}, {:?}, and {:.N} placeholders; escape literal { as {{");
     }
     int precision = 0;
     bool has_digit = false;
     for (std::size_t i = 2; i < text.size(); ++i) {
         unsigned char c = static_cast<unsigned char>(text[i]);
         if (!std::isdigit(c)) {
-            fail(loc, "format string only supports {} and {:.N} placeholders; escape literal { as {{");
+            fail(loc, "format string only supports {}, {:?}, and {:.N} placeholders; escape literal { as {{");
         }
         has_digit = true;
         precision = precision * 10 + static_cast<int>(text[i] - '0');
         if (precision > 64) fail(loc, "format precision must be at most 64");
     }
     if (!has_digit) fail(loc, "format precision placeholder expects digits after colon-dot");
-    return IrFormatSpec{precision};
+    return IrFormatSpec{precision, false};
 }
 
 } // namespace
@@ -63,6 +64,10 @@ FormatInAppendTarget format_in_display_append_target(std::string trait_name) {
     return FormatInAppendTarget{FormatInAppendKind::Display, std::move(trait_name)};
 }
 
+FormatInAppendTarget format_in_debug_append_target(std::string trait_name) {
+    return FormatInAppendTarget{FormatInAppendKind::Debug, std::move(trait_name)};
+}
+
 bool format_in_append_target_is_float(const FormatInAppendTarget& target) {
     return target.kind == FormatInAppendKind::F32 ||
            target.kind == FormatInAppendKind::F64;
@@ -70,6 +75,10 @@ bool format_in_append_target_is_float(const FormatInAppendTarget& target) {
 
 bool format_in_append_target_is_display(const FormatInAppendTarget& target) {
     return target.kind == FormatInAppendKind::Display;
+}
+
+bool format_in_append_target_is_debug(const FormatInAppendTarget& target) {
+    return target.kind == FormatInAppendKind::Debug;
 }
 
 const char* format_in_builtin_append_method_name(const FormatInAppendTarget& target) {
@@ -81,6 +90,7 @@ const char* format_in_builtin_append_method_name(const FormatInAppendTarget& tar
         case FormatInAppendKind::F32: return "append_f32_in";
         case FormatInAppendKind::F64: return "append_f64_in";
         case FormatInAppendKind::Display: break;
+        case FormatInAppendKind::Debug: break;
     }
     return "append_i64_in";
 }
@@ -104,7 +114,7 @@ ParsedFormatString parse_format_string(SourceLocation loc, const std::string& te
             }
             std::size_t close = text.find('}', i + 1);
             if (close == std::string::npos) {
-                fail(loc, "format string only supports {} and {:.N} placeholders; escape literal { as {{");
+                fail(loc, "format string only supports {}, {:?}, and {:.N} placeholders; escape literal { as {{");
             }
             parsed.parts.push_back(current);
             current.clear();

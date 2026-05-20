@@ -21,7 +21,7 @@ check: check-std-api $(TARGET) check-cli check-tools check-prelude check-control
 	$(TARGET) tests/cases/standard-library/ok/format/format-print.ari --emit-llvm $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_write_i64" $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_newline" $(BUILD_DIR)/ir/format-print.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-print.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print.elf; $(BUILD_DIR)/format-print.elf >$(BUILD_DIR)/format-print.out; grep -qx "value=-3 ok=true byte=A" $(BUILD_DIR)/format-print.out; grep -qx "{literal} 12" $(BUILD_DIR)/format-print.out; grep -qx "qualified=2" $(BUILD_DIR)/format-print.out; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-print.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print.elf; $(BUILD_DIR)/format-print.elf >$(BUILD_DIR)/format-print.out; grep -qx "value=-3 ok=true byte=A" $(BUILD_DIR)/format-print.out; grep -qx "{literal} 12" $(BUILD_DIR)/format-print.out; grep -qx "qualified=2" $(BUILD_DIR)/format-print.out; grep -qx 'text=ari quoted="ari"' $(BUILD_DIR)/format-print.out; grep -qx "debug=false" $(BUILD_DIR)/format-print.out; fi
 	$(TARGET) tests/cases/standard-library/ok/format/format-print-u64.ari --emit-llvm $(BUILD_DIR)/ir/format-print-u64.ll
 	grep -q "@ari_builtin_write_u64" $(BUILD_DIR)/ir/format-print-u64.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-print-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print-u64.elf; $(BUILD_DIR)/format-print-u64.elf >$(BUILD_DIR)/format-print-u64.out; grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/format-print-u64.out; grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/format-print-u64.out; fi
@@ -1027,6 +1027,10 @@ check-prelude: $(TARGET)
 	grep -E -q 'getelementptr inbounds \{ i64, i64 \}, ptr %t[0-9]+, i32 0, i32 0' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	grep -E -q 'getelementptr inbounds \{ i64, i64 \}, ptr %t[0-9]+, i32 0, i32 1' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-format-in-display.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in-display.elf; $(BUILD_DIR)/prelude/prelude-format-in-display.elf; code=$$?; test $$code -eq 150; fi
+	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-format-in-debug.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in-debug.ll
+	grep -F -q 'std__fmt__Debug8debug_in"(ptr' $(BUILD_DIR)/prelude/prelude-format-in-debug.ll
+	grep -q 'debug_in' $(BUILD_DIR)/prelude/prelude-format-in-debug.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-format-in-debug.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in-debug.elf; $(BUILD_DIR)/prelude/prelude-format-in-debug.elf; code=$$?; test $$code -eq 188; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q '_ARNv3std3fmt11unsigned_in' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q '_ARNv3std3fmt13debug_text_in' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
@@ -4764,6 +4768,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "format precision placeholders require f32 or f64 arguments" $(BUILD_DIR)/errors/format-precision-nonfloat.err
 	if $(TARGET) tests/cases/standard-library/errors/format/format-precision-syntax.ari -o $(BUILD_DIR)/errors/format-precision-syntax.elf >$(BUILD_DIR)/errors/format-precision-syntax.err 2>&1; then exit 1; fi
 	grep -q "format precision placeholder expects digits after colon-dot" $(BUILD_DIR)/errors/format-precision-syntax.err
+	if $(TARGET) tests/cases/standard-library/errors/format/prelude-format-in-no-debug.ari -o $(BUILD_DIR)/errors/prelude-format-in-no-debug.elf >$(BUILD_DIR)/errors/prelude-format-in-no-debug.err 2>&1; then exit 1; fi
+	grep -q "format_in! debug placeholders require Debug values" $(BUILD_DIR)/errors/prelude-format-in-no-debug.err
 	if $(TARGET) tests/cases/ffi/errors/extern-cpp-removed.ari -o $(BUILD_DIR)/errors/extern-cpp-removed.elf >$(BUILD_DIR)/errors/extern-cpp-removed.err 2>&1; then exit 1; fi
 	grep -q 'extern ABI must be "C" or "ari"' $(BUILD_DIR)/errors/extern-cpp-removed.err
 	if $(TARGET) tests/cases/ffi/errors/extern-body.ari -o $(BUILD_DIR)/errors/extern-body.elf >$(BUILD_DIR)/errors/extern-body.err 2>&1; then exit 1; fi

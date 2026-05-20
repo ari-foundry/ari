@@ -69,6 +69,9 @@ identifies the exact case:
 - `std-fmt-debug-values.ari`: source `std::fmt::Debug` trait dispatch,
   built-in and user debug impls, Writer-backed debug output, and stdout debug
   helpers.
+- `prelude-format-in-debug.ari`: `format_in!` `{:?}` placeholder lowering,
+  custom `Debug::debug_in` dispatch, built-in debug values, and one-evaluation
+  string assembly behavior.
 - `std-context-args.ari`: runtime-backed `std::context` argument, startup cwd,
   startup executable path, and thread-id access, source context predicates, and
   root alias behavior.
@@ -319,6 +322,8 @@ identifies the exact case:
   lazy fallback behavior.
 - `prelude-macro-format-no-default-zone.ari`: macro or implicit prelude
   diagnostic.
+- `prelude-format-in-no-debug.ari`: negative `format_in!` `{:?}` diagnostic
+  when a value has no `Debug` impl.
 - `zone-promote-return.ari`: compiler-known zone lifetime behavior.
 - `std-library-smoke.ari`: cross-module integration smoke.
 

@@ -20045,6 +20045,7 @@ private:
                 fail(expr.args[i]->loc, "format arguments cannot move owning values yet");
             }
             bool is_bool = arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::Bool;
+            bool is_string = arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::String;
             bool is_supported_float =
                 arg->type.qualifier == TypeQualifier::Value &&
                 (arg->type.primitive == IrPrimitiveKind::F32 || arg->type.primitive == IrPrimitiveKind::F64);
@@ -20054,8 +20055,11 @@ private:
             if (is_value_float_type(arg->type) && !is_supported_float) {
                 fail(expr.args[i]->loc, "format arguments do not support " + type_name(arg->type) + " yet");
             }
-            if (!is_value_integer_type(arg->type) && !is_bool && !is_supported_float) {
-                fail(expr.args[i]->loc, "format arguments currently support integer, bool, f32, and f64 values, got " + type_name(arg->type));
+            if (!is_value_integer_type(arg->type) && !is_bool && !is_string && !is_supported_float) {
+                if (spec.debug) {
+                    fail(expr.args[i]->loc, "print debug placeholders currently support string, integer, bool, f32, and f64 values; use fmt::println_debug(ref mut zone, value) for Debug types");
+                }
+                fail(expr.args[i]->loc, "format arguments currently support string, integer, bool, f32, and f64 values, got " + type_name(arg->type));
             }
             args.push_back(std::move(arg));
         }
@@ -20091,16 +20095,30 @@ private:
         return stmt;
     }
 
-    std::optional<std::string> format_in_display_trait_for_type(const IrType& type) const {
+    std::optional<std::string> format_in_trait_for_type(const IrType& type, const std::string& trait_name) const {
         if (type.qualifier != TypeQualifier::Value) return std::nullopt;
         if (is_owner_type(type) || contains_borrow_type(type)) return std::nullopt;
         static const std::vector<IrType> no_trait_args;
-        if (type_implements_trait("std::Display", no_trait_args, type)) return std::string("std::Display");
-        if (type_implements_trait("std::fmt::Display", no_trait_args, type)) return std::string("std::fmt::Display");
+        if (type_implements_trait("std::" + trait_name, no_trait_args, type)) return "std::" + trait_name;
+        if (type_implements_trait("std::fmt::" + trait_name, no_trait_args, type)) return "std::fmt::" + trait_name;
         return std::nullopt;
     }
 
-    std::optional<FormatInAppendTarget> format_in_append_target_from_type(SourceLocation loc, const IrType& type) const {
+    std::optional<std::string> format_in_display_trait_for_type(const IrType& type) const {
+        return format_in_trait_for_type(type, "Display");
+    }
+
+    std::optional<std::string> format_in_debug_trait_for_type(const IrType& type) const {
+        return format_in_trait_for_type(type, "Debug");
+    }
+
+    std::optional<FormatInAppendTarget> format_in_append_target_from_type(SourceLocation loc, const IrType& type, const IrFormatSpec& spec) const {
+        if (spec.debug) {
+            if (auto debug_trait = format_in_debug_trait_for_type(type)) {
+                return format_in_debug_append_target(*debug_trait);
+            }
+            fail(loc, "format_in! debug placeholders require Debug values, got " + type_name(type));
+        }
         if (auto target = builtin_format_in_append_target_from_type(type)) return target;
         if (auto display_trait = format_in_display_trait_for_type(type)) {
             return format_in_display_append_target(*display_trait);
@@ -20111,10 +20129,10 @@ private:
         return std::nullopt;
     }
 
-    FormatInAppendTarget format_in_append_target_for_local(SourceLocation loc, const std::string& name) {
+    FormatInAppendTarget format_in_append_target_for_local(SourceLocation loc, const std::string& name, const IrFormatSpec& spec) {
         const LocalInfo* local = find_local_slot(name);
         if (!local) throw CompileError("internal error: missing format_in! value local '" + name + "'");
-        if (auto target = format_in_append_target_from_type(loc, local->type)) return *target;
+        if (auto target = format_in_append_target_from_type(loc, local->type, spec)) return *target;
         fail(loc, "format_in! could not infer a supported value type for '" + name + "'");
     }
 
@@ -20171,16 +20189,17 @@ private:
         );
     }
 
-    ExprPtr make_format_in_display_call(SourceLocation loc,
-                                        const Expr& zone_arg,
-                                        const FormatInAppendTarget& target,
-                                        ExprPtr value_arg) {
+    ExprPtr make_format_in_trait_call(SourceLocation loc,
+                                      const Expr& zone_arg,
+                                      const FormatInAppendTarget& target,
+                                      ExprPtr value_arg) {
         std::vector<ExprPtr> args;
         args.push_back(make_ast_borrow_expr(loc, std::move(value_arg), false));
         args.push_back(clone_expression_tree(zone_arg));
+        std::string method_name = format_in_append_target_is_debug(target) ? "::debug_in" : "::format_in";
         return make_ast_call_expr(
             loc,
-            target.display_trait_name + "::format_in",
+            target.display_trait_name + method_name,
             nullptr,
             std::move(args));
     }
@@ -20253,7 +20272,7 @@ private:
                 clone_expression_tree(*args[i + 2]),
                 false
             ), statements);
-            FormatInAppendTarget target = format_in_append_target_for_local(args[i + 2]->loc, value_name);
+            FormatInAppendTarget target = format_in_append_target_for_local(args[i + 2]->loc, value_name, format_string.specs[i]);
             if (format_string.specs[i].precision >= 0 && !format_in_append_target_is_float(target)) {
                 const LocalInfo* local = find_local_slot(value_name);
                 if (!local) throw CompileError("internal error: missing format_in! value local '" + value_name + "'");
@@ -20261,12 +20280,12 @@ private:
                      "format precision placeholders require f32 or f64 arguments, got " + type_name(local->type));
             }
             ExprPtr value = make_ast_name_expr(args[i + 2]->loc, value_name);
-            if (format_in_append_target_is_display(target)) {
+            if (format_in_append_target_is_display(target) || format_in_append_target_is_debug(target)) {
                 const std::string display_name = make_hidden_local("$format_display");
                 append_format_in_statement(args[i + 2]->loc, make_format_in_var_decl(
                     args[i + 2]->loc,
                     display_name,
-                    make_format_in_display_call(
+                    make_format_in_trait_call(
                         args[i + 2]->loc,
                         zone_arg,
                         target,

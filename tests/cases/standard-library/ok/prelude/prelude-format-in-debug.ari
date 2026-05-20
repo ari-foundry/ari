@@ -1,0 +1,44 @@
+// Covers `{:?}` in explicit-zone formatting. Unlike print/println lowering,
+// format_in! can use user-defined Debug impls because the caller supplies the
+// allocation zone.
+struct Pair {
+  left: i64,
+  right: bool,
+}
+
+impl fmt::Debug for Pair {
+  fn debug_in(self: ref Self, zone: ref mut Zone) -> String {
+    var output = std::string::new(zone, 16);
+    output.append_string_in(zone, "Pair(");
+    output.append_value(self.left);
+    output.append_string_in(zone, ",");
+    output.append_value(self.right);
+    output.append_string_in(zone, ")");
+    return output;
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(256);
+  let pair = Pair { left: 7, right: true };
+  var text: String = format_in!(ref mut zone, "dbg={:?} text={:?} bool={:?}", pair, "ari", false);
+
+  assert_eq_i64(text.len(), 38);
+  assert_equal[char](text.get(0), 'd');
+  assert_equal[char](text.get(4), 'P');
+  assert_equal[char](text.get(9), '7');
+  assert_equal[char](text.get(22), '"');
+  assert_equal[char](text.get(26), '"');
+  assert_equal[char](text.get(33), 'f');
+  assert_equal[char](text.get(37), 'e');
+
+  let total = text.len()
+    + (text.get(4) as i64)
+    + (text.get(9) as i64)
+    + (text.get(22) as i64)
+    + (text.get(26) as i64)
+    + (text.get(33) as i64)
+    + (text.get(37) as i64);
+  zone::destroy(zone);
+  return total % 256;
+}

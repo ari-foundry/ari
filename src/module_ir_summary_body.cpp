@@ -384,7 +384,7 @@ void append_format_print_payload(std::string& out, const IrExpr& expr) {
     append_count(out, parts.size());
     for (const auto& part : parts) append_field(out, part);
     append_count(out, specs.size());
-    for (const auto& spec : specs) append_field(out, std::to_string(spec.precision));
+    for (const auto& spec : specs) append_field(out, spec.debug ? "?" : std::to_string(spec.precision));
     append_field(out, bool_key(ir_expr_format_print_newline(expr)));
 }
 

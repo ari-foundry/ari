@@ -17,7 +17,8 @@ enum class FormatInAppendKind {
     Bool,
     F32,
     F64,
-    Display
+    Display,
+    Debug
 };
 
 struct FormatInAppendTarget {
@@ -32,8 +33,10 @@ struct ParsedFormatString {
 
 std::optional<FormatInAppendTarget> builtin_format_in_append_target_from_type(const IrType& type);
 FormatInAppendTarget format_in_display_append_target(std::string trait_name);
+FormatInAppendTarget format_in_debug_append_target(std::string trait_name);
 bool format_in_append_target_is_float(const FormatInAppendTarget& target);
 bool format_in_append_target_is_display(const FormatInAppendTarget& target);
+bool format_in_append_target_is_debug(const FormatInAppendTarget& target);
 const char* format_in_builtin_append_method_name(const FormatInAppendTarget& target);
 std::string unsupported_format_in_value_message(const IrType& type);
 ParsedFormatString parse_format_string(SourceLocation loc,

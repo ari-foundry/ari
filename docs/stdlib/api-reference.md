@@ -141,8 +141,9 @@ comparison, so the public names stay natural rather than type-suffixed.
 `scratch(capacity)` creates an owned `Zone` for tests; destroy it explicitly
 with `zone::destroy(zone)` when the test is done.
 
-Debug printing currently uses `print`, `println`, `print!`, `println!`, and
-the `std::io` writer surface.
+Debug printing can use `print`/`println` with `{:?}` for built-in printable
+values, `format_in!(ref mut zone, "{:?}", value)` for values implementing
+`fmt::Debug`, or the `std::fmt`/`std::io` writer surface.
 
 Recoverable error values live in `std::error`:
 
@@ -1568,8 +1569,11 @@ Built-in `Debug` impls cover the same initial scalar/text set. `string` and
 or `fmt::println_debug` when diagnostic output should use that policy.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
-and `format_in!(ref mut zone, "...", values...)`. Use `format_in!` for owned
-formatted strings because Ari does not hide a default allocation zone.
+and `format_in!(ref mut zone, "...", values...)`. `{}` uses display
+formatting, `{:.N}` gives float precision, and `{:?}` uses debug formatting.
+Use `format_in!` for owned formatted strings because Ari does not hide a
+default allocation zone; this is also the macro path that can call custom
+`Debug::debug_in` impls.
 
 `FormatSpec` is the source-controlled formatting path for unsigned integer
 bases, width, integer precision, alignment, uppercase digits, and alternate
@@ -1583,8 +1587,8 @@ let text = fmt::unsigned_in(ref mut zone, 255u64, spec);
 `integer_in`, `boolean_in`, `text_in`, and `debug_text_in` are small
 allocator-backed helpers for common scalar/text values. `write_*` helpers
 format through an explicit temporary zone and then write to any `io::Writer`.
-Full custom formatter objects, derived debug output, and direct streaming
-formatters remain roadmap work.
+Full custom formatter objects and direct streaming formatters remain roadmap
+work; `Debug` dispatch itself is source-level today.
 
 ## Comparison
 

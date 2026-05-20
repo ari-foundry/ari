@@ -1036,7 +1036,11 @@ IrExprPtr replay_expr(const ModuleCacheIrExprSummaryPtr& summary, const ReplayTy
         specs.reserve(summary->format_specs.size());
         for (const auto& spec_text : summary->format_specs) {
             IrFormatSpec spec;
-            spec.precision = spec_text.empty() ? -1 : std::atoi(spec_text.c_str());
+            if (spec_text == "?") {
+                spec.debug = true;
+            } else {
+                spec.precision = spec_text.empty() ? -1 : std::atoi(spec_text.c_str());
+            }
             specs.push_back(spec);
         }
         set_ir_expr_format_print_payload(

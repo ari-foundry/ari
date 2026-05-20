@@ -1,0 +1,11 @@
+struct Point {
+  x: i64,
+}
+
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let point = Point { x: 4 };
+  let text = format_in!(ref mut zone, "point={:?}", point);
+  zone::destroy(zone);
+  return text.len();
+}
