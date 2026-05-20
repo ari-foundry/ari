@@ -2083,6 +2083,9 @@ parse::hex_integer_or(bytes, fallback)
 parse::binary_integer(bytes)
 parse::is_binary_integer(bytes)
 parse::binary_integer_or(bytes, fallback)
+parse::octal_integer(bytes)
+parse::is_octal_integer(bytes)
+parse::octal_integer_or(bytes, fallback)
 parse::boolean(bytes)
 parse::is_boolean(bytes)
 parse::boolean_or(bytes, fallback)
@@ -2096,8 +2099,9 @@ parse::float(bytes)
 fallback on invalid input. Decimal and radix integer parsers reject values
 outside the `i64` range instead of wrapping. `integer_radix` accepts bases `2`
 through `36` with ASCII alphanumeric digits, and `hex_integer` /
-`binary_integer` are readable wrappers for the common bases. These radix parsers
-trim whitespace but do not recognize prefixes such as `0x` or `0b`. `boolean`
+`binary_integer` / `octal_integer` are readable wrappers for common bases.
+These radix parsers trim whitespace but do not recognize prefixes such as
+`0x`, `0b`, or leading-zero octal policy. `boolean`
 returns `Option[bool]` and accepts only lowercase `true` and `false`;
 `is_boolean` and `boolean_or` provide the same validator/fallback pattern.
 `is_float` validates a decimal float shape with optional sign, fraction, and

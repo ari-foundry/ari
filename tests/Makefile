@@ -813,6 +813,9 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5parse14binary_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17is_binary_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17binary_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse13octal_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse16is_octal_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse16octal_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse7boolean' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10is_boolean' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10boolean_or' $(BUILD_DIR)/prelude/std-parse-basic.ll

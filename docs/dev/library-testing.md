@@ -191,9 +191,9 @@ identifies the exact case:
   runtime OS byte filling, deterministic non-cryptographic `Prng` behavior,
   unbiased bounded integers including a wide upper bound, unit floats, PRNG
   byte filling, and generic slice shuffle.
-- `std-parse-basic.ari`: source `std::parse` ASCII-trimmed signed integer,
-  bool, decimal float validation/conversion, fallback, and invalid
-  whole-input behavior.
+- `std-parse-basic.ari`: source `std::parse` ASCII-trimmed signed
+  decimal/radix/hex/binary/octal integer, bool, decimal float
+  validation/conversion, fallback, and invalid whole-input behavior.
 - `std-encoding-text.ari`: source `std::encoding` ASCII, UTF-8, and UTF-16
   validation/counting behavior.
 - `std-encoding-utf8-codepoints.ari`: source `std::encoding` UTF-8 lead-byte

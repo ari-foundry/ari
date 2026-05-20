@@ -436,6 +436,9 @@ fn std::parse::is_float|check-prelude std-parse-basic decimal float validator; d
 fn std::parse::is_hex_integer|check-prelude std-parse-basic signed hexadecimal integer parser validator; docs/stdlib/modules/parse.md
 fn std::parse::is_integer|check-prelude std-parse-basic signed integer parser validator; docs/stdlib/modules/parse.md
 fn std::parse::is_integer_radix|check-prelude std-parse-basic signed radix integer parser validator; docs/stdlib/modules/parse.md
+fn std::parse::is_octal_integer|check-prelude std-parse-basic signed octal integer parser validator; docs/stdlib/modules/parse.md
+fn std::parse::octal_integer|check-prelude std-parse-basic signed octal integer parser; docs/stdlib/modules/parse.md
+fn std::parse::octal_integer_or|check-prelude std-parse-basic signed octal integer parser with fallback; docs/stdlib/modules/parse.md
 fn std::path::bytes|check-prelude std-path-bytes typed borrowed path-byte view constructor; docs/stdlib/modules/path.md
 fn std::path::components|check-prelude std-path-components borrowed lexical component iterator; docs/stdlib/modules/path.md
 fn std::path::extension|check-prelude std-path-basic borrowed final-extension view; docs/stdlib/modules/path.md

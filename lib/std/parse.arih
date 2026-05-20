@@ -176,6 +176,18 @@ pub fn binary_integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
   return integer_radix_or(values, 2, fallback);
 }
 
+pub fn octal_integer(values: std::Slice[u8]) -> std::Option[i64] {
+  return integer_radix(values, 8);
+}
+
+pub fn is_octal_integer(values: std::Slice[u8]) -> bool {
+  return is_integer_radix(values, 8);
+}
+
+pub fn octal_integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
+  return integer_radix_or(values, 8, fallback);
+}
+
 pub fn boolean(values: std::Slice[u8]) -> std::Option[bool] {
   let input = std::ascii::trim(values);
   var true_bytes = ['t', 'r', 'u', 'e'];

@@ -23,6 +23,9 @@ parse::hex_integer_or(bytes, fallback) -> i64
 parse::binary_integer(bytes) -> Option[i64]
 parse::is_binary_integer(bytes) -> bool
 parse::binary_integer_or(bytes, fallback) -> i64
+parse::octal_integer(bytes) -> Option[i64]
+parse::is_octal_integer(bytes) -> bool
+parse::octal_integer_or(bytes, fallback) -> i64
 parse::boolean(bytes) -> Option[bool]
 parse::is_boolean(bytes) -> bool
 parse::boolean_or(bytes, fallback) -> bool
@@ -45,7 +48,9 @@ trailing garbage with `None<i64>()`. Overflow is checked in the target radix:
 the next value on either side is rejected. It intentionally does not recognize
 prefixes such as `0x` or `0b`; callers can strip those policies before calling
 the parser. `hex_integer` and `binary_integer` are readable wrappers for bases
-`16` and `2`, with matching `is_*` and `*_or` forms.
+`16` and `2`, while `octal_integer` covers base `8` for permission bits and
+other byte-oriented formats. All three wrappers have matching `is_*` and
+`*_or` forms.
 
 `boolean` trims ASCII whitespace and accepts only lowercase `true` or `false`.
 It intentionally does not accept titlecase, uppercase, `1`, `0`, `yes`, or
@@ -94,6 +99,10 @@ fn read_hex_color(bytes: Slice[u8]) -> i64 {
   return parse::hex_integer_or(bytes, 0);
 }
 
+fn read_mode(bytes: Slice[u8]) -> i64 {
+  return parse::octal_integer_or(bytes, 420); // 0644
+}
+
 fn read_flag(bytes: Slice[u8]) -> bool {
   return parse::boolean_or(bytes, false);
 }
@@ -109,9 +118,10 @@ fn read_ratio(bytes: Slice[u8]) -> f64 {
 tests/cases/standard-library/ok/parse/std-parse-basic.ari
 ```
 
-The focused test covers ASCII-trimmed signed integer parsing, boolean parsing,
-float validation, float conversion, and invalid whole-input cases. It is wired
-into `make check-prelude` with LLVM symbol checks for the public helpers.
+The focused test covers ASCII-trimmed signed integer parsing, radix wrappers
+for binary, octal, and hexadecimal input, boolean parsing, float validation,
+float conversion, and invalid whole-input cases. It is wired into
+`make check-prelude` with LLVM symbol checks for the public helpers.
 
 ## Future Work
 

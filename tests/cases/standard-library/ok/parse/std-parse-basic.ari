@@ -32,6 +32,11 @@ fn main() -> i64 {
   assert(parse::binary_integer("1010").unwrap_or(0) == 10);
   assert(parse::binary_integer_or("102", 4) == 4);
   assert(!parse::is_binary_integer("102"));
+  assert(parse::octal_integer("755").unwrap_or(0) == 493);
+  assert(parse::octal_integer("-10").unwrap_or(0) == -8);
+  assert(parse::octal_integer_or("778", 12) == 12);
+  assert(parse::is_octal_integer("17"));
+  assert(!parse::is_octal_integer("18"));
   match parse::integer(invalid_integer.as_slice()) {
     std::Some(_) => { panic(); }
     std::None => {}

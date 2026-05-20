@@ -100,8 +100,9 @@ limits, examples, and test files for one module.
   printable/control predicates, case conversion, borrowed-slice
   case-insensitive comparison/search, trimming, and digit/prefix parsing
   helpers.
-- [std::parse](parse.md): whole-input ASCII-trimmed integer, bool, and
-  decimal float parsers with natural validation/fallback helpers.
+- [std::parse](parse.md): whole-input ASCII-trimmed decimal, radix, hex,
+  binary, octal integer, bool, and decimal float parsers with natural
+  validation/fallback helpers.
 - [std::encoding](encoding.md): ASCII, UTF-8, and UTF-16 validation/counting
   plus UTF-8 scalar decode/encode, lowercase hex, standard base64, and
   fallible owned decode helpers.
