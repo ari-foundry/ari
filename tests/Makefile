@@ -1046,6 +1046,11 @@ check-prelude: $(TARGET)
 	grep -q 'print_debug' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
 	grep -q 'println_debug' $(BUILD_DIR)/prelude/std-fmt-debug-values.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-debug-values.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-debug-values.elf; $(BUILD_DIR)/prelude/std-fmt-debug-values.elf > $(BUILD_DIR)/prelude/std-fmt-debug-values.out; code=$$?; grep -qx '"out"false' $(BUILD_DIR)/prelude/std-fmt-debug-values.out; out_ok=$$?; test $$code -eq 5; test $$out_ok -eq 0; fi
+	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-char-values.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-char-values.ll
+	grep -q '_ARNv3std3fmt7char_in' $(BUILD_DIR)/prelude/std-fmt-char-values.ll
+	grep -q '_ARNv3std3fmt13debug_char_in' $(BUILD_DIR)/prelude/std-fmt-char-values.ll
+	grep -q 'append_byte' $(BUILD_DIR)/prelude/std-fmt-char-values.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-char-values.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-char-values.elf; $(BUILD_DIR)/prelude/std-fmt-char-values.elf; code=$$?; test $$code -eq 26; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-print-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-print-value.ll
 	grep -q 'print_value' $(BUILD_DIR)/prelude/std-fmt-print-value.ll
 	grep -q 'println_value' $(BUILD_DIR)/prelude/std-fmt-print-value.ll

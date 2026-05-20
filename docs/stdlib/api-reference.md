@@ -1548,7 +1548,9 @@ fmt::integer_in(ref mut zone, value)
 fmt::boolean_in(ref mut zone, value)
 fmt::float_in(ref mut zone, value, precision)
 fmt::text_in(ref mut zone, value)
+fmt::char_in(ref mut zone, value)
 fmt::debug_text_in(ref mut zone, value)
+fmt::debug_char_in(ref mut zone, value)
 fmt::debug_value<T: Debug>(ref mut zone, value)
 fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_integer<W: io::Writer>(ref mut writer, ref mut zone, value)
@@ -1562,15 +1564,19 @@ fmt::print_debug<T: Debug>(ref mut zone, value)
 fmt::println_debug<T: Debug>(ref mut zone, value)
 ```
 
-Built-in `Display` impls cover `i64`, `u64`, `bool`, `f32`, `f64`, lowercase
-`string`, and `std::string::String`. Use explicit impls for domain structs and
-enums. Float `Display` uses six fractional digits; call `fmt::float_in` to pick
-a precision explicitly. Prefer `fmt::write_value` for generic Writer-backed
-display output and `fmt::print_value`/`fmt::println_value` for generic stdout
-display output instead of adding new type-suffixed `write_*` helpers.
+Built-in `Display` impls cover `char`, `i64`, `u64`, `bool`, `f32`, `f64`,
+lowercase `string`, and `std::string::String`. Use explicit impls for domain
+structs and enums. Float `Display` uses six fractional digits; call
+`fmt::float_in` to pick a precision explicitly. Prefer `fmt::write_value` for
+generic Writer-backed display output and `fmt::print_value`/`fmt::println_value`
+for generic stdout display output instead of adding new type-suffixed
+`write_*` helpers. `char` is a byte-character alias, so `fmt::char_in`,
+`String.append_value('A')`, and `format_in!(..., "{}", 'A')` write the byte as
+text rather than as the number `65`.
 Built-in `Debug` impls cover the same initial scalar/text set. `string` and
-`String` debug output are quoted; use `fmt::debug_value`, `fmt::write_debug`,
-or `fmt::println_debug` when diagnostic output should use that policy.
+`String` debug output are quoted; `char` debug output is single-quoted. Use
+`fmt::debug_value`, `fmt::write_debug`, or `fmt::println_debug` when diagnostic
+output should use that policy.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 and `format_in!(ref mut zone, "...", values...)`. `{}` uses display
@@ -1588,7 +1594,8 @@ let spec = fmt::alternate(fmt::uppercase(fmt::with_width(fmt::hex(), 6)));
 let text = fmt::unsigned_in(ref mut zone, 255u64, spec);
 ```
 
-`integer_in`, `boolean_in`, `text_in`, and `debug_text_in` are small
+`integer_in`, `boolean_in`, `text_in`, `char_in`, `debug_text_in`, and
+`debug_char_in` are small
 allocator-backed helpers for common scalar/text values. `write_*` helpers
 format through an explicit temporary zone and then write to any `io::Writer`.
 Full custom formatter objects and direct streaming formatters remain roadmap

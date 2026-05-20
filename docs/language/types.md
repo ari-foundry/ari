@@ -64,6 +64,9 @@ type char = u8;
 `ascii::is_digit(value: char)` or character literals like `'0'`. Keep `u8` for
 raw buffers, hashes, encoded bytes, and memory-oriented APIs where the value is
 not text.
+Text-shaped formatting treats `char` values as byte characters:
+`String.append_value('A')` and `format_in!(ref mut zone, "{}", 'A')` write
+`A`, while `String.append_debug('A')` and `{:?}` write `'A'`.
 
 Both executable backends preserve the declared integer width when scalar locals
 are read or written. On the LLVM backend this includes narrow

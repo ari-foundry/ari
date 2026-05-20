@@ -73,6 +73,8 @@ identifies the exact case:
 - `std-fmt-debug-values.ari`: source `std::fmt::Debug` trait dispatch,
   built-in and user debug impls, Writer-backed debug output, and stdout debug
   helpers.
+- `std-fmt-char-values.ari`: source `char` Display/Debug formatting,
+  `format_in!` byte-character append lowering, and debug escape behavior.
 - `prelude-format-in-debug.ari`: `format_in!` `{:?}` placeholder lowering,
   custom `Debug::debug_in` dispatch, built-in debug values, and one-evaluation
   string assembly behavior.

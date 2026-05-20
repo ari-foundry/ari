@@ -249,13 +249,15 @@ Formatting rules:
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
 - the placeholder count is checked at compile time
-- formatted print values currently support lowercase `string`, integers, bool,
-  `f32`, and `f64`
+- formatted print values currently support lowercase `string`, `char`/byte
+  characters, integers, bool, `f32`, and `f64`
 - `println` appends one newline
 - `print` does not append a newline
 
 `bool` prints as lowercase `true` or `false`. `{}` prints lowercase `string`
-values as raw text, while `{:?}` quotes them for diagnostics.
+values as raw text, while `{:?}` quotes them for diagnostics. `char` is the
+standard ASCII-byte alias, so byte-character literals such as `'A'` display as
+characters in text-shaped formatting paths.
 For user-defined `Debug` values, use `format_in!(ref mut zone, "{:?}", value)`
 or `std::fmt::println_debug(ref mut zone, value)` so the temporary string's
 allocation zone is explicit.
@@ -433,9 +435,9 @@ User-defined display value types can participate in `{}` by implementing
 borrowed-receiver `Display::format_in`; `Display` and `Debug` are root aliases
 for `fmt::Display` and `fmt::Debug`, so either spelling names the same traits.
 These impls return a source `String` in the same explicit zone. The standard
-`fmt::Display` and `fmt::Debug` impls for `i64`, `u64`, `bool`, `f32`, `f64`,
-`string`, and `std::string::String` are also available to generic source APIs
-such as `String.append_value(value)` and `fmt::debug_value(ref mut zone,
+`fmt::Display` and `fmt::Debug` impls for `char`, `i64`, `u64`, `bool`, `f32`,
+`f64`, `string`, and `std::string::String` are also available to generic source
+APIs such as `String.append_value(value)` and `fmt::debug_value(ref mut zone,
 value)`. `{:.N}` placeholders format
 `f32`/`f64` values with `N` decimal digits, matching the print formatting
 surface; precision placeholders do not dispatch through `Display`. Each value

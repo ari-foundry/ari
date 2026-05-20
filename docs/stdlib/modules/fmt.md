@@ -40,7 +40,9 @@ integer_in(zone: ref mut Zone, value: i64) -> String
 boolean_in(zone: ref mut Zone, value: bool) -> String
 float_in(zone: ref mut Zone, value: f64, precision: i64) -> String
 text_in(zone: ref mut Zone, value: string) -> String
+char_in(zone: ref mut Zone, value: char) -> String
 debug_text_in(zone: ref mut Zone, value: string) -> String
+debug_char_in(zone: ref mut Zone, value: char) -> String
 debug_value[T: Debug](zone: ref mut Zone, value: T) -> String
 
 write_unsigned[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> bool
@@ -59,15 +61,18 @@ println_debug[T: Debug](zone: ref mut Zone, value: T) -> i64
 `Display::format_in` writes an owned byte string into an explicit target zone.
 That keeps allocation visible and matches Ari's current standard-library rule:
 owned strings never appear from a hidden global heap.
-The standard library implements `Display` for `i64`, `u64`, `bool`, `f32`,
-`f64`, lowercase `string`, and `std::string::String`, so
+The standard library implements `Display` for `char`, `i64`, `u64`, `bool`,
+`f32`, `f64`, lowercase `string`, and `std::string::String`, so
 `String.append_value(value)` and custom formatting code can use those common
 values without adding type-suffixed append helpers. Float `Display` uses six
 fractional digits, matching the default compiler-assisted `{}` float surface.
+`char` displays as the single byte character, matching `print` and
+`format_in!` byte-character formatting.
 `Debug::debug_in` follows the same explicit-zone allocation rule, but describes
 diagnostic output instead of ordinary display text. The standard library
 implements `Debug` for the same initial scalar/text set. Literal `string` and
-owned `String` debug output are quoted.
+owned `String` debug output are quoted, and `char` debug output uses
+single-quoted byte-character syntax such as `'A'` or `'\n'`.
 
 Treat `FormatSpec` as a value built by helper functions. Start with a base such
 as `fmt::hex()` or `fmt::binary()`, then chain natural modifiers:
@@ -168,10 +173,11 @@ The source helpers complement the macros:
 
 - `Debug` is real source dispatch now, including `{:?}` for `format_in!`.
   Custom formatter objects are still future work.
-- `Display` is intentionally small first: signed/unsigned 64-bit integers,
-  floats, bools, literal `string`, owned `String`, and user-defined impls.
-  `char`/`u8` needs a distinct text-vs-number policy before getting a default
-  impl.
+- `Display` is intentionally small first: byte characters, signed/unsigned
+  64-bit integers, floats, bools, literal `string`, owned `String`, and
+  user-defined impls. Because `char` is currently a `u8` alias, byte-oriented
+  `u8` values also follow the byte-character display policy in text-shaped
+  formatting paths.
 - `unsigned_in` handles base-specific formatting for `u64`. Negative signed
   integer base formatting should wait for the generic integer policy rather
   than adding type-suffixed one-off helpers.
@@ -191,6 +197,7 @@ Representative coverage lives in:
 ```text
 tests/cases/standard-library/ok/format/std-fmt-format-spec.ari
 tests/cases/standard-library/ok/format/std-fmt-debug-values.ari
+tests/cases/standard-library/ok/format/std-fmt-char-values.ari
 tests/cases/standard-library/ok/format/std-fmt-print-value.ari
 tests/cases/standard-library/ok/format/format-print.ari
 tests/cases/standard-library/ok/format/format-print-u64.ari

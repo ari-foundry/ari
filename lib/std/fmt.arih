@@ -278,6 +278,39 @@ pub fn debug_text_in(zone: ref mut Zone, value: string) -> std::string::String {
   return output;
 }
 
+pub fn char_in(zone: ref mut Zone, value: char) -> std::string::String {
+  var output = std::string::new(zone, 1);
+  output.push_in(zone, value);
+  return output;
+}
+
+pub fn debug_char_in(zone: ref mut Zone, value: char) -> std::string::String {
+  var output = std::string::new(zone, 4);
+  output.push_in(zone, '\'');
+  if value == '\n' {
+    output.append_string_in(zone, "\\n");
+  } else if value == '\r' {
+    output.append_string_in(zone, "\\r");
+  } else if value == '\t' {
+    output.append_string_in(zone, "\\t");
+  } else if value == '\'' {
+    output.append_string_in(zone, "\\'");
+  } else if value == '\\' {
+    output.append_string_in(zone, "\\\\");
+  } else {
+    output.push_in(zone, value);
+  }
+  output.push_in(zone, '\'');
+  return output;
+}
+
+impl std::fmt::Display for char {
+  pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr char);
+    return std::fmt::char_in(zone, value);
+  }
+}
+
 impl std::fmt::Display for i64 {
   pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
     let value = ptr_load(self as ptr i64);
@@ -365,6 +398,13 @@ impl std::fmt::Debug for string {
   pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
     let value = ptr_load(self as ptr string);
     return std::fmt::debug_text_in(zone, value);
+  }
+}
+
+impl std::fmt::Debug for char {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr char);
+    return std::fmt::debug_char_in(zone, value);
   }
 }
 

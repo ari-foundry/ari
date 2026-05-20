@@ -12,6 +12,7 @@ namespace ari {
 
 enum class FormatInAppendKind {
     String,
+    Char,
     I64,
     U64,
     Bool,

@@ -216,6 +216,8 @@ fn std::fmt::alternate|check-prelude std-fmt-format-spec alternate integer prefi
 fn std::fmt::binary|check-prelude std-fmt-format-spec binary integer spec helper; docs/stdlib/modules/fmt.md
 fn std::fmt::boolean_in|check-prelude std-fmt-format-spec allocator-backed bool formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::center|check-prelude std-fmt-format-spec center alignment spec helper; docs/stdlib/modules/fmt.md
+fn std::fmt::char_in|check-prelude std-fmt-char-values allocator-backed byte character display helper; docs/stdlib/modules/fmt.md
+fn std::fmt::debug_char_in|check-prelude std-fmt-char-values allocator-backed byte character debug helper; docs/stdlib/modules/fmt.md
 fn std::fmt::debug_text_in|check-prelude std-fmt-format-spec source debug text quoting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::debug_value[T: std::fmt::Debug]|check-prelude std-fmt-debug-values generic allocator-backed Debug formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::decimal|check-prelude std-fmt-format-spec decimal integer spec helper; docs/stdlib/modules/fmt.md

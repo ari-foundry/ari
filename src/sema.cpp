@@ -20167,10 +20167,16 @@ private:
                                        const IrFormatSpec& spec) {
         std::vector<ExprPtr> args;
         args.push_back(clone_expression_tree(zone_arg));
-        if (target.kind == FormatInAppendKind::I64 || target.kind == FormatInAppendKind::U64) {
+        if (target.kind == FormatInAppendKind::Char ||
+            target.kind == FormatInAppendKind::I64 ||
+            target.kind == FormatInAppendKind::U64) {
             TypeRef cast_type;
             cast_type.loc = loc;
-            cast_type.name = target.kind == FormatInAppendKind::I64 ? "i64" : "u64";
+            if (target.kind == FormatInAppendKind::Char) {
+                cast_type.name = "char";
+            } else {
+                cast_type.name = target.kind == FormatInAppendKind::I64 ? "i64" : "u64";
+            }
             value_arg = make_ast_cast_expr(loc, std::move(value_arg), std::move(cast_type));
         }
         args.push_back(std::move(value_arg));
