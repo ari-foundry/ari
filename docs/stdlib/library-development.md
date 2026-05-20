@@ -14,6 +14,8 @@ This guide is for contributors adding or changing source libraries under
 6. Add the test to `tests/Makefile`.
 7. Update `tests/std_api_manifest.txt`.
 8. Update this `docs/stdlib/` folder and any focused language docs.
+9. Run `make check-stdlib-docs` when the API changes docs, stability policy,
+   or module guide coverage.
 
 Compiler changes belong in `src/` only when source Ari cannot model the
 primitive. Examples include layout queries, raw pointer load/store,
@@ -73,6 +75,24 @@ depends on it.
   a borrowed receiver. Bind a local when the receiver is mutable or owns
   resources.
 - Do not add hidden allocation. Every allocation must flow through `Zone`.
+- Do not add compiler-tooling-only APIs such as source maps, source locations,
+  labels, fix-its, or diagnostic report builders to runtime `std`; keep them
+  in compiler/tooling packages.
+
+## Stability Review
+
+Before calling a public API usable or stable, classify it with the production
+readiness tiers:
+
+- core: portable source-first APIs
+- alloc: explicit-zone or collection APIs
+- hosted: APIs that need OS/runtime state
+- platform: ABI, C, target, or future raw OS surfaces
+- experimental: APIs that need more ownership, error, or runtime design first
+
+Every tier decision should be reflected in `docs/stdlib/production-readiness.md`
+or the focused module guide. If the answer is "only a future compiler would use
+this", it is probably not a runtime `std` API.
 
 ## Source Comments
 
@@ -131,4 +151,5 @@ an ad hoc library where a symbol check is not useful.
 - Positive behavior has an executable or LLVM check.
 - Misuse has a negative test when it can be caught before runtime.
 - `make check-std-api` passes.
+- `make check-stdlib-docs` passes when docs or stability policy changed.
 - A narrow build/test target passes before broader `make check`.

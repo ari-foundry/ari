@@ -34,11 +34,12 @@ indirect, or target-unsupported aggregate header surfaces remain rejected.
 ## Standard Library Coverage Note
 
 Public source `std` declarations are tracked in `tests/std_api_manifest.txt`
-and checked by `make check-std-api`. Standard library behavior is split by
-test prefix under `tests/cases/standard-library/`: `std-<module>-<feature>.ari`
-for source module APIs, `prelude-<feature>.ari` for implicit root aliases and
-macros, and `std-library-smoke.ari` for cross-library integration. Zone and
-pointer provenance hooks live under `tests/cases/memory/`. See
+and checked by `make check-std-api`; production-readiness docs are checked by
+`make check-stdlib-docs`. Standard library behavior is split by test prefix
+under `tests/cases/standard-library/`: `std-<module>-<feature>.ari` for source
+module APIs, `prelude-<feature>.ari` for implicit root aliases and macros, and
+`std-library-smoke.ari` for cross-library integration. Zone and pointer
+provenance hooks live under `tests/cases/memory/`. See
 [Library Testing](library-testing.md) for the full policy.
 
 ## Compiler And Bootstrap Documentation Coverage Note

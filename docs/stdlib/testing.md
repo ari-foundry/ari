@@ -8,6 +8,7 @@ through `tests/Makefile`.
 | Layer | Purpose | Command |
 | --- | --- | --- |
 | API manifest | Detect accidental public API drift. | `make check-std-api` |
+| Docs readiness | Keep production readiness, module tier, failure, and non-goal policy documented. | `make check-stdlib-docs` |
 | Focused source behavior | Compile and usually run one valid behavior. | `make check-prelude` |
 | Negative diagnostics | Lock down bad uses and planned gaps. | `make check-prelude` |
 | Backend checks | Inspect LLVM symbols, runtime hooks, and layout. | `make check-prelude` or `make check` |

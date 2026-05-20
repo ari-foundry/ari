@@ -17,7 +17,8 @@ under `lib/std/`.
 - [Library Development](library-development.md): how to add or change a
   standard library API.
 - [Production Readiness](production-readiness.md): quality bar for stable,
-  dependable standard library APIs.
+  dependable standard library APIs, including module tiers, failure policy,
+  platform policy, non-goals, and release acceptance checks.
 - [Testing](testing.md): test names, check targets, and coverage expectations.
 - [Roadmap](roadmap.md): staged implementation plan and next library families.
 

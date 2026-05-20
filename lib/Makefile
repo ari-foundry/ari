@@ -11,6 +11,7 @@ BUILD_DIR ?= build/lib
 
 STD_SOURCES := std.arih $(sort $(wildcard std/*.arih))
 STD_API_CHECKER := tests/check_std_api_manifest.py
+STD_DOC_CHECKER := tests/check_stdlib_docs.py
 STD_SMOKE := tests/cases/standard-library/ok/smoke/std-library-smoke.ari
 STD_SMOKE_PATH := $(ROOT)/$(STD_SMOKE)
 
@@ -25,16 +26,19 @@ LIBRARY_HEADER := $(LIBRARY_BASE).h
 LIBRARY_SO := $(LIBRARY_BASE).so
 LIBRARY_SYMBOL ?= _ARNv3add
 
-.PHONY: all build check check-api prepare std-smoke shared-library clean
+.PHONY: all build check check-api check-docs prepare std-smoke shared-library clean
 
 all: build
 
 build: std-smoke shared-library
 
-check: check-api build
+check: check-api check-docs build
 
 check-api:
 	cd $(ROOT) && python3 $(STD_API_CHECKER)
+
+check-docs:
+	cd $(ROOT) && python3 $(STD_DOC_CHECKER)
 
 prepare:
 	mkdir -p $(ROOT)/$(BUILD_DIR)

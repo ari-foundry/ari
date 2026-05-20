@@ -35,7 +35,6 @@ path-state helpers `current_dir`/`try_current_dir`/`current_dir_path`/
 `test` source executable `Report` helpers, generic equality checks, and
 scratch zone construction, `log` source stderr levels, threshold predicates,
 byte-slice logging, string-message logging, and convenience level functions,
-`diag` lightweight severity/code/message/note values and stderr summaries,
 `error` shared recoverable error categories, compact error values, POSIX errno
 mapping, predicate helpers, and raw scalar Result bridging,
 `input` runtime hooks plus the source `try_read_byte` EOF helper,
