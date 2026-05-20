@@ -44,6 +44,10 @@ fn checked_subsecond_nanos(value: i64) -> i64 {
   return value;
 }
 
+fn valid_unix_parts(seconds: i64, nanosecond: i64) -> bool {
+  return seconds >= 0 && nanosecond >= 0 && nanosecond < 1000000000;
+}
+
 fn year_days(year: i64) -> i64 {
   if is_leap_year(year) {
     return 366;
@@ -110,6 +114,13 @@ pub fn system_from_unix(seconds: i64, nanosecond: i64) -> SystemTime {
   };
 }
 
+pub fn try_system_from_unix(seconds: i64, nanosecond: i64) -> std::Option[SystemTime] {
+  if !valid_unix_parts(seconds, nanosecond) {
+    return std::None<SystemTime>();
+  }
+  return std::Some<SystemTime>(system_from_unix(seconds, nanosecond));
+}
+
 pub fn is_leap_year(year: i64) -> bool {
   if year % 4 != 0 {
     return false;
@@ -165,6 +176,13 @@ pub fn utc_from_unix(seconds: i64, nanosecond: i64) -> UtcDateTime {
     second: second,
     nanosecond: checked_nano,
   };
+}
+
+pub fn try_utc_from_unix(seconds: i64, nanosecond: i64) -> std::Option[UtcDateTime] {
+  if !valid_unix_parts(seconds, nanosecond) {
+    return std::None<UtcDateTime>();
+  }
+  return std::Some<UtcDateTime>(utc_from_unix(seconds, nanosecond));
 }
 
 pub fn elapsed(start: Instant) -> Duration {
@@ -285,6 +303,10 @@ pub impl std::time::SystemTime {
     return system_from_unix(seconds, nanosecond);
   }
 
+  fn try_from_unix(seconds: i64, nanosecond: i64) -> std::Option[SystemTime] {
+    return try_system_from_unix(seconds, nanosecond);
+  }
+
   fn now() -> SystemTime {
     return system_now();
   }
@@ -341,6 +363,14 @@ pub impl std::time::Deadline {
 }
 
 pub impl std::time::UtcDateTime {
+  fn from_unix(seconds: i64, nanosecond: i64) -> UtcDateTime {
+    return utc_from_unix(seconds, nanosecond);
+  }
+
+  fn try_from_unix(seconds: i64, nanosecond: i64) -> std::Option[UtcDateTime] {
+    return try_utc_from_unix(seconds, nanosecond);
+  }
+
   fn year(self) -> i64 {
     return self.year;
   }

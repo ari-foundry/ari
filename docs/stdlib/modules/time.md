@@ -29,9 +29,11 @@ time::try_seconds(value)
 time::now()
 time::system_now()
 time::system_from_unix(seconds, nanosecond)
+time::try_system_from_unix(seconds, nanosecond)
 time::is_leap_year(year)
 time::days_in_month(year, month)
 time::utc_from_unix(seconds, nanosecond)
+time::try_utc_from_unix(seconds, nanosecond)
 time::elapsed(start)
 time::sleep(duration)
 time::deadline_at(instant)
@@ -61,6 +63,7 @@ instant.add(duration)
 
 SystemTime::now()
 SystemTime::from_unix(seconds, nanosecond)
+SystemTime::try_from_unix(seconds, nanosecond)
 system_time.as_unix_nanos()
 system_time.as_unix_seconds()
 system_time.subsec_nanos()
@@ -74,6 +77,8 @@ deadline.has_expired()
 deadline.remaining()
 deadline.sleep()
 
+UtcDateTime::from_unix(seconds, nanosecond)
+UtcDateTime::try_from_unix(seconds, nanosecond)
 utc.year()
 utc.month()
 utc.day()
@@ -105,14 +110,18 @@ not elapsed-time measurement. Wall-clock time can move if the host clock is
 changed. `system_from_unix(seconds, nanosecond)` and
 `SystemTime::from_unix(seconds, nanosecond)` build deterministic wall-clock
 values from non-negative Unix timestamps for tests, parsers, and protocol
-code.
+code. Use `try_system_from_unix` or `SystemTime::try_from_unix` when seconds
+or nanoseconds came from user input and invalid ranges should become `None`.
 
 `UtcDateTime` is a plain UTC calendar value using the proleptic Gregorian
 calendar and Unix epoch rules. `utc_from_unix(seconds, nanosecond)` converts a
 non-negative Unix timestamp into year/month/day/hour/minute/second/nanosecond
-fields. `SystemTime::to_utc()` is the method form. `is_leap_year(year)` and
-`days_in_month(year, month)` expose the same calendar policy for validation
-and tests.
+fields. `UtcDateTime::from_unix` is the associated constructor, and
+`try_utc_from_unix`/`UtcDateTime::try_from_unix` return `Option[UtcDateTime]`
+for invalid negative seconds or out-of-range subsecond nanoseconds.
+`SystemTime::to_utc()` is the method form for already-validated system times.
+`is_leap_year(year)` and `days_in_month(year, month)` expose the same calendar
+policy for validation and tests.
 
 `Deadline` is the current timeout value. `timeout(duration)` and
 `timeout_after(duration)` create a deadline relative to `Instant::now()`;
@@ -191,6 +200,23 @@ fn main() -> i64 {
 }
 ```
 
+Fallible Unix timestamp conversion:
+
+```ari
+fn main() -> i64 {
+  match time::SystemTime::try_from_unix(1704067200, 0) {
+    std::Some(stamp) => {
+      let utc = stamp.to_utc();
+      if utc.year() == 2024 {
+        return process::success();
+      }
+    }
+    std::None => {}
+  }
+  return process::failure();
+}
+```
+
 Timeout/deadline check:
 
 ```ari
@@ -218,8 +244,9 @@ fn main() -> i64 {
   itself; IO/process/thread APIs must opt into accepting it.
 - `UtcDateTime` only supports non-negative Unix timestamps for now. Dates
   before 1970 and leap seconds are future policy work.
-- The `try_*` duration constructors reject negative inputs today. Overflow
-  checks for very large duration arithmetic are not designed yet.
+- The `try_*` duration and Unix timestamp constructors reject negative inputs
+  today. Duration scaling and Unix nanosecond assembly still need overflow
+  policy for very large values.
 - No timezone, formatting, timerfd, or async integration exists yet. Timezone
   databases are intentionally outside the first standard library slice.
 
@@ -230,6 +257,7 @@ Focused positive coverage:
 ```text
 tests/cases/standard-library/ok/time/std-time-basic.ari
 tests/cases/standard-library/ok/time/std-time-try-duration.ari
+tests/cases/standard-library/ok/time/std-time-try-unix.ari
 tests/cases/standard-library/ok/time/std-time-timeout.ari
 tests/cases/standard-library/ok/time/std-time-utc-calendar.ari
 ```
@@ -239,5 +267,6 @@ tests/cases/standard-library/ok/time/std-time-utc-calendar.ari
 deterministic exit-code score. It also checks timeout/deadline and UTC
 calendar helper symbols. `std-time-try-duration.ari` covers fallible
 constructor behavior for both module functions and `Duration::try_*`
-associated helpers. Public declarations are tracked in
-`tests/std_api_manifest.txt` and checked by `make check-std-api`.
+associated helpers. `std-time-try-unix.ari` covers fallible Unix timestamp
+construction for `SystemTime` and `UtcDateTime`. Public declarations are
+tracked in `tests/std_api_manifest.txt` and checked by `make check-std-api`.

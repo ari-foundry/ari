@@ -593,6 +593,8 @@ fn std::time::try_microseconds|check-prelude std-time-try-duration Option-return
 fn std::time::try_milliseconds|check-prelude std-time-try-duration Option-returning duration constructor; docs/stdlib/modules/time.md
 fn std::time::try_nanoseconds|check-prelude std-time-try-duration Option-returning duration constructor; docs/stdlib/modules/time.md
 fn std::time::try_seconds|check-prelude std-time-try-duration Option-returning duration constructor; docs/stdlib/modules/time.md
+fn std::time::try_system_from_unix|check-prelude std-time-try-unix Option-returning SystemTime Unix constructor; docs/stdlib/modules/time.md
+fn std::time::try_utc_from_unix|check-prelude std-time-try-unix Option-returning UTC Unix conversion; docs/stdlib/modules/time.md
 fn std::time::unix_nanos|check-prelude std-time-basic wall-clock hook; docs/stdlib/modules/time.md
 fn std::time::utc_from_unix|check-prelude std-time-utc-calendar UTC calendar conversion helper; docs/stdlib/modules/time.md
 fn std::todo|planned panic helper tests; docs/dev/test-matrix.md Prelude row
@@ -1122,13 +1124,16 @@ method std::time::SystemTime::from_unix|check-prelude std-time-utc-calendar asso
 method std::time::SystemTime::now|check-prelude std-time-basic associated wall-clock constructor; docs/stdlib/modules/time.md
 method std::time::SystemTime::subsec_nanos|check-prelude std-time-utc-calendar subsecond nanosecond helper; docs/stdlib/modules/time.md
 method std::time::SystemTime::to_utc|check-prelude std-time-utc-calendar UTC calendar conversion method; docs/stdlib/modules/time.md
+method std::time::SystemTime::try_from_unix|check-prelude std-time-try-unix associated Option-returning SystemTime Unix constructor; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::day|check-prelude std-time-utc-calendar UTC day accessor; docs/stdlib/modules/time.md
+method std::time::UtcDateTime::from_unix|check-prelude std-time-try-unix associated UTC Unix conversion; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::hour|check-prelude std-time-utc-calendar UTC hour accessor; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::is_leap_year|check-prelude std-time-utc-calendar UTC leap-year predicate method; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::minute|check-prelude std-time-utc-calendar UTC minute accessor; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::month|check-prelude std-time-utc-calendar UTC month accessor; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::nanosecond|check-prelude std-time-utc-calendar UTC nanosecond accessor; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::second|check-prelude std-time-utc-calendar UTC second accessor; docs/stdlib/modules/time.md
+method std::time::UtcDateTime::try_from_unix|check-prelude std-time-try-unix associated Option-returning UTC Unix conversion; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::year|check-prelude std-time-utc-calendar UTC year accessor; docs/stdlib/modules/time.md
 method std::vec::Vec[T]::as_mut_ptr|check-prelude std-vec-as-mut-ptr mutable borrowed receiver with reset invalidation; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row

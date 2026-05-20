@@ -642,9 +642,11 @@ time::try_seconds(value)
 time::now()
 time::system_now()
 time::system_from_unix(seconds, nanosecond)
+time::try_system_from_unix(seconds, nanosecond)
 time::is_leap_year(year)
 time::days_in_month(year, month)
 time::utc_from_unix(seconds, nanosecond)
+time::try_utc_from_unix(seconds, nanosecond)
 time::elapsed(start)
 time::sleep(duration)
 time::deadline_at(instant)
@@ -674,6 +676,7 @@ instant.add(duration)
 
 SystemTime::now()
 SystemTime::from_unix(seconds, nanosecond)
+SystemTime::try_from_unix(seconds, nanosecond)
 system_time.as_unix_nanos()
 system_time.as_unix_seconds()
 system_time.subsec_nanos()
@@ -687,6 +690,8 @@ deadline.has_expired()
 deadline.remaining()
 deadline.sleep()
 
+UtcDateTime::from_unix(seconds, nanosecond)
+UtcDateTime::try_from_unix(seconds, nanosecond)
 utc.year()
 utc.month()
 utc.day()
@@ -706,8 +711,9 @@ functions are exposed for low-level code, but ordinary code should prefer
 `timeout(duration)` or `deadline_at(instant)` when an API needs timeout policy
 without depending on wall-clock time. `utc_from_unix` and
 `SystemTime::to_utc` provide deterministic UTC calendar conversion for
-non-negative Unix timestamps. Timezone databases are outside the first
-standard-library slice.
+non-negative Unix timestamps; `try_system_from_unix` and `try_utc_from_unix`
+validate timestamp parts as `Option` before constructing values. Timezone
+databases are outside the first standard-library slice.
 
 Filesystem helpers live in `std::fs`:
 

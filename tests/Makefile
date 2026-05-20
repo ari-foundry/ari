@@ -590,6 +590,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-try-duration.ari -o $(BUILD_DIR)/prelude/std-time-try-duration.elf
 	$(BUILD_DIR)/prelude/std-time-try-duration.elf; code=$$?; test $$code -eq 55
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-try-duration.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-try-duration.elf; $(BUILD_DIR)/prelude/std-time-try-duration.elf; code=$$?; test $$code -eq 55; fi
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-try-unix.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-try-unix.ll
+	grep -F -q "std4time20try_system_from_unix" $(BUILD_DIR)/prelude/std-time-try-unix.ll
+	grep -F -q "std4time17try_utc_from_unix" $(BUILD_DIR)/prelude/std-time-try-unix.ll
+	grep -F -q "std__time__SystemTime8inherent13try_from_unix" $(BUILD_DIR)/prelude/std-time-try-unix.ll
+	grep -F -q "std__time__UtcDateTime8inherent13try_from_unix" $(BUILD_DIR)/prelude/std-time-try-unix.ll
+	grep -F -q "std__time__UtcDateTime8inherent9from_unix" $(BUILD_DIR)/prelude/std-time-try-unix.ll
+	$(TARGET) tests/cases/standard-library/ok/time/std-time-try-unix.ari -o $(BUILD_DIR)/prelude/std-time-try-unix.elf
+	$(BUILD_DIR)/prelude/std-time-try-unix.elf; code=$$?; test $$code -eq 66
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/time/std-time-try-unix.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-time-try-unix.elf; $(BUILD_DIR)/prelude/std-time-try-unix.elf; code=$$?; test $$code -eq 66; fi
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-timeout.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-timeout.ll
 	grep -F -q "std4time7timeout" $(BUILD_DIR)/prelude/std-time-timeout.ll
 	grep -F -q "std4time13timeout_after" $(BUILD_DIR)/prelude/std-time-timeout.ll

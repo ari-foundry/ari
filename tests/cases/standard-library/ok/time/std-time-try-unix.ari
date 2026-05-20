@@ -1,0 +1,76 @@
+// Covers Option-returning Unix timestamp constructors. Invalid timestamps
+// should be data, not process-aborting asserts, at user input boundaries.
+fn has_system(value: std::Option[time::SystemTime], seconds: i64, nanosecond: i64) -> bool {
+  match value {
+    std::Some(stamp) => {
+      return stamp.as_unix_seconds() == seconds && stamp.subsec_nanos() == nanosecond;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn has_new_year_utc(value: std::Option[time::UtcDateTime], nanosecond: i64) -> bool {
+  match value {
+    std::Some(utc) => {
+      return utc.year() == 2024 && utc.month() == 1 && utc.day() == 1 && utc.nanosecond() == nanosecond;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn has_epoch_utc(value: std::Option[time::UtcDateTime], nanosecond: i64) -> bool {
+  match value {
+    std::Some(utc) => {
+      return utc.year() == 1970 && utc.month() == 1 && utc.day() == 1 && utc.nanosecond() == nanosecond;
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  if time::try_system_from_unix(-1, 0).is_none() {
+    score = score + 1;
+  }
+  if time::try_system_from_unix(0, -1).is_none() {
+    score = score + 2;
+  }
+  if time::try_system_from_unix(0, 1000000000).is_none() {
+    score = score + 3;
+  }
+  if has_system(time::try_system_from_unix(1, 2), 1, 2) {
+    score = score + 4;
+  }
+  if has_system(time::SystemTime::try_from_unix(2, 3), 2, 3) {
+    score = score + 5;
+  }
+
+  if time::try_utc_from_unix(-1, 0).is_none() {
+    score = score + 6;
+  }
+  if time::try_utc_from_unix(0, -1).is_none() {
+    score = score + 7;
+  }
+  if time::try_utc_from_unix(0, 1000000000).is_none() {
+    score = score + 8;
+  }
+  if has_new_year_utc(time::try_utc_from_unix(1704067200, 9), 9) {
+    score = score + 9;
+  }
+  if has_epoch_utc(time::UtcDateTime::try_from_unix(0, 10), 10) {
+    score = score + 10;
+  }
+
+  let epoch = time::UtcDateTime::from_unix(0, 11);
+  if epoch.year() == 1970 && epoch.month() == 1 && epoch.day() == 1 {
+    if epoch.nanosecond() == 11 {
+      score = score + 11;
+    }
+  }
+
+  return score;
+}
