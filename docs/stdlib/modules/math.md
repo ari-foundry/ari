@@ -37,7 +37,9 @@ math::checked_sub(left, right)
 math::checked_neg(value)
 math::checked_abs(value)
 math::wrapping_add(left, right)
+math::wrapping_sub(left, right)
 math::overflowing_add(left, right)
+math::overflowing_sub(left, right)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
 math::saturating_neg(value)
@@ -50,9 +52,10 @@ underflow. The `saturating_*` helpers clamp to the nearest `i64` bound instead:
 positive overflow becomes `9223372036854775807`, and negative overflow becomes
 `-9223372036854775808`.
 
-`wrapping_add` returns the two's-complement wrapped result. `overflowing_add`
-returns `(value, overflowed)`, a tuple whose first slot is the wrapped result
-and whose second slot is the overflow flag:
+`wrapping_add` and `wrapping_sub` return the two's-complement wrapped result.
+`overflowing_add` and `overflowing_sub` return `(value, overflowed)`, a tuple
+whose first slot is the wrapped result and whose second slot is the overflow
+flag:
 
 ```ari
 let (sum, overflowed) = math::overflowing_add(left, right);

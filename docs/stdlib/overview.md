@@ -20,9 +20,10 @@ as `try_get`, `binary_search`, parser failure, or checked arithmetic overflow.
 `Result[T, E]` means success and failure are different control-flow outcomes.
 
 Use tuples for small product values that are always present and conventional at
-the call site. `math::overflowing_add(left, right)` returns `(value,
-overflowed)` because the wrapped result and the flag are both produced every
-time. `iter::enumerate` and `iter::zip` likewise yield tuple items. Prefer a
+the call site. `math::overflowing_add(left, right)` and
+`math::overflowing_sub(left, right)` return `(value, overflowed)` because the
+wrapped result and the flag are both produced every time. `iter::enumerate` and
+`iter::zip` likewise yield tuple items. Prefer a
 named struct when fields need domain names, invariants, methods, or longer-term
 API evolution.
 
@@ -65,7 +66,7 @@ API evolution.
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
 | `std::algo` | Source algorithms over borrowed slices. | `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, `dedup`. |
 | `std::convert` | Explicit conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. |
-| `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked/wrapping/overflowing/saturating add policy, checked/saturating sub/neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. |
+| `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked/wrapping/overflowing add/sub policy, saturating add/sub/neg/abs, checked neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. |
 | `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, byte-swap, population-count, and zero/one-run bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`, `byte_swap`, `population_count`, `leading_ones`. |
 
 ## Allocation Rules

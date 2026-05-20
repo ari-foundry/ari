@@ -460,7 +460,8 @@ Checklist:
       keeping the current concrete `i64` signatures
 - [x] source `std::math` exposes checked and saturating add/sub/neg/abs helpers
       with `Option[i64]` overflow reporting and edge-case saturation behavior
-- [x] source `std::math` exposes wrapping add and overflowing add tuple-result
+- [x] source `std::math` exposes wrapping add/sub and overflowing add/sub
+      tuple-result
       helpers without adding public type suffixes
 - [x] runtime-backed `std::thread` exposes function-pointer spawn/join,
       cooperative yield, duration sleep, hosted available parallelism, runtime

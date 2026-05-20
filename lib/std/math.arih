@@ -102,6 +102,30 @@ pub fn wrapping_add(left: i64, right: i64) -> i64 {
   return i64_max() - ((i64_min() - left) - right - 1);
 }
 
+pub fn wrapping_sub(left: i64, right: i64) -> i64 {
+  match checked_sub(left, right) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+
+  // Avoid negating `right`: `i64_min()` cannot be represented as positive i64.
+  if right == i64_min() {
+    if left < 0 {
+      return left - i64_min();
+    }
+    return i64_min() + left;
+  }
+
+  if right > 0 {
+    return i64_max() - (right - (left - i64_min()) - 1);
+  }
+
+  let magnitude = 0 - right;
+  return i64_min() + (magnitude - (i64_max() - left) - 1);
+}
+
 pub fn overflowing_add(left: i64, right: i64) -> (i64, bool) {
   match checked_add(left, right) {
     std::Some(value) => {
@@ -111,6 +135,17 @@ pub fn overflowing_add(left: i64, right: i64) -> (i64, bool) {
   }
 
   return (wrapping_add(left, right), true);
+}
+
+pub fn overflowing_sub(left: i64, right: i64) -> (i64, bool) {
+  match checked_sub(left, right) {
+    std::Some(value) => {
+      return (value, false);
+    }
+    std::None => {}
+  }
+
+  return (wrapping_sub(left, right), true);
 }
 
 pub fn saturating_add(left: i64, right: i64) -> i64 {

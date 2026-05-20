@@ -613,10 +613,12 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-math-checked-saturating.elf; code=$$?; test $$code -eq 20
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-wrapping-overflowing.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
 	grep -q '_ARNv3std4math12wrapping_add' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
+	grep -q '_ARNv3std4math12wrapping_sub' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
 	grep -q '_ARNv3std4math15overflowing_add' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
+	grep -q '_ARNv3std4math15overflowing_sub' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
 	grep -q 'ret { i64, i1 }' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-wrapping-overflowing.ari -o $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.elf
-	$(BUILD_DIR)/prelude/std-math-wrapping-overflowing.elf; code=$$?; test $$code -eq 6
+	$(BUILD_DIR)/prelude/std-math-wrapping-overflowing.elf; code=$$?; test $$code -eq 14
 	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-byte-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8is_digit' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8to_lower' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll

@@ -1,4 +1,4 @@
-// Covers the wrapping and overflowing add policy slice in std::math.
+// Covers the wrapping and overflowing add/sub policy slice in std::math.
 fn main() -> i64 {
   let min = -9223372036854775807 - 1;
   let max = 9223372036854775807;
@@ -11,6 +11,18 @@ fn main() -> i64 {
     score = score + 1;
   }
   if math::wrapping_add(min, -1) == max {
+    score = score + 1;
+  }
+  if math::wrapping_sub(40, -2) == 42 {
+    score = score + 1;
+  }
+  if math::wrapping_sub(min, 1) == max {
+    score = score + 1;
+  }
+  if math::wrapping_sub(max, -1) == min {
+    score = score + 1;
+  }
+  if math::wrapping_sub(0, min) == min {
     score = score + 1;
   }
 
@@ -29,6 +41,26 @@ fn main() -> i64 {
     score = score + 1;
   }
 
-  assert_eq_i64(score, 6);
+  let normal_sub = math::overflowing_sub(20, -22);
+  if normal_sub.0 == 42 && !normal_sub.1 {
+    score = score + 1;
+  }
+
+  let negative_sub = math::overflowing_sub(min, 1);
+  if negative_sub.0 == max && negative_sub.1 {
+    score = score + 1;
+  }
+
+  let (positive_sub_value, positive_sub_overflowed) = math::overflowing_sub(max, -1);
+  if positive_sub_value == min && positive_sub_overflowed {
+    score = score + 1;
+  }
+
+  let min_sub = math::overflowing_sub(0, min);
+  if min_sub.0 == min && min_sub.1 {
+    score = score + 1;
+  }
+
+  assert_eq_i64(score, 14);
   return score;
 }
