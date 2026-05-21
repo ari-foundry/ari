@@ -1,0 +1,63 @@
+// Covers ordered boundary access for red-black tree collections. The map and
+// set insert mixed orders so first/last must follow comparator order.
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  if map.try_first_key().is_none() {
+    score = score + 2;
+  }
+  if map.try_last_value().is_none() {
+    score = score + 3;
+  }
+
+  map.insert(ref mut zone, 4, 40);
+  map.insert(ref mut zone, 2, 20);
+  map.insert(ref mut zone, 8, 80);
+  map.insert(ref mut zone, 1, 10);
+  map.insert(ref mut zone, 3, 30);
+
+  if map.first_key() == 1 {
+    score = score + 5;
+  }
+  if map.last_key() == 8 {
+    score = score + 7;
+  }
+  if map.first_value() == 10 {
+    score = score + 11;
+  }
+  if map.last_value() == 80 {
+    score = score + 13;
+  }
+  if map.try_first_key().unwrap_or(0) == 1 {
+    score = score + 17;
+  }
+  if map.try_last_value().unwrap_or(0) == 80 {
+    score = score + 19;
+  }
+
+  if set.try_first().is_none() {
+    score = score + 23;
+  }
+  set.insert(ref mut zone, 6);
+  set.insert(ref mut zone, 2);
+  set.insert(ref mut zone, 9);
+
+  if set.first() == 2 {
+    score = score + 29;
+  }
+  if set.last() == 9 {
+    score = score + 31;
+  }
+  if set.try_first().unwrap_or(0) == 2 {
+    score = score + 37;
+  }
+  if set.try_last().unwrap_or(0) == 9 {
+    score = score + 41;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

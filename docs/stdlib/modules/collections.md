@@ -227,6 +227,14 @@ map.capacity()
 map.is_empty()
 map.contains(key)
 map.contains_key(key)
+map.first_key()
+map.try_first_key()
+map.last_key()
+map.try_last_key()
+map.first_value()
+map.try_first_value()
+map.last_value()
+map.try_last_value()
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -306,13 +314,19 @@ map.values()
 `TreeMap.insert` inserts or replaces and returns `Option[V]`. `contains_key`
 is the preferred key-membership spelling; `contains` remains available for
 compatibility with older examples. `keys` yields keys in ascending comparator
-order. `values` yields values in the same key-sorted order.
+order. `values` yields values in the same key-sorted order. `first_key`,
+`last_key`, `first_value`, and `last_value` assert when the tree is empty;
+use the `try_*` forms for empty-safe boundary access.
 
 ```ari
 set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.first()
+set.try_first()
+set.last()
+set.try_last()
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -327,8 +341,11 @@ set.iter()
 `TreeSet.insert` returns `false` for an equal existing value. `TreeSet.replace`
 returns the previous equal value or inserts a new one. `equals`, `is_subset`,
 `is_superset`, and `is_disjoint` compare ordered-set membership, not the
-internal tree shape. `TreeSet.iter()` yields values in ascending comparator
-order, and `TreeSet[T]` implements `IntoIterator[T]`.
+internal tree shape. `first` and `last` read the smallest and largest values
+in comparator order and assert when the tree is empty; use `try_first` and
+`try_last` when emptiness is ordinary control flow. `TreeSet.iter()` yields
+values in ascending comparator order, and `TreeSet[T]` implements
+`IntoIterator[T]`.
 
 ## BinaryHeap And PriorityQueue
 
@@ -414,6 +431,7 @@ tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.a
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
+tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
 tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari
@@ -458,7 +476,8 @@ checks key, value, and set cursors after tombstones.
 `std-collections-map-natural-api.ari` keeps compatibility `contains` calls
 working while locking down the preferred `contains_key` spelling for hash and
 tree maps. `std-collections-tree.ari` inserts mixed key order to exercise
-red-black rotations.
+red-black rotations. `std-collections-tree-boundaries.ari` checks empty-safe
+and asserting ordered boundary access for tree maps and sets.
 `std-collections-tree-set-relations.ari` inserts the same values in different
 orders to verify relationship predicates are membership-based, while
 `std-collections-tree-iter.ari` checks sorted successor traversal.

@@ -901,29 +901,41 @@ method std::collections::TreeMap[K,V]::capacity|check-prelude std-collections-tr
 method std::collections::TreeMap[K,V]::clear|check-prelude std-collections-tree drops live tree map nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains|check-prelude std-collections-tree ordered lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains_key|check-prelude std-collections-map-natural-api natural ordered map key-membership predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::first_key|check-prelude std-collections-tree-boundaries asserting smallest-key accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::first_value|check-prelude std-collections-tree-boundaries asserting value for smallest key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::get|check-prelude std-collections-tree asserting ordered lookup; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::insert|check-prelude std-collections-tree red-black insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::keys|check-prelude std-collections-tree-iter sorted key iterator; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::last_key|check-prelude std-collections-tree-boundaries asserting largest-key accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::last_value|check-prelude std-collections-tree-boundaries asserting value for largest key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::try_first_key|check-prelude std-collections-tree-boundaries optional smallest-key accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::try_first_value|check-prelude std-collections-tree-boundaries optional value for smallest key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::try_get|check-prelude std-collections-tree Option-returning ordered lookup; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::try_last_key|check-prelude std-collections-tree-boundaries optional largest-key accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::try_last_value|check-prelude std-collections-tree-boundaries optional value for largest key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::values|check-prelude std-collections-tree-iter sorted-by-key value iterator; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::capacity|check-prelude std-collections-tree tree set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::clear|check-prelude std-collections-tree drops live tree set nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::contains|check-prelude std-collections-tree ordered set lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::equals|check-prelude std-collections-tree-set-relations membership equality predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::first|check-prelude std-collections-tree-boundaries asserting smallest-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::insert|check-prelude std-collections-tree red-black set insertion with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::is_disjoint|check-prelude std-collections-tree-set-relations ordered-set disjointness predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::is_subset|check-prelude std-collections-tree-set-relations ordered-set subset predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::is_superset|check-prelude std-collections-tree-set-relations ordered-set superset predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::iter|check-prelude std-collections-tree-iter sorted iterator and IntoIterator; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::last|check-prelude std-collections-tree-boundaries asserting largest-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::try_first|check-prelude std-collections-tree-boundaries optional smallest-value accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::try_last|check-prelude std-collections-tree-boundaries optional largest-value accessor; docs/stdlib/modules/collections.md
 method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::next_index|check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::scalar|check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md

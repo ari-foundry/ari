@@ -1256,6 +1256,17 @@ fn tree_first_node(root: i64, left: ptr i64) -> i64 {
   return node;
 }
 
+fn tree_last_node(root: i64, right: ptr i64) -> i64 {
+  var node = root;
+  if node < 0 {
+    return -1;
+  }
+  while ptr_load(ptr_add(right, node)) >= 0 {
+    node = ptr_load(ptr_add(right, node));
+  }
+  return node;
+}
+
 fn tree_next_node(node: i64, left: ptr i64, right: ptr i64, parent: ptr i64) -> i64 {
   if node < 0 {
     return -1;
@@ -1354,6 +1365,62 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
 
   fn contains_key(self: ref Self, key: K) -> bool {
     return self.contains(key);
+  }
+
+  fn first_key(self: ref Self) -> K {
+    let node = tree_first_node(self.root, self.left);
+    std::assert(node >= 0);
+    return ptr_load(ptr_add(self.keys, node));
+  }
+
+  fn try_first_key(self: ref Self) -> std::Option[K] {
+    let node = tree_first_node(self.root, self.left);
+    if node < 0 {
+      return std::None<K>();
+    }
+    return std::Some<K>(ptr_load(ptr_add(self.keys, node)));
+  }
+
+  fn last_key(self: ref Self) -> K {
+    let node = tree_last_node(self.root, self.right);
+    std::assert(node >= 0);
+    return ptr_load(ptr_add(self.keys, node));
+  }
+
+  fn try_last_key(self: ref Self) -> std::Option[K] {
+    let node = tree_last_node(self.root, self.right);
+    if node < 0 {
+      return std::None<K>();
+    }
+    return std::Some<K>(ptr_load(ptr_add(self.keys, node)));
+  }
+
+  fn first_value(self: ref Self) -> V {
+    let node = tree_first_node(self.root, self.left);
+    std::assert(node >= 0);
+    return ptr_load(ptr_add(self.values, node));
+  }
+
+  fn try_first_value(self: ref Self) -> std::Option[V] {
+    let node = tree_first_node(self.root, self.left);
+    if node < 0 {
+      return std::None<V>();
+    }
+    return std::Some<V>(ptr_load(ptr_add(self.values, node)));
+  }
+
+  fn last_value(self: ref Self) -> V {
+    let node = tree_last_node(self.root, self.right);
+    std::assert(node >= 0);
+    return ptr_load(ptr_add(self.values, node));
+  }
+
+  fn try_last_value(self: ref Self) -> std::Option[V] {
+    let node = tree_last_node(self.root, self.right);
+    if node < 0 {
+      return std::None<V>();
+    }
+    return std::Some<V>(ptr_load(ptr_add(self.values, node)));
   }
 
   fn try_get(self: ref Self, key: K) -> std::Option[V] {
@@ -1679,6 +1746,34 @@ pub impl[T] std::collections::TreeSet[T] {
 
   fn contains(self: ref Self, value: T) -> bool {
     return tree_set_find_slot<T>(self, value) >= 0;
+  }
+
+  fn first(self: ref Self) -> T {
+    let node = tree_first_node(self.root, self.left);
+    std::assert(node >= 0);
+    return ptr_load(ptr_add(self.data, node));
+  }
+
+  fn try_first(self: ref Self) -> std::Option[T] {
+    let node = tree_first_node(self.root, self.left);
+    if node < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+
+  fn last(self: ref Self) -> T {
+    let node = tree_last_node(self.root, self.right);
+    std::assert(node >= 0);
+    return ptr_load(ptr_add(self.data, node));
+  }
+
+  fn try_last(self: ref Self) -> std::Option[T] {
+    let node = tree_last_node(self.root, self.right);
+    if node < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(ptr_add(self.data, node)));
   }
 
   fn is_subset(self: ref Self, other: ref Self) -> bool {

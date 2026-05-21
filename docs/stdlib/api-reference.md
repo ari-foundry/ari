@@ -1457,6 +1457,14 @@ map.capacity()
 map.is_empty()
 map.contains(key)
 map.contains_key(key)
+map.first_key()
+map.try_first_key()
+map.last_key()
+map.try_last_key()
+map.first_value()
+map.try_first_value()
+map.last_value()
+map.try_last_value()
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -1472,6 +1480,10 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.first()
+set.try_first()
+set.last()
+set.try_last()
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -1533,10 +1545,14 @@ set.iter()
 ```
 
 `TreeMap.contains_key(key)` is the preferred key-membership spelling;
-`TreeMap.contains(key)` remains available for compatibility. `TreeSet`
-relationship methods compare ordered-set membership, not internal tree shape.
-`TreeMap.keys()`, `TreeMap.values()`, `TreeSet.iter()`, and direct `for value
-in tree_set` walk values in ascending comparator order.
+`TreeMap.contains(key)` remains available for compatibility. `TreeMap`
+boundary methods read the smallest or largest key and the value attached to
+that key in comparator order; use the `try_*` forms when an empty tree is a
+normal case. `TreeSet` relationship methods compare ordered-set membership,
+not internal tree shape. `TreeSet.first()` and `TreeSet.last()` read the
+smallest and largest values, with `try_first` and `try_last` for empty-safe
+access. `TreeMap.keys()`, `TreeMap.values()`, `TreeSet.iter()`, and direct
+`for value in tree_set` walk values in ascending comparator order.
 
 `std::string::String` is an owned byte string:
 
