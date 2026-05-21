@@ -1560,6 +1560,16 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-collections-set-implicit-zone.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-implicit-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-implicit-zone.elf
 	$(BUILD_DIR)/prelude/std-collections-set-implicit-zone.elf; code=$$?; test $$code -eq 119
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-implicit-zone.ll
+	grep -q 'std__collections__HashMap_i64__i64_8inherent7reserve' $(BUILD_DIR)/prelude/std-collections-implicit-zone.ll
+	grep -q 'std__collections__HashSet_i64_8inherent7replace' $(BUILD_DIR)/prelude/std-collections-implicit-zone.ll
+	grep -q 'std__collections__TreeMap_i64__i64_8inherent6insert' $(BUILD_DIR)/prelude/std-collections-implicit-zone.ll
+	grep -q 'std__collections__Deque_i64_8inherent9push_back' $(BUILD_DIR)/prelude/std-collections-implicit-zone.ll
+	grep -q 'std__collections__LinkedList_i64_8inherent10push_front' $(BUILD_DIR)/prelude/std-collections-implicit-zone.ll
+	grep -q 'std__collections__BinaryHeap_i64_8inherent4push' $(BUILD_DIR)/prelude/std-collections-implicit-zone.ll
+	grep -q 'std__collections__PriorityQueue_i64_8inherent4push' $(BUILD_DIR)/prelude/std-collections-implicit-zone.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-implicit-zone.ari -o $(BUILD_DIR)/prelude/std-collections-implicit-zone.elf
+	$(BUILD_DIR)/prelude/std-collections-implicit-zone.elf; code=$$?; test $$code -eq 120
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-relations.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-relations.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent6equals' $(BUILD_DIR)/prelude/std-collections-set-relations.ll
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent9is_subset' $(BUILD_DIR)/prelude/std-collections-set-relations.ll
@@ -1902,6 +1912,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-access.elf; $(BUILD_DIR)/prelude/std-collections-set-access.elf; code=$$?; test $$code -eq 120; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-replace.elf; $(BUILD_DIR)/prelude/std-collections-set-replace.elf; code=$$?; test $$code -eq 127; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-implicit-zone.elf; $(BUILD_DIR)/prelude/std-collections-set-implicit-zone.elf; code=$$?; test $$code -eq 119; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-implicit-zone.elf; $(BUILD_DIR)/prelude/std-collections-implicit-zone.elf; code=$$?; test $$code -eq 120; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf; $(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash.elf; $(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255; fi
@@ -2034,6 +2045,8 @@ check-prelude: $(TARGET)
 	grep -q "std::collections::Set.reserve_extra zone argument must match the set allocation zone" $(BUILD_DIR)/prelude/std-collections-set-reserve-extra-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-set-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-collections-set-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-collections-set-implicit-zone-untracked.err 2>&1; then exit 1; fi
 	grep -q "std::collections::Set.reserve receiver must come from a tracked zone allocation to infer its zone" $(BUILD_DIR)/prelude/std-collections-set-implicit-zone-untracked.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-collections-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-collections-implicit-zone-untracked.err 2>&1; then exit 1; fi
+	grep -q "std::collections::HashMap.reserve receiver must come from a tracked zone allocation to infer its zone" $(BUILD_DIR)/prelude/std-collections-implicit-zone-untracked.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-hash-map-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-hash-map-keys-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-keys-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-keys-after-reset.err 2>&1; then exit 1; fi

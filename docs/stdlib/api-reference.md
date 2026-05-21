@@ -1389,11 +1389,12 @@ set.iter()
 set.copy_to(ref mut zone)
 ```
 
-For a local `Set[T]` created from a tracked zone allocation, the common growth
-methods may omit the repeated zone argument: `set.insert(value)`,
-`set.replace(value)`, `set.reserve(capacity)`, and
-`set.reserve_extra(additional)` infer the set's source zone. Keep the explicit
-`ref mut zone` form for manually assembled or otherwise untracked handles.
+For a local collection handle created from a tracked zone allocation, common
+growth methods may omit the repeated zone argument. Examples include
+`set.insert(value)`, `set.replace(value)`, `map.insert(key, value)`,
+`map.reserve(capacity)`, `deque.push_back(value)`, `list.push_front(value)`,
+and `heap.push(value)`. Keep the explicit `ref mut zone` form for manually
+assembled or otherwise untracked handles.
 
 `insert` returns `true` only for newly inserted values. `replace` returns
 `Some(previous)` for an equal existing value, or inserts the missing value and
@@ -1403,8 +1404,8 @@ instead of insertion order and borrow the other set explicitly. `first`,
 `last`, and `get` assert that the requested element exists, while
 `try_first`/`try_last`/`try_get` return `Option[T]`. `pop` removes the last
 insertion-order value, and `try_pop` returns `None` on an empty set.
-`reserve` and `reserve_extra` keep growth explicit through the same source
-zone. The set preserves insertion order in accessors, `index_of`, `as_slice`,
+`reserve` and `reserve_extra` grow through the same source zone. The set
+preserves insertion order in accessors, `index_of`, `as_slice`,
 `iter`, and `copy_to`. `std::collections::Iter[T]` implements `Iterator[T]`,
 and `Set[T]` implements `IntoIterator[T]`, so `for value in set` works through
 the standard iterator path.

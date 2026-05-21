@@ -78,7 +78,9 @@ iterator support, and reserve growth; growable `Deque`, bounded `RingBuffer`,
 zone-backed `LinkedList`, and comparator-driven `BinaryHeap`/`PriorityQueue`
 handles; real hash-table `HashMap`/`HashSet` handles with live-bucket
 iterators; and red-black-tree `TreeMap`/`TreeSet` handles with sorted
-key/value iteration. Root `Slice[T]` now has borrowed range views, split
+key/value iteration. Tracked local growable collection handles infer their
+constructor zone for common mutating growth calls. Root `Slice[T]` now has
+borrowed range views, split
 views, subsequence search, lexicographic comparison, lazy chunks/windows, and
 delimiter splitting, while `std::string` mirrors those byte-view operations
 and adds allocator-backed `join_in` plus typed borrowed `Utf8`/`OsStr` views

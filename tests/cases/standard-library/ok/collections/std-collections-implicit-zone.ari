@@ -1,0 +1,86 @@
+// Covers tracked-local implicit zone lowering across growable collections.
+fn main() -> i64 {
+  var zone = zone::create(8192);
+  var score = 0;
+
+  var map = collections::hash_map<i64, i64>(ref mut zone, 1, collections::hash_i64);
+  if map.insert(1, 10).is_none() {
+    score = score + 1;
+  }
+  if map.insert(1, 11).unwrap_or(0) == 10 && map.get(1) == 11 {
+    score = score + 2;
+  }
+  map.reserve(16);
+  if map.capacity() >= 16 {
+    score = score + 3;
+  }
+
+  var hash_set = collections::hash_set<i64>(ref mut zone, 1, collections::hash_i64);
+  if hash_set.insert(2) && !hash_set.insert(2) {
+    score = score + 4;
+  }
+  if hash_set.replace(2).unwrap_or(0) == 2 {
+    score = score + 5;
+  }
+  hash_set.reserve(16);
+  if hash_set.capacity() >= 16 {
+    score = score + 6;
+  }
+
+  var tree_map = collections::tree_map<i64, i64>(ref mut zone, 1, collections::less_i64);
+  if tree_map.insert(3, 30).is_none() && tree_map.get(3) == 30 {
+    score = score + 7;
+  }
+  tree_map.reserve(16);
+  if tree_map.capacity() >= 16 {
+    score = score + 8;
+  }
+
+  var tree_set = collections::tree_set<i64>(ref mut zone, 1, collections::less_i64);
+  if tree_set.insert(4) {
+    score = score + 9;
+  }
+  if tree_set.replace(4).unwrap_or(0) == 4 {
+    score = score + 10;
+  }
+  tree_set.reserve(16);
+  if tree_set.capacity() >= 16 {
+    score = score + 11;
+  }
+
+  var deque = collections::deque<i64>(ref mut zone, 1);
+  deque.push_back(5);
+  deque.push_front(4);
+  deque.reserve(8);
+  deque.reserve_extra(5);
+  if deque.front() == 4 && deque.back() == 5 && deque.capacity() >= deque.len() + 5 {
+    score = score + 12;
+  }
+
+  var list = collections::linked_list<i64>(ref mut zone, 1);
+  list.push_back(7);
+  list.push_front(6);
+  list.reserve_extra(4);
+  if list.front() == 6 && list.back() == 7 && list.capacity() >= list.len() + 4 {
+    score = score + 13;
+  }
+
+  var heap = collections::binary_heap<i64>(ref mut zone, 1, collections::less_i64);
+  heap.push(1);
+  heap.push(9);
+  heap.reserve_extra(4);
+  if heap.peek() == 9 && heap.capacity() >= heap.len() + 4 {
+    score = score + 14;
+  }
+
+  var queue = collections::priority_queue<i64>(ref mut zone, 1, collections::less_i64);
+  queue.push(2);
+  queue.push(8);
+  queue.reserve(8);
+  if queue.peek() == 8 && queue.capacity() >= 8 {
+    score = score + 15;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

@@ -75,13 +75,13 @@ Anything that allocates takes a `ref mut Zone` or returns a handle tied to a
 zone. Methods with an `_in` suffix take an explicit zone for growth or copying;
 methods with a `_to` suffix copy a derived value into a target zone.
 For tracked local `std::vec::Vec[T]`, `std::string::String`, and linear
-`std::collections::Set[T]` handles, Ari can infer the same source zone for
-common mutating methods. Other `std::collections` handles keep growth explicit
-today: `Deque`, `LinkedList`, `BinaryHeap`, `PriorityQueue`, `HashMap`,
-`HashSet`, `TreeMap`, and `TreeSet` spell `ref mut zone` on methods that may
-allocate. Fixed-capacity `RingBuffer` allocates only at construction. Their
-handles keep the same zone provenance as their backing storage, and collection
-iterator cursors preserve that provenance.
+`std::collections` handles, Ari can infer the same source zone for common
+mutating methods on tracked locals. `map.insert(key, value)`,
+`set.insert(value)`, `deque.push_back(value)`, `list.push_front(value)`, and
+`heap.push(value)` are natural forms over handles whose constructor established
+zone provenance. Fixed-capacity `RingBuffer` allocates only at construction.
+Collection handles keep the same zone provenance as their backing storage, and
+collection iterator cursors preserve that provenance.
 
 Use `zone::destroy(zone)` when a manually created zone is no longer needed.
 Pointers, strings, vectors, boxes, and slices derived from that zone become

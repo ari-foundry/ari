@@ -5920,7 +5920,7 @@ private:
             std_collections_implicit_zone_method_for_call(receiver_type, expr.name, expr.args.size());
         if (!implicit || !expr_type_args(expr).empty()) return nullptr;
 
-        const std::string context = "std::collections::Set." + expr.name;
+        const std::string context = std_collections_handle_display_name(receiver_type) + "." + expr.name;
         if (!receiver->zone_pointer || receiver->zone_pointer_source.empty()) {
             if (implicit->allow_untracked_fallback) return nullptr;
             fail(expr.loc,

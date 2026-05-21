@@ -223,6 +223,10 @@ bool is_std_collections_zone_handle_type(const IrType& type) {
            is_std_collections_priority_queue_handle_type(type);
 }
 
+std::string std_collections_handle_display_name(const IrType& type) {
+    return collection_type_display_name(value_qualified_set_type(type));
+}
+
 std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(const IrType& type) {
     if (!is_std_collections_zone_handle_type(type)) return std::nullopt;
     if (type.field_names.empty() && type.field_types.empty()) {
@@ -487,19 +491,75 @@ std::optional<StdCollectionsImplicitZoneMethod> std_collections_implicit_zone_me
     const std::string& method_name,
     std::size_t user_arg_count) {
     IrType receiver_value_type = value_qualified_set_type(receiver_type);
-    if (!is_std_collections_set_handle_type(receiver_value_type)) return std::nullopt;
-    if (method_name == "insert" && user_arg_count == 1) {
-        return StdCollectionsImplicitZoneMethod{"insert", false};
+    if (!is_std_collections_mutable_handle_type(receiver_value_type)) return std::nullopt;
+
+    if (is_std_collections_hash_map_handle_type(receiver_value_type) ||
+        is_std_collections_tree_map_handle_type(receiver_value_type)) {
+        if (method_name == "insert" && user_arg_count == 2) {
+            return StdCollectionsImplicitZoneMethod{"insert", false};
+        }
+        if (method_name == "reserve" && user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"reserve", false};
+        }
+        return std::nullopt;
     }
-    if (method_name == "replace" && user_arg_count == 1) {
-        return StdCollectionsImplicitZoneMethod{"replace", false};
+
+    if (is_std_collections_set_handle_type(receiver_value_type) ||
+        is_std_collections_hash_set_handle_type(receiver_value_type) ||
+        is_std_collections_tree_set_handle_type(receiver_value_type)) {
+        if (method_name == "insert" && user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"insert", false};
+        }
+        if (method_name == "replace" && user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"replace", false};
+        }
+        if (method_name == "reserve" && user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"reserve", false};
+        }
+        if (is_std_collections_set_handle_type(receiver_value_type) &&
+            method_name == "reserve_extra" &&
+            user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"reserve_extra", false};
+        }
+        return std::nullopt;
     }
-    if (method_name == "reserve" && user_arg_count == 1) {
-        return StdCollectionsImplicitZoneMethod{"reserve", false};
+
+    if (is_std_collections_deque_handle_type(receiver_value_type)) {
+        if ((method_name == "push_back" || method_name == "push_front") &&
+            user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{method_name, false};
+        }
+        if ((method_name == "reserve" || method_name == "reserve_extra") &&
+            user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{method_name, false};
+        }
+        return std::nullopt;
     }
-    if (method_name == "reserve_extra" && user_arg_count == 1) {
-        return StdCollectionsImplicitZoneMethod{"reserve_extra", false};
+
+    if (is_std_collections_linked_list_handle_type(receiver_value_type)) {
+        if ((method_name == "push_back" || method_name == "push_front") &&
+            user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{method_name, false};
+        }
+        if ((method_name == "reserve" || method_name == "reserve_extra") &&
+            user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{method_name, false};
+        }
+        return std::nullopt;
     }
+
+    if (is_std_collections_binary_heap_handle_type(receiver_value_type) ||
+        is_std_collections_priority_queue_handle_type(receiver_value_type)) {
+        if (method_name == "push" && user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"push", false};
+        }
+        if ((method_name == "reserve" || method_name == "reserve_extra") &&
+            user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{method_name, false};
+        }
+        return std::nullopt;
+    }
+
     return std::nullopt;
 }
 

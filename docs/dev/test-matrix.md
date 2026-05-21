@@ -623,13 +623,15 @@ Checklist:
 - [x] source `std::collections::HashMap<K,V>`/`HashSet<T>` and
       `TreeMap<K,V>`/`TreeSet<T>` expose tracked hash-table and red-black-tree
       containers with explicit hash/comparator functions, lookup, insertion,
-      replacement, reserve growth, hash/tree iterator invalidation,
-      reset/destroy invalidation, and same-zone growth diagnostics
+      replacement, reserve growth, tracked-local zone inference for common
+      mutation calls, hash/tree iterator invalidation, reset/destroy
+      invalidation, and same-zone growth diagnostics
 - [x] source `std::collections::Deque<T>`, `RingBuffer<T>`,
       `LinkedList<T>`, `BinaryHeap<T>`, and `PriorityQueue<T>` expose tracked
       queue/list/priority containers with circular growth, bounded overwrite,
       node reuse, comparator-driven pop order, iterator coverage where
-      applicable, reset/destroy provenance, and same-zone growth checks
+      applicable, tracked-local zone inference for growable mutation calls,
+      reset/destroy provenance, and same-zone growth checks
 - [x] LLVM backend lowers stored local `Vec[T]` literals, local
       copies, scalar indexing, the fixed-capacity method surface, and
       stored-vector `for` loops

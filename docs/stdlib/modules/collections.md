@@ -129,8 +129,10 @@ deque.reserve_extra(ref mut zone, additional)
 deque.iter()
 ```
 
-Use `Deque[T]` when both ends matter. `push_front` and `push_back` take the
-same zone used by the constructor because growth may allocate. `iter` and
+Use `Deque[T]` when both ends matter. For tracked local deque handles,
+`push_front(value)`, `push_back(value)`, `reserve(capacity)`, and
+`reserve_extra(additional)` infer the constructor zone. Keep the explicit
+`ref mut zone` form for manually assembled handles. `iter` and
 `for value in deque` yield logical front-to-back order, not physical storage
 order.
 
@@ -208,7 +210,10 @@ list.iter()
 ```
 
 `get` and `remove_at` traverse from the head, so they are O(n). Prefer
-front/back operations for queue-like code. `iter` yields front-to-back values.
+front/back operations for queue-like code. For tracked local linked-list
+handles, `push_front(value)`, `push_back(value)`, `reserve(capacity)`, and
+`reserve_extra(additional)` infer the constructor zone. `iter` yields
+front-to-back values.
 
 ## HashMap And HashSet
 
@@ -216,6 +221,9 @@ Hash collections are real hash tables, not aliases over `Set`. They use linear
 probing, tombstones for removal, and a load-factor growth rule. Until Ari has a
 standard `Hash` trait with dispatch through generic containers, constructors
 take a hash function explicitly.
+For tracked local hash handles, `map.insert(key, value)`, `map.reserve(capacity)`,
+`set.insert(value)`, `set.replace(value)`, and `set.reserve(capacity)` infer the
+constructor zone.
 
 ```ari
 collections::hash_i64(value)
@@ -337,7 +345,9 @@ use the `try_*` forms for empty-safe boundary access. `entries` yields
 `MapEntry[K, V]` values with `.key` and `.value` fields in the same sorted key
 order. `remove` returns the removed value as `Option[V]`; the current
 implementation compacts the live node arrays and rebuilds tree links in place,
-so removal does not allocate through a zone.
+so removal does not allocate through a zone. For tracked local tree maps,
+`map.insert(key, value)` and `map.reserve(capacity)` infer the constructor
+zone.
 
 ```ari
 set.len()
@@ -370,7 +380,9 @@ in comparator order and assert when the tree is empty; use `try_first` and
 value out as `Option[T]`; `remove` drops the removed value and returns whether
 anything was removed. Tree-set removal also compacts live nodes and rebuilds
 links in place without allocating. `TreeSet.iter()` yields values in ascending
-comparator order, and `TreeSet[T]` implements `IntoIterator[T]`.
+comparator order, and `TreeSet[T]` implements `IntoIterator[T]`. For tracked
+local tree sets, `set.insert(value)`, `set.replace(value)`, and
+`set.reserve(capacity)` infer the constructor zone.
 
 ## BinaryHeap And PriorityQueue
 
@@ -403,7 +415,9 @@ heap.reserve_extra(ref mut zone, additional)
 
 The priority queue has the same method surface. `peek` reads the current
 highest-priority value, while `pop` removes it and restores the heap invariant.
-Use `BinaryHeap[T]` when the data-structure name matters; use
+For tracked local heap and priority-queue handles, `push(value)`,
+`reserve(capacity)`, and `reserve_extra(additional)` infer the constructor
+zone. Use `BinaryHeap[T]` when the data-structure name matters; use
 `PriorityQueue[T]` when the abstraction is an application queue.
 
 ## Examples
@@ -415,8 +429,8 @@ fn main() -> i64 {
   var zone = zone::create(2048);
   var map = HashMap::new<i64, i64>(ref mut zone, 8, collections::hash_i64);
 
-  map.insert(ref mut zone, 7, 70);
-  map.insert(ref mut zone, 11, 110);
+  map.insert(7, 70);
+  map.insert(11, 110);
   let value = map.try_get(7).unwrap_or(0);
 
   zone::destroy(zone);
@@ -431,9 +445,9 @@ fn main() -> i64 {
   var zone = zone::create(2048);
   var set = TreeSet::new<i64>(ref mut zone, 8, collections::less_i64);
 
-  set.insert(ref mut zone, 4);
-  set.insert(ref mut zone, 2);
-  set.insert(ref mut zone, 8);
+  set.insert(4);
+  set.insert(2);
+  set.insert(8);
   let found = set.contains(2);
 
   zone::destroy(zone);
@@ -450,6 +464,7 @@ tests/cases/standard-library/ok/collections/std-collections-set.ari
 tests/cases/standard-library/ok/collections/std-collections-set-access.ari
 tests/cases/standard-library/ok/collections/std-collections-set-replace.ari
 tests/cases/standard-library/ok/collections/std-collections-set-implicit-zone.ari
+tests/cases/standard-library/ok/collections/std-collections-implicit-zone.ari
 tests/cases/standard-library/ok/collections/std-collections-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-hash.ari
@@ -479,6 +494,7 @@ tests/cases/standard-library/errors/collections/std-collections-set-replace-diff
 tests/cases/standard-library/errors/collections/std-collections-set-reserve-different-zone.ari
 tests/cases/standard-library/errors/collections/std-collections-set-reserve-extra-different-zone.ari
 tests/cases/standard-library/errors/collections/std-collections-set-implicit-zone-untracked.ari
+tests/cases/standard-library/errors/collections/std-collections-implicit-zone-untracked.ari
 tests/cases/standard-library/errors/collections/std-collections-hash-map-after-reset.ari
 tests/cases/standard-library/errors/collections/std-collections-hash-map-keys-after-reset.ari
 tests/cases/standard-library/errors/collections/std-collections-hash-map-values-after-reset.ari
@@ -498,6 +514,8 @@ tests/cases/standard-library/errors/collections/std-collections-binary-heap-push
 tests/cases/standard-library/errors/collections/std-collections-priority-queue-push-different-zone.ari
 ```
 
+`std-collections-implicit-zone.ari` checks tracked-local zone inference for
+hash, tree, deque, linked-list, heap, and priority-queue growth calls.
 `std-collections-hash.ari` forces collisions with a custom hash function so the
 linear-probing and tombstone paths are exercised.
 `std-collections-hash-set-relations.ari` keeps that collision pressure and
