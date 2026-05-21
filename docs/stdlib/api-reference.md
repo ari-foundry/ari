@@ -1161,6 +1161,7 @@ value.is_some()
 value.is_none()
 value.is_some_and(op)
 value.is_none_or(op)
+value.contains(value)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
 value.unwrap()
@@ -1190,6 +1191,8 @@ value.is_ok()
 value.is_err()
 value.is_ok_and(op)
 value.is_err_and(op)
+value.contains(value)
+value.contains_err(error)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
 value.unwrap()
@@ -1213,10 +1216,11 @@ value.transpose()
 
 Use `is_some_and`, `is_none_or`, `is_ok_and`, and `is_err_and` when a branch
 depends on both the enum case and a payload predicate. These helpers consume
-the enum value and pass the payload to the predicate. `Option::flatten` is
-available on `Option[Option[T]]` and removes one optional layer. `filter`
-keeps a `Some(T)` only when a borrowed `fn(ref T) -> bool` predicate accepts
-the payload.
+the enum value and pass the payload to the predicate. Use `contains` and
+`contains_err` for exact `==` comparisons against present success/error
+payloads. `Option::flatten` is available on `Option[Option[T]]` and removes
+one optional layer. `filter` keeps a `Some(T)` only when a borrowed
+`fn(ref T) -> bool` predicate accepts the payload.
 `Option::transpose` is available on `Option[Result[T, E]]` and turns optional
 fallible work into fallible optional work. Use the lazy `*_else` forms when the
 fallback is expensive or should only run on the missing/error branch. Use

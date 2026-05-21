@@ -26,6 +26,20 @@ pub impl[T, E] std::Result[T, E] {
     };
   }
 
+  fn contains(self, value: T) -> bool {
+    return match self {
+      std::Ok(payload) => payload == value,
+      std::Err(_) => false;
+    };
+  }
+
+  fn contains_err(self, error: E) -> bool {
+    return match self {
+      std::Ok(_) => false,
+      std::Err(payload) => payload == error;
+    };
+  }
+
   fn unwrap_or(self, fallback: T) -> T {
     return match self {
       std::Ok(value) => value,

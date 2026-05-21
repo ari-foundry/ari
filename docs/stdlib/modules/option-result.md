@@ -26,6 +26,7 @@ value.is_some()
 value.is_none()
 value.is_some_and(op)
 value.is_none_or(op)
+value.contains(value)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
 value.unwrap()
@@ -50,8 +51,9 @@ value.ok_or_else<E>(op)
 `unwrap_or_else`, `match`, or `?` in normal control flow.
 
 `is_some_and` and `is_none_or` consume the `Option[T]` and pass the payload to
-`op` only for `Some`. Use borrowed `is_some` or `is_none` when you only need
-to inspect the case without consuming a local value.
+`op` only for `Some`. `contains(value)` consumes the option and compares a
+present payload with `==`. Use borrowed `is_some` or `is_none` when you only
+need to inspect the case without consuming a local value.
 
 `filter` consumes the `Option[T]` but passes the payload to `op` as `ref T`.
 It keeps `Some(T)` when the predicate returns true and returns `None<T>()`
@@ -82,6 +84,8 @@ value.is_ok()
 value.is_err()
 value.is_ok_and(op)
 value.is_err_and(op)
+value.contains(value)
+value.contains_err(error)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
 value.unwrap()
@@ -118,7 +122,9 @@ lazily from the original error.
 and `Err(E)` into `Some(Err(E))`.
 
 `is_ok_and` consumes the `Result[T, E]` and predicates the success payload.
-`is_err_and` consumes it and predicates the error payload.
+`is_err_and` consumes it and predicates the error payload. Use
+`contains(value)` or `contains_err(error)` when the branch only needs an exact
+`==` comparison against the success or error payload.
 
 ## Example
 
@@ -152,6 +158,9 @@ tests/cases/standard-library/ok/prelude/prelude-option-result-combinators.ari
 tests/cases/standard-library/ok/prelude/prelude-option-result-conversions.ari
 tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap.ari
 ```
+
+`prelude-option-result-predicates.ari` covers consuming payload predicates and
+exact value-membership predicates for `Option` and `Result`.
 
 `prelude-option-result-combinators.ari` covers `map`, eager/lazy
 `map_or` fallback mapping, borrowed `inspect`/`inspect_err`, eager `and`/`or`,

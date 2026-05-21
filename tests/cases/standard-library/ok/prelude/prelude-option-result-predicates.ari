@@ -1,4 +1,5 @@
-// Covers consuming predicate helpers on Option and Result payloads.
+// Covers consuming predicate helpers and value-membership predicates on
+// Option and Result payloads.
 fn positive(value: i64) -> bool {
   return value > 0;
 }
@@ -14,6 +15,9 @@ fn main() -> i64 {
   let option_none_true = if None<i64>().is_none_or(positive) { 11 } else { 0 };
   let option_some_none_or = if Some(4).is_none_or(positive) { 13 } else { 0 };
   let option_some_none_or_false = if Some(-2).is_none_or(positive) { 0 } else { 17 };
+  let option_contains_hit = if Some(5).contains(5) { 43 } else { 0 };
+  let option_contains_miss = if Some(5).contains(6) { 0 } else { 47 };
+  let option_contains_none = if None<i64>().contains(5) { 0 } else { 53 };
 
   let result_ok_true = if Ok<i64, i32>(9).is_ok_and(positive) { 19 } else { 0 };
   let result_ok_false = if Ok<i64, i32>(-3).is_ok_and(positive) { 0 } else { 23 };
@@ -22,6 +26,12 @@ fn main() -> i64 {
   let result_err_pred_false =
     if Err<i64, i32>(14i32).is_err_and(small_error) { 0 } else { 37 };
   let result_ok_err_false = if Ok<i64, i32>(1).is_err_and(small_error) { 0 } else { 41 };
+  let result_contains_hit = if Ok<i64, i32>(9).contains(9) { 59 } else { 0 };
+  let result_contains_miss = if Ok<i64, i32>(9).contains(10) { 0 } else { 61 };
+  let result_contains_err_case = if Err<i64, i32>(4i32).contains(9) { 0 } else { 67 };
+  let result_contains_err_hit = if Err<i64, i32>(4i32).contains_err(4i32) { 71 } else { 0 };
+  let result_contains_err_miss = if Err<i64, i32>(4i32).contains_err(5i32) { 0 } else { 73 };
+  let result_contains_err_ok_case = if Ok<i64, i32>(1).contains_err(4i32) { 0 } else { 79 };
 
   let total =
     option_some_true +
@@ -30,13 +40,22 @@ fn main() -> i64 {
     option_none_true +
     option_some_none_or +
     option_some_none_or_false +
+    option_contains_hit +
+    option_contains_miss +
+    option_contains_none +
     result_ok_true +
     result_ok_false +
     result_err_false +
     result_err_true +
     result_err_pred_false +
-    result_ok_err_false;
+    result_ok_err_false +
+    result_contains_hit +
+    result_contains_miss +
+    result_contains_err_case +
+    result_contains_err_hit +
+    result_contains_err_miss +
+    result_contains_err_ok_case;
 
-  assert_eq_i64(total, 236);
-  return total;
+  assert_eq_i64(total, 789);
+  return total % 256;
 }

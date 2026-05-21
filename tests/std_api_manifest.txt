@@ -686,6 +686,7 @@ method Slice[T]::try_last|check-prelude prelude-slice-option-access Option-retur
 method Slice[T]::windows|check-prelude prelude-slice-sequence lazy borrowed window iterator; docs/stdlib/modules/slice.md
 method std::Option[T]::and[U]|check-prelude prelude-option-result-combinators eager present-branch combinator; docs/stdlib/modules/option-result.md
 method std::Option[T]::and_then[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::contains|check-prelude prelude-option-result-predicates exact value-membership predicate; docs/stdlib/modules/option-result.md
 method std::Option[T]::expect|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::filter|check-prelude prelude-option-filter borrowed predicate helper; docs/stdlib/api-reference.md Option and Result section
 method std::Option[T]::inspect|check-prelude prelude-option-result-combinators borrowed present-branch inspection helper; docs/stdlib/modules/option-result.md
@@ -708,6 +709,8 @@ method std::Option[std::Option[T]]::flatten|check-prelude prelude-option-flatten
 method std::Option[std::Result[T,E]]::transpose|check-prelude prelude-option-transpose; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::and[U]|check-prelude prelude-option-result-combinators eager success-branch combinator; docs/stdlib/modules/option-result.md
 method std::Result[T,E]::and_then[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::contains|check-prelude prelude-option-result-predicates exact success value-membership predicate; docs/stdlib/modules/option-result.md
+method std::Result[T,E]::contains_err|check-prelude prelude-option-result-predicates exact error value-membership predicate; docs/stdlib/modules/option-result.md
 method std::Result[T,E]::err|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::expect|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::expect_err|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
