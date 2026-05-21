@@ -78,6 +78,10 @@ min<T>(left, right)
 max<T>(left, right)
 clamp<T>(value, low, high)
 is_between<T>(value, low, high)
+min_by<T>(left, right, less)
+max_by<T>(left, right, less)
+clamp_by<T>(value, low, high, less)
+is_between_by<T>(value, low, high, less)
 create(capacity)
 alloc(ref mut zone, bytes, align)
 alloc_array<T>(ref mut zone, count)
@@ -2037,9 +2041,11 @@ cmp::Ord[T]
 cmp::PartialOrd[T]
 cmp::Ordering
 cmp::compare<T>(left, right)
+cmp::compare_by<T>(left, right, less)
 cmp::reverse(ordering)
 cmp::then(first, second)
 cmp::then_compare<T>(ordering, left, right)
+cmp::then_compare_by<T>(ordering, left, right, less)
 cmp::is_less(ordering)
 cmp::is_equal(ordering)
 cmp::is_greater(ordering)
@@ -2048,6 +2054,7 @@ cmp::is_greater_or_equal(ordering)
 Ordering::reverse()
 Ordering::then(ordering)
 Ordering::then_compare<T>(left, right)
+Ordering::then_compare_by<T>(left, right, less)
 Ordering::is_less()
 Ordering::is_equal()
 Ordering::is_greater()
@@ -2057,6 +2064,10 @@ cmp::min<T>(left, right)
 cmp::max<T>(left, right)
 cmp::clamp<T>(value, low, high)
 cmp::is_between<T>(value, low, high)
+cmp::min_by<T>(left, right, less)
+cmp::max_by<T>(left, right, less)
+cmp::clamp_by<T>(value, low, high, less)
+cmp::is_between_by<T>(value, low, high, less)
 ```
 
 `Eq[T]` currently requires `eq(self, other: T) -> bool`. For types without a
@@ -2065,18 +2076,21 @@ builtin equality comparison, `==` dispatches to `eq` and `!=` dispatches to
 types without builtin numeric ordering, `<` dispatches to `lt`, `>` swaps the
 operands, and `<=`/`>=` negate the opposite `lt` call. `compare`, `min`,
 `max`, `clamp`, and `is_between` use that trait bound, so custom ordered values
-need an `impl cmp::Ord[T] for T`. `std::cmp` already provides `Eq` and
-`PartialEq` impls for `bool` and fixed-width integers, plus `Ord` and
+need an `impl cmp::Ord[T] for T`. The `*_by` forms take a `fn(T, T) -> bool`
+less-than callback instead, which is useful for a one-off call-site ordering
+without making it the type-wide `Ord` meaning. `std::cmp` already provides
+`Eq` and `PartialEq` impls for `bool` and fixed-width integers, plus `Ord` and
 `PartialOrd` impls for fixed-width integers.
 `Ordering` has `Less`, `Equal`, and `Greater` cases. Use `then`/`then_compare`
 or the matching `Ordering` methods to build lexicographic comparisons without
 inventing numeric sentinel values.
 The method style is usually clearer after a value has already been compared.
 `clamp` and `is_between` assert that `low <= high`; `is_between` is inclusive
-at both ends.
+at both ends. `clamp_by` and `is_between_by` assert `!less(high, low)`.
 
 The root prelude re-exports the value helpers as `min<T>`, `max<T>`,
-`clamp<T>`, and `is_between<T>`.
+`clamp<T>`, `is_between<T>`, `min_by<T>`, `max_by<T>`, `clamp_by<T>`, and
+`is_between_by<T>`.
 
 ## Algorithms
 

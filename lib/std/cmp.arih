@@ -238,6 +238,10 @@ pub impl Ordering {
     return then_compare<T>(self, left, right);
   }
 
+  fn then_compare_by[T](self, left: T, right: T, less: fn(T, T) -> bool) -> Ordering {
+    return then_compare_by<T>(self, left, right, less);
+  }
+
   fn is_less(self) -> bool {
     return is_less(self);
   }
@@ -264,6 +268,16 @@ pub fn compare[T: Ord[T]](left: T, right: T) -> Ordering {
     return Less;
   }
   if left > right {
+    return Greater;
+  }
+  return Equal;
+}
+
+pub fn compare_by[T](left: T, right: T, less: fn(T, T) -> bool) -> Ordering {
+  if less(left, right) {
+    return Less;
+  }
+  if less(right, left) {
     return Greater;
   }
   return Equal;
@@ -298,6 +312,17 @@ pub fn then_compare[T: Ord[T]](ordering: Ordering, left: T, right: T) -> Orderin
   match ordering {
     Equal => {
       return compare<T>(left, right);
+    }
+    _ => {
+      return ordering;
+    }
+  }
+}
+
+pub fn then_compare_by[T](ordering: Ordering, left: T, right: T, less: fn(T, T) -> bool) -> Ordering {
+  match ordering {
+    Equal => {
+      return compare_by<T>(left, right, less);
     }
     _ => {
       return ordering;
@@ -353,8 +378,22 @@ pub fn min[T: Ord[T]](left: T, right: T) -> T {
   return left;
 }
 
+pub fn min_by[T](left: T, right: T, less: fn(T, T) -> bool) -> T {
+  if less(right, left) {
+    return right;
+  }
+  return left;
+}
+
 pub fn max[T: Ord[T]](left: T, right: T) -> T {
   if left < right {
+    return right;
+  }
+  return left;
+}
+
+pub fn max_by[T](left: T, right: T, less: fn(T, T) -> bool) -> T {
+  if less(left, right) {
     return right;
   }
   return left;
@@ -371,12 +410,34 @@ pub fn clamp[T: Ord[T]](value: T, low: T, high: T) -> T {
   return value;
 }
 
+pub fn clamp_by[T](value: T, low: T, high: T, less: fn(T, T) -> bool) -> T {
+  std::assert(!less(high, low));
+  if less(value, low) {
+    return low;
+  }
+  if less(high, value) {
+    return high;
+  }
+  return value;
+}
+
 pub fn is_between[T: Ord[T]](value: T, low: T, high: T) -> bool {
   std::assert(low <= high);
   if value < low {
     return false;
   }
   if value > high {
+    return false;
+  }
+  return true;
+}
+
+pub fn is_between_by[T](value: T, low: T, high: T, less: fn(T, T) -> bool) -> bool {
+  std::assert(!less(high, low));
+  if less(value, low) {
+    return false;
+  }
+  if less(high, value) {
     return false;
   }
   return true;

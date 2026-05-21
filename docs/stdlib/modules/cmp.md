@@ -17,11 +17,14 @@ Use `std::cmp` when code needs to choose or test values by order:
 - check whether a value is inside an inclusive range
 - return or chain a stable three-way comparison result
 - write generic helpers over a custom ordered type
+- pass a one-off comparator when the type should not have a global `Ord` impl
 
 For one-off primitive comparisons, plain operators such as `<`, `>`, `==`,
 and `!=` are still the clearest spelling. For custom equality and ordering
 types, implement `Eq[T]::eq` and `Ord[T]::lt`; the comparison operators use
-those methods when no builtin comparison exists.
+those methods when no builtin comparison exists. Use the `*_by` helpers when a
+call site needs a temporary ordering policy, such as sorting scores by one
+field in one place and by another field elsewhere.
 
 ## API
 
@@ -56,9 +59,11 @@ cmp::Less
 cmp::Equal
 cmp::Greater
 cmp::compare<T>(left, right)
+cmp::compare_by<T>(left, right, less)
 cmp::reverse(ordering)
 cmp::then(first, second)
 cmp::then_compare<T>(ordering, left, right)
+cmp::then_compare_by<T>(ordering, left, right, less)
 cmp::is_less(ordering)
 cmp::is_equal(ordering)
 cmp::is_greater(ordering)
@@ -74,6 +79,11 @@ lexicographic comparison. `then_compare` performs the second comparison only as
 part of this source helper shape; once lazy closures land, a future `then_with`
 style API can avoid computing fallback comparisons eagerly.
 
+`compare_by` and `then_compare_by` take an explicit `fn(T, T) -> bool`
+less-than callback. They are for call-site-specific orderings and do not
+require an `Ord[T]` impl for the compared type. The callback should behave like
+a strict less-than relation: equal values must return false in both directions.
+
 `Ordering` also has method wrappers with the same names, which is the preferred
 style for new code once a comparison result is already in hand:
 
@@ -81,6 +91,7 @@ style for new code once a comparison result is already in hand:
 ordering.reverse()
 ordering.then(next)
 ordering.then_compare<T>(left, right)
+ordering.then_compare_by<T>(left, right, less)
 ordering.is_less()
 ordering.is_equal()
 ordering.is_greater()
@@ -95,6 +106,10 @@ cmp::min<T>(left, right)
 cmp::max<T>(left, right)
 cmp::clamp<T>(value, low, high)
 cmp::is_between<T>(value, low, high)
+cmp::min_by<T>(left, right, less)
+cmp::max_by<T>(left, right, less)
+cmp::clamp_by<T>(value, low, high, less)
+cmp::is_between_by<T>(value, low, high, less)
 ```
 
 `min` and `max` return one of the two inputs. `clamp` returns `low` when the
@@ -105,8 +120,13 @@ range endpoints are included.
 `clamp` and `is_between` assert that `low <= high`. Passing an inverted range
 is treated as a programmer error.
 
+The `*_by` value helpers use the same behavior but take an explicit less-than
+callback instead of an `Ord[T]` impl. `clamp_by` and `is_between_by` assert
+that `!less(high, low)`, which is the comparator form of `low <= high`.
+
 The root prelude re-exports these helpers, so `min<T>`, `max<T>`, `clamp<T>`,
-and `is_between<T>` are aliases for the `std::cmp` implementations.
+`is_between<T>`, `min_by<T>`, `max_by<T>`, `clamp_by<T>`, and
+`is_between_by<T>` are aliases for the `std::cmp` implementations.
 
 `std::cmp` provides `Eq` and `PartialEq` impls for `bool` and all fixed-width
 integer types, plus `Ord` and `PartialOrd` impls for all fixed-width integer
@@ -159,6 +179,10 @@ fn bounded_score(score: Score) -> Score {
     Score { value: 100 });
 }
 
+fn score_less(left: Score, right: Score) -> bool {
+  return left.value < right.value;
+}
+
 fn main() -> i64 {
   let first = Score { value: 7 };
   let second = Score { value: 7 };
@@ -171,7 +195,11 @@ fn main() -> i64 {
     let ordering = cmp::compare<Point>(
       Point { x: 1, y: 9 },
       Point { x: 1, y: 4 });
-    if ordering.is_greater() {
+    let one_off = cmp::compare_by<Score>(
+      Score { value: 10 },
+      Score { value: 4 },
+      score_less);
+    if ordering.is_greater() && one_off.is_greater() {
       return cmp::max<i64>(value, 9);
     }
   }
@@ -202,6 +230,7 @@ tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari
 tests/cases/standard-library/ok/cmp/std-cmp-equality-operator.ari
 tests/cases/standard-library/ok/cmp/std-cmp-order-operators.ari
 tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari
+tests/cases/standard-library/ok/cmp/std-cmp-by-helpers.ari
 ```
 
 `make check-prelude` emits LLVM for that file, checks representative public

@@ -1,0 +1,118 @@
+// Comparator-based comparison helpers cover one-off orderings without forcing
+// a type-wide Ord impl.
+struct Score {
+  value: i64,
+  tie: i64,
+}
+
+fn score_less(left: Score, right: Score) -> bool {
+  if left.value < right.value {
+    return true;
+  }
+  if left.value > right.value {
+    return false;
+  }
+  return left.tie < right.tie;
+}
+
+fn weight(ordering: cmp::Ordering) -> i64 {
+  match ordering {
+    cmp::Less => {
+      return 1;
+    }
+    cmp::Equal => {
+      return 3;
+    }
+    cmp::Greater => {
+      return 7;
+    }
+  }
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  total = total + weight(cmp::compare_by<Score>(
+    Score { value: 1, tie: 9 },
+    Score { value: 2, tie: 0 },
+    score_less));
+  total = total + weight(cmp::compare_by<Score>(
+    Score { value: 2, tie: 0 },
+    Score { value: 2, tie: 0 },
+    score_less));
+  total = total + weight(cmp::compare_by<Score>(
+    Score { value: 2, tie: 9 },
+    Score { value: 2, tie: 0 },
+    score_less));
+
+  total = total + weight(cmp::then_compare_by<Score>(
+    cmp::Equal,
+    Score { value: 1, tie: 0 },
+    Score { value: 1, tie: 5 },
+    score_less));
+  total = total + weight(cmp::then_compare_by<Score>(
+    cmp::Greater,
+    Score { value: 1, tie: 0 },
+    Score { value: 1, tie: 5 },
+    score_less));
+  total = total + weight(cmp::Equal.then_compare_by<Score>(
+    Score { value: 3, tie: 0 },
+    Score { value: 2, tie: 0 },
+    score_less));
+
+  let low = cmp::min_by<Score>(
+    Score { value: 5, tie: 0 },
+    Score { value: 1, tie: 0 },
+    score_less);
+  let high = cmp::max_by<Score>(
+    Score { value: 5, tie: 0 },
+    Score { value: 1, tie: 0 },
+    score_less);
+  let clamped = cmp::clamp_by<Score>(
+    Score { value: 7, tie: 0 },
+    Score { value: 2, tie: 0 },
+    Score { value: 6, tie: 0 },
+    score_less);
+  total = total + low.value + high.value + clamped.value;
+
+  let inside = cmp::is_between_by<Score>(
+    Score { value: 3, tie: 0 },
+    Score { value: 2, tie: 0 },
+    Score { value: 6, tie: 0 },
+    score_less);
+  if inside {
+    total = total + 11;
+  }
+  let before_range = cmp::is_between_by<Score>(
+    Score { value: 1, tie: 0 },
+    Score { value: 2, tie: 0 },
+    Score { value: 6, tie: 0 },
+    score_less);
+  if !before_range {
+    total = total + 13;
+  }
+
+  let root_low = min_by<Score>(
+    Score { value: 9, tie: 0 },
+    Score { value: 4, tie: 0 },
+    score_less);
+  let root_high = max_by<Score>(
+    Score { value: 8, tie: 0 },
+    Score { value: 3, tie: 0 },
+    score_less);
+  let root_clamped = clamp_by<Score>(
+    Score { value: 0, tie: 0 },
+    Score { value: 2, tie: 0 },
+    Score { value: 6, tie: 0 },
+    score_less);
+  let root_inside = std::is_between_by<Score>(
+    Score { value: 4, tie: 0 },
+    Score { value: 2, tie: 0 },
+    Score { value: 6, tie: 0 },
+    score_less);
+  if root_inside {
+    total = total + root_low.value + root_high.value + root_clamped.value + 17;
+  }
+
+  return total;
+}

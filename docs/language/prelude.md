@@ -632,15 +632,27 @@ state operation.
 min<T>(left, right)
 max<T>(left, right)
 clamp<T>(value, low, high)
+is_between<T>(value, low, high)
+min_by<T>(left, right, less)
+max_by<T>(left, right, less)
+clamp_by<T>(value, low, high, less)
+is_between_by<T>(value, low, high, less)
 cmp::min<T>(left, right)
 cmp::max<T>(left, right)
 cmp::clamp<T>(value, low, high)
+cmp::is_between<T>(value, low, high)
+cmp::min_by<T>(left, right, less)
+cmp::max_by<T>(left, right, less)
+cmp::clamp_by<T>(value, low, high, less)
+cmp::is_between_by<T>(value, low, high, less)
 ```
 
 `clamp` asserts that `low <= high` according to `cmp::Ord[T]` before choosing
 the bounded value. The standard library provides `Eq`/`PartialEq` impls for
 `bool` and fixed-width integers, and `Ord`/`PartialOrd` impls for fixed-width
 integers, so common numeric helper calls do not need local boilerplate impls.
+The `*_by` helpers take a `fn(T, T) -> bool` less-than callback when the call
+site needs a temporary ordering policy without an `Ord[T]` impl.
 
 The compiler validates trait existence, type-argument count, visibility,
 duplicate impls, declared method conformance, and generic function trait

@@ -120,18 +120,24 @@ fn std::c::now|check-prelude std-c-interop dynamic loader flag helper; docs/stdl
 fn std::c::open|check-prelude std-c-interop dynamic library open wrapper; docs/stdlib/modules/c.md
 fn std::c::symbol|check-prelude std-c-interop dynamic symbol lookup wrapper; docs/stdlib/modules/c.md
 fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::cmp::clamp_by[T]|check-prelude std-cmp-by-helpers comparator-based clamping; docs/stdlib/modules/cmp.md
 fn std::cmp::compare[T: Ord[T]|check-prelude std-cmp-ordering generic three-way comparison; docs/stdlib/modules/cmp.md
+fn std::cmp::compare_by[T]|check-prelude std-cmp-by-helpers comparator-based three-way comparison; docs/stdlib/modules/cmp.md
 fn std::cmp::is_between[T: Ord[T]|std cmp value helper tests; docs/stdlib/api-reference.md Comparison section
+fn std::cmp::is_between_by[T]|check-prelude std-cmp-by-helpers comparator-based inclusive range predicate; docs/stdlib/modules/cmp.md
 fn std::cmp::is_equal|check-prelude std-cmp-ordering Ordering equality predicate; docs/stdlib/modules/cmp.md
 fn std::cmp::is_greater|check-prelude std-cmp-ordering Ordering greater-than predicate; docs/stdlib/modules/cmp.md
 fn std::cmp::is_greater_or_equal|check-prelude std-cmp-ordering Ordering greater-or-equal predicate; docs/stdlib/modules/cmp.md
 fn std::cmp::is_less|check-prelude std-cmp-ordering Ordering less-than predicate; docs/stdlib/modules/cmp.md
 fn std::cmp::is_less_or_equal|check-prelude std-cmp-ordering Ordering less-or-equal predicate; docs/stdlib/modules/cmp.md
 fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::cmp::max_by[T]|check-prelude std-cmp-by-helpers comparator-based maximum selection; docs/stdlib/modules/cmp.md
 fn std::cmp::min[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::cmp::min_by[T]|check-prelude std-cmp-by-helpers comparator-based minimum selection; docs/stdlib/modules/cmp.md
 fn std::cmp::reverse|check-prelude std-cmp-ordering reverse comparison result helper; docs/stdlib/modules/cmp.md
 fn std::cmp::then|check-prelude std-cmp-ordering lexicographic comparison chaining helper; docs/stdlib/modules/cmp.md
 fn std::cmp::then_compare[T: Ord[T]|check-prelude std-cmp-ordering lazy-ish generic compare chaining helper; docs/stdlib/modules/cmp.md
+fn std::cmp::then_compare_by[T]|check-prelude std-cmp-by-helpers comparator-based Ordering chain helper; docs/stdlib/modules/cmp.md
 fn std::collections::binary_heap[T]|check-prelude std-collections-heap explicit-comparator binary heap constructor; docs/stdlib/modules/collections.md
 fn std::collections::deque[T]|check-prelude std-collections-deque growable double-ended queue constructor; docs/stdlib/modules/collections.md
 fn std::collections::from_slice_in[T]|check-prelude std-collections-set source linear set from slice; docs/stdlib/modules/collections.md
@@ -661,6 +667,7 @@ method Ordering::is_less_or_equal|check-prelude std-cmp-ordering natural Orderin
 method Ordering::reverse|check-prelude std-cmp-ordering natural Ordering reverse method; docs/stdlib/modules/cmp.md
 method Ordering::then|check-prelude std-cmp-ordering natural Ordering chain method; docs/stdlib/modules/cmp.md
 method Ordering::then_compare[T: Ord[T]|check-prelude std-cmp-ordering natural generic Ordering chain method; docs/stdlib/modules/cmp.md
+method Ordering::then_compare_by[T]|check-prelude std-cmp-by-helpers natural comparator-based Ordering chain method; docs/stdlib/modules/cmp.md
 method SlicePair[T]::left|check-prelude prelude-slice-sequence split_at left half accessor; docs/stdlib/modules/slice.md
 method SlicePair[T]::right|check-prelude prelude-slice-sequence split_at right half accessor; docs/stdlib/modules/slice.md
 method Slice[T]::as_ptr|check-prelude prelude-slice-as-ptr borrowed receiver and provenance tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
@@ -1615,17 +1622,21 @@ use std::alloc_array|std zone raw array allocation root re-export tests; docs/st
 use std::arg|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows
 use std::arg_count|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows
 use std::clamp|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
+use std::clamp_by|check-prelude std-cmp-by-helpers comparator-based clamp root re-export; docs/stdlib/modules/cmp.md
 use std::create|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::destroy|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::has_arg|std context args root re-export tests; docs/stdlib/modules/context.md
 use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::input_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::is_between|std cmp value helper root re-export tests; docs/stdlib/api-reference.md Comparison section
+use std::is_between_by|check-prelude std-cmp-by-helpers comparator-based range root re-export; docs/stdlib/modules/cmp.md
 use std::iter::DoubleEndedIterator|check-prelude std-iter-double-ended module alias for root supertrait; docs/stdlib/modules/iter.md
 use std::iter::ExactSizeIterator|check-prelude std-iter-exact-size module alias for root supertrait; docs/stdlib/modules/iter.md
 use std::iter::collect|check-prelude std-iter-adapters natural iter::collect alias backed by std::vec; docs/stdlib/modules/iter.md
 use std::max|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
+use std::max_by|check-prelude std-cmp-by-helpers comparator-based max root re-export; docs/stdlib/modules/cmp.md
 use std::min|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
+use std::min_by|check-prelude std-cmp-by-helpers comparator-based min root re-export; docs/stdlib/modules/cmp.md
 use std::new|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::newline|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::promote|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
