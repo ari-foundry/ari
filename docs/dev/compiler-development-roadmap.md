@@ -130,7 +130,7 @@ future Ari-written compiler plan.
 | P1 | Parser and declaration artifacts | Expand syntax and declaration-index dumps around attributes, patterns, generics, modules, and malformed input. | One syntax/declaration golden per changed surface. |
 | P1 | Module project ergonomics | Harden package roots, `-I`, `.ari`/`.arih`, visibility, metadata, and cache invalidation diagnostics. | `make check-modules` or a single module fixture while iterating. |
 | P1 | Generic aggregate stress | Add compiler-shaped nested structs/enums/vectors/maps/results without special lowering escapes. | `tests/cases/compiler-development/ok/model/` fixture plus LLVM smoke. |
-| P2 | Trait and formatting selection | Make `Eq`, `Ord`, `Hash`, `Debug`, formatting, and `Drop` dispatch predictable in generic data-heavy code. | `make check-traits` and one compiler-model fixture. |
+| P2 | Trait and formatting selection | Make `Eq`, `Ord`, `Hash`, `Debug`, formatting, `Drop`, and trait-backed operator dispatch predictable in generic data-heavy code. | `make check-traits` and one compiler-model fixture. |
 | P2 | Ownership fact visibility | Add a small artifact for owner states, borrow sources, and inserted drops before broadening ownership behavior. | Future `--emit-ownership-facts` golden or equivalent typed-IR section. |
 | P2 | HIR sketch | Define the minimal lowered node vocabulary and artifact format before implementing a large HIR pass. | HIR text golden before backend checks. |
 

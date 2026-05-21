@@ -90,6 +90,7 @@ Use these when changing the compiler:
 - [Compiler Change Checklist](dev/compiler-change-checklist.md)
 - [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)
 - [Compiler Pass Contracts](dev/compiler-pass-contracts.md)
+- [Trait-Backed Operators](dev/operator-trait-design.md)
 - [Build And Test](dev/build-test.md)
 - [Aggregate ABI Classification](dev/aggregate-abi.md)
 - [Symbol Mangling](dev/symbol-mangling.md)

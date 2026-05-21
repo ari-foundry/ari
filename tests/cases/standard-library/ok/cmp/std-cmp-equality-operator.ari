@@ -1,0 +1,43 @@
+struct Score {
+  value: i64,
+}
+
+impl cmp::Eq[Score] for Score {
+  fn eq(self, other: Score) -> bool {
+    return self.value == other.value;
+  }
+}
+
+fn same[T: cmp::Eq[T]](left: T, right: T) -> bool {
+  return left == right;
+}
+
+fn different[T: cmp::Eq[T]](left: T, right: T) -> bool {
+  return left != right;
+}
+
+fn main() -> i64 {
+  let a = Score { value: 7 };
+  let b = Score { value: 7 };
+  let c = Score { value: 9 };
+  var total = 0;
+
+  if a == b {
+    total = total + 11;
+  }
+  if a != c {
+    total = total + 13;
+  }
+  let same_left = Score { value: 4 };
+  let same_right = Score { value: 4 };
+  if same<Score>(same_left, same_right) {
+    total = total + 17;
+  }
+  let different_left = Score { value: 4 };
+  let different_right = Score { value: 5 };
+  if different<Score>(different_left, different_right) {
+    total = total + 19;
+  }
+
+  return total;
+}

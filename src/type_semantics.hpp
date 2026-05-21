@@ -66,6 +66,7 @@ IrType require_raw_pointer_materializable_type(SourceLocation loc, const IrType&
 void require_numeric_operands(SourceLocation loc, const IrType& left, const IrType& right);
 void require_integer_operands(SourceLocation loc, const IrType& left, const IrType& right);
 void require_integer_shift_operands(SourceLocation loc, const IrType& left, const IrType& right);
+bool is_builtin_comparable_operands(const IrType& left, const IrType& right);
 void require_comparable_operands(SourceLocation loc, const IrType& left, const IrType& right);
 void require_logical_operand(SourceLocation loc, const IrType& type);
 void require_bitwise_not_operand(SourceLocation loc, const IrType& type);

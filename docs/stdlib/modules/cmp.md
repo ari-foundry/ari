@@ -19,7 +19,8 @@ Use `std::cmp` when code needs to choose or test values by order:
 - write generic helpers over a custom ordered type
 
 For one-off primitive comparisons, plain operators such as `<`, `>`, `==`,
-and `!=` are still the clearest spelling.
+and `!=` are still the clearest spelling. For custom equality types, implement
+`Eq[T]::eq`; `==` and `!=` use that method when no builtin comparison exists.
 
 ## API
 
@@ -39,9 +40,11 @@ fn eq(self, other: T) -> bool
 fn lt(self, other: T) -> bool
 ```
 
-`Ord[T]::lt` is enough for the current value helpers. The compiler does not
-enforce ordering laws such as transitivity; trait impl authors are responsible
-for making the comparison meaningful.
+`Eq[T]::eq` backs `==` and `!=` for non-builtin comparable values. `!=` is
+lowered as `!eq(...)`, so an `Eq` impl only needs one method. `Ord[T]::lt` is
+enough for the current value helpers. The compiler does not enforce ordering
+laws such as transitivity; trait impl authors are responsible for making the
+comparison meaningful.
 
 Three-way ordering:
 
@@ -120,6 +123,12 @@ impl cmp::Ord[Score] for Score {
   }
 }
 
+impl cmp::Eq[Score] for Score {
+  fn eq(self, other: Score) -> bool {
+    return self.value == other.value;
+  }
+}
+
 struct Point {
   x: i64,
   y: i64,
@@ -149,6 +158,12 @@ fn bounded_score(score: Score) -> Score {
 }
 
 fn main() -> i64 {
+  let first = Score { value: 7 };
+  let second = Score { value: 7 };
+  if first == second {
+    println("scores match");
+  }
+
   let value = cmp::min<i64>(12, 7);
   if cmp::is_between<i64>(value, 5, 10) {
     let ordering = cmp::compare<Point>(
@@ -172,12 +187,17 @@ The current comparison traits still do not provide derived ordering for every
 aggregate shape or separate checked handling for partial orders. Those belong
 in later trait and derive slices.
 
+Custom operator glyph declarations are not part of `std::cmp` yet. Equality is
+the first builtin operator bridge because it maps cleanly to the existing
+single-method `Eq[T]` contract.
+
 ## Tests
 
 The focused positive behavior test is:
 
 ```text
 tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari
+tests/cases/standard-library/ok/cmp/std-cmp-equality-operator.ari
 tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari
 ```
 

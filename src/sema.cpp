@@ -24431,6 +24431,31 @@ private:
         return wrap_call_with_receiver_prelude(expr.loc, std::move(receiver_prelude), std::move(call));
     }
 
+    IrExprPtr check_trait_equality_binary(const Expr& expr, IrExprPtr lowered) {
+        std::vector<ExprPtr> args;
+        args.push_back(clone_expression_tree(*expr_right(expr)));
+        ExprPtr method_call = make_ast_method_call_expr(
+            expr.loc,
+            clone_expression_tree(*expr_left(expr)),
+            "eq",
+            {},
+            std::move(args));
+
+        IrExprPtr call = check_method_call(*method_call, std::move(lowered));
+        require_logical_operand(expr.loc, call->type);
+        if (expr.op == TokenKind::EqEq) {
+            return call;
+        }
+
+        auto negated = std::make_unique<IrExpr>();
+        negated->kind = IrExprKind::Unary;
+        negated->loc = expr.loc;
+        negated->unary_op = IrUnaryOp::Not;
+        negated->type = bool_type(expr.loc);
+        set_ir_expr_operand(*negated, std::move(call));
+        return negated;
+    }
+
     IrExprPtr check_pointer_arithmetic_binary(const Expr& expr, IrExprPtr lhs, IrExprPtr rhs) {
         const bool subtract = expr.op == TokenKind::Minus;
         const std::string operation = subtract ? "pointer -" : "pointer +";
@@ -24454,6 +24479,20 @@ private:
     }
 
     IrExprPtr check_binary(const Expr& expr, IrExprPtr lowered) {
+        StateSnapshot equality_probe_state;
+        LocalScopeStack::NameState equality_probe_name_state;
+        std::size_t equality_probe_warning_count = 0;
+        int equality_probe_hidden_local_counter = 0;
+        std::size_t equality_probe_borrow_mark = 0;
+        const bool equality_operator = expr.op == TokenKind::EqEq || expr.op == TokenKind::BangEq;
+        if (equality_operator) {
+            equality_probe_state = snapshot_states();
+            equality_probe_name_state = local_scopes_.snapshot_name_state();
+            equality_probe_warning_count = warnings_.size();
+            equality_probe_hidden_local_counter = hidden_local_counter_;
+            equality_probe_borrow_mark = temporary_borrow_mark();
+        }
+
         IrExprPtr lhs = check_expr(*expr_left(expr));
         IrExprPtr rhs = check_expr(*expr_right(expr));
         if (is_borrow_type(lhs->type) || is_borrow_type(rhs->type)) {
@@ -24501,6 +24540,14 @@ private:
                 break;
             case IrBinaryOp::Eq:
             case IrBinaryOp::Ne:
+                if (!is_builtin_comparable_operands(lhs->type, rhs->type)) {
+                    release_temporary_borrows(equality_probe_borrow_mark);
+                    restore_states(equality_probe_state);
+                    local_scopes_.restore_name_state(std::move(equality_probe_name_state));
+                    warnings_.resize(equality_probe_warning_count);
+                    hidden_local_counter_ = equality_probe_hidden_local_counter;
+                    return check_trait_equality_binary(expr, std::move(lowered));
+                }
                 require_comparable_operands(expr.loc, lhs->type, rhs->type);
                 lowered->type = bool_type(expr.loc);
                 break;

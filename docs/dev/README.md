@@ -47,6 +47,7 @@ drive ordinary compiler design.
 - [Compiler Change Checklist](compiler-change-checklist.md)
 - [Compiler Readiness Inventory](compiler-readiness-inventory.md)
 - [Compiler Pass Contracts](compiler-pass-contracts.md)
+- [Trait-Backed Operators](operator-trait-design.md)
 - [Build And Test](build-test.md)
 - [Aggregate ABI Classification](aggregate-abi.md)
 - [Feature Test Matrix](test-matrix.md)

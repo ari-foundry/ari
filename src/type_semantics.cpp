@@ -581,20 +581,30 @@ void require_integer_shift_operands(SourceLocation loc, const IrType& left, cons
     fail(loc, "shift operands must be integers, got " + type_name(left) + " and " + type_name(right));
 }
 
-void require_comparable_operands(SourceLocation loc, const IrType& left, const IrType& right) {
+bool is_builtin_comparable_operands(const IrType& left, const IrType& right) {
     if ((has_aggregate_enum_layout(left) || has_aggregate_enum_layout(right)) && same_type(left, right)) {
-        fail(loc, "comparison for aggregate enum layouts is planned but is not supported yet");
+        return false;
     }
     if (same_type_or_char_u8_boundary(left, right) &&
         is_value_integer_type(left) &&
         is_value_integer_type(right)) {
-        return;
+        return true;
     }
     if (same_type(left, right) &&
         (is_value_integer_type(left) ||
          is_value_float_type(left) ||
          is_value_enum_type(left) ||
          (left.qualifier == TypeQualifier::Value && left.primitive == IrPrimitiveKind::Bool))) {
+        return true;
+    }
+    return false;
+}
+
+void require_comparable_operands(SourceLocation loc, const IrType& left, const IrType& right) {
+    if ((has_aggregate_enum_layout(left) || has_aggregate_enum_layout(right)) && same_type(left, right)) {
+        fail(loc, "comparison for aggregate enum layouts is planned but is not supported yet");
+    }
+    if (is_builtin_comparable_operands(left, right)) {
         return;
     }
     fail(loc, "comparison operands must have the same comparable type, got " + type_name(left) + " and " + type_name(right));

@@ -85,6 +85,43 @@ Comparisons return `bool`.
 
 Enum values in the lowered tagged-union subset support `==` and `!=`.
 
+For non-builtin value types, `==` and `!=` fall back to trait-style `eq`
+method dispatch. The standard spelling is an implementation of
+`std::cmp::Eq[T]` or another visible trait/inherent method that provides:
+
+```ari
+fn eq(self, other: T) -> bool
+```
+
+That lets comparison code stay natural:
+
+```ari
+struct Score {
+  value: i64,
+}
+
+impl cmp::Eq[Score] for Score {
+  fn eq(self, other: Score) -> bool {
+    return self.value == other.value;
+  }
+}
+
+fn same[T: cmp::Eq[T]](left: T, right: T) -> bool {
+  return left == right;
+}
+
+let left = Score { value: 7 };
+let right = Score { value: 7 };
+if left == right {
+  println("same");
+}
+```
+
+The fallback is deliberately narrow today: `==` calls `eq`, and `!=` calls
+`eq` and negates the result. The method must return `bool`. Ordering
+operators such as `<` and `>` still require numeric operands until the
+comparison trait operator surface is expanded.
+
 ## Boolean Logic
 
 ```ari
@@ -161,8 +198,10 @@ Generic prelude `Option[T]` and `Result[T, E]` values use the same rule on the
 LLVM backend path.
 
 Ari's current operator-sugar set is intentionally closed around compound
-assignment, range syntax, postfix `?`, and `??`. Additional null/result
-operators need a separate design pass rather than being reserved implicitly.
+assignment, range syntax, postfix `?`, `??`, and equality-to-`eq` trait
+dispatch. Additional null/result operators and user-defined operator symbols
+need a separate design pass rather than being reserved implicitly. The current
+developer design is [Trait-Backed Operators](../dev/operator-trait-design.md).
 
 ## Bitwise Not
 

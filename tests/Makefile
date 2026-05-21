@@ -844,6 +844,10 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf
 	$(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 235
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 235; fi
+	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-equality-operator.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-equality-operator.ll
+	grep -F -q 'std__cmp__Eq' $(BUILD_DIR)/prelude/std-cmp-equality-operator.ll
+	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-equality-operator.ari -o $(BUILD_DIR)/prelude/std-cmp-equality-operator.elf
+	$(BUILD_DIR)/prelude/std-cmp-equality-operator.elf; code=$$?; test $$code -eq 60
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-ordering.ll
 	grep -F -q 'compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-ordering.ll
 	grep -F -q 'then_compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-ordering.ll
@@ -2243,6 +2247,8 @@ check-prelude: $(TARGET)
 	grep -q "prelude type 'Shared' is reserved for future reference-counted ownership" $(BUILD_DIR)/prelude/prelude-shared-reserved.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-weak-reserved.ari -o $(BUILD_DIR)/prelude/prelude-weak-reserved.elf >$(BUILD_DIR)/prelude/prelude-weak-reserved.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'Weak' is reserved for future non-owning shared-pointer handles" $(BUILD_DIR)/prelude/prelude-weak-reserved.err
+	if $(TARGET) tests/cases/standard-library/errors/cmp/std-cmp-equality-operator-missing-eq.ari -o $(BUILD_DIR)/prelude/std-cmp-equality-operator-missing-eq.elf >$(BUILD_DIR)/prelude/std-cmp-equality-operator-missing-eq.err 2>&1; then exit 1; fi
+	grep -q "unknown method 'eq' for type Score" $(BUILD_DIR)/prelude/std-cmp-equality-operator-missing-eq.err
 	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude/prelude-special-without-std.ari -o $(BUILD_DIR)/prelude/prelude-special-without-std.elf >$(BUILD_DIR)/prelude/prelude-special-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'size_of'" $(BUILD_DIR)/prelude/prelude-special-without-std.err
 	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/cases/standard-library/errors/prelude/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi

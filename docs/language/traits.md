@@ -89,6 +89,25 @@ Generic trait methods are executable through static dispatch. They remain
 non-object-safe for `dyn` dispatch because a vtable slot must have one concrete
 signature.
 
+Equality operators use the same method-dispatch path when builtin comparison is
+not available. This means the generic helper above can be written with
+operator syntax once the bound provides `eq`:
+
+```ari
+fn same[T: cmp::Eq[T]](left: T, right: T) -> bool {
+  return left == right;
+}
+
+fn different[T: cmp::Eq[T]](left: T, right: T) -> bool {
+  return left != right;
+}
+```
+
+The operator fallback is intentionally specific: `==` dispatches to `eq`, `!=`
+dispatches to `eq` and negates it, and the selected method must return `bool`.
+Custom operator glyph declarations such as `op infix \`++\` = doubleadd;` are a
+planned parser/sema feature, not today's language surface.
+
 Generic impl blocks can also constrain their own parameters:
 
 ```ari
