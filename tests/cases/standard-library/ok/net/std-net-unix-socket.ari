@@ -1,7 +1,7 @@
 // Covers Unix domain stream sockets on hosted Unix-like targets. The test uses
-// a short pathname socket, transfers bytes through std::io traits, and cleans
-// up the path. Restricted hosts may reject socket creation; that still proves
-// the std::error bridge.
+// a short pathname socket, transfers bytes through stream byte and buffer
+// helpers, and cleans up the path. Restricted hosts may reject socket creation;
+// that still proves the std::error bridge.
 fn error_is(raw: i64, kind: error::Kind) -> bool {
   let value = error::from_raw(raw);
   return value.is_kind(kind);
@@ -59,8 +59,15 @@ fn main() -> i64 {
     score = score + 16;
   }
 
-  if server.write_byte(82u8) && client.read_byte() == 82 {
-    score = score + 32;
+  var reply = [82u8, 83u8];
+  if server.write_all(reply.as_slice()) {
+    var output = [0u8, 0u8];
+    let output_raw = output.as_slice().as_ptr();
+    if client.read_exact(output_raw, 2) {
+      if ptr_load(output_raw) == 82u8 && ptr_load(ptr_add(output_raw, 1)) == 83u8 {
+        score = score + 32;
+      }
+    }
   }
 
   if client.shutdown(net::Write) {

@@ -232,16 +232,17 @@ identifies the exact case:
 - `std-net-address-validation.ari`: strict and fallible IPv4 octet and IPv6
   segment accessors for known-good indexes and parsed-index validation.
 - `std-net-tcp-loopback.ari`: hosted IPv4 TCP listener/stream bind, local-port
-  lookup, connect, accept, `std::io::Reader`/`Writer` byte transfer, explicit
-  close, timeout/nonblocking helpers, stream shutdown, IPv6 unsupported
-  errors, and restricted-host `PermissionDenied` behavior when the test
-  environment forbids socket creation.
+  lookup, connect, accept, `std::io::Reader`/`Writer` byte transfer,
+  method-style stream `read_exact`/`write_all`, explicit close,
+  timeout/nonblocking helpers, stream shutdown, IPv6 unsupported errors, and
+  restricted-host `PermissionDenied` behavior when the test environment
+  forbids socket creation.
 - `std-net-udp-socket.ari`: hosted IPv4 UDP bind, local-port lookup,
   timeout/nonblocking helpers, single-byte datagram send/receive, unsupported
   IPv6 bind errors, restricted-host fallback, and explicit close.
 - `std-net-unix-socket.ari`: hosted Unix stream listener bind, stream connect,
-  accept, timeout/nonblocking helpers, bidirectional IO through common
-  `std::io` traits, stream shutdown, close, and socket-file cleanup.
+  accept, timeout/nonblocking helpers, bidirectional byte and buffer IO,
+  stream shutdown, close, and socket-file cleanup.
 - `std-net-dns-lookup.ari`: hosted IPv4 numeric lookup through both `Option`
   and `Result` APIs, unsupported IPv6 text input, and edge IPv4 addresses.
 - `std-algo-slice-helpers.ari`: source `std::algo` sort/stable sort,

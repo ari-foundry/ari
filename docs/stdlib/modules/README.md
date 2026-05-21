@@ -106,8 +106,8 @@ limits, examples, and test files for one module.
   normalization.
 - [std::net](net.md): IPv4, IPv6, generic IP, socket-address values, hosted
   IPv4 DNS lookup, TCP listener/stream handles, UDP single-byte datagrams,
-  Unix stream sockets, nonblocking/timeout/shutdown helpers, and networking
-  runtime roadmap.
+  Unix stream sockets, TCP/Unix stream buffer helpers,
+  nonblocking/timeout/shutdown helpers, and networking runtime roadmap.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,
   `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,

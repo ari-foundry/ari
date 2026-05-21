@@ -136,6 +136,36 @@ fn invalid_input_error_raw() -> i64 {
   return error.raw();
 }
 
+fn read_exact_raw(raw: i64, output: ptr u8, len: i64) -> bool {
+  if raw < 0 {
+    return false;
+  }
+  var index = 0;
+  while index < len {
+    let value = read_socket_byte_raw(raw);
+    if value < 0 {
+      return false;
+    }
+    std::mem::ptr_store(std::mem::ptr_add(output, index), value as u8);
+    index = index + 1;
+  }
+  return true;
+}
+
+fn write_all_raw(raw: i64, values: std::Slice[u8]) -> bool {
+  if raw < 0 {
+    return false;
+  }
+  var index = 0;
+  while index < values.len {
+    if !write_socket_byte_raw(raw, values[index]) {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
 fn tcp_listener_from_raw(raw: i64) -> TcpListener {
   var handle = std::os::OwnedFd::from_raw(raw);
   handle.set_close_on_exec(true);
@@ -578,6 +608,14 @@ pub impl std::net::TcpStream {
     }
     return std::Some<u8>(byte as u8);
   }
+
+  fn read_exact(self: ref mut Self, output: ptr u8, len: i64) -> bool {
+    return read_exact_raw(self.handle.raw(), output, len);
+  }
+
+  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> bool {
+    return write_all_raw(self.handle.raw(), values);
+  }
 }
 
 pub impl std::net::UdpSocket {
@@ -810,6 +848,14 @@ pub impl std::net::UnixStream {
       return std::None<u8>();
     }
     return std::Some<u8>(byte as u8);
+  }
+
+  fn read_exact(self: ref mut Self, output: ptr u8, len: i64) -> bool {
+    return read_exact_raw(self.handle.raw(), output, len);
+  }
+
+  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> bool {
+    return write_all_raw(self.handle.raw(), values);
   }
 }
 

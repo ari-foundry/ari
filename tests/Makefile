@@ -771,6 +771,8 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_local_port" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_set_read_timeout_millis" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_shutdown" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpStream8inherent9write_all" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari -o $(BUILD_DIR)/prelude/std-net-tcp-loopback.elf
 	$(BUILD_DIR)/prelude/std-net-tcp-loopback.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-udp-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-udp-socket.ll
@@ -782,6 +784,8 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_listen" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixStream8inherent9write_all" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari -o $(BUILD_DIR)/prelude/std-net-unix-socket.elf
 	$(BUILD_DIR)/prelude/std-net-unix-socket.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-dns-lookup.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-dns-lookup.ll

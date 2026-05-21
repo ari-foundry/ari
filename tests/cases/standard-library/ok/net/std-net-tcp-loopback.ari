@@ -67,11 +67,11 @@ fn main() -> i64 {
   }
 
   var reply = [66u8, 67u8];
-  if std::io::write_all<net::TcpStream>(ref mut server, reply.as_slice()) {
+  if server.write_all(reply.as_slice()) {
     var output = [0u8, 0u8];
     let view = output.as_slice();
     let output_raw = view.as_ptr();
-    if std::io::read_exact<net::TcpStream>(ref mut client, output_raw, 2) {
+    if client.read_exact(output_raw, 2) {
       if ptr_load(output_raw) == 66u8 && ptr_load(ptr_add(output_raw, 1)) == 67u8 {
         score = score + 64;
       }

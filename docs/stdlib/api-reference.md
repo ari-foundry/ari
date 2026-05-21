@@ -1173,6 +1173,8 @@ stream.set_read_timeout_millis(millis)
 stream.set_write_timeout_millis(millis)
 stream.shutdown(mode)
 stream.try_read_byte()
+stream.read_exact(output, len)
+stream.write_all(values)
 stream.close()
 
 UdpSocket::bind(addr)
@@ -1213,6 +1215,8 @@ stream.set_read_timeout_millis(millis)
 stream.set_write_timeout_millis(millis)
 stream.shutdown(mode)
 stream.try_read_byte()
+stream.read_exact(output, len)
+stream.write_all(values)
 stream.close()
 ```
 
@@ -1224,9 +1228,11 @@ owned descriptor-backed handles. They support hosted IPv4 TCP bind/connect/
 accept, IPv4 UDP bind/send-byte/receive-byte, Unix stream bind/connect/accept,
 local bound-port lookup where it applies, borrowed descriptor views, explicit
 close, nonblocking flags, millisecond timeouts, and stream shutdown. TCP and
-Unix streams adapt to `std::io::Reader`/`Writer`. IPv6 socket handles,
-buffered datagram APIs, richer socket options, peer/local address helpers, and
-direct `Result[..., Error]` payloads remain roadmap work.
+Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
+`read_exact(output, len)` / `write_all(values)` helpers for natural stream
+method syntax. IPv6 socket handles, buffered datagram APIs, richer socket
+options, peer/local address helpers, and direct `Result[..., Error]` payloads
+remain roadmap work.
 
 ## IO And Input
 
