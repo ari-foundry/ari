@@ -270,6 +270,9 @@ identifies the exact case:
 - `std-collections-tree-entry-boundaries.ari`: `TreeMap.first_entry`,
   `TreeMap.last_entry`, and optional boundary-entry helpers before and after
   link-rebuild removal.
+- `std-collections-tree-bounds.ari`: `TreeMap.lower_bound`,
+  `TreeMap.upper_bound`, `TreeSet.lower_bound`, and `TreeSet.upper_bound`
+  nearest-value lookup over comparator order.
 - `std-collections-tree-iter.ari`: sorted `TreeMap.keys`, `TreeMap.values`,
   `TreeSet.iter`, and direct `TreeSet` `IntoIterator` successor traversal.
 - `deque/std-collections-deque.ari`: `Deque[T]` front/back pushes and pops,

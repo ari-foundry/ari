@@ -1526,10 +1526,6 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
-set.first()
-set.try_first()
-set.last()
-set.try_last()
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -1591,6 +1587,8 @@ map.try_last_entry()
 map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
+map.lower_bound(key)
+map.upper_bound(key)
 map.insert(ref mut zone, key, value)
 map.remove(key)
 map.clear()
@@ -1611,6 +1609,8 @@ set.first()
 set.try_first()
 set.last()
 set.try_last()
+set.lower_bound(value)
+set.upper_bound(value)
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -1635,15 +1635,19 @@ in place after compacting live storage. `TreeMap` boundary methods read the
 smallest or largest key and the value attached to that key in comparator order;
 use the `try_*` forms when an empty tree is a normal case. `first_entry` and
 `last_entry` return `MapEntry[K,V]` values when both boundary key and value are
-needed together. `TreeSet` relationship methods compare ordered-set
-membership, not internal tree shape.
+needed together. `TreeMap.lower_bound(key)` returns the first entry whose key
+is not less than `key`; `TreeMap.upper_bound(key)` returns the first entry
+whose key is greater than `key`. `TreeSet` relationship methods compare
+ordered-set membership, not internal tree shape.
 `TreeSet.first()` and `TreeSet.last()` read the smallest and largest values,
-with `try_first` and `try_last` for empty-safe access. `TreeSet.take(value)`
-returns the removed value as `Option[T]`; `TreeSet.remove(value)` drops it and
-returns a boolean. `TreeMap.keys()`, `TreeMap.values()`, `TreeMap.entries()`,
-`TreeSet.iter()`, and direct `for value in tree_set` walk values in ascending
-comparator order. Tree `copy_to` methods rebuild the map or set in the target
-zone with the same comparator.
+with `try_first` and `try_last` for empty-safe access. `TreeSet.lower_bound`
+and `TreeSet.upper_bound` return optional nearest values in comparator order.
+`TreeSet.take(value)` returns the removed value as `Option[T]`;
+`TreeSet.remove(value)` drops it and returns a boolean. `TreeMap.keys()`,
+`TreeMap.values()`, `TreeMap.entries()`, `TreeSet.iter()`, and direct
+`for value in tree_set` walk values in ascending comparator order. Tree
+`copy_to` methods rebuild the map or set in the target zone with the same
+comparator.
 
 `std::string::String` is an owned byte string:
 

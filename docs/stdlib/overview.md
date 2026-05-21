@@ -60,7 +60,7 @@ API evolution.
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `try_remove`, `retain`, `dedup`, `fill`, `copy_from`, `partition`, `slice`, `split_at`, `find`, `contains_slice`, `compare`, `chunks`, `windows`, `split`, `reverse`, `rotate_left`, `rotate_right`, `sort`, `stable_sort`, `is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `min`, `max`, `as_slice`, `iter`. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers. |
 | `std::random` | OS entropy and deterministic non-cryptographic PRNG helpers. | `Prng`, `entropy`, `fill`, `seed`, `from_entropy`, `seed_from_os`, `next`, `boolean`, unbiased `below`/`try_below`, unbiased `range`/`try_range`, `float`, `fill_from`, `shuffle`. |
-| `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]` with insertion-order access and set-relationship predicates, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, target-zone copy across collection families, hash-table `HashMap[K,V]`/`HashSet[T]` with natural `contains_key`/`contains_value`/`get_or` map lookup, entry iteration, and live-bucket set relationships, red-black-tree `TreeMap[K,V]`/`TreeSet[T]` with natural `contains_key`/`contains_value`/`get_or` map lookup, sorted entry iteration, ordered key/value/entry boundary access, link-rebuild removal, and ordered-set relationships, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
+| `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]` with insertion-order access and set-relationship predicates, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, target-zone copy across collection families, hash-table `HashMap[K,V]`/`HashSet[T]` with natural `contains_key`/`contains_value`/`get_or` map lookup, entry iteration, and live-bucket set relationships, red-black-tree `TreeMap[K,V]`/`TreeSet[T]` with natural `contains_key`/`contains_value`/`get_or` map lookup, sorted entry iteration, ordered key/value/entry boundary access, lower/upper bound lookup, link-rebuild removal, and ordered-set relationships, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
 | `std::iter` | Range, iterator traits, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, `collect`. |
 | `std::fmt` | Formatting traits plus explicit-zone, writer, and stdout formatting helpers. Root `Display`/`Debug` re-export these traits. | `Display::format_in`, `Debug::debug_in`, `FormatSpec`, `decimal`, `hex`, `binary`, `octal`, strict `with_width`/`with_precision`, fallible `try_with_width`/`try_with_precision`, `left`, `right`, `center`, `uppercase`, `alternate`, `unsigned_in`, `integer_in`, `boolean_in`, `float_in`, `text_in`, `debug_text_in`, `debug_value`, `write_unsigned`, `write_integer`, `write_boolean`, `write_text`, `write_value`, `write_debug`, `print_value`, `println_value`, `print_debug`, `println_debug`. |
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `Ordering`, `compare`, `then_compare`, `min`, `max`, `clamp`, `is_between`. |
@@ -299,10 +299,10 @@ zone-backed reusable node slots, and `BinaryHeap[T]`/`PriorityQueue[T]` cover
 highest-priority removal. `HashMap[K,V]` and `HashSet[T]` are real
 open-addressed hash tables with tombstones and live-bucket iterators.
 `TreeMap[K,V]` and `TreeSet[T]` are red-black trees with sorted successor
-iterators for keys, values, entries, and set values, plus first/last boundary
-access in comparator order. Map entry iterators and tree boundary-entry helpers
-yield `MapEntry[K,V]` values so callers do not need tuple convention knowledge
-to read `.key` and `.value`.
+iterators for keys, values, entries, and set values, plus first/last and
+lower/upper-bound access in comparator order. Map entry iterators, boundary
+entry helpers, and map bound helpers yield `MapEntry[K,V]` values so callers do
+not need tuple convention knowledge to read `.key` and `.value`.
 Map types expose `contains_key` as the preferred key-membership spelling while
 keeping `contains` compatible, `contains_value` for value membership scans, and
 `get_or` for ordinary fallback lookups.

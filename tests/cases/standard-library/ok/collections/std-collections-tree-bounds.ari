@@ -1,0 +1,72 @@
+// Covers ordered lower/upper-bound lookup for tree maps and sets. These
+// helpers return the nearest comparator-ordered value instead of forcing users
+// to scan sorted iterators by hand.
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  map.insert(ref mut zone, 4, 40);
+  map.insert(ref mut zone, 2, 20);
+  map.insert(ref mut zone, 8, 80);
+  map.insert(ref mut zone, 1, 10);
+  map.insert(ref mut zone, 3, 30);
+
+  let lower_first = map.lower_bound(0).unwrap_or(MapEntry { key: 0, value: 0 });
+  if lower_first.key == 1 && lower_first.value == 10 {
+    score = score + 2;
+  }
+
+  let lower_exact = map.lower_bound(3).unwrap_or(MapEntry { key: 0, value: 0 });
+  if lower_exact.key == 3 && lower_exact.value == 30 {
+    score = score + 3;
+  }
+
+  let lower_gap = map.lower_bound(5).unwrap_or(MapEntry { key: 0, value: 0 });
+  if lower_gap.key == 8 && lower_gap.value == 80 {
+    score = score + 5;
+  }
+
+  if map.lower_bound(9).is_none() {
+    score = score + 7;
+  }
+
+  let upper_before = map.upper_bound(0).unwrap_or(MapEntry { key: 0, value: 0 });
+  if upper_before.key == 1 && upper_before.value == 10 {
+    score = score + 11;
+  }
+
+  let upper_exact = map.upper_bound(3).unwrap_or(MapEntry { key: 0, value: 0 });
+  if upper_exact.key == 4 && upper_exact.value == 40 {
+    score = score + 13;
+  }
+
+  if map.upper_bound(8).is_none() {
+    score = score + 17;
+  }
+
+  var set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  set.insert(ref mut zone, 6);
+  set.insert(ref mut zone, 2);
+  set.insert(ref mut zone, 9);
+  set.insert(ref mut zone, 4);
+
+  if set.lower_bound(1).unwrap_or(0) == 2 {
+    score = score + 19;
+  }
+  if set.lower_bound(4).unwrap_or(0) == 4 {
+    score = score + 23;
+  }
+  if set.lower_bound(5).unwrap_or(0) == 6 {
+    score = score + 29;
+  }
+  if set.lower_bound(10).is_none() {
+    score = score + 31;
+  }
+  if set.upper_bound(4).unwrap_or(0) == 6 {
+    score = score + 37;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

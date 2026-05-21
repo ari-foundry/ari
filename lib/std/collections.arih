@@ -1396,6 +1396,38 @@ fn tree_map_find_slot_mut[K, V](map: ref mut std::collections::TreeMap[K, V], ke
   return -1;
 }
 
+fn tree_map_lower_bound_node[K, V](map: ref std::collections::TreeMap[K, V], key: K) -> i64 {
+  let less = map.less;
+  var node = map.root;
+  var best = -1;
+  while node >= 0 {
+    let node_key = ptr_load(ptr_add(map.keys, node));
+    if less(node_key, key) {
+      node = ptr_load(ptr_add(map.right, node));
+    } else {
+      best = node;
+      node = ptr_load(ptr_add(map.left, node));
+    }
+  }
+  return best;
+}
+
+fn tree_map_upper_bound_node[K, V](map: ref std::collections::TreeMap[K, V], key: K) -> i64 {
+  let less = map.less;
+  var node = map.root;
+  var best = -1;
+  while node >= 0 {
+    let node_key = ptr_load(ptr_add(map.keys, node));
+    if less(key, node_key) {
+      best = node;
+      node = ptr_load(ptr_add(map.left, node));
+    } else {
+      node = ptr_load(ptr_add(map.right, node));
+    }
+  }
+  return best;
+}
+
 fn tree_map_link_existing_node[K, V](map: ref mut std::collections::TreeMap[K, V], index: i64) -> void {
   let less = map.less;
   var parent = -1;
@@ -1687,6 +1719,32 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     let index = tree_map_find_slot<K, V>(self, key);
     std::assert(index >= 0);
     return ptr_load(ptr_add(self.values, index));
+  }
+
+  fn lower_bound(self: ref Self, key: K) -> std::Option[std::collections::MapEntry[K, V]] {
+    let node = tree_map_lower_bound_node<K, V>(self, key);
+    if node < 0 {
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    return std::Some<std::collections::MapEntry[K, V]>(
+      std::collections::MapEntry<K, V> {
+        key: ptr_load(ptr_add(self.keys, node)),
+        value: ptr_load(ptr_add(self.values, node)),
+      }
+    );
+  }
+
+  fn upper_bound(self: ref Self, key: K) -> std::Option[std::collections::MapEntry[K, V]] {
+    let node = tree_map_upper_bound_node<K, V>(self, key);
+    if node < 0 {
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    return std::Some<std::collections::MapEntry[K, V]>(
+      std::collections::MapEntry<K, V> {
+        key: ptr_load(ptr_add(self.keys, node)),
+        value: ptr_load(ptr_add(self.values, node)),
+      }
+    );
   }
 
   fn insert(self: ref mut Self, zone: ref mut Zone, key: K, value: V) -> std::Option[V] {
@@ -1999,6 +2057,38 @@ fn tree_set_find_slot_mut[T](set: ref mut std::collections::TreeSet[T], value: T
   return -1;
 }
 
+fn tree_set_lower_bound_node[T](set: ref std::collections::TreeSet[T], value: T) -> i64 {
+  let less = set.less;
+  var node = set.root;
+  var best = -1;
+  while node >= 0 {
+    let node_value = ptr_load(ptr_add(set.data, node));
+    if less(node_value, value) {
+      node = ptr_load(ptr_add(set.right, node));
+    } else {
+      best = node;
+      node = ptr_load(ptr_add(set.left, node));
+    }
+  }
+  return best;
+}
+
+fn tree_set_upper_bound_node[T](set: ref std::collections::TreeSet[T], value: T) -> i64 {
+  let less = set.less;
+  var node = set.root;
+  var best = -1;
+  while node >= 0 {
+    let node_value = ptr_load(ptr_add(set.data, node));
+    if less(value, node_value) {
+      best = node;
+      node = ptr_load(ptr_add(set.left, node));
+    } else {
+      node = ptr_load(ptr_add(set.right, node));
+    }
+  }
+  return best;
+}
+
 fn tree_set_link_existing_node[T](set: ref mut std::collections::TreeSet[T], index: i64) -> void {
   let less = set.less;
   var parent = -1;
@@ -2135,6 +2225,22 @@ pub impl[T] std::collections::TreeSet[T] {
 
   fn try_last(self: ref Self) -> std::Option[T] {
     let node = tree_last_node(self.root, self.right);
+    if node < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+
+  fn lower_bound(self: ref Self, value: T) -> std::Option[T] {
+    let node = tree_set_lower_bound_node<T>(self, value);
+    if node < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+
+  fn upper_bound(self: ref Self, value: T) -> std::Option[T] {
+    let node = tree_set_upper_bound_node<T>(self, value);
     if node < 0 {
       return std::None<T>();
     }

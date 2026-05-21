@@ -254,6 +254,8 @@ map.contains_value(value)
 map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
+map.lower_bound(key)
+map.upper_bound(key)
 map.insert(ref mut zone, key, value)
 map.remove(key)
 map.clear()
@@ -370,8 +372,11 @@ key-sorted order. `first_key`,
 `last_key`, `first_value`, and `last_value` assert when the tree is empty;
 use the `try_*` forms for empty-safe boundary access. `first_entry` and
 `last_entry` return `MapEntry[K, V]` so callers can read the boundary key and
-value without doing two boundary lookups. `entries` yields `MapEntry[K, V]`
-values with `.key` and `.value` fields in the same sorted key order. `remove`
+value without doing two boundary lookups. `lower_bound(key)` returns the first
+entry whose key is not less than `key`, and `upper_bound(key)` returns the
+first entry whose key is greater than `key`; both return `None` when no such
+entry exists. `entries` yields `MapEntry[K, V]` values with `.key` and
+`.value` fields in the same sorted key order. `remove`
 returns the removed value as `Option[V]`; the current
 implementation compacts the live node arrays and rebuilds tree links in place,
 so removal does not allocate through a zone. For tracked local tree maps,
@@ -388,6 +393,8 @@ set.first()
 set.try_first()
 set.last()
 set.try_last()
+set.lower_bound(value)
+set.upper_bound(value)
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -408,12 +415,15 @@ returns the previous equal value or inserts a new one. `equals`, `is_subset`,
 `is_superset`, and `is_disjoint` compare ordered-set membership, not the
 internal tree shape. `first` and `last` read the smallest and largest values
 in comparator order and assert when the tree is empty; use `try_first` and
-`try_last` when emptiness is ordinary control flow. `take` moves a removed
-value out as `Option[T]`; `remove` drops the removed value and returns whether
-anything was removed. Tree-set removal also compacts live nodes and rebuilds
-links in place without allocating. `TreeSet.iter()` yields values in ascending
-comparator order, and `TreeSet[T]` implements `IntoIterator[T]`. For tracked
-local tree sets, `set.insert(value)`, `set.replace(value)`, and
+`try_last` when emptiness is ordinary control flow. `lower_bound(value)`
+returns the first stored value that is not less than `value`, and
+`upper_bound(value)` returns the first stored value greater than `value`; both
+return `None` past the right edge. `take` moves a removed value out as
+`Option[T]`; `remove` drops the removed value and returns whether anything was
+removed. Tree-set removal also compacts live nodes and rebuilds links in place
+without allocating. `TreeSet.iter()` yields values in ascending comparator
+order, and `TreeSet[T]` implements `IntoIterator[T]`. For tracked local tree
+sets, `set.insert(value)`, `set.replace(value)`, and
 `set.reserve(capacity)`/`set.reserve_extra(additional)` infer the constructor
 zone. `copy_to(ref mut target)` rebuilds the ordered set in the target zone
 with the same comparator.
@@ -516,6 +526,7 @@ tests/cases/standard-library/ok/collections/std-collections-map-value-predicates
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-entry-boundaries.ari
+tests/cases/standard-library/ok/collections/std-collections-tree-bounds.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
@@ -580,6 +591,8 @@ key order to exercise red-black rotations. `std-collections-tree-boundaries.ari`
 checks empty-safe and asserting ordered boundary access for tree maps and sets.
 `std-collections-tree-entry-boundaries.ari` checks key/value boundary entry
 helpers before and after tree removal.
+`std-collections-tree-bounds.ari` checks comparator-order lower/upper bound
+lookup for tree maps and sets.
 `std-collections-tree-remove.ari` removes root/internal tree nodes, checks
 missing-removal paths, and verifies sorted entries/boundaries after link
 rebuild.
