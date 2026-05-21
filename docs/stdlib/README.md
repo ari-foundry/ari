@@ -59,8 +59,8 @@ wall-clock timestamps, non-negative
 durations, elapsed-time helpers, monotonic deadlines, UTC calendar conversion,
 and sleep, and `std::fs` adds the first
 byte-oriented file handle slice with mode-string and `OpenOptions` opens for
-read, write, append, and read/write access, raw-error open, mutation, and
-byte-count results, plus
+read, write, append, and read/write access, direct `Error` result forms for
+open, mutation, and byte-count operations with raw compatibility bridges, plus
 access-permission checks, source create,
 read, write, append, position, seek, truncate, copy, rename, hard/symbolic
 links, link-target reads, no-follow link metadata, single-directory and

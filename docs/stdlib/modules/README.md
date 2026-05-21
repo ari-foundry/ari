@@ -65,8 +65,8 @@ limits, examples, and test files for one module.
 - [std::log](log.md): source-only stderr logging levels, byte-slice messages,
   string messages, convenience level functions, and diagnostics roadmap notes.
 - [std::error](error.md): shared recoverable error categories, compact error
-  values, POSIX errno mapping, root aliases, and the current raw-error bridge
-  for `Result[T, i64]`.
+  values, POSIX errno mapping, root aliases, direct `Result[T, Error]`
+  conversion helpers, and raw compatibility bridges for runtime/FFI code.
 - [std::c](c.md): C ABI boundary helpers, borrowed and owned
   NUL-terminated strings, POSIX errno access, dynamic loading handles, and
   libc type-mapping notes.
@@ -93,7 +93,8 @@ limits, examples, and test files for one module.
   timestamps, non-negative durations, elapsed-time helpers, monotonic
   deadlines/timeouts, UTC calendar conversion, and sleep.
 - [std::fs](fs.md): runtime-backed file existence, mode-string and
-  `OpenOptions` open calls, raw-error open, mutation, and byte-count results,
+  `OpenOptions` open calls, direct `Error` result helpers for open, mutation,
+  and byte-count operations, raw compatibility result helpers,
   close, removal, `File` value handles, `Option[File]` open helpers, and
   source byte create/read/write/append/truncate/copy plus target-following and
   no-follow metadata, path-kind predicates, rename, hard/symbolic links, and

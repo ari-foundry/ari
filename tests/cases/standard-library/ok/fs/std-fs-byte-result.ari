@@ -1,6 +1,6 @@
 // Covers Result-returning whole-file byte helpers. These keep byte counts on
-// success and preserve the compact std::error raw bridge on ordinary open,
-// write, and close failures.
+// success and preserve direct Error payloads plus the raw bridge on ordinary
+// open, write, and close failures.
 fn cleanup(path: string, copy_path: string, missing_source: string, missing_parent: string) -> void {
   fs::remove(path);
   fs::remove(copy_path);
@@ -8,22 +8,32 @@ fn cleanup(path: string, copy_path: string, missing_source: string, missing_pare
   fs::remove_dir(missing_parent);
 }
 
-fn error_matches(raw: i64, kind: error::Kind, code: i64) -> bool {
-  let value = error::from_raw(raw);
+fn error_matches(value: error::Error, kind: error::Kind, code: i64) -> bool {
   return value.is_kind(kind) && value.code() == code;
 }
 
-fn byte_result_ok(value: Result[i64, i64], expected: i64) -> bool {
+fn raw_error_matches(raw: i64, kind: error::Kind, code: i64) -> bool {
+  return error_matches(error::from_raw(raw), kind, code);
+}
+
+fn byte_result_ok(value: Result[i64, error::Error], expected: i64) -> bool {
   match value {
     Ok(count) => { return count == expected; }
     Err(_) => { return false; }
   }
 }
 
-fn byte_result_error(value: Result[i64, i64], kind: error::Kind, code: i64) -> bool {
+fn byte_result_error(value: Result[i64, error::Error], kind: error::Kind, code: i64) -> bool {
   match value {
     Ok(_) => { return false; }
-    Err(raw) => { return error_matches(raw, kind, code); }
+    Err(reason) => { return error_matches(reason, kind, code); }
+  }
+}
+
+fn byte_raw_result_error(value: Result[i64, i64], kind: error::Kind, code: i64) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(raw) => { return raw_error_matches(raw, kind, code); }
   }
 }
 
@@ -56,10 +66,12 @@ fn main() -> i64 {
     score = score + 8;
   }
 
-  if byte_result_error(fs::write_result(missing_child, first.as_slice()), error::NotFound, 2) {
+  if byte_result_error(fs::write_result(missing_child, first.as_slice()), error::NotFound, 2) &&
+    byte_raw_result_error(fs::write_raw_result(missing_child, first.as_slice()), error::NotFound, 2) {
     score = score + 16;
   }
-  if byte_result_error(fs::append_result(missing_child, tail.as_slice()), error::NotFound, 2) {
+  if byte_result_error(fs::append_result(missing_child, tail.as_slice()), error::NotFound, 2) &&
+    byte_raw_result_error(fs::append_raw_result(missing_child, tail.as_slice()), error::NotFound, 2) {
     score = score + 32;
   }
 
@@ -72,6 +84,7 @@ fn main() -> i64 {
   }
 
   assert(byte_result_error(fs::copy_result(missing_source, copy_path), error::NotFound, 2));
+  assert(byte_raw_result_error(fs::copy_raw_result(missing_source, copy_path), error::NotFound, 2));
   cleanup(path, copy_path, missing_source, missing_parent);
   zone::destroy(zone);
   assert_eq_i64(score, 255);

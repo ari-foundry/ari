@@ -12,12 +12,11 @@ has information the caller should inspect or propagate.
 Use `assert` or `panic` only for programmer errors. Ordinary missing values and
 recoverable failures should flow through `Option` or `Result`.
 
-For shared library or OS failures, use `std::error::Error`. Current Ari enum
-payload storage cannot always mix scalar success values with aggregate error
-values directly, so code that needs `Result[T, Error]` today should use
-`Result[T, i64]` with `error.raw()` and reconstruct with
-`error::from_raw(raw)`. This is a compatibility bridge, not the long-term
-shape.
+For shared library or OS failures, use `std::error::Error`. New public APIs
+should prefer `Result[T, Error]`. Keep `Result[T, i64]` at runtime, FFI, and
+compatibility boundaries, and adapt with `error::from_raw_result` or
+`error::to_raw_result` instead of leaking raw error integers into ordinary
+library code.
 
 ## Option API
 

@@ -129,12 +129,11 @@ naturally named, and `scratch` simply creates an explicit `Zone` for tests.
 `std::log` writes level-prefixed diagnostic lines to `stderr` through
 `std::io::Stderr`. `std::error`
 defines compact recoverable error values, stable error categories, POSIX errno
-mapping, fallible boundary validation, and a raw scalar bridge for today's
-`Result[T, i64]` storage limits.
+mapping, fallible boundary validation, direct `Result[T, Error]` bridges, and
+raw scalar compatibility conversion for runtime/FFI boundaries.
 Rich test discovery, compiler-owned source text and filename storage,
-structured logging, stack traces, backtraces, and direct
-`Result[T, Error]` mixed-payload storage remain runtime, driver, and compiler
-roadmap work.
+structured logging, stack traces, backtraces, owned error messages, and richer
+structured error fields remain runtime, driver, and compiler roadmap work.
 
 `std::c` is source Ari around compiler-known C ABI primitives. The compiler
 owns `c_int`, `c_char`, `c_void`, `size_t`, and target-sensitive C width
@@ -279,8 +278,9 @@ wall-clock timestamps and convert it to UTC with `to_utc()` when a calendar
 value is needed.
 
 `std::fs` is the first filesystem slice. `exists`, access-style permission
-checks, `remove`, mode-string and `OpenOptions` open helpers, raw-error
-open, mutation, and byte-count `Result` helpers, close, single-byte read/write, and file
+checks, `remove`, mode-string and `OpenOptions` open helpers, direct
+`Result[..., Error]` open/mutation/byte-count helpers, raw compatibility
+bridges, close, single-byte read/write, and file
 cursor `position`/`seek` are runtime-backed because they call host
 file-descriptor APIs. `permissions`,
 `try_open`, `open_result`, `open_options`, compatibility `try_open_*` wrappers, `rename`, `rename_result`, `create_dir`,

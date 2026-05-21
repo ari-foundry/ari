@@ -120,6 +120,28 @@ pub fn try_from_raw(raw: i64) -> std::Option[std::error::Error] {
   return std::Some<std::error::Error>(std::error::from_raw(raw));
 }
 
+pub fn from_raw_result[T](value: std::Result[T, i64]) -> std::Result[T, std::error::Error] {
+  match value {
+    std::Ok(payload) => {
+      return std::Ok<T, std::error::Error>(payload);
+    }
+    std::Err(raw) => {
+      return std::Err<T, std::error::Error>(std::error::from_raw(raw));
+    }
+  }
+}
+
+pub fn to_raw_result[T](value: std::Result[T, std::error::Error]) -> std::Result[T, i64] {
+  match value {
+    std::Ok(payload) => {
+      return std::Ok<T, i64>(payload);
+    }
+    std::Err(error) => {
+      return std::Err<T, i64>(error.raw());
+    }
+  }
+}
+
 pub fn from_errno(code: i64) -> std::error::Error {
   std::assert(valid_code(code));
   if code == 2 {

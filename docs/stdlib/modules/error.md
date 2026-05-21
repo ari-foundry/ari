@@ -40,6 +40,8 @@ from_errno(code: i64) -> Error
 try_from_errno(code: i64) -> Option[Error]
 from_raw(raw: i64) -> Error
 try_from_raw(raw: i64) -> Option[Error]
+from_raw_result[T](value: Result[T, i64]) -> Result[T, Error]
+to_raw_result[T](value: Result[T, Error]) -> Result[T, i64]
 
 kind(ref Error) -> Kind
 code(ref Error) -> i64
@@ -60,10 +62,11 @@ let kind: ErrorKind = reason.kind();
 ```
 
 `Error` currently stores a compact one-word representation. That is deliberate:
-today's generic enum payload storage can carry scalar success values and scalar
-error values together, so `raw()` and `from_raw()` are the bridge for
-`Result[T, i64]` until `Result[T, Error]` can carry mixed aggregate payloads
-directly.
+it lets filesystem and other OS-facing helpers return direct
+`Result[T, Error]` values while still allowing raw compatibility boundaries.
+Use `from_raw_result` when adapting an older `Result[T, i64]` helper into the
+preferred `Result[T, Error]` shape. Use `to_raw_result` only when a runtime,
+FFI, or compatibility test still needs the compact integer bridge.
 Use strict constructors such as `with_code`, `from_errno`, and `from_raw`
 when values are trusted or produced by Ari itself. Use `try_with_code`,
 `try_from_errno`, and `try_from_raw` at FFI, OS, serialized-data, and test
@@ -71,20 +74,30 @@ fixture boundaries where invalid negative or out-of-range codes should become
 `None`.
 
 ```ari
-fn open_like() -> Result[i64, i64] {
+fn open_like() -> Result[i64, Error] {
   let reason = error::from_errno(2);
-  return Err<i64, i64>(reason.raw());
+  return Err<i64, Error>(reason);
 }
 
 match open_like() {
   Ok(fd) => { /* use fd */ }
-  Err(raw) => {
-    let reason = error::from_raw(raw);
+  Err(reason) => {
     if reason.is_not_found() {
       /* recover */
     }
   }
 }
+```
+
+Bridge a legacy raw result:
+
+```ari
+fn old_open_like() -> Result[i64, i64] {
+  let reason = error::from_errno(2);
+  return Err<i64, i64>(reason.raw());
+}
+
+let result: Result[i64, Error] = error::from_raw_result<i64>(old_open_like());
 ```
 
 Fallible error reconstruction:
@@ -122,7 +135,9 @@ work.
 
 - Use `Option[T]` when absence is expected and has no extra information.
 - Use `Result[T, E]` when callers must inspect or propagate failure.
-- Use `std::error::Error` or its `raw()` form for OS/runtime/library errors.
+- Use `std::error::Error` for OS/runtime/library errors.
+- Keep `raw()` and `Result[T, i64]` forms at runtime, FFI, and compatibility
+  boundaries only.
 - Use `try_*` constructors at untrusted boundaries instead of asserting on
   malformed codes.
 - Use `assert`, `panic`, `todo`, and `unreachable` only for programmer errors
@@ -132,16 +147,15 @@ work.
 
 ## Current Limits
 
-- `Result[T, Error]` is roadmap work for mixed payload storage. Use
-  `Result[T, i64]` with `error.raw()` and `error::from_raw(raw)` for now when
-  `T` is scalar.
+- `std::fs` now exposes direct `Result[T, Error]` for its open, write, copy,
+  and mutation result helpers. `std::io`, `std::process`, and `std::net` still
+  have sentinel, bool, Option, or raw-result surfaces in places and should be
+  migrated in small tested slices.
 - `from_errno` is a POSIX/Linux-oriented seed. Windows `GetLastError` mapping
   should live behind target-aware runtime wrappers.
-- There is no stack trace, source location, panic payload, or typed exception
-  mechanism in this module.
-- Existing `std::fs`, `std::io`, `std::process`, and `std::net` APIs still use
-  bools, `Option`, or sentinel values in places; new richer APIs should return
-  error values instead of extending those sentinel conventions.
+- There are no owned dynamic error messages, structured path/operation fields,
+  stack traces, source locations, panic payloads, typed exceptions, or generic
+  formatter integration in this module yet.
 
 ## Tests
 
@@ -153,6 +167,6 @@ tests/cases/standard-library/ok/error/std-error-validation.ari
 ```
 
 The test covers `Kind`, compact `Error` values, `from_errno`, root aliases,
-predicate helpers, message names, method wrappers, and the current
-`Result[T, i64]` raw-error bridge. `std-error-validation.ari` covers
+predicate helpers, message names, method wrappers, direct `Result[T, Error]`,
+and raw-result conversion helpers. `std-error-validation.ari` covers
 `try_with_code`, `try_from_raw`, and `try_from_errno` invalid-input handling.

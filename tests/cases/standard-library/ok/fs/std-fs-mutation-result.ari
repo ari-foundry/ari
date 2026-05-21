@@ -1,26 +1,35 @@
 // Covers Result-returning filesystem mutation helpers. The success payload is
 // unit because callers only need to know that the operation completed; failures
-// keep the compact std::error raw bridge until direct Result[(), Error] is the
-// normal filesystem result shape.
+// use direct Error payloads while raw helpers stay available for compatibility.
 fn cleanup(dir_path: string, source_path: string, target_path: string) -> void {
   fs::remove(source_path);
   fs::remove(target_path);
   fs::remove_dir(dir_path);
 }
 
-fn error_matches(raw: i64, kind: error::Kind, code: i64) -> bool {
-  let value = error::from_raw(raw);
+fn error_matches(value: error::Error, kind: error::Kind, code: i64) -> bool {
   return value.is_kind(kind) && value.code() == code;
 }
 
-fn result_error_matches(value: Result[(), i64], kind: error::Kind, code: i64) -> bool {
+fn raw_error_matches(raw: i64, kind: error::Kind, code: i64) -> bool {
+  return error_matches(error::from_raw(raw), kind, code);
+}
+
+fn result_error_matches(value: Result[(), error::Error], kind: error::Kind, code: i64) -> bool {
   match value {
     Ok(_) => { return false; }
-    Err(raw) => { return error_matches(raw, kind, code); }
+    Err(reason) => { return error_matches(reason, kind, code); }
   }
 }
 
-fn result_ok(value: Result[(), i64]) -> bool {
+fn raw_result_error_matches(value: Result[(), i64], kind: error::Kind, code: i64) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(raw) => { return raw_error_matches(raw, kind, code); }
+  }
+}
+
+fn result_ok(value: Result[(), error::Error]) -> bool {
   match value {
     Ok(_) => { return true; }
     Err(_) => { return false; }
@@ -37,19 +46,22 @@ fn main() -> i64 {
 
   var score = 0;
 
-  if result_error_matches(fs::remove_result(missing_path), error::NotFound, 2) {
+  if result_error_matches(fs::remove_result(missing_path), error::NotFound, 2) &&
+    raw_result_error_matches(fs::remove_raw_result(missing_path), error::NotFound, 2) {
     score = score + 1;
   }
   if result_ok(fs::create_dir_result(dir_path)) && fs::exists(dir_path) {
     score = score + 2;
   }
-  if result_error_matches(fs::create_dir_result(dir_path), error::AlreadyExists, 17) {
+  if result_error_matches(fs::create_dir_result(dir_path), error::AlreadyExists, 17) &&
+    raw_result_error_matches(fs::create_dir_raw_result(dir_path), error::AlreadyExists, 17) {
     score = score + 4;
   }
   if result_ok(fs::remove_dir_result(dir_path)) && !fs::exists(dir_path) {
     score = score + 8;
   }
-  if result_error_matches(fs::remove_dir_result(dir_path), error::NotFound, 2) {
+  if result_error_matches(fs::remove_dir_result(dir_path), error::NotFound, 2) &&
+    raw_result_error_matches(fs::remove_dir_raw_result(dir_path), error::NotFound, 2) {
     score = score + 16;
   }
 
@@ -58,7 +70,8 @@ fn main() -> i64 {
     !fs::exists(source_path) && fs::exists(target_path) {
     score = score + 32;
   }
-  if result_error_matches(fs::rename_result(missing_path, source_path), error::NotFound, 2) {
+  if result_error_matches(fs::rename_result(missing_path, source_path), error::NotFound, 2) &&
+    raw_result_error_matches(fs::rename_raw_result(missing_path, source_path), error::NotFound, 2) {
     score = score + 64;
   }
   if result_ok(fs::remove_result(target_path)) && !fs::exists(target_path) {

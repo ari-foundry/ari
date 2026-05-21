@@ -242,6 +242,7 @@ fn std::env::try_get_os|check-prelude std-env-os-path-views optional OS-string e
 fn std::error::code|check-prelude std-error-basic error platform code extractor; docs/stdlib/modules/error.md
 fn std::error::from_errno|check-prelude std-error-basic POSIX errno mapping helper; docs/stdlib/modules/error.md
 fn std::error::from_raw|check-prelude std-error-basic compact Result-compatible error reconstruction; docs/stdlib/modules/error.md
+fn std::error::from_raw_result[T]|check-prelude std-error-basic Result[T, i64] to Result[T, Error] compatibility bridge; docs/stdlib/modules/error.md
 fn std::error::is_interrupted|check-prelude std-error-basic interrupted predicate helper; docs/stdlib/modules/error.md
 fn std::error::is_kind|check-prelude std-error-basic error-kind predicate helper; docs/stdlib/modules/error.md
 fn std::error::is_not_found|check-prelude std-error-basic not-found predicate helper; docs/stdlib/modules/error.md
@@ -251,6 +252,7 @@ fn std::error::message|check-prelude std-error-basic stable generic message help
 fn std::error::name|check-prelude std-error-basic error-kind name helper; docs/stdlib/modules/error.md
 fn std::error::new|check-prelude std-error-basic error constructor without platform code; docs/stdlib/modules/error.md
 fn std::error::raw|check-prelude std-error-basic compact raw error representation helper; docs/stdlib/modules/error.md
+fn std::error::to_raw_result[T]|check-prelude std-error-basic Result[T, Error] to Result[T, i64] compatibility bridge; docs/stdlib/modules/error.md
 fn std::error::try_from_errno|check-prelude std-error-validation Option-returning POSIX errno mapping helper; docs/stdlib/modules/error.md
 fn std::error::try_from_raw|check-prelude std-error-validation Option-returning raw error reconstruction; docs/stdlib/modules/error.md
 fn std::error::try_with_code|check-prelude std-error-validation Option-returning error constructor with platform code; docs/stdlib/modules/error.md
@@ -288,7 +290,8 @@ fn std::fmt::write_text[W: std::io::Writer]|check-prelude std-fmt-format-spec Wr
 fn std::fmt::write_unsigned[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_value[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
 fn std::fs::append|check-prelude std-fs-read-write source whole-file append helper; docs/stdlib/modules/fs.md
-fn std::fs::append_result|check-prelude std-fs-byte-result Result-returning whole-file append byte-count helper with raw error bridge; docs/stdlib/modules/fs.md
+fn std::fs::append_raw_result|check-prelude std-fs-byte-result raw Result-returning whole-file append byte-count compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::append_result|check-prelude std-fs-byte-result Result-returning whole-file append byte-count helper with Error payload; docs/stdlib/modules/fs.md
 fn std::fs::can_execute|check-prelude std-fs-permissions execute/search access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_read|check-prelude std-fs-permissions read access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_write|check-prelude std-fs-permissions write access hook; docs/stdlib/modules/fs.md
@@ -296,12 +299,15 @@ fn std::fs::canonicalize|check-prelude std-fs-canonicalize asserting realpath-ba
 fn std::fs::close|check-prelude std-fs-basic file close hook; docs/stdlib/modules/fs.md
 fn std::fs::close_dir|check-prelude std-fs-read-dir directory close hook; docs/stdlib/modules/fs.md
 fn std::fs::copy|check-prelude std-fs-create-truncate-copy source streaming copy helper; docs/stdlib/modules/fs.md
-fn std::fs::copy_result|check-prelude std-fs-byte-result Result-returning streaming copy byte-count helper with raw error bridge; docs/stdlib/modules/fs.md
+fn std::fs::copy_raw_result|check-prelude std-fs-byte-result raw Result-returning streaming copy byte-count compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::copy_result|check-prelude std-fs-byte-result Result-returning streaming copy byte-count helper with Error payload; docs/stdlib/modules/fs.md
 fn std::fs::create|check-prelude std-fs-create-truncate-copy source create/truncate open helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir|check-prelude std-fs-rename-dir runtime-backed single-directory creation hook; docs/stdlib/modules/fs.md
 fn std::fs::create_dir_all|check-prelude std-fs-create-dir-all runtime-backed recursive directory creation hook; docs/stdlib/modules/fs.md
-fn std::fs::create_dir_result|check-prelude std-fs-mutation-result Result-returning directory creation helper with raw error bridge; docs/stdlib/modules/fs.md
-fn std::fs::create_result|check-prelude std-fs-open-result Result-returning create helper with raw error bridge; docs/stdlib/modules/fs.md
+fn std::fs::create_dir_raw_result|check-prelude std-fs-mutation-result raw Result-returning directory creation compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::create_dir_result|check-prelude std-fs-mutation-result Result-returning directory creation helper with Error payload; docs/stdlib/modules/fs.md
+fn std::fs::create_raw_result|check-prelude std-fs-open-result raw Result-returning create compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::create_result|check-prelude std-fs-open-result Result-returning create helper with Error payload; docs/stdlib/modules/fs.md
 fn std::fs::ensure_dir|check-prelude std-fs-ensure-dir idempotent single-directory creation helper; docs/stdlib/modules/fs.md
 fn std::fs::ensure_dir_all|check-prelude std-fs-create-dir-all idempotent recursive directory creation alias; docs/stdlib/modules/fs.md
 fn std::fs::ensure_file|check-prelude std-fs-ensure-file idempotent single-file creation helper; docs/stdlib/modules/fs.md
@@ -317,8 +323,9 @@ fn std::fs::open|check-prelude std-fs-open-modes mode-string open hook; docs/std
 fn std::fs::open_append|check-prelude std-fs-append compatibility append wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::open_dir|check-prelude std-fs-read-dir directory open hook; docs/stdlib/modules/fs.md
 fn std::fs::open_options|check-prelude std-fs-open-options OpenOptions default constructor helper; docs/stdlib/modules/fs.md
+fn std::fs::open_raw_result|check-prelude std-fs-open-result raw Result-returning mode-string open compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::open_read|check-prelude std-fs-basic compatibility read wrapper over mode-string open; docs/stdlib/modules/fs.md
-fn std::fs::open_result|check-prelude std-fs-open-result Result-returning mode-string open helper with raw error bridge; docs/stdlib/modules/fs.md
+fn std::fs::open_result|check-prelude std-fs-open-result Result-returning mode-string open helper with Error payload; docs/stdlib/modules/fs.md
 fn std::fs::open_write|check-prelude std-fs-basic compatibility write wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::permissions|check-prelude std-fs-permissions access permission wrapper; docs/stdlib/modules/fs.md
 fn std::fs::position|check-prelude std-fs-seek file cursor position hook; docs/stdlib/modules/fs.md
@@ -332,10 +339,13 @@ fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byt
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir|check-prelude std-fs-rename-dir runtime-backed single-directory removal hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir_all|check-prelude std-fs-remove-dir-all recursive directory tree removal helper; docs/stdlib/modules/fs.md
-fn std::fs::remove_dir_result|check-prelude std-fs-mutation-result Result-returning directory removal helper with raw error bridge; docs/stdlib/modules/fs.md
-fn std::fs::remove_result|check-prelude std-fs-mutation-result Result-returning unlink helper with raw error bridge; docs/stdlib/modules/fs.md
+fn std::fs::remove_dir_raw_result|check-prelude std-fs-mutation-result raw Result-returning directory removal compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::remove_dir_result|check-prelude std-fs-mutation-result Result-returning directory removal helper with Error payload; docs/stdlib/modules/fs.md
+fn std::fs::remove_raw_result|check-prelude std-fs-mutation-result raw Result-returning unlink compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::remove_result|check-prelude std-fs-mutation-result Result-returning unlink helper with Error payload; docs/stdlib/modules/fs.md
 fn std::fs::rename|check-prelude std-fs-rename-dir runtime-backed file rename hook; docs/stdlib/modules/fs.md
-fn std::fs::rename_result|check-prelude std-fs-mutation-result Result-returning rename helper with raw error bridge; docs/stdlib/modules/fs.md
+fn std::fs::rename_raw_result|check-prelude std-fs-mutation-result raw Result-returning rename compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::rename_result|check-prelude std-fs-mutation-result Result-returning rename helper with Error payload; docs/stdlib/modules/fs.md
 fn std::fs::seek|check-prelude std-fs-seek absolute file cursor seek hook; docs/stdlib/modules/fs.md
 fn std::fs::set_mode|check-prelude std-fs-mode chmod-backed permission-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::set_permissions|check-prelude std-fs-mode Permissions-to-mode mutation helper; docs/stdlib/modules/fs.md
@@ -365,7 +375,8 @@ fn std::fs::try_write|check-prelude std-fs-read-write Option-returning write byt
 fn std::fs::write|check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md
 fn std::fs::write_byte|check-prelude std-fs-basic file byte write hook; docs/stdlib/modules/fs.md
 fn std::fs::write_bytes|check-prelude std-fs-basic source byte-slice write helper; docs/stdlib/modules/fs.md
-fn std::fs::write_result|check-prelude std-fs-byte-result Result-returning whole-file truncating write byte-count helper with raw error bridge; docs/stdlib/modules/fs.md
+fn std::fs::write_raw_result|check-prelude std-fs-byte-result raw Result-returning whole-file truncating write byte-count compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::write_result|check-prelude std-fs-byte-result Result-returning whole-file truncating write byte-count helper with Error payload; docs/stdlib/modules/fs.md
 fn std::hash::bytes|check-prelude std-hash-basic byte-slice hasher convenience; docs/stdlib/modules/hash.md
 fn std::hash::combine|check-prelude std-hash-combine-helpers precomputed u64 hash composition helper; docs/stdlib/modules/hash.md
 fn std::hash::finish|check-prelude std-hash-basic hasher finalization; docs/stdlib/modules/hash.md
@@ -1129,7 +1140,8 @@ method std::fs::OpenOptions::create|check-prelude std-fs-open-options create-if-
 method std::fs::OpenOptions::create_new|check-prelude std-fs-open-options exclusive create option builder; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::new|check-prelude std-fs-open-options empty OpenOptions constructor; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::open|check-prelude std-fs-open-options direct OpenOptions open helper; docs/stdlib/modules/fs.md
-method std::fs::OpenOptions::open_result|check-prelude std-fs-open-result Result-returning OpenOptions open helper with raw error bridge; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::open_raw_result|check-prelude std-fs-open-result raw Result-returning OpenOptions open compatibility helper; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::open_result|check-prelude std-fs-open-result Result-returning OpenOptions open helper with Error payload; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::read|check-prelude std-fs-open-options read option builder; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::truncate|check-prelude std-fs-open-options truncate option builder; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::try_open|check-prelude std-fs-open-options Option-returning OpenOptions open helper; docs/stdlib/modules/fs.md

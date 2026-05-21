@@ -378,9 +378,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-error-basic.ll
 	grep -q '_ARNv3std5error10from_errno' $(BUILD_DIR)/prelude/std-error-basic.ll
 	grep -q '_ARNv3std5error8from_raw' $(BUILD_DIR)/prelude/std-error-basic.ll
+	grep -q '_ARNv3std5error22from_raw_result__G_i64' $(BUILD_DIR)/prelude/std-error-basic.ll
+	grep -q '_ARNv3std5error20to_raw_result__G_i64' $(BUILD_DIR)/prelude/std-error-basic.ll
 	grep -q 'std__error__Error8inherent12is_retryable' $(BUILD_DIR)/prelude/std-error-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-basic.ari -o $(BUILD_DIR)/prelude/std-error-basic.elf
-	$(BUILD_DIR)/prelude/std-error-basic.elf; code=$$?; test $$code -eq 8
+	$(BUILD_DIR)/prelude/std-error-basic.elf; code=$$?; test $$code -eq 10
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-validation.ari --emit-llvm $(BUILD_DIR)/prelude/std-error-validation.ll
 	grep -q '_ARNv3std5error13try_with_code' $(BUILD_DIR)/prelude/std-error-validation.ll
 	grep -q '_ARNv3std5error12try_from_raw' $(BUILD_DIR)/prelude/std-error-validation.ll
@@ -528,8 +530,11 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-fs-open-options.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs11open_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs15open_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs13create_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs17create_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "OpenOptions8inherent11open_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "OpenOptions8inherent15open_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-result.ari -o $(BUILD_DIR)/prelude/std-fs-open-result.elf
 	$(BUILD_DIR)/prelude/std-fs-open-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-write.ll
@@ -543,8 +548,11 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-write.elf; $(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 136; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-byte-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs12write_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs16write_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs13append_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs17append_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs11copy_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs15copy_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-byte-result.ari -o $(BUILD_DIR)/prelude/std-fs-byte-result.elf
 	$(BUILD_DIR)/prelude/std-fs-byte-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-try-read.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-try-read.ll
@@ -587,9 +595,13 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mutation-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs13remove_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs17remove_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs13rename_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs17rename_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs17create_dir_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs21create_dir_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs17remove_dir_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs21remove_dir_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mutation-result.ari -o $(BUILD_DIR)/prelude/std-fs-mutation-result.elf
 	$(BUILD_DIR)/prelude/std-fs-mutation-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll

@@ -1,10 +1,14 @@
-// Covers source std::error recoverable error values and current Result integration.
+// Covers source std::error recoverable error values and direct Result integration.
 fn maybe_value(flag: bool) -> Result[i64, i64] {
   if flag {
     return Ok<i64, i64>(42);
   }
   let reason = error::with_code(error::InvalidInput, 22);
   return Err<i64, i64>(reason.raw());
+}
+
+fn maybe_error_value(flag: bool) -> Result[i64, error::Error] {
+  return error::from_raw_result<i64>(maybe_value(flag));
 }
 
 fn main() -> i64 {
@@ -61,6 +65,28 @@ fn main() -> i64 {
     Err(raw_reason) => {
       let reason = error::from_raw(raw_reason);
       if reason.is_kind(error::InvalidInput) {
+        score = score + 1;
+      }
+    }
+  }
+
+  match maybe_error_value(false) {
+    Ok(_) => {
+      panic();
+    }
+    Err(direct_reason) => {
+      if direct_reason.is_kind(error::InvalidInput) {
+        score = score + 1;
+      }
+    }
+  }
+
+  match error::to_raw_result<i64>(maybe_error_value(false)) {
+    Ok(_) => {
+      panic();
+    }
+    Err(roundtrip_raw) => {
+      if error::from_raw(roundtrip_raw).is_kind(error::InvalidInput) {
         score = score + 1;
       }
     }

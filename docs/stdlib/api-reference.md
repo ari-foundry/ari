@@ -164,6 +164,8 @@ error::from_errno(code)
 error::try_from_errno(code)
 error::from_raw(raw)
 error::try_from_raw(raw)
+error::from_raw_result[T](value)
+error::to_raw_result[T](value)
 error::kind(ref error)
 error::code(ref error)
 error::raw(ref error)
@@ -186,11 +188,12 @@ reason.message()
 ```
 
 Use `Error` for OS/runtime/library failures, and use `ErrorKind` for the root
-alias of `std::error::Kind`. Current `Error` values have a compact raw scalar
-representation so they can pass through `Result[T, i64]` while mixed
-`Result[T, Error]` payload storage is still roadmap work. The strict
-constructors are for trusted values; use `try_with_code`, `try_from_errno`,
-and `try_from_raw` when validating untrusted boundary data.
+alias of `std::error::Kind`. Direct `Result[T, Error]` is the preferred shape
+for recoverable OS/runtime/library failures. The raw scalar representation is
+kept for runtime, FFI, and compatibility bridges through
+`from_raw_result`/`to_raw_result`. The strict constructors are for trusted
+values; use `try_with_code`, `try_from_errno`, and `try_from_raw` when
+validating untrusted boundary data.
 
 Level-prefixed diagnostic logging lives in `std::log`:
 
@@ -852,11 +855,13 @@ fs::read_link(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
+fs::create_dir_raw_result(path)
 fs::create_dir_result(path)
 fs::ensure_dir(path)
 fs::create_dir_all(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
+fs::remove_dir_raw_result(path)
 fs::remove_dir_result(path)
 fs::remove_dir_all(path)
 fs::open_dir(path)
@@ -869,7 +874,9 @@ fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::open(path, mode)
 fs::create(path)
+fs::remove_raw_result(path)
 fs::remove_result(path)
+fs::rename_raw_result(source, target)
 fs::rename_result(source, target)
 fs::open_read(path)
 fs::open_write(path)
@@ -889,19 +896,24 @@ fs::seek(file, position)
 fs::read(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
+fs::write_raw_result(path, values)
 fs::write_result(path, values)
 fs::try_write(path, values)
 fs::append(path, values)
+fs::append_raw_result(path, values)
 fs::append_result(path, values)
 fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
+fs::copy_raw_result(source, target)
 fs::copy_result(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
+fs::open_raw_result(path, mode)
 fs::open_result(path, mode)
+fs::create_raw_result(path)
 fs::create_result(path)
 fs::open_options()
 OpenOptions::new()
@@ -912,6 +924,7 @@ options.truncate(enabled)
 options.create(enabled)
 options.create_new(enabled)
 options.open(path)
+options.open_raw_result(path)
 options.open_result(path)
 options.try_open(path)
 
@@ -978,13 +991,15 @@ as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
 `"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
 `try_open_*` variants are compatibility wrappers over those mode strings.
 Use `open_result(path, mode)` or `create_result(path)` when callers need more
-than presence/absence. They return `Result[File, i64]`, where `Err(raw)` is a
-compact `std::error::Error.raw()` value that can be inspected with
-`std::error::from_raw(raw)`.
+than presence/absence. They return `Result[File, Error]`. Use
+`open_raw_result(path, mode)` or `create_raw_result(path)` only for
+compatibility callers that still need `Result[File, i64]`.
 Use `OpenOptions::new()` or `fs::open_options()` when named policy is clearer:
 `read`, `write`, `append`, `truncate`, `create`, and `create_new` each return a
 new options value, `options.try_open(path)` returns `Option[File]`, and
-`options.open_result(path)` returns the same raw-error `Result` shape.
+`options.open_result(path)` returns `Result[File, Error]`.
+`options.open_raw_result(path)` keeps the raw integer compatibility `Result`
+shape.
 `create_new(true)` is exclusive creation; `append(true).truncate(true)` and
 create/truncate without write or append are rejected as invalid option sets.
 `create(path)` and `try_create(path)` are the natural create/truncate helpers
@@ -1053,7 +1068,8 @@ absolute path.
 `write_result(path, values)` truncates or creates a small byte file, writes the
 whole `Slice[u8]`, and returns `Ok(byte_count)` when the write and close
 succeed. `append_result(path, values)` creates if needed and appends the whole
-slice with the same raw-error `Result[i64, i64]` policy.
+slice with the same `Result[i64, Error]` policy. `write_raw_result` and
+`append_raw_result` preserve the raw `Result[i64, i64]` compatibility shape.
 `try_write(path, values)` and `try_append(path, values)` are `Option[i64]`
 wrappers over those helpers, and `write(path, values)` and
 `append(path, values)` are boolean compatibility wrappers.
@@ -1067,13 +1083,15 @@ absence matters. `truncate(path)` creates or empties a file. `try_copy(source,
 target)` streams bytes from the source handle into the target opened with
 truncating semantics and returns `Some(byte_count)` on success or `None` on
 open/write/close failure. `copy_result(source, target)` keeps those
-open/write/close failures as `Err(raw)`, and `copy(source, target)` is the
+open/write/close failures as `Err(Error)`, `copy_raw_result(source, target)`
+keeps the raw `Result[i64, i64]` bridge, and `copy(source, target)` is the
 boolean compatibility wrapper over `try_copy`. `rename(source, target)` moves or renames one path
 according to the host runtime's current behavior, and
-`rename_result(source, target)` preserves a raw `std::error` value on failure.
+`rename_result(source, target)` preserves a `std::error::Error` value on failure.
 `remove_result(path)`, `create_dir_result(path)`, and
-`remove_dir_result(path)` are the same raw-error `Result[(), i64]` shape for
-file removal and single-directory creation/removal. `create_dir(path)` creates
+`remove_dir_result(path)` are the same `Result[(), Error]` shape for file
+removal and single-directory creation/removal; `*_raw_result` variants remain
+for compatibility. `create_dir(path)` creates
 one directory, `ensure_dir(path)` treats an existing directory as success or
 creates a missing one, `create_dir_all(path)` recursively creates missing
 parent directories, `ensure_dir_all(path)` is the idempotent recursive alias,

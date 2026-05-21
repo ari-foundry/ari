@@ -1045,8 +1045,8 @@ Checklist:
       implemented in `std::option` and `std::result`
 - [x] add source `std::error` recoverable error values with stable kinds,
       POSIX errno mapping, predicate helpers, root `Error`/`ErrorKind`
-      aliases, and a compact raw scalar bridge for current `Result[T, i64]`
-      error flow
+      aliases, direct `Result[T, Error]` conversion, and compact raw scalar
+      compatibility bridges for runtime/FFI error flow
 - [x] add source `std::c` C ABI boundary helpers with borrowed `CStr`,
       zone-backed NUL-terminated `CString`, POSIX `errno`/`Error` bridging,
       root C boundary type aliases, and hosted dynamic loading wrappers over

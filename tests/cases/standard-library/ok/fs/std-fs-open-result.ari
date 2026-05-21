@@ -1,24 +1,39 @@
 // Covers Result-returning filesystem open helpers. This keeps error detail
-// separate from the Option-based try_open surface and exercises the current
-// raw Error bridge used until Result[T, Error] payloads are the default.
+// separate from the Option-based try_open surface and exercises both direct
+// Error payloads and the compatibility raw bridge.
 fn cleanup(path: string, missing: string) -> void {
   fs::remove(path);
   fs::remove(missing);
 }
 
-fn error_matches(raw: i64, kind: error::Kind, code: i64) -> bool {
-  let value = error::from_raw(raw);
+fn error_matches(value: error::Error, kind: error::Kind, code: i64) -> bool {
   return value.is_kind(kind) && value.code() == code;
 }
 
-fn result_error_matches(value: Result[fs::File, i64], kind: error::Kind, code: i64) -> bool {
+fn raw_error_matches(raw: i64, kind: error::Kind, code: i64) -> bool {
+  return error_matches(error::from_raw(raw), kind, code);
+}
+
+fn result_error_matches(value: Result[fs::File, error::Error], kind: error::Kind, code: i64) -> bool {
+  match value {
+    Ok(file) => {
+      file.close();
+      return false;
+    }
+    Err(reason) => {
+      return error_matches(reason, kind, code);
+    }
+  }
+}
+
+fn raw_result_error_matches(value: Result[fs::File, i64], kind: error::Kind, code: i64) -> bool {
   match value {
     Ok(file) => {
       file.close();
       return false;
     }
     Err(raw) => {
-      return error_matches(raw, kind, code);
+      return raw_error_matches(raw, kind, code);
     }
   }
 }
@@ -38,7 +53,8 @@ fn main() -> i64 {
   if result_error_matches(fs::open_result(path, "bad"), error::InvalidInput, 22) {
     score = score + 1;
   }
-  if result_error_matches(fs::open_result(missing, "r"), error::NotFound, 2) {
+  if result_error_matches(fs::open_result(missing, "r"), error::NotFound, 2) &&
+    raw_result_error_matches(fs::open_raw_result(missing, "r"), error::NotFound, 2) {
     score = score + 2;
   }
 
@@ -65,7 +81,8 @@ fn main() -> i64 {
   }
 
   let exclusive = fs::OpenOptions::new().write(true).create_new(true);
-  if result_error_matches(exclusive.open_result(path), error::AlreadyExists, 17) {
+  if result_error_matches(exclusive.open_result(path), error::AlreadyExists, 17) &&
+    raw_result_error_matches(exclusive.open_raw_result(path), error::AlreadyExists, 17) {
     score = score + 16;
   }
 

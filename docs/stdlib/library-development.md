@@ -68,9 +68,10 @@ depends on it.
 - Use `_in` when a function needs an explicit allocation zone.
 - Prefer `Option` or `Result` for ordinary absence or recoverable failure.
 - Prefer `std::error::Error`/`ErrorKind` for shared OS, runtime, IO,
-  filesystem, network, or parser failures. Until direct `Result[T, Error]`
-  payload storage is available for every `T`, use `error.raw()` with
-  `Result[T, i64]` and reconstruct with `error::from_raw(raw)`.
+  filesystem, network, or parser failures. Public library APIs should return
+  `Result[T, Error]` when they need a shared failure value. Keep
+  `Result[T, i64]` only at runtime, FFI, and compatibility boundaries, and use
+  `error::from_raw_result`/`error::to_raw_result` when adapting those shapes.
 - Use `assert` only for programmer errors and current precondition traps.
 - Keep mutating methods on `self: ref mut Self`.
 - Keep read-only methods on `self: ref Self`.

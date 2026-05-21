@@ -140,7 +140,7 @@ fn last_errno_error_raw() -> i64 {
   return error.raw();
 }
 
-fn unit_result(ok: bool) -> std::Result[(), i64] {
+fn unit_raw_result(ok: bool) -> std::Result[(), i64] {
   if ok {
     return std::Ok<(), i64>(());
   }
@@ -198,20 +198,36 @@ fn system_time_from_nanos(nanos: i64) -> std::time::SystemTime {
   return std::time::system_from_unix(nanos / 1000000000, nanos % 1000000000);
 }
 
-pub fn remove_result(path: string) -> std::Result[(), i64] {
-  return unit_result(remove(path));
+pub fn remove_raw_result(path: string) -> std::Result[(), i64] {
+  return unit_raw_result(remove(path));
 }
 
-pub fn rename_result(source: string, target: string) -> std::Result[(), i64] {
-  return unit_result(rename(source, target));
+pub fn remove_result(path: string) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(remove_raw_result(path));
 }
 
-pub fn create_dir_result(path: string) -> std::Result[(), i64] {
-  return unit_result(create_dir(path));
+pub fn rename_raw_result(source: string, target: string) -> std::Result[(), i64] {
+  return unit_raw_result(rename(source, target));
 }
 
-pub fn remove_dir_result(path: string) -> std::Result[(), i64] {
-  return unit_result(remove_dir(path));
+pub fn rename_result(source: string, target: string) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(rename_raw_result(source, target));
+}
+
+pub fn create_dir_raw_result(path: string) -> std::Result[(), i64] {
+  return unit_raw_result(create_dir(path));
+}
+
+pub fn create_dir_result(path: string) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(create_dir_raw_result(path));
+}
+
+pub fn remove_dir_raw_result(path: string) -> std::Result[(), i64] {
+  return unit_raw_result(remove_dir(path));
+}
+
+pub fn remove_dir_result(path: string) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(remove_dir_raw_result(path));
 }
 
 fn metadata_from_parts(
@@ -737,7 +753,7 @@ pub fn try_open(path: string, mode: string) -> std::Option[File] {
   return std::None<File>();
 }
 
-pub fn open_result(path: string, mode: string) -> std::Result[File, i64] {
+pub fn open_raw_result(path: string, mode: string) -> std::Result[File, i64] {
   if !supported_open_mode(mode) {
     return std::Err<File, i64>(invalid_input_error_raw());
   }
@@ -746,6 +762,10 @@ pub fn open_result(path: string, mode: string) -> std::Result[File, i64] {
     return std::Ok<File, i64>(file);
   }
   return std::Err<File, i64>(last_errno_error_raw());
+}
+
+pub fn open_result(path: string, mode: string) -> std::Result[File, std::error::Error] {
+  return std::error::from_raw_result<File>(open_raw_result(path, mode));
 }
 
 pub fn open_options() -> OpenOptions {
@@ -760,8 +780,12 @@ pub fn try_create(path: string) -> std::Option[File] {
   return try_open(path, "w");
 }
 
-pub fn create_result(path: string) -> std::Result[File, i64] {
-  return open_result(path, "w");
+pub fn create_raw_result(path: string) -> std::Result[File, i64] {
+  return open_raw_result(path, "w");
+}
+
+pub fn create_result(path: string) -> std::Result[File, std::error::Error] {
+  return std::error::from_raw_result<File>(create_raw_result(path));
 }
 
 pub fn open_read(path: string) -> File {
@@ -807,8 +831,8 @@ pub fn try_read_byte(file: File) -> std::Option[u8] {
   return std::Some<u8>(byte as u8);
 }
 
-fn write_all_result_with_mode(path: string, mode: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
-  match open_result(path, mode) {
+fn write_all_raw_result_with_mode(path: string, mode: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  match open_raw_result(path, mode) {
     std::Ok(file) => {
       let written = file.write_bytes(values);
       if written != values.len {
@@ -835,20 +859,28 @@ pub fn append(path: string, values: std::Slice[u8]) -> bool {
   return try_append(path, values).is_some();
 }
 
-pub fn write_result(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
-  return write_all_result_with_mode(path, "w", values);
+pub fn write_raw_result(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  return write_all_raw_result_with_mode(path, "w", values);
 }
 
-pub fn append_result(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
-  return write_all_result_with_mode(path, "a", values);
+pub fn write_result(path: string, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return std::error::from_raw_result<i64>(write_raw_result(path, values));
+}
+
+pub fn append_raw_result(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  return write_all_raw_result_with_mode(path, "a", values);
+}
+
+pub fn append_result(path: string, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return std::error::from_raw_result<i64>(append_raw_result(path, values));
 }
 
 pub fn try_write(path: string, values: std::Slice[u8]) -> std::Option[i64] {
-  return byte_count_option(write_result(path, values));
+  return byte_count_option(write_raw_result(path, values));
 }
 
 pub fn try_append(path: string, values: std::Slice[u8]) -> std::Option[i64] {
-  return byte_count_option(append_result(path, values));
+  return byte_count_option(append_raw_result(path, values));
 }
 
 pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {
@@ -905,10 +937,10 @@ pub fn copy(source: string, target: string) -> bool {
   return false;
 }
 
-pub fn copy_result(source: string, target: string) -> std::Result[i64, i64] {
-  match open_result(source, "r") {
+pub fn copy_raw_result(source: string, target: string) -> std::Result[i64, i64] {
+  match open_raw_result(source, "r") {
     std::Ok(reader) => {
-      match open_result(target, "w") {
+      match open_raw_result(target, "w") {
         std::Ok(writer) => {
           // read_byte currently uses one EOF/failure sentinel, so copy_result
           // preserves open, write, and close errors while keeping read errors
@@ -949,8 +981,12 @@ pub fn copy_result(source: string, target: string) -> std::Result[i64, i64] {
   }
 }
 
+pub fn copy_result(source: string, target: string) -> std::Result[i64, std::error::Error] {
+  return std::error::from_raw_result<i64>(copy_raw_result(source, target));
+}
+
 pub fn try_copy(source: string, target: string) -> std::Option[i64] {
-  return byte_count_option(copy_result(source, target));
+  return byte_count_option(copy_raw_result(source, target));
 }
 
 pub impl std::fs::Permissions {
@@ -1203,7 +1239,7 @@ pub impl std::fs::OpenOptions {
     );
   }
 
-  fn open_result(self: ref Self, path: string) -> std::Result[File, i64] {
+  fn open_raw_result(self: ref Self, path: string) -> std::Result[File, i64] {
     if !open_options_valid(self) {
       return std::Err<File, i64>(invalid_input_error_raw());
     }
@@ -1212,6 +1248,10 @@ pub impl std::fs::OpenOptions {
       return std::Ok<File, i64>(file);
     }
     return std::Err<File, i64>(last_errno_error_raw());
+  }
+
+  fn open_result(self: ref Self, path: string) -> std::Result[File, std::error::Error] {
+    return std::error::from_raw_result<File>(self.open_raw_result(path));
   }
 
   fn try_open(self: ref Self, path: string) -> std::Option[File] {

@@ -67,11 +67,13 @@ fs::read_link(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
+fs::create_dir_raw_result(path)
 fs::create_dir_result(path)
 fs::ensure_dir(path)
 fs::create_dir_all(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
+fs::remove_dir_raw_result(path)
 fs::remove_dir_result(path)
 fs::remove_dir_all(path)
 fs::open_dir(path)
@@ -84,7 +86,9 @@ fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::open(path, mode)
 fs::create(path)
+fs::remove_raw_result(path)
 fs::remove_result(path)
+fs::rename_raw_result(source, target)
 fs::rename_result(source, target)
 fs::open_read(path)
 fs::open_write(path)
@@ -104,19 +108,24 @@ fs::seek(file, position)
 fs::read(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
+fs::write_raw_result(path, values)
 fs::write_result(path, values)
 fs::try_write(path, values)
 fs::append(path, values)
+fs::append_raw_result(path, values)
 fs::append_result(path, values)
 fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
+fs::copy_raw_result(source, target)
 fs::copy_result(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
+fs::open_raw_result(path, mode)
 fs::open_result(path, mode)
+fs::create_raw_result(path)
 fs::create_result(path)
 fs::open_options()
 OpenOptions::new()
@@ -127,6 +136,7 @@ options.truncate(enabled)
 options.create(enabled)
 options.create_new(enabled)
 options.open(path)
+options.open_raw_result(path)
 options.open_result(path)
 options.try_open(path)
 
@@ -252,9 +262,10 @@ shape for common modes while also accepting the direct `"rw"` spelling:
 
 Invalid or unsupported mode strings return an invalid `File`; `try_open`
 turns that into `None`. Use `open_result(path, mode)` when callers need error
-detail. It returns `Result[File, i64]`; the `Err` payload is
-`std::error::Error.raw()`, so recover it with `std::error::from_raw(raw)` until
-direct `Result[File, Error]` is the default payload shape.
+detail. It returns `Result[File, Error]`, so callers can branch on
+`reason.kind()`, `reason.code()`, or predicates such as `reason.is_not_found()`.
+`open_raw_result(path, mode)` remains available for low-level compatibility
+tests and FFI-style bridges that still need `Result[File, i64]`.
 
 Use `OpenOptions` when the call site needs named policy instead of a mode
 string:
@@ -283,13 +294,16 @@ existing file when it is opened, `create(true)` creates a missing file, and
 `append(true).truncate(true)` is rejected because Ari keeps that ambiguous
 combination out of the portable surface. `options.open(path)` returns a `File`
 directly, `options.try_open(path)` turns invalid handles into `None`, and
-`options.open_result(path)` preserves the raw `std::error` bridge for callers
-that need to distinguish `NotFound`, `AlreadyExists`, or `InvalidInput`.
+`options.open_result(path)` returns `Result[File, Error]` for callers that
+need to distinguish `NotFound`, `AlreadyExists`, or `InvalidInput`.
+`options.open_raw_result(path)` is the compatibility form with a raw integer
+error payload.
 
 `create(path)` is the natural spelling for `open(path, "w")`: it creates a
 file if needed and truncates existing contents. `try_create(path)` wraps that
 same operation in `Option[File]`; `create_result(path)` returns
-`Result[File, i64]` with the same raw-error convention as `open_result`.
+`Result[File, Error]`. `create_raw_result(path)` keeps the old raw payload
+shape.
 
 `ensure_file(path)` is the idempotent regular-file helper. It returns `true`
 when `path` is already a regular file, creates an empty file when the path is
@@ -314,9 +328,10 @@ fails and returns the number of bytes written before that failure.
 `Slice[u8]`, closes the handle, and returns `Ok(byte_count)` when the
 complete write and close succeeded. `append_result(path, values)` does the
 same with `"a"` mode. Failed opens, short writes, or failed closes return
-`Err(raw)`, where `raw` is the compact `std::error` bridge.
+`Err(Error)`.
 `try_write(path, values)` and `try_append(path, values)` are byte-counting
-`Option` wrappers over those raw-error helpers.
+`Option` wrappers over the same operation. Use `write_raw_result` and
+`append_raw_result` only when a compatibility caller needs `Result[i64, i64]`.
 
 `write(path, values)` and `append(path, values)` are compatibility boolean
 wrappers over `try_write` and `try_append`.
@@ -350,7 +365,8 @@ succeeded. Missing sources, failed target opens, failed byte writes, and failed
 closes return `None`. Detailed read error reporting remains future `std::io` or
 `std::os` work because `read_byte` still uses one EOF/failure sentinel.
 `copy_result(source, target)` is the same operation but keeps open/write/close
-failures as `Err(raw)` with the current raw `std::error` bridge.
+failures as `Err(Error)`. `copy_raw_result(source, target)` keeps the raw
+integer bridge for compatibility tests and low-level adapters.
 
 `copy(source, target)` is the compatibility boolean wrapper over `try_copy`.
 
@@ -360,8 +376,8 @@ invalid handle returns `false`. The current first slice does not mutate the
 
 `exists(path)` checks whether the path exists. `remove(path)` removes a file
 path and returns whether the host accepted the request. `remove_result(path)`
-is the error-preserving form; it returns `Result[(), i64]` where `Err(raw)` is
-the compact `std::error` raw bridge.
+is the error-preserving form; it returns `Result[(), Error]`.
+`remove_raw_result(path)` keeps the old `Result[(), i64]` bridge.
 
 `can_read(path)`, `can_write(path)`, and `can_execute(path)` ask the host
 whether the current process can read, write, or execute/search the path. These
@@ -444,8 +460,9 @@ On the current Linux/glibc runtime path this follows host `rename` behavior,
 including replacing some existing targets when the OS allows it. Portable
 overwrite policy is still a future documentation point, so tests use a missing
 target path. `rename_result(source, target)` keeps the same operation but
-returns `Result[(), i64]` so callers can distinguish failures such as
-`NotFound`.
+returns `Result[(), Error]` so callers can distinguish failures such as
+`NotFound`. `rename_raw_result(source, target)` is the compatibility raw
+payload form.
 
 `hard_link(existing, link_path)` creates a new hard link to an existing file
 and returns whether the host accepted the request. The destination path must
@@ -476,9 +493,10 @@ not recursive and deliberately not an `OpenOptions` replacement; use
 
 `create_dir(path)` creates one directory with the current default permission
 mode used by Ari's runtime shim. It does not create parent directories.
-`create_dir_result(path)` preserves the raw `std::error` bridge for failed
+`create_dir_result(path)` returns `Result[(), Error]` for failed
 single-directory creation. `remove_dir_result(path)` does the same for
-`remove_dir(path)`.
+`remove_dir(path)`. The `*_raw_result` variants keep raw integer payloads for
+compatibility.
 `ensure_dir(path)` is the idempotent single-directory helper: it returns `true`
 when `path` is already a directory, creates it when it is missing, and returns
 `false` when another kind of path already exists or a parent directory is
@@ -522,22 +540,22 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 
 | Need | Status |
 | --- | --- |
-| open | Current: `open(path, mode)`, `try_open(path, mode)`, `open_result(path, mode)`, compatibility wrappers, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open_result`. |
+| open | Current: `open(path, mode)`, `try_open(path, mode)`, `open_result(path, mode)` with `Error`, raw compatibility `open_raw_result`, compatibility wrappers, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open_result`/`open_raw_result`. |
 | create | Current: `create(path)` and `try_create(path)` over `"w"` mode, plus non-truncating `ensure_file(path)` for idempotent file setup. |
 | read | Current: byte `read_byte`, whole-file `read`/`read_to_string`, and fallible `try_read`/`try_read_to_string`. |
-| write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, byte-counting `try_write`, and raw-error `write_result`. |
-| append | Current: `"a"`/`"a+"` modes, whole-file `append`, byte-counting `try_append`, and raw-error `append_result`. |
+| write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, byte-counting `try_write`, `Error`-returning `write_result`, and raw compatibility `write_raw_result`. |
+| append | Current: `"a"`/`"a+"` modes, whole-file `append`, byte-counting `try_append`, `Error`-returning `append_result`, and raw compatibility `append_raw_result`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
 | metadata | Current: `try_metadata(path)`/`metadata(path)` over the Linux/glibc `stat` runtime path, `try_symlink_metadata(path)`/`symlink_metadata(path)` and `is_symlink(path)` over the Linux/glibc `lstat` runtime path, plus `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
-| rename | Current: `rename(source, target)` hook and raw-error `rename_result(source, target)`; portable overwrite policy is roadmap. |
-| remove | Current: file removal with `remove(path)`/`remove_result(path)`, empty directory removal with `remove_dir(path)`/`remove_dir_result(path)`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
-| copy | Current: source streaming `copy(source, target)`, byte-counting `try_copy(source, target)`, and raw-error `copy_result(source, target)` for byte files. |
+| rename | Current: `rename(source, target)`, `rename_result(source, target)` with `Error`, and raw compatibility `rename_raw_result`; portable overwrite policy is roadmap. |
+| remove | Current: file removal with `remove(path)`/`remove_result(path)` plus raw compatibility `remove_raw_result`, empty directory removal with `remove_dir(path)`/`remove_dir_result(path)` plus raw compatibility `remove_dir_raw_result`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
+| copy | Current: source streaming `copy(source, target)`, byte-counting `try_copy(source, target)`, `Error`-returning `copy_result(source, target)`, and raw compatibility `copy_raw_result(source, target)` for byte files. |
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
 | read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors and owned OS-resource policy are roadmap. |
-| create directory | Current: single-directory `create_dir(path)`, raw-error `create_dir_result(path)`, and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
+| create directory | Current: single-directory `create_dir(path)`, `Error`-returning `create_dir_result(path)`, raw compatibility `create_dir_raw_result(path)`, and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
 | file locking | Optional roadmap: advisory locking after platform behavior is documented. |
@@ -854,13 +872,14 @@ the mode-string contract, including `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes,
 and invalid mode strings. `std-fs-open-options.ari` covers the `OpenOptions`
 value builder, exclusive creation, non-truncating read/write opens,
 append-with-read behavior, and invalid option combinations.
-`std-fs-open-result.ari` covers `open_result`, `create_result`, and
-`OpenOptions::open_result` raw-error bridges for invalid input, missing files,
-exclusive-create failures, and successful handles. `std-fs-read-write.ari` covers source whole-file
+`std-fs-open-result.ari` covers `open_result`, `open_raw_result`,
+`create_result`, `create_raw_result`, and `OpenOptions::open_result`/
+`open_raw_result` for invalid input, missing files, exclusive-create failures,
+and successful handles. `std-fs-read-write.ari` covers source whole-file
 write/append compatibility wrappers, `try_write`/`try_append` byte counts,
 read-to-byte-string, missing-file empty reads, and truncating rewrite behavior.
 `std-fs-byte-result.ari` covers `write_result`, `append_result`, and
-`copy_result` byte-count successes plus raw-error open failures.
+`copy_result` direct Error payloads plus raw compatibility helpers.
 `std-fs-try-read.ari` covers `Option[String]` whole-file
 reads where missing files become `None` and empty files stay `Some(empty)`.
 `std-fs-create-truncate-copy.ari` covers source `create`, `try_create`,
@@ -876,7 +895,8 @@ method syntax, direct module hooks, negative seek rejection, and generic
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-mutation-result.ari` covers
 `remove_result`, `rename_result`, `create_dir_result`, and
-`remove_dir_result` success and raw-error cases. `std-fs-ensure-dir.ari` covers
+`remove_dir_result` success/Error cases plus raw compatibility variants.
+`std-fs-ensure-dir.ari` covers
 idempotent single-directory creation, file-path rejection, missing-parent
 failure, and cleanup. `std-fs-create-dir-all.ari` covers recursive parent
 creation, existing-directory idempotence, `ensure_dir_all`, file-path
@@ -928,7 +948,7 @@ absolute canonical paths, filename preservation, and missing-path `None`.
   clearer owned string/path story.
 - Add secure temporary files and optional file locking after the resource and
   platform policy is documented.
-- Promote the raw `Result[File, i64]` open bridges to direct
-  `Result[File, Error]` once mixed payload storage is the normal compiler path.
+- Migrate remaining bool/Option-only filesystem helpers to richer
+  `Result[..., Error]` variants where callers need diagnostics.
 - Promote `File` toward an owned resource handle when the compiler can express
   OS-resource ownership and drop policy cleanly.

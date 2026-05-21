@@ -101,7 +101,7 @@ identifies the exact case:
   creation.
 - `std-error-basic.ari`: source `std::error::Kind` and compact `Error`
   behavior, POSIX errno mapping, root aliases, predicate helpers, string names,
-  and the current raw scalar bridge for `Result[T, i64]`.
+  direct `Result[T, Error]` conversion, and raw scalar compatibility bridges.
 - `std-c-interop.ari`: source `std::c` C ABI string views, zone-backed
   NUL-terminated `CString`, libc alias calls, POSIX errno mapping, dynamic
   loader handles, and root aliases.
@@ -164,13 +164,15 @@ identifies the exact case:
   exclusive creation, non-truncating read/write, append-with-read, and invalid
   option combinations.
 - `std-fs-open-result.ari`: `open_result`, `create_result`, and
-  `OpenOptions::open_result` raw-error bridges for invalid input, missing files,
-  exclusive-create failures, and successful handles.
+  `OpenOptions::open_result` direct `Error` results, plus raw compatibility
+  bridges for invalid input, missing files, exclusive-create failures, and
+  successful handles.
 - `std-fs-read-write.ari`: source whole-file `write`/`try_write`,
   `append`/`try_append`, `read_to_string`, missing-file empty reads,
   byte-count checks, and truncating rewrite behavior.
 - `std-fs-byte-result.ari`: `write_result`, `append_result`, and
-  `copy_result` byte-count successes plus raw-error open failures.
+  `copy_result` direct `Error` byte-count results plus raw compatibility open
+  failures.
 - `std-fs-try-read.ari`: `Option[String]` whole-file reads that distinguish
   missing files from empty files.
 - `std-fs-create-truncate-copy.ari`: source `create`, `try_create`, natural
@@ -186,7 +188,8 @@ identifies the exact case:
   `create_dir`/`remove_dir`, duplicate-create failure, and missing-source
   rename failure.
 - `std-fs-mutation-result.ari`: `remove_result`, `rename_result`,
-  `create_dir_result`, and `remove_dir_result` unit-success raw-error bridges.
+  `create_dir_result`, and `remove_dir_result` unit-success direct `Error`
+  results plus raw compatibility bridges.
 - `std-fs-create-dir-all.ari`: runtime-backed recursive `create_dir_all` and
   source `ensure_dir_all`, existing-directory idempotence, file-path
   rejection, blocked child creation, nested writes, and cleanup.
