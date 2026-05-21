@@ -9,6 +9,7 @@ turning an iterator into a value.
 ```ari
 iter::range<T>(start, end)
 iter::range_inclusive<T>(start, end)
+iter::repeat_with<T>(make_value)
 
 iter::map<T, U, I: std::Iterator[T]>(iter, op)
 iter::filter<T, I: std::Iterator[T]>(iter, keep)
@@ -45,6 +46,11 @@ Root aliases expose `range(start, end)` and `range_inclusive(start, end)`.
 `iter::collect` is a public alias backed by `std::vec::collect`, so collection
 always names the target allocation zone explicitly.
 
+`repeat_with(make_value)` is a generator-backed source iterator. Each `next()`
+calls the zero-argument maker and yields a fresh value, so the iterator itself
+has no natural end. Bound it with `take`, `zip`, or another terminating
+consumer before collecting or extending a vector.
+
 `skip` is the Ari standard name for the usual drop-count adapter because
 `drop` is already a language operation.
 
@@ -67,10 +73,10 @@ linear/circular collection cursors whose remaining length is stored directly.
 
 ## Lazy And Eager Operations
 
-`map`, `filter`, `take`, `skip`, `enumerate`, and `zip` are lazy. Constructing
-one of these adapters stores the source iterator and any callback, but does not
-pull values. Work happens only when `next` is called, normally through a `for`
-loop.
+`repeat_with`, `map`, `filter`, `take`, `skip`, `enumerate`, and `zip` are
+lazy. Constructing one of these adapters stores the source iterator and any
+callback, but does not pull values. Work happens only when `next` is called,
+normally through a `for` loop.
 
 `fold`, `reduce`, and `collect` are eager consumers. They advance the iterator
 until it is exhausted. `reduce` returns `None<T>()` for an empty iterator, while
@@ -102,6 +108,24 @@ var total = 0;
 for value in ref mut mapped {
   total = total + value;
 }
+```
+
+Use `repeat_with` when generated values should come from a function rather
+than a repeated source value:
+
+```ari
+fn make_value() -> i64 {
+  return 7;
+}
+
+var generated = iter::take<i64, std::iter::RepeatWith[i64]>(
+  iter::repeat_with<i64>(make_value),
+  4
+);
+var values = iter::collect<
+  i64,
+  std::iter::Take[std::iter::RepeatWith[i64], i64]
+>(ref mut zone, generated);
 ```
 
 `filter` predicates take a borrowed value so the predicate can inspect an item
@@ -150,6 +174,7 @@ Representative coverage lives in:
 
 ```text
 tests/cases/standard-library/ok/iter/std-iter-adapters.ari
+tests/cases/standard-library/ok/iter/std-iter-repeat-with.ari
 tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari
 tests/cases/standard-library/ok/iter/std-iter-double-ended.ari
 tests/cases/standard-library/ok/iter/std-iter-exact-size.ari

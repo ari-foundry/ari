@@ -8,6 +8,10 @@ pub struct RangeInclusive[T] {
   end: T,
 }
 
+pub struct RepeatWith[T] {
+  make_value: fn() -> T,
+}
+
 pub struct Map[I, T, U] {
   mut inner: I,
   op: fn(T) -> U,
@@ -40,6 +44,10 @@ pub struct Zip[I, J, T, U] {
 
 pub fn range[T](start: T, end: T) -> Range[T];
 pub fn range_inclusive[T](start: T, end: T) -> RangeInclusive[T];
+
+pub fn repeat_with[T](make_value: fn() -> T) -> RepeatWith[T] {
+  return RepeatWith<T> { make_value: make_value };
+}
 
 pub fn map[T, U, I: std::Iterator[T]](iter: I, op: fn(T) -> U) -> Map[I, T, U] {
   return Map<I, T, U> { inner: iter, op: op };
@@ -111,6 +119,13 @@ pub trait Iterator[T] {
 
 pub trait IntoIterator[T] {
   fn into_iter(self: ref mut Self) -> Self;
+}
+
+impl[T] std::Iterator[T] for std::iter::RepeatWith[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let make_value = self.make_value;
+    return std::Some<T>(make_value());
+  }
 }
 
 impl[T, U, I: std::Iterator[T]] std::Iterator[U] for std::iter::Map[I, T, U] {

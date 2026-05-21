@@ -2545,6 +2545,7 @@ box.is_empty()
 ```ari
 iter::range<T>(start, end)
 iter::range_inclusive<T>(start, end)
+iter::repeat_with<T>(make_value)
 iter::map<T, U, I: std::Iterator[T]>(iter, op)
 iter::filter<T, I: std::Iterator[T]>(iter, keep)
 iter::take<T, I: std::Iterator[T]>(iter, count)
@@ -2575,8 +2576,11 @@ right)` tuples. Map-like collections still use explicit `keys()` and
 explicit.
 
 The adapter constructors are lazy except for `fold`, `reduce`, and `collect`.
-Use `skip` for the usual drop-count adapter because `drop` is a language
-operation. `collect` builds a `std::vec::Vec[T]` in the caller-provided zone.
+`repeat_with(make_value)` is an infinite source adapter that calls the
+zero-argument maker on each `next()`, so bound it with `take`, `zip`, or
+another terminating consumer before collecting or extending a vector. Use
+`skip` for the usual drop-count adapter because `drop` is a language operation.
+`collect` builds a `std::vec::Vec[T]` in the caller-provided zone.
 
 `std::fmt` contains the formatting trait surface:
 

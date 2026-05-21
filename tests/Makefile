@@ -1868,6 +1868,12 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4iter35fold__G_i64_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
 	grep -q '_ARNv3std4iter33reduce__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
 	grep -q '_ARNv3std3vec34collect__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
+	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-repeat-with.ari --emit-llvm $(BUILD_DIR)/prelude/std-iter-repeat-with.ll
+	grep -q '_ARNv3std4iter18repeat_with__G_i64' $(BUILD_DIR)/prelude/std-iter-repeat-with.ll
+	grep -q '_ARNv4impl26std__iter__RepeatWith_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-iter-repeat-with.ll
+	grep -q '_ARNv4impl19std__vec__Vec_Pair_8inherent65extend_iter__G_std__iter__Take_std__iter__RepeatWith_Pair___Pair_' $(BUILD_DIR)/prelude/std-iter-repeat-with.ll
+	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-repeat-with.ari -o $(BUILD_DIR)/prelude/std-iter-repeat-with.elf
+	$(BUILD_DIR)/prelude/std-iter-repeat-with.elf
 	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari --emit-llvm $(BUILD_DIR)/prelude/std-iter-slice-vec.ll
 	grep -q '_ARNv4impl19std__SliceIter_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-iter-slice-vec.ll
 	grep -q '_ARNv4impl22std__SliceIterMut_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-iter-slice-vec.ll

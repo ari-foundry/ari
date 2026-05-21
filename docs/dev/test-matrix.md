@@ -629,9 +629,10 @@ Checklist:
       `Slice<T>.iter_mut()` / `std::vec::Vec<T>.iter_mut()` return
       `SliceIterMut<T>` mutable value cursors with `value()` /
       `value_mut()` handles until reference-valued iterator items land
-- [x] source `std::iter` adapters cover lazy `map`, `filter`, `take`, `skip`,
-      `enumerate`, and `zip` plus eager `fold`, `reduce`, and explicit-zone
-      `collect` over `std::vec::Iter<T>` and root `SliceIter<T>`
+- [x] source `std::iter` adapters cover generator-backed `repeat_with`, lazy
+      `map`, `filter`, `take`, `skip`, `enumerate`, and `zip` plus eager
+      `fold`, `reduce`, and explicit-zone `collect` over `std::vec::Iter<T>`,
+      `RepeatWith<T>`, and root `SliceIter<T>`
 - [x] source `std::vec::Vec<T>` and root `Slice<T>` expose half-open range
       mutation helpers for overlap-safe `copy_within`, `fill_range`,
       `reverse_range`, and left-rotation `rotate_range`; source Vec also

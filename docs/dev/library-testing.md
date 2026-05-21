@@ -57,6 +57,8 @@ identifies the exact case:
 - `std-iter-adapters.ari`: source `std::iter` lazy `map`, `filter`, `take`,
   `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed
   `collect` behavior over `std::vec::Iter[T]`.
+- `std-iter-repeat-with.ari`: generator-backed `repeat_with` source iterator,
+  bounded through `take` and consumed through `collect` / `Vec.extend_iter`.
 - `std-iter-exact-size.ari`: root `ExactSizeIterator[T]` supertrait behavior,
   including child-bound access to parent `Iterator[T]::next` and exact
   remaining-length checks for vector and slice cursors.

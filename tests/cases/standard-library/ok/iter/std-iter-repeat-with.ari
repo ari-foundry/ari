@@ -1,0 +1,51 @@
+// Covers `iter::repeat_with`, a generator-backed source iterator. The source is
+// intentionally infinite, so practical use should bound it with `take`.
+
+struct Pair {
+  left: i64,
+  right: i64,
+}
+
+fn make_i64() -> i64 {
+  return 7;
+}
+
+fn make_pair() -> Pair {
+  return Pair { left: 3, right: 5 };
+}
+
+fn main() -> i64 {
+  var zone = zone::create(1024);
+
+  var repeated_numbers = iter::take<
+    i64,
+    std::iter::RepeatWith[i64]
+  >(iter::repeat_with<i64>(make_i64), 4);
+  let numbers = iter::collect<
+    i64,
+    std::iter::Take[std::iter::RepeatWith[i64], i64]
+  >(ref mut zone, repeated_numbers);
+  assert(numbers.len() == 4);
+  assert(numbers.get(0) == 7);
+  assert(numbers.get(3) == 7);
+
+  var pairs = Vec::with_capacity<Pair>(ref mut zone, 1);
+  var repeated_pairs = iter::take<
+    Pair,
+    std::iter::RepeatWith[Pair]
+  >(iter::repeat_with<Pair>(make_pair), 3);
+  pairs.extend_iter<std::iter::Take[std::iter::RepeatWith[Pair], Pair]>(repeated_pairs);
+  assert(pairs.len() == 3);
+  assert(pairs.get(0).left == 3);
+  assert(pairs.get(1).right == 5);
+  assert(pairs.get(2).left + pairs.get(2).right == 8);
+
+  var empty = iter::take<i64, std::iter::RepeatWith[i64]>(
+    iter::repeat_with<i64>(make_i64),
+    0
+  );
+  assert(empty.next().is_none());
+
+  zone::destroy(zone);
+  return 0;
+}

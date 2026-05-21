@@ -461,6 +461,7 @@ fn std::iter::map[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy
 fn std::iter::range[T]|range for-loop tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::range_inclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::reduce[T, I: std::Iterator[T]|check-prelude std-iter-adapters eager optional reduction; docs/stdlib/modules/iter.md
+fn std::iter::repeat_with[T]|check-prelude std-iter-repeat-with generator-backed source iterator; docs/stdlib/modules/iter.md
 fn std::iter::skip[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy drop-count adapter; docs/stdlib/modules/iter.md
 fn std::iter::take[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy bounded adapter; docs/stdlib/modules/iter.md
 fn std::iter::zip[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy tuple pair adapter; docs/stdlib/modules/iter.md
@@ -1911,6 +1912,7 @@ struct std::iter::Filter[I, T]|check-prelude std-iter-adapters lazy filter adapt
 struct std::iter::Map[I, T, U]|check-prelude std-iter-adapters lazy map adapter state; docs/stdlib/modules/iter.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
+struct std::iter::RepeatWith[T]|check-prelude std-iter-repeat-with generator-backed infinite iterator state; docs/stdlib/modules/iter.md
 struct std::iter::Skip[I, T]|check-prelude std-iter-adapters lazy skip adapter state; docs/stdlib/modules/iter.md
 struct std::iter::Take[I, T]|check-prelude std-iter-adapters lazy take adapter state; docs/stdlib/modules/iter.md
 struct std::iter::Zip[I, J, T, U]|check-prelude std-iter-adapters lazy zip adapter state; docs/stdlib/modules/iter.md
