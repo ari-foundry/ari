@@ -1,6 +1,6 @@
 // Covers the high-level ZoneBacked API over allocation-header metadata.
 fn main() -> i64 {
-  var arena = zone::create(1024);
+  var arena = zone::create(8192);
   var score = 0;
 
   var values = std::vec::new<i64>(ref mut arena, 2);
@@ -36,6 +36,94 @@ fn main() -> i64 {
   let boxed_zone = zone::of(ref boxed);
   if boxed_zone.equals(ref raw_box_zone) {
     score = score + 16;
+  }
+
+  var map = std::collections::hash_map<i64, i64>(
+    ref mut arena,
+    2,
+    std::collections::hash_i64
+  );
+  map.insert(ref mut arena, 1, 10);
+  let map_zone = zone::of(ref map);
+  if map_zone.equals(ref raw_values_zone) {
+    score = score + 3;
+  }
+
+  var hash_set = std::collections::hash_set<i64>(
+    ref mut arena,
+    2,
+    std::collections::hash_i64
+  );
+  hash_set.insert(ref mut arena, 2);
+  let hash_set_zone = zone::of(ref hash_set);
+  if hash_set_zone.equals(ref raw_values_zone) {
+    score = score + 5;
+  }
+
+  var tree_map = std::collections::tree_map<i64, i64>(
+    ref mut arena,
+    2,
+    std::collections::less_i64
+  );
+  tree_map.insert(ref mut arena, 3, 30);
+  let tree_map_zone = zone::of(ref tree_map);
+  if tree_map_zone.equals(ref raw_values_zone) {
+    score = score + 7;
+  }
+
+  var tree_set = std::collections::tree_set<i64>(
+    ref mut arena,
+    2,
+    std::collections::less_i64
+  );
+  tree_set.insert(ref mut arena, 4);
+  let tree_set_zone = zone::of(ref tree_set);
+  if tree_set_zone.equals(ref raw_values_zone) {
+    score = score + 11;
+  }
+
+  var deque = std::collections::deque<i64>(ref mut arena, 2);
+  deque.push_back(ref mut arena, 5);
+  let deque_zone = zone::of(ref deque);
+  if deque_zone.equals(ref raw_values_zone) {
+    score = score + 13;
+  }
+
+  var ring = std::collections::ring_buffer<i64>(ref mut arena, 2);
+  if ring.push(6) {
+    let ring_zone = zone::of(ref ring);
+    if ring_zone.equals(ref raw_values_zone) {
+      score = score + 17;
+    }
+  }
+
+  var list = std::collections::linked_list<i64>(ref mut arena, 2);
+  list.push_back(ref mut arena, 7);
+  let list_zone = zone::of(ref list);
+  if list_zone.equals(ref raw_values_zone) {
+    score = score + 19;
+  }
+
+  var heap = std::collections::binary_heap<i64>(
+    ref mut arena,
+    2,
+    std::collections::less_i64
+  );
+  heap.push(ref mut arena, 8);
+  let heap_zone = zone::of(ref heap);
+  if heap_zone.equals(ref raw_values_zone) {
+    score = score + 23;
+  }
+
+  var queue = std::collections::priority_queue<i64>(
+    ref mut arena,
+    2,
+    std::collections::less_i64
+  );
+  queue.push(ref mut arena, 9);
+  let queue_zone = zone::of(ref queue);
+  if queue_zone.equals(ref raw_values_zone) {
+    score = score + 29;
   }
 
   zone::destroy(arena);

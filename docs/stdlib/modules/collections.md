@@ -33,6 +33,9 @@ that provenance and rejects:
 
 Growth copies live elements into newly allocated zone storage. Old raw buffers
 remain owned by the zone and are reclaimed when the zone resets or destroys.
+Every zone-backed collection handle implements `std::zone::ZoneBacked` once it
+has backing storage, so `zone::of(ref handle)` and `handle.zone()` expose the
+same allocation-header metadata as the raw buffer.
 
 ## Linear Set
 

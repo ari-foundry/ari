@@ -317,7 +317,8 @@ common "count times `size_of<T>()` at `align_of<T>()`" pattern for library
 authors. `allocation_zone(data)` is the raw allocation-header reader, while
 `metadata(data)` wraps that handle in `ZoneMetadata`. `ZoneBacked` plus
 `zone::of(ref value)`/`value.zone()` give higher-level handles a standard way
-to expose the same typed metadata when they have a real backing allocation.
+to expose the same typed metadata when they have a real backing allocation,
+including the zone-backed collection handles.
 
 `std::input` follows that pattern for stdin. `read_byte`, `line`, and
 `owned_line` are runtime hooks, while `try_read_byte` is source Ari that turns

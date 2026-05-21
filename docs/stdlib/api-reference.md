@@ -1143,7 +1143,8 @@ handles when ownership matters.
 allocation and returns the raw opaque handle. Prefer `metadata(data)`, which
 wraps that handle as `ZoneMetadata`. `zone::of(ref value)` and `value.zone()`
 use the `ZoneBacked` trait to expose `ZoneMetadata` from supported heap-backed
-stdlib values such as `Box[T]`, `String`, `Vec[T]`, and linear `Set[T]`.
+stdlib values such as `Box[T]`, `String`, `Vec[T]`, and zone-backed
+`std::collections` handles.
 `metadata.as_ptr()` is the raw escape hatch, and `metadata.equals(ref other)`
 checks handle identity. Zero-capacity handles have no allocation header to
 read, so construct with positive capacity or grow first before asking for

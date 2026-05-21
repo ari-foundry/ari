@@ -63,8 +63,9 @@ zone handle. Prefer `metadata(data)`, which wraps that handle in
 `ZoneBacked` is the high-level wrapper for library handles that own
 zone-backed storage. `zone::of(ref value)` and `value.zone()` expose
 `ZoneMetadata` for supported handles such as `Box[T]`, `String`, `Vec[T]`, and
-linear `Set[T]`. Use `metadata.as_ptr()` only at raw runtime or FFI
-boundaries, and `metadata.equals(ref other)` for identity checks.
+the zone-backed `std::collections` handles. Use `metadata.as_ptr()` only at raw
+runtime or FFI boundaries, and `metadata.equals(ref other)` for identity
+checks.
 
 These helpers require an actual backing allocation. Empty or zero-capacity
 handles may carry checker provenance but have no data pointer header to read;
@@ -115,7 +116,7 @@ behavior.
 - `tests/cases/standard-library/ok/zone/std-zone-backed.ari` checks
   `ZoneMetadata`, `ZoneBacked`, `zone::metadata(data)`, `zone::of(ref value)`,
   `value.zone()`, and raw allocation-header agreement for box, string, vector,
-  and set handles.
+  set, map, sequence, linked list, heap, and priority queue handles.
 - Existing zone, vector, string, and boxed tests cover reset/destroy
   invalidation and zone-backed handle provenance.
 

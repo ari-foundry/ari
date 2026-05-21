@@ -851,6 +851,13 @@ impl[K, V] std::Iterator[std::collections::MapEntry[K, V]] for std::collections:
   }
 }
 
+impl[K, V] std::zone::ZoneBacked for std::collections::HashMap[K, V] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(self.capacity > 0);
+    return std::zone::metadata(self.keys as ptr u8);
+  }
+}
+
 impl[K, V] std::Drop for std::collections::HashMap[K, V] {
   fn drop(self) -> void {
     var dropped = self;
@@ -1124,6 +1131,13 @@ impl[T] std::IntoIterator[T] for std::collections::HashSet[T] {
       capacity: self.capacity,
       index: 0,
     };
+  }
+}
+
+impl[T] std::zone::ZoneBacked for std::collections::HashSet[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(self.capacity > 0);
+    return std::zone::metadata(self.data as ptr u8);
   }
 }
 
@@ -1713,6 +1727,13 @@ impl[K, V] std::Iterator[std::collections::MapEntry[K, V]] for std::collections:
   }
 }
 
+impl[K, V] std::zone::ZoneBacked for std::collections::TreeMap[K, V] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(self.capacity > 0);
+    return std::zone::metadata(self.keys as ptr u8);
+  }
+}
+
 impl[K, V] std::Drop for std::collections::TreeMap[K, V] {
   fn drop(self) -> void {
     var dropped = self;
@@ -2151,6 +2172,13 @@ impl[T] std::IntoIterator[T] for std::collections::TreeSet[T] {
   }
 }
 
+impl[T] std::zone::ZoneBacked for std::collections::TreeSet[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(self.capacity > 0);
+    return std::zone::metadata(self.data as ptr u8);
+  }
+}
+
 impl[T] std::Drop for std::collections::TreeSet[T] {
   fn drop(self) -> void {
     var dropped = self;
@@ -2373,6 +2401,13 @@ impl[T] std::IntoIterator[T] for std::collections::Deque[T] {
   }
 }
 
+impl[T] std::zone::ZoneBacked for std::collections::Deque[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(self.capacity > 0);
+    return std::zone::metadata(self.data as ptr u8);
+  }
+}
+
 impl[T] std::Drop for std::collections::Deque[T] {
   fn drop(self) -> void {
     var dropped = self;
@@ -2522,6 +2557,13 @@ impl[T] std::Iterator[T] for std::collections::RingBufferIter[T] {
 impl[T] std::IntoIterator[T] for std::collections::RingBuffer[T] {
   pub fn into_iter(self: ref mut Self) -> std::collections::RingBufferIter[T] {
     return self.iter();
+  }
+}
+
+impl[T] std::zone::ZoneBacked for std::collections::RingBuffer[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(self.capacity > 0);
+    return std::zone::metadata(self.data as ptr u8);
   }
 }
 
@@ -2829,6 +2871,13 @@ impl[T] std::IntoIterator[T] for std::collections::LinkedList[T] {
   }
 }
 
+impl[T] std::zone::ZoneBacked for std::collections::LinkedList[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(self.capacity > 0);
+    return std::zone::metadata(self.data as ptr u8);
+  }
+}
+
 impl[T] std::Drop for std::collections::LinkedList[T] {
   fn drop(self) -> void {
     var dropped = self;
@@ -3000,6 +3049,13 @@ pub impl[T] std::collections::BinaryHeap[T] {
   }
 }
 
+impl[T] std::zone::ZoneBacked for std::collections::BinaryHeap[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(self.capacity > 0);
+    return std::zone::metadata(self.data as ptr u8);
+  }
+}
+
 impl[T] std::Drop for std::collections::BinaryHeap[T] {
   fn drop(self) -> void {
     var dropped = self;
@@ -3161,6 +3217,13 @@ pub impl[T] std::collections::PriorityQueue[T] {
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
     priority_queue_grow_to_capacity<T>(self, zone, self.len + additional);
+  }
+}
+
+impl[T] std::zone::ZoneBacked for std::collections::PriorityQueue[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(self.capacity > 0);
+    return std::zone::metadata(self.data as ptr u8);
   }
 }
 
