@@ -1,0 +1,194 @@
+// Covers collection view ergonomics that are easy to feel in real code:
+// mutable map value views, map entry iteration aliases, direct map iteration,
+// and draining cursors that leave the source collection empty.
+fn constant_hash(value: i64) -> u64 {
+  return 3;
+}
+
+fn add_one_to_hash_values(map: ref mut HashMap[i64, i64]) -> void {
+  var values = map.values_mut();
+  while values.has_next() {
+    let slot: ref mut i64 = values.next();
+    let raw = slot as ptr i64;
+    ptr_store(raw, ptr_load(raw) + 1);
+  }
+}
+
+fn add_three_with_hash_iter_mut(map: ref mut HashMap[i64, i64]) -> void {
+  var entries = map.iter_mut();
+  var item = entries.next();
+  while item.is_some() {
+    var entry = item.unwrap();
+    let slot: ref mut i64 = entry.value_mut();
+    let raw = slot as ptr i64;
+    ptr_store(raw, ptr_load(raw) + 3);
+    item = entries.next();
+  }
+}
+
+fn add_two_to_tree_values(map: ref mut TreeMap[i64, i64]) -> void {
+  var values = map.values_mut();
+  while values.has_next() {
+    let slot: ref mut i64 = values.next();
+    let raw = slot as ptr i64;
+    ptr_store(raw, ptr_load(raw) + 2);
+  }
+}
+
+fn add_four_with_tree_iter_mut(map: ref mut TreeMap[i64, i64]) -> void {
+  var entries = map.iter_mut();
+  var item = entries.next();
+  while item.is_some() {
+    var entry = item.unwrap();
+    let slot: ref mut i64 = entry.value_mut();
+    let raw = slot as ptr i64;
+    ptr_store(raw, ptr_load(raw) + 4);
+    item = entries.next();
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var score = 0;
+
+  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  hash.insert(ref mut zone, 1, 10);
+  hash.insert(ref mut zone, 9, 90);
+  hash.insert(ref mut zone, 17, 170);
+  add_one_to_hash_values(ref mut hash);
+  add_three_with_hash_iter_mut(ref mut hash);
+
+  var hash_key_sum = 0;
+  var hash_value_sum = 0;
+  for hash_entry in hash.iter() {
+    hash_key_sum = hash_key_sum + hash_entry.key;
+    hash_value_sum = hash_value_sum + hash_entry.value;
+  }
+  if hash_key_sum == 27 && hash_value_sum == 282 {
+    score = score + 11;
+  }
+
+  var direct_hash_sum = 0;
+  for direct_hash_entry in hash {
+    direct_hash_sum = direct_hash_sum + direct_hash_entry.value;
+  }
+  if direct_hash_sum == 282 {
+    score = score + 13;
+  }
+
+  var hash_drain = hash.drain();
+  if hash.is_empty() && !hash.contains_key(1) {
+    score = score + 17;
+  }
+  var hash_drain_sum = 0;
+  var hash_drain_count = 0;
+  for drained_hash_entry in hash_drain {
+    hash_drain_sum = hash_drain_sum + drained_hash_entry.value;
+    hash_drain_count = hash_drain_count + 1;
+  }
+  if hash_drain_sum == 282 && hash_drain_count == 3 {
+    score = score + 19;
+  }
+  if hash_drain.next().is_none() {
+    score = score + 23;
+  }
+
+  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  tree.insert(ref mut zone, 4, 40);
+  tree.insert(ref mut zone, 2, 20);
+  tree.insert(ref mut zone, 8, 80);
+  add_two_to_tree_values(ref mut tree);
+  add_four_with_tree_iter_mut(ref mut tree);
+
+  var tree_key_sum = 0;
+  var tree_value_sum = 0;
+  for tree_entry in tree.iter() {
+    tree_key_sum = tree_key_sum + tree_entry.key;
+    tree_value_sum = tree_value_sum + tree_entry.value;
+  }
+  if tree_key_sum == 14 && tree_value_sum == 158 {
+    score = score + 29;
+  }
+
+  var direct_tree_sum = 0;
+  for direct_tree_entry in tree {
+    direct_tree_sum = direct_tree_sum + direct_tree_entry.value;
+  }
+  if direct_tree_sum == 158 {
+    score = score + 31;
+  }
+
+  var tree_drain = tree.drain();
+  if tree.is_empty() && !tree.contains_key(4) {
+    score = score + 37;
+  }
+  var weighted_tree = 0;
+  var tree_weight = 1;
+  var tree_drain_item = tree_drain.next();
+  while tree_drain_item.is_some() {
+    let drained_tree_entry = tree_drain_item.unwrap();
+    weighted_tree = weighted_tree + drained_tree_entry.key * tree_weight + drained_tree_entry.value;
+    tree_weight = tree_weight * 10;
+    tree_drain_item = tree_drain.next();
+  }
+  if weighted_tree == 1000 {
+    score = score + 41;
+  }
+  if tree_drain.next().is_none() {
+    score = score + 43;
+  }
+
+  var linear = Set::new<i64>(ref mut zone, 4);
+  linear.insert(ref mut zone, 3);
+  linear.insert(ref mut zone, 5);
+  linear.insert(ref mut zone, 7);
+  var linear_drain = linear.drain();
+  if linear.len() == 0 {
+    score = score + 47;
+  }
+  var linear_sum = 0;
+  for drained_linear_value in linear_drain {
+    linear_sum = linear_sum + drained_linear_value;
+  }
+  if linear_sum == 15 {
+    score = score + 53;
+  }
+
+  var hash_set = HashSet::new<i64>(ref mut zone, 1, constant_hash);
+  hash_set.insert(ref mut zone, 2);
+  hash_set.insert(ref mut zone, 10);
+  hash_set.insert(ref mut zone, 18);
+  hash_set.remove(10);
+  hash_set.insert(ref mut zone, 26);
+  var hash_set_drain = hash_set.drain();
+  if hash_set.is_empty() && !hash_set.contains(2) {
+    score = score + 59;
+  }
+  var hash_set_sum = 0;
+  var hash_set_count = 0;
+  for drained_hash_set_value in hash_set_drain {
+    hash_set_sum = hash_set_sum + drained_hash_set_value;
+    hash_set_count = hash_set_count + 1;
+  }
+  if hash_set_sum == 46 && hash_set_count == 3 {
+    score = score + 61;
+  }
+
+  var tree_set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  tree_set.insert(ref mut zone, 4);
+  tree_set.insert(ref mut zone, 2);
+  tree_set.insert(ref mut zone, 8);
+  var tree_set_drain = tree_set.drain();
+  if tree_set.is_empty() && !tree_set.contains(4) {
+    score = score + 67;
+  }
+  let first = tree_set_drain.next().unwrap_or(0);
+  let second = tree_set_drain.next().unwrap_or(0);
+  let third = tree_set_drain.next().unwrap_or(0);
+  if first == 2 && second == 4 && third == 8 && tree_set_drain.next().is_none() {
+    score = score + 71;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

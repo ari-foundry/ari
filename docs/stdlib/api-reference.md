@@ -1895,6 +1895,7 @@ set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.as_slice()
 set.iter()
+set.drain()
 set.copy_to(ref mut zone)
 ```
 
@@ -1918,7 +1919,8 @@ insertion-order value, and `try_pop` returns `None` on an empty set.
 preserves insertion order in accessors, `index_of`, `as_slice`,
 `iter`, and `copy_to`. `std::collections::Iter[T]` implements `Iterator[T]`,
 and `Set[T]` implements `IntoIterator[T]`, so `for value in set` works through
-the standard iterator path.
+the standard iterator path. `drain()` yields insertion-order values and leaves
+the source set empty.
 
 Double-ended and bounded sequence collections:
 
@@ -2018,7 +2020,11 @@ map.reserve_extra(ref mut zone, additional)
 map.copy_to(ref mut target)
 map.keys()
 map.values()
+map.values_mut()
 map.entries()
+map.iter()
+map.iter_mut()
+map.drain()
 
 collections::hash_set<T>(ref mut zone, capacity, hash)
 HashSet::new<T>(ref mut zone, capacity, hash)
@@ -2041,6 +2047,7 @@ set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.copy_to(ref mut target)
 set.iter()
+set.drain()
 ```
 
 `collections::hash_i64` is a compatibility helper over `std::hash::value<i64>`.
@@ -2057,7 +2064,12 @@ maps infer the allocation zone for the natural `entry(key)` spelling.
 `HashMap.remove` returns `Option[V]` and leaves
 a tombstone so later probes still find collided keys. `HashMap.keys()` and
 `HashMap.values()` iterate live buckets; this is deterministic for the table
-state, but it is not insertion order. `HashSet.get(value)` and
+state, but it is not insertion order. `HashMap.values_mut()` is a mutable
+value cursor with `has_next()` and `next() -> ref mut V`. `HashMap.iter()` is
+an alias for `entries()`, `HashMap.iter_mut()` walks `MapEntryMut[K,V]`
+handles with copied keys and mutable values, direct `for entry in map` walks
+`MapEntry[K,V]` values, and `HashMap.drain()` leaves the map empty while
+yielding drained entries. `HashSet.get(value)` and
 `HashSet.try_get(value)` read the stored equal representative. `HashSet`
 relationship methods compare live membership and ignore tombstones;
 `HashMap.entries()` yields `MapEntry[K,V]` values with `.key`/`.value` fields
@@ -2065,7 +2077,8 @@ and `key()`/`value()` accessors over the same live buckets.
 `HashMap.remove_entry(key)` returns
 `Option[MapEntry[K,V]]` so callers can keep both removed key and value.
 `HashSet.iter()` and direct
-`for value in set` use the same live-bucket cursor. Hash
+`for value in set` use the same live-bucket cursor. `HashSet.drain()` leaves
+the set empty while yielding drained values. Hash
 `reserve_extra(additional)` grows enough buckets for `len + additional` live
 items without immediately violating the load-factor rule. Hash `copy_to`
 methods copy only live entries into the target zone, leaving tombstones behind.
@@ -2110,7 +2123,11 @@ map.reserve_extra(ref mut zone, additional)
 map.copy_to(ref mut target)
 map.keys()
 map.values()
+map.values_mut()
 map.entries()
+map.iter()
+map.iter_mut()
+map.drain()
 
 collections::tree_set<T>(ref mut zone, capacity, less)
 TreeSet::new<T>(ref mut zone, capacity, less)
@@ -2139,6 +2156,7 @@ set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.copy_to(ref mut target)
 set.iter()
+set.drain()
 ```
 
 `TreeMap.contains_key(key)` is the preferred key-membership spelling;
@@ -2166,8 +2184,13 @@ and `TreeSet.upper_bound` return optional nearest values in comparator order.
 `TreeSet.get(value)` and `TreeSet.try_get(value)` read the stored equal
 representative. `TreeSet.take(value)` returns the removed value as `Option[T]`;
 `TreeSet.remove(value)` drops it and returns a boolean. `TreeMap.keys()`,
-`TreeMap.values()`, `TreeMap.entries()`, `TreeSet.iter()`, and direct
-`for value in tree_set` walk values in ascending comparator order. Tree
+`TreeMap.values()`, `TreeMap.entries()`, `TreeMap.iter()`, `TreeSet.iter()`,
+and direct `for value in tree_set` walk values in ascending comparator order.
+`TreeMap.values_mut()` exposes a mutable sorted value cursor,
+`TreeMap.iter_mut()` walks sorted `MapEntryMut[K,V]` handles, direct
+`for entry in tree_map` walks `MapEntry[K,V]`, and `TreeMap.drain()`/
+`TreeSet.drain()` leave the source container empty while yielding sorted
+drained entries or values. Tree
 `copy_to` methods rebuild the map or set in the target zone with the same
 comparator.
 

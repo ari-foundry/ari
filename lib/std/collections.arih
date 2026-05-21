@@ -12,9 +12,20 @@ pub struct Iter[T] {
   mut index: i64,
 }
 
+pub struct SetDrain[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+}
+
 pub struct MapEntry[K, V] {
   key: K,
   value: V,
+}
+
+pub struct MapEntryMut[K, V] {
+  key: K,
+  value: ptr V,
 }
 
 // Mutable update handles for Rust-style map entry APIs. The `zone` pointer is
@@ -39,6 +50,14 @@ pub struct HashMapEntries[K, V] {
   mut index: i64,
 }
 
+pub struct HashMapEntriesMut[K, V] {
+  keys: ptr K,
+  values: ptr V,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+}
+
 pub struct HashMapKeys[K] {
   keys: ptr K,
   states: ptr i64,
@@ -53,7 +72,29 @@ pub struct HashMapValues[V] {
   mut index: i64,
 }
 
+pub struct HashMapValuesMut[V] {
+  values: ptr V,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+}
+
+pub struct HashMapDrain[K, V] {
+  keys: ptr K,
+  values: ptr V,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+}
+
 pub struct HashSetIter[T] {
+  data: ptr T,
+  states: ptr i64,
+  capacity: i64,
+  mut index: i64,
+}
+
+pub struct HashSetDrain[T] {
   data: ptr T,
   states: ptr i64,
   capacity: i64,
@@ -76,12 +117,40 @@ pub struct TreeMapValues[V] {
   mut current: i64,
 }
 
+pub struct TreeMapValuesMut[V] {
+  values: ptr V,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  mut current: i64,
+}
+
 pub struct TreeMapEntries[K, V] {
   keys: ptr K,
   values: ptr V,
   left: ptr i64,
   right: ptr i64,
   parent: ptr i64,
+  mut current: i64,
+}
+
+pub struct TreeMapEntriesMut[K, V] {
+  keys: ptr K,
+  values: ptr V,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  mut current: i64,
+}
+
+pub struct TreeMapDrain[K, V] {
+  keys: ptr K,
+  values: ptr V,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  colors: ptr i64,
+  len: i64,
   mut current: i64,
 }
 
@@ -93,6 +162,16 @@ pub struct TreeSetIter[T] {
   mut current: i64,
 }
 
+pub struct TreeSetDrain[T] {
+  data: ptr T,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  colors: ptr i64,
+  len: i64,
+  mut current: i64,
+}
+
 pub impl[K, V] std::collections::MapEntry[K, V] {
   fn key(self: ref Self) -> K {
     return self.key;
@@ -100,6 +179,20 @@ pub impl[K, V] std::collections::MapEntry[K, V] {
 
   fn value(self: ref Self) -> V {
     return self.value;
+  }
+}
+
+pub impl[K, V] std::collections::MapEntryMut[K, V] {
+  fn key(self: ref Self) -> K {
+    return self.key;
+  }
+
+  fn value(self: ref Self) -> V {
+    return ptr_load(self.value);
+  }
+
+  fn value_mut(self: ref mut Self) -> ref mut V {
+    return ref mut *self.value;
   }
 }
 
@@ -475,6 +568,16 @@ pub impl[T] std::collections::Set[T] {
     return std::collections::Iter<T> { data: self.data, len: self.len, index: 0 };
   }
 
+  fn drain(self: ref mut Self) -> std::collections::SetDrain[T] {
+    let cursor = std::collections::SetDrain<T> {
+      data: self.data,
+      len: self.len,
+      index: 0,
+    };
+    self.len = 0;
+    return cursor;
+  }
+
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::Set[T] {
     var copied = std::collections::new<T>(target, self.len);
     var index = 0;
@@ -510,6 +613,29 @@ impl[T] std::DoubleEndedIterator[T] for std::collections::Iter[T] {
     }
     self.len = self.len - 1;
     return std::Some<T>(ptr_load(ptr_add(self.data, self.len)));
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::SetDrain[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.index >= self.len {
+      return std::None<T>();
+    }
+    let value = ptr_load(ptr_add(self.data, self.index));
+    self.index = self.index + 1;
+    return std::Some<T>(value);
+  }
+}
+
+impl[T] std::Drop for std::collections::SetDrain[T] {
+  fn drop(self) -> void {
+    var cursor = self;
+    while cursor.index < cursor.len {
+      let value = ptr_load(ptr_add(cursor.data, cursor.index));
+      drop value;
+      cursor.index = cursor.index + 1;
+    }
+    return;
   }
 }
 
@@ -566,6 +692,17 @@ fn next_live_bucket(states: ptr i64, capacity: i64, start: i64) -> i64 {
   var index = start;
   while index < capacity {
     if ptr_load(ptr_add(states, index)) == 1 {
+      return index;
+    }
+    index = index + 1;
+  }
+  return -1;
+}
+
+fn next_drain_bucket(states: ptr i64, capacity: i64, start: i64) -> i64 {
+  var index = start;
+  while index < capacity {
+    if ptr_load(ptr_add(states, index)) == 3 {
       return index;
     }
     index = index + 1;
@@ -918,8 +1055,47 @@ pub impl[K, V] std::collections::HashMap[K, V] {
     };
   }
 
+  fn values_mut(self: ref mut Self) -> std::collections::HashMapValuesMut[V] {
+    return std::collections::HashMapValuesMut<V> {
+      values: self.values,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+    };
+  }
+
   fn entries(self: ref Self) -> std::collections::HashMapEntries[K, V] {
     return std::collections::HashMapEntries<K, V> {
+      keys: self.keys,
+      values: self.values,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+    };
+  }
+
+  fn iter(self: ref Self) -> std::collections::HashMapEntries[K, V] {
+    return self.entries();
+  }
+
+  fn iter_mut(self: ref mut Self) -> std::collections::HashMapEntriesMut[K, V] {
+    return std::collections::HashMapEntriesMut<K, V> {
+      keys: self.keys,
+      values: self.values,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+    };
+  }
+
+  fn drain(self: ref mut Self) -> std::collections::HashMapDrain[K, V] {
+    var bucket = next_live_bucket(self.states, self.capacity, 0);
+    while bucket >= 0 {
+      ptr_store(ptr_add(self.states, bucket), 3);
+      bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
+    }
+    self.len = 0;
+    return std::collections::HashMapDrain<K, V> {
       keys: self.keys,
       values: self.values,
       states: self.states,
@@ -1023,6 +1199,19 @@ impl[V] std::Iterator[V] for std::collections::HashMapValues[V] {
   }
 }
 
+pub impl[V] std::collections::HashMapValuesMut[V] {
+  fn has_next(self: ref Self) -> bool {
+    return next_live_bucket(self.states, self.capacity, self.index) >= 0;
+  }
+
+  fn next(self: ref mut Self) -> ref mut V {
+    let bucket = next_live_bucket(self.states, self.capacity, self.index);
+    std::assert(bucket >= 0);
+    self.index = bucket + 1;
+    return ref mut *ptr_add(self.values, bucket);
+  }
+}
+
 impl[K, V] std::Iterator[std::collections::MapEntry[K, V]] for std::collections::HashMapEntries[K, V] {
   pub fn next(self: ref mut Self) -> std::Option[std::collections::MapEntry[K, V]] {
     let bucket = next_live_bucket(self.states, self.capacity, self.index);
@@ -1036,6 +1225,61 @@ impl[K, V] std::Iterator[std::collections::MapEntry[K, V]] for std::collections:
         value: ptr_load(ptr_add(self.values, bucket)),
       }
     );
+  }
+}
+
+impl[K, V] std::Iterator[std::collections::MapEntryMut[K, V]] for std::collections::HashMapEntriesMut[K, V] {
+  pub fn next(self: ref mut Self) -> std::Option[std::collections::MapEntryMut[K, V]] {
+    let bucket = next_live_bucket(self.states, self.capacity, self.index);
+    if bucket < 0 {
+      return std::None<std::collections::MapEntryMut[K, V]>();
+    }
+    self.index = bucket + 1;
+    return std::Some<std::collections::MapEntryMut[K, V]>(
+      std::collections::MapEntryMut<K, V> {
+        key: ptr_load(ptr_add(self.keys, bucket)),
+        value: ptr_add(self.values, bucket),
+      }
+    );
+  }
+}
+
+impl[K, V] std::Iterator[std::collections::MapEntry[K, V]] for std::collections::HashMapDrain[K, V] {
+  pub fn next(self: ref mut Self) -> std::Option[std::collections::MapEntry[K, V]] {
+    let bucket = next_drain_bucket(self.states, self.capacity, self.index);
+    if bucket < 0 {
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    self.index = bucket + 1;
+    ptr_store(ptr_add(self.states, bucket), 0);
+    return std::Some<std::collections::MapEntry[K, V]>(
+      std::collections::MapEntry<K, V> {
+        key: ptr_load(ptr_add(self.keys, bucket)),
+        value: ptr_load(ptr_add(self.values, bucket)),
+      }
+    );
+  }
+}
+
+impl[K, V] std::Drop for std::collections::HashMapDrain[K, V] {
+  fn drop(self) -> void {
+    var cursor = self;
+    var bucket = next_drain_bucket(cursor.states, cursor.capacity, cursor.index);
+    while bucket >= 0 {
+      let key = ptr_load(ptr_add(cursor.keys, bucket));
+      let value = ptr_load(ptr_add(cursor.values, bucket));
+      drop key;
+      drop value;
+      ptr_store(ptr_add(cursor.states, bucket), 0);
+      bucket = next_drain_bucket(cursor.states, cursor.capacity, bucket + 1);
+    }
+    return;
+  }
+}
+
+impl[K, V] std::IntoIterator[std::collections::MapEntry[K, V]] for std::collections::HashMap[K, V] {
+  pub fn into_iter(self: ref mut Self) -> std::collections::HashMapEntries[K, V] {
+    return self.entries();
   }
 }
 
@@ -1331,6 +1575,21 @@ pub impl[T] std::collections::HashSet[T] {
       index: 0,
     };
   }
+
+  fn drain(self: ref mut Self) -> std::collections::HashSetDrain[T] {
+    var bucket = next_live_bucket(self.states, self.capacity, 0);
+    while bucket >= 0 {
+      ptr_store(ptr_add(self.states, bucket), 3);
+      bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
+    }
+    self.len = 0;
+    return std::collections::HashSetDrain<T> {
+      data: self.data,
+      states: self.states,
+      capacity: self.capacity,
+      index: 0,
+    };
+  }
 }
 
 impl[T] std::Iterator[T] for std::collections::HashSetIter[T] {
@@ -1341,6 +1600,32 @@ impl[T] std::Iterator[T] for std::collections::HashSetIter[T] {
     }
     self.index = bucket + 1;
     return std::Some<T>(ptr_load(ptr_add(self.data, bucket)));
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::HashSetDrain[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    let bucket = next_drain_bucket(self.states, self.capacity, self.index);
+    if bucket < 0 {
+      return std::None<T>();
+    }
+    self.index = bucket + 1;
+    ptr_store(ptr_add(self.states, bucket), 0);
+    return std::Some<T>(ptr_load(ptr_add(self.data, bucket)));
+  }
+}
+
+impl[T] std::Drop for std::collections::HashSetDrain[T] {
+  fn drop(self) -> void {
+    var cursor = self;
+    var bucket = next_drain_bucket(cursor.states, cursor.capacity, cursor.index);
+    while bucket >= 0 {
+      let value = ptr_load(ptr_add(cursor.data, bucket));
+      drop value;
+      ptr_store(ptr_add(cursor.states, bucket), 0);
+      bucket = next_drain_bucket(cursor.states, cursor.capacity, bucket + 1);
+    }
+    return;
   }
 }
 
@@ -2070,6 +2355,16 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     };
   }
 
+  fn values_mut(self: ref mut Self) -> std::collections::TreeMapValuesMut[V] {
+    return std::collections::TreeMapValuesMut<V> {
+      values: self.values,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+    };
+  }
+
   fn entries(self: ref Self) -> std::collections::TreeMapEntries[K, V] {
     return std::collections::TreeMapEntries<K, V> {
       keys: self.keys,
@@ -2078,6 +2373,38 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
       right: self.right,
       parent: self.parent,
       current: tree_first_node(self.root, self.left),
+    };
+  }
+
+  fn iter(self: ref Self) -> std::collections::TreeMapEntries[K, V] {
+    return self.entries();
+  }
+
+  fn iter_mut(self: ref mut Self) -> std::collections::TreeMapEntriesMut[K, V] {
+    return std::collections::TreeMapEntriesMut<K, V> {
+      keys: self.keys,
+      values: self.values,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      current: tree_first_node(self.root, self.left),
+    };
+  }
+
+  fn drain(self: ref mut Self) -> std::collections::TreeMapDrain[K, V] {
+    let old_len = self.len;
+    let first = tree_first_node(self.root, self.left);
+    self.root = -1;
+    self.len = 0;
+    return std::collections::TreeMapDrain<K, V> {
+      keys: self.keys,
+      values: self.values,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      colors: self.colors,
+      len: old_len,
+      current: first,
     };
   }
 }
@@ -2176,6 +2503,19 @@ impl[V] std::Iterator[V] for std::collections::TreeMapValues[V] {
   }
 }
 
+pub impl[V] std::collections::TreeMapValuesMut[V] {
+  fn has_next(self: ref Self) -> bool {
+    return self.current >= 0;
+  }
+
+  fn next(self: ref mut Self) -> ref mut V {
+    std::assert(self.current >= 0);
+    let node = self.current;
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    return ref mut *ptr_add(self.values, node);
+  }
+}
+
 impl[K, V] std::Iterator[std::collections::MapEntry[K, V]] for std::collections::TreeMapEntries[K, V] {
   pub fn next(self: ref mut Self) -> std::Option[std::collections::MapEntry[K, V]] {
     if self.current < 0 {
@@ -2189,6 +2529,63 @@ impl[K, V] std::Iterator[std::collections::MapEntry[K, V]] for std::collections:
         value: ptr_load(ptr_add(self.values, node)),
       }
     );
+  }
+}
+
+impl[K, V] std::Iterator[std::collections::MapEntryMut[K, V]] for std::collections::TreeMapEntriesMut[K, V] {
+  pub fn next(self: ref mut Self) -> std::Option[std::collections::MapEntryMut[K, V]] {
+    if self.current < 0 {
+      return std::None<std::collections::MapEntryMut[K, V]>();
+    }
+    let node = self.current;
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    return std::Some<std::collections::MapEntryMut[K, V]>(
+      std::collections::MapEntryMut<K, V> {
+        key: ptr_load(ptr_add(self.keys, node)),
+        value: ptr_add(self.values, node),
+      }
+    );
+  }
+}
+
+impl[K, V] std::Iterator[std::collections::MapEntry[K, V]] for std::collections::TreeMapDrain[K, V] {
+  pub fn next(self: ref mut Self) -> std::Option[std::collections::MapEntry[K, V]] {
+    if self.current < 0 {
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    let node = self.current;
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    ptr_store(ptr_add(self.colors, node), -2);
+    return std::Some<std::collections::MapEntry[K, V]>(
+      std::collections::MapEntry<K, V> {
+        key: ptr_load(ptr_add(self.keys, node)),
+        value: ptr_load(ptr_add(self.values, node)),
+      }
+    );
+  }
+}
+
+impl[K, V] std::Drop for std::collections::TreeMapDrain[K, V] {
+  fn drop(self) -> void {
+    var cursor = self;
+    var index = 0;
+    while index < cursor.len {
+      if ptr_load(ptr_add(cursor.colors, index)) != -2 {
+        let key = ptr_load(ptr_add(cursor.keys, index));
+        let value = ptr_load(ptr_add(cursor.values, index));
+        drop key;
+        drop value;
+        ptr_store(ptr_add(cursor.colors, index), -2);
+      }
+      index = index + 1;
+    }
+    return;
+  }
+}
+
+impl[K, V] std::IntoIterator[std::collections::MapEntry[K, V]] for std::collections::TreeMap[K, V] {
+  pub fn into_iter(self: ref mut Self) -> std::collections::TreeMapEntries[K, V] {
+    return self.entries();
   }
 }
 
@@ -2689,6 +3086,22 @@ pub impl[T] std::collections::TreeSet[T] {
       current: tree_first_node(self.root, self.left),
     };
   }
+
+  fn drain(self: ref mut Self) -> std::collections::TreeSetDrain[T] {
+    let old_len = self.len;
+    let first = tree_first_node(self.root, self.left);
+    self.root = -1;
+    self.len = 0;
+    return std::collections::TreeSetDrain<T> {
+      data: self.data,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      colors: self.colors,
+      len: old_len,
+      current: first,
+    };
+  }
 }
 
 impl[T] std::Iterator[T] for std::collections::TreeSetIter[T] {
@@ -2699,6 +3112,34 @@ impl[T] std::Iterator[T] for std::collections::TreeSetIter[T] {
     let node = self.current;
     self.current = tree_next_node(node, self.left, self.right, self.parent);
     return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::TreeSetDrain[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.current < 0 {
+      return std::None<T>();
+    }
+    let node = self.current;
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    ptr_store(ptr_add(self.colors, node), -2);
+    return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+}
+
+impl[T] std::Drop for std::collections::TreeSetDrain[T] {
+  fn drop(self) -> void {
+    var cursor = self;
+    var index = 0;
+    while index < cursor.len {
+      if ptr_load(ptr_add(cursor.colors, index)) != -2 {
+        let value = ptr_load(ptr_add(cursor.data, index));
+        drop value;
+        ptr_store(ptr_add(cursor.colors, index), -2);
+      }
+      index = index + 1;
+    }
+    return;
   }
 }
 

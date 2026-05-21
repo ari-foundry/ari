@@ -78,6 +78,7 @@ set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.as_slice()
 set.iter()
+set.drain()
 set.copy_to(ref mut target)
 ```
 
@@ -92,7 +93,9 @@ calls can omit the repeated zone argument: `set.insert(value)`,
 `set.reserve_extra(additional)` infer the set's source zone. Manually assembled
 or otherwise untracked sets must keep the explicit `ref mut zone` argument.
 `iter` yields insertion-order values and `Set[T]` implements
-`IntoIterator[T]`.
+`IntoIterator[T]`. `drain()` returns a cursor over the current insertion-order
+values and immediately leaves the source set empty; if the cursor is dropped
+before it is fully consumed, it drops the remaining drained values.
 
 ## Deque
 
@@ -265,7 +268,11 @@ map.reserve_extra(ref mut zone, additional)
 map.copy_to(ref mut target)
 map.keys()
 map.values()
+map.values_mut()
 map.entries()
+map.iter()
+map.iter_mut()
+map.drain()
 ```
 
 `HashMap.insert` inserts or replaces and returns `Option[V]`: `Some(previous)`
@@ -278,7 +285,16 @@ as `Option[V]`. `remove` returns the removed value. `keys` and `values`
 iterate live buckets. That order is deterministic for a specific table state,
 but it is not insertion order and should not be used as a stable sorting rule.
 `entries` yields copied `MapEntry[K, V]` values with `.key`/`.value` fields and
-`key()`/`value()` accessors over the same live buckets.
+`key()`/`value()` accessors over the same live buckets. `iter()` is the same
+entry cursor under the shorter common collection spelling, and `HashMap[K,V]`
+implements `IntoIterator[MapEntry[K,V]]`, so `for entry in map` walks copied
+entries directly. `values_mut()` yields a mutable value cursor with
+`has_next()` and `next() -> ref mut V`; use it when keys must stay fixed but
+stored values should be updated in place. `iter_mut()` yields
+`MapEntryMut[K,V]` handles with `key()`, `value()`, and `value_mut()` so code
+can read the copied key while mutating the stored value. `drain()` marks the
+current live entries as drained, leaves the map empty, and returns a draining
+entry cursor.
 `reserve_extra(additional)` reserves enough hash buckets
 for the requested live length without immediately violating the table's load
 factor rule. `copy_to(ref mut target)` copies only live entries into the target
@@ -332,6 +348,7 @@ set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.copy_to(ref mut target)
 set.iter()
+set.drain()
 ```
 
 `HashSet.insert` returns whether the value was newly inserted. `replace`
@@ -341,7 +358,8 @@ compare membership over live buckets and ignore tombstones. `try_get(value)`
 returns the stored equal representative as `Option[T]`, and `get(value)` asserts
 that such a representative exists. `HashSet.iter()`
 yields live buckets, and `HashSet[T]` implements `IntoIterator[T]` so
-`for value in set` works through the same cursor. `copy_to(ref mut target)`
+`for value in set` works through the same cursor. `HashSet.drain()` returns a
+live-bucket draining cursor and leaves the set empty. `copy_to(ref mut target)`
 copies live values into a fresh target-zone hash table without tombstones.
 
 ## TreeMap And TreeSet
@@ -396,7 +414,11 @@ map.reserve_extra(ref mut zone, additional)
 map.copy_to(ref mut target)
 map.keys()
 map.values()
+map.values_mut()
 map.entries()
+map.iter()
+map.iter_mut()
+map.drain()
 ```
 
 `TreeMap.insert` inserts or replaces and returns `Option[V]`. `contains_key`
@@ -413,7 +435,13 @@ value without doing two boundary lookups. `lower_bound(key)` returns the first
 entry whose key is not less than `key`, and `upper_bound(key)` returns the
 first entry whose key is greater than `key`; both return `None` when no such
 entry exists. `entries` yields `MapEntry[K, V]` values with `.key` and
-`.value` fields in the same sorted key order. `remove`
+`.value` fields in the same sorted key order. `iter()` is an alias for
+`entries()`, and direct `for entry in map` uses the same copied-entry order.
+`values_mut()` walks values in sorted key order with a mutable cursor; call
+`has_next()` before `next() -> ref mut V`. `iter_mut()` walks sorted
+`MapEntryMut[K,V]` handles for copied-key plus mutable-value updates.
+`drain()` returns entries in sorted key order and immediately leaves the source
+tree map empty. `remove`
 returns the removed value as `Option[V]`; the current
 implementation compacts the live node arrays and rebuilds tree links in place,
 so removal does not allocate through a zone. For tracked local tree maps,
@@ -453,6 +481,7 @@ set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.copy_to(ref mut target)
 set.iter()
+set.drain()
 ```
 
 `TreeSet.insert` returns `false` for an equal existing value. `TreeSet.replace`
@@ -469,7 +498,8 @@ moves a removed value out as
 `Option[T]`; `remove` drops the removed value and returns whether anything was
 removed. Tree-set removal also compacts live nodes and rebuilds links in place
 without allocating. `TreeSet.iter()` yields values in ascending comparator
-order, and `TreeSet[T]` implements `IntoIterator[T]`. For tracked local tree
+order, and `TreeSet[T]` implements `IntoIterator[T]`. `TreeSet.drain()` yields
+values in ascending comparator order and leaves the source tree set empty. For tracked local tree
 sets, `set.insert(value)`, `set.replace(value)`, and
 `set.reserve(capacity)`/`set.reserve_extra(additional)` infer the constructor
 zone. `copy_to(ref mut target)` rebuilds the ordered set in the target zone
@@ -569,6 +599,7 @@ tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.a
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari
 tests/cases/standard-library/ok/collections/std-collections-map-entries.ari
+tests/cases/standard-library/ok/collections/std-collections-view-api.ari
 tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari
 tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
@@ -630,6 +661,9 @@ checks set relationship predicates after a tombstone. `std-collections-hash-iter
 checks key, value, and set cursors after tombstones.
 `std-collections-map-entries.ari` checks hash entries over live buckets and
 tree entries in sorted key order.
+`std-collections-view-api.ari` checks map `values_mut()` cursors, map
+`iter()` aliases, `MapEntryMut`-based `iter_mut()` cursors, direct map
+`IntoIterator`, and draining cursors for linear, hash, and tree maps/sets.
 `std-collections-map-natural-api.ari` keeps compatibility `contains` calls
 working while locking down the preferred `contains_key` and fallback `get_or`
 spellings for hash and tree maps. `std-collections-map-value-predicates.ari`
@@ -674,6 +708,11 @@ and checked by `make check-std-api`.
   dispatch is ready.
 - Tree containers require an explicit comparator. The future API should use
   `Ord` when generic trait dispatch is strong enough.
+- `values_mut()` uses a `has_next()`/`next()` cursor because Ari does not yet
+  lower `Iterator[ref mut T]`/`Option[ref mut T]` as a stable public iterator
+  item shape. Map `iter_mut()` therefore yields `MapEntryMut[K,V]` handles
+  rather than `Option[ref mut (K,V)]`. Set `iter_mut()` stays future because
+  mutating set values can break hash and ordering invariants.
 - Tree removal compacts live storage and rebuilds links in place. A future
   direct red-black deletion path can improve asymptotic removal cost without
   changing the public API.

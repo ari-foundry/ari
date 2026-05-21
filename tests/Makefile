@@ -1986,6 +1986,28 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent7entries' $(BUILD_DIR)/prelude/std-collections-map-entries.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari -o $(BUILD_DIR)/prelude/std-collections-map-entries.elf
 	$(BUILD_DIR)/prelude/std-collections-map-entries.elf; code=$$?; test $$code -eq 71
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-view-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent10values_mut' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl39std__collections__HashMapValuesMut_i64_8inherent4next' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent4iter' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent8iter_mut' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent5drain' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl45std__collections__HashMapEntriesMut_i64__i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl40std__collections__HashMapDrain_i64__i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent10values_mut' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl39std__collections__TreeMapValuesMut_i64_8inherent4next' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent4iter' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent8iter_mut' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent5drain' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl45std__collections__TreeMapEntriesMut_i64__i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl40std__collections__TreeMapDrain_i64__i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent5drain' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent5drain' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent5drain' $(BUILD_DIR)/prelude/std-collections-view-api.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-view-api.ari -o $(BUILD_DIR)/prelude/std-collections-view-api.elf
+	$(BUILD_DIR)/prelude/std-collections-view-api.elf; code=$$?; test $$code -eq 110
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent12contains_key' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent6get_or' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
