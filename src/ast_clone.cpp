@@ -246,10 +246,17 @@ void clone_lambda_payload(const Expr& source,
     for (const Param& param : expr_lambda_params(source)) {
         params.push_back(clone_param_impl(param, context));
     }
+    TypeRef result_type = expr_lambda_result_type(source);
     std::vector<StmtPtr> body = clone_statement_list(expr_lambda_body(source), context);
     ExprPtr value = clone_optional_expression(expr_lambda_value(source), context);
     context.local_renames.resize(rename_mark);
-    set_expr_lambda_payload(target, std::move(params), std::move(body), std::move(value));
+    set_expr_lambda_payload(
+        target,
+        std::move(params),
+        expr_lambda_has_result_type(source),
+        std::move(result_type),
+        std::move(body),
+        std::move(value));
 }
 
 void clone_match_payload(const Expr& source,

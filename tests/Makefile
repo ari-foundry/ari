@@ -1644,6 +1644,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent14try_last_entry' $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-entry-boundaries.ari -o $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.elf
 	$(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.elf; code=$$?; test $$code -eq 77
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-copy-to.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent7copy_to' $(BUILD_DIR)/prelude/std-collections-copy-to.ll
+	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent7copy_to' $(BUILD_DIR)/prelude/std-collections-copy-to.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-copy-to.ari -o $(BUILD_DIR)/prelude/std-collections-copy-to.elf
+	$(BUILD_DIR)/prelude/std-collections-copy-to.elf; code=$$?; test $$code -eq 48
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6remove' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
@@ -1937,6 +1942,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; code=$$?; test $$code -eq 238; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-entry-boundaries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.elf; $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.elf; code=$$?; test $$code -eq 77; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-copy-to.elf; $(BUILD_DIR)/prelude/std-collections-copy-to.elf; code=$$?; test $$code -eq 48; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 195; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 39; fi
@@ -4933,6 +4939,12 @@ check-functions: $(TARGET) check-function-errors
 	$(TARGET) tests/cases/functions/ok/lambda-function-pointer.ari --emit-llvm $(BUILD_DIR)/functions/lambda-function-pointer.ll
 	grep -q '_u24lambda' $(BUILD_DIR)/functions/lambda-function-pointer.ll
 	grep -q 'call i64 %' $(BUILD_DIR)/functions/lambda-function-pointer.ll
+	$(TARGET) tests/cases/functions/ok/lambda-capture.ari -o $(BUILD_DIR)/functions/lambda-capture.elf
+	$(BUILD_DIR)/functions/lambda-capture.elf; code=$$?; test $$code -eq 37
+	$(TARGET) tests/cases/functions/ok/lambda-capture.ari --emit-llvm $(BUILD_DIR)/functions/lambda-capture.ll
+	grep -q '_u24lambda' $(BUILD_DIR)/functions/lambda-capture.ll
+	grep -q 'extractvalue' $(BUILD_DIR)/functions/lambda-capture.ll
+	grep -q 'call i64 %' $(BUILD_DIR)/functions/lambda-capture.ll
 	$(TARGET) tests/cases/functions/ok/function-extern-c.ari --emit-llvm $(BUILD_DIR)/functions/function-extern-c.ll
 	grep -q 'declare i64 @"puts"(ptr)' $(BUILD_DIR)/functions/function-extern-c.ll
 	grep -q 'call i64 @"puts"' $(BUILD_DIR)/functions/function-extern-c.ll
@@ -4975,11 +4987,11 @@ check-function-errors: $(TARGET)
 	if $(TARGET) tests/cases/functions/errors/function-module-private.ari -o $(BUILD_DIR)/functions/errors/function-module-private.elf >$(BUILD_DIR)/functions/errors/function-module-private.err 2>&1; then exit 1; fi
 	grep -q "function 'Secret::hidden' is not public" $(BUILD_DIR)/functions/errors/function-module-private.err
 	if $(TARGET) tests/cases/functions/errors/lambda-missing-expected-type.ari -o $(BUILD_DIR)/functions/errors/lambda-missing-expected-type.elf >$(BUILD_DIR)/functions/errors/lambda-missing-expected-type.err 2>&1; then exit 1; fi
-	grep -q "lambda expression requires an expected function pointer type" $(BUILD_DIR)/functions/errors/lambda-missing-expected-type.err
+	grep -q "lambda parameter 'value' needs an explicit type when no expected function type is available" $(BUILD_DIR)/functions/errors/lambda-missing-expected-type.err
 	if $(TARGET) tests/cases/functions/errors/lambda-param-count.ari -o $(BUILD_DIR)/functions/errors/lambda-param-count.elf >$(BUILD_DIR)/functions/errors/lambda-param-count.err 2>&1; then exit 1; fi
 	grep -q "lambda parameter count does not match expected fn(i64) -> i64" $(BUILD_DIR)/functions/errors/lambda-param-count.err
 	if $(TARGET) tests/cases/functions/errors/lambda-capture-local.ari -o $(BUILD_DIR)/functions/errors/lambda-capture-local.elf >$(BUILD_DIR)/functions/errors/lambda-capture-local.err 2>&1; then exit 1; fi
-	grep -q "lambda captures local binding 'base'" $(BUILD_DIR)/functions/errors/lambda-capture-local.err
+	grep -q "capturing lambda cannot be used as a plain function pointer" $(BUILD_DIR)/functions/errors/lambda-capture-local.err
 
 check-errors: $(TARGET) check-function-errors
 	mkdir -p $(BUILD_DIR)/errors

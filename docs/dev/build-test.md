@@ -99,8 +99,9 @@ and invalid suffix
 diagnostics.
 
 `make check-functions` runs function-focused tests for direct calls, recursion,
-function pointer values and indirect calls, non-capturing lambdas lowered as
-function pointer values, parameter patterns, vector parameter ABI views, and
+function pointer values and indirect calls, expression-body/block-body lambdas,
+non-capturing lambdas lowered as function pointer values, capturing lambdas
+lowered as closure values, parameter patterns, vector parameter ABI views, and
 function error diagnostics.
 
 `make check-generics` runs generic-focused tests for function

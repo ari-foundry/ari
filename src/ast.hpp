@@ -175,6 +175,8 @@ struct ExprBlockPayload {
 
 struct ExprLambdaPayload {
     std::vector<Param> params;
+    bool has_result_type = false;
+    TypeRef result_type;
     std::vector<StmtPtr> body;
     ExprPtr value;
 };
@@ -654,6 +656,18 @@ inline std::vector<Param>& expr_lambda_params(Expr& expr) {
     return ensure_expr_lambda_payload(expr).params;
 }
 
+inline bool expr_lambda_has_result_type(const Expr& expr) {
+    return expr_lambda_payload(expr).has_result_type;
+}
+
+inline const TypeRef& expr_lambda_result_type(const Expr& expr) {
+    return expr_lambda_payload(expr).result_type;
+}
+
+inline TypeRef& expr_lambda_result_type(Expr& expr) {
+    return ensure_expr_lambda_payload(expr).result_type;
+}
+
 inline const std::vector<StmtPtr>& expr_lambda_body(const Expr& expr) {
     return expr_lambda_payload(expr).body;
 }
@@ -672,10 +686,14 @@ inline ExprPtr& expr_lambda_value(Expr& expr) {
 
 inline void set_expr_lambda_payload(Expr& expr,
                                     std::vector<Param> params,
+                                    bool has_result_type,
+                                    TypeRef result_type,
                                     std::vector<StmtPtr> body,
                                     ExprPtr value) {
     ExprLambdaPayload& payload = ensure_expr_lambda_payload(expr);
     payload.params = std::move(params);
+    payload.has_result_type = has_result_type;
+    payload.result_type = std::move(result_type);
     payload.body = std::move(body);
     payload.value = std::move(value);
 }

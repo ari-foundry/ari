@@ -138,12 +138,20 @@ ExprPtr make_ast_block_expr(SourceLocation loc,
 
 ExprPtr make_ast_lambda_expr(SourceLocation loc,
                              std::vector<Param> params,
+                             bool has_result_type,
+                             TypeRef result_type,
                              std::vector<StmtPtr> body,
                              ExprPtr value) {
     auto expr = std::make_unique<Expr>();
     expr->kind = ExprKind::Lambda;
     expr->loc = loc;
-    set_expr_lambda_payload(*expr, std::move(params), std::move(body), std::move(value));
+    set_expr_lambda_payload(
+        *expr,
+        std::move(params),
+        has_result_type,
+        std::move(result_type),
+        std::move(body),
+        std::move(value));
     return expr;
 }
 

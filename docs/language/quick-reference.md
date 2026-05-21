@@ -117,7 +117,7 @@ Omit the semicolon only for the final value expression in a function, block,
 | shared borrow | `&i64`, `ref i64` | Many shared borrows may overlap. |
 | mutable borrow | `&mut i64`, `ref mut i64` | Requires mutable source and exclusive access. |
 | owner | `own i64`, `own Zone` | Must be consumed, returned, moved, dropped, or forgotten. |
-| function pointer | `fn(i64) -> i64` | Function names and non-capturing `fn(value) -> { ... }` lambdas can become pointer values. |
+| function pointer | `fn(i64) -> i64` | Function names and non-capturing `fn(value) value + 1` lambdas can become pointer values. |
 | trait object | `dyn Trait` forms | See [Traits](traits.md) and [Front-End Only Syntax](front-end-only.md). |
 
 ## Statements And Expressions

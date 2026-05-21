@@ -1,0 +1,13 @@
+// check-functions/ok: capturing lambdas lower to closure values with hidden environment fields.
+fn main() -> i64 {
+  let base: i64 = 10;
+  let scale: i64 = 3;
+
+  let add_base = fn(value: i64) -> i64 value + base;
+  let scaled_add = fn(value: i64) -> i64 {
+    let scaled = value * scale;
+    scaled + base
+  };
+
+  return add_base(5) + scaled_add(4);
+}

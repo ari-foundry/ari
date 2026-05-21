@@ -204,9 +204,10 @@ function pointer signature cannot be inferred.
 
 ### Lambda Expressions
 
-A lambda expression creates an anonymous, non-capturing function pointer value.
-Its syntax mirrors Ari's function pointer type syntax but uses a function block
-after `->`:
+A lambda expression creates an anonymous callable value. Ari uses `fn(...)`
+syntax for lambdas so the shape stays close to function pointer types, but
+capturing lambdas behave like Rust closures: names from the surrounding scope
+are captured automatically when the body uses them.
 
 ```ari
 fn apply(op: fn(i64) -> i64, value: i64) -> i64 {
@@ -214,31 +215,52 @@ fn apply(op: fn(i64) -> i64, value: i64) -> i64 {
 }
 
 fn main() -> i64 {
-  let add_one: fn(i64) -> i64 = fn(value) -> {
-    value + 1
-  };
+  let add_one = fn(value: i64) -> i64 value + 1;
 
-  apply(fn(value) -> {
-    value * 2
-  }, add_one(4))
+  apply(fn(value) value * 2, add_one(4))
 }
 ```
 
-The compiler currently needs an expected `fn(...) -> ...` type from a binding,
-parameter, return, or other typed context. Lambda parameter types may be omitted
-when the expected function pointer type is known, or written explicitly for
-readability:
+There are three useful forms:
 
 ```ari
-let add: fn(i64, i64) -> i64 = fn(left: i64, right: i64) -> {
+fn(value) value + 1
+fn(value) -> { value + 1 }
+fn(value: i64) -> i64 value + 1
+```
+
+When an expected `fn(...) -> ...` type is available from a binding, parameter,
+return, or call argument, lambda parameter and result types may be inferred from
+that context. Without an expected function type, write the parameter and result
+types explicitly:
+
+```ari
+let add = fn(left: i64, right: i64) -> i64 {
   left + right
 };
 ```
 
-Lambda bodies use the same block rules as functions: a final expression becomes
-the return value, and `fn() -> void` lambdas may use an empty or statement-only
-body. Capturing outer local bindings is not implemented yet; use explicit
-parameters or a named function until closure environment storage lands.
+Lambdas may capture local values directly:
+
+```ari
+fn main() -> i64 {
+  let base: i64 = 40;
+  let add = fn(value: i64) -> i64 value + base;
+
+  add(2)
+}
+```
+
+The compiler keeps non-capturing lambdas optimized as plain function pointer
+values whenever the expected type is `fn(...) -> ...`. Capturing lambdas lower
+to closure values with hidden environment fields and can be called with the same
+`call(args...)` syntax. Capturing closures do not coerce to plain function
+pointers; pass a named function or a non-capturing lambda when an API requires
+`fn(...) -> ...`.
+
+Current capture lowering stores copyable plain values in the closure
+environment. Capturing owning values or borrow-carrying aggregate values is a
+planned extension because those need the full ownership/lifetime closure model.
 
 ## Generics
 

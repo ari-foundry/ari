@@ -38,6 +38,8 @@ ExprPtr make_ast_block_expr(SourceLocation loc,
                             ExprPtr value);
 ExprPtr make_ast_lambda_expr(SourceLocation loc,
                              std::vector<Param> params,
+                             bool has_result_type,
+                             TypeRef result_type,
                              std::vector<StmtPtr> body,
                              ExprPtr value);
 ExprPtr make_ast_if_expr(SourceLocation loc,

@@ -486,6 +486,7 @@ private:
     std::vector<const FunctionDecl*> pending_std_functions_;
     std::set<std::string> queued_std_functions_;
     std::vector<FunctionDecl> lambda_functions_;
+    std::set<std::string> lambda_capture_ignore_;
     std::map<std::string, std::vector<ImplMethodInfo>> method_impls_;
     std::map<std::string, std::vector<ImplMethodInfo>> associated_impls_;
     std::vector<ImplMethodInfo> generic_method_impls_;
@@ -17167,6 +17168,7 @@ private:
     struct LambdaCaptureUse {
         std::string name;
         SourceLocation loc;
+        IrType type;
     };
 
     static void add_pattern_bindings_to_lambda_locals(const Pattern& pattern, std::set<std::string>& local_names) {
@@ -17196,7 +17198,8 @@ private:
         const std::set<std::string>& local_names
     ) {
         if (name.empty() || local_names.count(name)) return std::nullopt;
-        if (find_local_slot(name)) return LambdaCaptureUse{name, loc};
+        if (lambda_capture_ignore_.count(name)) return std::nullopt;
+        if (find_local_slot(name)) return LambdaCaptureUse{name, loc, {}};
         return std::nullopt;
     }
 
@@ -17377,32 +17380,169 @@ private:
         return lambda_capture_from_expr(expr_lambda_value(expr).get(), local_names);
     }
 
+    std::vector<LambdaCaptureUse> collect_lambda_captures_from_body(const Expr& expr) {
+        std::vector<LambdaCaptureUse> captures;
+        lambda_capture_ignore_.clear();
+        while (auto captured = lambda_capture_from_body(expr)) {
+            LocalInfo* local = find_local_slot(captured->name);
+            if (!local) {
+                lambda_capture_ignore_.clear();
+                fail(captured->loc, "internal error: missing lambda capture binding '" + captured->name + "'");
+            }
+            captured->type = local->type;
+            captures.push_back(*captured);
+            lambda_capture_ignore_.insert(captured->name);
+        }
+        lambda_capture_ignore_.clear();
+        return captures;
+    }
+
     std::string next_lambda_function_name() const {
         std::string base = "$lambda" + std::to_string(lambda_functions_.size());
         return current_module_name_.empty() ? base : current_module_name_ + "::" + base;
     }
 
-    IrExprPtr check_lambda_expr(const Expr& expr, const IrType& expected) {
-        if (expected.qualifier != TypeQualifier::Value ||
-            expected.primitive != IrPrimitiveKind::Function ||
-            expected.args.empty() ||
-            expected.array_size + 1 != expected.args.size()) {
+    static bool is_function_pointer_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Function &&
+               !type.args.empty() &&
+               type.array_size + 1 == type.args.size();
+    }
+
+    static bool is_lambda_closure_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Struct &&
+               !type.field_names.empty() &&
+               type.field_names[0] == "$call" &&
+               !type.field_types.empty() &&
+               is_function_pointer_type(type.field_types[0]) &&
+               !type.args.empty() &&
+               type.array_size + 1 == type.args.size();
+    }
+
+    static IrType callable_result_type(const IrType& type) {
+        if (!is_function_pointer_type(type) && !is_lambda_closure_type(type)) {
+            throw CompileError(where(type.loc) + ": malformed callable type");
+        }
+        return type.args[static_cast<std::size_t>(type.array_size)];
+    }
+
+    IrType make_lambda_callable_type(SourceLocation loc,
+                                     std::string name,
+                                     const std::vector<IrType>& param_types,
+                                     const IrType& result_type,
+                                     const IrType& function_field_type,
+                                     const std::vector<LambdaCaptureUse>& captures) const {
+        IrType type = primitive_type(IrPrimitiveKind::Struct, std::move(name), loc);
+        type.array_size = param_types.size();
+        type.args = param_types;
+        type.args.push_back(result_type);
+        type.field_names.push_back("$call");
+        type.field_types.push_back(function_field_type);
+        type.field_mutable.push_back(false);
+        for (const LambdaCaptureUse& capture : captures) {
+            type.field_names.push_back(capture.name);
+            type.field_types.push_back(capture.type);
+            type.field_mutable.push_back(false);
+        }
+        return type;
+    }
+
+    IrExprPtr make_lambda_capture_value_expr(const LambdaCaptureUse& capture) {
+        LocalInfo* local = find_local_slot(capture.name);
+        if (!local) fail(capture.loc, "unknown lambda capture '" + capture.name + "'");
+        if (auto error = local_unavailable_binding_error(capture.name, *local)) fail(capture.loc, *error);
+        if (is_owner_type(local->type)) {
+            fail(capture.loc,
+                 "lambda capture of owning binding '" + capture.name +
+                     "' is planned; capture a copyable value or pass ownership explicitly for now");
+        }
+        if (contains_borrow_type(local->type)) {
+            fail(capture.loc,
+                 "lambda capture of borrow-carrying binding '" + capture.name +
+                     "' is planned; capture a plain value for now");
+        }
+        require_can_read_borrow_path(capture.loc, capture.name, *local, "");
+        require_zone_pointer_valid(capture.loc, capture.name, *local);
+        return make_local_lvalue_expr(capture.loc, capture.name, local->type);
+    }
+
+    IrExprPtr check_lambda_expr(const Expr& expr, const IrType* expected) {
+        const bool has_expected = expected != nullptr;
+        if (has_expected && !is_function_pointer_type(*expected)) {
             fail(expr.loc,
                  "lambda expression requires an expected function pointer type; add a fn(...) -> ... annotation");
         }
 
         const std::vector<Param>& source_params = expr_lambda_params(expr);
-        const std::size_t param_count = static_cast<std::size_t>(expected.array_size);
+        const std::size_t param_count = has_expected
+            ? static_cast<std::size_t>(expected->array_size)
+            : source_params.size();
         if (source_params.size() != param_count) {
             fail(expr.loc,
-                 "lambda parameter count does not match expected " + type_name(expected) +
+                 "lambda parameter count does not match expected " + type_name(*expected) +
                      ": expected " + std::to_string(param_count) +
                      ", got " + std::to_string(source_params.size()));
         }
-        if (auto captured = lambda_capture_from_body(expr)) {
-            fail(captured->loc,
-                 "lambda captures local binding '" + captured->name +
-                     "', but capture environments are not supported yet");
+
+        std::vector<IrType> user_param_types;
+        user_param_types.reserve(param_count);
+        for (std::size_t i = 0; i < param_count; ++i) {
+            const Param& source = source_params[i];
+            if (source.has_pattern) {
+                fail(source.pattern.loc, "lambda parameter patterns are planned; use a plain named parameter for now");
+            }
+            if (source.binding_mode != BindingMode::Value) {
+                fail(source.type.loc, "lambda parameter binding modes are planned; use a plain named parameter for now");
+            }
+
+            IrType param_type;
+            if (has_expected) {
+                param_type = expected->args[i];
+            }
+            if (lambda_param_has_explicit_type(source)) {
+                IrType explicit_param = resolve_executable_type(source.type);
+                bool vec_view = false;
+                explicit_param = vector_parameter_abi_type(
+                    source.type.loc,
+                    explicit_param,
+                    "a lambda parameter",
+                    vec_view);
+                if (has_expected && !same_type(explicit_param, param_type)) {
+                    fail(source.type.loc,
+                         "lambda parameter '" + source.name + "' type mismatch: expected " +
+                             type_name(param_type) + ", got " + type_name(explicit_param));
+                }
+                param_type = explicit_param;
+            } else if (!has_expected) {
+                fail(source.type.loc,
+                     "lambda parameter '" + source.name +
+                         "' needs an explicit type when no expected function type is available");
+            }
+            user_param_types.push_back(std::move(param_type));
+        }
+
+        IrType result_type;
+        if (has_expected) {
+            result_type = expected->args[param_count];
+        }
+        if (expr_lambda_has_result_type(expr)) {
+            IrType explicit_result = resolve_executable_type(expr_lambda_result_type(expr));
+            if (has_expected && !same_type(explicit_result, result_type)) {
+                fail(expr_lambda_result_type(expr).loc,
+                     "lambda result type mismatch: expected " + type_name(result_type) +
+                         ", got " + type_name(explicit_result));
+            }
+            result_type = std::move(explicit_result);
+        } else if (!has_expected) {
+            fail(expr.loc,
+                 "lambda expression without an expected function type needs an explicit result type");
+        }
+
+        std::vector<LambdaCaptureUse> captures = collect_lambda_captures_from_body(expr);
+        if (has_expected && !captures.empty()) {
+            fail(captures.front().loc,
+                 "capturing lambda cannot be used as a plain function pointer; let the closure type be inferred or remove the capture");
         }
 
         FunctionDecl lambda;
@@ -17420,48 +17560,51 @@ private:
         FunctionSig sig;
         sig.loc = expr.loc;
         sig.module_name = current_module_name_;
-        sig.params.reserve(param_count);
+        sig.params.reserve(captures.size() + param_count);
+        for (const LambdaCaptureUse& capture : captures) {
+            Param param;
+            param.name = capture.name;
+            param.type.loc = capture.loc;
+            param.binding_mode = BindingMode::Value;
+            lambda.params.push_back(std::move(param));
+            sig.params.push_back(capture.type);
+        }
         for (std::size_t i = 0; i < param_count; ++i) {
             const Param& source = source_params[i];
-            if (source.has_pattern) {
-                fail(source.pattern.loc, "lambda parameter patterns are planned; use a plain named parameter for now");
-            }
-            if (source.binding_mode != BindingMode::Value) {
-                fail(source.type.loc, "lambda parameter binding modes are planned; use a plain named parameter for now");
-            }
-
-            const IrType& expected_param = expected.args[i];
-            if (lambda_param_has_explicit_type(source)) {
-                IrType explicit_param = resolve_executable_type(source.type);
-                bool vec_view = false;
-                explicit_param = vector_parameter_abi_type(
-                    source.type.loc,
-                    explicit_param,
-                    "a lambda parameter",
-                    vec_view);
-                if (!same_type(explicit_param, expected_param)) {
-                    fail(source.type.loc,
-                         "lambda parameter '" + source.name + "' type mismatch: expected " +
-                             type_name(expected_param) + ", got " + type_name(explicit_param));
-                }
-            }
-
             Param param;
             param.name = source.name;
             param.type = source.type;
             param.binding_mode = BindingMode::Value;
             lambda.params.push_back(std::move(param));
-            sig.params.push_back(expected_param);
+            sig.params.push_back(user_param_types[i]);
         }
-        sig.result = expected.args[param_count];
+        sig.result = result_type;
         set_function_return_contracts(sig);
 
+        IrType lambda_function_type = function_pointer_type(sig, expr.loc);
         auto inserted = functions_.emplace(lambda.name, std::move(sig));
         if (!inserted.second) fail(expr.loc, "internal error: duplicate generated lambda function '" + lambda.name + "'");
-        IrType lambda_type = expected;
-        lambda_type.loc = expr.loc;
         lambda_functions_.push_back(std::move(lambda));
-        return make_function_ref_expr(expr.loc, lambda_functions_.back().name, lambda_type);
+        if (captures.empty()) {
+            IrType lambda_type = has_expected ? *expected : lambda_function_type;
+            lambda_type.loc = expr.loc;
+            return make_function_ref_expr(expr.loc, lambda_functions_.back().name, lambda_type);
+        }
+
+        std::vector<IrExprPtr> elements;
+        elements.reserve(captures.size() + 1);
+        elements.push_back(make_function_ref_expr(expr.loc, lambda_functions_.back().name, lambda_function_type));
+        for (const LambdaCaptureUse& capture : captures) {
+            elements.push_back(make_lambda_capture_value_expr(capture));
+        }
+        IrType closure_type = make_lambda_callable_type(
+            expr.loc,
+            lambda_functions_.back().name + "$closure",
+            user_param_types,
+            result_type,
+            lambda_function_type,
+            captures);
+        return make_ir_tuple_expr(expr.loc, std::move(closure_type), std::move(elements));
     }
 
     IrExprPtr check_expr_with_expected(const Expr& expr, const IrType& expected) {
@@ -17469,7 +17612,7 @@ private:
             return make_typed_empty_vector_expr(expr.loc, expected);
         }
         if (expr.kind == ExprKind::Lambda) {
-            return check_lambda_expr(expr, expected);
+            return check_lambda_expr(expr, &expected);
         }
         if (expr.kind == ExprKind::String && is_prelude_u8_slice_type(expected)) {
             return make_string_literal_slice_expr(expr.loc, expr.string_value, expected);
@@ -17666,8 +17809,7 @@ private:
             case ExprKind::Block:
                 return check_block_expr(expr, std::move(lowered));
             case ExprKind::Lambda:
-                fail(expr.loc,
-                     "lambda expression requires an expected function pointer type; add a fn(...) -> ... annotation");
+                return check_lambda_expr(expr, nullptr);
             case ExprKind::Call:
                 return check_call(expr, std::move(lowered));
             case ExprKind::Binary:
@@ -23277,20 +23419,17 @@ private:
     }
 
     IrExprPtr check_indirect_call(SourceLocation loc, IrExprPtr callee, const std::vector<ExprPtr>& arg_exprs, IrExprPtr lowered) {
-        if (callee->type.qualifier != TypeQualifier::Value ||
-            callee->type.primitive != IrPrimitiveKind::Function ||
-            callee->type.args.empty() ||
-            callee->type.array_size + 1 != callee->type.args.size()) {
-            fail(loc, "called value must be a function pointer, got " + type_name(callee->type));
+        if (!is_function_pointer_type(callee->type) && !is_lambda_closure_type(callee->type)) {
+            fail(loc, "called value must be a function pointer or closure, got " + type_name(callee->type));
         }
         std::size_t param_count = static_cast<std::size_t>(callee->type.array_size);
         if (param_count != arg_exprs.size()) {
-            fail(loc, "wrong argument count for function pointer call");
+            fail(loc, "wrong argument count for callable value call");
         }
 
         lowered->kind = IrExprKind::IndirectCall;
         lowered->loc = loc;
-        lowered->type = function_pointer_result_type(callee->type);
+        lowered->type = callable_result_type(callee->type);
         set_ir_expr_operand(*lowered, std::move(callee));
         lowered->args.reserve(arg_exprs.size());
         std::size_t borrow_mark = temporary_borrow_mark();
@@ -23440,8 +23579,8 @@ private:
             return check_indirect_call(expr.loc, check_expr(*expr_operand(expr)), expr.args, std::move(lowered));
         }
         if (LocalInfo* local = find_local_slot(expr.name)) {
-            if (local->type.primitive != IrPrimitiveKind::Function || local->type.qualifier != TypeQualifier::Value) {
-                fail(expr.loc, "called value must be a function pointer, got " + type_name(local->type));
+            if (!is_function_pointer_type(local->type) && !is_lambda_closure_type(local->type)) {
+                fail(expr.loc, "called value must be a function pointer or closure, got " + type_name(local->type));
             }
             Expr local_expr;
             local_expr.kind = ExprKind::Name;

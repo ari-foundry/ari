@@ -432,6 +432,8 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
                 append_binding_mode(out, param.binding_mode);
                 append_type(out, param.type);
             }
+            append_bool(out, expr_lambda_has_result_type(expr));
+            if (expr_lambda_has_result_type(expr)) append_type(out, expr_lambda_result_type(expr));
             out << body.str();
             append_bool(out, has_value);
             if (has_value) out << value.str();
@@ -1631,12 +1633,21 @@ private:
                 param.type = read_type(label + " lambda parameter type");
                 params.push_back(std::move(param));
             }
+            bool has_result_type = read_bool(label + " lambda result type flag");
+            TypeRef result_type;
+            if (has_result_type) result_type = read_type(label + " lambda result type");
             std::vector<StmtPtr> body = read_body_stmt_list(label + " lambda body");
             ExprPtr value;
             if (read_bool(label + " lambda value flag")) {
                 value = read_const_expr(label + " lambda value");
             }
-            set_expr_lambda_payload(*expr, std::move(params), std::move(body), std::move(value));
+            set_expr_lambda_payload(
+                *expr,
+                std::move(params),
+                has_result_type,
+                std::move(result_type),
+                std::move(body),
+                std::move(value));
             return expr;
         }
         if (kind == "match-expr") {

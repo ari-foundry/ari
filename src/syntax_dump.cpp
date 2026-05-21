@@ -441,6 +441,9 @@ private:
                 for (const Param& param : expr_lambda_params(expr)) {
                     line(indent + 1, "Param name=" + quote(param.name));
                 }
+                if (expr_lambda_has_result_type(expr)) {
+                    line(indent + 1, "ResultType");
+                }
                 dump_statements(expr_lambda_body(expr), indent + 1);
                 if (expr_lambda_value(expr)) dump_expr(*expr_lambda_value(expr), indent + 1);
                 break;

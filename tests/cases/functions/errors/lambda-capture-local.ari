@@ -1,8 +1,6 @@
-// check-function-errors: capture environments are rejected until closure storage is implemented.
+// check-function-errors: capturing closures do not coerce to plain function pointers.
 fn main() -> i64 {
   let base: i64 = 2;
-  let add_base: fn(i64) -> i64 = fn(value) -> {
-    value + base
-  };
+  let add_base: fn(i64) -> i64 = fn(value) value + base;
   return add_base(1);
 }

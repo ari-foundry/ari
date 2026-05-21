@@ -61,6 +61,20 @@ std::string type_name(const IrType& type) {
             base = "string";
             break;
         case IrPrimitiveKind::Struct:
+            if (!type.field_names.empty() &&
+                type.field_names[0] == "$call" &&
+                !type.args.empty() &&
+                type.array_size + 1 == type.args.size()) {
+                base = "closure fn(";
+                std::size_t param_count = static_cast<std::size_t>(type.array_size);
+                for (std::size_t i = 0; i < param_count; ++i) {
+                    if (i > 0) base += ", ";
+                    base += type_name(type.args[i]);
+                }
+                base += ") -> ";
+                base += type_name(type.args[param_count]);
+                break;
+            }
             base = type.name.empty() ? "<struct>" : type.name;
             if (!type.args.empty()) {
                 base += "[";

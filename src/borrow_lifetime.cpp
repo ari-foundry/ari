@@ -82,8 +82,9 @@ void collect_expr_uses(const Expr* expr, NameUseCounts& counts) {
             collect_expr_uses(expr_block_value(*expr).get(), counts);
             return;
         case ExprKind::Lambda:
-            // Non-capturing lambdas lower as separate functions, so their body
-            // does not count as an immediate use in the enclosing scope.
+            // Lambda bodies lower as generated functions. Sema handles capture
+            // discovery before lowering, so NLL should not treat the body as an
+            // immediate statement in the enclosing scope.
             return;
         case ExprKind::Match:
             collect_expr_uses(expr_match_value(*expr).get(), counts);

@@ -4692,18 +4692,48 @@ private:
         return Value{"ptr", quote_global(found->second), expr.type};
     }
 
+    static bool is_function_pointer_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Function &&
+               !type.args.empty() &&
+               type.array_size + 1 == type.args.size();
+    }
+
+    static bool is_lambda_closure_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Struct &&
+               !type.field_names.empty() &&
+               type.field_names[0] == "$call" &&
+               !type.field_types.empty() &&
+               is_function_pointer_type(type.field_types[0]) &&
+               !type.args.empty() &&
+               type.array_size + 1 == type.args.size();
+    }
+
     Value emit_indirect_call(const IrExpr& expr) {
-        Value callee = emit_expr(*ir_expr_operand(expr));
         const IrType& callee_type = ir_expr_operand(expr)->type;
-        if (callee_type.primitive != IrPrimitiveKind::Function ||
-            callee_type.args.empty() ||
-            callee_type.array_size + 1 != callee_type.args.size()) {
-            throw CompileError(where(expr.loc) + ": LLVM backend cannot call non-function value");
+        if (!is_function_pointer_type(callee_type) && !is_lambda_closure_type(callee_type)) {
+            throw CompileError(where(expr.loc) + ": LLVM backend cannot call non-callable value");
         }
         std::size_t param_count = static_cast<std::size_t>(callee_type.array_size);
         IrType result = callee_type.args[param_count];
 
         std::vector<Value> args;
+        std::string callee_name;
+        if (is_lambda_closure_type(callee_type)) {
+            Value closure = emit_expr(*ir_expr_operand(expr));
+            callee_name = temp();
+            line("  " + callee_name + " = extractvalue " + closure.type + " " + closure.name + ", 0");
+            for (std::size_t i = 1; i < callee_type.field_types.size(); ++i) {
+                const IrType& capture_type = callee_type.field_types[i];
+                std::string capture = temp();
+                line("  " + capture + " = extractvalue " + closure.type + " " + closure.name +
+                     ", " + std::to_string(i));
+                args.push_back(Value{llvm_type(capture_type), capture, capture_type});
+            }
+        } else {
+            callee_name = emit_expr(*ir_expr_operand(expr)).name;
+        }
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             Value arg = emit_expr(*expr.args[i]);
             if (i < param_count) arg = cast_value(arg, callee_type.args[i]);
@@ -4711,7 +4741,7 @@ private:
         }
 
         std::string result_type = llvm_type(result);
-        std::string call = "call " + result_type + " " + callee.name + "(";
+        std::string call = "call " + result_type + " " + callee_name + "(";
         for (std::size_t i = 0; i < args.size(); ++i) {
             if (i > 0) call += ", ";
             call += args[i].type + " " + args[i].name;

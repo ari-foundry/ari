@@ -2402,10 +2402,33 @@ private:
             } while (match(TokenKind::Comma));
         }
         expect(TokenKind::RParen, "expected ) after lambda parameter list");
-        expect(TokenKind::Arrow, "expected -> after lambda parameter list");
-        if (!check(TokenKind::LBrace)) fail(peek().loc, "expected { after lambda ->");
-        std::vector<StmtPtr> body = parse_function_block();
-        return make_ast_lambda_expr(loc, std::move(params), std::move(body), nullptr);
+
+        bool has_result_type = false;
+        TypeRef result_type;
+        std::vector<StmtPtr> body;
+        ExprPtr value;
+        if (match(TokenKind::Arrow)) {
+            if (check(TokenKind::LBrace)) {
+                body = parse_function_block();
+            } else {
+                has_result_type = true;
+                result_type = parse_type();
+                if (check(TokenKind::LBrace)) {
+                    body = parse_function_block();
+                } else {
+                    value = parse_expression();
+                }
+            }
+        } else {
+            value = parse_expression();
+        }
+        return make_ast_lambda_expr(
+            loc,
+            std::move(params),
+            has_result_type,
+            std::move(result_type),
+            std::move(body),
+            std::move(value));
     }
 
     ExprPtr parse_struct_literal(ExprPtr name_expr) {

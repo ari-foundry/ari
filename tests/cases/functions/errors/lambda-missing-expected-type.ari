@@ -1,7 +1,5 @@
-// check-function-errors: lambdas need an expected fn(...) -> ... type for the first implementation slice.
+// check-function-errors: untyped lambdas need an expected fn(...) -> ... type.
 fn main() -> i64 {
-  let add_one = fn(value) -> {
-    value + 1
-  };
+  let add_one = fn(value) value + 1;
   return add_one(1);
 }
