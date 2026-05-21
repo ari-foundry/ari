@@ -1,0 +1,46 @@
+// Covers String.remove and String.try_remove for byte-oriented string handles:
+// empty, negative, in-range, end-boundary, and order-preserving shifts.
+fn byte_or(value: std::Option[u8], fallback: i64) -> i64 {
+  match value {
+    std::Some(byte) => {
+      return byte as i64;
+    }
+    std::None => {
+      return fallback;
+    }
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var text = std::string::new(ref mut zone, 5);
+
+  let empty_score = byte_or(text.try_remove(0), 3);
+
+  text.push('a');
+  text.push('b');
+  text.push('c');
+  text.push('d');
+
+  let removed_middle = text.remove(1) as i64;
+  let missing_negative = byte_or(text.try_remove(0 - 1), 5);
+  let missing_end = byte_or(text.try_remove(3), 7);
+  let shape_score = if text.len() == 3 &&
+    text.get(0) == 'a' && text.get(1) == 'c' && text.get(2) == 'd' {
+    11
+  } else {
+    0
+  };
+
+  let removed_tail = byte_or(text.try_remove(2), 0);
+  let removed_head = byte_or(text.try_remove(0), 0);
+  let final_score = if text.len() == 1 && text.first() == 'c' {
+    13
+  } else {
+    0
+  };
+
+  zone::destroy(zone);
+  return (empty_score + removed_middle + missing_negative + missing_end +
+    shape_score + removed_tail + removed_head + final_score) % 256;
+}

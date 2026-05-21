@@ -472,6 +472,29 @@ pub impl std::string::String {
     return std::Some<u8>(self.pop());
   }
 
+  fn remove(self: ref mut Self, index: i64) -> u8 {
+    std::assert(index >= 0);
+    std::assert(index < self.raw.len);
+    let value = ptr_load(ptr_add(self.raw.data, index));
+    var cursor = index;
+    while cursor + 1 < self.raw.len {
+      ptr_store(ptr_add(self.raw.data, cursor), ptr_load(ptr_add(self.raw.data, cursor + 1)));
+      cursor = cursor + 1;
+    }
+    self.raw.len = self.raw.len - 1;
+    return value;
+  }
+
+  fn try_remove(self: ref mut Self, index: i64) -> std::Option[u8] {
+    if index < 0 {
+      return std::None<u8>();
+    }
+    if index >= self.raw.len {
+      return std::None<u8>();
+    }
+    return std::Some<u8>(self.remove(index));
+  }
+
   fn insert(self: ref mut Self, index: i64, value: char) -> void {
     std::assert(index >= 0);
     std::assert(index <= self.raw.len);

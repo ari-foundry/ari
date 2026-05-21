@@ -1611,6 +1611,8 @@ text.push(char)
 text.push_in(ref mut zone, char)
 text.pop()
 text.try_pop()
+text.remove(index)
+text.try_remove(index)
 text.insert(index, char)
 text.insert_in(ref mut zone, index, char)
 text.clear()
@@ -1698,6 +1700,9 @@ c.as_slice()
 c.len()
 c.is_empty()
 ```
+
+`remove` and `try_remove` remove one byte and shift the following bytes left.
+Use the `try_` form when a missing index is ordinary input.
 
 String literals coerce to borrowed `Slice[u8]` values when a byte-slice API
 expects one, so calls such as `ascii::parse_decimal("123")` and

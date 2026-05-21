@@ -150,13 +150,18 @@ text.replace(index, char)
 text.push(char)
 text.pop()
 text.try_pop()
+text.remove(index)
+text.try_remove(index)
 text.insert(index, char)
 text.clear()
 text.truncate(length)
 ```
 
-`try_pop` returns `None<u8>()` when the string is empty. `pop` asserts in that
-case and is best when an empty string means a programmer error.
+`try_pop` returns `None<u8>()` when the string is empty. `try_remove` returns
+`None<u8>()` when the byte index is absent. `pop` and `remove` assert in those
+cases and are best when absence means a programmer error. These are byte
+operations; UTF-8-aware deletion should be built on explicit scalar boundary
+checks.
 
 Growth-capable mutation uses the owning zone. The explicit forms are the
 source-level contract:
@@ -422,6 +427,7 @@ Focused positive tests include:
 tests/cases/standard-library/ok/string/std-string-handle.ari
 tests/cases/standard-library/ok/string/std-string-first-last.ari
 tests/cases/standard-library/ok/string/std-string-try-byte-access.ari
+tests/cases/standard-library/ok/string/std-string-byte-remove.ari
 tests/cases/standard-library/ok/string/std-string-search.ari
 tests/cases/standard-library/ok/string/std-string-split-join.ari
 tests/cases/standard-library/ok/string/std-string-natural-api.ari

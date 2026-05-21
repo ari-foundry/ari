@@ -1146,6 +1146,7 @@ method std::string::String::pop|check-prelude std-string-handle tests; docs/dev/
 method std::string::String::push|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push_codepoint_in|check-prelude std-string-unicode-helpers UTF-8 scalar append convenience method; docs/stdlib/modules/string.md
 method std::string::String::push_in|check-prelude std-string-grow and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::remove|check-prelude std-string-byte-remove asserting indexed byte removal; docs/stdlib/modules/string.md
 method std::string::String::replace|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::reserve|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::reserve_extra|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
@@ -1172,6 +1173,7 @@ method std::string::String::try_first|check-prelude std-string-try-byte-access O
 method std::string::String::try_get|check-prelude std-string-try-byte-access Option-returning out-of-range byte access; docs/stdlib/modules/string.md
 method std::string::String::try_last|check-prelude std-string-try-byte-access Option-returning empty-safe byte access; docs/stdlib/modules/string.md
 method std::string::String::try_pop|check-prelude std-string-try-byte-access Option-returning empty pop; docs/stdlib/modules/string.md
+method std::string::String::try_remove|check-prelude std-string-byte-remove Option-returning indexed byte removal; docs/stdlib/modules/string.md
 method std::string::String::try_utf8|check-prelude std-string-natural-api natural validated UTF-8 view helper; docs/stdlib/modules/string.md
 method std::string::String::windows|check-prelude std-string-split-join borrowed byte window iterator; docs/stdlib/modules/string.md
 method std::string::Utf8::as_slice|check-prelude std-string-text-kinds validated UTF-8 bytes accessor; docs/stdlib/modules/string.md
