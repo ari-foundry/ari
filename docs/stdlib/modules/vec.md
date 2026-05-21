@@ -2,13 +2,14 @@
 
 `std::vec` contains Ari's source growable sequence handle. It exists to give
 programs an explicit-zone collection that can grow, copy, expose borrowed
-views, and participate in Ari's iterator surface without hiding allocation.
+views, and participate in Ari's iterator surface while keeping the allocation
+zone attached to the handle.
 
 There are two vector-shaped surfaces today:
 
 - Bare `Vec[T]` is the compiler-known local vector/literal storage surface.
-- `std::vec::Vec[T]` and root alias `std::Vec[T]` are source handles backed by
-  a `Zone`.
+- `std::vec::Vec[T]` and root alias `std::Vec[T]` are source handles that keep
+  their owning `Zone` pointer internally.
 
 Use the source handle when a collection must grow or outlive local literal
 storage under an explicit allocation capability.
@@ -77,7 +78,7 @@ borrow checker rules.
 
 ## Mutation And Growth
 
-Fixed-capacity mutation:
+Natural mutation uses the vector's owning zone:
 
 ```ari
 vec.push(value)
@@ -96,6 +97,10 @@ vec.fill(value)
 vec.copy_from(source)
 vec.partition(keep)
 vec.clear()
+vec.reserve(capacity)
+vec.reserve_extra(additional)
+vec.extend_from_slice(values)
+vec.resize(length, value)
 ```
 
 `try_pop` and `try_remove` return `Option[T]`; `pop` asserts when empty and
@@ -107,22 +112,25 @@ reducing the logical length. `dedup` compacts consecutive duplicates, truncates
 the vector to the unique prefix, and returns the new length. `fill` overwrites
 the live prefix with one value, `copy_from` copies the source prefix that fits
 and returns the copied count, and `partition` reorders live values by a
-borrowed predicate and returns the split index.
+borrowed predicate and returns the split index. `push`, `insert`, `reserve`,
+`reserve_extra`, `extend_from_slice`, and growing `resize` use the zone pointer
+stored inside the handle, so ordinary callers do not need to pass `ref mut
+zone` after construction.
 
-Growth-capable mutation uses the owning zone:
+Explicit-zone compatibility forms remain available:
 
 ```ari
 vec.push_in(ref mut zone, value)
 vec.insert_in(ref mut zone, index, value)
-vec.reserve(ref mut zone, capacity)
-vec.reserve_extra(ref mut zone, additional)
+vec.reserve_in(ref mut zone, capacity)
+vec.reserve_extra_in(ref mut zone, additional)
 vec.extend_from_slice_in(ref mut zone, values)
 vec.resize_in(ref mut zone, length, value)
 ```
 
-The explicit `_in` forms make the allocation capability visible. For tracked
-local source vectors, Ari can infer the same source zone for common
-non-`_in` convenience calls documented in the language guide.
+The explicit `_in` forms are mostly for compatibility and low-level tests. New
+code should prefer the natural owning-zone names unless it is deliberately
+testing zone capability plumbing.
 
 ## Search, Slices, And Iteration
 
@@ -254,7 +262,7 @@ fn main() -> i64 {
   var values = std::vec::new<i64>(ref mut zone, 2);
 
   values.push(5);
-  values.push_in(ref mut zone, 8);
+  values.push(8);
 
   let first = values.try_first().unwrap_or(0);
   let second = values.try_get(1).unwrap_or(0);

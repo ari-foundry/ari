@@ -6,6 +6,7 @@ pub struct RawVec[T] {
 
 pub struct Vec[T] {
   raw: RawVec[T],
+  mut zone: ptr Zone,
 }
 
 pub struct Iter[T] {
@@ -23,12 +24,12 @@ pub fn with_capacity[T](zone: ref mut Zone, capacity: i64) -> RawVec[T] {
 }
 
 pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::vec::Vec[T] {
-  return std::vec::Vec<T> { raw: with_capacity<T>(zone, capacity) };
+  return std::vec::Vec<T> { raw: with_capacity<T>(zone, capacity), zone: zone as ptr Zone };
 }
 
 pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::vec::Vec[T] {
   var output = std::vec::new<T>(zone, values.len);
-  output.extend_from_slice_in(zone, values);
+  output.extend_from_slice(values);
   return output;
 }
 
@@ -37,7 +38,7 @@ pub fn collect[T, I: std::Iterator[T]](zone: ref mut Zone, iter: I) -> std::vec:
   var output = std::vec::new<T>(zone, 4);
   var item = cursor.next();
   while item.is_some() {
-    output.push_in(zone, item.unwrap());
+    output.push(item.unwrap());
     item = cursor.next();
   }
   return output;
@@ -64,9 +65,23 @@ fn grow_to_capacity[T](value: ref mut std::vec::Vec[T], zone: ref mut Zone, capa
   }
   value.raw.data = data;
   value.raw.capacity = capacity;
+  value.zone = zone as ptr Zone;
 }
 
-fn ensure_spare_capacity[T](value: ref mut std::vec::Vec[T], zone: ref mut Zone) -> void {
+fn grow_to_own_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) -> void {
+  let zone = value.zone;
+  let zone_ref: ref mut Zone = ref mut *zone;
+  grow_to_capacity<T>(value, zone_ref, capacity);
+}
+
+fn ensure_spare_capacity[T](value: ref mut std::vec::Vec[T]) -> void {
+  if value.raw.len >= value.raw.capacity {
+    let capacity = next_growth_capacity(value.raw.capacity, value.raw.len + 1);
+    grow_to_own_capacity<T>(value, capacity);
+  }
+}
+
+fn ensure_spare_capacity_in[T](value: ref mut std::vec::Vec[T], zone: ref mut Zone) -> void {
   if value.raw.len >= value.raw.capacity {
     let capacity = next_growth_capacity(value.raw.capacity, value.raw.len + 1);
     grow_to_capacity<T>(value, zone, capacity);
@@ -83,6 +98,19 @@ fn shrink_to_len[T](value: ref mut std::vec::Vec[T], length: i64) -> void {
     index = index + 1;
   }
   value.raw.len = length;
+}
+
+fn insert_full[T](value: ref mut std::vec::Vec[T], index: i64, item: T) -> void {
+  std::assert(index >= 0);
+  std::assert(index <= value.raw.len);
+  std::assert(value.raw.len < value.raw.capacity);
+  var cursor = value.raw.len;
+  while cursor > index {
+    ptr_store(ptr_add(value.raw.data, cursor), ptr_load(ptr_add(value.raw.data, cursor - 1)));
+    cursor = cursor - 1;
+  }
+  ptr_store(ptr_add(value.raw.data, index), item);
+  value.raw.len = value.raw.len + 1;
 }
 
 pub impl[T] std::Slice[T] {
@@ -309,28 +337,30 @@ pub impl[T] std::vec::Vec[T] {
   }
 
   fn push(self: ref mut Self, value: T) -> void {
-    std::assert(self.raw.len < self.raw.capacity);
+    ensure_spare_capacity<T>(self);
     ptr_store(ptr_add(self.raw.data, self.raw.len), value);
     self.raw.len = self.raw.len + 1;
   }
 
   fn push_in(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
-    ensure_spare_capacity<T>(self, zone);
-    self.push(value);
+    ensure_spare_capacity_in<T>(self, zone);
+    ptr_store(ptr_add(self.raw.data, self.raw.len), value);
+    self.raw.len = self.raw.len + 1;
   }
 
   fn insert_in(self: ref mut Self, zone: ref mut Zone, index: i64, value: T) -> void {
     std::assert(index >= 0);
     std::assert(index <= self.raw.len);
-    ensure_spare_capacity<T>(self, zone);
-    self.insert(index, value);
+    ensure_spare_capacity_in<T>(self, zone);
+    insert_full<T>(self, index, value);
   }
 
   fn extend_from_slice_in(self: ref mut Self, zone: ref mut Zone, values: super::Slice[T]) -> void {
     var index = 0;
     while index < values.len {
-      ensure_spare_capacity<T>(self, zone);
-      self.push(values[index]);
+      ensure_spare_capacity_in<T>(self, zone);
+      ptr_store(ptr_add(self.raw.data, self.raw.len), values[index]);
+      self.raw.len = self.raw.len + 1;
       index = index + 1;
     }
   }
@@ -342,16 +372,25 @@ pub impl[T] std::vec::Vec[T] {
       return;
     }
     while self.raw.len < length {
-      ensure_spare_capacity<T>(self, zone);
-      self.push(value);
+      self.push_in(zone, value);
     }
   }
 
-  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+  fn reserve(self: ref mut Self, capacity: i64) -> void {
+    grow_to_own_capacity<T>(self, capacity);
+  }
+
+  fn reserve_in(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     grow_to_capacity<T>(self, zone, capacity);
   }
 
-  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+  fn reserve_extra(self: ref mut Self, additional: i64) -> void {
+    std::assert(additional >= 0);
+    let capacity = self.raw.len + additional;
+    grow_to_own_capacity<T>(self, capacity);
+  }
+
+  fn reserve_extra_in(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
     let capacity = self.raw.len + additional;
     grow_to_capacity<T>(self, zone, capacity);
@@ -395,14 +434,27 @@ pub impl[T] std::vec::Vec[T] {
   fn insert(self: ref mut Self, index: i64, value: T) -> void {
     std::assert(index >= 0);
     std::assert(index <= self.raw.len);
-    std::assert(self.raw.len < self.raw.capacity);
-    var cursor = self.raw.len;
-    while cursor > index {
-      ptr_store(ptr_add(self.raw.data, cursor), ptr_load(ptr_add(self.raw.data, cursor - 1)));
-      cursor = cursor - 1;
+    ensure_spare_capacity<T>(self);
+    insert_full<T>(self, index, value);
+  }
+
+  fn extend_from_slice(self: ref mut Self, values: super::Slice[T]) -> void {
+    var index = 0;
+    while index < values.len {
+      self.push(values[index]);
+      index = index + 1;
     }
-    ptr_store(ptr_add(self.raw.data, index), value);
-    self.raw.len = self.raw.len + 1;
+  }
+
+  fn resize(self: ref mut Self, length: i64, value: T) -> void {
+    std::assert(length >= 0);
+    if length <= self.raw.len {
+      shrink_to_len<T>(self, length);
+      return;
+    }
+    while self.raw.len < length {
+      self.push(value);
+    }
   }
 
   fn remove(self: ref mut Self, index: i64) -> T {

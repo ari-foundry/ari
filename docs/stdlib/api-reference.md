@@ -1577,9 +1577,13 @@ vec.fill(value)
 vec.copy_from(source)
 vec.partition(keep)
 vec.clear()
-vec.reserve(ref mut zone, capacity)
-vec.reserve_extra(ref mut zone, additional)
+vec.reserve(capacity)
+vec.reserve_in(ref mut zone, capacity)
+vec.reserve_extra(additional)
+vec.reserve_extra_in(ref mut zone, additional)
+vec.extend_from_slice(values)
 vec.extend_from_slice_in(ref mut zone, values)
+vec.resize(length, value)
 vec.resize_in(ref mut zone, length, value)
 vec.index_of(value)
 vec.contains(value)
@@ -1629,7 +1633,10 @@ the desired behavior. `retain(keep)` compacts accepted values in place,
 preserves their order, and drops rejected values. `dedup()` removes consecutive
 duplicate values from the owned vector and returns the new length. `fill`,
 `copy_from`, and `partition` are owned-vector wrappers over the same live-prefix
-policies as `Slice[T]`. The borrowed sequence helpers
+policies as `Slice[T]`. `push`, `insert`, `reserve`, `reserve_extra`,
+`extend_from_slice`, and growing `resize` use the zone pointer stored inside
+the handle; the `_in` forms remain available for explicit capability plumbing.
+The borrowed sequence helpers
 mirror the root `Slice[T]` vocabulary: `slice` and `split_at` create views over live vector storage,
 `find` and `contains_slice` search for borrowed subsequences, `compare` is
 lexicographic, `ordering` returns typed `cmp::Ordering`, and `chunks`,

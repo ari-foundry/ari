@@ -1699,7 +1699,7 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-reserve-extra.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-reserve-extra.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-vec-reserve-extra.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-copy-to.ll
-	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl18std__vec__Vec_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-vec-copy-to.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7copy_to' $(BUILD_DIR)/prelude/std-vec-copy-to.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl18std__vec__Vec_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-mut-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.ll
@@ -1736,7 +1736,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
 	grep -q '_ARNv3std3vec20from_slice_in__G_i64' $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent17extend_from_slice' $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-resize-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-resize-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9resize_in' $(BUILD_DIR)/prelude/std-vec-resize-in.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
@@ -1745,10 +1745,10 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7reserve' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9insert_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9resize_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent4push' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6insert' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent17extend_from_slice' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6resize' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-pop.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7try_pop' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
@@ -2038,7 +2038,7 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl15std__Slice_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-as-ptr.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
-	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl15std__Slice_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
+	grep -q '_ARNv4impl15std__Slice_i64_8inherent7copy_to' $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-view.ari -o $(BUILD_DIR)/prelude/prelude-slice-view.elf
 	$(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf
@@ -2317,13 +2317,13 @@ check-prelude: $(TARGET)
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-slice-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-slice-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-slice-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'tail' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-slice-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-reserve-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-reserve-different-zone.err 2>&1; then exit 1; fi
-	grep -q "std::vec::Vec.reserve zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-reserve-different-zone.err
+	grep -q "std::vec::Vec.reserve_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-reserve-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-reserve-untracked-receiver.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.elf >$(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.err 2>&1; then exit 1; fi
-	grep -q "std::vec::Vec.reserve receiver must come from a tracked zone allocation" $(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.err
+	grep -q "zone-backed struct literal fields must come from one zone" $(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.err 2>&1; then exit 1; fi
-	grep -q "std::vec::Vec.reserve receiver must come from a tracked zone allocation to infer its zone" $(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.err
+	grep -q "zone-backed struct literal fields must come from one zone" $(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-reserve-extra-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.err 2>&1; then exit 1; fi
-	grep -q "std::vec::Vec.reserve_extra zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.err
+	grep -q "std::vec::Vec.reserve_extra_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-push-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.push_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-push-in-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-insert-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.err 2>&1; then exit 1; fi

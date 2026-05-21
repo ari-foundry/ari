@@ -13,6 +13,11 @@ bool is_i64_value_type(const IrType& type) {
            type.primitive == IrPrimitiveKind::I64;
 }
 
+bool is_zone_ptr_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Ptr &&
+           type.primitive == IrPrimitiveKind::Zone;
+}
+
 IrType value_qualified_vec_type(IrType type) {
     type.qualifier = TypeQualifier::Value;
     return type;
@@ -124,11 +129,26 @@ std::optional<std::size_t> std_vec_zone_handle_source_field_index(const IrType& 
         return std_vec_iter_handle_data_field_index(type);
     }
     if (!is_std_vec_handle_type(type)) return std::nullopt;
-    if (type.field_names.empty() && type.field_types.empty()) return 0;
-    if (type.field_names.size() != 1 || type.field_types.size() != 1) return std::nullopt;
-    if (type.field_names[0] != "raw") return std::nullopt;
-    if (!is_std_vec_raw_handle_type(type.field_types[0])) return std::nullopt;
-    return 0;
+    if (type.field_names.empty() && type.field_types.empty()) return 1;
+    if (type.field_names.size() != 2 || type.field_types.size() != 2) return std::nullopt;
+
+    std::optional<std::size_t> raw_index;
+    std::optional<std::size_t> zone_index;
+    for (std::size_t i = 0; i < type.field_names.size(); ++i) {
+        const std::string& name = type.field_names[i];
+        const IrType& field_type = type.field_types[i];
+        if (name == "raw") {
+            if (!is_std_vec_raw_handle_type(field_type)) return std::nullopt;
+            raw_index = i;
+        } else if (name == "zone") {
+            if (!is_zone_ptr_type(field_type)) return std::nullopt;
+            zone_index = i;
+        } else {
+            return std::nullopt;
+        }
+    }
+    if (!raw_index || !zone_index) return std::nullopt;
+    return zone_index;
 }
 
 std::optional<std::vector<std::size_t>> std_vec_zone_handle_data_field_path_indices(const IrType& type) {
@@ -144,7 +164,17 @@ std::optional<std::vector<std::size_t>> std_vec_zone_handle_data_field_path_indi
     }
     if (!is_std_vec_handle_type(type)) return std::nullopt;
 
-    std::optional<std::size_t> raw_index = std_vec_zone_handle_source_field_index(type);
+    std::optional<std::size_t> raw_index;
+    if (type.field_names.empty() && type.field_types.empty()) {
+        raw_index = 0;
+    } else {
+        for (std::size_t i = 0; i < type.field_names.size(); ++i) {
+            if (type.field_names[i] == "raw") {
+                raw_index = i;
+                break;
+            }
+        }
+    }
     if (!raw_index || *raw_index >= type.field_types.size()) return std::nullopt;
     std::optional<std::size_t> data_index =
         std_vec_raw_handle_data_field_index(type.field_types[*raw_index]);
@@ -152,9 +182,37 @@ std::optional<std::vector<std::size_t>> std_vec_zone_handle_data_field_path_indi
     return std::vector<std::size_t>{*raw_index, *data_index};
 }
 
+std::vector<std::vector<std::size_t>> std_vec_zone_handle_storage_field_path_indices(const IrType& type) {
+    if (!std_vec_zone_handle_source_field_index(type)) return {};
+    if (is_std_vec_raw_handle_type(type)) {
+        std::optional<std::size_t> data_index = std_vec_raw_handle_data_field_index(type);
+        if (!data_index) return {};
+        return {{*data_index}};
+    }
+    if (is_std_vec_iter_handle_type(type)) {
+        std::optional<std::size_t> data_index = std_vec_iter_handle_data_field_index(type);
+        if (!data_index) return {};
+        return {{*data_index}};
+    }
+    if (!is_std_vec_handle_type(type)) return {};
+    if (type.field_names.empty() && type.field_types.empty()) return {{0}, {1}};
+
+    std::optional<std::size_t> raw_index;
+    std::optional<std::size_t> zone_index;
+    for (std::size_t i = 0; i < type.field_names.size(); ++i) {
+        if (type.field_names[i] == "raw") raw_index = i;
+        if (type.field_names[i] == "zone") zone_index = i;
+    }
+
+    std::vector<std::vector<std::size_t>> paths;
+    if (raw_index) paths.push_back({*raw_index});
+    if (zone_index) paths.push_back({*zone_index});
+    return paths;
+}
+
 bool std_vec_method_requires_same_zone_argument(const std::string& method_name) {
-    return method_name == "reserve" ||
-           method_name == "reserve_extra" ||
+    return method_name == "reserve_in" ||
+           method_name == "reserve_extra_in" ||
            method_name == "push_in" ||
            method_name == "insert_in" ||
            method_name == "extend_from_slice_in" ||
@@ -164,24 +222,8 @@ bool std_vec_method_requires_same_zone_argument(const std::string& method_name) 
 std::optional<StdVecImplicitZoneMethod> std_vec_implicit_zone_method_for_call(
     const std::string& method_name,
     std::size_t user_arg_count) {
-    if (method_name == "push" && user_arg_count == 1) {
-        return StdVecImplicitZoneMethod{"push_in", true};
-    }
-    if (method_name == "insert" && user_arg_count == 2) {
-        return StdVecImplicitZoneMethod{"insert_in", true};
-    }
-    if (method_name == "reserve" && user_arg_count == 1) {
-        return StdVecImplicitZoneMethod{"reserve", false};
-    }
-    if (method_name == "reserve_extra" && user_arg_count == 1) {
-        return StdVecImplicitZoneMethod{"reserve_extra", false};
-    }
-    if (method_name == "extend_from_slice" && user_arg_count == 1) {
-        return StdVecImplicitZoneMethod{"extend_from_slice_in", false};
-    }
-    if (method_name == "resize" && user_arg_count == 2) {
-        return StdVecImplicitZoneMethod{"resize_in", false};
-    }
+    (void)method_name;
+    (void)user_arg_count;
     return std::nullopt;
 }
 

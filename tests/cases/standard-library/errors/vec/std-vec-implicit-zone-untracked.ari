@@ -5,6 +5,7 @@ fn main() -> i64 {
       len: 0,
       capacity: 0,
     },
+    zone: 0u64 as ptr Zone,
   };
 
   vec.reserve(1);

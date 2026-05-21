@@ -566,35 +566,29 @@ Checklist:
 - [x] source `std::vec::Vec<T>` exposes `Ord[T]`-bounded `sort`,
       `stable_sort`, `is_sorted`, `binary_search`, `min`, and `max` wrappers
       over its live element storage
-- [x] source `std::vec::Vec<T>.reserve(ref mut Zone, capacity)` grows the handle
-      with a larger same-zone allocation and rejects different-zone reserve
-      calls
-- [x] source `std::vec::Vec<T>` same-zone growth methods reject manually
-      constructed receivers that are not tied to a tracked zone allocation
-- [x] source `std::vec::Vec<T>.reserve_extra(ref mut Zone, additional)` grows
-      capacity to at least `len + additional` through the same explicit zone
-      capability and rejects different-zone reserve calls
+- [x] source `std::vec::Vec<T>.reserve(capacity)` grows the handle with a
+      larger allocation from the zone pointer stored in the handle
+- [x] source `std::vec::Vec<T>.reserve_extra(additional)` grows capacity to at
+      least `len + additional` through the handle's stored zone capability
 - [x] source `std::vec::Vec<T>.push_in(ref mut Zone, value)` appends through the
-      same explicit zone capability and grows capacity on demand
+      explicit compatibility capability and grows capacity on demand
 - [x] source `std::vec::Vec<T>.insert_in(ref mut Zone, index, value)` inserts
-      through the same explicit zone capability and grows capacity on demand
+      through the explicit compatibility capability and grows capacity on
+      demand
 - [x] source `std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)`
-      appends a slice through the same explicit zone capability
+      appends a slice through the explicit compatibility capability
 - [x] `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)` copies a borrowed
       slice into a new target-zone source `Vec<T>` handle
 - [x] source `std::vec::Vec<T>.resize_in(ref mut Zone, length, value)` shrinks
-      by dropping removed tail values or grows through the same explicit zone
-      capability
+      by dropping removed tail values or grows through the explicit
+      compatibility capability
 - [x] source `std::vec::Vec<T>.try_pop()` returns `Option<T>` for empty-aware
       last-element move-out without an assertion
-- [x] source `std::vec::Vec<T>` same-zone `reserve`, `reserve_extra`,
-      `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in` share
-      one private capacity/copy growth path, covered by
-      `std-vec-growth-paths`
-- [x] tracked source `std::vec::Vec<T>` receiver locals infer the same source
-      zone for `push`, `insert`, one-argument `reserve`/`reserve_extra`,
-      `extend_from_slice`, and `resize`, while untracked receivers get a
-      targeted diagnostic instead of a hidden allocation capability
+- [x] source `std::vec::Vec<T>` owning-zone `push`, `insert`, `reserve`,
+      `reserve_extra`, `extend_from_slice`, and `resize` share one private
+      capacity/copy growth path, covered by `std-vec-growth-paths`
+- [x] source `std::vec::Vec<T>` stores its owning zone pointer in the handle so
+      natural growth calls work without compiler-synthesized zone arguments
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
       whose zone provenance is invalidated after reset/destroy
 - [x] source `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current

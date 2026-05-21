@@ -522,13 +522,14 @@ through a mutable receiver. A `std::boxed::Box<T>`, `std::string::String`, or
 `String.copy_to(ref mut Zone)` /
 `std::string::copy_to(ref value, ref mut Zone)`, the result is tracked against
 the target zone, not the original source zone. When a
-source `std::string::String` or `std::vec::Vec<T>` grows through an explicit
-zone argument, that argument must be the same source zone that created the
-handle. A tracked local `std::vec::Vec<T>` receiver can also infer that same
-zone for `push(value)`, `insert(index, value)`, `reserve(capacity)`,
+source `std::string::String` grows through an explicit zone argument, that
+argument must be the same source zone that created the handle. Source
+`std::vec::Vec<T>` stores its owning zone pointer in the handle, so
+`push(value)`, `insert(index, value)`, `reserve(capacity)`,
 `reserve_extra(additional)`, `extend_from_slice(values)`, and
-`resize(length, value)`. A tracked local `std::string::String` receiver does
-the same for those byte growth methods and for
+`resize(length, value)` grow through that stored capability. A tracked local
+`std::string::String` receiver can infer the same zone for its byte growth
+methods and for
 `append_string`/`append_i64`/`append_u64`/`append_bool`/`append_f32`/`append_f64`.
 Callers therefore do not have to thread the zone through every ordinary
 capacity-growing source Vec or String operation. Read-only

@@ -6,9 +6,10 @@ fn main() -> i64 {
       len: 0,
       capacity: 0,
     },
+    zone: 0u64 as ptr Zone,
   };
 
-  vec.reserve(ref mut zone, 1);
+  vec.reserve(1);
 
   zone::destroy(zone);
   return 0;

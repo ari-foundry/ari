@@ -75,7 +75,8 @@ future growable vector runtime. Its source lives in `lib/std/vec.arih`.
 capability and returns a tracked `ptr T`; `std::vec::with_capacity<T>(ref mut
 zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
 `data`, mutable `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
-capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed.
+capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed
+and stores the owning zone pointer inside the handle.
 The prelude expression macro `Vec!(T, ref mut zone, capacity)` is shorthand for
 that `std::vec::new<T>(ref mut zone, capacity)` constructor; it is allocator
 construction sugar, not a root `Vec[T]` ABI workaround.
@@ -83,17 +84,18 @@ The source handle currently exposes element methods: `len`, `capacity`,
 `is_empty`, `first`, `try_first`, `last`, `try_last`, `get`, `try_get`,
 `set`, `replace`, `swap`, `push`,
 `push_in(ref mut zone, value)`, grow-only same-zone `reserve`,
-`reserve_extra(ref mut zone, additional)`, `pop`, `try_pop`, `insert`,
+`reserve_extra(additional)`, `pop`, `try_pop`, `insert`,
 `insert_in(ref mut zone, index, value)`, `remove`, `clear`, `truncate`,
 `get_ref`, `get_mut`, `contains`, `index_of`, `count`, `equals(Slice[T])`,
 `starts_with(Slice[T])`, `ends_with(Slice[T])`,
-`extend_from_slice_in(ref mut zone, values)`,
-`resize_in(ref mut zone, length, value)`, `copy_to(ref mut zone)`,
+`extend_from_slice(values)`, `extend_from_slice_in(ref mut zone, values)`,
+`resize(length, value)`, `resize_in(ref mut zone, length, value)`,
+`reserve_in(ref mut zone, capacity)`,
+`reserve_extra_in(ref mut zone, additional)`, `copy_to(ref mut zone)`,
 top-level `std::vec::from_slice_in<T>(ref mut zone, values)`, `as_ptr()`,
-`as_mut_ptr()`, `iter()`, and `as_slice`. `reserve`, `reserve_extra`,
-`push_in`, `insert_in`,
-`extend_from_slice_in`, and `resize_in` use the same explicit zone capability
-to grow the buffer. Metadata, checked reads, search, Slice comparison,
+`as_mut_ptr()`, `iter()`, and `as_slice`. The natural growth methods use the
+zone pointer stored in the handle; the `_in` forms remain available when code
+needs to spell the capability directly. Metadata, checked reads, search, Slice comparison,
 `copy_to(ref mut zone)`, `get_ref(index)`, `as_ptr()`, and `iter()` borrow the
 handle receiver instead of copying it. `get_ref(index)` returns a shared borrow
 of the indexed element, while `get_mut(index)` returns a mutable element borrow
@@ -103,20 +105,15 @@ pointer with the source zone provenance preserved, and `as_mut_ptr()` exposes
 the same pointer through a mutable receiver. `iter()` returns a tracked
 `std::vec::Iter<T>` that implements `Iterator[T]`, and the Vec handle also
 implements `IntoIterator[T]` for direct `for value in vec` lowering. This is
-not the final root `Vec[T]` method API. `set`, shrinking `resize_in`,
+not the final root `Vec[T]` method API. `set`, shrinking `resize`/`resize_in`,
 `truncate`, and `clear` run removed element values through normal Drop lowering
 before the handle forgets them; the explicit zone still releases the backing
 bytes. `try_pop()` returns `Option[T]`, using `None` for an empty handle instead
 of asserting.
-When the receiver is a tracked local `std::vec::Vec<T>` handle, the checker can
-infer that same source zone for common growth calls. `vec.push(value)` and
-`vec.insert(index, value)` lower to the grow-on-demand same-zone paths, while
-`vec.reserve(capacity)`, `vec.reserve_extra(additional)`,
-`vec.extend_from_slice(values)`, and `vec.resize(length, value)` synthesize the
-hidden zone argument from the handle's provenance. The explicit `_in` forms and
-two-argument `reserve`/`reserve_extra` calls remain available for code that
-wants to name the capability directly. Manually assembled untracked handles
-cannot use the inferred-zone forms.
+`vec.push(value)`, `vec.insert(index, value)`, `vec.reserve(capacity)`,
+`vec.reserve_extra(additional)`, `vec.extend_from_slice(values)`, and
+`vec.resize(length, value)` work from the handle's stored zone instead of a
+compiler-synthesized hidden argument.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
@@ -833,12 +830,15 @@ builds a source `RawVec<T>` handle around that allocation, and
 `std::vec::Vec<T>`. `Vec!(T, ref mut Zone, capacity)` lowers to the same source
 constructor and keeps the same zone provenance. The source handle has methods
 for metadata, checked
-read/write/replace, push/pop, grow-on-demand
-`push_in(ref mut Zone, value)`, grow-only explicit
-`reserve(ref mut Zone, capacity)`, `reserve_extra(ref mut Zone, additional)`,
-grow-on-demand `insert_in(ref mut Zone, index, value)`,
-`resize_in(ref mut Zone, length, value)`, insert/remove, truncate/clear, swap,
+read/write/replace, push/pop, owning-zone grow-on-demand `push(value)` and
+`insert(index, value)`, grow-only `reserve(capacity)`,
+`reserve_extra(additional)`, `resize(length, value)`, explicit compatibility
+`push_in(ref mut Zone, value)`, `reserve_in(ref mut Zone, capacity)`,
+`reserve_extra_in(ref mut Zone, additional)`,
+`insert_in(ref mut Zone, index, value)`,
+`resize_in(ref mut Zone, length, value)`, remove, truncate/clear, swap,
 borrowed element views through `get_ref` / `get_mut`, simple linear search, and
+`extend_from_slice(Slice<T>)` plus
 `extend_from_slice_in(ref mut Zone, Slice<T>)`, and `vec.as_slice()` creates a
 mutable `Slice[T]` view over the same zone-backed buffer. `copy_to(ref mut
 Zone)` copies the current elements into a new handle tied to the target zone,
@@ -852,17 +852,11 @@ returns a tracked `std::vec::Iter<T>`, and `std::vec::Vec<T>` implements
 `IntoIterator[T]` so `for value in vec` uses the same iterator lowering.
 Metadata, checked read, element-borrow, search, iterator, target-zone copy, and
 raw-pointer methods borrow the source handle receiver instead of copying it.
-`reserve`, `reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`,
-and `resize_in` must receive the same zone that created the handle; they copy
-existing elements into a larger zone allocation when growth is needed and keep
-old storage under the zone's bulk lifetime. Dropping the source `Vec<T>` handle
+Natural growth methods copy existing elements into a larger allocation from the
+handle's stored zone when growth is needed and keep old storage under the
+zone's bulk lifetime. Dropping the source `Vec<T>` handle
 consumes it and drops each current element while leaving all backing storage
-under the explicit zone's bulk lifetime. Callers can still use
-the inferred-zone forms on tracked receiver locals:
-`push(value)`, `insert(index, value)`, `reserve(capacity)`,
-`reserve_extra(additional)`, `extend_from_slice(values)`, and
-`resize(length, value)` lower to those same same-zone operations. Callers can
-also keep using
+under the explicit zone's bulk lifetime. Callers can also keep using
 `vec.raw.data` with `ptr_store`, `ptr_load`, and `ptr_add` directly for
 lower-level experiments.
 `std::string::alloc_buffer(ref mut Zone, capacity)` is the analogous raw
@@ -924,10 +918,11 @@ the explicit allocator path for future Vec storage, and
 `std::vec::Vec<T>` / `std::Vec<T>`. `Vec!(T, ref mut Zone, capacity)` is the
 short prelude constructor spelling for that same source handle. The source
 handle supports metadata, read/write/replace,
-push/pop, `try_first`/`try_last`/`try_get`, same-zone `push_in` growth,
-same-zone grow-only `reserve`, `try_pop`, insert/remove, swap,
-same-zone `reserve_extra`, same-zone `insert_in` growth, same-zone
-`extend_from_slice_in` growth, same-zone `resize_in` growth, truncate/clear,
+push/pop, `try_first`/`try_last`/`try_get`, owning-zone `push`/`insert`
+growth, owning-zone grow-only `reserve`, `try_pop`, remove, swap,
+owning-zone `reserve_extra`, `extend_from_slice`, and `resize`, explicit
+`push_in`/`insert_in`/`extend_from_slice_in`/`resize_in` compatibility,
+truncate/clear,
 element borrow views, simple search, `Slice[T]` exact/prefix/suffix checks,
 target-zone `copy_to`, and `as_slice` calls over the stored raw handle.
 Read-only metadata, checked reads, `get_ref`, search, Slice comparison,

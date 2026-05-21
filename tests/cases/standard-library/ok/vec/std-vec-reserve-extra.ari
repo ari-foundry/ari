@@ -3,12 +3,12 @@ fn main() -> i64 {
   var vec = std::vec::new<i64>(ref mut zone, 1);
 
   vec.push(4);
-  vec.reserve_extra(ref mut zone, 3);
+  vec.reserve_extra(3);
   let grown = vec.capacity();
   vec.push(6);
   vec.push(8);
   vec.push(10);
-  vec.reserve_extra(ref mut zone, 1);
+  vec.reserve_extra(1);
   let grown_again = vec.capacity();
 
   let total = vec.len() + grown + grown_again + vec.get(0) + vec.get(1) + vec.get(2) + vec.get(3);

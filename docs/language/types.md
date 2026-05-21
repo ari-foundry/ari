@@ -665,6 +665,7 @@ vec.push(20)
 vec.push_in(ref mut zone, 30)
 vec.reserve(8)
 vec.reserve_extra(2)
+vec.reserve_in(ref mut zone, 10)
 vec.insert(1, 15)
 vec.insert_in(ref mut zone, 2, 18)
 vec.resize(8, 0)
@@ -698,26 +699,22 @@ exposes checked methods over the raw allocation.
 The bare root `Vec[T]` type is still the current local vector literal
 storage and borrowed parameter-view surface. `std::Vec[T]` is instead the
 explicit-zone source handle alias. Source `std::vec::Vec<T>.reserve`
-is grow-only: it allocates a larger buffer from the same explicit zone, copies
-the current elements, preserves `len`, and leaves the old buffer to the zone's
-bulk lifetime. `std::vec::Vec<T>.reserve_extra(ref mut Zone, additional)`
-grows to at least `len + additional`, which lets callers reserve append room
-without recomputing the current length. `std::vec::Vec<T>.push_in(ref mut Zone,
-value)` uses the same explicit zone capability and grows when the current
-capacity is full before appending. `std::vec::Vec<T>.insert_in(ref mut Zone,
-index, value)` follows the same explicit-zone growth rule before inserting and
-shifting later elements.
-`std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)` appends each
-slice element through that same growth path. `std::vec::Vec<T>.resize_in(ref
-mut Zone, length, value)` shrinks by dropping removed tail values and reducing
-`len`, or grows by appending copies of `value`.
-For tracked receiver locals, the checker can infer that source zone from the
-handle metadata/provenance. `push(value)` and `insert(index, value)` use the
-grow-on-demand same-zone paths, and `reserve(capacity)`,
-`reserve_extra(additional)`, `extend_from_slice(values)`, and
-`resize(length, value)` lower to the corresponding explicit-zone methods with
-the hidden zone argument synthesized. The explicit `_in` forms are still useful
-for untracked handles or when code should show the capability at the call site.
+is grow-only: it allocates a larger buffer from the zone stored in the handle,
+copies the current elements, preserves `len`, and leaves the old buffer to the
+zone's bulk lifetime. `std::vec::Vec<T>.reserve_extra(additional)` grows to at
+least `len + additional`, which lets callers reserve append room without
+recomputing the current length. `std::vec::Vec<T>.push(value)` and
+`insert(index, value)` use the same stored zone and grow when the current
+capacity is full. `std::vec::Vec<T>.extend_from_slice(Slice<T>)` appends each
+slice element through that same growth path. `std::vec::Vec<T>.resize(length,
+value)` shrinks by dropping removed tail values and reducing `len`, or grows by
+appending copies of `value`. The `_in` forms, including
+`push_in(ref mut Zone, value)`, `insert_in`, `reserve_in`,
+`reserve_extra_in`, `extend_from_slice_in`, and `resize_in`, remain available
+for explicit capability plumbing.
+The explicit `_in` forms are still useful for tests or code that intentionally
+shows the capability at the call site, but normal vector code should use the
+owning-zone methods.
 `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)` builds a new target-zone
 source `Vec<T>` by copying the borrowed slice elements into fresh zone storage.
 `set(index, value)` drops the previous element after storing the new value,
@@ -725,10 +722,10 @@ while `replace(index, value)` returns the previous element instead.
 `try_pop()` returns `Some(value)` for the current last element or `None` when
 the handle is empty.
 `truncate(length)` and `clear()` drop removed elements before reducing the live
-length. Passing a different zone borrow to `reserve`,
-`reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`, or
-`resize_in` is rejected because the source handle remains tied to the zone that
-created it. Dropping the source `Vec<T>` handle runs `drop` on each current
+length. Explicit compatibility calls such as `reserve_in`,
+`reserve_extra_in`, `push_in`, `insert_in`, `extend_from_slice_in`, and
+`resize_in` are intended to use the same zone capability as the handle's stored
+zone. Dropping the source `Vec<T>` handle runs `drop` on each current
 element, but the explicit zone still owns the backing allocation.
 `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current elements into a new
 handle tied to the target zone, so resetting the source zone does not

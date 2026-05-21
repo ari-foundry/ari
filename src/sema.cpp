@@ -10137,7 +10137,10 @@ private:
         }
         std::optional<std::vector<std::size_t>> data_path =
             std_vec_zone_handle_data_field_path_indices(value_qualified_type(local->type));
-        return data_path && path == local_owned_field_path_from_indices(*data_path);
+        if (data_path && path == local_owned_field_path_from_indices(*data_path)) return true;
+        std::optional<std::size_t> source_index =
+            std_vec_zone_handle_source_field_index(value_qualified_type(local->type));
+        return source_index && path == local_owned_field_path_from_indices({*source_index});
     }
 
     void mark_owned_field_assigned(const IrExpr& target) {
@@ -18446,9 +18449,13 @@ private:
 
         std::vector<IrExprPtr> elements;
         elements.reserve(struct_type.field_names.size());
+        std::vector<std::vector<std::size_t>> std_zone_handle_storage_field_paths;
         std::optional<std::size_t> std_zone_handle_source_field =
             std_vec_zone_handle_source_field_index(struct_type);
-        std::vector<std::vector<std::size_t>> std_zone_handle_storage_field_paths;
+        if (std_zone_handle_source_field) {
+            std_zone_handle_storage_field_paths =
+                std_vec_zone_handle_storage_field_path_indices(struct_type);
+        }
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_collections_set_zone_handle_source_field_index(struct_type);
             if (std_zone_handle_source_field) {
@@ -18478,7 +18485,8 @@ private:
             return false;
         };
         const bool std_zone_handle_requires_single_source =
-            is_std_fs_dir_entry_zone_handle_type(struct_type);
+            is_std_fs_dir_entry_zone_handle_type(struct_type) ||
+            is_std_vec_handle_type(struct_type);
         bool std_zone_handle_has_source = false;
         std::string std_zone_handle_source;
         for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
@@ -18507,6 +18515,9 @@ private:
                 }
             }
             elements.push_back(std::move(value));
+        }
+        if (std_zone_handle_requires_single_source && !std_zone_handle_has_source) {
+            fail(expr.loc, "zone-backed struct literal fields must come from one zone");
         }
         return make_ir_tuple_expr(expr.loc, std::move(struct_type), std::move(elements));
     }

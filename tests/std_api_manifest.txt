@@ -1500,6 +1500,7 @@ method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops borrowed receiver
 method std::vec::Vec[T]::dedup|check-prelude std-vec-sequence owned consecutive duplicate compaction and truncation; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::ends_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::equals|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::extend_from_slice|check-prelude std-vec-growth-paths owning-zone slice extension; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::extend_from_slice_in|check-prelude std-vec-extend-from-slice-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::fill|check-prelude std-vec-sequence owned live-prefix fill wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::find|check-prelude std-vec-sequence borrowed subsequence search wrapper; docs/stdlib/modules/vec.md
@@ -1529,8 +1530,11 @@ method std::vec::Vec[T]::push|check-prelude std-vec-fixed-ops; docs/dev/test-mat
 method std::vec::Vec[T]::push_in|check-prelude std-vec-push-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::remove|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::replace|check-prelude std-vec-replace; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::reserve|check-prelude std-vec-reserve; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::reserve_extra|check-prelude std-vec-reserve-extra; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::reserve|check-prelude std-vec-reserve owning-zone capacity growth; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::reserve_extra|check-prelude std-vec-reserve-extra owning-zone spare capacity growth; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::reserve_extra_in|check-prelude std-vec-reserve-extra explicit-zone compatibility growth; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::reserve_in|check-prelude std-vec-reserve explicit-zone compatibility growth; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::resize|check-prelude std-vec-growth-paths owning-zone resize growth and shrink; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::resize_in|check-prelude std-vec-resize-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::retain|check-prelude std-vec-retain stable in-place predicate filtering; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::reverse|check-prelude std-vec-sequence in-place sequence reversal wrapper; docs/stdlib/modules/vec.md

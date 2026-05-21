@@ -66,10 +66,12 @@ hooks because the current language cannot express those primitives directly.
 ## API Conventions
 
 Allocation APIs take a `ref mut Zone` or return values tied to a zone. The
-`_in` suffix means "use this explicit zone for growth or copying". For tracked
-local `std::vec::Vec[T]` and `std::string::String` handles, Ari can infer the
-same source zone for common methods such as `push`, `insert`, `reserve`,
-`reserve_extra`, `extend_from_slice`, and `resize`. `std::collections` handles
+`_in` suffix means "use this explicit zone for growth or copying".
+`std::vec::Vec[T]` stores its owning zone pointer in the handle, so common
+growth methods such as `push`, `insert`, `reserve`, `reserve_extra`,
+`extend_from_slice`, and `resize` do not need a zone argument after
+construction. For tracked local `std::string::String` handles, Ari can infer
+the same source zone for common byte-growth methods. `std::collections` handles
 keep growth explicit today: `Set`, `HashMap`, `HashSet`, `TreeMap`, and
 `TreeSet`, plus `Deque`, `LinkedList`, `BinaryHeap`, and `PriorityQueue`,
 spell `ref mut zone` on methods that may allocate, such as `insert`,
@@ -259,7 +261,7 @@ delimiter `split` are available on `Slice[T]` and `std::vec::Vec[T]`; on
 `try_pop()`, `reserve(ref mut zone, capacity)`,
 `reserve_extra(ref mut zone, additional)`, and `clear()`. For tracked local
 sets, `insert(value)`, `replace(value)`, `reserve(capacity)`, and
-`reserve_extra(additional)` infer the same source zone. Its accessors,
+`reserve_extra(additional)` use the same source zone. Its accessors,
 `index_of`, `as_slice`, and `iter()` preserve insertion order, and the handle
 implements `IntoIterator[T]` for direct `for value in set` loops.
 
