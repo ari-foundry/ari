@@ -7,9 +7,11 @@ pub trait Into[T] {
 }
 
 pub trait TryFrom[T] {
+  fn try_from(value: T) -> std::Option[Self];
 }
 
 pub trait TryInto[T] {
+  fn try_into(self) -> std::Option[T];
 }
 
 pub fn identity[T](value: T) -> T {
@@ -22,4 +24,12 @@ pub fn from[T, U: From[T]](value: T) -> U {
 
 pub fn into[T, U: Into[T]](value: U) -> T {
   return value.into();
+}
+
+pub fn try_from[T, U: TryFrom[T]](value: T) -> std::Option[U] {
+  return TryFrom[T]::try_from<U>(value);
+}
+
+pub fn try_into[T, U: TryInto[T]](value: U) -> std::Option[T] {
+  return value.try_into();
 }

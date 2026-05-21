@@ -836,6 +836,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/convert/std-convert-value-helpers.ari -o $(BUILD_DIR)/prelude/std-convert-value-helpers.elf
 	$(BUILD_DIR)/prelude/std-convert-value-helpers.elf; code=$$?; test $$code -eq 48
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/convert/std-convert-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-convert-value-helpers.elf; $(BUILD_DIR)/prelude/std-convert-value-helpers.elf; code=$$?; test $$code -eq 48; fi
+	$(TARGET) tests/cases/standard-library/ok/convert/std-convert-try-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-convert-try-helpers.ll
+	grep -F -q 'std7convert21try_from__G_i64_Small' $(BUILD_DIR)/prelude/std-convert-try-helpers.ll
+	grep -F -q 'std7convert21try_into__G_Small_i64' $(BUILD_DIR)/prelude/std-convert-try-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/convert/std-convert-try-helpers.ari -o $(BUILD_DIR)/prelude/std-convert-try-helpers.elf
+	$(BUILD_DIR)/prelude/std-convert-try-helpers.elf; code=$$?; test $$code -eq 93
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/convert/std-convert-try-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-convert-try-helpers.elf; $(BUILD_DIR)/prelude/std-convert-try-helpers.elf; code=$$?; test $$code -eq 93; fi
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-primitive-impls.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-primitive-impls.ll
 	grep -F -q 'compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-primitive-impls.ll
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-primitive-impls.ari -o $(BUILD_DIR)/prelude/std-cmp-primitive-impls.elf

@@ -2237,12 +2237,15 @@ convert::TryInto[T]
 convert::identity<T>(value)
 convert::from<T, U>(value)
 convert::into<T, U>(value)
+convert::try_from<T, U>(value)
+convert::try_into<T, U>(value)
 ```
 
 `identity` returns its input unchanged. `from<T, U>` builds destination `U`
 through `convert::From[T]`, and `into<T, U>` turns source `U` into destination
-`T` through `convert::Into[T]`. `TryFrom` and `TryInto` are reserved trait
-names only for now; fallible conversion methods are future library work.
+`T` through `convert::Into[T]`. `try_from<T, U>` and `try_into<T, U>` mirror
+those helpers through `convert::TryFrom[T]` and `convert::TryInto[T]` and
+return `Option` so invalid input stays an ordinary value.
 
 ## Math
 

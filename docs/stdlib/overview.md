@@ -65,7 +65,7 @@ API evolution.
 | `std::fmt` | Formatting traits plus explicit-zone, writer, and stdout formatting helpers. Root `Display`/`Debug` re-export these traits. | `Display::format_in`, `Debug::debug_in`, `FormatSpec`, `decimal`, `hex`, `binary`, `octal`, strict `with_width`/`with_precision`, fallible `try_with_width`/`try_with_precision`, `left`, `right`, `center`, `uppercase`, `alternate`, `unsigned_in`, `integer_in`, `boolean_in`, `float_in`, `text_in`, `debug_text_in`, `debug_value`, `write_unsigned`, `write_integer`, `write_boolean`, `write_text`, `write_value`, `write_debug`, `print_value`, `println_value`, `print_debug`, `println_debug`. |
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, primitive scalar impls, `Ordering`, `compare`, `compare_by`, `then_compare`, `then_compare_by`, `min`, `max`, `clamp`, `is_between`, comparator-based `*_by` value helpers. |
 | `std::algo` | Source algorithms over borrowed slices. | `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `binary_search_by`, `lower_bound`, `lower_bound_by`, `upper_bound`, `upper_bound_by`, `is_sorted`, `is_sorted_by`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `min_by`, `max`, `max_by`, `clamp`, `clamp_by`, `swap`, `fill`, `copy`, `dedup`, plus receiver-form `Slice[T]`/`Vec[T]` wrappers for common call sites. |
-| `std::convert` | Explicit conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. |
+| `std::convert` | Explicit conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`, `try_from`, `try_into`. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked add/sub/mul/div/rem/neg/abs, wrapping/overflowing add/sub/mul, saturating add/sub/mul/div/neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. |
 | `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, checked/wrapping alignment, byte-swap, population-count, and zero/one-run bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`, `checked_align_up`, `wrapping_align_up`, `byte_swap`, `population_count`, `leading_ones`. |
 
@@ -177,8 +177,9 @@ forms such as `compare_by`, `min_by`, and `is_between_by` cover one-off
 ordering policies without forcing a type-wide `Ord` impl.
 
 `std::convert` follows the same source-first path for generic conversion
-helpers. `identity`, `from`, and `into` are plain Ari functions over the
-module's trait surface.
+helpers. `identity`, `from`, `into`, `try_from`, and `try_into` are plain Ari
+functions over the module's trait surface; fallible conversion returns
+`Option` when the caller only needs success or failure.
 
 `std::context` keeps the same split: `argc`, `arg`, `thread_id`, startup `cwd`,
 and startup `executable_path` are runtime hooks because they read the host

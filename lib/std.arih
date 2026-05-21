@@ -575,9 +575,11 @@ pub trait Into[T] {
 }
 
 pub trait TryFrom[T] {
+  fn try_from(value: T) -> std::Option[Self];
 }
 
 pub trait TryInto[T] {
+  fn try_into(self) -> std::Option[T];
 }
 
 pub trait Iterable[T] {

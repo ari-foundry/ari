@@ -180,6 +180,8 @@ fn std::context::user_arg_count|check-prelude std-context-args source user argum
 fn std::convert::from[T, U: From[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::convert::identity[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::convert::into[T, U: Into[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
+fn std::convert::try_from[T, U: TryFrom[T]|std convert try helper tests; docs/stdlib/api-reference.md Conversion section
+fn std::convert::try_into[T, U: TryInto[T]|std convert try helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
 fn std::encoding::base64_decoded_len|check-prelude std-encoding-codec standard base64 decoded length validator; docs/stdlib/modules/encoding.md
 fn std::encoding::base64_encoded_len|check-prelude std-encoding-codec standard base64 encoded length helper; docs/stdlib/modules/encoding.md
@@ -1592,12 +1594,16 @@ trait-method std::Ord[T]::lt|prelude trait surface tests; docs/dev/test-matrix.m
 trait-method std::PartialEq[T]::eq|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::PartialOrd[T]::lt|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::ToString::to_string|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::TryFrom[T]::try_from|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::TryInto[T]::try_into|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::cmp::Eq[T]::eq|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::cmp::Ord[T]::lt|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::cmp::PartialEq[T]::eq|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::cmp::PartialOrd[T]::lt|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::convert::From[T]::from|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::convert::Into[T]::into|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::convert::TryFrom[T]::try_from|convert try helper tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::convert::TryInto[T]::try_into|convert try helper tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::fmt::Debug::debug_in|check-prelude std-fmt-debug-values Debug borrowed receiver tests; docs/stdlib/modules/fmt.md
 trait-method std::fmt::Display::format_in|format_in Display borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 trait-method std::hash::Hash[T]::hash|check-prelude std-hash-basic primitive trait impl dispatch; docs/stdlib/modules/hash.md

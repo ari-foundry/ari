@@ -360,6 +360,8 @@ identifies the exact case:
   lowering through `cmp::Ord[T]::lt` for concrete and generic values.
 - `std-convert-value-helpers.ari`: source `std::convert` identity and
   trait-bound conversion helper behavior.
+- `std-convert-try-helpers.ari`: source `std::convert` fallible
+  `TryFrom`/`TryInto` helper dispatch with success and `None` cases.
 - `std-math-integer-helpers.ari`: source `std::math` i64 sign predicate and
   helper behavior.
 - `std-math-division-rounding.ari`: source `std::math` signed division

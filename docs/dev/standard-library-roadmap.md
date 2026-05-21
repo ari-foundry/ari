@@ -121,7 +121,8 @@ The current `std` package already provides:
   fallible width/precision builders for runtime input, left/right/center
   alignment, debug text quoting, explicit-zone string helpers, and
   `std::io::Writer` helpers
-- `std::convert` source helpers: `identity`, `from`, and `into`
+- `std::convert` source helpers: `identity`, `from`, `into`, `try_from`, and
+  `try_into`
 - `std::math` integer helpers implemented in Ari source with natural names:
   `abs`, `sign`, `is_positive`, `is_negative`, `is_zero`, `is_even`,
   `is_odd`, checked add/sub/mul/div/rem/neg/abs, saturating
@@ -328,7 +329,7 @@ Likely compiler work:
 | `std::iter` | Lazy adapter and eager consumer layer over the canonical `std::Iterator[T]` protocol. | `std-iter-adapters` covers `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, and `collect` over `Vec` cursors. | Function-pointer callback typing, declaring-module field type resolution, and general iterator protocol lowering. |
 | `std::fmt` | Source trait impls for common values, full custom formatter objects, derived/debug formatting, direct writer streaming without temporary strings, allocator-returning `format!` once default-zone policy exists. | `format_in!`, `Display`, unsupported-type diagnostics, source `FormatSpec` helpers for unsigned radix/width/precision/alignment, fallible spec validation, and writer-backed formatting. | Macro-to-trait lowering cleanup and richer trait dispatch. |
 | `std::cmp` | Derived comparison impl coverage for more aggregate shapes, richer partial-order policy later. | Three-way `Ordering`, primitive `Eq`/`PartialEq`/`Ord`/`PartialOrd` impl availability, `compare`, comparator-based `compare_by`/`then_compare_by`, ordering-chain helpers, generic value helpers, inclusive range predicates, `*_by` helper tests over custom values without `Ord`, and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
-| `std::convert` | Concrete `From`/`Into` impl patterns and fallible conversion policy. | Identity/from/into behavior, explicit associated calls, and residual conversions. | Trait coherence and inference diagnostics. |
+| `std::convert` | Concrete conversion impl patterns and richer conversion coverage across stdlib value types. | Identity/from/into behavior, Option-returning try_from/try_into behavior, explicit associated calls, and residual conversions. | Trait coherence and inference diagnostics. |
 | `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Sign predicate behavior, integer helper behavior, signed division rounding, checked add/sub/mul/div/rem/neg/abs behavior, saturating add/sub/mul/div/neg/abs behavior, wrapping add/sub/mul behavior, and overflowing add/sub/mul tuple-result behavior. | Current checked/wrapping/overflowing/saturating helpers are pure source Ari; cross-width helpers likely need compiler intrinsics. |
 | `std::bits` | Grow natural helper names from u64 signatures into generic integer helpers. | Mask behavior, checked/wrapping alignment policy, rotate count handling, power-of-two rounding, low-mask widths, alignment preconditions, byte-swap behavior, population-count aliasing, zero/one-run scan edge cases, and future generic-width diagnostics. | Optional bit-scan/byte-swap intrinsics only after the source policy is stable. |
 

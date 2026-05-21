@@ -82,9 +82,15 @@ impl Into[i64] for i32 {
 }
 
 impl TryFrom[i64] for i64 {
+  fn try_from(value: i64) -> Option[i64] {
+    return Some(value);
+  }
 }
 
 impl TryInto[i64] for i64 {
+  fn try_into(self) -> Option[i64] {
+    return Some(self);
+  }
 }
 
 struct Bag {

@@ -1,0 +1,50 @@
+// Focused std::convert fallible conversion test:
+// - TryFrom/TryInto required methods return Option.
+// - try_from/try_into helpers dispatch through trait bounds.
+// - Failed conversions stay ordinary None values instead of panicking.
+struct Small {
+  value: i64,
+}
+
+impl convert::TryFrom[i64] for Small {
+  fn try_from(value: i64) -> std::Option[Small] {
+    if value < 0 {
+      return std::None<Small>();
+    }
+    if value > 100 {
+      return std::None<Small>();
+    }
+    return std::Some<Small>(Small { value: value });
+  }
+}
+
+impl convert::TryInto[Small] for i64 {
+  fn try_into(self) -> std::Option[Small] {
+    return convert::try_from<i64, Small>(self);
+  }
+}
+
+impl convert::TryFrom[Small] for i64 {
+  fn try_from(value: Small) -> std::Option[i64] {
+    return std::Some<i64>(value.value);
+  }
+}
+
+impl convert::TryInto[i64] for Small {
+  fn try_into(self) -> std::Option[i64] {
+    return std::Some<i64>(self.value);
+  }
+}
+
+fn main() -> i64 {
+  let from_ok = convert::try_from<i64, Small>(40).unwrap().value;
+  let from_bad = if convert::try_from<i64, Small>(101).is_none() { 7 } else { 0 };
+
+  let into_ok = convert::try_into<Small, i64>(5).unwrap().value;
+  let into_bad = if convert::try_into<Small, i64>(-1).is_none() { 11 } else { 0 };
+
+  let back_from = convert::try_from<Small, i64>(Small { value: 13 }).unwrap_or(0);
+  let back_into = convert::try_into<i64, Small>(Small { value: 17 }).unwrap_or(0);
+
+  return from_ok + from_bad + into_ok + into_bad + back_from + back_into;
+}
