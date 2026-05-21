@@ -340,6 +340,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std2io47read_all__G_std__io__BufReader_std__io__Cursor_' $(BUILD_DIR)/prelude/std-io-read-all.ll
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-read-all.ari -o $(BUILD_DIR)/prelude/std-io-read-all.elf
 	$(BUILD_DIR)/prelude/std-io-read-all.elf; code=$$?; test $$code -eq 4
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-read-to-string.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-read-to-string.ll
+	grep -q '_ARNv3std2io33read_to_string__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-read-to-string.ll
+	grep -q '_ARNv3std2io53read_to_string__G_std__io__BufReader_std__io__Cursor_' $(BUILD_DIR)/prelude/std-io-read-to-string.ll
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-read-to-string.ari -o $(BUILD_DIR)/prelude/std-io-read-to-string.elf
+	$(BUILD_DIR)/prelude/std-io-read-to-string.elf; code=$$?; test $$code -eq 4
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-copy.ll
 	grep -q '_ARNv3std2io36copy__G_std__io__Cursor_MemoryWriter' $(BUILD_DIR)/prelude/std-io-copy.ll
 	grep -q '_ARNv3std2io40try_copy__G_std__io__Cursor_MemoryWriter' $(BUILD_DIR)/prelude/std-io-copy.ll

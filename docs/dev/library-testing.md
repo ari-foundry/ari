@@ -338,6 +338,9 @@ identifies the exact case:
 - `std-io-read-all.ari`: source `std::io` `read_all` collection over generic
   `Reader` values, byte order, EOF after collection, and generated generic
   helper symbol checks.
+- `std-io-read-to-string.ari`: source `std::io` `read_to_string` collection
+  over generic `Reader` values, owned byte-string contents, EOF after
+  collection, and generated generic helper symbol checks.
 - `std-io-copy.ari`: source `std::io` `try_copy` byte counts, `copy` bool
   wrapper behavior, writer flush, writer failure handling, and generated
   generic helper symbol checks.

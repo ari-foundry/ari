@@ -1,0 +1,37 @@
+// Covers std::io::read_to_string over generic Reader values. The helper
+// collects bytes directly into an owned String, preserves EOF behavior, and
+// works through the same BufReader adapter path as read_all.
+fn main() -> i64 {
+  var score = 0;
+  var zone = zone::create(256);
+
+  var source = [65u8, 66u8, 67u8, 10u8];
+  var cursor = io::cursor(source.as_slice());
+  let text = io::read_to_string<io::Cursor>(ref mut zone, ref mut cursor);
+  if text.equals_text("ABC\n") &&
+     text.len() == 4 &&
+     text.get(0) == 65u8 &&
+     text.get(3) == 10u8 {
+    score = score + 1;
+  }
+  if cursor.read_byte() < 0 {
+    score = score + 1;
+  }
+
+  var buffered_source = [120u8, 121u8, 122u8];
+  var buffered_cursor = io::cursor(buffered_source.as_slice());
+  var storage = [0u8, 0u8];
+  var reader = io::buf_reader<io::Cursor>(buffered_cursor, storage.as_slice());
+  let buffered = io::read_to_string<io::BufReader[io::Cursor]>(ref mut zone, ref mut reader);
+  if buffered.equals_text("xyz") &&
+     buffered.len() == 3 &&
+     reader.buffered_len() == 0 {
+    score = score + 1;
+  }
+  if reader.read_byte() < 0 {
+    score = score + 1;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

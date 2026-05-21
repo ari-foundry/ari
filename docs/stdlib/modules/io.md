@@ -2,9 +2,9 @@
 
 `std::io` is the byte-oriented process IO module. It keeps the raw runtime
 hooks visible, then layers a small Ari-source interface over them so code can
-talk about readers, writers, exact reads, whole-stream reads, stream copies,
-whole-slice writes, buffered wrappers, and seekable in-memory cursors with
-natural names.
+talk about readers, writers, exact reads, whole-stream reads, whole-stream
+string reads, stream copies, whole-slice writes, buffered wrappers, and
+seekable in-memory cursors with natural names.
 
 Use `std::input` for ordinary stdin line/byte helpers, `std::fs` for files, and
 `std::io` when you want the lower-level IO contracts directly.
@@ -21,8 +21,8 @@ Implemented now:
   `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`
 - source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
   `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
-- source helpers: `read_exact`, `read_all`, `try_copy`, `copy`, `write_all`,
-  `flush`
+- source helpers: `read_exact`, `read_all`, `read_to_string`, `try_copy`,
+  `copy`, `write_all`, `flush`
 
 Roadmap, not implemented yet:
 
@@ -80,6 +80,7 @@ io::BufWriter::new<W>(inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
 
 io::read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::Vec[u8]
+io::read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::string::String
 io::try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> Option[i64]
 io::copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> bool
 io::write_all[W: Writer](writer: ref mut W, values: Slice[u8]) -> bool
@@ -112,6 +113,10 @@ matches the existing runtime hook and keeps `read_exact` simple: it returns
 `read_all(ref mut zone, ref mut reader)` repeatedly reads until EOF and returns
 a zone-backed `Vec[u8]`. Use it when the caller wants the whole remaining byte
 stream and can make allocation explicit through the zone.
+`read_to_string(ref mut zone, ref mut reader)` follows the same EOF rule but
+collects directly into an owned `std::string::String`. Ari strings are
+byte-backed, so this helper does not validate UTF-8; call `text.try_utf8()`
+when a caller needs a validated UTF-8 view.
 `try_copy(ref mut reader, ref mut writer)` streams from any `Reader` into any
 `Writer`, flushes the writer after EOF, and returns `Some(byte_count)` when all
 writes and the final flush succeed. `copy` is the bool wrapper for call sites
@@ -181,6 +186,17 @@ fn main() -> i64 {
 ```ari
 fn main() -> i64 {
   var zone = zone::create(128);
+  var input = io::cursor("owned text");
+  let text = io::read_to_string<io::Cursor>(ref mut zone, ref mut input);
+  let count = text.len();
+  zone::destroy(zone);
+  return count;
+}
+```
+
+```ari
+fn main() -> i64 {
+  var zone = zone::create(128);
   var pipe = io::pipe().unwrap();
   var reader = pipe.take_reader();
   var writer = pipe.take_writer();
@@ -231,9 +247,9 @@ handle, prefer `fmt::print_value(ref mut zone, value)` or
 ## Design Notes
 
 The trait names intentionally stay short and conventional: `Reader`, `Writer`,
-`Seek`, `read_exact`, `read_all`, `try_copy`, `copy`, `write_all`, and `flush`. Avoid
-type-suffixed helper names when trait bounds already carry the type
-information.
+`Seek`, `read_exact`, `read_all`, `read_to_string`, `try_copy`, `copy`,
+`write_all`, and `flush`. Avoid type-suffixed helper names when trait bounds
+already carry the type information.
 
 The module still separates process IO from filesystem IO. `std::fs::File` will
 implement these traits only after the file handle ownership policy is strong
@@ -250,6 +266,9 @@ enough to explain close, copy, drop, and seek behavior consistently.
 - `tests/cases/standard-library/ok/io/std-io-read-all.ari` checks
   `read_all` over `Cursor` and `BufReader[Cursor]`, returned byte order, EOF
   after collection, and generated generic helper symbols.
+- `tests/cases/standard-library/ok/io/std-io-read-to-string.ari` checks
+  `read_to_string` over `Cursor` and `BufReader[Cursor]`, owned byte-string
+  contents, EOF after collection, and generated generic helper symbols.
 - `tests/cases/standard-library/ok/io/std-io-copy.ari` checks `try_copy` and
   `copy` over generic `Reader`/`Writer` values, copied byte counts, final
   flush, writer failure behavior, and generated generic helper symbols.

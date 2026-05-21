@@ -1086,6 +1086,7 @@ io::buf_reader[R: Reader](inner, buffer)
 io::buf_writer[W: Writer](inner, buffer)
 io::read_exact[R: Reader](reader: ref mut R, output, len)
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R)
+io::read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R)
 io::try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
 io::copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
 io::write_all[W: Writer](writer: ref mut W, values)
@@ -1116,6 +1117,9 @@ the line must survive later input reads.
 `io::read_all(ref mut zone, ref mut reader)` collects the remaining bytes from
 any `Reader` into a zone-backed `Vec[u8]`, stopping at the same EOF sentinel as
 `read_exact`.
+`io::read_to_string(ref mut zone, ref mut reader)` collects the remaining bytes
+directly into an owned `std::string::String`. It is byte-oriented like the rest
+of `std::io`; use `String::try_utf8()` when a validated UTF-8 view is needed.
 `io::try_copy(ref mut reader, ref mut writer)` streams bytes from any `Reader`
 to any `Writer`, flushes at EOF, and returns `Some(byte_count)` on complete
 success or `None` when a write or final flush fails. `io::copy` is the bool

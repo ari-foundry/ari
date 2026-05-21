@@ -378,6 +378,7 @@ fn std::io::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude 
 fn std::io::read_exact[R: Reader]|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::read_line|prelude read_line/input tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_line_owned|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+fn std::io::read_to_string[R: Reader]|check-prelude std-io-read-to-string generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md
 fn std::io::stderr|std io stderr tests; docs/stdlib/modules/io.md
 fn std::io::stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::stdout|std io trait/cursor tests; docs/stdlib/modules/io.md

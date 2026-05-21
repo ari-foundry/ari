@@ -140,6 +140,16 @@ pub fn read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::V
   return output;
 }
 
+pub fn read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::string::String {
+  var output = std::string::new(zone, 16);
+  var value = reader.read_byte();
+  while value >= 0 {
+    output.push_in(zone, value as u8);
+    value = reader.read_byte();
+  }
+  return output;
+}
+
 pub fn try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> std::Option[i64] {
   var copied = 0;
   var value = reader.read_byte();
