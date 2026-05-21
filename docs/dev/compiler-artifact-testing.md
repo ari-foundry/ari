@@ -204,11 +204,14 @@ python3 tests/check_compiler_artifact_cli.py
 python3 tests/check_compiler_capability_cli.py
 python3 tests/check_compiler_pass_cli.py
 python3 tests/check_compiler_test_bucket_cli.py
+python3 tests/check_compiler_work_item_cli.py
 build/ari --list-artifacts
 build/ari --list-passes
 build/ari --explain-pass sema
 build/ari --list-test-buckets
 build/ari --explain-test-bucket compiler-artifact-ok
+build/ari --list-work-items
+build/ari --explain-work-item generic-aggregate-stress
 build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/modules/ok/module-llvm.ari --check
@@ -272,6 +275,8 @@ ari --list-passes
 ari --explain-pass name
 ari --list-test-buckets
 ari --explain-test-bucket name
+ari --list-work-items
+ari --explain-work-item name
 ari --emit-source-map path
 ari --emit-syntax path
 ari --emit-diagnostics path
@@ -284,7 +289,7 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves twenty-two low-level contracts:
+It currently proves twenty-four low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -301,6 +306,10 @@ It currently proves twenty-two low-level contracts:
   checks without needing an input file
 - `--explain-test-bucket compiler-artifact-ok` prints when to use the artifact
   golden bucket
+- `--list-work-items` prints compiler implementation slices with first files,
+  artifacts, and focused checks
+- `--explain-work-item generic-aggregate-stress` prints the next compiler work
+  contract for a concrete roadmap item
 - `--list-capabilities` prints the same compiler feature surface without
   needing an input file
 - `--explain-capability trait-resolution` prints the owner, status, first

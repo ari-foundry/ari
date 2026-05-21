@@ -44,6 +44,14 @@ std::string dump_compiler_test_bucket_catalog();
 // Single-bucket view used when deciding where a focused compiler test belongs.
 std::string dump_compiler_test_bucket_explanation(const std::string& bucket_name);
 
+// Input-free implementation queue for normal compiler development. It keeps the
+// near-term roadmap available from the compiler binary with first files,
+// artifacts, and checks attached to each work item.
+std::string dump_compiler_work_item_catalog();
+
+// Single-work-item view used when selecting the next small compiler change.
+std::string dump_compiler_work_item_explanation(const std::string& item_name);
+
 // Deterministic inventory of the compiler's current public capability surface.
 // This is intentionally coarse-grained: it gives contributors a stable map of
 // implemented, partial, planned, and intentionally rejected features without

@@ -36,6 +36,16 @@ struct CompilerTestBucketRow {
     const char* use_for;
 };
 
+struct CompilerWorkItemRow {
+    const char* name;
+    const char* priority;
+    const char* area;
+    const char* first_files;
+    const char* first_artifact;
+    const char* first_check;
+    const char* done_when;
+};
+
 struct CapabilityRow {
     const char* name;
     const char* status;
@@ -107,6 +117,49 @@ static const CompilerTestBucketRow kTestBucketRows[] = {
      "reader-facing language, compiler, tooling, and contributor documentation"},
 };
 
+static const CompilerWorkItemRow kWorkItemRows[] = {
+    {"source-identity-hardening", "P0", "source/diagnostics",
+     "src/driver.cpp, src/source_map_dump.cpp, lexer/parser diagnostic call sites",
+     "--emit-source-map", "make check-compiler-artifacts",
+     "diagnostics and artifacts preserve stable files, byte offsets, line columns, and snippets"},
+    {"diagnostic-code-data-model", "P0", "diagnostics",
+     "src/diagnostic_dump.cpp plus lexer/parser/module/sema throw sites",
+     "--emit-diagnostics", "make check-compiler-artifacts",
+     "expected failures carry stable code families, source fields, and reviewable messages"},
+    {"test-classification", "P0", "tests",
+     "tests/README.md, tests/Makefile, docs/dev/compiler-test-authoring.md",
+     "--list-test-buckets", "python3 tests/check_compiler_test_bucket_cli.py",
+     "new fixtures land in the closest behavior bucket with a small first check"},
+    {"module-project-ergonomics", "P1", "modules",
+     "src/module_loader.cpp, src/module_metadata.cpp, src/module_path.cpp",
+     "--emit-module-graph", "make check-modules or make check-compiler-artifacts",
+     "multi-file Ari projects fail closed with clear module, visibility, and cache diagnostics"},
+    {"parser-declaration-artifacts", "P1", "frontend",
+     "src/parser.cpp, src/ast.hpp, src/declaration_index_dump.cpp",
+     "--emit-syntax and --emit-declaration-index", "make check-compiler-artifacts",
+     "syntax and declaration surfaces expose enough data before sema changes behavior"},
+    {"generic-aggregate-stress", "P1", "types/generics",
+     "src/type_semantics.cpp, src/type_inference.cpp, src/sema.cpp, src/ir.hpp",
+     "--emit-typed-ir", "make check-generics",
+     "generic structs, enums, aliases, and nested payloads lower without one-off escapes"},
+    {"trait-dispatch-maturity", "P2", "traits",
+     "src/trait_semantics.cpp, src/type_semantics.cpp, src/sema.cpp",
+     "--emit-typed-ir", "make check-traits",
+     "trait selection for compiler-shaped code is deterministic and diagnosable"},
+    {"ownership-fact-visibility", "P2", "ownership",
+     "src/ownership_semantics.cpp, src/borrow_semantics.cpp, src/move_semantics.cpp",
+     "future --emit-ownership-facts", "focused ownership fixtures",
+     "move, borrow, drop, and branch-state decisions can be reviewed before backend output"},
+    {"hir-artifact-sketch", "P2", "lowering",
+     "src/ast.hpp, src/ir.hpp, future HIR dump code",
+     "planned --emit-hir", "future check-compiler-artifacts",
+     "lowered source shape is visible between parser AST and typed IR"},
+    {"backend-artifact-normalization", "P2", "backend",
+     "src/llvm_codegen.cpp, src/toolchain.cpp, src/symbol_mangle.cpp",
+     "--emit-llvm and --emit-obj", "focused --emit-llvm/--emit-obj",
+     "ABI, symbol, object, and shared-library regressions fail before broad executable tests"},
+};
+
 static const CapabilityRow kCapabilityRows[] = {
     {"functions", "implemented", "parser/sema/backend", "make check-functions",
      "function declarations, calls, returns, and main entry points"},
@@ -174,6 +227,10 @@ static constexpr std::size_t test_bucket_row_count() {
     return sizeof(kTestBucketRows) / sizeof(kTestBucketRows[0]);
 }
 
+static constexpr std::size_t work_item_row_count() {
+    return sizeof(kWorkItemRows) / sizeof(kWorkItemRows[0]);
+}
+
 static std::string quote_field(const char* text) {
     std::string escaped = "\"";
     for (const char* cursor = text; *cursor != '\0'; ++cursor) {
@@ -200,6 +257,13 @@ static const CompilerPassRow* find_pass_row(const std::string& name) {
 
 static const CompilerTestBucketRow* find_test_bucket_row(const std::string& name) {
     for (const CompilerTestBucketRow& row : kTestBucketRows) {
+        if (name == row.name) return &row;
+    }
+    return nullptr;
+}
+
+static const CompilerWorkItemRow* find_work_item_row(const std::string& name) {
+    for (const CompilerWorkItemRow& row : kWorkItemRows) {
         if (name == row.name) return &row;
     }
     return nullptr;
@@ -332,6 +396,42 @@ std::string dump_compiler_test_bucket_explanation(const std::string& bucket_name
         << " first_check=" << quote_field(row->first_check)
         << " use_for=" << quote_field(row->use_for) << "\n";
     out << "  Rule closest_behavior_bucket=true artifact_before_executable=true docs_checked=true\n";
+    return out.str();
+}
+
+std::string dump_compiler_work_item_catalog() {
+    std::ostringstream out;
+    out << "CompilerWorkItemCatalog version=1 entries=" << work_item_row_count() << "\n";
+    for (const CompilerWorkItemRow& row : kWorkItemRows) {
+        out << "  work_item=" << row.name
+            << " priority=" << row.priority
+            << " area=" << row.area
+            << " first_files=" << quote_field(row.first_files)
+            << " first_artifact=" << quote_field(row.first_artifact)
+            << " first_check=" << quote_field(row.first_check)
+            << " done_when=" << quote_field(row.done_when) << "\n";
+    }
+    out << "  Rule ordinary_compiler_work=true smallest_artifact_first=true roadmap_is_not_bootstrap=true\n";
+    return out.str();
+}
+
+std::string dump_compiler_work_item_explanation(const std::string& item_name) {
+    const CompilerWorkItemRow* row = find_work_item_row(item_name);
+    if (!row) {
+        throw CompileError("unknown compiler work item '" + item_name +
+                           "'; use --list-work-items");
+    }
+
+    std::ostringstream out;
+    out << "CompilerWorkItem version=1"
+        << " work_item=" << row->name
+        << " priority=" << row->priority
+        << " area=" << row->area
+        << " first_files=" << quote_field(row->first_files)
+        << " first_artifact=" << quote_field(row->first_artifact)
+        << " first_check=" << quote_field(row->first_check)
+        << " done_when=" << quote_field(row->done_when) << "\n";
+    out << "  Rule ordinary_compiler_work=true smallest_artifact_first=true roadmap_is_not_bootstrap=true\n";
     return out.str();
 }
 

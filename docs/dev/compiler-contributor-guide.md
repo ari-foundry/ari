@@ -59,6 +59,7 @@ Choose the smallest target that observes the behavior you changed:
 | Compiler roadmap, maturity gates, pass contracts, or readiness docs | `make check-compiler-dev-docs` |
 | Compiler pass ownership, inputs, outputs, or first artifact routing | `build/ari --list-passes` or `build/ari --explain-pass sema` |
 | Compiler fixture placement or test bucket routing | `build/ari --list-test-buckets` or `build/ari --explain-test-bucket compiler-artifact-ok` |
+| Compiler implementation slice selection | `build/ari --list-work-items` or `build/ari --explain-work-item generic-aggregate-stress` |
 | Stage-plan, capability inventory, token, source-map, syntax, diagnostic catalog, diagnostic, module-graph, declaration, typed-IR, or pass-summary artifacts | `make check-compiler-artifacts` |
 | Compiler-shaped Ari model fixtures | `make check-compiler-development` |
 | One ordinary Ari program | `build/ari path/to/case.ari --check` |
@@ -77,6 +78,7 @@ build/ari tests/cases/<area>/ok/<case>.ari --emit-llvm build/focused/<case>.ll
 build/ari tests/cases/<area>/ok/<case>.ari -o build/focused/<case>.elf
 build/ari --explain-pass sema
 build/ari --explain-test-bucket compiler-artifact-ok
+build/ari --explain-work-item generic-aggregate-stress
 make check-language-docs
 make check-compiler-dev-docs
 make check-compiler-development

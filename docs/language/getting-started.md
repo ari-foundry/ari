@@ -182,6 +182,9 @@ Useful options:
 --list-test-buckets list compiler test fixture buckets and first checks
 --explain-test-bucket name
                     explain one compiler test bucket and when to use it
+--list-work-items   list near-term compiler implementation work items
+--explain-work-item name
+                    explain one compiler work item, first files, artifact, and check
 --list-capabilities list implemented, partial, planned, and rejected compiler capabilities
 --explain-capability name
                     explain one compiler capability owner and first check
@@ -195,6 +198,8 @@ Use `ari --list-passes` or `ari --explain-pass sema` when deciding which
 compiler pass owns a behavior before opening source files.
 Use `ari --list-test-buckets` or `ari --explain-test-bucket compiler-artifact-ok`
 when deciding where a focused compiler fixture belongs.
+Use `ari --list-work-items` or `ari --explain-work-item generic-aggregate-stress`
+when choosing the next small compiler implementation slice.
 Use `ari --list-capabilities` or `ari --explain-capability trait-resolution`
 when deciding which compiler area owns a feature.
 

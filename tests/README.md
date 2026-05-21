@@ -83,6 +83,8 @@ Use `python3 tests/check_compiler_pass_cli.py` when changing compiler pass
 catalog listing, per-pass explanations, or pass information command errors.
 Use `python3 tests/check_compiler_test_bucket_cli.py` when changing compiler
 test-bucket listing, per-bucket explanations, or fixture-placement guidance.
+Use `python3 tests/check_compiler_work_item_cli.py` when changing compiler
+work-item listing, per-item explanations, or implementation-roadmap guidance.
 Use `python3 tests/check_compiler_diagnostic_cli.py` when changing diagnostic
 catalog listing or diagnostic-code explanation behavior.
 Use `python3 tests/check_compiler_target_cli.py` when changing target triple,

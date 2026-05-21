@@ -72,6 +72,7 @@ check-compiler-artifacts: $(TARGET)
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_capability_cli.py
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_pass_cli.py
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_test_bucket_cli.py
+	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_work_item_cli.py
 	python3 tests/check_compiler_artifacts.py
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
