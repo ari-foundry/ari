@@ -1692,24 +1692,37 @@ view.len()
 view.is_empty()
 view.first()
 view.try_first()
+view.first_mut()
 view.last()
 view.try_last()
+view.last_mut()
 view.get(index)
 view.try_get(index)
+view.get_mut(index)
 view[index]
 view.as_ptr()
 view.contains(value)
 view.index_of(value)
 view.count(value)
+view.find_if(predicate)
+view.position(predicate)
+view.rposition(predicate)
+view.any(predicate)
+view.all(predicate)
+view.count_if(predicate)
 view.find(needle)
 view.contains_slice(needle)
 view.starts_with(other)
 view.ends_with(other)
+view.strip_prefix(other)
+view.strip_suffix(other)
 view.equals(other)
 view.compare(other)
 view.ordering(other)
 view.slice(start, end)
 view.split_at(index)
+view.split_first()
+view.split_last()
 view.chunks(size)
 view.windows(size)
 view.split(delimiter)
@@ -1744,13 +1757,19 @@ view.copy_to(ref mut zone)
 
 `first`, `last`, and `get` assert when the requested element does not exist.
 Use `try_first`, `try_last`, and `try_get` when absence is an ordinary branch;
-they return `Option[T]`. `is_empty` is a source method that borrows the view
-and checks whether the stored length is zero. `find` searches for a borrowed
-subslice and returns an index or `-1`; an empty needle matches at `0`.
-`contains_slice` is the boolean wrapper. `compare` is lexicographic and
-returns `-1`, `0`, or `1` for compatibility; prefer `ordering` in new code
-because it returns `cmp::Ordering`. `slice` and `split_at` return borrowed
-views into the same storage. `chunks`, `windows`, and delimiter `split` are lazy
+they return `Option[T]`. `first_mut`, `last_mut`, and `get_mut` assert on
+absence and return mutable element borrows into the same backing storage.
+`is_empty` is a source method that borrows the view and checks whether the
+stored length is zero. `find` searches for a borrowed subslice and returns an
+index or `-1`; an empty needle matches at `0`. `contains_slice` is the boolean
+wrapper. `find_if`, `position`, `rposition`, `any`, `all`, and `count_if` take
+`fn(ref T) -> bool` predicates. `strip_prefix` and `strip_suffix` return
+`Option[Slice[T]]` borrowed remainders. `compare` is lexicographic and returns
+`-1`, `0`, or `1` for compatibility; prefer `ordering` in new code because it
+returns `cmp::Ordering`. `slice`, `split_at`, `split_first`, and `split_last`
+return borrowed views into the same storage; endpoint splitting returns
+`Option` so empty slices can be handled directly. `chunks`, `windows`, and
+delimiter `split` are lazy
 iterators that yield borrowed `Slice[T]` views. The reordering, fill/copy,
 partition/dedup, sort/search, and min/max receiver methods forward to
 `std::algo`; ordered methods require `T: std::cmp::Ord[T]`, and `*_by` methods

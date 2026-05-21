@@ -159,11 +159,13 @@ methods.
 the preferred collection vocabulary where it fits: `is_empty` for length
 metadata, asserting `first`/`last`/`get` for programmer errors, and
 `try_first`/`try_last`/`try_get` for ordinary absence handled through
-`Option`. `Slice[T]` and `std::vec::Vec[T]` also share borrowed-view
-operations such as `slice`, `split_at`, subsequence `find`, `contains_slice`,
-lexicographic `compare`, lazy `chunks`, lazy `windows`, delimiter `split`,
-in-place reordering, copying/filling, partition/dedup, sorting, ordered
-search, equal-range lookup, partition-point lookup, and min/max wrappers. `Vec[T]` returns views over its
+`Option`. `Slice[T]` adds mutable element borrows, endpoint splitting,
+predicate search/count helpers, and prefix/suffix stripping. `Slice[T]` and
+`std::vec::Vec[T]` also share borrowed-view operations such as `slice`,
+`split_at`, subsequence `find`, `contains_slice`, lexicographic `compare`,
+lazy `chunks`, lazy `windows`, delimiter `split`, in-place reordering,
+copying/filling, partition/dedup, sorting, ordered search, equal-range lookup,
+partition-point lookup, and min/max wrappers. `Vec[T]` returns views over its
 live element storage, and `String` exposes the same byte-view shape plus
 allocator-backed `join_in`.
 

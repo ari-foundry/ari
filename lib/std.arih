@@ -168,6 +168,11 @@ pub impl[T] Slice[T] {
     return Some<T>(ptr_load(self.data));
   }
 
+  fn first_mut(self: ref mut Self) -> ref mut T {
+    std::assert(self.len > 0);
+    return ref mut *self.data;
+  }
+
   fn last(self: ref Self) -> T {
     std::assert(self.len > 0);
     return ptr_load(ptr_add(self.data, self.len - 1));
@@ -178,6 +183,11 @@ pub impl[T] Slice[T] {
       return None<T>();
     }
     return Some<T>(ptr_load(ptr_add(self.data, self.len - 1)));
+  }
+
+  fn last_mut(self: ref mut Self) -> ref mut T {
+    std::assert(self.len > 0);
+    return ref mut *ptr_add(self.data, self.len - 1);
   }
 
   fn get(self: ref Self, index: i64) -> T {
@@ -194,6 +204,12 @@ pub impl[T] Slice[T] {
       return None<T>();
     }
     return Some<T>(ptr_load(ptr_add(self.data, index)));
+  }
+
+  fn get_mut(self: ref mut Self, index: i64) -> ref mut T {
+    std::assert(index >= 0);
+    std::assert(index < self.len);
+    return ref mut *ptr_add(self.data, index);
   }
 
   fn as_ptr(self: ref Self) -> ptr T {
@@ -213,6 +229,24 @@ pub impl[T] Slice[T] {
     let left = Slice<T> { data: self.data, len: index };
     let right = Slice<T> { data: ptr_add(self.data, index), len: self.len - index };
     return SlicePair<T> { left: left, right: right };
+  }
+
+  fn split_first(self: ref Self) -> Option[(T, Slice[T])] {
+    if self.len == 0 {
+      return None<(T, Slice[T])>();
+    }
+    let head = ptr_load(self.data);
+    let tail = Slice<T> { data: ptr_add(self.data, 1), len: self.len - 1 };
+    return Some<(T, Slice[T])>((head, tail));
+  }
+
+  fn split_last(self: ref Self) -> Option[(Slice[T], T)] {
+    if self.len == 0 {
+      return None<(Slice[T], T)>();
+    }
+    let prefix_view = Slice<T> { data: self.data, len: self.len - 1 };
+    let tail = ptr_load(ptr_add(self.data, self.len - 1));
+    return Some<(Slice[T], T)>((prefix_view, tail));
   }
 
   fn chunks(self: ref Self, size: i64) -> SliceChunks[T] {
@@ -255,6 +289,71 @@ pub impl[T] Slice[T] {
     var index = 0;
     while index < self.len {
       if ptr_load(ptr_add(self.data, index)) == value {
+        total = total + 1;
+      }
+      index = index + 1;
+    }
+    return total;
+  }
+
+  fn find_if(self: ref Self, predicate: fn(ref T) -> bool) -> Option[T] {
+    var index = 0;
+    while index < self.len {
+      let current = ptr_add(self.data, index);
+      if predicate(ref *current) {
+        return Some<T>(ptr_load(current));
+      }
+      index = index + 1;
+    }
+    return None<T>();
+  }
+
+  fn position(self: ref Self, predicate: fn(ref T) -> bool) -> i64 {
+    var index = 0;
+    while index < self.len {
+      let current = ptr_add(self.data, index);
+      if predicate(ref *current) {
+        return index;
+      }
+      index = index + 1;
+    }
+    return -1;
+  }
+
+  fn rposition(self: ref Self, predicate: fn(ref T) -> bool) -> i64 {
+    var index = self.len;
+    while index > 0 {
+      index = index - 1;
+      let current = ptr_add(self.data, index);
+      if predicate(ref *current) {
+        return index;
+      }
+    }
+    return -1;
+  }
+
+  fn any(self: ref Self, predicate: fn(ref T) -> bool) -> bool {
+    return self.position(predicate) >= 0;
+  }
+
+  fn all(self: ref Self, predicate: fn(ref T) -> bool) -> bool {
+    var index = 0;
+    while index < self.len {
+      let current = ptr_add(self.data, index);
+      if !predicate(ref *current) {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+
+  fn count_if(self: ref Self, predicate: fn(ref T) -> bool) -> i64 {
+    var total = 0;
+    var index = 0;
+    while index < self.len {
+      let current = ptr_add(self.data, index);
+      if predicate(ref *current) {
         total = total + 1;
       }
       index = index + 1;
@@ -367,6 +466,22 @@ pub impl[T] Slice[T] {
       index = index + 1;
     }
     return true;
+  }
+
+  fn strip_prefix(self: ref Self, values: Slice[T]) -> Option[Slice[T]] {
+    if !self.starts_with(values) {
+      return None<Slice[T]>();
+    }
+    let rest = Slice<T> { data: ptr_add(self.data, values.len), len: self.len - values.len };
+    return Some<Slice[T]>(rest);
+  }
+
+  fn strip_suffix(self: ref Self, values: Slice[T]) -> Option[Slice[T]] {
+    if !self.ends_with(values) {
+      return None<Slice[T]>();
+    }
+    let rest = Slice<T> { data: self.data, len: self.len - values.len };
+    return Some<Slice[T]>(rest);
   }
 
   fn equals(self: ref Self, values: Slice[T]) -> bool {

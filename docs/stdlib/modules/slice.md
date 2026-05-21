@@ -28,16 +28,22 @@ view.len()
 view.is_empty()
 view.first()
 view.try_first()
+view.first_mut()
 view.last()
 view.try_last()
+view.last_mut()
 view.get(index)
 view.try_get(index)
+view.get_mut(index)
 view[index]
 view.as_ptr()
 ```
 
 `first`, `last`, `get`, and indexing assert when the element is missing. Use
-the `try_*` forms for ordinary absence; they return `Option[T]`.
+the `try_*` forms for ordinary absence; they return `Option[T]`. `first_mut`,
+`last_mut`, and `get_mut` assert on absence and return mutable borrows into
+the same backing storage, so they are for writable slices derived from mutable
+arrays, local vectors, or source `std::vec::Vec[T]` storage.
 
 Search and comparison:
 
@@ -45,10 +51,18 @@ Search and comparison:
 view.index_of(value)
 view.contains(value)
 view.count(value)
+view.find_if(predicate)
+view.position(predicate)
+view.rposition(predicate)
+view.any(predicate)
+view.all(predicate)
+view.count_if(predicate)
 view.find(needle)
 view.contains_slice(needle)
 view.starts_with(prefix)
 view.ends_with(suffix)
+view.strip_prefix(prefix)
+view.strip_suffix(suffix)
 view.equals(other)
 view.compare(other)
 view.ordering(other)
@@ -56,10 +70,17 @@ view.ordering(other)
 
 `index_of` and `contains` search for one value. `find` searches for a borrowed
 subslice and returns the first index or `-1`; an empty needle matches at `0`.
-`contains_slice` is the boolean wrapper. `compare` is lexicographic and returns
-`-1`, `0`, or `1` for compatibility with existing code. Prefer `ordering` in
-new code; it returns `cmp::Less`, `cmp::Equal`, or `cmp::Greater`, which
-composes with `cmp::Ordering` helpers such as `is_less` and `then`.
+`contains_slice` is the boolean wrapper. `find_if`, `position`, `rposition`,
+`any`, `all`, and `count_if` accept `fn(ref T) -> bool`, matching the predicate
+shape used by `partition` and `partition_point`. `find_if` returns the first
+matching value as `Option[T]`; `position` and `rposition` return the first or
+last matching index, or `-1` when no element matches. `strip_prefix` and
+`strip_suffix` return the remaining borrowed view as `Option[Slice[T]]`, so a
+missing prefix or suffix can be handled without sentinel indexes. `compare` is
+lexicographic and returns `-1`, `0`, or `1` for compatibility with existing
+code. Prefer `ordering` in new code; it returns `cmp::Less`, `cmp::Equal`, or
+`cmp::Greater`, which composes with `cmp::Ordering` helpers such as `is_less`
+and `then`.
 
 ## Views And Lazy Splitting
 
@@ -68,11 +89,16 @@ Borrowed subviews:
 ```ari
 view.slice(start, end)
 view.split_at(index)
+view.split_first()
+view.split_last()
 ```
 
 `slice(start, end)` asserts `0 <= start <= end <= len` and returns a borrowed
 view over that range. `split_at(index)` returns `SlicePair[T]`; call
-`left()` and `right()` to inspect the two borrowed halves.
+`left()` and `right()` to inspect the two borrowed halves. `split_first()`
+returns `Option[(T, Slice[T])]`, where the tuple is `(first, rest)`.
+`split_last()` returns `Option[(Slice[T], T)]`, where the tuple is
+`(init, last)`. Empty slices return `None`.
 
 Lazy view iterators:
 
@@ -153,11 +179,15 @@ Focused positive tests:
 ```text
 tests/cases/standard-library/ok/vec/prelude-slice-methods.ari
 tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
+tests/cases/standard-library/ok/vec/prelude-slice-convenience.ari
 tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari
 tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari
 tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
 ```
 
+`prelude-slice-convenience.ari` covers `strip_prefix`, `strip_suffix`,
+`split_first`, `split_last`, `first_mut`, `last_mut`, `get_mut`, `find_if`,
+`position`, `rposition`, `any`, `all`, and `count_if`.
 `prelude-slice-sequence.ari` covers `slice`, `split_at`, `find`,
 `contains_slice`, `compare`, `ordering`, `chunks`, `windows`, delimiter `split`, in-place
 reordering, copying/filling, partition/dedup, sorting, binary search,

@@ -1113,8 +1113,14 @@ runtime length, so later vector length changes do not update an existing view.
 bounds checks against the source view; exclusive ranges allow empty slices when
 `start == end`, while inclusive ranges require the end index to name an
 existing element. `first()`, `last()`, and `get(index)` are checked read-only
-element accessors over the stored pointer and length. `contains(value)`,
-`index_of(value)`, and `count(value)` scan comparable elements. `equals(view)`,
+element accessors over the stored pointer and length; `first_mut()`,
+`last_mut()`, and `get_mut(index)` return mutable element borrows for writable
+views. `contains(value)`, `index_of(value)`, and `count(value)` scan comparable
+elements. `find_if(predicate)`, `position(predicate)`, `rposition(predicate)`,
+`any(predicate)`, `all(predicate)`, and `count_if(predicate)` scan with
+`fn(ref T) -> bool` predicates. `split_first()` and `split_last()` return
+optional endpoint/value pairs, while `strip_prefix(view)` and
+`strip_suffix(view)` return optional borrowed remainders. `equals(view)`,
 `starts_with(view)`, and `ends_with(view)` compare against another borrowed
 `Slice[T]` view. `as_ptr()` returns the stored `ptr T` and preserves the
 view's zone provenance when the view came from tracked zone-backed storage.

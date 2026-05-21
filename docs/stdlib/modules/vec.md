@@ -249,17 +249,28 @@ with source vectors:
 view.is_empty()
 view.first()
 view.try_first()
+view.first_mut()
 view.last()
 view.try_last()
+view.last_mut()
 view.get(index)
 view.try_get(index)
+view.get_mut(index)
 view.index_of(value)
 view.contains(value)
 view.count(value)
+view.find_if(predicate)
+view.position(predicate)
+view.rposition(predicate)
+view.any(predicate)
+view.all(predicate)
+view.count_if(predicate)
 view.find(needle)
 view.contains_slice(needle)
 view.starts_with(other)
 view.ends_with(other)
+view.strip_prefix(other)
+view.strip_suffix(other)
 view.equals(other)
 view.compare(other)
 view.ordering(other)
@@ -269,21 +280,26 @@ view.copy_to(ref mut zone)
 Use `Slice[T]` when you only need a borrowed view. `is_empty` checks the
 view's stored length without touching elements. Use `try_*` accessors when
 absence is a normal branch and `first`/`last`/`get` when absence should trap.
+The `_mut` accessors return writable element borrows, and the `*_if` /
+position helpers scan with `fn(ref T) -> bool` predicates.
 
 Borrowed view shaping and lazy splitting:
 
 ```ari
 view.slice(start, end)
 view.split_at(index)
+view.split_first()
+view.split_last()
 view.chunks(size)
 view.windows(size)
 view.split(delimiter)
 ```
 
-`slice` and `split_at` return borrowed views into the same storage. `chunks`,
-`windows`, and delimiter `split` are lazy iterators that yield `Slice[T]`
-views, so they do not allocate. The dedicated [Slice guide](slice.md) covers
-their exact boundary behavior.
+`slice`, `split_at`, `split_first`, `split_last`, `strip_prefix`, and
+`strip_suffix` return borrowed views into the same storage. `chunks`, `windows`,
+and delimiter `split` are lazy iterators that yield `Slice[T]` views, so they
+do not allocate. The dedicated [Slice guide](slice.md) covers their exact
+boundary behavior.
 
 ## Example
 

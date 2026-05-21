@@ -1,0 +1,79 @@
+// Covers Slice[T] affix trimming, split endpoints, mutable element borrows,
+// and predicate-based scans.
+
+fn expect_slice(values: Slice[i64], expected: Slice[i64]) -> void {
+  assert(values.equals(expected));
+}
+
+fn even(value: ref i64) -> bool {
+  let raw = (ref value) as ptr i64;
+  return (*raw % 2) == 0;
+}
+
+fn positive(value: ref i64) -> bool {
+  let raw = (ref value) as ptr i64;
+  return (*raw) > 0;
+}
+
+fn main() -> i64 {
+  var values = [3, 5, 8, 13, 8, 21];
+  var prefix = [3, 5];
+  var suffix = [8, 21];
+  var wrong = [5, 3];
+  var view = values.as_slice();
+  let empty = view.slice(0, 0);
+
+  expect_slice(view.strip_prefix(prefix.as_slice()).unwrap(), view.slice(2, 6));
+  expect_slice(view.strip_suffix(suffix.as_slice()).unwrap(), view.slice(0, 4));
+  expect_slice(view.strip_prefix(empty).unwrap(), view);
+  expect_slice(view.strip_suffix(empty).unwrap(), view);
+  assert(view.strip_prefix(wrong.as_slice()).is_none());
+  assert(view.strip_suffix(wrong.as_slice()).is_none());
+
+  let head = view.split_first().unwrap();
+  assert_eq_i64(head.0, 3);
+  expect_slice(head.1, view.slice(1, 6));
+
+  let tail = view.split_last().unwrap();
+  expect_slice(tail.0, view.slice(0, 5));
+  assert_eq_i64(tail.1, 21);
+  assert(empty.split_first().is_none());
+  assert(empty.split_last().is_none());
+
+  assert_eq_i64(view.find_if(even).unwrap_or(0), 8);
+  assert_eq_i64(view.position(even), 2);
+  assert_eq_i64(view.rposition(even), 4);
+  assert(view.any(even));
+  assert(view.all(positive));
+  assert(!view.all(even));
+  assert_eq_i64(view.count_if(even), 2);
+  assert_eq_i64(empty.position(even), -1);
+  assert_eq_i64(empty.rposition(even), -1);
+  assert(empty.find_if(even).is_none());
+  assert(!empty.any(even));
+  assert(empty.all(even));
+  assert_eq_i64(empty.count_if(even), 0);
+
+  {
+    let first_slot: ref mut i64 = view.first_mut();
+    let first_raw = first_slot as ptr i64;
+    ptr_store(first_raw, 30);
+  }
+  {
+    let middle_slot: ref mut i64 = view.get_mut(1);
+    let middle_raw = middle_slot as ptr i64;
+    ptr_store(middle_raw, 50);
+  }
+  {
+    let last_slot: ref mut i64 = view.last_mut();
+    let last_raw = last_slot as ptr i64;
+    ptr_store(last_raw, 210);
+  }
+
+  assert_eq_i64(values[0], 30);
+  assert_eq_i64(values[1], 50);
+  assert_eq_i64(values[5], 210);
+
+  return values[0] + values[1] + values[5] +
+    view.position(even) + view.rposition(even) + view.count_if(even);
+}

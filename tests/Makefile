@@ -2186,6 +2186,20 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-convenience.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent12strip_prefix' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent12strip_suffix' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent11split_first' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent10split_last' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent9first_mut' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent8last_mut' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent7get_mut' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent7find_if' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent8position' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent9rposition' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent3any' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent3all' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
+	grep -F -q 'Slice_i64_8inherent8count_if' $(BUILD_DIR)/prelude/prelude-slice-convenience.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent5slice' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent8split_at' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
@@ -2225,6 +2239,8 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf
 	$(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105
+	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-convenience.ari -o $(BUILD_DIR)/prelude/prelude-slice-convenience.elf
+	$(BUILD_DIR)/prelude/prelude-slice-convenience.elf; code=$$?; test $$code -eq 44
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari -o $(BUILD_DIR)/prelude/prelude-slice-sequence.elf
 	$(BUILD_DIR)/prelude/prelude-slice-sequence.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari -o $(BUILD_DIR)/prelude/prelude-slice-metadata.elf
@@ -2317,6 +2333,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; code=$$?; test $$code -eq 91; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf; $(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-convenience.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-convenience.elf; $(BUILD_DIR)/prelude/prelude-slice-convenience.elf; code=$$?; test $$code -eq 44; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-sequence.elf; $(BUILD_DIR)/prelude/prelude-slice-sequence.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; code=$$?; test $$code -eq 47; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; code=$$?; test $$code -eq 32; fi

@@ -781,26 +781,39 @@ method Ordering::then_compare[T: Ord[T]|check-prelude std-cmp-ordering natural g
 method Ordering::then_compare_by[T]|check-prelude std-cmp-by-helpers natural comparator-based Ordering chain method; docs/stdlib/modules/cmp.md
 method SlicePair[T]::left|check-prelude prelude-slice-sequence split_at left half accessor; docs/stdlib/modules/slice.md
 method SlicePair[T]::right|check-prelude prelude-slice-sequence split_at right half accessor; docs/stdlib/modules/slice.md
+method Slice[T]::all|check-prelude prelude-slice-convenience borrowed-predicate universal check; docs/stdlib/modules/slice.md
+method Slice[T]::any|check-prelude prelude-slice-convenience borrowed-predicate existential check; docs/stdlib/modules/slice.md
 method Slice[T]::as_ptr|check-prelude prelude-slice-as-ptr borrowed receiver and provenance tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 method Slice[T]::chunks|check-prelude prelude-slice-sequence lazy borrowed chunk iterator; docs/stdlib/modules/slice.md
 method Slice[T]::compare|check-prelude prelude-slice-sequence lexicographic slice compare; docs/stdlib/modules/slice.md
 method Slice[T]::contains|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::contains_slice|check-prelude prelude-slice-sequence borrowed subsequence predicate; docs/stdlib/modules/slice.md
 method Slice[T]::count|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::count_if|check-prelude prelude-slice-convenience borrowed-predicate count; docs/stdlib/modules/slice.md
 method Slice[T]::ends_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::equals|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::find|check-prelude prelude-slice-sequence borrowed subsequence search; docs/stdlib/modules/slice.md
+method Slice[T]::find_if|check-prelude prelude-slice-convenience borrowed-predicate value search; docs/stdlib/modules/slice.md
 method Slice[T]::first|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::first_mut|check-prelude prelude-slice-convenience mutable first-element borrow; docs/stdlib/modules/slice.md
 method Slice[T]::get|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::get_mut|check-prelude prelude-slice-convenience mutable indexed element borrow; docs/stdlib/modules/slice.md
 method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::is_empty|check-prelude prelude-slice-metadata borrowed receiver metadata helper; docs/stdlib/api-reference.md Slice section
 method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::last_mut|check-prelude prelude-slice-convenience mutable last-element borrow; docs/stdlib/modules/slice.md
 method Slice[T]::len|check-prelude prelude-slice-metadata natural borrowed length helper; docs/stdlib/api-reference.md Slice section
 method Slice[T]::ordering|check-prelude prelude-slice-sequence lexicographic Ordering comparison; docs/stdlib/modules/slice.md
+method Slice[T]::position|check-prelude prelude-slice-convenience borrowed-predicate first index search; docs/stdlib/modules/slice.md
+method Slice[T]::rposition|check-prelude prelude-slice-convenience borrowed-predicate last index search; docs/stdlib/modules/slice.md
 method Slice[T]::slice|check-prelude prelude-slice-sequence borrowed range view helper; docs/stdlib/modules/slice.md
 method Slice[T]::split|check-prelude prelude-slice-sequence lazy borrowed delimiter split iterator; docs/stdlib/modules/slice.md
 method Slice[T]::split_at|check-prelude prelude-slice-sequence borrowed left/right split helper; docs/stdlib/modules/slice.md
+method Slice[T]::split_first|check-prelude prelude-slice-convenience optional first value and tail view; docs/stdlib/modules/slice.md
+method Slice[T]::split_last|check-prelude prelude-slice-convenience optional init view and last value; docs/stdlib/modules/slice.md
 method Slice[T]::starts_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::strip_prefix|check-prelude prelude-slice-convenience optional prefix-stripped view; docs/stdlib/modules/slice.md
+method Slice[T]::strip_suffix|check-prelude prelude-slice-convenience optional suffix-stripped view; docs/stdlib/modules/slice.md
 method Slice[T]::try_first|check-prelude prelude-slice-option-access Option-returning empty-safe access; docs/stdlib/api-reference.md Slice section
 method Slice[T]::try_get|check-prelude prelude-slice-option-access Option-returning out-of-range access; docs/stdlib/api-reference.md Slice section
 method Slice[T]::try_last|check-prelude prelude-slice-option-access Option-returning empty-safe access; docs/stdlib/api-reference.md Slice section

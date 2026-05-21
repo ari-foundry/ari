@@ -37,6 +37,9 @@ identifies the exact case:
   behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access
   behavior.
+- `prelude-slice-convenience.ari`: root `Slice[T]` affix stripping, endpoint
+  splitting, mutable element borrows, and borrowed-predicate search/count
+  helpers.
 - `prelude-slice-sequence.ari`: root `Slice[T]` range views, split views,
   subsequence search, lexicographic compare, chunks, windows, delimiter
   splitting, and receiver-form algorithm wrappers including sorted/equal-range
