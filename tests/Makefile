@@ -1457,6 +1457,9 @@ check-prelude: $(TARGET)
 	grep -F -q 'std__vec__Vec_i64_8inherent11rotate_left' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent12rotate_right' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent5dedup' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent4fill' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent9copy_from' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent9partition' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent4sort' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent11stable_sort' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent9is_sorted' $(BUILD_DIR)/prelude/std-vec-sequence.ll

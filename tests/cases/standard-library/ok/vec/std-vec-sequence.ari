@@ -12,6 +12,28 @@ fn expect_slice(values: Slice[i64], expected: Slice[i64]) -> void {
   assert(values.equals(expected));
 }
 
+fn even(value: ref i64) -> bool {
+  let raw = (ref value) as ptr i64;
+  return (*raw % 2) == 0;
+}
+
+fn partition_ok(values: Slice[i64], split: i64) -> bool {
+  var index = 0;
+  while index < split {
+    if (values[index] % 2) != 0 {
+      return false;
+    }
+    index = index + 1;
+  }
+  while index < values.len {
+    if (values[index] % 2) == 0 {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
 fn main() -> i64 {
   var zone = zone::create(512);
   var values = std::vec::new<i64>(ref mut zone, 8);
@@ -128,6 +150,36 @@ fn main() -> i64 {
   assert_eq_i64(compact.len(), 4);
   assert_eq_i64(compact.capacity(), 8);
   expect_slice(compact.as_slice(), compact_expected.as_slice());
+
+  var filled = std::vec::new<i64>(ref mut zone, 3);
+  filled.push(1);
+  filled.push(2);
+  filled.push(3);
+  filled.fill(9);
+  var filled_expected = [9, 9, 9];
+  expect_slice(filled.as_slice(), filled_expected.as_slice());
+
+  var copy_target = std::vec::new<i64>(ref mut zone, 4);
+  copy_target.push(0);
+  copy_target.push(0);
+  copy_target.push(0);
+  copy_target.push(0);
+  var copy_source = [8, 7, 6];
+  let copied = copy_target.copy_from(copy_source.as_slice());
+  var copy_expected = [8, 7, 6, 0];
+  assert_eq_i64(copied, 3);
+  expect_slice(copy_target.as_slice(), copy_expected.as_slice());
+
+  var parted = std::vec::new<i64>(ref mut zone, 6);
+  parted.push(1);
+  parted.push(2);
+  parted.push(3);
+  parted.push(4);
+  parted.push(5);
+  parted.push(6);
+  let parted_split = parted.partition(even);
+  assert_eq_i64(parted_split, 3);
+  assert(partition_ok(parted.as_slice(), parted_split));
 
   zone::destroy(zone);
   return 0;

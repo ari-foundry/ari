@@ -419,6 +419,19 @@ pub impl[T] std::vec::Vec[T] {
     return length;
   }
 
+  fn fill(self: ref mut Self, value: T) -> void {
+    std::algo::fill<T>(self.as_slice(), value);
+    return;
+  }
+
+  fn copy_from(self: ref mut Self, source: super::Slice[T]) -> i64 {
+    return std::algo::copy<T>(self.as_slice(), source);
+  }
+
+  fn partition(self: ref mut Self, keep: fn(ref T) -> bool) -> i64 {
+    return std::algo::partition<T>(self.as_slice(), keep);
+  }
+
   fn index_of(self: ref Self, value: T) -> i64 {
     var index = 0;
     while index < self.raw.len {

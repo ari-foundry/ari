@@ -1312,6 +1312,9 @@ vec.try_remove(index)
 vec.truncate(length)
 vec.retain(keep)
 vec.dedup()
+vec.fill(value)
+vec.copy_from(source)
+vec.partition(keep)
 vec.clear()
 vec.reserve(ref mut zone, capacity)
 vec.reserve_extra(ref mut zone, additional)
@@ -1355,7 +1358,9 @@ The `try_*` accessors return `Option[T]` for empty or out-of-range reads.
 Use the non-`try` forms when absence is a programmer error and an assertion is
 the desired behavior. `retain(keep)` compacts accepted values in place,
 preserves their order, and drops rejected values. `dedup()` removes consecutive
-duplicate values from the owned vector and returns the new length. The borrowed sequence helpers
+duplicate values from the owned vector and returns the new length. `fill`,
+`copy_from`, and `partition` are owned-vector wrappers over the same live-prefix
+policies as `Slice[T]`. The borrowed sequence helpers
 mirror the root `Slice[T]` vocabulary: `slice` and `split_at` create views over live vector storage,
 `find` and `contains_slice` search for borrowed subsequences, `compare` is
 lexicographic, `ordering` returns typed `cmp::Ordering`, and `chunks`,

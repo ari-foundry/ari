@@ -1298,12 +1298,14 @@ method std::vec::Vec[T]::clear|check-prelude std-vec-fixed-ops; docs/dev/test-ma
 method std::vec::Vec[T]::compare|check-prelude std-vec-sequence lexicographic borrowed view compare wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::contains|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::contains_slice|check-prelude std-vec-sequence borrowed subsequence predicate wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::copy_from|check-prelude std-vec-sequence owned target prefix copy wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::copy_to|check-prelude std-vec-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::dedup|check-prelude std-vec-sequence owned consecutive duplicate compaction and truncation; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::ends_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::equals|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::extend_from_slice_in|check-prelude std-vec-extend-from-slice-in; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::fill|check-prelude std-vec-sequence owned live-prefix fill wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::find|check-prelude std-vec-sequence borrowed subsequence search wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::first|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::get|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
@@ -1321,6 +1323,7 @@ method std::vec::Vec[T]::lower_bound|check-prelude std-vec-sequence ordered sequ
 method std::vec::Vec[T]::max|check-prelude std-vec-sequence ordered sequence maximum wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::min|check-prelude std-vec-sequence ordered sequence minimum wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::ordering|check-prelude std-vec-sequence lexicographic Ordering comparison wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::partition|check-prelude std-vec-sequence owned borrowed-predicate partition wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::pop|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push_in|check-prelude std-vec-push-in; docs/dev/test-matrix.md Explicit memory zones row

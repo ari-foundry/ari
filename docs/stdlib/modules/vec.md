@@ -92,6 +92,9 @@ vec.try_remove(index)
 vec.truncate(length)
 vec.retain(keep)
 vec.dedup()
+vec.fill(value)
+vec.copy_from(source)
+vec.partition(keep)
 vec.clear()
 ```
 
@@ -101,7 +104,10 @@ index is ordinary input. `retain` keeps values accepted by `keep: fn(ref T) ->
 bool`, preserves the order of kept values, and drops rejected values. `set`,
 `clear`, `truncate`, and shrink paths drop removed live elements before
 reducing the logical length. `dedup` compacts consecutive duplicates, truncates
-the vector to the unique prefix, and returns the new length.
+the vector to the unique prefix, and returns the new length. `fill` overwrites
+the live prefix with one value, `copy_from` copies the source prefix that fits
+and returns the copied count, and `partition` reorders live values by a
+borrowed predicate and returns the split index.
 
 Growth-capable mutation uses the owning zone:
 
