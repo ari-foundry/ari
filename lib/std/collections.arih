@@ -1673,6 +1673,39 @@ pub impl[T] std::collections::TreeSet[T] {
     return tree_set_find_slot<T>(self, value) >= 0;
   }
 
+  fn is_subset(self: ref Self, other: ref Self) -> bool {
+    var index = 0;
+    while index < self.len {
+      if !other.contains(ptr_load(ptr_add(self.data, index))) {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+
+  fn is_superset(self: ref Self, other: ref Self) -> bool {
+    return other.is_subset(self);
+  }
+
+  fn is_disjoint(self: ref Self, other: ref Self) -> bool {
+    var index = 0;
+    while index < self.len {
+      if other.contains(ptr_load(ptr_add(self.data, index))) {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+
+  fn equals(self: ref Self, other: ref Self) -> bool {
+    if self.len != other.len {
+      return false;
+    }
+    return self.is_subset(other);
+  }
+
   fn insert(self: ref mut Self, zone: ref mut Zone, value: T) -> bool {
     let less = self.less;
     var parent = -1;

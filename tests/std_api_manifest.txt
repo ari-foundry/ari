@@ -911,8 +911,12 @@ method std::collections::TreeMap[K,V]::values|check-prelude std-collections-tree
 method std::collections::TreeSet[T]::capacity|check-prelude std-collections-tree tree set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::clear|check-prelude std-collections-tree drops live tree set nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::contains|check-prelude std-collections-tree ordered set lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::equals|check-prelude std-collections-tree-set-relations membership equality predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::insert|check-prelude std-collections-tree red-black set insertion with same-zone growth; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::is_disjoint|check-prelude std-collections-tree-set-relations ordered-set disjointness predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::is_subset|check-prelude std-collections-tree-set-relations ordered-set subset predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::is_superset|check-prelude std-collections-tree-set-relations ordered-set superset predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::iter|check-prelude std-collections-tree-iter sorted iterator and IntoIterator; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md

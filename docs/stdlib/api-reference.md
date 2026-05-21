@@ -1518,6 +1518,10 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.equals(ref other)
+set.is_subset(ref other)
+set.is_superset(ref other)
+set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.clear()
@@ -1525,7 +1529,8 @@ set.reserve(ref mut zone, capacity)
 set.iter()
 ```
 
-`TreeMap.keys()`, `TreeMap.values()`, `TreeSet.iter()`, and direct
+`TreeSet` relationship methods compare ordered-set membership, not internal
+tree shape. `TreeMap.keys()`, `TreeMap.values()`, `TreeSet.iter()`, and direct
 `for value in tree_set` walk values in ascending comparator order.
 
 `std::string::String` is an owned byte string:

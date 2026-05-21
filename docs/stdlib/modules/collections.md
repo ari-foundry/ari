@@ -309,6 +309,10 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.equals(ref other)
+set.is_subset(ref other)
+set.is_superset(ref other)
+set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.clear()
@@ -317,9 +321,10 @@ set.iter()
 ```
 
 `TreeSet.insert` returns `false` for an equal existing value. `TreeSet.replace`
-returns the previous equal value or inserts a new one. `TreeSet.iter()` yields
-values in ascending comparator order, and `TreeSet[T]` implements
-`IntoIterator[T]`.
+returns the previous equal value or inserts a new one. `equals`, `is_subset`,
+`is_superset`, and `is_disjoint` compare ordered-set membership, not the
+internal tree shape. `TreeSet.iter()` yields values in ascending comparator
+order, and `TreeSet[T]` implements `IntoIterator[T]`.
 
 ## BinaryHeap And PriorityQueue
 
@@ -404,6 +409,7 @@ tests/cases/standard-library/ok/collections/std-collections-hash.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
+tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
 tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari
 tests/cases/standard-library/ok/collections/ring-buffer/std-collections-ring-buffer.ari
@@ -444,7 +450,9 @@ linear-probing and tombstone paths are exercised.
 `std-collections-hash-set-relations.ari` keeps that collision pressure and
 checks set relationship predicates after a tombstone. `std-collections-hash-iter`
 checks key, value, and set cursors after tombstones. `std-collections-tree.ari`
-inserts mixed key order to exercise red-black rotations, while
+inserts mixed key order to exercise red-black rotations.
+`std-collections-tree-set-relations.ari` inserts the same values in different
+orders to verify relationship predicates are membership-based, while
 `std-collections-tree-iter.ari` checks sorted successor traversal.
 `std-collections-deque.ari` checks circular growth and both-end operations.
 `std-collections-ring-buffer.ari` checks bounded push failure, overwrite, and

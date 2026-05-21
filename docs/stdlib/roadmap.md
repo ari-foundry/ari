@@ -73,7 +73,7 @@ lightweight normalization helpers,
 accessors, `pop`/`try_pop`, replace-or-insert updates, set-relationship
 predicates, explicit reserve growth, direct iterator support, open-addressed `HashMap`/`HashSet` with
 hash-set relationship predicates, tombstones, and live-bucket iterators, red-black-tree `TreeMap`/`TreeSet` with
-sorted iterators, growable `Deque`, fixed `RingBuffer`, zone-backed
+tree-set relationship predicates and sorted iterators, growable `Deque`, fixed `RingBuffer`, zone-backed
 `LinkedList`, and `BinaryHeap`/`PriorityQueue` priority containers, and the
 first `parse` whole-input integer/bool/decimal-float parsers, `encoding`
 ASCII/UTF-8/UTF-16 validation plus hex/base64 codecs, and `math` sign,

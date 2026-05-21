@@ -1,0 +1,45 @@
+// Covers TreeSet[T] relationship predicates. The values are inserted in
+// different orders so the test checks ordered-set membership, not tree shape.
+fn main() -> i64 {
+  var zone = zone::create(2048);
+  var left = collections::tree_set<i64>(ref mut zone, 1, collections::less_i64);
+  var same = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  var superset = collections::tree_set<i64>(ref mut zone, 1, collections::less_i64);
+  var disjoint = collections::tree_set<i64>(ref mut zone, 1, collections::less_i64);
+
+  left.insert(ref mut zone, 3);
+  left.insert(ref mut zone, 7);
+  same.insert(ref mut zone, 7);
+  same.insert(ref mut zone, 3);
+  superset.insert(ref mut zone, 9);
+  superset.insert(ref mut zone, 3);
+  superset.insert(ref mut zone, 7);
+  disjoint.insert(ref mut zone, 1);
+  disjoint.insert(ref mut zone, 2);
+
+  var score = 0;
+  if left.equals(ref same) {
+    score = score + 3;
+  }
+  if same.equals(ref left) {
+    score = score + 5;
+  }
+  if left.is_subset(ref superset) {
+    score = score + 7;
+  }
+  if superset.is_superset(ref left) {
+    score = score + 11;
+  }
+  if !superset.equals(ref left) {
+    score = score + 13;
+  }
+  if left.is_disjoint(ref disjoint) {
+    score = score + 17;
+  }
+  if !left.is_disjoint(ref same) {
+    score = score + 19;
+  }
+
+  zone::destroy(zone);
+  return score;
+}
