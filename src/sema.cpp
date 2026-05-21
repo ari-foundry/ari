@@ -2264,6 +2264,31 @@ private:
         return true;
     }
 
+    static std::optional<int> method_receiver_match_rank(const IrType& expected,
+                                                         const IrType& actual) {
+        if (same_type(expected, actual)) return 0;
+        if (can_weaken_mut_receiver_to_shared(expected, actual)) return 1;
+
+        bool mutable_borrow = false;
+        if (!is_borrow_type(actual) &&
+            borrowed_receiver_matches_value(expected, actual, mutable_borrow)) {
+            return 2;
+        }
+
+        IrType actual_value = value_qualified_type(actual);
+        if (!is_borrow_type(actual) &&
+            is_prelude_slice_type(expected) &&
+            expected.args.size() == 1 &&
+            (actual_value.primitive == IrPrimitiveKind::Array ||
+             actual_value.primitive == IrPrimitiveKind::Vector) &&
+            actual_value.args.size() == 1 &&
+            same_type(expected.args.front(), actual_value.args.front())) {
+            return 3;
+        }
+
+        return std::nullopt;
+    }
+
     static bool has_name(const std::vector<std::string>& names, const std::string& name) {
         return std::find(names.begin(), names.end(), name) != names.end();
     }
@@ -23478,7 +23503,7 @@ private:
     const ImplMethodInfo* select_constrained_method_impl(
         const Expr& method_expr,
         const IrType& receiver_type,
-        const std::vector<ImplMethodInfo>& candidates
+        const std::vector<const ImplMethodInfo*>& candidates
     ) {
         std::string generic_name = generic_origin_from_expr(*expr_operand(method_expr));
         if (generic_name.empty()) return nullptr;
@@ -23489,12 +23514,12 @@ private:
             if (!trait_application_has_method(bound.trait_name, bound.trait_args, method_expr.name)) continue;
 
             for (const auto& candidate : candidates) {
-                if (!same_type(candidate.receiver_type, receiver_type)) continue;
+                if (!same_type(candidate->receiver_type, receiver_type)) continue;
                 if (!trait_application_implies_trait(
                         bound.trait_name,
                         bound.trait_args,
-                        candidate.trait_name,
-                        candidate.trait_args)) {
+                        candidate->trait_name,
+                        candidate->trait_args)) {
                     continue;
                 }
                 if (selected) {
@@ -23502,10 +23527,59 @@ private:
                          "method call '" + method_expr.name + "' for generic parameter '" +
                              generic_name + "' is ambiguous across trait bounds");
                 }
-                selected = &candidate;
+                selected = candidate;
             }
         }
         return selected;
+    }
+
+    std::vector<const ImplMethodInfo*> best_receiver_method_candidates(
+        const std::vector<ImplMethodInfo>& candidates,
+        const IrType& actual_receiver_type
+    ) const {
+        std::vector<const ImplMethodInfo*> best;
+        std::optional<int> best_rank;
+        for (const auto& candidate : candidates) {
+            if (candidate.sig.params.empty()) continue;
+            std::optional<int> rank =
+                method_receiver_match_rank(candidate.sig.params.front(), actual_receiver_type);
+            if (!rank) continue;
+            if (!best_rank || *rank < *best_rank) {
+                best.clear();
+                best_rank = rank;
+            }
+            if (*rank == *best_rank) {
+                best.push_back(&candidate);
+            }
+        }
+        return best;
+    }
+
+    std::vector<const ImplMethodInfo*> prefer_current_module_method_candidates(
+        const std::vector<const ImplMethodInfo*>& candidates
+    ) const {
+        std::vector<const ImplMethodInfo*> local;
+        if (candidates.size() <= 1) {
+            local.reserve(candidates.size());
+            for (const auto* candidate : candidates) {
+                local.push_back(candidate);
+            }
+            return local;
+        }
+
+        for (const auto* candidate : candidates) {
+            if (candidate->module_name == current_module_name_) {
+                local.push_back(candidate);
+            }
+        }
+        if (!local.empty()) return local;
+
+        std::vector<const ImplMethodInfo*> fallback;
+        fallback.reserve(candidates.size());
+        for (const auto* candidate : candidates) {
+            fallback.push_back(candidate);
+        }
+        return fallback;
     }
 
     IrExprPtr check_indirect_call(SourceLocation loc, IrExprPtr callee, const std::vector<ExprPtr>& arg_exprs, IrExprPtr lowered) {
@@ -24404,8 +24478,19 @@ private:
         std::string generic_origin = generic_origin_from_expr(*expr_operand(expr));
         std::vector<IrExprPtr> generic_args;
         std::vector<IrType> generic_arg_types;
+        std::vector<const ImplMethodInfo*> receiver_compatible_methods;
         if (found != method_impls_.end()) {
-            selected = select_constrained_method_impl(expr, method_receiver_type, found->second);
+            receiver_compatible_methods =
+                best_receiver_method_candidates(found->second, receiver->type);
+            receiver_compatible_methods =
+                prefer_current_module_method_candidates(receiver_compatible_methods);
+            selected = select_constrained_method_impl(
+                expr,
+                method_receiver_type,
+                receiver_compatible_methods);
+            if (!selected && receiver_compatible_methods.size() == 1) {
+                selected = receiver_compatible_methods.front();
+            }
         }
         if (found == method_impls_.end()) {
             generic_args.reserve(expr.args.size());
@@ -24431,13 +24516,17 @@ private:
         if (found != method_impls_.end() && !expr_type_args(expr).empty()) {
             fail(expr.loc, "method '" + expr.name + "' does not take type arguments");
         }
-        if (found != method_impls_.end() && !selected && found->second.size() > 1) {
+        if (found != method_impls_.end() && receiver_compatible_methods.empty()) {
+            fail(expr.loc, "method '" + expr.name + "' cannot be called with receiver type " +
+                     type_name(receiver->type));
+        }
+        if (found != method_impls_.end() && !selected && receiver_compatible_methods.size() > 1) {
             fail(expr.loc, "method call '" + expr.name + "' for type " + type_name(method_receiver_type) + " is ambiguous");
         }
 
         const ImplMethodInfo& method = has_generic_selected
             ? generic_selected
-            : (selected ? *selected : found->second.front());
+            : (selected ? *selected : *receiver_compatible_methods.front());
         const FunctionSig& sig = method.sig;
         if (sig.params.empty()) {
             fail(expr.loc, "method '" + expr.name + "' for type " + type_name(receiver->type) + " has no receiver parameter");

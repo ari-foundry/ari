@@ -543,6 +543,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf
 	$(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 171
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 171; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-io-traits.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-io-traits.ll
+	grep -F -q "std2io31read_to_string__G_std__fs__File" $(BUILD_DIR)/prelude/std-fs-io-traits.ll
+	grep -F -q "std2io39try_copy__G_std__fs__File_std__fs__File" $(BUILD_DIR)/prelude/std-fs-io-traits.ll
+	grep -F -q "std2io26write_all__G_std__fs__File" $(BUILD_DIR)/prelude/std-fs-io-traits.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-io-traits.ari -o $(BUILD_DIR)/prelude/std-fs-io-traits.elf
+	$(BUILD_DIR)/prelude/std-fs-io-traits.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
 	grep -q "@ari_builtin_fs_rename" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
 	grep -q "@ari_builtin_fs_create_dir" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
@@ -4113,6 +4119,9 @@ check-traits: $(TARGET)
 	$(TARGET) tests/cases/generics/ok/generic-trait-method-bound.ari --emit-llvm $(BUILD_DIR)/traits/generic-trait-method-bound.ll
 	grep -q "Score" $(BUILD_DIR)/traits/generic-trait-method-bound.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/generics/ok/generic-trait-method-bound.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/generic-trait-method-bound.elf; $(BUILD_DIR)/traits/generic-trait-method-bound.elf; code=$$?; test $$code -eq 45; fi
+	$(TARGET) tests/cases/generics/ok/generic-trait-method-ref-bound-inherent.ari --emit-llvm $(BUILD_DIR)/traits/generic-trait-method-ref-bound-inherent.ll
+	grep -q "Readerish" $(BUILD_DIR)/traits/generic-trait-method-ref-bound-inherent.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/generics/ok/generic-trait-method-ref-bound-inherent.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/generic-trait-method-ref-bound-inherent.elf; $(BUILD_DIR)/traits/generic-trait-method-ref-bound-inherent.elf; code=$$?; test $$code -eq 105; fi
 	$(TARGET) tests/cases/traits/ok/iterator-next-surface.ari --emit-llvm $(BUILD_DIR)/traits/iterator-next-surface.ll
 	grep -q "Cursor.*next" $(BUILD_DIR)/traits/iterator-next-surface.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/traits/ok/iterator-next-surface.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/iterator-next-surface.elf; $(BUILD_DIR)/traits/iterator-next-surface.elf; code=$$?; test $$code -eq 37; fi

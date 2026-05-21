@@ -1,0 +1,83 @@
+// Covers std::fs::File as a std::io Reader/Writer adapter. Generic IO helpers
+// can read a file into a String, copy between files, write whole byte slices,
+// flush direct file writes, and reject invalid handles through the traits.
+fn cleanup(path: string) -> void {
+  if fs::exists(path) {
+    fs::remove(path);
+  }
+}
+
+fn main() -> i64 {
+  let source_path = "build/prelude/std-fs-io-traits-source.tmp";
+  let copy_path = "build/prelude/std-fs-io-traits-copy.tmp";
+  let write_path = "build/prelude/std-fs-io-traits-write.tmp";
+  cleanup(source_path);
+  cleanup(copy_path);
+  cleanup(write_path);
+
+  var score = 0;
+  var seed = [65u8, 66u8, 67u8];
+  if fs::write(source_path, seed.as_slice()) {
+    score = score + 1;
+  }
+
+  var zone = zone::create(512);
+
+  var reader = fs::try_open(source_path, "r").unwrap_or(fs::File::invalid());
+  let text = io::read_to_string<std::fs::File>(ref mut zone, ref mut reader);
+  if text.equals_text("ABC") && text.len() == 3 {
+    score = score + 2;
+  }
+  var eof = [0u8];
+  let eof_view = eof.as_slice();
+  if !io::read_exact<std::fs::File>(ref mut reader, eof_view.as_ptr(), 1) {
+    score = score + 4;
+  }
+  reader.close();
+
+  var copy_reader = fs::try_open(source_path, "r").unwrap_or(fs::File::invalid());
+  var copy_writer = fs::try_open(copy_path, "w").unwrap_or(fs::File::invalid());
+  match io::try_copy<std::fs::File, std::fs::File>(ref mut copy_reader, ref mut copy_writer) {
+    std::Some(count) => {
+      if count == 3 {
+        score = score + 8;
+      }
+    }
+    std::None => {}
+  }
+  copy_reader.close();
+  copy_writer.close();
+  let copied = fs::read(ref mut zone, copy_path);
+  if copied.equals_text("ABC") {
+    score = score + 16;
+  }
+
+  var writer = fs::try_open(write_path, "w").unwrap_or(fs::File::invalid());
+  var payload = [120u8, 121u8];
+  if io::write_all<std::fs::File>(ref mut writer, payload.as_slice()) {
+    score = score + 32;
+  }
+  if io::flush<std::fs::File>(ref mut writer) {
+    score = score + 64;
+  }
+  writer.close();
+  let written = fs::read(ref mut zone, write_path);
+  if written.equals_text("xy") {
+    score = score + 128;
+  }
+
+  var invalid = fs::File::invalid();
+  var invalid_output = [0u8];
+  let invalid_view = invalid_output.as_slice();
+  let invalid_ok = !io::read_exact<std::fs::File>(ref mut invalid, invalid_view.as_ptr(), 1) &&
+                   !io::flush<std::fs::File>(ref mut invalid);
+
+  cleanup(source_path);
+  cleanup(copy_path);
+  cleanup(write_path);
+  zone::destroy(zone);
+  if !invalid_ok {
+    return 1;
+  }
+  return score;
+}

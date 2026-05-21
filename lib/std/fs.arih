@@ -684,6 +684,30 @@ pub impl std::fs::File {
   }
 }
 
+impl std::io::Reader for std::fs::File {
+  pub fn read_byte(self: ref mut Self) -> i64 {
+    if self.fd < 0 {
+      return -1;
+    }
+    return std::fs::read_byte(std::fs::File { fd: self.fd });
+  }
+}
+
+impl std::io::Writer for std::fs::File {
+  pub fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if self.fd < 0 {
+      return false;
+    }
+    return std::fs::write_byte(std::fs::File { fd: self.fd }, value);
+  }
+
+  pub fn flush(self: ref mut Self) -> bool {
+    // File writes currently go straight through the runtime descriptor hook.
+    // This keeps std::io::copy usable for File without inventing buffering.
+    return self.fd >= 0;
+  }
+}
+
 pub impl std::fs::Dir {
   fn invalid() -> Dir {
     let handle: ptr c_void = null;

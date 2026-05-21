@@ -1,0 +1,34 @@
+// Covers method lookup when a generic trait-bound receiver has the same method
+// name as an inherent method on the concrete type. The ref-mut trait receiver
+// must win inside the bound, while direct value calls keep the inherent method.
+trait Readerish {
+  fn read(self: ref mut Self) -> i64
+}
+
+struct Fileish {
+  mut value: i64,
+}
+
+impl Fileish {
+  fn read(self) -> i64 {
+    return 100;
+  }
+}
+
+impl Readerish for Fileish {
+  fn read(self: ref mut Self) -> i64 {
+    self.value = self.value + 1;
+    return self.value;
+  }
+}
+
+fn use_readerish[R: Readerish](reader: ref mut R) -> i64 {
+  return reader.read();
+}
+
+fn main() -> i64 {
+  var file = Fileish { value: 4 };
+  let inherent = file.read();
+  let trait_bound = use_readerish<Fileish>(ref mut file);
+  return inherent + trait_bound;
+}

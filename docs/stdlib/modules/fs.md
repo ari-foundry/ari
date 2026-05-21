@@ -15,7 +15,8 @@ directory entry names through an explicit `Dir` handle, collect lightweight
 `DirEntry` values with names and joined paths,
 query basic file metadata, ask direct path-kind predicates such as `is_file`
 and `is_dir`, read and change POSIX permission bits, resolve an existing path
-to an absolute canonical path, close the handle, and remove a file.
+to an absolute canonical path, pass `File` handles to generic `std::io::Reader`
+and `std::io::Writer` helpers, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
@@ -107,6 +108,9 @@ file.try_read_byte()
 file.write_byte(value)
 file.write_bytes(values)
 
+impl std::io::Reader for File
+impl std::io::Writer for File
+
 Dir::invalid()
 dir.is_open()
 dir.next(ref mut zone)
@@ -144,6 +148,27 @@ handle. That view does not close or extend the lifetime of the file. If code
 intentionally takes over close responsibility from a file descriptor, wrap the
 raw value with `std::os::OwnedFd::from_raw(file.descriptor().raw())` and do not
 also close the original `File` value.
+
+`File` implements `std::io::Reader` and `std::io::Writer`, so file handles can
+flow through generic IO helpers without a file-specific suffix:
+
+```ari
+var zone = zone::create(512);
+var input = fs::try_open("input.txt", "r").unwrap_or(fs::File::invalid());
+let text = io::read_to_string<std::fs::File>(ref mut zone, ref mut input);
+input.close();
+
+var source = fs::try_open("input.txt", "r").unwrap_or(fs::File::invalid());
+var target = fs::try_open("output.txt", "w").unwrap_or(fs::File::invalid());
+io::copy<std::fs::File, std::fs::File>(ref mut source, ref mut target);
+source.close();
+target.close();
+zone::destroy(zone);
+```
+
+The `Writer` `flush` method is currently a direct-descriptor success check:
+file writes are not buffered by `File` itself. Use future or explicit buffered
+wrappers when the library grows owned buffering policy.
 
 `open(path, mode)` takes a small mode string. Ari follows the familiar C/Python
 shape for common modes while also accepting the direct `"rw"` spelling:
@@ -621,6 +646,7 @@ tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
 tests/cases/standard-library/ok/fs/std-fs-read-write.ari
 tests/cases/standard-library/ok/fs/std-fs-try-read.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
+tests/cases/standard-library/ok/fs/std-fs-io-traits.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari
@@ -649,6 +675,10 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 `std-fs-create-truncate-copy.ari` covers source `create`, `try_create`,
 `read`, `truncate`, missing-source copy failure, whole-file copy behavior, and
 `try_copy` byte counts.
+`std-fs-io-traits.ari` covers `File` as a generic `std::io::Reader` and
+`std::io::Writer`, including `read_to_string`, EOF through `read_exact`,
+file-to-file `try_copy`, whole-slice `write_all`, direct-descriptor `flush`,
+and invalid-handle trait behavior.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-ensure-dir.ari` covers
 idempotent single-directory creation, file-path rejection, missing-parent

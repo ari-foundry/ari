@@ -895,6 +895,9 @@ file.try_read_byte()
 file.write_byte(value)
 file.write_bytes(values)
 
+impl std::io::Reader for File
+impl std::io::Writer for File
+
 Dir::invalid()
 dir.is_open()
 dir.next(ref mut zone)
@@ -932,7 +935,12 @@ as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
 `"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
 `try_open_*` variants are compatibility wrappers over those mode strings.
 `create(path)` and `try_create(path)` are the natural create/truncate helpers
-over `"w"` mode. `ensure_file(path)` creates an empty file only when the path
+over `"w"` mode. `File` implements `std::io::Reader` and `std::io::Writer`,
+so a handle from `try_open` can be passed to generic IO helpers such as
+`io::read_to_string<std::fs::File>`, `io::copy`, `io::try_copy`,
+`io::write_all`, and `io::flush`. `File` writes are direct descriptor writes;
+`flush` currently reports whether the handle is open rather than draining a
+separate file buffer. `ensure_file(path)` creates an empty file only when the path
 is missing, treats an existing regular file as success without truncating it,
 and returns `false` for directories, other existing path kinds, or missing
 parents. `can_read`, `can_write`, and `can_execute` are access-style

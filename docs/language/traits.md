@@ -222,6 +222,14 @@ matching generic trait impl specialization. Generic trait impls can use the
 same `impl[T: Trait]` bounds, and those bounds participate in trait-bound
 static dispatch.
 
+When a generic trait-bound receiver and an inherent method share a name, Ari
+selects the method whose receiver shape matches the call. For example,
+`reader: ref mut R` inside `fn f[R: Reader](reader: ref mut R)` resolves
+`reader.read_byte()` to `Reader::read_byte`, while a direct value call on
+`File` can still use an inherent `File::read_byte()` method. This keeps
+standard-library helpers such as `io::read_to_string<std::fs::File>` natural
+without forcing type-suffixed adapter names.
+
 Trait impls must be coherent. Ari rejects concrete and generic impls, or two
 generic impls, when they can describe the same trait/type pair:
 

@@ -251,9 +251,12 @@ The trait names intentionally stay short and conventional: `Reader`, `Writer`,
 `write_all`, and `flush`. Avoid type-suffixed helper names when trait bounds
 already carry the type information.
 
-The module still separates process IO from filesystem IO. `std::fs::File` will
-implement these traits only after the file handle ownership policy is strong
-enough to explain close, copy, drop, and seek behavior consistently.
+The module keeps process IO and filesystem construction separate, but
+`std::fs::File` now adapts to `Reader` and `Writer`. Create the file handle in
+`std::fs`, then pass it to generic helpers such as `read_to_string`, `copy`,
+`try_copy`, `write_all`, and `flush`. Close policy still belongs to the file
+handle owner: `File` is not an owned drop resource yet, and `flush` only checks
+that the direct descriptor remains open because `File` itself does not buffer.
 
 ## Tests
 
@@ -272,6 +275,10 @@ enough to explain close, copy, drop, and seek behavior consistently.
 - `tests/cases/standard-library/ok/io/std-io-copy.ari` checks `try_copy` and
   `copy` over generic `Reader`/`Writer` values, copied byte counts, final
   flush, writer failure behavior, and generated generic helper symbols.
+- `tests/cases/standard-library/ok/fs/std-fs-io-traits.ari` checks the
+  filesystem adapter side: `File` as `Reader`/`Writer`, generic
+  `read_to_string`, `read_exact`, `try_copy`, `write_all`, `flush`, and
+  invalid-handle behavior.
 - `tests/cases/standard-library/ok/io/std-io-stderr.ari` checks `Stderr`,
   stderr routing, explicit flush success, generated helper symbols, and
   stdout/stderr stream separation.
