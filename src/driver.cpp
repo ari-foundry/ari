@@ -129,6 +129,8 @@ static void usage(std::ostream& out) {
            "       ari --explain-artifact option\n"
            "       ari --list-passes\n"
            "       ari --explain-pass name\n"
+           "       ari --list-test-buckets\n"
+           "       ari --explain-test-bucket name\n"
            "       ari --list-capabilities [--target triple] [--no-implicit-std]\n"
            "       ari --explain-capability name\n"
            "       ari --list-diagnostics\n"
@@ -241,8 +243,10 @@ int run(int argc, char** argv) {
     bool implicit_std = true;
     bool target_info_requested = false;
     bool list_passes_requested = false;
+    bool list_test_buckets_requested = false;
     bool list_capabilities_requested = false;
     std::string pass_explanation;
+    std::string test_bucket_explanation;
     std::string capability_explanation;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -346,6 +350,11 @@ int run(int argc, char** argv) {
         } else if (arg == "--explain-pass") {
             if (i + 1 >= argc) throw CompileError("--explain-pass expects a pass name");
             pass_explanation = argv[++i];
+        } else if (arg == "--list-test-buckets") {
+            list_test_buckets_requested = true;
+        } else if (arg == "--explain-test-bucket") {
+            if (i + 1 >= argc) throw CompileError("--explain-test-bucket expects a test bucket name");
+            test_bucket_explanation = argv[++i];
         } else if (arg == "--list-capabilities") {
             list_capabilities_requested = true;
         } else if (arg == "--explain-capability") {
@@ -370,6 +379,8 @@ int run(int argc, char** argv) {
     const int info_command_count = (target_info_requested ? 1 : 0) +
                                    (list_passes_requested ? 1 : 0) +
                                    (!pass_explanation.empty() ? 1 : 0) +
+                                   (list_test_buckets_requested ? 1 : 0) +
+                                   (!test_bucket_explanation.empty() ? 1 : 0) +
                                    (list_capabilities_requested ? 1 : 0) +
                                    (!capability_explanation.empty() ? 1 : 0);
     if (info_command_count > 0) {
@@ -379,6 +390,8 @@ int run(int argc, char** argv) {
         const char* command_name = target_info_requested ? "--target-info" :
                                    list_passes_requested ? "--list-passes" :
                                    !pass_explanation.empty() ? "--explain-pass" :
+                                   list_test_buckets_requested ? "--list-test-buckets" :
+                                   !test_bucket_explanation.empty() ? "--explain-test-bucket" :
                                    list_capabilities_requested ? "--list-capabilities" :
                                    "--explain-capability";
         if (!input.empty()) throw CompileError(std::string(command_name) + " does not take an input file");
@@ -388,6 +401,10 @@ int run(int argc, char** argv) {
             std::cout << dump_compiler_pass_catalog();
         } else if (!pass_explanation.empty()) {
             std::cout << dump_compiler_pass_explanation(pass_explanation);
+        } else if (list_test_buckets_requested) {
+            std::cout << dump_compiler_test_bucket_catalog();
+        } else if (!test_bucket_explanation.empty()) {
+            std::cout << dump_compiler_test_bucket_explanation(test_bucket_explanation);
         } else if (list_capabilities_requested) {
             TargetInfo target = resolve_target_info(target_triple);
             std::cout << dump_compiler_capability_inventory(target.triple, implicit_std);

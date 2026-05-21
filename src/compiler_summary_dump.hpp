@@ -36,6 +36,14 @@ std::string dump_compiler_pass_catalog();
 // owning layer before choosing a fixture or artifact.
 std::string dump_compiler_pass_explanation(const std::string& pass_name);
 
+// Input-free test-bucket catalog for compiler contributors. It keeps fixture
+// placement rules discoverable from the compiler binary itself, so tests stay
+// grouped by the behavior they prove instead of by the file that changed.
+std::string dump_compiler_test_bucket_catalog();
+
+// Single-bucket view used when deciding where a focused compiler test belongs.
+std::string dump_compiler_test_bucket_explanation(const std::string& bucket_name);
+
 // Deterministic inventory of the compiler's current public capability surface.
 // This is intentionally coarse-grained: it gives contributors a stable map of
 // implemented, partial, planned, and intentionally rejected features without

@@ -27,6 +27,15 @@ struct CompilerPassRow {
     const char* purpose;
 };
 
+struct CompilerTestBucketRow {
+    const char* name;
+    const char* path;
+    const char* kind;
+    const char* owner;
+    const char* first_check;
+    const char* use_for;
+};
+
 struct CapabilityRow {
     const char* name;
     const char* status;
@@ -69,6 +78,33 @@ static const CompilerPassRow kPassRows[] = {
     {"executable-link", "backend", "toolchain", "LLVM IR or object file plus link args",
      "executable or shared library", "-o or --shared", "focused linked run",
      "prove final runtime behavior only after earlier artifacts are stable"},
+};
+
+static const CompilerTestBucketRow kTestBucketRows[] = {
+    {"feature-ok", "tests/cases/<feature>/ok/", "positive-language",
+     "feature owner", "build/ari path/to/case.ari --check",
+     "valid language behavior that should check, emit LLVM, link, or run"},
+    {"feature-errors", "tests/cases/<feature>/errors/", "negative-language",
+     "feature owner", "focused failing build/ari invocation",
+     "invalid source that should be rejected by the earliest compiler layer"},
+    {"compiler-model", "tests/cases/compiler-development/ok/model/", "compiler-development-model",
+     "compiler docs/tests", "make check-compiler-development",
+     "ordinary Ari programs that model compiler data, workflows, and policies"},
+    {"compiler-artifact-ok", "tests/cases/compiler-development/artifact/ok/", "golden-artifact",
+     "artifact owner", "make check-compiler-artifacts",
+     "deterministic compiler text artifacts that should compare cleanly"},
+    {"compiler-artifact-errors", "tests/cases/compiler-development/artifact/errors/", "golden-error-artifact",
+     "artifact/diagnostic owner", "make check-compiler-artifacts",
+     "diagnostic artifacts or text-comparator mismatch reports that should compare cleanly"},
+    {"compiler-development-errors", "tests/cases/compiler-development/errors/", "negative-compiler-development",
+     "compiler docs/tests", "make check-compiler-development",
+     "compiler-development source cases that intentionally exercise rejected compiler policy"},
+    {"tooling", "tests/tools/", "tooling-smoke",
+     "tool owner", "make check-tools",
+     "lint, LSP, editor, or other helper-tool behavior outside the core compiler pipeline"},
+    {"docs", "docs/", "documentation",
+     "docs owner", "make check-language-docs or make check-compiler-dev-docs",
+     "reader-facing language, compiler, tooling, and contributor documentation"},
 };
 
 static const CapabilityRow kCapabilityRows[] = {
@@ -134,6 +170,10 @@ static constexpr std::size_t pass_row_count() {
     return sizeof(kPassRows) / sizeof(kPassRows[0]);
 }
 
+static constexpr std::size_t test_bucket_row_count() {
+    return sizeof(kTestBucketRows) / sizeof(kTestBucketRows[0]);
+}
+
 static std::string quote_field(const char* text) {
     std::string escaped = "\"";
     for (const char* cursor = text; *cursor != '\0'; ++cursor) {
@@ -153,6 +193,13 @@ static const CapabilityRow* find_capability_row(const std::string& name) {
 
 static const CompilerPassRow* find_pass_row(const std::string& name) {
     for (const CompilerPassRow& row : kPassRows) {
+        if (name == row.name) return &row;
+    }
+    return nullptr;
+}
+
+static const CompilerTestBucketRow* find_test_bucket_row(const std::string& name) {
+    for (const CompilerTestBucketRow& row : kTestBucketRows) {
         if (name == row.name) return &row;
     }
     return nullptr;
@@ -251,6 +298,40 @@ std::string dump_compiler_pass_explanation(const std::string& pass_name) {
         << " first_check=" << quote_field(row->first_check)
         << " purpose=" << quote_field(row->purpose) << "\n";
     out << "  Rule one_pass_owner=true earliest_artifact_first=true executable_last=true\n";
+    return out.str();
+}
+
+std::string dump_compiler_test_bucket_catalog() {
+    std::ostringstream out;
+    out << "CompilerTestBucketCatalog version=1 entries=" << test_bucket_row_count() << "\n";
+    for (const CompilerTestBucketRow& row : kTestBucketRows) {
+        out << "  bucket=" << row.name
+            << " path=" << quote_field(row.path)
+            << " kind=" << row.kind
+            << " owner=" << quote_field(row.owner)
+            << " first_check=" << quote_field(row.first_check)
+            << " use_for=" << quote_field(row.use_for) << "\n";
+    }
+    out << "  Rule closest_behavior_bucket=true artifact_before_executable=true docs_checked=true\n";
+    return out.str();
+}
+
+std::string dump_compiler_test_bucket_explanation(const std::string& bucket_name) {
+    const CompilerTestBucketRow* row = find_test_bucket_row(bucket_name);
+    if (!row) {
+        throw CompileError("unknown compiler test bucket '" + bucket_name +
+                           "'; use --list-test-buckets");
+    }
+
+    std::ostringstream out;
+    out << "CompilerTestBucket version=1"
+        << " bucket=" << row->name
+        << " path=" << quote_field(row->path)
+        << " kind=" << row->kind
+        << " owner=" << quote_field(row->owner)
+        << " first_check=" << quote_field(row->first_check)
+        << " use_for=" << quote_field(row->use_for) << "\n";
+    out << "  Rule closest_behavior_bucket=true artifact_before_executable=true docs_checked=true\n";
     return out.str();
 }
 

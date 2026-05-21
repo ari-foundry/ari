@@ -123,6 +123,8 @@ build/ari --list-artifacts
 build/ari --explain-artifact --emit-tokens
 build/ari --list-passes
 build/ari --explain-pass sema
+build/ari --list-test-buckets
+build/ari --explain-test-bucket compiler-artifact-ok
 build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens build/focused/token.tokens
@@ -136,6 +138,8 @@ supposed to prove.
 Use `--list-passes` or `--explain-pass` when the question is about a compiler
 boundary: pass owner, pass input, pass output, first artifact, or first focused
 check.
+Use `--list-test-buckets` or `--explain-test-bucket` when the question is about
+where the fixture or golden file belongs.
 Use `--list-capabilities` or `--explain-capability` when the change is really a
 compiler feature-surface change rather than a new artifact format.
 

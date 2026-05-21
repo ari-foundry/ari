@@ -203,9 +203,12 @@ For the current C++ compiler, prefer direct focused commands while developing:
 python3 tests/check_compiler_artifact_cli.py
 python3 tests/check_compiler_capability_cli.py
 python3 tests/check_compiler_pass_cli.py
+python3 tests/check_compiler_test_bucket_cli.py
 build/ari --list-artifacts
 build/ari --list-passes
 build/ari --explain-pass sema
+build/ari --list-test-buckets
+build/ari --explain-test-bucket compiler-artifact-ok
 build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/modules/ok/module-llvm.ari --check
@@ -267,6 +270,8 @@ ari --emit-tokens path
 ari --emit-capability-inventory path
 ari --list-passes
 ari --explain-pass name
+ari --list-test-buckets
+ari --explain-test-bucket name
 ari --emit-source-map path
 ari --emit-syntax path
 ari --emit-diagnostics path
@@ -279,7 +284,7 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves twenty low-level contracts:
+It currently proves twenty-two low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -292,6 +297,10 @@ It currently proves twenty low-level contracts:
 - `--list-passes` prints compiler pass owners, inputs, outputs, first
   artifacts, and first focused checks without needing an input file
 - `--explain-pass sema` prints the sema pass contract used for triage
+- `--list-test-buckets` prints compiler fixture buckets and first focused
+  checks without needing an input file
+- `--explain-test-bucket compiler-artifact-ok` prints when to use the artifact
+  golden bucket
 - `--list-capabilities` prints the same compiler feature surface without
   needing an input file
 - `--explain-capability trait-resolution` prints the owner, status, first

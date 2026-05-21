@@ -81,6 +81,8 @@ def main() -> int:
         "--explain-artifact",
         "--list-passes",
         "--explain-pass",
+        "--list-test-buckets",
+        "--explain-test-bucket",
         "--list-capabilities",
         "--explain-capability",
         "--emit-llvm",
@@ -251,6 +253,7 @@ def main() -> int:
         "compiler-test-classification",
         "tests/check_compiler_capability_cli.py",
         "tests/check_compiler_pass_cli.py",
+        "tests/check_compiler_test_bucket_cli.py",
     ]:
         require(tests_index, needle, tests_index_path)
 

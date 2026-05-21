@@ -233,6 +233,9 @@ Exit criteria:
 - Keep `ari --list-passes` and `ari --explain-pass <name>` aligned with the
   pass-contract table so contributors can see each pass owner, input, output,
   first artifact, and first focused check without reading source first.
+- Keep `ari --list-test-buckets` and `ari --explain-test-bucket <name>`
+  aligned with the test-authoring policy so new fixtures land in the closest
+  behavior bucket with a focused first check.
 - Keep `ari --list-capabilities` and `ari --explain-capability <name>` aligned
   with the same capability table so contributors can find the owner and first
   focused check without generating a file artifact.
@@ -294,6 +297,7 @@ build/ari path/to/test.ari --check
 build/ari path/to/test.ari --emit-llvm build/focused/name.ll
 build/ari path/to/test.ari -o build/focused/name.elf
 build/ari --explain-pass sema
+build/ari --explain-test-bucket compiler-artifact-ok
 build/ari --explain-capability trait-resolution
 make check-compiler-dev-docs
 make check-compiler-artifacts

@@ -23,6 +23,17 @@ If a test could fit two buckets, choose the one closest to the first layer that
 can fail. A lexer artifact should not wait for LLVM. A type error should not be
 hidden behind an executable test.
 
+The compiler can print the same bucket map:
+
+```text
+build/ari --list-test-buckets
+build/ari --explain-test-bucket compiler-artifact-ok
+```
+
+Use it before adding a fixture when the right directory or first check is not
+obvious. The output names the bucket path, kind, owner, first focused check, and
+intended use.
+
 ## Name The File
 
 Use behavior names:
@@ -48,6 +59,7 @@ next contributor should know why the test exists before opening compiler code.
 | Compiler artifact or golden text | `make check-compiler-artifacts` |
 | Developer docs only | `make check-compiler-dev-docs` |
 | Language docs only | `make check-language-docs` |
+| Unknown fixture bucket | `build/ari --list-test-buckets` |
 
 Full `make check` belongs at handoff for broad changes. Sanitizer checks are
 intentionally separate and are not part of this focused authoring loop.
