@@ -384,6 +384,25 @@ pub impl[T] std::vec::Vec[T] {
     shrink_to_len<T>(self, length);
   }
 
+  fn retain(self: ref mut Self, keep: fn(ref T) -> bool) -> void {
+    var write = 0;
+    var read = 0;
+    while read < self.raw.len {
+      let source = ptr_add(self.raw.data, read);
+      if keep(ref *source) {
+        if write != read {
+          ptr_store(ptr_add(self.raw.data, write), ptr_load(source));
+        }
+        write = write + 1;
+      } else {
+        let removed = ptr_load(source);
+        drop removed;
+      }
+      read = read + 1;
+    }
+    self.raw.len = write;
+  }
+
   fn index_of(self: ref Self, value: T) -> i64 {
     var index = 0;
     while index < self.raw.len {

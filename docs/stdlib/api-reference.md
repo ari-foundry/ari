@@ -1291,6 +1291,7 @@ vec.insert_in(ref mut zone, index, value)
 vec.remove(index)
 vec.try_remove(index)
 vec.truncate(length)
+vec.retain(keep)
 vec.clear()
 vec.reserve(ref mut zone, capacity)
 vec.reserve_extra(ref mut zone, additional)
@@ -1330,8 +1331,9 @@ vec.iter()
 The `try_*` accessors return `Option[T]` for empty or out-of-range reads.
 `try_pop` and `try_remove` keep empty or missing-index removal in `Option[T]`.
 Use the non-`try` forms when absence is a programmer error and an assertion is
-the desired behavior. The borrowed sequence helpers mirror the root `Slice[T]`
-vocabulary: `slice` and `split_at` create views over live vector storage,
+the desired behavior. `retain(keep)` compacts accepted values in place,
+preserves their order, and drops rejected values. The borrowed sequence helpers
+mirror the root `Slice[T]` vocabulary: `slice` and `split_at` create views over live vector storage,
 `find` and `contains_slice` search for borrowed subsequences, `compare` is
 lexicographic, `ordering` returns typed `cmp::Ordering`, and `chunks`,
 `windows`, and delimiter `split` are lazy allocation-free view iterators.

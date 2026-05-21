@@ -1,0 +1,58 @@
+// Covers Vec.retain: stable in-place filtering without allocation, including
+// empty-vector and remove-all paths.
+fn keep_even(value: ref i64) -> bool {
+  let raw = (ref value) as ptr i64;
+  return (*raw % 2) == 0;
+}
+
+fn keep_positive(value: ref i64) -> bool {
+  let raw = (ref value) as ptr i64;
+  return *raw > 0;
+}
+
+fn keep_none(value: ref i64) -> bool {
+  return false;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var values = std::vec::new<i64>(ref mut zone, 8);
+  var empty = std::vec::new<i64>(ref mut zone, 1);
+
+  empty.retain(keep_even);
+  let empty_score = if empty.is_empty() { 3 } else { 0 };
+
+  values.push(1);
+  values.push(2);
+  values.push(4);
+  values.push(7);
+  values.push(8);
+  values.push(10);
+
+  values.retain(keep_even);
+  let even_shape = if values.len() == 4 &&
+    values.get(0) == 2 && values.get(1) == 4 &&
+    values.get(2) == 8 && values.get(3) == 10 {
+    11
+  } else {
+    0
+  };
+
+  values.push(-6);
+  values.retain(keep_positive);
+  let positive_shape = if values.len() == 4 && values.last() == 10 {
+    17
+  } else {
+    0
+  };
+
+  values.retain(keep_none);
+  let cleared_score = if values.is_empty() && values.try_first().is_none() {
+    23
+  } else {
+    0
+  };
+
+  zone::destroy(zone);
+  return empty_score + even_shape + positive_shape + cleared_score;
+}
