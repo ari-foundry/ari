@@ -91,7 +91,8 @@ limits, examples, and test files for one module.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock
   timestamps, non-negative durations, elapsed-time helpers, monotonic
   deadlines/timeouts, UTC calendar conversion, and sleep.
-- [std::fs](fs.md): runtime-backed file existence, mode-string open calls,
+- [std::fs](fs.md): runtime-backed file existence, mode-string and
+  `OpenOptions` open calls,
   close, removal, `File` value handles, `Option[File]` open helpers, and
   source byte create/read/write/append/truncate/copy plus target-following and
   no-follow metadata, path-kind predicates, rename, hard/symbolic links, and

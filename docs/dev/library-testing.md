@@ -158,6 +158,9 @@ identifies the exact case:
 - `std-fs-open-modes.ari`: mode-string `open`/`try_open` behavior for `"r"`,
   `"w"`, `"a"`, `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes, and invalid
   mode strings.
+- `std-fs-open-options.ari`: `OpenOptions` value builder behavior for
+  exclusive creation, non-truncating read/write, append-with-read, and invalid
+  option combinations.
 - `std-fs-read-write.ari`: source whole-file `write`/`try_write`,
   `append`/`try_append`, `read_to_string`, missing-file empty reads,
   byte-count checks, and truncating rewrite behavior.

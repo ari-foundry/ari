@@ -1,0 +1,86 @@
+// Covers std::fs::OpenOptions. The test separates the options-value API from
+// the older mode-string surface and checks non-truncating read/write,
+// exclusive creation, append, and invalid option combinations.
+fn cleanup(path: string, missing: string) -> void {
+  fs::remove(path);
+  fs::remove(missing);
+}
+
+fn read_text(zone: ref mut Zone, path: string, expected: string) -> bool {
+  let text = fs::read_to_string(zone, path);
+  return text.equals_text(expected);
+}
+
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-open-options.tmp";
+  let missing = "build/prelude/std-fs-open-options-missing.tmp";
+  cleanup(path, missing);
+
+  var score = 0;
+  let empty_options = fs::open_options();
+  let bad_append_truncate = fs::OpenOptions::new().append(true).truncate(true);
+  if empty_options.try_open(path).is_none() && bad_append_truncate.try_open(path).is_none() {
+    score = score + 1;
+  }
+
+  let bad_create_read = fs::OpenOptions::new().read(true).create(true);
+  if bad_create_read.try_open(path).is_none() {
+    score = score + 2;
+  }
+
+  let create_new = fs::OpenOptions::new().write(true).create_new(true);
+  let created = create_new.try_open(path).unwrap_or(fs::File::invalid());
+  var create_new_ok = false;
+  if created.is_open() {
+    if created.write_byte(78 as u8) && created.close() {
+      create_new_ok = true;
+    }
+  }
+  if create_new_ok && create_new.try_open(path).is_none() {
+    score = score + 4;
+  }
+
+  let read_only = fs::OpenOptions::new().read(true);
+  let reader = read_only.try_open(path).unwrap_or(fs::File::invalid());
+  if reader.read_byte() == 78 && reader.read_byte() < 0 && reader.close() {
+    score = score + 8;
+  }
+
+  let read_write = fs::OpenOptions::new().read(true).write(true);
+  let both = read_write.try_open(path).unwrap_or(fs::File::invalid());
+  if both.read_byte() == 78 && both.write_byte(87 as u8) && both.close() {
+    var zone = std::zone::create(128);
+    if read_text(ref mut zone, path, "NW") {
+      score = score + 16;
+    }
+    std::zone::destroy(zone);
+  }
+
+  let truncate_existing = fs::OpenOptions::new().write(true).truncate(true);
+  let trunc = truncate_existing.try_open(path).unwrap_or(fs::File::invalid());
+  if trunc.is_open() && trunc.write_byte(84 as u8) && trunc.close() {
+    var zone2 = std::zone::create(128);
+    if read_text(ref mut zone2, path, "T") {
+      score = score + 32;
+    }
+    std::zone::destroy(zone2);
+  }
+
+  if truncate_existing.try_open(missing).is_none() && !fs::exists(missing) {
+    score = score + 64;
+  }
+
+  let append_read = fs::OpenOptions::new().read(true).append(true).create(true);
+  let appender = append_read.try_open(path).unwrap_or(fs::File::invalid());
+  if appender.read_byte() == 84 && appender.write_byte(65 as u8) && appender.close() {
+    var zone3 = std::zone::create(128);
+    if read_text(ref mut zone3, path, "TA") {
+      score = score + 128;
+    }
+    std::zone::destroy(zone3);
+  }
+
+  cleanup(path, missing);
+  assert_eq_i64(score, 255);
+  return score;
+}

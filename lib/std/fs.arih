@@ -6,6 +6,15 @@ pub struct File {
   fd: i64,
 }
 
+pub struct OpenOptions {
+  read_enabled: bool,
+  write_enabled: bool,
+  append_enabled: bool,
+  truncate_enabled: bool,
+  create_enabled: bool,
+  create_new_enabled: bool,
+}
+
 pub struct Dir {
   handle: ptr c_void,
 }
@@ -58,6 +67,15 @@ extern "ari" fn remove_dir_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_buil
 extern "ari" fn open_dir_bytes_raw(data: ptr u8, len: i64) -> Dir = "ari_builtin_fs_open_dir_bytes";
 // Modes: "r", "w", "a", "rw", "r+", "w+", and "a+".
 pub extern "ari" fn open(path: string, mode: string) -> File = "ari_builtin_fs_open";
+extern "ari" fn open_options_raw(
+  path: string,
+  read: bool,
+  write: bool,
+  append: bool,
+  truncate: bool,
+  create: bool,
+  create_new: bool
+) -> File = "ari_builtin_fs_open_options";
 pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";
 pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
 pub extern "ari" fn write_byte(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
@@ -639,6 +657,10 @@ pub fn try_open(path: string, mode: string) -> std::Option[File] {
   return std::None<File>();
 }
 
+pub fn open_options() -> OpenOptions {
+  return OpenOptions::new();
+}
+
 pub fn create(path: string) -> File {
   return open(path, "w");
 }
@@ -965,6 +987,105 @@ pub impl std::fs::File {
 
   fn write_bytes(self, values: std::Slice[u8]) -> i64 {
     return write_bytes(self, values);
+  }
+}
+
+pub impl std::fs::OpenOptions {
+  fn new() -> OpenOptions {
+    return OpenOptions {
+      read_enabled: false,
+      write_enabled: false,
+      append_enabled: false,
+      truncate_enabled: false,
+      create_enabled: false,
+      create_new_enabled: false,
+    };
+  }
+
+  fn read(self, enabled: bool) -> OpenOptions {
+    return OpenOptions {
+      read_enabled: enabled,
+      write_enabled: self.write_enabled,
+      append_enabled: self.append_enabled,
+      truncate_enabled: self.truncate_enabled,
+      create_enabled: self.create_enabled,
+      create_new_enabled: self.create_new_enabled,
+    };
+  }
+
+  fn write(self, enabled: bool) -> OpenOptions {
+    return OpenOptions {
+      read_enabled: self.read_enabled,
+      write_enabled: enabled,
+      append_enabled: self.append_enabled,
+      truncate_enabled: self.truncate_enabled,
+      create_enabled: self.create_enabled,
+      create_new_enabled: self.create_new_enabled,
+    };
+  }
+
+  fn append(self, enabled: bool) -> OpenOptions {
+    return OpenOptions {
+      read_enabled: self.read_enabled,
+      write_enabled: self.write_enabled,
+      append_enabled: enabled,
+      truncate_enabled: self.truncate_enabled,
+      create_enabled: self.create_enabled,
+      create_new_enabled: self.create_new_enabled,
+    };
+  }
+
+  fn truncate(self, enabled: bool) -> OpenOptions {
+    return OpenOptions {
+      read_enabled: self.read_enabled,
+      write_enabled: self.write_enabled,
+      append_enabled: self.append_enabled,
+      truncate_enabled: enabled,
+      create_enabled: self.create_enabled,
+      create_new_enabled: self.create_new_enabled,
+    };
+  }
+
+  fn create(self, enabled: bool) -> OpenOptions {
+    return OpenOptions {
+      read_enabled: self.read_enabled,
+      write_enabled: self.write_enabled,
+      append_enabled: self.append_enabled,
+      truncate_enabled: self.truncate_enabled,
+      create_enabled: enabled,
+      create_new_enabled: self.create_new_enabled,
+    };
+  }
+
+  fn create_new(self, enabled: bool) -> OpenOptions {
+    return OpenOptions {
+      read_enabled: self.read_enabled,
+      write_enabled: self.write_enabled,
+      append_enabled: self.append_enabled,
+      truncate_enabled: self.truncate_enabled,
+      create_enabled: self.create_enabled,
+      create_new_enabled: enabled,
+    };
+  }
+
+  fn open(self: ref Self, path: string) -> File {
+    return open_options_raw(
+      path,
+      self.read_enabled,
+      self.write_enabled,
+      self.append_enabled,
+      self.truncate_enabled,
+      self.create_enabled,
+      self.create_new_enabled
+    );
+  }
+
+  fn try_open(self: ref Self, path: string) -> std::Option[File] {
+    let file = self.open(path);
+    if file.is_open() {
+      return std::Some<File>(file);
+    }
+    return std::None<File>();
   }
 }
 

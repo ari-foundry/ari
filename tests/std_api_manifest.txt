@@ -308,6 +308,7 @@ fn std::fs::mode|check-prelude std-fs-mode asserting POSIX permission-mode helpe
 fn std::fs::open|check-prelude std-fs-open-modes mode-string open hook; docs/stdlib/modules/fs.md
 fn std::fs::open_append|check-prelude std-fs-append compatibility append wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::open_dir|check-prelude std-fs-read-dir directory open hook; docs/stdlib/modules/fs.md
+fn std::fs::open_options|check-prelude std-fs-open-options OpenOptions default constructor helper; docs/stdlib/modules/fs.md
 fn std::fs::open_read|check-prelude std-fs-basic compatibility read wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::open_write|check-prelude std-fs-basic compatibility write wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::permissions|check-prelude std-fs-permissions access permission wrapper; docs/stdlib/modules/fs.md
@@ -1094,6 +1095,15 @@ method std::fs::Metadata::is_symlink|check-prelude std-fs-metadata symlink kind 
 method std::fs::Metadata::len|check-prelude std-fs-metadata byte length accessor; docs/stdlib/modules/fs.md
 method std::fs::Metadata::modified|check-prelude std-fs-metadata-times modification timestamp accessor; docs/stdlib/modules/fs.md
 method std::fs::Metadata::permissions|check-prelude std-fs-metadata permission snapshot accessor; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::append|check-prelude std-fs-open-options append-mode option builder; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::create|check-prelude std-fs-open-options create-if-missing option builder; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::create_new|check-prelude std-fs-open-options exclusive create option builder; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::new|check-prelude std-fs-open-options empty OpenOptions constructor; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::open|check-prelude std-fs-open-options direct OpenOptions open helper; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::read|check-prelude std-fs-open-options read option builder; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::truncate|check-prelude std-fs-open-options truncate option builder; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::try_open|check-prelude std-fs-open-options Option-returning OpenOptions open helper; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::write|check-prelude std-fs-open-options write option builder; docs/stdlib/modules/fs.md
 method std::fs::Permissions::all|check-prelude std-fs-mode all-permission constructor for mode mutation; docs/stdlib/modules/fs.md
 method std::fs::Permissions::any|check-prelude std-fs-permissions any-access predicate; docs/stdlib/modules/fs.md
 method std::fs::Permissions::can_execute|check-prelude std-fs-permissions executable/searchable access method; docs/stdlib/modules/fs.md
@@ -1542,6 +1552,7 @@ struct std::fs::Dir|std fs directory handle tests; docs/stdlib/modules/fs.md
 struct std::fs::DirEntry|std fs directory entry tests; docs/stdlib/modules/fs.md
 struct std::fs::File|std fs file handle tests; docs/stdlib/modules/fs.md
 struct std::fs::Metadata|std fs metadata tests; docs/stdlib/modules/fs.md
+struct std::fs::OpenOptions|check-prelude std-fs-open-options file open option builder; docs/stdlib/modules/fs.md
 struct std::fs::Permissions|std fs permission query tests; docs/stdlib/modules/fs.md
 struct std::hash::Hasher|check-prelude std-hash-basic source hasher state; docs/stdlib/modules/hash.md
 struct std::io::BufReader[R]|std io buffered tests; docs/stdlib/modules/io.md

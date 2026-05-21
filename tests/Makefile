@@ -519,6 +519,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-modes.ari -o $(BUILD_DIR)/prelude/std-fs-open-modes.elf
 	$(BUILD_DIR)/prelude/std-fs-open-modes.elf; code=$$?; test $$code -eq 34
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-modes.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-open-modes.elf; $(BUILD_DIR)/prelude/std-fs-open-modes.elf; code=$$?; test $$code -eq 34; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-options.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-open-options.ll
+	grep -q "@ari_builtin_fs_open_options" $(BUILD_DIR)/prelude/std-fs-open-options.ll
+	grep -F -q "std2fs12open_options" $(BUILD_DIR)/prelude/std-fs-open-options.ll
+	grep -F -q "OpenOptions8inherent10create_new" $(BUILD_DIR)/prelude/std-fs-open-options.ll
+	grep -F -q "OpenOptions8inherent8try_open" $(BUILD_DIR)/prelude/std-fs-open-options.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-options.ari -o $(BUILD_DIR)/prelude/std-fs-open-options.elf
+	$(BUILD_DIR)/prelude/std-fs-open-options.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	grep -F -q "std2fs5write" $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	grep -F -q "std2fs6append" $(BUILD_DIR)/prelude/std-fs-read-write.ll

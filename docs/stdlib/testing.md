@@ -68,6 +68,7 @@ std-time-utc-calendar.ari
 std-fs-basic.ari
 std-fs-append.ari
 std-fs-open-modes.ari
+std-fs-open-options.ari
 std-fs-read-write.ari
 std-fs-try-read.ari
 std-fs-create-truncate-copy.ari

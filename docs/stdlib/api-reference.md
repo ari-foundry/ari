@@ -894,6 +894,17 @@ fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
+fs::open_options()
+OpenOptions::new()
+options.read(enabled)
+options.write(enabled)
+options.append(enabled)
+options.truncate(enabled)
+options.create(enabled)
+options.create_new(enabled)
+options.open(path)
+options.try_open(path)
+
 File::invalid()
 file.is_open()
 file.close()
@@ -956,6 +967,11 @@ write, `"a"` for create/append write, `"rw"` for existing read/write, `"r+"`
 as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
 `"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
 `try_open_*` variants are compatibility wrappers over those mode strings.
+Use `OpenOptions::new()` or `fs::open_options()` when named policy is clearer:
+`read`, `write`, `append`, `truncate`, `create`, and `create_new` each return a
+new options value, and `options.try_open(path)` returns `Option[File]`.
+`create_new(true)` is exclusive creation; `append(true).truncate(true)` and
+create/truncate without write or append are rejected as invalid option sets.
 `create(path)` and `try_create(path)` are the natural create/truncate helpers
 over `"w"` mode. `File` implements `std::io::Reader`, `std::io::Writer`, and
 `std::io::Seek`, so a handle from `try_open` can be passed to generic IO

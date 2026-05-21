@@ -58,8 +58,8 @@ parallelism, and per-thread runtime ids,
 wall-clock timestamps, non-negative
 durations, elapsed-time helpers, monotonic deadlines, UTC calendar conversion,
 and sleep, and `std::fs` adds the first
-byte-oriented file handle slice with mode-string opens for read, write,
-append, and read/write access plus access-permission checks, source create,
+byte-oriented file handle slice with mode-string and `OpenOptions` opens for
+read, write, append, and read/write access plus access-permission checks, source create,
 read, write, append, position, seek, truncate, copy, rename, hard/symbolic
 links, link-target reads, no-follow link metadata, single-directory and
 recursive directory create/remove helpers, directory-entry metadata, and
