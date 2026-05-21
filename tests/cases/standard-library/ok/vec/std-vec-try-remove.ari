@@ -1,0 +1,25 @@
+// Covers Vec.try_remove: Option-returning indexed removal for empty,
+// negative, in-range, and end-boundary indices while preserving order.
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var values = std::vec::new<i64>(ref mut zone, 4);
+
+  let missing_empty = if values.try_remove(0).is_none() { 3 } else { 0 };
+
+  values.push(10);
+  values.push(20);
+  values.push(30);
+
+  let removed_middle = values.try_remove(1).unwrap_or(0);
+  let missing_negative = if values.try_remove(-1).is_none() { 5 } else { 0 };
+  let missing_end = if values.try_remove(2).is_none() { 7 } else { 0 };
+  let shape_after_middle = values.len() + values.get(0) + values.get(1);
+
+  let removed_head = values.try_remove(0).unwrap_or(0);
+  let removed_tail = values.try_remove(0).unwrap_or(0);
+  let empty_after = if values.is_empty() { 11 } else { 0 };
+
+  zone::destroy(zone);
+  return missing_empty + removed_middle + missing_negative + missing_end +
+    shape_after_middle + removed_head + removed_tail + empty_after;
+}

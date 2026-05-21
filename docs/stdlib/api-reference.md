@@ -1289,6 +1289,7 @@ vec.swap(left, right)
 vec.insert(index, value)
 vec.insert_in(ref mut zone, index, value)
 vec.remove(index)
+vec.try_remove(index)
 vec.truncate(length)
 vec.clear()
 vec.reserve(ref mut zone, capacity)
@@ -1327,6 +1328,7 @@ vec.iter()
 ```
 
 The `try_*` accessors return `Option[T]` for empty or out-of-range reads.
+`try_pop` and `try_remove` keep empty or missing-index removal in `Option[T]`.
 Use the non-`try` forms when absence is a programmer error and an assertion is
 the desired behavior. The borrowed sequence helpers mirror the root `Slice[T]`
 vocabulary: `slice` and `split_at` create views over live vector storage,

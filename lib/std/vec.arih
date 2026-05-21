@@ -366,6 +366,16 @@ pub impl[T] std::vec::Vec[T] {
     return value;
   }
 
+  fn try_remove(self: ref mut Self, index: i64) -> super::Option[T] {
+    if index < 0 {
+      return super::None<T>();
+    }
+    if index >= self.raw.len {
+      return super::None<T>();
+    }
+    return super::Some<T>(self.remove(index));
+  }
+
   fn clear(self: ref mut Self) -> void {
     shrink_to_len<T>(self, 0);
   }

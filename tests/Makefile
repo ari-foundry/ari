@@ -1489,6 +1489,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-pop.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7try_pop' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-remove.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-remove.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent10try_remove' $(BUILD_DIR)/prelude/std-vec-try-remove.ll
+	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-vec-try-remove.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-remove.ari -o $(BUILD_DIR)/prelude/std-vec-try-remove.elf
+	$(BUILD_DIR)/prelude/std-vec-try-remove.elf; code=$$?; test $$code -eq 128
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent9try_first"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-try-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent8try_last"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-try-access.ll
@@ -1857,6 +1862,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; code=$$?; test $$code -eq 135; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; code=$$?; test $$code -eq 36; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-try-pop.elf; $(BUILD_DIR)/prelude/std-vec-try-pop.elf; code=$$?; test $$code -eq 25; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-try-remove.elf; $(BUILD_DIR)/prelude/std-vec-try-remove.elf; code=$$?; test $$code -eq 128; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-shrink-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; code=$$?; test $$code -eq 13; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-drop-value.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set.elf; $(BUILD_DIR)/prelude/std-collections-set.elf; code=$$?; test $$code -eq 250; fi

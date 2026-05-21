@@ -1315,6 +1315,7 @@ method std::vec::Vec[T]::try_first|check-prelude std-vec-try-access Option-retur
 method std::vec::Vec[T]::try_get|check-prelude std-vec-try-access Option-returning out-of-range access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_last|check-prelude std-vec-try-access Option-returning empty-safe access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::vec::Vec[T]::try_remove|check-prelude std-vec-try-remove Option-returning indexed removal; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::windows|check-prelude std-vec-sequence borrowed window iterator wrapper; docs/stdlib/modules/vec.md
 module std::algo|check-prelude std-algo-slice-helpers source algorithm module; docs/stdlib/modules/algo.md
 module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overview.md module map

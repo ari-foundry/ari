@@ -88,13 +88,15 @@ vec.replace(index, value)
 vec.swap(left, right)
 vec.insert(index, value)
 vec.remove(index)
+vec.try_remove(index)
 vec.truncate(length)
 vec.clear()
 ```
 
-`try_pop` returns `Option[T]`; `pop` asserts when empty. `set`, `clear`,
-`truncate`, and shrink paths drop removed live elements before reducing the
-logical length.
+`try_pop` and `try_remove` return `Option[T]`; `pop` asserts when empty and
+`remove` asserts when the index is absent. Use `try_remove` when a missing
+index is ordinary input. `set`, `clear`, `truncate`, and shrink paths drop
+removed live elements before reducing the logical length.
 
 Growth-capable mutation uses the owning zone:
 
@@ -253,6 +255,7 @@ tests/cases/standard-library/ok/vec/std-vec-metadata-methods.ari
 tests/cases/standard-library/ok/vec/std-vec-fixed-ops.ari
 tests/cases/standard-library/ok/vec/std-vec-try-access.ari
 tests/cases/standard-library/ok/vec/std-vec-try-pop.ari
+tests/cases/standard-library/ok/vec/std-vec-try-remove.ari
 tests/cases/standard-library/ok/vec/std-vec-slice-compare.ari
 tests/cases/standard-library/ok/vec/std-vec-sequence.ari
 tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari
