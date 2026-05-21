@@ -90,6 +90,8 @@ std-fs-metadata-times.ari
 std-algo-slice-helpers.ari
 std-hash-basic.ari
 std-random-basic.ari
+std-random-result.ari
+std-random-try-bounds.ari
 std-parse-basic.ari
 std-encoding-text.ari
 std-encoding-utf8-codepoints.ari

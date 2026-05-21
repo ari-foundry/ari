@@ -372,6 +372,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);
     if (symbol == "ari_builtin_random_entropy") return builtin_sig({}, u64);
     if (symbol == "ari_builtin_random_fill") return builtin_sig({ptr_u8, i64}, void_type);
+    if (symbol == "ari_builtin_random_fill_result") return builtin_sig({ptr_u8, i64}, i64);
     if (symbol == "ari_builtin_os_close") return builtin_sig({i64}, boolean);
     if (symbol == "ari_builtin_os_dup") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_os_close_on_exec") return builtin_sig({i64}, i64);

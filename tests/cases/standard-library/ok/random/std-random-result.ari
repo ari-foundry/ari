@@ -1,0 +1,59 @@
+// Covers Result-returning OS entropy helpers, including the recoverable invalid
+// input path that the hard-fail entropy APIs intentionally hide.
+fn main() -> i64 {
+  var bytes = [0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8];
+  var score = 0;
+
+  if random::fill_raw_result(bytes.as_slice()).is_ok() {
+    score = score + 3;
+  }
+
+  if random::fill_result(bytes.as_slice()).is_ok() {
+    score = score + 5;
+  }
+
+  let raw_entropy = random::entropy_raw_result();
+  if raw_entropy.is_ok() {
+    score = score + 7;
+  }
+
+  let entropy = random::entropy_result();
+  if entropy.is_ok() {
+    score = score + 11;
+  }
+
+  let seeded = random::from_entropy_result();
+  if seeded.is_ok() {
+    var rng = seeded.unwrap();
+    let value = rng.below(10);
+    if value >= 0 && value < 10 {
+      score = score + 13;
+    }
+  }
+
+  let associated = random::Prng::seed_from_os_result();
+  if associated.is_ok() {
+    score = score + 17;
+  }
+
+  var byte = 0u8;
+  let invalid = Slice<u8> { data: (ref mut byte) as ptr u8, len: -1 };
+
+  let invalid_raw = random::fill_raw_result(invalid);
+  if invalid_raw.is_err() {
+    let raw_error = std::error::from_raw(invalid_raw.unwrap_err());
+    if raw_error.code() == 22 && raw_error.is_kind(std::error::InvalidInput) {
+      score = score + 19;
+    }
+  }
+
+  let invalid_typed = random::fill_result(invalid);
+  if invalid_typed.is_err() {
+    let error = invalid_typed.unwrap_err();
+    if error.code() == 22 && error.is_kind(std::error::InvalidInput) {
+      score = score + 23;
+    }
+  }
+
+  return score;
+}

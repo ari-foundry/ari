@@ -22,8 +22,9 @@ Implemented now:
   `execvp`, `setenv`, `chdir`, `pipe`, `dup2`, and `kill`.
 - `std::mem::page_size()` reports the hosted runtime page size for alignment
   and future mapping work.
-- `std::random::entropy()` and `std::random::fill(values)` use the hosted Linux
-  `getrandom` path first and fall back to `/dev/urandom` for OS seed material.
+- `std::random::entropy()` / `fill(values)` and their `Result`-returning forms
+  use the hosted Linux `getrandom` path first and fall back to `/dev/urandom`
+  for OS seed material.
 - `std::c` provides the first hosted C boundary helpers: POSIX `errno`
   reading through the glibc errno location, `std::error` mapping, borrowed and
   owned C strings, and dynamic loading wrappers over `dlopen`, `dlsym`,
@@ -92,7 +93,7 @@ useful for modern systems work.
 | --- | --- | --- |
 | raw syscall wrapper | Not exposed. | Future `std::os::linux::syscall` should return typed error values and stay behind target guards. |
 | errno mapping | `std::target::uses_posix_errno()` reports the ABI family, and `std::c::errno()`/`std::c::error()` provide the first hosted runtime accessor and `std::error` bridge. | Add portable `std::os::errno` together with the first fallible descriptor wrappers and non-glibc tests. |
-| getrandom | `std::random::entropy()` and `std::random::fill(values)` use the hosted libc/syscall path and hard-fail if entropy cannot be read. | Add fallible entropy once standard `Error` results can be returned. |
+| getrandom | `std::random::entropy()` and `std::random::fill(values)` use the hosted libc/syscall path and hard-fail if entropy cannot be read; `entropy_result()` and `fill_result(values)` return `std::error::Error` instead. | Add broader failure injection tests and keep cryptographic streams behind a separate policy. |
 | `/dev/urandom` | Used as the random fallback when `getrandom` cannot make progress. | Keep as fallback; do not expose raw device reads as portable API. |
 | file descriptor abstraction | `std::os::Fd` is a public non-owning descriptor view, `std::os::OwnedFd` owns exactly-one-close responsibility, `OwnedFd::try_clone()` duplicates that ownership through `dup`, `std::os::pipe()` creates an owned read/write `Pipe`, and `std::fs::File.descriptor()` exposes file handles through the borrowed view. | Add duplicate-with-flags and richer error policy before exposing broad `fcntl`, `poll`, or epoll. |
 | file open options | `std::fs::OpenOptions` lowers read/write/append/truncate/create/create-new policy to hosted `open(2)` flags. | Add typed filesystem errors before exposing more platform-specific open flags. |

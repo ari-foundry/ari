@@ -1149,6 +1149,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari -o $(BUILD_DIR)/prelude/std-random-basic.elf
 	$(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 11
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-basic.elf; $(BUILD_DIR)/prelude/std-random-basic.elf; code=$$?; test $$code -eq 11; fi
+	$(TARGET) tests/cases/standard-library/ok/random/std-random-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-random-result.ll
+	grep -F -q '@ari_builtin_random_fill_result' $(BUILD_DIR)/prelude/std-random-result.ll
+	grep -F -q 'std6random11fill_result' $(BUILD_DIR)/prelude/std-random-result.ll
+	grep -F -q 'std6random14entropy_result' $(BUILD_DIR)/prelude/std-random-result.ll
+	grep -F -q 'std__random__Prng8inherent19seed_from_os_result' $(BUILD_DIR)/prelude/std-random-result.ll
+	$(TARGET) tests/cases/standard-library/ok/random/std-random-result.ari -o $(BUILD_DIR)/prelude/std-random-result.elf
+	$(BUILD_DIR)/prelude/std-random-result.elf; code=$$?; test $$code -eq 98
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/random/std-random-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-random-result.elf; $(BUILD_DIR)/prelude/std-random-result.elf; code=$$?; test $$code -eq 98; fi
 	$(TARGET) tests/cases/standard-library/ok/random/std-random-try-bounds.ari --emit-llvm $(BUILD_DIR)/prelude/std-random-try-bounds.ll
 	grep -F -q 'std6random9try_below' $(BUILD_DIR)/prelude/std-random-try-bounds.ll
 	grep -F -q 'std6random9try_range' $(BUILD_DIR)/prelude/std-random-try-bounds.ll

@@ -15,9 +15,13 @@ write `random::entropy()`, `random::seed(123u64)`, and `rng.range(0, 10)`.
 struct Prng
 
 random::entropy()
+random::entropy_raw_result()
+random::entropy_result()
 random::seed(value)
 random::from_entropy()
+random::from_entropy_result()
 random::seed_from_os()
+random::seed_from_os_result()
 random::next(ref mut rng)
 random::boolean(ref mut rng)
 random::below(ref mut rng, upper)
@@ -26,12 +30,16 @@ random::range(ref mut rng, start, end)
 random::try_range(ref mut rng, start, end)
 random::float(ref mut rng)
 random::fill(values)
+random::fill_raw_result(values)
+random::fill_result(values)
 random::fill_from(ref mut rng, values)
 random::shuffle<T>(ref mut rng, values)
 
 Prng::seed(value)
 Prng::from_entropy()
+Prng::from_entropy_result()
 Prng::seed_from_os()
+Prng::seed_from_os_result()
 rng.next()
 rng.boolean()
 rng.below(upper)
@@ -43,21 +51,28 @@ rng.fill(values)
 rng.shuffle<T>(values)
 ```
 
-`entropy()` returns one `u64` from the operating system. On the current
-hosted Linux runtime it tries the `getrandom` libc/syscall path first and then
-falls back to reading eight bytes from `/dev/urandom`. If both fail, the
-runtime terminates instead of returning weak entropy.
+`entropy()` returns one `u64` from the operating system. On the current hosted
+Linux runtime it tries the `getrandom` libc/syscall path first and then falls
+back to reading eight bytes from `/dev/urandom`. If both fail, the strict helper
+terminates instead of returning weak entropy. `entropy_result()` exposes the
+same policy as `Result[u64, std::error::Error]`; `entropy_raw_result()` keeps
+the compatibility `Result[u64, i64]` shape used by lower-level wrappers.
 
 `fill(values)` fills a `Slice[u8]` directly from OS entropy. On hosted Linux
 it uses the same `getrandom`-first policy as `entropy()` and falls back to
 `/dev/urandom` only when the first path cannot make progress. Use it for seed
-bytes or small random tokens. A future fallible shape should return `Result`
-once Ari's error and owned-buffer story is stronger.
+bytes or small random tokens. `fill_result(values)` returns `Result[(),
+std::error::Error]`, and `fill_raw_result(values)` returns `Result[(), i64]`.
+The strict `fill(values)` helper remains available for code that treats missing
+host entropy as unrecoverable.
 
 `Prng` is deterministic and non-cryptographic. `seed(value)` and
 `Prng::seed(value)` create a repeatable generator. `from_entropy()` and
-`seed_from_os()` seed that generator from OS entropy, which is useful for
-games, randomized algorithms, and tests that do not need reproducibility.
+`seed_from_os()` seed that generator from OS entropy, which is useful for games,
+randomized algorithms, and tests that do not need reproducibility.
+`from_entropy_result()` and `seed_from_os_result()` return recoverable
+`Result[Prng, std::error::Error]` values when entropy failure should be handled
+by the caller.
 
 `next()` returns the next raw `u64`. `boolean()` consumes one raw word and
 returns a deterministic `bool`. `below(upper)` returns an `i64` in `0..upper`;
@@ -102,7 +117,7 @@ fn main() -> i64 {
 
 | Need | Status |
 | --- | --- |
-| OS entropy | Current: `entropy()` returns a `u64`; `fill(values)` fills byte slices directly from the host. |
+| OS entropy | Current: `entropy()` returns a `u64`; `entropy_result()` and `fill_result(values)` expose recoverable `Error` results; `fill(values)` fills byte slices directly from the host. |
 | `/dev/urandom` | Current Linux runtime fallback when `getrandom` does not return eight bytes. |
 | `getrandom` syscall | Current hosted Linux runtime uses the libc `getrandom` entry point before fallback. |
 | CSPRNG seed | Current: use `entropy()`, `from_entropy()`, or `seed_from_os()` as seed material. |
@@ -120,8 +135,9 @@ fn main() -> i64 {
 - Bounded integer helpers use rejection sampling over the raw `u64` stream.
   The exact sequence may still change if the PRNG core changes, so tests should
   assert range and repeatability properties rather than pin every value.
-- OS entropy currently has a hard-fail runtime shape. A fallible
-  `Result`-returning API belongs with richer standard error values.
+- Strict OS entropy helpers still hard-fail on host entropy failure. Use
+  `entropy_result()` or `fill_result(values)` when the caller should decide how
+  to recover.
 - No distribution helpers exist yet. Normal/exponential/weighted sampling
   should probably live outside the first core stdlib slice.
 
@@ -129,6 +145,7 @@ fn main() -> i64 {
 
 ```text
 tests/cases/standard-library/ok/random/std-random-basic.ari
+tests/cases/standard-library/ok/random/std-random-result.ari
 tests/cases/standard-library/ok/random/std-random-try-bounds.ari
 ```
 
@@ -138,11 +155,11 @@ deterministic boolean generation, deterministic byte filling, OS byte filling,
 and generic slice shuffling.
 The bound test covers `Option`-returning invalid-bound handling for both module
 functions and `Prng` methods.
+The result test covers `Result`-returning OS entropy helpers and a recoverable
+invalid-slice error path.
 
 ## Next Work
 
-- Add a fallible entropy API after `Result[T, Error]` can carry richer error
-  values comfortably.
 - Add larger distribution tests once Ari has a property-test or statistical
   test harness.
 - Keep cryptographic PRNG streams and advanced distributions separate until

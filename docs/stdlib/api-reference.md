@@ -2616,10 +2616,16 @@ helpers:
 ```ari
 random::Prng
 random::entropy()
+random::entropy_raw_result()
+random::entropy_result()
 random::fill(values)
+random::fill_raw_result(values)
+random::fill_result(values)
 random::seed(value)
 random::from_entropy()
+random::from_entropy_result()
 random::seed_from_os()
+random::seed_from_os_result()
 random::next(ref mut rng)
 random::boolean(ref mut rng)
 random::below(ref mut rng, upper)
@@ -2632,7 +2638,9 @@ random::shuffle<T>(ref mut rng, values)
 
 Prng::seed(value)
 Prng::from_entropy()
+Prng::from_entropy_result()
 Prng::seed_from_os()
+Prng::seed_from_os_result()
 rng.next()
 rng.boolean()
 rng.below(upper)
@@ -2647,7 +2655,10 @@ rng.shuffle<T>(values)
 Use `entropy()` or `fill(values)` when seed material must come from the host
 OS. On hosted Linux, both use `getrandom` first and fall back to
 `/dev/urandom`; `fill(values)` writes the caller's byte slice directly instead
-of looping through `entropy()` words. Use `Prng` for reproducible booleans,
+of looping through `entropy()` words. The strict helpers terminate on host
+entropy failure. Use `entropy_result()` and `fill_result(values)` when failures
+should be returned as `std::error::Error`; the `*_raw_result` forms keep the
+compatibility `i64` error payload. Use `Prng` for reproducible booleans,
 integers, floats, tests, games, randomized algorithms, and shuffling.
 `below` and `range` use rejection sampling instead of raw modulo so bounded
 integer results are not biased. `Prng` is not cryptographic.

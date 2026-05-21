@@ -289,6 +289,9 @@ identifies the exact case:
   runtime OS byte filling, deterministic non-cryptographic `Prng` behavior,
   deterministic booleans, unbiased bounded integers including a wide upper
   bound, unit floats, PRNG byte filling, and generic slice shuffle.
+- `std-random-result.ari`: `Result`-returning OS entropy and byte-fill helpers,
+  raw compatibility result bridges, OS-seeded `Prng` result constructors, and
+  recoverable invalid-slice error mapping.
 - `std-parse-basic.ari`: source `std::parse` ASCII-trimmed signed
   decimal/radix/hex/binary/octal integer, bool, decimal float
   validation/conversion, fallback, and invalid whole-input behavior.

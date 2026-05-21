@@ -2754,10 +2754,12 @@ private:
         line("}");
         line();
 
-        line("define " + runtime_visibility + "void @ari_builtin_random_fill(ptr %data, i64 %len) {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_random_fill_result(ptr %data, i64 %len) {");
         line("entry:");
         line("  %bad.len = icmp slt i64 %len, 0");
-        line("  br i1 %bad.len, label %fail, label %check_empty");
+        line("  br i1 %bad.len, label %bad_len, label %check_empty");
+        line("bad_len:");
+        line("  ret i64 22");
         line("check_empty:");
         line("  %empty = icmp eq i64 %len, 0");
         line("  br i1 %empty, label %done, label %getrandom_loop");
@@ -2775,7 +2777,7 @@ private:
         line("fallback_open:");
         line("  %fd = call i32 @open(ptr " + dev_urandom + ", i32 0, i32 0)");
         line("  %opened = icmp sge i32 %fd, 0");
-        line("  br i1 %opened, label %fallback_loop, label %fail");
+        line("  br i1 %opened, label %fallback_loop, label %open_fail");
         line("fallback_loop:");
         line("  %fallback.offset = phi i64 [ %offset, %fallback_open ], [ %fallback.next, %fallback_advance ]");
         line("  %fallback.remaining = sub i64 %len, %fallback.offset");
@@ -2789,10 +2791,32 @@ private:
         line("  br i1 %fallback.done, label %fallback_close, label %fallback_loop");
         line("fallback_close:");
         line("  %ignored.close = call i32 @close(i32 %fd)");
-        line("  ret void");
+        line("  ret i64 0");
         line("fallback_fail:");
+        line("  %read.errno.ptr = call ptr @__errno_location()");
+        line("  %read.errno.i32 = load i32, ptr %read.errno.ptr");
+        line("  %read.errno = sext i32 %read.errno.i32 to i64");
         line("  %ignored.close.fail = call i32 @close(i32 %fd)");
-        line("  br label %fail");
+        line("  %read.errno.valid = icmp sgt i64 %read.errno, 0");
+        line("  %read.errno.code = select i1 %read.errno.valid, i64 %read.errno, i64 5");
+        line("  ret i64 %read.errno.code");
+        line("open_fail:");
+        line("  %open.errno.ptr = call ptr @__errno_location()");
+        line("  %open.errno.i32 = load i32, ptr %open.errno.ptr");
+        line("  %open.errno = sext i32 %open.errno.i32 to i64");
+        line("  %open.errno.valid = icmp sgt i64 %open.errno, 0");
+        line("  %open.errno.code = select i1 %open.errno.valid, i64 %open.errno, i64 5");
+        line("  ret i64 %open.errno.code");
+        line("done:");
+        line("  ret i64 0");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_random_fill(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %code = call i64 @ari_builtin_random_fill_result(ptr %data, i64 %len)");
+        line("  %ok = icmp eq i64 %code, 0");
+        line("  br i1 %ok, label %done, label %fail");
         line("done:");
         line("  ret void");
         line("fail:");
