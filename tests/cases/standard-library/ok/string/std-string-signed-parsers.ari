@@ -1,0 +1,65 @@
+// Covers String convenience methods for signed std::ascii decimal parsers:
+// - whole-string parsing accepts one optional leading sign.
+// - prefix parsing reports both the signed value and consumed byte count.
+// - bare or nonnumeric signs fail without producing a partial value.
+fn main() -> i64 {
+  var zone = zone::create(256);
+
+  var negative = std::string::from_string(ref mut zone, "-123");
+  var positive = std::string::from_string(ref mut zone, "+42");
+  var plain = std::string::from_string(ref mut zone, "77");
+  var prefix = std::string::from_string(ref mut zone, "-56x");
+  var plus_prefix = std::string::from_string(ref mut zone, "+9q");
+  var bare_minus = std::string::from_string(ref mut zone, "-");
+  var bad_sign = std::string::from_string(ref mut zone, "+x");
+
+  var score = 0;
+
+  if negative.parse_signed_decimal().unwrap_or(0) == -123 {
+    score = score + 1;
+  }
+  if positive.parse_signed_decimal().unwrap_or(0) == 42 {
+    score = score + 2;
+  }
+  if plain.parse_signed_decimal().unwrap_or(0) == 77 {
+    score = score + 4;
+  }
+  if prefix.parse_signed_decimal().is_none() {
+    score = score + 8;
+  }
+
+  match prefix.parse_signed_decimal_prefix() {
+    std::Some(parsed_negative) => {
+      if parsed_negative.value == -56 {
+        score = score + 16;
+      }
+      if parsed_negative.len == 3 {
+        score = score + 32;
+      }
+    }
+    std::None => {}
+  }
+
+  match plus_prefix.parse_signed_decimal_prefix() {
+    std::Some(parsed_positive) => {
+      if parsed_positive.value == 9 {
+        score = score + 64;
+      }
+      if parsed_positive.len == 2 {
+        score = score + 128;
+      }
+    }
+    std::None => {}
+  }
+
+  if bare_minus.parse_signed_decimal_prefix().is_none() {
+    score = score + 256;
+  }
+  if bad_sign.parse_signed_decimal_prefix().is_none() {
+    score = score + 512;
+  }
+
+  assert_eq_i64(score, 1023);
+  zone::destroy(zone);
+  return score % 256;
+}

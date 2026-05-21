@@ -1230,6 +1230,8 @@ method std::string::String::parse_decimal|check-prelude std-string-ascii-helpers
 method std::string::String::parse_decimal_prefix|check-prelude std-string-prefix-parsers leading ASCII decimal parser; docs/stdlib/api-reference.md String section
 method std::string::String::parse_hex|check-prelude std-string-ascii-helpers whole-string ASCII hexadecimal parser; docs/stdlib/api-reference.md String section
 method std::string::String::parse_hex_prefix|check-prelude std-string-prefix-parsers leading ASCII hexadecimal parser; docs/stdlib/api-reference.md String section
+method std::string::String::parse_signed_decimal|check-prelude std-string-signed-parsers optional-sign whole-string ASCII decimal parser; docs/stdlib/api-reference.md String section
+method std::string::String::parse_signed_decimal_prefix|check-prelude std-string-signed-parsers optional-sign leading ASCII decimal parser; docs/stdlib/api-reference.md String section
 method std::string::String::pop|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push_codepoint_in|check-prelude std-string-unicode-helpers UTF-8 scalar append convenience method; docs/stdlib/modules/string.md

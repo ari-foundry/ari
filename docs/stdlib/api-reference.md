@@ -1811,6 +1811,8 @@ text.trim_to(ref mut zone)
 text.trimmed(ref mut zone)
 text.parse_decimal()
 text.parse_decimal_prefix()
+text.parse_signed_decimal()
+text.parse_signed_decimal_prefix()
 text.parse_hex()
 text.parse_hex_prefix()
 text.bytes()
@@ -1875,17 +1877,20 @@ the caller's zone.
 `equals_ignore_case`, `starts_with_ignore_case`,
 `ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`,
 `trim_start`, `trim_end`, `trim`, `parse_decimal`, `parse_decimal_prefix`,
-`parse_hex`, and `parse_hex_prefix` intentionally reuse `std::ascii` behavior.
-The `_text_ignore_case` forms are literal-friendly wrappers over the same ASCII
+`parse_signed_decimal`, `parse_signed_decimal_prefix`, `parse_hex`, and
+`parse_hex_prefix` intentionally reuse `std::ascii` behavior. The
+`_text_ignore_case` forms are literal-friendly wrappers over the same ASCII
 policy.
 The `try_*` byte accessors return `Option[u8]` for empty or out-of-range
 access. The plain trim methods return borrowed `Slice[u8]` views, while
 `trim_start_to`, `trim_end_to`, and `trim_to` copy the trimmed bytes into a
 target zone and return owned `String` handles. `trimmed_start`, `trimmed_end`,
 and `trimmed` are friendlier owned-copy aliases. The whole parse methods require
-the whole string to be valid and return `Option[i64]`; prefix parsers return
-`Option[std::ascii::ParsedInt]` and stop before the first invalid byte. Trim
-first when leading or trailing ASCII whitespace should be ignored.
+the whole string to be valid and return `Option[i64]`; the signed decimal form
+accepts one optional leading `+` or `-` and still rejects bare signs or trailing
+bytes. Prefix parsers return `Option[std::ascii::ParsedInt]` and stop before
+the first invalid byte; the signed prefix form counts an accepted sign in
+`len`. Trim first when leading or trailing ASCII whitespace should be ignored.
 
 The UTF-8 helpers reuse `std::encoding`. `is_utf8` validates the whole byte
 string, `try_utf8` returns `Option[std::string::Utf8]`, `codepoint_count`

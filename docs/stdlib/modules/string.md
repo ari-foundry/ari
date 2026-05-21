@@ -291,6 +291,8 @@ text.trim_to(ref mut zone)
 text.trimmed(ref mut zone)
 text.parse_decimal()
 text.parse_decimal_prefix()
+text.parse_signed_decimal()
+text.parse_signed_decimal_prefix()
 text.parse_hex()
 text.parse_hex_prefix()
 ```
@@ -306,10 +308,13 @@ or destroyed. `trimmed_start`, `trimmed_end`, and `trimmed` are the friendlier
 owned-copy aliases for those `*_to` methods. The whole-string parse methods
 require the entire string to be a valid decimal or hexadecimal ASCII integer
 and return `Option[i64]`. Empty input, whitespace, or invalid bytes return
-`None<i64>()`. The prefix parsers return `Option[std::ascii::ParsedInt]` with
-the parsed `value` and consumed byte `len`, stopping before the first invalid
-byte. To accept surrounding ASCII whitespace, trim first and parse the returned
-slice with `std::ascii`:
+`None<i64>()`. `parse_signed_decimal` accepts one optional leading `+` or `-`
+and still rejects empty input, bare signs, whitespace, and trailing bytes. The
+prefix parsers return `Option[std::ascii::ParsedInt]` with the parsed `value`
+and consumed byte `len`, stopping before the first invalid byte.
+`parse_signed_decimal_prefix` counts an accepted sign in `len` and requires at
+least one digit after that sign. To accept surrounding ASCII whitespace, trim
+first and parse the returned slice with `std::ascii`:
 
 ```ari
 let view = text.trim();
@@ -439,6 +444,7 @@ tests/cases/standard-library/ok/string/std-string-equals.ari
 tests/cases/standard-library/ok/string/std-string-ascii-helpers.ari
 tests/cases/standard-library/ok/string/std-string-ascii-case-helpers.ari
 tests/cases/standard-library/ok/string/std-string-prefix-parsers.ari
+tests/cases/standard-library/ok/string/std-string-signed-parsers.ari
 tests/cases/standard-library/ok/string/std-string-trim-copy.ari
 tests/cases/standard-library/ok/string/std-string-grow.ari
 tests/cases/standard-library/ok/string/std-string-append.ari

@@ -37,6 +37,7 @@ std-string-unicode-helpers.ari
 std-string-text-kinds.ari
 std-string-byte-literals.ari
 std-string-prefix-parsers.ari
+std-string-signed-parsers.ari
 std-string-trim-copy.ari
 std-string-trim-to-after-target-reset.ari
 std-string-try-byte-access.ari
