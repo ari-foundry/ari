@@ -1,0 +1,161 @@
+// Covers Result-returning std::io helpers. The older bool/Option wrappers stay
+// for compatibility, while these APIs preserve shared Error payloads.
+struct MemoryWriter {
+  data: Slice[u8],
+  mut position: i64,
+  mut flushed: bool,
+}
+
+struct FlushFailWriter {
+  mut flushed: bool,
+}
+
+impl io::Writer for MemoryWriter {
+  fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if self.position >= self.data.len {
+      return false;
+    }
+    ptr_store(ptr_add(self.data.as_ptr(), self.position), value);
+    self.position = self.position + 1;
+    return true;
+  }
+
+  fn flush(self: ref mut Self) -> bool {
+    self.flushed = true;
+    return true;
+  }
+}
+
+impl io::Writer for FlushFailWriter {
+  fn write_byte(self: ref mut Self, value: u8) -> bool {
+    return true;
+  }
+
+  fn flush(self: ref mut Self) -> bool {
+    self.flushed = true;
+    return false;
+  }
+}
+
+fn error_is(value: error::Error, kind: error::Kind) -> bool {
+  return value.is_kind(kind) && value.code() == 0;
+}
+
+fn unit_ok(value: Result[(), error::Error]) -> bool {
+  match value {
+    Ok(_) => { return true; }
+    Err(_) => { return false; }
+  }
+}
+
+fn unit_error_is(value: Result[(), error::Error], kind: error::Kind) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(reason) => { return error_is(reason, kind); }
+  }
+}
+
+fn count_ok(value: Result[i64, error::Error], expected: i64) -> bool {
+  match value {
+    Ok(count) => { return count == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn count_error_is(value: Result[i64, error::Error], kind: error::Kind) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(reason) => { return error_is(reason, kind); }
+  }
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  var exact_source = [65u8, 66u8];
+  var exact_reader = io::cursor(exact_source.as_slice());
+  var exact_output = [0u8, 0u8];
+  let exact_view = exact_output.as_slice();
+  let exact_raw = exact_view.as_ptr();
+  if unit_ok(io::read_exact_result<io::Cursor>(ref mut exact_reader, exact_raw, 2)) {
+    if exact_output[0] == 65u8 && exact_output[1] == 66u8 {
+      score = score + 1;
+    }
+  }
+
+  var short_source = [67u8];
+  var short_reader = io::cursor(short_source.as_slice());
+  var short_output = [0u8, 0u8];
+  let short_view = short_output.as_slice();
+  let short_raw = short_view.as_ptr();
+  if unit_error_is(io::read_exact_result<io::Cursor>(ref mut short_reader, short_raw, 2), error::UnexpectedEof) {
+    if short_output[0] == 67u8 {
+      score = score + 2;
+    }
+  }
+  if !unit_error_is(io::read_exact_result<io::Cursor>(ref mut short_reader, short_raw, -1), error::InvalidInput) {
+    panic();
+  }
+
+  var write_output = [0u8, 0u8, 0u8];
+  var write_writer = MemoryWriter { data: write_output.as_slice(), position: 0, flushed: false };
+  var write_payload = [68u8, 69u8, 70u8];
+  if unit_ok(io::write_all_result<MemoryWriter>(ref mut write_writer, write_payload.as_slice())) {
+    if write_writer.position == 3 &&
+       !write_writer.flushed &&
+       write_output[0] == 68u8 &&
+       write_output[1] == 69u8 &&
+       write_output[2] == 70u8 {
+      score = score + 4;
+    }
+  }
+
+  var fail_output = [0u8];
+  var fail_writer = MemoryWriter { data: fail_output.as_slice(), position: 0, flushed: false };
+  var fail_payload = [71u8, 72u8];
+  if unit_error_is(io::write_all_result<MemoryWriter>(ref mut fail_writer, fail_payload.as_slice()), error::BrokenPipe) {
+    if fail_writer.position == 1 && !fail_writer.flushed && fail_output[0] == 71u8 {
+      score = score + 8;
+    }
+  }
+
+  var flush_writer = FlushFailWriter { flushed: false };
+  if unit_error_is(io::flush_result<FlushFailWriter>(ref mut flush_writer), error::Other) {
+    if flush_writer.flushed {
+      score = score + 16;
+    }
+  }
+
+  var copy_source = [73u8, 74u8];
+  var copy_reader = io::cursor(copy_source.as_slice());
+  var copy_output = [0u8, 0u8];
+  var copy_writer = MemoryWriter { data: copy_output.as_slice(), position: 0, flushed: false };
+  if count_ok(io::copy_result<io::Cursor, MemoryWriter>(ref mut copy_reader, ref mut copy_writer), 2) {
+    if copy_writer.flushed && copy_output[0] == 73u8 && copy_output[1] == 74u8 {
+      score = score + 32;
+    }
+  }
+
+  var copy_fail_source = [75u8, 76u8];
+  var copy_fail_reader = io::cursor(copy_fail_source.as_slice());
+  var copy_fail_output = [0u8];
+  var copy_fail_writer = MemoryWriter { data: copy_fail_output.as_slice(), position: 0, flushed: false };
+  if count_error_is(io::copy_result<io::Cursor, MemoryWriter>(ref mut copy_fail_reader, ref mut copy_fail_writer), error::BrokenPipe) {
+    if copy_fail_writer.position == 1 && !copy_fail_writer.flushed {
+      score = score + 64;
+    }
+  }
+
+  var compat_source = [77u8];
+  var compat_reader = io::cursor(compat_source.as_slice());
+  var compat_output = [0u8];
+  var compat_writer = MemoryWriter { data: compat_output.as_slice(), position: 0, flushed: false };
+  if io::try_copy<io::Cursor, MemoryWriter>(ref mut compat_reader, ref mut compat_writer).contains(1) {
+    if io::copy<io::Cursor, MemoryWriter>(ref mut compat_reader, ref mut compat_writer) {
+      score = score + 128;
+    }
+  }
+
+  assert_eq_i64(score, 255);
+  return score;
+}

@@ -147,10 +147,10 @@ work.
 
 ## Current Limits
 
-- `std::fs` now exposes direct `Result[T, Error]` for its open, write, copy,
-  and mutation result helpers. `std::io`, `std::process`, and `std::net` still
-  have sentinel, bool, Option, or raw-result surfaces in places and should be
-  migrated in small tested slices.
+- `std::fs`, `std::io`, and `std::net` now expose first direct
+  `Result[T, Error]` helper surfaces, while compatibility bool/Option/raw
+  helpers remain at older boundaries. `std::process` and remaining low-level
+  runtime hooks should be migrated in small tested slices.
 - `from_errno` is a POSIX/Linux-oriented seed. Windows `GetLastError` mapping
   should live behind target-aware runtime wrappers.
 - There are no owned dynamic error messages, structured path/operation fields,

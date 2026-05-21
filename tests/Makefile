@@ -350,6 +350,13 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std2io40try_copy__G_std__io__Cursor_MemoryWriter' $(BUILD_DIR)/prelude/std-io-copy.ll
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-copy.ari -o $(BUILD_DIR)/prelude/std-io-copy.elf
 	$(BUILD_DIR)/prelude/std-io-copy.elf; code=$$?; test $$code -eq 5
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-result.ll
+	grep -q '_ARNv3std2io36read_exact_result__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-result.ll
+	grep -q '_ARNv3std2io32write_all_result__G_MemoryWriter' $(BUILD_DIR)/prelude/std-io-result.ll
+	grep -q '_ARNv3std2io31flush_result__G_FlushFailWriter' $(BUILD_DIR)/prelude/std-io-result.ll
+	grep -q '_ARNv3std2io43copy_result__G_std__io__Cursor_MemoryWriter' $(BUILD_DIR)/prelude/std-io-result.ll
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-result.ari -o $(BUILD_DIR)/prelude/std-io-result.elf
+	$(BUILD_DIR)/prelude/std-io-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-stderr.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-stderr.ll
 	grep -q '_ARNv3std2io28write_all__G_std__io__Stderr' $(BUILD_DIR)/prelude/std-io-stderr.ll
 	grep -q "@ari_builtin_write_error_byte" $(BUILD_DIR)/prelude/std-io-stderr.ll

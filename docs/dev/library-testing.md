@@ -412,6 +412,10 @@ identifies the exact case:
 - `std-io-copy.ari`: source `std::io` `try_copy` byte counts, `copy` bool
   wrapper behavior, writer flush, writer failure handling, and generated
   generic helper symbol checks.
+- `std-io-result.ari`: source `std::io` direct `Result[..., Error]` helpers
+  for exact reads, whole-slice writes, explicit flushes, and generic stream
+  copies, including `UnexpectedEof`, `BrokenPipe`, and generic flush-error
+  classification plus compatibility wrapper delegation.
 - `std-io-stderr.ari`: source `std::io` `Stderr` writer behavior, stderr
   routing, explicit flush success, stdout/stderr separation, and generated
   helper symbol checks.
