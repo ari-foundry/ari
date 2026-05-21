@@ -294,6 +294,7 @@ fn std::fs::copy|check-prelude std-fs-create-truncate-copy source streaming copy
 fn std::fs::create|check-prelude std-fs-create-truncate-copy source create/truncate open helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir|check-prelude std-fs-rename-dir runtime-backed single-directory creation hook; docs/stdlib/modules/fs.md
 fn std::fs::create_dir_all|check-prelude std-fs-create-dir-all runtime-backed recursive directory creation hook; docs/stdlib/modules/fs.md
+fn std::fs::create_result|check-prelude std-fs-open-result Result-returning create helper with raw error bridge; docs/stdlib/modules/fs.md
 fn std::fs::ensure_dir|check-prelude std-fs-ensure-dir idempotent single-directory creation helper; docs/stdlib/modules/fs.md
 fn std::fs::ensure_dir_all|check-prelude std-fs-create-dir-all idempotent recursive directory creation alias; docs/stdlib/modules/fs.md
 fn std::fs::ensure_file|check-prelude std-fs-ensure-file idempotent single-file creation helper; docs/stdlib/modules/fs.md
@@ -310,6 +311,7 @@ fn std::fs::open_append|check-prelude std-fs-append compatibility append wrapper
 fn std::fs::open_dir|check-prelude std-fs-read-dir directory open hook; docs/stdlib/modules/fs.md
 fn std::fs::open_options|check-prelude std-fs-open-options OpenOptions default constructor helper; docs/stdlib/modules/fs.md
 fn std::fs::open_read|check-prelude std-fs-basic compatibility read wrapper over mode-string open; docs/stdlib/modules/fs.md
+fn std::fs::open_result|check-prelude std-fs-open-result Result-returning mode-string open helper with raw error bridge; docs/stdlib/modules/fs.md
 fn std::fs::open_write|check-prelude std-fs-basic compatibility write wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::permissions|check-prelude std-fs-permissions access permission wrapper; docs/stdlib/modules/fs.md
 fn std::fs::position|check-prelude std-fs-seek file cursor position hook; docs/stdlib/modules/fs.md
@@ -1100,6 +1102,7 @@ method std::fs::OpenOptions::create|check-prelude std-fs-open-options create-if-
 method std::fs::OpenOptions::create_new|check-prelude std-fs-open-options exclusive create option builder; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::new|check-prelude std-fs-open-options empty OpenOptions constructor; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::open|check-prelude std-fs-open-options direct OpenOptions open helper; docs/stdlib/modules/fs.md
+method std::fs::OpenOptions::open_result|check-prelude std-fs-open-result Result-returning OpenOptions open helper with raw error bridge; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::read|check-prelude std-fs-open-options read option builder; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::truncate|check-prelude std-fs-open-options truncate option builder; docs/stdlib/modules/fs.md
 method std::fs::OpenOptions::try_open|check-prelude std-fs-open-options Option-returning OpenOptions open helper; docs/stdlib/modules/fs.md

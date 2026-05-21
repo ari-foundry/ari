@@ -108,6 +108,8 @@ fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
+fs::open_result(path, mode)
+fs::create_result(path)
 fs::open_options()
 OpenOptions::new()
 options.read(enabled)
@@ -117,6 +119,7 @@ options.truncate(enabled)
 options.create(enabled)
 options.create_new(enabled)
 options.open(path)
+options.open_result(path)
 options.try_open(path)
 
 File::invalid()
@@ -240,8 +243,13 @@ shape for common modes while also accepting the direct `"rw"` spelling:
 | `"a+"` | Create if needed, read, and append writes at the end. |
 
 Invalid or unsupported mode strings return an invalid `File`; `try_open`
-turns that into `None`. Use `OpenOptions` when the call site needs named
-policy instead of a mode string:
+turns that into `None`. Use `open_result(path, mode)` when callers need error
+detail. It returns `Result[File, i64]`; the `Err` payload is
+`std::error::Error.raw()`, so recover it with `std::error::from_raw(raw)` until
+direct `Result[File, Error]` is the default payload shape.
+
+Use `OpenOptions` when the call site needs named policy instead of a mode
+string:
 
 ```ari
 let options = fs::OpenOptions::new()
@@ -266,11 +274,14 @@ existing file when it is opened, `create(true)` creates a missing file, and
 `truncate`, `create`, and `create_new` require `write(true)` or `append(true)`;
 `append(true).truncate(true)` is rejected because Ari keeps that ambiguous
 combination out of the portable surface. `options.open(path)` returns a `File`
-directly, and `options.try_open(path)` turns invalid handles into `None`.
+directly, `options.try_open(path)` turns invalid handles into `None`, and
+`options.open_result(path)` preserves the raw `std::error` bridge for callers
+that need to distinguish `NotFound`, `AlreadyExists`, or `InvalidInput`.
 
 `create(path)` is the natural spelling for `open(path, "w")`: it creates a
 file if needed and truncates existing contents. `try_create(path)` wraps that
-same operation in `Option[File]`.
+same operation in `Option[File]`; `create_result(path)` returns
+`Result[File, i64]` with the same raw-error convention as `open_result`.
 
 `ensure_file(path)` is the idempotent regular-file helper. It returns `true`
 when `path` is already a regular file, creates an empty file when the path is
@@ -491,7 +502,7 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 
 | Need | Status |
 | --- | --- |
-| open | Current: `open(path, mode)`, `try_open(path, mode)`, compatibility wrappers, and `OpenOptions` for named read/write/append/truncate/create/create-new policy. |
+| open | Current: `open(path, mode)`, `try_open(path, mode)`, `open_result(path, mode)`, compatibility wrappers, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open_result`. |
 | create | Current: `create(path)` and `try_create(path)` over `"w"` mode, plus non-truncating `ensure_file(path)` for idempotent file setup. |
 | read | Current: byte `read_byte`, whole-file `read`/`read_to_string`, and fallible `try_read`/`try_read_to_string`. |
 | write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, and byte-counting `try_write`. |
@@ -786,6 +797,7 @@ tests/cases/standard-library/ok/fs/std-fs-try-byte.ari
 tests/cases/standard-library/ok/fs/std-fs-append.ari
 tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
 tests/cases/standard-library/ok/fs/std-fs-open-options.ari
+tests/cases/standard-library/ok/fs/std-fs-open-result.ari
 tests/cases/standard-library/ok/fs/std-fs-read-write.ari
 tests/cases/standard-library/ok/fs/std-fs-try-read.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
@@ -819,7 +831,10 @@ and failed append opens through `Option[File]`. `std-fs-open-modes.ari` covers
 the mode-string contract, including `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes,
 and invalid mode strings. `std-fs-open-options.ari` covers the `OpenOptions`
 value builder, exclusive creation, non-truncating read/write opens,
-append-with-read behavior, and invalid option combinations. `std-fs-read-write.ari` covers source whole-file
+append-with-read behavior, and invalid option combinations.
+`std-fs-open-result.ari` covers `open_result`, `create_result`, and
+`OpenOptions::open_result` raw-error bridges for invalid input, missing files,
+exclusive-create failures, and successful handles. `std-fs-read-write.ari` covers source whole-file
 write/append compatibility wrappers, `try_write`/`try_append` byte counts,
 read-to-byte-string, missing-file empty reads, and truncating rewrite behavior.
 `std-fs-try-read.ari` covers `Option[String]` whole-file
@@ -887,7 +902,7 @@ absolute canonical paths, filename preservation, and missing-path `None`.
   clearer owned string/path story.
 - Add secure temporary files and optional file locking after the resource and
   platform policy is documented.
-- Grow `OpenOptions` toward typed error reporting after `std::error` can flow
-  through filesystem results directly.
+- Promote the raw `Result[File, i64]` open bridges to direct
+  `Result[File, Error]` once mixed payload storage is the normal compiler path.
 - Promote `File` toward an owned resource handle when the compiler can express
   OS-resource ownership and drop policy cleanly.

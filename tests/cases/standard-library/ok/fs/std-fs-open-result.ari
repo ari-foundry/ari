@@ -1,0 +1,99 @@
+// Covers Result-returning filesystem open helpers. This keeps error detail
+// separate from the Option-based try_open surface and exercises the current
+// raw Error bridge used until Result[T, Error] payloads are the default.
+fn cleanup(path: string, missing: string) -> void {
+  fs::remove(path);
+  fs::remove(missing);
+}
+
+fn error_matches(raw: i64, kind: error::Kind, code: i64) -> bool {
+  let value = error::from_raw(raw);
+  return value.is_kind(kind) && value.code() == code;
+}
+
+fn result_error_matches(value: Result[fs::File, i64], kind: error::Kind, code: i64) -> bool {
+  match value {
+    Ok(file) => {
+      file.close();
+      return false;
+    }
+    Err(raw) => {
+      return error_matches(raw, kind, code);
+    }
+  }
+}
+
+fn read_text(zone: ref mut Zone, path: string, expected: string) -> bool {
+  let text = fs::read_to_string(zone, path);
+  return text.equals_text(expected);
+}
+
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-open-result.tmp";
+  let missing = "build/prelude/std-fs-open-result-missing.tmp";
+  cleanup(path, missing);
+
+  var score = 0;
+
+  if result_error_matches(fs::open_result(path, "bad"), error::InvalidInput, 22) {
+    score = score + 1;
+  }
+  if result_error_matches(fs::open_result(missing, "r"), error::NotFound, 2) {
+    score = score + 2;
+  }
+
+  match fs::create_result(path) {
+    Ok(created_file) => {
+      if created_file.write_byte('R') && created_file.close() {
+        score = score + 4;
+      }
+    }
+    Err(_) => {}
+  }
+
+  match fs::open_result(path, "rw") {
+    Ok(read_write_file) => {
+      if read_write_file.read_byte() == 'R' && read_write_file.write_byte('W') && read_write_file.close() {
+        var zone = std::zone::create(128);
+        if read_text(ref mut zone, path, "RW") {
+          score = score + 8;
+        }
+        std::zone::destroy(zone);
+      }
+    }
+    Err(_) => {}
+  }
+
+  let exclusive = fs::OpenOptions::new().write(true).create_new(true);
+  if result_error_matches(exclusive.open_result(path), error::AlreadyExists, 17) {
+    score = score + 16;
+  }
+
+  let empty_options = fs::open_options();
+  if result_error_matches(empty_options.open_result(path), error::InvalidInput, 22) {
+    score = score + 32;
+  }
+
+  let bad_create_read = fs::OpenOptions::new().read(true).create(true);
+  if result_error_matches(bad_create_read.open_result(path), error::InvalidInput, 22) {
+    score = score + 64;
+  }
+
+  let append_read = fs::OpenOptions::new().read(true).append(true).create(true);
+  match append_read.open_result(path) {
+    Ok(append_file) => {
+      if append_file.read_byte() == 'R' && append_file.write_byte('A') && append_file.close() {
+        var zone2 = std::zone::create(128);
+        if read_text(ref mut zone2, path, "RWA") {
+          score = score + 128;
+        }
+        std::zone::destroy(zone2);
+      }
+    }
+    Err(_) => {}
+  }
+
+  cleanup(path, missing);
+  assert_eq_i64(score, 255);
+  return score;
+}

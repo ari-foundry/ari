@@ -130,6 +130,53 @@ fn file_kind_from_raw(kind: i64) -> FileKind {
   return Other;
 }
 
+fn invalid_input_error_raw() -> i64 {
+  let error = std::error::from_errno(22);
+  return error.raw();
+}
+
+fn last_errno_error_raw() -> i64 {
+  let error = std::c::error();
+  return error.raw();
+}
+
+fn supported_open_mode(mode: string) -> bool {
+  let bytes = std::string::bytes(mode);
+  if bytes.equals("r") {
+    return true;
+  }
+  if bytes.equals("w") {
+    return true;
+  }
+  if bytes.equals("a") {
+    return true;
+  }
+  if bytes.equals("rw") {
+    return true;
+  }
+  if bytes.equals("r+") {
+    return true;
+  }
+  if bytes.equals("w+") {
+    return true;
+  }
+  return bytes.equals("a+");
+}
+
+fn open_options_valid(options: ref OpenOptions) -> bool {
+  let writable = options.write_enabled || options.append_enabled;
+  if !(options.read_enabled || writable) {
+    return false;
+  }
+  if (options.create_enabled || options.create_new_enabled) && !writable {
+    return false;
+  }
+  if options.truncate_enabled && !writable {
+    return false;
+  }
+  return !(options.append_enabled && options.truncate_enabled);
+}
+
 fn system_time_from_nanos(nanos: i64) -> std::time::SystemTime {
   return std::time::system_from_unix(nanos / 1000000000, nanos % 1000000000);
 }
@@ -657,6 +704,17 @@ pub fn try_open(path: string, mode: string) -> std::Option[File] {
   return std::None<File>();
 }
 
+pub fn open_result(path: string, mode: string) -> std::Result[File, i64] {
+  if !supported_open_mode(mode) {
+    return std::Err<File, i64>(invalid_input_error_raw());
+  }
+  let file = open(path, mode);
+  if file.is_open() {
+    return std::Ok<File, i64>(file);
+  }
+  return std::Err<File, i64>(last_errno_error_raw());
+}
+
 pub fn open_options() -> OpenOptions {
   return OpenOptions::new();
 }
@@ -667,6 +725,10 @@ pub fn create(path: string) -> File {
 
 pub fn try_create(path: string) -> std::Option[File] {
   return try_open(path, "w");
+}
+
+pub fn create_result(path: string) -> std::Result[File, i64] {
+  return open_result(path, "w");
 }
 
 pub fn open_read(path: string) -> File {
@@ -1078,6 +1140,17 @@ pub impl std::fs::OpenOptions {
       self.create_enabled,
       self.create_new_enabled
     );
+  }
+
+  fn open_result(self: ref Self, path: string) -> std::Result[File, i64] {
+    if !open_options_valid(self) {
+      return std::Err<File, i64>(invalid_input_error_raw());
+    }
+    let file = self.open(path);
+    if file.is_open() {
+      return std::Ok<File, i64>(file);
+    }
+    return std::Err<File, i64>(last_errno_error_raw());
   }
 
   fn try_open(self: ref Self, path: string) -> std::Option[File] {

@@ -894,6 +894,8 @@ fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
+fs::open_result(path, mode)
+fs::create_result(path)
 fs::open_options()
 OpenOptions::new()
 options.read(enabled)
@@ -903,6 +905,7 @@ options.truncate(enabled)
 options.create(enabled)
 options.create_new(enabled)
 options.open(path)
+options.open_result(path)
 options.try_open(path)
 
 File::invalid()
@@ -967,9 +970,14 @@ write, `"a"` for create/append write, `"rw"` for existing read/write, `"r+"`
 as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
 `"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
 `try_open_*` variants are compatibility wrappers over those mode strings.
+Use `open_result(path, mode)` or `create_result(path)` when callers need more
+than presence/absence. They return `Result[File, i64]`, where `Err(raw)` is a
+compact `std::error::Error.raw()` value that can be inspected with
+`std::error::from_raw(raw)`.
 Use `OpenOptions::new()` or `fs::open_options()` when named policy is clearer:
 `read`, `write`, `append`, `truncate`, `create`, and `create_new` each return a
-new options value, and `options.try_open(path)` returns `Option[File]`.
+new options value, `options.try_open(path)` returns `Option[File]`, and
+`options.open_result(path)` returns the same raw-error `Result` shape.
 `create_new(true)` is exclusive creation; `append(true).truncate(true)` and
 create/truncate without write or append are rejected as invalid option sets.
 `create(path)` and `try_create(path)` are the natural create/truncate helpers

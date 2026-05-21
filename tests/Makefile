@@ -526,6 +526,12 @@ check-prelude: $(TARGET)
 	grep -F -q "OpenOptions8inherent8try_open" $(BUILD_DIR)/prelude/std-fs-open-options.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-options.ari -o $(BUILD_DIR)/prelude/std-fs-open-options.elf
 	$(BUILD_DIR)/prelude/std-fs-open-options.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs11open_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs13create_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "OpenOptions8inherent11open_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-result.ari -o $(BUILD_DIR)/prelude/std-fs-open-result.elf
+	$(BUILD_DIR)/prelude/std-fs-open-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	grep -F -q "std2fs5write" $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	grep -F -q "std2fs6append" $(BUILD_DIR)/prelude/std-fs-read-write.ll

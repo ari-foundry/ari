@@ -161,6 +161,9 @@ identifies the exact case:
 - `std-fs-open-options.ari`: `OpenOptions` value builder behavior for
   exclusive creation, non-truncating read/write, append-with-read, and invalid
   option combinations.
+- `std-fs-open-result.ari`: `open_result`, `create_result`, and
+  `OpenOptions::open_result` raw-error bridges for invalid input, missing files,
+  exclusive-create failures, and successful handles.
 - `std-fs-read-write.ari`: source whole-file `write`/`try_write`,
   `append`/`try_append`, `read_to_string`, missing-file empty reads,
   byte-count checks, and truncating rewrite behavior.
