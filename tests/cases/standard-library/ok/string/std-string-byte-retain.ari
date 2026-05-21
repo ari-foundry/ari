@@ -1,0 +1,58 @@
+// Covers String.retain: stable in-place byte filtering for empty,
+// keep-some, and remove-all paths.
+fn keep_not_dash(value: ref u8) -> bool {
+  let raw = (ref value) as ptr u8;
+  return *raw != '-';
+}
+
+fn keep_lower_ascii(value: ref u8) -> bool {
+  let raw = (ref value) as ptr u8;
+  return *raw >= 'a' && *raw <= 'z';
+}
+
+fn keep_none(value: ref u8) -> bool {
+  return false;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var text = std::string::new(ref mut zone, 8);
+  var empty = std::string::new(ref mut zone, 1);
+
+  empty.retain(keep_not_dash);
+  let empty_score = if empty.is_empty() { 3 } else { 0 };
+
+  text.push('a');
+  text.push('-');
+  text.push('b');
+  text.push('-');
+  text.push('C');
+  text.push('d');
+
+  text.retain(keep_not_dash);
+  let dash_score = if text.len() == 4 &&
+    text.get(0) == 'a' && text.get(1) == 'b' &&
+    text.get(2) == 'C' && text.get(3) == 'd' {
+    11
+  } else {
+    0
+  };
+
+  text.retain(keep_lower_ascii);
+  let lower_score = if text.len() == 3 &&
+    text.get(0) == 'a' && text.get(1) == 'b' && text.get(2) == 'd' {
+    17
+  } else {
+    0
+  };
+
+  text.retain(keep_none);
+  let cleared_score = if text.is_empty() && text.try_first().is_none() {
+    23
+  } else {
+    0
+  };
+
+  zone::destroy(zone);
+  return empty_score + dash_score + lower_score + cleared_score;
+}

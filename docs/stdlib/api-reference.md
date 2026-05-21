@@ -1617,6 +1617,7 @@ text.insert(index, char)
 text.insert_in(ref mut zone, index, char)
 text.clear()
 text.truncate(length)
+text.retain(keep)
 text.reserve(ref mut zone, capacity)
 text.reserve_extra(ref mut zone, additional)
 text.append(ref mut zone, "text")
@@ -1702,7 +1703,8 @@ c.is_empty()
 ```
 
 `remove` and `try_remove` remove one byte and shift the following bytes left.
-Use the `try_` form when a missing index is ordinary input.
+Use the `try_` form when a missing index is ordinary input. `retain(keep)`
+keeps bytes accepted by `keep: fn(ref u8) -> bool` and preserves their order.
 
 String literals coerce to borrowed `Slice[u8]` values when a byte-slice API
 expects one, so calls such as `ascii::parse_decimal("123")` and

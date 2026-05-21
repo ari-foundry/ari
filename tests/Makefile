@@ -1195,6 +1195,10 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent10try_remove"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-string-byte-remove.ll
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-byte-remove.ari -o $(BUILD_DIR)/prelude/std-string-byte-remove.elf
 	$(BUILD_DIR)/prelude/std-string-byte-remove.elf; code=$$?; test $$code -eq 78
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-byte-retain.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-byte-retain.ll
+	grep -F -q '_ARNv4impl19std__string__String8inherent6retain' $(BUILD_DIR)/prelude/std-string-byte-retain.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-byte-retain.ari -o $(BUILD_DIR)/prelude/std-string-byte-retain.elf
+	$(BUILD_DIR)/prelude/std-string-byte-retain.elf; code=$$?; test $$code -eq 54
 	grep -F -q 'define ptr @"_ARNv4impl19std__string__String8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent7push_in' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-handle.ll
@@ -1839,6 +1843,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; code=$$?; test $$code -eq 6; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-handle.elf; $(BUILD_DIR)/prelude/std-string-handle.elf; code=$$?; test $$code -eq 153; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-byte-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-byte-remove.elf; $(BUILD_DIR)/prelude/std-string-byte-remove.elf; code=$$?; test $$code -eq 78; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-byte-retain.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-byte-retain.elf; $(BUILD_DIR)/prelude/std-string-byte-retain.elf; code=$$?; test $$code -eq 54; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-fixed-push.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-fixed-push.elf; $(BUILD_DIR)/prelude/std-string-fixed-push.elf; code=$$?; test $$code -eq 179; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-first-last.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-first-last.elf; $(BUILD_DIR)/prelude/std-string-first-last.elf; code=$$?; test $$code -eq 239; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-search.elf; $(BUILD_DIR)/prelude/std-string-search.elf; code=$$?; test $$code -eq 77; fi

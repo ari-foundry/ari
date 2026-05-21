@@ -1151,6 +1151,7 @@ method std::string::String::replace|check-prelude std-string-handle tests; docs/
 method std::string::String::reserve|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::reserve_extra|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::resize_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::retain|check-prelude std-string-byte-retain stable in-place byte filtering; docs/stdlib/modules/string.md
 method std::string::String::set|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::slice|check-prelude std-string-split-join borrowed byte range view; docs/stdlib/modules/string.md
 method std::string::String::split|check-prelude std-string-split-join borrowed delimiter split iterator; docs/stdlib/modules/string.md

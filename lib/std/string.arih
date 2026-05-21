@@ -554,6 +554,22 @@ pub impl std::string::String {
     self.raw.len = length;
   }
 
+  fn retain(self: ref mut Self, keep: fn(ref u8) -> bool) -> void {
+    var write = 0;
+    var read = 0;
+    while read < self.raw.len {
+      let source = ptr_add(self.raw.data, read);
+      if keep(ref *source) {
+        if write != read {
+          ptr_store(ptr_add(self.raw.data, write), ptr_load(source));
+        }
+        write = write + 1;
+      }
+      read = read + 1;
+    }
+    self.raw.len = write;
+  }
+
   fn index_of(self: ref Self, value: char) -> i64 {
     var index = 0;
     while index < self.raw.len {
