@@ -1538,6 +1538,9 @@ view.lower_bound(value)
 view.lower_bound_by(value, less)
 view.upper_bound(value)
 view.upper_bound_by(value, less)
+view.equal_range(value)
+view.equal_range_by(value, less)
+view.partition_point(predicate)
 view.min()
 view.min_by(less)
 view.max()
@@ -1558,7 +1561,9 @@ iterators that yield borrowed `Slice[T]` views. The reordering, fill/copy,
 partition/dedup, sort/search, and min/max receiver methods forward to
 `std::algo`; ordered methods require `T: std::cmp::Ord[T]`, and `*_by` methods
 take explicit comparators for call-site ordering. `lower_bound` and
-`upper_bound` return sorted insertion indexes.
+`upper_bound` return sorted insertion indexes. `equal_range` returns the
+matching `(lower, upper)` range, and `partition_point` returns the first false
+predicate index in a predicate-partitioned view.
 
 `std::vec::Vec[T]` is the source growable sequence:
 
@@ -1632,6 +1637,9 @@ vec.lower_bound(value)
 vec.lower_bound_by(value, less)
 vec.upper_bound(value)
 vec.upper_bound_by(value, less)
+vec.equal_range(value)
+vec.equal_range_by(value, less)
+vec.partition_point(predicate)
 vec.min()
 vec.min_by(less)
 vec.max()
@@ -1658,6 +1666,8 @@ mirror the root `Slice[T]` vocabulary: `slice` and `split_at` create views over 
 `find` and `contains_slice` search for borrowed subsequences, `compare` is
 lexicographic, `ordering` returns typed `cmp::Ordering`, and `chunks`,
 `windows`, and delimiter `split` are lazy allocation-free view iterators.
+The sort/search wrappers share the `std::algo` policy, including
+lower/upper/equal-range bounds and partition-point lookup.
 
 `std::collections::Set[T]` is a zone-backed linear set:
 
@@ -2390,6 +2400,9 @@ algo::lower_bound<T>(values, target)
 algo::lower_bound_by<T>(values, target, less)
 algo::upper_bound<T>(values, target)
 algo::upper_bound_by<T>(values, target, less)
+algo::equal_range<T>(values, target)
+algo::equal_range_by<T>(values, target, less)
+algo::partition_point<T>(values, predicate)
 algo::is_sorted<T>(values)
 algo::is_sorted_by<T>(values, less)
 algo::reverse<T>(values)
@@ -2411,6 +2424,9 @@ algo::dedup<T>(values)
 The ordered helpers use `cmp::Ord[T]`; the `*_by` helpers take an explicit
 `fn(T, T) -> bool` comparator. `binary_search` and `binary_search_by` return
 `Option[i64]`, while bound helpers return sorted insertion indexes.
+`equal_range` returns the matching `(lower, upper)` duplicate range, and
+`partition_point` returns the first false predicate index in a
+predicate-partitioned slice.
 `partition` accepts `fn(ref T) -> bool` and returns the split index. `copy`
 returns the number of copied elements. `dedup` compacts consecutive duplicates
 and returns the logical prefix length.

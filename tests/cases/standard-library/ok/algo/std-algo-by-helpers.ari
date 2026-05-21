@@ -19,6 +19,11 @@ fn score_value_less(left: Score, right: Score) -> bool {
   return left.value < right.value;
 }
 
+fn score_value_less_than_three(value: ref Score) -> bool {
+  let raw = (ref value) as ptr Score;
+  return (*raw).value < 3;
+}
+
 fn main() -> i64 {
   var values = [
     Score { value: 3, tie: 0 },
@@ -52,6 +57,13 @@ fn main() -> i64 {
     view,
     Score { value: 2, tie: 5 },
     score_less), 3);
+  let equal_value = algo::equal_range_by<Score>(
+    view,
+    Score { value: 2, tie: 99 },
+    score_value_less);
+  assert_eq_i64(equal_value.0, 1);
+  assert_eq_i64(equal_value.1, 3);
+  assert_eq_i64(algo::partition_point<Score>(view, score_value_less_than_three), 3);
 
   let low = algo::min_by<Score>(view, score_less).unwrap_or(Score { value: 0, tie: 0 });
   let high = algo::max_by<Score>(view, score_less).unwrap_or(Score { value: 0, tie: 0 });
@@ -85,6 +97,12 @@ fn main() -> i64 {
   assert_eq_i64(stable_view.upper_bound_by(
     Score { value: 2, tie: 0 },
     score_value_less), 3);
+  let stable_equal = stable_view.equal_range_by(
+    Score { value: 2, tie: 0 },
+    score_value_less);
+  assert_eq_i64(stable_equal.0, 1);
+  assert_eq_i64(stable_equal.1, 3);
+  assert_eq_i64(stable_view.partition_point(score_value_less_than_three), 3);
 
   var zone = zone::create(256);
   var owned = std::vec::new<Score>(ref mut zone, 4);
@@ -102,6 +120,12 @@ fn main() -> i64 {
   assert_eq_i64(owned.upper_bound_by(
     Score { value: 3, tie: 0 },
     score_less), 2);
+  let owned_equal = owned.equal_range_by(
+    Score { value: 3, tie: 0 },
+    score_less);
+  assert_eq_i64(owned_equal.0, 1);
+  assert_eq_i64(owned_equal.1, 2);
+  assert_eq_i64(owned.partition_point(score_value_less_than_three), 1);
   assert_eq_i64(owned.min_by(score_less).unwrap_or(Score { value: 0, tie: 0 }).value, 2);
   assert_eq_i64(owned.max_by(score_less).unwrap_or(Score { value: 0, tie: 0 }).value, 4);
   owned.stable_sort_by(score_value_less);

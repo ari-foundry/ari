@@ -179,6 +179,9 @@ vec.lower_bound(value)
 vec.lower_bound_by(value, less)
 vec.upper_bound(value)
 vec.upper_bound_by(value, less)
+vec.equal_range(value)
+vec.equal_range_by(value, less)
+vec.partition_point(predicate)
 vec.min()
 vec.min_by(less)
 vec.max()
@@ -193,12 +196,14 @@ storage. `chunks`, `windows`, and delimiter `split` return lazy iterators that
 yield borrowed `Slice[T]` views, so they do not allocate. `reverse`, the
 rotation helpers, `sort`, and `stable_sort` mutate the existing storage in
 place through the same algorithm module helpers used for borrowed slices.
-`is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `min`, and `max`
-are available when `T` implements `Ord[T]`. The `*_by` variants take an
+`is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `equal_range`,
+`min`, and `max` are available when `T` implements `Ord[T]`. The `*_by` variants take an
 explicit `fn(T, T) -> bool` less-than callback when a vector needs a temporary
 ordering policy without a type-wide `Ord` impl. The bound helpers return sorted
 insertion indexes, making them useful for keeping a vector sorted after a
-lookup miss. `as_slice` is the whole-vector view. The pointer helpers preserve
+lookup miss. `equal_range` returns the matching `(lower, upper)` duplicate
+range, and `partition_point` finds the first false predicate index in a
+predicate-partitioned vector. `as_slice` is the whole-vector view. The pointer helpers preserve
 zone provenance in the checker.
 
 Iterator entry point:

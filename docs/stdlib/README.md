@@ -98,8 +98,8 @@ delimiter splitting, while `std::string` mirrors those byte-view operations
 and adds allocator-backed `join_in` plus typed borrowed `Utf8`/`OsStr` views
 and shared `std::c::CStr` construction so code can distinguish validated
 UTF-8, OS bytes, and NUL-terminated C strings. `std::algo` adds source slice algorithms
-for sorting, binary search, reverse/rotate, partition, min/max/clamp, swap,
-fill, copy, and dedup. `std::parse` adds whole-input decimal, radix, hex,
+for sorting, binary search, lower/upper/equal-range bounds, partition-point
+lookup, reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup. `std::parse` adds whole-input decimal, radix, hex,
 binary, octal integer, bool, and decimal float parsing,
 and `std::encoding` adds ASCII/UTF-8/UTF-16 validation plus hex/base64 codecs
 with fallible owned decoders for untrusted input.

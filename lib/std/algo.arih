@@ -311,6 +311,32 @@ pub fn upper_bound_by[T](values: std::Slice[T], target: T, less: fn(T, T) -> boo
   return low;
 }
 
+pub fn equal_range[T: std::cmp::Ord[T]](values: std::Slice[T], target: T) -> (i64, i64) {
+  let lower = lower_bound<T>(values, target);
+  let upper = upper_bound<T>(values, target);
+  return (lower, upper);
+}
+
+pub fn equal_range_by[T](values: std::Slice[T], target: T, less: fn(T, T) -> bool) -> (i64, i64) {
+  let lower = lower_bound_by<T>(values, target, less);
+  let upper = upper_bound_by<T>(values, target, less);
+  return (lower, upper);
+}
+
+pub fn partition_point[T](values: std::Slice[T], predicate: fn(ref T) -> bool) -> i64 {
+  var low = 0;
+  var high = values.len;
+  while low < high {
+    let mid = low + ((high - low) / 2);
+    if predicate(ref *ptr_add(values.data, mid)) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
+}
+
 pub fn sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
   var index = 0;
   while index < values.len {

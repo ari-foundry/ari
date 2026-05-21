@@ -19,6 +19,11 @@ fn even(value: ref i64) -> bool {
   return (*raw % 2) == 0;
 }
 
+fn less_than_three(value: ref i64) -> bool {
+  let raw = (ref value) as ptr i64;
+  return (*raw) < 3;
+}
+
 fn partition_ok(values: Slice[i64], split: i64) -> bool {
   var index = 0;
   while index < split {
@@ -59,8 +64,14 @@ fn main() -> i64 {
   let lower_missing = algo::lower_bound<i64>(bounds.as_slice(), 5);
   let upper_before = algo::upper_bound<i64>(bounds.as_slice(), 0);
   let upper_after = algo::upper_bound<i64>(bounds.as_slice(), 9);
+  let equal_hit = algo::equal_range<i64>(bounds.as_slice(), 2);
+  let equal_missing = algo::equal_range<i64>(bounds.as_slice(), 3);
+  let point = algo::partition_point<i64>(bounds.as_slice(), less_than_three);
   if lower_hit == 1 && upper_hit == 4 &&
-     lower_missing == 5 && upper_before == 0 && upper_after == 6 {
+     lower_missing == 5 && upper_before == 0 && upper_after == 6 &&
+     equal_hit.0 == 1 && equal_hit.1 == 4 &&
+     equal_missing.0 == 4 && equal_missing.1 == 4 &&
+     point == 4 {
     score = score + 1;
   }
 

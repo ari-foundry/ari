@@ -28,6 +28,8 @@ fn std::algo::clamp[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers cla
 fn std::algo::clamp_by[T]|check-prelude std-algo-by-helpers comparator clamp wrapper over cmp; docs/stdlib/modules/algo.md
 fn std::algo::copy[T]|check-prelude std-algo-slice-helpers prefix copy between slices; docs/stdlib/modules/algo.md
 fn std::algo::dedup[T]|check-prelude std-algo-slice-helpers consecutive duplicate compaction; docs/stdlib/modules/algo.md
+fn std::algo::equal_range[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers ordered equal-range bounds; docs/stdlib/modules/algo.md
+fn std::algo::equal_range_by[T]|check-prelude std-algo-by-helpers comparator equal-range bounds; docs/stdlib/modules/algo.md
 fn std::algo::fill[T]|check-prelude std-algo-slice-helpers fill slice values; docs/stdlib/modules/algo.md
 fn std::algo::is_sorted[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers sortedness predicate; docs/stdlib/modules/algo.md
 fn std::algo::is_sorted_by[T]|check-prelude std-algo-by-helpers comparator sortedness predicate; docs/stdlib/modules/algo.md
@@ -38,6 +40,7 @@ fn std::algo::max_by[T]|check-prelude std-algo-by-helpers comparator slice maxim
 fn std::algo::min[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers slice minimum helper; docs/stdlib/modules/algo.md
 fn std::algo::min_by[T]|check-prelude std-algo-by-helpers comparator slice minimum helper; docs/stdlib/modules/algo.md
 fn std::algo::partition[T]|check-prelude std-algo-slice-helpers borrowed-predicate partition; docs/stdlib/modules/algo.md
+fn std::algo::partition_point[T]|check-prelude std-algo-slice-helpers partition-point binary search over predicate-partitioned slices; docs/stdlib/modules/algo.md
 fn std::algo::reverse[T]|check-prelude std-algo-slice-helpers in-place slice reverse; docs/stdlib/modules/algo.md
 fn std::algo::rotate_left[T]|check-prelude std-algo-slice-helpers left rotation; docs/stdlib/modules/algo.md
 fn std::algo::rotate_right[T]|check-prelude std-algo-slice-helpers right rotation; docs/stdlib/modules/algo.md
@@ -796,6 +799,8 @@ method std::Slice[T]::binary_search_by|check-prelude std-algo-by-helpers compara
 method std::Slice[T]::copy_from|check-prelude prelude-slice-sequence borrowed target copy wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::copy_to|check-prelude prelude-slice-copy-to borrowed receiver and target reset tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 method std::Slice[T]::dedup|check-prelude prelude-slice-sequence consecutive duplicate compaction wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::equal_range|check-prelude prelude-slice-sequence ordered equal-range wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::equal_range_by|check-prelude std-algo-by-helpers comparator equal-range wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::fill|check-prelude prelude-slice-sequence borrowed target fill wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::is_sorted|check-prelude prelude-slice-sequence ordered borrowed slice sortedness wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::is_sorted_by|check-prelude std-algo-by-helpers comparator borrowed slice sortedness wrapper; docs/stdlib/modules/slice.md
@@ -806,6 +811,7 @@ method std::Slice[T]::max_by|check-prelude std-algo-by-helpers comparator borrow
 method std::Slice[T]::min|check-prelude prelude-slice-sequence ordered borrowed slice minimum wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::min_by|check-prelude std-algo-by-helpers comparator borrowed slice minimum wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::partition|check-prelude prelude-slice-sequence borrowed predicate partition wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::partition_point|check-prelude prelude-slice-sequence partition-point wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::reverse|check-prelude prelude-slice-sequence in-place borrowed slice reverse wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::rotate_left|check-prelude prelude-slice-sequence borrowed slice left rotation wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::rotate_right|check-prelude prelude-slice-sequence borrowed slice right rotation wrapper; docs/stdlib/modules/slice.md
@@ -1507,6 +1513,8 @@ method std::vec::Vec[T]::copy_to|check-prelude std-vec-copy-to borrowed receiver
 method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::dedup|check-prelude std-vec-sequence owned consecutive duplicate compaction and truncation; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::ends_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::equal_range|check-prelude std-vec-sequence ordered equal-range wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::equal_range_by|check-prelude std-algo-by-helpers comparator equal-range wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::equals|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::extend_from_slice|check-prelude std-vec-growth-paths owning-zone slice extension; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::extend_from_slice_in|check-prelude std-vec-extend-from-slice-in; docs/dev/test-matrix.md Explicit memory zones row
@@ -1533,6 +1541,7 @@ method std::vec::Vec[T]::min|check-prelude std-vec-sequence ordered sequence min
 method std::vec::Vec[T]::min_by|check-prelude std-algo-by-helpers comparator sequence minimum wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::ordering|check-prelude std-vec-sequence lexicographic Ordering comparison wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::partition|check-prelude std-vec-sequence owned borrowed-predicate partition wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::partition_point|check-prelude std-vec-sequence partition-point wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::pop|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push_in|check-prelude std-vec-push-in; docs/dev/test-matrix.md Explicit memory zones row

@@ -204,6 +204,16 @@ pub impl[T] std::Slice[T] {
     return std::algo::upper_bound_by<T>(current, target, less);
   }
 
+  fn equal_range_by(self: ref Self, target: T, less: fn(T, T) -> bool) -> (i64, i64) {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::equal_range_by<T>(current, target, less);
+  }
+
+  fn partition_point(self: ref Self, predicate: fn(ref T) -> bool) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::partition_point<T>(current, predicate);
+  }
+
   fn min_by(self: ref Self, less: fn(T, T) -> bool) -> super::Option[T] {
     let current = super::Slice<T> { data: self.data, len: self.len };
     return std::algo::min_by<T>(current, less);
@@ -246,6 +256,11 @@ pub impl[T: std::cmp::Ord[T]] std::Slice[T] {
   fn upper_bound(self: ref Self, target: T) -> i64 {
     let current = super::Slice<T> { data: self.data, len: self.len };
     return std::algo::upper_bound<T>(current, target);
+  }
+
+  fn equal_range(self: ref Self, target: T) -> (i64, i64) {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::equal_range<T>(current, target);
   }
 
   fn min(self: ref Self) -> super::Option[T] {
@@ -706,6 +721,11 @@ pub impl[T: std::cmp::Ord[T]] std::vec::Vec[T] {
     return std::algo::upper_bound<T>(view, target);
   }
 
+  fn equal_range(self: ref Self, target: T) -> (i64, i64) {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::equal_range<T>(view, target);
+  }
+
   fn min(self: ref Self) -> super::Option[T] {
     let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
     return std::algo::min<T>(view);
@@ -746,6 +766,16 @@ pub impl[T] std::vec::Vec[T] {
   fn upper_bound_by(self: ref Self, target: T, less: fn(T, T) -> bool) -> i64 {
     let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
     return std::algo::upper_bound_by<T>(view, target, less);
+  }
+
+  fn equal_range_by(self: ref Self, target: T, less: fn(T, T) -> bool) -> (i64, i64) {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::equal_range_by<T>(view, target, less);
+  }
+
+  fn partition_point(self: ref Self, predicate: fn(ref T) -> bool) -> i64 {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::partition_point<T>(view, predicate);
   }
 
   fn min_by(self: ref Self, less: fn(T, T) -> bool) -> super::Option[T] {

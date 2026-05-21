@@ -25,6 +25,9 @@ algo::lower_bound<T>(values, target)
 algo::lower_bound_by<T>(values, target, less)
 algo::upper_bound<T>(values, target)
 algo::upper_bound_by<T>(values, target, less)
+algo::equal_range<T>(values, target)
+algo::equal_range_by<T>(values, target, less)
+algo::partition_point<T>(values, predicate)
 algo::is_sorted<T>(values)
 algo::is_sorted_by<T>(values, less)
 algo::reverse<T>(values)
@@ -44,7 +47,7 @@ algo::dedup<T>(values)
 ```
 
 `sort`, `stable_sort`, `binary_search`, `lower_bound`, `upper_bound`,
-`is_sorted`, `min`, `max`, and `clamp` use `cmp::Ord[T]`. Their source code
+`equal_range`, `is_sorted`, `min`, `max`, and `clamp` use `cmp::Ord[T]`. Their source code
 uses ordinary `<`, `>`, and `<=` operators; for generic element types those
 operators dispatch to `Ord[T]::lt`. Define `impl cmp::Ord[YourType] for
 YourType` before using those helpers with a custom type. The `*_by` variants
@@ -54,8 +57,11 @@ site needs a temporary ordering policy rather than a type-wide `Ord` impl.
 `binary_search` returns `Option[i64]`: `Some(index)` when it finds an equal
 value under `Ord`, and `None` otherwise. `lower_bound` returns the first sorted
 insertion index whose value is not less than the target. `upper_bound` returns
-the first index whose value is greater than the target. Call these search
-helpers only on a sorted slice.
+the first index whose value is greater than the target. `equal_range` returns
+the `(lower, upper)` pair for all values equal to the target, and
+`partition_point` returns the first index where a borrowed predicate becomes
+false. Call these search helpers only on sorted or predicate-partitioned
+slices.
 
 `partition(values, keep)` reorders the slice so values accepted by
 `keep: fn(ref T) -> bool` appear before rejected values. It returns the split
@@ -76,7 +82,8 @@ array or vector; use the returned length as the prefix boundary.
 | --- | --- |
 | sort | Current: `sort(values)` and `sort_by(values, less)` over slices. |
 | stable sort | Current: `stable_sort(values)` and `stable_sort_by(values, less)`. |
-| binary search | Current: `binary_search(values, target) -> Option[i64]`, `lower_bound(values, target) -> i64`, `upper_bound(values, target) -> i64`, and comparator `*_by` variants. |
+| binary search | Current: `binary_search(values, target) -> Option[i64]`, `lower_bound(values, target) -> i64`, `upper_bound(values, target) -> i64`, `equal_range(values, target) -> (i64, i64)`, and comparator `*_by` variants. |
+| partition point | Current: `partition_point(values, predicate) -> i64` for predicate-partitioned slices. |
 | reverse | Current: `reverse(values)`. |
 | rotate | Current: `rotate_left(values, count)` and `rotate_right(values, count)`. |
 | partition | Current: `partition(values, keep)` with borrowed predicates. |
@@ -104,6 +111,7 @@ let view = values.as_slice();
 view.sort();
 let again = view.binary_search(4);
 let insert_at = view.lower_bound(2);
+let equal = view.equal_range(1);
 ```
 
 Partition and compact:
@@ -114,8 +122,14 @@ fn even(value: ref i64) -> bool {
   return (*raw % 2) == 0;
 }
 
+fn below_four(value: ref i64) -> bool {
+  let raw = (ref value) as ptr i64;
+  return (*raw) < 4;
+}
+
 var values = [1, 2, 3, 4, 5, 6];
 let split = algo::partition<i64>(values.as_slice(), even);
+let point = algo::partition_point<i64>(values.as_slice(), below_four);
 
 var repeated = [1, 1, 2, 2, 3];
 let unique_len = algo::dedup<i64>(repeated.as_slice());
@@ -154,10 +168,11 @@ tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
 ```
 
 The focused test covers sorting, stable sorting, comparator-based sorting,
-binary search, lower/upper bounds, min/max/clamp, reverse, rotation, partition,
-fill, copy, dedup, and swap over `Slice[i64]`. `std-algo-by-helpers.ari`
-covers comparator search, bounds, min/max/clamp, and natural `Slice`/`Vec`
-receiver wrappers over a custom value with no `Ord` impl.
+binary search, lower/upper/equal-range bounds, partition point, min/max/clamp,
+reverse, rotation, partition, fill, copy, dedup, and swap over `Slice[i64]`.
+`std-algo-by-helpers.ari` covers comparator search, bounds, equal range,
+partition point, min/max/clamp, and natural `Slice`/`Vec` receiver wrappers
+over a custom value with no `Ord` impl.
 `prelude-slice-sequence.ari` covers the ordered receiver wrappers over the same
 algorithms.
 

@@ -120,6 +120,9 @@ view.lower_bound(target)
 view.lower_bound_by(target, less)
 view.upper_bound(target)
 view.upper_bound_by(target, less)
+view.equal_range(target)
+view.equal_range_by(target, less)
+view.partition_point(predicate)
 view.min()
 view.min_by(less)
 view.max()
@@ -134,6 +137,9 @@ returns the logical unique length; callers decide whether to truncate an owning
 container. `partition` accepts a borrowed predicate and returns the split index.
 `lower_bound` and `upper_bound` return sorted insertion indexes, which is useful
 when missing values should be inserted or duplicate ranges must be counted.
+`equal_range` returns the `(lower, upper)` duplicate range directly, and
+`partition_point` returns the first index where a borrowed predicate turns
+false in an already predicate-partitioned slice.
 The ordered methods require `T: std::cmp::Ord[T]`; the `*_by` methods take an
 explicit `fn(T, T) -> bool` less-than callback for temporary ordering policies.
 
@@ -155,7 +161,7 @@ tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
 `prelude-slice-sequence.ari` covers `slice`, `split_at`, `find`,
 `contains_slice`, `compare`, `ordering`, `chunks`, `windows`, delimiter `split`, in-place
 reordering, copying/filling, partition/dedup, sorting, binary search,
-lower/upper bounds, and min/max wrappers.
+lower/upper/equal-range bounds, partition point, and min/max wrappers.
 
 ## Limits And Roadmap
 

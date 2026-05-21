@@ -1025,6 +1025,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'std4algo20binary_search__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	grep -F -q 'std4algo18lower_bound__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	grep -F -q 'std4algo18upper_bound__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
+	grep -F -q 'equal_range__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
+	grep -F -q 'partition_point__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	grep -F -q 'std4algo16partition__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	grep -F -q 'std4algo12dedup__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf
@@ -1033,6 +1035,8 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
 	grep -F -q 'std4algo21is_sorted_by__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
 	grep -F -q 'std4algo25binary_search_by__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
+	grep -F -q 'equal_range_by__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
+	grep -F -q 'partition_point__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
 	grep -F -q 'std4algo17clamp_by__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari -o $(BUILD_DIR)/prelude/std-algo-by-helpers.elf
 	$(BUILD_DIR)/prelude/std-algo-by-helpers.elf; code=$$?; test $$code -eq 0
@@ -1700,6 +1704,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'std__vec__Vec_i64_8inherent13binary_search' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent11lower_bound' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent11upper_bound' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent11equal_range' $(BUILD_DIR)/prelude/std-vec-sequence.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent15partition_point' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent3min' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	grep -F -q 'std__vec__Vec_i64_8inherent3max' $(BUILD_DIR)/prelude/std-vec-sequence.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-slice.ll
@@ -2037,6 +2043,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'Slice_i64_8inherent13binary_search' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent11lower_bound' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent11upper_bound' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent11equal_range' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
+	grep -F -q 'Slice_i64_8inherent15partition_point' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent3min' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	grep -F -q 'Slice_i64_8inherent3max' $(BUILD_DIR)/prelude/prelude-slice-sequence.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/prelude-slice-metadata.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-metadata.ll

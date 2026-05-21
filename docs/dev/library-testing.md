@@ -26,15 +26,17 @@ identifies the exact case:
 - `std-vec-sequence.ari`: source `std::vec::Vec[T]` direct borrowed
   `slice`, `split_at`, subsequence search, lexicographic compare, chunks,
   windows, delimiter splitting, reverse, rotation, sorting, binary search,
-  lower/upper bounds, owned consecutive deduplication, live-prefix fill/copy,
-  borrowed-predicate partition, and min/max wrappers over live storage.
+  lower/upper/equal-range bounds, partition point, owned consecutive
+  deduplication, live-prefix fill/copy, borrowed-predicate partition, and
+  min/max wrappers over live storage.
 - `prelude-slice-metadata.ari`: root `Slice[T]` borrowed metadata helper
   behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access
   behavior.
 - `prelude-slice-sequence.ari`: root `Slice[T]` range views, split views,
   subsequence search, lexicographic compare, chunks, windows, delimiter
-  splitting, and receiver-form algorithm wrappers including sorted bounds.
+  splitting, and receiver-form algorithm wrappers including sorted/equal-range
+  bounds and partition point.
 - `std-iter-adapters.ari`: source `std::iter` lazy `map`, `filter`, `take`,
   `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed
   `collect` behavior over `std::vec::Iter[T]`.
@@ -247,12 +249,14 @@ identifies the exact case:
 - `std-net-dns-lookup.ari`: hosted IPv4 numeric lookup through both `Option`
   and `Result` APIs, unsupported IPv6 text input, and edge IPv4 addresses.
 - `std-algo-slice-helpers.ari`: source `std::algo` sort/stable sort,
-  comparator sort, binary search, lower/upper bounds, reverse/rotate,
-  partition, min/max/clamp, swap, fill, copy, and dedup behavior over borrowed
-  slices, including custom `Ord` values through natural ordering operators.
+  comparator sort, binary search, lower/upper/equal-range bounds, partition
+  point, reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup
+  behavior over borrowed slices, including custom `Ord` values through natural
+  ordering operators.
 - `std-algo-by-helpers.ari`: source `std::algo` comparator sortedness,
-  search/bounds, min/max/clamp, stable comparator ordering, and natural
-  `Slice`/`Vec` receiver wrappers over a custom value with no `Ord` impl.
+  search/bounds/equal-range, partition point, min/max/clamp, stable comparator
+  ordering, and natural `Slice`/`Vec` receiver wrappers over a custom value
+  with no `Ord` impl.
 - `std-hash-basic.ari`: source `std::hash` deterministic `Hasher`
   construction/reset/finalization, byte-slice hashing, generic `Hash[T]`
   dispatch for primitive values, primitive write helpers, and the
