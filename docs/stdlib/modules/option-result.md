@@ -31,6 +31,7 @@ value.unwrap_or_else(op)
 value.unwrap()
 value.expect("message")
 value.map<U>(op)
+value.and<U>(other)
 value.and_then<U>(op)
 value.filter(op)
 value.flatten()
@@ -52,6 +53,10 @@ to inspect the case without consuming a local value.
 `filter` consumes the `Option[T]` but passes the payload to `op` as `ref T`.
 It keeps `Some(T)` when the predicate returns true and returns `None<T>()`
 when the predicate returns false or the input is already `None`.
+
+`and(other)` returns `other` when the receiver is `Some`, otherwise it returns
+`None`. Use `and_then(op)` when the next option must be computed from the
+payload.
 
 `ok_or` and `ok_or_else` convert `Option[T]` into `Result[T, E]`. The lazy
 form calls its function only for `None`.
@@ -81,6 +86,7 @@ value.ok()
 value.err()
 value.map<U>(op)
 value.map_err<F>(op)
+value.and<U>(other)
 value.and_then<U>(op)
 value.or<F>(fallback)
 value.or_else<F>(op)
@@ -89,8 +95,10 @@ value.transpose()
 
 `ok` keeps the success payload as `Option[T]`. `err` keeps the error payload as
 `Option[E]`. `unwrap_or_else` receives the error and returns a fallback success
-value. `or` uses an already-built fallback `Result[T, F]` when the receiver is
-`Err`; `or_else` builds that fallback lazily from the original error.
+value. `and(other)` returns `other` when the receiver is `Ok`, otherwise it
+preserves the original error. `or` uses an already-built fallback
+`Result[T, F]` when the receiver is `Err`; `or_else` builds that fallback
+lazily from the original error.
 `transpose` is available on `Result[Option[T], E]` values. It turns
 `Ok(Some(T))` into `Some(Ok(T))`, `Ok(None<T>())` into `None<Result[T, E]>()`,
 and `Err(E)` into `Some(Err(E))`.
@@ -130,6 +138,9 @@ tests/cases/standard-library/ok/prelude/prelude-option-result-combinators.ari
 tests/cases/standard-library/ok/prelude/prelude-option-result-conversions.ari
 tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap.ari
 ```
+
+`prelude-option-result-combinators.ari` covers `map`, eager `and`/`or`,
+lazy `and_then`/`or_else`, and error-preserving `Result.and` behavior.
 
 `make check-prelude` compiles the tests to LLVM, checks representative method
 symbols, links executable cases, and verifies results.

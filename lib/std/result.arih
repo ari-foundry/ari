@@ -119,6 +119,13 @@ pub impl[T, E] std::Result[T, E] {
     };
   }
 
+  fn and[U](self, other: std::Result[U, E]) -> std::Result[U, E] {
+    return match self {
+      std::Ok(_) => other,
+      std::Err(error) => std::Err<U, E>(error);
+    };
+  }
+
   fn or[F](self, fallback: std::Result[T, F]) -> std::Result[T, F] {
     return match self {
       std::Ok(value) => std::Ok<T, F>(value),

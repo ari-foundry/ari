@@ -38,6 +38,8 @@ fn main() -> i64 {
   let option_map_none = None<i64>().map<i64>(double).unwrap_or(3);
   let option_then = Some(4).and_then<i64>(positive_next).unwrap_or(0);
   let option_then_none = Some(-1).and_then<i64>(positive_next).unwrap_or(7);
+  let option_and_some = Some(1).and<i64>(Some(17)).unwrap_or(0);
+  let option_and_none = None<i64>().and<i64>(Some(19)).unwrap_or(23);
   let option_or_some = Some(2).or(Some(30)).unwrap_or(0);
   let option_or_none = None<i64>().or(Some(31)).unwrap_or(0);
   let option_or_else_some = Some(4).or_else(alternate_option).unwrap_or(0);
@@ -54,6 +56,12 @@ fn main() -> i64 {
   let result_ok_passthrough = Ok<i64, i32>(9).map_err<i64>(widen_error).unwrap_or(0);
   let result_then_ok = Ok<i64, i32>(5).and_then<i64>(result_next).unwrap_or(0);
   let result_then_err = Err<i64, i32>(6i32).and_then<i64>(result_next).unwrap_or(13);
+  let result_and_ok = Ok<i64, i32>(2).and<i64>(Ok<i64, i32>(29)).unwrap_or(0);
+  let result_and_err = Err<i64, i32>(7i32).and<i64>(Ok<i64, i32>(31)).unwrap_or(37);
+  let result_and_preserves_err = match Err<i64, i32>(12i32).and<i64>(Ok<i64, i32>(41)) {
+    Ok(ok_payload) => ok_payload,
+    Err(err_payload) => err_payload as i64;
+  };
   let result_or_ok = Ok<i64, i32>(41).or<i64>(Err<i64, i64>(99)).unwrap_or(0);
   let result_or_err = Err<i64, i32>(10i32).or<i64>(Ok<i64, i64>(43)).unwrap_or(0);
   let result_or_still_err =
@@ -64,12 +72,14 @@ fn main() -> i64 {
 
   let total =
     option_map + option_map_none + option_then + option_then_none +
-    option_or_some + option_or_none + option_or_else_some +
+    option_and_some + option_and_none + option_or_some + option_or_none +
+    option_or_else_some +
     option_or_else_none + option_or_else_still_none +
     result_map + result_map_err_passthrough + result_err_changed +
     result_ok_passthrough + result_then_ok + result_then_err +
+    result_and_ok + result_and_err + result_and_preserves_err +
     result_or_ok + result_or_err + result_or_still_err +
     result_or_else_ok + result_or_else_err + result_or_else_still_err;
-  assert_eq_i64(total, 355);
+  assert_eq_i64(total, 473);
   return total % 256;
 }

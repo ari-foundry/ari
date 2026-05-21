@@ -29,9 +29,10 @@ The library contract is explicit and capability-oriented:
 The current `std` package already provides:
 
 - prelude ADTs: `Option`, `Result`, `Slice`, `Range`, `RangeInclusive`
-- source `Option`/`Result` predicates, combinators, conversions, nested option
-  filtering, flattening, bidirectional option-result transposition, and lazy
-  fallback helpers, including consuming payload predicate helpers
+- source `Option`/`Result` predicates, eager/lazy combinators, conversions,
+  nested option filtering, flattening, bidirectional option-result
+  transposition, and lazy fallback helpers, including consuming payload
+  predicate helpers
 - assertion, panic, `move`, and `take` helpers
 - IO/input/context/env declarations and source helpers such as
   `io::Reader`, `io::Writer`, `io::Seek`, `io::cursor`,

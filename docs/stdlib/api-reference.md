@@ -1166,6 +1166,7 @@ value.unwrap_or_else(op)
 value.unwrap()
 value.expect("message")
 value.map<U>(op)
+value.and<U>(other)
 value.and_then<U>(op)
 value.filter(op)
 value.flatten()
@@ -1196,6 +1197,7 @@ value.ok()
 value.err()
 value.map<U>(op)
 value.map_err<F>(op)
+value.and<U>(other)
 value.and_then<U>(op)
 value.or<F>(fallback)
 value.or_else<F>(op)
@@ -1211,6 +1213,8 @@ the payload.
 `Option::transpose` is available on `Option[Result[T, E]]` and turns optional
 fallible work into fallible optional work. Use the lazy `*_else` forms when the
 fallback is expensive or should only run on the missing/error branch. Use
+`Option::and` and `Result::and` when the next value is already available and
+should be selected only from the present/success branch. Use
 `ok_or` and `ok_or_else` when an optional value needs to enter a
 `Result`-returning flow. Use `ok` and `err` when a `Result` should be projected
 back into an `Option`. Use `Result::or` when a fallback `Result` is already
