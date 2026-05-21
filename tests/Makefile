@@ -1896,6 +1896,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent17extend_from_slice' $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-resize-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-resize-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9resize_in' $(BUILD_DIR)/prelude/std-vec-resize-in.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-resize-with.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-resize-with.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent11resize_with' $(BUILD_DIR)/prelude/std-vec-resize-with.ll
+	grep -q '_ARNv4impl19std__vec__Vec_Pair_8inherent11resize_with' $(BUILD_DIR)/prelude/std-vec-resize-with.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-resize-with.ari -o $(BUILD_DIR)/prelude/std-vec-resize-with.elf
+	$(BUILD_DIR)/prelude/std-vec-resize-with.elf
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec27grow_to_own_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec28ensure_spare_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll

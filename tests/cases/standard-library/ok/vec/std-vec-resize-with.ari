@@ -1,0 +1,47 @@
+// Covers generator-based Vec growth. `resize_with` creates a fresh value for
+// each new slot and shares the normal shrink/drop path when the target length
+// is smaller than the current length.
+
+struct Pair {
+  left: i64,
+  right: i64,
+}
+
+fn make_pair() -> Pair {
+  return Pair { left: 4, right: 9 };
+}
+
+fn make_i64() -> i64 {
+  return 21;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+
+  var numbers = Vec::with_capacity<i64>(ref mut zone, 1);
+  numbers.push(5);
+  numbers.resize_with(4, make_i64);
+  assert(numbers.len() == 4);
+  assert(numbers.get(0) == 5);
+  assert(numbers.get(1) == 21);
+  assert(numbers.get(3) == 21);
+
+  numbers.resize_with(2, make_i64);
+  assert(numbers.len() == 2);
+  assert(numbers.get(0) == 5);
+  assert(numbers.get(1) == 21);
+
+  var pairs = Vec::with_capacity<Pair>(ref mut zone, 0);
+  pairs.resize_with(3, make_pair);
+  assert(pairs.len() == 3);
+  assert(pairs.get(0).left == 4);
+  assert(pairs.get(1).right == 9);
+  assert(pairs.get(2).left + pairs.get(2).right == 13);
+
+  pairs.resize_with(1, make_pair);
+  assert(pairs.len() == 1);
+  assert(pairs.get(0).left == 4 && pairs.get(0).right == 9);
+
+  zone::destroy(zone);
+  return 0;
+}

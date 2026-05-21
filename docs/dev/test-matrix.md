@@ -598,11 +598,15 @@ Checklist:
 - [x] source `std::vec::Vec<T>.resize_in(ref mut Zone, length, value)` shrinks
       by dropping removed tail values or grows through the explicit
       compatibility capability
+- [x] source `std::vec::Vec<T>.resize_with(length, make_value)` grows through
+      stored zone metadata and calls the zero-argument maker once per new slot,
+      covered by `std-vec-resize-with`
 - [x] source `std::vec::Vec<T>.try_pop()` returns `Option<T>` for empty-aware
       last-element move-out without an assertion
 - [x] source `std::vec::Vec<T>` owning-zone `push`, `insert`, `reserve`,
-      `reserve_extra`, `extend_from_slice`, and `resize` share one private
-      capacity/copy growth path, covered by `std-vec-growth-paths`
+      `reserve_extra`, `extend_from_slice`, `resize`, and `resize_with` share
+      one private capacity/copy growth path, covered by `std-vec-growth-paths`
+      and `std-vec-resize-with`
 - [x] source `std::vec::Vec<T>` stores `ZoneMetadata` in the handle so
       natural growth calls work without compiler-synthesized zone arguments
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view

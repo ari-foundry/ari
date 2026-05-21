@@ -114,6 +114,7 @@ vec.extend_iter(iter)
 vec.extend_from_slice(values)
 vec.append(ref mut other)
 vec.resize(length, value)
+vec.resize_with(length, make_value)
 vec.drain()
 vec.drain_range(start, end)
 vec.insert_many(index, values)
@@ -159,7 +160,10 @@ capacity but does not reclaim old bytes until the zone is reset or destroyed.
 the same allocation policy as `reserve`; allocation failure is still governed
 by the runtime zone policy. `push`, `insert`, `reserve`, `try_reserve`,
 `reserve_extra`, `extend`, `extend_from_slice`, `append`, `insert_many`,
-`splice`, and growing `resize` use `ZoneMetadata` captured at construction.
+`splice`, growing `resize`, and `resize_with` use `ZoneMetadata` captured at
+construction. `resize_with(length, make_value)` calls `make_value()` once per
+new slot, making it the natural growth API when one repeated value is not the
+right contract.
 The metadata can also be recovered from a non-empty backing allocation header,
 so ordinary callers do not need to pass `ref mut zone` after construction.
 
@@ -177,6 +181,10 @@ production-safe today for scalar and plain copyable elements. That means:
   move-only resource transfer or clone-generation APIs.
 - Growing `resize(length, value)` writes the same value repeatedly. It is not a
   clone or generator API for move-only resources.
+- `resize_with(length, make_value)` calls the zero-argument maker once per new
+  slot and stores each returned value. This avoids the repeated-value contract
+  of `resize`, though the final placement still relies on today's raw storage
+  model.
 - Shrinking `resize`, `truncate`, `clear`, `remove_range`, `retain`, and
   `Vec::dedup*` drop removed live values exactly once through normal `Drop`
   lowering. `swap_remove` returns the removed value and moves the old tail
@@ -417,6 +425,7 @@ tests/cases/standard-library/ok/vec/std-vec-sequence.ari
 tests/cases/standard-library/ok/algo/std-algo-final-sort.ari
 tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari
 tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari
+tests/cases/standard-library/ok/vec/std-vec-resize-with.ari
 tests/cases/standard-library/ok/vec/std-vec-complete-convenience-api.ari
 tests/cases/standard-library/ok/vec/std-vec-range-mutation.ari
 tests/cases/standard-library/ok/vec/std-vec-iter.ari

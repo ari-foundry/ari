@@ -1864,6 +1864,7 @@ vec.extend_from_slice(values)
 vec.extend_from_slice_in(ref mut zone, values)
 vec.append(ref mut other)
 vec.resize(length, value)
+vec.resize_with(length, make_value)
 vec.resize_in(ref mut zone, length, value)
 vec.drain()
 vec.drain_range(start, end)
@@ -1950,9 +1951,11 @@ allocation, while old bytes remain owned by the zone until reset/destroy.
 `try_reserve(capacity)` returns `false` for negative capacities and otherwise
 uses the same runtime allocation policy as `reserve`. `push`, `insert`,
 `reserve`, `try_reserve`, `reserve_extra`, `extend`, `extend_from_slice`,
-`append`, `insert_many`, `splice`, and growing `resize` use `ZoneMetadata`
-stored inside the handle; the `_in` forms remain available for explicit
-capability plumbing.
+`append`, `insert_many`, `splice`, growing `resize`, and `resize_with` use
+`ZoneMetadata` stored inside the handle; the `_in` forms remain available for
+explicit capability plumbing. `resize_with(length, make_value)` calls the
+zero-argument maker once per new slot, which is the natural growth spelling
+when one repeated value is not the right contract.
 The borrowed sequence helpers
 mirror the root `Slice[T]` vocabulary: `slice` and `split_at` create views over live vector storage,
 `find` and `contains_slice` search for borrowed subsequences, `compare` is
@@ -1965,7 +1968,9 @@ handle supports `value()` and `value_mut()`.
 Vector growth and reordering also follow the shared
 [value movement contract](value-contracts.md). Shrink and removal paths drop
 removed live values, while growing `resize(length, value)` repeats one value and
-therefore is not a clone/generator API for resource owners.
+therefore is not a clone/generator API for resource owners. Use
+`resize_with(length, make_value)` when each new slot should be built by a fresh
+function call; final placement still follows today's raw storage model.
 
 `std::collections::Set[T]` is a zone-backed linear set:
 

@@ -1756,6 +1756,7 @@ method std::vec::Vec[T]::reserve_extra_in|check-prelude std-vec-reserve-extra ex
 method std::vec::Vec[T]::reserve_in|check-prelude std-vec-reserve explicit-zone compatibility growth; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::resize|check-prelude std-vec-growth-paths owning-zone resize growth and shrink; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::resize_in|check-prelude std-vec-resize-in; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::resize_with|check-prelude std-vec-resize-with generator-based vector growth and shrink; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::retain|check-prelude std-vec-retain stable in-place predicate filtering; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::reverse|check-prelude std-vec-sequence in-place sequence reversal wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::reverse_range|check-prelude std-vec-range-mutation owned vector half-open range reverse; docs/stdlib/modules/vec.md

@@ -33,6 +33,9 @@ identifies the exact case:
   convenience surface for associated `with_capacity`, `try_reserve`,
   `shrink_to_fit`, `extend`, `append`, `insert_many`, `remove_range`,
   `splice`, `drain`, `truncate`, `resize`, and `clear`.
+- `std-vec-resize-with.ari`: source `std::vec::Vec[T]` generator-based growth
+  through `resize_with`, including one maker call per new slot and the normal
+  shrink path.
 - `std-vec-complete-convenience-api.ari`: source `std::vec::Vec[T]` complete
   practical convenience pass for capacity trimming, whole/range draining,
   splice, `split_off`, `append`, slice and iterator extension,

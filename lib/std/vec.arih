@@ -761,6 +761,17 @@ pub impl[T] std::vec::Vec[T] {
     }
   }
 
+  fn resize_with(self: ref mut Self, length: i64, make_value: fn() -> T) -> void {
+    std::assert(length >= 0);
+    if length <= self.raw.len {
+      shrink_to_len<T>(self, length);
+      return;
+    }
+    while self.raw.len < length {
+      self.push(make_value());
+    }
+  }
+
   fn remove(self: ref mut Self, index: i64) -> T {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);
