@@ -277,8 +277,9 @@ has an ordinary fallback value; use `try_get` when absence should stay visible
 as `Option[V]`. `remove` returns the removed value. `keys` and `values`
 iterate live buckets. That order is deterministic for a specific table state,
 but it is not insertion order and should not be used as a stable sorting rule.
-`entries` yields `MapEntry[K, V]` values with `.key` and `.value` fields over
-the same live buckets. `reserve_extra(additional)` reserves enough hash buckets
+`entries` yields copied `MapEntry[K, V]` values with `.key`/`.value` fields and
+`key()`/`value()` accessors over the same live buckets.
+`reserve_extra(additional)` reserves enough hash buckets
 for the requested live length without immediately violating the table's load
 factor rule. `copy_to(ref mut target)` copies only live entries into the target
 zone and leaves tombstones behind.
@@ -294,13 +295,21 @@ created the map.
 map.entry(word).or_insert(0) += 1
 map.entry(key).and_modify(update).or_insert(fallback) += 0
 map.entry(key).or_insert_with(make_value) += 0
+map.entry(key).insert(value)
+map.entry(key).value_mut() += 1
+map.entry(key).remove()
 map.remove_entry(key)
 ```
 
 `or_insert(value)` inserts `value` when the key is absent and returns
 `ref mut V`. `or_insert_with(make_value)` calls `make_value` only when the key
 is absent. `and_modify(fn(ref mut V) -> void)` runs only when the key already
-exists and returns the entry handle for chaining. `remove_entry(key)` returns
+exists and returns the entry handle for chaining. `insert(value)` replaces the
+stored value and returns the previous value as `Option[V]`, or inserts a new
+value and returns `None`. `remove()` removes through the entry handle and
+returns `Option[V]`. `key()` returns the handle key; `value()` and
+`value_mut()` assert that the key exists, then return the stored value by value
+or by mutable reference. `remove_entry(key)` returns
 `Option[MapEntry[K, V]]`, preserving both the removed key and value.
 
 ```ari
@@ -414,9 +423,9 @@ target)` rebuilds the map in the target zone with the same comparator.
 
 `TreeMap.entry(key)` mirrors `HashMap.entry(key)`, but lookup follows the map's
 strict less-than comparator. `TreeMapEntry[K, V]` supports the same
-`or_insert`, `or_insert_with`, and `and_modify` methods, and
-`remove_entry(key)` returns `Option[MapEntry[K, V]]` after compacting storage
-and rebuilding links.
+`or_insert`, `or_insert_with`, `and_modify`, `insert`, `remove`, `key`,
+`value`, and `value_mut` methods, and `remove_entry(key)` returns
+`Option[MapEntry[K, V]]` after compacting storage and rebuilding links.
 
 ```ari
 set.len()

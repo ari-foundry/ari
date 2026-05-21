@@ -341,13 +341,14 @@ lower/upper-bound access in comparator order. Hash and tree sets expose
 `get`/`try_get` so callers can recover the stored representative for an equal
 value without scanning. Map entry iterators, boundary entry helpers, and map
 bound helpers yield `MapEntry[K,V]` values so callers do not need tuple
-convention knowledge to read `.key` and `.value`.
+convention knowledge to read `.key`/`.value` or `key()`/`value()`.
 Map types expose `contains_key` as the preferred key-membership spelling while
 keeping `contains` compatible, `contains_value` for value membership scans, and
 `get_or` for ordinary fallback lookups. `HashMap.entry(key)` and
 `TreeMap.entry(key)` return update handles with `or_insert`,
-`or_insert_with`, and `and_modify`, and `remove_entry(key)` returns copied
-`MapEntry[K,V]` key-value pairs for removal cases that need both fields.
+`or_insert_with`, `and_modify`, direct `insert`, direct `remove`, `key`,
+`value`, and `value_mut`, and `remove_entry(key)` returns copied `MapEntry[K,V]`
+key-value pairs for removal cases that need both fields.
 Tree removal compacts live nodes and rebuilds links in place, so the public
 API does not need a zone argument. Hash, tree, and heap constructors take
 explicit policy functions until trait dispatch is strong enough for fully

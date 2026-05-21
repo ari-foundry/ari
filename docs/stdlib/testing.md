@@ -109,6 +109,8 @@ std-collections-set-replace.ari
 std-collections-set-iter.ari
 std-collections-hash.ari
 std-collections-hash-iter.ari
+std-collections-map-entry-api.ari
+std-collections-map-entry-accessors.ari
 std-collections-tree.ari
 std-collections-tree-iter.ari
 std-collections-deque.ari

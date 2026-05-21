@@ -1966,6 +1966,13 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent12remove_entry' $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-api.ari -o $(BUILD_DIR)/prelude/std-collections-map-entry-api.elf
 	$(BUILD_DIR)/prelude/std-collections-map-entry-api.elf; code=$$?; test $$code -eq 136
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-accessors.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.ll
+	grep -q '_ARNv4impl36std__collections__MapEntry_i64__i64_8inherent3key' $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.ll
+	grep -q '_ARNv4impl40std__collections__HashMapEntry_i64__i64_8inherent6insert' $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.ll
+	grep -q '_ARNv4impl40std__collections__HashMapEntry_i64__i64_8inherent9value_mut' $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.ll
+	grep -q '_ARNv4impl40std__collections__TreeMapEntry_i64__i64_8inherent6remove' $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-accessors.ari -o $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.elf
+	$(BUILD_DIR)/prelude/std-collections-map-entry-accessors.elf; code=$$?; test $$code -eq 131
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
@@ -2312,6 +2319,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; code=$$?; test $$code -eq 236; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-entries.elf; $(BUILD_DIR)/prelude/std-collections-map-entries.elf; code=$$?; test $$code -eq 71; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 145; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-accessors.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.elf; $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.elf; code=$$?; test $$code -eq 131; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; code=$$?; test $$code -eq 90; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; code=$$?; test $$code -eq 238; fi

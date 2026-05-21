@@ -272,9 +272,10 @@ implements `IntoIterator[T]` for direct `for value in set` loops.
 `entry(key)`, `remove`, `remove_entry`, `reserve(ref mut zone, capacity)`,
 `clear`, `keys()`, `values()`, and `entries()`. `entry(key)` returns a
 short-lived `HashMapEntry[K,V]` or `TreeMapEntry[K,V]` update handle with
-`or_insert`, `or_insert_with`, and `and_modify`; copied iterator, boundary, and
-removal results use `MapEntry[K,V]`. Hash map iterators walk live buckets; tree
-map iterators walk ascending key order.
+`or_insert`, `or_insert_with`, `and_modify`, `insert`, `remove`, `key`,
+`value`, and `value_mut`; copied iterator, boundary, and removal results use
+`MapEntry[K,V]` with `key()` and `value()` accessors. Hash map iterators walk
+live buckets; tree map iterators walk ascending key order.
 
 `std::collections::HashSet[T]` and `TreeSet[T]` share `len`, `capacity`,
 `is_empty`, `contains`, `insert(ref mut zone, value)`,

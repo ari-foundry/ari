@@ -1997,16 +1997,18 @@ set.iter()
 tombstones. `HashMap.get_or(key, fallback)` returns the stored value or the
 fallback when the key is absent. `HashMap.insert` returns `Option[V]` with the
 previous value on replacement. `HashMap.entry(key)` returns a
-`HashMapEntry[K,V]` update handle with `or_insert`, `or_insert_with`, and
-`and_modify`; tracked local maps infer the allocation zone for the natural
-`entry(key)` spelling. `HashMap.remove` returns `Option[V]` and leaves
+`HashMapEntry[K,V]` update handle with `or_insert`, `or_insert_with`,
+`and_modify`, `insert`, `remove`, `key`, `value`, and `value_mut`; tracked local
+maps infer the allocation zone for the natural `entry(key)` spelling.
+`HashMap.remove` returns `Option[V]` and leaves
 a tombstone so later probes still find collided keys. `HashMap.keys()` and
 `HashMap.values()` iterate live buckets; this is deterministic for the table
 state, but it is not insertion order. `HashSet.get(value)` and
 `HashSet.try_get(value)` read the stored equal representative. `HashSet`
 relationship methods compare live membership and ignore tombstones;
-`HashMap.entries()` yields `MapEntry[K,V]` values with `.key` and `.value`
-fields over the same live buckets. `HashMap.remove_entry(key)` returns
+`HashMap.entries()` yields `MapEntry[K,V]` values with `.key`/`.value` fields
+and `key()`/`value()` accessors over the same live buckets.
+`HashMap.remove_entry(key)` returns
 `Option[MapEntry[K,V]]` so callers can keep both removed key and value.
 `HashSet.iter()` and direct
 `for value in set` use the same live-bucket cursor. Hash
@@ -2090,8 +2092,9 @@ set.iter()
 `TreeMap.contains_value(value)` scans stored values without using key order.
 `TreeMap.get_or(key, fallback)` returns the stored value or the fallback when
 the key is absent. `TreeMap.entry(key)` returns a `TreeMapEntry[K,V]` update
-handle with `or_insert`, `or_insert_with`, and `and_modify`; tracked local maps
-infer the allocation zone for the natural `entry(key)` spelling.
+handle with `or_insert`, `or_insert_with`, `and_modify`, `insert`, `remove`,
+`key`, `value`, and `value_mut`; tracked local maps infer the allocation zone
+for the natural `entry(key)` spelling.
 `TreeMap.remove(key)` returns `Option[V]` and rebuilds links
 in place after compacting live storage. `TreeMap` boundary methods read the
 smallest or largest key and the value attached to that key in comparator order;

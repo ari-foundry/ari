@@ -915,8 +915,13 @@ method std::collections::Deque[T]::try_get|check-prelude std-collections-deque o
 method std::collections::Deque[T]::try_pop_back|check-prelude std-collections-deque optional back removal; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::try_pop_front|check-prelude std-collections-deque optional front removal; docs/stdlib/modules/collections.md
 method std::collections::HashMapEntry[K,V]::and_modify|check-prelude std-collections-map-entry-api hash map occupied-entry mutation hook; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::insert|check-prelude std-collections-map-entry-accessors hash map entry replacement helper; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::key|check-prelude std-collections-map-entry-accessors hash map entry key accessor; docs/stdlib/modules/collections.md
 method std::collections::HashMapEntry[K,V]::or_insert|check-prelude std-collections-map-entry-api hash map eager entry insertion returning ref mut value; docs/stdlib/modules/collections.md
 method std::collections::HashMapEntry[K,V]::or_insert_with|check-prelude std-collections-map-entry-api hash map lazy entry insertion returning ref mut value; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::remove|check-prelude std-collections-map-entry-accessors hash map entry value removal helper; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::value|check-prelude std-collections-map-entry-accessors hash map entry value accessor; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::value_mut|check-prelude std-collections-map-entry-accessors hash map entry mutable value accessor; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::capacity|check-prelude std-collections-hash hash table capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::clear|check-prelude std-collections-hash drops live hash map entries; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::contains|check-prelude std-collections-hash hash lookup predicate; docs/stdlib/modules/collections.md
@@ -981,6 +986,8 @@ method std::collections::LinkedList[T]::try_get|check-prelude std-collections-li
 method std::collections::LinkedList[T]::try_pop_back|check-prelude std-collections-linked-list optional back removal; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::try_pop_front|check-prelude std-collections-linked-list optional front removal; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::try_remove_at|check-prelude std-collections-linked-list optional indexed removal; docs/stdlib/modules/collections.md
+method std::collections::MapEntry[K,V]::key|check-prelude std-collections-map-entry-accessors copied map entry key accessor; docs/stdlib/modules/collections.md
+method std::collections::MapEntry[K,V]::value|check-prelude std-collections-map-entry-accessors copied map entry value accessor; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::capacity|check-prelude std-collections-heap priority queue capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::clear|check-prelude std-collections-heap drops live priority queue values; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone priority queue copy preserving priority order; docs/stdlib/modules/collections.md
@@ -1039,8 +1046,13 @@ method std::collections::Set[T]::try_get|check-prelude std-collections-set-acces
 method std::collections::Set[T]::try_last|check-prelude std-collections-set-access optional last accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::try_pop|check-prelude std-collections-set-access optional last-value removal; docs/stdlib/modules/collections.md
 method std::collections::TreeMapEntry[K,V]::and_modify|check-prelude std-collections-map-entry-api tree map occupied-entry mutation hook; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::insert|check-prelude std-collections-map-entry-accessors tree map entry replacement helper; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::key|check-prelude std-collections-map-entry-accessors tree map entry key accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMapEntry[K,V]::or_insert|check-prelude std-collections-map-entry-api tree map eager entry insertion returning ref mut value; docs/stdlib/modules/collections.md
 method std::collections::TreeMapEntry[K,V]::or_insert_with|check-prelude std-collections-map-entry-api tree map lazy entry insertion returning ref mut value; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::remove|check-prelude std-collections-map-entry-accessors tree map entry value removal helper; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::value|check-prelude std-collections-map-entry-accessors tree map entry value accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::value_mut|check-prelude std-collections-map-entry-accessors tree map entry mutable value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::capacity|check-prelude std-collections-tree tree map capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::clear|check-prelude std-collections-tree drops live tree map nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains|check-prelude std-collections-tree ordered lookup predicate; docs/stdlib/modules/collections.md

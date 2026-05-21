@@ -1,0 +1,89 @@
+// Covers the complete live map entry surface: key/value access, mutable value
+// borrowing, replacement, and removal for both hash-table and ordered maps.
+fn constant_hash(value: i64) -> u64 {
+  return 11;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(8192);
+  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  if hash.entry(1).insert(10).is_none() {
+    score = score + 3;
+  }
+  if hash.entry(1).key() == 1 && hash.entry(1).value() == 10 {
+    score = score + 5;
+  }
+  hash.entry(1).value_mut() += 5;
+  if hash.get(1) == 15 {
+    score = score + 7;
+  }
+  let old_hash = hash.entry(1).insert(20);
+  if old_hash.is_some() {
+    let old_hash_value = old_hash.unwrap();
+    if old_hash_value == 15 && hash.entry(1).value() == 20 {
+      score = score + 11;
+    }
+  }
+  let removed_hash = hash.entry(1).remove();
+  if removed_hash.is_some() {
+    let removed_hash_value = removed_hash.unwrap();
+    if removed_hash_value == 20 && !hash.contains_key(1) {
+      score = score + 13;
+    }
+  }
+  if hash.entry(1).remove().is_none() {
+    score = score + 17;
+  }
+
+  hash.entry(7).or_insert(70) += 0;
+  let hash_pair_result = hash.remove_entry(7);
+  if hash_pair_result.is_some() {
+    var hash_pair = hash_pair_result.unwrap();
+    if hash_pair.key() == 7 && hash_pair.value() == 70 {
+      score = score + 19;
+    }
+  }
+
+  if tree.entry(5).insert(50).is_none() {
+    score = score + 2;
+  }
+  if tree.entry(5).key() == 5 && tree.entry(5).value() == 50 {
+    score = score + 4;
+  }
+  tree.entry(5).value_mut() += 6;
+  if tree.get(5) == 56 {
+    score = score + 6;
+  }
+  let old_tree = tree.entry(5).insert(60);
+  if old_tree.is_some() {
+    let old_tree_value = old_tree.unwrap();
+    if old_tree_value == 56 && tree.entry(5).value() == 60 {
+      score = score + 8;
+    }
+  }
+  let removed_tree = tree.entry(5).remove();
+  if removed_tree.is_some() {
+    let removed_tree_value = removed_tree.unwrap();
+    if removed_tree_value == 60 && !tree.contains_key(5) {
+      score = score + 10;
+    }
+  }
+  if tree.entry(5).remove().is_none() {
+    score = score + 12;
+  }
+
+  tree.entry(9).or_insert(90) += 0;
+  let tree_pair_result = tree.remove_entry(9);
+  if tree_pair_result.is_some() {
+    var tree_pair = tree_pair_result.unwrap();
+    if tree_pair.key() == 9 && tree_pair.value() == 90 {
+      score = score + 14;
+    }
+  }
+
+  zone::destroy(zone);
+  return score;
+}

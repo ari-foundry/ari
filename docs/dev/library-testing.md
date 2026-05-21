@@ -363,6 +363,9 @@ identifies the exact case:
   handles, including `entry(key)`, `or_insert`, `or_insert_with`,
   `and_modify`, direct `+=` through returned `ref mut V`, and
   `remove_entry`.
+- `std-collections-map-entry-accessors.ari`: live `HashMapEntry` and
+  `TreeMapEntry` key/value access, mutable value borrowing, direct replacement,
+  direct entry removal, and copied `MapEntry.key()`/`value()` accessors.
 - `std-collections-hash-map-keys-after-reset.ari`: negative source-zone
   provenance diagnostic for hash map key cursors after reset.
 - `std-collections-hash-map-values-after-reset.ari`: negative source-zone
