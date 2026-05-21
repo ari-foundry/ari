@@ -1471,6 +1471,10 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.equals(ref other)
+set.is_subset(ref other)
+set.is_superset(ref other)
+set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
@@ -1486,8 +1490,9 @@ set.iter()
 `HashMap.remove` returns `Option[V]` and leaves a tombstone so later probes
 still find collided keys. `HashMap.keys()` and `HashMap.values()` iterate live
 buckets; this is deterministic for the table state, but it is not insertion
-order. `HashSet.iter()` and direct `for value in set` use the same live-bucket
-cursor.
+order. `HashSet` relationship methods compare live membership and ignore
+tombstones; `HashSet.iter()` and direct `for value in set` use the same
+live-bucket cursor.
 
 Tree collections use explicit strict less-than comparators:
 

@@ -1540,6 +1540,13 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-hash.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari -o $(BUILD_DIR)/prelude/std-collections-hash.elf
 	$(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
+	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent6equals' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
+	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent9is_subset' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
+	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent11is_superset' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
+	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent11is_disjoint' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari -o $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf
+	$(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 75
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-hash-iter.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent4keys' $(BUILD_DIR)/prelude/std-collections-hash-iter.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent6values' $(BUILD_DIR)/prelude/std-collections-hash-iter.ll
@@ -1819,6 +1826,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf; $(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash.elf; $(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 39; fi

@@ -806,8 +806,12 @@ method std::collections::HashMap[K,V]::values|check-prelude std-collections-hash
 method std::collections::HashSet[T]::capacity|check-prelude std-collections-hash hash set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::clear|check-prelude std-collections-hash drops live hash set entries; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::contains|check-prelude std-collections-hash hash set lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::equals|check-prelude std-collections-hash-set-relations membership equality predicate; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::insert|check-prelude std-collections-hash hash set insertion with same-zone growth; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::is_disjoint|check-prelude std-collections-hash-set-relations live-bucket disjointness predicate; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::is_empty|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::is_subset|check-prelude std-collections-hash-set-relations live-bucket subset predicate; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::is_superset|check-prelude std-collections-hash-set-relations live-bucket superset predicate; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::iter|check-prelude std-collections-hash-iter live-bucket iterator and IntoIterator; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::len|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::new|check-prelude std-collections-hash associated explicit-hasher constructor; docs/stdlib/modules/collections.md

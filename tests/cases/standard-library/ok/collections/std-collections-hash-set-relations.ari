@@ -1,0 +1,52 @@
+// Covers HashSet[T] relationship predicates over live buckets. The custom
+// hash forces collisions, and the removed value leaves a tombstone that must
+// not participate in membership comparisons.
+fn constant_hash(value: i64) -> u64 {
+  return 11;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(2048);
+  var left = collections::hash_set<i64>(ref mut zone, 1, constant_hash);
+  var same = collections::hash_set<i64>(ref mut zone, 1, constant_hash);
+  var superset = collections::hash_set<i64>(ref mut zone, 1, constant_hash);
+  var disjoint = HashSet::new<i64>(ref mut zone, 1, constant_hash);
+
+  left.insert(ref mut zone, 3);
+  left.insert(ref mut zone, 7);
+  same.insert(ref mut zone, 7);
+  same.insert(ref mut zone, 3);
+  superset.insert(ref mut zone, 3);
+  superset.insert(ref mut zone, 7);
+  superset.insert(ref mut zone, 9);
+  superset.insert(ref mut zone, 42);
+  superset.remove(42);
+  disjoint.insert(ref mut zone, 1);
+  disjoint.insert(ref mut zone, 2);
+
+  var score = 0;
+  if left.equals(ref same) {
+    score = score + 3;
+  }
+  if same.equals(ref left) {
+    score = score + 5;
+  }
+  if left.is_subset(ref superset) {
+    score = score + 7;
+  }
+  if superset.is_superset(ref left) {
+    score = score + 11;
+  }
+  if !superset.equals(ref left) {
+    score = score + 13;
+  }
+  if left.is_disjoint(ref disjoint) {
+    score = score + 17;
+  }
+  if !left.is_disjoint(ref same) {
+    score = score + 19;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

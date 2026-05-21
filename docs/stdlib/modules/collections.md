@@ -247,6 +247,10 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.equals(ref other)
+set.is_subset(ref other)
+set.is_superset(ref other)
+set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
@@ -258,9 +262,10 @@ set.iter()
 
 `HashSet.insert` returns whether the value was newly inserted. `replace`
 returns the previous equal value when present. `take` moves a removed value out;
-`remove` drops it. `HashSet.iter()` yields live buckets, and `HashSet[T]`
-implements `IntoIterator[T]` so `for value in set` works through the same
-cursor.
+`remove` drops it. `equals`, `is_subset`, `is_superset`, and `is_disjoint`
+compare membership over live buckets and ignore tombstones. `HashSet.iter()`
+yields live buckets, and `HashSet[T]` implements `IntoIterator[T]` so
+`for value in set` works through the same cursor.
 
 ## TreeMap And TreeSet
 
@@ -393,8 +398,10 @@ Focused positive coverage:
 tests/cases/standard-library/ok/collections/std-collections-set.ari
 tests/cases/standard-library/ok/collections/std-collections-set-access.ari
 tests/cases/standard-library/ok/collections/std-collections-set-replace.ari
+tests/cases/standard-library/ok/collections/std-collections-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-hash.ari
+tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
@@ -433,7 +440,9 @@ tests/cases/standard-library/errors/collections/std-collections-priority-queue-p
 ```
 
 `std-collections-hash.ari` forces collisions with a custom hash function so the
-linear-probing and tombstone paths are exercised. `std-collections-hash-iter`
+linear-probing and tombstone paths are exercised.
+`std-collections-hash-set-relations.ari` keeps that collision pressure and
+checks set relationship predicates after a tombstone. `std-collections-hash-iter`
 checks key, value, and set cursors after tombstones. `std-collections-tree.ari`
 inserts mixed key order to exercise red-black rotations, while
 `std-collections-tree-iter.ari` checks sorted successor traversal.
