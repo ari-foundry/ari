@@ -1,0 +1,47 @@
+// Covers Result-returning process helpers. Raw fork/wait remain available for
+// compatibility, while these APIs preserve child ids, statuses, and Error
+// payloads at ordinary call sites.
+fn status_ok(value: Result[i64, error::Error], expected: i64) -> bool {
+  match value {
+    Ok(status) => { return status == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn error_has_code(value: Result[i64, error::Error]) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(reason) => { return reason.code() > 0; }
+  }
+}
+
+fn main() -> i64 {
+  match process::fork_result() {
+    Err(_) => {
+      return 2;
+    }
+    Ok(child) => {
+      if process::is_child(child) {
+        process::exit(41);
+        return 1;
+      }
+
+      var score = 0;
+      if process::is_parent(child) {
+        score = score + 11;
+      }
+      if status_ok(process::wait_result(child), 41) {
+        score = score + 29;
+      }
+      if error_has_code(process::wait_result(child)) {
+        score = score + 43;
+      }
+      if process::is_wait_error(process::wait(child)) {
+        score = score + 59;
+      }
+
+      assert_eq_i64(score, 142);
+      return score;
+    }
+  }
+}

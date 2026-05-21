@@ -557,6 +557,7 @@ fn std::process::abort|check-prelude std-process-abort explicit process abort ho
 fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
 fn std::process::failure|check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md
 fn std::process::fork|check-prelude std-process-fork-wait POSIX fork hook; docs/stdlib/modules/process.md
+fn std::process::fork_result|check-prelude std-process-result POSIX fork direct Error result helper; docs/stdlib/modules/process.md
 fn std::process::gid|check-prelude std-process-identity current process group id hook; docs/stdlib/modules/process.md
 fn std::process::id|check-prelude std-process-basic current process id hook; docs/stdlib/modules/process.md
 fn std::process::is_child|check-prelude std-process-fork-wait source child-branch predicate; docs/stdlib/modules/process.md
@@ -569,6 +570,7 @@ fn std::process::is_wait_error|check-prelude std-process-fork-wait source wait f
 fn std::process::success|check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md
 fn std::process::uid|check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md
 fn std::process::wait|check-prelude std-process-fork-wait POSIX wait hook and exit-status decode; docs/stdlib/modules/process.md
+fn std::process::wait_result|check-prelude std-process-result POSIX wait direct Error result helper; docs/stdlib/modules/process.md
 fn std::random::below|check-prelude std-random-basic unbiased bounded non-crypto PRNG integer helper; docs/stdlib/modules/random.md
 fn std::random::boolean|check-prelude std-random-basic deterministic PRNG boolean helper; docs/stdlib/modules/random.md
 fn std::random::entropy|check-prelude std-random-basic OS entropy hook; docs/stdlib/modules/random.md

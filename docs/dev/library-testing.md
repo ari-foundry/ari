@@ -130,6 +130,9 @@ identifies the exact case:
   non-aborting path.
 - `std-process-fork-wait.ari`: runtime-backed POSIX `fork`/`wait` behavior,
   child/parent predicates, explicit child exit, and wait failure sentinel.
+- `std-process-result.ari`: direct `Result[i64, Error]` process fork/wait
+  helpers, normal child exit propagation, waitpid errno payloads, and raw
+  compatibility wait sentinel behavior after the child has been consumed.
 - `std-thread-basic.ari`: runtime-backed `std::thread` function-pointer
   spawn/join behavior, child runtime ids, invalid-handle sentinels, root
   `Thread`, method wrappers, and scheduler yield.

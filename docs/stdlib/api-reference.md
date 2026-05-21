@@ -466,7 +466,9 @@ process::failure()
 process::is_success(code)
 process::is_failure(code)
 process::is_root()
+process::fork_result()
 process::fork()
+process::wait_result(pid)
 process::wait(pid)
 process::is_child(pid)
 process::is_parent(pid)
@@ -481,10 +483,17 @@ current user and group ids. `is_root()` is the source convenience check for
 helpers are source functions for the common `0` success and `1` failure
 convention.
 
-`fork()` and `wait(pid)` are the first POSIX child-process slice on the
-Linux/LLVM runtime path. `fork()` returns `0` in the child, a positive child pid
-in the parent, and a negative value on failure; use `is_child`, `is_parent`,
-and `is_fork_error` to make that branch readable. `wait(pid)` returns a normal
+`fork_result()` and `wait_result(pid)` are the preferred POSIX child-process
+helpers when failure matters. `fork_result()` returns `Ok(0)` in the child,
+`Ok(child_pid)` in the parent, or `Err(Error)` from the host `fork` failure.
+`wait_result(pid)` returns `Ok(exit_status)` for a normal child exit, maps host
+`waitpid` failures through `std::c::error()`, and reports non-normal child
+states as `Error(Other)` until richer status values exist.
+
+`fork()` and `wait(pid)` are the raw compatibility slice on the Linux/LLVM
+runtime path. `fork()` returns `0` in the child, a positive child pid in the
+parent, and a negative value on failure; use `is_child`, `is_parent`, and
+`is_fork_error` to make that branch readable. `wait(pid)` returns a normal
 child exit status or `-1`; use `is_wait_error` for that sentinel. Rich process
 handles, portable spawn, and detailed status values remain roadmap work.
 

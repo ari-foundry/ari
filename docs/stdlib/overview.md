@@ -43,7 +43,7 @@ API evolution.
 | `std::c` | C ABI boundary helpers. | `CStr`, `CString`, `Library`, `Symbol`, `from_string`, `from_ptr`, `from_slice_in`, `from_cstr_in`, `is_null`, `errno`, `error`, `open`, `main_program`, `symbol`, `function`, `close`, `last_error`, `lazy`, `now`, `local`, `global`. |
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
 | `std::env` | User-facing process argument, environment-variable, OS-string, and path-state helpers. | `arg_count`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, `get`, `get_os`, `try_get`, `try_get_os`, `set`, `remove`, `current_dir`, `current_dir_os`, `current_dir_path`, `try_current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`. |
-| `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `is_success`, `is_failure`, `is_root`, `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
+| `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `is_success`, `is_failure`, `is_root`, direct `Error` helpers `fork_result`, `wait_result`, raw compatibility `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`. |
 | `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `Mutex`, `RwLock`, `Once`, atomic `load`/`store`/`swap`/`fetch_add`/`compare_exchange`, mutex helpers, rwlock helpers, `call_once`. |
 | `std::time` | Monotonic time, wall-clock time, sleep, deadlines, and UTC calendar values. | `Duration`, `Instant`, `SystemTime`, `Deadline`, `UtcDateTime`, strict and fallible duration constructors, strict and fallible Unix timestamp constructors, strict and fallible calendar helpers, `now`, `system_now`, `elapsed`, `sleep`, `timeout`, `timeout_after`, `deadline_at`. |
@@ -242,9 +242,9 @@ from ordinary text.
 the host process id, `uid`/`gid` read current user and group identity, `exit`
 terminates with an explicit status, `abort` terminates abnormally, and the
 status/root helpers are source Ari. The first POSIX child-process slice adds
-runtime-backed `fork`/`wait` plus source branch and error predicates. Portable
-spawn, richer status values, and process handles are intentionally still
-roadmap work.
+`fork_result`/`wait_result` direct `Error` helpers, raw compatibility
+`fork`/`wait`, and source branch/error predicates. Portable spawn, richer
+status values, and process handles are intentionally still roadmap work.
 
 `std::thread` is the first thread slice. `spawn`, `join`, `yield_now`, and
 `available_parallelism` are runtime-backed because they call the host threading

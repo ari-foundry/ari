@@ -19,7 +19,9 @@ process::failure()
 process::is_success(code)
 process::is_failure(code)
 process::is_root()
+process::fork_result()
 process::fork()
+process::wait_result(pid)
 process::wait(pid)
 process::is_child(pid)
 process::is_parent(pid)
@@ -47,14 +49,19 @@ comparison at the call site.
 permission guarantee; filesystem and process permissions can still change after
 the check.
 
-`fork()` creates a child process on the current POSIX runtime path. The return
-value follows the host convention: `0` in the child, a positive child pid in the
+`fork_result()` creates a child process on the current POSIX runtime path and
+returns `Result[i64, Error]`: `Ok(0)` in the child, `Ok(child_pid)` in the
+parent, or `Err(std::c::error())` when the host `fork` fails. `fork()` keeps the
+older raw host convention: `0` in the child, a positive child pid in the
 parent, or a negative value on failure. Use `is_child`, `is_parent`, and
 `is_fork_error` instead of spelling those comparisons at every call site.
 
-`wait(pid)` waits for a child process and returns the child's normal exit
-status as `i64`. It returns `-1` when `waitpid` fails or when the child did not
-exit normally. Use `is_wait_error(status)` to make that sentinel explicit.
+`wait_result(pid)` waits for a child process and returns `Ok(exit_status)` when
+the child exited normally. Host `waitpid` failures become `Err(std::c::error())`.
+If the child is observed in a non-normal state, the current source wrapper
+returns `Err(Error(Other))` until richer process status values exist.
+`wait(pid)` is the older raw compatibility helper; it returns the child's normal
+exit status or `-1`. Use `is_wait_error(status)` to make that sentinel explicit.
 
 ## Example
 
@@ -93,21 +100,22 @@ Fork and wait:
 
 ```ari
 fn main() -> i64 {
-  let child = process::fork();
-  if process::is_fork_error(child) {
-    return process::failure();
-  }
+  match process::fork_result() {
+    Err(_) => {
+      return process::failure();
+    }
+    Ok(child) => {
+      if process::is_child(child) {
+        process::exit(37);
+        return 1;
+      }
 
-  if process::is_child(child) {
-    process::exit(37);
-    return 1;
+      match process::wait_result(child) {
+        Ok(status) => { return status; }
+        Err(_) => { return process::failure(); }
+      }
+    }
   }
-
-  let status = process::wait(child);
-  if process::is_wait_error(status) {
-    return process::failure();
-  }
-  return status;
 }
 ```
 
@@ -122,6 +130,9 @@ fn main() -> i64 {
   treated as noreturn.
 - `wait(pid)` currently decodes only normal child exit statuses and returns
   `-1` for wait failures, signaled children, and other non-normal states.
+  `wait_result(pid)` preserves `Error` payloads for host `waitpid` failures,
+  but still reports non-normal child states as `Error(Other)` until the module
+  has a richer `ExitStatus`/signal model.
 - The API is intentionally not a raw syscall grab bag. Keep future process
   work behind `std::process` or a future `std::os` submodule in small safe
   slices with clear ownership and platform policy.
@@ -136,6 +147,7 @@ tests/cases/standard-library/ok/process/std-process-identity.ari
 tests/cases/standard-library/ok/process/std-process-exit.ari
 tests/cases/standard-library/ok/process/std-process-abort.ari
 tests/cases/standard-library/ok/process/std-process-fork-wait.ari
+tests/cases/standard-library/ok/process/std-process-result.ari
 ```
 
 `make check-prelude` emits LLVM, checks the runtime hook symbols, and executes

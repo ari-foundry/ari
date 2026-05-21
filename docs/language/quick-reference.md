@@ -240,7 +240,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | runtime context | `context::argc()`, `context::arg(index)`, `context::thread_id()`, `context::cwd()`, `context::cwd_path()`, `context::executable_path()`, `context::is_main_thread()` |
 | environment/path state | `env::try_get(name)`, `env::try_get_os(name)`, `env::set(name, value)`, `env::try_current_dir_path()`, `env::set_current_dir(path)`, `env::try_executable_path_os()` |
 | current process | `process::id()`, `process::exit(code)`, `process::success()`, `process::failure()` |
-| POSIX child process | `process::fork()`, `process::wait(pid)`, `process::is_child(pid)`, `process::is_parent(pid)`, `process::is_wait_error(status)` |
+| POSIX child process | `process::fork_result()`, `process::wait_result(pid)`, `process::is_child(pid)`, `process::is_parent(pid)`, raw `process::fork()`, raw `process::wait(pid)` |
 | thread | `thread::spawn(entry)`, `thread::join(handle)`, `handle.join()`, `thread::id()`, `thread::yield_now()`, `thread::sleep(duration)`, `thread::available_parallelism()` |
 | time | `time::now()`, `time::system_now()`, `time::milliseconds(n)`, `time::timeout(duration)`, `deadline.remaining()`, `deadline.has_expired()`, `system_time.to_utc()` |
 | atomic i64 | `AtomicI64::new(value)`, `.load()`, `.store(replacement)`, `.fetch_add(amount)`, `.compare_exchange(expected, replacement)` |

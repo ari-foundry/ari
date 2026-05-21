@@ -8,6 +8,9 @@ pub extern "ari" fn abort() -> void = "ari_builtin_process_abort";
 pub extern "ari" fn fork() -> i64 = "ari_builtin_process_fork";
 pub extern "ari" fn wait(pid: i64) -> i64 = "ari_builtin_process_wait";
 
+extern "C" fn raw_fork() -> c_int = "fork";
+extern "C" fn raw_waitpid(pid: c_int, status: ptr c_int, options: c_int) -> c_int = "waitpid";
+
 pub fn success() -> i64 {
   return 0;
 }
@@ -42,4 +45,32 @@ pub fn is_fork_error(pid: i64) -> bool {
 
 pub fn is_wait_error(status: i64) -> bool {
   return status < 0;
+}
+
+fn non_normal_exit_error() -> std::error::Error {
+  return std::error::new(std::error::Other);
+}
+
+pub fn fork_result() -> std::Result[i64, std::error::Error] {
+  let raw = raw_fork();
+  if raw < 0 {
+    return std::Err<i64, std::error::Error>(std::c::error());
+  }
+  return std::Ok<i64, std::error::Error>(raw as i64);
+}
+
+pub fn wait_result(pid: i64) -> std::Result[i64, std::error::Error] {
+  var status = 0 as c_int;
+  let waited = raw_waitpid(pid as c_int, (ref mut status) as ptr c_int, 0 as c_int);
+  if waited <= 0 {
+    return std::Err<i64, std::error::Error>(std::c::error());
+  }
+
+  let raw_status = status as i64;
+  let signal_bits = raw_status & 127;
+  if signal_bits != 0 {
+    return std::Err<i64, std::error::Error>(std::process::non_normal_exit_error());
+  }
+
+  return std::Ok<i64, std::error::Error>((raw_status / 256) & 255);
 }

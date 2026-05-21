@@ -45,7 +45,8 @@ wider `Result[T, Error]` rollout, and backtrace support remain roadmap work.
 handles over `dlopen`/`dlsym`.
 `std::process`
 starts the OS-facing surface with current
-process id, explicit exit helpers, and the first POSIX fork/wait slice,
+process id, explicit exit helpers, and the first POSIX fork/wait slice with
+direct `Error` results plus raw compatibility helpers,
 `std::os` introduces non-owning `Fd` descriptor views and `OwnedFd` wrappers
 for raw descriptor close, duplicate, close-on-exec, and nonblocking policy,
 plus `Pipe` for owned read/write descriptor pairs,
