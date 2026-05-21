@@ -764,6 +764,8 @@ Checklist:
 - [x] metadata records stable source content hashes for cache invalidation
 - [x] metadata/cache checks accept only the centralized current `v0` headers
 - [x] metadata/cache parsing rejects duplicate source, import, item summary,
+  while member-origin impl item keys let metadata represent intentional split
+  inherent impl blocks for the same type,
       and AST-summary records
 - [x] stale module metadata reports changed cfg, source, import, and item records
 - [x] source-snapshot module caches can be emitted and reused after validating

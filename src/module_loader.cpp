@@ -543,13 +543,16 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
                 std::vector<ModuleCacheIrFunctionSummary> ir_functions;
                 const ModuleCacheIrSummary* ir_summary =
                     find_module_cache_ir_summary(*input_cache, path);
+                bool can_load_ast_summary = can_load_module_cache_ast_summary_declarations(declarations);
                 if (ir_summary) {
                     ir_functions = materialize_module_cache_ir_summary_functions(*ir_summary, path);
-                    require_ir_summary_covers_ast_summary_functions(declarations, ir_functions, path);
+                    if (!can_load_ast_summary) {
+                        require_ir_summary_covers_ast_summary_functions(declarations, ir_functions, path);
+                    }
                     require_ir_summary_specializations_match_ast_summary(declarations, ir_functions, path);
                     require_ir_summary_cached_impl_calls_resolve(ir_functions, input_cache, path);
                 }
-                if (can_load_module_cache_ast_summary_declarations(declarations) ||
+                if (can_load_ast_summary ||
                     can_load_module_cache_declarations_with_ir_functions(declarations, ir_functions)) {
                     return ParsedModuleFile{
                         std::move(declarations),

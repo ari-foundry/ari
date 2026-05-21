@@ -1,0 +1,20 @@
+pub struct Boxed {
+  value: i64,
+}
+
+pub impl Boxed {
+  fn get(self: ref Self) -> i64 {
+    return self.value;
+  }
+}
+
+pub impl Boxed {
+  fn doubled(self: ref Self) -> i64 {
+    return self.value + self.value;
+  }
+}
+
+fn main() -> i64 {
+  let boxed = Boxed { value: 5 };
+  return boxed.get() + boxed.doubled();
+}

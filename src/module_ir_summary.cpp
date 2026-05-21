@@ -259,6 +259,16 @@ void require_count_match(std::uint64_t recorded,
                        " but IR summary contains " + std::to_string(parsed));
 }
 
+void require_function_modules_match_summary(const std::vector<ModuleCacheIrFunctionSummary>& functions,
+                                            const ModuleCacheIrSummary& summary) {
+    for (const auto& fn : functions) {
+        if (fn.module_name == summary.module_name) continue;
+        throw CompileError("module cache IR summary for " + summary_display(summary) +
+                           " contains lowered function '" + fn.name +
+                           "' from module '" + display_module_name(fn.module_name) + "'");
+    }
+}
+
 IrSummaryParseResult parse_validated_ir_summary_payload(const ModuleCacheIrSummary& summary,
                                                         const std::string& display_path) {
     if (summary.ir_summary.empty()) {
@@ -285,6 +295,7 @@ IrSummaryParseResult parse_validated_ir_summary_payload(const ModuleCacheIrSumma
     try {
         IrSummaryParseResult result = parse_ir_summary_payload(summary);
         require_count_match(summary.function_count, result.counts.function_count, "function", summary);
+        require_function_modules_match_summary(result.functions, summary);
         return result;
     } catch (const CompileError& error) {
         throw CompileError("invalid module cache '" + display_path + "': " + error.what());

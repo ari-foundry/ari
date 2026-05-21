@@ -138,12 +138,15 @@ std::string import_display(const ModuleMetadataImport& import) {
 }
 
 std::string item_key(const ModuleMetadataItem& item) {
-    return item.module_name + "\t" + item.kind + "\t" + item.name + "\t" + bool_key(item.is_public);
+    return item.module_name + "\t" + item.kind + "\t" + item.name + "\t" +
+           item.origin + "\t" + bool_key(item.is_public);
 }
 
 std::string item_display(const ModuleMetadataItem& item) {
-    return item.kind + " '" + item.name + "' in module '" +
-           display_module_name(item.module_name) + "' (" + visibility_text(item.is_public) + ")";
+    std::string text = item.kind + " '" + item.name + "' in module '" +
+                       display_module_name(item.module_name) + "' (" + visibility_text(item.is_public) + ")";
+    if (!item.origin.empty()) text += " (" + item.origin + ")";
+    return text;
 }
 
 template <typename Record, typename KeyFn, typename DisplayFn>
@@ -308,15 +311,34 @@ std::string generic_params_summary(const std::vector<GenericParam>& generics) {
     return text;
 }
 
+std::string impl_member_origin_summary(const ImplDecl& decl) {
+    std::vector<std::string> members;
+    for (const auto& witness : decl.associated_type_witnesses) {
+        members.push_back("type:" + witness.name);
+    }
+    for (const auto& method : decl.methods) {
+        members.push_back("fn:" + qualified_basename(method.name));
+    }
+    std::sort(members.begin(), members.end());
+    std::string text = "members:";
+    for (std::size_t i = 0; i < members.size(); ++i) {
+        if (i > 0) text += ",";
+        text += members[i];
+    }
+    return text;
+}
+
 void add_item(ModuleMetadata& metadata,
               std::string module_name,
               std::string kind,
               std::string name,
+              std::string origin,
               bool is_public) {
     metadata.items.push_back(ModuleMetadataItem{
         std::move(module_name),
         std::move(kind),
         std::move(name),
+        std::move(origin),
         is_public,
     });
 }
@@ -341,37 +363,42 @@ void collect_module_metadata_source(ModuleMetadata& metadata,
     metadata.sources.push_back(ModuleMetadataSource{module_name, path, std::move(content_hash), is_root});
 
     for (const auto& decl : program.modules) {
-        add_item(metadata, decl.module_name, "module", decl.name, decl.is_public);
+        add_item(metadata, decl.module_name, "module", decl.name, "", decl.is_public);
     }
     for (const auto& decl : program.uses) {
         std::string name = decl.is_glob ? decl.path + "::*" : decl.path + " as " + decl.alias;
-        add_item(metadata, decl.module_name, "use", std::move(name), decl.is_public);
+        add_item(metadata, decl.module_name, "use", std::move(name), "", decl.is_public);
     }
     for (const auto& decl : program.constants) {
-        add_item(metadata, decl.module_name, "const", decl.name, decl.is_public);
+        add_item(metadata, decl.module_name, "const", decl.name, "", decl.is_public);
     }
     for (const auto& decl : program.type_aliases) {
-        add_item(metadata, decl.module_name, "type", decl.name, decl.is_public);
+        add_item(metadata, decl.module_name, "type", decl.name, "", decl.is_public);
     }
     for (const auto& decl : program.functions) {
         std::string kind = decl.is_extern ? "extern-" + decl.extern_abi + "-fn" : (decl.meta ? "meta-fn" : "fn");
-        add_item(metadata, decl.module_name, std::move(kind), decl.name, decl.is_public);
+        add_item(metadata, decl.module_name, std::move(kind), decl.name, "", decl.is_public);
     }
     for (const auto& decl : program.structs) {
-        add_item(metadata, decl.module_name, "struct", decl.name, decl.is_public);
+        add_item(metadata, decl.module_name, "struct", decl.name, "", decl.is_public);
     }
     for (const auto& decl : program.enums) {
-        add_item(metadata, decl.module_name, "enum", decl.name, decl.is_public);
+        add_item(metadata, decl.module_name, "enum", decl.name, "", decl.is_public);
     }
     for (const auto& decl : program.traits) {
-        add_item(metadata, decl.module_name, "trait", decl.name, decl.is_public);
+        add_item(metadata, decl.module_name, "trait", decl.name, "", decl.is_public);
     }
     for (const auto& decl : program.impls) {
         std::string name = generic_params_summary(decl.generics);
         name += decl.has_trait
             ? type_ref_summary(decl.trait_type) + " for " + type_ref_summary(decl.for_type)
             : type_ref_summary(decl.for_type);
-        add_item(metadata, decl.module_name, decl.has_trait ? "trait-impl" : "impl", std::move(name), decl.is_public);
+        add_item(metadata,
+                 decl.module_name,
+                 decl.has_trait ? "trait-impl" : "impl",
+                 std::move(name),
+                 impl_member_origin_summary(decl),
+                 decl.is_public);
     }
 }
 
@@ -426,7 +453,11 @@ std::string serialize_module_metadata(const ModuleMetadata& metadata) {
         });
     }
     for (const auto& item : metadata.items) {
-        write_line(out, {"item", item.module_name, item.kind, item.name, item.is_public ? "1" : "0"});
+        if (item.origin.empty()) {
+            write_line(out, {"item", item.module_name, item.kind, item.name, item.is_public ? "1" : "0"});
+        } else {
+            write_line(out, {"item", item.module_name, item.kind, item.name, item.origin, item.is_public ? "1" : "0"});
+        }
     }
     return out.str();
 }
@@ -516,7 +547,7 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
             }
             metadata.imports.push_back(std::move(import));
         } else if (tag == "item") {
-            if (fields.size() != 5) {
+            if (fields.size() != 5 && fields.size() != 6) {
                 throw CompileError("invalid module metadata '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed item record");
             }
@@ -524,7 +555,8 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
                 fields[1],
                 fields[2],
                 fields[3],
-                parse_bool_field(fields[4], display_path, line_number),
+                fields.size() == 6 ? fields[4] : "",
+                parse_bool_field(fields.size() == 6 ? fields[5] : fields[4], display_path, line_number),
             };
             if (!seen_items.insert(item_key(item)).second) {
                 throw CompileError("invalid module metadata '" + display_path + "' at line " +

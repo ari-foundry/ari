@@ -1,5 +1,5 @@
 pub trait Ordered[T] {
-  fn lt(self, other: T) -> bool;
+  fn before(self, other: T) -> bool;
 }
 
 pub struct Boxed[T] {
@@ -14,7 +14,7 @@ pub impl[T] Boxed[T] {
 
 pub impl[T: Ordered[T]] Boxed[T] {
   fn min(self: ref Self, other: T) -> T {
-    if self.value.lt(other) {
+    if self.value.before(other) {
       return self.value;
     }
     return other;
@@ -22,7 +22,7 @@ pub impl[T: Ordered[T]] Boxed[T] {
 }
 
 impl Ordered[i64] for i64 {
-  fn lt(self, other: i64) -> bool {
+  fn before(self, other: i64) -> bool {
     return self < other;
   }
 }

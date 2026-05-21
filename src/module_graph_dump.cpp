@@ -31,7 +31,7 @@ std::string import_key(const ModuleMetadataImport& import) {
 
 std::string item_key(const ModuleMetadataItem& item) {
     return item.module_name + "\t" + item.kind + "\t" + item.name + "\t" +
-           (item.is_public ? "1" : "0");
+           item.origin + "\t" + (item.is_public ? "1" : "0");
 }
 
 } // namespace

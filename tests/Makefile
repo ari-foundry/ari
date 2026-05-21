@@ -3021,6 +3021,13 @@ check-modules: $(TARGET)
 	$(TARGET) tests/cases/modules/ok/module-metadata-impl-generics.ari --check-module-metadata $(BUILD_DIR)/modules/module-metadata-impl-generics.arimeta --check
 	$(TARGET) tests/cases/modules/ok/module-metadata-impl-generics.ari -o $(BUILD_DIR)/modules/module-metadata-impl-generics.elf
 	$(BUILD_DIR)/modules/module-metadata-impl-generics.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/cases/modules/ok/module-metadata-split-impl.ari --emit-module-metadata $(BUILD_DIR)/modules/module-metadata-split-impl.arimeta --emit-llvm $(BUILD_DIR)/modules/module-metadata-split-impl.ll
+	test $$(grep -c "item.*impl.*Boxed" $(BUILD_DIR)/modules/module-metadata-split-impl.arimeta) -eq 2
+	awk -F '\t' '$$1 == "item" && $$3 == "impl" && $$4 == "Boxed" { print $$5 }' $(BUILD_DIR)/modules/module-metadata-split-impl.arimeta | sort -u >$(BUILD_DIR)/modules/module-metadata-split-impl.origins
+	test $$(wc -l <$(BUILD_DIR)/modules/module-metadata-split-impl.origins) -eq 2
+	$(TARGET) tests/cases/modules/ok/module-metadata-split-impl.ari --check-module-metadata $(BUILD_DIR)/modules/module-metadata-split-impl.arimeta --check
+	$(TARGET) tests/cases/modules/ok/module-metadata-split-impl.ari -o $(BUILD_DIR)/modules/module-metadata-split-impl.elf
+	$(BUILD_DIR)/modules/module-metadata-split-impl.elf; code=$$?; test $$code -eq 15
 	awk 'BEGIN { done = 0 } { print; if (!done && $$1 == "import") { print; done = 1 } }' $(BUILD_DIR)/modules/package-module-main.arimeta >$(BUILD_DIR)/modules/package-module-main-duplicate-import.arimeta
 	if $(TARGET) -Itests/packages tests/cases/modules/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-duplicate-import.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-duplicate-import.ll >$(BUILD_DIR)/modules/package-module-main-duplicate-import.err 2>&1; then exit 1; fi
 	grep -q "duplicate import record" $(BUILD_DIR)/modules/package-module-main-duplicate-import.err
@@ -3193,7 +3200,7 @@ check-modules: $(TARGET)
 	grep -q "expected 'ari-ir-summary-v0;' header" $(BUILD_DIR)/modules/package-module-main-cache-ir-summary-non-v0.err
 	awk 'BEGIN { FS=OFS="\t" } $$1 == "ir-summary" && $$2 == "package_math" { pm_path = $$3; pm_root = $$4; pm_hash = $$5; next } $$1 == "ir-summary" && $$2 == "package_math::nested" { $$2 = "package_math"; $$3 = pm_path; $$4 = pm_root; $$5 = pm_hash } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-ir-summary-wrong-surface.aricache
 	if $(TARGET) -Itests/packages tests/cases/modules/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-ir-summary-wrong-surface.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-ir-summary-wrong-surface.ll >$(BUILD_DIR)/modules/package-module-main-cache-ir-summary-wrong-surface.err 2>&1; then exit 1; fi
-	grep -q "missing lowered function 'package_math::value'" $(BUILD_DIR)/modules/package-module-main-cache-ir-summary-wrong-surface.err
+	grep -q "contains lowered function 'package_math::nested::bonus' from module 'package_math::nested'" $(BUILD_DIR)/modules/package-module-main-cache-ir-summary-wrong-surface.err
 	sed '0,/package_math::value/s/package_math::value/package_math::wrong/' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache
 	if $(TARGET) -Itests/packages tests/cases/modules/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-tampered.err 2>&1; then exit 1; fi
 	grep -q "does not match the current source graph" $(BUILD_DIR)/modules/package-module-main-cache-tampered.err

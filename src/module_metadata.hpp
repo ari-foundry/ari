@@ -27,6 +27,7 @@ struct ModuleMetadataItem {
     std::string module_name;
     std::string kind;
     std::string name;
+    std::string origin;
     bool is_public = false;
 };
 
