@@ -939,6 +939,9 @@ permissions.to_mode()
 metadata.len()
 metadata.file_type()
 metadata.permissions()
+metadata.accessed()
+metadata.modified()
+metadata.changed()
 metadata.is_file()
 metadata.is_dir()
 metadata.is_symlink()
@@ -983,6 +986,9 @@ symlink permission-bit policy is not part of this slice.
 `Metadata::len` reports host byte length, `Metadata::file_type` returns
 `FileKind` (`Regular`, `Directory`, `Symlink`, or `Other`), and
 `Metadata::permissions` carries the access-style permission snapshot.
+`Metadata::accessed`, `Metadata::modified`, and `Metadata::changed` return
+`std::time::SystemTime` values for access time, modification time, and POSIX
+status-change time respectively. `changed` is not a portable creation time.
 `try_file_type(path)` returns just `Option[FileKind]` without building the full
 metadata/permission snapshot.
 `fs::is_file(path)`, `fs::is_dir(path)`, `fs::is_symlink(path)`, and
@@ -991,8 +997,8 @@ missing or unstatable paths. `is_symlink` uses the no-follow policy; the other
 direct predicates follow symbolic links through ordinary metadata. The
 matching `metadata.is_*()` methods are the right choice when code already has a
 `Metadata` value. The current runtime implementation uses Linux/glibc `stat`
-for ordinary metadata and `lstat` for no-follow metadata; richer timestamps
-are future work.
+for ordinary metadata and `lstat` for no-follow metadata; portable creation or
+birth time is future platform-policy work.
 `try_mode(path)` returns `Option[i64]` containing the low POSIX `0777`
 permission bits, and `mode(path)` is the asserting wrapper. Use `set_mode(path,
 mode)` for direct chmod-style updates, or `set_permissions(path, permissions)`

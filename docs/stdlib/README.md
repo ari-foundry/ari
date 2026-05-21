@@ -63,7 +63,8 @@ append, and read/write access plus access-permission checks, source create,
 read, write, append, position, seek, truncate, copy, rename, hard/symbolic
 links, link-target reads, no-follow link metadata, single-directory and
 recursive directory create/remove helpers, directory-entry metadata, and
-read-to-byte-string helpers, `std::path`
+metadata access/modification/status-change timestamps, and read-to-byte-string
+helpers, `std::path`
 adds source-only lexical path
 splitting, joining, lightweight normalization, and typed `PathBytes` views,
 and `std::net` adds

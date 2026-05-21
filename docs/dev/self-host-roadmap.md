@@ -122,7 +122,7 @@ bootstrap path should not wait for one.
 
 | Area | Current Readiness | Needed Before Full Self-Host |
 | --- | --- | --- |
-| Source IO | Good enough for small tools through `std::fs`, `std::path`, `std::env`, and `std::io`. | Directory walking, richer metadata, canonical paths, stable owned path buffers, and better file errors. |
+| Source IO | Good enough for small tools through `std::fs`, `std::path`, `std::env`, and `std::io`. | Richer file errors, stable owned path buffers, owner/group/ACL metadata, and portable creation/birth-time policy. |
 | Text | Good enough for byte strings, UTF-8 validation, C strings, OS string views, formatting, and encoding helpers. | Owned UTF-8/OS/path string policies, richer parse errors, and less special-case formatting lowering. |
 | Collections | Good first pass: `Vec`, `Slice`, hash/tree maps and sets, queues, lists, heaps, and iterators exist. | Trait-driven `Hash`/`Eq`/`Ord`, deletion/comparator policy completion, stress tests, and cleaner nested generic aggregate behavior. |
 | Error reporting | Basic logging, panic, formatting, errors, and test helpers exist in runtime `std`. | Compiler/tooling source spans, owned filename/source-text maps, structured report values, multi-label builders, multiple notes, fix-it text, and stable golden output. |

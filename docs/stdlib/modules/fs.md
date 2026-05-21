@@ -154,6 +154,9 @@ permissions.to_mode()
 metadata.len()
 metadata.file_type()
 metadata.permissions()
+metadata.accessed()
+metadata.modified()
+metadata.changed()
 metadata.is_file()
 metadata.is_dir()
 metadata.is_symlink()
@@ -353,7 +356,11 @@ with `Regular`, `Directory`, `Symlink`, and `Other` variants. The convenience
 methods `metadata.is_file()`, `metadata.is_dir()`, `metadata.is_symlink()`, and
 `metadata.is_other()` cover common branches when you already have metadata.
 The current Linux/glibc runtime uses `stat` for target-following metadata and
-`lstat` for no-follow symlink metadata.
+`lstat` for no-follow symlink metadata. `metadata.accessed()` and
+`metadata.modified()` expose access and modification times as
+`std::time::SystemTime`. `metadata.changed()` exposes the POSIX status-change
+timestamp (`ctime`), not a portable creation time. A separate creation/birth-time
+API should wait until the platform policy is explicit.
 
 `try_mode(path)` returns the current POSIX permission bits as
 `Option[i64]`. The value is already masked to the low `0777` permission bits,
@@ -456,7 +463,7 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, and byte-counting `try_write`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, and byte-counting `try_append`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
-| metadata | Current: `try_metadata(path)`/`metadata(path)` over the Linux/glibc `stat` runtime path, `try_symlink_metadata(path)`/`symlink_metadata(path)` and `is_symlink(path)` over the Linux/glibc `lstat` runtime path, plus `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, and `FileKind`; richer timestamps are roadmap. |
+| metadata | Current: `try_metadata(path)`/`metadata(path)` over the Linux/glibc `stat` runtime path, `try_symlink_metadata(path)`/`symlink_metadata(path)` and `is_symlink(path)` over the Linux/glibc `lstat` runtime path, plus `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
 | rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)`, empty directory removal with `remove_dir(path)`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
@@ -716,8 +723,9 @@ if file.is_open() {
   Directory reads expose names, joined child paths, and lazy per-entry metadata
   methods, but not per-entry error values. Basic `stat`/`lstat` metadata,
   permission-bit lookup and mutation, and existing-path canonicalization exist,
-  but richer timestamps, owner/group/ACL policy, richer link metadata, and
-  platform-specific symlink policy are still future work.
+  including access, modification, and POSIX status-change timestamps. Richer
+  owner/group/ACL policy, portable creation/birth time, richer link metadata,
+  and platform-specific symlink policy are still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
   `stat`, `lstat`, `chmod`, `realpath`, `readlink`, `unlink`, `rename`, `link`,
   `symlink`, `mkdir`, `rmdir`, `opendir`, `readdir`, `closedir`, `open`,
@@ -761,6 +769,7 @@ tests/cases/standard-library/ok/fs/std-fs-symlink-metadata.ari
 tests/cases/standard-library/ok/fs/std-fs-permissions.ari
 tests/cases/standard-library/ok/fs/std-fs-mode.ari
 tests/cases/standard-library/ok/fs/std-fs-metadata.ari
+tests/cases/standard-library/ok/fs/std-fs-metadata-times.ari
 tests/cases/standard-library/ok/fs/std-fs-canonicalize.ari
 ```
 
@@ -821,6 +830,9 @@ depending on exact chmod effects from the host filesystem.
 `std-fs-metadata.ari` covers target-following `Option[Metadata]`,
 `Option[FileKind]`, direct path-kind predicates, regular-file byte length,
 `FileKind`, metadata methods, directory predicates, and missing-path `None`.
+`std-fs-metadata-times.ari` covers `Metadata::accessed`,
+`Metadata::modified`, and `Metadata::changed` for target-following metadata,
+no-follow symlink metadata, and `DirEntry` lazy metadata over stored paths.
 `std-fs-canonicalize.ari` covers `Option[String]` path resolution,
 absolute canonical paths, filename preservation, and missing-path `None`.
 
@@ -830,7 +842,8 @@ absolute canonical paths, filename preservation, and missing-path `None`.
 - Add explicit overwrite/platform policy for `rename`.
 - Grow canonicalization toward owned path values and platform-specific policy.
 - Expand link support with clearer platform-specific symlink policy.
-- Expand metadata with modified/accessed/created timestamps.
+- Add portable metadata creation/birth time only after the platform policy is
+  explicit.
 - Expand directory reads with richer per-entry error reporting and owned
   OS-resource iterator handles.
 - Grow `std::path` from lexical helpers into owned path values after Ari has a

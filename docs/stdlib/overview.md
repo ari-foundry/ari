@@ -282,8 +282,10 @@ permission `mode`/`try_mode`/`set_mode`/`set_permissions`,
 `canonicalize`/`try_canonicalize`, `read_link`/`try_read_link`, and the `File`,
 `Dir`, `DirEntry`, `Metadata`, and `Permissions` methods are ordinary Ari
 source or thin runtime hooks over the raw OS boundary. Directory entry values
-now expose names, joined child paths, and lazy metadata/file-kind predicates;
-richer per-entry errors remain future work. Each handle is a visible value
+now expose names, joined child paths, and lazy metadata/file-kind predicates.
+Metadata values expose access, modification, and POSIX status-change times as
+`SystemTime`; richer per-entry errors remain future work. Each handle is a
+visible value
 today and should become a stronger owned resource when OS resource ownership is
 modeled by the language.
 

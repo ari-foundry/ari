@@ -211,6 +211,9 @@ identifies the exact case:
 - `std-fs-metadata.ari`: runtime-backed target-following `stat` metadata
   checks, missing-path `None`, regular-file length/kind, directory kind, and
   `Metadata` methods.
+- `std-fs-metadata-times.ari`: access, modification, and POSIX status-change
+  timestamp methods on target-following metadata, no-follow symlink metadata,
+  and stored-path `DirEntry` metadata.
 - `std-fs-canonicalize.ari`: runtime-backed `realpath` canonicalization,
   absolute owned paths, filename preservation, and missing-path `None`.
 - `std-net-addresses.ari`: source `std::net` IPv4/IPv6 constructors, generic

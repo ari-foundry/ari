@@ -97,7 +97,7 @@ limits, examples, and test files for one module.
   no-follow metadata, path-kind predicates, rename, hard/symbolic links, and
   single-directory create/ensure/remove helpers, recursive directory creation
   and removal, directory entries with lazy metadata, and non-truncating file
-  ensure.
+  ensure, including metadata access/modification/status-change timestamps.
 - [std::path](path.md): source-only POSIX-style lexical path helpers for
   separators, absolute/relative checks, typed `PathBytes` views including
   direct literal coercion, borrowed components, join, and lightweight

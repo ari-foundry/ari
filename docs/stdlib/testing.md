@@ -78,6 +78,7 @@ std-fs-remove-dir-all.ari
 std-fs-links.ari
 std-fs-permissions.ari
 std-fs-mode.ari
+std-fs-metadata-times.ari
 std-algo-slice-helpers.ari
 std-hash-basic.ari
 std-random-basic.ari

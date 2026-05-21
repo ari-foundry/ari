@@ -1084,12 +1084,15 @@ method std::fs::File::read_byte|check-prelude std-fs-basic value file handle byt
 method std::fs::File::try_read_byte|check-prelude std-fs-try-byte value file handle Option-returning byte read method; docs/stdlib/modules/fs.md
 method std::fs::File::write_byte|check-prelude std-fs-basic value file handle byte write method; docs/stdlib/modules/fs.md
 method std::fs::File::write_bytes|check-prelude std-fs-basic value file handle slice write method; docs/stdlib/modules/fs.md
+method std::fs::Metadata::accessed|check-prelude std-fs-metadata-times access timestamp accessor; docs/stdlib/modules/fs.md
+method std::fs::Metadata::changed|check-prelude std-fs-metadata-times status-change timestamp accessor; docs/stdlib/modules/fs.md
 method std::fs::Metadata::file_type|check-prelude std-fs-metadata file kind accessor; docs/stdlib/modules/fs.md
 method std::fs::Metadata::is_dir|check-prelude std-fs-metadata directory kind predicate; docs/stdlib/modules/fs.md
 method std::fs::Metadata::is_file|check-prelude std-fs-metadata regular-file kind predicate; docs/stdlib/modules/fs.md
 method std::fs::Metadata::is_other|check-prelude std-fs-metadata non-file/non-dir/non-symlink predicate; docs/stdlib/modules/fs.md
 method std::fs::Metadata::is_symlink|check-prelude std-fs-metadata symlink kind predicate; docs/stdlib/modules/fs.md
 method std::fs::Metadata::len|check-prelude std-fs-metadata byte length accessor; docs/stdlib/modules/fs.md
+method std::fs::Metadata::modified|check-prelude std-fs-metadata-times modification timestamp accessor; docs/stdlib/modules/fs.md
 method std::fs::Metadata::permissions|check-prelude std-fs-metadata permission snapshot accessor; docs/stdlib/modules/fs.md
 method std::fs::Permissions::all|check-prelude std-fs-mode all-permission constructor for mode mutation; docs/stdlib/modules/fs.md
 method std::fs::Permissions::any|check-prelude std-fs-permissions any-access predicate; docs/stdlib/modules/fs.md

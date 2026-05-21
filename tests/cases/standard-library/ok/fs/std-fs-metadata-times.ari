@@ -1,0 +1,86 @@
+// Covers timestamp fields on filesystem metadata. Target-following metadata,
+// no-follow symlink metadata, and DirEntry metadata all expose access,
+// modification, and status-change times as SystemTime values.
+fn has_timestamp(value: time::SystemTime) -> bool {
+  return value.as_unix_nanos() > 0 &&
+         value.as_unix_seconds() > 0 &&
+         value.subsec_nanos() >= 0 &&
+         value.subsec_nanos() < 1000000000;
+}
+
+fn has_all_timestamps(info: fs::Metadata) -> bool {
+  return has_timestamp(info.accessed()) &&
+         has_timestamp(info.modified()) &&
+         has_timestamp(info.changed());
+}
+
+fn cleanup(root: string, file_path: string, link_path: string) -> void {
+  fs::remove(link_path);
+  fs::remove(file_path);
+  fs::remove_dir(root);
+}
+
+fn main() -> i64 {
+  let root = "build/prelude/std-fs-metadata-times.tmp";
+  let file_path = "build/prelude/std-fs-metadata-times.tmp/file.txt";
+  let link_path = "build/prelude/std-fs-metadata-times.tmp/file-link";
+  let link_target = "file.txt";
+  cleanup(root, file_path, link_path);
+
+  var score = 0;
+  if fs::create_dir(root) {
+    score = score + 1;
+  }
+  if fs::write(file_path, "time") {
+    score = score + 2;
+  }
+  if fs::symbolic_link(link_target, link_path) {
+    score = score + 4;
+  }
+
+  match fs::try_metadata(file_path) {
+    std::Some(info) => {
+      if info.is_file() && has_all_timestamps(info) {
+        score = score + 8;
+      }
+    }
+    std::None => {}
+  }
+
+  let direct = fs::metadata(file_path);
+  if has_timestamp(direct.accessed()) && has_timestamp(direct.modified()) && has_timestamp(direct.changed()) {
+    score = score + 16;
+  }
+
+  match fs::try_symlink_metadata(link_path) {
+    std::Some(link_info) => {
+      if link_info.is_symlink() && has_all_timestamps(link_info) {
+        score = score + 32;
+      }
+    }
+    std::None => {}
+  }
+
+  var zone = std::zone::create(4096);
+  match fs::try_read_dir_entries(ref mut zone, root) {
+    std::Some(entries) => {
+      var index = 0;
+      while index < entries.len() {
+        let entry = entries.get(index);
+        if entry.name_equals("file.txt") && has_all_timestamps(entry.metadata()) {
+          score = score + 64;
+        }
+        if entry.name_equals("file-link") && has_all_timestamps(entry.symlink_metadata()) {
+          score = score + 128;
+        }
+        index = index + 1;
+      }
+    }
+    std::None => {}
+  }
+  std::zone::destroy(zone);
+
+  cleanup(root, file_path, link_path);
+  assert_eq_i64(score, 255);
+  return score;
+}

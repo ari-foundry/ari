@@ -668,6 +668,16 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari -o $(BUILD_DIR)/prelude/std-fs-metadata.elf
 	$(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 129
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-metadata.elf; $(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 129; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata-times.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
+	grep -q "@ari_builtin_fs_metadata_accessed_nanos" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
+	grep -q "@ari_builtin_fs_metadata_modified_nanos" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
+	grep -q "@ari_builtin_fs_metadata_changed_nanos" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
+	grep -q "@ari_builtin_fs_symlink_metadata_changed_nanos_bytes" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
+	grep -F -q "Metadata8inherent8accessed" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
+	grep -F -q "Metadata8inherent8modified" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
+	grep -F -q "Metadata8inherent7changed" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata-times.ari -o $(BUILD_DIR)/prelude/std-fs-metadata-times.elf
+	$(BUILD_DIR)/prelude/std-fs-metadata-times.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-canonicalize.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-canonicalize.ll
 	grep -q "@ari_builtin_fs_canonicalize" $(BUILD_DIR)/prelude/std-fs-canonicalize.ll
 	grep -q "declare ptr @realpath" $(BUILD_DIR)/prelude/std-fs-canonicalize.ll
