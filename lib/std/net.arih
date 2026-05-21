@@ -1,7 +1,8 @@
-// Network address value helpers.
+// Network address and first socket helpers.
 //
-// This first std::net slice stays source-only: address values are ordinary
-// Ari data, while sockets and DNS remain future OS-resource/runtime work.
+// Address values stay plain Ari data. TCP sockets are explicit owned
+// descriptor wrappers over the hosted runtime, with Result helpers for callers
+// that need the compact std::error raw bridge.
 pub struct Ipv4Addr {
   a: u8,
   b: u8,
@@ -37,6 +38,23 @@ pub struct SocketAddr {
   port: u16,
 }
 
+pub struct TcpListener {
+  mut handle: std::os::OwnedFd,
+}
+
+pub struct TcpStream {
+  mut handle: std::os::OwnedFd,
+}
+
+extern "ari" fn tcp_listen_v4_raw(a: i64, b: i64, c: i64, d: i64, port: i64) -> i64 =
+  "ari_builtin_net_tcp_listen_v4";
+extern "ari" fn tcp_connect_v4_raw(a: i64, b: i64, c: i64, d: i64, port: i64) -> i64 =
+  "ari_builtin_net_tcp_connect_v4";
+extern "ari" fn tcp_accept_raw(raw: i64) -> i64 = "ari_builtin_net_tcp_accept";
+extern "ari" fn local_port_raw(raw: i64) -> i64 = "ari_builtin_net_local_port";
+extern "ari" fn read_socket_byte_raw(raw: i64) -> i64 = "ari_builtin_os_read_byte";
+extern "ari" fn write_socket_byte_raw(raw: i64, value: u8) -> bool = "ari_builtin_os_write_byte";
+
 pub fn ipv4(a: u8, b: u8, c: u8, d: u8) -> Ipv4Addr {
   return Ipv4Addr { a: a, b: b, c: c, d: d };
 }
@@ -52,6 +70,69 @@ pub fn socket_addr(ip: IpAddr, port: u16) -> SocketAddr {
 pub fn localhost(port: u16) -> SocketAddr {
   let host = Ipv4Addr::localhost();
   return socket_addr(host.as_ip(), port);
+}
+
+fn last_errno_error_raw() -> i64 {
+  let error = std::c::error();
+  return error.raw();
+}
+
+fn unsupported_address_error_raw() -> i64 {
+  let error = std::error::new(std::error::Unsupported);
+  return error.raw();
+}
+
+fn invalid_input_error_raw() -> i64 {
+  let error = std::error::new(std::error::InvalidInput);
+  return error.raw();
+}
+
+fn tcp_listener_from_raw(raw: i64) -> TcpListener {
+  var handle = std::os::OwnedFd::from_raw(raw);
+  handle.set_close_on_exec(true);
+  return TcpListener { handle: handle };
+}
+
+fn tcp_stream_from_raw(raw: i64) -> TcpStream {
+  var handle = std::os::OwnedFd::from_raw(raw);
+  handle.set_close_on_exec(true);
+  return TcpStream { handle: handle };
+}
+
+fn tcp_listen_raw(addr: SocketAddr) -> std::Result[i64, i64] {
+  let ip = addr.ip;
+  if !ip.is_v4() {
+    return std::Err<i64, i64>(unsupported_address_error_raw());
+  }
+  let raw = tcp_listen_v4_raw(
+    ip.s0 as i64,
+    ip.s1 as i64,
+    ip.s2 as i64,
+    ip.s3 as i64,
+    addr.port as i64
+  );
+  if raw >= 0 {
+    return std::Ok<i64, i64>(raw);
+  }
+  return std::Err<i64, i64>(last_errno_error_raw());
+}
+
+fn tcp_connect_raw(addr: SocketAddr) -> std::Result[i64, i64] {
+  let ip = addr.ip;
+  if !ip.is_v4() {
+    return std::Err<i64, i64>(unsupported_address_error_raw());
+  }
+  let raw = tcp_connect_v4_raw(
+    ip.s0 as i64,
+    ip.s1 as i64,
+    ip.s2 as i64,
+    ip.s3 as i64,
+    addr.port as i64
+  );
+  if raw >= 0 {
+    return std::Ok<i64, i64>(raw);
+  }
+  return std::Err<i64, i64>(last_errno_error_raw());
 }
 
 pub impl std::net::Ipv4Addr {
@@ -236,5 +317,134 @@ pub impl std::net::SocketAddr {
   fn is_unspecified(self: ref Self) -> bool {
     let ip = self.ip;
     return ip.is_unspecified();
+  }
+}
+
+pub impl std::net::TcpListener {
+  fn bind(addr: SocketAddr) -> std::Option[TcpListener] {
+    return TcpListener::bind_result(addr).ok();
+  }
+
+  fn try_bind(addr: SocketAddr) -> std::Option[TcpListener] {
+    return TcpListener::bind(addr);
+  }
+
+  fn bind_result(addr: SocketAddr) -> std::Result[TcpListener, i64] {
+    match tcp_listen_raw(addr) {
+      std::Ok(raw) => {
+        return std::Ok<TcpListener, i64>(tcp_listener_from_raw(raw));
+      }
+      std::Err(error) => {
+        return std::Err<TcpListener, i64>(error);
+      }
+    }
+  }
+
+  fn descriptor(self: ref Self) -> std::os::Fd {
+    return self.handle.as_fd();
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.handle.is_open();
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return self.handle.close();
+  }
+
+  fn local_port(self: ref Self) -> std::Option[u16] {
+    if !self.is_open() {
+      return std::None<u16>();
+    }
+    let port = local_port_raw(self.handle.raw());
+    if port < 0 || port > 65535 {
+      return std::None<u16>();
+    }
+    return std::Some<u16>(port as u16);
+  }
+
+  fn accept(self: ref Self) -> std::Option[TcpStream] {
+    return self.accept_result().ok();
+  }
+
+  fn try_accept(self: ref Self) -> std::Option[TcpStream] {
+    return self.accept();
+  }
+
+  fn accept_result(self: ref Self) -> std::Result[TcpStream, i64] {
+    if !self.is_open() {
+      return std::Err<TcpStream, i64>(invalid_input_error_raw());
+    }
+    let raw = tcp_accept_raw(self.handle.raw());
+    if raw >= 0 {
+      return std::Ok<TcpStream, i64>(tcp_stream_from_raw(raw));
+    }
+    return std::Err<TcpStream, i64>(last_errno_error_raw());
+  }
+}
+
+pub impl std::net::TcpStream {
+  fn connect(addr: SocketAddr) -> std::Option[TcpStream] {
+    return TcpStream::connect_result(addr).ok();
+  }
+
+  fn try_connect(addr: SocketAddr) -> std::Option[TcpStream] {
+    return TcpStream::connect(addr);
+  }
+
+  fn connect_result(addr: SocketAddr) -> std::Result[TcpStream, i64] {
+    match tcp_connect_raw(addr) {
+      std::Ok(raw) => {
+        return std::Ok<TcpStream, i64>(tcp_stream_from_raw(raw));
+      }
+      std::Err(error) => {
+        return std::Err<TcpStream, i64>(error);
+      }
+    }
+  }
+
+  fn descriptor(self: ref Self) -> std::os::Fd {
+    return self.handle.as_fd();
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.handle.is_open();
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return self.handle.close();
+  }
+
+  fn try_read_byte(self: ref mut Self) -> std::Option[u8] {
+    if !self.is_open() {
+      return std::None<u8>();
+    }
+    let byte = read_socket_byte_raw(self.handle.raw());
+    if byte < 0 {
+      return std::None<u8>();
+    }
+    return std::Some<u8>(byte as u8);
+  }
+}
+
+impl std::io::Reader for std::net::TcpStream {
+  pub fn read_byte(self: ref mut Self) -> i64 {
+    if !self.handle.is_open() {
+      return -1;
+    }
+    return read_socket_byte_raw(self.handle.raw());
+  }
+}
+
+impl std::io::Writer for std::net::TcpStream {
+  pub fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if !self.handle.is_open() {
+      return false;
+    }
+    return write_socket_byte_raw(self.handle.raw(), value);
+  }
+
+  pub fn flush(self: ref mut Self) -> bool {
+    return self.handle.is_open();
   }
 }

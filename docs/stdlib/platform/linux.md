@@ -26,7 +26,8 @@ Implemented now:
   reading through the glibc errno location, `std::error` mapping, borrowed and
   owned C strings, and dynamic loading wrappers over `dlopen`, `dlsym`,
   `dlclose`, and `dlerror`.
-- `std::net` provides IP and socket-address values, but not sockets yet.
+- `std::net` provides IP and socket-address values plus the first hosted IPv4
+  TCP listener/stream handles over Linux sockets.
 - Hosted executables currently rely on the platform CRT and dynamic linker;
   Ari emits LLVM IR and lets the LLVM driver link.
 
@@ -97,6 +98,7 @@ useful for modern systems work.
 | symbolic-link target reads | `std::fs::try_read_link(ref mut zone, path)` and `read_link(ref mut zone, path)` are backed by hosted `readlink(2)` and copy the stored link target into a zone-owned `String`; `try_symlink_metadata(path)`, `symlink_metadata(path)`, and `is_symlink(path)` use hosted `lstat(2)` for no-follow metadata, including access/modification/status-change timestamps. | Add richer link/error policy before exposing platform-specific link management. |
 | close-on-exec | `OwnedFd::close_on_exec()` and `set_close_on_exec(enabled)` are backed by hosted `fcntl(F_GETFD/F_SETFD)`. | Add close-on-exec-at-creation/dup where host APIs support it, then default new descriptors to close-on-exec where possible. |
 | nonblocking mode | `OwnedFd::is_nonblocking()` and `set_nonblocking(enabled)` are backed by hosted `fcntl(F_GETFL/F_SETFL)`. | Add socket-specific tests and document interaction with IO helpers before readiness APIs. |
+| TCP sockets | `std::net::TcpListener` and `std::net::TcpStream` use hosted `socket`, `bind`, `listen`, `accept`, `connect`, and `getsockname` for the first IPv4 handle slice. `TcpStream` adapts to `std::io::Reader`/`Writer` through descriptor byte reads/writes. | Add DNS, IPv6 socket handles, peer/local address helpers, `send`/`recv`, shutdown, socket options, and timeout/nonblocking policy. |
 | pipe | `std::os::pipe()` is backed by the hosted `pipe(2)` ABI and returns an owning `Pipe` value with separate read/write ends; `std::io::pipe()` adapts it into `Reader`/`Writer` ends. | Add `pipe2`-style close-on-exec/nonblocking-at-creation policy where host APIs support it. |
 | fcntl | Not exposed. | Future low-level descriptor module with typed flag helpers. |
 | ioctl | Not exposed. | Keep optional and narrow; prefer typed wrappers for common devices over a raw catch-all. |

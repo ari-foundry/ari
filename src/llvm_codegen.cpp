@@ -493,6 +493,15 @@ private:
                symbol == "dup" ||
                symbol == "fcntl" ||
                symbol == "pipe" ||
+               symbol == "socket" ||
+               symbol == "bind" ||
+               symbol == "listen" ||
+               symbol == "connect" ||
+               symbol == "accept" ||
+               symbol == "getsockname" ||
+               symbol == "htons" ||
+               symbol == "htonl" ||
+               symbol == "ntohs" ||
                symbol == "malloc" ||
                symbol == "free" ||
                symbol == "exit" ||
@@ -629,6 +638,15 @@ private:
         declarations_ << "declare i32 @dup(i32)\n";
         declarations_ << "declare i32 @fcntl(i32, i32, ...)\n";
         declarations_ << "declare i32 @pipe(ptr)\n";
+        declarations_ << "declare i32 @socket(i32, i32, i32)\n";
+        declarations_ << "declare i32 @bind(i32, ptr, i32)\n";
+        declarations_ << "declare i32 @listen(i32, i32)\n";
+        declarations_ << "declare i32 @connect(i32, ptr, i32)\n";
+        declarations_ << "declare i32 @accept(i32, ptr, ptr)\n";
+        declarations_ << "declare i32 @getsockname(i32, ptr, ptr)\n";
+        declarations_ << "declare i16 @htons(i16)\n";
+        declarations_ << "declare i32 @htonl(i32)\n";
+        declarations_ << "declare i16 @ntohs(i16)\n";
         declarations_ << "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memmove.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memset.p0.i64(ptr, i8, i64, i1)\n";
@@ -1888,6 +1906,120 @@ private:
         line("  %shifted = shl i64 %write64, 32");
         line("  %packed = or i64 %shifted, %read64");
         line("  ret i64 %packed");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define private void @ari_runtime_net_sockaddr_v4(ptr %addr, i64 %a, i64 %b, i64 %c, i64 %d, i64 %port) {");
+        line("entry:");
+        line("  call void @llvm.memset.p0.i64(ptr %addr, i8 0, i64 16, i1 false)");
+        line("  %family.ptr = getelementptr inbounds i8, ptr %addr, i64 0");
+        line("  store i16 2, ptr %family.ptr, align 2");
+        line("  %port16 = trunc i64 %port to i16");
+        line("  %net.port = call i16 @htons(i16 %port16)");
+        line("  %port.ptr = getelementptr inbounds i8, ptr %addr, i64 2");
+        line("  store i16 %net.port, ptr %port.ptr, align 2");
+        line("  %a32 = trunc i64 %a to i32");
+        line("  %b32 = trunc i64 %b to i32");
+        line("  %c32 = trunc i64 %c to i32");
+        line("  %d32 = trunc i64 %d to i32");
+        line("  %a.shift = shl i32 %a32, 24");
+        line("  %b.shift = shl i32 %b32, 16");
+        line("  %c.shift = shl i32 %c32, 8");
+        line("  %ab = or i32 %a.shift, %b.shift");
+        line("  %abc = or i32 %ab, %c.shift");
+        line("  %host.addr = or i32 %abc, %d32");
+        line("  %net.addr = call i32 @htonl(i32 %host.addr)");
+        line("  %addr.ptr = getelementptr inbounds i8, ptr %addr, i64 4");
+        line("  store i32 %net.addr, ptr %addr.ptr, align 4");
+        line("  ret void");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_tcp_listen_v4(i64 %a, i64 %b, i64 %c, i64 %d, i64 %port) {");
+        line("entry:");
+        line("  %fd32 = call i32 @socket(i32 2, i32 1, i32 0)");
+        line("  %socket.bad = icmp slt i32 %fd32, 0");
+        line("  br i1 %socket.bad, label %fail, label %bind");
+        line("bind:");
+        line("  %storage = alloca [16 x i8], align 4");
+        line("  %addr = getelementptr inbounds [16 x i8], ptr %storage, i64 0, i64 0");
+        line("  call void @ari_runtime_net_sockaddr_v4(ptr %addr, i64 %a, i64 %b, i64 %c, i64 %d, i64 %port)");
+        line("  %bind.code = call i32 @bind(i32 %fd32, ptr %addr, i32 16)");
+        line("  %bind.ok = icmp eq i32 %bind.code, 0");
+        line("  br i1 %bind.ok, label %listen, label %close_fail");
+        line("listen:");
+        line("  %listen.code = call i32 @listen(i32 %fd32, i32 128)");
+        line("  %listen.ok = icmp eq i32 %listen.code, 0");
+        line("  br i1 %listen.ok, label %ok, label %close_fail");
+        line("ok:");
+        line("  %fd = sext i32 %fd32 to i64");
+        line("  ret i64 %fd");
+        line("close_fail:");
+        line("  %ignored = call i32 @close(i32 %fd32)");
+        line("  ret i64 -1");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_tcp_connect_v4(i64 %a, i64 %b, i64 %c, i64 %d, i64 %port) {");
+        line("entry:");
+        line("  %fd32 = call i32 @socket(i32 2, i32 1, i32 0)");
+        line("  %socket.bad = icmp slt i32 %fd32, 0");
+        line("  br i1 %socket.bad, label %fail, label %connect");
+        line("connect:");
+        line("  %storage = alloca [16 x i8], align 4");
+        line("  %addr = getelementptr inbounds [16 x i8], ptr %storage, i64 0, i64 0");
+        line("  call void @ari_runtime_net_sockaddr_v4(ptr %addr, i64 %a, i64 %b, i64 %c, i64 %d, i64 %port)");
+        line("  %connect.code = call i32 @connect(i32 %fd32, ptr %addr, i32 16)");
+        line("  %connect.ok = icmp eq i32 %connect.code, 0");
+        line("  br i1 %connect.ok, label %ok, label %close_fail");
+        line("ok:");
+        line("  %fd = sext i32 %fd32 to i64");
+        line("  ret i64 %fd");
+        line("close_fail:");
+        line("  %ignored = call i32 @close(i32 %fd32)");
+        line("  ret i64 -1");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_tcp_accept(i64 %fd) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %do_accept");
+        line("do_accept:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %accepted32 = call i32 @accept(i32 %fd32, ptr null, ptr null)");
+        line("  %accepted = sext i32 %accepted32 to i64");
+        line("  ret i64 %accepted");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_local_port(i64 %fd) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %query");
+        line("query:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %storage = alloca [16 x i8], align 4");
+        line("  %addr = getelementptr inbounds [16 x i8], ptr %storage, i64 0, i64 0");
+        line("  %len.ptr = alloca i32, align 4");
+        line("  store i32 16, ptr %len.ptr, align 4");
+        line("  %code = call i32 @getsockname(i32 %fd32, ptr %addr, ptr %len.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        line("  %port.ptr = getelementptr inbounds i8, ptr %addr, i64 2");
+        line("  %net.port = load i16, ptr %port.ptr, align 2");
+        line("  %host.port = call i16 @ntohs(i16 %net.port)");
+        line("  %wide = zext i16 %host.port to i64");
+        line("  ret i64 %wide");
         line("fail:");
         line("  ret i64 -1");
         line("}");

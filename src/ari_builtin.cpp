@@ -377,6 +377,10 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_os_pipe") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_os_read_byte") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_os_write_byte") return builtin_sig({i64, u8}, boolean);
+    if (symbol == "ari_builtin_net_tcp_listen_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
+    if (symbol == "ari_builtin_net_tcp_connect_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
+    if (symbol == "ari_builtin_net_tcp_accept") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_local_port") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_read") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_write") return builtin_sig({source_string}, boolean);

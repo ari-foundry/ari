@@ -1103,6 +1103,8 @@ net::Ipv4Addr
 net::Ipv6Addr
 net::IpAddr
 net::SocketAddr
+net::TcpListener
+net::TcpStream
 
 net::ipv4(a, b, c, d)
 net::ipv6(s0, s1, s2, s3, s4, s5, s6, s7)
@@ -1139,14 +1141,35 @@ addr.port()
 addr.with_port(port)
 addr.is_unspecified()
 addr.is_loopback()
+
+TcpListener::bind(addr)
+TcpListener::try_bind(addr)
+TcpListener::bind_result(addr)
+listener.descriptor()
+listener.is_open()
+listener.local_port()
+listener.accept()
+listener.try_accept()
+listener.accept_result()
+listener.close()
+
+TcpStream::connect(addr)
+TcpStream::try_connect(addr)
+TcpStream::connect_result(addr)
+stream.descriptor()
+stream.is_open()
+stream.try_read_byte()
+stream.close()
 ```
 
-The current network slice is source-only and deterministic. It does not do DNS
-lookup, open sockets, or touch the host network. Use `octet`/`segment` for
+Address values are deterministic source structs. Use `octet`/`segment` for
 known-good indexes and `try_octet`/`try_segment` when validating parsed input.
-TCP listeners/streams, UDP sockets, Unix domain sockets, socket options,
-nonblocking mode, timeouts, and shutdown are roadmap work for the
-runtime-backed `std::net` handle layer.
+`TcpListener` and `TcpStream` are the first hosted socket handles. They support
+IPv4 bind/connect/accept, local bound-port lookup, borrowed descriptor views,
+explicit close, and `std::io::Reader`/`Writer` byte adapters. DNS lookup, UDP
+sockets, Unix domain sockets, socket options, IPv6 handles, nonblocking socket
+policy, timeouts, and shutdown are roadmap work for the richer runtime-backed
+`std::net` handle layer.
 
 ## IO And Input
 

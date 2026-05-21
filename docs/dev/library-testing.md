@@ -229,6 +229,12 @@ identifies the exact case:
 - `std-net-addresses.ari`: source `std::net` IPv4/IPv6 constructors, generic
   IP predicates, socket-address construction, port replacement, loopback, and
   unspecified checks.
+- `std-net-address-validation.ari`: strict and fallible IPv4 octet and IPv6
+  segment accessors for known-good indexes and parsed-index validation.
+- `std-net-tcp-loopback.ari`: hosted IPv4 TCP listener/stream bind, local-port
+  lookup, connect, accept, `std::io::Reader`/`Writer` byte transfer, explicit
+  close, IPv6 unsupported errors, and restricted-host `PermissionDenied`
+  behavior when the test environment forbids socket creation.
 - `std-algo-slice-helpers.ari`: source `std::algo` sort/stable sort,
   comparator sort, binary search, lower/upper bounds, reverse/rotate,
   partition, min/max/clamp, swap, fill, copy, and dedup behavior over borrowed

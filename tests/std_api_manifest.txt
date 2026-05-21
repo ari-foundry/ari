@@ -1168,6 +1168,23 @@ method std::net::SocketAddr::localhost|check-prelude std-net-addresses socket ad
 method std::net::SocketAddr::new|check-prelude std-net-addresses socket address associated constructor; docs/stdlib/modules/net.md
 method std::net::SocketAddr::port|check-prelude std-net-addresses socket address port accessor; docs/stdlib/modules/net.md
 method std::net::SocketAddr::with_port|check-prelude std-net-addresses socket address port replacement; docs/stdlib/modules/net.md
+method std::net::TcpListener::accept|check-prelude std-net-tcp-loopback Option-returning TCP accept helper; docs/stdlib/modules/net.md
+method std::net::TcpListener::accept_result|check-prelude std-net-tcp-loopback Result-returning TCP accept helper; docs/stdlib/modules/net.md
+method std::net::TcpListener::bind|check-prelude std-net-tcp-loopback Option-returning IPv4 TCP bind helper; docs/stdlib/modules/net.md
+method std::net::TcpListener::bind_result|check-prelude std-net-tcp-loopback Result-returning IPv4 TCP bind helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::TcpListener::close|check-prelude std-net-tcp-loopback explicit listener descriptor close helper; docs/stdlib/modules/net.md
+method std::net::TcpListener::descriptor|check-prelude std-net-tcp-loopback listener borrowed descriptor view; docs/stdlib/modules/net.md
+method std::net::TcpListener::is_open|check-prelude std-net-tcp-loopback listener open predicate; docs/stdlib/modules/net.md
+method std::net::TcpListener::local_port|check-prelude std-net-tcp-loopback listener bound-port lookup; docs/stdlib/modules/net.md
+method std::net::TcpListener::try_accept|check-prelude std-net-tcp-loopback alias for fallible TCP accept; docs/stdlib/modules/net.md
+method std::net::TcpListener::try_bind|check-prelude std-net-tcp-loopback alias for fallible TCP bind; docs/stdlib/modules/net.md
+method std::net::TcpStream::close|check-prelude std-net-tcp-loopback explicit stream descriptor close helper; docs/stdlib/modules/net.md
+method std::net::TcpStream::connect|check-prelude std-net-tcp-loopback Option-returning IPv4 TCP connect helper; docs/stdlib/modules/net.md
+method std::net::TcpStream::connect_result|check-prelude std-net-tcp-loopback Result-returning IPv4 TCP connect helper; docs/stdlib/modules/net.md
+method std::net::TcpStream::descriptor|check-prelude std-net-tcp-loopback stream borrowed descriptor view; docs/stdlib/modules/net.md
+method std::net::TcpStream::is_open|check-prelude std-net-tcp-loopback stream open predicate; docs/stdlib/modules/net.md
+method std::net::TcpStream::try_connect|check-prelude std-net-tcp-loopback alias for fallible TCP connect; docs/stdlib/modules/net.md
+method std::net::TcpStream::try_read_byte|check-prelude std-net-tcp-loopback Option-returning single-byte stream read helper; docs/stdlib/modules/net.md
 method std::os::Fd::equals|check-prelude std-os-fd descriptor identity comparison; docs/stdlib/modules/os.md
 method std::os::Fd::is_invalid|check-prelude std-os-fd invalid descriptor predicate; docs/stdlib/modules/os.md
 method std::os::Fd::is_standard|check-prelude std-os-fd standard descriptor predicate; docs/stdlib/modules/os.md
@@ -1586,6 +1603,8 @@ struct std::net::IpAddr|std net generic IP address tests; docs/stdlib/modules/ne
 struct std::net::Ipv4Addr|std net IPv4 address tests; docs/stdlib/modules/net.md
 struct std::net::Ipv6Addr|std net IPv6 address tests; docs/stdlib/modules/net.md
 struct std::net::SocketAddr|std net socket address tests; docs/stdlib/modules/net.md
+struct std::net::TcpListener|check-prelude std-net-tcp-loopback owned TCP listener handle; docs/stdlib/modules/net.md
+struct std::net::TcpStream|check-prelude std-net-tcp-loopback owned TCP stream handle and IO traits; docs/stdlib/modules/net.md
 struct std::os::Fd|check-prelude std-os-fd non-owning file descriptor view; docs/stdlib/modules/os.md
 struct std::os::OwnedFd|check-prelude std-os-owned-fd owning file descriptor close wrapper; docs/stdlib/modules/os.md
 struct std::os::Pipe|check-prelude std-os-pipe owning pipe descriptor pair; docs/stdlib/modules/os.md

@@ -49,7 +49,7 @@ API evolution.
 | `std::time` | Monotonic time, wall-clock time, sleep, deadlines, and UTC calendar values. | `Duration`, `Instant`, `SystemTime`, `Deadline`, `UtcDateTime`, strict and fallible duration constructors, strict and fallible Unix timestamp constructors, strict and fallible calendar helpers, `now`, `system_now`, `elapsed`, `sleep`, `timeout`, `timeout_after`, `deadline_at`. |
 | `std::fs` | Byte-oriented filesystem handles. | `File`, `Dir`, `DirEntry`, `FileKind`, `Metadata`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `metadata`, `try_metadata`, `symlink_metadata`, `try_symlink_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`, `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`, `canonicalize`, `try_canonicalize`, `remove`, `rename`, `hard_link`, `symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `create_dir_all`, `ensure_dir_all`, `remove_dir`, `remove_dir_all`, `try_read_dir`, `read_dir`, `try_read_dir_entries`, `read_dir_entries`, `try_open_dir`, `Dir::next`, `Dir::close`, `DirEntry::metadata`, `DirEntry::try_metadata`, `DirEntry::symlink_metadata`, `DirEntry::try_symlink_metadata`, `DirEntry::try_file_type`, `DirEntry::is_file`, `DirEntry::is_dir`, `DirEntry::is_symlink`, `DirEntry::is_other`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `try_read_byte`, `write_byte`, `write_bytes`, `position`, `seek`, whole-file `read`, `try_read`, `write`, `try_write`, `append`, `try_append`, `truncate`, `copy`, `try_copy`, `read_to_string`, `try_read_to_string`, `close`. |
 | `std::path` | Source lexical path manipulation. | `PathBytes`, `bytes`, `from_os`, method-style path-byte helpers, `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `components`, `file_name`, `parent`, `extension`, `stem`, `file_stem`, `has_file_name`, `has_extension`, `has_stem`, `has_file_stem`, `with_file_name_in`, `with_extension_in`, `join_in`, `normalize_in`. |
-| `std::net` | Source network address values. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `ipv4`, `ipv6`, `socket_addr`, `localhost`, strict and fallible indexed address accessors, family/loopback/unspecified predicates, port helpers. |
+| `std::net` | Network address values and first hosted TCP handles. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `TcpListener`, `TcpStream`, address constructors/accessors, family/loopback/unspecified predicates, IPv4 TCP bind/connect/accept/local-port helpers, explicit close, and `std::io` byte adapters. |
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `allocation_zone`, `metadata`, `ZoneMetadata`, `ZoneBacked`, `of`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `try_get`, `set`, `take`, `try_take`, `copy_to`. |
@@ -299,9 +299,12 @@ work.
 
 `std::net` starts with deterministic value types: IPv4, IPv6, generic IP, and
 socket addresses. Address components support strict access for known-good
-indexes and fallible access for parsed indexes. DNS lookup and TCP/UDP/Unix
-sockets remain runtime-backed roadmap work because they need owned OS handles,
-errors, nonblocking behavior, timeouts, and shutdown policy.
+indexes and fallible access for parsed indexes. The first hosted socket slice
+adds IPv4 `TcpListener`/`TcpStream` handles with bind/connect/accept,
+ephemeral local-port lookup, descriptor views, explicit close, and
+`std::io::Reader`/`Writer` byte adapters. DNS lookup, UDP/Unix sockets, IPv6
+socket handles, options, nonblocking behavior, timeouts, and shutdown policy
+remain roadmap work.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
 small, insertion-order, linear set with iterator support. `Deque[T]` and

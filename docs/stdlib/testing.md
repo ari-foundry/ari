@@ -93,6 +93,9 @@ std-encoding-codec.ari
 std-path-basic.ari
 std-path-components.ari
 std-path-bytes.ari
+std-net-addresses.ari
+std-net-address-validation.ari
+std-net-tcp-loopback.ari
 std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari

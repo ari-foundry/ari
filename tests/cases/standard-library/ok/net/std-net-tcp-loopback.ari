@@ -1,0 +1,87 @@
+// Covers the first runtime-backed std::net socket slice. A listener binds an
+// ephemeral IPv4 loopback port when the host permits sockets. Restricted test
+// sandboxes may reject socket creation with PermissionDenied; that path still
+// verifies the std::error bridge instead of making check depend on host policy.
+fn error_is(raw: i64, kind: error::Kind) -> bool {
+  let value = error::from_raw(raw);
+  return value.is_kind(kind);
+}
+
+fn main() -> i64 {
+  let unsupported = net::socket_addr(net::Ipv6Addr::localhost().as_ip(), 0 as u16);
+  var score = 0;
+  match net::TcpListener::bind_result(unsupported) {
+    Ok(_listener) => {}
+    Err(raw) => {
+      if error_is(raw, error::Unsupported) {
+        score = score + 1;
+      }
+    }
+  }
+
+  let bind_addr = net::SocketAddr::localhost(0 as u16);
+  let maybe_listener = net::TcpListener::bind(bind_addr);
+  if maybe_listener.is_none() {
+    match net::TcpListener::bind_result(bind_addr) {
+      Ok(_retry_listener) => {}
+      Err(bind_raw) => {
+        let bind_error = error::from_raw(bind_raw);
+        if bind_error.is_kind(error::PermissionDenied) || bind_error.is_kind(error::Unsupported) {
+          score = score + 254;
+        }
+      }
+    }
+    assert_eq_i64(score, 255);
+    return score;
+  }
+  assert(maybe_listener.is_some());
+  var listener = maybe_listener.unwrap();
+  if listener.is_open() && listener.descriptor().is_valid() {
+    score = score + 2;
+  }
+
+  let maybe_port = listener.local_port();
+  assert(maybe_port.is_some());
+  let port = maybe_port.unwrap();
+  if port > 0 as u16 {
+    score = score + 4;
+  }
+
+  let connect_addr = net::SocketAddr::localhost(port);
+  let maybe_client = net::TcpStream::connect(connect_addr);
+  assert(maybe_client.is_some());
+  var client = maybe_client.unwrap();
+  if client.is_open() && client.descriptor().is_valid() {
+    score = score + 8;
+  }
+
+  let maybe_server = listener.accept();
+  assert(maybe_server.is_some());
+  var server = maybe_server.unwrap();
+  if server.is_open() && server.descriptor().is_valid() {
+    score = score + 16;
+  }
+
+  if client.write_byte(65u8) && server.read_byte() == 65 {
+    score = score + 32;
+  }
+
+  var reply = [66u8, 67u8];
+  if std::io::write_all<net::TcpStream>(ref mut server, reply.as_slice()) {
+    var output = [0u8, 0u8];
+    let view = output.as_slice();
+    let output_raw = view.as_ptr();
+    if std::io::read_exact<net::TcpStream>(ref mut client, output_raw, 2) {
+      if ptr_load(output_raw) == 66u8 && ptr_load(ptr_add(output_raw, 1)) == 67u8 {
+        score = score + 64;
+      }
+    }
+  }
+
+  if server.close() && client.close() && listener.close() {
+    score = score + 128;
+  }
+
+  assert_eq_i64(score, 255);
+  return score;
+}

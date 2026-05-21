@@ -22,8 +22,8 @@ Implemented runtime support today:
 - compiler-emitted `std::target` hooks for target triple, architecture, OS,
   libc/environment, object/debug format, errno ABI, pointer width, C `long`
   width, and Linux syscall/API-family classification
-- process IO, input, environment, path, process, thread, sync, time, fs, and
-  net-address support hooks used by current `std`
+- process IO, input, environment, path, process, thread, sync, time, fs,
+  net-address, and first IPv4 TCP socket support hooks used by current `std`
 - panic/assert stop behavior through `exit(1)`
 - LLVM atomic instructions for the first `AtomicI64` slice
 - byte memory routines: `std::mem::copy_bytes`, `move_bytes`, and `set_bytes`

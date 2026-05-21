@@ -764,6 +764,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-address-validation.ari -o $(BUILD_DIR)/prelude/std-net-address-validation.elf
 	$(BUILD_DIR)/prelude/std-net-address-validation.elf; code=$$?; test $$code -eq 55
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/net/std-net-address-validation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-net-address-validation.elf; $(BUILD_DIR)/prelude/std-net-address-validation.elf; code=$$?; test $$code -eq 55; fi
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_tcp_listen_v4" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_tcp_connect_v4" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_tcp_accept" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_local_port" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari -o $(BUILD_DIR)/prelude/std-net-tcp-loopback.elf
+	$(BUILD_DIR)/prelude/std-net-tcp-loopback.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/target/std-target-basic.ari --target x86_64-pc-linux-gnu --emit-llvm $(BUILD_DIR)/prelude/std-target-basic.ll
 	grep -q 'target triple = "x86_64-pc-linux-gnu"' $(BUILD_DIR)/prelude/std-target-basic.ll
 	grep -q "@ari_builtin_target_triple" $(BUILD_DIR)/prelude/std-target-basic.ll
