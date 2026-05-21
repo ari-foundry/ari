@@ -214,6 +214,7 @@ make -C bootstrap check-ir
 For the current C++ compiler, prefer direct focused commands while developing:
 
 ```text
+python3 tests/check_compiler_artifact_cli.py
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/ffi/ok/library-export.ari --shared --emit-llvm build/focused/library-export.ll
 build/ari tests/cases/bootstrap-readiness/ok/formatting/formatting-artifact-line.ari --check
@@ -249,6 +250,7 @@ frontend producer:
 
 ```text
 tests/check_compiler_artifacts.py
+tests/check_compiler_artifact_cli.py
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/capability-inventory.inventory
@@ -293,6 +295,8 @@ It currently proves fifteen low-level contracts:
   and development-gate text directly from the compiler driver
 - `--emit-capability-inventory` writes the compiler's implemented, partial,
   planned, and rejected public feature surface with owners and first checks
+- artifact CLI misuse names the exact conflicting artifact options, such as
+  `--emit-tokens, --emit-syntax`
 - `--emit-source-map` writes deterministic source file, byte offset, line, and
   newline-policy text for root and file-backed modules
 - `--emit-tokens` writes deterministic lexer output for a small Ari source file

@@ -66,6 +66,15 @@ static std::string shell_quote(const std::string& text) {
     return quoted;
 }
 
+static std::string join_option_names(const std::vector<std::string>& options) {
+    std::string joined;
+    for (std::size_t i = 0; i < options.size(); ++i) {
+        if (i != 0) joined += ", ";
+        joined += options[i];
+    }
+    return joined;
+}
+
 static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
                  "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
@@ -238,6 +247,24 @@ int run(int argc, char** argv) {
     if (shared_library && test_mode) {
         throw CompileError("--test cannot be combined with --shared");
     }
+    std::vector<std::string> requested_artifacts;
+    const std::pair<const char*, const std::string*> artifact_options[] = {
+        {"--emit-tokens", &token_output},
+        {"--emit-syntax", &syntax_output},
+        {"--emit-diagnostics", &diagnostic_output},
+        {"--emit-diagnostic-catalog", &diagnostic_catalog_output},
+        {"--emit-capability-inventory", &capability_inventory_output},
+        {"--emit-source-map", &source_map_output},
+        {"--emit-module-graph", &module_graph_output},
+        {"--emit-declaration-index", &declaration_index_output},
+        {"--emit-typed-ir", &typed_ir_output},
+        {"--emit-pass-summary", &pass_summary_output},
+        {"--emit-stage-plan", &stage_plan_output},
+    };
+    for (const auto& option : artifact_options) {
+        if (!option.second->empty()) requested_artifacts.push_back(option.first);
+    }
+
     if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
                        !c_header_output.empty() || !source_map_output.empty() ||
@@ -266,22 +293,12 @@ int run(int argc, char** argv) {
          !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
          !metadata_output.empty() || !metadata_check.empty() ||
          !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty())) {
-        throw CompileError("compiler artifact outputs cannot be combined with backend, module-cache, or linking options");
+        throw CompileError("compiler artifact outputs cannot be combined with backend, module-cache, or linking options: " +
+                           join_option_names(requested_artifacts));
     }
-    int artifact_output_count = 0;
-    if (!token_output.empty()) ++artifact_output_count;
-    if (!syntax_output.empty()) ++artifact_output_count;
-    if (!diagnostic_output.empty()) ++artifact_output_count;
-    if (!diagnostic_catalog_output.empty()) ++artifact_output_count;
-    if (!capability_inventory_output.empty()) ++artifact_output_count;
-    if (!source_map_output.empty()) ++artifact_output_count;
-    if (!module_graph_output.empty()) ++artifact_output_count;
-    if (!declaration_index_output.empty()) ++artifact_output_count;
-    if (!typed_ir_output.empty()) ++artifact_output_count;
-    if (!pass_summary_output.empty()) ++artifact_output_count;
-    if (!stage_plan_output.empty()) ++artifact_output_count;
-    if (artifact_output_count > 1) {
-        throw CompileError("artifact outputs cannot be combined");
+    if (requested_artifacts.size() > 1) {
+        throw CompileError("artifact outputs cannot be combined: " +
+                           join_option_names(requested_artifacts));
     }
     if (!diagnostic_catalog_output.empty()) {
         write_text_file(diagnostic_catalog_output, dump_diagnostic_catalog());

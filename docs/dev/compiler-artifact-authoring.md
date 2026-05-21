@@ -119,6 +119,7 @@ Keep fixture names behavior-based:
 Use the smallest command that proves the artifact:
 
 ```sh
+python3 tests/check_compiler_artifact_cli.py
 build/ari tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens build/focused/token.tokens
 python3 tests/check_compiler_artifacts.py expected actual
 make check-compiler-artifacts
@@ -136,6 +137,7 @@ Before handing off an artifact change, answer:
 - Is the output deterministic and normalized?
 - Is the artifact small enough to review?
 - Does the filename name the behavior?
+- Does CLI misuse name the conflicting `--emit-*` flags?
 - Did the golden diff avoid unrelated churn?
 - Did docs change when the artifact format changed?
 - Is executable behavior used only after earlier artifacts are stable?
