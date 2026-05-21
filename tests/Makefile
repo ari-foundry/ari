@@ -83,6 +83,8 @@ check-compiler-artifacts: $(TARGET)
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-diagnostic-catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog
 	$(TARGET) tests/cases/modules/ok/file-module-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-source-map $(BUILD_DIR)/compiler-development/artifact/source-map-file-module.map
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/source-map-file-module.map $(BUILD_DIR)/compiler-development/artifact/source-map-file-module.map
 	$(TARGET) tests/cases/modules/ok/file-module-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
@@ -1554,11 +1556,21 @@ check-prelude: $(TARGET)
 	grep -q 'std__collections__HashSet_i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-hash-iter.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf
 	$(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-entries.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent7entries' $(BUILD_DIR)/prelude/std-collections-map-entries.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent7entries' $(BUILD_DIR)/prelude/std-collections-map-entries.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari -o $(BUILD_DIR)/prelude/std-collections-map-entries.elf
+	$(BUILD_DIR)/prelude/std-collections-map-entries.elf; code=$$?; test $$code -eq 71
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent12contains_key' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent12contains_key' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf
 	$(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 119
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari -o $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf
+	$(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; code=$$?; test $$code -eq 90
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6insert' $(BUILD_DIR)/prelude/std-collections-tree.ll
 	grep -q '_ARNv3std11collections30tree_map_fix_insert__G_i64_i64' $(BUILD_DIR)/prelude/std-collections-tree.ll
@@ -1847,7 +1859,9 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash.elf; $(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-entries.elf; $(BUILD_DIR)/prelude/std-collections-map-entries.elf; code=$$?; test $$code -eq 71; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 119; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; code=$$?; test $$code -eq 90; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; code=$$?; test $$code -eq 238; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 75; fi

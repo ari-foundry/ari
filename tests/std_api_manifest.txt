@@ -794,6 +794,8 @@ method std::collections::HashMap[K,V]::capacity|check-prelude std-collections-ha
 method std::collections::HashMap[K,V]::clear|check-prelude std-collections-hash drops live hash map entries; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::contains|check-prelude std-collections-hash hash lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::contains_key|check-prelude std-collections-map-natural-api natural hash map key-membership predicate; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::contains_value|check-prelude std-collections-map-value-predicates live-bucket value-membership predicate; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::entries|check-prelude std-collections-map-entries live-bucket key-value entry iterator; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get|check-prelude std-collections-hash asserting hash lookup; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::insert|check-prelude std-collections-hash insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::is_empty|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
@@ -901,6 +903,8 @@ method std::collections::TreeMap[K,V]::capacity|check-prelude std-collections-tr
 method std::collections::TreeMap[K,V]::clear|check-prelude std-collections-tree drops live tree map nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains|check-prelude std-collections-tree ordered lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains_key|check-prelude std-collections-map-natural-api natural ordered map key-membership predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::contains_value|check-prelude std-collections-map-value-predicates tree map value-membership predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::entries|check-prelude std-collections-map-entries sorted key-value entry iterator; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_key|check-prelude std-collections-tree-boundaries asserting smallest-key accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_value|check-prelude std-collections-tree-boundaries asserting value for smallest key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::get|check-prelude std-collections-tree asserting ordered lookup; docs/stdlib/modules/collections.md
@@ -1362,6 +1366,7 @@ struct std::c::Symbol|check-prelude std-c-interop dynamic symbol handle wrapper;
 struct std::collections::BinaryHeap[T]|std collections binary heap tests; docs/stdlib/modules/collections.md
 struct std::collections::DequeIter[T]|std collections deque iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::Deque[T]|std collections deque tests; docs/stdlib/modules/collections.md
+struct std::collections::HashMapEntries[K, V]|std collections map entry iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMapKeys[K]|std collections hash iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMapValues[V]|std collections hash iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMap[K, V]|std collections hash map tests; docs/stdlib/modules/collections.md
@@ -1370,10 +1375,12 @@ struct std::collections::HashSet[T]|std collections hash set tests; docs/stdlib/
 struct std::collections::Iter[T]|std collections iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::LinkedListIter[T]|std collections linked list iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::LinkedList[T]|std collections linked list tests; docs/stdlib/modules/collections.md
+struct std::collections::MapEntry[K, V]|std collections map entry iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::PriorityQueue[T]|std collections priority queue tests; docs/stdlib/modules/collections.md
 struct std::collections::RingBufferIter[T]|std collections ring buffer iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::RingBuffer[T]|std collections ring buffer tests; docs/stdlib/modules/collections.md
 struct std::collections::Set[T]|std collections linear set tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeMapEntries[K, V]|std collections map entry iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapKeys[K]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapValues[V]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdlib/modules/collections.md

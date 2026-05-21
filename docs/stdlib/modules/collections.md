@@ -227,14 +227,7 @@ map.capacity()
 map.is_empty()
 map.contains(key)
 map.contains_key(key)
-map.first_key()
-map.try_first_key()
-map.last_key()
-map.try_last_key()
-map.first_value()
-map.try_first_value()
-map.last_value()
-map.try_last_value()
+map.contains_value(value)
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -243,14 +236,18 @@ map.clear()
 map.reserve(ref mut zone, capacity)
 map.keys()
 map.values()
+map.entries()
 ```
 
 `HashMap.insert` inserts or replaces and returns `Option[V]`: `Some(previous)`
 on replacement, `None` on a new key. `contains_key` is the preferred
 key-membership spelling; `contains` remains available for compatibility with
-older examples. `remove` returns the removed value. `keys` and `values` iterate
+older examples. `contains_value` scans live bucket values and ignores
+tombstones. `remove` returns the removed value. `keys` and `values` iterate
 live buckets. That order is deterministic for a specific table state, but it
 is not insertion order and should not be used as a stable sorting rule.
+`entries` yields `MapEntry[K, V]` values with `.key` and `.value` fields over
+the same live buckets.
 
 ```ari
 set.len()
@@ -302,6 +299,15 @@ map.capacity()
 map.is_empty()
 map.contains(key)
 map.contains_key(key)
+map.contains_value(value)
+map.first_key()
+map.try_first_key()
+map.last_key()
+map.try_last_key()
+map.first_value()
+map.try_first_value()
+map.last_value()
+map.try_last_value()
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -309,14 +315,18 @@ map.clear()
 map.reserve(ref mut zone, capacity)
 map.keys()
 map.values()
+map.entries()
 ```
 
 `TreeMap.insert` inserts or replaces and returns `Option[V]`. `contains_key`
 is the preferred key-membership spelling; `contains` remains available for
-compatibility with older examples. `keys` yields keys in ascending comparator
-order. `values` yields values in the same key-sorted order. `first_key`,
+compatibility with older examples. `contains_value` scans stored values without
+using key order. `keys` yields keys in ascending comparator order. `values`
+yields values in the same key-sorted order. `first_key`,
 `last_key`, `first_value`, and `last_value` assert when the tree is empty;
-use the `try_*` forms for empty-safe boundary access.
+use the `try_*` forms for empty-safe boundary access. `entries` yields
+`MapEntry[K, V]` values with `.key` and `.value` fields in the same sorted key
+order.
 
 ```ari
 set.len()
@@ -429,7 +439,9 @@ tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-hash.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
+tests/cases/standard-library/ok/collections/std-collections-map-entries.ari
 tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari
+tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari
@@ -473,9 +485,13 @@ linear-probing and tombstone paths are exercised.
 `std-collections-hash-set-relations.ari` keeps that collision pressure and
 checks set relationship predicates after a tombstone. `std-collections-hash-iter`
 checks key, value, and set cursors after tombstones.
+`std-collections-map-entries.ari` checks hash entries over live buckets and
+tree entries in sorted key order.
 `std-collections-map-natural-api.ari` keeps compatibility `contains` calls
 working while locking down the preferred `contains_key` spelling for hash and
-tree maps. `std-collections-tree.ari` inserts mixed key order to exercise
+tree maps. `std-collections-map-value-predicates.ari` checks `contains_value`
+for hash live buckets after a tombstone and for tree map values independent of
+key order. `std-collections-tree.ari` inserts mixed key order to exercise
 red-black rotations. `std-collections-tree-boundaries.ari` checks empty-safe
 and asserting ordered boundary access for tree maps and sets.
 `std-collections-tree-set-relations.ari` inserts the same values in different

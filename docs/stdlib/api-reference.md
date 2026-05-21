@@ -1457,14 +1457,7 @@ map.capacity()
 map.is_empty()
 map.contains(key)
 map.contains_key(key)
-map.first_key()
-map.try_first_key()
-map.last_key()
-map.try_last_key()
-map.first_value()
-map.try_first_value()
-map.last_value()
-map.try_last_value()
+map.contains_value(value)
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -1473,6 +1466,7 @@ map.clear()
 map.reserve(ref mut zone, capacity)
 map.keys()
 map.values()
+map.entries()
 
 collections::hash_set<T>(ref mut zone, capacity, hash)
 HashSet::new<T>(ref mut zone, capacity, hash)
@@ -1500,13 +1494,17 @@ set.iter()
 `collections::hash_i64` is a compatibility helper over `std::hash::value<i64>`.
 
 `HashMap.contains_key(key)` is the preferred key-membership spelling;
-`HashMap.contains(key)` remains available for compatibility. `HashMap.insert`
-returns `Option[V]` with the previous value on replacement. `HashMap.remove`
-returns `Option[V]` and leaves a tombstone so later probes still find collided
-keys. `HashMap.keys()` and `HashMap.values()` iterate live buckets; this is
-deterministic for the table state, but it is not insertion order. `HashSet`
-relationship methods compare live membership and ignore tombstones;
-`HashSet.iter()` and direct `for value in set` use the same live-bucket cursor.
+`HashMap.contains(key)` remains available for compatibility.
+`HashMap.contains_value(value)` scans live bucket values and ignores
+tombstones. `HashMap.insert` returns `Option[V]` with the previous value on
+replacement. `HashMap.remove` returns `Option[V]` and leaves a tombstone so
+later probes still find collided keys. `HashMap.keys()` and `HashMap.values()`
+iterate live buckets; this is deterministic for the table state, but it is not
+insertion order. `HashSet` relationship methods compare live membership and
+ignore tombstones;
+`HashMap.entries()` yields `MapEntry[K,V]` values with `.key` and `.value`
+fields over the same live buckets. `HashSet.iter()` and direct
+`for value in set` use the same live-bucket cursor.
 
 Tree collections use explicit strict less-than comparators:
 
@@ -1519,6 +1517,15 @@ map.capacity()
 map.is_empty()
 map.contains(key)
 map.contains_key(key)
+map.contains_value(value)
+map.first_key()
+map.try_first_key()
+map.last_key()
+map.try_last_key()
+map.first_value()
+map.try_first_value()
+map.last_value()
+map.try_last_value()
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -1526,6 +1533,7 @@ map.clear()
 map.reserve(ref mut zone, capacity)
 map.keys()
 map.values()
+map.entries()
 
 collections::tree_set<T>(ref mut zone, capacity, less)
 TreeSet::new<T>(ref mut zone, capacity, less)
@@ -1545,14 +1553,16 @@ set.iter()
 ```
 
 `TreeMap.contains_key(key)` is the preferred key-membership spelling;
-`TreeMap.contains(key)` remains available for compatibility. `TreeMap`
-boundary methods read the smallest or largest key and the value attached to
-that key in comparator order; use the `try_*` forms when an empty tree is a
-normal case. `TreeSet` relationship methods compare ordered-set membership,
-not internal tree shape. `TreeSet.first()` and `TreeSet.last()` read the
-smallest and largest values, with `try_first` and `try_last` for empty-safe
-access. `TreeMap.keys()`, `TreeMap.values()`, `TreeSet.iter()`, and direct
-`for value in tree_set` walk values in ascending comparator order.
+`TreeMap.contains(key)` remains available for compatibility.
+`TreeMap.contains_value(value)` scans stored values without using key order.
+`TreeMap` boundary methods read the smallest or largest key and the value
+attached to that key in comparator order; use the `try_*` forms when an empty
+tree is a normal case. `TreeSet` relationship methods compare ordered-set
+membership, not internal tree shape. `TreeSet.first()` and `TreeSet.last()`
+read the smallest and largest values, with `try_first` and `try_last` for
+empty-safe access. `TreeMap.keys()`, `TreeMap.values()`, `TreeMap.entries()`,
+`TreeSet.iter()`, and direct `for value in tree_set` walk values in ascending
+comparator order.
 
 `std::string::String` is an owned byte string:
 

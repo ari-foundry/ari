@@ -95,10 +95,11 @@ so tuple slots/destructuring stay lighter than dedicated wrapper structs.
 Collections that implement `IntoIterator[T]` can be used directly in `for`
 loops. Today `std::collections::Set[T]`, `Deque[T]`, `RingBuffer[T]`,
 `LinkedList[T]`, `HashSet[T]`, and `TreeSet[T]` expose that path. `HashMap`
-and `TreeMap` intentionally expose `keys()` and `values()` instead of a pair
-iterator until tuple conventions are stable. `BinaryHeap[T]` and
-`PriorityQueue[T]` expose priority removal through `pop()` rather than an
-iterator so callers do not mistake heap storage order for priority order.
+and `TreeMap` expose `keys()`, `values()`, and `entries()`; map entries are
+dedicated `MapEntry[K,V]` values so callers can use `.key` and `.value` without
+depending on tuple conventions. `BinaryHeap[T]` and `PriorityQueue[T]` expose
+priority removal through `pop()` rather than an iterator so callers do not
+mistake heap storage order for priority order.
 
 ## Current Limits
 
@@ -108,10 +109,8 @@ iterator so callers do not mistake heap storage order for priority order.
 - `collect` currently builds a `std::vec::Vec[T]`; other collection targets
   should be added as explicit functions after their ownership contracts are
   stable.
-- Direct map-entry iteration still waits for a collection-view policy. Iterator
-  pair adapters use tuples, but maps still expose `HashMap.keys`,
-  `HashMap.values`, `TreeMap.keys`, or `TreeMap.values` while entry borrowing
-  is kept explicit.
+- Map entries are copied `MapEntry[K,V]` values. Borrowed mutable entry views
+  remain future work because they need a stronger collection-view policy.
 
 ## Tests
 

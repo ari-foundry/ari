@@ -1,0 +1,49 @@
+// Covers map entry iterators. HashMap entries walk live buckets and ignore
+// tombstones; TreeMap entries walk key-sorted successor order.
+fn constant_hash(value: i64) -> u64 {
+  return 5;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var score = 0;
+
+  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  hash.insert(ref mut zone, 1, 10);
+  hash.insert(ref mut zone, 9, 90);
+  hash.insert(ref mut zone, 17, 170);
+  hash.remove(1);
+
+  var hash_count = 0;
+  var hash_key_sum = 0;
+  var hash_value_sum = 0;
+  for entry in hash.entries() {
+    hash_count = hash_count + 1;
+    hash_key_sum = hash_key_sum + entry.key;
+    hash_value_sum = hash_value_sum + entry.value;
+  }
+  if hash_count == 2 && hash_key_sum == 26 && hash_value_sum == 260 {
+    score = score + 17;
+  }
+
+  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  tree.insert(ref mut zone, 4, 40);
+  tree.insert(ref mut zone, 2, 20);
+  tree.insert(ref mut zone, 8, 80);
+
+  var tree_entries = tree.entries();
+  let first = tree_entries.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  let second = tree_entries.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  let third = tree_entries.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  if first.key == 2 && first.value == 20 &&
+     second.key == 4 && second.value == 40 &&
+     third.key == 8 && third.value == 80 {
+    score = score + 23;
+  }
+  if tree_entries.next().is_none() {
+    score = score + 31;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

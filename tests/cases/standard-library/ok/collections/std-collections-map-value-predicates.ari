@@ -1,0 +1,44 @@
+// Covers map value-membership predicates. HashMap checks live buckets after a
+// tombstone; TreeMap checks values independently of insertion order.
+fn constant_hash(value: i64) -> u64 {
+  return 11;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var score = 0;
+
+  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  hash.insert(ref mut zone, 1, 10);
+  hash.insert(ref mut zone, 9, 90);
+  hash.insert(ref mut zone, 17, 170);
+  hash.remove(1);
+
+  if hash.contains_value(90) {
+    score = score + 7;
+  }
+  if !hash.contains_value(10) {
+    score = score + 11;
+  }
+  if !hash.contains_value(99) {
+    score = score + 13;
+  }
+
+  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  tree.insert(ref mut zone, 4, 40);
+  tree.insert(ref mut zone, 2, 20);
+  tree.insert(ref mut zone, 8, 80);
+
+  if tree.contains_value(20) {
+    score = score + 17;
+  }
+  if tree.contains_value(80) {
+    score = score + 19;
+  }
+  if !tree.contains_value(70) {
+    score = score + 23;
+  }
+
+  zone::destroy(zone);
+  return score;
+}
