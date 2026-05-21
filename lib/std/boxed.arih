@@ -110,6 +110,12 @@ pub impl[T] std::boxed::Box[T] {
   }
 }
 
+impl[T] std::zone::ZoneBacked for std::boxed::Box[T] {
+  pub fn zone(self: ref Self) -> ptr c_void {
+    return std::zone::allocation_zone(self.as_ptr() as ptr u8);
+  }
+}
+
 impl[T] std::Drop for std::boxed::Box[T] {
   fn drop(self) -> void {
     if !has_data<T>(self.data) {

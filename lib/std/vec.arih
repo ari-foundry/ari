@@ -570,6 +570,13 @@ pub impl[T: std::cmp::Ord[T]] std::vec::Vec[T] {
   }
 }
 
+impl[T] std::zone::ZoneBacked for std::vec::Vec[T] {
+  pub fn zone(self: ref Self) -> ptr c_void {
+    std::assert(self.raw.capacity > 0);
+    return std::zone::allocation_zone(self.raw.data as ptr u8);
+  }
+}
+
 impl[T] super::Iterator[T] for std::vec::Iter[T] {
   pub fn next(self: ref mut Self) -> super::Option[T] {
     if self.index >= self.len {

@@ -638,6 +638,7 @@ fn std::zone::allocation_zone|zone allocation header metadata tests; docs/dev/te
 fn std::zone::create|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::destroy|zone lifecycle and invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::new[T]|placement construction tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::of[T: std::zone::ZoneBacked]|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 fn std::zone::promote[T]|scratch promotion tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::reset|zone reset invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
 method Ordering::is_equal|check-prelude std-cmp-ordering natural Ordering equality method; docs/stdlib/modules/cmp.md
@@ -1482,6 +1483,7 @@ trait std::io::Writer|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait std::iter::IntoIterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait std::iter::Iterable[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait std::iter::Iterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
+trait std::zone::ZoneBacked|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 trait-method std::Clone::clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::Default::default|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::Drop::drop|ownership destructor tests; docs/dev/test-matrix.md Ownership row
@@ -1510,6 +1512,7 @@ trait-method std::io::Writer::flush|std io trait/cursor tests; docs/stdlib/modul
 trait-method std::io::Writer::write_byte|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
+trait-method std::zone::ZoneBacked::zone|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 type std::char|check-generics type-alias-char/no-implicit-std tests; docs/language/types.md Type Aliases section
 use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md
 use std::BinaryHeap|check-prelude std-collections-heap root alias for std::collections::BinaryHeap[T]; docs/stdlib/modules/collections.md
@@ -1538,6 +1541,7 @@ use std::Thread|check-prelude std-thread-basic root alias for std::thread::Threa
 use std::TreeMap|check-prelude std-collections-tree root alias for std::collections::TreeMap[K, V]; docs/stdlib/modules/collections.md
 use std::TreeSet|check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md
 use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row
+use std::ZoneBacked|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::alloc|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::alloc_array|std zone raw array allocation root re-export tests; docs/stdlib/modules/zone.md

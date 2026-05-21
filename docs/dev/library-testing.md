@@ -341,6 +341,9 @@ identifies the exact case:
   and the `population_count` alias.
 - `std-zone-alloc-array.ari`: source `std::zone` typed raw array allocation,
   root re-export, zero-count null return, and raw pointer load/store behavior.
+- `std-zone-backed.ari`: source `std::zone::ZoneBacked`, `zone::of(ref value)`,
+  and `value.zone()` agree with raw allocation-header metadata for boxed,
+  string, vector, and set handles.
 - `std-boxed-as-ptr-after-reset.ari`: negative zone provenance diagnostic.
 - `prelude-option-result-methods.ari`: root prelude ADT method behavior.
 - `prelude-option-result-predicates.ari`: consuming Option/Result payload

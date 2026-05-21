@@ -551,5 +551,5 @@ pub use context::arg as arg;
 pub use context::has_arg;
 pub use mem::{size_of, align_of, ptr_offset, ptr_add, ptr_load, ptr_store, replace, swap};
 pub use cmp::{min, max, clamp, is_between};
-pub use zone::{create, alloc, alloc_array, new, promote, reset, destroy};
+pub use zone::{ZoneBacked, create, alloc, alloc_array, new, promote, reset, destroy};
 pub use iter::{range, range_inclusive};

@@ -17,7 +17,8 @@ direct algorithm wrappers, `algo` slice sort/search/reorder helpers, `hash` dete
 hasher/value/byte-slice helpers, `random` OS entropy plus deterministic
 non-cryptographic PRNG helpers, `mem` layout,
 pointer, value, byte memory, and hosted page-size helpers, `zone` raw
-allocation plus source typed array allocation,
+allocation plus source typed array allocation and `ZoneBacked` handle zone
+metadata access,
 `boxed`, `string` byte access/search/split/chunk/window/join/ASCII helpers
 including case search, prefix parsers, owned trim copies, typed borrowed
 `Utf8`/`OsStr` views, and `std::c::CStr` convenience construction, `ascii`

@@ -413,6 +413,8 @@ zone::create(capacity: i64) -> own Zone
 zone::temp(capacity: i64) -> own Zone
 zone::alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8
 zone::allocation_zone(data: ptr u8) -> ptr c_void
+zone::of<T: std::zone::ZoneBacked>(value: ref T) -> ptr c_void
+value.zone()
 zone::alloc<T>(zone: ref mut Zone) -> ptr T
 zone::new<T>(zone: ref mut Zone, value: T) -> ptr T
 zone::scratch<T>(capacity: i64, value: T) -> ptr T
@@ -440,6 +442,10 @@ pointer-adjacent arithmetic. The returned zone handle is opaque (`ptr c_void`)
 and is meant for capability recovery in runtime helpers, not for bypassing the
 typed `Zone` API. Empty source String and Vec buffers may still use a null data
 pointer, so metadata queries require a non-null allocation pointer.
+For stdlib heap handles, prefer `zone::of(ref value)` or `value.zone()` through
+`std::zone::ZoneBacked`; they read the same header from the handle's backing
+allocation. The handle must have real storage, so zero-capacity handles still
+need an explicit `ref mut Zone` or a growth step before runtime recovery.
 
 `zone::scratch<T>(capacity, value)` is local-binding sugar for the common
 temporary-object case. It can only appear as the initializer of a local `let` or

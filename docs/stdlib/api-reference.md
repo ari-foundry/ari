@@ -1125,6 +1125,8 @@ zone::alloc_array<T>(ref mut zone, count)
 zone::new<T>(ref mut zone, value)
 zone::promote<T>(ref mut target, source)
 zone::allocation_zone(data)
+zone::of<T: zone::ZoneBacked>(ref value)
+value.zone()
 zone::reset(ref mut zone)
 zone::destroy(zone)
 ```
@@ -1133,6 +1135,13 @@ zone::destroy(zone)
 values. It returns null for `0`, asserts for negative counts, and does not run
 destructors for the slots; initialize before reading and prefer higher-level
 handles when ownership matters.
+
+`allocation_zone(data)` reads Ari's allocation header for a non-null zone
+allocation and returns an opaque raw zone handle. `zone::of(ref value)` and
+`value.zone()` use the `ZoneBacked` trait to expose the same handle from
+supported heap-backed stdlib values such as `Box[T]`, `String`, `Vec[T]`, and
+linear `Set[T]`. Zero-capacity handles have no allocation header to read, so
+construct with positive capacity or grow first before asking for their zone.
 
 ## Option And Result
 

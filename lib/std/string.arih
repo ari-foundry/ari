@@ -838,6 +838,13 @@ pub impl std::string::String {
   }
 }
 
+impl std::zone::ZoneBacked for std::string::String {
+  pub fn zone(self: ref Self) -> ptr c_void {
+    std::assert(self.raw.capacity > 0);
+    return std::zone::allocation_zone(self.raw.data);
+  }
+}
+
 impl std::Drop for std::string::String {
   fn drop(self) -> void {
     return;

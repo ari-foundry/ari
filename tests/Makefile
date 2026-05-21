@@ -1109,7 +1109,13 @@ check-prelude: $(TARGET)
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-zone-alloc-array.ll
 	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari -o $(BUILD_DIR)/prelude/std-zone-alloc-array.elf
 	$(BUILD_DIR)/prelude/std-zone-alloc-array.elf; code=$$?; test $$code -eq 72
+	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --emit-llvm $(BUILD_DIR)/prelude/std-zone-backed.ll
+	grep -q '_ARNv3std4zone24of__G_std__vec__Vec_i64_' $(BUILD_DIR)/prelude/std-zone-backed.ll
+	grep -q '@ari_builtin_zone_allocation_zone' $(BUILD_DIR)/prelude/std-zone-backed.ll
+	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari -o $(BUILD_DIR)/prelude/std-zone-backed.elf
+	$(BUILD_DIR)/prelude/std-zone-backed.elf; code=$$?; test $$code -eq 31
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; code=$$?; test $$code -eq 72; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-backed.elf; $(BUILD_DIR)/prelude/std-zone-backed.elf; code=$$?; test $$code -eq 31; fi
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
 	grep -q '_ARNv3std3vec19alloc_buffer__G_i64' $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
