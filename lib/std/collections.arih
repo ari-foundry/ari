@@ -802,6 +802,24 @@ pub impl[K, V] std::collections::HashMap[K, V] {
     hash_map_grow_to_capacity<K, V>(self, zone, hash_capacity_for_len(self.len + additional));
   }
 
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::HashMap[K, V] {
+    var copied = std::collections::hash_map<K, V>(
+      target,
+      hash_capacity_for_len(self.len),
+      self.hash
+    );
+    var bucket = next_live_bucket(self.states, self.capacity, 0);
+    while bucket >= 0 {
+      copied.insert(
+        target,
+        ptr_load(ptr_add(self.keys, bucket)),
+        ptr_load(ptr_add(self.values, bucket))
+      );
+      bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
+    }
+    return copied;
+  }
+
   fn keys(self: ref Self) -> std::collections::HashMapKeys[K] {
     return std::collections::HashMapKeys<K> {
       keys: self.keys,
@@ -1123,6 +1141,20 @@ pub impl[T] std::collections::HashSet[T] {
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
     hash_set_grow_to_capacity<T>(self, zone, hash_capacity_for_len(self.len + additional));
+  }
+
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::HashSet[T] {
+    var copied = std::collections::hash_set<T>(
+      target,
+      hash_capacity_for_len(self.len),
+      self.hash
+    );
+    var bucket = next_live_bucket(self.states, self.capacity, 0);
+    while bucket >= 0 {
+      copied.insert(target, ptr_load(ptr_add(self.data, bucket)));
+      bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
+    }
+    return copied;
   }
 
   fn iter(self: ref Self) -> std::collections::HashSetIter[T] {
@@ -1733,6 +1765,20 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     tree_map_grow_to_capacity<K, V>(self, zone, self.len + additional);
   }
 
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::TreeMap[K, V] {
+    var copied = std::collections::tree_map<K, V>(target, self.len, self.less);
+    var index = 0;
+    while index < self.len {
+      copied.insert(
+        target,
+        ptr_load(ptr_add(self.keys, index)),
+        ptr_load(ptr_add(self.values, index))
+      );
+      index = index + 1;
+    }
+    return copied;
+  }
+
   fn keys(self: ref Self) -> std::collections::TreeMapKeys[K] {
     return std::collections::TreeMapKeys<K> {
       keys: self.keys,
@@ -2217,6 +2263,16 @@ pub impl[T] std::collections::TreeSet[T] {
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
     tree_set_grow_to_capacity<T>(self, zone, self.len + additional);
+  }
+
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::TreeSet[T] {
+    var copied = std::collections::tree_set<T>(target, self.len, self.less);
+    var index = 0;
+    while index < self.len {
+      copied.insert(target, ptr_load(ptr_add(self.data, index)));
+      index = index + 1;
+    }
+    return copied;
   }
 
   fn iter(self: ref Self) -> std::collections::TreeSetIter[T] {

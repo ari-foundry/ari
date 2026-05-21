@@ -1494,6 +1494,7 @@ map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
+map.copy_to(ref mut target)
 map.keys()
 map.values()
 map.entries()
@@ -1519,6 +1520,7 @@ set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
+set.copy_to(ref mut target)
 set.iter()
 ```
 
@@ -1538,7 +1540,8 @@ live membership and ignore tombstones;
 fields over the same live buckets. `HashSet.iter()` and direct
 `for value in set` use the same live-bucket cursor. Hash
 `reserve_extra(additional)` grows enough buckets for `len + additional` live
-items without immediately violating the load-factor rule.
+items without immediately violating the load-factor rule. Hash `copy_to`
+methods copy only live entries into the target zone, leaving tombstones behind.
 
 Tree collections use explicit strict less-than comparators:
 
@@ -1572,6 +1575,7 @@ map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
+map.copy_to(ref mut target)
 map.keys()
 map.values()
 map.entries()
@@ -1597,6 +1601,7 @@ set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
+set.copy_to(ref mut target)
 set.iter()
 ```
 
@@ -1616,7 +1621,8 @@ with `try_first` and `try_last` for empty-safe access. `TreeSet.take(value)`
 returns the removed value as `Option[T]`; `TreeSet.remove(value)` drops it and
 returns a boolean. `TreeMap.keys()`, `TreeMap.values()`, `TreeMap.entries()`,
 `TreeSet.iter()`, and direct `for value in tree_set` walk values in ascending
-comparator order.
+comparator order. Tree `copy_to` methods rebuild the map or set in the target
+zone with the same comparator.
 
 `std::string::String` is an owned byte string:
 

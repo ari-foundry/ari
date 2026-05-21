@@ -253,6 +253,7 @@ map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
+map.copy_to(ref mut target)
 map.keys()
 map.values()
 map.entries()
@@ -270,7 +271,8 @@ but it is not insertion order and should not be used as a stable sorting rule.
 `entries` yields `MapEntry[K, V]` values with `.key` and `.value` fields over
 the same live buckets. `reserve_extra(additional)` reserves enough hash buckets
 for the requested live length without immediately violating the table's load
-factor rule.
+factor rule. `copy_to(ref mut target)` copies only live entries into the target
+zone and leaves tombstones behind.
 
 ```ari
 set.len()
@@ -288,6 +290,7 @@ set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
+set.copy_to(ref mut target)
 set.iter()
 ```
 
@@ -296,7 +299,8 @@ returns the previous equal value when present. `take` moves a removed value out;
 `remove` drops it. `equals`, `is_subset`, `is_superset`, and `is_disjoint`
 compare membership over live buckets and ignore tombstones. `HashSet.iter()`
 yields live buckets, and `HashSet[T]` implements `IntoIterator[T]` so
-`for value in set` works through the same cursor.
+`for value in set` works through the same cursor. `copy_to(ref mut target)`
+copies live values into a fresh target-zone hash table without tombstones.
 
 ## TreeMap And TreeSet
 
@@ -343,6 +347,8 @@ map.insert(ref mut zone, key, value)
 map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
+map.reserve_extra(ref mut zone, additional)
+map.copy_to(ref mut target)
 map.keys()
 map.values()
 map.entries()
@@ -364,7 +370,8 @@ returns the removed value as `Option[V]`; the current
 implementation compacts the live node arrays and rebuilds tree links in place,
 so removal does not allocate through a zone. For tracked local tree maps,
 `map.insert(key, value)`, `map.reserve(capacity)`, and
-`map.reserve_extra(additional)` infer the constructor zone.
+`map.reserve_extra(additional)` infer the constructor zone. `copy_to(ref mut
+target)` rebuilds the map in the target zone with the same comparator.
 
 ```ari
 set.len()
@@ -386,6 +393,7 @@ set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
+set.copy_to(ref mut target)
 set.iter()
 ```
 
@@ -401,7 +409,8 @@ links in place without allocating. `TreeSet.iter()` yields values in ascending
 comparator order, and `TreeSet[T]` implements `IntoIterator[T]`. For tracked
 local tree sets, `set.insert(value)`, `set.replace(value)`, and
 `set.reserve(capacity)`/`set.reserve_extra(additional)` infer the constructor
-zone.
+zone. `copy_to(ref mut target)` rebuilds the ordered set in the target zone
+with the same comparator.
 
 ## BinaryHeap And PriorityQueue
 
@@ -486,6 +495,7 @@ tests/cases/standard-library/ok/collections/std-collections-set-implicit-zone.ar
 tests/cases/standard-library/ok/collections/std-collections-implicit-zone.ari
 tests/cases/standard-library/ok/collections/std-collections-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
+tests/cases/standard-library/ok/collections/std-collections-copy-to.ari
 tests/cases/standard-library/ok/collections/std-collections-hash.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
@@ -536,6 +546,9 @@ tests/cases/standard-library/errors/collections/std-collections-priority-queue-p
 
 `std-collections-implicit-zone.ari` checks tracked-local zone inference for
 hash, tree, deque, linked-list, heap, and priority-queue growth calls.
+`std-collections-copy-to.ari` checks target-zone copies for hash and tree
+maps/sets, including tombstone skipping for hash collections and post-source
+destroy reads from target-zone storage.
 `std-collections-hash.ari` forces collisions with a custom hash function so the
 linear-probing and tombstone paths are exercised.
 `std-collections-hash-set-relations.ari` keeps that collision pressure and

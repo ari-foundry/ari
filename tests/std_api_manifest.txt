@@ -797,6 +797,7 @@ method std::collections::HashMap[K,V]::clear|check-prelude std-collections-hash 
 method std::collections::HashMap[K,V]::contains|check-prelude std-collections-hash hash lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::contains_key|check-prelude std-collections-map-natural-api natural hash map key-membership predicate; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::contains_value|check-prelude std-collections-map-value-predicates live-bucket value-membership predicate; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::copy_to|check-prelude std-collections-copy-to target-zone hash map copy without tombstones; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::entries|check-prelude std-collections-map-entries live-bucket key-value entry iterator; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get|check-prelude std-collections-hash asserting hash lookup; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get_or|check-prelude std-collections-map-natural-api fallback hash lookup helper; docs/stdlib/modules/collections.md
@@ -813,6 +814,7 @@ method std::collections::HashMap[K,V]::values|check-prelude std-collections-hash
 method std::collections::HashSet[T]::capacity|check-prelude std-collections-hash hash set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::clear|check-prelude std-collections-hash drops live hash set entries; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::contains|check-prelude std-collections-hash hash set lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::copy_to|check-prelude std-collections-copy-to target-zone hash set copy without tombstones; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::equals|check-prelude std-collections-hash-set-relations membership equality predicate; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::insert|check-prelude std-collections-hash hash set insertion with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::is_disjoint|check-prelude std-collections-hash-set-relations live-bucket disjointness predicate; docs/stdlib/modules/collections.md
@@ -909,6 +911,7 @@ method std::collections::TreeMap[K,V]::clear|check-prelude std-collections-tree 
 method std::collections::TreeMap[K,V]::contains|check-prelude std-collections-tree ordered lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains_key|check-prelude std-collections-map-natural-api natural ordered map key-membership predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains_value|check-prelude std-collections-map-value-predicates tree map value-membership predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::copy_to|check-prelude std-collections-copy-to target-zone ordered map copy; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::entries|check-prelude std-collections-map-entries sorted key-value entry iterator; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_entry|check-prelude std-collections-tree-entry-boundaries asserting smallest key-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_key|check-prelude std-collections-tree-boundaries asserting smallest-key accessor; docs/stdlib/modules/collections.md
@@ -937,6 +940,7 @@ method std::collections::TreeMap[K,V]::values|check-prelude std-collections-tree
 method std::collections::TreeSet[T]::capacity|check-prelude std-collections-tree tree set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::clear|check-prelude std-collections-tree drops live tree set nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::contains|check-prelude std-collections-tree ordered set lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::copy_to|check-prelude std-collections-copy-to target-zone ordered set copy; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::equals|check-prelude std-collections-tree-set-relations membership equality predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::first|check-prelude std-collections-tree-boundaries asserting smallest-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::insert|check-prelude std-collections-tree red-black set insertion with same-zone growth; docs/stdlib/modules/collections.md

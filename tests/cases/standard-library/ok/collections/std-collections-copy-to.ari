@@ -1,0 +1,73 @@
+// Covers target-zone copies for hash and tree collections. Hash copies skip
+// tombstones; tree copies preserve ordered lookup through fresh target storage.
+fn constant_hash(value: i64) -> u64 {
+  return 7;
+}
+
+fn main() -> i64 {
+  var source = zone::create(4096);
+  var target = zone::create(4096);
+  var score = 0;
+
+  var map = HashMap::new<i64, i64>(ref mut source, 1, constant_hash);
+  map.insert(ref mut source, 1, 10);
+  map.insert(ref mut source, 9, 90);
+  map.insert(ref mut source, 17, 170);
+  map.remove(1);
+  var map_copy = map.copy_to(ref mut target);
+
+  var hash_set = HashSet::new<i64>(ref mut source, 1, constant_hash);
+  hash_set.insert(ref mut source, 2);
+  hash_set.insert(ref mut source, 10);
+  hash_set.insert(ref mut source, 18);
+  hash_set.remove(10);
+  var hash_set_copy = hash_set.copy_to(ref mut target);
+
+  var tree_map = TreeMap::new<i64, i64>(ref mut source, 1, collections::less_i64);
+  tree_map.insert(ref mut source, 4, 40);
+  tree_map.insert(ref mut source, 2, 20);
+  tree_map.insert(ref mut source, 8, 80);
+  var tree_map_copy = tree_map.copy_to(ref mut target);
+
+  var tree_set = TreeSet::new<i64>(ref mut source, 1, collections::less_i64);
+  tree_set.insert(ref mut source, 6);
+  tree_set.insert(ref mut source, 2);
+  tree_set.insert(ref mut source, 9);
+  var tree_set_copy = tree_set.copy_to(ref mut target);
+
+  zone::destroy(source);
+
+  if map_copy.len() == 2 &&
+     map_copy.get_or(9, 0) == 90 &&
+     map_copy.get_or(17, 0) == 170 &&
+     !map_copy.contains_key(1) {
+    score = score + 7;
+  }
+
+  if hash_set_copy.len() == 2 &&
+     hash_set_copy.contains(2) &&
+     hash_set_copy.contains(18) &&
+     !hash_set_copy.contains(10) {
+    score = score + 11;
+  }
+
+  let first = tree_map_copy.first_entry();
+  let last = tree_map_copy.last_entry();
+  if tree_map_copy.len() == 3 &&
+     first.key == 2 &&
+     first.value == 20 &&
+     last.key == 8 &&
+     last.value == 80 {
+    score = score + 13;
+  }
+
+  if tree_set_copy.len() == 3 &&
+     tree_set_copy.first() == 2 &&
+     tree_set_copy.last() == 9 &&
+     tree_set_copy.contains(6) {
+    score = score + 17;
+  }
+
+  zone::destroy(target);
+  return score;
+}
