@@ -227,7 +227,7 @@ Hash collections are real hash tables, not aliases over `Set`. They use linear
 probing, tombstones for removal, and a load-factor growth rule. Until Ari has a
 standard `Hash` trait with dispatch through generic containers, constructors
 take a hash function explicitly.
-For tracked local hash handles, `map.insert(key, value)`,
+For tracked local hash handles, `map.insert(key, value)`, `map.entry(key)`,
 `map.reserve(capacity)`, `map.reserve_extra(additional)`, `set.insert(value)`,
 `set.replace(value)`, `set.reserve(capacity)`, and
 `set.reserve_extra(additional)` infer the constructor zone.
@@ -254,10 +254,11 @@ map.contains_value(value)
 map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
-map.lower_bound(key)
-map.upper_bound(key)
 map.insert(ref mut zone, key, value)
+map.entry(ref mut zone, key)
+map.entry(key)
 map.remove(key)
+map.remove_entry(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
@@ -281,6 +282,26 @@ the same live buckets. `reserve_extra(additional)` reserves enough hash buckets
 for the requested live length without immediately violating the table's load
 factor rule. `copy_to(ref mut target)` copies only live entries into the target
 zone and leaves tombstones behind.
+
+`map.entry(key)` returns a mutable update handle. It is separate from
+`MapEntry[K, V]`: `MapEntry` is a copied key-value result from iterators,
+boundaries, and `remove_entry`, while `HashMapEntry[K, V]` is a short-lived
+handle used to update a stored value in place. The explicit spelling is
+`map.entry(ref mut zone, key)`, but tracked local maps infer the same zone that
+created the map.
+
+```ari
+map.entry(word).or_insert(0) += 1
+map.entry(key).and_modify(update).or_insert(fallback) += 0
+map.entry(key).or_insert_with(make_value) += 0
+map.remove_entry(key)
+```
+
+`or_insert(value)` inserts `value` when the key is absent and returns
+`ref mut V`. `or_insert_with(make_value)` calls `make_value` only when the key
+is absent. `and_modify(fn(ref mut V) -> void)` runs only when the key already
+exists and returns the entry handle for chaining. `remove_entry(key)` returns
+`Option[MapEntry[K, V]]`, preserving both the removed key and value.
 
 ```ari
 set.len()
@@ -356,7 +377,10 @@ map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
+map.entry(ref mut zone, key)
+map.entry(key)
 map.remove(key)
+map.remove_entry(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
@@ -384,9 +408,15 @@ entry exists. `entries` yields `MapEntry[K, V]` values with `.key` and
 returns the removed value as `Option[V]`; the current
 implementation compacts the live node arrays and rebuilds tree links in place,
 so removal does not allocate through a zone. For tracked local tree maps,
-`map.insert(key, value)`, `map.reserve(capacity)`, and
+`map.insert(key, value)`, `map.entry(key)`, `map.reserve(capacity)`, and
 `map.reserve_extra(additional)` infer the constructor zone. `copy_to(ref mut
 target)` rebuilds the map in the target zone with the same comparator.
+
+`TreeMap.entry(key)` mirrors `HashMap.entry(key)`, but lookup follows the map's
+strict less-than comparator. `TreeMapEntry[K, V]` supports the same
+`or_insert`, `or_insert_with`, and `and_modify` methods, and
+`remove_entry(key)` returns `Option[MapEntry[K, V]]` after compacting storage
+and rebuilding links.
 
 ```ari
 set.len()

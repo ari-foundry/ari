@@ -85,8 +85,10 @@ insertion-order access, optional access, replace-or-insert updates,
 iterator support, and reserve growth; growable `Deque`, bounded `RingBuffer`,
 zone-backed `LinkedList`, and comparator-driven `BinaryHeap`/`PriorityQueue`
 handles; real hash-table `HashMap`/`HashSet` handles with live-bucket
-iterators and set representative lookup; and red-black-tree `TreeMap`/`TreeSet`
-handles with sorted key/value iteration and set representative lookup.
+iterators, map entry update handles, key-value removal, and set representative
+lookup; and red-black-tree `TreeMap`/`TreeSet` handles with sorted key/value
+iteration, entry update handles, key-value removal, and set representative
+lookup.
 Tracked local growable collection handles infer their
 constructor zone for common mutating growth calls. Root `Slice[T]` now has
 borrowed range views, split

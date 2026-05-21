@@ -1780,7 +1780,10 @@ map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
+map.entry(ref mut zone, key)
+map.entry(key)
 map.remove(key)
+map.remove_entry(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
@@ -1819,14 +1822,19 @@ set.iter()
 `HashMap.contains_value(value)` scans live bucket values and ignores
 tombstones. `HashMap.get_or(key, fallback)` returns the stored value or the
 fallback when the key is absent. `HashMap.insert` returns `Option[V]` with the
-previous value on replacement. `HashMap.remove` returns `Option[V]` and leaves
+previous value on replacement. `HashMap.entry(key)` returns a
+`HashMapEntry[K,V]` update handle with `or_insert`, `or_insert_with`, and
+`and_modify`; tracked local maps infer the allocation zone for the natural
+`entry(key)` spelling. `HashMap.remove` returns `Option[V]` and leaves
 a tombstone so later probes still find collided keys. `HashMap.keys()` and
 `HashMap.values()` iterate live buckets; this is deterministic for the table
 state, but it is not insertion order. `HashSet.get(value)` and
 `HashSet.try_get(value)` read the stored equal representative. `HashSet`
 relationship methods compare live membership and ignore tombstones;
 `HashMap.entries()` yields `MapEntry[K,V]` values with `.key` and `.value`
-fields over the same live buckets. `HashSet.iter()` and direct
+fields over the same live buckets. `HashMap.remove_entry(key)` returns
+`Option[MapEntry[K,V]]` so callers can keep both removed key and value.
+`HashSet.iter()` and direct
 `for value in set` use the same live-bucket cursor. Hash
 `reserve_extra(additional)` grows enough buckets for `len + additional` live
 items without immediately violating the load-factor rule. Hash `copy_to`
@@ -1862,7 +1870,10 @@ map.try_get(key)
 map.lower_bound(key)
 map.upper_bound(key)
 map.insert(ref mut zone, key, value)
+map.entry(ref mut zone, key)
+map.entry(key)
 map.remove(key)
+map.remove_entry(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
@@ -1904,14 +1915,19 @@ set.iter()
 `TreeMap.contains(key)` remains available for compatibility.
 `TreeMap.contains_value(value)` scans stored values without using key order.
 `TreeMap.get_or(key, fallback)` returns the stored value or the fallback when
-the key is absent. `TreeMap.remove(key)` returns `Option[V]` and rebuilds links
+the key is absent. `TreeMap.entry(key)` returns a `TreeMapEntry[K,V]` update
+handle with `or_insert`, `or_insert_with`, and `and_modify`; tracked local maps
+infer the allocation zone for the natural `entry(key)` spelling.
+`TreeMap.remove(key)` returns `Option[V]` and rebuilds links
 in place after compacting live storage. `TreeMap` boundary methods read the
 smallest or largest key and the value attached to that key in comparator order;
 use the `try_*` forms when an empty tree is a normal case. `first_entry` and
 `last_entry` return `MapEntry[K,V]` values when both boundary key and value are
 needed together. `TreeMap.lower_bound(key)` returns the first entry whose key
 is not less than `key`; `TreeMap.upper_bound(key)` returns the first entry
-whose key is greater than `key`. `TreeSet` relationship methods compare
+whose key is greater than `key`. `TreeMap.remove_entry(key)` returns
+`Option[MapEntry[K,V]]`, keeping the removed key and value together.
+`TreeSet` relationship methods compare
 ordered-set membership, not internal tree shape.
 `TreeSet.first()` and `TreeSet.last()` read the smallest and largest values,
 with `try_first` and `try_last` for empty-safe access. `TreeSet.lower_bound`

@@ -1,0 +1,74 @@
+// Covers update-entry map APIs: lazy insertion, in-place modification, and
+// key-value removal for both hash-table and ordered-tree maps.
+fn constant_hash(value: i64) -> u64 {
+  return 3;
+}
+
+fn add_two(value: ref mut i64) -> void {
+  let raw = value as ptr i64;
+  *raw += 2;
+}
+
+fn default_seven() -> i64 {
+  return 7;
+}
+
+fn default_nine() -> i64 {
+  return 9;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(8192);
+  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  hash.entry(1).or_insert(0) += 1;
+  hash.entry(1).and_modify(add_two).or_insert(10) += 0;
+  if hash.get(1) == 3 {
+    score = score + 5;
+  }
+
+  hash.entry(2).or_insert_with(default_seven) += 1;
+  hash.entry(2).or_insert_with(default_nine) += 0;
+  if hash.get(2) == 8 {
+    score = score + 7;
+  }
+
+  let removed_hash = hash.remove_entry(2);
+  if removed_hash.is_some() {
+    let hash_entry = removed_hash.unwrap();
+    if hash_entry.key == 2 && hash_entry.value == 8 {
+      score = score + 11;
+    }
+  }
+  if !hash.contains_key(2) {
+    score = score + 13;
+  }
+
+  tree.entry(5).or_insert(50) += 5;
+  tree.entry(5).and_modify(add_two).or_insert(99) += 0;
+  if tree.get(5) == 57 {
+    score = score + 17;
+  }
+
+  tree.entry(3).or_insert_with(default_seven) += 0;
+  tree.entry(9).or_insert_with(default_nine) += 1;
+  if tree.get(9) == 10 {
+    score = score + 23;
+  }
+
+  let removed_tree = tree.remove_entry(5);
+  if removed_tree.is_some() {
+    let tree_entry = removed_tree.unwrap();
+    if tree_entry.key == 5 && tree_entry.value == 57 {
+      score = score + 29;
+    }
+  }
+  if !tree.contains_key(5) {
+    score = score + 31;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

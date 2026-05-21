@@ -40,9 +40,10 @@ limits, examples, and test files for one module.
 - [std::collections](collections.md): source `Set[T]`, `Deque[T]`,
   `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`,
   hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree
-  `TreeMap[K,V]`/`TreeSet[T]`, natural lookup/update names, explicit
-  hash/comparator constructors, collection iterators, copied views,
-  set representative lookup, comparator-order bounds, and explicit-zone
+  `TreeMap[K,V]`/`TreeSet[T]`, natural lookup/update names, map entry update
+  handles, explicit hash/comparator constructors, collection iterators, copied
+  views, key-value removal, set representative lookup, comparator-order bounds,
+  and explicit-zone
   provenance.
 - [std::iter](iter.md): range constructors plus the minimal iterator traits
   used by `for` loops and collection cursors.

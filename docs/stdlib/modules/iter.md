@@ -135,8 +135,9 @@ mistake heap storage order for priority order.
 - `collect` currently builds a `std::vec::Vec[T]`; other collection targets
   should be added as explicit functions after their ownership contracts are
   stable.
-- Map entries are copied `MapEntry[K,V]` values. Borrowed mutable entry views
-  remain future work because they need a stronger collection-view policy.
+- Iterator and boundary map entries are copied `MapEntry[K,V]` values.
+  Mutable updates use `HashMap.entry(key)` or `TreeMap.entry(key)` instead of
+  iterator views.
 
 ## Tests
 

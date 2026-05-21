@@ -929,6 +929,13 @@ private:
                 TokenKind field = peek(offset + 1).kind;
                 if (field != TokenKind::Identifier && field != TokenKind::Integer) return -1;
                 offset += 2;
+                if (peek(offset).kind == TokenKind::LParen) {
+                    if (!skip_balanced_assignment_scan(offset, TokenKind::LParen, TokenKind::RParen)) return -1;
+                }
+                continue;
+            }
+            if (peek(offset).kind == TokenKind::LParen) {
+                if (!skip_balanced_assignment_scan(offset, TokenKind::LParen, TokenKind::RParen)) return -1;
                 continue;
             }
             if (peek(offset).kind == TokenKind::LBracket) {
@@ -1044,7 +1051,7 @@ private:
             } else if (is_assignment_target_expr(*target)) {
                 set_stmt_assign_target(*stmt, std::move(target));
             } else {
-                fail(loc, "assignment target must be a binding, field access, index access, or pointer dereference");
+                fail(loc, "assignment target must be a binding, field access, index access, pointer dereference, or borrow-returning call");
             }
             ExprPtr rhs = parse_expression();
             if (op.kind == TokenKind::Equal) {

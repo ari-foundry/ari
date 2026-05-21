@@ -628,7 +628,8 @@ Checklist:
 - [x] source `std::collections::HashMap<K,V>`/`HashSet<T>` and
       `TreeMap<K,V>`/`TreeSet<T>` expose tracked hash-table and red-black-tree
       containers with explicit hash/comparator functions, lookup, insertion,
-      replacement, reserve growth, tracked-local zone inference for common
+      replacement, `HashMapEntry`/`TreeMapEntry` update handles,
+      `remove_entry`, reserve growth, tracked-local zone inference for common
       mutation calls, hash/tree iterator invalidation, reset/destroy
       invalidation, and same-zone growth diagnostics
 - [x] source `std::collections::Deque<T>`, `RingBuffer<T>`,

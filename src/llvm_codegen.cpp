@@ -3303,6 +3303,7 @@ private:
                 }
                 break;
             case IrStmtKind::Assign:
+                collect_expr_locals(ir_stmt_assign_target(stmt), locals);
                 collect_expr_locals(ir_stmt_assign_rhs(stmt), locals);
                 break;
             case IrStmtKind::ExprStmt:
@@ -3963,6 +3964,16 @@ private:
         }
         if (expr.kind == IrExprKind::PointerLoad && ir_expr_operand(expr)) {
             return emit_expr(*ir_expr_operand(expr)).name;
+        }
+        if (expr.kind == IrExprKind::Block) {
+            if (!ir_expr_block_label(expr).empty()) {
+                throw CompileError(where(expr.loc) + ": labeled block expressions cannot be assignment targets");
+            }
+            emit_statements(ir_expr_block_body(expr));
+            return emit_lvalue_ptr(*ir_expr_block_value(expr));
+        }
+        if (expr.kind == IrExprKind::Call) {
+            return emit_expr(expr).name;
         }
         if (expr.kind == IrExprKind::TupleIndex && ir_expr_operand(expr)) {
             std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));

@@ -99,7 +99,8 @@ The current `std` package already provides:
   `HashMap[K,V]`/`HashSet[T]` with explicit hash functions and live-bucket
   iterators, and red-black-tree `TreeMap[K,V]`/`TreeSet[T]` with explicit
   comparators, sorted iterators, boundary entries, lower/upper-bound lookup,
-  fallback `get_or` map lookup, and set representative `get`/`try_get`;
+  fallback `get_or` map lookup, entry update handles, `remove_entry`
+  key-value removal, and set representative `get`/`try_get`;
   collection families support target-zone copy where they own storage,
   and all use explicit-zone storage, tracked-local zone inference for common
   growable mutation calls, and provenance checks

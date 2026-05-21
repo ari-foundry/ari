@@ -882,6 +882,9 @@ method std::collections::Deque[T]::try_front|check-prelude std-collections-deque
 method std::collections::Deque[T]::try_get|check-prelude std-collections-deque optional indexed read; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::try_pop_back|check-prelude std-collections-deque optional back removal; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::try_pop_front|check-prelude std-collections-deque optional front removal; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::and_modify|check-prelude std-collections-map-entry-api hash map occupied-entry mutation hook; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::or_insert|check-prelude std-collections-map-entry-api hash map eager entry insertion returning ref mut value; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::or_insert_with|check-prelude std-collections-map-entry-api hash map lazy entry insertion returning ref mut value; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::capacity|check-prelude std-collections-hash hash table capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::clear|check-prelude std-collections-hash drops live hash map entries; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::contains|check-prelude std-collections-hash hash lookup predicate; docs/stdlib/modules/collections.md
@@ -889,6 +892,7 @@ method std::collections::HashMap[K,V]::contains_key|check-prelude std-collection
 method std::collections::HashMap[K,V]::contains_value|check-prelude std-collections-map-value-predicates live-bucket value-membership predicate; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::copy_to|check-prelude std-collections-copy-to target-zone hash map copy without tombstones; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::entries|check-prelude std-collections-map-entries live-bucket key-value entry iterator; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::entry|check-prelude std-collections-map-entry-api hash map update entry handle with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get|check-prelude std-collections-hash asserting hash lookup; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get_or|check-prelude std-collections-map-natural-api fallback hash lookup helper; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::insert|check-prelude std-collections-hash insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
@@ -897,6 +901,7 @@ method std::collections::HashMap[K,V]::keys|check-prelude std-collections-hash-i
 method std::collections::HashMap[K,V]::len|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::new|check-prelude std-collections-hash associated explicit-hasher constructor; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::remove|check-prelude std-collections-hash tombstone removal; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::remove_entry|check-prelude std-collections-map-entry-api hash map key-value tombstone removal; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::reserve|check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::reserve_extra|check-prelude std-collections-implicit-zone spare table growth; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::try_get|check-prelude std-collections-hash Option-returning hash lookup; docs/stdlib/modules/collections.md
@@ -1001,6 +1006,9 @@ method std::collections::Set[T]::try_first|check-prelude std-collections-set-acc
 method std::collections::Set[T]::try_get|check-prelude std-collections-set-access optional indexed accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::try_last|check-prelude std-collections-set-access optional last accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::try_pop|check-prelude std-collections-set-access optional last-value removal; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::and_modify|check-prelude std-collections-map-entry-api tree map occupied-entry mutation hook; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::or_insert|check-prelude std-collections-map-entry-api tree map eager entry insertion returning ref mut value; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::or_insert_with|check-prelude std-collections-map-entry-api tree map lazy entry insertion returning ref mut value; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::capacity|check-prelude std-collections-tree tree map capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::clear|check-prelude std-collections-tree drops live tree map nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains|check-prelude std-collections-tree ordered lookup predicate; docs/stdlib/modules/collections.md
@@ -1008,6 +1016,7 @@ method std::collections::TreeMap[K,V]::contains_key|check-prelude std-collection
 method std::collections::TreeMap[K,V]::contains_value|check-prelude std-collections-map-value-predicates tree map value-membership predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::copy_to|check-prelude std-collections-copy-to target-zone ordered map copy; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::entries|check-prelude std-collections-map-entries sorted key-value entry iterator; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::entry|check-prelude std-collections-map-entry-api tree map update entry handle with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_entry|check-prelude std-collections-tree-entry-boundaries asserting smallest key-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_key|check-prelude std-collections-tree-boundaries asserting smallest-key accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_value|check-prelude std-collections-tree-boundaries asserting value for smallest key; docs/stdlib/modules/collections.md
@@ -1023,6 +1032,7 @@ method std::collections::TreeMap[K,V]::len|check-prelude std-collections-tree me
 method std::collections::TreeMap[K,V]::lower_bound|check-prelude std-collections-tree-bounds optional first entry not less than key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::remove|check-prelude std-collections-tree-remove link-rebuild removal returning removed value; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::remove_entry|check-prelude std-collections-map-entry-api tree map key-value removal after link rebuild; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve_extra|check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::try_first_entry|check-prelude std-collections-tree-entry-boundaries optional smallest key-value accessor; docs/stdlib/modules/collections.md
@@ -1601,6 +1611,7 @@ struct std::collections::BinaryHeap[T]|std collections binary heap tests; docs/s
 struct std::collections::DequeIter[T]|std collections deque iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::Deque[T]|std collections deque tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMapEntries[K, V]|std collections map entry iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::HashMapEntry[K, V]|std collections map entry update tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMapKeys[K]|std collections hash iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMapValues[V]|std collections hash iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::HashMap[K, V]|std collections hash map tests; docs/stdlib/modules/collections.md
@@ -1615,6 +1626,7 @@ struct std::collections::RingBufferIter[T]|std collections ring buffer iterator 
 struct std::collections::RingBuffer[T]|std collections ring buffer tests; docs/stdlib/modules/collections.md
 struct std::collections::Set[T]|std collections linear set tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapEntries[K, V]|std collections map entry iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeMapEntry[K, V]|std collections map entry update tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapKeys[K]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapValues[V]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdlib/modules/collections.md

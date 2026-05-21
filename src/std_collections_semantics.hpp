@@ -19,6 +19,7 @@ struct StdCollectionsImplicitZoneMethod {
 // Collection behavior stays in Ari source; sema only tracks zone ownership.
 bool is_std_collections_set_handle_type(const IrType& type);
 bool is_std_collections_iter_handle_type(const IrType& type);
+bool is_std_collections_map_update_entry_handle_type(const IrType& type);
 bool is_std_collections_mutable_handle_type(const IrType& type);
 bool is_std_collections_zone_handle_type(const IrType& type);
 std::string std_collections_handle_display_name(const IrType& type);

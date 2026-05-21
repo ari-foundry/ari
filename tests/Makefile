@@ -1868,6 +1868,15 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6get_or' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf
 	$(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 145
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent5entry' $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent12remove_entry' $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
+	grep -q '_ARNv4impl40std__collections__HashMapEntry_i64__i64_8inherent9or_insert' $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
+	grep -q '_ARNv4impl40std__collections__HashMapEntry_i64__i64_8inherent14or_insert_with' $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
+	grep -q '_ARNv4impl40std__collections__TreeMapEntry_i64__i64_8inherent10and_modify' $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent12remove_entry' $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-api.ari -o $(BUILD_DIR)/prelude/std-collections-map-entry-api.elf
+	$(BUILD_DIR)/prelude/std-collections-map-entry-api.elf; code=$$?; test $$code -eq 136
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll

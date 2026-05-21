@@ -468,13 +468,15 @@ bool is_assignment_target_expr(const Expr& expr) {
            expr.kind == ExprKind::FieldAccess ||
            expr.kind == ExprKind::TupleIndex ||
            expr.kind == ExprKind::Index ||
+           expr.kind == ExprKind::Call ||
+           expr.kind == ExprKind::MethodCall ||
            (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star);
 }
 
 ExprPtr clone_assignment_target(const Expr& expr) {
     if (!is_assignment_target_expr(expr)) {
         throw CompileError(where(expr.loc) +
-                           ": assignment target must be a binding, field access, index access, or pointer dereference");
+                           ": assignment target must be a binding, field access, index access, pointer dereference, or borrow-returning call");
     }
     return clone_expression_tree(expr);
 }

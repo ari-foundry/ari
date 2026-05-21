@@ -54,7 +54,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked and `Option` element access, mutation, growth, copy, direct borrowed `slice`/`split_at`/`find`/`contains_slice`/`compare`/`chunks`/`windows`/`split`, in-place `reverse`/rotation/sort/search helpers, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `pair`, `combine`, `bytes`, primitive write helpers. | Source-only helpers for values, byte slices, two-value composition, and precomputed hash composition. Hash-table constructors still take explicit hash functions until trait-driven collection constructors land. |
 | `std::random` | OS entropy and deterministic non-cryptographic random streams. | `Prng`, `entropy`, `fill`, `seed`, `from_entropy`, `seed_from_os`, `next`, `boolean`, unbiased `below`/`range`, `float`, `fill_from`, `shuffle`. | `entropy` is runtime-backed on Linux through `getrandom` with `/dev/urandom` fallback. `Prng` and shuffle are source Ari and are not cryptographic. |
-| `std::collections` | Zone-backed collection handles beyond sequences. | Linear `Set[T]`/`Iter[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, queue/list/heap operations, lookup, insertion, replacement, removal, reserve, clear, hash bucket iterators, and sorted tree iterators. | Implemented in source Ari with compiler provenance recognition for reset/destroy and same-zone growth checks. |
+| `std::collections` | Zone-backed collection handles beyond sequences. | Linear `Set[T]`/`Iter[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, queue/list/heap operations, lookup, insertion, replacement, entry update handles, key-value removal, reserve, clear, hash bucket iterators, and sorted tree iterators. | Implemented in source Ari with compiler provenance recognition for reset/destroy and same-zone growth checks. |
 | `std::iter` | Iteration traits, range constructors, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, `collect`. | Adapter callbacks are plain function pointers today; non-capturing lambdas can fill those slots when an expected `fn(...) -> ...` type is present. Capturing closure-aware iterator adapter traits remain future work. |
 | `std::fmt` | Formatting traits and explicit formatting helpers. Root `Display`/`Debug` are aliases for these traits. | `Debug::debug_in`, `Display::format_in`, `FormatSpec`, `decimal`, `hex`, `binary`, `octal`, width/precision/alignment modifiers, allocator-backed `*_in` helpers including `float_in`, `debug_value`, `write_value`, `write_debug`, `print_value`, `println_value`, `print_debug`, `println_debug`, and type-specific `write_*` helpers for `io::Writer`. | Formatting macros still use compiler lowering. `{}` maps to Display, `{:?}` maps to Debug where an explicit zone is available, and `FormatSpec` covers source hex/binary/octal, width, precision, and alignment for unsigned integers. |
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, primitive scalar impls, `Ordering`, `compare`, `compare_by`, `then_compare`, `then_compare_by`, `min`, `max`, `clamp`, `is_between`, and comparator-based `*_by` value helpers. | Implemented for source-level trait-bound static dispatch and explicit comparator call sites. |
@@ -73,8 +73,10 @@ same source zone for common methods such as `push`, `insert`, `reserve`,
 keep growth explicit today: `Set`, `HashMap`, `HashSet`, `TreeMap`, and
 `TreeSet`, plus `Deque`, `LinkedList`, `BinaryHeap`, and `PriorityQueue`,
 spell `ref mut zone` on methods that may allocate, such as `insert`,
-`replace`, `push`, `push_front`, `push_back`, `reserve`, and `reserve_extra`
-where that method exists. `RingBuffer` is fixed-capacity after construction.
+`entry`, `replace`, `push`, `push_front`, `push_back`, `reserve`, and
+`reserve_extra` where that method exists. Tracked local map handles can infer
+the same source zone for `map.entry(key)`. `RingBuffer` is fixed-capacity after
+construction.
 
 Generic APIs should keep natural names. Prefer `insert`, `get`, `contains`,
 and `copy_to` over type-suffixed names such as `insert_i64`; the type belongs
@@ -136,9 +138,9 @@ Use this table when writing code from docs alone:
 | Keep a bounded FIFO buffer. | `RingBuffer::new<T>(ref mut zone, capacity)` or `collections::ring_buffer<T>(...)` | `push(value)` returns `false` when full. `push_overwrite(value)` keeps the newest value and returns the overwritten oldest value as `Option[T]`. |
 | Use linked front/back nodes. | `LinkedList::new<T>(ref mut zone, capacity)` or `collections::linked_list<T>(...)` | Uses zone-backed reusable node slots. `push_front`/`push_back`, `pop_front`/`pop_back`, `remove_at`, `try_remove_at`, and `iter` are available; indexed access is O(n). |
 | Pop highest-priority values. | `BinaryHeap::new<T>(ref mut zone, capacity, less)` or `PriorityQueue::new<T>(ref mut zone, capacity, less)` | `less(a, b)` means `a` has lower priority than `b`. With `collections::less_i64`, larger integers pop first. Use `push`, `peek`, `try_peek`, `pop`, and `try_pop`. |
-| Store values by hash lookup. | `HashMap::new<K,V>(ref mut zone, capacity, hash)` or `collections::hash_map<K,V>(...)` | Hash functions have shape `fn(K) -> u64`. `collections::hash_i64` is available for i64 keys and delegates to `hash::value<i64>`. `insert` returns the replaced `Option[V]`, `try_get` handles absence, `remove` leaves a tombstone for later probing, and `keys()`/`values()` iterate live buckets. |
+| Store values by hash lookup. | `HashMap::new<K,V>(ref mut zone, capacity, hash)` or `collections::hash_map<K,V>(...)` | Hash functions have shape `fn(K) -> u64`. `collections::hash_i64` is available for i64 keys and delegates to `hash::value<i64>`. `insert` returns the replaced `Option[V]`, `entry(key).or_insert(value)` updates missing values in place, `try_get` handles absence, `remove` leaves a tombstone for later probing, `remove_entry` keeps the removed key and value together, and `keys()`/`values()` iterate live buckets. |
 | Store hash-based membership. | `HashSet::new<T>(ref mut zone, capacity, hash)` or `collections::hash_set<T>(...)` | `insert` returns whether the value was new. Use `replace`, `take`, `remove`, `contains`, `reserve`, `clear`, and `iter`. Direct `for value in set` uses the same live-bucket cursor. |
-| Store values by ordered lookup. | `TreeMap::new<K,V>(ref mut zone, capacity, less)` or `collections::tree_map<K,V>(...)` | The comparator has shape `fn(K, K) -> bool` and must be a strict less-than relation. `collections::less_i64` is available for i64 keys. `keys()` and `values()` iterate in ascending key order. |
+| Store values by ordered lookup. | `TreeMap::new<K,V>(ref mut zone, capacity, less)` or `collections::tree_map<K,V>(...)` | The comparator has shape `fn(K, K) -> bool` and must be a strict less-than relation. `collections::less_i64` is available for i64 keys. `entry(key)` supports in-place `or_insert`/`or_insert_with`/`and_modify`, `remove_entry` returns copied key-value data, and `keys()`/`values()` iterate in ascending key order. |
 | Store ordered membership. | `TreeSet::new<T>(ref mut zone, capacity, less)` or `collections::tree_set<T>(...)` | Uses a red-black tree. `insert` rejects equal values, `replace` returns the previous equal value, and `iter`/direct `for value in set` walk ascending comparator order. |
 | Generate random values or shuffle a slice. | `random::entropy()`, `random::seed(123u64)`, `random::from_entropy()`, `rng.range(start, end)`, `rng.float()`, `rng.shuffle<T>(values)` | Use `entropy`/`fill` for OS-backed seed material. `Prng` is deterministic and non-cryptographic, so it is for simulations, tests, randomized algorithms, and repeatable shuffles. |
 | Store owned byte text. | `std::string::from(ref mut zone, "text")`, `std::string::copy(ref mut zone, bytes)`, `std::string::empty(ref mut zone)`, `std::string::join_in(ref mut zone, parts, separator)` | The handle stores bytes, not a full Unicode text abstraction yet. Use `append`, `append_byte`, `append_bytes`, `contains_text`, `starts_with_text`, and `equals_text` for ordinary string-literal workflows. String literals coerce to `Slice[u8]`, local `Vec[u8]`, or fixed `[u8, N]` when those byte types are expected; use `std::string::bytes("literal")` when the boundary should be explicit. |
@@ -262,10 +264,14 @@ sets, `insert(value)`, `replace(value)`, `reserve(capacity)`, and
 implements `IntoIterator[T]` for direct `for value in set` loops.
 
 `std::collections::HashMap[K,V]` and `TreeMap[K,V]` share `len`, `capacity`,
-`is_empty`, `contains`, `get`, `try_get`, `insert(ref mut zone, key, value)`,
-`reserve(ref mut zone, capacity)`, `clear`, `keys()`, and `values()`.
-`HashMap` also has `remove(key)`. Hash map iterators walk live buckets;
-tree map iterators walk ascending key order.
+`is_empty`, `contains`, `contains_key`, `contains_value`, `get`, `get_or`,
+`try_get`, `insert(ref mut zone, key, value)`, `entry(ref mut zone, key)`,
+`entry(key)`, `remove`, `remove_entry`, `reserve(ref mut zone, capacity)`,
+`clear`, `keys()`, `values()`, and `entries()`. `entry(key)` returns a
+short-lived `HashMapEntry[K,V]` or `TreeMapEntry[K,V]` update handle with
+`or_insert`, `or_insert_with`, and `and_modify`; copied iterator, boundary, and
+removal results use `MapEntry[K,V]`. Hash map iterators walk live buckets; tree
+map iterators walk ascending key order.
 
 `std::collections::HashSet[T]` and `TreeSet[T]` share `len`, `capacity`,
 `is_empty`, `contains`, `insert(ref mut zone, value)`,
@@ -423,7 +429,7 @@ small source APIs with focused tests before becoming a larger design promise.
 | --- | --- | --- |
 | Foundation | Programs need stable ADTs, traits, assertions, and low-level helpers before higher-level APIs can be trusted. | `std`, `std::option`, `std::result`, `std::cmp`, `std::convert`, `std::mem`. |
 | Allocation | Ari's memory model is explicit, so allocation must be visible and capability-based. | `std::zone`, future allocator traits, future scoped scratch helpers. |
-| Collections | Most programs need growable storage, membership checks, ordered lookup, queues, priority queues, and borrowed views. | `std::vec`, `std::boxed`, `std::collections::Set`, `Deque`, `RingBuffer`, `LinkedList`, `BinaryHeap`, `PriorityQueue`, `HashMap`, `HashSet`, `TreeMap`, `TreeSet`, future tree deletion and trait-driven collection constructors. |
+| Collections | Most programs need growable storage, membership checks, ordered lookup, queues, priority queues, and borrowed views. | `std::vec`, `std::boxed`, `std::collections::Set`, `Deque`, `RingBuffer`, `LinkedList`, `BinaryHeap`, `PriorityQueue`, `HashMap`, `HashSet`, `TreeMap`, `TreeSet`, entry update handles, key-value removal, future optimized tree deletion and trait-driven collection constructors. |
 | Text And Formatting | Diagnostics, CLI tools, and user programs need owned text, byte helpers, and formatting. | `std::string`, `std::ascii`, `std::fmt`, formatting macros. |
 | IO And Process Context | Programs need arguments, environment variables, stdin/stdout/stderr, process status, files, child processes, threads, and synchronization. | `std::io`, `std::input`, `std::context`, `std::env`, `std::process`, `std::thread`, `std::sync`, `std::fs`. |
 | Iteration | Collections and ranges need a shared loop protocol. | `std::iter`, collection iterators. |

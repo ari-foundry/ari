@@ -10234,10 +10234,23 @@ private:
         if (expr.kind == ExprKind::Index) {
             return check_slice_index_assignment_target(expr);
         }
+        if (expr.kind == ExprKind::Call || expr.kind == ExprKind::MethodCall) {
+            return check_borrow_return_assignment_target(expr);
+        }
         if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
             return check_pointer_deref_assignment_target(expr);
         }
-        fail(expr.loc, "assignment target must be a binding, field access, index access, or pointer dereference");
+        fail(expr.loc, "assignment target must be a binding, field access, index access, pointer dereference, or borrow-returning call");
+    }
+
+    IrExprPtr check_borrow_return_assignment_target(const Expr& expr) {
+        IrExprPtr target = check_expr(expr);
+        if (target->type.qualifier != TypeQualifier::MutRef) {
+            fail(expr.loc,
+                 "assignment target call must return ref mut T, got " + type_name(target->type));
+        }
+        target->type = value_qualified_type(target->type);
+        return target;
     }
 
     bool has_raw_pointer_deref_base(const Expr& expr) const {
@@ -21141,9 +21154,25 @@ private:
                                                bool mutable_receiver_borrow,
                                                std::vector<IrStmtPtr>& prelude) {
         if (mutable_receiver_borrow) {
-            fail(loc,
-                 "method '" + method_name +
-                     "' with mutable borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
+            if (!is_std_collections_map_update_entry_handle_type(value_qualified_type(receiver->type))) {
+                fail(loc,
+                     "method '" + method_name +
+                         "' with mutable borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
+            }
+            IrType receiver_type = receiver->type;
+            std::string temp_name = make_hidden_local("$receiver");
+            declare_local(loc, temp_name, receiver_type, true);
+            prelude.push_back(make_ir_var_decl(
+                loc,
+                temp_name,
+                receiver_type,
+                std::move(receiver),
+                true));
+            receiver = check_expr(*make_ast_borrow_expr(
+                loc,
+                make_ast_name_expr(loc, temp_name),
+                true));
+            return;
         }
         if (is_borrow_type(result_type) || contains_borrow_type(result_type)) {
             fail(loc,
@@ -24687,6 +24716,14 @@ private:
         return make_pointer_add_expr(expr.loc, std::move(lhs), std::move(rhs));
     }
 
+    IrExprPtr load_borrow_returned_call_value_if_needed(const Expr& source, IrExprPtr value) {
+        if ((source.kind != ExprKind::Call && source.kind != ExprKind::MethodCall) ||
+            !is_borrow_type(value->type)) {
+            return value;
+        }
+        return make_pointer_load_expr(source.loc, std::move(value), value_qualified_type(value->type));
+    }
+
     IrExprPtr check_binary(const Expr& expr, IrExprPtr lowered) {
         StateSnapshot trait_operator_probe_state;
         LocalScopeStack::NameState trait_operator_probe_name_state;
@@ -24705,8 +24742,12 @@ private:
             trait_operator_probe_borrow_mark = temporary_borrow_mark();
         }
 
-        IrExprPtr lhs = check_expr(*expr_left(expr));
-        IrExprPtr rhs = check_expr(*expr_right(expr));
+        IrExprPtr lhs = load_borrow_returned_call_value_if_needed(
+            *expr_left(expr),
+            check_expr(*expr_left(expr)));
+        IrExprPtr rhs = load_borrow_returned_call_value_if_needed(
+            *expr_right(expr),
+            check_expr(*expr_right(expr)));
         if (is_borrow_type(lhs->type) || is_borrow_type(rhs->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }

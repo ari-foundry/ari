@@ -333,6 +333,10 @@ identifies the exact case:
 - `std-collections-map-natural-api.ari`: natural map lookup spellings,
   including compatibility `contains`, preferred `contains_key`, and fallback
   `get_or` for both hash and tree maps.
+- `std-collections-map-entry-api.ari`: Rust-style hash/tree map update
+  handles, including `entry(key)`, `or_insert`, `or_insert_with`,
+  `and_modify`, direct `+=` through returned `ref mut V`, and
+  `remove_entry`.
 - `std-collections-hash-map-keys-after-reset.ari`: negative source-zone
   provenance diagnostic for hash map key cursors after reset.
 - `std-collections-hash-map-values-after-reset.ari`: negative source-zone
