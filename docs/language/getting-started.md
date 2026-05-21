@@ -174,10 +174,15 @@ Useful options:
 --test              build a generated test runner for @test functions
 --no-implicit-std   require explicit mod std; instead of auto-loading lib/std.arih
 --cfg-feature name  enable feature("name") inside @cfg(...)
+--list-artifacts    list compiler-development artifact producers
+--explain-artifact option
+                    explain one compiler artifact owner, first check, and purpose
 ```
 
 Use `ari --target-info` or `ari --target x86_64-pc-linux-gnu --target-info`
 when checking which `target("...")` predicates and ABI facts the compiler sees.
+Use `ari --explain-artifact --emit-tokens` when choosing the smallest
+compiler artifact that proves a frontend change.
 
 ## Runtime Artifacts
 

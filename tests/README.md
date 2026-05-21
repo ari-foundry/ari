@@ -75,7 +75,8 @@ Use the narrowest target that matches the changed surface:
 | `make check-bootstrap-readiness` | Small pre-bootstrap Ari fixtures under `tests/cases/bootstrap-readiness/`. |
 
 Use `python3 tests/check_compiler_artifact_cli.py` when changing artifact CLI
-help, artifact listing, combination rules, or error text.
+help, artifact listing, per-artifact explanations, combination rules, or error
+text.
 Use `python3 tests/check_compiler_diagnostic_cli.py` when changing diagnostic
 catalog listing or diagnostic-code explanation behavior.
 Use `python3 tests/check_compiler_target_cli.py` when changing target triple,

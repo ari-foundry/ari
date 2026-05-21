@@ -126,6 +126,7 @@ static void usage(std::ostream& out) {
            "           [--test] [--cfg-feature name]\n"
            "       ari --help\n"
            "       ari --list-artifacts\n"
+           "       ari --explain-artifact option\n"
            "       ari --list-diagnostics\n"
            "       ari --explain-diagnostic code\n"
            "       ari --target-info [--target triple]\n";
@@ -143,6 +144,34 @@ static void list_artifacts(std::ostream& out) {
     out << "  Rule one_artifact_output=true backend_outputs_separate=true\n";
 }
 
+static std::string normalize_artifact_option(std::string option) {
+    if (option.rfind("--", 0) != 0) option = "--" + option;
+    return option;
+}
+
+static const ArtifactHelpRow* find_artifact_help(const std::string& option) {
+    const std::string normalized = normalize_artifact_option(option);
+    for (const ArtifactHelpRow& row : kArtifactHelp) {
+        if (normalized == row.option) return &row;
+    }
+    return nullptr;
+}
+
+static void explain_artifact(std::ostream& out, const std::string& option) {
+    const std::string normalized = normalize_artifact_option(option);
+    const ArtifactHelpRow* row = find_artifact_help(normalized);
+    if (!row) {
+        throw CompileError("unknown compiler artifact option '" + normalized +
+                           "'; use --list-artifacts");
+    }
+    out << "CompilerArtifact version=1"
+        << " option=" << row->option
+        << " owner=" << row->owner
+        << " first_check=\"" << row->first_check << "\""
+        << " purpose=\"" << row->purpose << "\"\n";
+    out << "  Rule earliest_layer=true one_artifact_output=true\n";
+}
+
 int run(int argc, char** argv) {
     if (argc < 2) {
         usage(std::cerr);
@@ -156,6 +185,11 @@ int run(int argc, char** argv) {
         }
         if (arg == "--list-artifacts") {
             list_artifacts(std::cout);
+            return 0;
+        }
+        if (arg == "--explain-artifact") {
+            if (i + 1 >= argc) throw CompileError("--explain-artifact expects an artifact option");
+            explain_artifact(std::cout, argv[i + 1]);
             return 0;
         }
         if (arg == "--list-diagnostics") {

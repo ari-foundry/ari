@@ -79,6 +79,7 @@ def main() -> int:
         "./build/ari hello.ari --check",
         "mod math;",
         "--target-info",
+        "--explain-artifact",
         "--emit-llvm",
         "--emit-obj",
         "--shared",

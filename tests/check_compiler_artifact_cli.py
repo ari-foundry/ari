@@ -76,6 +76,7 @@ def main():
         run_raw("--help"),
         "usage: ari <input.ari>",
         "ari --list-artifacts",
+        "ari --explain-artifact option",
     )
 
     ok &= require_success(
@@ -83,6 +84,24 @@ def main():
         "CompilerArtifacts version=1",
         "option=--emit-capability-inventory",
         "Rule one_artifact_output=true backend_outputs_separate=true",
+    )
+
+    ok &= require_success(
+        run_raw("--explain-artifact", "--emit-tokens"),
+        "CompilerArtifact version=1 option=--emit-tokens owner=lexer",
+        'first_check="make check-compiler-artifacts"',
+        'purpose="token kinds, spellings, and byte spans"',
+        "Rule earliest_layer=true one_artifact_output=true",
+    )
+
+    ok &= require_success(
+        run_raw("--explain-artifact", "emit-pass-summary"),
+        "CompilerArtifact version=1 option=--emit-pass-summary owner=driver/sema",
+    )
+
+    ok &= require_failure(
+        run_raw("--explain-artifact", "--emit-bytecode"),
+        "unknown compiler artifact option '--emit-bytecode'; use --list-artifacts",
     )
 
     combined = run_ari(

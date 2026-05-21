@@ -286,7 +286,7 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves fifteen low-level contracts:
+It currently proves sixteen low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -298,6 +298,8 @@ It currently proves fifteen low-level contracts:
   planned, and rejected public feature surface with owners and first checks
 - `--list-artifacts` prints the available artifact producers without needing a
   source file
+- `--explain-artifact --emit-tokens` prints the owner, first focused check,
+  and proof purpose for one producer
 - artifact CLI misuse names the exact conflicting artifact options, such as
   `--emit-tokens, --emit-syntax`
 - `--emit-source-map` writes deterministic source file, byte offset, line, and
