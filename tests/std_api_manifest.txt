@@ -368,6 +368,7 @@ fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelu
 fn std::input::try_read_byte|std input byte option tests; docs/stdlib/modules/input.md
 fn std::io::buf_reader[R: Reader]|std io buffered tests; docs/stdlib/modules/io.md
 fn std::io::buf_writer[W: Writer]|std io buffered tests; docs/stdlib/modules/io.md
+fn std::io::copy[R: Reader, W: Writer]|check-prelude std-io-copy generic Reader-to-Writer copy bool wrapper; docs/stdlib/modules/io.md
 fn std::io::cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::flush[W: Writer]|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::newline|prelude IO and print tests; docs/dev/test-matrix.md Prelude row
@@ -380,6 +381,7 @@ fn std::io::read_line_owned|prelude owned read_line tests; docs/dev/test-matrix.
 fn std::io::stderr|std io stderr tests; docs/stdlib/modules/io.md
 fn std::io::stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::stdout|std io trait/cursor tests; docs/stdlib/modules/io.md
+fn std::io::try_copy[R: Reader, W: Writer]|check-prelude std-io-copy generic Reader-to-Writer copy byte-count helper; docs/stdlib/modules/io.md
 fn std::io::write_all[W: Writer]|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::write_bool|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude row

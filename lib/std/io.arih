@@ -140,6 +140,26 @@ pub fn read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::V
   return output;
 }
 
+pub fn try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> std::Option[i64] {
+  var copied = 0;
+  var value = reader.read_byte();
+  while value >= 0 {
+    if !writer.write_byte(value as u8) {
+      return std::None<i64>();
+    }
+    copied = copied + 1;
+    value = reader.read_byte();
+  }
+  if !writer.flush() {
+    return std::None<i64>();
+  }
+  return std::Some<i64>(copied);
+}
+
+pub fn copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> bool {
+  return try_copy<R, W>(reader, writer).is_some();
+}
+
 pub fn write_all[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> bool {
   var index = 0;
   while index < values.len {

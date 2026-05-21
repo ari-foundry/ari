@@ -1086,6 +1086,8 @@ io::buf_reader[R: Reader](inner, buffer)
 io::buf_writer[W: Writer](inner, buffer)
 io::read_exact[R: Reader](reader: ref mut R, output, len)
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R)
+io::try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
+io::copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
 io::write_all[W: Writer](writer: ref mut W, values)
 io::flush[W: Writer](writer: ref mut W)
 io::write_i64(value)
@@ -1114,6 +1116,10 @@ the line must survive later input reads.
 `io::read_all(ref mut zone, ref mut reader)` collects the remaining bytes from
 any `Reader` into a zone-backed `Vec[u8]`, stopping at the same EOF sentinel as
 `read_exact`.
+`io::try_copy(ref mut reader, ref mut writer)` streams bytes from any `Reader`
+to any `Writer`, flushes at EOF, and returns `Some(byte_count)` on complete
+success or `None` when a write or final flush fails. `io::copy` is the bool
+wrapper when the byte count is not needed.
 `io::Stdout` and `io::Stderr` implement `Writer` over the current process
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit

@@ -1,0 +1,78 @@
+// Covers generic std::io stream copy helpers. try_copy returns copied byte
+// counts, copy gives a bool wrapper, and writer failure becomes None/false.
+struct MemoryWriter {
+  data: Slice[u8],
+  mut position: i64,
+  mut flushed: bool,
+}
+
+impl io::Writer for MemoryWriter {
+  fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if self.position >= self.data.len {
+      return false;
+    }
+    ptr_store(ptr_add(self.data.as_ptr(), self.position), value);
+    self.position = self.position + 1;
+    return true;
+  }
+
+  fn flush(self: ref mut Self) -> bool {
+    self.flushed = true;
+    return true;
+  }
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  var source = [65u8, 66u8, 67u8];
+  var reader = io::cursor(source.as_slice());
+  var output = [0u8, 0u8, 0u8, 0u8];
+  var writer = MemoryWriter { data: output.as_slice(), position: 0, flushed: false };
+  match io::try_copy<io::Cursor, MemoryWriter>(ref mut reader, ref mut writer) {
+    std::Some(count) => {
+      if count == 3 &&
+         writer.position == 3 &&
+         writer.flushed &&
+         output[0] == 65u8 &&
+         output[1] == 66u8 &&
+         output[2] == 67u8 {
+        score = score + 1;
+      }
+    }
+    std::None => {}
+  }
+  if reader.read_byte() < 0 {
+    score = score + 1;
+  }
+
+  var bool_source = [68u8, 69u8];
+  var bool_cursor = io::cursor(bool_source.as_slice());
+  var bool_output = [0u8, 0u8];
+  var bool_writer = MemoryWriter { data: bool_output.as_slice(), position: 0, flushed: false };
+  if io::copy<io::Cursor, MemoryWriter>(ref mut bool_cursor, ref mut bool_writer) {
+    if bool_output[0] == 68u8 && bool_output[1] == 69u8 && bool_writer.flushed {
+      score = score + 1;
+    }
+  }
+
+  var short_source = [70u8, 71u8, 72u8];
+  var short_reader = io::cursor(short_source.as_slice());
+  var short_output = [0u8, 0u8];
+  var short_writer = MemoryWriter { data: short_output.as_slice(), position: 0, flushed: false };
+  if io::try_copy<io::Cursor, MemoryWriter>(ref mut short_reader, ref mut short_writer).is_none() {
+    if short_writer.position == 2 && !short_writer.flushed {
+      score = score + 1;
+    }
+  }
+
+  var fail_source = [73u8, 74u8];
+  var fail_reader = io::cursor(fail_source.as_slice());
+  var fail_output = [0u8];
+  var fail_writer = MemoryWriter { data: fail_output.as_slice(), position: 0, flushed: false };
+  if !io::copy<io::Cursor, MemoryWriter>(ref mut fail_reader, ref mut fail_writer) {
+    score = score + 1;
+  }
+
+  return score;
+}
