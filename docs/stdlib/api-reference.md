@@ -574,9 +574,11 @@ path::file_name(path)
 path::parent(path)
 path::extension(path)
 path::stem(path)
+path::file_stem(path)
 path::has_file_name(path, expected)
 path::has_extension(path, expected)
 path::has_stem(path, expected)
+path::has_file_stem(path, expected)
 path::join_in(ref mut zone, base, child)
 path::normalize_in(ref mut zone, path)
 
@@ -591,9 +593,11 @@ path.file_name()
 path.parent()
 path.extension()
 path.stem()
+path.file_stem()
 path.has_file_name(expected)
 path.has_extension(expected)
 path.has_stem(expected)
+path.has_file_stem(expected)
 path.join_in(ref mut zone, child)
 path.normalize_in(ref mut zone)
 ```
@@ -611,8 +615,8 @@ filesystem and platform policy.
 or validated text. When `PathBytes` is expected, a string literal can be used
 directly as a borrowed path-byte view.
 The `has_*` helpers are allocation-free predicates over `file_name`,
-`extension`, and `stem`; they return `false` when the corresponding view is
-absent.
+`extension`, `stem`, and `file_stem`; they return `false` when the
+corresponding view is absent. `file_stem` is an explicit alias for `stem`.
 
 Thread helpers live in `std::thread`:
 

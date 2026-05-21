@@ -1088,6 +1088,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4path11is_absolute' $(BUILD_DIR)/prelude/std-path-basic.ll
 	grep -q '_ARNv3std4path9file_name' $(BUILD_DIR)/prelude/std-path-basic.ll
 	grep -q '_ARNv3std4path6parent' $(BUILD_DIR)/prelude/std-path-basic.ll
+	grep -q '_ARNv3std4path9file_stem' $(BUILD_DIR)/prelude/std-path-basic.ll
 	grep -q '_ARNv3std4path7join_in' $(BUILD_DIR)/prelude/std-path-basic.ll
 	grep -q '_ARNv3std4path12normalize_in' $(BUILD_DIR)/prelude/std-path-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-basic.ari -o $(BUILD_DIR)/prelude/std-path-basic.elf
@@ -1096,7 +1097,9 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4path13has_file_name' $(BUILD_DIR)/prelude/std-path-predicates.ll
 	grep -q '_ARNv3std4path13has_extension' $(BUILD_DIR)/prelude/std-path-predicates.ll
 	grep -q '_ARNv3std4path8has_stem' $(BUILD_DIR)/prelude/std-path-predicates.ll
+	grep -q '_ARNv3std4path13has_file_stem' $(BUILD_DIR)/prelude/std-path-predicates.ll
 	grep -q 'std__path__PathBytes8inherent13has_extension' $(BUILD_DIR)/prelude/std-path-predicates.ll
+	grep -q 'std__path__PathBytes8inherent13has_file_stem' $(BUILD_DIR)/prelude/std-path-predicates.ll
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-predicates.ari -o $(BUILD_DIR)/prelude/std-path-predicates.elf
 	$(BUILD_DIR)/prelude/std-path-predicates.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-components.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-components.ll

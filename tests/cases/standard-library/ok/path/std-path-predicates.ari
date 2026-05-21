@@ -28,8 +28,14 @@ fn main() -> i64 {
   if path::has_stem(source.as_slice(), main_stem.as_slice()) {
     score = score + 16;
   }
+  if path::has_file_stem(source.as_slice(), main_stem.as_slice()) {
+    score = score + 2048;
+  }
   if path::has_stem(hidden.as_slice(), hidden.as_slice()) {
     score = score + 32;
+  }
+  if path::has_file_stem(hidden.as_slice(), hidden.as_slice()) {
+    score = score + 4096;
   }
   if !path::has_extension(hidden.as_slice(), ari.as_slice()) {
     score = score + 64;
@@ -48,7 +54,10 @@ fn main() -> i64 {
   if typed.has_stem(main_stem.as_slice()) {
     score = score + 1024;
   }
+  if typed.has_file_stem(main_stem.as_slice()) {
+    score = score + 8192;
+  }
 
-  assert_eq_i64(score, 2047);
+  assert_eq_i64(score, 16383);
   return score % 256;
 }

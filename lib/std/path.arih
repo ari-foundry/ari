@@ -181,6 +181,10 @@ pub fn stem(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
   return std::Some<std::Slice[u8]>(slice_range(trimmed, start, end));
 }
 
+pub fn file_stem(path: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  return stem(path);
+}
+
 pub fn has_stem(path: std::Slice[u8], expected: std::Slice[u8]) -> bool {
   match stem(path) {
     std::Some(value) => {
@@ -190,6 +194,10 @@ pub fn has_stem(path: std::Slice[u8], expected: std::Slice[u8]) -> bool {
       return false;
     }
   }
+}
+
+pub fn has_file_stem(path: std::Slice[u8], expected: std::Slice[u8]) -> bool {
+  return has_stem(path, expected);
 }
 
 pub fn join_in(zone: ref mut Zone, base: std::Slice[u8], child: std::Slice[u8]) -> std::string::String {
@@ -349,8 +357,16 @@ pub impl std::path::PathBytes {
     return std::path::stem(self.bytes);
   }
 
+  fn file_stem(self: ref Self) -> std::Option[std::Slice[u8]] {
+    return std::path::file_stem(self.bytes);
+  }
+
   fn has_stem(self: ref Self, expected: std::Slice[u8]) -> bool {
     return std::path::has_stem(self.bytes, expected);
+  }
+
+  fn has_file_stem(self: ref Self, expected: std::Slice[u8]) -> bool {
+    return std::path::has_file_stem(self.bytes, expected);
   }
 
   fn join_in(self: ref Self, zone: ref mut Zone, child: std::path::PathBytes) -> std::string::String {

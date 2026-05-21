@@ -24,6 +24,7 @@ fn main() -> i64 {
   let file = std::path::bytes(file_bytes.as_slice());
   expect_slice(file.file_name().unwrap(), file_name.as_slice());
   expect_slice(file.stem().unwrap(), stem.as_slice());
+  expect_slice(file.file_stem().unwrap(), stem.as_slice());
   expect_slice(file.extension().unwrap(), extension.as_slice());
 
   var child_bytes = [98u8, 105u8, 110u8];

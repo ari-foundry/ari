@@ -52,7 +52,9 @@ fn main() -> i64 {
   assert(expect_some(path::parent(source.as_slice()), src.as_slice()));
   assert(expect_none(path::parent(hidden.as_slice())));
   assert(expect_some(path::stem(source.as_slice()), main_stem.as_slice()));
+  assert(expect_some(path::file_stem(source.as_slice()), main_stem.as_slice()));
   assert(expect_some(path::stem(hidden.as_slice()), hidden.as_slice()));
+  assert(expect_some(path::file_stem(hidden.as_slice()), hidden.as_slice()));
   assert(expect_some(path::extension(source.as_slice()), ari.as_slice()));
   assert(expect_none(path::extension(hidden.as_slice())));
 

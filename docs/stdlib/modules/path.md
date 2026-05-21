@@ -24,9 +24,11 @@ path::file_name(path) -> Option[Slice[u8]]
 path::parent(path) -> Option[Slice[u8]]
 path::extension(path) -> Option[Slice[u8]]
 path::stem(path) -> Option[Slice[u8]]
+path::file_stem(path) -> Option[Slice[u8]]
 path::has_file_name(path, expected) -> bool
 path::has_extension(path, expected) -> bool
 path::has_stem(path, expected) -> bool
+path::has_file_stem(path, expected) -> bool
 path::join_in(ref mut zone, base, child) -> String
 path::normalize_in(ref mut zone, path) -> String
 ```
@@ -52,9 +54,11 @@ path.file_name()
 path.parent()
 path.extension()
 path.stem()
+path.file_stem()
 path.has_file_name(expected)
 path.has_extension(expected)
 path.has_stem(expected)
+path.has_file_stem(expected)
 path.join_in(ref mut zone, child)
 path.normalize_in(ref mut zone)
 ```
@@ -85,14 +89,15 @@ skips leading, repeated, and trailing `/` separators. Root-only `/` and empty
 paths produce no components. It does not normalize `.` or `..`; callers that
 need lightweight lexical cleanup should call `normalize_in` first.
 
-`extension` and `stem` operate on the final component. `.env` has no extension
-and its stem is `.env`. `main.ari` has extension `ari` and stem `main`.
-Trailing dots do not count as extensions in this first slice.
+`extension` and `stem` operate on the final component. `file_stem` is the same
+operation as `stem`, kept under the more explicit name many path APIs use.
+`.env` has no extension and its stem is `.env`. `main.ari` has extension `ari`
+and stem `main`. Trailing dots do not count as extensions in this first slice.
 
-`has_file_name`, `has_extension`, and `has_stem` compare the borrowed view
-helpers against an expected byte slice without allocating. They return `false`
-when the corresponding view helper would return `None`. `has_extension` expects
-only the extension bytes, not a leading dot.
+`has_file_name`, `has_extension`, `has_stem`, and `has_file_stem` compare the
+borrowed view helpers against an expected byte slice without allocating. They
+return `false` when the corresponding view helper would return `None`.
+`has_extension` expects only the extension bytes, not a leading dot.
 
 `join_in` copies into the caller-provided zone. If `child` is absolute, it
 returns a copy of `child`. Otherwise it inserts one `/` between `base` and
@@ -107,7 +112,7 @@ symlinks, and platform behavior.
 
 ```ari
 fn module_name(path_bytes: Slice[u8]) -> Slice[u8] {
-  return path::stem(path_bytes).unwrap_or(path_bytes);
+  return path::file_stem(path_bytes).unwrap_or(path_bytes);
 }
 
 fn child_path(zone: ref mut Zone, dir: Slice[u8], name: Slice[u8]) -> String {
@@ -135,8 +140,9 @@ tests/cases/standard-library/ok/path/std-path-predicates.ari
 
 The focused test covers separator policy, absolute/relative checks, trailing
 separator trimming, final component views, parent/stem/extension behavior,
-zone-backed join, lightweight normalization, component iteration, typed
-`PathBytes` views, and allocation-free final-component predicates.
+explicit `file_stem` aliases, zone-backed join, lightweight normalization,
+component iteration, typed `PathBytes` views, and allocation-free
+final-component predicates.
 `make check-prelude` checks representative helper symbols and executable
 results.
 

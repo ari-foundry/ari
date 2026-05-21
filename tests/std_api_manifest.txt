@@ -490,9 +490,11 @@ fn std::path::bytes|check-prelude std-path-bytes typed borrowed path-byte view c
 fn std::path::components|check-prelude std-path-components borrowed lexical component iterator; docs/stdlib/modules/path.md
 fn std::path::extension|check-prelude std-path-basic borrowed final-extension view; docs/stdlib/modules/path.md
 fn std::path::file_name|check-prelude std-path-basic borrowed final-component view; docs/stdlib/modules/path.md
+fn std::path::file_stem|check-prelude std-path-basic natural alias for borrowed file-stem view; docs/stdlib/modules/path.md
 fn std::path::from_os|check-prelude std-path-bytes path-byte view from OS-string bytes; docs/stdlib/modules/path.md
 fn std::path::has_extension|check-prelude std-path-predicates final-extension predicate; docs/stdlib/modules/path.md
 fn std::path::has_file_name|check-prelude std-path-predicates final-component predicate; docs/stdlib/modules/path.md
+fn std::path::has_file_stem|check-prelude std-path-predicates natural alias for file-stem predicate; docs/stdlib/modules/path.md
 fn std::path::has_stem|check-prelude std-path-predicates file-stem predicate; docs/stdlib/modules/path.md
 fn std::path::is_absolute|check-prelude std-path-basic POSIX absolute path predicate; docs/stdlib/modules/path.md
 fn std::path::is_relative|check-prelude std-path-basic POSIX relative path predicate; docs/stdlib/modules/path.md
@@ -1149,8 +1151,10 @@ method std::path::PathBytes::as_slice|check-prelude std-path-bytes borrowed path
 method std::path::PathBytes::components|check-prelude std-path-bytes typed path component iterator wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::extension|check-prelude std-path-bytes typed path extension wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::file_name|check-prelude std-path-bytes typed path file-name wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::file_stem|check-prelude std-path-bytes natural typed path file-stem wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::has_extension|check-prelude std-path-predicates typed path extension predicate wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::has_file_name|check-prelude std-path-predicates typed path file-name predicate wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::has_file_stem|check-prelude std-path-predicates natural typed path file-stem predicate wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::has_stem|check-prelude std-path-predicates typed path stem predicate wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::is_absolute|check-prelude std-path-bytes typed path absolute predicate; docs/stdlib/modules/path.md
 method std::path::PathBytes::is_empty|check-prelude std-path-bytes typed path empty predicate; docs/stdlib/modules/path.md
