@@ -69,6 +69,8 @@ fn std::ascii::parse_decimal|std ascii slice helper tests; docs/stdlib/api-refer
 fn std::ascii::parse_decimal_prefix|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::parse_hex|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::parse_hex_prefix|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::parse_signed_decimal|std ascii signed parser tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::parse_signed_decimal_prefix|std ascii signed parser tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::skip_whitespace|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::starts_with_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::to_lower|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section

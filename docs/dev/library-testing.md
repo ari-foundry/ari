@@ -381,6 +381,8 @@ identifies the exact case:
   case-insensitive first-match search behavior.
 - `std-ascii-prefix-parsers.ari`: source `std::ascii` prefix parser result
   shape and consumed-byte behavior.
+- `std-ascii-signed-parsers.ari`: source `std::ascii` optional-sign decimal
+  parser behavior for whole-slice and prefix forms.
 - `std-ascii-slice-helpers.ari`: source `std::ascii` borrowed-slice trimming
   and integer parsing behavior.
 - `std-bits-mask-helpers.ari`: source `std::bits` u64 mask and alignment

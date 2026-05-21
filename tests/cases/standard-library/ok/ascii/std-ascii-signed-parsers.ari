@@ -1,0 +1,62 @@
+// Covers signed ASCII decimal parsers:
+// - parse_signed_decimal requires the whole slice to be one signed value.
+// - parse_signed_decimal_prefix reports value and consumed bytes.
+// - bare signs and sign-followed-by-nondigit inputs fail cleanly.
+fn main() -> i64 {
+  var negative: Vec[u8] = ['-', '1', '2', '3'];
+  var positive: Vec[u8] = ['+', '4', '2'];
+  var plain: Vec[u8] = ['7', '7'];
+  var prefix: Vec[u8] = ['-', '5', '6', 'x'];
+  var plus_prefix: Vec[u8] = ['+', '9', 'q'];
+  var bare_minus: Vec[u8] = ['-'];
+  var bad_sign: Vec[u8] = ['+', 'x'];
+
+  var score = 0;
+
+  if ascii::parse_signed_decimal(negative.as_slice()).unwrap_or(0) == -123 {
+    score = score + 1;
+  }
+  if ascii::parse_signed_decimal(positive.as_slice()).unwrap_or(0) == 42 {
+    score = score + 2;
+  }
+  if ascii::parse_signed_decimal(plain.as_slice()).unwrap_or(0) == 77 {
+    score = score + 4;
+  }
+  if ascii::parse_signed_decimal(prefix.as_slice()).is_none() {
+    score = score + 8;
+  }
+
+  match ascii::parse_signed_decimal_prefix(prefix.as_slice()) {
+    std::Some(parsed_negative) => {
+      if parsed_negative.value == -56 {
+        score = score + 16;
+      }
+      if parsed_negative.len == 3 {
+        score = score + 32;
+      }
+    }
+    std::None => {}
+  }
+
+  match ascii::parse_signed_decimal_prefix(plus_prefix.as_slice()) {
+    std::Some(parsed_positive) => {
+      if parsed_positive.value == 9 {
+        score = score + 64;
+      }
+      if parsed_positive.len == 2 {
+        score = score + 128;
+      }
+    }
+    std::None => {}
+  }
+
+  if ascii::parse_signed_decimal_prefix(bare_minus.as_slice()).is_none() {
+    score = score + 256;
+  }
+  if ascii::parse_signed_decimal_prefix(bad_sign.as_slice()).is_none() {
+    score = score + 512;
+  }
+
+  assert_eq_i64(score, 1023);
+  return score % 256;
+}

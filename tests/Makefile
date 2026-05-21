@@ -1011,6 +1011,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5ascii16parse_hex_prefix' $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.ll
 	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-prefix-parsers.ari -o $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.elf
 	$(BUILD_DIR)/prelude/std-ascii-prefix-parsers.elf; code=$$?; test $$code -eq 39
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-signed-parsers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-signed-parsers.ll
+	grep -q '_ARNv3std5ascii20parse_signed_decimal' $(BUILD_DIR)/prelude/std-ascii-signed-parsers.ll
+	grep -q '_ARNv3std5ascii27parse_signed_decimal_prefix' $(BUILD_DIR)/prelude/std-ascii-signed-parsers.ll
+	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-signed-parsers.ari -o $(BUILD_DIR)/prelude/std-ascii-signed-parsers.elf
+	$(BUILD_DIR)/prelude/std-ascii-signed-parsers.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-case-compare.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
 	grep -q '_ARNv3std5ascii18equals_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
 	grep -q '_ARNv3std5ascii23starts_with_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-compare.ll

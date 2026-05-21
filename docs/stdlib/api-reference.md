@@ -2414,6 +2414,8 @@ ascii::trim_end(bytes)
 ascii::trim(bytes)
 ascii::parse_decimal(bytes)
 ascii::parse_decimal_prefix(bytes)
+ascii::parse_signed_decimal(bytes)
+ascii::parse_signed_decimal_prefix(bytes)
 ascii::parse_hex(bytes)
 ascii::parse_hex_prefix(bytes)
 ```
@@ -2440,16 +2442,20 @@ fold only ASCII letter case. Empty prefixes, suffixes, and search needles
 match. `index_of_ignore_case` returns the first matching byte offset or `-1`;
 `contains_ignore_case` returns the same search as a bool. `skip_whitespace`,
 `trim_start`, `trim_end`, and `trim` also operate on `Slice[u8]` and return
-either a byte offset or a borrowed sub-slice. `parse_decimal` and `parse_hex`
-parse the entire slice and return `Option[i64]`; empty input or invalid bytes
-return `None<i64>()`. These parser helpers do not define overflow behavior
-yet.
+either a byte offset or a borrowed sub-slice. `parse_decimal`,
+`parse_signed_decimal`, and `parse_hex` parse the entire slice and return
+`Option[i64]`; empty input or invalid bytes return `None<i64>()`.
+`parse_signed_decimal` accepts one optional leading `+` or `-` and requires at
+least one digit after it. These parser helpers do not trim and do not define
+overflow behavior yet.
 
 `ParsedInt` carries `value: i64` and `len: i64` for prefix parser results.
-`parse_decimal_prefix` and `parse_hex_prefix` parse only the leading digit run,
-stop before the first invalid byte, and return `None<ParsedInt>()` when the
-first byte is empty or invalid. They do not trim, parse signs, or recognize
-hexadecimal prefixes such as `0x`.
+`parse_decimal_prefix`, `parse_signed_decimal_prefix`, and `parse_hex_prefix`
+parse only the leading digit run, stop before the first invalid byte, and
+return `None<ParsedInt>()` when the first byte is empty or invalid.
+`parse_signed_decimal_prefix` accepts one optional leading sign and counts it
+in `len`. The prefix parsers do not trim or recognize hexadecimal prefixes
+such as `0x`.
 
 ## Parsing
 
