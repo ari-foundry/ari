@@ -2015,6 +2015,16 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6get_or' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf
 	$(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 145
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-mut-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-mut-access.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent11try_get_mut' $(BUILD_DIR)/prelude/std-collections-map-mut-access.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent7get_mut' $(BUILD_DIR)/prelude/std-collections-map-mut-access.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent7replace' $(BUILD_DIR)/prelude/std-collections-map-mut-access.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent11try_get_mut' $(BUILD_DIR)/prelude/std-collections-map-mut-access.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent7get_mut' $(BUILD_DIR)/prelude/std-collections-map-mut-access.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent7replace' $(BUILD_DIR)/prelude/std-collections-map-mut-access.ll
+	grep -q '_ARNv4impl34std__collections__MapValueMut_i64_8inherent9value_mut' $(BUILD_DIR)/prelude/std-collections-map-mut-access.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-mut-access.ari -o $(BUILD_DIR)/prelude/std-collections-map-mut-access.elf
+	$(BUILD_DIR)/prelude/std-collections-map-mut-access.elf; code=$$?; test $$code -eq 236
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent5entry' $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent12remove_entry' $(BUILD_DIR)/prelude/std-collections-map-entry-api.ll
@@ -2377,6 +2387,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; code=$$?; test $$code -eq 236; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-entries.elf; $(BUILD_DIR)/prelude/std-collections-map-entries.elf; code=$$?; test $$code -eq 71; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 145; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-mut-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-mut-access.elf; $(BUILD_DIR)/prelude/std-collections-map-mut-access.elf; code=$$?; test $$code -eq 236; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-accessors.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.elf; $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.elf; code=$$?; test $$code -eq 131; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; code=$$?; test $$code -eq 90; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi

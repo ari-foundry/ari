@@ -2009,7 +2009,10 @@ map.contains_value(value)
 map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
+map.get_mut(key)
+map.try_get_mut(key)
 map.insert(ref mut zone, key, value)
+map.replace(ref mut zone, key, value)
 map.entry(ref mut zone, key)
 map.entry(key)
 map.remove(key)
@@ -2056,8 +2059,11 @@ set.drain()
 `HashMap.contains(key)` remains available for compatibility.
 `HashMap.contains_value(value)` scans live bucket values and ignores
 tombstones. `HashMap.get_or(key, fallback)` returns the stored value or the
-fallback when the key is absent. `HashMap.insert` returns `Option[V]` with the
-previous value on replacement. `HashMap.entry(key)` returns a
+fallback when the key is absent. `HashMap.get_mut(key)` asserts that the key
+exists and returns `ref mut V`; `HashMap.try_get_mut(key)` returns
+`Option[MapValueMut[V]]` with `value()` and `value_mut()` helpers.
+`HashMap.insert` and `HashMap.replace` return `Option[V]` with the previous
+value on replacement. `HashMap.entry(key)` returns a
 `HashMapEntry[K,V]` update handle with `or_insert`, `or_insert_with`,
 `and_modify`, `insert`, `remove`, `key`, `value`, and `value_mut`; tracked local
 maps infer the allocation zone for the natural `entry(key)` spelling.
@@ -2110,9 +2116,12 @@ map.try_last_entry()
 map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
+map.get_mut(key)
+map.try_get_mut(key)
 map.lower_bound(key)
 map.upper_bound(key)
 map.insert(ref mut zone, key, value)
+map.replace(ref mut zone, key, value)
 map.entry(ref mut zone, key)
 map.entry(key)
 map.remove(key)
@@ -2163,7 +2172,11 @@ set.drain()
 `TreeMap.contains(key)` remains available for compatibility.
 `TreeMap.contains_value(value)` scans stored values without using key order.
 `TreeMap.get_or(key, fallback)` returns the stored value or the fallback when
-the key is absent. `TreeMap.entry(key)` returns a `TreeMapEntry[K,V]` update
+the key is absent. `TreeMap.get_mut(key)` asserts that the key exists and
+returns `ref mut V`; `TreeMap.try_get_mut(key)` returns
+`Option[MapValueMut[V]]` with `value()` and `value_mut()` helpers.
+`TreeMap.replace` is the named insert-or-replace form and returns the previous
+value like `insert`. `TreeMap.entry(key)` returns a `TreeMapEntry[K,V]` update
 handle with `or_insert`, `or_insert_with`, `and_modify`, `insert`, `remove`,
 `key`, `value`, and `value_mut`; tracked local maps infer the allocation zone
 for the natural `entry(key)` spelling.

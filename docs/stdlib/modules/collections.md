@@ -257,7 +257,10 @@ map.contains_value(value)
 map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
+map.get_mut(key)
+map.try_get_mut(key)
 map.insert(ref mut zone, key, value)
+map.replace(ref mut zone, key, value)
 map.entry(ref mut zone, key)
 map.entry(key)
 map.remove(key)
@@ -281,20 +284,24 @@ key-membership spelling; `contains` remains available for compatibility with
 older examples. `contains_value` scans live bucket values and ignores
 tombstones. `get_or(key, fallback)` is the compact spelling when a missing key
 has an ordinary fallback value; use `try_get` when absence should stay visible
-as `Option[V]`. `remove` returns the removed value. `keys` and `values`
-iterate live buckets. That order is deterministic for a specific table state,
-but it is not insertion order and should not be used as a stable sorting rule.
-`entries` yields copied `MapEntry[K, V]` values with `.key`/`.value` fields and
-`key()`/`value()` accessors over the same live buckets. `iter()` is the same
-entry cursor under the shorter common collection spelling, and `HashMap[K,V]`
-implements `IntoIterator[MapEntry[K,V]]`, so `for entry in map` walks copied
-entries directly. `values_mut()` yields a mutable value cursor with
-`has_next()` and `next() -> ref mut V`; use it when keys must stay fixed but
-stored values should be updated in place. `iter_mut()` yields
-`MapEntryMut[K,V]` handles with `key()`, `value()`, and `value_mut()` so code
-can read the copied key while mutating the stored value. `drain()` marks the
-current live entries as drained, leaves the map empty, and returns a draining
-entry cursor.
+as `Option[V]`. `get_mut(key)` asserts that the key exists and returns
+`ref mut V`; `try_get_mut(key)` returns `Option[MapValueMut[V]]` so callers can
+branch on absence and then call `value_mut() -> ref mut V` on the handle.
+`replace(ref mut zone, key, value)` is the named insert-or-replace spelling and
+returns the previous value just like `insert`. `remove` returns the removed
+value. `keys` and `values` iterate live buckets. That order is deterministic
+for a specific table state, but it is not insertion order and should not be
+used as a stable sorting rule. `entries` yields copied `MapEntry[K, V]` values
+with `.key`/`.value` fields and `key()`/`value()` accessors over the same live
+buckets. `iter()` is the same entry cursor under the shorter common collection
+spelling, and `HashMap[K,V]` implements `IntoIterator[MapEntry[K,V]]`, so
+`for entry in map` walks copied entries directly. `values_mut()` yields a
+mutable value cursor with `has_next()` and `next() -> ref mut V`; use it when
+keys must stay fixed but stored values should be updated in place. `iter_mut()`
+yields `MapEntryMut[K,V]` handles with `key()`, `value()`, and `value_mut()` so
+code can read the copied key while mutating the stored value. `drain()` marks
+the current live entries as drained, leaves the map empty, and returns a
+draining entry cursor.
 `reserve_extra(additional)` reserves enough hash buckets
 for the requested live length without immediately violating the table's load
 factor rule. `copy_to(ref mut target)` copies only live entries into the target
@@ -403,7 +410,10 @@ map.try_last_entry()
 map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
+map.get_mut(key)
+map.try_get_mut(key)
 map.insert(ref mut zone, key, value)
+map.replace(ref mut zone, key, value)
 map.entry(ref mut zone, key)
 map.entry(key)
 map.remove(key)
@@ -425,9 +435,13 @@ map.drain()
 is the preferred key-membership spelling; `contains` remains available for
 compatibility with older examples. `contains_value` scans stored values without
 using key order. `get_or(key, fallback)` returns the stored value or the
-fallback without forcing every call site to unwrap `Option[V]`. `keys` yields
-keys in ascending comparator order. `values` yields values in the same
-key-sorted order. `first_key`,
+fallback without forcing every call site to unwrap `Option[V]`. `get_mut(key)`
+asserts that the key exists and returns `ref mut V`; `try_get_mut(key)` returns
+`Option[MapValueMut[V]]` with `value()` and `value_mut()` helpers for
+miss-safe mutation. `replace(ref mut zone, key, value)` is the named
+insert-or-replace spelling and returns the previous value just like `insert`.
+`keys` yields keys in ascending comparator order. `values` yields values in
+the same key-sorted order. `first_key`,
 `last_key`, `first_value`, and `last_value` assert when the tree is empty;
 use the `try_*` forms for empty-safe boundary access. `first_entry` and
 `last_entry` return `MapEntry[K, V]` so callers can read the boundary key and
@@ -601,6 +615,7 @@ tests/cases/standard-library/ok/collections/std-collections-set-representatives.
 tests/cases/standard-library/ok/collections/std-collections-map-entries.ari
 tests/cases/standard-library/ok/collections/std-collections-view-api.ari
 tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari
+tests/cases/standard-library/ok/collections/std-collections-map-mut-access.ari
 tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari
@@ -666,7 +681,9 @@ tree entries in sorted key order.
 `IntoIterator`, and draining cursors for linear, hash, and tree maps/sets.
 `std-collections-map-natural-api.ari` keeps compatibility `contains` calls
 working while locking down the preferred `contains_key` and fallback `get_or`
-spellings for hash and tree maps. `std-collections-map-value-predicates.ari`
+spellings for hash and tree maps. `std-collections-map-mut-access.ari` checks
+asserting `get_mut`, optional `try_get_mut` value handles, named `replace`, and
+removal for both hash and tree maps. `std-collections-map-value-predicates.ari`
 checks `contains_value` for hash live buckets after a tombstone and for tree
 map values independent of key order. `std-collections-set-representatives.ari`
 checks `HashSet.get`/`try_get` and `TreeSet.get`/`try_get` before and after
@@ -713,6 +730,8 @@ and checked by `make check-std-api`.
   item shape. Map `iter_mut()` therefore yields `MapEntryMut[K,V]` handles
   rather than `Option[ref mut (K,V)]`. Set `iter_mut()` stays future because
   mutating set values can break hash and ordering invariants.
+- `try_get_mut()` returns `Option[MapValueMut[V]]` rather than
+  `Option[ref mut V]` for the same reference-valued generic payload reason.
 - Tree removal compacts live storage and rebuilds links in place. A future
   direct red-black deletion path can improve asymptotic removal cost without
   changing the public API.

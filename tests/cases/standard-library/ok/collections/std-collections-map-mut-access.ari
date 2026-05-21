@@ -1,0 +1,98 @@
+// Covers direct mutable map value access. `get_mut` asserts that a key exists,
+// while `try_get_mut` returns an optional value handle for miss-safe updates.
+fn constant_hash(value: i64) -> u64 {
+  return 5;
+}
+
+fn bump_hash_slot(map: ref mut HashMap[i64, i64], key: i64, amount: i64) -> void {
+  let slot: ref mut i64 = map.get_mut(key);
+  let raw = slot as ptr i64;
+  ptr_store(raw, ptr_load(raw) + amount);
+}
+
+fn bump_tree_slot(map: ref mut TreeMap[i64, i64], key: i64, amount: i64) -> void {
+  let slot: ref mut i64 = map.get_mut(key);
+  let raw = slot as ptr i64;
+  ptr_store(raw, ptr_load(raw) + amount);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var score = 0;
+
+  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  hash.insert(ref mut zone, 1, 10);
+  hash.insert(ref mut zone, 9, 90);
+  bump_hash_slot(ref mut hash, 9, 4);
+  if hash.get(9) == 94 {
+    score = score + 3;
+  }
+  var hash_maybe = hash.try_get_mut(9);
+  if hash_maybe.is_some() {
+    var hash_value = hash_maybe.unwrap();
+    let hash_slot: ref mut i64 = hash_value.value_mut();
+    let hash_raw = hash_slot as ptr i64;
+    ptr_store(hash_raw, ptr_load(hash_raw) + 6);
+  }
+  if hash.get(9) == 100 {
+    score = score + 5;
+  }
+  if hash.try_get_mut(42).is_none() {
+    score = score + 7;
+  }
+  let replaced_hash = hash.replace(ref mut zone, 9, 900);
+  if replaced_hash.is_some() {
+    if replaced_hash.unwrap() == 100 && hash.get(9) == 900 {
+      score = score + 11;
+    }
+  }
+  if hash.replace(ref mut zone, 17, 170).is_none() && hash.contains_key(17) {
+    score = score + 13;
+  }
+  let removed_hash = hash.remove(17);
+  if removed_hash.is_some() {
+    if removed_hash.unwrap() == 170 && !hash.contains_key(17) {
+      score = score + 17;
+    }
+  }
+
+  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  tree.insert(ref mut zone, 4, 40);
+  tree.insert(ref mut zone, 2, 20);
+  tree.insert(ref mut zone, 8, 80);
+  bump_tree_slot(ref mut tree, 4, 9);
+  if tree.get(4) == 49 {
+    score = score + 19;
+  }
+  var tree_maybe = tree.try_get_mut(4);
+  if tree_maybe.is_some() {
+    var tree_value = tree_maybe.unwrap();
+    let tree_slot: ref mut i64 = tree_value.value_mut();
+    let tree_raw = tree_slot as ptr i64;
+    ptr_store(tree_raw, ptr_load(tree_raw) + 1);
+  }
+  if tree.get(4) == 50 {
+    score = score + 23;
+  }
+  if tree.try_get_mut(7).is_none() {
+    score = score + 29;
+  }
+  let replaced_tree = tree.replace(ref mut zone, 4, 400);
+  if replaced_tree.is_some() {
+    if replaced_tree.unwrap() == 50 && tree.get(4) == 400 {
+      score = score + 31;
+    }
+  }
+  if tree.replace(ref mut zone, 6, 60).is_none() && tree.contains_key(6) {
+    score = score + 37;
+  }
+  let removed_tree = tree.remove(6);
+  if removed_tree.is_some() {
+    if removed_tree.unwrap() == 60 && !tree.contains_key(6) {
+      score = score + 41;
+    }
+  }
+
+  zone::destroy(zone);
+  return score;
+}

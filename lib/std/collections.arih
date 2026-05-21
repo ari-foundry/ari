@@ -28,6 +28,10 @@ pub struct MapEntryMut[K, V] {
   value: ptr V,
 }
 
+pub struct MapValueMut[V] {
+  value: ptr V,
+}
+
 // Mutable update handles for Rust-style map entry APIs. The `zone` pointer is
 // captured from the map's allocation zone so `entry(key)` can grow in place.
 pub struct HashMapEntry[K, V] {
@@ -187,6 +191,16 @@ pub impl[K, V] std::collections::MapEntryMut[K, V] {
     return self.key;
   }
 
+  fn value(self: ref Self) -> V {
+    return ptr_load(self.value);
+  }
+
+  fn value_mut(self: ref mut Self) -> ref mut V {
+    return ref mut *self.value;
+  }
+}
+
+pub impl[V] std::collections::MapValueMut[V] {
   fn value(self: ref Self) -> V {
     return ptr_load(self.value);
   }
@@ -944,6 +958,18 @@ pub impl[K, V] std::collections::HashMap[K, V] {
     return std::Some<V>(ptr_load(ptr_add(self.values, index)));
   }
 
+  fn try_get_mut(self: ref mut Self, key: K) -> std::Option[std::collections::MapValueMut[V]] {
+    let index = hash_map_find_slot_mut<K, V>(self, key);
+    if index < 0 {
+      return std::None<std::collections::MapValueMut[V]>();
+    }
+    return std::Some<std::collections::MapValueMut[V]>(
+      std::collections::MapValueMut<V> {
+        value: ptr_add(self.values, index),
+      }
+    );
+  }
+
   fn get_or(self: ref Self, key: K, fallback: V) -> V {
     return self.try_get(key).unwrap_or(fallback);
   }
@@ -952,6 +978,12 @@ pub impl[K, V] std::collections::HashMap[K, V] {
     let index = hash_map_find_slot<K, V>(self, key);
     std::assert(index >= 0);
     return ptr_load(ptr_add(self.values, index));
+  }
+
+  fn get_mut(self: ref mut Self, key: K) -> ref mut V {
+    let index = hash_map_find_slot_mut<K, V>(self, key);
+    std::assert(index >= 0);
+    return ref mut *ptr_add(self.values, index);
   }
 
   fn insert(self: ref mut Self, zone: ref mut Zone, key: K, value: V) -> std::Option[V] {
@@ -966,6 +998,10 @@ pub impl[K, V] std::collections::HashMap[K, V] {
     }
     hash_map_insert_absent_slot<K, V>(self, zone, key, value);
     return std::None<V>();
+  }
+
+  fn replace(self: ref mut Self, zone: ref mut Zone, key: K, value: V) -> std::Option[V] {
+    return self.insert(zone, key, value);
   }
 
   fn entry(self: ref mut Self, zone: ref mut Zone, key: K) -> std::collections::HashMapEntry[K, V] {
@@ -2210,6 +2246,18 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     return std::Some<V>(ptr_load(ptr_add(self.values, index)));
   }
 
+  fn try_get_mut(self: ref mut Self, key: K) -> std::Option[std::collections::MapValueMut[V]] {
+    let index = tree_map_find_slot_mut<K, V>(self, key);
+    if index < 0 {
+      return std::None<std::collections::MapValueMut[V]>();
+    }
+    return std::Some<std::collections::MapValueMut[V]>(
+      std::collections::MapValueMut<V> {
+        value: ptr_add(self.values, index),
+      }
+    );
+  }
+
   fn get_or(self: ref Self, key: K, fallback: V) -> V {
     return self.try_get(key).unwrap_or(fallback);
   }
@@ -2218,6 +2266,12 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     let index = tree_map_find_slot<K, V>(self, key);
     std::assert(index >= 0);
     return ptr_load(ptr_add(self.values, index));
+  }
+
+  fn get_mut(self: ref mut Self, key: K) -> ref mut V {
+    let index = tree_map_find_slot_mut<K, V>(self, key);
+    std::assert(index >= 0);
+    return ref mut *ptr_add(self.values, index);
   }
 
   fn lower_bound(self: ref Self, key: K) -> std::Option[std::collections::MapEntry[K, V]] {
@@ -2258,6 +2312,10 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     }
     tree_map_insert_absent_slot<K, V>(self, zone, key, value);
     return std::None<V>();
+  }
+
+  fn replace(self: ref mut Self, zone: ref mut Zone, key: K, value: V) -> std::Option[V] {
+    return self.insert(zone, key, value);
   }
 
   fn entry(self: ref mut Self, zone: ref mut Zone, key: K) -> std::collections::TreeMapEntry[K, V] {

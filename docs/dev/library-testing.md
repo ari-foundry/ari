@@ -370,6 +370,9 @@ identifies the exact case:
 - `std-collections-map-natural-api.ari`: natural map lookup spellings,
   including compatibility `contains`, preferred `contains_key`, and fallback
   `get_or` for both hash and tree maps.
+- `std-collections-map-mut-access.ari`: asserting `get_mut`, optional
+  `try_get_mut` value handles, named `replace`, and removal for both hash and
+  tree maps.
 - `std-collections-map-entry-api.ari`: Rust-style hash/tree map update
   handles, including `entry(key)`, `or_insert`, `or_insert_with`,
   `and_modify`, direct `+=` through returned `ref mut V`, and

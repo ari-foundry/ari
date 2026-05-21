@@ -141,9 +141,9 @@ Use this table when writing code from docs alone:
 | Keep a bounded FIFO buffer. | `RingBuffer::new<T>(ref mut zone, capacity)` or `collections::ring_buffer<T>(...)` | `push(value)` returns `false` when full. `push_overwrite(value)` keeps the newest value and returns the overwritten oldest value as `Option[T]`. |
 | Use linked front/back nodes. | `LinkedList::new<T>(ref mut zone, capacity)` or `collections::linked_list<T>(...)` | Uses zone-backed reusable node slots. `push_front`/`push_back`, `pop_front`/`pop_back`, `remove_at`, `try_remove_at`, and `iter` are available; indexed access is O(n). |
 | Pop highest-priority values. | `BinaryHeap::new<T>(ref mut zone, capacity, less)` or `PriorityQueue::new<T>(ref mut zone, capacity, less)` | `less(a, b)` means `a` has lower priority than `b`. With `collections::less_i64`, larger integers pop first. Use `push`, `peek`, `try_peek`, `pop`, and `try_pop`. |
-| Store values by hash lookup. | `HashMap::new<K,V>(ref mut zone, capacity, hash)` or `collections::hash_map<K,V>(...)` | Hash functions have shape `fn(K) -> u64`. `collections::hash_i64` is available for i64 keys and delegates to `hash::value<i64>`. `insert` returns the replaced `Option[V]`, `entry(key).or_insert(value)` updates missing values in place, `try_get` handles absence, `remove` leaves a tombstone for later probing, `remove_entry` keeps the removed key and value together, `keys()`/`values()` iterate live buckets, `values_mut()` updates stored values in place, `iter()`/direct `for entry in map` walk copied entries, `iter_mut()` walks copied-key mutable-value handles, and `drain()` empties the map while yielding entries. |
+| Store values by hash lookup. | `HashMap::new<K,V>(ref mut zone, capacity, hash)` or `collections::hash_map<K,V>(...)` | Hash functions have shape `fn(K) -> u64`. `collections::hash_i64` is available for i64 keys and delegates to `hash::value<i64>`. `insert`/`replace` return the replaced `Option[V]`, `entry(key).or_insert(value)` updates missing values in place, `try_get` handles absence, `get_mut` returns `ref mut V`, `try_get_mut` returns an optional mutable value handle, `remove` leaves a tombstone for later probing, `remove_entry` keeps the removed key and value together, `keys()`/`values()` iterate live buckets, `values_mut()` updates stored values in place, `iter()`/direct `for entry in map` walk copied entries, `iter_mut()` walks copied-key mutable-value handles, and `drain()` empties the map while yielding entries. |
 | Store hash-based membership. | `HashSet::new<T>(ref mut zone, capacity, hash)` or `collections::hash_set<T>(...)` | `insert` returns whether the value was new. Use `replace`, `take`, `remove`, `contains`, `reserve`, `clear`, and `iter`. Direct `for value in set` uses the same live-bucket cursor. |
-| Store values by ordered lookup. | `TreeMap::new<K,V>(ref mut zone, capacity, less)` or `collections::tree_map<K,V>(...)` | The comparator has shape `fn(K, K) -> bool` and must be a strict less-than relation. `collections::less_i64` is available for i64 keys. `entry(key)` supports in-place `or_insert`/`or_insert_with`/`and_modify`, `remove_entry` returns copied key-value data, `keys()`/`values()` iterate in ascending key order, `values_mut()` updates values in sorted key order, `iter()`/direct `for entry in map` walk entries, `iter_mut()` walks copied-key mutable-value handles in sorted order, and `drain()` empties the map while yielding sorted entries. |
+| Store values by ordered lookup. | `TreeMap::new<K,V>(ref mut zone, capacity, less)` or `collections::tree_map<K,V>(...)` | The comparator has shape `fn(K, K) -> bool` and must be a strict less-than relation. `collections::less_i64` is available for i64 keys. `entry(key)` supports in-place `or_insert`/`or_insert_with`/`and_modify`, `replace` is the named insert-or-replace form, `get_mut` returns `ref mut V`, `try_get_mut` returns an optional mutable value handle, `remove_entry` returns copied key-value data, `keys()`/`values()` iterate in ascending key order, `values_mut()` updates values in sorted key order, `iter()`/direct `for entry in map` walk entries, `iter_mut()` walks copied-key mutable-value handles in sorted order, and `drain()` empties the map while yielding sorted entries. |
 | Store ordered membership. | `TreeSet::new<T>(ref mut zone, capacity, less)` or `collections::tree_set<T>(...)` | Uses a red-black tree. `insert` rejects equal values, `replace` returns the previous equal value, and `iter`/direct `for value in set` walk ascending comparator order. |
 | Generate random values or shuffle a slice. | `random::entropy()`, `random::entropy_result()`, `random::fill_result(values)`, `random::seed(123u64)`, `random::from_entropy()`, `random::from_entropy_result()`, `rng.range(start, end)`, `rng.float()`, `rng.shuffle<T>(values)` | Use strict `entropy`/`fill` for unrecoverable OS-backed seed material and result forms when callers should handle host entropy errors. `Prng` is deterministic and non-cryptographic, so it is for simulations, tests, randomized algorithms, and repeatable shuffles. |
 | Store owned byte text. | `std::string::from(ref mut zone, "text")`, `std::string::copy(ref mut zone, bytes)`, `std::string::empty(ref mut zone)`, `std::string::join_in(ref mut zone, parts, separator)` | The handle stores bytes, not a full Unicode text abstraction yet. Use `append`, `append_byte`, `append_bytes`, `contains_text`, `starts_with_text`, and `equals_text` for ordinary string-literal workflows. String literals coerce to `Slice[u8]`, local `Vec[u8]`, or fixed `[u8, N]` when those byte types are expected; use `std::string::bytes("literal")` when the boundary should be explicit. |
@@ -270,10 +270,11 @@ created.
 
 `std::collections::HashMap[K,V]` and `TreeMap[K,V]` share `len`, `capacity`,
 `is_empty`, `contains`, `contains_key`, `contains_value`, `get`, `get_or`,
-`try_get`, `insert(ref mut zone, key, value)`, `entry(ref mut zone, key)`,
-`entry(key)`, `remove`, `remove_entry`, `reserve(ref mut zone, capacity)`,
-`clear`, `keys()`, `values()`, `values_mut()`, `entries()`, `iter()`, `iter_mut()`, and
-`drain()`. `entry(key)` returns a
+`try_get`, `get_mut`, `try_get_mut`, `insert(ref mut zone, key, value)`,
+`replace(ref mut zone, key, value)`, `entry(ref mut zone, key)`, `entry(key)`,
+`remove`, `remove_entry`, `reserve(ref mut zone, capacity)`, `clear`, `keys()`,
+`values()`, `values_mut()`, `entries()`, `iter()`, `iter_mut()`, and `drain()`.
+`entry(key)` returns a
 short-lived `HashMapEntry[K,V]` or `TreeMapEntry[K,V]` update handle with
 `or_insert`, `or_insert_with`, `and_modify`, `insert`, `remove`, `key`,
 `value`, and `value_mut`; copied iterator, boundary, and removal results use
@@ -282,6 +283,8 @@ live buckets; tree map iterators walk ascending key order. `values_mut()` uses
 a `has_next()`/`next() -> ref mut V` cursor, and direct `for entry in map`
 uses the same copied-entry order as `iter()`. `iter_mut()` yields
 `MapEntryMut[K,V]` handles with copied keys and mutable stored values.
+`try_get_mut()` returns `Option[MapValueMut[V]]`; unwrap the handle and call
+`value_mut()` when absence is a normal branch.
 
 `std::collections::HashSet[T]` and `TreeSet[T]` share `len`, `capacity`,
 `is_empty`, `contains`, `insert(ref mut zone, value)`,
