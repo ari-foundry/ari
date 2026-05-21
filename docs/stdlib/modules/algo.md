@@ -85,6 +85,33 @@ array or vector; use the returned length as the prefix boundary.
 compares adjacent keys returned by `key(ref value)`, which is the practical
 shape for records such as `users.dedup_by_key<i64>(user_id)`.
 
+## Value Movement Contracts
+
+The current algorithm implementations reorder and copy elements through
+copy-oriented raw place operations. They are production-safe for copyable scalar
+values and plain Ari-layout aggregates that do not contain `own`, `ref`, or
+`ref mut` fields. They are not the final move-aware contract for resource
+owners such as files, sockets, boxes, or user values with ownership fields.
+
+`copy`, `fill`, `sort`, `stable_sort`, `partition`, `stable_partition`,
+`dedup`, and the natural `Slice[T]`/`Vec[T]` wrappers follow the shared
+[value movement contracts](../value-contracts.md). In short:
+
+- `copy` is a forward element copy of the prefix that fits, not a typed
+  overlapping `memmove`.
+- `fill` stores one value repeatedly; it does not clone or construct fresh
+  values for move-only resources.
+- `sort` and `stable_sort` currently swap or shift values in place and require
+  copyable/plain element materialization.
+- `dedup` on a borrowed slice only returns the live prefix length; it does not
+  drop the suffix because a slice does not own storage.
+- `Vec::dedup` and other owning vector shrink paths drop removed values after
+  compaction.
+
+Future move-aware algorithms should add explicit place-transfer contracts and
+by-reference comparator forms instead of silently widening these copy-oriented
+helpers.
+
 ## Feature Status
 
 | Need | Status |
@@ -167,9 +194,9 @@ algo::fill<i64>(target.as_slice()[copied..target.len()], -1);
   `sort` is selection-sort based, while `stable_sort` is adjacent-swap
   insertion sort. Faster large-slice algorithms are future work.
 - The helpers use the current plain generic value model. They are intended for
-  scalar/plain copyable values today; ownership-carrying element policy should
-  become stricter once Ari has a first-class `Copy`/move-aware algorithm
-  contract.
+  scalar/plain copyable values today; see
+  [value movement contracts](../value-contracts.md) for the exact copy, drop,
+  and future move-aware policy.
 - `copy` is a forward element copy, not a guaranteed memmove for overlapping
   views. Use `std::mem::move_bytes` for raw byte overlap until typed overlap
   policy is documented.

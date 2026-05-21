@@ -146,6 +146,30 @@ by the runtime zone policy. `push`, `insert`, `reserve`, `try_reserve`,
 The metadata can also be recovered from a non-empty backing allocation header,
 so ordinary callers do not need to pass `ref mut zone` after construction.
 
+### Element Movement Contract
+
+`std::vec::Vec[T]` is the growable sequence handle, but its current growth,
+copy, sort, fill, and range-edit internals still move values with the same
+copy-oriented raw place operations documented in
+[Value Movement Contracts](../value-contracts.md). Those helpers are
+production-safe today for scalar and plain copyable elements. That means:
+
+- `copy_to`, `extend`, `extend_from_slice`, `insert_many`, and replacement
+  slices copy borrowed elements; they do not consume the source.
+- Growing `resize(length, value)` writes the same value repeatedly. It is not a
+  clone or generator API for move-only resources.
+- Shrinking `resize`, `truncate`, `clear`, `remove_range`, `retain`, and
+  `Vec::dedup*` drop removed live values exactly once through normal `Drop`
+  lowering.
+- `drain()` immediately makes the vector empty and owns the removed live range
+  through the drain cursor; dropping the cursor drops any unconsumed values.
+- `append(ref mut other)` leaves `other` empty after transferring its live
+  prefix, but it still relies on the current raw place model and should not be
+  treated as the final resource-owner move API.
+
+Resource-owning elements should wait for explicit move-aware place operations,
+`Clone`/generator-based growth APIs, and by-reference comparator forms.
+
 Explicit-zone compatibility forms remain available:
 
 ```ari

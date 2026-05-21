@@ -2687,6 +2687,8 @@ check-prelude: $(TARGET)
 	grep -q "unknown function or enum case 'std::mem::size_of'" $(BUILD_DIR)/prelude/prelude-special-missing-decl.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-take-non-place.ari -o $(BUILD_DIR)/prelude/prelude-take-non-place.elf >$(BUILD_DIR)/prelude/prelude-take-non-place.err 2>&1; then exit 1; fi
 	grep -q "take expects a local binding, field, tuple index, or index expression" $(BUILD_DIR)/prelude/prelude-take-non-place.err
+	if $(TARGET) tests/cases/standard-library/errors/algo/std-algo-copy-own.ari -o $(BUILD_DIR)/prelude/std-algo-copy-own.elf >$(BUILD_DIR)/prelude/std-algo-copy-own.err 2>&1; then exit 1; fi
+	grep -q "as_slice currently supports copyable element arrays and vectors only" $(BUILD_DIR)/prelude/std-algo-copy-own.err
 	if $(TARGET) tests/cases/standard-library/errors/mem/std-mem-replace-own.ari -o $(BUILD_DIR)/prelude/std-mem-replace-own.elf >$(BUILD_DIR)/prelude/std-mem-replace-own.err 2>&1; then exit 1; fi
 	grep -q "std::mem::replace cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/prelude/std-mem-replace-own.err
 	if $(TARGET) tests/cases/standard-library/errors/mem/std-mem-swap-own.ari -o $(BUILD_DIR)/prelude/std-mem-swap-own.elf >$(BUILD_DIR)/prelude/std-mem-swap-own.err 2>&1; then exit 1; fi

@@ -90,6 +90,9 @@ std-fs-permissions.ari
 std-fs-mode.ari
 std-fs-metadata-times.ari
 std-algo-slice-helpers.ari
+std-algo-dedup-partition.ari
+std-algo-by-helpers.ari
+errors/algo/std-algo-copy-own.ari
 std-hash-basic.ari
 std-random-basic.ari
 std-random-result.ari

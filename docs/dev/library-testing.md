@@ -295,6 +295,9 @@ identifies the exact case:
   search/bounds/equal-range, partition point, min/max/clamp, stable comparator
   ordering, and natural `Slice`/`Vec` receiver wrappers over a custom value
   with no `Ord` impl.
+- `std-algo-copy-own.ari`: negative value-movement diagnostic showing that
+  current borrowed-slice algorithm copying does not accept ownership-carrying
+  aggregate elements as copyable array/vector views.
 - `std-hash-basic.ari`: source `std::hash` deterministic `Hasher`
   construction/reset/finalization, byte-slice hashing, generic `Hash[T]`
   dispatch for primitive values, primitive write helpers, and the

@@ -1792,6 +1792,9 @@ and `*_by` methods take explicit comparators for call-site ordering.
 `lower_bound` and `upper_bound` return sorted insertion indexes. `equal_range`
 returns the matching `(lower, upper)` range, and `partition_point` returns the first false
 predicate index in a predicate-partitioned view.
+These helpers share the current copy-oriented
+[value movement contract](value-contracts.md): they are for copyable/plain
+elements today, and move-aware resource elements remain future work.
 
 `std::vec::Vec[T]` is the source growable sequence:
 
@@ -1920,6 +1923,10 @@ lexicographic, `ordering` returns typed `cmp::Ordering`, and `chunks`,
 `windows`, and delimiter `split` are lazy allocation-free view iterators.
 The sort/search wrappers share the `std::algo` policy, including
 lower/upper/equal-range bounds and partition-point lookup.
+Vector growth and reordering also follow the shared
+[value movement contract](value-contracts.md). Shrink and removal paths drop
+removed live values, while growing `resize(length, value)` repeats one value and
+therefore is not a clone/generator API for resource owners.
 
 `std::collections::Set[T]` is a zone-backed linear set:
 
@@ -2726,6 +2733,13 @@ predicate-partitioned slice.
 shape. `copy` returns the number of copied elements. `dedup`, `dedup_by`, and
 `dedup_by_key` compact consecutive duplicates and return the logical prefix
 length.
+The current implementation contract is copy-oriented: element materialization
+uses raw place loads/stores and is intended for copyable scalar values and plain
+Ari-layout aggregates. `copy` is forward element copy, not guaranteed typed
+overlap handling. Borrowed-slice `dedup*` returns a prefix length and does not
+drop the suffix; `Vec::dedup*` truncates and drops removed values. See
+[Value Movement Contracts](value-contracts.md) before using these helpers with
+types that own files, sockets, boxes, or other resources.
 
 ## Hashing
 

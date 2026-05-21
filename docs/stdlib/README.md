@@ -10,6 +10,8 @@ under `lib/std/`.
 - [API Reference](api-reference.md): current public APIs grouped by module.
 - [Text And Path Kinds](text-kinds.md): when to use byte strings, UTF-8
   views, OS string bytes, path bytes, and C strings.
+- [Value Movement Contracts](value-contracts.md): copy, move, clone, drop, and
+  drain contracts for sequence and collection helpers.
 - [Module Guides](modules/README.md): focused notes for individual standard
   library modules.
 - [Platform Notes](platform/README.md): target, ABI, linker, and OS-specific
@@ -107,7 +109,10 @@ and adds allocator-backed `join_in` plus typed borrowed `Utf8`/`OsStr` views
 and shared `std::c::CStr` construction so code can distinguish validated
 UTF-8, OS bytes, and NUL-terminated C strings. `std::algo` adds source slice algorithms
 for sorting, binary search, lower/upper/equal-range bounds, partition-point
-lookup, reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup. `std::parse` adds whole-input decimal, radix, hex,
+  lookup, reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup.
+  The current sequence value movement contract is documented separately so
+  copy-oriented helpers stay distinct from future move-aware resource handling.
+  `std::parse` adds whole-input decimal, radix, hex,
 binary, octal integer, bool, and decimal float parsing,
 and `std::encoding` adds ASCII/UTF-8/UTF-16 validation plus hex/base64 codecs
 with fallible owned decoders for untrusted input.

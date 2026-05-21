@@ -91,6 +91,19 @@ Use `zone::destroy(zone)` when a manually created zone is no longer needed.
 Pointers, strings, vectors, boxes, and slices derived from that zone become
 invalid after `reset` or `destroy`, and sema rejects later use.
 
+## Value Movement Rules
+
+Sequence helpers make their value contract explicit. Current `std::algo` and
+`std::vec` copy/reorder helpers are for copyable scalar values and plain
+Ari-layout aggregates. Ownership- or borrow-valued elements are not silently
+copied through generic algorithms. Removed live elements in owning containers
+are dropped through normal `Drop` lowering, while borrowed `Slice[T]` compaction
+helpers return a logical prefix length because they do not own the suffix.
+
+Use [Value Movement Contracts](value-contracts.md) when adding or reviewing
+helpers such as `copy`, `fill`, `resize`, `sort`, `dedup`, `partition`, and
+`drain`.
+
 ## Source Versus Compiler Hooks
 
 Most helper methods are plain Ari source. Compiler hooks remain for primitives
