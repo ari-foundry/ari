@@ -1169,6 +1169,7 @@ TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
 stream.local_addr()
+stream.peer_addr()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
 stream.set_read_timeout_millis(millis)
@@ -1235,7 +1236,7 @@ close, nonblocking flags, millisecond timeouts, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
 `read_exact(output, len)` / `write_all(values)` helpers for natural stream
 method syntax. IPv6 socket handles, buffered datagram APIs, richer socket
-options, peer address helpers, and direct `Result[..., Error]` payloads
+options, UDP source address helpers, and direct `Result[..., Error]` payloads
 remain roadmap work.
 
 ## IO And Input

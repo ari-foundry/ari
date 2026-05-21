@@ -386,6 +386,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_net_tcp_accept") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_local_port") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_local_addr_v4") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_peer_addr_v4") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_udp_bind_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
     if (symbol == "ari_builtin_net_udp_send_byte_to_v4") {
         return builtin_sig({i64, u8, i64, i64, i64, i64, i64}, boolean);

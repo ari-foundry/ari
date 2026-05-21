@@ -1209,6 +1209,7 @@ method std::net::TcpStream::descriptor|check-prelude std-net-tcp-loopback stream
 method std::net::TcpStream::is_nonblocking|check-prelude std-net-tcp-loopback stream nonblocking descriptor query; docs/stdlib/modules/net.md
 method std::net::TcpStream::is_open|check-prelude std-net-tcp-loopback stream open predicate; docs/stdlib/modules/net.md
 method std::net::TcpStream::local_addr|check-prelude std-net-tcp-loopback stream local IPv4 socket-address lookup; docs/stdlib/modules/net.md
+method std::net::TcpStream::peer_addr|check-prelude std-net-tcp-loopback stream peer IPv4 socket-address lookup; docs/stdlib/modules/net.md
 method std::net::TcpStream::read_exact|check-prelude std-net-tcp-loopback stream buffer read helper; docs/stdlib/modules/net.md
 method std::net::TcpStream::set_nonblocking|check-prelude std-net-tcp-loopback stream nonblocking descriptor setter; docs/stdlib/modules/net.md
 method std::net::TcpStream::set_read_timeout_millis|check-prelude std-net-tcp-loopback stream read timeout setter; docs/stdlib/modules/net.md

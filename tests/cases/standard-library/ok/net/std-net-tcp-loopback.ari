@@ -57,8 +57,11 @@ fn main() -> i64 {
   let maybe_client_addr = client.local_addr();
   assert(maybe_client_addr.is_some());
   let client_addr = maybe_client_addr.unwrap();
+  let maybe_client_peer = client.peer_addr();
+  assert(maybe_client_peer.is_some());
+  let client_peer = maybe_client_peer.unwrap();
   if client.is_open() && client.descriptor().is_valid() && client_addr.port() > 0 as u16 &&
-    client_addr.is_loopback() {
+    client_addr.is_loopback() && client_peer.port() == port && client_peer.is_loopback() {
     score = score + 8;
   }
 
@@ -68,9 +71,16 @@ fn main() -> i64 {
   let maybe_server_addr = server.local_addr();
   assert(maybe_server_addr.is_some());
   let server_addr = maybe_server_addr.unwrap();
+  let maybe_server_peer = server.peer_addr();
+  assert(maybe_server_peer.is_some());
+  let server_peer = maybe_server_peer.unwrap();
   if server.is_open() && server.descriptor().is_valid() && server_addr.port() == port &&
     server_addr.is_loopback() {
     score = score + 16;
+  }
+
+  if server_peer.port() == client_addr.port() && server_peer.is_loopback() {
+    score = score + 512;
   }
 
   if client.write_byte(65u8) && server.read_byte() == 65 {
@@ -105,6 +115,6 @@ fn main() -> i64 {
     score = score + 128;
   }
 
-  assert_eq_i64(score, 511);
+  assert_eq_i64(score, 1023);
   return score;
 }

@@ -234,7 +234,7 @@ identifies the exact case:
 - `std-net-address-validation.ari`: strict and fallible IPv4 octet and IPv6
   segment accessors for known-good indexes and parsed-index validation.
 - `std-net-tcp-loopback.ari`: hosted IPv4 TCP listener/stream bind, local-port
-  and local-address lookup, connect, accept, stream local-address lookup,
+  and local-address lookup, connect, accept, stream local/peer-address lookup,
   `std::io::Reader`/`Writer` byte transfer, method-style stream
   `read_exact`/`write_all`, explicit close,
   timeout/nonblocking helpers, stream shutdown, IPv6 unsupported errors, and

@@ -499,6 +499,7 @@ private:
                symbol == "connect" ||
                symbol == "accept" ||
                symbol == "getsockname" ||
+               symbol == "getpeername" ||
                symbol == "sendto" ||
                symbol == "recvfrom" ||
                symbol == "setsockopt" ||
@@ -655,6 +656,7 @@ private:
         declarations_ << "declare i32 @connect(i32, ptr, i32)\n";
         declarations_ << "declare i32 @accept(i32, ptr, ptr)\n";
         declarations_ << "declare i32 @getsockname(i32, ptr, ptr)\n";
+        declarations_ << "declare i32 @getpeername(i32, ptr, ptr)\n";
         declarations_ << "declare i64 @sendto(i32, ptr, i64, i32, ptr, i32)\n";
         declarations_ << "declare i64 @recvfrom(i32, ptr, i64, i32, ptr, ptr)\n";
         declarations_ << "declare i32 @setsockopt(i32, i32, i32, ptr, i32)\n";
@@ -2055,6 +2057,40 @@ private:
         line("  %len.ptr = alloca i32, align 4");
         line("  store i32 16, ptr %len.ptr, align 4");
         line("  %code = call i32 @getsockname(i32 %fd32, ptr %addr, ptr %len.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %check_family, label %fail");
+        line("check_family:");
+        line("  %family = load i16, ptr %addr, align 2");
+        line("  %is.v4 = icmp eq i16 %family, 2");
+        line("  br i1 %is.v4, label %pack, label %fail");
+        line("pack:");
+        line("  %port.ptr = getelementptr inbounds i8, ptr %addr, i64 2");
+        line("  %net.port = load i16, ptr %port.ptr, align 2");
+        line("  %host.port = call i16 @ntohs(i16 %net.port)");
+        line("  %port64 = zext i16 %host.port to i64");
+        line("  %addr.ptr = getelementptr inbounds i8, ptr %addr, i64 4");
+        line("  %net.addr = load i32, ptr %addr.ptr, align 4");
+        line("  %host.addr = call i32 @ntohl(i32 %net.addr)");
+        line("  %addr64 = zext i32 %host.addr to i64");
+        line("  %addr.shift = shl i64 %addr64, 16");
+        line("  %packed = or i64 %addr.shift, %port64");
+        line("  ret i64 %packed");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_peer_addr_v4(i64 %fd) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %query");
+        line("query:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %storage = alloca [16 x i8], align 4");
+        line("  %addr = getelementptr inbounds [16 x i8], ptr %storage, i64 0, i64 0");
+        line("  %len.ptr = alloca i32, align 4");
+        line("  store i32 16, ptr %len.ptr, align 4");
+        line("  %code = call i32 @getpeername(i32 %fd32, ptr %addr, ptr %len.ptr)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  br i1 %ok, label %check_family, label %fail");
         line("check_family:");

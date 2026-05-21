@@ -770,10 +770,12 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_tcp_accept" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_local_port" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_local_addr_v4" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_peer_addr_v4" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_set_read_timeout_millis" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_shutdown" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpStream8inherent9peer_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent9write_all" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari -o $(BUILD_DIR)/prelude/std-net-tcp-loopback.elf

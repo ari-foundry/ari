@@ -71,6 +71,7 @@ extern "ari" fn tcp_connect_v4_raw(a: i64, b: i64, c: i64, d: i64, port: i64) ->
 extern "ari" fn tcp_accept_raw(raw: i64) -> i64 = "ari_builtin_net_tcp_accept";
 extern "ari" fn local_port_raw(raw: i64) -> i64 = "ari_builtin_net_local_port";
 extern "ari" fn local_addr_v4_raw(raw: i64) -> i64 = "ari_builtin_net_local_addr_v4";
+extern "ari" fn peer_addr_v4_raw(raw: i64) -> i64 = "ari_builtin_net_peer_addr_v4";
 extern "ari" fn udp_bind_v4_raw(a: i64, b: i64, c: i64, d: i64, port: i64) -> i64 =
   "ari_builtin_net_udp_bind_v4";
 extern "ari" fn udp_send_byte_to_v4_raw(raw: i64, value: u8, a: i64, b: i64, c: i64, d: i64, port: i64) -> bool =
@@ -128,6 +129,14 @@ fn socket_addr_from_packed_v4(packed: i64) -> SocketAddr {
 
 fn local_addr_v4(raw: i64) -> std::Option[SocketAddr] {
   let packed = local_addr_v4_raw(raw);
+  if packed < 0 {
+    return std::None<SocketAddr>();
+  }
+  return std::Some<SocketAddr>(socket_addr_from_packed_v4(packed));
+}
+
+fn peer_addr_v4(raw: i64) -> std::Option[SocketAddr] {
+  let packed = peer_addr_v4_raw(raw);
   if packed < 0 {
     return std::None<SocketAddr>();
   }
@@ -616,6 +625,13 @@ pub impl std::net::TcpStream {
       return std::None<SocketAddr>();
     }
     return local_addr_v4(self.handle.raw());
+  }
+
+  fn peer_addr(self: ref Self) -> std::Option[SocketAddr] {
+    if !self.is_open() {
+      return std::None<SocketAddr>();
+    }
+    return peer_addr_v4(self.handle.raw());
   }
 
   fn shutdown(self: ref Self, mode: Shutdown) -> bool {

@@ -88,6 +88,7 @@ TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
 stream.local_addr()
+stream.peer_addr()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
 stream.set_read_timeout_millis(millis)
@@ -202,7 +203,9 @@ needs the complete IPv4 `SocketAddr`. `accept`/`try_accept` return
 closing the descriptor owner. Use `write_all(values)` to send every byte in a
 `Slice[u8]`, and `read_exact(output, len)` to fill a caller-owned byte buffer
 or return `false` if the stream closes or errors first. `local_addr()` reports
-the bound local IPv4 socket address after connect or accept.
+the bound local IPv4 socket address after connect or accept. `peer_addr()`
+reports the connected remote IPv4 `SocketAddr`: the listener address on the
+client side and the accepted client address on the server side.
 
 ## UDP Sockets
 
@@ -332,7 +335,7 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
 | DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` over `getaddrinfo`. |
 | TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result`, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking setter/query, accept timeout, and explicit close. |
-| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result`, `local_addr`, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
+| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result`, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
 | UDP socket | Current hosted IPv4 slice: bind helpers, local-port and local-address lookup, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
 | Unix domain socket | Current hosted stream slice: `UnixListener` bind/accept helpers and `UnixStream` connect/IO/shutdown plus `read_exact`/`write_all` buffer helpers. |
 | socket options | Current: nonblocking and read/write timeout helpers; future reuse-address, nodelay, buffer size, linger, multicast, and close-on-exec-at-creation options. |
@@ -397,7 +400,7 @@ lookup shapes, unsupported IPv6 text input, and edge IPv4 addresses.
 
 - Add address parsing and formatting once `std::string` formatting and parse
   policy can express dotted IPv4 and compressed IPv6 cleanly.
-- Add IPv6 TCP and UDP socket handles, peer address helpers, and richer
+- Add IPv6 TCP and UDP socket handles, UDP source address helpers, and richer
   socket-address reporting.
 - Replace raw millisecond timeout setters with `std::time::Duration`-friendly
   helpers once direct `Result[..., Error]` payloads are available.
