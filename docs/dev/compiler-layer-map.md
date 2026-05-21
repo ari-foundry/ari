@@ -15,10 +15,12 @@ where to edit or how to prove the change.
 Start with the earliest layer that can know the behavior:
 
 1. Find the source row for the behavior.
-2. Read the linked contract page before editing.
-3. Add or update the closest `ok`, `errors`, `artifact`, or model fixture.
-4. Run the smallest check listed for that layer.
-5. Update user docs if the public Ari rule changed.
+2. Run `build/ari --list-passes` or `build/ari --explain-pass sema` when the
+   boundary, owner, input, or first artifact is unclear.
+3. Read the linked contract page before editing.
+4. Add or update the closest `ok`, `errors`, `artifact`, or model fixture.
+5. Run the smallest check listed for that layer.
+6. Update user docs if the public Ari rule changed.
 
 If a later layer needs information an earlier layer already knew, move that
 information forward through AST, module metadata, typed IR, or artifacts.
@@ -61,6 +63,7 @@ toward explicit helper files and forward-flowing data.
 | Layer | First Check |
 | --- | --- |
 | Driver and CLI | `make check-cli` or one direct `build/ari file.ari --emit-llvm build/focused/file.ll` |
+| Pass ownership and routing | `build/ari --list-passes` or `build/ari --explain-pass sema` |
 | Lexer artifact | `make check-compiler-artifacts` or one `--emit-tokens` comparison |
 | Parser artifact | `make check-compiler-artifacts` or one `--emit-syntax` comparison |
 | Modules | `make check-modules` or one `--emit-module-graph` comparison |

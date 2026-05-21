@@ -79,6 +79,8 @@ def main() -> int:
         "mod math;",
         "--target-info",
         "--explain-artifact",
+        "--list-passes",
+        "--explain-pass",
         "--list-capabilities",
         "--explain-capability",
         "--emit-llvm",
@@ -248,6 +250,7 @@ def main() -> int:
         "compiler-development-dashboard",
         "compiler-test-classification",
         "tests/check_compiler_capability_cli.py",
+        "tests/check_compiler_pass_cli.py",
     ]:
         require(tests_index, needle, tests_index_path)
 

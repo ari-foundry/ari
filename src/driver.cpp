@@ -127,6 +127,8 @@ static void usage(std::ostream& out) {
            "       ari --help\n"
            "       ari --list-artifacts\n"
            "       ari --explain-artifact option\n"
+           "       ari --list-passes\n"
+           "       ari --explain-pass name\n"
            "       ari --list-capabilities [--target triple] [--no-implicit-std]\n"
            "       ari --explain-capability name\n"
            "       ari --list-diagnostics\n"
@@ -238,7 +240,9 @@ int run(int argc, char** argv) {
     bool test_mode = false;
     bool implicit_std = true;
     bool target_info_requested = false;
+    bool list_passes_requested = false;
     bool list_capabilities_requested = false;
+    std::string pass_explanation;
     std::string capability_explanation;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -337,6 +341,11 @@ int run(int argc, char** argv) {
             target_triple = argv[++i];
         } else if (arg == "--target-info") {
             target_info_requested = true;
+        } else if (arg == "--list-passes") {
+            list_passes_requested = true;
+        } else if (arg == "--explain-pass") {
+            if (i + 1 >= argc) throw CompileError("--explain-pass expects a pass name");
+            pass_explanation = argv[++i];
         } else if (arg == "--list-capabilities") {
             list_capabilities_requested = true;
         } else if (arg == "--explain-capability") {
@@ -359,6 +368,8 @@ int run(int argc, char** argv) {
         }
     }
     const int info_command_count = (target_info_requested ? 1 : 0) +
+                                   (list_passes_requested ? 1 : 0) +
+                                   (!pass_explanation.empty() ? 1 : 0) +
                                    (list_capabilities_requested ? 1 : 0) +
                                    (!capability_explanation.empty() ? 1 : 0);
     if (info_command_count > 0) {
@@ -366,11 +377,17 @@ int run(int argc, char** argv) {
             throw CompileError("compiler information commands cannot be combined");
         }
         const char* command_name = target_info_requested ? "--target-info" :
+                                   list_passes_requested ? "--list-passes" :
+                                   !pass_explanation.empty() ? "--explain-pass" :
                                    list_capabilities_requested ? "--list-capabilities" :
                                    "--explain-capability";
         if (!input.empty()) throw CompileError(std::string(command_name) + " does not take an input file");
         if (target_info_requested) {
             std::cout << dump_target_info(resolve_target_info(target_triple));
+        } else if (list_passes_requested) {
+            std::cout << dump_compiler_pass_catalog();
+        } else if (!pass_explanation.empty()) {
+            std::cout << dump_compiler_pass_explanation(pass_explanation);
         } else if (list_capabilities_requested) {
             TargetInfo target = resolve_target_info(target_triple);
             std::cout << dump_compiler_capability_inventory(target.triple, implicit_std);

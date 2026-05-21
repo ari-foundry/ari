@@ -137,6 +137,16 @@ regression should not first appear as an executable failure. See
 [Compiler Artifact Testing](compiler-artifact-testing.md) for normalization and
 golden file policy.
 
+The compiler also exposes the pass contract table directly:
+
+```text
+build/ari --list-passes
+build/ari --explain-pass sema
+```
+
+Use that CLI before widening a test. It records the pass owner, input, output,
+first artifact, and first focused check in the same language used by this page.
+
 ## Implementation Slices
 
 These slices are safe compiler-development work:

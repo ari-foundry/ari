@@ -26,6 +26,16 @@ std::string dump_compiler_stage_plan(const std::string& source_name,
                                      std::size_t module_search_path_count,
                                      std::size_t cfg_feature_count);
 
+// Input-free pass catalog for compiler contributors. Unlike
+// dump_compiler_pass_summary, this does not inspect one program; it documents
+// the compiler's stable pass boundaries, ownership, inputs, outputs, and first
+// focused checks.
+std::string dump_compiler_pass_catalog();
+
+// Single-pass view used by the CLI when routing a compiler change to the first
+// owning layer before choosing a fixture or artifact.
+std::string dump_compiler_pass_explanation(const std::string& pass_name);
+
 // Deterministic inventory of the compiler's current public capability surface.
 // This is intentionally coarse-grained: it gives contributors a stable map of
 // implemented, partial, planned, and intentionally rejected features without

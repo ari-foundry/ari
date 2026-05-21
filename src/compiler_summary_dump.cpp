@@ -16,12 +16,59 @@ struct StagePlanRow {
     const char* proves;
 };
 
+struct CompilerPassRow {
+    const char* name;
+    const char* layer;
+    const char* owner;
+    const char* input;
+    const char* output;
+    const char* artifact;
+    const char* first_check;
+    const char* purpose;
+};
+
 struct CapabilityRow {
     const char* name;
     const char* status;
     const char* owner;
     const char* first_check;
     const char* proves;
+};
+
+static const CompilerPassRow kPassRows[] = {
+    {"source-load", "frontend", "driver/module-loader", "root path plus module paths",
+     "source files with stable identities", "--emit-source-map", "make check-compiler-artifacts",
+     "load files, preserve paths, and make byte offsets reviewable"},
+    {"lexer", "frontend", "lexer", "source bytes",
+     "tokens with byte spans", "--emit-tokens", "make check-compiler-artifacts",
+     "prove token boundaries before parser behavior is involved"},
+    {"parser", "frontend", "parser", "tokens",
+     "AST plus parse recovery diagnostics", "--emit-syntax", "make check-compiler-artifacts",
+     "prove source syntax shape before name or type resolution"},
+    {"module-loader", "frontend", "module-loader", "root AST and module paths",
+     "module graph and source metadata", "--emit-module-graph", "make check-compiler-artifacts",
+     "prove file-backed module edges, visibility surfaces, and imports"},
+    {"declaration-collector", "frontend", "declaration-collector", "module ASTs",
+     "declaration index", "--emit-declaration-index", "make check-compiler-artifacts",
+     "prove item signatures and visibility before expression checking"},
+    {"hir-lowering", "middle", "lowering/resolver", "AST plus declaration index",
+     "lowered resolver-facing tree", "planned --emit-hir", "future check-compiler-artifacts",
+     "separate source shape from typed facts before sema grows further"},
+    {"sema", "middle", "sema", "AST, modules, declarations, and cfg features",
+     "typed IR plus warnings", "--emit-typed-ir", "make check-compiler-artifacts",
+     "prove names, types, traits, ownership, and lowering facts"},
+    {"pass-summary", "middle", "driver/sema", "tokens, AST, metadata, and typed IR",
+     "stage counts", "--emit-pass-summary", "make check-compiler-artifacts",
+     "summarize cross-pass shape without dumping every detail"},
+    {"llvm-backend", "backend", "llvm-backend", "typed IR",
+     "LLVM IR text", "--emit-llvm", "focused --emit-llvm",
+     "prove backend lowering after frontend artifacts already match"},
+    {"object-emission", "backend", "toolchain", "LLVM IR text",
+     "object file", "--emit-obj", "focused --emit-obj",
+     "prove the LLVM driver emits target objects with expected symbols"},
+    {"executable-link", "backend", "toolchain", "LLVM IR or object file plus link args",
+     "executable or shared library", "-o or --shared", "focused linked run",
+     "prove final runtime behavior only after earlier artifacts are stable"},
 };
 
 static const CapabilityRow kCapabilityRows[] = {
@@ -83,6 +130,10 @@ static constexpr std::size_t capability_row_count() {
     return sizeof(kCapabilityRows) / sizeof(kCapabilityRows[0]);
 }
 
+static constexpr std::size_t pass_row_count() {
+    return sizeof(kPassRows) / sizeof(kPassRows[0]);
+}
+
 static std::string quote_field(const char* text) {
     std::string escaped = "\"";
     for (const char* cursor = text; *cursor != '\0'; ++cursor) {
@@ -95,6 +146,13 @@ static std::string quote_field(const char* text) {
 
 static const CapabilityRow* find_capability_row(const std::string& name) {
     for (const CapabilityRow& row : kCapabilityRows) {
+        if (name == row.name) return &row;
+    }
+    return nullptr;
+}
+
+static const CompilerPassRow* find_pass_row(const std::string& name) {
+    for (const CompilerPassRow& row : kPassRows) {
         if (name == row.name) return &row;
     }
     return nullptr;
@@ -156,6 +214,43 @@ std::string dump_compiler_stage_plan(const std::string& source_name,
     }
     out << "  DevelopmentGate source_identity=required diagnostics=required "
         << "modules=required artifacts=ordered executable=last\n";
+    return out.str();
+}
+
+std::string dump_compiler_pass_catalog() {
+    std::ostringstream out;
+    out << "CompilerPassCatalog version=1 entries=" << pass_row_count() << "\n";
+    for (const CompilerPassRow& row : kPassRows) {
+        out << "  pass=" << row.name
+            << " layer=" << row.layer
+            << " owner=" << row.owner
+            << " input=" << quote_field(row.input)
+            << " output=" << quote_field(row.output)
+            << " artifact=" << quote_field(row.artifact)
+            << " first_check=" << quote_field(row.first_check)
+            << " purpose=" << quote_field(row.purpose) << "\n";
+    }
+    out << "  Rule one_pass_owner=true earliest_artifact_first=true executable_last=true\n";
+    return out.str();
+}
+
+std::string dump_compiler_pass_explanation(const std::string& pass_name) {
+    const CompilerPassRow* row = find_pass_row(pass_name);
+    if (!row) {
+        throw CompileError("unknown compiler pass '" + pass_name + "'; use --list-passes");
+    }
+
+    std::ostringstream out;
+    out << "CompilerPass version=1"
+        << " pass=" << row->name
+        << " layer=" << row->layer
+        << " owner=" << row->owner
+        << " input=" << quote_field(row->input)
+        << " output=" << quote_field(row->output)
+        << " artifact=" << quote_field(row->artifact)
+        << " first_check=" << quote_field(row->first_check)
+        << " purpose=" << quote_field(row->purpose) << "\n";
+    out << "  Rule one_pass_owner=true earliest_artifact_first=true executable_last=true\n";
     return out.str();
 }
 

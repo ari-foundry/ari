@@ -81,6 +81,14 @@ CompilerCapabilityInventory version=1 target=x86_64-pc-linux-gnu implicit_std=fa
   capability=hir-artifact status=planned owner=lowering/resolver first_check="future check-compiler-artifacts" proves="lowered syntax and resolver-facing node shapes before typed IR"
 ```
 
+Pass catalog example:
+
+```text
+CompilerPassCatalog version=1 entries=11
+  pass=sema layer=middle owner=sema input="AST, modules, declarations, and cfg features" output="typed IR plus warnings" artifact="--emit-typed-ir" first_check="make check-compiler-artifacts" purpose="prove names, types, traits, ownership, and lowering facts"
+  Rule one_pass_owner=true earliest_artifact_first=true executable_last=true
+```
+
 Token dump example:
 
 ```text
@@ -194,7 +202,10 @@ For the current C++ compiler, prefer direct focused commands while developing:
 ```text
 python3 tests/check_compiler_artifact_cli.py
 python3 tests/check_compiler_capability_cli.py
+python3 tests/check_compiler_pass_cli.py
 build/ari --list-artifacts
+build/ari --list-passes
+build/ari --explain-pass sema
 build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/modules/ok/module-llvm.ari --check
@@ -254,6 +265,8 @@ tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character
 tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic
 ari --emit-tokens path
 ari --emit-capability-inventory path
+ari --list-passes
+ari --explain-pass name
 ari --emit-source-map path
 ari --emit-syntax path
 ari --emit-diagnostics path
@@ -266,7 +279,7 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves eighteen low-level contracts:
+It currently proves twenty low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -276,6 +289,9 @@ It currently proves eighteen low-level contracts:
   and development-gate text directly from the compiler driver
 - `--emit-capability-inventory` writes the compiler's implemented, partial,
   planned, and rejected public feature surface with owners and first checks
+- `--list-passes` prints compiler pass owners, inputs, outputs, first
+  artifacts, and first focused checks without needing an input file
+- `--explain-pass sema` prints the sema pass contract used for triage
 - `--list-capabilities` prints the same compiler feature surface without
   needing an input file
 - `--explain-capability trait-resolution` prints the owner, status, first

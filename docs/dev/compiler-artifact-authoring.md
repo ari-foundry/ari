@@ -121,6 +121,8 @@ Use the smallest command that proves the artifact:
 python3 tests/check_compiler_artifact_cli.py
 build/ari --list-artifacts
 build/ari --explain-artifact --emit-tokens
+build/ari --list-passes
+build/ari --explain-pass sema
 build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens build/focused/token.tokens
@@ -131,6 +133,9 @@ make check-compiler-artifacts
 Use `--explain-artifact` before adding a broader check. It records the artifact
 owner, the first focused check to run, and the exact behavior the artifact is
 supposed to prove.
+Use `--list-passes` or `--explain-pass` when the question is about a compiler
+boundary: pass owner, pass input, pass output, first artifact, or first focused
+check.
 Use `--list-capabilities` or `--explain-capability` when the change is really a
 compiler feature-surface change rather than a new artifact format.
 

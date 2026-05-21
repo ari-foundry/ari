@@ -79,6 +79,8 @@ help, artifact listing, per-artifact explanations, combination rules, or error
 text.
 Use `python3 tests/check_compiler_capability_cli.py` when changing compiler
 capability inventory listing or per-capability explanations.
+Use `python3 tests/check_compiler_pass_cli.py` when changing compiler pass
+catalog listing, per-pass explanations, or pass information command errors.
 Use `python3 tests/check_compiler_diagnostic_cli.py` when changing diagnostic
 catalog listing or diagnostic-code explanation behavior.
 Use `python3 tests/check_compiler_target_cli.py` when changing target triple,
