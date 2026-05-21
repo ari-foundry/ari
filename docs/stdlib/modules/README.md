@@ -93,7 +93,7 @@ limits, examples, and test files for one module.
   close, removal, `File` value handles, `Option[File]` open helpers, and
   source byte create/read/write/append/truncate/copy plus metadata,
   path-kind predicates, rename, hard/symbolic links, and single-directory
-  create/remove helpers.
+  create/ensure/remove helpers.
 - [std::path](path.md): source-only POSIX-style lexical path helpers for
   separators, absolute/relative checks, typed `PathBytes` views including
   direct literal coercion, borrowed components, join, and lightweight

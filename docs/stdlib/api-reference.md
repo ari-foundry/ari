@@ -847,6 +847,7 @@ fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::create_dir(path)
+fs::ensure_dir(path)
 fs::remove_dir(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
@@ -976,7 +977,8 @@ truncating semantics and returns `Some(byte_count)` on success or `None` on
 open/write/close failure. `copy(source, target)` is the boolean compatibility
 wrapper over `try_copy`. `rename(source, target)` moves or renames one path
 according to the host runtime's current behavior. `create_dir(path)` creates
-one directory and `remove_dir(path)` removes one empty directory.
+one directory, `ensure_dir(path)` treats an existing directory as success or
+creates a missing one, and `remove_dir(path)` removes one empty directory.
 `try_open_dir(path)` returns `Option[Dir]`, `dir.next(ref mut zone)` returns
 the next entry name while skipping `"."` and `".."`, and `dir.close()` closes
 the handle. `try_read_dir(ref mut zone, path)` opens, collects names into

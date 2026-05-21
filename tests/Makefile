@@ -538,6 +538,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf
 	$(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll
+	grep -F -q "std2fs10ensure_dir" $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll
+	grep -q "@ari_builtin_fs_create_dir" $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll
+	grep -q "declare i32 @mkdir" $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari -o $(BUILD_DIR)/prelude/std-fs-ensure-dir.elf
+	$(BUILD_DIR)/prelude/std-fs-ensure-dir.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -q "@ari_builtin_fs_open_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -q "@ari_builtin_fs_read_dir_next" $(BUILD_DIR)/prelude/std-fs-read-dir.ll

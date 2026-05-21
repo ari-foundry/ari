@@ -8,11 +8,12 @@ with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
 byte-oriented `String` with either compatibility or `Option`-returning absence
 behavior, rename paths, create hard or symbolic links, create or remove one
-empty directory, read directory entry names through an explicit `Dir` handle,
-collect lightweight `DirEntry` values with names and joined paths, query basic
-file metadata, ask direct path-kind predicates such as `is_file` and `is_dir`,
-read and change POSIX permission bits, resolve an existing path to an absolute
-canonical path, close the handle, and remove a file.
+empty directory, ensure a single directory exists without treating an existing
+directory as failure, read directory entry names through an explicit `Dir`
+handle, collect lightweight `DirEntry` values with names and joined paths,
+query basic file metadata, ask direct path-kind predicates such as `is_file`
+and `is_dir`, read and change POSIX permission bits, resolve an existing path
+to an absolute canonical path, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
@@ -22,9 +23,10 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `try_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
 `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
-`symbolic_link`, `create_dir`, `remove_dir`, `try_open_dir`, `read_dir`,
-`try_read_dir`, `read_dir_entries`, `try_read_dir_entries`, `read_dir_next`,
-`close_dir`, `close`, `exists`, and `remove`, not type-suffixed names.
+`symbolic_link`, `create_dir`, `ensure_dir`, `remove_dir`, `try_open_dir`,
+`read_dir`, `try_read_dir`, `read_dir_entries`, `try_read_dir_entries`,
+`read_dir_next`, `close_dir`, `close`, `exists`, and `remove`, not
+type-suffixed names.
 
 ## API
 
@@ -52,6 +54,7 @@ fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::create_dir(path)
+fs::ensure_dir(path)
 fs::remove_dir(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
@@ -293,6 +296,11 @@ behavior remains future platform work.
 
 `create_dir(path)` creates one directory with the current default permission
 mode used by Ari's runtime shim. It does not create parent directories.
+`ensure_dir(path)` is the idempotent single-directory helper: it returns `true`
+when `path` is already a directory, creates it when it is missing, and returns
+`false` when another kind of path already exists or a parent directory is
+missing. It is deliberately not recursive; use it when a test or tool needs one
+known output directory without treating reruns as errors.
 `remove_dir(path)` removes one empty directory.
 
 `try_open_dir(path)` opens one directory and returns `Option[Dir]`.
@@ -333,7 +341,7 @@ owned/path-to-OS-string boundary slice.
 | symbolic link | Current: `symbolic_link(target, link_path)` runtime hook on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
 | read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, and `dir.close()` for entry names and joined paths; richer metadata-bearing entries and owned OS-resource policy are roadmap. |
-| create directory | Current: single-directory `create_dir(path)`; recursive creation is roadmap. |
+| create directory | Current: single-directory `create_dir(path)` and idempotent `ensure_dir(path)`; recursive creation is roadmap. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
 | file locking | Optional roadmap: advisory locking after platform behavior is documented. |
@@ -577,6 +585,7 @@ tests/cases/standard-library/ok/fs/std-fs-read-write.ari
 tests/cases/standard-library/ok/fs/std-fs-try-read.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
+tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-read-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
 tests/cases/standard-library/ok/fs/std-fs-permissions.ari
@@ -603,7 +612,9 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 `read`, `truncate`, missing-source copy failure, whole-file copy behavior, and
 `try_copy` byte counts.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
-`create_dir`, and `remove_dir` behavior. `std-fs-read-dir.ari` covers
+`create_dir`, and `remove_dir` behavior. `std-fs-ensure-dir.ari` covers
+idempotent single-directory creation, file-path rejection, missing-parent
+failure, and cleanup. `std-fs-read-dir.ari` covers
 runtime-backed `Dir` open/next/close behavior, one-shot
 `try_read_dir`/`read_dir` name-list helpers,
 `try_read_dir_entries`/`read_dir_entries` entry-list helpers, joined paths,

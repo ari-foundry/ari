@@ -1,0 +1,56 @@
+// Covers idempotent single-directory creation. ensure_dir succeeds for an
+// existing directory, creates a missing directory, and rejects file paths.
+fn main() -> i64 {
+  let dir_path = "build/prelude/std-fs-ensure-dir.tmp";
+  let file_path = "build/prelude/std-fs-ensure-dir-file.tmp";
+  let missing_parent_dir = "build/prelude/std-fs-ensure-dir-missing";
+  let missing_parent_path = "build/prelude/std-fs-ensure-dir-missing/child";
+
+  if fs::exists(missing_parent_path) {
+    fs::remove_dir(missing_parent_path);
+  }
+  if fs::exists(missing_parent_dir) {
+    fs::remove_dir(missing_parent_dir);
+  }
+  if fs::exists(file_path) {
+    fs::remove(file_path);
+  }
+  if fs::exists(dir_path) {
+    fs::remove_dir(dir_path);
+  }
+
+  var score = 0;
+  if fs::ensure_dir(dir_path) {
+    score = score + 1;
+  }
+  if fs::is_dir(dir_path) {
+    score = score + 2;
+  }
+  if fs::ensure_dir(dir_path) {
+    score = score + 4;
+  }
+  if fs::write(file_path, "file") {
+    score = score + 8;
+  }
+  if !fs::ensure_dir(file_path) {
+    score = score + 16;
+  }
+  if !fs::ensure_dir(missing_parent_path) {
+    score = score + 32;
+  }
+  if fs::remove(file_path) {
+    score = score + 64;
+  }
+  if fs::remove_dir(dir_path) {
+    score = score + 128;
+  }
+  if fs::exists(missing_parent_path) {
+    fs::remove_dir(missing_parent_path);
+  }
+  if fs::exists(missing_parent_dir) {
+    fs::remove_dir(missing_parent_dir);
+  }
+
+  assert_eq_i64(score, 255);
+  return score;
+}

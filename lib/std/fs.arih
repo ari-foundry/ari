@@ -210,6 +210,16 @@ pub fn set_permissions(path: string, permissions: Permissions) -> bool {
   return set_mode(path, permissions.to_mode());
 }
 
+pub fn ensure_dir(path: string) -> bool {
+  if is_dir(path) {
+    return true;
+  }
+  if exists(path) {
+    return false;
+  }
+  return create_dir(path);
+}
+
 pub fn try_open_dir(path: string) -> std::Option[Dir] {
   let dir = open_dir(path);
   if dir.is_open() {
