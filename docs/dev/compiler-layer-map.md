@@ -28,7 +28,7 @@ Do not make LLVM codegen re-resolve Ari source-level names.
 
 | Layer | First Files | Owns | First Artifact |
 | --- | --- | --- | --- |
-| Driver | `src/driver.cpp`, `src/toolchain.cpp` | CLI flags, file IO, target options, artifact paths, LLVM driver calls. | source map, pass summary, linked output |
+| Driver | `src/driver.cpp`, `src/toolchain.cpp` | CLI flags, file IO, target options, artifact paths, LLVM driver calls, capability inventory. | capability inventory, source map, pass summary, linked output |
 | Lexer | `src/lexer.cpp`, `src/token.hpp`, `src/literal.cpp` | token kinds, spelling classes, comments, escapes, lexical byte spans. | token dump |
 | Parser | `src/parser.cpp`, `src/ast.hpp`, `src/ast_builders.cpp` | grammar, AST shape, parser recovery, source-shaped syntax. | syntax dump |
 | Module loading | `src/module_loader.cpp`, `src/module_path.cpp`, `src/module_metadata.cpp` | file-backed modules, search paths, `.ari`/`.arih`, imports, metadata, cache inputs. | module graph |
@@ -108,8 +108,8 @@ Before handing off a compiler-layer change, check:
 - Did the earliest capable layer reject the invalid program?
 - Did the next layer receive data instead of re-reading source state?
 - Is there a small fixture in the closest test bucket?
-- Is the artifact order still token, syntax, module, declaration, typed facts,
-  LLVM, then executable behavior?
+- Is the artifact order still capability inventory, token, syntax, module,
+  declaration, typed facts, LLVM, then executable behavior?
 - Did docs tell a new contributor which file and check to use next?
 - Is the change normal Ari compiler development rather than bootstrap-only
   machinery?

@@ -133,7 +133,7 @@ compiler/
   report/       Diagnostic, Label, Note, FixIt, stable renderer
   arena/        long-lived compiler graph allocation policy
   intern/       interned names and stable ids
-  artifact/     token, syntax, HIR, IR, LLVM text normalization
+  artifact/     capability inventory, token, syntax, HIR, IR, LLVM text normalization
 ```
 
 This package can later be reused by lint, LSP, formatter, and package tools.

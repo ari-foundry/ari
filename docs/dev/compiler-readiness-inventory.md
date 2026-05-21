@@ -89,11 +89,13 @@ Ari program that returns structured errors, not only for a future compiler
 written in Ari.
 
 The hosted compiler now also has the first artifact producers:
-`--emit-stage-plan path`, `--emit-source-map path`, `--emit-tokens path`, `--emit-syntax path`,
+`--emit-stage-plan path`, `--emit-capability-inventory path`,
+`--emit-source-map path`, `--emit-tokens path`, `--emit-syntax path`,
 `--emit-diagnostics path`, `--emit-diagnostic-catalog path`,
 `--emit-module-graph path`, `--emit-declaration-index path`, `--emit-typed-ir path`, and
 `--emit-pass-summary path`. They write deterministic stage order and first-check
-routing, source byte/line tables, lexer token text, parser tree text, expected-failure diagnostic text,
+routing, compiler capability status tables, source byte/line tables, lexer token text,
+parser tree text, expected-failure diagnostic text,
 diagnostic code ownership tables,
 file-backed source/import/item graph text, declaration signature text,
 sema-lowered typed IR, and stage-boundary counts, all checked by
@@ -125,8 +127,9 @@ Use this order for general compiler development:
    scratch reset rules, and predictable drops.
 7. IR contract: lower resolved facts into typed IR so LLVM codegen is mostly a
    mechanical emitter.
-8. Artifact testing: normalize and compare token, diagnostic, syntax, HIR,
-   typed IR, LLVM, object symbol, and executable outputs.
+8. Artifact testing: normalize and compare capability inventory, token,
+   diagnostic, syntax, HIR, typed IR, LLVM, object symbol, and executable
+   outputs.
 
 ## Compiler Development Gates
 
@@ -251,6 +254,9 @@ Current readiness tests:
 - `tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan`:
   stage order, owner, first-check, and development-gate golden checked through
   `--emit-stage-plan`.
+- `tests/cases/compiler-development/artifact/ok/capability-inventory.inventory`:
+  implemented, partial, planned, and rejected compiler capability status
+  checked through `--emit-capability-inventory`.
 - `tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog`:
   diagnostic code, family, owner, and fallback-policy golden checked through
   `--emit-diagnostic-catalog`.

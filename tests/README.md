@@ -69,7 +69,7 @@ Use the narrowest target that matches the changed surface:
 | --- | --- |
 | `make check-language-docs` | Language docs, docs-only reading path, and test-layout navigation. |
 | `make check-compiler-dev-docs` | Compiler roadmap, maturity gates, pass contracts, project model, source diagnostics, and artifact-testing docs. |
-| `make check-compiler-artifacts` | Deterministic source-map, token, syntax, diagnostic, module graph, declaration index, typed IR, and pass-summary artifacts. |
+| `make check-compiler-artifacts` | Deterministic capability inventory, source-map, token, syntax, diagnostic, module graph, declaration index, typed IR, and pass-summary artifacts. |
 | `make check-compiler-development` | Ari fixtures that model compiler pass worklists, diagnostics, source maps, readiness gates, and test classification as ordinary language code. |
 | `make check-bootstrap-docs` | Later bootstrap start-gate docs and fixture-group manifest. |
 | `make check-bootstrap-readiness` | Small pre-bootstrap Ari fixtures under `tests/cases/bootstrap-readiness/`. |

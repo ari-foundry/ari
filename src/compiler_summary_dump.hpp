@@ -26,4 +26,11 @@ std::string dump_compiler_stage_plan(const std::string& source_name,
                                      std::size_t module_search_path_count,
                                      std::size_t cfg_feature_count);
 
+// Deterministic inventory of the compiler's current public capability surface.
+// This is intentionally coarse-grained: it gives contributors a stable map of
+// implemented, partial, planned, and intentionally rejected features without
+// pretending to be a full language specification.
+std::string dump_compiler_capability_inventory(const std::string& target_triple,
+                                               bool implicit_std);
+
 } // namespace ari

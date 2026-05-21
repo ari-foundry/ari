@@ -26,19 +26,20 @@ Use this order when choosing a new artifact or golden:
 | Order | Artifact | First Use |
 | --- | --- | --- |
 | 1 | `--emit-stage-plan` | Artifact ladder, owners, and first checks. |
-| 2 | `--emit-source-map` | Source files, bytes, line starts, and paths. |
-| 3 | `--emit-tokens` | Lexer output and token spans. |
-| 4 | `--emit-diagnostics` | Expected failures, labels, notes, and path normalization. |
-| 5 | `--emit-diagnostic-catalog` | Diagnostic codes, families, owners, and current fallback policy. |
-| 6 | `--emit-syntax` | Parser tree and recovery shape. |
-| 7 | `--emit-module-graph` | File-backed modules, imports, and item surfaces. |
-| 8 | `--emit-declaration-index` | Declaration names, visibility, signatures, and source locations. |
-| 9 | Future HIR dump | Lowered syntax and resolver-facing node shapes. |
-| 10 | `--emit-typed-ir` | Type, ownership, trait, and lowering facts. |
-| 11 | `--emit-pass-summary` | Stage counts and pass boundaries. |
-| 12 | `--emit-llvm` | Backend lowering once earlier layers are stable. |
-| 13 | Object/shared symbol checks | ABI, exported names, relocation, and shared-library surfaces. |
-| 14 | Executable behavior | Final runtime behavior after earlier artifacts match. |
+| 2 | `--emit-capability-inventory` | Implemented, partial, planned, and rejected compiler capabilities. |
+| 3 | `--emit-source-map` | Source files, bytes, line starts, and paths. |
+| 4 | `--emit-tokens` | Lexer output and token spans. |
+| 5 | `--emit-diagnostics` | Expected failures, labels, notes, and path normalization. |
+| 6 | `--emit-diagnostic-catalog` | Diagnostic codes, families, owners, and current fallback policy. |
+| 7 | `--emit-syntax` | Parser tree and recovery shape. |
+| 8 | `--emit-module-graph` | File-backed modules, imports, and item surfaces. |
+| 9 | `--emit-declaration-index` | Declaration names, visibility, signatures, and source locations. |
+| 10 | Future HIR dump | Lowered syntax and resolver-facing node shapes. |
+| 11 | `--emit-typed-ir` | Type, ownership, trait, and lowering facts. |
+| 12 | `--emit-pass-summary` | Stage counts and pass boundaries. |
+| 13 | `--emit-llvm` | Backend lowering once earlier layers are stable. |
+| 14 | Object/shared symbol checks | ABI, exported names, relocation, and shared-library surfaces. |
+| 15 | Executable behavior | Final runtime behavior after earlier artifacts match. |
 
 The order is not bureaucracy. It keeps failures near the layer that changed.
 
@@ -107,6 +108,7 @@ Keep fixture names behavior-based:
 - `syntax-dump-basic.syntax`
 - `module-graph-file-module.graph`
 - `declaration-index-basic.decls`
+- `capability-inventory.inventory`
 - `diagnostic-catalog.catalog`
 - `stage-plan-basic.plan`
 - `typed-ir-basic.ir`

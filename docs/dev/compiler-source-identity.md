@@ -140,8 +140,8 @@ Before handing off source identity work, answer:
 - Are generated or virtual sources represented explicitly?
 - Are spans byte-based, inclusive/exclusive, and bounds-checked?
 - Does line/column rendering stay one-based for users?
-- Is the source-map, token, syntax, declaration, module, or diagnostic artifact
-  the closest proof?
+- Is the capability inventory, source-map, token, syntax, declaration, module,
+  or diagnostic artifact the closest proof?
 - Did diagnostics improve without moving compiler-only APIs into runtime `std`?
 
 Strong source identity moves Ari toward a real compiler by making every later

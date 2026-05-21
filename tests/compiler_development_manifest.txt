@@ -34,8 +34,8 @@ allocation-model: zones, scratch arenas, ownership, drop, borrow diagnostics
 ir-contract: resolved sema facts lowered into typed IR
 backend-artifacts: LLVM IR, object, executable, shared-library artifact checks
 tool-build-flow: focused Make targets for one Ari tool and its fixtures
-artifact-testing: token, diagnostic, syntax, HIR, typed IR, LLVM, object, executable comparison policy
+artifact-testing: capability inventory, token, diagnostic, syntax, HIR, typed IR, LLVM, object, executable comparison policy
 test-classification: ok, errors, artifact, tooling, backend, and executable fixture categories
 doc-crosswalk: language feature docs, examples, test families, and small checks
 policy-errors: class/interface bootstrap-only syntax stays rejected in compiler-development fixtures
-stage-comparison: token, syntax, HIR, typed IR, LLVM text comparison order
+stage-comparison: capability inventory, token, syntax, HIR, typed IR, LLVM text comparison order

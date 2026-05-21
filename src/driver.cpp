@@ -71,6 +71,7 @@ static void usage() {
                  "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
                  "           [--emit-diagnostics path] [--emit-source-map path]\n"
                  "           [--emit-diagnostic-catalog path]\n"
+                 "           [--emit-capability-inventory path]\n"
                  "           [--emit-module-graph path] [--emit-declaration-index path]\n"
                  "           [--emit-typed-ir path] [--emit-pass-summary path]\n"
                  "           [--emit-stage-plan path]\n"
@@ -98,6 +99,7 @@ int run(int argc, char** argv) {
     std::string syntax_output;
     std::string diagnostic_output;
     std::string diagnostic_catalog_output;
+    std::string capability_inventory_output;
     std::string source_map_output;
     std::string module_graph_output;
     std::string declaration_index_output;
@@ -163,6 +165,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-diagnostic-catalog") {
             if (i + 1 >= argc) throw CompileError("--emit-diagnostic-catalog expects a path");
             diagnostic_catalog_output = argv[++i];
+        } else if (arg == "--emit-capability-inventory") {
+            if (i + 1 >= argc) throw CompileError("--emit-capability-inventory expects a path");
+            capability_inventory_output = argv[++i];
         } else if (arg == "--emit-source-map") {
             if (i + 1 >= argc) throw CompileError("--emit-source-map expects a path");
             source_map_output = argv[++i];
@@ -237,6 +242,7 @@ int run(int argc, char** argv) {
                        !object_output.empty() ||
                        !c_header_output.empty() || !source_map_output.empty() ||
                        !diagnostic_catalog_output.empty() ||
+                       !capability_inventory_output.empty() ||
                        !module_graph_output.empty() || !declaration_index_output.empty() ||
                        !typed_ir_output.empty() ||
                        !pass_summary_output.empty() || !stage_plan_output.empty() ||
@@ -251,6 +257,7 @@ int run(int argc, char** argv) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
     if ((!source_map_output.empty() || !diagnostic_catalog_output.empty() ||
+         !capability_inventory_output.empty() ||
          !module_graph_output.empty() ||
          !declaration_index_output.empty() ||
          !typed_ir_output.empty() || !pass_summary_output.empty() ||
@@ -266,6 +273,7 @@ int run(int argc, char** argv) {
     if (!syntax_output.empty()) ++artifact_output_count;
     if (!diagnostic_output.empty()) ++artifact_output_count;
     if (!diagnostic_catalog_output.empty()) ++artifact_output_count;
+    if (!capability_inventory_output.empty()) ++artifact_output_count;
     if (!source_map_output.empty()) ++artifact_output_count;
     if (!module_graph_output.empty()) ++artifact_output_count;
     if (!declaration_index_output.empty()) ++artifact_output_count;
@@ -278,6 +286,12 @@ int run(int argc, char** argv) {
     if (!diagnostic_catalog_output.empty()) {
         write_text_file(diagnostic_catalog_output, dump_diagnostic_catalog());
         std::cout << "wrote " << diagnostic_catalog_output << " (diagnostic catalog)\n";
+        return 0;
+    }
+    if (!capability_inventory_output.empty()) {
+        write_text_file(capability_inventory_output,
+                        dump_compiler_capability_inventory(target.triple, implicit_std));
+        std::cout << "wrote " << capability_inventory_output << " (compiler capability inventory)\n";
         return 0;
     }
     if (!stage_plan_output.empty()) {

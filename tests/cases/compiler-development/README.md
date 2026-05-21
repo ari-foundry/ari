@@ -73,6 +73,8 @@ the same language surface that normal Ari users get.
   module, and source-location golden seed before semantic lowering.
 - `artifact/ok/stage-plan-basic.plan`: compiler artifact order, layer owner,
   first-check, and development-gate golden seed emitted by the driver.
+- `artifact/ok/capability-inventory.inventory`: implemented, partial, planned,
+  and rejected compiler capability status emitted by the driver.
 - `artifact/ok/diagnostic-catalog.catalog`: diagnostic code, family, owner,
   and fallback-policy golden seed emitted by the driver.
 - `artifact/ok/token-dump-basic.*`: lexer, parser, and typed-IR golden seed

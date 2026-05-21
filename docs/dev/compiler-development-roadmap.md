@@ -50,9 +50,9 @@ Read this page for normal compiler work:
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) defines
   the source-map and diagnostic tooling layer that should stay outside runtime
   `std`.
-- [Compiler Artifact Testing](compiler-artifact-testing.md) defines how token,
-  diagnostic, syntax, HIR, typed IR, LLVM, object, and executable artifacts are
-  compared.
+- [Compiler Artifact Testing](compiler-artifact-testing.md) defines how
+  capability inventory, token, diagnostic, syntax, HIR, typed IR, LLVM,
+  object, and executable artifacts are compared.
 - [Production Compiler Design](production-compiler-design.md) explains the
   language contract a future Ari-written compiler would also rely on.
 - [Bootstrap Readiness](bootstrap-readiness.md) tracks how close Ari is to
@@ -233,9 +233,9 @@ Exit criteria:
 
 ### Phase 6: IR And Backend Artifacts
 
-- Keep `--emit-source-map`, `--emit-tokens`, `--emit-syntax`,
-  `--emit-diagnostics`, `--emit-declaration-index`, and `--emit-typed-ir` as
-  the first detailed artifact producers.
+- Keep `--emit-capability-inventory`, `--emit-source-map`, `--emit-tokens`,
+  `--emit-syntax`, `--emit-diagnostics`, `--emit-declaration-index`, and
+  `--emit-typed-ir` as the first detailed artifact producers.
 - Use `--emit-pass-summary` for quick stage-boundary counts while extending the
   same golden comparison pattern to module graphs, structured diagnostics, HIR,
   and richer typed IR.

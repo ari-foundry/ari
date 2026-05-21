@@ -104,7 +104,7 @@ Run the smallest check that proves the slice you touched:
 | Language docs or feature index | `make check-language-docs` |
 | Compiler roadmap, dashboard, or dev docs | `make check-compiler-dev-docs` |
 | Compiler-shaped Ari model fixture | `make check-compiler-development` |
-| Stage-plan, token, syntax, diagnostic catalog, diagnostic, module, declaration, typed-IR, or pass-summary golden | `make check-compiler-artifacts` |
+| Stage-plan, capability inventory, token, syntax, diagnostic catalog, diagnostic, module, declaration, typed-IR, or pass-summary golden | `make check-compiler-artifacts` |
 | Long-term self-host readiness docs only | `make check-bootstrap-docs` |
 | One Ari source while iterating | `build/ari path/to/file.ari --check` |
 

@@ -43,19 +43,20 @@ Compare artifacts in this order:
 | Order | Artifact | Purpose | Producer |
 | --- | --- | --- | --- |
 | 1 | Stage plan | Prove artifact order, owners, and first checks are visible from the compiler. | driver |
-| 2 | Source map dump | Prove file text, byte offsets, line tables, and newline policy are stable. | source loader |
-| 3 | Token dump | Prove lexing and source spans are stable. | lexer |
-| 4 | Diagnostic dump | Prove source maps and error rendering are stable. | lexer/parser/sema |
-| 5 | Diagnostic catalog | Prove diagnostic code ownership and fallback policy are stable. | diagnostics |
-| 6 | Syntax dump | Prove parsing and recovery are stable. | parser |
-| 7 | Module graph dump | Prove file-backed module loading, imports, and public item surfaces are stable. | module loader |
-| 8 | Declaration index dump | Prove parsed declaration signatures, visibility, and source locations are stable. | parser/module loader |
-| 9 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
-| 10 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
-| 11 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
-| 12 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
-| 13 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
-| 14 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
+| 2 | Capability inventory | Prove implemented, partial, planned, and rejected compiler features are explicit. | driver |
+| 3 | Source map dump | Prove file text, byte offsets, line tables, and newline policy are stable. | source loader |
+| 4 | Token dump | Prove lexing and source spans are stable. | lexer |
+| 5 | Diagnostic dump | Prove source maps and error rendering are stable. | lexer/parser/sema |
+| 6 | Diagnostic catalog | Prove diagnostic code ownership and fallback policy are stable. | diagnostics |
+| 7 | Syntax dump | Prove parsing and recovery are stable. | parser |
+| 8 | Module graph dump | Prove file-backed module loading, imports, and public item surfaces are stable. | module loader |
+| 9 | Declaration index dump | Prove parsed declaration signatures, visibility, and source locations are stable. | parser/module loader |
+| 10 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
+| 11 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
+| 12 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
+| 13 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
+| 14 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
+| 15 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
 
 Do not skip directly to executable comparison for compiler frontend work. A
 binary exit code can say "something changed"; it cannot say which compiler
@@ -71,6 +72,14 @@ Source map dump example:
 SourceMap source=src/main.ari files=1
   File module=<root> root=true path=src/main.ari bytes=20 lines=1 trailing_newline=true
     Line number=1 byte_start=0 byte_len=19 newline=lf text="fn main() -> i64 {}"
+```
+
+Capability inventory example:
+
+```text
+CompilerCapabilityInventory version=1 target=x86_64-pc-linux-gnu implicit_std=false entries=2
+  capability=functions status=implemented owner=parser/sema/backend first_check="make check-functions" proves="function declarations, calls, returns, and main entry points"
+  capability=hir-artifact status=planned owner=lowering/resolver first_check="future check-compiler-artifacts" proves="lowered syntax and resolver-facing node shapes before typed IR"
 ```
 
 Token dump example:
@@ -242,6 +251,7 @@ frontend producer:
 tests/check_compiler_artifacts.py
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
+tests/cases/compiler-development/artifact/ok/capability-inventory.inventory
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
 tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog
@@ -260,6 +270,7 @@ tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic
 ari --emit-tokens path
+ari --emit-capability-inventory path
 ari --emit-source-map path
 ari --emit-syntax path
 ari --emit-diagnostics path
@@ -272,7 +283,7 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves fourteen low-level contracts:
+It currently proves fifteen low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -280,6 +291,8 @@ It currently proves fourteen low-level contracts:
 - a line mismatch produces a small report naming the fixture and line
 - `--emit-stage-plan` writes deterministic artifact order, owner, first-check,
   and development-gate text directly from the compiler driver
+- `--emit-capability-inventory` writes the compiler's implemented, partial,
+  planned, and rejected public feature surface with owners and first checks
 - `--emit-source-map` writes deterministic source file, byte offset, line, and
   newline-policy text for root and file-backed modules
 - `--emit-tokens` writes deterministic lexer output for a small Ari source file
@@ -319,6 +332,8 @@ The current compiler already has useful artifact checks:
 - `--emit-source-map` for stable byte offset, line table, and snippet text
 - `--emit-stage-plan` for stable stage-order and first-check routing from the
   compiler binary
+- `--emit-capability-inventory` for stable public compiler feature status,
+  owners, and next-check routing
 - `--emit-diagnostic-catalog` for stable diagnostic code ownership
 - `--emit-tokens` for stable lexer token text and start locations
 - `--emit-syntax` for stable parser tree text before semantic analysis
@@ -358,7 +373,7 @@ end test.
 ## Readiness Impact
 
 Stage comparison remains a major blocker. Ari should stay around the current
-**38-42% ready** estimate until the current token, diagnostic, syntax, and
-typed-IR seeds grow into broader coverage, and HIR plus LLVM text comparison
-exist enough that a future stage1 and stage2 can disagree in a useful,
-localized way.
+**38-42% ready** estimate until the current capability inventory, token,
+diagnostic, syntax, and typed-IR seeds grow into broader coverage, and HIR plus
+LLVM text comparison exist enough that a future stage1 and stage2 can disagree
+in a useful, localized way.
