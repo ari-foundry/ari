@@ -1426,6 +1426,7 @@ deque.front()
 deque.back()
 deque.get(index)
 deque.try_get(index)
+deque.copy_to(ref mut target)
 deque.iter()
 
 collections::ring_buffer<T>(ref mut zone, capacity)
@@ -1439,12 +1440,15 @@ buffer.try_peek()
 buffer.get(index)
 buffer.try_get(index)
 buffer.is_full()
+buffer.copy_to(ref mut target)
 buffer.iter()
 ```
 
 `Deque[T]` grows with the same zone when either end needs more room.
 `RingBuffer[T]` is fixed-capacity: `push` returns `false` when full, and
 `push_overwrite` returns the overwritten oldest value when it has to make room.
+Both collections support `copy_to(ref mut target)` for moving logical contents
+into another zone without depending on the source zone lifetime.
 
 Linked lists and priority queues:
 
@@ -1457,6 +1461,7 @@ list.pop_front()
 list.pop_back()
 list.remove_at(index)
 list.try_remove_at(index)
+list.copy_to(ref mut target)
 list.iter()
 
 collections::binary_heap<T>(ref mut zone, capacity, less)
@@ -1468,11 +1473,15 @@ heap.peek()
 heap.try_peek()
 heap.pop()
 heap.try_pop()
+heap.copy_to(ref mut target)
+queue.copy_to(ref mut target)
 ```
 
 `LinkedList[T]` uses zone-backed index nodes and reuses removed node slots.
 `BinaryHeap[T]` and `PriorityQueue[T]` use `less(a, b)` as a lower-priority
 predicate, so `collections::less_i64` makes larger integers pop first.
+`copy_to(ref mut target)` rebuilds linked-list live order or copies heap
+storage into the target zone while preserving observable pop order.
 
 Hash-table collections use explicit hash functions:
 

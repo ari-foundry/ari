@@ -95,9 +95,10 @@ The current `std` package already provides:
   `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed
   `HashMap[K,V]`/`HashSet[T]` with explicit hash functions and live-bucket
   iterators, and red-black-tree `TreeMap[K,V]`/`TreeSet[T]` with explicit
-  comparators, sorted iterators, boundary entries, target-zone copy, and
-  fallback `get_or` map lookup; all use explicit-zone storage, tracked-local
-  zone inference for common growable mutation calls, and provenance checks
+  comparators, sorted iterators, boundary entries, and fallback `get_or` map
+  lookup; collection families support target-zone copy where they own storage,
+  and all use explicit-zone storage, tracked-local zone inference for common
+  growable mutation calls, and provenance checks
 - `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access,
   `Option`-returning element access helpers, and borrowed
   range/split/subsequence/compare/chunk/window helpers plus receiver-form

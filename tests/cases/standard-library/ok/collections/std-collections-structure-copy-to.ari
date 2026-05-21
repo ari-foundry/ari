@@ -1,0 +1,78 @@
+// Covers target-zone copies for sequence-like and priority collections. Copies
+// keep logical order for queues/lists and priority order for heap structures.
+fn main() -> i64 {
+  var source = zone::create(4096);
+  var target = zone::create(4096);
+  var score = 0;
+
+  var deque = Deque::new<i64>(ref mut source, 1);
+  deque.push_back(ref mut source, 1);
+  deque.push_back(ref mut source, 2);
+  deque.push_back(ref mut source, 3);
+  deque.pop_front();
+  deque.push_back(ref mut source, 4);
+  var deque_copy = deque.copy_to(ref mut target);
+
+  var buffer = RingBuffer::new<i64>(ref mut source, 4);
+  buffer.push(1);
+  buffer.push(2);
+  buffer.push(3);
+  buffer.pop();
+  buffer.push(4);
+  var buffer_copy = buffer.copy_to(ref mut target);
+
+  var list = LinkedList::new<i64>(ref mut source, 1);
+  list.push_back(ref mut source, 1);
+  list.push_back(ref mut source, 2);
+  list.push_back(ref mut source, 3);
+  list.remove_at(1);
+  list.push_back(ref mut source, 4);
+  var list_copy = list.copy_to(ref mut target);
+
+  var heap = BinaryHeap::new<i64>(ref mut source, 1, collections::less_i64);
+  heap.push(ref mut source, 2);
+  heap.push(ref mut source, 9);
+  heap.push(ref mut source, 5);
+  var heap_copy = heap.copy_to(ref mut target);
+
+  var queue = PriorityQueue::new<i64>(ref mut source, 1, collections::less_i64);
+  queue.push(ref mut source, 3);
+  queue.push(ref mut source, 7);
+  queue.push(ref mut source, 1);
+  var queue_copy = queue.copy_to(ref mut target);
+
+  zone::destroy(source);
+
+  if deque_copy.len() == 3 &&
+     deque_copy.front() == 2 &&
+     deque_copy.back() == 4 &&
+     deque_copy.get(1) == 3 {
+    score = score + 5;
+  }
+
+  if buffer_copy.capacity() == 4 &&
+     buffer_copy.len() == 3 &&
+     buffer_copy.get(0) == 2 &&
+     buffer_copy.get(2) == 4 &&
+     buffer_copy.push(5) {
+    score = score + 7;
+  }
+
+  if list_copy.len() == 3 &&
+     list_copy.front() == 1 &&
+     list_copy.get(1) == 3 &&
+     list_copy.back() == 4 {
+    score = score + 11;
+  }
+
+  if heap_copy.pop() == 9 && heap_copy.pop() == 5 {
+    score = score + 13;
+  }
+
+  if queue_copy.pop() == 7 && queue_copy.pop() == 3 {
+    score = score + 17;
+  }
+
+  zone::destroy(target);
+  return score;
+}

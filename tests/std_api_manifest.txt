@@ -762,6 +762,7 @@ method std::c::Symbol::invalid|check-prelude std-c-interop invalid dynamic symbo
 method std::c::Symbol::is_valid|check-prelude std-c-interop dynamic symbol validity predicate; docs/stdlib/modules/c.md
 method std::collections::BinaryHeap[T]::capacity|check-prelude std-collections-heap binary heap capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::clear|check-prelude std-collections-heap drops live heap values; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone binary heap copy preserving priority order; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::is_empty|check-prelude std-collections-heap binary heap emptiness predicate; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::len|check-prelude std-collections-heap binary heap length metadata; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::new|check-prelude std-collections-heap associated explicit-comparator constructor; docs/stdlib/modules/collections.md
@@ -775,6 +776,7 @@ method std::collections::BinaryHeap[T]::try_pop|check-prelude std-collections-he
 method std::collections::Deque[T]::back|check-prelude std-collections-deque asserting back accessor; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::capacity|check-prelude std-collections-deque deque capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::clear|check-prelude std-collections-deque drops live deque values; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone deque copy preserving logical order; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::front|check-prelude std-collections-deque asserting front accessor; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::get|check-prelude std-collections-deque logical indexed read through circular storage; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::is_empty|check-prelude std-collections-deque deque emptiness predicate; docs/stdlib/modules/collections.md
@@ -832,6 +834,7 @@ method std::collections::HashSet[T]::take|check-prelude std-collections-hash Opt
 method std::collections::LinkedList[T]::back|check-prelude std-collections-linked-list asserting back accessor; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::capacity|check-prelude std-collections-linked-list linked list capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::clear|check-prelude std-collections-linked-list drops live linked list values; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone linked-list copy preserving logical order; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::front|check-prelude std-collections-linked-list asserting front accessor; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::get|check-prelude std-collections-linked-list indexed traversal read; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::is_empty|check-prelude std-collections-linked-list linked list emptiness predicate; docs/stdlib/modules/collections.md
@@ -853,6 +856,7 @@ method std::collections::LinkedList[T]::try_pop_front|check-prelude std-collecti
 method std::collections::LinkedList[T]::try_remove_at|check-prelude std-collections-linked-list optional indexed removal; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::capacity|check-prelude std-collections-heap priority queue capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::clear|check-prelude std-collections-heap drops live priority queue values; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone priority queue copy preserving priority order; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::is_empty|check-prelude std-collections-heap priority queue emptiness predicate; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::len|check-prelude std-collections-heap priority queue length metadata; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::new|check-prelude std-collections-heap associated priority queue constructor; docs/stdlib/modules/collections.md
@@ -865,6 +869,7 @@ method std::collections::PriorityQueue[T]::try_peek|check-prelude std-collection
 method std::collections::PriorityQueue[T]::try_pop|check-prelude std-collections-heap optional highest-priority removal; docs/stdlib/modules/collections.md
 method std::collections::RingBuffer[T]::capacity|check-prelude std-collections-ring-buffer ring buffer fixed capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::RingBuffer[T]::clear|check-prelude std-collections-ring-buffer drops live ring buffer values; docs/stdlib/modules/collections.md
+method std::collections::RingBuffer[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone ring buffer copy preserving fixed capacity and FIFO order; docs/stdlib/modules/collections.md
 method std::collections::RingBuffer[T]::get|check-prelude std-collections-ring-buffer logical indexed read after wraparound; docs/stdlib/modules/collections.md
 method std::collections::RingBuffer[T]::is_empty|check-prelude std-collections-ring-buffer emptiness predicate; docs/stdlib/modules/collections.md
 method std::collections::RingBuffer[T]::is_full|check-prelude std-collections-ring-buffer full-capacity predicate; docs/stdlib/modules/collections.md

@@ -2510,6 +2510,16 @@ pub impl[T] std::collections::Deque[T] {
     deque_grow_to_capacity<T>(self, zone, self.len + additional);
   }
 
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::Deque[T] {
+    var copied = std::collections::deque<T>(target, self.len);
+    var index = 0;
+    while index < self.len {
+      copied.push_back(target, self.get(index));
+      index = index + 1;
+    }
+    return copied;
+  }
+
   fn iter(self: ref Self) -> std::collections::DequeIter[T] {
     return std::collections::DequeIter<T> {
       data: self.data,
@@ -2667,6 +2677,16 @@ pub impl[T] std::collections::RingBuffer[T] {
 
   fn clear(self: ref mut Self) -> void {
     ring_buffer_drop_values<T>(self);
+  }
+
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::RingBuffer[T] {
+    var copied = std::collections::ring_buffer<T>(target, self.capacity);
+    var index = 0;
+    while index < self.len {
+      copied.push(self.get(index));
+      index = index + 1;
+    }
+    return copied;
   }
 
   fn iter(self: ref Self) -> std::collections::RingBufferIter[T] {
@@ -2982,6 +3002,16 @@ pub impl[T] std::collections::LinkedList[T] {
     linked_list_grow_to_capacity<T>(self, zone, self.len + additional);
   }
 
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::LinkedList[T] {
+    var copied = std::collections::linked_list<T>(target, self.len);
+    var node = self.head;
+    while node >= 0 {
+      copied.push_back(target, ptr_load(ptr_add(self.data, node)));
+      node = ptr_load(ptr_add(self.next_node, node));
+    }
+    return copied;
+  }
+
   fn iter(self: ref Self) -> std::collections::LinkedListIter[T] {
     return std::collections::LinkedListIter<T> {
       data: self.data,
@@ -3184,6 +3214,17 @@ pub impl[T] std::collections::BinaryHeap[T] {
     std::assert(additional >= 0);
     binary_heap_grow_to_capacity<T>(self, zone, self.len + additional);
   }
+
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::BinaryHeap[T] {
+    var copied = std::collections::binary_heap<T>(target, self.len, self.less);
+    var index = 0;
+    while index < self.len {
+      ptr_store(ptr_add(copied.data, index), ptr_load(ptr_add(self.data, index)));
+      index = index + 1;
+    }
+    copied.len = self.len;
+    return copied;
+  }
 }
 
 impl[T] std::zone::ZoneBacked for std::collections::BinaryHeap[T] {
@@ -3354,6 +3395,17 @@ pub impl[T] std::collections::PriorityQueue[T] {
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
     priority_queue_grow_to_capacity<T>(self, zone, self.len + additional);
+  }
+
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::PriorityQueue[T] {
+    var copied = std::collections::priority_queue<T>(target, self.len, self.less);
+    var index = 0;
+    while index < self.len {
+      ptr_store(ptr_add(copied.data, index), ptr_load(ptr_add(self.data, index)));
+      index = index + 1;
+    }
+    copied.len = self.len;
+    return copied;
   }
 }
 

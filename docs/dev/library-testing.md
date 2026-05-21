@@ -228,6 +228,9 @@ identifies the exact case:
 - `std-collections-copy-to.ari`: target-zone copies for hash and tree maps/sets,
   including tombstone skipping and post-source-destroy reads from copied
   storage.
+- `std-collections-structure-copy-to.ari`: target-zone copies for deque, ring
+  buffer, linked list, binary heap, and priority queue after source-zone
+  destroy, covering logical order and priority pop order.
 - `std-collections-set-after-reset.ari`: negative source-zone provenance
   diagnostic for a tracked set after `zone::reset`.
 - `std-collections-set-iter-after-reset.ari`: negative source-zone provenance
