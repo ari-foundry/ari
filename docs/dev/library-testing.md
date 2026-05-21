@@ -288,6 +288,11 @@ identifies the exact case:
   point, reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup
   behavior over borrowed slices, including custom `Ord` values through natural
   ordering operators.
+- `std-algo-final-sort.ari`: production-shaped sort coverage for empty,
+  one-element, two-element, sorted, reverse-sorted, all-equal, alternating,
+  random, duplicate-heavy, 10,000-element random/sorted/reverse inputs,
+  duplicate-key stable ordering, explicit temporary-zone stable sort, and
+  `try_stable_sort*` result wrappers.
 - `std-algo-dedup-partition.ari`: source `std::algo` `dedup_by`,
   `dedup_by_key`, stable partition, and the matching natural `Slice`/`Vec`
   receiver wrappers, including owned `Vec` truncation after dedup.

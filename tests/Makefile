@@ -1133,6 +1133,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf
 	$(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 12
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 12; fi
+	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-final-sort.ari --emit-llvm $(BUILD_DIR)/prelude/std-algo-final-sort.ll
+	grep -F -q 'introsort_ord_range__G_i64' $(BUILD_DIR)/prelude/std-algo-final-sort.ll
+	grep -F -q 'heap_sort_ord_range__G_i64' $(BUILD_DIR)/prelude/std-algo-final-sort.ll
+	grep -F -q 'stable_merge_sort_ord_range__G_i64' $(BUILD_DIR)/prelude/std-algo-final-sort.ll
+	grep -F -q 'stable_sort_by_in__G_Pair' $(BUILD_DIR)/prelude/std-algo-final-sort.ll
+	grep -F -q 'try_stable_sort_by__G_Pair' $(BUILD_DIR)/prelude/std-algo-final-sort.ll
+	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-final-sort.ari -o $(BUILD_DIR)/prelude/std-algo-final-sort.elf
+	$(BUILD_DIR)/prelude/std-algo-final-sort.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-dedup-partition.ari --emit-llvm $(BUILD_DIR)/prelude/std-algo-dedup-partition.ll
 	grep -F -q 'std4algo15dedup_by__G_i64' $(BUILD_DIR)/prelude/std-algo-dedup-partition.ll
 	grep -F -q 'dedup_by_key__G_User_i64' $(BUILD_DIR)/prelude/std-algo-dedup-partition.ll

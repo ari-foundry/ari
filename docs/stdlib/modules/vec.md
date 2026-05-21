@@ -241,6 +241,10 @@ vec.sort()
 vec.sort_by(less)
 vec.stable_sort()
 vec.stable_sort_by(less)
+vec.stable_sort_in(ref mut zone)
+vec.stable_sort_by_in(less, ref mut zone)
+vec.try_stable_sort()
+vec.try_stable_sort_by(less)
 vec.is_sorted()
 vec.is_sorted_by(less)
 vec.binary_search(value)
@@ -266,7 +270,11 @@ storage. `chunks`, `windows`, and delimiter `split` return lazy iterators that
 yield borrowed `Slice[T]` views, so they do not allocate. `reverse`, the
 rotation helpers, their half-open `reverse_range`/`rotate_range` variants,
 `sort`, and `stable_sort` mutate the existing storage in place through the same
-algorithm module helpers used for borrowed slices.
+algorithm module helpers used for borrowed slices. `stable_sort` uses an
+internal temporary zone for merge-sort storage, while `stable_sort_in` and
+`stable_sort_by_in` use a caller-provided temporary zone. The `try_stable_sort`
+forms return `Result[(), Error]` for the same preflight contract exposed by
+`std::algo`.
 The borrowed-view `dedup_by*` forms return a logical length without truncating;
 the owning mutation forms above truncate the vector.
 `is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `equal_range`,
@@ -394,6 +402,7 @@ tests/cases/standard-library/ok/vec/std-vec-try-remove.ari
 tests/cases/standard-library/ok/vec/std-vec-retain.ari
 tests/cases/standard-library/ok/vec/std-vec-slice-compare.ari
 tests/cases/standard-library/ok/vec/std-vec-sequence.ari
+tests/cases/standard-library/ok/algo/std-algo-final-sort.ari
 tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari
 tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari
 tests/cases/standard-library/ok/vec/std-vec-range-mutation.ari

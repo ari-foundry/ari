@@ -578,9 +578,10 @@ Checklist:
 - [x] source `std::vec::Vec<T>` exposes in-place `reverse`,
       `rotate_left(count)`, and `rotate_right(count)` wrappers over its live
       element storage
-- [x] source `std::vec::Vec<T>` exposes `Ord[T]`-bounded `sort`,
-      `stable_sort`, `is_sorted`, `binary_search`, `min`, and `max` wrappers
-      over its live element storage
+- [x] source `std::vec::Vec<T>` exposes `Ord[T]`-bounded introsort-backed
+      `sort`, merge-sort-backed `stable_sort`, explicit-zone and `Result`
+      stable-sort wrappers, `is_sorted`, `binary_search`, `min`, and `max`
+      wrappers over its live element storage
 - [x] source `std::vec::Vec<T>.reserve(capacity)` grows the handle with a
       larger allocation from the `ZoneMetadata` stored in the handle
 - [x] source `std::vec::Vec<T>.reserve_extra(additional)` grows capacity to at
@@ -631,6 +632,12 @@ Checklist:
       mutation helpers for overlap-safe `copy_within`, `fill_range`,
       `reverse_range`, and left-rotation `rotate_range`; source Vec also
       exposes `extend_iter` and `drain_range`
+- [x] source `std::algo` covers production-shaped sort engines with
+      insertion-sort cutoff, duplicate-heavy 3-way partitioning, heapsort
+      fallback symbols, merge-sort stable sort, explicit temporary-zone stable
+      sort, `try_stable_sort*` result wrappers, large 10,000-element sorted,
+      reverse, random, and duplicate-heavy cases, and stable duplicate-key
+      ordering
 - [x] source `std::vec::Vec<T>` has a value-drop handle `Drop` impl that drops
       each current element while leaving storage release to the explicit zone,
       with shared shrink/drop lowering for `set`, `clear`, `truncate`, and

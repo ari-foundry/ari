@@ -152,6 +152,10 @@ view.sort()
 view.sort_by(less)
 view.stable_sort()
 view.stable_sort_by(less)
+view.stable_sort_in(ref mut zone)
+view.stable_sort_by_in(less, ref mut zone)
+view.try_stable_sort()
+view.try_stable_sort_by(less)
 view.is_sorted()
 view.is_sorted_by(less)
 view.binary_search(target)
@@ -181,6 +185,10 @@ The range forms use half-open indexes: `copy_within(start, end, target)` copies
 `[start, end)` into the same slice starting at `target`, `fill_range` overwrites
 `[start, end)`, `reverse_range` reverses that span, and `rotate_range` left
 rotates only that span.
+The stable-sort receiver forms forward to the merge-sort engine in `std::algo`.
+Use `stable_sort_in`/`stable_sort_by_in` when the caller already has a
+temporary zone to spend on the merge buffer; use `try_stable_sort*` when the
+call site wants a `Result[(), Error]` shape for layout preflight errors.
 `lower_bound` and `upper_bound` return sorted insertion indexes, which is useful
 when missing values should be inserted or duplicate ranges must be counted.
 `equal_range` returns the `(lower, upper)` duplicate range directly, and
@@ -201,6 +209,7 @@ tests/cases/standard-library/ok/vec/prelude-slice-methods.ari
 tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
 tests/cases/standard-library/ok/vec/prelude-slice-convenience.ari
 tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari
+tests/cases/standard-library/ok/algo/std-algo-final-sort.ari
 tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari
 tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
 tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari

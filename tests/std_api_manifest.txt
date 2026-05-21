@@ -55,7 +55,11 @@ fn std::algo::sort_by[T]|check-prelude std-algo-slice-helpers comparator sort; d
 fn std::algo::stable_partition[T]|check-prelude std-algo-dedup-partition stable borrowed-predicate partition; docs/stdlib/modules/algo.md
 fn std::algo::stable_sort[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers ordered stable sort; docs/stdlib/modules/algo.md
 fn std::algo::stable_sort_by[T]|check-prelude std-algo-slice-helpers comparator stable sort; docs/stdlib/modules/algo.md
+fn std::algo::stable_sort_by_in[T]|check-prelude std-algo-final-sort comparator stable sort with explicit temporary zone; docs/stdlib/modules/algo.md
+fn std::algo::stable_sort_in[T: std::cmp::Ord[T]|check-prelude std-algo-final-sort ordered stable sort with explicit temporary zone; docs/stdlib/modules/algo.md
 fn std::algo::swap[T]|check-prelude std-algo-slice-helpers element swap; docs/stdlib/modules/algo.md
+fn std::algo::try_stable_sort[T: std::cmp::Ord[T]|check-prelude std-algo-final-sort direct Result stable sort entry; docs/stdlib/modules/algo.md
+fn std::algo::try_stable_sort_by[T]|check-prelude std-algo-final-sort comparator direct Result stable sort entry; docs/stdlib/modules/algo.md
 fn std::algo::upper_bound[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers sorted insertion upper bound; docs/stdlib/modules/algo.md
 fn std::algo::upper_bound_by[T]|check-prelude std-algo-by-helpers comparator sorted insertion upper bound; docs/stdlib/modules/algo.md
 fn std::ascii::contains_ignore_case|std ascii case search tests; docs/stdlib/api-reference.md ASCII section
@@ -913,6 +917,10 @@ method std::Slice[T]::sort_by|check-prelude std-algo-by-helpers comparator borro
 method std::Slice[T]::stable_partition|check-prelude std-algo-dedup-partition stable borrowed-predicate partition wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::stable_sort|check-prelude prelude-slice-sequence ordered borrowed slice stable sort wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::stable_sort_by|check-prelude std-algo-by-helpers comparator borrowed slice stable sort wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::stable_sort_by_in|check-prelude std-algo-final-sort comparator borrowed slice stable sort with explicit temporary zone; docs/stdlib/modules/slice.md
+method std::Slice[T]::stable_sort_in|check-prelude std-algo-final-sort ordered borrowed slice stable sort with explicit temporary zone; docs/stdlib/modules/slice.md
+method std::Slice[T]::try_stable_sort|check-prelude std-algo-final-sort direct Result borrowed slice stable sort wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::try_stable_sort_by|check-prelude std-algo-final-sort comparator direct Result borrowed slice stable sort wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::upper_bound|check-prelude prelude-slice-sequence ordered borrowed slice upper-bound wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::upper_bound_by|check-prelude std-algo-by-helpers comparator borrowed slice upper-bound wrapper; docs/stdlib/modules/slice.md
 method std::boxed::Box[T]::as_mut|check-prelude std-boxed-as-ref-mut mutable value borrow with conflict diagnostic; docs/dev/test-matrix.md Explicit memory zones row
@@ -1765,6 +1773,8 @@ method std::vec::Vec[T]::split_at|check-prelude std-vec-sequence borrowed split 
 method std::vec::Vec[T]::stable_partition|check-prelude std-algo-dedup-partition stable borrowed-predicate partition wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::stable_sort|check-prelude std-vec-sequence ordered in-place stable sort wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::stable_sort_by|check-prelude std-algo-by-helpers comparator in-place stable sort wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::stable_sort_by_in|check-prelude std-algo-final-sort comparator vector stable sort with explicit temporary zone; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::stable_sort_in|check-prelude std-algo-final-sort ordered vector stable sort with explicit temporary zone; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::starts_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
@@ -1774,6 +1784,8 @@ method std::vec::Vec[T]::try_last|check-prelude std-vec-try-access Option-return
 method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::vec::Vec[T]::try_remove|check-prelude std-vec-try-remove Option-returning indexed removal; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::try_reserve|check-prelude std-vec-convenience-api fallible-looking vector reserve validation; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::try_stable_sort|check-prelude std-algo-final-sort direct Result vector stable sort wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::try_stable_sort_by|check-prelude std-algo-final-sort comparator direct Result vector stable sort wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::upper_bound|check-prelude std-vec-sequence ordered sequence upper-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::upper_bound_by|check-prelude std-algo-by-helpers comparator sequence upper-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::windows|check-prelude std-vec-sequence borrowed window iterator wrapper; docs/stdlib/modules/vec.md

@@ -19,6 +19,10 @@ algo::sort<T>(values)
 algo::sort_by<T>(values, less)
 algo::stable_sort<T>(values)
 algo::stable_sort_by<T>(values, less)
+algo::stable_sort_in<T>(values, ref mut zone)
+algo::stable_sort_by_in<T>(values, less, ref mut zone)
+algo::try_stable_sort<T>(values)
+algo::try_stable_sort_by<T>(values, less)
 algo::binary_search<T>(values, target)
 algo::binary_search_by<T>(values, target, less)
 algo::lower_bound<T>(values, target)
@@ -60,6 +64,21 @@ operators dispatch to `Ord[T]::lt`. Define `impl cmp::Ord[YourType] for
 YourType` before using those helpers with a custom type. The `*_by` variants
 take an explicit comparator `fn(T, T) -> bool`, which is useful when a call
 site needs a temporary ordering policy rather than a type-wide `Ord` impl.
+
+`sort` and `sort_by` use an introsort engine: insertion sort for small ranges,
+median-of-three or Tukey-ninther pivot selection, 3-way partitioning for
+duplicate-heavy input, and heapsort fallback at `2 * floor_log2(len)` recursion
+depth. The result is unstable, in-place, average `O(n log n)`, and worst-case
+`O(n log n)`.
+
+`stable_sort` and `stable_sort_by` use merge sort with the same insertion-sort
+cutoff for small ranges. They preserve equal-value order and need a temporary
+buffer of `len` elements. The strict forms create and destroy an internal
+temporary zone. `stable_sort_in` and `stable_sort_by_in` use a caller-provided
+temporary zone. `try_stable_sort` and `try_stable_sort_by` return
+`Result[(), Error]` for preflight layout errors; today's hosted zone allocator
+still aborts on actual allocation failure until Ari grows a fallible zone
+allocation primitive.
 
 `binary_search` returns `Option[i64]`: `Some(index)` when it finds an equal
 value under `Ord`, and `None` otherwise. `lower_bound` returns the first sorted
@@ -114,8 +133,9 @@ wrappers follow the shared
   copy-oriented operation rather than a move-only resource transfer.
 - `fill` stores one value repeatedly; it does not clone or construct fresh
   values for move-only resources.
-- `sort` and `stable_sort` currently swap or shift values in place and require
-  copyable/plain element materialization.
+- `sort` is an unstable in-place introsort. `stable_sort` uses a temporary
+  merge buffer and preserves equal-value order. Both still require
+  copyable/plain element materialization under today's raw place model.
 - `dedup` on a borrowed slice only returns the live prefix length; it does not
   drop the suffix because a slice does not own storage.
 - `Vec::dedup` and other owning vector shrink paths drop removed values after
@@ -129,8 +149,8 @@ helpers.
 
 | Need | Status |
 | --- | --- |
-| sort | Current: `sort(values)` and `sort_by(values, less)` over slices. |
-| stable sort | Current: `stable_sort(values)` and `stable_sort_by(values, less)`. |
+| sort | Current: `sort(values)` and `sort_by(values, less)` use introsort with 3-way partitioning, insertion-sort cutoff, and heapsort fallback. |
+| stable sort | Current: `stable_sort(values)`, `stable_sort_by(values, less)`, explicit-zone `stable_sort_in`/`stable_sort_by_in`, and `Result` wrappers `try_stable_sort`/`try_stable_sort_by` use merge sort with an insertion-sort cutoff. |
 | binary search | Current: `binary_search(values, target) -> Option[i64]`, `lower_bound(values, target) -> i64`, `upper_bound(values, target) -> i64`, `equal_range(values, target) -> (i64, i64)`, and comparator `*_by` variants. |
 | partition point | Current: `partition_point(values, predicate) -> i64` for predicate-partitioned slices. |
 | reverse | Current: `reverse(values)`. |
@@ -203,9 +223,9 @@ algo::fill<i64>(target.as_slice()[copied..target.len()], -1);
 
 ## Current Limits
 
-- The current implementations are source-level and optimized for clarity.
-  `sort` is selection-sort based, while `stable_sort` is adjacent-swap
-  insertion sort. Faster large-slice algorithms are future work.
+- The current implementations are source-level and now use production-shaped
+  sort engines, but comparator callbacks still receive values by copy. Add
+  by-reference comparator forms before sorting resource-owning values.
 - The helpers use the current plain generic value model. They are intended for
   scalar/plain copyable values today; see
   [value movement contracts](../value-contracts.md) for the exact copy, drop,
@@ -220,6 +240,7 @@ algo::fill<i64>(target.as_slice()[copied..target.len()], -1);
 
 ```text
 tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari
+tests/cases/standard-library/ok/algo/std-algo-final-sort.ari
 tests/cases/standard-library/ok/algo/std-algo-dedup-partition.ari
 tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari
 tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
@@ -228,6 +249,10 @@ tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
 The focused test covers sorting, stable sorting, comparator-based sorting,
 binary search, lower/upper/equal-range bounds, partition point, min/max/clamp,
 reverse, rotation, partition, fill, copy, dedup, and swap over `Slice[i64]`.
+`std-algo-final-sort.ari` covers empty, one-element, two-element, sorted,
+reverse-sorted, all-equal, alternating, random, duplicate-heavy, 10,000-element
+sorted/reverse/random inputs, stability with duplicate keys, explicit temporary
+zone stable sort, `try_stable_sort`, and Slice/Vec receiver wrappers.
 `std-algo-dedup-partition.ari` covers `dedup_by`, `dedup_by_key`,
 `stable_partition`, and the natural `Slice`/`Vec` receiver wrappers.
 `std-algo-by-helpers.ari` covers comparator search, bounds, equal range,
@@ -238,8 +263,9 @@ algorithms.
 
 ## Next Work
 
-- Add faster `sort`/`stable_sort` implementations after iterator and
-  move-aware temporary storage policy are stronger.
+- Add by-reference comparator forms and true move-aware place-transfer
+  contracts so resource-owning values can be sorted without copy-oriented
+  materialization.
 - Grow `std::hash` and `std::collections` with trait-driven collection
   constructors once `Hash`/`Eq` and `Ord` dispatch policy is stronger. Hash
   containers should derive default policy from `Hash + Eq`; tree and heap

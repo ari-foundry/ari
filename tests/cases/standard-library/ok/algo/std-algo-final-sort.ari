@@ -1,0 +1,184 @@
+// Covers the production sort engines: introsort for unstable sort and
+// merge-sort-backed stable_sort paths, including large and duplicate-heavy data.
+
+struct Pair {
+  key: i64,
+  id: i64,
+}
+
+fn greater(left: i64, right: i64) -> bool {
+  return left > right;
+}
+
+fn pair_key_less(left: Pair, right: Pair) -> bool {
+  return left.key < right.key;
+}
+
+fn assert_sorted(values: Slice[i64]) -> void {
+  var index = 1;
+  while index < values.len {
+    assert(values[index - 1] <= values[index]);
+    index = index + 1;
+  }
+}
+
+fn assert_descending(values: Slice[i64]) -> void {
+  var index = 1;
+  while index < values.len {
+    assert(values[index - 1] >= values[index]);
+    index = index + 1;
+  }
+}
+
+fn fill_random(values: ref mut std::vec::Vec[i64], count: i64, modulo: i64) -> void {
+  var seed = 17;
+  var index = 0;
+  while index < count {
+    seed = (seed * 48271) % 2147483647;
+    values.push(seed % modulo);
+    index = index + 1;
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(3000000);
+
+  var empty = Vec::with_capacity<i64>(ref mut zone, 0);
+  empty.sort();
+  empty.stable_sort();
+  assert_eq_i64(empty.len(), 0);
+
+  var one = [1];
+  algo::sort<i64>(one.as_slice());
+  algo::stable_sort<i64>(one.as_slice());
+  assert_eq_i64(one[0], 1);
+
+  var two = [2, 1];
+  algo::sort<i64>(two.as_slice());
+  assert_eq_i64(two[0], 1);
+  assert_eq_i64(two[1], 2);
+
+  var already = [1, 2, 3, 4, 5];
+  algo::sort<i64>(already.as_slice());
+  assert_sorted(already.as_slice());
+
+  var reverse = [5, 4, 3, 2, 1];
+  algo::sort<i64>(reverse.as_slice());
+  assert_sorted(reverse.as_slice());
+
+  var equal = [1, 1, 1, 1];
+  algo::sort<i64>(equal.as_slice());
+  assert_sorted(equal.as_slice());
+
+  var alternating = [2, 1, 2, 1, 2, 1];
+  algo::sort<i64>(alternating.as_slice());
+  assert_sorted(alternating.as_slice());
+  assert_eq_i64(alternating[0], 1);
+  assert_eq_i64(alternating[5], 2);
+
+  var descending = [1, 4, 2, 3];
+  algo::sort_by<i64>(descending.as_slice(), greater);
+  assert_descending(descending.as_slice());
+
+  var random_small = std::vec::new<i64>(ref mut zone, 100);
+  fill_random(ref mut random_small, 100, 1000);
+  random_small.sort();
+  assert_sorted(random_small.as_slice());
+
+  var random_large = std::vec::new<i64>(ref mut zone, 10000);
+  fill_random(ref mut random_large, 10000, 100000);
+  random_large.sort();
+  assert_sorted(random_large.as_slice());
+
+  var duplicate_large = std::vec::new<i64>(ref mut zone, 10000);
+  fill_random(ref mut duplicate_large, 10000, 7);
+  duplicate_large.sort();
+  assert_sorted(duplicate_large.as_slice());
+
+  var sorted_large = std::vec::new<i64>(ref mut zone, 10000);
+  var sorted_index = 0;
+  while sorted_index < 10000 {
+    sorted_large.push(sorted_index);
+    sorted_index = sorted_index + 1;
+  }
+  sorted_large.sort();
+  assert_sorted(sorted_large.as_slice());
+  assert_eq_i64(sorted_large.get(9999), 9999);
+
+  var reverse_large = std::vec::new<i64>(ref mut zone, 10000);
+  var reverse_index = 10000;
+  while reverse_index > 0 {
+    reverse_large.push(reverse_index);
+    reverse_index = reverse_index - 1;
+  }
+  reverse_large.sort();
+  assert_sorted(reverse_large.as_slice());
+  assert_eq_i64(reverse_large.get(0), 1);
+  assert_eq_i64(reverse_large.get(9999), 10000);
+
+  var stable = [
+    Pair { key: 1, id: 0 },
+    Pair { key: 1, id: 1 },
+    Pair { key: 1, id: 2 },
+    Pair { key: 0, id: 3 },
+    Pair { key: 1, id: 4 }
+  ];
+  algo::stable_sort_by<Pair>(stable.as_slice(), pair_key_less);
+  assert_eq_i64(stable[0].id, 3);
+  assert_eq_i64(stable[1].id, 0);
+  assert_eq_i64(stable[2].id, 1);
+  assert_eq_i64(stable[3].id, 2);
+  assert_eq_i64(stable[4].id, 4);
+
+  var temp = zone::create(4096);
+  var stable_in = [4, 3, 2, 1];
+  algo::stable_sort_in<i64>(stable_in.as_slice(), ref mut temp);
+  assert_sorted(stable_in.as_slice());
+
+  var stable_by_in = [
+    Pair { key: 2, id: 10 },
+    Pair { key: 1, id: 20 },
+    Pair { key: 2, id: 11 }
+  ];
+  stable_by_in.as_slice().stable_sort_by_in(pair_key_less, ref mut temp);
+  assert_eq_i64(stable_by_in[0].id, 20);
+  assert_eq_i64(stable_by_in[1].id, 10);
+  assert_eq_i64(stable_by_in[2].id, 11);
+  zone::destroy(temp);
+
+  var try_values = [3, 2, 1];
+  assert(algo::try_stable_sort<i64>(try_values.as_slice()).is_ok());
+  assert_sorted(try_values.as_slice());
+
+  var try_pairs = [
+    Pair { key: 2, id: 30 },
+    Pair { key: 1, id: 40 },
+    Pair { key: 2, id: 31 }
+  ];
+  assert(algo::try_stable_sort_by<Pair>(try_pairs.as_slice(), pair_key_less).is_ok());
+  assert_eq_i64(try_pairs[0].id, 40);
+  assert_eq_i64(try_pairs[1].id, 30);
+  assert_eq_i64(try_pairs[2].id, 31);
+
+  var owned = std::vec::new<i64>(ref mut zone, 4);
+  owned.push(4);
+  owned.push(1);
+  owned.push(3);
+  owned.push(2);
+  var owned_temp = zone::create(4096);
+  owned.stable_sort_in(ref mut owned_temp);
+  assert_sorted(owned.as_slice());
+  zone::destroy(owned_temp);
+
+  var owned_pairs = std::vec::new<Pair>(ref mut zone, 3);
+  owned_pairs.push(Pair { key: 2, id: 50 });
+  owned_pairs.push(Pair { key: 1, id: 60 });
+  owned_pairs.push(Pair { key: 2, id: 51 });
+  assert(owned_pairs.try_stable_sort_by(pair_key_less).is_ok());
+  assert_eq_i64(owned_pairs.get(0).id, 60);
+  assert_eq_i64(owned_pairs.get(1).id, 50);
+  assert_eq_i64(owned_pairs.get(2).id, 51);
+
+  zone::destroy(zone);
+  return 0;
+}

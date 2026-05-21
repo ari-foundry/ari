@@ -466,47 +466,62 @@ pub fn partition_point[T](values: std::Slice[T], predicate: fn(ref T) -> bool) -
   return low;
 }
 
-pub fn sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
-  var index = 0;
-  while index < values.len {
-    var best = index;
-    var scan = index + 1;
-    while scan < values.len {
-      if ptr_load(ptr_add(values.data, scan)) < ptr_load(ptr_add(values.data, best)) {
-        best = scan;
-      }
-      scan = scan + 1;
-    }
-    if best != index {
-      swap<T>(values, index, best);
-    }
-    index = index + 1;
-  }
+fn insertion_limit() -> i64 {
+  return 24;
 }
 
-pub fn sort_by[T](values: std::Slice[T], less: fn(T, T) -> bool) -> void {
-  var index = 0;
-  while index < values.len {
-    var best = index;
-    var scan = index + 1;
-    while scan < values.len {
-      if less(ptr_load(ptr_add(values.data, scan)), ptr_load(ptr_add(values.data, best))) {
-        best = scan;
-      }
-      scan = scan + 1;
-    }
-    if best != index {
-      swap<T>(values, index, best);
-    }
-    index = index + 1;
+fn floor_log2(value: i64) -> i64 {
+  var current = value;
+  var depth = 0;
+  while current > 1 {
+    current = current / 2;
+    depth = depth + 1;
   }
+  return depth;
 }
 
-pub fn stable_sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
-  var index = 1;
-  while index < values.len {
+fn checked_temp_bytes[T](count: i64) -> std::Result[i64, std::error::Error] {
+  if count <= 0 {
+    return std::Ok<i64, std::error::Error>(1);
+  }
+  let size = std::mem::size_of<T>();
+  if size <= 0 {
+    return std::Err<i64, std::error::Error>(std::error::new(std::error::InvalidInput));
+  }
+  let limit = 9223372036854775807 / size;
+  if count > limit {
+    return std::Err<i64, std::error::Error>(std::error::new(std::error::OutOfMemory));
+  }
+  return std::Ok<i64, std::error::Error>(count * size);
+}
+
+fn insertion_sort_by_range[T](
+  values: std::Slice[T],
+  start: i64,
+  end: i64,
+  less: fn(T, T) -> bool
+) -> void {
+  var index = start + 1;
+  while index < end {
     var cursor = index;
-    while cursor > 0 &&
+    while cursor > start &&
+          less(ptr_load(ptr_add(values.data, cursor)), ptr_load(ptr_add(values.data, cursor - 1))) {
+      swap<T>(values, cursor - 1, cursor);
+      cursor = cursor - 1;
+    }
+    index = index + 1;
+  }
+}
+
+fn insertion_sort_ord_range[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  start: i64,
+  end: i64
+) -> void {
+  var index = start + 1;
+  while index < end {
+    var cursor = index;
+    while cursor > start &&
           ptr_load(ptr_add(values.data, cursor)) < ptr_load(ptr_add(values.data, cursor - 1)) {
       swap<T>(values, cursor - 1, cursor);
       cursor = cursor - 1;
@@ -515,15 +530,526 @@ pub fn stable_sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
   }
 }
 
-pub fn stable_sort_by[T](values: std::Slice[T], less: fn(T, T) -> bool) -> void {
-  var index = 1;
-  while index < values.len {
-    var cursor = index;
-    while cursor > 0 &&
-          less(ptr_load(ptr_add(values.data, cursor)), ptr_load(ptr_add(values.data, cursor - 1))) {
-      swap<T>(values, cursor - 1, cursor);
-      cursor = cursor - 1;
+fn median_index_by[T](
+  values: std::Slice[T],
+  left: i64,
+  middle: i64,
+  right: i64,
+  less: fn(T, T) -> bool
+) -> i64 {
+  let a = ptr_load(ptr_add(values.data, left));
+  let b = ptr_load(ptr_add(values.data, middle));
+  let c = ptr_load(ptr_add(values.data, right));
+  if less(a, b) {
+    if less(b, c) {
+      return middle;
     }
-    index = index + 1;
+    if less(a, c) {
+      return right;
+    }
+    return left;
+  }
+  if less(a, c) {
+    return left;
+  }
+  if less(b, c) {
+    return right;
+  }
+  return middle;
+}
+
+fn median_index_ord[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  left: i64,
+  middle: i64,
+  right: i64
+) -> i64 {
+  let a = ptr_load(ptr_add(values.data, left));
+  let b = ptr_load(ptr_add(values.data, middle));
+  let c = ptr_load(ptr_add(values.data, right));
+  if a < b {
+    if b < c {
+      return middle;
+    }
+    if a < c {
+      return right;
+    }
+    return left;
+  }
+  if a < c {
+    return left;
+  }
+  if b < c {
+    return right;
+  }
+  return middle;
+}
+
+fn choose_pivot_index_by[T](
+  values: std::Slice[T],
+  start: i64,
+  end: i64,
+  less: fn(T, T) -> bool
+) -> i64 {
+  let length = end - start;
+  let mid = start + (length / 2);
+  let last = end - 1;
+  if length < 64 {
+    return median_index_by<T>(values, start, mid, last, less);
+  }
+
+  let step = length / 8;
+  let first = median_index_by<T>(values, start, start + step, start + (step * 2), less);
+  let second = median_index_by<T>(values, mid - step, mid, mid + step, less);
+  let third = median_index_by<T>(values, last - (step * 2), last - step, last, less);
+  return median_index_by<T>(values, first, second, third, less);
+}
+
+fn choose_pivot_index_ord[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  start: i64,
+  end: i64
+) -> i64 {
+  let length = end - start;
+  let mid = start + (length / 2);
+  let last = end - 1;
+  if length < 64 {
+    return median_index_ord<T>(values, start, mid, last);
+  }
+
+  let step = length / 8;
+  let first = median_index_ord<T>(values, start, start + step, start + (step * 2));
+  let second = median_index_ord<T>(values, mid - step, mid, mid + step);
+  let third = median_index_ord<T>(values, last - (step * 2), last - step, last);
+  return median_index_ord<T>(values, first, second, third);
+}
+
+fn partition_three_way_by[T](
+  values: std::Slice[T],
+  start: i64,
+  end: i64,
+  pivot: T,
+  less: fn(T, T) -> bool
+) -> (i64, i64) {
+  var lt = start;
+  var scan = start;
+  var gt = end;
+  while scan < gt {
+    let value = ptr_load(ptr_add(values.data, scan));
+    if less(value, pivot) {
+      swap<T>(values, lt, scan);
+      lt = lt + 1;
+      scan = scan + 1;
+    } else if less(pivot, value) {
+      gt = gt - 1;
+      swap<T>(values, scan, gt);
+    } else {
+      scan = scan + 1;
+    }
+  }
+  return (lt, gt);
+}
+
+fn partition_three_way_ord[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  start: i64,
+  end: i64,
+  pivot: T
+) -> (i64, i64) {
+  var lt = start;
+  var scan = start;
+  var gt = end;
+  while scan < gt {
+    let value = ptr_load(ptr_add(values.data, scan));
+    if value < pivot {
+      swap<T>(values, lt, scan);
+      lt = lt + 1;
+      scan = scan + 1;
+    } else if pivot < value {
+      gt = gt - 1;
+      swap<T>(values, scan, gt);
+    } else {
+      scan = scan + 1;
+    }
+  }
+  return (lt, gt);
+}
+
+fn heap_sift_down_by[T](
+  values: std::Slice[T],
+  start: i64,
+  root: i64,
+  end: i64,
+  less: fn(T, T) -> bool
+) -> void {
+  var parent = root;
+  while (parent * 2) + 1 < end {
+    var child = (parent * 2) + 1;
+    if child + 1 < end &&
+       less(
+         ptr_load(ptr_add(values.data, start + child)),
+         ptr_load(ptr_add(values.data, start + child + 1))) {
+      child = child + 1;
+    }
+    if less(
+      ptr_load(ptr_add(values.data, start + parent)),
+      ptr_load(ptr_add(values.data, start + child))) {
+      swap<T>(values, start + parent, start + child);
+      parent = child;
+    } else {
+      return;
+    }
+  }
+}
+
+fn heap_sift_down_ord[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  start: i64,
+  root: i64,
+  end: i64
+) -> void {
+  var parent = root;
+  while (parent * 2) + 1 < end {
+    var child = (parent * 2) + 1;
+    if child + 1 < end &&
+       ptr_load(ptr_add(values.data, start + child)) <
+       ptr_load(ptr_add(values.data, start + child + 1)) {
+      child = child + 1;
+    }
+    if ptr_load(ptr_add(values.data, start + parent)) <
+       ptr_load(ptr_add(values.data, start + child)) {
+      swap<T>(values, start + parent, start + child);
+      parent = child;
+    } else {
+      return;
+    }
+  }
+}
+
+fn heap_sort_by_range[T](
+  values: std::Slice[T],
+  start: i64,
+  end: i64,
+  less: fn(T, T) -> bool
+) -> void {
+  let count = end - start;
+  if count <= 1 {
+    return;
+  }
+
+  var parent = count / 2;
+  while parent > 0 {
+    parent = parent - 1;
+    heap_sift_down_by<T>(values, start, parent, count, less);
+  }
+
+  var heap_end = count;
+  while heap_end > 1 {
+    heap_end = heap_end - 1;
+    swap<T>(values, start, start + heap_end);
+    heap_sift_down_by<T>(values, start, 0, heap_end, less);
+  }
+}
+
+fn heap_sort_ord_range[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  start: i64,
+  end: i64
+) -> void {
+  let count = end - start;
+  if count <= 1 {
+    return;
+  }
+
+  var parent = count / 2;
+  while parent > 0 {
+    parent = parent - 1;
+    heap_sift_down_ord<T>(values, start, parent, count);
+  }
+
+  var heap_end = count;
+  while heap_end > 1 {
+    heap_end = heap_end - 1;
+    swap<T>(values, start, start + heap_end);
+    heap_sift_down_ord<T>(values, start, 0, heap_end);
+  }
+}
+
+fn introsort_by_range[T](
+  values: std::Slice[T],
+  start_in: i64,
+  end_in: i64,
+  depth_in: i64,
+  less: fn(T, T) -> bool
+) -> void {
+  var start = start_in;
+  var end = end_in;
+  var depth = depth_in;
+  while end - start > insertion_limit() {
+    if depth == 0 {
+      heap_sort_by_range<T>(values, start, end, less);
+      return;
+    }
+    depth = depth - 1;
+
+    let pivot_index = choose_pivot_index_by<T>(values, start, end, less);
+    let pivot = ptr_load(ptr_add(values.data, pivot_index));
+    let bounds = partition_three_way_by<T>(values, start, end, pivot, less);
+    let left_len = bounds.0 - start;
+    let right_len = end - bounds.1;
+    if left_len < right_len {
+      introsort_by_range<T>(values, start, bounds.0, depth, less);
+      start = bounds.1;
+    } else {
+      introsort_by_range<T>(values, bounds.1, end, depth, less);
+      end = bounds.0;
+    }
+  }
+  insertion_sort_by_range<T>(values, start, end, less);
+}
+
+fn introsort_ord_range[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  start_in: i64,
+  end_in: i64,
+  depth_in: i64
+) -> void {
+  var start = start_in;
+  var end = end_in;
+  var depth = depth_in;
+  while end - start > insertion_limit() {
+    if depth == 0 {
+      heap_sort_ord_range<T>(values, start, end);
+      return;
+    }
+    depth = depth - 1;
+
+    let pivot_index = choose_pivot_index_ord<T>(values, start, end);
+    let pivot = ptr_load(ptr_add(values.data, pivot_index));
+    let bounds = partition_three_way_ord<T>(values, start, end, pivot);
+    let left_len = bounds.0 - start;
+    let right_len = end - bounds.1;
+    if left_len < right_len {
+      introsort_ord_range<T>(values, start, bounds.0, depth);
+      start = bounds.1;
+    } else {
+      introsort_ord_range<T>(values, bounds.1, end, depth);
+      end = bounds.0;
+    }
+  }
+  insertion_sort_ord_range<T>(values, start, end);
+}
+
+fn merge_by_range[T](
+  values: std::Slice[T],
+  start: i64,
+  mid: i64,
+  end: i64,
+  temp: ptr T,
+  less: fn(T, T) -> bool
+) -> void {
+  var copy = start;
+  while copy < end {
+    ptr_store(ptr_add(temp, copy), ptr_load(ptr_add(values.data, copy)));
+    copy = copy + 1;
+  }
+
+  var left = start;
+  var right = mid;
+  var out = start;
+  while left < mid && right < end {
+    if less(ptr_load(ptr_add(temp, right)), ptr_load(ptr_add(temp, left))) {
+      ptr_store(ptr_add(values.data, out), ptr_load(ptr_add(temp, right)));
+      right = right + 1;
+    } else {
+      ptr_store(ptr_add(values.data, out), ptr_load(ptr_add(temp, left)));
+      left = left + 1;
+    }
+    out = out + 1;
+  }
+  while left < mid {
+    ptr_store(ptr_add(values.data, out), ptr_load(ptr_add(temp, left)));
+    left = left + 1;
+    out = out + 1;
+  }
+  while right < end {
+    ptr_store(ptr_add(values.data, out), ptr_load(ptr_add(temp, right)));
+    right = right + 1;
+    out = out + 1;
+  }
+}
+
+fn merge_ord_range[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  start: i64,
+  mid: i64,
+  end: i64,
+  temp: ptr T
+) -> void {
+  var copy = start;
+  while copy < end {
+    ptr_store(ptr_add(temp, copy), ptr_load(ptr_add(values.data, copy)));
+    copy = copy + 1;
+  }
+
+  var left = start;
+  var right = mid;
+  var out = start;
+  while left < mid && right < end {
+    if ptr_load(ptr_add(temp, right)) < ptr_load(ptr_add(temp, left)) {
+      ptr_store(ptr_add(values.data, out), ptr_load(ptr_add(temp, right)));
+      right = right + 1;
+    } else {
+      ptr_store(ptr_add(values.data, out), ptr_load(ptr_add(temp, left)));
+      left = left + 1;
+    }
+    out = out + 1;
+  }
+  while left < mid {
+    ptr_store(ptr_add(values.data, out), ptr_load(ptr_add(temp, left)));
+    left = left + 1;
+    out = out + 1;
+  }
+  while right < end {
+    ptr_store(ptr_add(values.data, out), ptr_load(ptr_add(temp, right)));
+    right = right + 1;
+    out = out + 1;
+  }
+}
+
+fn stable_merge_sort_by_range[T](
+  values: std::Slice[T],
+  start: i64,
+  end: i64,
+  temp: ptr T,
+  less: fn(T, T) -> bool
+) -> void {
+  if end - start <= insertion_limit() {
+    insertion_sort_by_range<T>(values, start, end, less);
+    return;
+  }
+
+  let mid = start + ((end - start) / 2);
+  stable_merge_sort_by_range<T>(values, start, mid, temp, less);
+  stable_merge_sort_by_range<T>(values, mid, end, temp, less);
+  if !less(ptr_load(ptr_add(values.data, mid)), ptr_load(ptr_add(values.data, mid - 1))) {
+    return;
+  }
+  merge_by_range<T>(values, start, mid, end, temp, less);
+}
+
+fn stable_merge_sort_ord_range[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  start: i64,
+  end: i64,
+  temp: ptr T
+) -> void {
+  if end - start <= insertion_limit() {
+    insertion_sort_ord_range<T>(values, start, end);
+    return;
+  }
+
+  let mid = start + ((end - start) / 2);
+  stable_merge_sort_ord_range<T>(values, start, mid, temp);
+  stable_merge_sort_ord_range<T>(values, mid, end, temp);
+  if !(ptr_load(ptr_add(values.data, mid)) < ptr_load(ptr_add(values.data, mid - 1))) {
+    return;
+  }
+  merge_ord_range<T>(values, start, mid, end, temp);
+}
+
+pub fn sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
+  if values.len <= 1 {
+    return;
+  }
+  introsort_ord_range<T>(values, 0, values.len, 2 * floor_log2(values.len));
+}
+
+pub fn sort_by[T](values: std::Slice[T], less: fn(T, T) -> bool) -> void {
+  if values.len <= 1 {
+    return;
+  }
+  introsort_by_range<T>(values, 0, values.len, 2 * floor_log2(values.len), less);
+}
+
+pub fn stable_sort_in[T: std::cmp::Ord[T]](
+  values: std::Slice[T],
+  zone: ref mut Zone
+) -> void {
+  if values.len <= 1 {
+    return;
+  }
+  let temp = std::zone::alloc_array<T>(zone, values.len);
+  stable_merge_sort_ord_range<T>(values, 0, values.len, temp);
+}
+
+pub fn stable_sort_by_in[T](
+  values: std::Slice[T],
+  less: fn(T, T) -> bool,
+  zone: ref mut Zone
+) -> void {
+  if values.len <= 1 {
+    return;
+  }
+  let temp = std::zone::alloc_array<T>(zone, values.len);
+  stable_merge_sort_by_range<T>(values, 0, values.len, temp, less);
+}
+
+pub fn stable_sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
+  if values.len <= 1 {
+    return;
+  }
+  let bytes = checked_temp_bytes<T>(values.len).unwrap();
+  var zone = std::zone::create(bytes);
+  stable_sort_in<T>(values, ref mut zone);
+  std::zone::destroy(zone);
+}
+
+pub fn stable_sort_by[T](values: std::Slice[T], less: fn(T, T) -> bool) -> void {
+  if values.len <= 1 {
+    return;
+  }
+  let bytes = checked_temp_bytes<T>(values.len).unwrap();
+  var zone = std::zone::create(bytes);
+  stable_sort_by_in<T>(values, less, ref mut zone);
+  std::zone::destroy(zone);
+}
+
+pub fn try_stable_sort[T: std::cmp::Ord[T]](
+  values: std::Slice[T]
+) -> std::Result[(), std::error::Error] {
+  if values.len <= 1 {
+    return std::Ok<(), std::error::Error>(());
+  }
+  match checked_temp_bytes<T>(values.len) {
+    std::Ok(bytes) => {
+      var zone = std::zone::create(bytes);
+      stable_sort_in<T>(values, ref mut zone);
+      std::zone::destroy(zone);
+      return std::Ok<(), std::error::Error>(());
+    }
+    std::Err(error) => {
+      return std::Err<(), std::error::Error>(error);
+    }
+  }
+}
+
+pub fn try_stable_sort_by[T](
+  values: std::Slice[T],
+  less: fn(T, T) -> bool
+) -> std::Result[(), std::error::Error] {
+  if values.len <= 1 {
+    return std::Ok<(), std::error::Error>(());
+  }
+  match checked_temp_bytes<T>(values.len) {
+    std::Ok(bytes) => {
+      var zone = std::zone::create(bytes);
+      stable_sort_by_in<T>(values, less, ref mut zone);
+      std::zone::destroy(zone);
+      return std::Ok<(), std::error::Error>(());
+    }
+    std::Err(error) => {
+      return std::Err<(), std::error::Error>(error);
+    }
   }
 }
