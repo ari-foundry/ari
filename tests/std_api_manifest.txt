@@ -693,6 +693,8 @@ method std::Option[T]::is_none_or|check-prelude prelude-option-result-predicates
 method std::Option[T]::is_some|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::is_some_and|check-prelude prelude-option-result-predicates consuming predicate helper; docs/stdlib/api-reference.md Option and Result section
 method std::Option[T]::map[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::map_or[U]|check-prelude prelude-option-result-combinators eager fallback mapping helper; docs/stdlib/modules/option-result.md
+method std::Option[T]::map_or_else[U]|check-prelude prelude-option-result-combinators lazy fallback mapping helper; docs/stdlib/modules/option-result.md
 method std::Option[T]::ok_or[E]|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Option[T]::ok_or_else[E]|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Option[T]::or|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
@@ -714,6 +716,8 @@ method std::Result[T,E]::is_ok|check-prelude prelude-option-result-methods; docs
 method std::Result[T,E]::is_ok_and|check-prelude prelude-option-result-predicates consuming success predicate helper; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::map[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::map_err[F]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::map_or[U]|check-prelude prelude-option-result-combinators eager success fallback mapping helper; docs/stdlib/modules/option-result.md
+method std::Result[T,E]::map_or_else[U]|check-prelude prelude-option-result-combinators lazy error fallback mapping helper; docs/stdlib/modules/option-result.md
 method std::Result[T,E]::ok|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::or[F]|check-prelude prelude-option-result-combinators; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::or_else[F]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row

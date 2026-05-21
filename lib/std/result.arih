@@ -105,6 +105,20 @@ pub impl[T, E] std::Result[T, E] {
     };
   }
 
+  fn map_or[U](self, fallback: U, op: fn(T) -> U) -> U {
+    return match self {
+      std::Ok(value) => op(value),
+      std::Err(_) => fallback;
+    };
+  }
+
+  fn map_or_else[U](self, fallback: fn(E) -> U, op: fn(T) -> U) -> U {
+    return match self {
+      std::Ok(value) => op(value),
+      std::Err(error) => fallback(error);
+    };
+  }
+
   fn map_err[F](self, op: fn(E) -> F) -> std::Result[T, F] {
     return match self {
       std::Ok(value) => std::Ok<T, F>(value),

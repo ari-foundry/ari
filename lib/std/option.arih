@@ -69,6 +69,20 @@ pub impl[T] std::Option[T] {
     };
   }
 
+  fn map_or[U](self, fallback: U, op: fn(T) -> U) -> U {
+    return match self {
+      std::Some(value) => op(value),
+      std::None => fallback;
+    };
+  }
+
+  fn map_or_else[U](self, fallback: fn() -> U, op: fn(T) -> U) -> U {
+    return match self {
+      std::Some(value) => op(value),
+      std::None => fallback();
+    };
+  }
+
   fn and[U](self, other: std::Option[U]) -> std::Option[U] {
     return match self {
       std::Some(_) => other,
