@@ -849,6 +849,8 @@ fs::symbolic_link(target, link_path)
 fs::ensure_file(path)
 fs::create_dir(path)
 fs::ensure_dir(path)
+fs::create_dir_all(path)
+fs::ensure_dir_all(path)
 fs::remove_dir(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
@@ -982,7 +984,9 @@ open/write/close failure. `copy(source, target)` is the boolean compatibility
 wrapper over `try_copy`. `rename(source, target)` moves or renames one path
 according to the host runtime's current behavior. `create_dir(path)` creates
 one directory, `ensure_dir(path)` treats an existing directory as success or
-creates a missing one, and `remove_dir(path)` removes one empty directory.
+creates a missing one, `create_dir_all(path)` recursively creates missing
+parent directories, `ensure_dir_all(path)` is the idempotent recursive alias,
+and `remove_dir(path)` removes one empty directory.
 `try_open_dir(path)` returns `Option[Dir]`, `dir.next(ref mut zone)` returns
 the next entry name while skipping `"."` and `".."`, and `dir.close()` closes
 the handle. `try_read_dir(ref mut zone, path)` opens, collects names into

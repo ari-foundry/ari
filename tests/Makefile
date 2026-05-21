@@ -559,6 +559,11 @@ check-prelude: $(TARGET)
 	grep -q "declare i32 @mkdir" $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari -o $(BUILD_DIR)/prelude/std-fs-ensure-dir.elf
 	$(BUILD_DIR)/prelude/std-fs-ensure-dir.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-create-dir-all.ll
+	grep -F -q "std2fs14ensure_dir_all" $(BUILD_DIR)/prelude/std-fs-create-dir-all.ll
+	grep -q "@ari_builtin_fs_create_dir_all" $(BUILD_DIR)/prelude/std-fs-create-dir-all.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari -o $(BUILD_DIR)/prelude/std-fs-create-dir-all.elf
+	$(BUILD_DIR)/prelude/std-fs-create-dir-all.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-file.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-ensure-file.ll
 	grep -F -q "std2fs11ensure_file" $(BUILD_DIR)/prelude/std-fs-ensure-file.ll
 	grep -F -q "std2fs10try_create" $(BUILD_DIR)/prelude/std-fs-ensure-file.ll

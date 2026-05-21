@@ -536,6 +536,7 @@ private:
             symbol == "ari_builtin_fs_remove" ||
             symbol == "ari_builtin_fs_rename" ||
             symbol == "ari_builtin_fs_create_dir" ||
+            symbol == "ari_builtin_fs_create_dir_all" ||
             symbol == "ari_builtin_fs_remove_dir" ||
             symbol == "ari_builtin_fs_set_mode" ||
             symbol == "ari_builtin_fs_close_dir" ||
@@ -1004,6 +1005,30 @@ private:
         line("}");
         line();
 
+        line("define private i1 @ari_runtime_fs_ensure_dir_component(ptr %path) {");
+        line("entry:");
+        line("  %kind = call i64 @ari_builtin_fs_metadata_kind(ptr %path)");
+        line("  %is.dir = icmp eq i64 %kind, 2");
+        line("  br i1 %is.dir, label %success, label %not.dir");
+        line("not.dir:");
+        line("  %exists = icmp sge i64 %kind, 0");
+        line("  br i1 %exists, label %fail, label %mkdir");
+        line("mkdir:");
+        // 0755 in decimal; the process umask still applies on POSIX hosts.
+        line("  %code = call i32 @mkdir(ptr %path, i32 493)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %success, label %retry");
+        line("retry:");
+        line("  %retry.kind = call i64 @ari_builtin_fs_metadata_kind(ptr %path)");
+        line("  %retry.dir = icmp eq i64 %retry.kind, 2");
+        line("  br i1 %retry.dir, label %success, label %fail");
+        line("success:");
+        line("  ret i1 true");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "ptr @ari_builtin_fs_canonicalize(ptr %path) {");
         line("entry:");
         line("  %resolved = call ptr @realpath(ptr %path, ptr " + realpath_buffer + ")");
@@ -1054,6 +1079,67 @@ private:
         line("  %code = call i32 @mkdir(ptr %path, i32 493)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_create_dir_all(ptr %path) {");
+        line("entry:");
+        line("  %first = load i8, ptr %path");
+        line("  %empty.path = icmp eq i8 %first, 0");
+        line("  br i1 %empty.path, label %fail, label %existing.check");
+        line("existing.check:");
+        line("  %existing.kind = call i64 @ari_builtin_fs_metadata_kind(ptr %path)");
+        line("  %existing.dir = icmp eq i64 %existing.kind, 2");
+        line("  br i1 %existing.dir, label %success, label %existing.not.dir");
+        line("existing.not.dir:");
+        line("  %existing.any = icmp sge i64 %existing.kind, 0");
+        line("  br i1 %existing.any, label %fail, label %copy.init");
+        line("copy.init:");
+        line("  %buffer.storage = alloca [4096 x i8], align 1");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %buffer.storage, i64 0, i64 0");
+        line("  br label %copy.loop");
+        line("copy.loop:");
+        line("  %copy.i = phi i64 [0, %copy.init], [%copy.next, %copy.more]");
+        line("  %copy.too.long = icmp sge i64 %copy.i, 4095");
+        line("  br i1 %copy.too.long, label %fail, label %copy.byte");
+        line("copy.byte:");
+        line("  %source.ptr = getelementptr inbounds i8, ptr %path, i64 %copy.i");
+        line("  %byte = load i8, ptr %source.ptr");
+        line("  %dest.ptr = getelementptr inbounds i8, ptr %buffer, i64 %copy.i");
+        line("  store i8 %byte, ptr %dest.ptr");
+        line("  %copy.done = icmp eq i8 %byte, 0");
+        line("  br i1 %copy.done, label %scan.init, label %copy.more");
+        line("copy.more:");
+        line("  %copy.next = add i64 %copy.i, 1");
+        line("  br label %copy.loop");
+        line("scan.init:");
+        line("  br label %scan.loop");
+        line("scan.loop:");
+        line("  %scan.i = phi i64 [0, %scan.init], [%scan.next, %scan.next.block]");
+        line("  %scan.ptr = getelementptr inbounds i8, ptr %buffer, i64 %scan.i");
+        line("  %scan.byte = load i8, ptr %scan.ptr");
+        line("  %scan.end = icmp eq i8 %scan.byte, 0");
+        line("  br i1 %scan.end, label %final, label %scan.check");
+        line("scan.check:");
+        line("  %is.slash = icmp eq i8 %scan.byte, 47");
+        line("  %after.first = icmp sgt i64 %scan.i, 0");
+        line("  %should.ensure = and i1 %is.slash, %after.first");
+        line("  br i1 %should.ensure, label %prefix.ensure, label %scan.next.block");
+        line("prefix.ensure:");
+        line("  store i8 0, ptr %scan.ptr");
+        line("  %prefix.ok = call i1 @ari_runtime_fs_ensure_dir_component(ptr %buffer)");
+        line("  store i8 47, ptr %scan.ptr");
+        line("  br i1 %prefix.ok, label %scan.next.block, label %fail");
+        line("scan.next.block:");
+        line("  %scan.next = add i64 %scan.i, 1");
+        line("  br label %scan.loop");
+        line("final:");
+        line("  %final.ok = call i1 @ari_runtime_fs_ensure_dir_component(ptr %buffer)");
+        line("  br i1 %final.ok, label %success, label %fail");
+        line("success:");
+        line("  ret i1 true");
+        line("fail:");
+        line("  ret i1 false");
         line("}");
         line();
 

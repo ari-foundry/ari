@@ -10,8 +10,9 @@ byte-oriented `String` with either compatibility or `Option`-returning absence
 behavior, rename paths, create hard or symbolic links, ensure a single regular
 file exists without truncating an existing file, create or remove one empty
 directory, ensure a single directory exists without treating an existing
-directory as failure, read directory entry names through an explicit `Dir`
-handle, collect lightweight `DirEntry` values with names and joined paths,
+directory as failure, recursively create missing directory parents, read
+directory entry names through an explicit `Dir` handle, collect lightweight
+`DirEntry` values with names and joined paths,
 query basic file metadata, ask direct path-kind predicates such as `is_file`
 and `is_dir`, read and change POSIX permission bits, resolve an existing path
 to an absolute canonical path, close the handle, and remove a file.
@@ -25,7 +26,8 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
 `symbolic_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`,
-`try_open_dir`, `read_dir`, `try_read_dir`, `read_dir_entries`,
+`create_dir_all`, `ensure_dir_all`, `try_open_dir`, `read_dir`,
+`try_read_dir`, `read_dir_entries`,
 `try_read_dir_entries`,
 `read_dir_next`, `close_dir`, `close`, `exists`, and `remove`, not
 type-suffixed names.
@@ -58,6 +60,8 @@ fs::symbolic_link(target, link_path)
 fs::ensure_file(path)
 fs::create_dir(path)
 fs::ensure_dir(path)
+fs::create_dir_all(path)
+fs::ensure_dir_all(path)
 fs::remove_dir(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
@@ -318,6 +322,13 @@ when `path` is already a directory, creates it when it is missing, and returns
 `false` when another kind of path already exists or a parent directory is
 missing. It is deliberately not recursive; use it when a test or tool needs one
 known output directory without treating reruns as errors.
+`create_dir_all(path)` creates every missing parent directory needed for
+`path`, treats existing directories as success, and returns `false` when the
+path is empty, an existing non-directory blocks the final path, or an
+intermediate component cannot be created or searched. `ensure_dir_all(path)` is
+the natural idempotent alias for callers that read the operation as setup
+rather than creation. Both helpers use the runtime's current default directory
+mode for newly created components, with the host process umask still applying.
 `remove_dir(path)` removes one empty directory.
 
 `try_open_dir(path)` opens one directory and returns `Option[Dir]`.
@@ -358,7 +369,7 @@ owned/path-to-OS-string boundary slice.
 | symbolic link | Current: `symbolic_link(target, link_path)` runtime hook on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
 | read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, and `dir.close()` for entry names and joined paths; richer metadata-bearing entries and owned OS-resource policy are roadmap. |
-| create directory | Current: single-directory `create_dir(path)` and idempotent `ensure_dir(path)`; recursive creation is roadmap. |
+| create directory | Current: single-directory `create_dir(path)` and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
 | file locking | Optional roadmap: advisory locking after platform behavior is documented. |
@@ -451,6 +462,15 @@ if fs::rename(path, moved) {
 let dir = "build/prelude/example-fs-dir.tmp";
 if fs::create_dir(dir) {
   fs::remove_dir(dir);
+}
+```
+
+Create nested output directories:
+
+```ari
+let nested = "build/prelude/example-fs-dir.tmp/cache/shards";
+if fs::create_dir_all(nested) {
+  fs::write("build/prelude/example-fs-dir.tmp/cache/shards/data.txt", "ok");
 }
 ```
 
@@ -568,7 +588,7 @@ if file.is_open() {
 ## Current Limits
 
 - This slice is byte-oriented. There is no owned path type, recursive directory
-  API, file locking API, temporary-file API, or text encoding policy yet.
+  removal API, file locking API, temporary-file API, or text encoding policy yet.
   Directory reads currently return names and joined child paths only; they do
   not expose per-entry metadata or per-entry errors. Basic `stat` metadata,
   permission-bit lookup and mutation, and existing-path canonicalization exist,
@@ -603,6 +623,7 @@ tests/cases/standard-library/ok/fs/std-fs-try-read.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari
+tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari
 tests/cases/standard-library/ok/fs/std-fs-read-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
 tests/cases/standard-library/ok/fs/std-fs-permissions.ari
@@ -631,7 +652,10 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-ensure-dir.ari` covers
 idempotent single-directory creation, file-path rejection, missing-parent
-failure, and cleanup. `std-fs-ensure-file.ari` covers idempotent single-file
+failure, and cleanup. `std-fs-create-dir-all.ari` covers recursive parent
+creation, existing-directory idempotence, `ensure_dir_all`, file-path
+rejection, blocked child creation, nested writes, and cleanup.
+`std-fs-ensure-file.ari` covers idempotent single-file
 creation, existing-file preservation, directory-path rejection, missing-parent
 failure, and cleanup. `std-fs-read-dir.ari` covers
 runtime-backed `Dir` open/next/close behavior, one-shot
@@ -663,8 +687,7 @@ absolute canonical paths, filename preservation, and missing-path `None`.
   `symlink_metadata` helper.
 - Expand directory reads with `DirEntry` metadata, richer error reporting, and
   owned OS-resource iterator handles.
-- Add recursive directory creation/removal after the single-directory hooks
-  have stable policy.
+- Add recursive directory removal after creation policy has more mileage.
 - Grow `std::path` from lexical helpers into owned path values after Ari has a
   clearer owned string/path story.
 - Add secure temporary files and optional file locking after the resource and

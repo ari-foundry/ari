@@ -293,7 +293,9 @@ fn std::fs::close_dir|check-prelude std-fs-read-dir directory close hook; docs/s
 fn std::fs::copy|check-prelude std-fs-create-truncate-copy source streaming copy helper; docs/stdlib/modules/fs.md
 fn std::fs::create|check-prelude std-fs-create-truncate-copy source create/truncate open helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir|check-prelude std-fs-rename-dir runtime-backed single-directory creation hook; docs/stdlib/modules/fs.md
+fn std::fs::create_dir_all|check-prelude std-fs-create-dir-all runtime-backed recursive directory creation hook; docs/stdlib/modules/fs.md
 fn std::fs::ensure_dir|check-prelude std-fs-ensure-dir idempotent single-directory creation helper; docs/stdlib/modules/fs.md
+fn std::fs::ensure_dir_all|check-prelude std-fs-create-dir-all idempotent recursive directory creation alias; docs/stdlib/modules/fs.md
 fn std::fs::ensure_file|check-prelude std-fs-ensure-file idempotent single-file creation helper; docs/stdlib/modules/fs.md
 fn std::fs::exists|check-prelude std-fs-basic file existence hook; docs/stdlib/modules/fs.md
 fn std::fs::hard_link|check-prelude std-fs-links runtime-backed hard-link hook; docs/stdlib/modules/fs.md

@@ -45,6 +45,7 @@ pub extern "ari" fn rename(source: string, target: string) -> bool = "ari_builti
 pub extern "ari" fn hard_link(existing: string, link_path: string) -> bool = "ari_builtin_fs_hard_link";
 pub extern "ari" fn symbolic_link(target: string, link_path: string) -> bool = "ari_builtin_fs_symbolic_link";
 pub extern "ari" fn create_dir(path: string) -> bool = "ari_builtin_fs_create_dir";
+pub extern "ari" fn create_dir_all(path: string) -> bool = "ari_builtin_fs_create_dir_all";
 pub extern "ari" fn remove_dir(path: string) -> bool = "ari_builtin_fs_remove_dir";
 pub extern "ari" fn open_dir(path: string) -> Dir = "ari_builtin_fs_open_dir";
 pub extern "ari" fn close_dir(dir: Dir) -> bool = "ari_builtin_fs_close_dir";
@@ -218,6 +219,10 @@ pub fn ensure_dir(path: string) -> bool {
     return false;
   }
   return create_dir(path);
+}
+
+pub fn ensure_dir_all(path: string) -> bool {
+  return create_dir_all(path);
 }
 
 // Keep setup code rerunnable without truncating existing regular files.
