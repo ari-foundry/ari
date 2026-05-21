@@ -1,13 +1,21 @@
 // check-functions/ok: capturing lambdas lower to closure values with hidden environment fields.
+struct Bias {
+  base: i64,
+  step: i64,
+}
+
 fn main() -> i64 {
   let base: i64 = 10;
   let scale: i64 = 3;
+  let bias = Bias { base: 2, step: 6 };
 
   let add_base = fn(value: i64) -> i64 value + base;
   let scaled_add = fn(value: i64) -> i64 {
     let scaled = value * scale;
     scaled + base
   };
+  let add_bias = fn(value: i64) -> i64 bias.base + bias.step + value;
+  let lift = fn(value: i64) -> i64 add_base(value) + 2;
 
-  return add_base(5) + scaled_add(4);
+  return add_base(5) + scaled_add(4) + add_bias(5) + lift(2);
 }

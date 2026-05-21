@@ -258,9 +258,12 @@ to closure values with hidden environment fields and can be called with the same
 pointers; pass a named function or a non-capturing lambda when an API requires
 `fn(...) -> ...`.
 
-Current capture lowering stores copyable plain values in the closure
-environment. Capturing owning values or borrow-carrying aggregate values is a
-planned extension because those need the full ownership/lifetime closure model.
+Current capture lowering stores pointer-free plain values in the closure
+environment. That includes scalars, strings, function pointers, and product
+values whose fields are also pointer-free plain values. Capturing owning values,
+borrow-valued bindings, raw pointers, local `Vec[T]` storage, or values that
+carry hidden pointer provenance is a planned extension because those need the
+full ownership/lifetime closure model.
 
 ## Generics
 

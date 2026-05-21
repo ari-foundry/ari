@@ -1,0 +1,9 @@
+// check-function-errors: closure environments do not erase raw pointer lifetime risk.
+fn main() -> i64 {
+  let raw = null;
+  let use_raw = fn(value: i64) -> i64 {
+    raw;
+    value
+  };
+  return use_raw(1);
+}

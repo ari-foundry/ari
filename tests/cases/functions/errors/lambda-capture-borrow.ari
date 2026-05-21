@@ -1,0 +1,10 @@
+// check-function-errors: closure environments currently reject borrow-valued captures.
+fn main() -> i64 {
+  let source: i64 = 9;
+  let borrowed = &source;
+  let use_borrow = fn(value: i64) -> i64 {
+    borrowed;
+    value
+  };
+  return use_borrow(1);
+}

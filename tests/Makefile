@@ -5075,7 +5075,7 @@ check-functions: $(TARGET) check-function-errors
 	grep -q '_u24lambda' $(BUILD_DIR)/functions/lambda-function-pointer.ll
 	grep -q 'call i64 %' $(BUILD_DIR)/functions/lambda-function-pointer.ll
 	$(TARGET) tests/cases/functions/ok/lambda-capture.ari -o $(BUILD_DIR)/functions/lambda-capture.elf
-	$(BUILD_DIR)/functions/lambda-capture.elf; code=$$?; test $$code -eq 37
+	$(BUILD_DIR)/functions/lambda-capture.elf; code=$$?; test $$code -eq 64
 	$(TARGET) tests/cases/functions/ok/lambda-capture.ari --emit-llvm $(BUILD_DIR)/functions/lambda-capture.ll
 	grep -q '_u24lambda' $(BUILD_DIR)/functions/lambda-capture.ll
 	grep -q 'extractvalue' $(BUILD_DIR)/functions/lambda-capture.ll
@@ -5127,6 +5127,10 @@ check-function-errors: $(TARGET)
 	grep -q "lambda parameter count does not match expected fn(i64) -> i64" $(BUILD_DIR)/functions/errors/lambda-param-count.err
 	if $(TARGET) tests/cases/functions/errors/lambda-capture-local.ari -o $(BUILD_DIR)/functions/errors/lambda-capture-local.elf >$(BUILD_DIR)/functions/errors/lambda-capture-local.err 2>&1; then exit 1; fi
 	grep -q "capturing lambda cannot be used as a plain function pointer" $(BUILD_DIR)/functions/errors/lambda-capture-local.err
+	if $(TARGET) tests/cases/functions/errors/lambda-capture-borrow.ari -o $(BUILD_DIR)/functions/errors/lambda-capture-borrow.elf >$(BUILD_DIR)/functions/errors/lambda-capture-borrow.err 2>&1; then exit 1; fi
+	grep -q "lambda capture of borrow-carrying binding 'borrowed'" $(BUILD_DIR)/functions/errors/lambda-capture-borrow.err
+	if $(TARGET) tests/cases/functions/errors/lambda-capture-raw-pointer.ari -o $(BUILD_DIR)/functions/errors/lambda-capture-raw-pointer.elf >$(BUILD_DIR)/functions/errors/lambda-capture-raw-pointer.err 2>&1; then exit 1; fi
+	grep -q "lambda capture of binding 'raw' has unsupported type ptr void" $(BUILD_DIR)/functions/errors/lambda-capture-raw-pointer.err
 
 check-errors: $(TARGET) check-function-errors
 	mkdir -p $(BUILD_DIR)/errors

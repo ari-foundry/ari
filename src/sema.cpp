@@ -17332,6 +17332,11 @@ private:
             case ExprKind::StructLiteral:
             case ExprKind::Vector:
             case ExprKind::Call:
+                if (expr->kind == ExprKind::Call &&
+                    !expr_operand(*expr) &&
+                    !expr->name.empty()) {
+                    if (auto captured = lambda_capture_from_name(expr->loc, expr->name, local_names)) return captured;
+                }
                 if (auto captured = lambda_capture_from_expr(expr_operand(*expr).get(), local_names)) return captured;
                 for (const ExprPtr& arg : expr->args) {
                     if (auto captured = lambda_capture_from_expr(arg.get(), local_names)) return captured;
@@ -17460,10 +17465,72 @@ private:
         return type;
     }
 
+    bool lambda_capture_type_is_plain_value(const IrType& type) const {
+        if (type.qualifier != TypeQualifier::Value) return false;
+        if (is_owner_type(type) ||
+            contains_borrow_type(type) ||
+            is_raw_pointer_type(type) ||
+            is_vector_storage_type(type) ||
+            type.primitive == IrPrimitiveKind::Zone ||
+            type.primitive == IrPrimitiveKind::TraitObject ||
+            type.primitive == IrPrimitiveKind::MetaType) {
+            return false;
+        }
+
+        if (is_lambda_closure_type(type)) {
+            for (std::size_t i = 1; i < type.field_types.size(); ++i) {
+                if (!lambda_capture_type_is_plain_value(type.field_types[i])) return false;
+            }
+            return true;
+        }
+
+        switch (type.primitive) {
+            case IrPrimitiveKind::I8:
+            case IrPrimitiveKind::I16:
+            case IrPrimitiveKind::I32:
+            case IrPrimitiveKind::I64:
+            case IrPrimitiveKind::U8:
+            case IrPrimitiveKind::U16:
+            case IrPrimitiveKind::U32:
+            case IrPrimitiveKind::U64:
+            case IrPrimitiveKind::F32:
+            case IrPrimitiveKind::F64:
+            case IrPrimitiveKind::F128:
+            case IrPrimitiveKind::Bool:
+            case IrPrimitiveKind::String:
+            case IrPrimitiveKind::Function:
+                return true;
+            case IrPrimitiveKind::Enum:
+                if (!has_aggregate_enum_layout(type)) return true;
+                break;
+            case IrPrimitiveKind::Struct:
+            case IrPrimitiveKind::Tuple:
+            case IrPrimitiveKind::Array:
+                break;
+            case IrPrimitiveKind::Unknown:
+            case IrPrimitiveKind::Void:
+            case IrPrimitiveKind::Vector:
+            case IrPrimitiveKind::Zone:
+            case IrPrimitiveKind::TraitObject:
+            case IrPrimitiveKind::MetaType:
+                return false;
+        }
+
+        for (const IrType& field : aggregate_field_types(type)) {
+            if (!lambda_capture_type_is_plain_value(field)) return false;
+        }
+        return true;
+    }
+
     IrExprPtr make_lambda_capture_value_expr(const LambdaCaptureUse& capture) {
         LocalInfo* local = find_local_slot(capture.name);
         if (!local) fail(capture.loc, "unknown lambda capture '" + capture.name + "'");
         if (auto error = local_unavailable_binding_error(capture.name, *local)) fail(capture.loc, *error);
+        if (local->zone_pointer) {
+            fail(capture.loc,
+                 "lambda capture of zone pointer binding '" + capture.name +
+                     "' is planned; pass the pointer as an explicit parameter for now");
+        }
         if (is_owner_type(local->type)) {
             fail(capture.loc,
                  "lambda capture of owning binding '" + capture.name +
@@ -17473,6 +17540,12 @@ private:
             fail(capture.loc,
                  "lambda capture of borrow-carrying binding '" + capture.name +
                      "' is planned; capture a plain value for now");
+        }
+        if (!lambda_capture_type_is_plain_value(local->type)) {
+            fail(capture.loc,
+                 "lambda capture of binding '" + capture.name + "' has unsupported type " +
+                     type_name(local->type) +
+                     "; current closure captures only pointer-free plain values");
         }
         require_can_read_borrow_path(capture.loc, capture.name, *local, "");
         require_zone_pointer_valid(capture.loc, capture.name, *local);
