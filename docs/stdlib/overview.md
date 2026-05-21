@@ -51,7 +51,7 @@ API evolution.
 | `std::path` | Source lexical path manipulation. | `PathBytes`, `bytes`, `from_os`, method-style path-byte helpers, `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `components`, `file_name`, `parent`, `extension`, `stem`, `file_stem`, `has_file_name`, `has_extension`, `has_stem`, `has_file_stem`, `with_file_name_in`, `with_extension_in`, `join_in`, `normalize_in`. |
 | `std::net` | Network address values, DNS lookup, and explicit socket handles. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, `UnixStream`, `Shutdown`, address constructors/accessors, family/loopback/unspecified predicates, IPv4 DNS lookup, IPv4 TCP bind/connect/accept/local-port helpers, IPv4 UDP bind/send-byte/receive-byte helpers, Unix stream bind/connect/accept helpers, descriptor views, nonblocking flags, millisecond timeouts, stream shutdown, explicit close, and TCP/Unix `std::io` byte adapters. |
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
-| `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `allocation_zone`, `metadata`, `ZoneMetadata`, `ZoneBacked`, `of`, `reset`, `destroy`. |
+| `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `allocation_zone`, `metadata`, `from_zone`, `ZoneMetadata`, metadata handle allocation, `ZoneBacked`, `of`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `try_get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string and typed borrowed text-boundary views. | `String`, `Utf8`, `OsStr`, direct string-literal coercion to `Slice[u8]` / `Vec[u8]` / `[u8, N]` / `Utf8` / `OsStr` / `PathBytes` / `CStr`, `utf8`, `os_str`, `c_str`, `c_len`, `c_bytes`, `bytes`, `new`, `empty`, `from`, `copy`, `from_string`, `from_slice_in`, `join_in`, `push`, `try_get`, `try_pop`, `remove`, `try_remove`, `retain`, `append`, `append_byte`, `append_bytes`, `find_text`, `contains_text`, `split`, `chunks`, `windows`, `push_codepoint_in`, `try_utf8`, `is_utf8`, `codepoint_count`, `codepoint_at`, `equals_text`, `equals_text_ignore_case`, `trim`, `trimmed`, `parse_decimal`, `parse_signed_decimal`, `parse_decimal_prefix`, `parse_signed_decimal_prefix`, `as_slice`. `c_str` returns the shared `std::c::CStr` type. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`, signed decimal parsers, and overflow-checked `i64` parser policy. |
@@ -74,9 +74,10 @@ API evolution.
 Anything that allocates takes a `ref mut Zone` or returns a handle tied to a
 zone. Methods with an `_in` suffix take an explicit zone for growth or copying;
 methods with a `_to` suffix copy a derived value into a target zone.
-`std::vec::Vec[T]` stores its owning zone pointer in the handle, so natural
-growth methods such as `vec.push(value)` and `vec.reserve(capacity)` do not
-need a zone argument after construction. For tracked local
+`std::vec::Vec[T]` stores `ZoneMetadata` in the handle, so natural growth
+methods such as `vec.push(value)` and `vec.reserve(capacity)` can allocate
+through the recovered runtime zone without a zone argument after construction.
+For tracked local
 `std::string::String` and linear `std::collections` handles, Ari can infer the
 same source zone for common mutating methods on tracked locals.
 `map.insert(key, value)`,
@@ -350,10 +351,12 @@ strong as `std::vec::Vec[T]`.
 are runtime-backed, while `alloc_array<T>` is source Ari that packages the
 common "count times `size_of<T>()` at `align_of<T>()`" pattern for library
 authors. `allocation_zone(data)` is the raw allocation-header reader, while
-`metadata(data)` wraps that handle in `ZoneMetadata`. `ZoneBacked` plus
+`metadata(data)` wraps that handle in `ZoneMetadata`. `from_zone(ref mut zone)`
+captures metadata from an explicit zone capability, and `ZoneMetadata` can
+allocate directly through that recovered runtime handle. `ZoneBacked` plus
 `zone::of(ref value)`/`value.zone()` give higher-level handles a standard way
-to expose the same typed metadata when they have a real backing allocation,
-including the zone-backed collection handles.
+to expose the same typed metadata, either from cached construction metadata or
+from a real backing allocation, including the zone-backed collection handles.
 
 `std::input` follows that pattern for stdin. `read_byte`, `line`, and
 `owned_line` are runtime hooks, while `try_read_byte` is source Ari that turns

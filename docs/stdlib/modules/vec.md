@@ -113,8 +113,9 @@ the vector to the unique prefix, and returns the new length. `fill` overwrites
 the live prefix with one value, `copy_from` copies the source prefix that fits
 and returns the copied count, and `partition` reorders live values by a
 borrowed predicate and returns the split index. `push`, `insert`, `reserve`,
-`reserve_extra`, `extend_from_slice`, and growing `resize` use the zone pointer
-stored inside the handle, so ordinary callers do not need to pass `ref mut
+`reserve_extra`, `extend_from_slice`, and growing `resize` use `ZoneMetadata`
+captured at construction. The metadata can also be recovered from a non-empty
+backing allocation header, so ordinary callers do not need to pass `ref mut
 zone` after construction.
 
 Explicit-zone compatibility forms remain available:

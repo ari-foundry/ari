@@ -541,7 +541,9 @@ Checklist:
       `alloc_array` alias and zero-count null behavior
 - [x] source `std::zone::ZoneMetadata` and `std::zone::ZoneBacked` expose
       allocation-header zone recovery through `zone::metadata(data)`,
-      `zone::of(ref value)`, and `value.zone()` for backed std handles
+      `zone::from_zone(ref mut zone)`, `metadata.alloc_array<T>(count)`,
+      `metadata.as_zone_ptr()`, `zone::of(ref value)`, and `value.zone()` for
+      backed std handles
 - [x] control-flow expressions that select source `std::vec::Vec<T>` handles
       from the same zone keep reset/destroy provenance on the selected handle
 - [x] source `std::vec::Vec<T>` exposes tracked read-only metadata methods
@@ -567,9 +569,9 @@ Checklist:
       `stable_sort`, `is_sorted`, `binary_search`, `min`, and `max` wrappers
       over its live element storage
 - [x] source `std::vec::Vec<T>.reserve(capacity)` grows the handle with a
-      larger allocation from the zone pointer stored in the handle
+      larger allocation from the `ZoneMetadata` stored in the handle
 - [x] source `std::vec::Vec<T>.reserve_extra(additional)` grows capacity to at
-      least `len + additional` through the handle's stored zone capability
+      least `len + additional` through the handle's stored zone metadata
 - [x] source `std::vec::Vec<T>.push_in(ref mut Zone, value)` appends through the
       explicit compatibility capability and grows capacity on demand
 - [x] source `std::vec::Vec<T>.insert_in(ref mut Zone, index, value)` inserts
@@ -587,7 +589,7 @@ Checklist:
 - [x] source `std::vec::Vec<T>` owning-zone `push`, `insert`, `reserve`,
       `reserve_extra`, `extend_from_slice`, and `resize` share one private
       capacity/copy growth path, covered by `std-vec-growth-paths`
-- [x] source `std::vec::Vec<T>` stores its owning zone pointer in the handle so
+- [x] source `std::vec::Vec<T>` stores `ZoneMetadata` in the handle so
       natural growth calls work without compiler-synthesized zone arguments
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
       whose zone provenance is invalidated after reset/destroy

@@ -520,10 +520,13 @@ private:
         if (symbol == "ari_builtin_zone_create") {
             return IrType{TypeQualifier::Own, IrPrimitiveKind::Zone, "Zone", {}, {}, {}, {}, loc};
         }
-        if (symbol == "ari_builtin_zone_alloc" || symbol == "ari_builtin_string_alloc_buffer") {
+        if (symbol == "ari_builtin_zone_alloc" ||
+            symbol == "ari_builtin_zone_alloc_handle" ||
+            symbol == "ari_builtin_string_alloc_buffer") {
             return IrType{TypeQualifier::Ptr, IrPrimitiveKind::U8, "u8", {}, {}, {}, {}, loc};
         }
-        if (symbol == "ari_builtin_zone_allocation_zone") {
+        if (symbol == "ari_builtin_zone_allocation_zone" ||
+            symbol == "ari_builtin_zone_handle") {
             return IrType{TypeQualifier::Ptr, IrPrimitiveKind::Void, "void", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_random_entropy") {
@@ -2861,9 +2864,29 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "ptr @ari_builtin_zone_handle(ptr %zone.slot) {");
+        line("entry:");
+        line("  %zone = load ptr, ptr %zone.slot");
+        line("  %zone.null = icmp eq ptr %zone, null");
+        line("  br i1 %zone.null, label %fail, label %ok");
+        line("ok:");
+        line("  ret ptr %zone");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "ptr @ari_builtin_zone_alloc(ptr %zone.slot, i64 %bytes, i64 %align) {");
         line("entry:");
         line("  %zone = load ptr, ptr %zone.slot");
+        line("  %out = call ptr @ari_builtin_zone_alloc_handle(ptr %zone, i64 %bytes, i64 %align)");
+        line("  ret ptr %out");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_zone_alloc_handle(ptr %zone, i64 %bytes, i64 %align) {");
+        line("entry:");
         line("  %zone.null = icmp eq ptr %zone, null");
         line("  %bytes.bad = icmp sle i64 %bytes, 0");
         line("  %align.bad = icmp sle i64 %align, 0");

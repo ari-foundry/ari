@@ -1359,9 +1359,13 @@ zone::new<T>(ref mut zone, value)
 zone::promote<T>(ref mut target, source)
 zone::allocation_zone(data)
 zone::metadata(data)
+zone::from_zone(ref mut zone)
 zone::of<T: zone::ZoneBacked>(ref value)
 value.zone()
 metadata.as_ptr()
+metadata.as_zone_ptr()
+metadata.alloc(bytes, align)
+metadata.alloc_array<T>(count)
 metadata.equals(ref other)
 zone::reset(ref mut zone)
 zone::destroy(zone)
@@ -1374,14 +1378,17 @@ handles when ownership matters.
 
 `allocation_zone(data)` reads Ari's allocation header for a non-null zone
 allocation and returns the raw opaque handle. Prefer `metadata(data)`, which
-wraps that handle as `ZoneMetadata`. `zone::of(ref value)` and `value.zone()`
-use the `ZoneBacked` trait to expose `ZoneMetadata` from supported heap-backed
-stdlib values such as `Box[T]`, `String`, `Vec[T]`, and zone-backed
-`std::collections` handles.
-`metadata.as_ptr()` is the raw escape hatch, and `metadata.equals(ref other)`
-checks handle identity. Zero-capacity handles have no allocation header to
-read, so construct with positive capacity or grow first before asking for
-their zone.
+wraps that handle as `ZoneMetadata`. `from_zone(ref mut zone)` captures
+metadata directly from an explicit zone capability. `zone::of(ref value)` and
+`value.zone()` use the `ZoneBacked` trait to expose `ZoneMetadata` from
+supported heap-backed stdlib values such as `Box[T]`, `String`, `Vec[T]`, and
+zone-backed `std::collections` handles.
+`metadata.as_ptr()` is the raw escape hatch, `metadata.as_zone_ptr()` exposes
+the same address as `ptr Zone`, and `metadata.equals(ref other)` checks handle
+identity. `metadata.alloc(bytes, align)` and `metadata.alloc_array<T>(count)`
+allocate through the recovered runtime zone handle. Zero-capacity handles may
+carry metadata from construction even when they have no backing data pointer;
+raw `metadata(data)` still requires a non-null allocation pointer.
 
 ## Option And Result
 
@@ -1634,8 +1641,8 @@ preserves their order, and drops rejected values. `dedup()` removes consecutive
 duplicate values from the owned vector and returns the new length. `fill`,
 `copy_from`, and `partition` are owned-vector wrappers over the same live-prefix
 policies as `Slice[T]`. `push`, `insert`, `reserve`, `reserve_extra`,
-`extend_from_slice`, and growing `resize` use the zone pointer stored inside
-the handle; the `_in` forms remain available for explicit capability plumbing.
+`extend_from_slice`, and growing `resize` use `ZoneMetadata` stored inside the
+handle; the `_in` forms remain available for explicit capability plumbing.
 The borrowed sequence helpers
 mirror the root `Slice[T]` vocabulary: `slice` and `split_at` create views over live vector storage,
 `find` and `contains_slice` search for borrowed subsequences, `compare` is

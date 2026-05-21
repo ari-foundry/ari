@@ -13,9 +13,10 @@ bool is_i64_value_type(const IrType& type) {
            type.primitive == IrPrimitiveKind::I64;
 }
 
-bool is_zone_ptr_type(const IrType& type) {
-    return type.qualifier == TypeQualifier::Ptr &&
-           type.primitive == IrPrimitiveKind::Zone;
+bool is_zone_metadata_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::zone::ZoneMetadata";
 }
 
 IrType value_qualified_vec_type(IrType type) {
@@ -133,22 +134,22 @@ std::optional<std::size_t> std_vec_zone_handle_source_field_index(const IrType& 
     if (type.field_names.size() != 2 || type.field_types.size() != 2) return std::nullopt;
 
     std::optional<std::size_t> raw_index;
-    std::optional<std::size_t> zone_index;
+    std::optional<std::size_t> metadata_index;
     for (std::size_t i = 0; i < type.field_names.size(); ++i) {
         const std::string& name = type.field_names[i];
         const IrType& field_type = type.field_types[i];
         if (name == "raw") {
             if (!is_std_vec_raw_handle_type(field_type)) return std::nullopt;
             raw_index = i;
-        } else if (name == "zone") {
-            if (!is_zone_ptr_type(field_type)) return std::nullopt;
-            zone_index = i;
+        } else if (name == "metadata") {
+            if (!is_zone_metadata_type(field_type)) return std::nullopt;
+            metadata_index = i;
         } else {
             return std::nullopt;
         }
     }
-    if (!raw_index || !zone_index) return std::nullopt;
-    return zone_index;
+    if (!raw_index || !metadata_index) return std::nullopt;
+    return metadata_index;
 }
 
 std::optional<std::vector<std::size_t>> std_vec_zone_handle_data_field_path_indices(const IrType& type) {
@@ -198,15 +199,15 @@ std::vector<std::vector<std::size_t>> std_vec_zone_handle_storage_field_path_ind
     if (type.field_names.empty() && type.field_types.empty()) return {{0}, {1}};
 
     std::optional<std::size_t> raw_index;
-    std::optional<std::size_t> zone_index;
+    std::optional<std::size_t> metadata_index;
     for (std::size_t i = 0; i < type.field_names.size(); ++i) {
         if (type.field_names[i] == "raw") raw_index = i;
-        if (type.field_names[i] == "zone") zone_index = i;
+        if (type.field_names[i] == "metadata") metadata_index = i;
     }
 
     std::vector<std::vector<std::size_t>> paths;
     if (raw_index) paths.push_back({*raw_index});
-    if (zone_index) paths.push_back({*zone_index});
+    if (metadata_index) paths.push_back({*metadata_index});
     return paths;
 }
 

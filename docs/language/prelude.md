@@ -76,7 +76,7 @@ capability and returns a tracked `ptr T`; `std::vec::with_capacity<T>(ref mut
 zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
 `data`, mutable `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
 capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed
-and stores the owning zone pointer inside the handle.
+and stores `ZoneMetadata` inside the handle.
 The prelude expression macro `Vec!(T, ref mut zone, capacity)` is shorthand for
 that `std::vec::new<T>(ref mut zone, capacity)` constructor; it is allocator
 construction sugar, not a root `Vec[T]` ABI workaround.
@@ -93,8 +93,8 @@ The source handle currently exposes element methods: `len`, `capacity`,
 `reserve_in(ref mut zone, capacity)`,
 `reserve_extra_in(ref mut zone, additional)`, `copy_to(ref mut zone)`,
 top-level `std::vec::from_slice_in<T>(ref mut zone, values)`, `as_ptr()`,
-`as_mut_ptr()`, `iter()`, and `as_slice`. The natural growth methods use the
-zone pointer stored in the handle; the `_in` forms remain available when code
+`as_mut_ptr()`, `iter()`, and `as_slice`. The natural growth methods use
+metadata stored in the handle; the `_in` forms remain available when code
 needs to spell the capability directly. Metadata, checked reads, search, Slice comparison,
 `copy_to(ref mut zone)`, `get_ref(index)`, `as_ptr()`, and `iter()` borrow the
 handle receiver instead of copying it. `get_ref(index)` returns a shared borrow
@@ -112,7 +112,7 @@ bytes. `try_pop()` returns `Option[T]`, using `None` for an empty handle instead
 of asserting.
 `vec.push(value)`, `vec.insert(index, value)`, `vec.reserve(capacity)`,
 `vec.reserve_extra(additional)`, `vec.extend_from_slice(values)`, and
-`vec.resize(length, value)` work from the handle's stored zone instead of a
+`vec.resize(length, value)` work from the handle's `ZoneMetadata` instead of a
 compiler-synthesized hidden argument.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
@@ -780,6 +780,10 @@ zone::create(capacity: i64) -> own Zone
 zone::temp(capacity: i64) -> own Zone
 zone::alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8
 zone::allocation_zone(data: ptr u8) -> ptr c_void
+zone::metadata(data: ptr u8) -> std::zone::ZoneMetadata
+zone::from_zone(zone: ref mut Zone) -> std::zone::ZoneMetadata
+zone::of<T: std::zone::ZoneBacked>(value: ref T) -> std::zone::ZoneMetadata
+value.zone() -> std::zone::ZoneMetadata
 zone::alloc<T>(zone: ref mut Zone) -> ptr T
 zone::alloc_array<T>(zone: ref mut Zone, count: i64) -> ptr T
 zone::new<T>(zone: ref mut Zone, value: T) -> ptr T
@@ -811,9 +815,11 @@ lowers through compiler-emitted `malloc`/`free` runtime helpers.
 Host zone allocations carry a compiler-defined 8-byte header immediately
 before the returned user pointer. That header stores only the owning raw zone
 handle at `ptr - 8`; allocation size and requested alignment are not pointer
-metadata. `zone::allocation_zone` is the intended low-level bridge for future
-runtime growth helpers that need to infer the allocation capability from a
-stored buffer pointer.
+metadata. `zone::allocation_zone` is the raw header reader, while
+`zone::metadata(data)` and `zone::from_zone(ref mut zone)` wrap a runtime zone
+handle as `ZoneMetadata`. `ZoneMetadata` exposes raw identity helpers and
+metadata-backed allocation helpers for stdlib runtime growth code that needs
+to infer the allocation capability from a stored buffer pointer.
 Pointers allocated from a temporary zone are lexical too: returning them,
 storing them into longer-lived bindings or aggregates, or sending them through
 escape-prone calls is rejected with a diagnostic that names the pointer and the
@@ -852,9 +858,9 @@ returns a tracked `std::vec::Iter<T>`, and `std::vec::Vec<T>` implements
 `IntoIterator[T]` so `for value in vec` uses the same iterator lowering.
 Metadata, checked read, element-borrow, search, iterator, target-zone copy, and
 raw-pointer methods borrow the source handle receiver instead of copying it.
-Natural growth methods copy existing elements into a larger allocation from the
-handle's stored zone when growth is needed and keep old storage under the
-zone's bulk lifetime. Dropping the source `Vec<T>` handle
+Natural growth methods copy existing elements into a larger allocation through
+the handle's `ZoneMetadata` when growth is needed and keep old storage under
+the zone's bulk lifetime. Dropping the source `Vec<T>` handle
 consumes it and drops each current element while leaving all backing storage
 under the explicit zone's bulk lifetime. Callers can also keep using
 `vec.raw.data` with `ptr_store`, `ptr_load`, and `ptr_add` directly for

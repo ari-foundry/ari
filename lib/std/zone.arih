@@ -1,6 +1,8 @@
 pub extern "ari" fn create(capacity: i64) -> own Zone = "ari_builtin_zone_create";
 pub extern "ari" fn alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8 = "ari_builtin_zone_alloc";
 pub extern "ari" fn allocation_zone(data: ptr u8) -> ptr c_void = "ari_builtin_zone_allocation_zone";
+extern "ari" fn zone_handle(zone: ref mut Zone) -> ptr c_void = "ari_builtin_zone_handle";
+extern "ari" fn alloc_handle(handle: ptr c_void, bytes: i64, align: i64) -> ptr u8 = "ari_builtin_zone_alloc_handle";
 
 pub struct ZoneMetadata {
   handle: ptr c_void,
@@ -14,6 +16,10 @@ pub fn metadata(data: ptr u8) -> std::zone::ZoneMetadata {
   return std::zone::ZoneMetadata { handle: allocation_zone(data) };
 }
 
+pub fn from_zone(zone: ref mut Zone) -> std::zone::ZoneMetadata {
+  return std::zone::ZoneMetadata { handle: zone_handle(zone) };
+}
+
 pub fn of[T: std::zone::ZoneBacked](value: ref T) -> std::zone::ZoneMetadata {
   return value.zone();
 }
@@ -21,6 +27,22 @@ pub fn of[T: std::zone::ZoneBacked](value: ref T) -> std::zone::ZoneMetadata {
 pub impl std::zone::ZoneMetadata {
   fn as_ptr(self: ref Self) -> ptr c_void {
     return self.handle;
+  }
+
+  fn as_zone_ptr(self: ref Self) -> ptr Zone {
+    return self.handle as ptr Zone;
+  }
+
+  fn alloc(self: ref Self, bytes: i64, align: i64) -> ptr u8 {
+    return alloc_handle(self.handle, bytes, align);
+  }
+
+  fn alloc_array[T](self: ref Self, count: i64) -> ptr T {
+    std::assert(count >= 0);
+    if count == 0 {
+      return 0u64 as ptr T;
+    }
+    return self.alloc(count * std::mem::size_of<T>(), std::mem::align_of<T>()) as ptr T;
   }
 
   fn equals(self: ref Self, other: ref Self) -> bool {

@@ -702,6 +702,7 @@ fn std::zone::alloc_array[T]|std zone raw array allocation tests; docs/stdlib/mo
 fn std::zone::allocation_zone|zone allocation header metadata tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::create|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::destroy|zone lifecycle and invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::from_zone|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 fn std::zone::metadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 fn std::zone::new[T]|placement construction tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::of[T: std::zone::ZoneBacked]|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
@@ -1559,7 +1560,10 @@ method std::vec::Vec[T]::try_remove|check-prelude std-vec-try-remove Option-retu
 method std::vec::Vec[T]::upper_bound|check-prelude std-vec-sequence ordered sequence upper-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::upper_bound_by|check-prelude std-algo-by-helpers comparator sequence upper-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::windows|check-prelude std-vec-sequence borrowed window iterator wrapper; docs/stdlib/modules/vec.md
+method std::zone::ZoneMetadata::alloc|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
+method std::zone::ZoneMetadata::alloc_array[T]|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::as_ptr|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
+method std::zone::ZoneMetadata::as_zone_ptr|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::equals|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 module std::algo|check-prelude std-algo-slice-helpers source algorithm module; docs/stdlib/modules/algo.md
 module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overview.md module map
@@ -1808,6 +1812,7 @@ use std::clamp|std cmp value helper root re-export tests; docs/dev/test-matrix.m
 use std::clamp_by|check-prelude std-cmp-by-helpers comparator-based clamp root re-export; docs/stdlib/modules/cmp.md
 use std::create|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::destroy|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::from_zone|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::has_arg|std context args root re-export tests; docs/stdlib/modules/context.md
 use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::input_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
@@ -1818,10 +1823,12 @@ use std::iter::ExactSizeIterator|check-prelude std-iter-exact-size module alias 
 use std::iter::collect|check-prelude std-iter-adapters natural iter::collect alias backed by std::vec; docs/stdlib/modules/iter.md
 use std::max|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::max_by|check-prelude std-cmp-by-helpers comparator-based max root re-export; docs/stdlib/modules/cmp.md
+use std::metadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::min|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::min_by|check-prelude std-cmp-by-helpers comparator-based min root re-export; docs/stdlib/modules/cmp.md
 use std::new|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::newline|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::of|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::promote|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::ptr_add|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::ptr_load|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows

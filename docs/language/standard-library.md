@@ -67,10 +67,10 @@ hooks because the current language cannot express those primitives directly.
 
 Allocation APIs take a `ref mut Zone` or return values tied to a zone. The
 `_in` suffix means "use this explicit zone for growth or copying".
-`std::vec::Vec[T]` stores its owning zone pointer in the handle, so common
-growth methods such as `push`, `insert`, `reserve`, `reserve_extra`,
-`extend_from_slice`, and `resize` do not need a zone argument after
-construction. For tracked local `std::string::String` handles, Ari can infer
+`std::vec::Vec[T]` stores `ZoneMetadata` in the handle, so common growth
+methods such as `push`, `insert`, `reserve`, `reserve_extra`,
+`extend_from_slice`, and `resize` can recover the runtime zone without a zone
+argument after construction. For tracked local `std::string::String` handles, Ari can infer
 the same source zone for common byte-growth methods. `std::collections` handles
 keep growth explicit today: `Set`, `HashMap`, `HashSet`, `TreeMap`, and
 `TreeSet`, plus `Deque`, `LinkedList`, `BinaryHeap`, and `PriorityQueue`,

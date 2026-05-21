@@ -3,6 +3,15 @@ fn main() -> i64 {
   var arena = zone::create(8192);
   var score = 0;
 
+  let direct_meta = from_zone(ref mut arena);
+  let direct_values = direct_meta.alloc_array<i64>(1);
+  ptr_store(direct_values, 31);
+  let direct_values_zone = zone::metadata(direct_values as ptr u8);
+  if direct_meta.equals(ref direct_values_zone) &&
+     (direct_meta.as_ptr() as u64) == (direct_meta.as_zone_ptr() as u64) {
+    score = score + ptr_load(direct_values);
+  }
+
   var values = std::vec::new<i64>(ref mut arena, 2);
   values.push(11);
   let raw_values_zone = zone::metadata(values.as_ptr() as ptr u8);

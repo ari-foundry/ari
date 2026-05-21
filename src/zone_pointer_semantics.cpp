@@ -305,7 +305,9 @@ bool zone_metadata_extern_builtin_allows_zone_pointer_argument(const std::string
                                                                std::size_t arg_index) {
     if (arg_index != 0) return false;
     std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(function_name);
-    return builtin_symbol && *builtin_symbol == "ari_builtin_zone_allocation_zone";
+    return builtin_symbol &&
+           (*builtin_symbol == "ari_builtin_zone_allocation_zone" ||
+            *builtin_symbol == "ari_builtin_zone_alloc_handle");
 }
 
 bool memory_extern_builtin_allows_zone_pointer_argument(const std::string& function_name,

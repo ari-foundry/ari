@@ -18477,7 +18477,16 @@ private:
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_string_zone_handle_source_field_index(struct_type);
         }
+        const bool std_zone_metadata_literal =
+            struct_type.qualifier == TypeQualifier::Value &&
+            struct_type.primitive == IrPrimitiveKind::Struct &&
+            struct_type.name == "std::zone::ZoneMetadata";
         auto std_zone_handle_field_allows_zone_pointer = [&](std::size_t index) {
+            if (std_zone_metadata_literal &&
+                index < struct_type.field_names.size() &&
+                struct_type.field_names[index] == "handle") {
+                return true;
+            }
             if (std_zone_handle_source_field && index == *std_zone_handle_source_field) return true;
             for (const std::vector<std::size_t>& path : std_zone_handle_storage_field_paths) {
                 if (path.size() == 1 && path[0] == index) return true;

@@ -6,7 +6,7 @@ pub struct RawVec[T] {
 
 pub struct Vec[T] {
   raw: RawVec[T],
-  mut zone: ptr Zone,
+  mut metadata: std::zone::ZoneMetadata,
 }
 
 pub struct Iter[T] {
@@ -24,7 +24,10 @@ pub fn with_capacity[T](zone: ref mut Zone, capacity: i64) -> RawVec[T] {
 }
 
 pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::vec::Vec[T] {
-  return std::vec::Vec<T> { raw: with_capacity<T>(zone, capacity), zone: zone as ptr Zone };
+  return std::vec::Vec<T> {
+    raw: with_capacity<T>(zone, capacity),
+    metadata: std::zone::from_zone(zone),
+  };
 }
 
 pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::vec::Vec[T] {
@@ -65,13 +68,24 @@ fn grow_to_capacity[T](value: ref mut std::vec::Vec[T], zone: ref mut Zone, capa
   }
   value.raw.data = data;
   value.raw.capacity = capacity;
-  value.zone = zone as ptr Zone;
+  value.metadata = std::zone::from_zone(zone);
 }
 
 fn grow_to_own_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) -> void {
-  let zone = value.zone;
-  let zone_ref: ref mut Zone = ref mut *zone;
-  grow_to_capacity<T>(value, zone_ref, capacity);
+  std::assert(capacity >= 0);
+  let metadata = value.metadata;
+  if capacity <= value.raw.capacity {
+    return;
+  }
+  let data = metadata.alloc_array<T>(capacity);
+  var index = 0;
+  while index < value.raw.len {
+    ptr_store(ptr_add(data, index), ptr_load(ptr_add(value.raw.data, index)));
+    index = index + 1;
+  }
+  value.raw.data = data;
+  value.raw.capacity = capacity;
+  value.metadata = metadata;
 }
 
 fn ensure_spare_capacity[T](value: ref mut std::vec::Vec[T]) -> void {
@@ -747,6 +761,9 @@ pub impl[T] std::vec::Vec[T] {
 
 impl[T] std::zone::ZoneBacked for std::vec::Vec[T] {
   pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    if self.raw.capacity == 0 {
+      return self.metadata;
+    }
     std::assert(self.raw.capacity > 0);
     return std::zone::metadata(self.raw.data as ptr u8);
   }

@@ -22,12 +22,18 @@ zone::new<T>(ref mut Zone, value: T) -> ptr T
 zone::promote<T>(ref mut target, source: ptr T) -> ptr T
 zone::allocation_zone(data: ptr u8) -> ptr c_void
 zone::metadata(data: ptr u8) -> ZoneMetadata
+zone::from_zone(ref mut Zone) -> ZoneMetadata
 zone::of<T: ZoneBacked>(ref value) -> ZoneMetadata
 value.zone() -> ZoneMetadata
 zone::reset(ref mut Zone) -> void
 zone::destroy(zone: own Zone) -> void
 
 ZoneMetadata
+metadata.as_ptr() -> ptr c_void
+metadata.as_zone_ptr() -> ptr Zone
+metadata.alloc(bytes: i64, align: i64) -> ptr u8
+metadata.alloc_array<T>(count: i64) -> ptr T
+metadata.equals(ref other) -> bool
 ZoneBacked
 
 create(capacity)
@@ -58,19 +64,24 @@ into a longer-lived zone.
 `allocation_zone(data)` is the raw allocation-header primitive. It reads the
 header immediately before a non-null zone allocation and returns the opaque raw
 zone handle. Prefer `metadata(data)`, which wraps that handle in
-`ZoneMetadata`.
+`ZoneMetadata`. `from_zone(ref mut zone)` creates the same typed metadata from
+an existing zone capability without requiring a prior payload allocation.
 
 `ZoneBacked` is the high-level wrapper for library handles that own
 zone-backed storage. `zone::of(ref value)` and `value.zone()` expose
 `ZoneMetadata` for supported handles such as `Box[T]`, `String`, `Vec[T]`, and
-the zone-backed `std::collections` handles. Use `metadata.as_ptr()` only at raw
-runtime or FFI boundaries, and `metadata.equals(ref other)` for identity
-checks.
+the zone-backed `std::collections` handles. `metadata.as_ptr()` exposes the
+raw opaque handle, `metadata.as_zone_ptr()` gives the same address typed as
+`ptr Zone`, and `metadata.equals(ref other)` checks handle identity.
+`metadata.alloc(bytes, align)` and `metadata.alloc_array<T>(count)` allocate
+through that recovered runtime zone handle; this is the preferred internal
+building block for heap handles that need to grow without carrying an explicit
+`ref mut Zone` argument.
 
-These helpers require an actual backing allocation. Empty or zero-capacity
-handles may carry checker provenance but have no data pointer header to read;
-call `reserve`, construct with a positive capacity, or keep using the explicit
-`ref mut Zone` capability in that case.
+Raw header recovery requires an actual backing allocation. Empty or
+zero-capacity handles may have no data pointer header to read, so use
+`from_zone(ref mut zone)` or a handle API that caches `ZoneMetadata` when code
+needs a zone before the first allocation.
 
 `reset(ref mut zone)` invalidates allocations from the zone while keeping the
 zone object alive. `destroy(zone)` consumes the owning zone handle and releases
@@ -114,9 +125,11 @@ behavior.
   `std::zone::alloc_array`, the root `alloc_array` alias, null return for
   zero count, pointer loads/stores, LLVM symbol emission, and runtime result.
 - `tests/cases/standard-library/ok/zone/std-zone-backed.ari` checks
-  `ZoneMetadata`, `ZoneBacked`, `zone::metadata(data)`, `zone::of(ref value)`,
-  `value.zone()`, and raw allocation-header agreement for box, string, vector,
-  set, map, sequence, linked list, heap, and priority queue handles.
+  `ZoneMetadata`, `ZoneBacked`, `zone::metadata(data)`, `zone::from_zone`,
+  `metadata.alloc_array<T>`, `metadata.as_ptr()`,
+  `metadata.as_zone_ptr()`, `zone::of(ref value)`, `value.zone()`, and raw
+  allocation-header agreement for box, string, vector, set, map, sequence,
+  linked list, heap, and priority queue handles.
 - Existing zone, vector, string, and boxed tests cover reset/destroy
   invalidation and zone-backed handle provenance.
 

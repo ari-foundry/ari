@@ -414,6 +414,7 @@ zone::temp(capacity: i64) -> own Zone
 zone::alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8
 zone::allocation_zone(data: ptr u8) -> ptr c_void
 zone::metadata(data: ptr u8) -> std::zone::ZoneMetadata
+zone::from_zone(zone: ref mut Zone) -> std::zone::ZoneMetadata
 zone::of<T: std::zone::ZoneBacked>(value: ref T) -> std::zone::ZoneMetadata
 value.zone() -> std::zone::ZoneMetadata
 zone::alloc<T>(zone: ref mut Zone) -> ptr T
@@ -440,15 +441,18 @@ call-site layout facts rather than pointer metadata. The user pointer remains
 the real payload pointer, so normal loads, stores, and casts use it directly.
 `zone::allocation_zone` exposes the raw handle without requiring source code to
 do pointer-adjacent arithmetic. `zone::metadata(data)` wraps that raw handle in
-`ZoneMetadata`, which is the preferred public shape. The raw handle is meant
-for capability recovery in runtime helpers, not for bypassing the typed `Zone`
-API. Empty source String and Vec buffers may still use a null data pointer, so
-metadata queries require a non-null allocation pointer.
+`ZoneMetadata`, which is the preferred public shape. `zone::from_zone(ref mut
+zone)` captures the same metadata from an explicit zone capability before any
+payload allocation exists. `ZoneMetadata` exposes `as_ptr()`,
+`as_zone_ptr()`, `alloc(bytes, align)`, and `alloc_array<T>(count)` for runtime
+helpers that need to recover the backing zone from heap metadata. Empty source
+String and Vec buffers may still use a null data pointer, so raw
+`metadata(data)` queries require a non-null allocation pointer.
 For stdlib heap handles, prefer `zone::of(ref value)` or `value.zone()` through
-`std::zone::ZoneBacked`; they read the same header from the handle's backing
-allocation and return `ZoneMetadata`. The handle must have real storage, so
-zero-capacity handles still need an explicit `ref mut Zone` or a growth step
-before runtime recovery.
+`std::zone::ZoneBacked`; they expose the same typed metadata for supported
+handles. Some handles, such as `Vec<T>`, keep construction metadata even before
+the first payload allocation. Raw header recovery through `metadata(data)`
+still requires a non-null backing allocation.
 
 `zone::scratch<T>(capacity, value)` is local-binding sugar for the common
 temporary-object case. It can only appear as the initializer of a local `let` or
@@ -524,10 +528,10 @@ through a mutable receiver. A `std::boxed::Box<T>`, `std::string::String`, or
 the target zone, not the original source zone. When a
 source `std::string::String` grows through an explicit zone argument, that
 argument must be the same source zone that created the handle. Source
-`std::vec::Vec<T>` stores its owning zone pointer in the handle, so
-`push(value)`, `insert(index, value)`, `reserve(capacity)`,
-`reserve_extra(additional)`, `extend_from_slice(values)`, and
-`resize(length, value)` grow through that stored capability. A tracked local
+`std::vec::Vec<T>` stores `ZoneMetadata` in the handle, so `push(value)`,
+`insert(index, value)`, `reserve(capacity)`, `reserve_extra(additional)`,
+`extend_from_slice(values)`, and `resize(length, value)` grow through that
+recovered runtime zone. A tracked local
 `std::string::String` receiver can infer the same zone for its byte growth
 methods and for
 `append_string`/`append_i64`/`append_u64`/`append_bool`/`append_f32`/`append_f64`.

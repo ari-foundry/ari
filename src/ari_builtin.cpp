@@ -247,6 +247,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::alloc", "ari_builtin_zone_alloc"},
         {"zone::alloc", "ari_builtin_zone_alloc"},
         {"std::zone::alloc", "ari_builtin_zone_alloc"},
+        {"zone::alloc_handle", "ari_builtin_zone_alloc_handle"},
+        {"std::zone::alloc_handle", "ari_builtin_zone_alloc_handle"},
+        {"zone::zone_handle", "ari_builtin_zone_handle"},
+        {"std::zone::zone_handle", "ari_builtin_zone_handle"},
         {"allocation_zone", "ari_builtin_zone_allocation_zone"},
         {"std::allocation_zone", "ari_builtin_zone_allocation_zone"},
         {"zone::allocation_zone", "ari_builtin_zone_allocation_zone"},
@@ -462,6 +466,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_read_line_owned") return builtin_sig({ref_mut_zone}, std_string);
     if (symbol == "ari_builtin_zone_create") return builtin_sig({i64}, own_zone);
     if (symbol == "ari_builtin_zone_alloc") return builtin_sig({ref_mut_zone, i64, i64}, ptr_u8);
+    if (symbol == "ari_builtin_zone_alloc_handle") return builtin_sig({ptr_c_void, i64, i64}, ptr_u8);
+    if (symbol == "ari_builtin_zone_handle") return builtin_sig({ref_mut_zone}, ptr_c_void);
     if (symbol == "ari_builtin_zone_allocation_zone") return builtin_sig({ptr_u8}, ptr_c_void);
     if (symbol == "ari_builtin_string_alloc_buffer") return builtin_sig({ref_mut_zone, i64}, ptr_u8);
     if (symbol == "ari_builtin_string_with_capacity") return builtin_sig({ref_mut_zone, i64}, raw_string);
