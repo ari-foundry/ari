@@ -92,6 +92,7 @@ vec.swap(left, right)
 vec.insert(index, value)
 vec.remove(index)
 vec.try_remove(index)
+vec.swap_remove(index)
 vec.truncate(length)
 vec.retain(keep)
 vec.dedup()
@@ -118,18 +119,21 @@ vec.drain_range(start, end)
 vec.insert_many(index, values)
 vec.remove_range(start, end)
 vec.splice(start, end, replacement)
+vec.split_off(index)
 ```
 
 `try_pop` and `try_remove` return `Option[T]`; `pop` asserts when empty and
 `remove` asserts when the index is absent. Use `try_remove` when a missing
-index is ordinary input. `retain` keeps values accepted by `keep: fn(ref T) ->
-bool`, preserves the order of kept values, and drops rejected values. `set`,
-`clear`, `truncate`, and shrink paths drop removed live elements before
-reducing the logical length. `dedup`, `dedup_by`, and `dedup_by_key` compact
-consecutive duplicates, truncate the vector to the unique prefix, and return
-the new length. `fill` overwrites the live prefix with one value, `copy_from`
-copies the source prefix that fits and returns the copied count, `partition`
-reorders live values by a borrowed predicate and returns the split index, and
+index is ordinary input. `swap_remove(index)` removes one value in O(1) by
+moving the last live element into the removed slot, so it does not preserve
+order. `retain` keeps values accepted by `keep: fn(ref T) -> bool`, preserves
+the order of kept values, and drops rejected values. `set`, `clear`,
+`truncate`, and shrink paths drop removed live elements before reducing the
+logical length. `dedup`, `dedup_by`, and `dedup_by_key` compact consecutive
+duplicates, truncate the vector to the unique prefix, and return the new
+length. `fill` overwrites the live prefix with one value, `copy_from` copies
+the source prefix that fits and returns the copied count, `partition` reorders
+live values by a borrowed predicate and returns the split index, and
 `stable_partition` preserves the relative order of both partitions.
 `copy_within(start, end, target)` copies the half-open source range inside the
 same vector with overlap-safe direction, while `fill_range` overwrites only
@@ -139,9 +143,13 @@ yielded value into the receiver. `append` moves every live value from another
 vector into the receiver and leaves the source vector empty. `insert_many`
 inserts a borrowed slice at one index, `remove_range` drops the selected
 half-open range and shifts the tail left, and `splice` replaces a half-open
-range with a borrowed replacement slice. `drain_range(start, end)` removes a
-half-open range and returns a drain cursor over exactly those removed values.
-`drain()` empties the vector and returns a
+range with a borrowed replacement slice. `split_off(index)` moves the tail
+`[index, len)` into a new `Vec[T]` backed by the same zone metadata and leaves
+the receiver with the prefix. The source declaration carries an inferred
+same-zone parameter so the compiler can keep the returned vector tied to the
+receiver's allocation zone; normal callers still write `vec.split_off(index)`.
+`drain_range(start, end)` removes a half-open range and returns a drain cursor
+over exactly those removed values. `drain()` empties the vector and returns a
 `std::vec::Drain[T]` cursor over the removed live values; unconsumed drain
 items are dropped when the cursor is dropped. `shrink_to_fit` moves live values
 into a new backing allocation whose logical capacity equals `len()`. Since
@@ -171,7 +179,8 @@ production-safe today for scalar and plain copyable elements. That means:
   clone or generator API for move-only resources.
 - Shrinking `resize`, `truncate`, `clear`, `remove_range`, `retain`, and
   `Vec::dedup*` drop removed live values exactly once through normal `Drop`
-  lowering.
+  lowering. `swap_remove` returns the removed value and moves the old tail
+  slot into the hole, so only the returned value is consumed by the caller.
 - `drain()` immediately makes the vector empty and owns the removed live range
   through the drain cursor; `drain_range(start, end)` does the same for only
   that half-open range after shifting the retained tail left. Dropping either
@@ -179,6 +188,9 @@ production-safe today for scalar and plain copyable elements. That means:
 - `append(ref mut other)` leaves `other` empty after transferring its live
   prefix, but it still relies on the current raw place model and should not be
   treated as the final resource-owner move API.
+- `split_off(index)` transfers the tail into another vector handle with the
+  same zone metadata. The source no longer owns those slots after its length is
+  shortened.
 
 Resource-owning elements should wait for explicit move-aware place operations,
 `Clone`/generator-based growth APIs, and by-reference comparator forms.
@@ -405,6 +417,7 @@ tests/cases/standard-library/ok/vec/std-vec-sequence.ari
 tests/cases/standard-library/ok/algo/std-algo-final-sort.ari
 tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari
 tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari
+tests/cases/standard-library/ok/vec/std-vec-complete-convenience-api.ari
 tests/cases/standard-library/ok/vec/std-vec-range-mutation.ari
 tests/cases/standard-library/ok/vec/std-vec-iter.ari
 tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari

@@ -567,6 +567,17 @@ pub impl[T] std::vec::Vec[T] {
     ptr_store(ptr_add(self.raw.data, right), value);
   }
 
+  fn swap_remove(self: ref mut Self, index: i64) -> T {
+    std::assert(index >= 0);
+    std::assert(index < self.raw.len);
+    let value = ptr_load(ptr_add(self.raw.data, index));
+    self.raw.len = self.raw.len - 1;
+    if index != self.raw.len {
+      ptr_store(ptr_add(self.raw.data, index), ptr_load(ptr_add(self.raw.data, self.raw.len)));
+    }
+    return value;
+  }
+
   fn push(self: ref mut Self, value: T) -> void {
     ensure_spare_capacity<T>(self);
     ptr_store(ptr_add(self.raw.data, self.raw.len), value);
@@ -771,6 +782,20 @@ pub impl[T] std::vec::Vec[T] {
       return super::None<T>();
     }
     return super::Some<T>(self.remove(index));
+  }
+
+  fn split_off(self: ref mut Self, zone: ref mut Zone, index: i64) -> std::vec::Vec[T] {
+    std::assert(index >= 0);
+    std::assert(index <= self.raw.len);
+    let count = self.raw.len - index;
+    var tail = std::vec::new<T>(zone, count);
+    var cursor = 0;
+    while cursor < count {
+      tail.push(ptr_load(ptr_add(self.raw.data, index + cursor)));
+      cursor = cursor + 1;
+    }
+    self.raw.len = index;
+    return tail;
   }
 
   fn clear(self: ref mut Self) -> void {

@@ -1913,6 +1913,14 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl20std__vec__Drain_i64_24std__DoubleEndedIterator9next_back' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari -o $(BUILD_DIR)/prelude/std-vec-convenience-api.elf
 	$(BUILD_DIR)/prelude/std-vec-convenience-api.elf; code=$$?; test $$code -eq 123
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-complete-convenience-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-complete-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent11swap_remove' $(BUILD_DIR)/prelude/std-vec-complete-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9split_off' $(BUILD_DIR)/prelude/std-vec-complete-convenience-api.ll
+	grep -q 'extend_iter__G_std__SliceIter_i64_' $(BUILD_DIR)/prelude/std-vec-complete-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8dedup_by' $(BUILD_DIR)/prelude/std-vec-complete-convenience-api.ll
+	grep -q 'dedup_by_key__G_i64' $(BUILD_DIR)/prelude/std-vec-complete-convenience-api.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-complete-convenience-api.ari -o $(BUILD_DIR)/prelude/std-vec-complete-convenience-api.elf
+	$(BUILD_DIR)/prelude/std-vec-complete-convenience-api.elf
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-range-mutation.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-range-mutation.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent11copy_within' $(BUILD_DIR)/prelude/std-vec-range-mutation.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent10fill_range' $(BUILD_DIR)/prelude/std-vec-range-mutation.ll
@@ -2574,6 +2582,8 @@ check-prelude: $(TARGET)
 	grep -q "std::vec::Vec.extend_from_slice_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-resize-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-resize-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-resize-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.resize_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-resize-in-different-zone.err
+	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-split-off-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-split-off-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-split-off-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::vec::Vec.split_off zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-split-off-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi

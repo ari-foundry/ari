@@ -33,6 +33,13 @@ identifies the exact case:
   convenience surface for associated `with_capacity`, `try_reserve`,
   `shrink_to_fit`, `extend`, `append`, `insert_many`, `remove_range`,
   `splice`, `drain`, `truncate`, `resize`, and `clear`.
+- `std-vec-complete-convenience-api.ari`: source `std::vec::Vec[T]` complete
+  practical convenience pass for capacity trimming, whole/range draining,
+  splice, `split_off`, `append`, slice and iterator extension,
+  `swap_remove`, and owned `dedup_by` / `dedup_by_key`.
+- `std-vec-split-off-different-zone.ari`: negative same-zone diagnostic for
+  the explicit `split_off(ref mut zone, index)` implementation shape behind
+  the natural `split_off(index)` call.
 - `prelude-slice-metadata.ari`: root `Slice[T]` borrowed metadata helper
   behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access

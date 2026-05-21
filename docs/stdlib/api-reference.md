@@ -1839,6 +1839,7 @@ vec.insert(index, value)
 vec.insert_in(ref mut zone, index, value)
 vec.remove(index)
 vec.try_remove(index)
+vec.swap_remove(index)
 vec.truncate(length)
 vec.retain(keep)
 vec.dedup()
@@ -1869,6 +1870,7 @@ vec.drain_range(start, end)
 vec.insert_many(index, values)
 vec.remove_range(start, end)
 vec.splice(start, end, replacement)
+vec.split_off(index)
 vec.index_of(value)
 vec.contains(value)
 vec.count(value)
@@ -1923,10 +1925,12 @@ vec.iter_mut()
 The `try_*` accessors return `Option[T]` for empty or out-of-range reads.
 `try_pop` and `try_remove` keep empty or missing-index removal in `Option[T]`.
 Use the non-`try` forms when absence is a programmer error and an assertion is
-the desired behavior. `retain(keep)` compacts accepted values in place,
-preserves their order, and drops rejected values. `dedup()`, `dedup_by(same)`,
-and `dedup_by_key(key)` remove consecutive duplicate values from the owned
-vector and return the new length. `fill`, `copy_from`, `partition`, and
+the desired behavior. `swap_remove(index)` is the unordered O(1) removal form:
+it returns the removed value and moves the old tail value into the hole.
+`retain(keep)` compacts accepted values in place, preserves their order, and
+drops rejected values. `dedup()`, `dedup_by(same)`, and `dedup_by_key(key)`
+remove consecutive duplicate values from the owned vector and return the new
+length. `fill`, `copy_from`, `partition`, and
 `stable_partition` are owned-vector wrappers over the same live-prefix
 policies as `Slice[T]`. `copy_within`, `fill_range`, `reverse_range`, and
 `rotate_range` are half-open range mutation helpers. `extend(values)` is the
@@ -1937,7 +1941,10 @@ vector. `insert_many`, `remove_range`, `drain_range`, and `splice` cover common
 half-open range edits. `drain()` empties the vector and returns a
 `std::vec::Drain[T]` cursor; `drain_range(start, end)` returns the same cursor
 shape for only that removed range. Unconsumed drained values are dropped with
-the cursor. `shrink_to_fit()` shrinks the
+the cursor. `split_off(index)` moves the tail into a new same-zone `Vec[T]`
+and leaves the receiver with the prefix. Its source declaration carries the
+same-zone parameter that the compiler injects for tracked local receivers, so
+ordinary code uses the natural one-argument call. `shrink_to_fit()` shrinks the
 handle's logical capacity to `len()` by moving live values into a new zone
 allocation, while old bytes remain owned by the zone until reset/destroy.
 `try_reserve(capacity)` returns `false` for negative capacities and otherwise

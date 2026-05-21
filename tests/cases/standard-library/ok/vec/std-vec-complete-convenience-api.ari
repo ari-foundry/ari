@@ -1,0 +1,103 @@
+// Covers the production Vec convenience surface: capacity trimming, draining,
+// splice/split/append/iterator extension, unordered removal, and dedup variants.
+
+fn same_parity(left: ref i64, right: ref i64) -> bool {
+  let left_raw = (ref left) as ptr i64;
+  let right_raw = (ref right) as ptr i64;
+  return ((*left_raw % 2) == (*right_raw % 2));
+}
+
+fn parity_key(value: ref i64) -> i64 {
+  let raw = (ref value) as ptr i64;
+  return *raw % 2;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(16384);
+
+  var values = Vec::with_capacity<i64>(ref mut zone, 2);
+  assert(!values.try_reserve(-4));
+  assert(values.try_reserve(8));
+
+  values.push(1);
+  values.push(2);
+  values.push(3);
+
+  var slice_seed = [4, 5];
+  let slice_view = slice_seed.as_slice();
+  values.extend(slice_view);
+
+  var iter_seed = [6, 7];
+  let iter_view = iter_seed.as_slice();
+  values.extend_iter<SliceIter[i64]>(iter_view.iter());
+  assert(values.len() == 7 && values.get(0) == 1 && values.get(6) == 7);
+
+  var extra = Vec::with_capacity<i64>(ref mut zone, 2);
+  extra.push(8);
+  extra.push(9);
+  values.append(ref mut extra);
+  assert(extra.len() == 0 && values.len() == 9 && values.get(8) == 9);
+
+  let removed = values.swap_remove(1);
+  assert(removed == 2 && values.len() == 8 && values.get(1) == 9);
+
+  var tail = values.split_off(5);
+  assert(values.len() == 5 && tail.len() == 3 && tail.get(0) == 6 && tail.get(2) == 8);
+
+  var replacement = [30, 40];
+  let replacement_view = replacement.as_slice();
+  values.splice(1, 3, replacement_view);
+  assert(values.len() == 5 && values.get(0) == 1 && values.get(1) == 30 &&
+    values.get(2) == 40 && values.get(4) == 5);
+
+  var drained = values.drain_range(2, 4);
+  let first_drained = drained.next().unwrap_or(0);
+  let last_drained = drained.next_back().unwrap_or(0);
+  assert(values.len() == 3 && values.get(1) == 30 && first_drained == 40 &&
+    last_drained == 4 && drained.len() == 0);
+  drop drained;
+
+  values.remove_range(1, 2);
+  values.insert_many(1, replacement_view);
+  assert(values.len() == 4 && values.get(0) == 1 && values.get(1) == 30 &&
+    values.get(2) == 40 && values.get(3) == 5);
+
+  values.shrink_to_fit();
+  assert(values.capacity() == values.len());
+
+  var all = values.drain();
+  let first = all.next().unwrap_or(0);
+  let last = all.next_back().unwrap_or(0);
+  assert(values.is_empty() && first == 1 && last == 5 && all.len() == 2);
+  drop all;
+
+  var deduped = Vec::with_capacity<i64>(ref mut zone, 8);
+  deduped.push(1);
+  deduped.push(3);
+  deduped.push(2);
+  deduped.push(4);
+  deduped.push(5);
+  let deduped_len = deduped.dedup_by(same_parity);
+  assert(deduped_len == 3 && deduped.len() == 3 && deduped.get(0) == 1 &&
+    deduped.get(1) == 2 && deduped.get(2) == 5);
+
+  var keyed = Vec::with_capacity<i64>(ref mut zone, 8);
+  keyed.push(4);
+  keyed.push(6);
+  keyed.push(7);
+  keyed.push(9);
+  keyed.push(10);
+  let keyed_len = keyed.dedup_by_key<i64>(parity_key);
+  assert(keyed_len == 3 && keyed.len() == 3 && keyed.get(0) == 4 &&
+    keyed.get(1) == 7 && keyed.get(2) == 10);
+
+  let keyed_len_before_split = keyed.len();
+  var empty_tail = keyed.split_off(keyed_len_before_split);
+  assert(empty_tail.len() == 0 && keyed.len() == 3);
+
+  let last_removed = keyed.swap_remove(2);
+  assert(last_removed == 10 && keyed.len() == 2);
+
+  zone::destroy(zone);
+  return 0;
+}

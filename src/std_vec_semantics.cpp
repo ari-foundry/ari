@@ -217,14 +217,16 @@ bool std_vec_method_requires_same_zone_argument(const std::string& method_name) 
            method_name == "push_in" ||
            method_name == "insert_in" ||
            method_name == "extend_from_slice_in" ||
-           method_name == "resize_in";
+           method_name == "resize_in" ||
+           method_name == "split_off";
 }
 
 std::optional<StdVecImplicitZoneMethod> std_vec_implicit_zone_method_for_call(
     const std::string& method_name,
     std::size_t user_arg_count) {
-    (void)method_name;
-    (void)user_arg_count;
+    if (method_name == "split_off" && user_arg_count == 1) {
+        return StdVecImplicitZoneMethod{"split_off", false};
+    }
     return std::nullopt;
 }
 

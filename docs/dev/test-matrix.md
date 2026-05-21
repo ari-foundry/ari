@@ -632,6 +632,10 @@ Checklist:
       mutation helpers for overlap-safe `copy_within`, `fill_range`,
       `reverse_range`, and left-rotation `rotate_range`; source Vec also
       exposes `extend_iter` and `drain_range`
+- [x] source `std::vec::Vec<T>` covers the practical convenience set with
+      `try_reserve`, `shrink_to_fit`, `drain`, `splice`, `split_off`,
+      `append`, slice and iterator extension, `swap_remove`, `dedup_by`, and
+      `dedup_by_key`, covered by `std-vec-complete-convenience-api`
 - [x] source `std::algo` covers production-shaped sort engines with
       insertion-sort cutoff, duplicate-heavy 3-way partitioning, heapsort
       fallback symbols, merge-sort stable sort, explicit temporary-zone stable

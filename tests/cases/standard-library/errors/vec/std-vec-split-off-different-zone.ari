@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var other = zone::create(128);
+  var values = Vec!(i64, ref mut zone, 4);
+  values.push(1);
+  values.push(2);
+  var tail = values.split_off(ref mut other, 1);
+  return tail.len();
+}

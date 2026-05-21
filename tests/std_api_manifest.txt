@@ -1770,6 +1770,7 @@ method std::vec::Vec[T]::sort_by|check-prelude std-algo-by-helpers comparator in
 method std::vec::Vec[T]::splice|check-prelude std-vec-convenience-api in-place vector range replacement; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::split|check-prelude std-vec-sequence borrowed delimiter split iterator wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::split_at|check-prelude std-vec-sequence borrowed split view wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::split_off|check-prelude std-vec-complete-convenience-api owned tail split into a same-zone vector; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::stable_partition|check-prelude std-algo-dedup-partition stable borrowed-predicate partition wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::stable_sort|check-prelude std-vec-sequence ordered in-place stable sort wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::stable_sort_by|check-prelude std-algo-by-helpers comparator in-place stable sort wrapper; docs/stdlib/modules/vec.md
@@ -1777,6 +1778,7 @@ method std::vec::Vec[T]::stable_sort_by_in|check-prelude std-algo-final-sort com
 method std::vec::Vec[T]::stable_sort_in|check-prelude std-algo-final-sort ordered vector stable sort with explicit temporary zone; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::starts_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::swap_remove|check-prelude std-vec-complete-convenience-api unordered O(1) indexed removal; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::try_first|check-prelude std-vec-try-access Option-returning empty-safe access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_get|check-prelude std-vec-try-access Option-returning out-of-range access; docs/stdlib/api-reference.md Vec section
