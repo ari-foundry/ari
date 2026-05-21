@@ -1487,6 +1487,7 @@ map.contains(key)
 map.contains_key(key)
 map.contains_value(value)
 map.get(key)
+map.get_or(key, fallback)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
 map.remove(key)
@@ -1526,12 +1527,13 @@ set.iter()
 `HashMap.contains_key(key)` is the preferred key-membership spelling;
 `HashMap.contains(key)` remains available for compatibility.
 `HashMap.contains_value(value)` scans live bucket values and ignores
-tombstones. `HashMap.insert` returns `Option[V]` with the previous value on
-replacement. `HashMap.remove` returns `Option[V]` and leaves a tombstone so
-later probes still find collided keys. `HashMap.keys()` and `HashMap.values()`
-iterate live buckets; this is deterministic for the table state, but it is not
-insertion order. `HashSet` relationship methods compare live membership and
-ignore tombstones;
+tombstones. `HashMap.get_or(key, fallback)` returns the stored value or the
+fallback when the key is absent. `HashMap.insert` returns `Option[V]` with the
+previous value on replacement. `HashMap.remove` returns `Option[V]` and leaves
+a tombstone so later probes still find collided keys. `HashMap.keys()` and
+`HashMap.values()` iterate live buckets; this is deterministic for the table
+state, but it is not insertion order. `HashSet` relationship methods compare
+live membership and ignore tombstones;
 `HashMap.entries()` yields `MapEntry[K,V]` values with `.key` and `.value`
 fields over the same live buckets. `HashSet.iter()` and direct
 `for value in set` use the same live-bucket cursor. Hash
@@ -1559,6 +1561,7 @@ map.try_first_value()
 map.last_value()
 map.try_last_value()
 map.get(key)
+map.get_or(key, fallback)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
 map.remove(key)
@@ -1596,10 +1599,11 @@ set.iter()
 `TreeMap.contains_key(key)` is the preferred key-membership spelling;
 `TreeMap.contains(key)` remains available for compatibility.
 `TreeMap.contains_value(value)` scans stored values without using key order.
-`TreeMap.remove(key)` returns `Option[V]` and rebuilds links in place after
-compacting live storage. `TreeMap` boundary methods read the smallest or
-largest key and the value attached to that key in comparator order; use the
-`try_*` forms when an empty tree is a normal case. `TreeSet` relationship
+`TreeMap.get_or(key, fallback)` returns the stored value or the fallback when
+the key is absent. `TreeMap.remove(key)` returns `Option[V]` and rebuilds links
+in place after compacting live storage. `TreeMap` boundary methods read the
+smallest or largest key and the value attached to that key in comparator order;
+use the `try_*` forms when an empty tree is a normal case. `TreeSet` relationship
 methods compare ordered-set membership, not internal tree shape.
 `TreeSet.first()` and `TreeSet.last()` read the smallest and largest values,
 with `try_first` and `try_last` for empty-safe access. `TreeSet.take(value)`

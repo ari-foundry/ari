@@ -1616,9 +1616,11 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-collections-map-entries.elf; code=$$?; test $$code -eq 71
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent12contains_key' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent6get_or' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent12contains_key' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6get_or' $(BUILD_DIR)/prelude/std-collections-map-natural-api.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf
-	$(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 119
+	$(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 145
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
@@ -1925,7 +1927,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-entries.elf; $(BUILD_DIR)/prelude/std-collections-map-entries.elf; code=$$?; test $$code -eq 71; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 119; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 145; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; code=$$?; test $$code -eq 90; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; code=$$?; test $$code -eq 238; fi

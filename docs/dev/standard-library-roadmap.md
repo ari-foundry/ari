@@ -95,9 +95,9 @@ The current `std` package already provides:
   `BinaryHeap[T]`, `PriorityQueue[T]`, open-addressed
   `HashMap[K,V]`/`HashSet[T]` with explicit hash functions and live-bucket
   iterators, and red-black-tree `TreeMap[K,V]`/`TreeSet[T]` with explicit
-  comparators and sorted iterators; all use explicit-zone storage,
-  tracked-local zone inference for common growable mutation calls, and
-  provenance checks
+  comparators, sorted iterators, and fallback `get_or` map lookup; all use
+  explicit-zone storage, tracked-local zone inference for common growable
+  mutation calls, and provenance checks
 - `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access,
   `Option`-returning element access helpers, and borrowed
   range/split/subsequence/compare/chunk/window helpers plus receiver-form
@@ -204,10 +204,11 @@ Likely compiler work:
   hash buckets, sorted tree traversal, deques, ring buffers, and linked lists.
 - Keep `Set[T]` linear and insertion-order. Hash-backed behavior belongs in
   `HashMap`/`HashSet`, so call sites stay honest and natural.
-- Keep `HashMap`/`HashSet` and `TreeMap`/`TreeSet` on explicit hash/comparator
-  constructors until `Hash`, `Eq`, and `Ord` trait dispatch can drive generic
-  containers directly. Public names should remain natural (`insert`, `get`,
-  `contains`, `remove`) rather than type-suffixed.
+- Keep `HashMap`/`HashSet` and `TreeMap`/`TreeSet` on explicit
+  hash/comparator constructors until `Hash`, `Eq`, and `Ord` trait dispatch can
+  drive generic containers directly. Public names should remain natural
+  (`insert`, `get`, `get_or`, `contains`, `contains_key`, `remove`) rather than
+  type-suffixed.
 
 Likely compiler work:
 

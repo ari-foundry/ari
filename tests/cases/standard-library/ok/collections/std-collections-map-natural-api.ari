@@ -1,5 +1,5 @@
-// Covers natural key-membership aliases for map types. The legacy contains
-// method remains valid, while contains_key reads better at map call sites.
+// Covers natural map lookup aliases. The legacy contains method remains valid,
+// while contains_key and get_or read better at map call sites.
 fn constant_hash(value: i64) -> u64 {
   return 3;
 }
@@ -25,6 +25,12 @@ fn main() -> i64 {
   if hash.contains(9) {
     score = score + 17;
   }
+  if hash.get_or(9, 0) == 90 {
+    score = score + 3;
+  }
+  if hash.get_or(2, 31) == 31 {
+    score = score + 5;
+  }
 
   tree.insert(ref mut zone, 4, 40);
   tree.insert(ref mut zone, 2, 20);
@@ -37,6 +43,12 @@ fn main() -> i64 {
   }
   if tree.contains(8) {
     score = score + 29;
+  }
+  if tree.get_or(2, 0) == 20 {
+    score = score + 7;
+  }
+  if tree.get_or(7, 11) == 11 {
+    score = score + 11;
   }
 
   zone::destroy(zone);

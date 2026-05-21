@@ -751,6 +751,10 @@ pub impl[K, V] std::collections::HashMap[K, V] {
     return std::Some<V>(ptr_load(ptr_add(self.values, index)));
   }
 
+  fn get_or(self: ref Self, key: K, fallback: V) -> V {
+    return self.try_get(key).unwrap_or(fallback);
+  }
+
   fn get(self: ref Self, key: K) -> V {
     let index = hash_map_find_slot<K, V>(self, key);
     std::assert(index >= 0);
@@ -1597,6 +1601,10 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
       return std::None<V>();
     }
     return std::Some<V>(ptr_load(ptr_add(self.values, index)));
+  }
+
+  fn get_or(self: ref Self, key: K, fallback: V) -> V {
+    return self.try_get(key).unwrap_or(fallback);
   }
 
   fn get(self: ref Self, key: K) -> V {

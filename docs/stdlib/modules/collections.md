@@ -246,6 +246,7 @@ map.contains(key)
 map.contains_key(key)
 map.contains_value(value)
 map.get(key)
+map.get_or(key, fallback)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
 map.remove(key)
@@ -261,9 +262,11 @@ map.entries()
 on replacement, `None` on a new key. `contains_key` is the preferred
 key-membership spelling; `contains` remains available for compatibility with
 older examples. `contains_value` scans live bucket values and ignores
-tombstones. `remove` returns the removed value. `keys` and `values` iterate
-live buckets. That order is deterministic for a specific table state, but it
-is not insertion order and should not be used as a stable sorting rule.
+tombstones. `get_or(key, fallback)` is the compact spelling when a missing key
+has an ordinary fallback value; use `try_get` when absence should stay visible
+as `Option[V]`. `remove` returns the removed value. `keys` and `values`
+iterate live buckets. That order is deterministic for a specific table state,
+but it is not insertion order and should not be used as a stable sorting rule.
 `entries` yields `MapEntry[K, V]` values with `.key` and `.value` fields over
 the same live buckets. `reserve_extra(additional)` reserves enough hash buckets
 for the requested live length without immediately violating the table's load
@@ -330,6 +333,7 @@ map.try_first_value()
 map.last_value()
 map.try_last_value()
 map.get(key)
+map.get_or(key, fallback)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
 map.remove(key)
@@ -343,8 +347,10 @@ map.entries()
 `TreeMap.insert` inserts or replaces and returns `Option[V]`. `contains_key`
 is the preferred key-membership spelling; `contains` remains available for
 compatibility with older examples. `contains_value` scans stored values without
-using key order. `keys` yields keys in ascending comparator order. `values`
-yields values in the same key-sorted order. `first_key`,
+using key order. `get_or(key, fallback)` returns the stored value or the
+fallback without forcing every call site to unwrap `Option[V]`. `keys` yields
+keys in ascending comparator order. `values` yields values in the same
+key-sorted order. `first_key`,
 `last_key`, `first_value`, and `last_value` assert when the tree is empty;
 use the `try_*` forms for empty-safe boundary access. `entries` yields
 `MapEntry[K, V]` values with `.key` and `.value` fields in the same sorted key
@@ -531,12 +537,12 @@ checks key, value, and set cursors after tombstones.
 `std-collections-map-entries.ari` checks hash entries over live buckets and
 tree entries in sorted key order.
 `std-collections-map-natural-api.ari` keeps compatibility `contains` calls
-working while locking down the preferred `contains_key` spelling for hash and
-tree maps. `std-collections-map-value-predicates.ari` checks `contains_value`
-for hash live buckets after a tombstone and for tree map values independent of
-key order. `std-collections-tree.ari` inserts mixed key order to exercise
-red-black rotations. `std-collections-tree-boundaries.ari` checks empty-safe
-and asserting ordered boundary access for tree maps and sets.
+working while locking down the preferred `contains_key` and fallback `get_or`
+spellings for hash and tree maps. `std-collections-map-value-predicates.ari`
+checks `contains_value` for hash live buckets after a tombstone and for tree
+map values independent of key order. `std-collections-tree.ari` inserts mixed
+key order to exercise red-black rotations. `std-collections-tree-boundaries.ari`
+checks empty-safe and asserting ordered boundary access for tree maps and sets.
 `std-collections-tree-remove.ari` removes root/internal tree nodes, checks
 missing-removal paths, and verifies sorted entries/boundaries after link
 rebuild.

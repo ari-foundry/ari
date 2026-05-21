@@ -799,6 +799,7 @@ method std::collections::HashMap[K,V]::contains_key|check-prelude std-collection
 method std::collections::HashMap[K,V]::contains_value|check-prelude std-collections-map-value-predicates live-bucket value-membership predicate; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::entries|check-prelude std-collections-map-entries live-bucket key-value entry iterator; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get|check-prelude std-collections-hash asserting hash lookup; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::get_or|check-prelude std-collections-map-natural-api fallback hash lookup helper; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::insert|check-prelude std-collections-hash insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::is_empty|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::keys|check-prelude std-collections-hash-iter bucket-order key iterator; docs/stdlib/modules/collections.md
@@ -912,6 +913,7 @@ method std::collections::TreeMap[K,V]::entries|check-prelude std-collections-map
 method std::collections::TreeMap[K,V]::first_key|check-prelude std-collections-tree-boundaries asserting smallest-key accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_value|check-prelude std-collections-tree-boundaries asserting value for smallest key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::get|check-prelude std-collections-tree asserting ordered lookup; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::get_or|check-prelude std-collections-map-natural-api fallback ordered lookup helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::insert|check-prelude std-collections-tree red-black insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::keys|check-prelude std-collections-tree-iter sorted key iterator; docs/stdlib/modules/collections.md

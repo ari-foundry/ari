@@ -248,6 +248,9 @@ identifies the exact case:
 - `std-collections-hash-iter.ari`: live-bucket `HashMap.keys`,
   `HashMap.values`, `HashSet.iter`, and direct `HashSet` `IntoIterator`
   behavior after tombstone reuse.
+- `std-collections-map-natural-api.ari`: natural map lookup spellings,
+  including compatibility `contains`, preferred `contains_key`, and fallback
+  `get_or` for both hash and tree maps.
 - `std-collections-hash-map-keys-after-reset.ari`: negative source-zone
   provenance diagnostic for hash map key cursors after reset.
 - `std-collections-hash-map-values-after-reset.ari`: negative source-zone
