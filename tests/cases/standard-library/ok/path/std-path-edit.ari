@@ -18,6 +18,7 @@ fn main() -> i64 {
   var hidden_local = [46u8, 101u8, 110u8, 118u8, 46u8, 108u8, 111u8, 99u8, 97u8, 108u8];
   var root = [47u8];
   var tmp = [116u8, 109u8, 112u8];
+  var root_tmp = [47u8, 116u8, 109u8, 112u8];
   var bin = [98u8, 105u8, 110u8];
   var source_bin = [115u8, 114u8, 99u8, 47u8, 109u8, 97u8, 105u8, 110u8, 46u8, 98u8, 105u8, 110u8];
   var empty: Vec[u8] = [];
@@ -27,7 +28,7 @@ fn main() -> i64 {
   expect_text(path::with_extension_in(ref mut zone, source.as_slice(), empty.as_slice()), source_no_ext.as_slice());
   expect_text(path::with_extension_in(ref mut zone, hidden.as_slice(), local.as_slice()), hidden_local.as_slice());
   expect_text(path::with_extension_in(ref mut zone, root.as_slice(), txt.as_slice()), root.as_slice());
-  expect_text(path::with_file_name_in(ref mut zone, root.as_slice(), tmp.as_slice()), tmp.as_slice());
+  expect_text(path::with_file_name_in(ref mut zone, root.as_slice(), tmp.as_slice()), root_tmp.as_slice());
 
   let typed = path::bytes(source.as_slice());
   expect_text(typed.with_file_name_in(ref mut zone, lib_name.as_slice()), src_lib.as_slice());

@@ -205,6 +205,13 @@ pub fn with_file_name_in(
   path: std::Slice[u8],
   new_file_name: std::Slice[u8]
 ) -> std::string::String {
+  let trimmed = trim_trailing_separators(path);
+  if trimmed.len == 1 {
+    if is_separator(trimmed[0]) {
+      return join_in(zone, trimmed, new_file_name);
+    }
+  }
+
   match parent(path) {
     std::Some(base) => {
       return join_in(zone, base, new_file_name);

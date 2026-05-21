@@ -105,11 +105,11 @@ return `false` when the corresponding view helper would return `None`.
 
 `with_file_name_in` and `with_extension_in` allocate a new owned
 `std::string::String` in the provided zone. `with_file_name_in` keeps the
-current parent when one exists and otherwise returns a copy of the new final
-component. `with_extension_in` replaces the final extension, appends one when
-the path has no extension, and removes the extension when `new_extension` is
-empty. Paths without a final component, such as `/`, are copied unchanged by
-`with_extension_in`.
+current parent when one exists, preserves root for paths such as `/`, and
+otherwise returns a copy of the new final component. `with_extension_in`
+replaces the final extension, appends one when the path has no extension, and
+removes the extension when `new_extension` is empty. Paths without a final
+component, such as `/`, are copied unchanged by `with_extension_in`.
 
 `join_in` copies into the caller-provided zone. If `child` is absolute, it
 returns a copy of `child`. Otherwise it inserts one `/` between `base` and

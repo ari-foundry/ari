@@ -616,7 +616,8 @@ but keeps `..` components because resolving them safely depends on stronger
 filesystem and platform policy.
 `with_file_name_in` and `with_extension_in` are zone-backed lexical editing
 helpers for replacing the final component or final extension without touching
-the filesystem.
+the filesystem. `with_file_name_in` preserves root paths, while
+`with_extension_in` leaves paths without a final component unchanged.
 `PathBytes` is the typed borrowed path-byte view. Use it when a byte slice or
 `std::string::OsStr` should be treated as a path rather than as generic bytes
 or validated text. When `PathBytes` is expected, a string literal can be used
