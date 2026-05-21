@@ -554,6 +554,10 @@ fn std::path::trim_trailing_separators|check-prelude std-path-basic borrowed tra
 fn std::path::with_extension_in|check-prelude std-path-edit zone-backed lexical extension replacement helper; docs/stdlib/modules/path.md
 fn std::path::with_file_name_in|check-prelude std-path-edit zone-backed lexical final-component replacement helper; docs/stdlib/modules/path.md
 fn std::process::abort|check-prelude std-process-abort explicit process abort hook; docs/stdlib/modules/process.md
+fn std::process::arg|check-prelude std-process-command C-argv argument wrapper for Command; docs/stdlib/modules/process.md
+fn std::process::command|check-prelude std-process-command natural Command constructor; docs/stdlib/modules/process.md
+fn std::process::command_with_args|check-prelude std-process-command Command constructor with argv slice; docs/stdlib/modules/process.md
+fn std::process::env_var|check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md
 fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
 fn std::process::failure|check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md
 fn std::process::fork|check-prelude std-process-fork-wait POSIX fork hook; docs/stdlib/modules/process.md
@@ -567,7 +571,9 @@ fn std::process::is_parent|check-prelude std-process-fork-wait source parent-bra
 fn std::process::is_root|check-prelude std-process-identity source root-user predicate; docs/stdlib/modules/process.md
 fn std::process::is_success|check-prelude std-process-basic source status predicate; docs/stdlib/modules/process.md
 fn std::process::is_wait_error|check-prelude std-process-fork-wait source wait failure predicate; docs/stdlib/modules/process.md
+fn std::process::kill|check-prelude std-process-command POSIX signal helper returning Error on failure; docs/stdlib/modules/process.md
 fn std::process::success|check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md
+fn std::process::terminate|check-prelude std-process-command SIGTERM convenience helper; docs/stdlib/modules/process.md
 fn std::process::uid|check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md
 fn std::process::wait|check-prelude std-process-fork-wait POSIX wait hook and exit-status decode; docs/stdlib/modules/process.md
 fn std::process::wait_result|check-prelude std-process-result POSIX wait direct Error result helper; docs/stdlib/modules/process.md
@@ -1339,6 +1345,18 @@ method std::path::PathBytes::stem|check-prelude std-path-bytes typed path stem w
 method std::path::PathBytes::trim_trailing_separators|check-prelude std-path-bytes typed path trailing separator trim wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::with_extension_in|check-prelude std-path-edit typed path extension replacement wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::with_file_name_in|check-prelude std-path-edit typed path final-component replacement wrapper; docs/stdlib/modules/path.md
+method std::process::Child::kill|check-prelude std-process-command child signal helper; docs/stdlib/modules/process.md
+method std::process::Child::pid|check-prelude std-process-command child pid accessor; docs/stdlib/modules/process.md
+method std::process::Child::terminate|check-prelude std-process-command child SIGTERM convenience helper; docs/stdlib/modules/process.md
+method std::process::Child::wait|check-prelude std-process-command child wait Result helper; docs/stdlib/modules/process.md
+method std::process::Command::args|check-prelude std-process-command replace command argument slice; docs/stdlib/modules/process.md
+method std::process::Command::current_dir|check-prelude std-process-command child working-directory setup; docs/stdlib/modules/process.md
+method std::process::Command::env|check-prelude std-process-command child environment setup; docs/stdlib/modules/process.md
+method std::process::Command::exec|check-prelude std-process-command replace current process with command; docs/stdlib/modules/process.md
+method std::process::Command::new|check-prelude std-process-command associated Command constructor; docs/stdlib/modules/process.md
+method std::process::Command::spawn|check-prelude std-process-command spawn child process handle; docs/stdlib/modules/process.md
+method std::process::Command::status|check-prelude std-process-command spawn and wait for exit status; docs/stdlib/modules/process.md
+method std::process::Command::with_args|check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md
 method std::random::Prng::below|check-prelude std-random-basic unbiased bounded non-crypto PRNG integer method; docs/stdlib/modules/random.md
 method std::random::Prng::boolean|check-prelude std-random-basic deterministic PRNG boolean method; docs/stdlib/modules/random.md
 method std::random::Prng::fill|check-prelude std-random-basic deterministic PRNG byte fill method; docs/stdlib/modules/random.md
@@ -1731,6 +1749,10 @@ struct std::os::OwnedFd|check-prelude std-os-owned-fd owning file descriptor clo
 struct std::os::Pipe|check-prelude std-os-pipe owning pipe descriptor pair; docs/stdlib/modules/os.md
 struct std::path::Components|check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md
 struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md
+struct std::process::Arg|check-prelude std-process-command borrowed C argv argument wrapper; docs/stdlib/modules/process.md
+struct std::process::Child|check-prelude std-process-command child process handle; docs/stdlib/modules/process.md
+struct std::process::Command|check-prelude std-process-command process command builder; docs/stdlib/modules/process.md
+struct std::process::EnvVar|check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row

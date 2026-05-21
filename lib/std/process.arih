@@ -10,6 +10,30 @@ pub extern "ari" fn wait(pid: i64) -> i64 = "ari_builtin_process_wait";
 
 extern "C" fn raw_fork() -> c_int = "fork";
 extern "C" fn raw_waitpid(pid: c_int, status: ptr c_int, options: c_int) -> c_int = "waitpid";
+extern "C" fn raw_execvp(path: ptr c_char, argv: ptr c_void) -> c_int = "execvp";
+extern "C" fn raw_kill(pid: c_int, signal: c_int) -> c_int = "kill";
+extern "C" fn raw_setenv(name: ptr c_char, value: ptr c_char, overwrite: c_int) -> c_int = "setenv";
+extern "C" fn raw_chdir(path: ptr c_char) -> c_int = "chdir";
+
+pub struct Arg {
+  value: std::c::CStr,
+}
+
+pub struct EnvVar {
+  name: std::c::CStr,
+  value: std::c::CStr,
+}
+
+pub struct Child {
+  pid_value: i64,
+}
+
+pub struct Command {
+  program: std::c::CStr,
+  mut arg_values: std::Slice[std::process::Arg],
+  mut env_values: std::Slice[std::process::EnvVar],
+  mut cwd_path: std::Option[std::c::CStr],
+}
 
 pub fn success() -> i64 {
   return 0;
@@ -47,6 +71,25 @@ pub fn is_wait_error(status: i64) -> bool {
   return status < 0;
 }
 
+pub fn arg(value: string) -> std::process::Arg {
+  return std::process::Arg { value: std::c::from_string(value) };
+}
+
+pub fn env_var(name: string, value: string) -> std::process::EnvVar {
+  return std::process::EnvVar {
+    name: std::c::from_string(name),
+    value: std::c::from_string(value),
+  };
+}
+
+pub fn command(program: string) -> std::process::Command {
+  return std::process::Command::new(program);
+}
+
+pub fn command_with_args(program: string, args: std::Slice[std::process::Arg]) -> std::process::Command {
+  return std::process::Command::with_args(program, args);
+}
+
 fn non_normal_exit_error() -> std::error::Error {
   return std::error::new(std::error::Other);
 }
@@ -73,4 +116,163 @@ pub fn wait_result(pid: i64) -> std::Result[i64, std::error::Error] {
   }
 
   return std::Ok<i64, std::error::Error>((raw_status / 256) & 255);
+}
+
+pub fn kill(pid: i64, signal: i64) -> std::Result[(), std::error::Error] {
+  if raw_kill(pid as c_int, signal as c_int) == 0 {
+    return std::Ok<(), std::error::Error>(());
+  }
+  return std::Err<(), std::error::Error>(std::c::error());
+}
+
+pub fn terminate(pid: i64) -> std::Result[(), std::error::Error] {
+  return std::process::kill(pid, 15);
+}
+
+fn empty_args() -> std::Slice[std::process::Arg] {
+  return std::Slice<std::process::Arg> { data: 0u64 as ptr std::process::Arg, len: 0 };
+}
+
+fn empty_env() -> std::Slice[std::process::EnvVar] {
+  return std::Slice<std::process::EnvVar> { data: 0u64 as ptr std::process::EnvVar, len: 0 };
+}
+
+fn argv_capacity(command: ref std::process::Command) -> i64 {
+  return ((command.arg_values.len + 2) * std::mem::size_of<u64>()) + 64;
+}
+
+fn build_argv(zone: ref mut Zone, command: ref std::process::Command) -> ptr c_void {
+  let count = command.arg_values.len + 2;
+  // Ari does not yet parse nested pointer types in extern signatures, so the
+  // argv vector is materialized as pointer-sized integers and handed to execvp
+  // as an opaque C pointer.
+  let values = std::zone::alloc_array<u64>(zone, count);
+  ptr_store(values, command.program.as_ptr() as u64);
+
+  var index = 0;
+  while index < command.arg_values.len {
+    ptr_store(ptr_add(values, index + 1), command.arg_values[index].value.as_ptr() as u64);
+    index = index + 1;
+  }
+
+  ptr_store(ptr_add(values, count - 1), 0u64);
+  return values as ptr c_void;
+}
+
+fn apply_setup(command: ref std::process::Command) -> std::Result[(), std::error::Error] {
+  var env_index = 0;
+  while env_index < command.env_values.len {
+    let env_value = command.env_values[env_index];
+    if raw_setenv(env_value.name.as_ptr(), env_value.value.as_ptr(), 1 as c_int) != 0 {
+      return std::Err<(), std::error::Error>(std::c::error());
+    }
+    env_index = env_index + 1;
+  }
+
+  match command.cwd_path {
+    std::None => {}
+    std::Some(path) => {
+      if raw_chdir(path.as_ptr()) != 0 {
+        return std::Err<(), std::error::Error>(std::c::error());
+      }
+    }
+  }
+  return std::Ok<(), std::error::Error>(());
+}
+
+fn exec_with_argv(command: ref std::process::Command, argv: ptr c_void) -> std::Result[(), std::error::Error] {
+  match std::process::apply_setup(command) {
+    std::Ok(_) => {}
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+  }
+
+  raw_execvp(command.program.as_ptr(), argv);
+  return std::Err<(), std::error::Error>(std::c::error());
+}
+
+pub impl std::process::Child {
+  fn pid(self: ref Self) -> i64 {
+    return self.pid_value;
+  }
+
+  fn wait(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::process::wait_result(self.pid_value);
+  }
+
+  fn kill(self: ref Self, signal: i64) -> std::Result[(), std::error::Error] {
+    return std::process::kill(self.pid_value, signal);
+  }
+
+  fn terminate(self: ref Self) -> std::Result[(), std::error::Error] {
+    return std::process::terminate(self.pid_value);
+  }
+}
+
+pub impl std::process::Command {
+  fn new(program: string) -> std::process::Command {
+    return std::process::Command {
+      program: std::c::from_string(program),
+      arg_values: std::process::empty_args(),
+      env_values: std::process::empty_env(),
+      cwd_path: std::None<std::c::CStr>(),
+    };
+  }
+
+  fn with_args(program: string, args: std::Slice[std::process::Arg]) -> std::process::Command {
+    return std::process::Command {
+      program: std::c::from_string(program),
+      arg_values: args,
+      env_values: std::process::empty_env(),
+      cwd_path: std::None<std::c::CStr>(),
+    };
+  }
+
+  fn args(self: ref mut Self, values: std::Slice[std::process::Arg]) -> void {
+    self.arg_values = values;
+  }
+
+  fn env(self: ref mut Self, values: std::Slice[std::process::EnvVar]) -> void {
+    self.env_values = values;
+  }
+
+  fn current_dir(self: ref mut Self, path: string) -> void {
+    self.cwd_path = std::Some<std::c::CStr>(std::c::from_string(path));
+  }
+
+  fn spawn(self: ref Self) -> std::Result[std::process::Child, std::error::Error] {
+    var scratch = zone::temp(std::process::argv_capacity(self));
+    let argv = std::process::build_argv(ref mut scratch, self);
+
+    match std::process::fork_result() {
+      std::Err(reason) => {
+        return std::Err<std::process::Child, std::error::Error>(reason);
+      }
+      std::Ok(pid) => {
+        if std::process::is_child(pid) {
+          std::process::exec_with_argv(self, argv);
+          std::process::exit(127);
+        }
+        return std::Ok<std::process::Child, std::error::Error>(std::process::Child { pid_value: pid });
+      }
+    }
+  }
+
+  fn status(self: ref Self) -> std::Result[i64, std::error::Error] {
+    match self.spawn() {
+      std::Err(reason) => {
+        return std::Err<i64, std::error::Error>(reason);
+      }
+      std::Ok(child) => {
+        return child.wait();
+      }
+    }
+  }
+
+  fn exec(self: ref Self) -> std::Result[(), std::error::Error] {
+    var scratch = zone::temp(std::process::argv_capacity(self));
+    let argv = std::process::build_argv(ref mut scratch, self);
+    return std::process::exec_with_argv(self, argv);
+  }
 }

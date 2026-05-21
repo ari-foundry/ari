@@ -57,6 +57,8 @@ std-process-identity.ari
 std-process-exit.ari
 std-process-abort.ari
 std-process-fork-wait.ari
+std-process-result.ari
+std-process-command.ari
 std-thread-basic.ari
 std-thread-runtime-helpers.ari
 std-sync-atomic-i64.ari

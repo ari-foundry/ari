@@ -1,0 +1,69 @@
+// Covers the first Command API slice: argument passing, environment and
+// working-directory setup, spawn/status helpers, and non-destructive kill(0).
+fn status_is(value: Result[i64, error::Error], expected: i64) -> bool {
+  match value {
+    Ok(status) => { return status == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn unit_ok(value: Result[(), error::Error]) -> bool {
+  match value {
+    Ok(_) => { return true; }
+    Err(_) => { return false; }
+  }
+}
+
+fn unit_err_with_code(value: Result[(), error::Error]) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(reason) => { return reason.code() > 0; }
+  }
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  var status_args = [process::arg("-c"), process::arg("exit 17")];
+  var status_cmd = process::Command::with_args("sh", status_args.as_slice());
+  if status_is(status_cmd.status(), 17) {
+    score = score + 11;
+  }
+
+  var setter_args = [process::arg("-c"), process::arg("exit 19")];
+  var setter_cmd = process::Command::new("sh");
+  setter_cmd.args(setter_args.as_slice());
+  if status_is(setter_cmd.status(), 19) {
+    score = score + 13;
+  }
+
+  var env_args = [process::arg("-c"), process::arg("test \"$ARI_COMMAND_TEST\" = yes && pwd | grep -q '/build/prelude$'")];
+  var env_cmd = process::command_with_args("sh", env_args.as_slice());
+  var env_values = [process::env_var("ARI_COMMAND_TEST", "yes")];
+  env_cmd.env(env_values.as_slice());
+  env_cmd.current_dir("build/prelude");
+  if status_is(env_cmd.status(), 0) {
+    score = score + 17;
+  }
+
+  var spawn_args = [process::arg("-c"), process::arg("exit 23")];
+  var spawn_cmd = process::command_with_args("sh", spawn_args.as_slice());
+  match spawn_cmd.spawn() {
+    Err(_) => {}
+    Ok(child) => {
+      if child.pid() > 0 && unit_ok(child.kill(0)) && status_is(child.wait(), 23) {
+        score = score + 29;
+      }
+    }
+  }
+
+  if unit_ok(process::kill(process::id(), 0)) {
+    score = score + 31;
+  }
+  if unit_err_with_code(process::kill(-999999, 0)) {
+    score = score + 37;
+  }
+
+  assert_eq_i64(score, 138);
+  return score;
+}

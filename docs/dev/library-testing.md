@@ -133,6 +133,10 @@ identifies the exact case:
 - `std-process-result.ari`: direct `Result[i64, Error]` process fork/wait
   helpers, normal child exit propagation, waitpid errno payloads, and raw
   compatibility wait sentinel behavior after the child has been consumed.
+- `std-process-command.ari`: first `Command`/`Child` builder slice, including
+  argv construction through `process::arg`, child environment setup,
+  working-directory setup, `status`, `spawn`, `Child::wait`, and
+  non-destructive `kill(0)` probes.
 - `std-thread-basic.ari`: runtime-backed `std::thread` function-pointer
   spawn/join behavior, child runtime ids, invalid-handle sentinels, root
   `Thread`, method wrappers, and scheduler yield.

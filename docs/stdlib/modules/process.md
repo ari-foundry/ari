@@ -1,10 +1,11 @@
 # std::process
 
 `std::process` is the user-facing module for current-process operations and
-small child-process control. The implemented surface is still deliberately
-thin: read process identity values, terminate explicitly with `exit` or
-`abort`, use natural status helper names in source Ari, and on the current
-Linux/LLVM path fork and wait for a child process.
+child-process control. The implemented surface reads process identity values,
+terminates explicitly with `exit` or `abort`, uses natural status helper names
+in source Ari, and on the current Linux/LLVM path can fork/wait directly or use
+the first `Command` builder for `spawn`, `status`, `exec`, `kill`, environment
+setup, and working-directory setup.
 
 ## Current API
 
@@ -27,6 +28,26 @@ process::is_child(pid)
 process::is_parent(pid)
 process::is_fork_error(pid)
 process::is_wait_error(status)
+process::arg(value)
+process::env_var(name, value)
+process::command(program)
+process::command_with_args(program, args)
+process::kill(pid, signal)
+process::terminate(pid)
+
+process::Command::new(program)
+process::Command::with_args(program, args)
+Command::args(args)
+Command::env(env_values)
+Command::current_dir(path)
+Command::spawn()
+Command::status()
+Command::exec()
+
+Child::pid()
+Child::wait()
+Child::kill(signal)
+Child::terminate()
 ```
 
 `id()` returns the host process id as `i64`. `uid()` and `gid()` return the
@@ -62,6 +83,23 @@ If the child is observed in a non-normal state, the current source wrapper
 returns `Err(Error(Other))` until richer process status values exist.
 `wait(pid)` is the older raw compatibility helper; it returns the child's normal
 exit status or `-1`. Use `is_wait_error(status)` to make that sentinel explicit.
+
+`Command` is the first higher-level process builder. It stores the program,
+argument slice, child environment assignments, and child working directory.
+`status()` spawns the command, waits for it, and returns `Result[i64, Error]`.
+`spawn()` returns a `Child` handle with `pid`, `wait`, `kill`, and `terminate`
+methods. `exec()` applies the setup and replaces the current process with the
+program; if `execvp` returns, Ari reports the host error.
+
+Arguments use `process::arg("...")` rather than raw `string` slices so the
+builder can keep an executable-friendly C argv representation. Environment
+entries use `process::env_var(name, value)`. The ergonomic rule is: call sites
+still look like command construction, while the stdlib owns the pointer-level
+ABI shape.
+
+`kill(pid, signal)` sends a POSIX signal and returns `Result[(), Error]`.
+`terminate(pid)` sends signal `15` (`SIGTERM`) as the conventional graceful
+termination request.
 
 ## Example
 
@@ -119,10 +157,51 @@ fn main() -> i64 {
 }
 ```
 
+Command status:
+
+```ari
+fn main() -> i64 {
+  var args = [process::arg("-c"), process::arg("exit 17")];
+  var cmd = process::Command::with_args("sh", args.as_slice());
+
+  match cmd.status() {
+    Ok(status) => { return status; }
+    Err(_) => { return process::failure(); }
+  }
+}
+```
+
+Command setup and child handle:
+
+```ari
+fn main() -> i64 {
+  var args = [process::arg("-c"), process::arg("test \"$ARI_MODE\" = test")];
+  var env = [process::env_var("ARI_MODE", "test")];
+  var cmd = process::command_with_args("sh", args.as_slice());
+  cmd.env(env.as_slice());
+  cmd.current_dir("build/prelude");
+
+  match cmd.spawn() {
+    Err(_) => { return process::failure(); }
+    Ok(child) => {
+      if child.pid() <= 0 {
+        return process::failure();
+      }
+      return child.wait().unwrap();
+    }
+  }
+}
+```
+
 ## Current Limits
 
-- `uid`, `gid`, `fork`, and `wait` are POSIX-flavored hosted runtime hooks.
-  Portable `spawn`, `exec`, `kill`, rich status values, and process handles are
+- `uid`, `gid`, `fork`, `wait`, `Command`, and `kill` are POSIX-flavored hosted
+  runtime hooks today. The API shape is intended to stay portable, but Windows
+  mapping still needs a separate implementation.
+- `Command` currently supports `spawn`, `status`, `exec`, arguments,
+  environment assignments, working-directory setup, and `Child` wait/kill
+  helpers. Captured `output`, stdout/stderr pipe ownership, stdin redirection,
+  inherited/cleared environment policies, and richer process-status values are
   future work.
 - Exit runs through the host process immediately. Do not expect Ari destructors
   or zone cleanup to run after `process::exit`.
@@ -133,6 +212,8 @@ fn main() -> i64 {
   `wait_result(pid)` preserves `Error` payloads for host `waitpid` failures,
   but still reports non-normal child states as `Error(Other)` until the module
   has a richer `ExitStatus`/signal model.
+- `exec()` never returns on success. Use it only when replacing the current
+  process is the desired behavior.
 - The API is intentionally not a raw syscall grab bag. Keep future process
   work behind `std::process` or a future `std::os` submodule in small safe
   slices with clear ownership and platform policy.
@@ -148,10 +229,13 @@ tests/cases/standard-library/ok/process/std-process-exit.ari
 tests/cases/standard-library/ok/process/std-process-abort.ari
 tests/cases/standard-library/ok/process/std-process-fork-wait.ari
 tests/cases/standard-library/ok/process/std-process-result.ari
+tests/cases/standard-library/ok/process/std-process-command.ari
 ```
 
 `make check-prelude` emits LLVM, checks the runtime hook symbols, and executes
 the programs. The abort fixture compiles and runs only a non-aborting path while
-checking that the abort hook lowers to the host `abort` declaration. Public
+checking that the abort hook lowers to the host `abort` declaration. The command
+fixture covers argument passing, environment setup, working-directory setup,
+`status`, `spawn`, `Child::wait`, and non-destructive `kill(0)`. Public
 declarations are tracked in `tests/std_api_manifest.txt` and checked by
 `make check-std-api`.

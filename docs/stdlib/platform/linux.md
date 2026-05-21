@@ -17,7 +17,8 @@ Implemented now:
   the LLVM driver. `std::thread::available_parallelism()` currently uses
   `sysconf(_SC_NPROCESSORS_ONLN)` and clamps host failure to `1`.
 - `std::process` currently covers process id, user id, group id, explicit exit,
-  explicit abort, and the first POSIX `fork`/`wait` slice.
+  explicit abort, POSIX `fork`/`wait`, and the first `Command`/`Child` builder
+  over `fork`, `execvp`, `setenv`, `chdir`, and `kill`.
 - `std::mem::page_size()` reports the hosted runtime page size for alignment
   and future mapping work.
 - `std::random::entropy()` and `std::random::fill(values)` use the hosted Linux
@@ -127,11 +128,11 @@ useful for modern systems work.
 | argv/env | Portable surface exists through `std::context` and `std::env`. | Keep user-facing wrappers portable; reserve raw `environ` access for `std::os` if needed. |
 | current process info | `std::process::id`, `uid`, `gid`, and `is_root` exist. | Add parent id, session/process-group helpers only with clear platform policy. |
 | exit/abort | `std::process::exit` and `abort` exist. | Document destructor/cleanup limits anywhere higher-level runtime teardown is added. |
-| spawn | Not exposed. | Prefer a portable `std::process::spawn` builder before exposing POSIX-only `posix_spawn`. |
+| spawn | `Command::spawn` is exposed through a portable-looking builder backed by POSIX `fork`/`execvp` today. | Add Windows mapping and decide stdin/stdout/stderr ownership before broadening the API. |
 | fork | `std::process::fork` exists as a POSIX slice. | Keep marked as sharp; fork-with-threads and async-signal-safe limitations need more docs. |
-| exec | Not exposed. | Add after argument/environment vector ownership and error reporting are stable. |
-| wait | `std::process::wait` returns normal child exit status or `-1`. | Replace sentinel-only status with a richer status/result value. |
-| kill | Not exposed. | Add with signal constants and permission/error mapping. |
+| exec | `Command::exec` replaces the current process after applying child setup. | Add richer setup policy and document noreturn behavior in more examples. |
+| wait | `std::process::wait`, `wait_result`, `Command::status`, and `Child::wait` cover normal child exit status. | Replace compact status-only reporting with a richer status/result value. |
+| kill | `process::kill`, `process::terminate`, `Child::kill`, and `Child::terminate` are exposed. | Add signal constants and more structured permission/error mapping. |
 | working directory | `std::env::current_dir`, `set_current_dir`, and `std::fs::try_canonicalize` exist. | Owned path values should wrap the existing `std::path`/`std::fs` split. |
 | daemon helpers | Not exposed. | Optional; should be policy-heavy and probably separate from core process APIs. |
 | signal mask | Not exposed. | Future `std::os::signal` with mask values and clear thread/process scope. |

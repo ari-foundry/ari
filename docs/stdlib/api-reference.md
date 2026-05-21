@@ -474,6 +474,26 @@ process::is_child(pid)
 process::is_parent(pid)
 process::is_fork_error(pid)
 process::is_wait_error(status)
+process::arg(value)
+process::env_var(name, value)
+process::command(program)
+process::command_with_args(program, args)
+process::kill(pid, signal)
+process::terminate(pid)
+
+process::Command::new(program)
+process::Command::with_args(program, args)
+Command::args(args)
+Command::env(env_values)
+Command::current_dir(path)
+Command::spawn()
+Command::status()
+Command::exec()
+
+Child::pid()
+Child::wait()
+Child::kill(signal)
+Child::terminate()
 ```
 
 `id()` returns the host process id as `i64`. `uid()` and `gid()` return the
@@ -495,7 +515,23 @@ runtime path. `fork()` returns `0` in the child, a positive child pid in the
 parent, and a negative value on failure; use `is_child`, `is_parent`, and
 `is_fork_error` to make that branch readable. `wait(pid)` returns a normal
 child exit status or `-1`; use `is_wait_error` for that sentinel. Rich process
-handles, portable spawn, and detailed status values remain roadmap work.
+status values remain roadmap work.
+
+`Command` is the higher-level child-process builder. Use `process::arg` for
+argv entries and `process::env_var` for child environment assignments:
+
+```ari
+var args = [process::arg("-c"), process::arg("exit 7")];
+var cmd = process::command_with_args("sh", args.as_slice());
+let status = cmd.status();
+```
+
+`status()` spawns and waits. `spawn()` returns a `Child` handle. `exec()`
+replaces the current process on success and returns `Err(Error)` only if the
+host `execvp` path fails. `kill(pid, signal)` and `Child::kill(signal)` return
+`Result[(), Error]`; `terminate` sends `SIGTERM`. Portable Windows mapping,
+captured `output`, stdout/stderr pipe ownership, and richer `ExitStatus` values
+are still future process-library work.
 
 ## OS Descriptor Views
 

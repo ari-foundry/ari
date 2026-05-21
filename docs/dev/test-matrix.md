@@ -117,6 +117,13 @@ outside narrowing control flow. The remaining owner-path gaps are dynamic
 indexed owner element moves and broader non-static runtime sequence owner paths
 beyond the supported Vec/Slice pattern cases.
 
+Process coverage note: `std-process-command.ari` now covers the first
+`std::process::Command`/`Child` slice on the hosted POSIX path: argv wrappers,
+child environment setup, child working-directory setup, `spawn`, `status`,
+`exec` lowering, child wait, and non-destructive `kill(0)` probes. Remaining
+process runtime matrix work is captured output, explicit stdout/stderr pipe
+ownership, stdin redirection, richer status values, and non-POSIX mapping.
+
 ## Completed Sprint: C FFI
 
 Goal: C FFI must be boring and reliable. Ari supports only C ABI for foreign
