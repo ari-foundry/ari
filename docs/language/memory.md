@@ -413,8 +413,9 @@ zone::create(capacity: i64) -> own Zone
 zone::temp(capacity: i64) -> own Zone
 zone::alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8
 zone::allocation_zone(data: ptr u8) -> ptr c_void
-zone::of<T: std::zone::ZoneBacked>(value: ref T) -> ptr c_void
-value.zone()
+zone::metadata(data: ptr u8) -> std::zone::ZoneMetadata
+zone::of<T: std::zone::ZoneBacked>(value: ref T) -> std::zone::ZoneMetadata
+value.zone() -> std::zone::ZoneMetadata
 zone::alloc<T>(zone: ref mut Zone) -> ptr T
 zone::new<T>(zone: ref mut Zone, value: T) -> ptr T
 zone::scratch<T>(capacity: i64, value: T) -> ptr T
@@ -437,15 +438,17 @@ On the LLVM host backend, every non-empty `zone::alloc` result has a fixed
 header stores only the raw zone handle at `ptr - 8`; size and alignment stay
 call-site layout facts rather than pointer metadata. The user pointer remains
 the real payload pointer, so normal loads, stores, and casts use it directly.
-`zone::allocation_zone` exposes the handle without requiring source code to do
-pointer-adjacent arithmetic. The returned zone handle is opaque (`ptr c_void`)
-and is meant for capability recovery in runtime helpers, not for bypassing the
-typed `Zone` API. Empty source String and Vec buffers may still use a null data
-pointer, so metadata queries require a non-null allocation pointer.
+`zone::allocation_zone` exposes the raw handle without requiring source code to
+do pointer-adjacent arithmetic. `zone::metadata(data)` wraps that raw handle in
+`ZoneMetadata`, which is the preferred public shape. The raw handle is meant
+for capability recovery in runtime helpers, not for bypassing the typed `Zone`
+API. Empty source String and Vec buffers may still use a null data pointer, so
+metadata queries require a non-null allocation pointer.
 For stdlib heap handles, prefer `zone::of(ref value)` or `value.zone()` through
 `std::zone::ZoneBacked`; they read the same header from the handle's backing
-allocation. The handle must have real storage, so zero-capacity handles still
-need an explicit `ref mut Zone` or a growth step before runtime recovery.
+allocation and return `ZoneMetadata`. The handle must have real storage, so
+zero-capacity handles still need an explicit `ref mut Zone` or a growth step
+before runtime recovery.
 
 `zone::scratch<T>(capacity, value)` is local-binding sugar for the common
 temporary-object case. It can only appear as the initializer of a local `let` or

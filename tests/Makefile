@@ -1111,6 +1111,7 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-zone-alloc-array.elf; code=$$?; test $$code -eq 72
 	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --emit-llvm $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -q '_ARNv3std4zone24of__G_std__vec__Vec_i64_' $(BUILD_DIR)/prelude/std-zone-backed.ll
+	grep -q '_ARNv3std4zone8metadata' $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -q '@ari_builtin_zone_allocation_zone' $(BUILD_DIR)/prelude/std-zone-backed.ll
 	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari -o $(BUILD_DIR)/prelude/std-zone-backed.elf
 	$(BUILD_DIR)/prelude/std-zone-backed.elf; code=$$?; test $$code -eq 31

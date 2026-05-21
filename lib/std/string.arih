@@ -839,9 +839,9 @@ pub impl std::string::String {
 }
 
 impl std::zone::ZoneBacked for std::string::String {
-  pub fn zone(self: ref Self) -> ptr c_void {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
     std::assert(self.raw.capacity > 0);
-    return std::zone::allocation_zone(self.raw.data);
+    return std::zone::metadata(self.raw.data);
   }
 }
 

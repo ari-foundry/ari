@@ -2,12 +2,30 @@ pub extern "ari" fn create(capacity: i64) -> own Zone = "ari_builtin_zone_create
 pub extern "ari" fn alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8 = "ari_builtin_zone_alloc";
 pub extern "ari" fn allocation_zone(data: ptr u8) -> ptr c_void = "ari_builtin_zone_allocation_zone";
 
-pub trait ZoneBacked {
-  fn zone(self: ref Self) -> ptr c_void;
+pub struct ZoneMetadata {
+  handle: ptr c_void,
 }
 
-pub fn of[T: std::zone::ZoneBacked](value: ref T) -> ptr c_void {
+pub trait ZoneBacked {
+  fn zone(self: ref Self) -> std::zone::ZoneMetadata;
+}
+
+pub fn metadata(data: ptr u8) -> std::zone::ZoneMetadata {
+  return std::zone::ZoneMetadata { handle: allocation_zone(data) };
+}
+
+pub fn of[T: std::zone::ZoneBacked](value: ref T) -> std::zone::ZoneMetadata {
   return value.zone();
+}
+
+pub impl std::zone::ZoneMetadata {
+  fn as_ptr(self: ref Self) -> ptr c_void {
+    return self.handle;
+  }
+
+  fn equals(self: ref Self, other: ref Self) -> bool {
+    return (self.handle as u64) == (other.handle as u64);
+  }
 }
 
 pub fn alloc[T](zone: ref mut Zone) -> ptr T;

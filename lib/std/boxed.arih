@@ -111,8 +111,8 @@ pub impl[T] std::boxed::Box[T] {
 }
 
 impl[T] std::zone::ZoneBacked for std::boxed::Box[T] {
-  pub fn zone(self: ref Self) -> ptr c_void {
-    return std::zone::allocation_zone(self.as_ptr() as ptr u8);
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return std::zone::metadata(self.as_ptr() as ptr u8);
   }
 }
 

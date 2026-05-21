@@ -1,39 +1,40 @@
 // Covers the high-level ZoneBacked API over allocation-header metadata.
-fn same_zone(left: ptr c_void, right: ptr c_void) -> bool {
-  return (left as u64) == (right as u64);
-}
-
 fn main() -> i64 {
   var arena = zone::create(1024);
   var score = 0;
 
   var values = std::vec::new<i64>(ref mut arena, 2);
   values.push(11);
-  let raw_values_zone = zone::allocation_zone(values.as_ptr() as ptr u8);
-  if same_zone(zone::of(ref values), raw_values_zone) {
+  let raw_values_zone = zone::metadata(values.as_ptr() as ptr u8);
+  let values_zone = zone::of(ref values);
+  if values_zone.equals(ref raw_values_zone) {
     score = score + 1;
   }
-  if same_zone(values.zone(), raw_values_zone) {
+  let values_method_zone = values.zone();
+  if values_method_zone.equals(ref raw_values_zone) {
     score = score + 2;
   }
 
   var text = std::string::new(ref mut arena, 4);
   text.push('A');
-  let raw_text_zone = zone::allocation_zone(text.as_slice().data);
-  if same_zone(zone::of(ref text), raw_text_zone) {
+  let raw_text_zone = zone::metadata(text.as_slice().data);
+  let text_zone = zone::of(ref text);
+  if text_zone.equals(ref raw_text_zone) {
     score = score + 4;
   }
 
   var set = std::collections::new<i64>(ref mut arena, 2);
   set.insert(ref mut arena, 7);
-  let raw_set_zone = zone::allocation_zone(set.as_slice().data as ptr u8);
-  if same_zone(zone::of(ref set), raw_set_zone) {
+  let raw_set_zone = zone::metadata(set.as_slice().data as ptr u8);
+  let set_zone = zone::of(ref set);
+  if set_zone.equals(ref raw_set_zone) {
     score = score + 8;
   }
 
   var boxed = std::boxed::new<i64>(ref mut arena, 19);
-  let raw_box_zone = zone::allocation_zone(boxed.as_ptr() as ptr u8);
-  if same_zone(zone::of(ref boxed), raw_box_zone) {
+  let raw_box_zone = zone::metadata(boxed.as_ptr() as ptr u8);
+  let boxed_zone = zone::of(ref boxed);
+  if boxed_zone.equals(ref raw_box_zone) {
     score = score + 16;
   }
 

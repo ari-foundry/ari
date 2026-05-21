@@ -21,11 +21,13 @@ zone::alloc_array<T>(ref mut Zone, count: i64) -> ptr T
 zone::new<T>(ref mut Zone, value: T) -> ptr T
 zone::promote<T>(ref mut target, source: ptr T) -> ptr T
 zone::allocation_zone(data: ptr u8) -> ptr c_void
-zone::of<T: ZoneBacked>(ref value) -> ptr c_void
-value.zone()
+zone::metadata(data: ptr u8) -> ZoneMetadata
+zone::of<T: ZoneBacked>(ref value) -> ZoneMetadata
+value.zone() -> ZoneMetadata
 zone::reset(ref mut Zone) -> void
 zone::destroy(zone: own Zone) -> void
 
+ZoneMetadata
 ZoneBacked
 
 create(capacity)
@@ -53,11 +55,16 @@ into it, and returns the typed pointer.
 target zone. Use it when a temporary or shorter-lived zone value must move
 into a longer-lived zone.
 
-`allocation_zone(data)` reads the allocation header immediately before a
-non-null zone allocation and returns the opaque raw zone handle. `ZoneBacked`
-is the high-level wrapper for library handles that own zone-backed storage.
-`zone::of(ref value)` and `value.zone()` expose that same handle for supported
-handles such as `Box[T]`, `String`, `Vec[T]`, and linear `Set[T]`.
+`allocation_zone(data)` is the raw allocation-header primitive. It reads the
+header immediately before a non-null zone allocation and returns the opaque raw
+zone handle. Prefer `metadata(data)`, which wraps that handle in
+`ZoneMetadata`.
+
+`ZoneBacked` is the high-level wrapper for library handles that own
+zone-backed storage. `zone::of(ref value)` and `value.zone()` expose
+`ZoneMetadata` for supported handles such as `Box[T]`, `String`, `Vec[T]`, and
+linear `Set[T]`. Use `metadata.as_ptr()` only at raw runtime or FFI
+boundaries, and `metadata.equals(ref other)` for identity checks.
 
 These helpers require an actual backing allocation. Empty or zero-capacity
 handles may carry checker provenance but have no data pointer header to read;
@@ -106,8 +113,9 @@ behavior.
   `std::zone::alloc_array`, the root `alloc_array` alias, null return for
   zero count, pointer loads/stores, LLVM symbol emission, and runtime result.
 - `tests/cases/standard-library/ok/zone/std-zone-backed.ari` checks
-  `ZoneBacked`, `zone::of(ref value)`, `value.zone()`, and raw
-  `allocation_zone` agreement for box, string, vector, and set handles.
+  `ZoneMetadata`, `ZoneBacked`, `zone::metadata(data)`, `zone::of(ref value)`,
+  `value.zone()`, and raw allocation-header agreement for box, string, vector,
+  and set handles.
 - Existing zone, vector, string, and boxed tests cover reset/destroy
   invalidation and zone-backed handle provenance.
 
