@@ -1560,6 +1560,10 @@ map.first_value()
 map.try_first_value()
 map.last_value()
 map.try_last_value()
+map.first_entry()
+map.try_first_entry()
+map.last_entry()
+map.try_last_entry()
 map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
@@ -1603,8 +1607,10 @@ set.iter()
 the key is absent. `TreeMap.remove(key)` returns `Option[V]` and rebuilds links
 in place after compacting live storage. `TreeMap` boundary methods read the
 smallest or largest key and the value attached to that key in comparator order;
-use the `try_*` forms when an empty tree is a normal case. `TreeSet` relationship
-methods compare ordered-set membership, not internal tree shape.
+use the `try_*` forms when an empty tree is a normal case. `first_entry` and
+`last_entry` return `MapEntry[K,V]` values when both boundary key and value are
+needed together. `TreeSet` relationship methods compare ordered-set
+membership, not internal tree shape.
 `TreeSet.first()` and `TreeSet.last()` read the smallest and largest values,
 with `try_first` and `try_last` for empty-safe access. `TreeSet.take(value)`
 returns the removed value as `Option[T]`; `TreeSet.remove(value)` drops it and

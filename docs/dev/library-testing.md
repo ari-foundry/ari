@@ -259,6 +259,9 @@ identifies the exact case:
   provenance diagnostic for hash set iterators after reset.
 - `std-collections-tree.ari`: red-black `TreeMap`/`TreeSet` insertion,
   replacement, lookup, and rotation-path behavior.
+- `std-collections-tree-entry-boundaries.ari`: `TreeMap.first_entry`,
+  `TreeMap.last_entry`, and optional boundary-entry helpers before and after
+  link-rebuild removal.
 - `std-collections-tree-iter.ari`: sorted `TreeMap.keys`, `TreeMap.values`,
   `TreeSet.iter`, and direct `TreeSet` `IntoIterator` successor traversal.
 - `deque/std-collections-deque.ari`: `Deque[T]` front/back pushes and pops,

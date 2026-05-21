@@ -1,0 +1,52 @@
+// Covers TreeMap boundary-entry helpers. They return key/value together, so
+// users do not need to call first_key plus first_value for the same node.
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  if map.try_first_entry().is_none() {
+    score = score + 2;
+  }
+  if map.try_last_entry().is_none() {
+    score = score + 3;
+  }
+
+  map.insert(ref mut zone, 4, 40);
+  map.insert(ref mut zone, 2, 20);
+  map.insert(ref mut zone, 8, 80);
+  map.insert(ref mut zone, 1, 10);
+  map.insert(ref mut zone, 3, 30);
+
+  let first = map.first_entry();
+  if first.key == 1 && first.value == 10 {
+    score = score + 5;
+  }
+  let last = map.last_entry();
+  if last.key == 8 && last.value == 80 {
+    score = score + 7;
+  }
+
+  let maybe_first = map.try_first_entry().unwrap_or(MapEntry { key: 0, value: 0 });
+  if maybe_first.key == 1 && maybe_first.value == 10 {
+    score = score + 11;
+  }
+  let maybe_last = map.try_last_entry().unwrap_or(MapEntry { key: 0, value: 0 });
+  if maybe_last.key == 8 && maybe_last.value == 80 {
+    score = score + 13;
+  }
+
+  map.remove(1);
+  map.remove(8);
+  let after_first = map.first_entry();
+  if after_first.key == 2 && after_first.value == 20 {
+    score = score + 17;
+  }
+  let after_last = map.last_entry();
+  if after_last.key == 4 && after_last.value == 40 {
+    score = score + 19;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

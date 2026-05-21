@@ -1639,6 +1639,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent8try_last' $(BUILD_DIR)/prelude/std-collections-tree-boundaries.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari -o $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf
 	$(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; code=$$?; test $$code -eq 238
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-entry-boundaries.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent11first_entry' $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent14try_last_entry' $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-entry-boundaries.ari -o $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.elf
+	$(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.elf; code=$$?; test $$code -eq 77
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6remove' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
@@ -1931,6 +1936,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; code=$$?; test $$code -eq 90; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; code=$$?; test $$code -eq 238; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-entry-boundaries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.elf; $(BUILD_DIR)/prelude/std-collections-tree-entry-boundaries.elf; code=$$?; test $$code -eq 77; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 195; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 39; fi

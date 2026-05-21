@@ -1581,6 +1581,28 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     return std::Some<V>(ptr_load(ptr_add(self.values, node)));
   }
 
+  fn first_entry(self: ref Self) -> std::collections::MapEntry[K, V] {
+    let node = tree_first_node(self.root, self.left);
+    std::assert(node >= 0);
+    return std::collections::MapEntry<K, V> {
+      key: ptr_load(ptr_add(self.keys, node)),
+      value: ptr_load(ptr_add(self.values, node)),
+    };
+  }
+
+  fn try_first_entry(self: ref Self) -> std::Option[std::collections::MapEntry[K, V]] {
+    let node = tree_first_node(self.root, self.left);
+    if node < 0 {
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    return std::Some<std::collections::MapEntry[K, V]>(
+      std::collections::MapEntry<K, V> {
+        key: ptr_load(ptr_add(self.keys, node)),
+        value: ptr_load(ptr_add(self.values, node)),
+      }
+    );
+  }
+
   fn last_value(self: ref Self) -> V {
     let node = tree_last_node(self.root, self.right);
     std::assert(node >= 0);
@@ -1593,6 +1615,28 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
       return std::None<V>();
     }
     return std::Some<V>(ptr_load(ptr_add(self.values, node)));
+  }
+
+  fn last_entry(self: ref Self) -> std::collections::MapEntry[K, V] {
+    let node = tree_last_node(self.root, self.right);
+    std::assert(node >= 0);
+    return std::collections::MapEntry<K, V> {
+      key: ptr_load(ptr_add(self.keys, node)),
+      value: ptr_load(ptr_add(self.values, node)),
+    };
+  }
+
+  fn try_last_entry(self: ref Self) -> std::Option[std::collections::MapEntry[K, V]] {
+    let node = tree_last_node(self.root, self.right);
+    if node < 0 {
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    return std::Some<std::collections::MapEntry[K, V]>(
+      std::collections::MapEntry<K, V> {
+        key: ptr_load(ptr_add(self.keys, node)),
+        value: ptr_load(ptr_add(self.values, node)),
+      }
+    );
   }
 
   fn try_get(self: ref Self, key: K) -> std::Option[V] {

@@ -332,6 +332,10 @@ map.first_value()
 map.try_first_value()
 map.last_value()
 map.try_last_value()
+map.first_entry()
+map.try_first_entry()
+map.last_entry()
+map.try_last_entry()
 map.get(key)
 map.get_or(key, fallback)
 map.try_get(key)
@@ -352,9 +356,11 @@ fallback without forcing every call site to unwrap `Option[V]`. `keys` yields
 keys in ascending comparator order. `values` yields values in the same
 key-sorted order. `first_key`,
 `last_key`, `first_value`, and `last_value` assert when the tree is empty;
-use the `try_*` forms for empty-safe boundary access. `entries` yields
-`MapEntry[K, V]` values with `.key` and `.value` fields in the same sorted key
-order. `remove` returns the removed value as `Option[V]`; the current
+use the `try_*` forms for empty-safe boundary access. `first_entry` and
+`last_entry` return `MapEntry[K, V]` so callers can read the boundary key and
+value without doing two boundary lookups. `entries` yields `MapEntry[K, V]`
+values with `.key` and `.value` fields in the same sorted key order. `remove`
+returns the removed value as `Option[V]`; the current
 implementation compacts the live node arrays and rebuilds tree links in place,
 so removal does not allocate through a zone. For tracked local tree maps,
 `map.insert(key, value)`, `map.reserve(capacity)`, and
@@ -488,6 +494,7 @@ tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari
 tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari
+tests/cases/standard-library/ok/collections/std-collections-tree-entry-boundaries.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
@@ -543,6 +550,8 @@ checks `contains_value` for hash live buckets after a tombstone and for tree
 map values independent of key order. `std-collections-tree.ari` inserts mixed
 key order to exercise red-black rotations. `std-collections-tree-boundaries.ari`
 checks empty-safe and asserting ordered boundary access for tree maps and sets.
+`std-collections-tree-entry-boundaries.ari` checks key/value boundary entry
+helpers before and after tree removal.
 `std-collections-tree-remove.ari` removes root/internal tree nodes, checks
 missing-removal paths, and verifies sorted entries/boundaries after link
 rebuild.
