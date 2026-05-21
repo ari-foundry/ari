@@ -83,6 +83,11 @@ set.copy_to(ref mut target)
 returns `None`. `take` moves the removed value out, while `remove` drops it.
 `equals`, `is_subset`, `is_superset`, and `is_disjoint` compare membership,
 not insertion order, and borrow the other set explicitly.
+When a local `Set[T]` comes from a tracked zone allocation, the common growth
+calls can omit the repeated zone argument: `set.insert(value)`,
+`set.replace(value)`, `set.reserve(capacity)`, and
+`set.reserve_extra(additional)` infer the set's source zone. Manually assembled
+or otherwise untracked sets must keep the explicit `ref mut zone` argument.
 `iter` yields insertion-order values and `Set[T]` implements
 `IntoIterator[T]`.
 
@@ -441,6 +446,7 @@ Focused positive coverage:
 tests/cases/standard-library/ok/collections/std-collections-set.ari
 tests/cases/standard-library/ok/collections/std-collections-set-access.ari
 tests/cases/standard-library/ok/collections/std-collections-set-replace.ari
+tests/cases/standard-library/ok/collections/std-collections-set-implicit-zone.ari
 tests/cases/standard-library/ok/collections/std-collections-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-hash.ari
@@ -469,6 +475,7 @@ tests/cases/standard-library/errors/collections/std-collections-set-insert-diffe
 tests/cases/standard-library/errors/collections/std-collections-set-replace-different-zone.ari
 tests/cases/standard-library/errors/collections/std-collections-set-reserve-different-zone.ari
 tests/cases/standard-library/errors/collections/std-collections-set-reserve-extra-different-zone.ari
+tests/cases/standard-library/errors/collections/std-collections-set-implicit-zone-untracked.ari
 tests/cases/standard-library/errors/collections/std-collections-hash-map-after-reset.ari
 tests/cases/standard-library/errors/collections/std-collections-hash-map-keys-after-reset.ari
 tests/cases/standard-library/errors/collections/std-collections-hash-map-values-after-reset.ari

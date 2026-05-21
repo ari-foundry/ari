@@ -5909,6 +5909,43 @@ private:
             std::move(args));
     }
 
+    ExprPtr rewrite_std_collections_implicit_zone_method_call(const Expr& expr) {
+        if (current_module_name_ == "std::collections") return nullptr;
+        const Expr* receiver_expr = expr_operand(expr).get();
+        if (!receiver_expr || receiver_expr->kind != ExprKind::Name) return nullptr;
+        LocalInfo* receiver = find_local_slot(receiver_expr->name);
+        if (!receiver) return nullptr;
+        IrType receiver_type = value_qualified_type(receiver->type);
+        std::optional<StdCollectionsImplicitZoneMethod> implicit =
+            std_collections_implicit_zone_method_for_call(receiver_type, expr.name, expr.args.size());
+        if (!implicit || !expr_type_args(expr).empty()) return nullptr;
+
+        const std::string context = "std::collections::Set." + expr.name;
+        if (!receiver->zone_pointer || receiver->zone_pointer_source.empty()) {
+            if (implicit->allow_untracked_fallback) return nullptr;
+            fail(expr.loc,
+                 context +
+                     " receiver must come from a tracked zone allocation to infer its zone; pass an explicit zone argument instead");
+        }
+
+        std::vector<ExprPtr> args;
+        args.reserve(expr.args.size() + 1);
+        args.push_back(make_zone_argument_expr_from_source(
+            expr.loc,
+            receiver->zone_pointer_source,
+            context));
+        for (const auto& arg : expr.args) {
+            args.push_back(clone_expression_tree(*arg));
+        }
+
+        return make_ast_method_call_expr(
+            expr.loc,
+            clone_expression_tree(*receiver_expr),
+            implicit->lowered_name,
+            {},
+            std::move(args));
+    }
+
     void set_zone_pointer_source_from_expr(LocalInfo& target, const IrExpr& value) {
         ari::set_zone_pointer_source_from_expr(
             target,
@@ -23745,6 +23782,9 @@ private:
         }
         if (ExprPtr implicit_string_call = rewrite_std_string_implicit_zone_method_call(expr)) {
             return check_method_call(*implicit_string_call, std::move(lowered));
+        }
+        if (ExprPtr implicit_collections_call = rewrite_std_collections_implicit_zone_method_call(expr)) {
+            return check_method_call(*implicit_collections_call, std::move(lowered));
         }
 
         std::size_t borrow_mark = temporary_borrow_mark();

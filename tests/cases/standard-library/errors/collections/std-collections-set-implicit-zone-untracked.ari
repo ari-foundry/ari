@@ -1,0 +1,10 @@
+fn main() -> i64 {
+  var set = std::collections::Set<i64> {
+    data: 0u64 as ptr i64,
+    len: 0,
+    capacity: 0,
+  };
+
+  set.reserve(1);
+  return 0;
+}

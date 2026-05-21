@@ -482,6 +482,27 @@ bool std_collections_set_method_requires_same_zone_argument(const std::string& m
            method_name == "push";
 }
 
+std::optional<StdCollectionsImplicitZoneMethod> std_collections_implicit_zone_method_for_call(
+    const IrType& receiver_type,
+    const std::string& method_name,
+    std::size_t user_arg_count) {
+    IrType receiver_value_type = value_qualified_set_type(receiver_type);
+    if (!is_std_collections_set_handle_type(receiver_value_type)) return std::nullopt;
+    if (method_name == "insert" && user_arg_count == 1) {
+        return StdCollectionsImplicitZoneMethod{"insert", false};
+    }
+    if (method_name == "replace" && user_arg_count == 1) {
+        return StdCollectionsImplicitZoneMethod{"replace", false};
+    }
+    if (method_name == "reserve" && user_arg_count == 1) {
+        return StdCollectionsImplicitZoneMethod{"reserve", false};
+    }
+    if (method_name == "reserve_extra" && user_arg_count == 1) {
+        return StdCollectionsImplicitZoneMethod{"reserve_extra", false};
+    }
+    return std::nullopt;
+}
+
 bool std_collections_result_preserves_receiver_zone(const IrExpr& call) {
     if (call.kind != IrExprKind::Call || call.args.empty()) return false;
     if (!is_std_collections_mutable_handle_type(value_qualified_set_type(call.args[0]->type))) return false;

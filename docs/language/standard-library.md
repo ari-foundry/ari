@@ -254,7 +254,9 @@ delimiter `split` are available on `Slice[T]` and `std::vec::Vec[T]`; on
 `std::collections::Set[T]` also includes `insert(ref mut zone, value)`,
 `replace(ref mut zone, value)`, `remove(value)`, `take(value)`, `pop()`,
 `try_pop()`, `reserve(ref mut zone, capacity)`,
-`reserve_extra(ref mut zone, additional)`, and `clear()`. Its accessors,
+`reserve_extra(ref mut zone, additional)`, and `clear()`. For tracked local
+sets, `insert(value)`, `replace(value)`, `reserve(capacity)`, and
+`reserve_extra(additional)` infer the same source zone. Its accessors,
 `index_of`, `as_slice`, and `iter()` preserve insertion order, and the handle
 implements `IntoIterator[T]` for direct `for value in set` loops.
 

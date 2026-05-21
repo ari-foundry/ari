@@ -1,0 +1,40 @@
+// Covers tracked-local implicit zone lowering for Set growth methods.
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var set = collections::new<i64>(ref mut zone, 0);
+  var score = 0;
+
+  if set.insert(3) {
+    score = score + 3;
+  }
+  if !set.insert(3) {
+    score = score + 5;
+  }
+
+  let missing = set.replace(7);
+  if missing.is_none() && set.contains(7) {
+    score = score + 11;
+  }
+
+  let previous = set.replace(7);
+  if previous.unwrap_or(0) == 7 && set.len() == 2 {
+    score = score + 17;
+  }
+
+  set.reserve(8);
+  if set.capacity() >= 8 {
+    score = score + 23;
+  }
+
+  set.reserve_extra(5);
+  if set.capacity() >= set.len() + 5 {
+    score = score + 29;
+  }
+
+  if set.contains(3) && set.contains(7) {
+    score = score + 31;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

@@ -1373,6 +1373,12 @@ set.iter()
 set.copy_to(ref mut zone)
 ```
 
+For a local `Set[T]` created from a tracked zone allocation, the common growth
+methods may omit the repeated zone argument: `set.insert(value)`,
+`set.replace(value)`, `set.reserve(capacity)`, and
+`set.reserve_extra(additional)` infer the set's source zone. Keep the explicit
+`ref mut zone` form for manually assembled or otherwise untracked handles.
+
 `insert` returns `true` only for newly inserted values. `replace` returns
 `Some(previous)` for an equal existing value, or inserts the missing value and
 returns `None`. `remove` drops the removed value and reports whether it was

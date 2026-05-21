@@ -217,6 +217,8 @@ identifies the exact case:
   optional accessors, explicit reserve growth, `pop`, and `try_pop` behavior.
 - `std-collections-set-replace.ari`: source set replace-or-insert behavior,
   returned previous values, missing-value insertion, and growth behavior.
+- `std-collections-set-implicit-zone.ari`: tracked local set calls infer the
+  source zone for insert, replace, reserve, and reserve-extra growth methods.
 - `std-collections-set-iter.ari`: source set cursor iteration, direct
   `for value in set.iter()`, and `IntoIterator` lowering for `for value in set`.
 - `std-collections-set-after-reset.ari`: negative source-zone provenance
@@ -232,6 +234,8 @@ identifies the exact case:
 - `std-collections-set-reserve-extra-different-zone.ari`: negative same-zone
   growth diagnostic for spare-capacity set reserve with the wrong allocation
   zone.
+- `std-collections-set-implicit-zone-untracked.ari`: negative diagnostic for
+  omitting the zone on a set handle with no tracked allocation provenance.
 - `std-collections-hash.ari`: open-addressed `HashMap`/`HashSet` collision,
   replacement, tombstone, removal, and set-taking behavior.
 - `std-collections-hash-iter.ari`: live-bucket `HashMap.keys`,
