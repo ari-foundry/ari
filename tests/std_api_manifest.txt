@@ -1131,8 +1131,8 @@ method std::collections::TreeMap[K,V]::last_value|check-prelude std-collections-
 method std::collections::TreeMap[K,V]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::lower_bound|check-prelude std-collections-tree-bounds optional first entry not less than key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
-method std::collections::TreeMap[K,V]::remove|check-prelude std-collections-tree-remove link-rebuild removal returning removed value; docs/stdlib/modules/collections.md
-method std::collections::TreeMap[K,V]::remove_entry|check-prelude std-collections-map-entry-api tree map key-value removal after link rebuild; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::remove|check-prelude std-collections-tree-remove direct red-black deletion returning removed value; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::remove_entry|check-prelude std-collections-map-entry-api tree map key-value removal after direct red-black deletion; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::replace|check-prelude std-collections-map-mut-access named ordered map insert-or-replace helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve_extra|check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md
@@ -1165,11 +1165,11 @@ method std::collections::TreeSet[T]::last|check-prelude std-collections-tree-bou
 method std::collections::TreeSet[T]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::lower_bound|check-prelude std-collections-tree-bounds optional first value not less than target; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
-method std::collections::TreeSet[T]::remove|check-prelude std-collections-tree-remove link-rebuild removal predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::remove|check-prelude std-collections-tree-remove direct red-black deletion predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve_extra|check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md
-method std::collections::TreeSet[T]::take|check-prelude std-collections-tree-remove Option-returning link-rebuild removal; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::take|check-prelude std-collections-tree-remove Option-returning direct red-black deletion; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::try_first|check-prelude std-collections-tree-boundaries optional smallest-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::try_get|check-prelude std-collections-set-representatives optional ordered representative lookup; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::try_last|check-prelude std-collections-tree-boundaries optional largest-value accessor; docs/stdlib/modules/collections.md

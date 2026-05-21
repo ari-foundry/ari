@@ -397,7 +397,7 @@ identifies the exact case:
   replacement, lookup, and rotation-path behavior.
 - `std-collections-tree-entry-boundaries.ari`: `TreeMap.first_entry`,
   `TreeMap.last_entry`, and optional boundary-entry helpers before and after
-  link-rebuild removal.
+  direct red-black deletion.
 - `std-collections-tree-bounds.ari`: `TreeMap.lower_bound`,
   `TreeMap.upper_bound`, `TreeSet.lower_bound`, and `TreeSet.upper_bound`
   nearest-value lookup over comparator order.

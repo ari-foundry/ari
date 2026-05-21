@@ -1,6 +1,6 @@
-// Covers TreeMap.remove plus TreeSet.take/remove. Deletion compacts the live
-// arrays and rebuilds tree links in place, so the test checks lookups and
-// sorted iteration after removing root/internal nodes.
+// Covers TreeMap.remove plus TreeSet.take/remove. Deletion uses direct
+// red-black fixup and then compacts the live slot arrays, so this checks
+// root, internal, and leaf removals without rebuilding every link.
 fn main() -> i64 {
   var zone = zone::create(4096);
   var score = 0;
@@ -60,6 +60,77 @@ fn main() -> i64 {
   }
   if set.first() == 1 && set.last() == 8 {
     score = score + 37;
+  }
+
+  var stress = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  stress.insert(ref mut zone, 10, 100);
+  stress.insert(ref mut zone, 5, 50);
+  stress.insert(ref mut zone, 15, 150);
+  stress.insert(ref mut zone, 2, 20);
+  stress.insert(ref mut zone, 7, 70);
+  stress.insert(ref mut zone, 12, 120);
+  stress.insert(ref mut zone, 18, 180);
+  stress.insert(ref mut zone, 1, 10);
+  stress.insert(ref mut zone, 3, 30);
+  stress.insert(ref mut zone, 6, 60);
+  stress.insert(ref mut zone, 8, 80);
+  stress.insert(ref mut zone, 11, 110);
+  stress.insert(ref mut zone, 13, 130);
+  stress.insert(ref mut zone, 17, 170);
+  stress.insert(ref mut zone, 20, 200);
+
+  if stress.remove(10).unwrap_or(0) == 100 &&
+     stress.remove(1).unwrap_or(0) == 10 &&
+     stress.remove(15).unwrap_or(0) == 150 {
+    if stress.len() == 12 && !stress.contains_key(10) &&
+       !stress.contains_key(1) && !stress.contains_key(15) {
+      if stress.first_key() == 2 && stress.last_key() == 20 {
+        var checksum = 0;
+        var count = 0;
+        for entry in stress.entries() {
+          checksum = checksum + entry.key + entry.value;
+          count = count + 1;
+        }
+        if count == 12 && checksum == 1342 {
+          score = score + 41;
+        }
+      }
+    }
+  }
+
+  var stress_set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  stress_set.insert(ref mut zone, 10);
+  stress_set.insert(ref mut zone, 5);
+  stress_set.insert(ref mut zone, 15);
+  stress_set.insert(ref mut zone, 2);
+  stress_set.insert(ref mut zone, 7);
+  stress_set.insert(ref mut zone, 12);
+  stress_set.insert(ref mut zone, 18);
+  stress_set.insert(ref mut zone, 1);
+  stress_set.insert(ref mut zone, 3);
+  stress_set.insert(ref mut zone, 6);
+  stress_set.insert(ref mut zone, 8);
+  stress_set.insert(ref mut zone, 11);
+  stress_set.insert(ref mut zone, 13);
+  stress_set.insert(ref mut zone, 17);
+  stress_set.insert(ref mut zone, 20);
+
+  if stress_set.take(10).unwrap_or(0) == 10 &&
+     stress_set.take(1).unwrap_or(0) == 1 &&
+     stress_set.remove(15) {
+    if stress_set.len() == 12 && !stress_set.contains(10) &&
+       !stress_set.contains(1) && !stress_set.contains(15) {
+      var set_sum = 0;
+      var set_count = 0;
+      for value in stress_set.iter() {
+        set_sum = set_sum + value;
+        set_count = set_count + 1;
+      }
+      if set_count == 12 && set_sum == 122 &&
+         stress_set.first() == 2 && stress_set.last() == 20 {
+        score = score + 43;
+      }
+    }
   }
 
   zone::destroy(zone);

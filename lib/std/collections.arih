@@ -1805,6 +1805,203 @@ fn tree_map_rotate_right[K, V](map: ref mut std::collections::TreeMap[K, V], nod
   ptr_store(ptr_add(map.parent, node), pivot);
 }
 
+fn tree_map_left_child[K, V](map: ref mut std::collections::TreeMap[K, V], node: i64) -> i64 {
+  if node < 0 {
+    return -1;
+  }
+  return ptr_load(ptr_add(map.left, node));
+}
+
+fn tree_map_right_child[K, V](map: ref mut std::collections::TreeMap[K, V], node: i64) -> i64 {
+  if node < 0 {
+    return -1;
+  }
+  return ptr_load(ptr_add(map.right, node));
+}
+
+fn tree_map_transplant[K, V](
+  map: ref mut std::collections::TreeMap[K, V],
+  old_node: i64,
+  new_node: i64
+) -> void {
+  let parent = ptr_load(ptr_add(map.parent, old_node));
+  if parent < 0 {
+    map.root = new_node;
+  } else if old_node == ptr_load(ptr_add(map.left, parent)) {
+    ptr_store(ptr_add(map.left, parent), new_node);
+  } else {
+    ptr_store(ptr_add(map.right, parent), new_node);
+  }
+  if new_node >= 0 {
+    ptr_store(ptr_add(map.parent, new_node), parent);
+  }
+}
+
+fn tree_map_fix_delete[K, V](
+  map: ref mut std::collections::TreeMap[K, V],
+  start: i64,
+  start_parent: i64,
+  start_is_left: bool
+) -> void {
+  var node = start;
+  var parent = start_parent;
+  var is_left = start_is_left;
+  while node != map.root && tree_map_color<K, V>(map, node) == 0 {
+    if parent < 0 {
+      return;
+    }
+    if is_left {
+      var right_sibling = ptr_load(ptr_add(map.right, parent));
+      if tree_map_color<K, V>(map, right_sibling) == 1 {
+        tree_map_set_color<K, V>(map, right_sibling, 0);
+        tree_map_set_color<K, V>(map, parent, 1);
+        tree_map_rotate_left<K, V>(map, parent);
+        right_sibling = ptr_load(ptr_add(map.right, parent));
+      }
+      if tree_map_color<K, V>(map, tree_map_left_child<K, V>(map, right_sibling)) == 0 &&
+         tree_map_color<K, V>(map, tree_map_right_child<K, V>(map, right_sibling)) == 0 {
+        tree_map_set_color<K, V>(map, right_sibling, 1);
+        node = parent;
+        parent = ptr_load(ptr_add(map.parent, node));
+        is_left = parent >= 0 && node == ptr_load(ptr_add(map.left, parent));
+      } else {
+        if tree_map_color<K, V>(map, tree_map_right_child<K, V>(map, right_sibling)) == 0 {
+          tree_map_set_color<K, V>(map, tree_map_left_child<K, V>(map, right_sibling), 0);
+          tree_map_set_color<K, V>(map, right_sibling, 1);
+          tree_map_rotate_right<K, V>(map, right_sibling);
+          right_sibling = ptr_load(ptr_add(map.right, parent));
+        }
+        tree_map_set_color<K, V>(map, right_sibling, tree_map_color<K, V>(map, parent));
+        tree_map_set_color<K, V>(map, parent, 0);
+        tree_map_set_color<K, V>(map, tree_map_right_child<K, V>(map, right_sibling), 0);
+        tree_map_rotate_left<K, V>(map, parent);
+        node = map.root;
+        parent = -1;
+      }
+    } else {
+      var left_sibling = ptr_load(ptr_add(map.left, parent));
+      if tree_map_color<K, V>(map, left_sibling) == 1 {
+        tree_map_set_color<K, V>(map, left_sibling, 0);
+        tree_map_set_color<K, V>(map, parent, 1);
+        tree_map_rotate_right<K, V>(map, parent);
+        left_sibling = ptr_load(ptr_add(map.left, parent));
+      }
+      if tree_map_color<K, V>(map, tree_map_right_child<K, V>(map, left_sibling)) == 0 &&
+         tree_map_color<K, V>(map, tree_map_left_child<K, V>(map, left_sibling)) == 0 {
+        tree_map_set_color<K, V>(map, left_sibling, 1);
+        node = parent;
+        parent = ptr_load(ptr_add(map.parent, node));
+        is_left = parent >= 0 && node == ptr_load(ptr_add(map.left, parent));
+      } else {
+        if tree_map_color<K, V>(map, tree_map_left_child<K, V>(map, left_sibling)) == 0 {
+          tree_map_set_color<K, V>(map, tree_map_right_child<K, V>(map, left_sibling), 0);
+          tree_map_set_color<K, V>(map, left_sibling, 1);
+          tree_map_rotate_left<K, V>(map, left_sibling);
+          left_sibling = ptr_load(ptr_add(map.left, parent));
+        }
+        tree_map_set_color<K, V>(map, left_sibling, tree_map_color<K, V>(map, parent));
+        tree_map_set_color<K, V>(map, parent, 0);
+        tree_map_set_color<K, V>(map, tree_map_left_child<K, V>(map, left_sibling), 0);
+        tree_map_rotate_right<K, V>(map, parent);
+        node = map.root;
+        parent = -1;
+      }
+    }
+  }
+  tree_map_set_color<K, V>(map, node, 0);
+}
+
+fn tree_map_delete_slot[K, V](map: ref mut std::collections::TreeMap[K, V], target: i64) -> void {
+  var removed = target;
+  var removed_color = tree_map_color<K, V>(map, removed);
+  var fix_node = -1;
+  var fix_parent = -1;
+  var fix_is_left = false;
+  let left = ptr_load(ptr_add(map.left, target));
+  let right = ptr_load(ptr_add(map.right, target));
+  if left < 0 {
+    fix_node = right;
+    fix_parent = ptr_load(ptr_add(map.parent, target));
+    if fix_parent >= 0 {
+      fix_is_left = target == ptr_load(ptr_add(map.left, fix_parent));
+    }
+    tree_map_transplant<K, V>(map, target, right);
+  } else if right < 0 {
+    fix_node = left;
+    fix_parent = ptr_load(ptr_add(map.parent, target));
+    if fix_parent >= 0 {
+      fix_is_left = target == ptr_load(ptr_add(map.left, fix_parent));
+    }
+    tree_map_transplant<K, V>(map, target, left);
+  } else {
+    removed = tree_first_node(right, map.left);
+    removed_color = tree_map_color<K, V>(map, removed);
+    fix_node = ptr_load(ptr_add(map.right, removed));
+    if ptr_load(ptr_add(map.parent, removed)) == target {
+      fix_parent = removed;
+      fix_is_left = false;
+      if fix_node >= 0 {
+        ptr_store(ptr_add(map.parent, fix_node), removed);
+      }
+    } else {
+      fix_parent = ptr_load(ptr_add(map.parent, removed));
+      fix_is_left = removed == ptr_load(ptr_add(map.left, fix_parent));
+      tree_map_transplant<K, V>(map, removed, fix_node);
+      ptr_store(ptr_add(map.right, removed), right);
+      ptr_store(ptr_add(map.parent, right), removed);
+    }
+    tree_map_transplant<K, V>(map, target, removed);
+    ptr_store(ptr_add(map.left, removed), left);
+    ptr_store(ptr_add(map.parent, left), removed);
+    ptr_store(ptr_add(map.colors, removed), tree_map_color<K, V>(map, target));
+  }
+  if removed_color == 0 {
+    tree_map_fix_delete<K, V>(map, fix_node, fix_parent, fix_is_left);
+  }
+  tree_map_set_color<K, V>(map, map.root, 0);
+  ptr_store(ptr_add(map.left, target), -1);
+  ptr_store(ptr_add(map.right, target), -1);
+  ptr_store(ptr_add(map.parent, target), -1);
+  ptr_store(ptr_add(map.colors, target), 0);
+}
+
+fn tree_map_move_last_slot[K, V](
+  map: ref mut std::collections::TreeMap[K, V],
+  target: i64,
+  source: i64
+) -> void {
+  if target == source {
+    return;
+  }
+  ptr_store(ptr_add(map.keys, target), ptr_load(ptr_add(map.keys, source)));
+  ptr_store(ptr_add(map.values, target), ptr_load(ptr_add(map.values, source)));
+  ptr_store(ptr_add(map.left, target), ptr_load(ptr_add(map.left, source)));
+  ptr_store(ptr_add(map.right, target), ptr_load(ptr_add(map.right, source)));
+  ptr_store(ptr_add(map.parent, target), ptr_load(ptr_add(map.parent, source)));
+  ptr_store(ptr_add(map.colors, target), ptr_load(ptr_add(map.colors, source)));
+
+  if map.root == source {
+    map.root = target;
+  }
+  let parent = ptr_load(ptr_add(map.parent, target));
+  if parent >= 0 {
+    if ptr_load(ptr_add(map.left, parent)) == source {
+      ptr_store(ptr_add(map.left, parent), target);
+    }
+    if ptr_load(ptr_add(map.right, parent)) == source {
+      ptr_store(ptr_add(map.right, parent), target);
+    }
+  }
+  let left = ptr_load(ptr_add(map.left, target));
+  if left >= 0 {
+    ptr_store(ptr_add(map.parent, left), target);
+  }
+  let right = ptr_load(ptr_add(map.right, target));
+  if right >= 0 {
+    ptr_store(ptr_add(map.parent, right), target);
+  }
+}
+
 fn tree_map_fix_insert[K, V](map: ref mut std::collections::TreeMap[K, V], inserted: i64) -> void {
   var node = inserted;
   while node != map.root && tree_map_color<K, V>(map, ptr_load(ptr_add(map.parent, node))) == 1 {
@@ -1945,16 +2142,6 @@ fn tree_map_link_existing_node[K, V](map: ref mut std::collections::TreeMap[K, V
     ptr_store(ptr_add(map.right, parent), index);
   }
   tree_map_fix_insert<K, V>(map, index);
-}
-
-fn tree_map_rebuild_links[K, V](map: ref mut std::collections::TreeMap[K, V]) -> void {
-  let count = map.len;
-  map.root = -1;
-  var index = 0;
-  while index < count {
-    tree_map_link_existing_node<K, V>(map, index);
-    index = index + 1;
-  }
 }
 
 fn tree_first_node(root: i64, left: ptr i64) -> i64 {
@@ -2334,13 +2521,10 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     let removed_key = ptr_load(ptr_add(self.keys, index));
     let removed_value = ptr_load(ptr_add(self.values, index));
     let last = self.len - 1;
-    if index != last {
-      ptr_store(ptr_add(self.keys, index), ptr_load(ptr_add(self.keys, last)));
-      ptr_store(ptr_add(self.values, index), ptr_load(ptr_add(self.values, last)));
-    }
     drop removed_key;
+    tree_map_delete_slot<K, V>(self, index);
+    tree_map_move_last_slot<K, V>(self, index, last);
     self.len = last;
-    tree_map_rebuild_links<K, V>(self);
     return std::Some<V>(removed_value);
   }
 
@@ -2352,12 +2536,9 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     let removed_key = ptr_load(ptr_add(self.keys, index));
     let removed_value = ptr_load(ptr_add(self.values, index));
     let last = self.len - 1;
-    if index != last {
-      ptr_store(ptr_add(self.keys, index), ptr_load(ptr_add(self.keys, last)));
-      ptr_store(ptr_add(self.values, index), ptr_load(ptr_add(self.values, last)));
-    }
+    tree_map_delete_slot<K, V>(self, index);
+    tree_map_move_last_slot<K, V>(self, index, last);
     self.len = last;
-    tree_map_rebuild_links<K, V>(self);
     return std::Some<std::collections::MapEntry[K, V]>(
       std::collections::MapEntry<K, V> {
         key: removed_key,
@@ -2719,6 +2900,202 @@ fn tree_set_rotate_right[T](set: ref mut std::collections::TreeSet[T], node: i64
   ptr_store(ptr_add(set.parent, node), pivot);
 }
 
+fn tree_set_left_child[T](set: ref mut std::collections::TreeSet[T], node: i64) -> i64 {
+  if node < 0 {
+    return -1;
+  }
+  return ptr_load(ptr_add(set.left, node));
+}
+
+fn tree_set_right_child[T](set: ref mut std::collections::TreeSet[T], node: i64) -> i64 {
+  if node < 0 {
+    return -1;
+  }
+  return ptr_load(ptr_add(set.right, node));
+}
+
+fn tree_set_transplant[T](
+  set: ref mut std::collections::TreeSet[T],
+  old_node: i64,
+  new_node: i64
+) -> void {
+  let parent = ptr_load(ptr_add(set.parent, old_node));
+  if parent < 0 {
+    set.root = new_node;
+  } else if old_node == ptr_load(ptr_add(set.left, parent)) {
+    ptr_store(ptr_add(set.left, parent), new_node);
+  } else {
+    ptr_store(ptr_add(set.right, parent), new_node);
+  }
+  if new_node >= 0 {
+    ptr_store(ptr_add(set.parent, new_node), parent);
+  }
+}
+
+fn tree_set_fix_delete[T](
+  set: ref mut std::collections::TreeSet[T],
+  start: i64,
+  start_parent: i64,
+  start_is_left: bool
+) -> void {
+  var node = start;
+  var parent = start_parent;
+  var is_left = start_is_left;
+  while node != set.root && tree_set_color<T>(set, node) == 0 {
+    if parent < 0 {
+      return;
+    }
+    if is_left {
+      var right_sibling = ptr_load(ptr_add(set.right, parent));
+      if tree_set_color<T>(set, right_sibling) == 1 {
+        tree_set_set_color<T>(set, right_sibling, 0);
+        tree_set_set_color<T>(set, parent, 1);
+        tree_set_rotate_left<T>(set, parent);
+        right_sibling = ptr_load(ptr_add(set.right, parent));
+      }
+      if tree_set_color<T>(set, tree_set_left_child<T>(set, right_sibling)) == 0 &&
+         tree_set_color<T>(set, tree_set_right_child<T>(set, right_sibling)) == 0 {
+        tree_set_set_color<T>(set, right_sibling, 1);
+        node = parent;
+        parent = ptr_load(ptr_add(set.parent, node));
+        is_left = parent >= 0 && node == ptr_load(ptr_add(set.left, parent));
+      } else {
+        if tree_set_color<T>(set, tree_set_right_child<T>(set, right_sibling)) == 0 {
+          tree_set_set_color<T>(set, tree_set_left_child<T>(set, right_sibling), 0);
+          tree_set_set_color<T>(set, right_sibling, 1);
+          tree_set_rotate_right<T>(set, right_sibling);
+          right_sibling = ptr_load(ptr_add(set.right, parent));
+        }
+        tree_set_set_color<T>(set, right_sibling, tree_set_color<T>(set, parent));
+        tree_set_set_color<T>(set, parent, 0);
+        tree_set_set_color<T>(set, tree_set_right_child<T>(set, right_sibling), 0);
+        tree_set_rotate_left<T>(set, parent);
+        node = set.root;
+        parent = -1;
+      }
+    } else {
+      var left_sibling = ptr_load(ptr_add(set.left, parent));
+      if tree_set_color<T>(set, left_sibling) == 1 {
+        tree_set_set_color<T>(set, left_sibling, 0);
+        tree_set_set_color<T>(set, parent, 1);
+        tree_set_rotate_right<T>(set, parent);
+        left_sibling = ptr_load(ptr_add(set.left, parent));
+      }
+      if tree_set_color<T>(set, tree_set_right_child<T>(set, left_sibling)) == 0 &&
+         tree_set_color<T>(set, tree_set_left_child<T>(set, left_sibling)) == 0 {
+        tree_set_set_color<T>(set, left_sibling, 1);
+        node = parent;
+        parent = ptr_load(ptr_add(set.parent, node));
+        is_left = parent >= 0 && node == ptr_load(ptr_add(set.left, parent));
+      } else {
+        if tree_set_color<T>(set, tree_set_left_child<T>(set, left_sibling)) == 0 {
+          tree_set_set_color<T>(set, tree_set_right_child<T>(set, left_sibling), 0);
+          tree_set_set_color<T>(set, left_sibling, 1);
+          tree_set_rotate_left<T>(set, left_sibling);
+          left_sibling = ptr_load(ptr_add(set.left, parent));
+        }
+        tree_set_set_color<T>(set, left_sibling, tree_set_color<T>(set, parent));
+        tree_set_set_color<T>(set, parent, 0);
+        tree_set_set_color<T>(set, tree_set_left_child<T>(set, left_sibling), 0);
+        tree_set_rotate_right<T>(set, parent);
+        node = set.root;
+        parent = -1;
+      }
+    }
+  }
+  tree_set_set_color<T>(set, node, 0);
+}
+
+fn tree_set_delete_slot[T](set: ref mut std::collections::TreeSet[T], target: i64) -> void {
+  var removed = target;
+  var removed_color = tree_set_color<T>(set, removed);
+  var fix_node = -1;
+  var fix_parent = -1;
+  var fix_is_left = false;
+  let left = ptr_load(ptr_add(set.left, target));
+  let right = ptr_load(ptr_add(set.right, target));
+  if left < 0 {
+    fix_node = right;
+    fix_parent = ptr_load(ptr_add(set.parent, target));
+    if fix_parent >= 0 {
+      fix_is_left = target == ptr_load(ptr_add(set.left, fix_parent));
+    }
+    tree_set_transplant<T>(set, target, right);
+  } else if right < 0 {
+    fix_node = left;
+    fix_parent = ptr_load(ptr_add(set.parent, target));
+    if fix_parent >= 0 {
+      fix_is_left = target == ptr_load(ptr_add(set.left, fix_parent));
+    }
+    tree_set_transplant<T>(set, target, left);
+  } else {
+    removed = tree_first_node(right, set.left);
+    removed_color = tree_set_color<T>(set, removed);
+    fix_node = ptr_load(ptr_add(set.right, removed));
+    if ptr_load(ptr_add(set.parent, removed)) == target {
+      fix_parent = removed;
+      fix_is_left = false;
+      if fix_node >= 0 {
+        ptr_store(ptr_add(set.parent, fix_node), removed);
+      }
+    } else {
+      fix_parent = ptr_load(ptr_add(set.parent, removed));
+      fix_is_left = removed == ptr_load(ptr_add(set.left, fix_parent));
+      tree_set_transplant<T>(set, removed, fix_node);
+      ptr_store(ptr_add(set.right, removed), right);
+      ptr_store(ptr_add(set.parent, right), removed);
+    }
+    tree_set_transplant<T>(set, target, removed);
+    ptr_store(ptr_add(set.left, removed), left);
+    ptr_store(ptr_add(set.parent, left), removed);
+    ptr_store(ptr_add(set.colors, removed), tree_set_color<T>(set, target));
+  }
+  if removed_color == 0 {
+    tree_set_fix_delete<T>(set, fix_node, fix_parent, fix_is_left);
+  }
+  tree_set_set_color<T>(set, set.root, 0);
+  ptr_store(ptr_add(set.left, target), -1);
+  ptr_store(ptr_add(set.right, target), -1);
+  ptr_store(ptr_add(set.parent, target), -1);
+  ptr_store(ptr_add(set.colors, target), 0);
+}
+
+fn tree_set_move_last_slot[T](
+  set: ref mut std::collections::TreeSet[T],
+  target: i64,
+  source: i64
+) -> void {
+  if target == source {
+    return;
+  }
+  ptr_store(ptr_add(set.data, target), ptr_load(ptr_add(set.data, source)));
+  ptr_store(ptr_add(set.left, target), ptr_load(ptr_add(set.left, source)));
+  ptr_store(ptr_add(set.right, target), ptr_load(ptr_add(set.right, source)));
+  ptr_store(ptr_add(set.parent, target), ptr_load(ptr_add(set.parent, source)));
+  ptr_store(ptr_add(set.colors, target), ptr_load(ptr_add(set.colors, source)));
+
+  if set.root == source {
+    set.root = target;
+  }
+  let parent = ptr_load(ptr_add(set.parent, target));
+  if parent >= 0 {
+    if ptr_load(ptr_add(set.left, parent)) == source {
+      ptr_store(ptr_add(set.left, parent), target);
+    }
+    if ptr_load(ptr_add(set.right, parent)) == source {
+      ptr_store(ptr_add(set.right, parent), target);
+    }
+  }
+  let left = ptr_load(ptr_add(set.left, target));
+  if left >= 0 {
+    ptr_store(ptr_add(set.parent, left), target);
+  }
+  let right = ptr_load(ptr_add(set.right, target));
+  if right >= 0 {
+    ptr_store(ptr_add(set.parent, right), target);
+  }
+}
+
 fn tree_set_fix_insert[T](set: ref mut std::collections::TreeSet[T], inserted: i64) -> void {
   var node = inserted;
   while node != set.root && tree_set_color<T>(set, ptr_load(ptr_add(set.parent, node))) == 1 {
@@ -2859,16 +3236,6 @@ fn tree_set_link_existing_node[T](set: ref mut std::collections::TreeSet[T], ind
     ptr_store(ptr_add(set.right, parent), index);
   }
   tree_set_fix_insert<T>(set, index);
-}
-
-fn tree_set_rebuild_links[T](set: ref mut std::collections::TreeSet[T]) -> void {
-  let count = set.len;
-  set.root = -1;
-  var index = 0;
-  while index < count {
-    tree_set_link_existing_node<T>(set, index);
-    index = index + 1;
-  }
 }
 
 fn tree_set_grow_to_capacity[T](
@@ -3080,11 +3447,9 @@ pub impl[T] std::collections::TreeSet[T] {
     }
     let removed = ptr_load(ptr_add(self.data, index));
     let last = self.len - 1;
-    if index != last {
-      ptr_store(ptr_add(self.data, index), ptr_load(ptr_add(self.data, last)));
-    }
+    tree_set_delete_slot<T>(self, index);
+    tree_set_move_last_slot<T>(self, index, last);
     self.len = last;
-    tree_set_rebuild_links<T>(self);
     return std::Some<T>(removed);
   }
 

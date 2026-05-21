@@ -2095,10 +2095,12 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-collections-structure-copy-to.elf; code=$$?; test $$code -eq 53
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6remove' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
+	grep -q '_ARNv3std11collections31tree_map_delete_slot__G_i64_i64' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent6remove' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
+	grep -q '_ARNv3std11collections27tree_set_delete_slot__G_i64' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari -o $(BUILD_DIR)/prelude/std-collections-tree-remove.elf
-	$(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 195
+	$(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 23
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent6equals' $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent9is_subset' $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
@@ -2411,7 +2413,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-bounds.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-bounds.elf; $(BUILD_DIR)/prelude/std-collections-tree-bounds.elf; code=$$?; test $$code -eq 197; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-copy-to.elf; $(BUILD_DIR)/prelude/std-collections-copy-to.elf; code=$$?; test $$code -eq 48; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-structure-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-structure-copy-to.elf; $(BUILD_DIR)/prelude/std-collections-structure-copy-to.elf; code=$$?; test $$code -eq 53; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 195; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 23; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 39; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-deque.elf; $(BUILD_DIR)/prelude/std-collections-deque.elf; code=$$?; test $$code -eq 42; fi

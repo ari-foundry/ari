@@ -467,9 +467,11 @@ entry exists. `entries` yields `MapEntry[K, V]` values with `.key` and
 `MapEntryMut[K,V]` handles for copied-key plus mutable-value updates.
 `drain()` returns entries in sorted key order and immediately leaves the source
 tree map empty. `remove`
-returns the removed value as `Option[V]`; the current
-implementation compacts the live node arrays and rebuilds tree links in place,
-so removal does not allocate through a zone. For tracked local tree maps,
+returns the removed value as `Option[V]`; deletion now uses red-black delete
+fixup, then compacts the live node arrays by moving the final live slot into
+the removed slot and updating only the affected parent/child/root references.
+Removal does not allocate through a zone and no longer rebuilds every tree
+link. For tracked local tree maps,
 `map.insert(key, value)`, `map.entry(key)`, `map.reserve(capacity)`, and
 `map.reserve_extra(additional)` infer the constructor zone. `copy_to(ref mut
 target)` rebuilds the map in the target zone with the same comparator.
@@ -478,7 +480,8 @@ target)` rebuilds the map in the target zone with the same comparator.
 strict less-than comparator. `TreeMapEntry[K, V]` supports the same
 `or_insert`, `or_insert_with`, `and_modify`, `insert`, `remove`, `key`,
 `value`, and `value_mut` methods, and `remove_entry(key)` returns
-`Option[MapEntry[K, V]]` after compacting storage and rebuilding links.
+`Option[MapEntry[K, V]]` after the same direct red-black deletion and storage
+compaction path.
 
 ```ari
 set.len()
@@ -521,8 +524,8 @@ return `None` past the right edge. `try_get(value)` returns the stored equal
 representative as `Option[T]`, and `get(value)` asserts that it exists. `take`
 moves a removed value out as
 `Option[T]`; `remove` drops the removed value and returns whether anything was
-removed. Tree-set removal also compacts live nodes and rebuilds links in place
-without allocating. `TreeSet.iter()` yields values in ascending comparator
+removed. Tree-set removal uses direct red-black delete fixup and compacting
+slot movement without allocating or rebuilding all links. `TreeSet.iter()` yields values in ascending comparator
 order, and `TreeSet[T]` implements `IntoIterator[T]`. `TreeSet.drain()` yields
 values in ascending comparator order and leaves the source tree set empty. For tracked local tree
 sets, `set.insert(value)`, `set.replace(value)`, and
@@ -706,8 +709,8 @@ helpers before and after tree removal.
 `std-collections-tree-bounds.ari` checks comparator-order lower/upper bound
 lookup for tree maps and sets.
 `std-collections-tree-remove.ari` removes root/internal tree nodes, checks
-missing-removal paths, and verifies sorted entries/boundaries after link
-rebuild.
+missing-removal paths, and verifies sorted entries/boundaries after direct
+red-black deletion with compacting slot movement.
 `std-collections-tree-set-relations.ari` inserts the same values in different
 orders to verify relationship predicates are membership-based, while
 `std-collections-tree-iter.ari` checks sorted successor traversal.
@@ -746,9 +749,9 @@ and checked by `make check-std-api`.
   mutating set values can break hash and ordering invariants.
 - `try_get_mut()` returns `Option[MapValueMut[V]]` rather than
   `Option[ref mut V]` for the same reference-valued generic payload reason.
-- Tree removal compacts live storage and rebuilds links in place. A future
-  direct red-black deletion path can improve asymptotic removal cost without
-  changing the public API.
+- Tree removal uses direct red-black delete fixup plus compacting slot
+  movement. It preserves the public API while avoiding the older full-link
+  rebuild path.
 - `LinkedList[T]` is zone-backed index storage rather than one allocation per
   node. Spare node storage is reused by the list and reclaimed with the zone.
 - `BinaryHeap[T]` and `PriorityQueue[T]` require an explicit comparator until
