@@ -1102,6 +1102,13 @@ check-prelude: $(TARGET)
 	grep -q 'std__path__PathBytes8inherent13has_file_stem' $(BUILD_DIR)/prelude/std-path-predicates.ll
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-predicates.ari -o $(BUILD_DIR)/prelude/std-path-predicates.elf
 	$(BUILD_DIR)/prelude/std-path-predicates.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-edit.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-edit.ll
+	grep -q '_ARNv3std4path17with_file_name_in' $(BUILD_DIR)/prelude/std-path-edit.ll
+	grep -q '_ARNv3std4path17with_extension_in' $(BUILD_DIR)/prelude/std-path-edit.ll
+	grep -q 'std__path__PathBytes8inherent17with_file_name_in' $(BUILD_DIR)/prelude/std-path-edit.ll
+	grep -q 'std__path__PathBytes8inherent17with_extension_in' $(BUILD_DIR)/prelude/std-path-edit.ll
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-edit.ari -o $(BUILD_DIR)/prelude/std-path-edit.elf
+	$(BUILD_DIR)/prelude/std-path-edit.elf; code=$$?; test $$code -eq 27
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-components.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-components.ll
 	grep -q '_ARNv3std4path10components' $(BUILD_DIR)/prelude/std-path-components.ll
 	grep -q 'std__path__Components13std__Iterator4next' $(BUILD_DIR)/prelude/std-path-components.ll

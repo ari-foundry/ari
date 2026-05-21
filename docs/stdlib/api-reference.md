@@ -579,6 +579,8 @@ path::has_file_name(path, expected)
 path::has_extension(path, expected)
 path::has_stem(path, expected)
 path::has_file_stem(path, expected)
+path::with_file_name_in(ref mut zone, path, new_file_name)
+path::with_extension_in(ref mut zone, path, new_extension)
 path::join_in(ref mut zone, base, child)
 path::normalize_in(ref mut zone, path)
 
@@ -598,6 +600,8 @@ path.has_file_name(expected)
 path.has_extension(expected)
 path.has_stem(expected)
 path.has_file_stem(expected)
+path.with_file_name_in(ref mut zone, new_file_name)
+path.with_extension_in(ref mut zone, new_extension)
 path.join_in(ref mut zone, child)
 path.normalize_in(ref mut zone)
 ```
@@ -610,6 +614,9 @@ and skips leading, repeated, and trailing separators.
 zone. Normalization collapses repeated separators and removes `.` components,
 but keeps `..` components because resolving them safely depends on stronger
 filesystem and platform policy.
+`with_file_name_in` and `with_extension_in` are zone-backed lexical editing
+helpers for replacing the final component or final extension without touching
+the filesystem.
 `PathBytes` is the typed borrowed path-byte view. Use it when a byte slice or
 `std::string::OsStr` should be treated as a path rather than as generic bytes
 or validated text. When `PathBytes` is expected, a string literal can be used

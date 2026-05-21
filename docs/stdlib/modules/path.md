@@ -29,6 +29,8 @@ path::has_file_name(path, expected) -> bool
 path::has_extension(path, expected) -> bool
 path::has_stem(path, expected) -> bool
 path::has_file_stem(path, expected) -> bool
+path::with_file_name_in(ref mut zone, path, new_file_name) -> String
+path::with_extension_in(ref mut zone, path, new_extension) -> String
 path::join_in(ref mut zone, base, child) -> String
 path::normalize_in(ref mut zone, path) -> String
 ```
@@ -59,6 +61,8 @@ path.has_file_name(expected)
 path.has_extension(expected)
 path.has_stem(expected)
 path.has_file_stem(expected)
+path.with_file_name_in(ref mut zone, new_file_name)
+path.with_extension_in(ref mut zone, new_extension)
 path.join_in(ref mut zone, child)
 path.normalize_in(ref mut zone)
 ```
@@ -99,6 +103,14 @@ borrowed view helpers against an expected byte slice without allocating. They
 return `false` when the corresponding view helper would return `None`.
 `has_extension` expects only the extension bytes, not a leading dot.
 
+`with_file_name_in` and `with_extension_in` allocate a new owned
+`std::string::String` in the provided zone. `with_file_name_in` keeps the
+current parent when one exists and otherwise returns a copy of the new final
+component. `with_extension_in` replaces the final extension, appends one when
+the path has no extension, and removes the extension when `new_extension` is
+empty. Paths without a final component, such as `/`, are copied unchanged by
+`with_extension_in`.
+
 `join_in` copies into the caller-provided zone. If `child` is absolute, it
 returns a copy of `child`. Otherwise it inserts one `/` between `base` and
 `child` when needed.
@@ -119,6 +131,10 @@ fn child_path(zone: ref mut Zone, dir: Slice[u8], name: Slice[u8]) -> String {
   return path::join_in(zone, dir, name);
 }
 
+fn ari_to_object(zone: ref mut Zone, source: Slice[u8]) -> String {
+  return path::with_extension_in(zone, source, "o");
+}
+
 fn score(path_bytes: Slice[u8]) -> i64 {
   var total = 0;
   var parts = path::components(path_bytes);
@@ -136,13 +152,14 @@ tests/cases/standard-library/ok/path/std-path-basic.ari
 tests/cases/standard-library/ok/path/std-path-components.ari
 tests/cases/standard-library/ok/path/std-path-bytes.ari
 tests/cases/standard-library/ok/path/std-path-predicates.ari
+tests/cases/standard-library/ok/path/std-path-edit.ari
 ```
 
 The focused test covers separator policy, absolute/relative checks, trailing
 separator trimming, final component views, parent/stem/extension behavior,
-explicit `file_stem` aliases, zone-backed join, lightweight normalization,
-component iteration, typed `PathBytes` views, and allocation-free
-final-component predicates.
+explicit `file_stem` aliases, zone-backed path editing, zone-backed join,
+lightweight normalization, component iteration, typed `PathBytes` views, and
+allocation-free final-component predicates.
 `make check-prelude` checks representative helper symbols and executable
 results.
 

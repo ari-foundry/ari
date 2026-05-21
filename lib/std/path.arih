@@ -200,6 +200,55 @@ pub fn has_file_stem(path: std::Slice[u8], expected: std::Slice[u8]) -> bool {
   return has_stem(path, expected);
 }
 
+pub fn with_file_name_in(
+  zone: ref mut Zone,
+  path: std::Slice[u8],
+  new_file_name: std::Slice[u8]
+) -> std::string::String {
+  match parent(path) {
+    std::Some(base) => {
+      return join_in(zone, base, new_file_name);
+    }
+    std::None => {
+      return std::string::from_slice_in(zone, new_file_name);
+    }
+  }
+}
+
+pub fn with_extension_in(
+  zone: ref mut Zone,
+  path: std::Slice[u8],
+  new_extension: std::Slice[u8]
+) -> std::string::String {
+  match stem(path) {
+    std::Some(name_stem) => {
+      var capacity = path.len + new_extension.len + 1;
+      var output = std::string::new(zone, capacity);
+
+      match parent(path) {
+        std::Some(base) => {
+          output.extend_from_slice_in(zone, base);
+          if !is_separator(base[base.len - 1]) {
+            output.push_in(zone, '/');
+          }
+        }
+        std::None => {
+        }
+      }
+
+      output.extend_from_slice_in(zone, name_stem);
+      if new_extension.len > 0 {
+        output.push_in(zone, '.');
+        output.extend_from_slice_in(zone, new_extension);
+      }
+      return output;
+    }
+    std::None => {
+      return std::string::from_slice_in(zone, path);
+    }
+  }
+}
+
 pub fn join_in(zone: ref mut Zone, base: std::Slice[u8], child: std::Slice[u8]) -> std::string::String {
   if child.len == 0 {
     return std::string::from_slice_in(zone, base);
@@ -367,6 +416,22 @@ pub impl std::path::PathBytes {
 
   fn has_file_stem(self: ref Self, expected: std::Slice[u8]) -> bool {
     return std::path::has_file_stem(self.bytes, expected);
+  }
+
+  fn with_file_name_in(
+    self: ref Self,
+    zone: ref mut Zone,
+    new_file_name: std::Slice[u8]
+  ) -> std::string::String {
+    return std::path::with_file_name_in(zone, self.bytes, new_file_name);
+  }
+
+  fn with_extension_in(
+    self: ref Self,
+    zone: ref mut Zone,
+    new_extension: std::Slice[u8]
+  ) -> std::string::String {
+    return std::path::with_extension_in(zone, self.bytes, new_extension);
   }
 
   fn join_in(self: ref Self, zone: ref mut Zone, child: std::path::PathBytes) -> std::string::String {
