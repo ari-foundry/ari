@@ -75,7 +75,7 @@ Use the narrowest target that matches the changed surface:
 | `make check-bootstrap-readiness` | Small pre-bootstrap Ari fixtures under `tests/cases/bootstrap-readiness/`. |
 
 Use `python3 tests/check_compiler_artifact_cli.py` when changing artifact CLI
-combination rules or error text.
+help, artifact listing, combination rules, or error text.
 
 Documentation checks are intentionally small. For example,
 `make check-bootstrap-docs` only verifies that the bootstrap readiness guide

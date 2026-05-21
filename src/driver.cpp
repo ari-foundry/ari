@@ -75,29 +75,86 @@ static std::string join_option_names(const std::vector<std::string>& options) {
     return joined;
 }
 
-static void usage() {
-    std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
-                 "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
-                 "           [--emit-diagnostics path] [--emit-source-map path]\n"
-                 "           [--emit-diagnostic-catalog path]\n"
-                 "           [--emit-capability-inventory path]\n"
-                 "           [--emit-module-graph path] [--emit-declaration-index path]\n"
-                 "           [--emit-typed-ir path] [--emit-pass-summary path]\n"
-                 "           [--emit-stage-plan path]\n"
-                 "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
-                 "           [--target triple]\n"
-                 "           [--emit-c-header path]\n"
-                 "           [--emit-module-metadata path] [--check-module-metadata path]\n"
-                 "           [--emit-module-cache path] [--use-module-cache path]\n"
-                 "           [--no-implicit-std]\n"
-                 "           [-L path] [-l name] [--link name] [--shared]\n"
-                 "           [--test] [--cfg-feature name]\n";
+struct ArtifactHelpRow {
+    const char* option;
+    const char* owner;
+    const char* first_check;
+    const char* purpose;
+};
+
+static const ArtifactHelpRow kArtifactHelp[] = {
+    {"--emit-stage-plan", "driver", "make check-compiler-artifacts",
+     "artifact ladder, layer owners, and first checks"},
+    {"--emit-capability-inventory", "driver", "make check-compiler-artifacts",
+     "implemented, partial, planned, and rejected compiler capabilities"},
+    {"--emit-source-map", "driver", "make check-compiler-artifacts",
+     "source files, byte offsets, line starts, and snippets"},
+    {"--emit-tokens", "lexer", "make check-compiler-artifacts",
+     "token kinds, spellings, and byte spans"},
+    {"--emit-diagnostics", "diagnostics", "make check-compiler-artifacts",
+     "stable error code families and normalized messages"},
+    {"--emit-diagnostic-catalog", "diagnostics", "make check-compiler-artifacts",
+     "diagnostic codes, layer families, and owning source files"},
+    {"--emit-syntax", "parser", "make check-compiler-artifacts",
+     "AST shape and parser recovery"},
+    {"--emit-module-graph", "module-loader", "make check-compiler-artifacts",
+     "file-backed modules, imports, visibility, and item surfaces"},
+    {"--emit-declaration-index", "declaration-collector", "make check-compiler-artifacts",
+     "declaration signatures, visibility, and source locations"},
+    {"--emit-typed-ir", "sema", "make check-compiler-artifacts",
+     "type, trait, ownership, and lowering facts"},
+    {"--emit-pass-summary", "driver/sema", "make check-compiler-artifacts",
+     "stage counts and pass boundaries"},
+};
+
+static void usage(std::ostream& out) {
+    out << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
+           "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
+           "           [--emit-diagnostics path] [--emit-source-map path]\n"
+           "           [--emit-diagnostic-catalog path]\n"
+           "           [--emit-capability-inventory path]\n"
+           "           [--emit-module-graph path] [--emit-declaration-index path]\n"
+           "           [--emit-typed-ir path] [--emit-pass-summary path]\n"
+           "           [--emit-stage-plan path]\n"
+           "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
+           "           [--target triple]\n"
+           "           [--emit-c-header path]\n"
+           "           [--emit-module-metadata path] [--check-module-metadata path]\n"
+           "           [--emit-module-cache path] [--use-module-cache path]\n"
+           "           [--no-implicit-std]\n"
+           "           [-L path] [-l name] [--link name] [--shared]\n"
+           "           [--test] [--cfg-feature name]\n"
+           "       ari --help\n"
+           "       ari --list-artifacts\n";
+}
+
+static void list_artifacts(std::ostream& out) {
+    out << "CompilerArtifacts version=1 entries="
+        << (sizeof(kArtifactHelp) / sizeof(kArtifactHelp[0])) << "\n";
+    for (const ArtifactHelpRow& row : kArtifactHelp) {
+        out << "  option=" << row.option
+            << " owner=" << row.owner
+            << " first_check=\"" << row.first_check << "\""
+            << " purpose=\"" << row.purpose << "\"\n";
+    }
+    out << "  Rule one_artifact_output=true backend_outputs_separate=true\n";
 }
 
 int run(int argc, char** argv) {
     if (argc < 2) {
-        usage();
+        usage(std::cerr);
         return 2;
+    }
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--help" || arg == "-h") {
+            usage(std::cout);
+            return 0;
+        }
+        if (arg == "--list-artifacts") {
+            list_artifacts(std::cout);
+            return 0;
+        }
     }
 
     std::string input;

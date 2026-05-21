@@ -27,6 +27,30 @@ def run_ari(*args):
     )
 
 
+def run_raw(*args):
+    return subprocess.run(
+        [str(ARI), *map(str, args)],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def require_success(result, *needles):
+    if result.returncode != 0:
+        print(f"expected ari command to succeed, got {result.returncode}", file=sys.stderr)
+        print(result.stderr, file=sys.stderr)
+        return False
+    for needle in needles:
+        if needle not in result.stdout:
+            print("missing expected stdout text", file=sys.stderr)
+            print(f"expected: {needle}", file=sys.stderr)
+            print(f"stdout: {result.stdout}", file=sys.stderr)
+            return False
+    return True
+
+
 def require_failure(result, expected):
     if result.returncode == 0:
         print("expected ari command to fail, but it succeeded", file=sys.stderr)
@@ -47,6 +71,19 @@ def main():
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     ok = True
+
+    ok &= require_success(
+        run_raw("--help"),
+        "usage: ari <input.ari>",
+        "ari --list-artifacts",
+    )
+
+    ok &= require_success(
+        run_raw("--list-artifacts"),
+        "CompilerArtifacts version=1",
+        "option=--emit-capability-inventory",
+        "Rule one_artifact_output=true backend_outputs_separate=true",
+    )
 
     combined = run_ari(
         "--emit-tokens", OUT_DIR / "tokens.tokens",

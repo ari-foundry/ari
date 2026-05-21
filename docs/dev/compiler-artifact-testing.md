@@ -215,6 +215,7 @@ For the current C++ compiler, prefer direct focused commands while developing:
 
 ```text
 python3 tests/check_compiler_artifact_cli.py
+build/ari --list-artifacts
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/ffi/ok/library-export.ari --shared --emit-llvm build/focused/library-export.ll
 build/ari tests/cases/bootstrap-readiness/ok/formatting/formatting-artifact-line.ari --check
@@ -295,6 +296,8 @@ It currently proves fifteen low-level contracts:
   and development-gate text directly from the compiler driver
 - `--emit-capability-inventory` writes the compiler's implemented, partial,
   planned, and rejected public feature surface with owners and first checks
+- `--list-artifacts` prints the available artifact producers without needing a
+  source file
 - artifact CLI misuse names the exact conflicting artifact options, such as
   `--emit-tokens, --emit-syntax`
 - `--emit-source-map` writes deterministic source file, byte offset, line, and
