@@ -1,0 +1,79 @@
+// Covers iterator interop between root Slice views, source Vec handles, and
+// std::iter adapters. Mutable iteration uses value handles until Ari grows
+// first-class reference-valued iterator items.
+fn triple(value: i64) -> i64 {
+  return value * 3;
+}
+
+fn add_to_slice(view: ref mut Slice[i64], amount: i64) -> void {
+  var cursor = view.iter_mut();
+  var item = cursor.next();
+  while item.is_some() {
+    var handle = item.unwrap();
+    let slot: ref mut i64 = handle.value_mut();
+    let raw = slot as ptr i64;
+    ptr_store(raw, ptr_load(raw) + amount);
+    item = cursor.next();
+  }
+}
+
+fn add_to_vec(values: ref mut std::vec::Vec[i64], amount: i64) -> void {
+  var cursor = values.iter_mut();
+  var item = cursor.next();
+  while item.is_some() {
+    var handle = item.unwrap();
+    let slot: ref mut i64 = handle.value_mut();
+    let raw = slot as ptr i64;
+    ptr_store(raw, ptr_load(raw) + amount);
+    item = cursor.next();
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(2048);
+  var score = 0;
+
+  var values = Vec::with_capacity<i64>(ref mut zone, 4);
+  values.push(1);
+  values.push(2);
+  values.push(3);
+  values.push(4);
+
+  var view = values.as_slice();
+  add_to_slice(ref mut view, 10);
+  add_to_vec(ref mut values, 1);
+
+  var folded = iter::collect<i64, SliceIter[i64]>(ref mut zone, view.iter());
+  if folded.len() == 4 && folded.get(0) + folded.get(1) + folded.get(2) + folded.get(3) == 54 {
+    score = score + 11;
+  }
+
+  var collected = iter::collect<i64, SliceIter[i64]>(ref mut zone, view.iter());
+  if collected.len() == 4 && collected.get(0) == 12 && collected.get(3) == 15 {
+    score = score + 13;
+  }
+
+  var mapped = iter::map<i64, i64, SliceIter[i64]>(view.iter(), triple);
+  var mapped_collected = iter::collect<
+    i64,
+    std::iter::Map[SliceIter[i64], i64, i64]
+  >(ref mut zone, mapped);
+  if mapped_collected.len() == 4 && mapped_collected.get(0) == 36 &&
+      mapped_collected.get(3) == 45 {
+    score = score + 17;
+  }
+
+  var extended = Vec::with_capacity<i64>(ref mut zone, 1);
+  extended.extend_iter<SliceIter[i64]>(view.iter());
+  if extended.len() == 4 && extended.get(1) == 13 && extended.get(2) == 14 {
+    score = score + 19;
+  }
+
+  var vec_collected = iter::collect<i64, std::vec::Iter[i64]>(ref mut zone, values.iter());
+  if vec_collected.len() == 4 && vec_collected.get(0) == 12 && vec_collected.get(3) == 15 {
+    score = score + 23;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

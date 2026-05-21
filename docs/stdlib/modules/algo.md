@@ -31,8 +31,10 @@ algo::partition_point<T>(values, predicate)
 algo::is_sorted<T>(values)
 algo::is_sorted_by<T>(values, less)
 algo::reverse<T>(values)
+algo::reverse_range<T>(values, start, end)
 algo::rotate_left<T>(values, count)
 algo::rotate_right<T>(values, count)
+algo::rotate_range<T>(values, start, end, count)
 algo::partition<T>(values, keep)
 algo::stable_partition<T>(values, keep)
 algo::min<T>(values)
@@ -43,7 +45,9 @@ algo::clamp<T>(value, low, high)
 algo::clamp_by<T>(value, low, high, less)
 algo::swap<T>(values, left, right)
 algo::fill<T>(values, value)
+algo::fill_range<T>(values, start, end, value)
 algo::copy<T>(target, source)
+algo::copy_within<T>(values, start, end, target)
 algo::dedup<T>(values)
 algo::dedup_by<T>(values, same)
 algo::dedup_by_key<T, K>(values, key)
@@ -76,6 +80,12 @@ the relative order of rejected values.
 elements copied. This shape keeps it ergonomic for buffers where the target may
 be shorter than the source. Use exact length checks in your own code when a
 short copy should be an error.
+`copy_within(values, start, end, target)` copies the half-open source range
+`[start, end)` into the same slice starting at `target`; it asserts that both
+ranges fit and copies backward when needed so overlapping ranges behave like a
+typed `memmove` for copyable/plain values. `fill_range`, `reverse_range`, and
+`rotate_range` are the half-open range forms of `fill`, `reverse`, and left
+rotation.
 
 `dedup(values)` compacts consecutive duplicates into the front of the same
 slice and returns the logical unique length. It does not resize the original
@@ -93,12 +103,15 @@ values and plain Ari-layout aggregates that do not contain `own`, `ref`, or
 `ref mut` fields. They are not the final move-aware contract for resource
 owners such as files, sockets, boxes, or user values with ownership fields.
 
-`copy`, `fill`, `sort`, `stable_sort`, `partition`, `stable_partition`,
-`dedup`, and the natural `Slice[T]`/`Vec[T]` wrappers follow the shared
+`copy`, `copy_within`, `fill`, `fill_range`, `sort`, `stable_sort`,
+`partition`, `stable_partition`, `dedup`, and the natural `Slice[T]`/`Vec[T]`
+wrappers follow the shared
 [value movement contracts](../value-contracts.md). In short:
 
 - `copy` is a forward element copy of the prefix that fits, not a typed
   overlapping `memmove`.
+- `copy_within` handles overlapping source/target ranges, but it is still a
+  copy-oriented operation rather than a move-only resource transfer.
 - `fill` stores one value repeatedly; it does not clone or construct fresh
   values for move-only resources.
 - `sort` and `stable_sort` currently swap or shift values in place and require
@@ -121,13 +134,13 @@ helpers.
 | binary search | Current: `binary_search(values, target) -> Option[i64]`, `lower_bound(values, target) -> i64`, `upper_bound(values, target) -> i64`, `equal_range(values, target) -> (i64, i64)`, and comparator `*_by` variants. |
 | partition point | Current: `partition_point(values, predicate) -> i64` for predicate-partitioned slices. |
 | reverse | Current: `reverse(values)`. |
-| rotate | Current: `rotate_left(values, count)` and `rotate_right(values, count)`. |
+| rotate | Current: `rotate_left(values, count)`, `rotate_right(values, count)`, half-open `reverse_range`, and left-rotation `rotate_range`. |
 | partition | Current: `partition(values, keep)` and stable `stable_partition(values, keep)` with borrowed predicates. |
 | min/max | Current: `min(values)` and `max(values)` return `Option[T]`; `min_by` and `max_by` take explicit comparators. |
 | clamp | Current: `clamp(value, low, high)` delegates to `std::cmp`; `clamp_by` delegates to comparator-based `std::cmp`. |
 | swap | Current: `swap(values, left, right)`. |
-| fill | Current: `fill(values, value)`. |
-| copy | Current: `copy(target, source) -> copied_count`. |
+| fill | Current: `fill(values, value)` and half-open `fill_range(values, start, end, value)`. |
+| copy | Current: `copy(target, source) -> copied_count` and overlap-safe `copy_within(values, start, end, target)`. |
 | dedup | Current: `dedup`, `dedup_by`, and `dedup_by_key` consecutive in-place compaction returning logical length. |
 | hashing | Current: `std::hash` has `Hasher`, `Hash[T]`, primitive hashing, byte-slice hashing, and `collections::hash_i64` compatibility. |
 | base64 | Current: `std::encoding` has standard base64 length, encode, decode, and validation guards. |

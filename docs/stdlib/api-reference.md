@@ -1713,6 +1713,8 @@ view.try_get(index)
 view.get_mut(index)
 view[index]
 view.as_ptr()
+view.iter()
+view.iter_mut()
 view.contains(value)
 view.index_of(value)
 view.count(value)
@@ -1739,10 +1741,14 @@ view.chunks(size)
 view.windows(size)
 view.split(delimiter)
 view.reverse()
+view.reverse_range(start, end)
 view.rotate_left(count)
 view.rotate_right(count)
+view.rotate_range(start, end, count)
 view.fill(value)
+view.fill_range(start, end, value)
 view.copy_from(source)
+view.copy_within(start, end, target)
 view.partition(keep)
 view.stable_partition(keep)
 view.dedup()
@@ -1774,6 +1780,9 @@ view.copy_to(ref mut zone)
 Use `try_first`, `try_last`, and `try_get` when absence is an ordinary branch;
 they return `Option[T]`. `first_mut`, `last_mut`, and `get_mut` assert on
 absence and return mutable element borrows into the same backing storage.
+`iter()` returns a `SliceIter[T]` value cursor. `iter_mut()` returns a
+`SliceIterMut[T]` cursor whose items are `SliceValueMut[T]` handles with
+`value()` and `value_mut()` accessors for in-place updates.
 `is_empty` is a source method that borrows the view and checks whether the
 stored length is zero. `find` searches for a borrowed subslice and returns an
 index or `-1`; an empty needle matches at `0`. `contains_slice` is the boolean
@@ -1789,6 +1798,8 @@ iterators that yield borrowed `Slice[T]` views. The reordering, fill/copy,
 stable/unstable partition, dedup variants, sort/search, and min/max receiver
 methods forward to `std::algo`; ordered methods require `T: std::cmp::Ord[T]`,
 and `*_by` methods take explicit comparators for call-site ordering.
+The half-open range methods `copy_within`, `fill_range`, `reverse_range`, and
+`rotate_range` mutate only `[start, end)` or copy that range to `target`.
 `lower_bound` and `upper_bound` return sorted insertion indexes. `equal_range`
 returns the matching `(lower, upper)` range, and `partition_point` returns the first false
 predicate index in a predicate-partitioned view.
@@ -1830,7 +1841,9 @@ vec.dedup()
 vec.dedup_by(same)
 vec.dedup_by_key(key)
 vec.fill(value)
+vec.fill_range(start, end, value)
 vec.copy_from(source)
+vec.copy_within(start, end, target)
 vec.partition(keep)
 vec.stable_partition(keep)
 vec.clear()
@@ -1841,12 +1854,14 @@ vec.reserve_extra(additional)
 vec.reserve_extra_in(ref mut zone, additional)
 vec.shrink_to_fit()
 vec.extend(values)
+vec.extend_iter(iter)
 vec.extend_from_slice(values)
 vec.extend_from_slice_in(ref mut zone, values)
 vec.append(ref mut other)
 vec.resize(length, value)
 vec.resize_in(ref mut zone, length, value)
 vec.drain()
+vec.drain_range(start, end)
 vec.insert_many(index, values)
 vec.remove_range(start, end)
 vec.splice(start, end, replacement)
@@ -1866,8 +1881,10 @@ vec.chunks(size)
 vec.windows(size)
 vec.split(delimiter)
 vec.reverse()
+vec.reverse_range(start, end)
 vec.rotate_left(count)
 vec.rotate_right(count)
+vec.rotate_range(start, end, count)
 vec.sort()
 vec.sort_by(less)
 vec.stable_sort()
@@ -1892,6 +1909,7 @@ vec.as_ptr()
 vec.as_mut_ptr()
 vec.copy_to(ref mut zone)
 vec.iter()
+vec.iter_mut()
 ```
 
 The `try_*` accessors return `Option[T]` for empty or out-of-range reads.
@@ -1902,12 +1920,16 @@ preserves their order, and drops rejected values. `dedup()`, `dedup_by(same)`,
 and `dedup_by_key(key)` remove consecutive duplicate values from the owned
 vector and return the new length. `fill`, `copy_from`, `partition`, and
 `stable_partition` are owned-vector wrappers over the same live-prefix
-policies as `Slice[T]`. `extend(values)` is the natural alias for
-`extend_from_slice(values)`. `append(ref mut other)` moves another vector's
-live values into the receiver and empties the source vector. `insert_many`,
-`remove_range`, and `splice` cover common half-open range edits. `drain()`
-empties the vector and returns a `std::vec::Drain[T]` cursor; unconsumed
-drained values are dropped with the cursor. `shrink_to_fit()` shrinks the
+policies as `Slice[T]`. `copy_within`, `fill_range`, `reverse_range`, and
+`rotate_range` are half-open range mutation helpers. `extend(values)` is the
+natural alias for `extend_from_slice(values)`, while `extend_iter(iter)`
+consumes any `Iterator[T]` and pushes yielded values. `append(ref mut other)`
+moves another vector's live values into the receiver and empties the source
+vector. `insert_many`, `remove_range`, `drain_range`, and `splice` cover common
+half-open range edits. `drain()` empties the vector and returns a
+`std::vec::Drain[T]` cursor; `drain_range(start, end)` returns the same cursor
+shape for only that removed range. Unconsumed drained values are dropped with
+the cursor. `shrink_to_fit()` shrinks the
 handle's logical capacity to `len()` by moving live values into a new zone
 allocation, while old bytes remain owned by the zone until reset/destroy.
 `try_reserve(capacity)` returns `false` for negative capacities and otherwise
@@ -1923,6 +1945,8 @@ lexicographic, `ordering` returns typed `cmp::Ordering`, and `chunks`,
 `windows`, and delimiter `split` are lazy allocation-free view iterators.
 The sort/search wrappers share the `std::algo` policy, including
 lower/upper/equal-range bounds and partition-point lookup.
+`iter_mut()` returns a `SliceIterMut[T]` mutable value cursor; each yielded
+handle supports `value()` and `value_mut()`.
 Vector growth and reordering also follow the shared
 [value movement contract](value-contracts.md). Shrink and removal paths drop
 removed live values, while growing `resize(length, value)` repeats one value and

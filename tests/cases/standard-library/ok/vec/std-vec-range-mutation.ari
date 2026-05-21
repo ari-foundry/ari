@@ -1,0 +1,61 @@
+// Covers half-open range mutation helpers on Vec and borrowed Slice views:
+// overlap-safe copy, fill, reverse, rotate, and draining a subrange.
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var score = 0;
+
+  var values = Vec::with_capacity<i64>(ref mut zone, 8);
+  values.push(1);
+  values.push(2);
+  values.push(3);
+  values.push(4);
+  values.push(5);
+  values.push(6);
+
+  values.copy_within(1, 4, 2);
+  if values.get(0) == 1 && values.get(2) == 2 && values.get(4) == 4 {
+    score = score + 11;
+  }
+
+  values.fill_range(0, 2, 9);
+  values.reverse_range(2, 6);
+  values.rotate_range(1, 5, 2);
+  if values.get(0) == 9 && values.get(1) == 4 && values.get(4) == 6 {
+    score = score + 13;
+  }
+  if values.get(2) == 3 && values.get(3) == 9 && values.get(5) == 2 {
+    score = score + 17;
+  }
+
+  var drained = values.drain_range(2, 5);
+  if values.len() == 3 && values.get(0) == 9 && values.get(1) == 4 && values.get(2) == 2 {
+    score = score + 19;
+  }
+  let first = drained.next().unwrap_or(0);
+  let last = drained.next_back().unwrap_or(0);
+  if first == 3 && last == 6 && drained.len() == 1 {
+    score = score + 23;
+  }
+  drop drained;
+
+  var slice_values = Vec::with_capacity<i64>(ref mut zone, 5);
+  slice_values.push(1);
+  slice_values.push(2);
+  slice_values.push(3);
+  slice_values.push(4);
+  slice_values.push(5);
+  var view = slice_values.as_slice();
+  view.copy_within(0, 2, 3);
+  view.fill_range(1, 3, 8);
+  view.reverse_range(0, 5);
+  view.rotate_range(1, 4, 1);
+  if slice_values.get(0) == 2 && slice_values.get(1) == 8 && slice_values.get(3) == 1 {
+    score = score + 29;
+  }
+  if slice_values.get(4) == 1 {
+    score = score + 31;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

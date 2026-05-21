@@ -51,6 +51,22 @@ pub struct Slice[T] {
   len: i64,
 }
 
+pub struct SliceIter[T] {
+  data: ptr T,
+  mut len: i64,
+  mut index: i64,
+}
+
+pub struct SliceIterMut[T] {
+  data: ptr T,
+  mut len: i64,
+  mut index: i64,
+}
+
+pub struct SliceValueMut[T] {
+  value: ptr T,
+}
+
 pub struct SlicePair[T] {
   left: Slice[T],
   right: Slice[T],
@@ -210,6 +226,14 @@ pub impl[T] Slice[T] {
     std::assert(index >= 0);
     std::assert(index < self.len);
     return ref mut *ptr_add(self.data, index);
+  }
+
+  fn iter(self: ref Self) -> SliceIter[T] {
+    return SliceIter<T> { data: self.data, len: self.len, index: 0 };
+  }
+
+  fn iter_mut(self: ref mut Self) -> SliceIterMut[T] {
+    return SliceIterMut<T> { data: self.data, len: self.len, index: 0 };
   }
 
   fn as_ptr(self: ref Self) -> ptr T {
@@ -501,6 +525,16 @@ pub impl[T] Slice[T] {
 
 pub mod iter;
 
+pub impl[T] SliceValueMut[T] {
+  fn value(self: ref Self) -> T {
+    return ptr_load(self.value);
+  }
+
+  fn value_mut(self: ref mut Self) -> ref mut T {
+    return ref mut *self.value;
+  }
+}
+
 pub impl[T] SlicePair[T] {
   fn left(self: ref Self) -> Slice[T] {
     return self.left;
@@ -508,6 +542,62 @@ pub impl[T] SlicePair[T] {
 
   fn right(self: ref Self) -> Slice[T] {
     return self.right;
+  }
+}
+
+impl[T] Iterator[T] for SliceIter[T] {
+  pub fn next(self: ref mut Self) -> Option[T] {
+    if self.index >= self.len {
+      return None<T>();
+    }
+    let value = ptr_load(ptr_add(self.data, self.index));
+    self.index = self.index + 1;
+    return Some<T>(value);
+  }
+}
+
+impl[T] ExactSizeIterator[T] for SliceIter[T] {
+  pub fn len(self: ref Self) -> i64 {
+    return self.len - self.index;
+  }
+}
+
+impl[T] DoubleEndedIterator[T] for SliceIter[T] {
+  pub fn next_back(self: ref mut Self) -> Option[T] {
+    if self.index >= self.len {
+      return None<T>();
+    }
+    self.len = self.len - 1;
+    let value = ptr_load(ptr_add(self.data, self.len));
+    return Some<T>(value);
+  }
+}
+
+impl[T] Iterator[SliceValueMut[T]] for SliceIterMut[T] {
+  pub fn next(self: ref mut Self) -> Option[SliceValueMut[T]] {
+    if self.index >= self.len {
+      return None<SliceValueMut[T]>();
+    }
+    let value = SliceValueMut<T> { value: ptr_add(self.data, self.index) };
+    self.index = self.index + 1;
+    return Some<SliceValueMut[T]>(value);
+  }
+}
+
+impl[T] ExactSizeIterator[SliceValueMut[T]] for SliceIterMut[T] {
+  pub fn len(self: ref Self) -> i64 {
+    return self.len - self.index;
+  }
+}
+
+impl[T] DoubleEndedIterator[SliceValueMut[T]] for SliceIterMut[T] {
+  pub fn next_back(self: ref mut Self) -> Option[SliceValueMut[T]] {
+    if self.index >= self.len {
+      return None<SliceValueMut[T]>();
+    }
+    self.len = self.len - 1;
+    let value = SliceValueMut<T> { value: ptr_add(self.data, self.len) };
+    return Some<SliceValueMut[T]>(value);
   }
 }
 

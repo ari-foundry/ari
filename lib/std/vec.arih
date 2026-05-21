@@ -177,6 +177,37 @@ fn remove_range_in_place[T](
   return;
 }
 
+fn drain_range_in_place[T](
+  value: ref mut std::vec::Vec[T],
+  start: i64,
+  end: i64
+) -> std::vec::Drain[T] {
+  std::assert(start >= 0);
+  std::assert(end >= start);
+  std::assert(end <= value.raw.len);
+  let count = end - start;
+  if count == 0 {
+    return std::vec::Drain<T> { data: value.raw.data, len: 0, index: 0 };
+  }
+
+  let removed = value.metadata.alloc_array<T>(count);
+  var index = 0;
+  while index < count {
+    ptr_store(ptr_add(removed, index), ptr_load(ptr_add(value.raw.data, start + index)));
+    index = index + 1;
+  }
+
+  var write = start;
+  var read = end;
+  while read < value.raw.len {
+    ptr_store(ptr_add(value.raw.data, write), ptr_load(ptr_add(value.raw.data, read)));
+    write = write + 1;
+    read = read + 1;
+  }
+  value.raw.len = value.raw.len - count;
+  return std::vec::Drain<T> { data: removed, len: count, index: 0 };
+}
+
 fn splice_slice[T](
   value: ref mut std::vec::Vec[T],
   start: i64,
@@ -257,6 +288,30 @@ pub impl[T] std::Slice[T] {
   fn fill(self: ref Self, value: T) -> void {
     let current = super::Slice<T> { data: self.data, len: self.len };
     std::algo::fill<T>(current, value);
+    return;
+  }
+
+  fn copy_within(self: ref Self, start: i64, end: i64, target: i64) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::copy_within<T>(current, start, end, target);
+    return;
+  }
+
+  fn fill_range(self: ref Self, start: i64, end: i64, value: T) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::fill_range<T>(current, start, end, value);
+    return;
+  }
+
+  fn reverse_range(self: ref Self, start: i64, end: i64) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::reverse_range<T>(current, start, end);
+    return;
+  }
+
+  fn rotate_range(self: ref Self, start: i64, end: i64, count: i64) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::rotate_range<T>(current, start, end, count);
     return;
   }
 
@@ -581,6 +636,10 @@ pub impl[T] std::vec::Vec[T] {
     return std::vec::Iter<T> { data: self.raw.data, len: self.raw.len, index: 0 };
   }
 
+  fn iter_mut(self: ref mut Self) -> super::SliceIterMut[T] {
+    return super::SliceIterMut<T> { data: self.raw.data, len: self.raw.len, index: 0 };
+  }
+
   fn pop(self: ref mut Self) -> T {
     std::assert(self.raw.len > 0);
     self.raw.len = self.raw.len - 1;
@@ -631,6 +690,16 @@ pub impl[T] std::vec::Vec[T] {
 
   fn extend(self: ref mut Self, values: super::Slice[T]) -> void {
     self.extend_from_slice(values);
+  }
+
+  fn extend_iter[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      self.push(item.unwrap());
+      item = cursor.next();
+    }
+    return;
   }
 
   fn append(self: ref mut Self, other: ref mut std::vec::Vec[T]) -> void {
@@ -693,6 +762,10 @@ pub impl[T] std::vec::Vec[T] {
     return cursor;
   }
 
+  fn drain_range(self: ref mut Self, start: i64, end: i64) -> std::vec::Drain[T] {
+    return drain_range_in_place<T>(self, start, end);
+  }
+
   fn remove_range(self: ref mut Self, start: i64, end: i64) -> void {
     remove_range_in_place<T>(self, start, end);
     return;
@@ -742,6 +815,26 @@ pub impl[T] std::vec::Vec[T] {
 
   fn fill(self: ref mut Self, value: T) -> void {
     std::algo::fill<T>(self.as_slice(), value);
+    return;
+  }
+
+  fn copy_within(self: ref mut Self, start: i64, end: i64, target: i64) -> void {
+    std::algo::copy_within<T>(self.as_slice(), start, end, target);
+    return;
+  }
+
+  fn fill_range(self: ref mut Self, start: i64, end: i64, value: T) -> void {
+    std::algo::fill_range<T>(self.as_slice(), start, end, value);
+    return;
+  }
+
+  fn reverse_range(self: ref mut Self, start: i64, end: i64) -> void {
+    std::algo::reverse_range<T>(self.as_slice(), start, end);
+    return;
+  }
+
+  fn rotate_range(self: ref mut Self, start: i64, end: i64, count: i64) -> void {
+    std::algo::rotate_range<T>(self.as_slice(), start, end, count);
     return;
   }
 

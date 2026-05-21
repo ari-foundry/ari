@@ -9,7 +9,10 @@ fn check_index(length: i64, index: i64) -> void {
   std::assert(index < length);
 }
 
-fn reverse_range[T](values: std::Slice[T], start: i64, end: i64) -> void {
+pub fn reverse_range[T](values: std::Slice[T], start: i64, end: i64) -> void {
+  std::assert(start >= 0);
+  std::assert(end >= start);
+  std::assert(end <= values.len);
   var left = start;
   var right = end - 1;
   while left < right {
@@ -17,6 +20,68 @@ fn reverse_range[T](values: std::Slice[T], start: i64, end: i64) -> void {
     left = left + 1;
     right = right - 1;
   }
+}
+
+pub fn copy_within[T](values: std::Slice[T], start: i64, end: i64, target: i64) -> void {
+  std::assert(start >= 0);
+  std::assert(end >= start);
+  std::assert(end <= values.len);
+  std::assert(target >= 0);
+  let count = end - start;
+  std::assert(target + count <= values.len);
+  if count == 0 || target == start {
+    return;
+  }
+
+  if target < start {
+    var index = 0;
+    while index < count {
+      ptr_store(
+        ptr_add(values.data, target + index),
+        ptr_load(ptr_add(values.data, start + index))
+      );
+      index = index + 1;
+    }
+    return;
+  }
+
+  var backward = count;
+  while backward > 0 {
+    backward = backward - 1;
+    ptr_store(
+      ptr_add(values.data, target + backward),
+      ptr_load(ptr_add(values.data, start + backward))
+    );
+  }
+}
+
+pub fn fill_range[T](values: std::Slice[T], start: i64, end: i64, value: T) -> void {
+  std::assert(start >= 0);
+  std::assert(end >= start);
+  std::assert(end <= values.len);
+  var index = start;
+  while index < end {
+    ptr_store(ptr_add(values.data, index), value);
+    index = index + 1;
+  }
+}
+
+pub fn rotate_range[T](values: std::Slice[T], start: i64, end: i64, count: i64) -> void {
+  std::assert(start >= 0);
+  std::assert(end >= start);
+  std::assert(end <= values.len);
+  std::assert(count >= 0);
+  let length = end - start;
+  if length <= 1 {
+    return;
+  }
+  let amount = count % length;
+  if amount == 0 {
+    return;
+  }
+  reverse_range<T>(values, start, start + amount);
+  reverse_range<T>(values, start + amount, end);
+  reverse_range<T>(values, start, end);
 }
 
 pub fn swap[T](values: std::Slice[T], left: i64, right: i64) -> void {

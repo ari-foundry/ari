@@ -37,6 +37,8 @@ view.try_get(index)
 view.get_mut(index)
 view[index]
 view.as_ptr()
+view.iter()
+view.iter_mut()
 ```
 
 `first`, `last`, `get`, and indexing assert when the element is missing. Use
@@ -44,6 +46,11 @@ the `try_*` forms for ordinary absence; they return `Option[T]`. `first_mut`,
 `last_mut`, and `get_mut` assert on absence and return mutable borrows into
 the same backing storage, so they are for writable slices derived from mutable
 arrays, local vectors, or source `std::vec::Vec[T]` storage.
+`iter()` returns `SliceIter[T]`, a borrowed value cursor that implements
+`Iterator[T]`, `ExactSizeIterator[T]`, and `DoubleEndedIterator[T]`.
+`iter_mut()` returns `SliceIterMut[T]`, which yields `SliceValueMut[T]`
+handles. Call `handle.value()` to copy the current value or
+`handle.value_mut()` to borrow the element mutably in place.
 
 Search and comparison:
 
@@ -128,10 +135,14 @@ Common in-place algorithms are available directly on the borrowed view:
 
 ```ari
 view.reverse()
+view.reverse_range(start, end)
 view.rotate_left(count)
 view.rotate_right(count)
+view.rotate_range(start, end, count)
 view.fill(value)
+view.fill_range(start, end, value)
 view.copy_from(source)
+view.copy_within(start, end, target)
 view.partition(keep)
 view.stable_partition(keep)
 view.dedup()
@@ -166,6 +177,10 @@ consecutive duplicate values in place and return the logical unique length;
 callers decide whether to truncate an owning container. `partition` accepts a
 borrowed predicate and returns the split index; `stable_partition` keeps the
 relative order of both accepted and rejected elements.
+The range forms use half-open indexes: `copy_within(start, end, target)` copies
+`[start, end)` into the same slice starting at `target`, `fill_range` overwrites
+`[start, end)`, `reverse_range` reverses that span, and `rotate_range` left
+rotates only that span.
 `lower_bound` and `upper_bound` return sorted insertion indexes, which is useful
 when missing values should be inserted or duplicate ranges must be counted.
 `equal_range` returns the `(lower, upper)` duplicate range directly, and
@@ -188,6 +203,8 @@ tests/cases/standard-library/ok/vec/prelude-slice-convenience.ari
 tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari
 tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari
 tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
+tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari
+tests/cases/standard-library/ok/vec/std-vec-range-mutation.ari
 ```
 
 `prelude-slice-convenience.ari` covers `strip_prefix`, `strip_suffix`,
@@ -197,6 +214,9 @@ tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
 `contains_slice`, `compare`, `ordering`, `chunks`, `windows`, delimiter `split`, in-place
 reordering, copying/filling, partition/dedup, sorting, binary search,
 lower/upper/equal-range bounds, partition point, and min/max wrappers.
+`std-iter-slice-vec.ari` covers `iter()` and mutable value cursors over borrowed
+slices; `std-vec-range-mutation.ari` covers the half-open range mutation
+wrappers shared with `std::vec::Vec[T]`.
 
 ## Limits And Roadmap
 

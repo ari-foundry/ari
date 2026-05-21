@@ -98,7 +98,9 @@ vec.dedup()
 vec.dedup_by(same)
 vec.dedup_by_key(key)
 vec.fill(value)
+vec.fill_range(start, end, value)
 vec.copy_from(source)
+vec.copy_within(start, end, target)
 vec.partition(keep)
 vec.stable_partition(keep)
 vec.clear()
@@ -107,10 +109,12 @@ vec.try_reserve(capacity)
 vec.reserve_extra(additional)
 vec.shrink_to_fit()
 vec.extend(values)
+vec.extend_iter(iter)
 vec.extend_from_slice(values)
 vec.append(ref mut other)
 vec.resize(length, value)
 vec.drain()
+vec.drain_range(start, end)
 vec.insert_many(index, values)
 vec.remove_range(start, end)
 vec.splice(start, end, replacement)
@@ -126,13 +130,18 @@ consecutive duplicates, truncate the vector to the unique prefix, and return
 the new length. `fill` overwrites the live prefix with one value, `copy_from`
 copies the source prefix that fits and returns the copied count, `partition`
 reorders live values by a borrowed predicate and returns the split index, and
-`stable_partition` preserves the relative order of both partitions. `extend`
-is the natural alias for `extend_from_slice`. `append` moves every live value
-from another vector into the receiver and leaves the source vector empty.
-`insert_many` inserts a borrowed slice at one index, `remove_range` drops the
-selected half-open range and shifts the tail left, and `splice` replaces a
-half-open range with a borrowed replacement slice. `drain()` empties the
-vector and returns a
+`stable_partition` preserves the relative order of both partitions.
+`copy_within(start, end, target)` copies the half-open source range inside the
+same vector with overlap-safe direction, while `fill_range` overwrites only
+`[start, end)`. `extend` is the natural alias for `extend_from_slice`;
+`extend_iter<I: Iterator[T]>(iter)` consumes any Ari iterator and pushes each
+yielded value into the receiver. `append` moves every live value from another
+vector into the receiver and leaves the source vector empty. `insert_many`
+inserts a borrowed slice at one index, `remove_range` drops the selected
+half-open range and shifts the tail left, and `splice` replaces a half-open
+range with a borrowed replacement slice. `drain_range(start, end)` removes a
+half-open range and returns a drain cursor over exactly those removed values.
+`drain()` empties the vector and returns a
 `std::vec::Drain[T]` cursor over the removed live values; unconsumed drain
 items are dropped when the cursor is dropped. `shrink_to_fit` moves live values
 into a new backing allocation whose logical capacity equals `len()`. Since
@@ -156,13 +165,17 @@ production-safe today for scalar and plain copyable elements. That means:
 
 - `copy_to`, `extend`, `extend_from_slice`, `insert_many`, and replacement
   slices copy borrowed elements; they do not consume the source.
+- `copy_within` and `fill_range` are copy-oriented range edits. They are not
+  move-only resource transfer or clone-generation APIs.
 - Growing `resize(length, value)` writes the same value repeatedly. It is not a
   clone or generator API for move-only resources.
 - Shrinking `resize`, `truncate`, `clear`, `remove_range`, `retain`, and
   `Vec::dedup*` drop removed live values exactly once through normal `Drop`
   lowering.
 - `drain()` immediately makes the vector empty and owns the removed live range
-  through the drain cursor; dropping the cursor drops any unconsumed values.
+  through the drain cursor; `drain_range(start, end)` does the same for only
+  that half-open range after shifting the retained tail left. Dropping either
+  cursor drops any unconsumed values.
 - `append(ref mut other)` leaves `other` empty after transferring its live
   prefix, but it still relies on the current raw place model and should not be
   treated as the final resource-owner move API.
@@ -217,8 +230,10 @@ vec.chunks(size)
 vec.windows(size)
 vec.split(delimiter)
 vec.reverse()
+vec.reverse_range(start, end)
 vec.rotate_left(count)
 vec.rotate_right(count)
+vec.rotate_range(start, end, count)
 vec.stable_partition(keep)
 vec.dedup_by(same)
 vec.dedup_by_key(key)
@@ -249,8 +264,9 @@ vec.as_mut_ptr()
 `slice` and `split_at` return borrowed `Slice[T]` views into the live vector
 storage. `chunks`, `windows`, and delimiter `split` return lazy iterators that
 yield borrowed `Slice[T]` views, so they do not allocate. `reverse`, the
-rotation helpers, `sort`, and `stable_sort` mutate the existing storage in
-place through the same algorithm module helpers used for borrowed slices.
+rotation helpers, their half-open `reverse_range`/`rotate_range` variants,
+`sort`, and `stable_sort` mutate the existing storage in place through the same
+algorithm module helpers used for borrowed slices.
 The borrowed-view `dedup_by*` forms return a logical length without truncating;
 the owning mutation forms above truncate the vector.
 `is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `equal_range`,
@@ -267,12 +283,17 @@ Iterator entry point:
 
 ```ari
 vec.iter()
+vec.iter_mut()
+vec.into_iter()
 ```
 
 `std::vec::Iter[T]` implements `Iterator[T]`, and `std::vec::Drain[T]`
 implements `Iterator[T]`, `ExactSizeIterator[T]`, and
-`DoubleEndedIterator[T]`. `std::vec::Vec[T]` implements `IntoIterator[T]` for
-the current for-loop lowering.
+`DoubleEndedIterator[T]`. `vec.iter_mut()` returns the same
+`SliceIterMut[T]` mutable value cursor used by borrowed slices; call
+`handle.value_mut()` on each yielded handle to edit an element in place.
+`std::vec::Vec[T]` implements `IntoIterator[T]` for the current for-loop
+lowering, so direct `for value in vec` uses the vector iterator path.
 
 ## Slice Accessors
 
@@ -375,7 +396,9 @@ tests/cases/standard-library/ok/vec/std-vec-slice-compare.ari
 tests/cases/standard-library/ok/vec/std-vec-sequence.ari
 tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari
 tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari
+tests/cases/standard-library/ok/vec/std-vec-range-mutation.ari
 tests/cases/standard-library/ok/vec/std-vec-iter.ari
+tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari
 ```
 
 `make check-prelude` compiles these to LLVM, checks representative symbols,
@@ -386,9 +409,9 @@ tracked in `tests/std_api_manifest.txt` and checked by `make check-std-api`.
 
 Potential next slices:
 
-- iterator adapters after general iterator protocol diagnostics mature
+- broader iterator adapters after general iterator protocol diagnostics mature
 - richer borrow-returning slice APIs after generic lifetime rules are clearer
-- range-drain APIs that return removed values as a fresh `Vec[T]` after
-  zone-backed aggregate provenance can express that construction directly
+- move-aware range-drain APIs that can transfer resource-owning elements
+  without relying on today's copy-oriented place operations
 - maps, sets, and deques after generic aggregate monomorphization is stronger
 - eventual unification plan for bare local `Vec[T]` and source `std::Vec[T]`

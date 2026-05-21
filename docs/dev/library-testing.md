@@ -399,6 +399,12 @@ identifies the exact case:
 - `std-collections-view-api.ari`: `HashMap`/`TreeMap` `values_mut` cursors,
   map `iter()` aliases, `MapEntryMut`-based `iter_mut()` cursors, direct map
   `IntoIterator`, and draining cursors for linear, hash, and tree maps/sets.
+- `std-iter-slice-vec.ari`: root `SliceIter` collection, `SliceIterMut`
+  mutable value handles, `Vec.iter_mut`, iterator-to-Vec `collect`, and
+  `Vec.extend_iter` integration.
+- `std-vec-range-mutation.ari`: `Vec` and `Slice` half-open
+  `copy_within`/`fill_range`/`reverse_range`/`rotate_range`, plus
+  `Vec.drain_range` cursor semantics.
 - `std-collections-hash-map-keys-after-reset.ari`: negative source-zone
   provenance diagnostic for hash map key cursors after reset.
 - `std-collections-hash-map-values-after-reset.ari`: negative source-zone

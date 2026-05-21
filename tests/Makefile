@@ -1860,6 +1860,13 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4iter35fold__G_i64_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
 	grep -q '_ARNv3std4iter33reduce__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
 	grep -q '_ARNv3std3vec34collect__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
+	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari --emit-llvm $(BUILD_DIR)/prelude/std-iter-slice-vec.ll
+	grep -q '_ARNv4impl19std__SliceIter_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-iter-slice-vec.ll
+	grep -q '_ARNv4impl22std__SliceIterMut_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-iter-slice-vec.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8iter_mut' $(BUILD_DIR)/prelude/std-iter-slice-vec.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent34extend_iter__G_std__SliceIter_i64_' $(BUILD_DIR)/prelude/std-iter-slice-vec.ll
+	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari -o $(BUILD_DIR)/prelude/std-iter-slice-vec.elf
+	$(BUILD_DIR)/prelude/std-iter-slice-vec.elf; code=$$?; test $$code -eq 83
 	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-exact-size.ari --emit-llvm $(BUILD_DIR)/prelude/std-iter-exact-size.ll
 	grep -q 'std__ExactSizeIterator3len' $(BUILD_DIR)/prelude/std-iter-exact-size.ll
 	grep -q 'std__Iterator4next' $(BUILD_DIR)/prelude/std-iter-exact-size.ll
@@ -1898,6 +1905,14 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl20std__vec__Drain_i64_24std__DoubleEndedIterator9next_back' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari -o $(BUILD_DIR)/prelude/std-vec-convenience-api.elf
 	$(BUILD_DIR)/prelude/std-vec-convenience-api.elf; code=$$?; test $$code -eq 123
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-range-mutation.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-range-mutation.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent11copy_within' $(BUILD_DIR)/prelude/std-vec-range-mutation.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent10fill_range' $(BUILD_DIR)/prelude/std-vec-range-mutation.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13reverse_range' $(BUILD_DIR)/prelude/std-vec-range-mutation.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent12rotate_range' $(BUILD_DIR)/prelude/std-vec-range-mutation.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent11drain_range' $(BUILD_DIR)/prelude/std-vec-range-mutation.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-range-mutation.ari -o $(BUILD_DIR)/prelude/std-vec-range-mutation.elf
+	$(BUILD_DIR)/prelude/std-vec-range-mutation.elf; code=$$?; test $$code -eq 143
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7reserve' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll

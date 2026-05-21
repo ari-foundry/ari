@@ -52,17 +52,18 @@ always names the target allocation zone explicitly.
 cursor can yield from both the front and the back without allocating a reversed
 copy. A generic bound such as `I: DoubleEndedIterator[i64]` can call
 `next_back()` from the child trait and `next()` from the parent `Iterator`
-trait. Current double-ended cursors include `std::vec::Iter[T]`, slice
-`chunks()` and `windows()` cursors, linear `Set[T]` cursors, `Deque[T]`
-cursors, and `RingBuffer[T]` cursors.
+trait. Current double-ended cursors include root `SliceIter[T]`,
+`SliceIterMut[T]` mutable value cursors, `std::vec::Iter[T]`, slice `chunks()`
+and `windows()` cursors, linear `Set[T]` cursors, `Deque[T]` cursors, and
+`RingBuffer[T]` cursors.
 
 `ExactSizeIterator[T]` is a supertrait child of `Iterator[T]`. Use it when a
 cursor can report the exact number of values still available without advancing
 the cursor. A generic bound such as `I: ExactSizeIterator[i64]` can call both
 `len()` from the child trait and `next()` from the parent `Iterator` trait.
-Current exact-size cursors include `std::vec::Iter[T]`, slice `chunks()` and
-`windows()` cursors, and the linear/circular collection cursors whose remaining
-length is stored directly.
+Current exact-size cursors include `std::vec::Iter[T]`, root `SliceIter[T]` and
+`SliceIterMut[T]`, slice `chunks()` and `windows()` cursors, and the
+linear/circular collection cursors whose remaining length is stored directly.
 
 ## Lazy And Eager Operations
 
@@ -119,7 +120,7 @@ so tuple slots/destructuring stay lighter than dedicated wrapper structs.
 `zip` stops when either side is exhausted.
 
 Collections that implement `IntoIterator[T]` can be used directly in `for`
-loops. Today `std::collections::Set[T]`, `Deque[T]`, `RingBuffer[T]`,
+loops. Today `std::vec::Vec[T]`, `std::collections::Set[T]`, `Deque[T]`, `RingBuffer[T]`,
 `LinkedList[T]`, `HashSet[T]`, and `TreeSet[T]` expose that path. `HashMap`
 and `TreeMap` expose `keys()`, `values()`, and `entries()`; map entries are
 dedicated `MapEntry[K,V]` values so callers can use `.key` and `.value` without
@@ -135,6 +136,10 @@ mistake heap storage order for priority order.
 - `collect` currently builds a `std::vec::Vec[T]`; other collection targets
   should be added as explicit functions after their ownership contracts are
   stable.
+- `Slice[T].iter_mut()` and `Vec[T].iter_mut()` yield mutable value handles
+  (`SliceValueMut[T]`) rather than raw reference items. This matches the map
+  cursor pattern until the compiler grows first-class reference-valued iterator
+  item support.
 - Iterator and boundary map entries are copied `MapEntry[K,V]` values.
   Mutable updates use `HashMap.entry(key)` or `TreeMap.entry(key)` instead of
   iterator views.
@@ -145,6 +150,7 @@ Representative coverage lives in:
 
 ```text
 tests/cases/standard-library/ok/iter/std-iter-adapters.ari
+tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari
 tests/cases/standard-library/ok/iter/std-iter-double-ended.ari
 tests/cases/standard-library/ok/iter/std-iter-exact-size.ari
 tests/cases/standard-library/ok/vec/std-vec-iter.ari
