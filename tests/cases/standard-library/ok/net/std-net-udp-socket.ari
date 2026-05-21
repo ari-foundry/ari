@@ -22,6 +22,14 @@ fn main() -> i64 {
       }
     }
   }
+  match net::udp_bind(unsupported) {
+    Ok(_module_socket) => {}
+    Err(module_reason) => {
+      if error_is(module_reason, error::Unsupported) {
+        score = score + 256;
+      }
+    }
+  }
   match net::UdpSocket::bind_raw_result(unsupported) {
     Ok(_raw_socket) => {}
     Err(raw) => {
@@ -42,7 +50,7 @@ fn main() -> i64 {
         }
       }
     }
-    assert_eq_i64(score, 255);
+    assert_eq_i64(score, 511);
     return score;
   }
 
@@ -94,6 +102,6 @@ fn main() -> i64 {
     score = score + 128;
   }
 
-  assert_eq_i64(score, 255);
+  assert_eq_i64(score, 511);
   return score;
 }

@@ -893,6 +893,29 @@ pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {
   return std::string::new(zone, 64);
 }
 
+pub fn read_to_string_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+  match open_result(path, "r") {
+    std::Err(reason) => {
+      return std::Err<std::string::String, std::error::Error>(reason);
+    }
+    std::Ok(file) => {
+      var output = std::string::new(zone, 64);
+      // File byte reads currently share one EOF/failure sentinel. This helper
+      // preserves detailed open and close errors while the lower-level read
+      // error channel is still being split from EOF.
+      var byte = file.read_byte();
+      while byte >= 0 {
+        output.push_in(zone, byte as u8);
+        byte = file.read_byte();
+      }
+      if file.close() {
+        return std::Ok<std::string::String, std::error::Error>(output);
+      }
+      return std::Err<std::string::String, std::error::Error>(std::error::from_raw(last_errno_error_raw()));
+    }
+  }
+}
+
 pub fn try_read_to_string(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
   var output = std::string::new(zone, 64);
   let file = try_open(path, "r").unwrap_or(File::invalid());
@@ -913,6 +936,10 @@ pub fn try_read_to_string(zone: ref mut Zone, path: string) -> std::Option[std::
 
 pub fn read(zone: ref mut Zone, path: string) -> std::string::String {
   return read_to_string(zone, path);
+}
+
+pub fn read_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+  return read_to_string_result(zone, path);
 }
 
 pub fn try_read(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {

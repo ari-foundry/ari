@@ -553,6 +553,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari -o $(BUILD_DIR)/prelude/std-fs-read-write.elf
 	$(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 136
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-write.elf; $(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 136; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-result.ll
+	grep -F -q "std2fs11read_result" $(BUILD_DIR)/prelude/std-fs-read-result.ll
+	grep -F -q "std2fs21read_to_string_result" $(BUILD_DIR)/prelude/std-fs-read-result.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-result.ari -o $(BUILD_DIR)/prelude/std-fs-read-result.elf
+	$(BUILD_DIR)/prelude/std-fs-read-result.elf; code=$$?; test $$code -eq 31
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-byte-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs12write_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs16write_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
@@ -796,6 +801,10 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__TcpListener8inherent18set_accept_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent15bind_raw_result" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent17accept_raw_result" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std3net6listen" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std3net10tcp_listen" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std3net11tcp_connect" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std3net7connect" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent9peer_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
@@ -810,6 +819,7 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_local_addr_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -q "@ari_builtin_net_udp_send_byte_to_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -q "@ari_builtin_net_udp_recv_byte" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -F -q "std3net8udp_bind" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent15bind_raw_result" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
@@ -819,6 +829,8 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_listen" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std3net11unix_listen" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std3net12unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixListener8inherent15bind_raw_result" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixListener8inherent17accept_raw_result" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent18connect_raw_result" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
@@ -902,13 +914,17 @@ check-prelude: $(TARGET)
 	grep -F -q "std7process3arg" $(BUILD_DIR)/prelude/std-process-command.ll
 	grep -F -q "std7process7env_var" $(BUILD_DIR)/prelude/std-process-command.ll
 	grep -F -q "std7process4kill" $(BUILD_DIR)/prelude/std-process-command.ll
+	grep -F -q "std7process5spawn" $(BUILD_DIR)/prelude/std-process-command.ll
+	grep -F -q "std7process6status" $(BUILD_DIR)/prelude/std-process-command.ll
+	grep -F -q "std7process11exit_status" $(BUILD_DIR)/prelude/std-process-command.ll
 	grep -F -q '@"execvp"' $(BUILD_DIR)/prelude/std-process-command.ll
 	grep -F -q '@"kill"' $(BUILD_DIR)/prelude/std-process-command.ll
 	grep -F -q '@"setenv"' $(BUILD_DIR)/prelude/std-process-command.ll
 	grep -F -q '@"chdir"' $(BUILD_DIR)/prelude/std-process-command.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-command.ari -o $(BUILD_DIR)/prelude/std-process-command.elf
-	$(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 138
+	$(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 227
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-output.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-output.ll
+	grep -F -q "std7process9output_in" $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q "std__process__Command8inherent9output_in" $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q "std__process__Output8inherent6stdout" $(BUILD_DIR)/prelude/std-process-output.ll
 	grep -F -q "std__process__Output8inherent6stderr" $(BUILD_DIR)/prelude/std-process-output.ll
@@ -923,7 +939,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-fork-wait.elf; $(BUILD_DIR)/prelude/std-process-fork-wait.elf; code=$$?; test $$code -eq 112; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-result.elf; $(BUILD_DIR)/prelude/std-process-result.elf; code=$$?; test $$code -eq 142; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit-status.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit-status.elf; $(BUILD_DIR)/prelude/std-process-exit-status.elf; code=$$?; test $$code -eq 83; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-command.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-command.elf; $(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 138; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-command.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-command.elf; $(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 227; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-output.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-output.elf; $(BUILD_DIR)/prelude/std-process-output.elf; code=$$?; test $$code -eq 112; fi
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-basic.ll
 	grep -q "@ari_builtin_thread_spawn" $(BUILD_DIR)/prelude/std-thread-basic.ll

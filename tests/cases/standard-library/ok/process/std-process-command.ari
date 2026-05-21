@@ -37,6 +37,23 @@ fn main() -> i64 {
     score = score + 13;
   }
 
+  var module_status_args = [process::arg("-c"), process::arg("exit 7")];
+  var module_status_cmd = process::command_with_args("sh", module_status_args.as_slice());
+  if status_is(process::status(ref module_status_cmd), 7) {
+    score = score + 41;
+  }
+
+  var module_exit_status_args = [process::arg("-c"), process::arg("exit 3")];
+  var module_exit_status_cmd = process::command_with_args("sh", module_exit_status_args.as_slice());
+  match process::exit_status(ref module_exit_status_cmd) {
+    Err(_) => {}
+    Ok(status) => {
+      if status.code_or(-1) == 3 {
+        score = score + 5;
+      }
+    }
+  }
+
   var env_args = [process::arg("-c"), process::arg("test \"$ARI_COMMAND_TEST\" = yes && pwd | grep -q '/build/prelude$'")];
   var env_cmd = process::command_with_args("sh", env_args.as_slice());
   var env_values = [process::env_var("ARI_COMMAND_TEST", "yes")];
@@ -57,6 +74,17 @@ fn main() -> i64 {
     }
   }
 
+  var module_spawn_args = [process::arg("-c"), process::arg("exit 5")];
+  var module_spawn_cmd = process::command_with_args("sh", module_spawn_args.as_slice());
+  match process::spawn(ref module_spawn_cmd) {
+    Err(_) => {}
+    Ok(module_child) => {
+      if module_child.pid() > 0 && status_is(module_child.wait(), 5) {
+        score = score + 43;
+      }
+    }
+  }
+
   if unit_ok(process::kill(process::id(), 0)) {
     score = score + 31;
   }
@@ -64,6 +92,6 @@ fn main() -> i64 {
     score = score + 37;
   }
 
-  assert_eq_i64(score, 138);
+  assert_eq_i64(score, 227);
   return score;
 }

@@ -121,6 +121,34 @@ pub fn lookup_v4_result(host: string, port: u16) -> std::Result[SocketAddr, std:
   return std::error::from_raw_result<SocketAddr>(lookup_v4_raw_result(host, port));
 }
 
+pub fn listen(addr: SocketAddr) -> std::Result[TcpListener, std::error::Error] {
+  return TcpListener::bind_result(addr);
+}
+
+pub fn tcp_listen(addr: SocketAddr) -> std::Result[TcpListener, std::error::Error] {
+  return TcpListener::bind_result(addr);
+}
+
+pub fn connect(addr: SocketAddr) -> std::Result[TcpStream, std::error::Error] {
+  return TcpStream::connect_result(addr);
+}
+
+pub fn tcp_connect(addr: SocketAddr) -> std::Result[TcpStream, std::error::Error] {
+  return TcpStream::connect_result(addr);
+}
+
+pub fn udp_bind(addr: SocketAddr) -> std::Result[UdpSocket, std::error::Error] {
+  return UdpSocket::bind_result(addr);
+}
+
+pub fn unix_listen(path: string) -> std::Result[UnixListener, std::error::Error] {
+  return UnixListener::bind_result(path);
+}
+
+pub fn unix_connect(path: string) -> std::Result[UnixStream, std::error::Error] {
+  return UnixStream::connect_result(path);
+}
+
 fn socket_addr_from_packed_v4(packed: i64) -> SocketAddr {
   let address = packed >> 16;
   let a = ((address >> 24) & 255) as u8;

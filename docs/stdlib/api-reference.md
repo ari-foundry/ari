@@ -479,6 +479,11 @@ process::arg(value)
 process::env_var(name, value)
 process::command(program)
 process::command_with_args(program, args)
+process::spawn(command)
+process::status(command)
+process::exit_status(command)
+process::output_in(command, zone)
+process::exec(command)
 process::kill(pid, signal)
 process::terminate(pid)
 
@@ -552,6 +557,10 @@ distinguish normal exit from signal termination. `spawn()` returns a `Child`
 handle. `exec()` replaces the current process on success and returns
 `Err(Error)` only if the host `execvp` path fails. `kill(pid, signal)` and
 `Child::kill(signal)` return `Result[(), Error]`; `terminate` sends `SIGTERM`.
+Module-level `process::spawn(ref cmd)`, `process::status(ref cmd)`,
+`process::exit_status(ref cmd)`, `process::output_in(ref cmd, ref mut zone)`,
+and `process::exec(ref cmd)` are direct wrappers over the matching `Command`
+methods for call sites that prefer function-style process APIs.
 
 `ExitStatus::code()` returns `Some(code)` only for normal exits.
 `ExitStatus::signal()` returns `Some(signal)` only for signal termination.
@@ -982,6 +991,7 @@ fs::write_bytes(file, values)
 fs::position(file)
 fs::seek(file, position)
 fs::read(ref mut zone, path)
+fs::read_result(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
 fs::write_raw_result(path, values)
@@ -997,6 +1007,7 @@ fs::copy_raw_result(source, target)
 fs::copy_result(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
+fs::read_to_string_result(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
 fs::open_raw_result(path, mode)
@@ -1082,6 +1093,9 @@ Use `open_result(path, mode)` or `create_result(path)` when callers need more
 than presence/absence. They return `Result[File, Error]`. Use
 `open_raw_result(path, mode)` or `create_raw_result(path)` only for
 compatibility callers that still need `Result[File, i64]`.
+Use `read_result(ref mut zone, path)` or
+`read_to_string_result(ref mut zone, path)` when a missing file should return
+`Error(NotFound)` instead of the compatibility empty string/`None` behavior.
 Use `OpenOptions::new()` or `fs::open_options()` when named policy is clearer:
 `read`, `write`, `append`, `truncate`, `create`, and `create_new` each return a
 new options value, `options.try_open(path)` returns `Option[File]`, and
@@ -1223,6 +1237,13 @@ net::localhost(port)
 net::lookup_v4(host, port)
 net::lookup_v4_raw_result(host, port)
 net::lookup_v4_result(host, port)
+net::listen(addr)
+net::tcp_listen(addr)
+net::connect(addr)
+net::tcp_connect(addr)
+net::udp_bind(addr)
+net::unix_listen(path)
+net::unix_connect(path)
 
 Ipv4Addr::new(a, b, c, d)
 Ipv4Addr::any()
@@ -1351,6 +1372,9 @@ known-good indexes and `try_octet`/`try_segment` when validating parsed input.
 Socket and lookup `*_result` helpers return `Result[..., Error]`; matching
 `*_raw_result` helpers are compatibility-only bridges for low-level callers that
 still need raw integer errors.
+`net::listen`/`net::connect` are TCP-focused module-level `Result` helpers;
+use `tcp_listen`/`tcp_connect`, `udp_bind`, `unix_listen`, and `unix_connect`
+when the socket family should be explicit at the call site.
 `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, and `UnixStream` are
 owned descriptor-backed handles. They support hosted IPv4 TCP bind/connect/
 accept, IPv4 UDP bind/send-byte/receive-byte, Unix stream bind/connect/accept,

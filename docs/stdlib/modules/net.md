@@ -37,6 +37,13 @@ net::localhost(port)
 net::lookup_v4(host, port)
 net::lookup_v4_raw_result(host, port)
 net::lookup_v4_result(host, port)
+net::listen(addr)
+net::tcp_listen(addr)
+net::connect(addr)
+net::tcp_connect(addr)
+net::udp_bind(addr)
+net::unix_listen(path)
+net::unix_connect(path)
 
 Ipv4Addr::new(a, b, c, d)
 Ipv4Addr::any()
@@ -204,6 +211,12 @@ categories and owned multi-address result lists are future work.
 
 ## TCP Sockets
 
+At module level, `listen(addr)` and `tcp_listen(addr)` are natural aliases for
+`TcpListener::bind_result(addr)`, and `connect(addr)`/`tcp_connect(addr)` are
+aliases for `TcpStream::connect_result(addr)`. Use the short names for ordinary
+TCP code and the explicit `tcp_*` names where UDP or Unix socket code appears
+nearby.
+
 `TcpListener` owns a listening TCP descriptor. `bind` and `try_bind` return
 `Option[TcpListener]` for simple code. `bind_result` returns
 `Result[TcpListener, Error]`, while `bind_raw_result` keeps the old compact
@@ -353,10 +366,10 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
 | DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` with `Error`, and `lookup_v4_raw_result` compatibility over `getaddrinfo`. |
-| TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result` with `Error`, `bind_raw_result` compatibility, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond accept timeout setters, and explicit close. |
-| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result` with `Error`, `connect_raw_result` compatibility, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4 slice: bind helpers with `Error` and raw compatibility forms, local-port and local-address lookup, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
-| Unix domain socket | Current hosted stream slice: `UnixListener` bind/accept and `UnixStream` connect helpers with `Error` and raw compatibility forms, IO/shutdown plus `Duration` and raw-millisecond timeout setters and `read_exact`/`write_all` buffer helpers. |
+| TCP listener | Current hosted IPv4 slice: module-level `listen`/`tcp_listen`, `TcpListener::bind`, `try_bind`, `bind_result` with `Error`, `bind_raw_result` compatibility, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond accept timeout setters, and explicit close. |
+| TCP stream | Current hosted IPv4 slice: module-level `connect`/`tcp_connect`, `TcpStream::connect`, `try_connect`, `connect_result` with `Error`, `connect_raw_result` compatibility, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4 slice: module-level `udp_bind`, bind helpers with `Error` and raw compatibility forms, local-port and local-address lookup, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
+| Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect helpers with `Error` and raw compatibility forms, IO/shutdown plus `Duration` and raw-millisecond timeout setters and `read_exact`/`write_all` buffer helpers. |
 | socket options | Current: nonblocking and read/write timeout helpers; future reuse-address, nodelay, buffer size, linger, multicast, and close-on-exec-at-creation options. |
 | timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond compatibility helpers; future timeout-specific error results. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
@@ -400,16 +413,19 @@ family predicates, loopback/unspecified checks, socket-address construction,
 port replacement, and associated/module constructor forms.
 `std-net-address-validation.ari` covers strict and fallible IPv4 octet and
 IPv6 segment accessors.
-`std-net-tcp-loopback.ari` covers IPv6 unsupported errors, IPv4 listener bind,
-ephemeral local-port/local-address lookup, stream connect, accept, stream
-local-address lookup, timeout/nonblocking helpers, stream shutdown, byte
-transfer through both stream methods and `std::io::Reader`/`Writer`, and
-explicit close. On restricted hosts it verifies that socket creation reports
-`PermissionDenied` through the shared error bridge.
-`std-net-udp-socket.ari` covers IPv4 UDP bind, local-port/local-address lookup,
-timeout/nonblocking helpers, single-byte datagram send/receive, unsupported
-IPv6 bind errors, restricted-host fallback, and explicit close.
-`std-net-unix-socket.ari` covers Unix stream listener bind, stream connect,
+`std-net-tcp-loopback.ari` covers IPv6 unsupported errors, module-level
+`listen`/`connect` and explicit `tcp_*` aliases, IPv4 listener bind, ephemeral
+local-port/local-address lookup, stream connect, accept, stream local-address
+lookup, timeout/nonblocking helpers, stream shutdown, byte transfer through
+both stream methods and `std::io::Reader`/`Writer`, and explicit close. On
+restricted hosts it verifies that socket creation reports `PermissionDenied`
+through the shared error bridge.
+`std-net-udp-socket.ari` covers module-level `udp_bind`, IPv4 UDP bind,
+local-port/local-address lookup, timeout/nonblocking helpers, single-byte
+datagram send/receive, unsupported IPv6 bind errors, restricted-host fallback,
+and explicit close.
+`std-net-unix-socket.ari` covers module-level Unix listener/connect wrappers,
+Unix stream listener bind, stream connect,
 accept, timeout/nonblocking helpers, bidirectional byte and buffer IO,
 shutdown, close, and test socket-file cleanup.
 `std-net-dns-lookup.ari` covers numeric IPv4 lookup, `Option` and `Result`

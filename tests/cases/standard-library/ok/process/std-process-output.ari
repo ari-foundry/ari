@@ -26,7 +26,7 @@ fn main() -> i64 {
   ];
   var cmd = process::command_with_args("sh", args.as_slice());
 
-  match cmd.output_in(ref mut zone) {
+  match process::output_in(ref cmd, ref mut zone) {
     Err(_) => {}
     Ok(value) => {
       var output = value;

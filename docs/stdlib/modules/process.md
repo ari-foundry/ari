@@ -34,6 +34,11 @@ process::arg(value)
 process::env_var(name, value)
 process::command(program)
 process::command_with_args(program, args)
+process::spawn(command)
+process::status(command)
+process::exit_status(command)
+process::output_in(command, zone)
+process::exec(command)
 process::kill(pid, signal)
 process::terminate(pid)
 
@@ -118,6 +123,13 @@ when signal termination matters. `spawn()` returns a `Child` handle with `pid`,
 `wait`, `wait_status`, `kill`, and `terminate` methods. `exec()` applies the
 setup and replaces the current process with the program; if `execvp` returns,
 Ari reports the host error.
+
+The module-level wrappers `process::spawn(ref command)`,
+`process::status(ref command)`, `process::exit_status(ref command)`,
+`process::output_in(ref command, ref mut zone)`, and
+`process::exec(ref command)` call the matching `Command` methods. They exist so
+code can use either fluent builder style or the direct `process::spawn(cmd)`
+shape common in other standard libraries without losing `Error` detail.
 
 `output_in(zone)` spawns the command with stdout and stderr redirected to
 temporary pipes, waits for the child, reads both streams into `Vec[u8]` values
@@ -317,9 +329,10 @@ tests/cases/standard-library/ok/process/std-process-output.ari
 the programs. The abort fixture compiles and runs only a non-aborting path while
 checking that the abort hook lowers to the host `abort` declaration. The command
 fixture covers argument passing, environment setup, working-directory setup,
-`status`, `spawn`, `Child::wait`, and non-destructive `kill(0)`. The typed-status
-fixture covers `ExitStatus`, `Command::exit_status`, `Child::wait_status`,
-normal exit codes, and signal termination. The output fixture covers small
+method and module-level `status`/`spawn`, module-level `exit_status`,
+`Child::wait`, and non-destructive `kill(0)`. The typed-status fixture covers
+`ExitStatus`, `Command::exit_status`, `Child::wait_status`, normal exit codes,
+and signal termination. The output fixture covers method and module-level small
 stdout/stderr capture, exit status accessors, and missing command status `127`.
 Public declarations are tracked in
 `tests/std_api_manifest.txt` and checked by `make check-std-api`.

@@ -75,6 +75,7 @@ std-fs-open-modes.ari
 std-fs-open-options.ari
 std-fs-open-result.ari
 std-fs-read-write.ari
+std-fs-read-result.ari
 std-fs-byte-result.ari
 std-fs-try-read.ari
 std-fs-create-truncate-copy.ari

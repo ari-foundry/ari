@@ -22,6 +22,30 @@ fn main() -> i64 {
       }
     }
   }
+  match net::listen(unsupported) {
+    Ok(_module_listener) => {}
+    Err(module_reason) => {
+      if error_is(module_reason, error::Unsupported) {
+        score = score + 1024;
+      }
+    }
+  }
+  match net::tcp_listen(unsupported) {
+    Ok(_tcp_module_listener) => {}
+    Err(tcp_listen_reason) => {
+      if error_is(tcp_listen_reason, error::Unsupported) {
+        score = score + 2048;
+      }
+    }
+  }
+  match net::tcp_connect(unsupported) {
+    Ok(_tcp_module_stream) => {}
+    Err(tcp_connect_reason) => {
+      if error_is(tcp_connect_reason, error::Unsupported) {
+        score = score + 4096;
+      }
+    }
+  }
   match net::TcpListener::bind_raw_result(unsupported) {
     Ok(_raw_listener) => {}
     Err(raw) => {
@@ -42,7 +66,7 @@ fn main() -> i64 {
         }
       }
     }
-    assert_eq_i64(score, 511);
+    assert_eq_i64(score, 7679);
     return score;
   }
   assert(maybe_listener.is_some());
@@ -62,8 +86,8 @@ fn main() -> i64 {
   }
 
   let connect_addr = net::SocketAddr::localhost(port);
-  let maybe_client = net::TcpStream::connect(connect_addr);
-  assert(maybe_client.is_some());
+  let maybe_client = net::connect(connect_addr);
+  assert(maybe_client.is_ok());
   var client = maybe_client.unwrap();
   let maybe_client_addr = client.local_addr();
   assert(maybe_client_addr.is_some());
@@ -128,6 +152,6 @@ fn main() -> i64 {
     score = score + 128;
   }
 
-  assert_eq_i64(score, 1023);
+  assert_eq_i64(score, 8191);
   return score;
 }

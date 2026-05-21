@@ -1,0 +1,56 @@
+// Covers direct Error-returning whole-file read helpers. The compatibility
+// read/try_read forms intentionally stay available, but callers that need a
+// specific failure reason should use read_result or read_to_string_result.
+fn string_ok(value: Result[std::string::String, error::Error], expected: string) -> bool {
+  match value {
+    Ok(text) => {
+      return text.equals_text(expected);
+    }
+    Err(_) => {
+      return false;
+    }
+  }
+}
+
+fn string_err(value: Result[std::string::String, error::Error], kind: error::Kind, code: i64) -> bool {
+  match value {
+    Ok(_) => {
+      return false;
+    }
+    Err(reason) => {
+      return reason.is_kind(kind) && reason.code() == code;
+    }
+  }
+}
+
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-read-result.tmp";
+  let missing = "build/prelude/std-fs-read-result-missing.tmp";
+  fs::remove(path);
+  fs::remove(missing);
+
+  var zone = zone::create(1024);
+  var bytes = [65u8, 114u8, 105u8];
+  var score = 0;
+
+  if fs::write(path, bytes.as_slice()) {
+    score = score + 1;
+  }
+  if string_ok(fs::read_to_string_result(ref mut zone, path), "Ari") {
+    score = score + 2;
+  }
+  if string_ok(fs::read_result(ref mut zone, path), "Ari") {
+    score = score + 4;
+  }
+  if string_err(fs::read_result(ref mut zone, missing), error::NotFound, 2) {
+    score = score + 8;
+  }
+  if fs::try_read(ref mut zone, missing).is_none() {
+    score = score + 16;
+  }
+
+  fs::remove(path);
+  zone::destroy(zone);
+  assert_eq_i64(score, 31);
+  return score;
+}

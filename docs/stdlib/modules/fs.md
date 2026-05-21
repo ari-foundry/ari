@@ -22,7 +22,8 @@ and `std::io::Writer` helpers, inspect and move a file cursor through
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
-`try_read_byte`, `write_byte`, `write_bytes`, `read`, `try_read`, `write`,
+`try_read_byte`, `write_byte`, `write_bytes`, `read`, `read_result`,
+`try_read`, `read_to_string_result`, `write`,
 `write_result`, `append`, `append_result`, `try_write`, `try_append`,
 `truncate`, `copy`, `copy_result`, `try_copy`, `metadata`,
 `try_metadata`, `symlink_metadata`, `try_symlink_metadata`,
@@ -106,6 +107,7 @@ fs::write_bytes(file, values)
 fs::position(file)
 fs::seek(file, position)
 fs::read(ref mut zone, path)
+fs::read_result(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
 fs::write_raw_result(path, values)
@@ -121,6 +123,7 @@ fs::copy_raw_result(source, target)
 fs::copy_result(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
+fs::read_to_string_result(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
 fs::open_raw_result(path, mode)
@@ -542,7 +545,7 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | --- | --- |
 | open | Current: `open(path, mode)`, `try_open(path, mode)`, `open_result(path, mode)` with `Error`, raw compatibility `open_raw_result`, compatibility wrappers, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open_result`/`open_raw_result`. |
 | create | Current: `create(path)` and `try_create(path)` over `"w"` mode, plus non-truncating `ensure_file(path)` for idempotent file setup. |
-| read | Current: byte `read_byte`, whole-file `read`/`read_to_string`, and fallible `try_read`/`try_read_to_string`. |
+| read | Current: byte `read_byte`, whole-file `read`/`read_to_string`, direct `Error` helpers `read_result`/`read_to_string_result`, and fallible `try_read`/`try_read_to_string`. |
 | write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, byte-counting `try_write`, `Error`-returning `write_result`, and raw compatibility `write_raw_result`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, byte-counting `try_append`, `Error`-returning `append_result`, and raw compatibility `append_raw_result`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
@@ -821,11 +824,10 @@ if file.is_open() {
 - The mode-string surface is intentionally small. Use `"rw"` or `"r+"` for
   existing read/write files, `"w+"` for create/truncate read/write, and `"a+"`
   for read/append. More detailed flags belong in a future options API.
-- Error details are not surfaced from `std::fs` yet. Current APIs expose
-  boolean success, `Option` for fallible whole-file reads and opens, an
-  empty-string read fallback for compatibility, or a `-1` read sentinel. New
-  richer APIs should use `std::error::Error` instead of growing more sentinel
-  conventions.
+- Prefer the `*_result` helpers when the caller needs a reason. Compatibility
+  bool, `Option`, empty-string, and `-1` sentinel helpers remain for compact
+  code and older tests, but new filesystem APIs should use `std::error::Error`
+  instead of adding more sentinel conventions.
 
 ## Tests
 
@@ -837,6 +839,7 @@ tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
 tests/cases/standard-library/ok/fs/std-fs-open-options.ari
 tests/cases/standard-library/ok/fs/std-fs-open-result.ari
 tests/cases/standard-library/ok/fs/std-fs-read-write.ari
+tests/cases/standard-library/ok/fs/std-fs-read-result.ari
 tests/cases/standard-library/ok/fs/std-fs-byte-result.ari
 tests/cases/standard-library/ok/fs/std-fs-try-read.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
@@ -878,6 +881,9 @@ append-with-read behavior, and invalid option combinations.
 and successful handles. `std-fs-read-write.ari` covers source whole-file
 write/append compatibility wrappers, `try_write`/`try_append` byte counts,
 read-to-byte-string, missing-file empty reads, and truncating rewrite behavior.
+`std-fs-read-result.ari` covers direct `Error` whole-file read helpers,
+successful byte-string reads, missing-file `NotFound`, and compatibility
+`try_read` absence.
 `std-fs-byte-result.ari` covers `write_result`, `append_result`, and
 `copy_result` direct Error payloads plus raw compatibility helpers.
 `std-fs-try-read.ari` covers `Option[String]` whole-file

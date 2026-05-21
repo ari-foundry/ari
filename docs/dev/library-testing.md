@@ -138,11 +138,13 @@ identifies the exact case:
   exit-code access, signal termination access, and compatibility `status`.
 - `std-process-command.ari`: first `Command`/`Child` builder slice, including
   argv construction through `process::arg`, child environment setup,
-  working-directory setup, `status`, `spawn`, `Child::wait`, and
-  non-destructive `kill(0)` probes.
+  working-directory setup, method and module-level `status`/`spawn`,
+  module-level `exit_status`, `Child::wait`, and non-destructive `kill(0)`
+  probes.
 - `std-process-output.ari`: `Command::output_in` small stdout/stderr capture,
-  `Output` accessors, missing-command `127` status, `pipe`/`dup2` lowering, and
-  compiler zone provenance for the zone-backed `Output` handle.
+  module-level `process::output_in`, `Output` accessors, missing-command `127`
+  status, `pipe`/`dup2` lowering, and compiler zone provenance for the
+  zone-backed `Output` handle.
 - `std-thread-basic.ari`: runtime-backed `std::thread` function-pointer
   spawn/join behavior, child runtime ids, invalid-handle sentinels, root
   `Thread`, method wrappers, and scheduler yield.
@@ -183,6 +185,9 @@ identifies the exact case:
 - `std-fs-read-write.ari`: source whole-file `write`/`try_write`,
   `append`/`try_append`, `read_to_string`, missing-file empty reads,
   byte-count checks, and truncating rewrite behavior.
+- `std-fs-read-result.ari`: `read_result` and `read_to_string_result` direct
+  `Error` whole-file reads, including successful owned byte-string reads,
+  missing-file `NotFound`, and compatibility `try_read` absence.
 - `std-fs-byte-result.ari`: `write_result`, `append_result`, and
   `copy_result` direct `Error` byte-count results plus raw compatibility open
   failures.

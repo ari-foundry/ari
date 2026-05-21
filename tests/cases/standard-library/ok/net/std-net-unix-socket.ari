@@ -16,8 +16,8 @@ fn main() -> i64 {
   fs::remove(path);
 
   var score = 0;
-  let maybe_listener = net::UnixListener::bind(path);
-  if maybe_listener.is_none() {
+  let maybe_listener = net::unix_listen(path);
+  if maybe_listener.is_err() {
     match net::UnixListener::bind_result(path) {
       Ok(_retry_listener) => {}
       Err(bind_error) => {
@@ -43,8 +43,8 @@ fn main() -> i64 {
     score = score + 1;
   }
 
-  let maybe_client = net::UnixStream::connect(path);
-  assert(maybe_client.is_some());
+  let maybe_client = net::unix_connect(path);
+  assert(maybe_client.is_ok());
   var client = maybe_client.unwrap();
   if client.is_open() && client.descriptor().is_valid() {
     score = score + 2;

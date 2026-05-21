@@ -101,6 +101,26 @@ pub fn command_with_args(program: string, args: std::Slice[std::process::Arg]) -
   return std::process::Command::with_args(program, args);
 }
 
+pub fn spawn(command: ref std::process::Command) -> std::Result[std::process::Child, std::error::Error] {
+  return command.spawn();
+}
+
+pub fn status(command: ref std::process::Command) -> std::Result[i64, std::error::Error] {
+  return command.status();
+}
+
+pub fn exit_status(command: ref std::process::Command) -> std::Result[std::process::ExitStatus, std::error::Error] {
+  return command.exit_status();
+}
+
+pub fn exec(command: ref std::process::Command) -> std::Result[(), std::error::Error] {
+  return command.exec();
+}
+
+pub fn output_in(command: ref std::process::Command, zone: ref mut Zone) -> std::Result[std::process::Output, std::error::Error] {
+  return command.output_in(zone);
+}
+
 fn non_normal_exit_error() -> std::error::Error {
   return std::error::new(std::error::Other);
 }

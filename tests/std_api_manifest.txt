@@ -335,7 +335,9 @@ fn std::fs::read_dir|check-prelude std-fs-read-dir asserting directory name-list
 fn std::fs::read_dir_entries|check-prelude std-fs-read-dir asserting directory entry-list helper; docs/stdlib/modules/fs.md
 fn std::fs::read_dir_next|check-prelude std-fs-read-dir Option-returning directory entry name helper; docs/stdlib/modules/fs.md
 fn std::fs::read_link|check-prelude std-fs-read-link asserting symbolic-link target reader; docs/stdlib/modules/fs.md
+fn std::fs::read_result|check-prelude std-fs-read-result Error-returning whole-file read alias; docs/stdlib/modules/fs.md
 fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byte-string read helper; docs/stdlib/modules/fs.md
+fn std::fs::read_to_string_result|check-prelude std-fs-read-result Error-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir|check-prelude std-fs-rename-dir runtime-backed single-directory removal hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir_all|check-prelude std-fs-remove-dir-all recursive directory tree removal helper; docs/stdlib/modules/fs.md
@@ -498,13 +500,20 @@ fn std::mem::set_bytes|std mem byte operation tests; docs/stdlib/modules/mem.md
 fn std::mem::size_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::swap[T]|std mem value helper tests; docs/dev/test-matrix.md Prelude and C FFI rows
 fn std::move[T]|explicit move tests; docs/dev/test-matrix.md Ownership row
+fn std::net::connect|check-prelude std-net-tcp-loopback module-level TCP connect helper returning Error; docs/stdlib/modules/net.md
 fn std::net::ipv4|check-prelude std-net-addresses source IPv4 constructor; docs/stdlib/modules/net.md
 fn std::net::ipv6|check-prelude std-net-addresses source IPv6 constructor; docs/stdlib/modules/net.md
+fn std::net::listen|check-prelude std-net-tcp-loopback module-level TCP listener helper returning Error; docs/stdlib/modules/net.md
 fn std::net::localhost|check-prelude std-net-addresses source loopback socket address constructor; docs/stdlib/modules/net.md
 fn std::net::lookup_v4|check-prelude std-net-dns-lookup Option-returning IPv4 name lookup; docs/stdlib/modules/net.md
 fn std::net::lookup_v4_raw_result|check-prelude std-net-dns-lookup raw Result-returning IPv4 name lookup compatibility helper; docs/stdlib/modules/net.md
 fn std::net::lookup_v4_result|check-prelude std-net-dns-lookup Result-returning IPv4 name lookup with Error payload; docs/stdlib/modules/net.md
 fn std::net::socket_addr|check-prelude std-net-addresses source socket address constructor; docs/stdlib/modules/net.md
+fn std::net::tcp_connect|check-prelude std-net-tcp-loopback explicit TCP connect helper returning Error; docs/stdlib/modules/net.md
+fn std::net::tcp_listen|check-prelude std-net-tcp-loopback explicit TCP listener helper returning Error; docs/stdlib/modules/net.md
+fn std::net::udp_bind|check-prelude std-net-udp-socket module-level UDP bind helper returning Error; docs/stdlib/modules/net.md
+fn std::net::unix_connect|check-prelude std-net-unix-socket module-level Unix stream connect helper returning Error; docs/stdlib/modules/net.md
+fn std::net::unix_listen|check-prelude std-net-unix-socket module-level Unix listener helper returning Error; docs/stdlib/modules/net.md
 fn std::os::fd|check-prelude std-os-fd non-owning descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::invalid|check-prelude std-os-fd invalid descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::pipe|check-prelude std-os-pipe owned OS pipe descriptor pair constructor; docs/stdlib/modules/os.md
@@ -558,7 +567,9 @@ fn std::process::arg|check-prelude std-process-command C-argv argument wrapper f
 fn std::process::command|check-prelude std-process-command natural Command constructor; docs/stdlib/modules/process.md
 fn std::process::command_with_args|check-prelude std-process-command Command constructor with argv slice; docs/stdlib/modules/process.md
 fn std::process::env_var|check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md
+fn std::process::exec|check-prelude std-process-command module-level Command exec wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
+fn std::process::exit_status|check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::failure|check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md
 fn std::process::fork|check-prelude std-process-fork-wait POSIX fork hook; docs/stdlib/modules/process.md
 fn std::process::fork_result|check-prelude std-process-result POSIX fork direct Error result helper; docs/stdlib/modules/process.md
@@ -572,6 +583,9 @@ fn std::process::is_root|check-prelude std-process-identity source root-user pre
 fn std::process::is_success|check-prelude std-process-basic source status predicate; docs/stdlib/modules/process.md
 fn std::process::is_wait_error|check-prelude std-process-fork-wait source wait failure predicate; docs/stdlib/modules/process.md
 fn std::process::kill|check-prelude std-process-command POSIX signal helper returning Error on failure; docs/stdlib/modules/process.md
+fn std::process::output_in|check-prelude std-process-output module-level Command output capture wrapper returning Error; docs/stdlib/modules/process.md
+fn std::process::spawn|check-prelude std-process-command module-level Command spawn wrapper returning Error; docs/stdlib/modules/process.md
+fn std::process::status|check-prelude std-process-command module-level Command exit-code wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::success|check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md
 fn std::process::terminate|check-prelude std-process-command SIGTERM convenience helper; docs/stdlib/modules/process.md
 fn std::process::uid|check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md
