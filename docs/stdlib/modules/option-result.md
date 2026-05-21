@@ -33,6 +33,7 @@ value.expect("message")
 value.map<U>(op)
 value.map_or<U>(fallback, op)
 value.map_or_else<U>(fallback, op)
+value.inspect(op)
 value.and<U>(other)
 value.and_then<U>(op)
 value.filter(op)
@@ -57,9 +58,11 @@ It keeps `Some(T)` when the predicate returns true and returns `None<T>()`
 when the predicate returns false or the input is already `None`.
 
 `map_or(fallback, op)` maps the payload or returns the eager fallback.
-`map_or_else(fallback, op)` calls `fallback()` only for `None`. `and(other)`
-returns `other` when the receiver is `Some`, otherwise it returns `None`. Use
-`and_then(op)` when the next option must be computed from the payload.
+`map_or_else(fallback, op)` calls `fallback()` only for `None`.
+`inspect(op)` passes `ref T` to `op` only for `Some` and then returns the
+original option. `and(other)` returns `other` when the receiver is `Some`,
+otherwise it returns `None`. Use `and_then(op)` when the next option must be
+computed from the payload.
 
 `ok_or` and `ok_or_else` convert `Option[T]` into `Result[T, E]`. The lazy
 form calls its function only for `None`.
@@ -91,6 +94,8 @@ value.map<U>(op)
 value.map_or<U>(fallback, op)
 value.map_or_else<U>(fallback, op)
 value.map_err<F>(op)
+value.inspect(op)
+value.inspect_err(op)
 value.and<U>(other)
 value.and_then<U>(op)
 value.or<F>(fallback)
@@ -102,10 +107,12 @@ value.transpose()
 `Option[E]`. `unwrap_or_else` receives the error and returns a fallback success
 value. `map_or(fallback, op)` maps the success payload or returns the eager
 fallback, while `map_or_else(fallback, op)` maps `Ok` and calls
-`fallback(error)` only for `Err`. `and(other)` returns `other` when the
-receiver is `Ok`, otherwise it preserves the original error. `or` uses an
-already-built fallback `Result[T, F]` when the receiver is `Err`; `or_else`
-builds that fallback lazily from the original error.
+`fallback(error)` only for `Err`. `inspect(op)` passes `ref T` to `op` only
+for `Ok`, and `inspect_err(op)` passes `ref E` only for `Err`; both return the
+original result. `and(other)` returns `other` when the receiver is `Ok`,
+otherwise it preserves the original error. `or` uses an already-built fallback
+`Result[T, F]` when the receiver is `Err`; `or_else` builds that fallback
+lazily from the original error.
 `transpose` is available on `Result[Option[T], E]` values. It turns
 `Ok(Some(T))` into `Some(Ok(T))`, `Ok(None<T>())` into `None<Result[T, E]>()`,
 and `Err(E)` into `Some(Err(E))`.
@@ -147,8 +154,8 @@ tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap.ari
 ```
 
 `prelude-option-result-combinators.ari` covers `map`, eager/lazy
-`map_or` fallback mapping, eager `and`/`or`, lazy `and_then`/`or_else`, and
-error-preserving `Result.and` behavior.
+`map_or` fallback mapping, borrowed `inspect`/`inspect_err`, eager `and`/`or`,
+lazy `and_then`/`or_else`, and error-preserving `Result.and` behavior.
 
 `make check-prelude` compiles the tests to LLVM, checks representative method
 symbols, links executable cases, and verifies results.

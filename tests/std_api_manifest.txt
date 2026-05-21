@@ -688,6 +688,7 @@ method std::Option[T]::and[U]|check-prelude prelude-option-result-combinators ea
 method std::Option[T]::and_then[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::expect|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::filter|check-prelude prelude-option-filter borrowed predicate helper; docs/stdlib/api-reference.md Option and Result section
+method std::Option[T]::inspect|check-prelude prelude-option-result-combinators borrowed present-branch inspection helper; docs/stdlib/modules/option-result.md
 method std::Option[T]::is_none|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::is_none_or|check-prelude prelude-option-result-predicates consuming predicate helper; docs/stdlib/api-reference.md Option and Result section
 method std::Option[T]::is_some|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
@@ -710,6 +711,8 @@ method std::Result[T,E]::and_then[U]|check-prelude prelude-option-result-combina
 method std::Result[T,E]::err|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::expect|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::expect_err|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::inspect|check-prelude prelude-option-result-combinators borrowed success inspection helper; docs/stdlib/modules/option-result.md
+method std::Result[T,E]::inspect_err|check-prelude prelude-option-result-combinators borrowed error inspection helper; docs/stdlib/modules/option-result.md
 method std::Result[T,E]::is_err|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::is_err_and|check-prelude prelude-option-result-predicates consuming error predicate helper; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::is_ok|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row

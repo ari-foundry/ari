@@ -119,6 +119,26 @@ pub impl[T, E] std::Result[T, E] {
     };
   }
 
+  fn inspect(self, op: fn(ref T) -> void) -> std::Result[T, E] {
+    return match self {
+      std::Ok(value) => {
+        op(ref value);
+        std::Ok<T, E>(value)
+      },
+      std::Err(error) => std::Err<T, E>(error);
+    };
+  }
+
+  fn inspect_err(self, op: fn(ref E) -> void) -> std::Result[T, E] {
+    return match self {
+      std::Ok(value) => std::Ok<T, E>(value),
+      std::Err(error) => {
+        op(ref error);
+        std::Err<T, E>(error)
+      };
+    };
+  }
+
   fn map_err[F](self, op: fn(E) -> F) -> std::Result[T, F] {
     return match self {
       std::Ok(value) => std::Ok<T, F>(value),

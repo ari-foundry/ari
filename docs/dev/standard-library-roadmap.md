@@ -29,10 +29,10 @@ The library contract is explicit and capability-oriented:
 The current `std` package already provides:
 
 - prelude ADTs: `Option`, `Result`, `Slice`, `Range`, `RangeInclusive`
-- source `Option`/`Result` predicates, eager/lazy combinators, conversions,
-  nested option filtering, flattening, bidirectional option-result
-  transposition, and lazy fallback helpers, including consuming payload
-  predicate helpers
+- source `Option`/`Result` predicates, borrowed inspection, eager/lazy
+  combinators, conversions, nested option filtering, flattening,
+  bidirectional option-result transposition, and lazy fallback helpers,
+  including consuming payload predicate helpers
 - assertion, panic, `move`, and `take` helpers
 - IO/input/context/env declarations and source helpers such as
   `io::Reader`, `io::Writer`, `io::Seek`, `io::cursor`,
@@ -295,7 +295,7 @@ Likely compiler work:
 | Module | Next Useful Slice | Tests To Add First | Compiler Work If Needed |
 | --- | --- | --- | --- |
 | `std::io` | Grow from the current `Reader`/`Writer`/`Seek`, `Stdin`, `Stdout`, `Stderr`, `PipeReader`/`PipeWriter`, `Cursor`, caller-buffered `BufReader`/`BufWriter`, `read_exact`, `write_all`, and `flush` slice into file adapters, zone-owning buffered constructors, and drop-time writer flush. | current `std-io-byte-slice` raw stdout byte-slice output, `std-io-traits-cursor` trait/cursor/exact-read/write-all/flush checks, `std-io-stderr` stderr routing and stdout/stderr separation checks, current `std-io-pipe` `std::os::Pipe` ownership splitting, trait-based pipe writes/reads, EOF after writer close, and raw fd read/write hook checks, and current `std-io-buffered` caller-provided buffer fill/flush checks; future zone-owned buffered storage, drop-time flush policy, and `File` trait-adapter tests. | Current stdout/stderr/caller-buffered/pipe source slice uses runtime stream and descriptor hooks. Future zone-owning buffered wrappers need std raw-buffer provenance support; file adapters need owned file-resource policy. |
-| `std::option` | Inspect-style helpers after borrowed function-pointer ergonomics are clear. | Predicate/filter/combinator/conversion/flatten/transpose behavior plus wrong-payload negative tests. | Generic enum method specialization diagnostics. |
+| `std::option` | Wrong-payload diagnostics and residual conversion polish after the borrowed inspect helper slice. | Predicate/filter/inspect/combinator/conversion/flatten/transpose behavior plus wrong-payload negative tests. | Generic enum method specialization diagnostics. |
 | `std::result` | Error conversion helpers that use `From`/`Into` after trait impl patterns mature. | `Result` projection/conversion, transpose, eager/lazy fallback, and `?` residual tests. | Residual conversion and trait-bound selection. |
 | `std::mem` | Grow from current layout/pointer/value helpers, byte `copy_bytes`/`move_bytes`/`set_bytes`, and hosted `page_size` into safer copy/fill and mapping-adjacent helpers. | current `std-mem-value-helpers` scalar/aggregate replace/swap tests, `std-mem-byte-ops` byte copy/move/set plus LLVM intrinsic checks, and `std-mem-page-size` runtime page-size checks; future owner-rejection, typed copy/fill, and owned mapping tests. | Current byte helpers use `extern "ari"` runtime wrappers around LLVM intrinsics and `page_size` uses a hosted runtime hook. Future typed copy/fill and mapping APIs need layout service, ownership-aware raw memory checks, descriptor/error policy, and owned mapping cleanup. |
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |

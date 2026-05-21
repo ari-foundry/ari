@@ -383,8 +383,9 @@ identifies the exact case:
 - `prelude-option-transpose.ari`: Option/Result transposition behavior.
 - `prelude-result-transpose.ari`: Result/Option transposition behavior.
 - `prelude-option-result-combinators.ari`: Option/Result map,
-  eager/lazy `map_or`, eager `and`, lazy `and_then`, eager fallback, lazy
-  fallback, and error-preserving `Result.and` combinator behavior.
+  eager/lazy `map_or`, borrowed `inspect`/`inspect_err`, eager `and`, lazy
+  `and_then`, eager fallback, lazy fallback, and error-preserving `Result.and`
+  combinator behavior.
 - `prelude-option-result-conversions.ari`: Option/Result conversion, xor, and
   lazy fallback behavior.
 - `prelude-macro-format-no-default-zone.ari`: macro or implicit prelude
