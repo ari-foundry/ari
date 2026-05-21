@@ -1,0 +1,35 @@
+// Covers source std::hash helpers for composing hash values:
+// - pair<T, U> hashes two Hash-backed values in order.
+// - combine(left, right) composes precomputed u64 hashes.
+// - Slice[u8] implements Hash so byte views can use generic hash::value.
+fn main() -> i64 {
+  var score = 0;
+
+  var pair_state = hash::new();
+  hash::write<i64>(ref mut pair_state, 7);
+  hash::write<bool>(ref mut pair_state, true);
+  if hash::pair<i64, bool>(7, true) == hash::finish(ref pair_state) {
+    score = score + 1;
+  }
+
+  if hash::pair<i64, bool>(7, true) != hash::pair<bool, i64>(true, 7) {
+    score = score + 2;
+  }
+
+  let left = hash::value<i64>(11);
+  let right = hash::value<i64>(13);
+  var combine_state = hash::new();
+  hash::write_u64(ref mut combine_state, left);
+  hash::write_u64(ref mut combine_state, right);
+  if hash::combine(left, right) == hash::finish(ref combine_state) {
+    score = score + 4;
+  }
+
+  var bytes = [65u8, 66u8, 67u8, 68u8];
+  let view = bytes.as_slice();
+  if hash::value<Slice[u8]>(view) == hash::bytes(view) {
+    score = score + 8;
+  }
+
+  return score;
+}

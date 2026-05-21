@@ -201,6 +201,8 @@ identifies the exact case:
   `collections::hash_i64` compatibility wrapper.
 - `std-hash-integer-widths.ari`: fixed-width signed and unsigned integer
   writer helpers, generic `Hash[T]` dispatch, and width-distinct byte feeds.
+- `std-hash-combine-helpers.ari`: ordered two-value hashing, precomputed
+  `u64` hash composition, and generic `Slice[u8]` hashing.
 - `std-random-basic.ari`: runtime-backed OS entropy hook reachability, direct
   runtime OS byte filling, deterministic non-cryptographic `Prng` behavior,
   deterministic booleans, unbiased bounded integers including a wide upper

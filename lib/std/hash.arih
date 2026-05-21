@@ -114,6 +114,20 @@ pub fn value[T: Hash[T]](item: T) -> u64 {
   return finish(ref state);
 }
 
+pub fn pair[T: Hash[T], U: Hash[U]](left: T, right: U) -> u64 {
+  var state = new();
+  write<T>(ref mut state, left);
+  write<U>(ref mut state, right);
+  return finish(ref state);
+}
+
+pub fn combine(left: u64, right: u64) -> u64 {
+  var state = new();
+  write_u64(ref mut state, left);
+  write_u64(ref mut state, right);
+  return finish(ref state);
+}
+
 pub fn bytes(values: std::Slice[u8]) -> u64 {
   var state = new();
   write_bytes(ref mut state, values);
@@ -171,5 +185,11 @@ impl std::hash::Hash[u8] for u8 {
 impl std::hash::Hash[bool] for bool {
   fn hash(self, state: ref mut Hasher) -> void {
     write_bool(state, self);
+  }
+}
+
+impl std::hash::Hash[std::Slice[u8]] for std::Slice[u8] {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_bytes(state, self);
   }
 }

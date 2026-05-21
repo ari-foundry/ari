@@ -907,6 +907,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-integer-widths.ari -o $(BUILD_DIR)/prelude/std-hash-integer-widths.elf
 	$(BUILD_DIR)/prelude/std-hash-integer-widths.elf; code=$$?; test $$code -eq 255
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/hash/std-hash-integer-widths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-hash-integer-widths.elf; $(BUILD_DIR)/prelude/std-hash-integer-widths.elf; code=$$?; test $$code -eq 255; fi
+	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-combine-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-hash-combine-helpers.ll
+	grep -F -q 'std4hash16pair__G_i64_bool' $(BUILD_DIR)/prelude/std-hash-combine-helpers.ll
+	grep -F -q 'std4hash7combine' $(BUILD_DIR)/prelude/std-hash-combine-helpers.ll
+	grep -F -q 'std4hash23value__G_std__Slice_u8_' $(BUILD_DIR)/prelude/std-hash-combine-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-combine-helpers.ari -o $(BUILD_DIR)/prelude/std-hash-combine-helpers.elf
+	$(BUILD_DIR)/prelude/std-hash-combine-helpers.elf; code=$$?; test $$code -eq 15
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/hash/std-hash-combine-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-hash-combine-helpers.elf; $(BUILD_DIR)/prelude/std-hash-combine-helpers.elf; code=$$?; test $$code -eq 15; fi
 	$(TARGET) tests/cases/standard-library/ok/random/std-random-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-random-basic.ll
 	grep -F -q '@ari_builtin_random_entropy' $(BUILD_DIR)/prelude/std-random-basic.ll
 	grep -F -q '@ari_builtin_random_fill' $(BUILD_DIR)/prelude/std-random-basic.ll

@@ -2161,6 +2161,8 @@ hash::reset(ref mut state)
 hash::finish(ref state)
 hash::write<T>(ref mut state, value)
 hash::value<T>(value)
+hash::pair<T, U>(left, right)
+hash::combine(left_hash, right_hash)
 hash::bytes(values)
 hash::write_byte(ref mut state, value)
 hash::write_bytes(ref mut state, values)
@@ -2175,10 +2177,11 @@ hash::write_i64(ref mut state, value)
 hash::write_bool(ref mut state, value)
 ```
 
-Use `hash::value<T>` for a single value with a `Hash[T]` impl, `hash::bytes`
-for a borrowed `Slice[u8]`, and `Hasher` plus `write` calls for incremental
-hashing. Current built-in impls cover fixed-width signed and unsigned integer
-types plus `bool`.
+Use `hash::value<T>` for a single value with a `Hash[T]` impl, `hash::pair`
+for two hashable values in order, `hash::combine` for two precomputed `u64`
+hashes, `hash::bytes` for a borrowed `Slice[u8]`, and `Hasher` plus `write`
+calls for incremental hashing. Current built-in impls cover fixed-width signed
+and unsigned integer types, `bool`, and `Slice[u8]`.
 
 ## Random
 

@@ -6,7 +6,8 @@ it when you need stable `u64` hash values inside Ari code; do not use it for
 passwords, signatures, or adversarial security boundaries.
 
 The module owns the domain, so public names stay short: `hash::new`,
-`hash::write`, `hash::value`, and `hash::bytes`.
+`hash::write`, `hash::value`, `hash::pair`, `hash::combine`, and
+`hash::bytes`.
 
 ## API
 
@@ -18,6 +19,8 @@ hash::reset(ref mut state)
 hash::finish(ref state)
 hash::write<T>(ref mut state, value)
 hash::value<T>(value)
+hash::pair<T, U>(left, right)
+hash::combine(left_hash, right_hash)
 hash::bytes(values)
 hash::write_byte(ref mut state, value)
 hash::write_bytes(ref mut state, values)
@@ -50,8 +53,18 @@ little-endian byte width of the type, so `u8(1)`, `u16(1)`, and `u32(1)` stay
 distinct hash inputs. User types can implement the trait by writing their
 fields into the supplied hasher.
 
+`pair<T, U>(left, right)` hashes two `Hash` values in order. It is a concise
+helper for small compound keys and examples where a full custom `Hasher` block
+would obscure the intent.
+
+`combine(left_hash, right_hash)` hashes two already-computed `u64` hash values
+in order. Use it when a caller already has stable component hashes and wants a
+single composed hash.
+
 `bytes(values)` hashes a `Slice[u8]` directly. It is the preferred helper for
-byte buffers and byte strings when you already have a slice view.
+byte buffers and byte strings when you already have a slice view. `Slice[u8]`
+also implements `Hash`, so generic code can call `hash::value<Slice[u8]>` when
+it should treat a byte view like any other hashable value.
 
 `collections::hash_i64` remains as a compatibility helper for current
 `HashMap`/`HashSet` constructors, and now delegates to `hash::value<i64>`.
@@ -81,6 +94,20 @@ hash::write<i64>(ref mut state, 7);
 hash::write<bool>(ref mut state, true);
 hash::write_byte(ref mut state, 9u8);
 let digest = hash::finish(ref state);
+```
+
+Hash two values in order:
+
+```ari
+let digest = hash::pair<i64, bool>(7, true);
+```
+
+Compose two component hashes:
+
+```ari
+let left = hash::value<i64>(11);
+let right = hash::value<i64>(13);
+let digest = hash::combine(left, right);
 ```
 
 Implement hashing for a small type:
@@ -116,18 +143,20 @@ impl hash::Hash[Pair] for Pair {
 ```text
 tests/cases/standard-library/ok/hash/std-hash-basic.ari
 tests/cases/standard-library/ok/hash/std-hash-integer-widths.ari
+tests/cases/standard-library/ok/hash/std-hash-combine-helpers.ari
 ```
 
 The focused test covers hasher construction, reset, byte writes, byte-slice
 hashing, primitive `Hash[T]` dispatch, and `collections::hash_i64`
 compatibility. `std-hash-integer-widths.ari` checks fixed-width signed and
 unsigned integer writers, generic `Hash[T]` dispatch, and width-distinct byte
-feeds.
+feeds. `std-hash-combine-helpers.ari` checks `pair`, `combine`, ordered
+composition, and the `Slice[u8]` `Hash` impl.
 
 ## Next Work
 
-- Add `Hash` impl patterns for common aggregate/value types after derive and
-  trait policy are settled.
+- Add derived `Hash` impl patterns for common aggregate/value types after
+  derive and trait policy are settled.
 - Add `HashMap`/`HashSet` constructors that use `Hash[T]` and `Eq[T]` instead
   of explicit hash functions.
 - Add more non-integer `Hash` impls after aggregate/derive policy is settled.
