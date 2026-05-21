@@ -56,10 +56,10 @@ pub impl Ordering {
 }
 
 pub fn compare[T: Ord[T]](left: T, right: T) -> Ordering {
-  if left.lt(right) {
+  if left < right {
     return Less;
   }
-  if right.lt(left) {
+  if left > right {
     return Greater;
   }
   return Equal;
@@ -143,36 +143,36 @@ pub fn is_greater_or_equal(ordering: Ordering) -> bool {
 }
 
 pub fn min[T: Ord[T]](left: T, right: T) -> T {
-  if right.lt(left) {
+  if right < left {
     return right;
   }
   return left;
 }
 
 pub fn max[T: Ord[T]](left: T, right: T) -> T {
-  if left.lt(right) {
+  if left < right {
     return right;
   }
   return left;
 }
 
 pub fn clamp[T: Ord[T]](value: T, low: T, high: T) -> T {
-  std::assert(!high.lt(low));
-  if value.lt(low) {
+  std::assert(low <= high);
+  if value < low {
     return low;
   }
-  if high.lt(value) {
+  if value > high {
     return high;
   }
   return value;
 }
 
 pub fn is_between[T: Ord[T]](value: T, low: T, high: T) -> bool {
-  std::assert(!high.lt(low));
-  if value.lt(low) {
+  std::assert(low <= high);
+  if value < low {
     return false;
   }
-  if high.lt(value) {
+  if value > high {
     return false;
   }
   return true;

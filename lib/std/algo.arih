@@ -126,7 +126,7 @@ pub fn dedup[T](values: std::Slice[T]) -> i64 {
 pub fn is_sorted[T: std::cmp::Ord[T]](values: std::Slice[T]) -> bool {
   var index = 1;
   while index < values.len {
-    if ptr_load(ptr_add(values.data, index)).lt(ptr_load(ptr_add(values.data, index - 1))) {
+    if ptr_load(ptr_add(values.data, index)) < ptr_load(ptr_add(values.data, index - 1)) {
       return false;
     }
     index = index + 1;
@@ -142,7 +142,7 @@ pub fn min[T: std::cmp::Ord[T]](values: std::Slice[T]) -> std::Option[T] {
   var index = 1;
   while index < values.len {
     let value = ptr_load(ptr_add(values.data, index));
-    if value.lt(best) {
+    if value < best {
       best = value;
     }
     index = index + 1;
@@ -158,7 +158,7 @@ pub fn max[T: std::cmp::Ord[T]](values: std::Slice[T]) -> std::Option[T] {
   var index = 1;
   while index < values.len {
     let value = ptr_load(ptr_add(values.data, index));
-    if best.lt(value) {
+    if value > best {
       best = value;
     }
     index = index + 1;
@@ -176,9 +176,9 @@ pub fn binary_search[T: std::cmp::Ord[T]](values: std::Slice[T], target: T) -> s
   while low < high {
     let mid = low + ((high - low) / 2);
     let value = ptr_load(ptr_add(values.data, mid));
-    if value.lt(target) {
+    if value < target {
       low = mid + 1;
-    } else if target.lt(value) {
+    } else if value > target {
       high = mid;
     } else {
       return std::Some<i64>(mid);
@@ -192,7 +192,7 @@ pub fn lower_bound[T: std::cmp::Ord[T]](values: std::Slice[T], target: T) -> i64
   var high = values.len;
   while low < high {
     let mid = low + ((high - low) / 2);
-    if ptr_load(ptr_add(values.data, mid)).lt(target) {
+    if ptr_load(ptr_add(values.data, mid)) < target {
       low = mid + 1;
     } else {
       high = mid;
@@ -206,7 +206,7 @@ pub fn upper_bound[T: std::cmp::Ord[T]](values: std::Slice[T], target: T) -> i64
   var high = values.len;
   while low < high {
     let mid = low + ((high - low) / 2);
-    if !target.lt(ptr_load(ptr_add(values.data, mid))) {
+    if ptr_load(ptr_add(values.data, mid)) <= target {
       low = mid + 1;
     } else {
       high = mid;
@@ -221,7 +221,7 @@ pub fn sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
     var best = index;
     var scan = index + 1;
     while scan < values.len {
-      if ptr_load(ptr_add(values.data, scan)).lt(ptr_load(ptr_add(values.data, best))) {
+      if ptr_load(ptr_add(values.data, scan)) < ptr_load(ptr_add(values.data, best)) {
         best = scan;
       }
       scan = scan + 1;
@@ -256,7 +256,7 @@ pub fn stable_sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
   while index < values.len {
     var cursor = index;
     while cursor > 0 &&
-          ptr_load(ptr_add(values.data, cursor)).lt(ptr_load(ptr_add(values.data, cursor - 1))) {
+          ptr_load(ptr_add(values.data, cursor)) < ptr_load(ptr_add(values.data, cursor - 1)) {
       swap<T>(values, cursor - 1, cursor);
       cursor = cursor - 1;
     }

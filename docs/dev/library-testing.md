@@ -191,7 +191,7 @@ identifies the exact case:
 - `std-algo-slice-helpers.ari`: source `std::algo` sort/stable sort,
   comparator sort, binary search, lower/upper bounds, reverse/rotate,
   partition, min/max/clamp, swap, fill, copy, and dedup behavior over borrowed
-  slices.
+  slices, including custom `Ord` values through natural ordering operators.
 - `std-hash-basic.ari`: source `std::hash` deterministic `Hasher`
   construction/reset/finalization, byte-slice hashing, generic `Hash[T]`
   dispatch for primitive values, primitive write helpers, and the
@@ -343,7 +343,8 @@ identifies the exact case:
 - `std-input-byte-option.ari`: source `std::input` EOF-to-Option byte helper
   behavior over the raw stdin hook.
 - `std-cmp-value-helpers.ari`: source `std::cmp` trait-bound value selection,
-  clamping, inclusive range predicates, and root re-export behavior.
+  clamping, inclusive range predicates, root re-export behavior, and generic
+  helper dispatch through natural ordering operators.
 - `std-cmp-equality-operator.ari`: trait-backed `==` and `!=` lowering through
   `cmp::Eq[T]::eq` for concrete and generic values.
 - `std-cmp-order-operators.ari`: trait-backed `<`, `<=`, `>`, and `>=`

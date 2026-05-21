@@ -44,6 +44,11 @@ fn before[T: cmp::Ord[T]](left: T, right: T) -> bool {
 This is a narrow bridge for builtin comparison glyphs. Custom glyphs such as
 `++` are not parsed as Ari operators yet.
 
+Source `std` code should use this bridge too. Library helpers such as
+`cmp::compare`, `Slice.ordering`, `algo::sort`, and `algo::binary_search`
+should read as ordinary operator code while keeping `cmp::Eq[T]` and
+`cmp::Ord[T]` as the public extension points.
+
 ## Planned Surface
 
 The planned source shape is an operator declaration that binds a glyph to a

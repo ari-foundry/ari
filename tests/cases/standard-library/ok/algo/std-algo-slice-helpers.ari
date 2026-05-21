@@ -9,6 +9,16 @@ fn greater(left: i64, right: i64) -> bool {
   return left > right;
 }
 
+struct Score {
+  value: i64,
+}
+
+impl cmp::Ord[Score] for Score {
+  fn lt(self, other: Score) -> bool {
+    return self.value < other.value;
+  }
+}
+
 fn even(value: ref i64) -> bool {
   let raw = (ref value) as ptr i64;
   return (*raw % 2) == 0;
@@ -115,6 +125,24 @@ fn main() -> i64 {
   algo::swap<i64>(compact.as_slice(), 1, 2);
   if unique_len == 4 && compact[0] == 1 && compact[1] == 3 &&
      compact[2] == 2 && compact[3] == 1 {
+    score = score + 1;
+  }
+
+  var custom = [Score { value: 3 }, Score { value: 1 }, Score { value: 2 }];
+  algo::sort<Score>(custom.as_slice());
+  let custom_min = algo::min<Score>(custom.as_slice()).unwrap_or(Score { value: 0 });
+  let custom_max = algo::max<Score>(custom.as_slice()).unwrap_or(Score { value: 0 });
+  let custom_found = algo::binary_search<Score>(
+    custom.as_slice(),
+    Score { value: 2 }).unwrap_or(-1);
+  let custom_clamped = algo::clamp<Score>(
+    Score { value: 5 },
+    Score { value: 1 },
+    Score { value: 4 });
+  if algo::is_sorted<Score>(custom.as_slice()) &&
+     custom[0].value == 1 && custom[1].value == 2 && custom[2].value == 3 &&
+     custom_min.value == 1 && custom_max.value == 3 &&
+     custom_found == 1 && custom_clamped.value == 4 {
     score = score + 1;
   }
 

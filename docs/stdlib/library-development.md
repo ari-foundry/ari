@@ -61,6 +61,10 @@ depends on it.
   helper. Keep `io::write_i64`-style names only for raw runtime hooks.
 - For direct stdout output, prefer `fmt::print_value(ref mut zone, value)` or
   `fmt::println_value(ref mut zone, value)` over raw type-specific IO hooks.
+- For equality and ordering in source `std`, prefer `==`, `!=`, `<`, `>`,
+  `<=`, and `>=` over direct `.eq(...)` or `.lt(...)` calls. The operators
+  preserve the public `cmp::Eq[T]` and `cmp::Ord[T]` contracts while keeping
+  library code close to normal user code.
 - Use `_in` when a function needs an explicit allocation zone.
 - Prefer `Option` or `Result` for ordinary absence or recoverable failure.
 - Prefer `std::error::Error`/`ErrorKind` for shared OS, runtime, IO,

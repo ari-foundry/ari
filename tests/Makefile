@@ -867,8 +867,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'std4algo16partition__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	grep -F -q 'std4algo12dedup__G_i64' $(BUILD_DIR)/prelude/std-algo-slice-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf
-	$(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 11
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 11; fi
+	$(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 12
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 12; fi
 	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-hash-basic.ll
 	grep -F -q 'std4hash3new' $(BUILD_DIR)/prelude/std-hash-basic.ll
 	grep -F -q 'std4hash12value__G_i64' $(BUILD_DIR)/prelude/std-hash-basic.ll

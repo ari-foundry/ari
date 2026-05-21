@@ -66,8 +66,10 @@ cmp::is_less_or_equal(ordering)
 cmp::is_greater_or_equal(ordering)
 ```
 
-`compare` returns `Less`, `Equal`, or `Greater` by calling `lt` in both
-directions. `then` keeps the first non-`Equal` result, which is useful for
+`compare` returns `Less`, `Equal`, or `Greater` through the same `<` and `>`
+operators users write. For generic values those operators dispatch to
+`Ord[T]::lt`, so the source implementation stays readable without changing the
+trait contract. `then` keeps the first non-`Equal` result, which is useful for
 lexicographic comparison. `then_compare` performs the second comparison only as
 part of this source helper shape; once lazy closures land, a future `then_with`
 style API can avoid computing fallback comparisons eagerly.

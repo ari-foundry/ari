@@ -37,10 +37,12 @@ algo::dedup<T>(values)
 ```
 
 `sort`, `stable_sort`, `binary_search`, `is_sorted`, `min`, `max`, and
-`clamp` use `cmp::Ord[T]`. Define `impl cmp::Ord[YourType] for YourType`
-before using those helpers with a custom type. The `*_by` variants take an
-explicit comparator `fn(T, T) -> bool`, which is useful while trait-driven
-constructor and comparator inference are still young.
+`clamp` use `cmp::Ord[T]`. Their source code uses ordinary `<`, `>`, and
+`<=` operators; for generic element types those operators dispatch to
+`Ord[T]::lt`. Define `impl cmp::Ord[YourType] for YourType` before using those
+helpers with a custom type. The `*_by` variants take an explicit comparator
+`fn(T, T) -> bool`, which is useful while trait-driven constructor and
+comparator inference are still young.
 
 `binary_search` returns `Option[i64]`: `Some(index)` when it finds an equal
 value under `Ord`, and `None` otherwise. `lower_bound` returns the first sorted
