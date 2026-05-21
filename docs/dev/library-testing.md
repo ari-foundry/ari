@@ -325,6 +325,9 @@ identifies the exact case:
   normalization behavior.
 - `std-path-predicates.ari`: source `std::path` allocation-free
   final-component predicate helpers and `PathBytes` receiver wrappers.
+- `std-path-affixes.ari`: source `std::path` component-aware prefix/suffix
+  predicates, borrowed affix stripping, root-prefix behavior, and `PathBytes`
+  receiver wrappers.
 - `std-path-components.ari`: source `std::path::components` lazy borrowed
   iterator behavior for absolute paths, repeated separators, trailing
   separators, and root-only paths.

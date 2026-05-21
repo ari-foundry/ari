@@ -561,6 +561,7 @@ fn std::parse::octal_integer|check-prelude std-parse-basic signed octal integer 
 fn std::parse::octal_integer_or|check-prelude std-parse-basic signed octal integer parser with fallback; docs/stdlib/modules/parse.md
 fn std::path::bytes|check-prelude std-path-bytes typed borrowed path-byte view constructor; docs/stdlib/modules/path.md
 fn std::path::components|check-prelude std-path-components borrowed lexical component iterator; docs/stdlib/modules/path.md
+fn std::path::ends_with|check-prelude std-path-affixes component-aware suffix predicate; docs/stdlib/modules/path.md
 fn std::path::extension|check-prelude std-path-basic borrowed final-extension view; docs/stdlib/modules/path.md
 fn std::path::file_name|check-prelude std-path-basic borrowed final-component view; docs/stdlib/modules/path.md
 fn std::path::file_stem|check-prelude std-path-basic natural alias for borrowed file-stem view; docs/stdlib/modules/path.md
@@ -575,7 +576,10 @@ fn std::path::is_separator|check-prelude std-path-basic POSIX slash separator pr
 fn std::path::join_in|check-prelude std-path-basic zone-backed lexical join helper; docs/stdlib/modules/path.md
 fn std::path::normalize_in|check-prelude std-path-basic lightweight lexical normalization helper; docs/stdlib/modules/path.md
 fn std::path::parent|check-prelude std-path-basic borrowed parent path view; docs/stdlib/modules/path.md
+fn std::path::starts_with|check-prelude std-path-affixes component-aware prefix predicate; docs/stdlib/modules/path.md
 fn std::path::stem|check-prelude std-path-basic borrowed file-stem view; docs/stdlib/modules/path.md
+fn std::path::strip_prefix|check-prelude std-path-affixes borrowed component-aware prefix removal; docs/stdlib/modules/path.md
+fn std::path::strip_suffix|check-prelude std-path-affixes borrowed component-aware suffix removal; docs/stdlib/modules/path.md
 fn std::path::trim_trailing_separators|check-prelude std-path-basic borrowed trailing slash trim helper; docs/stdlib/modules/path.md
 fn std::path::with_extension_in|check-prelude std-path-edit zone-backed lexical extension replacement helper; docs/stdlib/modules/path.md
 fn std::path::with_file_name_in|check-prelude std-path-edit zone-backed lexical final-component replacement helper; docs/stdlib/modules/path.md
@@ -1419,6 +1423,7 @@ method std::os::Pipe::take_write_end|check-prelude std-os-pipe take pipe write e
 method std::os::Pipe::write_end|check-prelude std-os-pipe borrowed pipe write descriptor view; docs/stdlib/modules/os.md
 method std::path::PathBytes::as_slice|check-prelude std-path-bytes borrowed path-byte view accessor; docs/stdlib/modules/path.md
 method std::path::PathBytes::components|check-prelude std-path-bytes typed path component iterator wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::ends_with|check-prelude std-path-affixes typed path suffix predicate wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::extension|check-prelude std-path-bytes typed path extension wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::file_name|check-prelude std-path-bytes typed path file-name wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::file_stem|check-prelude std-path-bytes natural typed path file-stem wrapper; docs/stdlib/modules/path.md
@@ -1433,7 +1438,10 @@ method std::path::PathBytes::join_in|check-prelude std-path-bytes typed path lex
 method std::path::PathBytes::len|check-prelude std-path-bytes typed path length accessor; docs/stdlib/modules/path.md
 method std::path::PathBytes::normalize_in|check-prelude std-path-bytes typed path normalization wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::parent|check-prelude std-path-bytes typed path parent wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::starts_with|check-prelude std-path-affixes typed path prefix predicate wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::stem|check-prelude std-path-bytes typed path stem wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::strip_prefix|check-prelude std-path-affixes typed path prefix stripping wrapper; docs/stdlib/modules/path.md
+method std::path::PathBytes::strip_suffix|check-prelude std-path-affixes typed path suffix stripping wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::trim_trailing_separators|check-prelude std-path-bytes typed path trailing separator trim wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::with_extension_in|check-prelude std-path-edit typed path extension replacement wrapper; docs/stdlib/modules/path.md
 method std::path::PathBytes::with_file_name_in|check-prelude std-path-edit typed path final-component replacement wrapper; docs/stdlib/modules/path.md

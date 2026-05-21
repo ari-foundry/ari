@@ -679,6 +679,10 @@ path::has_file_name(path, expected)
 path::has_extension(path, expected)
 path::has_stem(path, expected)
 path::has_file_stem(path, expected)
+path::starts_with(path, prefix)
+path::strip_prefix(path, prefix)
+path::ends_with(path, suffix)
+path::strip_suffix(path, suffix)
 path::with_file_name_in(ref mut zone, path, new_file_name)
 path::with_extension_in(ref mut zone, path, new_extension)
 path::join_in(ref mut zone, base, child)
@@ -700,6 +704,10 @@ path.has_file_name(expected)
 path.has_extension(expected)
 path.has_stem(expected)
 path.has_file_stem(expected)
+path.starts_with(prefix)
+path.strip_prefix(prefix)
+path.ends_with(suffix)
+path.strip_suffix(suffix)
 path.with_file_name_in(ref mut zone, new_file_name)
 path.with_extension_in(ref mut zone, new_extension)
 path.join_in(ref mut zone, child)
@@ -725,6 +733,10 @@ directly as a borrowed path-byte view.
 The `has_*` helpers are allocation-free predicates over `file_name`,
 `extension`, `stem`, and `file_stem`; they return `false` when the
 corresponding view is absent. `file_stem` is an explicit alias for `stem`.
+`starts_with`/`ends_with` and `strip_prefix`/`strip_suffix` are
+component-aware: trailing separators are ignored, and a match must end on a
+path component boundary. The strip helpers return borrowed views into the
+trimmed input path.
 
 Thread helpers live in `std::thread`:
 

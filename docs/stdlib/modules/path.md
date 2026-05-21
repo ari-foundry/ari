@@ -29,6 +29,10 @@ path::has_file_name(path, expected) -> bool
 path::has_extension(path, expected) -> bool
 path::has_stem(path, expected) -> bool
 path::has_file_stem(path, expected) -> bool
+path::starts_with(path, prefix) -> bool
+path::strip_prefix(path, prefix) -> Option[Slice[u8]]
+path::ends_with(path, suffix) -> bool
+path::strip_suffix(path, suffix) -> Option[Slice[u8]]
 path::with_file_name_in(ref mut zone, path, new_file_name) -> String
 path::with_extension_in(ref mut zone, path, new_extension) -> String
 path::join_in(ref mut zone, base, child) -> String
@@ -61,6 +65,10 @@ path.has_file_name(expected)
 path.has_extension(expected)
 path.has_stem(expected)
 path.has_file_stem(expected)
+path.starts_with(prefix)
+path.strip_prefix(prefix)
+path.ends_with(suffix)
+path.strip_suffix(suffix)
 path.with_file_name_in(ref mut zone, new_file_name)
 path.with_extension_in(ref mut zone, new_extension)
 path.join_in(ref mut zone, child)
@@ -102,6 +110,13 @@ and stem `main`. Trailing dots do not count as extensions in this first slice.
 borrowed view helpers against an expected byte slice without allocating. They
 return `false` when the corresponding view helper would return `None`.
 `has_extension` expects only the extension bytes, not a leading dot.
+
+`starts_with`, `strip_prefix`, `ends_with`, and `strip_suffix` are
+component-aware path affix helpers. They trim trailing separators before
+matching and require a path component boundary, so `src` matches
+`src/main.ari` but not `src2/main.ari`. A root prefix `/` matches absolute
+paths and strips to the relative remainder. Strip helpers return borrowed views
+into the trimmed input path and return `None` when the affix is absent.
 
 `with_file_name_in` and `with_extension_in` allocate a new owned
 `std::string::String` in the provided zone. `with_file_name_in` keeps the
@@ -152,6 +167,7 @@ tests/cases/standard-library/ok/path/std-path-basic.ari
 tests/cases/standard-library/ok/path/std-path-components.ari
 tests/cases/standard-library/ok/path/std-path-bytes.ari
 tests/cases/standard-library/ok/path/std-path-predicates.ari
+tests/cases/standard-library/ok/path/std-path-affixes.ari
 tests/cases/standard-library/ok/path/std-path-edit.ari
 ```
 
@@ -159,7 +175,8 @@ The focused test covers separator policy, absolute/relative checks, trailing
 separator trimming, final component views, parent/stem/extension behavior,
 explicit `file_stem` aliases, zone-backed path editing, zone-backed join,
 lightweight normalization, component iteration, typed `PathBytes` views, and
-allocation-free final-component predicates.
+allocation-free final-component predicates plus component-aware path
+prefix/suffix predicates and stripping.
 `make check-prelude` checks representative helper symbols and executable
 results.
 

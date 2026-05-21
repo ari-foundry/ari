@@ -1,0 +1,89 @@
+// Covers component-aware path prefix/suffix helpers.
+//
+// The helpers intentionally differ from generic byte-slice prefix checks:
+// a prefix or suffix must end on a path component boundary, so "src" matches
+// "src/main.ari" but not "src2/main.ari".
+
+fn expect_some(value: std::Option[std::Slice[u8]], expected: std::Slice[u8]) -> bool {
+  match value {
+    std::Some(slice) => {
+      return slice.equals(expected);
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+fn expect_empty(value: std::Option[std::Slice[u8]]) -> bool {
+  match value {
+    std::Some(slice) => {
+      return slice.len == 0;
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+fn expect_none(value: std::Option[std::Slice[u8]]) -> bool {
+  match value {
+    std::Some(_) => {
+      return false;
+    }
+    std::None => {
+      return true;
+    }
+  }
+}
+
+fn main() -> i64 {
+  var source = [115u8, 114u8, 99u8, 47u8, 109u8, 97u8, 105u8, 110u8, 46u8, 97u8, 114u8, 105u8];
+  var source2 = [115u8, 114u8, 99u8, 50u8, 47u8, 109u8, 97u8, 105u8, 110u8, 46u8, 97u8, 114u8, 105u8];
+  var src = [115u8, 114u8, 99u8];
+  var src_slash = [115u8, 114u8, 99u8, 47u8];
+  var main_name = [109u8, 97u8, 105u8, 110u8, 46u8, 97u8, 114u8, 105u8];
+  var ain_name = [97u8, 105u8, 110u8, 46u8, 97u8, 114u8, 105u8];
+  var root = [47u8];
+  var usr = [47u8, 117u8, 115u8, 114u8];
+  var usr_bin = [47u8, 117u8, 115u8, 114u8, 47u8, 98u8, 105u8, 110u8];
+  var usr_bin_relative = [117u8, 115u8, 114u8, 47u8, 98u8, 105u8, 110u8];
+  var bin = [98u8, 105u8, 110u8];
+  var slash_bin = [47u8, 98u8, 105u8, 110u8];
+
+  assert(path::starts_with(source.as_slice(), src.as_slice()));
+  assert(path::starts_with(source.as_slice(), src_slash.as_slice()));
+  assert(!path::starts_with(source2.as_slice(), src.as_slice()));
+  assert(expect_some(path::strip_prefix(source.as_slice(), src.as_slice()), main_name.as_slice()));
+  assert(expect_some(path::strip_prefix(source.as_slice(), src_slash.as_slice()), main_name.as_slice()));
+  assert(expect_empty(path::strip_prefix(source.as_slice(), source.as_slice())));
+  assert(expect_none(path::strip_prefix(source2.as_slice(), src.as_slice())));
+
+  assert(path::starts_with(usr_bin.as_slice(), root.as_slice()));
+  assert(expect_some(path::strip_prefix(usr_bin.as_slice(), root.as_slice()), usr_bin_relative.as_slice()));
+
+  assert(path::ends_with(source.as_slice(), main_name.as_slice()));
+  assert(path::ends_with(source.as_slice(), source.as_slice()));
+  assert(!path::ends_with(source.as_slice(), ain_name.as_slice()));
+  assert(expect_some(path::strip_suffix(source.as_slice(), main_name.as_slice()), src.as_slice()));
+  assert(expect_empty(path::strip_suffix(source.as_slice(), source.as_slice())));
+
+  assert(path::ends_with(usr_bin.as_slice(), bin.as_slice()));
+  assert(path::ends_with(usr_bin.as_slice(), usr_bin_relative.as_slice()));
+  assert(path::ends_with(usr_bin.as_slice(), usr_bin.as_slice()));
+  assert(expect_some(path::strip_suffix(usr_bin.as_slice(), bin.as_slice()), usr.as_slice()));
+  assert(expect_empty(path::strip_suffix(usr_bin.as_slice(), usr_bin.as_slice())));
+  assert(!path::ends_with(usr_bin.as_slice(), slash_bin.as_slice()));
+  assert(expect_none(path::strip_suffix(usr_bin.as_slice(), slash_bin.as_slice())));
+
+  assert(expect_some(path::strip_suffix(slash_bin.as_slice(), bin.as_slice()), root.as_slice()));
+
+  let typed = path::bytes(source.as_slice());
+  assert(typed.starts_with(path::bytes(src.as_slice())));
+  assert(!typed.starts_with(path::bytes(ain_name.as_slice())));
+  assert(typed.ends_with(path::bytes(main_name.as_slice())));
+  assert(expect_some(typed.strip_prefix(path::bytes(src.as_slice())), main_name.as_slice()));
+  assert(expect_some(typed.strip_suffix(path::bytes(main_name.as_slice())), src.as_slice()));
+
+  return 37;
+}

@@ -200,6 +200,100 @@ pub fn has_file_stem(path: std::Slice[u8], expected: std::Slice[u8]) -> bool {
   return has_stem(path, expected);
 }
 
+pub fn starts_with(path: std::Slice[u8], prefix: std::Slice[u8]) -> bool {
+  let current = trim_trailing_separators(path);
+  let base = trim_trailing_separators(prefix);
+  if base.len == 0 {
+    return true;
+  }
+  if base.len > current.len {
+    return false;
+  }
+  if !slice_range(current, 0, base.len).equals(base) {
+    return false;
+  }
+  if current.len == base.len {
+    return true;
+  }
+  if base.len == 1 {
+    if is_separator(base[0]) {
+      return true;
+    }
+  }
+  return is_separator(current[base.len]);
+}
+
+pub fn strip_prefix(path: std::Slice[u8], prefix: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  let current = trim_trailing_separators(path);
+  let base = trim_trailing_separators(prefix);
+  if !starts_with(current, base) {
+    return std::None<std::Slice[u8]>();
+  }
+  if base.len == 0 {
+    return std::Some<std::Slice[u8]>(current);
+  }
+  if current.len == base.len {
+    return std::Some<std::Slice[u8]>(slice_range(current, current.len, current.len));
+  }
+
+  var start = base.len;
+  if start < current.len {
+    if is_separator(current[start]) {
+      start = start + 1;
+    }
+  }
+  return std::Some<std::Slice[u8]>(slice_range(current, start, current.len));
+}
+
+pub fn ends_with(path: std::Slice[u8], suffix: std::Slice[u8]) -> bool {
+  let current = trim_trailing_separators(path);
+  let ending = trim_trailing_separators(suffix);
+  if ending.len == 0 {
+    return true;
+  }
+  if ending.len > current.len {
+    return false;
+  }
+  if is_absolute(ending) {
+    return current.equals(ending);
+  }
+
+  let start = current.len - ending.len;
+  if !slice_range(current, start, current.len).equals(ending) {
+    return false;
+  }
+  if start == 0 {
+    return true;
+  }
+  return is_separator(current[start - 1]);
+}
+
+pub fn strip_suffix(path: std::Slice[u8], suffix: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  let current = trim_trailing_separators(path);
+  let ending = trim_trailing_separators(suffix);
+  if !ends_with(current, ending) {
+    return std::None<std::Slice[u8]>();
+  }
+  if ending.len == 0 {
+    return std::Some<std::Slice[u8]>(current);
+  }
+  if is_absolute(ending) {
+    return std::Some<std::Slice[u8]>(slice_range(current, 0, 0));
+  }
+
+  var end = current.len - ending.len;
+  if end == 0 {
+    return std::Some<std::Slice[u8]>(slice_range(current, 0, 0));
+  }
+  if is_separator(current[end - 1]) {
+    if end == 1 {
+      return std::Some<std::Slice[u8]>(slice_range(current, 0, 1));
+    }
+    end = end - 1;
+  }
+  return std::Some<std::Slice[u8]>(trim_trailing_separators(slice_range(current, 0, end)));
+}
+
 pub fn with_file_name_in(
   zone: ref mut Zone,
   path: std::Slice[u8],
@@ -423,6 +517,22 @@ pub impl std::path::PathBytes {
 
   fn has_file_stem(self: ref Self, expected: std::Slice[u8]) -> bool {
     return std::path::has_file_stem(self.bytes, expected);
+  }
+
+  fn starts_with(self: ref Self, prefix: std::path::PathBytes) -> bool {
+    return std::path::starts_with(self.bytes, prefix.as_slice());
+  }
+
+  fn strip_prefix(self: ref Self, prefix: std::path::PathBytes) -> std::Option[std::Slice[u8]] {
+    return std::path::strip_prefix(self.bytes, prefix.as_slice());
+  }
+
+  fn ends_with(self: ref Self, suffix: std::path::PathBytes) -> bool {
+    return std::path::ends_with(self.bytes, suffix.as_slice());
+  }
+
+  fn strip_suffix(self: ref Self, suffix: std::path::PathBytes) -> std::Option[std::Slice[u8]] {
+    return std::path::strip_suffix(self.bytes, suffix.as_slice());
   }
 
   fn with_file_name_in(

@@ -1369,6 +1369,15 @@ check-prelude: $(TARGET)
 	grep -q 'std__path__PathBytes8inherent13has_file_stem' $(BUILD_DIR)/prelude/std-path-predicates.ll
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-predicates.ari -o $(BUILD_DIR)/prelude/std-path-predicates.elf
 	$(BUILD_DIR)/prelude/std-path-predicates.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-affixes.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-affixes.ll
+	grep -q '_ARNv3std4path11starts_with' $(BUILD_DIR)/prelude/std-path-affixes.ll
+	grep -q '_ARNv3std4path12strip_prefix' $(BUILD_DIR)/prelude/std-path-affixes.ll
+	grep -q '_ARNv3std4path9ends_with' $(BUILD_DIR)/prelude/std-path-affixes.ll
+	grep -q '_ARNv3std4path12strip_suffix' $(BUILD_DIR)/prelude/std-path-affixes.ll
+	grep -q 'std__path__PathBytes8inherent11starts_with' $(BUILD_DIR)/prelude/std-path-affixes.ll
+	grep -q 'std__path__PathBytes8inherent12strip_suffix' $(BUILD_DIR)/prelude/std-path-affixes.ll
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-affixes.ari -o $(BUILD_DIR)/prelude/std-path-affixes.elf
+	$(BUILD_DIR)/prelude/std-path-affixes.elf; code=$$?; test $$code -eq 37
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-edit.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-edit.ll
 	grep -q '_ARNv3std4path17with_file_name_in' $(BUILD_DIR)/prelude/std-path-edit.ll
 	grep -q '_ARNv3std4path17with_extension_in' $(BUILD_DIR)/prelude/std-path-edit.ll
