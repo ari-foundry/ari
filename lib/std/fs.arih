@@ -60,6 +60,8 @@ pub extern "ari" fn seek(file: File, position: i64) -> bool = "ari_builtin_fs_se
 extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadata_size";
 extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
 extern "ari" fn metadata_mode_raw(path: string) -> i64 = "ari_builtin_fs_metadata_mode";
+extern "ari" fn symlink_metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_size";
+extern "ari" fn symlink_metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_kind";
 extern "ari" fn set_mode_raw(path: string, mode: i64) -> bool = "ari_builtin_fs_set_mode";
 extern "ari" fn read_dir_next_raw(dir: Dir) -> string = "ari_builtin_fs_read_dir_next";
 extern "ari" fn canonicalize_raw(path: string) -> string = "ari_builtin_fs_canonicalize";
@@ -85,13 +87,8 @@ fn file_kind_from_raw(kind: i64) -> FileKind {
   return Other;
 }
 
-pub fn try_metadata(path: string) -> std::Option[Metadata] {
-  let kind = metadata_kind_raw(path);
-  if kind < 0 {
-    return std::None<Metadata>();
-  }
-  let size = metadata_size_raw(path);
-  if size < 0 {
+fn metadata_from_raw(path: string, kind: i64, size: i64) -> std::Option[Metadata] {
+  if kind < 0 || size < 0 {
     return std::None<Metadata>();
   }
   return std::Some<Metadata>(Metadata {
@@ -99,6 +96,24 @@ pub fn try_metadata(path: string) -> std::Option[Metadata] {
     kind: file_kind_from_raw(kind),
     permissions: permissions(path),
   });
+}
+
+pub fn try_metadata(path: string) -> std::Option[Metadata] {
+  let kind = metadata_kind_raw(path);
+  if kind < 0 {
+    return std::None<Metadata>();
+  }
+  let size = metadata_size_raw(path);
+  return metadata_from_raw(path, kind, size);
+}
+
+pub fn try_symlink_metadata(path: string) -> std::Option[Metadata] {
+  let kind = symlink_metadata_kind_raw(path);
+  if kind < 0 {
+    return std::None<Metadata>();
+  }
+  let size = symlink_metadata_size_raw(path);
+  return metadata_from_raw(path, kind, size);
 }
 
 pub fn try_file_type(path: string) -> std::Option[FileKind] {
@@ -140,14 +155,9 @@ pub fn is_dir(path: string) -> bool {
 }
 
 pub fn is_symlink(path: string) -> bool {
-  match try_file_type(path) {
-    std::Some(kind) => {
-      match kind {
-        Symlink => {
-          return true;
-        }
-        _ => {}
-      }
+  match try_symlink_metadata(path) {
+    std::Some(info) => {
+      return info.is_symlink();
     }
     std::None => {}
   }
@@ -171,6 +181,21 @@ pub fn is_other(path: string) -> bool {
 
 pub fn metadata(path: string) -> Metadata {
   match try_metadata(path) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+  std::panic();
+  return Metadata {
+    byte_len: 0,
+    kind: Other,
+    permissions: Permissions::none(),
+  };
+}
+
+pub fn symlink_metadata(path: string) -> Metadata {
+  match try_symlink_metadata(path) {
     std::Some(value) => {
       return value;
     }

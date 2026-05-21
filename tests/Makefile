@@ -613,6 +613,15 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs9read_link" $(BUILD_DIR)/prelude/std-fs-read-link.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-link.ari -o $(BUILD_DIR)/prelude/std-fs-read-link.elf
 	$(BUILD_DIR)/prelude/std-fs-read-link.elf; code=$$?; test $$code -eq 31
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-symlink-metadata.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
+	grep -q "@ari_builtin_fs_symlink_metadata_size" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
+	grep -q "@ari_builtin_fs_symlink_metadata_kind" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
+	grep -q "declare i32 @lstat" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
+	grep -F -q "std2fs20try_symlink_metadata" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
+	grep -F -q "std2fs16symlink_metadata" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
+	grep -F -q "std2fs10is_symlink" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-symlink-metadata.ari -o $(BUILD_DIR)/prelude/std-fs-symlink-metadata.elf
+	$(BUILD_DIR)/prelude/std-fs-symlink-metadata.elf; code=$$?; test $$code -eq 127
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-permissions.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-permissions.ll
 	grep -q "@ari_builtin_fs_can_read" $(BUILD_DIR)/prelude/std-fs-permissions.ll
 	grep -q "@ari_builtin_fs_can_write" $(BUILD_DIR)/prelude/std-fs-permissions.ll

@@ -302,8 +302,8 @@ fn std::fs::hard_link|check-prelude std-fs-links runtime-backed hard-link hook; 
 fn std::fs::is_dir|check-prelude std-fs-metadata direct directory-kind predicate; docs/stdlib/modules/fs.md
 fn std::fs::is_file|check-prelude std-fs-metadata direct regular-file predicate; docs/stdlib/modules/fs.md
 fn std::fs::is_other|check-prelude std-fs-metadata direct other-kind predicate; docs/stdlib/modules/fs.md
-fn std::fs::is_symlink|check-prelude std-fs-metadata direct symlink-kind predicate; docs/stdlib/modules/fs.md
-fn std::fs::metadata|check-prelude std-fs-metadata asserting metadata convenience wrapper; docs/stdlib/modules/fs.md
+fn std::fs::is_symlink|check-prelude std-fs-symlink-metadata no-follow direct symlink-kind predicate; docs/stdlib/modules/fs.md
+fn std::fs::metadata|check-prelude std-fs-metadata asserting target-following metadata convenience wrapper; docs/stdlib/modules/fs.md
 fn std::fs::mode|check-prelude std-fs-mode asserting POSIX permission-mode helper; docs/stdlib/modules/fs.md
 fn std::fs::open|check-prelude std-fs-open-modes mode-string open hook; docs/stdlib/modules/fs.md
 fn std::fs::open_append|check-prelude std-fs-append compatibility append wrapper over mode-string open; docs/stdlib/modules/fs.md
@@ -326,13 +326,14 @@ fn std::fs::seek|check-prelude std-fs-seek absolute file cursor seek hook; docs/
 fn std::fs::set_mode|check-prelude std-fs-mode chmod-backed permission-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::set_permissions|check-prelude std-fs-mode Permissions-to-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::symbolic_link|check-prelude std-fs-links runtime-backed symbolic-link hook; docs/stdlib/modules/fs.md
+fn std::fs::symlink_metadata|check-prelude std-fs-symlink-metadata asserting no-follow metadata helper; docs/stdlib/modules/fs.md
 fn std::fs::truncate|check-prelude std-fs-create-truncate-copy source create/truncate helper; docs/stdlib/modules/fs.md
 fn std::fs::try_append|check-prelude std-fs-read-write Option-returning append byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::try_canonicalize|check-prelude std-fs-canonicalize Option-returning realpath-backed canonicalization helper; docs/stdlib/modules/fs.md
 fn std::fs::try_copy|check-prelude std-fs-create-truncate-copy Option-returning copy byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::try_create|check-prelude std-fs-create-truncate-copy Option-returning create helper; docs/stdlib/modules/fs.md
 fn std::fs::try_file_type|check-prelude std-fs-metadata Option-returning path kind helper; docs/stdlib/modules/fs.md
-fn std::fs::try_metadata|check-prelude std-fs-metadata Option-returning stat-backed metadata helper; docs/stdlib/modules/fs.md
+fn std::fs::try_metadata|check-prelude std-fs-metadata Option-returning target-following stat-backed metadata helper; docs/stdlib/modules/fs.md
 fn std::fs::try_mode|check-prelude std-fs-mode Option-returning permission-mode helper; docs/stdlib/modules/fs.md
 fn std::fs::try_open|check-prelude std-fs-open-modes Option-returning mode-string open helper; docs/stdlib/modules/fs.md
 fn std::fs::try_open_append|check-prelude std-fs-append compatibility Option-returning append helper; docs/stdlib/modules/fs.md
@@ -345,6 +346,7 @@ fn std::fs::try_read_dir|check-prelude std-fs-read-dir Option-returning director
 fn std::fs::try_read_dir_entries|check-prelude std-fs-read-dir Option-returning directory entry-list helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read_link|check-prelude std-fs-read-link Option-returning symbolic-link target reader; docs/stdlib/modules/fs.md
 fn std::fs::try_read_to_string|check-prelude std-fs-try-read Option-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
+fn std::fs::try_symlink_metadata|check-prelude std-fs-symlink-metadata Option-returning no-follow metadata helper; docs/stdlib/modules/fs.md
 fn std::fs::try_write|check-prelude std-fs-read-write Option-returning write byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::write|check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md
 fn std::fs::write_byte|check-prelude std-fs-basic file byte write hook; docs/stdlib/modules/fs.md

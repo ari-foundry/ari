@@ -1,0 +1,63 @@
+// Covers no-follow symbolic-link metadata. `metadata` follows a link to its
+// target, while `symlink_metadata` reports the link object itself.
+fn cleanup(path: string) -> void {
+  fs::remove(path);
+}
+
+fn main() -> i64 {
+  let source = "build/prelude/std-fs-symlink-metadata-source.tmp";
+  let link = "build/prelude/std-fs-symlink-metadata-link.tmp";
+  let target = "std-fs-symlink-metadata-source.tmp";
+  let missing = "build/prelude/std-fs-symlink-metadata-missing.tmp";
+  cleanup(link);
+  cleanup(source);
+
+  var data = ['S', 'Y', 'M', 'M'];
+  var score = 0;
+  if fs::write(source, data.as_slice()) {
+    score = score + 1;
+  }
+  if fs::symbolic_link(target, link) {
+    score = score + 2;
+  }
+
+  if fs::try_symlink_metadata(missing).is_none() {
+    score = score + 4;
+  }
+
+  match fs::try_symlink_metadata(source) {
+    std::Some(source_info) => {
+      if source_info.is_file() && !source_info.is_symlink() {
+        score = score + 8;
+      }
+    }
+    std::None => {}
+  }
+
+  match fs::try_metadata(link) {
+    std::Some(followed) => {
+      if followed.is_file() && followed.len() == 4 {
+        score = score + 16;
+      }
+    }
+    std::None => {}
+  }
+
+  match fs::try_symlink_metadata(link) {
+    std::Some(link_info) => {
+      if link_info.is_symlink() && !link_info.is_file() && link_info.len() == std::string::c_len(target) {
+        score = score + 32;
+      }
+    }
+    std::None => {}
+  }
+
+  let direct = fs::symlink_metadata(link);
+  if direct.is_symlink() && fs::is_symlink(link) && !fs::is_symlink(source) {
+    score = score + 64;
+  }
+
+  cleanup(link);
+  cleanup(source);
+  return score;
+}

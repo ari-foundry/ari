@@ -404,6 +404,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_fs_metadata_size") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_fs_metadata_kind") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_fs_metadata_mode") return builtin_sig({source_string}, i64);
+    if (symbol == "ari_builtin_fs_symlink_metadata_size") return builtin_sig({source_string}, i64);
+    if (symbol == "ari_builtin_fs_symlink_metadata_kind") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_fs_set_mode") return builtin_sig({source_string, i64}, boolean);
     if (symbol == "ari_builtin_fs_canonicalize") return builtin_sig({source_string}, source_string);
     if (symbol == "ari_builtin_mem_copy_bytes") return builtin_sig({ptr_u8, ptr_u8, i64}, void_type);

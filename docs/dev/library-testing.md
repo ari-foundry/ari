@@ -192,14 +192,18 @@ identifies the exact case:
 - `std-fs-read-link.ari`: runtime-backed symbolic-link target reads,
   `Option[String]` failure for regular and missing paths, and asserting
   `read_link` behavior.
+- `std-fs-symlink-metadata.ari`: runtime-backed no-follow `lstat` metadata,
+  target-following `metadata` behavior over links, direct `is_symlink`
+  behavior, and missing-path `None`.
 - `std-fs-permissions.ari`: runtime-backed access permission checks,
   `Permissions` method wrappers, directory execute/search checks, and
   missing-path all-false behavior.
 - `std-fs-mode.ari`: runtime-backed permission mode lookup, chmod mutation call,
   structured `Permissions` constructors/conversion, invalid-mode rejection,
   missing-path failure, and host-filesystem-independent cleanup.
-- `std-fs-metadata.ari`: runtime-backed `stat` metadata checks, missing-path
-  `None`, regular-file length/kind, directory kind, and `Metadata` methods.
+- `std-fs-metadata.ari`: runtime-backed target-following `stat` metadata
+  checks, missing-path `None`, regular-file length/kind, directory kind, and
+  `Metadata` methods.
 - `std-fs-canonicalize.ari`: runtime-backed `realpath` canonicalization,
   absolute owned paths, filename preservation, and missing-path `None`.
 - `std-net-addresses.ari`: source `std::net` IPv4/IPv6 constructors, generic

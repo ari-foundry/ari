@@ -831,6 +831,8 @@ fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
 fs::try_metadata(path)
+fs::symlink_metadata(path)
+fs::try_symlink_metadata(path)
 fs::try_file_type(path)
 fs::is_file(path)
 fs::is_dir(path)
@@ -961,7 +963,13 @@ preflight checks for the current process. `permissions(path)` snapshots those
 three checks into a `Permissions` value; still handle later open/read/write
 failures because filesystem access can change after the check.
 `try_metadata(path)` returns `Option[Metadata]`, using `None` for missing or
-unstatable paths. `metadata(path)` asserts that metadata is available.
+unstatable paths. `metadata(path)` asserts that metadata is available. These
+helpers follow symbolic links.
+`try_symlink_metadata(path)` and `symlink_metadata(path)` use no-follow
+metadata lookup, so a symbolic link reports `FileKind::Symlink` and its stored
+target byte length instead of the target file's metadata. The `Permissions`
+field is still the same access-style snapshot as `permissions(path)`; portable
+symlink permission-bit policy is not part of this slice.
 `Metadata::len` reports host byte length, `Metadata::file_type` returns
 `FileKind` (`Regular`, `Directory`, `Symlink`, or `Other`), and
 `Metadata::permissions` carries the access-style permission snapshot.
@@ -969,10 +977,12 @@ unstatable paths. `metadata(path)` asserts that metadata is available.
 metadata/permission snapshot.
 `fs::is_file(path)`, `fs::is_dir(path)`, `fs::is_symlink(path)`, and
 `fs::is_other(path)` are direct path predicates that return `false` for
-missing or unstatable paths. The matching `metadata.is_*()` methods are the
-right choice when code already has a `Metadata` value. The first runtime
-implementation uses Linux/glibc `stat`, so symbolic links are followed;
-no-follow symlink metadata and richer timestamps are future work.
+missing or unstatable paths. `is_symlink` uses the no-follow policy; the other
+direct predicates follow symbolic links through ordinary metadata. The
+matching `metadata.is_*()` methods are the right choice when code already has a
+`Metadata` value. The current runtime implementation uses Linux/glibc `stat`
+for ordinary metadata and `lstat` for no-follow metadata; richer timestamps
+are future work.
 `try_mode(path)` returns `Option[i64]` containing the low POSIX `0777`
 permission bits, and `mode(path)` is the asserting wrapper. Use `set_mode(path,
 mode)` for direct chmod-style updates, or `set_permissions(path, permissions)`

@@ -610,6 +610,7 @@ private:
         declarations_ << "declare i64 @getrandom(ptr, i64, i32)\n";
         declarations_ << "declare i32 @access(ptr, i32)\n";
         declarations_ << "declare i32 @stat(ptr, ptr)\n";
+        declarations_ << "declare i32 @lstat(ptr, ptr)\n";
         declarations_ << "declare i32 @unlink(ptr)\n";
         declarations_ << "declare i32 @rename(ptr, ptr)\n";
         declarations_ << "declare i32 @link(ptr, ptr)\n";
@@ -975,6 +976,47 @@ private:
         line("  %stat.storage = alloca [144 x i8], align 8");
         line("  %stat.ptr = getelementptr inbounds [144 x i8], ptr %stat.storage, i64 0, i64 0");
         line("  %code = call i32 @stat(ptr %path, ptr %stat.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        // Linux/glibc x86_64 stat layout: st_mode is an i32 at byte offset 24.
+        line("  %mode.ptr = getelementptr inbounds i8, ptr %stat.ptr, i64 24");
+        line("  %mode = load i32, ptr %mode.ptr, align 4");
+        line("  %masked = and i32 %mode, 61440");
+        line("  %is.regular = icmp eq i32 %masked, 32768");
+        line("  %is.dir = icmp eq i32 %masked, 16384");
+        line("  %is.symlink = icmp eq i32 %masked, 40960");
+        line("  %kind.dir = select i1 %is.dir, i64 2, i64 0");
+        line("  %kind.link = select i1 %is.symlink, i64 3, i64 %kind.dir");
+        line("  %kind = select i1 %is.regular, i64 1, i64 %kind.link");
+        line("  ret i64 %kind");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_symlink_metadata_size(ptr %path) {");
+        line("entry:");
+        line("  %stat.storage = alloca [144 x i8], align 8");
+        line("  %stat.ptr = getelementptr inbounds [144 x i8], ptr %stat.storage, i64 0, i64 0");
+        line("  %code = call i32 @lstat(ptr %path, ptr %stat.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        // Linux/glibc x86_64 stat layout: st_size is an i64 at byte offset 48.
+        line("  %size.ptr = getelementptr inbounds i8, ptr %stat.ptr, i64 48");
+        line("  %size = load i64, ptr %size.ptr, align 8");
+        line("  ret i64 %size");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_symlink_metadata_kind(ptr %path) {");
+        line("entry:");
+        line("  %stat.storage = alloca [144 x i8], align 8");
+        line("  %stat.ptr = getelementptr inbounds [144 x i8], ptr %stat.storage, i64 0, i64 0");
+        line("  %code = call i32 @lstat(ptr %path, ptr %stat.ptr)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  br i1 %ok, label %load, label %fail");
         line("load:");

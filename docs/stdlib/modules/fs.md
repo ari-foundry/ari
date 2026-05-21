@@ -8,7 +8,7 @@ with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
 byte-oriented `String` with either compatibility or `Option`-returning absence
 behavior, rename paths, create hard or symbolic links, read symbolic-link
-targets, ensure a single regular file exists without truncating an existing file, create or remove one empty
+targets, query no-follow symbolic-link metadata, ensure a single regular file exists without truncating an existing file, create or remove one empty
 directory, ensure a single directory exists without treating an existing
 directory as failure, recursively create missing directory parents, read
 directory entry names through an explicit `Dir` handle, collect lightweight
@@ -24,7 +24,8 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
 `try_read_byte`, `write_byte`, `write_bytes`, `read`, `try_read`, `write`, `append`,
 `try_write`, `try_append`, `truncate`, `copy`, `try_copy`, `metadata`,
-`try_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
+`try_metadata`, `symlink_metadata`, `try_symlink_metadata`,
+`try_file_type`, `is_file`, `is_dir`, `is_symlink`,
 `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
 `symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`,
@@ -44,6 +45,8 @@ fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
 fs::try_metadata(path)
+fs::symlink_metadata(path)
+fs::try_symlink_metadata(path)
 fs::try_file_type(path)
 fs::is_file(path)
 fs::is_dir(path)
@@ -308,15 +311,30 @@ read-only becomes `0444` and all-permissions becomes `0777`.
 metadata lookups return `None`; successful calls snapshot the byte length,
 `FileKind`, and the same access-style `Permissions` used by
 `permissions(path)`. `metadata(path)` is the asserting convenience wrapper for
-programs that treat a missing path as a programmer error.
+programs that treat a missing path as a programmer error. This helper follows
+symbolic links, matching the common "tell me about the thing this path names"
+policy.
+
+`try_symlink_metadata(path)` returns `Option[Metadata]` using a no-follow path
+lookup. For ordinary files and directories it looks like `try_metadata`; for a
+symbolic link it reports the link object itself, so `file_type()` is
+`Symlink` and `len()` is the stored target byte length on the current
+Linux/glibc backend. `symlink_metadata(path)` is the asserting wrapper. Use
+this helper before rewriting or removing links when the distinction between
+the link and its target matters. The embedded `Permissions` value still uses
+the same access-style `permissions(path)` snapshot as ordinary metadata;
+portable symlink permission-bit policy is intentionally not promised yet.
 
 `try_file_type(path)` is the lightweight `Option[FileKind]` helper for code
 that only needs the path kind without building the full metadata/permission
 snapshot. `is_file(path)`, `is_dir(path)`,
-`is_symlink(path)`, and `is_other(path)` are direct path predicates over the
-same metadata policy; missing or unstatable paths return `false`. Prefer these
-predicates at call sites that only branch on the kind, and keep
-`metadata(path)` for code that also needs size or permissions.
+`is_symlink(path)`, and `is_other(path)` are direct path predicates. `is_file`,
+`is_dir`, `is_other`, and `try_file_type` follow symbolic links through the
+ordinary metadata policy; `is_symlink` uses no-follow metadata so it can detect
+the link object itself. Missing or unstatable paths return `false`. Prefer
+these predicates at call sites that only branch on the kind, and keep
+`metadata(path)` or `symlink_metadata(path)` for code that also needs size or
+permissions.
 
 `Metadata::len()` returns the byte length reported by the host. Directories and
 special files can have host-specific sizes; only regular-file sizes should be
@@ -324,8 +342,8 @@ used as portable byte counts. `metadata.file_type()` returns a `FileKind` enum
 with `Regular`, `Directory`, `Symlink`, and `Other` variants. The convenience
 methods `metadata.is_file()`, `metadata.is_dir()`, `metadata.is_symlink()`, and
 `metadata.is_other()` cover common branches when you already have metadata.
-The current Linux/glibc runtime uses `stat`, so `metadata` follows
-symbolic links; a separate no-follow `symlink_metadata` helper is future work.
+The current Linux/glibc runtime uses `stat` for target-following metadata and
+`lstat` for no-follow symlink metadata.
 
 `try_mode(path)` returns the current POSIX permission bits as
 `Option[i64]`. The value is already masked to the low `0777` permission bits,
@@ -422,7 +440,7 @@ owned/path-to-OS-string boundary slice.
 | write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, and byte-counting `try_write`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, and byte-counting `try_append`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
-| metadata | Current: `try_metadata(path)`/`metadata(path)`, `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_symlink(path)`, `is_other(path)`, `Metadata`, and `FileKind` over the Linux/glibc `stat` runtime path; no-follow symlink metadata and richer timestamps are roadmap. |
+| metadata | Current: `try_metadata(path)`/`metadata(path)` over the Linux/glibc `stat` runtime path, `try_symlink_metadata(path)`/`symlink_metadata(path)` and `is_symlink(path)` over the Linux/glibc `lstat` runtime path, plus `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, and `FileKind`; richer timestamps are roadmap. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
 | rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)` and empty directory removal with `remove_dir(path)`. |
@@ -652,12 +670,12 @@ if file.is_open() {
 - This slice is byte-oriented. There is no owned path type, recursive directory
   removal API, file locking API, temporary-file API, or text encoding policy yet.
   Directory reads currently return names and joined child paths only; they do
-  not expose per-entry metadata or per-entry errors. Basic `stat` metadata,
+  not expose per-entry metadata or per-entry errors. Basic `stat`/`lstat` metadata,
   permission-bit lookup and mutation, and existing-path canonicalization exist,
-  but richer timestamps, owner/group/ACL policy, no-follow symlink metadata,
-  link metadata, and platform-specific symlink policy are still future work.
+  but richer timestamps, owner/group/ACL policy, richer link metadata, and
+  platform-specific symlink policy are still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
-  `stat`, `chmod`, `realpath`, `unlink`, `rename`, `link`, `symlink`,
+  `stat`, `lstat`, `chmod`, `realpath`, `unlink`, `rename`, `link`, `symlink`,
   `mkdir`, `rmdir`, `opendir`, `readdir`, `closedir`, `open`, `read`,
   `write`, `lseek`, and `close`; the one-shot `read_dir` helpers are source Ari over
   those hooks.
@@ -691,6 +709,7 @@ tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari
 tests/cases/standard-library/ok/fs/std-fs-read-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
 tests/cases/standard-library/ok/fs/std-fs-read-link.ari
+tests/cases/standard-library/ok/fs/std-fs-symlink-metadata.ari
 tests/cases/standard-library/ok/fs/std-fs-permissions.ari
 tests/cases/standard-library/ok/fs/std-fs-mode.ari
 tests/cases/standard-library/ok/fs/std-fs-metadata.ari
@@ -738,15 +757,17 @@ cleanup. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
 checks. `std-fs-read-link.ari` covers runtime-backed symbolic-link target
 reads, `Option[String]` failure behavior for regular and missing paths, and
-the asserting `read_link` helper. `std-fs-permissions.ari` covers access-style readable/writable/
+the asserting `read_link` helper. `std-fs-symlink-metadata.ari` covers
+no-follow `lstat` metadata, `metadata` following a symbolic link to its target,
+direct `is_symlink` behavior, and missing-path `None`. `std-fs-permissions.ari` covers access-style readable/writable/
 executable checks, the `Permissions` wrapper methods, and missing-path
 all-false behavior. `std-fs-mode.ari` covers stat-backed mode lookup,
 chmod-backed mutation calls, `Permissions` constructors, mode conversion,
 invalid mode rejection, missing-path failure, and cleanup restoration without
 depending on exact chmod effects from the host filesystem.
-`std-fs-metadata.ari` covers `Option[Metadata]`, `Option[FileKind]`,
-direct path-kind predicates, regular-file byte length, `FileKind`, metadata
-methods, directory predicates, and missing-path `None`.
+`std-fs-metadata.ari` covers target-following `Option[Metadata]`,
+`Option[FileKind]`, direct path-kind predicates, regular-file byte length,
+`FileKind`, metadata methods, directory predicates, and missing-path `None`.
 `std-fs-canonicalize.ari` covers `Option[String]` path resolution,
 absolute canonical paths, filename preservation, and missing-path `None`.
 
@@ -755,10 +776,8 @@ absolute canonical paths, filename preservation, and missing-path `None`.
 - Add richer permission metadata for owner/group/ACL policy.
 - Add explicit overwrite/platform policy for `rename`.
 - Grow canonicalization toward owned path values and platform-specific policy.
-- Expand link support with metadata helpers and clearer
-  platform-specific symlink policy.
-- Expand metadata with modified/accessed/created timestamps and a no-follow
-  `symlink_metadata` helper.
+- Expand link support with clearer platform-specific symlink policy.
+- Expand metadata with modified/accessed/created timestamps.
 - Expand directory reads with `DirEntry` metadata, richer error reporting, and
   owned OS-resource iterator handles.
 - Add recursive directory removal after creation policy has more mileage.
