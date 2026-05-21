@@ -335,6 +335,9 @@ identifies the exact case:
 - `std-mem-byte-ops.ari`: `std::mem` byte `copy_bytes`, `move_bytes`, and
   `set_bytes` behavior plus LLVM `memcpy`/`memmove`/`memset` intrinsic
   lowering checks.
+- `std-mem-pointer-ops.ari`: natural raw pointer `+`, `-`, dereference load,
+  and dereference store operators alongside explicit `ptr_*` helpers, with
+  typed and byte GEP lowering checks.
 - `std-mem-page-size.ari`: `std::mem::page_size` hosted runtime hook lowering
   and basic page-size invariants.
 - `std-input-byte-option.ari`: source `std::input` EOF-to-Option byte helper

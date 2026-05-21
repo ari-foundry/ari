@@ -3316,6 +3316,11 @@ private:
                 is_prelude_pointer_add_function_name(pointer_expr.name) &&
                 !pointer_expr.args.empty()) {
                 pointer_source = pointer_expr.args[0].get();
+            } else if (pointer_expr.kind == ExprKind::Binary &&
+                       (pointer_expr.op == TokenKind::Plus ||
+                        pointer_expr.op == TokenKind::Minus) &&
+                       expr_left(pointer_expr)) {
+                pointer_source = expr_left(pointer_expr).get();
             }
             std::optional<BorrowReturnOperandPathHint> base =
                 borrow_return_operand_path_hint(*pointer_source, param_name, type);
@@ -10408,14 +10413,21 @@ private:
     }
 
     bool try_build_tracked_pointer_add_access(const Expr& expr, TrackedAggregateAccess& out) {
-        if (expr.kind != ExprKind::Call ||
-            !is_prelude_pointer_add_function_name(expr.name) ||
-            expr.args.size() != 2) {
+        const Expr* pointer_source = nullptr;
+        if (expr.kind == ExprKind::Call &&
+            is_prelude_pointer_add_function_name(expr.name) &&
+            expr.args.size() == 2) {
+            pointer_source = expr.args[0].get();
+        } else if (expr.kind == ExprKind::Binary &&
+                   (expr.op == TokenKind::Plus || expr.op == TokenKind::Minus) &&
+                   expr_left(expr)) {
+            pointer_source = expr_left(expr).get();
+        } else {
             return false;
         }
 
         TrackedAggregateAccess base;
-        if (!try_build_tracked_aggregate_access(*expr.args[0], base)) return false;
+        if (!try_build_tracked_aggregate_access(*pointer_source, base)) return false;
         if (!is_raw_pointer_type(base.type)) return false;
 
         IrExprPtr pointer = check_expr(expr);
@@ -24419,11 +24431,41 @@ private:
         return wrap_call_with_receiver_prelude(expr.loc, std::move(receiver_prelude), std::move(call));
     }
 
+    IrExprPtr check_pointer_arithmetic_binary(const Expr& expr, IrExprPtr lhs, IrExprPtr rhs) {
+        const bool subtract = expr.op == TokenKind::Minus;
+        const std::string operation = subtract ? "pointer -" : "pointer +";
+        (void)require_raw_pointer_add_type(expr.loc, lhs->type, operation);
+        if (!is_value_integer_type(rhs->type)) {
+            fail(expr_right(expr)->loc,
+                 operation + " element offset must be an integer, got " + type_name(rhs->type));
+        }
+
+        IrType index_type = i64_type(expr.loc);
+        SourceLocation rhs_loc = rhs->loc;
+        rhs = make_cast_expr(rhs_loc, std::move(rhs), index_type);
+        if (subtract) {
+            rhs = make_i64_binary_expr(
+                expr.loc,
+                IrBinaryOp::Sub,
+                make_integer_zero(expr.loc, index_type),
+                std::move(rhs));
+        }
+        return make_pointer_add_expr(expr.loc, std::move(lhs), std::move(rhs));
+    }
+
     IrExprPtr check_binary(const Expr& expr, IrExprPtr lowered) {
         IrExprPtr lhs = check_expr(*expr_left(expr));
         IrExprPtr rhs = check_expr(*expr_right(expr));
         if (is_borrow_type(lhs->type) || is_borrow_type(rhs->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
+        }
+        if ((expr.op == TokenKind::Plus || expr.op == TokenKind::Minus) &&
+            is_raw_pointer_type(lhs->type)) {
+            return check_pointer_arithmetic_binary(expr, std::move(lhs), std::move(rhs));
+        }
+        if ((expr.op == TokenKind::Plus || expr.op == TokenKind::Minus) &&
+            is_raw_pointer_type(rhs->type)) {
+            fail(expr.loc, "raw pointer arithmetic expects the pointer on the left and an integer element offset on the right");
         }
         coerce_integer_binary_operands(*lhs, *rhs);
         coerce_float_binary_operands(*lhs, *rhs);

@@ -1121,8 +1121,11 @@ type.
 `ptr_offset(pointer, bytes)` performs byte-wise address arithmetic without
 loading from memory. `ptr_add(pointer, count)` performs typed pointer
 arithmetic, scaling by the current Ari layout size of `T` for `ptr T`; scalar
-and aggregate element types are supported. `size_of<T>()` and `align_of<T>()`
-return the current scalar or Ari-layout aggregate byte size/alignment as `i64`.
+and aggregate element types are supported. The operator forms
+`pointer + count` and `pointer - count` use the same typed element scale as
+`ptr_add`, while `ptr_offset` remains the explicit byte-wise operation.
+`size_of<T>()` and `align_of<T>()` return the current scalar or Ari-layout
+aggregate byte size/alignment as `i64`.
 Aggregate layout queries use field order, natural scalar alignment, array
 element stride padding, and final aggregate padding to the maximum field
 alignment. They are Ari layout queries, not a C ABI promise; use `@repr(C)`

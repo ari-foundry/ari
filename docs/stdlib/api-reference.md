@@ -1108,6 +1108,12 @@ mem::replace<T>(ref mut place, value)
 mem::swap<T>(ref mut left, ref mut right)
 ```
 
+For everyday raw-pointer code, prefer the operator spelling when it keeps the
+site readable: `pointer + count` and `pointer - count` are typed element
+offsets equivalent to `ptr_add`, while `*pointer` and `*pointer = value` are the
+load/store forms equivalent to `ptr_load` and `ptr_store`. Keep
+`ptr_offset(pointer, bytes)` for byte-wise address arithmetic.
+
 `copy_bytes`, `move_bytes`, and `set_bytes` operate on `ptr u8` and byte
 lengths. `copy_bytes` is for non-overlapping regions, `move_bytes` permits
 overlap, and `set_bytes` fills a region with one byte. They lower through LLVM

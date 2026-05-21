@@ -29,6 +29,11 @@ const IrExpr& zone_pointer_source_expr(const IrExpr& value) {
     if (value.kind == IrExprKind::Cast && ir_expr_operand(value)) {
         return zone_pointer_source_expr(*ir_expr_operand(value));
     }
+    if ((value.kind == IrExprKind::PointerAdd ||
+         value.kind == IrExprKind::PointerOffset) &&
+        ir_expr_operand(value)) {
+        return zone_pointer_source_expr(*ir_expr_operand(value));
+    }
     return value;
 }
 

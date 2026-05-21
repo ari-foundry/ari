@@ -11,6 +11,8 @@ Implemented now:
 
 - layout queries: `size_of<T>`, `align_of<T>`
 - raw pointer arithmetic: `ptr_offset<T>`, `ptr_add<T>`
+- raw pointer operators: `pointer + count`, `pointer - count`, `*pointer`,
+  and `*pointer = value`
 - raw pointer scalar/plain-aggregate access: `ptr_load<T>`, `ptr_store<T>`
 - byte memory routines: `copy_bytes`, `move_bytes`, `set_bytes`
 - hosted runtime page query: `page_size`
@@ -38,6 +40,21 @@ mem::replace<T>(target: ref mut T, value: T) -> T
 mem::swap<T>(left: ref mut T, right: ref mut T) -> void
 ```
 
+The helper functions remain part of the public API because explicit names are
+useful in generic library code, FFI glue, and tests that want to name the exact
+primitive. Ari code can also use the natural operator surface:
+
+```ari
+let second = values + 1;     // typed element offset, same scale as ptr_add
+let first = second - 1;      // typed element offset in the other direction
+let value = *first;          // same raw load as ptr_load(first)
+*second = value + 1;         // same raw store shape as ptr_store(second, ...)
+```
+
+Use `ptr_offset(pointer, bytes)` when the count is a byte count. `pointer + n`
+and `pointer - n` are typed pointer operations and scale by the layout size of
+the pointer element type.
+
 Root aliases exist for the long-standing layout and typed pointer helpers:
 `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`,
 `replace`, and `swap`. The byte routines stay under `mem::` so raw bulk memory
@@ -63,13 +80,13 @@ fn main() -> i64 {
   let target = zone::alloc_array<u8>(ref mut zone, 4);
 
   ptr_store(source, 'A');
-  ptr_store(ptr_add(source, 1), 'B');
-  ptr_store(ptr_add(source, 2), 'C');
-  ptr_store(ptr_add(source, 3), 'D');
+  *(source + 1) = 'B';
+  *(source + 2) = 'C';
+  ptr_store(source + 3, 'D');
 
   mem::set_bytes(target, 0u8, 4);
   mem::copy_bytes(target, source, 4);
-  mem::move_bytes(ptr_add(target, 1), target, 3);
+  mem::move_bytes(target + 1, target, 3);
 
   let first = ptr_load(target);
   let page = mem::page_size();
@@ -97,6 +114,11 @@ unless the surrounding API has a clear ownership and drop policy.
 - `tests/cases/standard-library/ok/mem/std-mem-byte-ops.ari` checks
   `copy_bytes`, `move_bytes`, `set_bytes`, overlapping move behavior, and LLVM
   intrinsic lowering.
+- `tests/cases/standard-library/ok/mem/std-mem-pointer-ops.ari` checks natural
+  pointer arithmetic and dereference operators beside the explicit `ptr_*`
+  helpers.
+- `tests/cases/standard-library/errors/mem/std-mem-pointer-op-after-reset.ari`
+  checks that pointer arithmetic preserves source zone provenance.
 - `tests/cases/standard-library/ok/mem/std-mem-page-size.ari` checks
   `page_size`, hosted runtime lowering, and basic page-size invariants.
 

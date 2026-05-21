@@ -1108,6 +1108,11 @@ check-prelude: $(TARGET)
 	grep -q '@llvm.memset.p0.i64' $(BUILD_DIR)/prelude/std-mem-byte-ops.ll
 	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-byte-ops.ari -o $(BUILD_DIR)/prelude/std-mem-byte-ops.elf
 	$(BUILD_DIR)/prelude/std-mem-byte-ops.elf; code=$$?; test $$code -eq 5
+	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-pointer-ops.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-pointer-ops.ll
+	grep -q 'getelementptr i64' $(BUILD_DIR)/prelude/std-mem-pointer-ops.ll
+	grep -q 'getelementptr i8' $(BUILD_DIR)/prelude/std-mem-pointer-ops.ll
+	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-pointer-ops.ari -o $(BUILD_DIR)/prelude/std-mem-pointer-ops.elf
+	$(BUILD_DIR)/prelude/std-mem-pointer-ops.elf; code=$$?; test $$code -eq 37
 	$(TARGET) tests/cases/standard-library/ok/mem/std-mem-page-size.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-page-size.ll
 	grep -q '@ari_builtin_mem_page_size' $(BUILD_DIR)/prelude/std-mem-page-size.ll
 	grep -q '@getpagesize' $(BUILD_DIR)/prelude/std-mem-page-size.ll
@@ -2243,6 +2248,8 @@ check-prelude: $(TARGET)
 	grep -q "std::mem::replace cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/prelude/std-mem-replace-own.err
 	if $(TARGET) tests/cases/standard-library/errors/mem/std-mem-swap-own.ari -o $(BUILD_DIR)/prelude/std-mem-swap-own.elf >$(BUILD_DIR)/prelude/std-mem-swap-own.err 2>&1; then exit 1; fi
 	grep -q "std::mem::swap cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/prelude/std-mem-swap-own.err
+	if $(TARGET) tests/cases/standard-library/errors/mem/std-mem-pointer-op-after-reset.ari -o $(BUILD_DIR)/prelude/std-mem-pointer-op-after-reset.elf >$(BUILD_DIR)/prelude/std-mem-pointer-op-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'shifted' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-mem-pointer-op-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-move-borrow-result.ari -o $(BUILD_DIR)/prelude/prelude-move-borrow-result.elf >$(BUILD_DIR)/prelude/prelude-move-borrow-result.err 2>&1; then exit 1; fi
 	grep -q "move cannot return borrow-valued expressions" $(BUILD_DIR)/prelude/prelude-move-borrow-result.err
 	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude/prelude-trait-without-std.ari -o $(BUILD_DIR)/prelude/prelude-trait-without-std.elf >$(BUILD_DIR)/prelude/prelude-trait-without-std.err 2>&1; then exit 1; fi

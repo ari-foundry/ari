@@ -1,0 +1,24 @@
+// check-stdlib/ok: pointer operators mirror the low-level ptr_* helper API.
+fn main() -> i64 {
+  var zone = zone::create(128);
+  let values = zone::alloc_array<i64>(ref mut zone, 4);
+
+  *values = 3;
+  *(values + 1) = 5;
+  ptr_store(values + 2, 7);
+  *(values + 3) = ptr_load(values + 2) + *(values + 1);
+
+  let last = values + 3;
+  let prior = last - 2;
+  let byte_shifted = ptr_offset(values as ptr u8, 8) as ptr i64;
+  let total =
+    *values +
+    *(values + 1) +
+    ptr_load(values + 2) +
+    *last +
+    *prior +
+    *byte_shifted;
+
+  zone::destroy(zone);
+  return total;
+}

@@ -1,0 +1,9 @@
+// check-stdlib/errors: pointer arithmetic keeps the source zone provenance.
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let data = zone::alloc_array<i64>(ref mut zone, 2);
+  let shifted = data + 1;
+
+  zone::reset(ref mut zone);
+  return *shifted;
+}
