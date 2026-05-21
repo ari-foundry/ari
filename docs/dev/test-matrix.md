@@ -474,6 +474,9 @@ Checklist:
       `contains_ignore_case` helpers with ASCII-only first-match search
 - [x] source `std::ascii` exposes `ParsedInt`, `parse_decimal_prefix`, and
       `parse_hex_prefix` for leading digit runs with consumed-byte counts
+- [x] source `std::ascii` decimal, signed decimal, and hexadecimal parsers
+      reject `i64` overflow without wrapping, including exact min/max boundary
+      coverage
 - [x] source `std::parse` exposes ASCII-trimmed whole-input `integer`,
       `integer_radix`, `hex_integer`, `binary_integer`, `octal_integer`,
       `boolean`, `is_float`, `float_or`, and `float` helpers with natural names

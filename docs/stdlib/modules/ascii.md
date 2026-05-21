@@ -109,8 +109,10 @@ they do not allocate or copy. `parse_decimal`, `parse_signed_decimal`, and
 `parse_hex` parse the entire slice and return `None<i64>()` for empty input or
 invalid bytes. `parse_signed_decimal` accepts one optional leading `+` or `-`
 and then requires at least one digit. These helpers do not trim whitespace;
-call `ascii::trim` first when that policy is wanted. Overflow behavior is not
-promised yet.
+call `ascii::trim` first when that policy is wanted. Decimal, signed decimal,
+and hexadecimal parsers return `None` instead of wrapping when the digit run
+exceeds the `i64` range. Signed decimal parsing accepts `-9223372036854775808`
+as the minimum `i64` value.
 
 `ParsedInt` is the result shape for prefix parsers:
 
@@ -125,7 +127,9 @@ parse the leading digit run and stop before the first invalid byte. They return
 `None<ParsedInt>()` when the first byte is missing or invalid. The signed
 prefix parser accepts one leading `+` or `-`, requires a digit after it, and
 counts the sign in `ParsedInt.len`. They do not trim whitespace, recognize
-`0x`, or promise overflow behavior yet.
+`0x`, or return partial values after overflow. A digit run that exceeds `i64`
+returns `None<ParsedInt>()` even when later bytes would otherwise stop the
+prefix parser.
 
 ## Example
 
@@ -173,6 +177,7 @@ tests/cases/standard-library/ok/ascii/std-ascii-class-helpers.ari
 tests/cases/standard-library/ok/ascii/std-ascii-slice-helpers.ari
 tests/cases/standard-library/ok/ascii/std-ascii-prefix-parsers.ari
 tests/cases/standard-library/ok/ascii/std-ascii-signed-parsers.ari
+tests/cases/standard-library/ok/ascii/std-ascii-overflow-parsers.ari
 tests/cases/standard-library/ok/ascii/std-ascii-case-compare.ari
 tests/cases/standard-library/ok/ascii/std-ascii-case-search.ari
 ```
@@ -187,7 +192,6 @@ The public API is tracked in `tests/std_api_manifest.txt` and checked by
 
 Potential next slices:
 
-- overflow-checked ASCII parsing after numeric overflow policy is documented
 - byte-window helpers after collection substring policy grows beyond
   first-match search
 - a separate text/Unicode module after Ari has a deliberate text policy

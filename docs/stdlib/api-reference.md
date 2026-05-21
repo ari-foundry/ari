@@ -2461,7 +2461,9 @@ either a byte offset or a borrowed sub-slice. `parse_decimal`,
 `Option[i64]`; empty input or invalid bytes return `None<i64>()`.
 `parse_signed_decimal` accepts one optional leading `+` or `-` and requires at
 least one digit after it. These parser helpers do not trim and do not define
-overflow behavior yet.
+wrapping overflow behavior: decimal, signed decimal, and hexadecimal digit runs
+that exceed `i64` return `None`. Signed decimal parsing accepts
+`-9223372036854775808` as the minimum `i64` value.
 
 `ParsedInt` carries `value: i64` and `len: i64` for prefix parser results.
 `parse_decimal_prefix`, `parse_signed_decimal_prefix`, and `parse_hex_prefix`
@@ -2469,7 +2471,8 @@ parse only the leading digit run, stop before the first invalid byte, and
 return `None<ParsedInt>()` when the first byte is empty or invalid.
 `parse_signed_decimal_prefix` accepts one optional leading sign and counts it
 in `len`. The prefix parsers do not trim or recognize hexadecimal prefixes
-such as `0x`.
+such as `0x`; a digit run that overflows `i64` returns `None<ParsedInt>()`
+instead of a partial wrapped value.
 
 ## Parsing
 

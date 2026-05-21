@@ -104,8 +104,8 @@ limits, examples, and test files for one module.
   `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,
   printable/control predicates, case conversion, borrowed-slice
-  case-insensitive comparison/search, trimming, and digit/prefix parsing
-  helpers.
+  case-insensitive comparison/search, trimming, and overflow-checked
+  digit/prefix parsing helpers.
 - [std::parse](parse.md): whole-input ASCII-trimmed decimal, radix, hex,
   binary, octal integer, bool, and decimal float parsers with natural
   validation/fallback helpers.

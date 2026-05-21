@@ -387,6 +387,8 @@ identifies the exact case:
   shape and consumed-byte behavior.
 - `std-ascii-signed-parsers.ari`: source `std::ascii` optional-sign decimal
   parser behavior for whole-slice and prefix forms.
+- `std-ascii-overflow-parsers.ari`: source `std::ascii` decimal, signed
+  decimal, and hexadecimal parser overflow rejection at `i64` boundaries.
 - `std-ascii-slice-helpers.ari`: source `std::ascii` borrowed-slice trimming
   and integer parsing behavior.
 - `std-bits-mask-helpers.ari`: source `std::bits` u64 mask and alignment

@@ -208,38 +208,87 @@ pub fn trim(values: std::Slice[u8]) -> std::Slice[u8] {
   return trim_end(trim_start(values));
 }
 
+fn append_decimal_digit(result: i64, digit: i64) -> std::Option[i64] {
+  if result > (std::math::max_value() - digit) / 10 {
+    return std::None<i64>();
+  }
+  return std::Some<i64>((result * 10) + digit);
+}
+
+fn append_negative_decimal_digit(result: i64, digit: i64) -> std::Option[i64] {
+  if result < (std::math::min_value() + digit) / 10 {
+    return std::None<i64>();
+  }
+  return std::Some<i64>((result * 10) - digit);
+}
+
+fn append_hex_digit(result: i64, digit: i64) -> std::Option[i64] {
+  if result > (std::math::max_value() - digit) / 16 {
+    return std::None<i64>();
+  }
+  return std::Some<i64>((result * 16) + digit);
+}
+
 // Whole-slice parsers reject empty or partial input so callers cannot
 // accidentally ignore trailing invalid bytes.
 pub fn parse_decimal(values: std::Slice[u8]) -> std::Option[i64] {
-  if values.len == 0 {
-    return std::None<i64>();
+  match parse_decimal_prefix(values) {
+    std::Some(parsed) => {
+      if parsed.len == values.len {
+        return std::Some<i64>(parsed.value);
+      }
+      return std::None<i64>();
+    }
+    std::None => {
+      return std::None<i64>();
+    }
   }
+}
 
+fn parse_negative_decimal_prefix(values: std::Slice[u8], offset: i64) -> std::Option[ParsedInt] {
   var result = 0;
-  var index = 0;
+  var index = offset;
   while index < values.len {
     match digit_value(values[index]) {
       std::Some(value) => {
-        result = (result * 10) + value;
+        match append_negative_decimal_digit(result, value) {
+          std::Some(updated) => {
+            result = updated;
+          }
+          std::None => {
+            return std::None<ParsedInt>();
+          }
+        }
       }
       std::None => {
-        return std::None<i64>();
+        if index == offset {
+          return std::None<ParsedInt>();
+        }
+        return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
       }
     }
     index = index + 1;
   }
-  return std::Some<i64>(result);
+  if index == offset {
+    return std::None<ParsedInt>();
+  }
+  return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
 }
 
-// Prefix parsers consume only the leading digit run and report how many bytes
-// were used, so parser code can continue from the next byte.
-pub fn parse_decimal_prefix(values: std::Slice[u8]) -> std::Option[ParsedInt] {
+fn parse_positive_decimal_prefix(values: std::Slice[u8]) -> std::Option[ParsedInt] {
   var result = 0;
   var index = 0;
   while index < values.len {
     match digit_value(values[index]) {
       std::Some(value) => {
-        result = (result * 10) + value;
+        match append_decimal_digit(result, value) {
+          std::Some(updated) => {
+            result = updated;
+          }
+          std::None => {
+            return std::None<ParsedInt>();
+          }
+        }
       }
       std::None => {
         if index == 0 {
@@ -256,39 +305,68 @@ pub fn parse_decimal_prefix(values: std::Slice[u8]) -> std::Option[ParsedInt] {
   return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
 }
 
+fn parse_positive_hex_prefix(values: std::Slice[u8]) -> std::Option[ParsedInt] {
+  var result = 0;
+  var index = 0;
+  while index < values.len {
+    match hex_value(values[index]) {
+      std::Some(value) => {
+        match append_hex_digit(result, value) {
+          std::Some(updated) => {
+            result = updated;
+          }
+          std::None => {
+            return std::None<ParsedInt>();
+          }
+        }
+      }
+      std::None => {
+        if index == 0 {
+          return std::None<ParsedInt>();
+        }
+        return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
+      }
+    }
+    index = index + 1;
+  }
+  if index == 0 {
+    return std::None<ParsedInt>();
+  }
+  return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
+}
+
+// Prefix parsers consume only the leading digit run and report how many bytes
+// were used, so parser code can continue from the next byte.
+pub fn parse_decimal_prefix(values: std::Slice[u8]) -> std::Option[ParsedInt] {
+  return parse_positive_decimal_prefix(values);
+}
+
 pub fn parse_signed_decimal_prefix(values: std::Slice[u8]) -> std::Option[ParsedInt] {
   if values.len == 0 {
     return std::None<ParsedInt>();
   }
 
-  var sign = 1;
-  var offset = 0;
   if values[0] == '-' {
-    sign = -1;
-    offset = 1;
-  } else if values[0] == '+' {
-    offset = 1;
+    return parse_negative_decimal_prefix(values, 1);
   }
-
-  if offset >= values.len {
-    return std::None<ParsedInt>();
-  }
-
-  let digits = std::Slice<u8> {
-    data: ptr_add(values.data, offset),
-    len: values.len - offset
-  };
-  match parse_decimal_prefix(digits) {
-    std::Some(parsed) => {
-      return std::Some<ParsedInt>(ParsedInt {
-        value: parsed.value * sign,
-        len: parsed.len + offset
-      });
-    }
-    std::None => {
-      return std::None<ParsedInt>();
+  if values[0] == '+' {
+    let digits = std::Slice<u8> {
+      data: ptr_add(values.data, 1),
+      len: values.len - 1
+    };
+    match parse_positive_decimal_prefix(digits) {
+      std::Some(parsed) => {
+        return std::Some<ParsedInt>(ParsedInt {
+          value: parsed.value,
+          len: parsed.len + 1
+        });
+      }
+      std::None => {
+        return std::None<ParsedInt>();
+      }
     }
   }
+  return parse_positive_decimal_prefix(values);
 }
 
 pub fn parse_signed_decimal(values: std::Slice[u8]) -> std::Option[i64] {
@@ -306,45 +384,19 @@ pub fn parse_signed_decimal(values: std::Slice[u8]) -> std::Option[i64] {
 }
 
 pub fn parse_hex(values: std::Slice[u8]) -> std::Option[i64] {
-  if values.len == 0 {
-    return std::None<i64>();
-  }
-
-  var result = 0;
-  var index = 0;
-  while index < values.len {
-    match hex_value(values[index]) {
-      std::Some(value) => {
-        result = (result * 16) + value;
+  match parse_hex_prefix(values) {
+    std::Some(parsed) => {
+      if parsed.len == values.len {
+        return std::Some<i64>(parsed.value);
       }
-      std::None => {
-        return std::None<i64>();
-      }
+      return std::None<i64>();
     }
-    index = index + 1;
+    std::None => {
+      return std::None<i64>();
+    }
   }
-  return std::Some<i64>(result);
 }
 
 pub fn parse_hex_prefix(values: std::Slice[u8]) -> std::Option[ParsedInt] {
-  var result = 0;
-  var index = 0;
-  while index < values.len {
-    match hex_value(values[index]) {
-      std::Some(value) => {
-        result = (result * 16) + value;
-      }
-      std::None => {
-        if index == 0 {
-          return std::None<ParsedInt>();
-        }
-        return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
-      }
-    }
-    index = index + 1;
-  }
-  if index == 0 {
-    return std::None<ParsedInt>();
-  }
-  return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
+  return parse_positive_hex_prefix(values);
 }

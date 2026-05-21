@@ -126,7 +126,9 @@ std-math-wrapping-overflowing.ari
 std-ascii-case-compare.ari
 std-ascii-case-search.ari
 std-ascii-class-helpers.ari
+std-ascii-overflow-parsers.ari
 std-ascii-prefix-parsers.ari
+std-ascii-signed-parsers.ari
 std-ascii-slice-helpers.ari
 std-bits-alignment-policy.ari
 std-bits-byte-population.ari

@@ -1,0 +1,83 @@
+// Covers overflow policy for ASCII integer parsers:
+// - decimal and hexadecimal parsers accept i64::MAX exactly.
+// - signed decimal parsing accepts i64::MIN exactly.
+// - whole and prefix parsers return None when the digit run exceeds i64.
+fn main() -> i64 {
+  var score = 0;
+  let max = std::math::max_value();
+  let min = std::math::min_value();
+
+  if ascii::parse_decimal("9223372036854775807").unwrap_or(0) == max {
+    score = score + 1;
+  }
+  if ascii::parse_decimal("9223372036854775808").is_none() {
+    score = score + 2;
+  }
+
+  match ascii::parse_decimal_prefix("9223372036854775807x") {
+    std::Some(parsed_max) => {
+      if parsed_max.value == max {
+        score = score + 4;
+      }
+      if parsed_max.len == 19 {
+        score = score + 8;
+      }
+    }
+    std::None => {}
+  }
+  if ascii::parse_decimal_prefix("9223372036854775808x").is_none() {
+    score = score + 16;
+  }
+
+  if ascii::parse_signed_decimal("-9223372036854775808").unwrap_or(0) == min {
+    score = score + 32;
+  }
+  if ascii::parse_signed_decimal("-9223372036854775809").is_none() {
+    score = score + 64;
+  }
+  if ascii::parse_signed_decimal("+9223372036854775807").unwrap_or(0) == max {
+    score = score + 128;
+  }
+  if ascii::parse_signed_decimal("+9223372036854775808").is_none() {
+    score = score + 256;
+  }
+
+  match ascii::parse_signed_decimal_prefix("-9223372036854775808x") {
+    std::Some(parsed_min) => {
+      if parsed_min.value == min {
+        score = score + 512;
+      }
+      if parsed_min.len == 20 {
+        score = score + 1024;
+      }
+    }
+    std::None => {}
+  }
+  if ascii::parse_signed_decimal_prefix("-9223372036854775809x").is_none() {
+    score = score + 2048;
+  }
+
+  if ascii::parse_hex("7fffffffffffffff").unwrap_or(0) == max {
+    score = score + 4096;
+  }
+  if ascii::parse_hex("8000000000000000").is_none() {
+    score = score + 8192;
+  }
+  match ascii::parse_hex_prefix("7fffffffffffffffx") {
+    std::Some(parsed_hex) => {
+      if parsed_hex.value == max {
+        score = score + 16384;
+      }
+      if parsed_hex.len == 16 {
+        score = score + 32768;
+      }
+    }
+    std::None => {}
+  }
+  if ascii::parse_hex_prefix("8000000000000000x").is_none() {
+    score = score + 65536;
+  }
+
+  assert_eq_i64(score, 131071);
+  return score % 256;
+}
