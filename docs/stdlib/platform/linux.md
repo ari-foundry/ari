@@ -18,8 +18,8 @@ Implemented now:
   `sysconf(_SC_NPROCESSORS_ONLN)` and clamps host failure to `1`.
 - `std::process` currently covers process id, user id, group id, explicit exit,
   explicit abort, POSIX `fork`/`wait`, and the first
-  `Command`/`Child`/`Output` builder over `fork`, `execvp`, `setenv`, `chdir`,
-  `pipe`, `dup2`, and `kill`.
+  `Command`/`Child`/`ExitStatus`/`Output` builder over `fork`, `waitpid`,
+  `execvp`, `setenv`, `chdir`, `pipe`, `dup2`, and `kill`.
 - `std::mem::page_size()` reports the hosted runtime page size for alignment
   and future mapping work.
 - `std::random::entropy()` and `std::random::fill(values)` use the hosted Linux
@@ -130,10 +130,10 @@ useful for modern systems work.
 | current process info | `std::process::id`, `uid`, `gid`, and `is_root` exist. | Add parent id, session/process-group helpers only with clear platform policy. |
 | exit/abort | `std::process::exit` and `abort` exist. | Document destructor/cleanup limits anywhere higher-level runtime teardown is added. |
 | spawn | `Command::spawn` is exposed through a portable-looking builder backed by POSIX `fork`/`execvp` today. | Add Windows mapping and decide stdin ownership before broadening the API. |
-| output capture | `Command::output_in(ref mut zone)` captures small child stdout/stderr into a zone-backed `Output` handle using `pipe(2)` and `dup2(2)`. | Add readiness or nonblocking draining before promising large-output capture, then add stdin redirection and richer status values. |
+| output capture | `Command::output_in(ref mut zone)` captures small child stdout/stderr into a zone-backed `Output` handle using `pipe(2)` and `dup2(2)`. | Add readiness or nonblocking draining before promising large-output capture, then add stdin redirection. |
 | fork | `std::process::fork` exists as a POSIX slice. | Keep marked as sharp; fork-with-threads and async-signal-safe limitations need more docs. |
 | exec | `Command::exec` replaces the current process after applying child setup. | Add richer setup policy and document noreturn behavior in more examples. |
-| wait | `std::process::wait`, `wait_result`, `Command::status`, and `Child::wait` cover normal child exit status. | Replace compact status-only reporting with a richer status/result value. |
+| wait | `std::process::wait_status_result`, `Command::exit_status`, and `Child::wait_status` preserve typed `ExitStatus` values for normal exits and signal termination. Compatibility `wait`, `wait_result`, `Command::status`, and `Child::wait` still expose normal exit codes. | Add richer platform-specific status fields and Windows mapping. |
 | kill | `process::kill`, `process::terminate`, `Child::kill`, and `Child::terminate` are exposed. | Add signal constants and more structured permission/error mapping. |
 | working directory | `std::env::current_dir`, `set_current_dir`, and `std::fs::try_canonicalize` exist. | Owned path values should wrap the existing `std::path`/`std::fs` split. |
 | daemon helpers | Not exposed. | Optional; should be policy-heavy and probably separate from core process APIs. |

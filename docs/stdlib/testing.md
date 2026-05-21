@@ -58,6 +58,7 @@ std-process-exit.ari
 std-process-abort.ari
 std-process-fork-wait.ari
 std-process-result.ari
+std-process-exit-status.ari
 std-process-command.ari
 std-process-output.ari
 std-thread-basic.ari

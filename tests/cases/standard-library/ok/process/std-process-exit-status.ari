@@ -1,0 +1,92 @@
+// Covers typed process exit status helpers. `status()` keeps the old i64 shape,
+// while `exit_status()` and `wait_status()` preserve signal termination.
+fn code_is(value: Option[i64], expected: i64) -> bool {
+  match value {
+    Some(code) => { return code == expected; }
+    None => { return false; }
+  }
+}
+
+fn is_none_i64(value: Option[i64]) -> bool {
+  match value {
+    Some(_) => { return false; }
+    None => { return true; }
+  }
+}
+
+fn status_ok(value: Result[process::ExitStatus, error::Error], expected: i64) -> bool {
+  match value {
+    Err(_) => { return false; }
+    Ok(status) => {
+      return status.exited()
+        && !status.signaled()
+        && code_is(status.code(), expected)
+        && status.code_or(-1) == expected
+        && status.signal_or(0) == 0
+        && status.is_success() == (expected == 0)
+        && status.is_failure() == (expected != 0);
+    }
+  }
+}
+
+fn signal_ok(value: Result[process::ExitStatus, error::Error], expected: i64) -> bool {
+  match value {
+    Err(_) => { return false; }
+    Ok(status) => {
+      return !status.exited()
+        && status.signaled()
+        && is_none_i64(status.code())
+        && status.code_or(99) == 99
+        && code_is(status.signal(), expected)
+        && status.signal_or(-1) == expected
+        && status.is_failure();
+    }
+  }
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  var zero_args = [process::arg("-c"), process::arg("exit 0")];
+  var zero_cmd = process::command_with_args("sh", zero_args.as_slice());
+  if status_ok(zero_cmd.exit_status(), 0) {
+    score = score + 11;
+  }
+
+  var exit_args = [process::arg("-c"), process::arg("exit 33")];
+  var exit_cmd = process::command_with_args("sh", exit_args.as_slice());
+  if status_ok(exit_cmd.exit_status(), 33) {
+    score = score + 13;
+  }
+
+  var spawn_args = [process::arg("-c"), process::arg("exit 9")];
+  var spawn_cmd = process::command_with_args("sh", spawn_args.as_slice());
+  match spawn_cmd.spawn() {
+    Err(_) => {}
+    Ok(child) => {
+      if status_ok(child.wait_status(), 9) {
+        score = score + 17;
+      }
+    }
+  }
+
+  var signal_args = [process::arg("-c"), process::arg("kill -TERM $$")];
+  var signal_cmd = process::command_with_args("sh", signal_args.as_slice());
+  if signal_ok(signal_cmd.exit_status(), 15) {
+    score = score + 19;
+  }
+
+  var old_args = [process::arg("-c"), process::arg("exit 7")];
+  var old_cmd = process::command_with_args("sh", old_args.as_slice());
+  match old_cmd.status() {
+    Ok(code) => {
+      if code == 7 {
+        score = score + 23;
+      }
+    }
+    Err(_) => {}
+  }
+
+  assert_eq_i64(score, 83);
+  return score;
+}

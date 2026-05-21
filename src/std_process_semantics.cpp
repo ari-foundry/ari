@@ -23,7 +23,7 @@ std::optional<std::size_t> std_process_output_zone_handle_source_field_index(con
     if (!is_std_process_output_zone_handle_type(type)) return std::nullopt;
     if (type.field_names.empty() && type.field_types.empty()) return 1;
     if (type.field_names.size() != 3 || type.field_types.size() != 3) return std::nullopt;
-    if (type.field_names[0] != "status_value" ||
+    if (type.field_names[0] != "raw_status_value" ||
         type.field_names[1] != "stdout_bytes" ||
         type.field_names[2] != "stderr_bytes") {
         return std::nullopt;

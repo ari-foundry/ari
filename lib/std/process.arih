@@ -29,6 +29,10 @@ pub struct Child {
   pid_value: i64,
 }
 
+pub struct ExitStatus {
+  raw_value: i64,
+}
+
 pub struct Command {
   program: std::c::CStr,
   mut arg_values: std::Slice[std::process::Arg],
@@ -37,7 +41,7 @@ pub struct Command {
 }
 
 pub struct Output {
-  status_value: i64,
+  raw_status_value: i64,
   mut stdout_bytes: std::vec::Vec[u8],
   mut stderr_bytes: std::vec::Vec[u8],
 }
@@ -105,6 +109,18 @@ fn pipe_error() -> std::error::Error {
   return std::error::new(std::error::Other);
 }
 
+fn exit_status_from_raw(raw_status: i64) -> std::process::ExitStatus {
+  return std::process::ExitStatus { raw_value: raw_status };
+}
+
+fn exit_code_from_raw(raw_status: i64) -> i64 {
+  return (raw_status / 256) & 255;
+}
+
+fn signal_from_raw(raw_status: i64) -> i64 {
+  return raw_status & 127;
+}
+
 pub fn fork_result() -> std::Result[i64, std::error::Error] {
   let raw = raw_fork();
   if raw < 0 {
@@ -113,20 +129,33 @@ pub fn fork_result() -> std::Result[i64, std::error::Error] {
   return std::Ok<i64, std::error::Error>(raw as i64);
 }
 
-pub fn wait_result(pid: i64) -> std::Result[i64, std::error::Error] {
+pub fn wait_status_result(pid: i64) -> std::Result[std::process::ExitStatus, std::error::Error] {
   var status = 0 as c_int;
   let waited = raw_waitpid(pid as c_int, (ref mut status) as ptr c_int, 0 as c_int);
   if waited <= 0 {
-    return std::Err<i64, std::error::Error>(std::c::error());
+    return std::Err<std::process::ExitStatus, std::error::Error>(std::c::error());
   }
+  return std::Ok<std::process::ExitStatus, std::error::Error>(
+    std::process::exit_status_from_raw(status as i64)
+  );
+}
 
-  let raw_status = status as i64;
-  let signal_bits = raw_status & 127;
-  if signal_bits != 0 {
-    return std::Err<i64, std::error::Error>(std::process::non_normal_exit_error());
+pub fn wait_result(pid: i64) -> std::Result[i64, std::error::Error] {
+  match std::process::wait_status_result(pid) {
+    std::Err(reason) => {
+      return std::Err<i64, std::error::Error>(reason);
+    }
+    std::Ok(status) => {
+      match status.code() {
+        std::Some(code) => {
+          return std::Ok<i64, std::error::Error>(code);
+        }
+        std::None => {
+          return std::Err<i64, std::error::Error>(std::process::non_normal_exit_error());
+        }
+      }
+    }
   }
-
-  return std::Ok<i64, std::error::Error>((raw_status / 256) & 255);
 }
 
 pub fn kill(pid: i64, signal: i64) -> std::Result[(), std::error::Error] {
@@ -207,13 +236,76 @@ fn redirect_descriptor(source: i64, target: i64) -> bool {
   return raw_dup2(source as c_int, target as c_int) >= 0;
 }
 
-pub impl std::process::Output {
-  fn status(self: ref Self) -> i64 {
-    return self.status_value;
+pub impl std::process::ExitStatus {
+  fn raw(self: ref Self) -> i64 {
+    return self.raw_value;
+  }
+
+  fn exited(self: ref Self) -> bool {
+    return std::process::signal_from_raw(self.raw_value) == 0;
+  }
+
+  fn signaled(self: ref Self) -> bool {
+    let signal = std::process::signal_from_raw(self.raw_value);
+    return signal != 0 && signal != 127;
+  }
+
+  fn code(self: ref Self) -> std::Option[i64] {
+    if self.exited() {
+      return std::Some<i64>(std::process::exit_code_from_raw(self.raw_value));
+    }
+    return std::None<i64>();
+  }
+
+  fn code_or(self: ref Self, fallback: i64) -> i64 {
+    match self.code() {
+      std::Some(code) => {
+        return code;
+      }
+      std::None => {
+        return fallback;
+      }
+    }
+  }
+
+  fn signal(self: ref Self) -> std::Option[i64] {
+    if self.signaled() {
+      return std::Some<i64>(std::process::signal_from_raw(self.raw_value));
+    }
+    return std::None<i64>();
+  }
+
+  fn signal_or(self: ref Self, fallback: i64) -> i64 {
+    match self.signal() {
+      std::Some(signal) => {
+        return signal;
+      }
+      std::None => {
+        return fallback;
+      }
+    }
   }
 
   fn is_success(self: ref Self) -> bool {
-    return std::process::is_success(self.status_value);
+    return self.code_or(-1) == std::process::success();
+  }
+
+  fn is_failure(self: ref Self) -> bool {
+    return !self.is_success();
+  }
+}
+
+pub impl std::process::Output {
+  fn status(self: ref Self) -> i64 {
+    return self.exit_status().code_or(-1);
+  }
+
+  fn is_success(self: ref Self) -> bool {
+    return self.exit_status().is_success();
+  }
+
+  fn exit_status(self: ref Self) -> std::process::ExitStatus {
+    return std::process::exit_status_from_raw(self.raw_status_value);
   }
 
   fn stdout(self: ref mut Self) -> std::Slice[u8] {
@@ -232,6 +324,10 @@ pub impl std::process::Child {
 
   fn wait(self: ref Self) -> std::Result[i64, std::error::Error] {
     return std::process::wait_result(self.pid_value);
+  }
+
+  fn wait_status(self: ref Self) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    return std::process::wait_status_result(self.pid_value);
   }
 
   fn kill(self: ref Self, signal: i64) -> std::Result[(), std::error::Error] {
@@ -293,12 +389,30 @@ pub impl std::process::Command {
   }
 
   fn status(self: ref Self) -> std::Result[i64, std::error::Error] {
-    match self.spawn() {
+    match self.exit_status() {
       std::Err(reason) => {
         return std::Err<i64, std::error::Error>(reason);
       }
+      std::Ok(status) => {
+        match status.code() {
+          std::Some(code) => {
+            return std::Ok<i64, std::error::Error>(code);
+          }
+          std::None => {
+            return std::Err<i64, std::error::Error>(std::process::non_normal_exit_error());
+          }
+        }
+      }
+    }
+  }
+
+  fn exit_status(self: ref Self) -> std::Result[std::process::ExitStatus, std::error::Error] {
+    match self.spawn() {
+      std::Err(reason) => {
+        return std::Err<std::process::ExitStatus, std::error::Error>(reason);
+      }
       std::Ok(child) => {
-        return child.wait();
+        return child.wait_status();
       }
     }
   }
@@ -361,13 +475,13 @@ pub impl std::process::Command {
         stdout_reader.close();
         stderr_reader.close();
 
-        match std::process::wait_result(pid) {
+        match std::process::wait_status_result(pid) {
           std::Err(wait_reason) => {
             return std::Err<std::process::Output, std::error::Error>(wait_reason);
           }
           std::Ok(status) => {
             return std::Ok<std::process::Output, std::error::Error>(std::process::Output {
-              status_value: status,
+              raw_status_value: status.raw(),
               stdout_bytes: stdout_bytes,
               stderr_bytes: stderr_bytes,
             });

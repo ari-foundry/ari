@@ -468,6 +468,7 @@ process::is_failure(code)
 process::is_root()
 process::fork_result()
 process::fork()
+process::wait_status_result(pid)
 process::wait_result(pid)
 process::wait(pid)
 process::is_child(pid)
@@ -488,16 +489,29 @@ Command::env(env_values)
 Command::current_dir(path)
 Command::spawn()
 Command::status()
+Command::exit_status()
 Command::output_in(zone)
 Command::exec()
 
+ExitStatus::raw()
+ExitStatus::exited()
+ExitStatus::signaled()
+ExitStatus::code()
+ExitStatus::code_or(fallback)
+ExitStatus::signal()
+ExitStatus::signal_or(fallback)
+ExitStatus::is_success()
+ExitStatus::is_failure()
+
 Output::status()
+Output::exit_status()
 Output::is_success()
 Output::stdout()
 Output::stderr()
 
 Child::pid()
 Child::wait()
+Child::wait_status()
 Child::kill(signal)
 Child::terminate()
 ```
@@ -509,19 +523,19 @@ current user and group ids. `is_root()` is the source convenience check for
 helpers are source functions for the common `0` success and `1` failure
 convention.
 
-`fork_result()` and `wait_result(pid)` are the preferred POSIX child-process
-helpers when failure matters. `fork_result()` returns `Ok(0)` in the child,
-`Ok(child_pid)` in the parent, or `Err(Error)` from the host `fork` failure.
-`wait_result(pid)` returns `Ok(exit_status)` for a normal child exit, maps host
-`waitpid` failures through `std::c::error()`, and reports non-normal child
-states as `Error(Other)` until richer status values exist.
+`fork_result()` and `wait_status_result(pid)` are the preferred POSIX
+child-process helpers when failure matters. `fork_result()` returns `Ok(0)` in
+the child, `Ok(child_pid)` in the parent, or `Err(Error)` from the host `fork`
+failure. `wait_status_result(pid)` returns a typed `ExitStatus`, maps host
+`waitpid` failures through `std::c::error()`, and preserves signal termination
+without flattening it into an `i64` sentinel. `wait_result(pid)` remains the
+convenient compatibility form for normal exit codes only.
 
 `fork()` and `wait(pid)` are the raw compatibility slice on the Linux/LLVM
 runtime path. `fork()` returns `0` in the child, a positive child pid in the
 parent, and a negative value on failure; use `is_child`, `is_parent`, and
 `is_fork_error` to make that branch readable. `wait(pid)` returns a normal
-child exit status or `-1`; use `is_wait_error` for that sentinel. Rich process
-status values remain roadmap work.
+child exit status or `-1`; use `is_wait_error` for that sentinel.
 
 `Command` is the higher-level child-process builder. Use `process::arg` for
 argv entries and `process::env_var` for child environment assignments:
@@ -532,10 +546,17 @@ var cmd = process::command_with_args("sh", args.as_slice());
 let status = cmd.status();
 ```
 
-`status()` spawns and waits. `spawn()` returns a `Child` handle. `exec()`
-replaces the current process on success and returns `Err(Error)` only if the
-host `execvp` path fails. `kill(pid, signal)` and `Child::kill(signal)` return
-`Result[(), Error]`; `terminate` sends `SIGTERM`.
+`status()` spawns and waits, returning a normal exit code for compatibility.
+`exit_status()` spawns and waits, returning the typed `ExitStatus` that can
+distinguish normal exit from signal termination. `spawn()` returns a `Child`
+handle. `exec()` replaces the current process on success and returns
+`Err(Error)` only if the host `execvp` path fails. `kill(pid, signal)` and
+`Child::kill(signal)` return `Result[(), Error]`; `terminate` sends `SIGTERM`.
+
+`ExitStatus::code()` returns `Some(code)` only for normal exits.
+`ExitStatus::signal()` returns `Some(signal)` only for signal termination.
+`code_or` and `signal_or` are convenience fallbacks for compact control flow,
+and `raw()` exposes the hosted wait-status bits for diagnostics.
 
 `output_in(zone)` is the first captured-output helper. It spawns the child with
 stdout and stderr redirected to pipes, waits for it, and returns an `Output`
@@ -548,11 +569,12 @@ var cmd = process::command_with_args("sh", args.as_slice());
 let result = cmd.output_in(ref mut zone);
 ```
 
-Use `Output::status()` for the exit code, `Output::is_success()` for the
-standard success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]`
-views. This slice is meant for small outputs today; large concurrent streams,
-stdin redirection, environment inheritance policy, portable Windows mapping,
-and richer `ExitStatus` values are still future process-library work.
+Use `Output::exit_status()` for typed status, `Output::status()` for the normal
+exit code compatibility accessor, `Output::is_success()` for the standard
+success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views. This
+slice is meant for small outputs today; large concurrent streams, stdin
+redirection, environment inheritance policy, portable Windows mapping, and
+platform-specific status detail are still future process-library work.
 
 ## OS Descriptor Views
 

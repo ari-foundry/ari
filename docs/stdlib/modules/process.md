@@ -5,7 +5,8 @@ child-process control. The implemented surface reads process identity values,
 terminates explicitly with `exit` or `abort`, uses natural status helper names
 in source Ari, and on the current Linux/LLVM path can fork/wait directly or use
 the first `Command` builder for `spawn`, `status`, `output_in`, `exec`, `kill`,
-environment setup, working-directory setup, and small stdout/stderr capture.
+environment setup, working-directory setup, typed `ExitStatus` inspection, and
+small stdout/stderr capture.
 
 ## Current API
 
@@ -22,6 +23,7 @@ process::is_failure(code)
 process::is_root()
 process::fork_result()
 process::fork()
+process::wait_status_result(pid)
 process::wait_result(pid)
 process::wait(pid)
 process::is_child(pid)
@@ -42,16 +44,29 @@ Command::env(env_values)
 Command::current_dir(path)
 Command::spawn()
 Command::status()
+Command::exit_status()
 Command::output_in(zone)
 Command::exec()
 
+ExitStatus::raw()
+ExitStatus::exited()
+ExitStatus::signaled()
+ExitStatus::code()
+ExitStatus::code_or(fallback)
+ExitStatus::signal()
+ExitStatus::signal_or(fallback)
+ExitStatus::is_success()
+ExitStatus::is_failure()
+
 Output::status()
+Output::exit_status()
 Output::is_success()
 Output::stdout()
 Output::stderr()
 
 Child::pid()
 Child::wait()
+Child::wait_status()
 Child::kill(signal)
 Child::terminate()
 ```
@@ -83,28 +98,35 @@ older raw host convention: `0` in the child, a positive child pid in the
 parent, or a negative value on failure. Use `is_child`, `is_parent`, and
 `is_fork_error` instead of spelling those comparisons at every call site.
 
-`wait_result(pid)` waits for a child process and returns `Ok(exit_status)` when
-the child exited normally. Host `waitpid` failures become `Err(std::c::error())`.
-If the child is observed in a non-normal state, the current source wrapper
-returns `Err(Error(Other))` until richer process status values exist.
-`wait(pid)` is the older raw compatibility helper; it returns the child's normal
-exit status or `-1`. Use `is_wait_error(status)` to make that sentinel explicit.
+`wait_status_result(pid)` waits for a child process and returns
+`Result[ExitStatus, Error]`. Host `waitpid` failures become
+`Err(std::c::error())`; normal exit and signal termination are represented in
+the returned `ExitStatus`. Use `ExitStatus::code()` for an optional normal exit
+code and `ExitStatus::signal()` for an optional terminating signal number.
+
+`wait_result(pid)` keeps the older convenient `Result[i64, Error]` shape: it
+returns `Ok(exit_code)` only for a normal child exit and reports non-normal child
+states as `Error(Other)`. `wait(pid)` is the raw compatibility helper; it returns
+the child's normal exit status or `-1`. Use `is_wait_error(status)` to make that
+sentinel explicit.
 
 `Command` is the first higher-level process builder. It stores the program,
 argument slice, child environment assignments, and child working directory.
-`status()` spawns the command, waits for it, and returns `Result[i64, Error]`.
-`spawn()` returns a `Child` handle with `pid`, `wait`, `kill`, and `terminate`
-methods. `exec()` applies the setup and replaces the current process with the
-program; if `execvp` returns, Ari reports the host error.
+`status()` spawns the command, waits for it, and returns `Result[i64, Error]`
+for compatibility with earlier tests. New code should prefer `exit_status()`
+when signal termination matters. `spawn()` returns a `Child` handle with `pid`,
+`wait`, `wait_status`, `kill`, and `terminate` methods. `exec()` applies the
+setup and replaces the current process with the program; if `execvp` returns,
+Ari reports the host error.
 
 `output_in(zone)` spawns the command with stdout and stderr redirected to
 temporary pipes, waits for the child, reads both streams into `Vec[u8]` values
-allocated in `zone`, and returns `Result[Output, Error]`. `Output::status()`
-reads the child exit status, `Output::is_success()` checks it against
-`process::success()`, and `Output::stdout()` / `Output::stderr()` expose
-borrowed `Slice[u8]` views over the captured bytes. The `_in` suffix is
-intentional: captured output owns buffers, so the caller chooses the allocation
-zone.
+allocated in `zone`, and returns `Result[Output, Error]`. `Output::exit_status()`
+returns the typed child status, `Output::status()` returns the normal exit code
+or `-1` for compatibility, `Output::is_success()` checks the typed status, and
+`Output::stdout()` / `Output::stderr()` expose borrowed `Slice[u8]` views over
+the captured bytes. The `_in` suffix is intentional: captured output owns
+buffers, so the caller chooses the allocation zone.
 
 Arguments use `process::arg("...")` rather than raw `string` slices so the
 builder can keep an executable-friendly C argv representation. Environment
@@ -229,27 +251,46 @@ fn main() -> i64 {
 }
 ```
 
+Typed exit status:
+
+```ari
+fn main() -> i64 {
+  var args = [process::arg("-c"), process::arg("kill -TERM $$")];
+  var cmd = process::command_with_args("sh", args.as_slice());
+
+  match cmd.exit_status() {
+    Err(_) => { return process::failure(); }
+    Ok(status) => {
+      if status.signaled() && status.signal_or(0) == 15 {
+        return process::success();
+      }
+      return process::failure();
+    }
+  }
+}
+```
+
 ## Current Limits
 
 - `uid`, `gid`, `fork`, `wait`, `Command`, and `kill` are POSIX-flavored hosted
   runtime hooks today. The API shape is intended to stay portable, but Windows
   mapping still needs a separate implementation.
-- `Command` currently supports `spawn`, `status`, `output_in`, `exec`,
-  arguments, environment assignments, working-directory setup, captured stdout
-  and stderr, and `Child` wait/kill helpers. `output_in` is intended for small
-  captured outputs today: large concurrent stdout/stderr streams need future
-  readiness/nonblocking draining to avoid pipe-buffer backpressure. Explicit
-  stdin redirection, inherited/cleared environment policies, and richer
-  process-status values are future work.
+- `Command` currently supports `spawn`, `status`, `exit_status`, `output_in`,
+  `exec`, arguments, environment assignments, working-directory setup, captured
+  stdout and stderr, typed status inspection, and `Child` wait/kill helpers.
+  `output_in` is intended for small captured outputs today: large concurrent
+  stdout/stderr streams need future readiness/nonblocking draining to avoid
+  pipe-buffer backpressure. Explicit stdin redirection, inherited/cleared
+  environment policies, and portable platform-specific status detail are future
+  work.
 - Exit runs through the host process immediately. Do not expect Ari destructors
   or zone cleanup to run after `process::exit`.
 - Abort also terminates immediately through the host runtime and should be
   treated as noreturn.
 - `wait(pid)` currently decodes only normal child exit statuses and returns
   `-1` for wait failures, signaled children, and other non-normal states.
-  `wait_result(pid)` preserves `Error` payloads for host `waitpid` failures,
-  but still reports non-normal child states as `Error(Other)` until the module
-  has a richer `ExitStatus`/signal model.
+  Prefer `wait_status_result(pid)` or `Child::wait_status()` when signal
+  termination matters.
 - `exec()` never returns on success. Use it only when replacing the current
   process is the desired behavior.
 - The API is intentionally not a raw syscall grab bag. Keep future process
@@ -267,6 +308,7 @@ tests/cases/standard-library/ok/process/std-process-exit.ari
 tests/cases/standard-library/ok/process/std-process-abort.ari
 tests/cases/standard-library/ok/process/std-process-fork-wait.ari
 tests/cases/standard-library/ok/process/std-process-result.ari
+tests/cases/standard-library/ok/process/std-process-exit-status.ari
 tests/cases/standard-library/ok/process/std-process-command.ari
 tests/cases/standard-library/ok/process/std-process-output.ari
 ```
@@ -275,7 +317,9 @@ tests/cases/standard-library/ok/process/std-process-output.ari
 the programs. The abort fixture compiles and runs only a non-aborting path while
 checking that the abort hook lowers to the host `abort` declaration. The command
 fixture covers argument passing, environment setup, working-directory setup,
-`status`, `spawn`, `Child::wait`, and non-destructive `kill(0)`. The output
-fixture covers small stdout/stderr capture, exit status accessors, and missing
-command status `127`. Public declarations are tracked in
+`status`, `spawn`, `Child::wait`, and non-destructive `kill(0)`. The typed-status
+fixture covers `ExitStatus`, `Command::exit_status`, `Child::wait_status`,
+normal exit codes, and signal termination. The output fixture covers small
+stdout/stderr capture, exit status accessors, and missing command status `127`.
+Public declarations are tracked in
 `tests/std_api_manifest.txt` and checked by `make check-std-api`.

@@ -890,6 +890,13 @@ check-prelude: $(TARGET)
 	grep -q "declare i32 @waitpid" $(BUILD_DIR)/prelude/std-process-result.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-result.ari -o $(BUILD_DIR)/prelude/std-process-result.elf
 	$(BUILD_DIR)/prelude/std-process-result.elf; code=$$?; test $$code -eq 142
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-exit-status.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	grep -F -q "std7process18wait_status_result" $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	grep -F -q "std__process__Command8inherent11exit_status" $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	grep -F -q "std__process__Child8inherent11wait_status" $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	grep -F -q "std__process__ExitStatus8inherent6signal" $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	$(TARGET) tests/cases/standard-library/ok/process/std-process-exit-status.ari -o $(BUILD_DIR)/prelude/std-process-exit-status.elf
+	$(BUILD_DIR)/prelude/std-process-exit-status.elf; code=$$?; test $$code -eq 83
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-command.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-command.ll
 	grep -F -q "std7process17command_with_args" $(BUILD_DIR)/prelude/std-process-command.ll
 	grep -F -q "std7process3arg" $(BUILD_DIR)/prelude/std-process-command.ll
@@ -915,6 +922,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-abort.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-abort.elf; $(BUILD_DIR)/prelude/std-process-abort.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-fork-wait.elf; $(BUILD_DIR)/prelude/std-process-fork-wait.elf; code=$$?; test $$code -eq 112; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-result.elf; $(BUILD_DIR)/prelude/std-process-result.elf; code=$$?; test $$code -eq 142; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-exit-status.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit-status.elf; $(BUILD_DIR)/prelude/std-process-exit-status.elf; code=$$?; test $$code -eq 83; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-command.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-command.elf; $(BUILD_DIR)/prelude/std-process-command.elf; code=$$?; test $$code -eq 138; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/process/std-process-output.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-output.elf; $(BUILD_DIR)/prelude/std-process-output.elf; code=$$?; test $$code -eq 112; fi
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-basic.ll
