@@ -220,6 +220,8 @@ identifies the exact case:
 - `std-path-basic.ari`: source `std::path` POSIX-style separator policy,
   absolute/relative checks, borrowed component views, join, and lightweight
   normalization behavior.
+- `std-path-predicates.ari`: source `std::path` allocation-free
+  final-component predicate helpers and `PathBytes` receiver wrappers.
 - `std-path-components.ari`: source `std::path::components` lazy borrowed
   iterator behavior for absolute paths, repeated separators, trailing
   separators, and root-only paths.

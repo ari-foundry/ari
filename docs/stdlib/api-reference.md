@@ -574,6 +574,9 @@ path::file_name(path)
 path::parent(path)
 path::extension(path)
 path::stem(path)
+path::has_file_name(path, expected)
+path::has_extension(path, expected)
+path::has_stem(path, expected)
 path::join_in(ref mut zone, base, child)
 path::normalize_in(ref mut zone, path)
 
@@ -588,6 +591,9 @@ path.file_name()
 path.parent()
 path.extension()
 path.stem()
+path.has_file_name(expected)
+path.has_extension(expected)
+path.has_stem(expected)
 path.join_in(ref mut zone, child)
 path.normalize_in(ref mut zone)
 ```
@@ -604,6 +610,9 @@ filesystem and platform policy.
 `std::string::OsStr` should be treated as a path rather than as generic bytes
 or validated text. When `PathBytes` is expected, a string literal can be used
 directly as a borrowed path-byte view.
+The `has_*` helpers are allocation-free predicates over `file_name`,
+`extension`, and `stem`; they return `false` when the corresponding view is
+absent.
 
 Thread helpers live in `std::thread`:
 
