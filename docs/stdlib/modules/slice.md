@@ -109,13 +109,21 @@ view.copy_from(source)
 view.partition(keep)
 view.dedup()
 view.sort()
+view.sort_by(less)
 view.stable_sort()
+view.stable_sort_by(less)
 view.is_sorted()
+view.is_sorted_by(less)
 view.binary_search(target)
+view.binary_search_by(target, less)
 view.lower_bound(target)
+view.lower_bound_by(target, less)
 view.upper_bound(target)
+view.upper_bound_by(target, less)
 view.min()
+view.min_by(less)
 view.max()
+view.max_by(less)
 ```
 
 These methods forward to `std::algo`, so the algorithm policy still lives in
@@ -126,7 +134,8 @@ returns the logical unique length; callers decide whether to truncate an owning
 container. `partition` accepts a borrowed predicate and returns the split index.
 `lower_bound` and `upper_bound` return sorted insertion indexes, which is useful
 when missing values should be inserted or duplicate ranges must be counted.
-The ordered methods require `T: std::cmp::Ord[T]`.
+The ordered methods require `T: std::cmp::Ord[T]`; the `*_by` methods take an
+explicit `fn(T, T) -> bool` less-than callback for temporary ordering policies.
 
 The free functions remain useful for generic utility code and for cases where
 the target/source role is clearer as `algo::copy(target, source)`.
@@ -138,6 +147,7 @@ Focused positive tests:
 ```text
 tests/cases/standard-library/ok/vec/prelude-slice-methods.ari
 tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
+tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari
 tests/cases/standard-library/ok/vec/prelude-slice-option-access.ari
 tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
 ```

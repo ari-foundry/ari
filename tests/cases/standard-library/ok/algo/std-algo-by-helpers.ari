@@ -1,0 +1,112 @@
+// Covers comparator-based std::algo helpers over values without an Ord impl.
+
+struct Score {
+  value: i64,
+  tie: i64,
+}
+
+fn score_less(left: Score, right: Score) -> bool {
+  if left.value < right.value {
+    return true;
+  }
+  if left.value > right.value {
+    return false;
+  }
+  return left.tie < right.tie;
+}
+
+fn score_value_less(left: Score, right: Score) -> bool {
+  return left.value < right.value;
+}
+
+fn main() -> i64 {
+  var values = [
+    Score { value: 3, tie: 0 },
+    Score { value: 1, tie: 0 },
+    Score { value: 2, tie: 5 },
+    Score { value: 2, tie: 1 }
+  ];
+
+  let view = values.as_slice();
+  assert(!algo::is_sorted_by<Score>(view, score_less));
+  algo::sort_by<Score>(view, score_less);
+  assert(algo::is_sorted_by<Score>(view, score_less));
+  assert_eq_i64(values[0].value, 1);
+  assert_eq_i64(values[1].tie, 1);
+  assert_eq_i64(values[2].tie, 5);
+  assert_eq_i64(values[3].value, 3);
+
+  assert_eq_i64(algo::binary_search_by<Score>(
+    view,
+    Score { value: 2, tie: 5 },
+    score_less).unwrap_or(-1), 2);
+  assert(algo::binary_search_by<Score>(
+    view,
+    Score { value: 9, tie: 0 },
+    score_less).is_none());
+  assert_eq_i64(algo::lower_bound_by<Score>(
+    view,
+    Score { value: 2, tie: 0 },
+    score_less), 1);
+  assert_eq_i64(algo::upper_bound_by<Score>(
+    view,
+    Score { value: 2, tie: 5 },
+    score_less), 3);
+
+  let low = algo::min_by<Score>(view, score_less).unwrap_or(Score { value: 0, tie: 0 });
+  let high = algo::max_by<Score>(view, score_less).unwrap_or(Score { value: 0, tie: 0 });
+  let clamped = algo::clamp_by<Score>(
+    Score { value: 4, tie: 0 },
+    Score { value: 1, tie: 0 },
+    Score { value: 3, tie: 0 },
+    score_less);
+  assert_eq_i64(low.value, 1);
+  assert_eq_i64(high.value, 3);
+  assert_eq_i64(clamped.value, 3);
+
+  var stable = [
+    Score { value: 2, tie: 20 },
+    Score { value: 1, tie: 10 },
+    Score { value: 2, tie: 21 }
+  ];
+  let stable_view = stable.as_slice();
+  stable_view.stable_sort_by(score_value_less);
+  assert(stable_view.is_sorted_by(score_value_less));
+  assert_eq_i64(stable[0].tie, 10);
+  assert_eq_i64(stable[1].tie, 20);
+  assert_eq_i64(stable[2].tie, 21);
+
+  assert_eq_i64(stable_view.binary_search_by(
+    Score { value: 2, tie: 99 },
+    score_value_less).unwrap_or(-1), 1);
+  assert_eq_i64(stable_view.lower_bound_by(
+    Score { value: 2, tie: 0 },
+    score_value_less), 1);
+  assert_eq_i64(stable_view.upper_bound_by(
+    Score { value: 2, tie: 0 },
+    score_value_less), 3);
+
+  var zone = zone::create(256);
+  var owned = std::vec::new<Score>(ref mut zone, 4);
+  owned.push(Score { value: 4, tie: 0 });
+  owned.push(Score { value: 2, tie: 0 });
+  owned.push(Score { value: 3, tie: 0 });
+  owned.sort_by(score_less);
+  assert(owned.is_sorted_by(score_less));
+  assert_eq_i64(owned.binary_search_by(
+    Score { value: 3, tie: 0 },
+    score_less).unwrap_or(-1), 1);
+  assert_eq_i64(owned.lower_bound_by(
+    Score { value: 3, tie: 0 },
+    score_less), 1);
+  assert_eq_i64(owned.upper_bound_by(
+    Score { value: 3, tie: 0 },
+    score_less), 2);
+  assert_eq_i64(owned.min_by(score_less).unwrap_or(Score { value: 0, tie: 0 }).value, 2);
+  assert_eq_i64(owned.max_by(score_less).unwrap_or(Score { value: 0, tie: 0 }).value, 4);
+  owned.stable_sort_by(score_value_less);
+  assert(owned.is_sorted_by(score_value_less));
+
+  zone::destroy(zone);
+  return 0;
+}

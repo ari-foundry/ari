@@ -192,6 +192,9 @@ identifies the exact case:
   comparator sort, binary search, lower/upper bounds, reverse/rotate,
   partition, min/max/clamp, swap, fill, copy, and dedup behavior over borrowed
   slices, including custom `Ord` values through natural ordering operators.
+- `std-algo-by-helpers.ari`: source `std::algo` comparator sortedness,
+  search/bounds, min/max/clamp, stable comparator ordering, and natural
+  `Slice`/`Vec` receiver wrappers over a custom value with no `Ord` impl.
 - `std-hash-basic.ari`: source `std::hash` deterministic `Hasher`
   construction/reset/finalization, byte-slice hashing, generic `Hash[T]`
   dispatch for primitive values, primitive write helpers, and the

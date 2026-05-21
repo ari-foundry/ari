@@ -20,29 +20,36 @@ algo::sort_by<T>(values, less)
 algo::stable_sort<T>(values)
 algo::stable_sort_by<T>(values, less)
 algo::binary_search<T>(values, target)
+algo::binary_search_by<T>(values, target, less)
 algo::lower_bound<T>(values, target)
+algo::lower_bound_by<T>(values, target, less)
 algo::upper_bound<T>(values, target)
+algo::upper_bound_by<T>(values, target, less)
 algo::is_sorted<T>(values)
+algo::is_sorted_by<T>(values, less)
 algo::reverse<T>(values)
 algo::rotate_left<T>(values, count)
 algo::rotate_right<T>(values, count)
 algo::partition<T>(values, keep)
 algo::min<T>(values)
+algo::min_by<T>(values, less)
 algo::max<T>(values)
+algo::max_by<T>(values, less)
 algo::clamp<T>(value, low, high)
+algo::clamp_by<T>(value, low, high, less)
 algo::swap<T>(values, left, right)
 algo::fill<T>(values, value)
 algo::copy<T>(target, source)
 algo::dedup<T>(values)
 ```
 
-`sort`, `stable_sort`, `binary_search`, `is_sorted`, `min`, `max`, and
-`clamp` use `cmp::Ord[T]`. Their source code uses ordinary `<`, `>`, and
-`<=` operators; for generic element types those operators dispatch to
-`Ord[T]::lt`. Define `impl cmp::Ord[YourType] for YourType` before using those
-helpers with a custom type. The `*_by` variants take an explicit comparator
-`fn(T, T) -> bool`, which is useful while trait-driven constructor and
-comparator inference are still young.
+`sort`, `stable_sort`, `binary_search`, `lower_bound`, `upper_bound`,
+`is_sorted`, `min`, `max`, and `clamp` use `cmp::Ord[T]`. Their source code
+uses ordinary `<`, `>`, and `<=` operators; for generic element types those
+operators dispatch to `Ord[T]::lt`. Define `impl cmp::Ord[YourType] for
+YourType` before using those helpers with a custom type. The `*_by` variants
+take an explicit comparator `fn(T, T) -> bool`, which is useful when a call
+site needs a temporary ordering policy rather than a type-wide `Ord` impl.
 
 `binary_search` returns `Option[i64]`: `Some(index)` when it finds an equal
 value under `Ord`, and `None` otherwise. `lower_bound` returns the first sorted
@@ -69,12 +76,12 @@ array or vector; use the returned length as the prefix boundary.
 | --- | --- |
 | sort | Current: `sort(values)` and `sort_by(values, less)` over slices. |
 | stable sort | Current: `stable_sort(values)` and `stable_sort_by(values, less)`. |
-| binary search | Current: `binary_search(values, target) -> Option[i64]`, `lower_bound(values, target) -> i64`, and `upper_bound(values, target) -> i64`. |
+| binary search | Current: `binary_search(values, target) -> Option[i64]`, `lower_bound(values, target) -> i64`, `upper_bound(values, target) -> i64`, and comparator `*_by` variants. |
 | reverse | Current: `reverse(values)`. |
 | rotate | Current: `rotate_left(values, count)` and `rotate_right(values, count)`. |
 | partition | Current: `partition(values, keep)` with borrowed predicates. |
-| min/max | Current: `min(values)` and `max(values)` return `Option[T]`. |
-| clamp | Current: `clamp(value, low, high)` delegates to `std::cmp`. |
+| min/max | Current: `min(values)` and `max(values)` return `Option[T]`; `min_by` and `max_by` take explicit comparators. |
+| clamp | Current: `clamp(value, low, high)` delegates to `std::cmp`; `clamp_by` delegates to comparator-based `std::cmp`. |
 | swap | Current: `swap(values, left, right)`. |
 | fill | Current: `fill(values, value)`. |
 | copy | Current: `copy(target, source) -> copied_count`. |
@@ -142,13 +149,17 @@ algo::fill<i64>(target.as_slice()[copied..target.len()], -1);
 
 ```text
 tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari
+tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari
 tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
 ```
 
 The focused test covers sorting, stable sorting, comparator-based sorting,
 binary search, lower/upper bounds, min/max/clamp, reverse, rotation, partition,
-fill, copy, dedup, and swap over `Slice[i64]`. `prelude-slice-sequence.ari`
-covers the natural receiver wrappers over the same algorithms.
+fill, copy, dedup, and swap over `Slice[i64]`. `std-algo-by-helpers.ari`
+covers comparator search, bounds, min/max/clamp, and natural `Slice`/`Vec`
+receiver wrappers over a custom value with no `Ord` impl.
+`prelude-slice-sequence.ari` covers the ordered receiver wrappers over the same
+algorithms.
 
 ## Next Work
 

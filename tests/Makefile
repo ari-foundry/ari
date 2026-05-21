@@ -878,6 +878,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf
 	$(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 12
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 12; fi
+	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
+	grep -F -q 'std4algo21is_sorted_by__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
+	grep -F -q 'std4algo25binary_search_by__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
+	grep -F -q 'std4algo17clamp_by__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari -o $(BUILD_DIR)/prelude/std-algo-by-helpers.elf
+	$(BUILD_DIR)/prelude/std-algo-by-helpers.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-hash-basic.ll
 	grep -F -q 'std4hash3new' $(BUILD_DIR)/prelude/std-hash-basic.ll
 	grep -F -q 'std4hash12value__G_i64' $(BUILD_DIR)/prelude/std-hash-basic.ll

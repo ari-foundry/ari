@@ -159,13 +159,21 @@ vec.reverse()
 vec.rotate_left(count)
 vec.rotate_right(count)
 vec.sort()
+vec.sort_by(less)
 vec.stable_sort()
+vec.stable_sort_by(less)
 vec.is_sorted()
+vec.is_sorted_by(less)
 vec.binary_search(value)
+vec.binary_search_by(value, less)
 vec.lower_bound(value)
+vec.lower_bound_by(value, less)
 vec.upper_bound(value)
+vec.upper_bound_by(value, less)
 vec.min()
+vec.min_by(less)
 vec.max()
+vec.max_by(less)
 vec.as_slice()
 vec.as_ptr()
 vec.as_mut_ptr()
@@ -177,7 +185,9 @@ yield borrowed `Slice[T]` views, so they do not allocate. `reverse`, the
 rotation helpers, `sort`, and `stable_sort` mutate the existing storage in
 place through the same algorithm module helpers used for borrowed slices.
 `is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `min`, and `max`
-are available when `T` implements `Ord[T]`. The bound helpers return sorted
+are available when `T` implements `Ord[T]`. The `*_by` variants take an
+explicit `fn(T, T) -> bool` less-than callback when a vector needs a temporary
+ordering policy without a type-wide `Ord` impl. The bound helpers return sorted
 insertion indexes, making them useful for keeping a vector sorted after a
 lookup miss. `as_slice` is the whole-vector view. The pointer helpers preserve
 zone provenance in the checker.

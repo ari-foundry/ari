@@ -129,6 +129,48 @@ pub impl[T] std::Slice[T] {
     let current = super::Slice<T> { data: self.data, len: self.len };
     return std::algo::dedup<T>(current);
   }
+
+  fn sort_by(self: ref Self, less: fn(T, T) -> bool) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::sort_by<T>(current, less);
+    return;
+  }
+
+  fn stable_sort_by(self: ref Self, less: fn(T, T) -> bool) -> void {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    std::algo::stable_sort_by<T>(current, less);
+    return;
+  }
+
+  fn is_sorted_by(self: ref Self, less: fn(T, T) -> bool) -> bool {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::is_sorted_by<T>(current, less);
+  }
+
+  fn binary_search_by(self: ref Self, target: T, less: fn(T, T) -> bool) -> super::Option[i64] {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::binary_search_by<T>(current, target, less);
+  }
+
+  fn lower_bound_by(self: ref Self, target: T, less: fn(T, T) -> bool) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::lower_bound_by<T>(current, target, less);
+  }
+
+  fn upper_bound_by(self: ref Self, target: T, less: fn(T, T) -> bool) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::upper_bound_by<T>(current, target, less);
+  }
+
+  fn min_by(self: ref Self, less: fn(T, T) -> bool) -> super::Option[T] {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::min_by<T>(current, less);
+  }
+
+  fn max_by(self: ref Self, less: fn(T, T) -> bool) -> super::Option[T] {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::max_by<T>(current, less);
+  }
 }
 
 pub impl[T: std::cmp::Ord[T]] std::Slice[T] {
@@ -606,6 +648,48 @@ pub impl[T: std::cmp::Ord[T]] std::vec::Vec[T] {
   fn max(self: ref Self) -> super::Option[T] {
     let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
     return std::algo::max<T>(view);
+  }
+}
+
+pub impl[T] std::vec::Vec[T] {
+  fn sort_by(self: ref mut Self, less: fn(T, T) -> bool) -> void {
+    std::algo::sort_by<T>(self.as_slice(), less);
+    return;
+  }
+
+  fn stable_sort_by(self: ref mut Self, less: fn(T, T) -> bool) -> void {
+    std::algo::stable_sort_by<T>(self.as_slice(), less);
+    return;
+  }
+
+  fn is_sorted_by(self: ref Self, less: fn(T, T) -> bool) -> bool {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::is_sorted_by<T>(view, less);
+  }
+
+  fn binary_search_by(self: ref Self, target: T, less: fn(T, T) -> bool) -> super::Option[i64] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::binary_search_by<T>(view, target, less);
+  }
+
+  fn lower_bound_by(self: ref Self, target: T, less: fn(T, T) -> bool) -> i64 {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::lower_bound_by<T>(view, target, less);
+  }
+
+  fn upper_bound_by(self: ref Self, target: T, less: fn(T, T) -> bool) -> i64 {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::upper_bound_by<T>(view, target, less);
+  }
+
+  fn min_by(self: ref Self, less: fn(T, T) -> bool) -> super::Option[T] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::min_by<T>(view, less);
+  }
+
+  fn max_by(self: ref Self, less: fn(T, T) -> bool) -> super::Option[T] {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::max_by<T>(view, less);
   }
 }
 
