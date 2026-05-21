@@ -1304,6 +1304,64 @@ fn tree_map_find_slot[K, V](map: ref std::collections::TreeMap[K, V], key: K) ->
   return -1;
 }
 
+fn tree_map_find_slot_mut[K, V](map: ref mut std::collections::TreeMap[K, V], key: K) -> i64 {
+  let less = map.less;
+  var node = map.root;
+  while node >= 0 {
+    let node_key = ptr_load(ptr_add(map.keys, node));
+    if less(key, node_key) {
+      node = ptr_load(ptr_add(map.left, node));
+    } else if less(node_key, key) {
+      node = ptr_load(ptr_add(map.right, node));
+    } else {
+      return node;
+    }
+  }
+  return -1;
+}
+
+fn tree_map_link_existing_node[K, V](map: ref mut std::collections::TreeMap[K, V], index: i64) -> void {
+  let less = map.less;
+  var parent = -1;
+  var node = map.root;
+  var place_left = false;
+  let key = ptr_load(ptr_add(map.keys, index));
+  ptr_store(ptr_add(map.left, index), -1);
+  ptr_store(ptr_add(map.right, index), -1);
+  ptr_store(ptr_add(map.parent, index), -1);
+  ptr_store(ptr_add(map.colors, index), 1);
+  while node >= 0 {
+    parent = node;
+    let node_key = ptr_load(ptr_add(map.keys, node));
+    if less(key, node_key) {
+      node = ptr_load(ptr_add(map.left, node));
+      place_left = true;
+    } else {
+      node = ptr_load(ptr_add(map.right, node));
+      place_left = false;
+    }
+  }
+  ptr_store(ptr_add(map.parent, index), parent);
+  if parent < 0 {
+    map.root = index;
+  } else if place_left {
+    ptr_store(ptr_add(map.left, parent), index);
+  } else {
+    ptr_store(ptr_add(map.right, parent), index);
+  }
+  tree_map_fix_insert<K, V>(map, index);
+}
+
+fn tree_map_rebuild_links[K, V](map: ref mut std::collections::TreeMap[K, V]) -> void {
+  let count = map.len;
+  map.root = -1;
+  var index = 0;
+  while index < count {
+    tree_map_link_existing_node<K, V>(map, index);
+    index = index + 1;
+  }
+}
+
 fn tree_first_node(root: i64, left: ptr i64) -> i64 {
   var node = root;
   if node < 0 {
@@ -1552,6 +1610,24 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     return std::None<V>();
   }
 
+  fn remove(self: ref mut Self, key: K) -> std::Option[V] {
+    let index = tree_map_find_slot_mut<K, V>(self, key);
+    if index < 0 {
+      return std::None<V>();
+    }
+    let removed_key = ptr_load(ptr_add(self.keys, index));
+    let removed_value = ptr_load(ptr_add(self.values, index));
+    let last = self.len - 1;
+    if index != last {
+      ptr_store(ptr_add(self.keys, index), ptr_load(ptr_add(self.keys, last)));
+      ptr_store(ptr_add(self.values, index), ptr_load(ptr_add(self.values, last)));
+    }
+    drop removed_key;
+    self.len = last;
+    tree_map_rebuild_links<K, V>(self);
+    return std::Some<V>(removed_value);
+  }
+
   fn clear(self: ref mut Self) -> void {
     tree_map_drop_values<K, V>(self);
   }
@@ -1773,6 +1849,48 @@ fn tree_set_find_slot_mut[T](set: ref mut std::collections::TreeSet[T], value: T
   return -1;
 }
 
+fn tree_set_link_existing_node[T](set: ref mut std::collections::TreeSet[T], index: i64) -> void {
+  let less = set.less;
+  var parent = -1;
+  var node = set.root;
+  var place_left = false;
+  let value = ptr_load(ptr_add(set.data, index));
+  ptr_store(ptr_add(set.left, index), -1);
+  ptr_store(ptr_add(set.right, index), -1);
+  ptr_store(ptr_add(set.parent, index), -1);
+  ptr_store(ptr_add(set.colors, index), 1);
+  while node >= 0 {
+    parent = node;
+    let node_value = ptr_load(ptr_add(set.data, node));
+    if less(value, node_value) {
+      node = ptr_load(ptr_add(set.left, node));
+      place_left = true;
+    } else {
+      node = ptr_load(ptr_add(set.right, node));
+      place_left = false;
+    }
+  }
+  ptr_store(ptr_add(set.parent, index), parent);
+  if parent < 0 {
+    set.root = index;
+  } else if place_left {
+    ptr_store(ptr_add(set.left, parent), index);
+  } else {
+    ptr_store(ptr_add(set.right, parent), index);
+  }
+  tree_set_fix_insert<T>(set, index);
+}
+
+fn tree_set_rebuild_links[T](set: ref mut std::collections::TreeSet[T]) -> void {
+  let count = set.len;
+  set.root = -1;
+  var index = 0;
+  while index < count {
+    tree_set_link_existing_node<T>(set, index);
+    index = index + 1;
+  }
+}
+
 fn tree_set_grow_to_capacity[T](
   set: ref mut std::collections::TreeSet[T],
   zone: ref mut Zone,
@@ -1943,6 +2061,34 @@ pub impl[T] std::collections::TreeSet[T] {
     self.len = self.len + 1;
     tree_set_fix_insert<T>(self, index);
     return true;
+  }
+
+  fn take(self: ref mut Self, value: T) -> std::Option[T] {
+    let index = tree_set_find_slot_mut<T>(self, value);
+    if index < 0 {
+      return std::None<T>();
+    }
+    let removed = ptr_load(ptr_add(self.data, index));
+    let last = self.len - 1;
+    if index != last {
+      ptr_store(ptr_add(self.data, index), ptr_load(ptr_add(self.data, last)));
+    }
+    self.len = last;
+    tree_set_rebuild_links<T>(self);
+    return std::Some<T>(removed);
+  }
+
+  fn remove(self: ref mut Self, value: T) -> bool {
+    let removed = self.take(value);
+    match removed {
+      std::Some(payload) => {
+        drop payload;
+        return true;
+      }
+      std::None => {
+        return false;
+      }
+    }
   }
 
   fn replace(self: ref mut Self, zone: ref mut Zone, value: T) -> std::Option[T] {

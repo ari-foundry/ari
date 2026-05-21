@@ -311,6 +311,7 @@ map.try_last_value()
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
+map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.keys()
@@ -326,7 +327,9 @@ yields values in the same key-sorted order. `first_key`,
 `last_key`, `first_value`, and `last_value` assert when the tree is empty;
 use the `try_*` forms for empty-safe boundary access. `entries` yields
 `MapEntry[K, V]` values with `.key` and `.value` fields in the same sorted key
-order.
+order. `remove` returns the removed value as `Option[V]`; the current
+implementation compacts the live node arrays and rebuilds tree links in place,
+so removal does not allocate through a zone.
 
 ```ari
 set.len()
@@ -343,6 +346,8 @@ set.is_superset(ref other)
 set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
+set.take(value)
+set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
 set.iter()
@@ -353,9 +358,11 @@ returns the previous equal value or inserts a new one. `equals`, `is_subset`,
 `is_superset`, and `is_disjoint` compare ordered-set membership, not the
 internal tree shape. `first` and `last` read the smallest and largest values
 in comparator order and assert when the tree is empty; use `try_first` and
-`try_last` when emptiness is ordinary control flow. `TreeSet.iter()` yields
-values in ascending comparator order, and `TreeSet[T]` implements
-`IntoIterator[T]`.
+`try_last` when emptiness is ordinary control flow. `take` moves a removed
+value out as `Option[T]`; `remove` drops the removed value and returns whether
+anything was removed. Tree-set removal also compacts live nodes and rebuilds
+links in place without allocating. `TreeSet.iter()` yields values in ascending
+comparator order, and `TreeSet[T]` implements `IntoIterator[T]`.
 
 ## BinaryHeap And PriorityQueue
 
@@ -444,6 +451,7 @@ tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari
 tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari
+tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
 tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari
@@ -494,6 +502,9 @@ for hash live buckets after a tombstone and for tree map values independent of
 key order. `std-collections-tree.ari` inserts mixed key order to exercise
 red-black rotations. `std-collections-tree-boundaries.ari` checks empty-safe
 and asserting ordered boundary access for tree maps and sets.
+`std-collections-tree-remove.ari` removes root/internal tree nodes, checks
+missing-removal paths, and verifies sorted entries/boundaries after link
+rebuild.
 `std-collections-tree-set-relations.ari` inserts the same values in different
 orders to verify relationship predicates are membership-based, while
 `std-collections-tree-iter.ari` checks sorted successor traversal.
@@ -522,9 +533,9 @@ and checked by `make check-std-api`.
   dispatch is ready.
 - Tree containers require an explicit comparator. The future API should use
   `Ord` when generic trait dispatch is strong enough.
-- Tree removal is not implemented in this slice. It should land with focused
-  red-black deletion tests before `TreeMap.remove` or `TreeSet.take` become
-  public.
+- Tree removal compacts live storage and rebuilds links in place. A future
+  direct red-black deletion path can improve asymptotic removal cost without
+  changing the public API.
 - `LinkedList[T]` is zone-backed index storage rather than one allocation per
   node. Spare node storage is reused by the list and reclaimed with the zone.
 - `BinaryHeap[T]` and `PriorityQueue[T]` require an explicit comparator until

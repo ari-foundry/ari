@@ -1,0 +1,67 @@
+// Covers TreeMap.remove plus TreeSet.take/remove. Deletion compacts the live
+// arrays and rebuilds tree links in place, so the test checks lookups and
+// sorted iteration after removing root/internal nodes.
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var score = 0;
+
+  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  map.insert(ref mut zone, 4, 40);
+  map.insert(ref mut zone, 2, 20);
+  map.insert(ref mut zone, 8, 80);
+  map.insert(ref mut zone, 1, 10);
+  map.insert(ref mut zone, 3, 30);
+  map.insert(ref mut zone, 6, 60);
+
+  if map.remove(2).unwrap_or(0) == 20 {
+    score = score + 3;
+  }
+  if !map.contains_key(2) && map.contains_key(3) {
+    score = score + 5;
+  }
+  if map.remove(9).is_none() {
+    score = score + 7;
+  }
+  if map.remove(4).unwrap_or(0) == 40 {
+    score = score + 11;
+  }
+  if map.first_key() == 1 && map.last_key() == 8 {
+    score = score + 13;
+  }
+
+  var entries = map.entries();
+  let first = entries.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  let second = entries.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  let third = entries.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  let fourth = entries.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  if first.key == 1 && second.key == 3 && third.key == 6 && fourth.key == 8 &&
+     entries.next().is_none() {
+    score = score + 17;
+  }
+
+  var set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  set.insert(ref mut zone, 5);
+  set.insert(ref mut zone, 2);
+  set.insert(ref mut zone, 8);
+  set.insert(ref mut zone, 1);
+  set.insert(ref mut zone, 3);
+
+  if set.take(2).unwrap_or(0) == 2 {
+    score = score + 19;
+  }
+  if !set.contains(2) && set.contains(3) {
+    score = score + 23;
+  }
+  if set.remove(5) {
+    score = score + 29;
+  }
+  if !set.remove(9) {
+    score = score + 31;
+  }
+  if set.first() == 1 && set.last() == 8 {
+    score = score + 37;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

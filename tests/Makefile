@@ -85,6 +85,8 @@ check-compiler-artifacts: $(TARGET)
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-diagnostic-catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog
+	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-capability-inventory $(BUILD_DIR)/compiler-development/artifact/capability-inventory.inventory
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/capability-inventory.inventory $(BUILD_DIR)/compiler-development/artifact/capability-inventory.inventory
 	$(TARGET) tests/cases/modules/ok/file-module-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-source-map $(BUILD_DIR)/compiler-development/artifact/source-map-file-module.map
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/source-map-file-module.map $(BUILD_DIR)/compiler-development/artifact/source-map-file-module.map
 	$(TARGET) tests/cases/modules/ok/file-module-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
@@ -1584,6 +1586,12 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent8try_last' $(BUILD_DIR)/prelude/std-collections-tree-boundaries.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari -o $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf
 	$(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; code=$$?; test $$code -eq 238
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
+	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent6remove' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
+	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
+	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent6remove' $(BUILD_DIR)/prelude/std-collections-tree-remove.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari -o $(BUILD_DIR)/prelude/std-collections-tree-remove.elf
+	$(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 195
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent6equals' $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent9is_subset' $(BUILD_DIR)/prelude/std-collections-tree-set-relations.ll
@@ -1864,6 +1872,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; code=$$?; test $$code -eq 90; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree.elf; $(BUILD_DIR)/prelude/std-collections-tree.elf; code=$$?; test $$code -eq 159; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-boundaries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; $(BUILD_DIR)/prelude/std-collections-tree-boundaries.elf; code=$$?; test $$code -eq 238; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 195; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 39; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-deque.elf; $(BUILD_DIR)/prelude/std-collections-deque.elf; code=$$?; test $$code -eq 42; fi

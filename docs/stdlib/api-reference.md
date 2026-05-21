@@ -1529,6 +1529,7 @@ map.try_last_value()
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
+map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
 map.keys()
@@ -1541,12 +1542,18 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.first()
+set.try_first()
+set.last()
+set.try_last()
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
 set.is_disjoint(ref other)
 set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
+set.take(value)
+set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
 set.iter()
@@ -1555,12 +1562,15 @@ set.iter()
 `TreeMap.contains_key(key)` is the preferred key-membership spelling;
 `TreeMap.contains(key)` remains available for compatibility.
 `TreeMap.contains_value(value)` scans stored values without using key order.
-`TreeMap` boundary methods read the smallest or largest key and the value
-attached to that key in comparator order; use the `try_*` forms when an empty
-tree is a normal case. `TreeSet` relationship methods compare ordered-set
-membership, not internal tree shape. `TreeSet.first()` and `TreeSet.last()`
-read the smallest and largest values, with `try_first` and `try_last` for
-empty-safe access. `TreeMap.keys()`, `TreeMap.values()`, `TreeMap.entries()`,
+`TreeMap.remove(key)` returns `Option[V]` and rebuilds links in place after
+compacting live storage. `TreeMap` boundary methods read the smallest or
+largest key and the value attached to that key in comparator order; use the
+`try_*` forms when an empty tree is a normal case. `TreeSet` relationship
+methods compare ordered-set membership, not internal tree shape.
+`TreeSet.first()` and `TreeSet.last()` read the smallest and largest values,
+with `try_first` and `try_last` for empty-safe access. `TreeSet.take(value)`
+returns the removed value as `Option[T]`; `TreeSet.remove(value)` drops it and
+returns a boolean. `TreeMap.keys()`, `TreeMap.values()`, `TreeMap.entries()`,
 `TreeSet.iter()`, and direct `for value in tree_set` walk values in ascending
 comparator order.
 

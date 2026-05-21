@@ -60,7 +60,7 @@ API evolution.
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `slice`, `split_at`, `find`, `contains_slice`, `compare`, `chunks`, `windows`, `split`, `reverse`, `rotate_left`, `rotate_right`, `sort`, `stable_sort`, `is_sorted`, `binary_search`, `min`, `max`, `as_slice`, `iter`. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers. |
 | `std::random` | OS entropy and deterministic non-cryptographic PRNG helpers. | `Prng`, `entropy`, `fill`, `seed`, `from_entropy`, `seed_from_os`, `next`, `boolean`, unbiased `below`/`try_below`, unbiased `range`/`try_range`, `float`, `fill_from`, `shuffle`. |
-| `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]` with insertion-order access and set-relationship predicates, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]` with natural `contains_key`/`contains_value` map lookup, entry iteration, and live-bucket set relationships, red-black-tree `TreeMap[K,V]`/`TreeSet[T]` with natural `contains_key`/`contains_value` map lookup, sorted entry iteration, ordered boundary access, and ordered-set relationships, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
+| `std::collections` | Source collection handles beyond sequences. | Linear `Set[T]` with insertion-order access and set-relationship predicates, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]` with natural `contains_key`/`contains_value` map lookup, entry iteration, and live-bucket set relationships, red-black-tree `TreeMap[K,V]`/`TreeSet[T]` with natural `contains_key`/`contains_value` map lookup, sorted entry iteration, ordered boundary access, link-rebuild removal, and ordered-set relationships, explicit hash/comparator constructors, lookup, insertion, replacement, removal, reserve, clear, FIFO/linked/heap iteration where applicable, live-bucket hash iteration, and sorted tree iteration. |
 | `std::iter` | Range, iterator traits, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `fold`, `reduce`, `collect`. |
 | `std::fmt` | Formatting traits plus explicit-zone, writer, and stdout formatting helpers. Root `Display`/`Debug` re-export these traits. | `Display::format_in`, `Debug::debug_in`, `FormatSpec`, `decimal`, `hex`, `binary`, `octal`, strict `with_width`/`with_precision`, fallible `try_with_width`/`try_with_precision`, `left`, `right`, `center`, `uppercase`, `alternate`, `unsigned_in`, `integer_in`, `boolean_in`, `float_in`, `text_in`, `debug_text_in`, `debug_value`, `write_unsigned`, `write_integer`, `write_boolean`, `write_text`, `write_value`, `write_debug`, `print_value`, `println_value`, `print_debug`, `println_debug`. |
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `Ordering`, `compare`, `then_compare`, `min`, `max`, `clamp`, `is_between`. |
@@ -304,10 +304,12 @@ access in comparator order. Map entry iterators yield `MapEntry[K,V]` values
 so callers do not need tuple convention knowledge to read `.key` and `.value`.
 Map types expose `contains_key` as the preferred key-membership spelling while
 keeping `contains` compatible, and `contains_value` for value membership scans.
-Hash, tree, and heap constructors take explicit policy functions until trait
-dispatch is strong enough for fully trait-driven containers. The compiler only recognizes the handle shapes so zone
-reset/destroy invalidation and same-zone growth diagnostics stay as strong as
-`std::vec::Vec[T]`.
+Tree removal compacts live nodes and rebuilds links in place, so the public
+API does not need a zone argument. Hash, tree, and heap constructors take
+explicit policy functions until trait dispatch is strong enough for fully
+trait-driven containers. The compiler only recognizes the handle shapes so
+zone reset/destroy invalidation and same-zone growth diagnostics stay as
+strong as `std::vec::Vec[T]`.
 
 `std::zone` keeps allocation visible. Raw byte allocation and lifecycle hooks
 are runtime-backed, while `alloc_array<T>` is source Ari that packages the
