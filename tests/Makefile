@@ -544,6 +544,11 @@ check-prelude: $(TARGET)
 	grep -q "declare i32 @mkdir" $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari -o $(BUILD_DIR)/prelude/std-fs-ensure-dir.elf
 	$(BUILD_DIR)/prelude/std-fs-ensure-dir.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-file.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-ensure-file.ll
+	grep -F -q "std2fs11ensure_file" $(BUILD_DIR)/prelude/std-fs-ensure-file.ll
+	grep -F -q "std2fs10try_create" $(BUILD_DIR)/prelude/std-fs-ensure-file.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-file.ari -o $(BUILD_DIR)/prelude/std-fs-ensure-file.elf
+	$(BUILD_DIR)/prelude/std-fs-ensure-file.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -q "@ari_builtin_fs_open_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -q "@ari_builtin_fs_read_dir_next" $(BUILD_DIR)/prelude/std-fs-read-dir.ll

@@ -1,0 +1,92 @@
+// Covers idempotent single-file creation. ensure_file succeeds for an existing
+// regular file without truncating it, creates a missing empty file, and rejects
+// directory paths or paths whose parent directory is missing.
+fn main() -> i64 {
+  let existing_path = "build/prelude/std-fs-ensure-file-existing.tmp";
+  let missing_path = "build/prelude/std-fs-ensure-file-created.tmp";
+  let dir_path = "build/prelude/std-fs-ensure-file-dir.tmp";
+  let missing_parent_dir = "build/prelude/std-fs-ensure-file-missing";
+  let missing_parent_path = "build/prelude/std-fs-ensure-file-missing/child.tmp";
+
+  if fs::exists(existing_path) {
+    fs::remove(existing_path);
+  }
+  if fs::exists(missing_path) {
+    fs::remove(missing_path);
+  }
+  if fs::exists(dir_path) {
+    if fs::is_dir(dir_path) {
+      fs::remove_dir(dir_path);
+    } else {
+      fs::remove(dir_path);
+    }
+  }
+  if fs::exists(missing_parent_path) {
+    fs::remove(missing_parent_path);
+  }
+  if fs::exists(missing_parent_dir) {
+    if fs::is_dir(missing_parent_dir) {
+      fs::remove_dir(missing_parent_dir);
+    } else {
+      fs::remove(missing_parent_dir);
+    }
+  }
+
+  var keep = [107 as u8, 101 as u8, 101 as u8, 112 as u8];
+  if !fs::write(existing_path, keep.as_slice()) {
+    return 1;
+  }
+  if !fs::ensure_file(existing_path) {
+    return 2;
+  }
+
+  var zone = zone::create(256);
+  let kept = fs::read(ref mut zone, existing_path);
+  if !kept.equals_text("keep") {
+    zone::destroy(zone);
+    return 3;
+  }
+
+  if !fs::ensure_file(missing_path) {
+    zone::destroy(zone);
+    return 4;
+  }
+  if !fs::is_file(missing_path) {
+    zone::destroy(zone);
+    return 5;
+  }
+  let created = fs::read(ref mut zone, missing_path);
+  if !created.is_empty() {
+    zone::destroy(zone);
+    return 6;
+  }
+
+  if !fs::ensure_dir(dir_path) {
+    zone::destroy(zone);
+    return 7;
+  }
+  if fs::ensure_file(dir_path) {
+    zone::destroy(zone);
+    return 8;
+  }
+  if fs::ensure_file(missing_parent_path) {
+    zone::destroy(zone);
+    return 9;
+  }
+
+  if !fs::remove(existing_path) {
+    zone::destroy(zone);
+    return 10;
+  }
+  if !fs::remove(missing_path) {
+    zone::destroy(zone);
+    return 11;
+  }
+  if !fs::remove_dir(dir_path) {
+    zone::destroy(zone);
+    return 12;
+  }
+
+  zone::destroy(zone);
+  return 0;
+}

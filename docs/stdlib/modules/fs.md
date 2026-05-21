@@ -7,8 +7,9 @@ exists, query access-style read/write/execute permissions, open a byte stream
 with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
 byte-oriented `String` with either compatibility or `Option`-returning absence
-behavior, rename paths, create hard or symbolic links, create or remove one
-empty directory, ensure a single directory exists without treating an existing
+behavior, rename paths, create hard or symbolic links, ensure a single regular
+file exists without truncating an existing file, create or remove one empty
+directory, ensure a single directory exists without treating an existing
 directory as failure, read directory entry names through an explicit `Dir`
 handle, collect lightweight `DirEntry` values with names and joined paths,
 query basic file metadata, ask direct path-kind predicates such as `is_file`
@@ -23,8 +24,9 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `try_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
 `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
-`symbolic_link`, `create_dir`, `ensure_dir`, `remove_dir`, `try_open_dir`,
-`read_dir`, `try_read_dir`, `read_dir_entries`, `try_read_dir_entries`,
+`symbolic_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`,
+`try_open_dir`, `read_dir`, `try_read_dir`, `read_dir_entries`,
+`try_read_dir_entries`,
 `read_dir_next`, `close_dir`, `close`, `exists`, and `remove`, not
 type-suffixed names.
 
@@ -53,6 +55,7 @@ fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
+fs::ensure_file(path)
 fs::create_dir(path)
 fs::ensure_dir(path)
 fs::remove_dir(path)
@@ -160,6 +163,13 @@ small first surface because they keep call sites short and familiar.
 `create(path)` is the natural spelling for `open(path, "w")`: it creates a
 file if needed and truncates existing contents. `try_create(path)` wraps that
 same operation in `Option[File]`.
+
+`ensure_file(path)` is the idempotent regular-file helper. It returns `true`
+when `path` is already a regular file, creates an empty file when the path is
+missing, and returns `false` when another path kind already exists or when a
+parent directory is missing. Unlike `create(path)`, it does not truncate an
+existing file, so it is the safer setup primitive for tests, caches, and tools
+that merely need a file to exist.
 
 `open_read`, `open_write`, `open_append`, and their `try_open_*` partners are
 compatibility wrappers over `open(path, "r")`, `open(path, "w")`, and
@@ -294,6 +304,13 @@ are resolved by the host relative to the directory containing `link_path`, not
 the caller's current directory. Windows-specific file-vs-directory symlink
 behavior remains future platform work.
 
+`ensure_file(path)` is the file counterpart to `ensure_dir`: it creates one
+empty file only when the path is missing and otherwise succeeds only for an
+existing regular file. It returns `false` for directories, symlinks resolved to
+non-regular targets, other path kinds, or missing parents. It is deliberately
+not recursive and deliberately not an `OpenOptions` replacement; use
+`try_open(path, mode)` or `try_create(path)` when the caller needs a handle.
+
 `create_dir(path)` creates one directory with the current default permission
 mode used by Ari's runtime shim. It does not create parent directories.
 `ensure_dir(path)` is the idempotent single-directory helper: it returns `true`
@@ -327,7 +344,7 @@ owned/path-to-OS-string boundary slice.
 | Need | Status |
 | --- | --- |
 | open | Current: `open(path, mode)`, `try_open(path, mode)`, and wrappers. |
-| create | Current: `create(path)` and `try_create(path)` over `"w"` mode. |
+| create | Current: `create(path)` and `try_create(path)` over `"w"` mode, plus non-truncating `ensure_file(path)` for idempotent file setup. |
 | read | Current: byte `read_byte`, whole-file `read`/`read_to_string`, and fallible `try_read`/`try_read_to_string`. |
 | write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, and byte-counting `try_write`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, and byte-counting `try_append`. |
@@ -614,6 +631,8 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-ensure-dir.ari` covers
 idempotent single-directory creation, file-path rejection, missing-parent
+failure, and cleanup. `std-fs-ensure-file.ari` covers idempotent single-file
+creation, existing-file preservation, directory-path rejection, missing-parent
 failure, and cleanup. `std-fs-read-dir.ari` covers
 runtime-backed `Dir` open/next/close behavior, one-shot
 `try_read_dir`/`read_dir` name-list helpers,

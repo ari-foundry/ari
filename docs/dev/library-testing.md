@@ -169,6 +169,9 @@ identifies the exact case:
 - `std-fs-rename-dir.ari`: runtime-backed `rename`, single-directory
   `create_dir`/`remove_dir`, duplicate-create failure, and missing-source
   rename failure.
+- `std-fs-ensure-file.ari`: source `ensure_file` idempotence, existing-file
+  preservation, missing-file creation, directory rejection, missing-parent
+  failure, and cleanup.
 - `std-fs-read-dir.ari`: runtime-backed `Dir` open/next/close, one-shot
   `try_read_dir`/`read_dir`, lightweight `DirEntry` name/path helpers,
   dot-entry skip, missing-directory failure, invalid-handle `None`, and

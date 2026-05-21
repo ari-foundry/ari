@@ -846,6 +846,7 @@ fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
+fs::ensure_file(path)
 fs::create_dir(path)
 fs::ensure_dir(path)
 fs::remove_dir(path)
@@ -929,7 +930,10 @@ as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
 `"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
 `try_open_*` variants are compatibility wrappers over those mode strings.
 `create(path)` and `try_create(path)` are the natural create/truncate helpers
-over `"w"` mode. `can_read`, `can_write`, and `can_execute` are access-style
+over `"w"` mode. `ensure_file(path)` creates an empty file only when the path
+is missing, treats an existing regular file as success without truncating it,
+and returns `false` for directories, other existing path kinds, or missing
+parents. `can_read`, `can_write`, and `can_execute` are access-style
 preflight checks for the current process. `permissions(path)` snapshots those
 three checks into a `Permissions` value; still handle later open/read/write
 failures because filesystem access can change after the check.

@@ -220,6 +220,22 @@ pub fn ensure_dir(path: string) -> bool {
   return create_dir(path);
 }
 
+// Keep setup code rerunnable without truncating existing regular files.
+pub fn ensure_file(path: string) -> bool {
+  if is_file(path) {
+    return true;
+  }
+  if exists(path) {
+    return false;
+  }
+
+  let file = try_create(path).unwrap_or(File::invalid());
+  if !file.is_open() {
+    return false;
+  }
+  return file.close();
+}
+
 pub fn try_open_dir(path: string) -> std::Option[Dir] {
   let dir = open_dir(path);
   if dir.is_open() {
