@@ -6,33 +6,43 @@ surface, so contributors do not have to guess which layer owns a change.
 
 ## Implemented Today
 
-`==` and `!=` first use Ari's builtin comparable operands:
+`==`, `!=`, `<`, `<=`, `>`, and `>=` first use Ari's builtin comparable or
+ordered operands:
 
 - integers, including compatible `char`/`u8` boundary cases
 - floats
 - bool
 - value enums in the supported tagged-union subset
 
-When builtin equality is not available, sema rewrites the operator through
+When builtin comparison is not available, sema rewrites the operator through
 method dispatch:
 
 ```ari
 left == right  // left.eq(right)
 left != right  // !left.eq(right)
+left < right   // left.lt(right)
+left > right   // right.lt(left)
+left <= right  // !right.lt(left)
+left >= right  // !left.lt(right)
 ```
 
-The selected `eq` method must return `bool`. The standard-library spelling is
-`cmp::Eq[T]`, but the lowering intentionally reuses normal method dispatch so
-generic bounds and existing impl selection rules stay consistent:
+The selected `eq` or `lt` method must return `bool`. The standard-library
+spellings are `cmp::Eq[T]` and `cmp::Ord[T]`, but the lowering intentionally
+reuses normal method dispatch so generic bounds and existing impl selection
+rules stay consistent:
 
 ```ari
 fn same[T: cmp::Eq[T]](left: T, right: T) -> bool {
   return left == right;
 }
+
+fn before[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left < right;
+}
 ```
 
-This is a narrow bridge. Ordering operators still require numeric operands.
-Custom glyphs such as `++` are not parsed as Ari operators yet.
+This is a narrow bridge for builtin comparison glyphs. Custom glyphs such as
+`++` are not parsed as Ari operators yet.
 
 ## Planned Surface
 
@@ -108,8 +118,13 @@ operation.
 ## First Useful Test Slices
 
 - Positive: `cmp::Eq[T]`-backed `==` and `!=` for a concrete struct.
-- Positive: the same operators inside `fn same[T: cmp::Eq[T]]`.
+- Positive: `cmp::Ord[T]`-backed `<`, `<=`, `>`, and `>=` for a concrete
+  struct.
+- Positive: the same operators inside `fn same[T: cmp::Eq[T]]` and
+  `fn before[T: cmp::Ord[T]]`.
 - Negative: `a == b` on a struct with no `eq` method reports the missing
+  method.
+- Negative: `a < b` on a struct with no `lt` method reports the missing
   method.
 - Future positive: ``op infix(60, left) `++` = doubleadd;`` parses and lowers
   to a two-argument call.

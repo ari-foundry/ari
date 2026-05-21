@@ -117,10 +117,33 @@ if left == right {
 }
 ```
 
-The fallback is deliberately narrow today: `==` calls `eq`, and `!=` calls
-`eq` and negates the result. The method must return `bool`. Ordering
-operators such as `<` and `>` still require numeric operands until the
-comparison trait operator surface is expanded.
+Ordering operators can also fall back to trait-style `lt` dispatch when
+builtin numeric ordering is not available:
+
+```ari
+a < b   // a.lt(b)
+a > b   // b.lt(a)
+a <= b  // !b.lt(a)
+a >= b  // !a.lt(b)
+```
+
+The standard spelling is `std::cmp::Ord[T]`:
+
+```ari
+impl cmp::Ord[Score] for Score {
+  fn lt(self, other: Score) -> bool {
+    return self.value < other.value;
+  }
+}
+
+fn before[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left < right;
+}
+```
+
+The fallback is deliberately narrow today: `==` calls `eq`, `!=` calls `eq`
+and negates the result, and ordering calls `lt` with the operand order shown
+above. The selected method must return `bool`.
 
 ## Boolean Logic
 
@@ -198,10 +221,11 @@ Generic prelude `Option[T]` and `Result[T, E]` values use the same rule on the
 LLVM backend path.
 
 Ari's current operator-sugar set is intentionally closed around compound
-assignment, range syntax, postfix `?`, `??`, and equality-to-`eq` trait
-dispatch. Additional null/result operators and user-defined operator symbols
-need a separate design pass rather than being reserved implicitly. The current
-developer design is [Trait-Backed Operators](../dev/operator-trait-design.md).
+assignment, range syntax, postfix `?`, `??`, equality-to-`eq` dispatch, and
+ordering-to-`lt` dispatch. Additional null/result operators and user-defined
+operator symbols need a separate design pass rather than being reserved
+implicitly. The current developer design is
+[Trait-Backed Operators](../dev/operator-trait-design.md).
 
 ## Bitwise Not
 

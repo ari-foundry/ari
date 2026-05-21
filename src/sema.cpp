@@ -24456,6 +24456,53 @@ private:
         return negated;
     }
 
+    IrExprPtr make_bool_not_expr(SourceLocation loc, IrExprPtr value) const {
+        auto negated = std::make_unique<IrExpr>();
+        negated->kind = IrExprKind::Unary;
+        negated->loc = loc;
+        negated->unary_op = IrUnaryOp::Not;
+        negated->type = bool_type(loc);
+        set_ir_expr_operand(*negated, std::move(value));
+        return negated;
+    }
+
+    IrExprPtr check_trait_lt_call(const Expr& expr, IrExprPtr lowered, bool reverse_operands) {
+        const Expr& receiver = reverse_operands ? *expr_right(expr) : *expr_left(expr);
+        const Expr& argument = reverse_operands ? *expr_left(expr) : *expr_right(expr);
+
+        std::vector<ExprPtr> args;
+        args.push_back(clone_expression_tree(argument));
+        ExprPtr method_call = make_ast_method_call_expr(
+            expr.loc,
+            clone_expression_tree(receiver),
+            "lt",
+            {},
+            std::move(args));
+
+        IrExprPtr call = check_method_call(*method_call, std::move(lowered));
+        require_logical_operand(expr.loc, call->type);
+        return call;
+    }
+
+    IrExprPtr check_trait_order_binary(const Expr& expr, IrExprPtr lowered) {
+        switch (expr.op) {
+            case TokenKind::Less:
+                return check_trait_lt_call(expr, std::move(lowered), false);
+            case TokenKind::Greater:
+                return check_trait_lt_call(expr, std::move(lowered), true);
+            case TokenKind::LessEq:
+                return make_bool_not_expr(
+                    expr.loc,
+                    check_trait_lt_call(expr, std::move(lowered), true));
+            case TokenKind::GreaterEq:
+                return make_bool_not_expr(
+                    expr.loc,
+                    check_trait_lt_call(expr, std::move(lowered), false));
+            default:
+                fail(expr.loc, "unsupported trait-backed ordering operator");
+        }
+    }
+
     IrExprPtr check_pointer_arithmetic_binary(const Expr& expr, IrExprPtr lhs, IrExprPtr rhs) {
         const bool subtract = expr.op == TokenKind::Minus;
         const std::string operation = subtract ? "pointer -" : "pointer +";
@@ -24479,18 +24526,21 @@ private:
     }
 
     IrExprPtr check_binary(const Expr& expr, IrExprPtr lowered) {
-        StateSnapshot equality_probe_state;
-        LocalScopeStack::NameState equality_probe_name_state;
-        std::size_t equality_probe_warning_count = 0;
-        int equality_probe_hidden_local_counter = 0;
-        std::size_t equality_probe_borrow_mark = 0;
-        const bool equality_operator = expr.op == TokenKind::EqEq || expr.op == TokenKind::BangEq;
-        if (equality_operator) {
-            equality_probe_state = snapshot_states();
-            equality_probe_name_state = local_scopes_.snapshot_name_state();
-            equality_probe_warning_count = warnings_.size();
-            equality_probe_hidden_local_counter = hidden_local_counter_;
-            equality_probe_borrow_mark = temporary_borrow_mark();
+        StateSnapshot trait_operator_probe_state;
+        LocalScopeStack::NameState trait_operator_probe_name_state;
+        std::size_t trait_operator_probe_warning_count = 0;
+        int trait_operator_probe_hidden_local_counter = 0;
+        std::size_t trait_operator_probe_borrow_mark = 0;
+        const bool trait_backed_operator =
+            expr.op == TokenKind::EqEq || expr.op == TokenKind::BangEq ||
+            expr.op == TokenKind::Less || expr.op == TokenKind::LessEq ||
+            expr.op == TokenKind::Greater || expr.op == TokenKind::GreaterEq;
+        if (trait_backed_operator) {
+            trait_operator_probe_state = snapshot_states();
+            trait_operator_probe_name_state = local_scopes_.snapshot_name_state();
+            trait_operator_probe_warning_count = warnings_.size();
+            trait_operator_probe_hidden_local_counter = hidden_local_counter_;
+            trait_operator_probe_borrow_mark = temporary_borrow_mark();
         }
 
         IrExprPtr lhs = check_expr(*expr_left(expr));
@@ -24541,11 +24591,11 @@ private:
             case IrBinaryOp::Eq:
             case IrBinaryOp::Ne:
                 if (!is_builtin_comparable_operands(lhs->type, rhs->type)) {
-                    release_temporary_borrows(equality_probe_borrow_mark);
-                    restore_states(equality_probe_state);
-                    local_scopes_.restore_name_state(std::move(equality_probe_name_state));
-                    warnings_.resize(equality_probe_warning_count);
-                    hidden_local_counter_ = equality_probe_hidden_local_counter;
+                    release_temporary_borrows(trait_operator_probe_borrow_mark);
+                    restore_states(trait_operator_probe_state);
+                    local_scopes_.restore_name_state(std::move(trait_operator_probe_name_state));
+                    warnings_.resize(trait_operator_probe_warning_count);
+                    hidden_local_counter_ = trait_operator_probe_hidden_local_counter;
                     return check_trait_equality_binary(expr, std::move(lowered));
                 }
                 require_comparable_operands(expr.loc, lhs->type, rhs->type);
@@ -24555,6 +24605,15 @@ private:
             case IrBinaryOp::Le:
             case IrBinaryOp::Gt:
             case IrBinaryOp::Ge:
+                if (!((is_value_integer_type(lhs->type) || is_value_float_type(lhs->type)) &&
+                      same_type(lhs->type, rhs->type))) {
+                    release_temporary_borrows(trait_operator_probe_borrow_mark);
+                    restore_states(trait_operator_probe_state);
+                    local_scopes_.restore_name_state(std::move(trait_operator_probe_name_state));
+                    warnings_.resize(trait_operator_probe_warning_count);
+                    hidden_local_counter_ = trait_operator_probe_hidden_local_counter;
+                    return check_trait_order_binary(expr, std::move(lowered));
+                }
                 require_numeric_operands(expr.loc, lhs->type, rhs->type);
                 lowered->type = bool_type(expr.loc);
                 break;

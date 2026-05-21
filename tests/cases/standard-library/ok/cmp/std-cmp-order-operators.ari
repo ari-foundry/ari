@@ -1,0 +1,65 @@
+struct Score {
+  value: i64,
+}
+
+impl cmp::Ord[Score] for Score {
+  fn lt(self, other: Score) -> bool {
+    return self.value < other.value;
+  }
+}
+
+fn before[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left < right;
+}
+
+fn after[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left > right;
+}
+
+fn at_most[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left <= right;
+}
+
+fn at_least[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left >= right;
+}
+
+fn main() -> i64 {
+  let low = Score { value: 3 };
+  let mid = Score { value: 5 };
+  let high = Score { value: 8 };
+  var total = 0;
+
+  if low < mid {
+    total = total + 3;
+  }
+  if high > mid {
+    total = total + 5;
+  }
+  if low <= mid {
+    total = total + 7;
+  }
+  if mid <= mid {
+    total = total + 11;
+  }
+  if high >= mid {
+    total = total + 13;
+  }
+  if mid >= mid {
+    total = total + 17;
+  }
+  if before<Score>(low, high) {
+    total = total + 19;
+  }
+  if after<Score>(high, low) {
+    total = total + 23;
+  }
+  if at_most<Score>(mid, high) {
+    total = total + 29;
+  }
+  if at_least<Score>(mid, low) {
+    total = total + 31;
+  }
+
+  return total;
+}

@@ -105,8 +105,22 @@ fn different[T: cmp::Eq[T]](left: T, right: T) -> bool {
 
 The operator fallback is intentionally specific: `==` dispatches to `eq`, `!=`
 dispatches to `eq` and negates it, and the selected method must return `bool`.
-Custom operator glyph declarations such as `op infix \`++\` = doubleadd;` are a
-planned parser/sema feature, not today's language surface.
+Ordering operators use the same pattern with an `lt` method:
+
+```ari
+fn before[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left < right;
+}
+
+fn at_least[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left >= right;
+}
+```
+
+`<` lowers to `left.lt(right)`, `>` lowers to `right.lt(left)`, `<=` lowers to
+`!right.lt(left)`, and `>=` lowers to `!left.lt(right)`. Custom operator glyph
+declarations such as `op infix \`++\` = doubleadd;` are a planned parser/sema
+feature, not today's language surface.
 
 Generic impl blocks can also constrain their own parameters:
 

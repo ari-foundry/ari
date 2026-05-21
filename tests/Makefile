@@ -848,6 +848,10 @@ check-prelude: $(TARGET)
 	grep -F -q 'std__cmp__Eq' $(BUILD_DIR)/prelude/std-cmp-equality-operator.ll
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-equality-operator.ari -o $(BUILD_DIR)/prelude/std-cmp-equality-operator.elf
 	$(BUILD_DIR)/prelude/std-cmp-equality-operator.elf; code=$$?; test $$code -eq 60
+	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-order-operators.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-order-operators.ll
+	grep -F -q 'std__cmp__Ord' $(BUILD_DIR)/prelude/std-cmp-order-operators.ll
+	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-order-operators.ari -o $(BUILD_DIR)/prelude/std-cmp-order-operators.elf
+	$(BUILD_DIR)/prelude/std-cmp-order-operators.elf; code=$$?; test $$code -eq 158
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-ordering.ll
 	grep -F -q 'compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-ordering.ll
 	grep -F -q 'then_compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-ordering.ll
@@ -2249,6 +2253,8 @@ check-prelude: $(TARGET)
 	grep -q "prelude type 'Weak' is reserved for future non-owning shared-pointer handles" $(BUILD_DIR)/prelude/prelude-weak-reserved.err
 	if $(TARGET) tests/cases/standard-library/errors/cmp/std-cmp-equality-operator-missing-eq.ari -o $(BUILD_DIR)/prelude/std-cmp-equality-operator-missing-eq.elf >$(BUILD_DIR)/prelude/std-cmp-equality-operator-missing-eq.err 2>&1; then exit 1; fi
 	grep -q "unknown method 'eq' for type Score" $(BUILD_DIR)/prelude/std-cmp-equality-operator-missing-eq.err
+	if $(TARGET) tests/cases/standard-library/errors/cmp/std-cmp-order-operator-missing-ord.ari -o $(BUILD_DIR)/prelude/std-cmp-order-operator-missing-ord.elf >$(BUILD_DIR)/prelude/std-cmp-order-operator-missing-ord.err 2>&1; then exit 1; fi
+	grep -q "unknown method 'lt' for type Score" $(BUILD_DIR)/prelude/std-cmp-order-operator-missing-ord.err
 	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude/prelude-special-without-std.ari -o $(BUILD_DIR)/prelude/prelude-special-without-std.elf >$(BUILD_DIR)/prelude/prelude-special-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'size_of'" $(BUILD_DIR)/prelude/prelude-special-without-std.err
 	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/cases/standard-library/errors/prelude/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi

@@ -19,8 +19,9 @@ Use `std::cmp` when code needs to choose or test values by order:
 - write generic helpers over a custom ordered type
 
 For one-off primitive comparisons, plain operators such as `<`, `>`, `==`,
-and `!=` are still the clearest spelling. For custom equality types, implement
-`Eq[T]::eq`; `==` and `!=` use that method when no builtin comparison exists.
+and `!=` are still the clearest spelling. For custom equality and ordering
+types, implement `Eq[T]::eq` and `Ord[T]::lt`; the comparison operators use
+those methods when no builtin comparison exists.
 
 ## API
 
@@ -41,10 +42,11 @@ fn lt(self, other: T) -> bool
 ```
 
 `Eq[T]::eq` backs `==` and `!=` for non-builtin comparable values. `!=` is
-lowered as `!eq(...)`, so an `Eq` impl only needs one method. `Ord[T]::lt` is
-enough for the current value helpers. The compiler does not enforce ordering
-laws such as transitivity; trait impl authors are responsible for making the
-comparison meaningful.
+lowered as `!eq(...)`, so an `Eq` impl only needs one method. `Ord[T]::lt`
+backs `<`, `>`, `<=`, and `>=` for non-builtin ordered values. `>` flips the
+operands, and `<=`/`>=` negate the opposite `lt` call. The compiler does not
+enforce ordering laws such as transitivity; trait impl authors are responsible
+for making the comparison meaningful.
 
 Three-way ordering:
 
@@ -187,9 +189,9 @@ The current comparison traits still do not provide derived ordering for every
 aggregate shape or separate checked handling for partial orders. Those belong
 in later trait and derive slices.
 
-Custom operator glyph declarations are not part of `std::cmp` yet. Equality is
-the first builtin operator bridge because it maps cleanly to the existing
-single-method `Eq[T]` contract.
+Custom operator glyph declarations are not part of `std::cmp` yet. Equality
+and ordering are the first builtin operator bridges because they map cleanly to
+the existing single-method `Eq[T]` and `Ord[T]` contracts.
 
 ## Tests
 
@@ -198,6 +200,7 @@ The focused positive behavior test is:
 ```text
 tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari
 tests/cases/standard-library/ok/cmp/std-cmp-equality-operator.ari
+tests/cases/standard-library/ok/cmp/std-cmp-order-operators.ari
 tests/cases/standard-library/ok/cmp/std-cmp-ordering.ari
 ```
 

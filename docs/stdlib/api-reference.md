@@ -2061,13 +2061,14 @@ cmp::is_between<T>(value, low, high)
 
 `Eq[T]` currently requires `eq(self, other: T) -> bool`. For types without a
 builtin equality comparison, `==` dispatches to `eq` and `!=` dispatches to
-`!eq(...)`. `Ord[T]` currently requires `lt(self, other: T) -> bool`.
-`compare`, `min`, `max`, `clamp`, and `is_between` use that trait bound, so
-custom ordered values need an `impl cmp::Ord[T] for T`. `Ordering` has `Less`,
-`Equal`, and `Greater` cases. Use `then`/`then_compare` or the matching
-`Ordering` methods to build lexicographic comparisons without inventing
-numeric sentinel values. The method style is usually clearer after a value has
-already been compared.
+`!eq(...)`. `Ord[T]` currently requires `lt(self, other: T) -> bool`. For
+types without builtin numeric ordering, `<` dispatches to `lt`, `>` swaps the
+operands, and `<=`/`>=` negate the opposite `lt` call. `compare`, `min`,
+`max`, `clamp`, and `is_between` use that trait bound, so custom ordered values
+need an `impl cmp::Ord[T] for T`. `Ordering` has `Less`, `Equal`, and
+`Greater` cases. Use `then`/`then_compare` or the matching `Ordering` methods
+to build lexicographic comparisons without inventing numeric sentinel values.
+The method style is usually clearer after a value has already been compared.
 `clamp` and `is_between` assert that `low <= high`; `is_between` is inclusive
 at both ends.
 

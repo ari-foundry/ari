@@ -346,6 +346,8 @@ identifies the exact case:
   clamping, inclusive range predicates, and root re-export behavior.
 - `std-cmp-equality-operator.ari`: trait-backed `==` and `!=` lowering through
   `cmp::Eq[T]::eq` for concrete and generic values.
+- `std-cmp-order-operators.ari`: trait-backed `<`, `<=`, `>`, and `>=`
+  lowering through `cmp::Ord[T]::lt` for concrete and generic values.
 - `std-convert-value-helpers.ari`: source `std::convert` identity and
   trait-bound conversion helper behavior.
 - `std-math-integer-helpers.ari`: source `std::math` i64 sign predicate and
