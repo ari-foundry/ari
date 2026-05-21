@@ -70,6 +70,7 @@ extern "ari" fn tcp_connect_v4_raw(a: i64, b: i64, c: i64, d: i64, port: i64) ->
   "ari_builtin_net_tcp_connect_v4";
 extern "ari" fn tcp_accept_raw(raw: i64) -> i64 = "ari_builtin_net_tcp_accept";
 extern "ari" fn local_port_raw(raw: i64) -> i64 = "ari_builtin_net_local_port";
+extern "ari" fn local_addr_v4_raw(raw: i64) -> i64 = "ari_builtin_net_local_addr_v4";
 extern "ari" fn udp_bind_v4_raw(a: i64, b: i64, c: i64, d: i64, port: i64) -> i64 =
   "ari_builtin_net_udp_bind_v4";
 extern "ari" fn udp_send_byte_to_v4_raw(raw: i64, value: u8, a: i64, b: i64, c: i64, d: i64, port: i64) -> bool =
@@ -112,13 +113,25 @@ pub fn lookup_v4_result(host: string, port: u16) -> std::Result[SocketAddr, i64]
   if packed < 0 {
     return std::Err<SocketAddr, i64>(std::error::new(std::error::Other).raw());
   }
+  return std::Ok<SocketAddr, i64>(socket_addr_from_packed_v4(packed));
+}
+
+fn socket_addr_from_packed_v4(packed: i64) -> SocketAddr {
   let address = packed >> 16;
   let a = ((address >> 24) & 255) as u8;
   let b = ((address >> 16) & 255) as u8;
   let c = ((address >> 8) & 255) as u8;
   let d = (address & 255) as u8;
   let resolved_port = (packed & 65535) as u16;
-  return std::Ok<SocketAddr, i64>(socket_addr(ipv4(a, b, c, d).as_ip(), resolved_port));
+  return socket_addr(ipv4(a, b, c, d).as_ip(), resolved_port);
+}
+
+fn local_addr_v4(raw: i64) -> std::Option[SocketAddr] {
+  let packed = local_addr_v4_raw(raw);
+  if packed < 0 {
+    return std::None<SocketAddr>();
+  }
+  return std::Some<SocketAddr>(socket_addr_from_packed_v4(packed));
 }
 
 fn last_errno_error_raw() -> i64 {
@@ -517,6 +530,13 @@ pub impl std::net::TcpListener {
     return std::Some<u16>(port as u16);
   }
 
+  fn local_addr(self: ref Self) -> std::Option[SocketAddr] {
+    if !self.is_open() {
+      return std::None<SocketAddr>();
+    }
+    return local_addr_v4(self.handle.raw());
+  }
+
   fn accept(self: ref Self) -> std::Option[TcpStream] {
     return self.accept_result().ok();
   }
@@ -591,6 +611,13 @@ pub impl std::net::TcpStream {
     return set_write_timeout_millis_raw(self.handle.raw(), millis);
   }
 
+  fn local_addr(self: ref Self) -> std::Option[SocketAddr] {
+    if !self.is_open() {
+      return std::None<SocketAddr>();
+    }
+    return local_addr_v4(self.handle.raw());
+  }
+
   fn shutdown(self: ref Self, mode: Shutdown) -> bool {
     if !self.is_open() {
       return false;
@@ -659,6 +686,13 @@ pub impl std::net::UdpSocket {
       return std::None<u16>();
     }
     return std::Some<u16>(port as u16);
+  }
+
+  fn local_addr(self: ref Self) -> std::Option[SocketAddr] {
+    if !self.is_open() {
+      return std::None<SocketAddr>();
+    }
+    return local_addr_v4(self.handle.raw());
   }
 
   fn is_nonblocking(self: ref Self) -> std::Option[bool] {

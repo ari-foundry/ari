@@ -42,7 +42,10 @@ fn main() -> i64 {
   let maybe_port = server.local_port();
   assert(maybe_port.is_some());
   let port = maybe_port.unwrap();
-  if port > 0 as u16 {
+  let maybe_server_addr = server.local_addr();
+  assert(maybe_server_addr.is_some());
+  let server_addr = maybe_server_addr.unwrap();
+  if port > 0 as u16 && server_addr.port() == port && server_addr.is_loopback() {
     score = score + 4;
   }
 
@@ -67,7 +70,9 @@ fn main() -> i64 {
   }
 
   let client_port = client.local_port();
-  if client_port.is_some() && client_port.unwrap() > 0 as u16 {
+  let client_addr = client.local_addr();
+  if client_port.is_some() && client_addr.is_some() &&
+    client_addr.unwrap().port() == client_port.unwrap() {
     score = score + 64;
   }
 

@@ -73,6 +73,7 @@ TcpListener::bind_result(addr)
 listener.descriptor()
 listener.is_open()
 listener.local_port()
+listener.local_addr()
 listener.is_nonblocking()
 listener.set_nonblocking(enabled)
 listener.set_accept_timeout_millis(millis)
@@ -86,6 +87,7 @@ TcpStream::try_connect(addr)
 TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
+stream.local_addr()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
 stream.set_read_timeout_millis(millis)
@@ -102,6 +104,7 @@ UdpSocket::bind_result(addr)
 socket.descriptor()
 socket.is_open()
 socket.local_port()
+socket.local_addr()
 socket.is_nonblocking()
 socket.set_nonblocking(enabled)
 socket.set_read_timeout_millis(millis)
@@ -188,7 +191,8 @@ multi-address result lists are future work.
 `Option[TcpListener]` for simple code. `bind_result` returns
 `Result[TcpListener, i64]`, where the `i64` is the compact raw
 `std::error::Error` bridge. Use `local_port()` after binding to port `0` to
-learn the ephemeral port chosen by the OS. `accept`/`try_accept` return
+learn the ephemeral port chosen by the OS, or `local_addr()` when the caller
+needs the complete IPv4 `SocketAddr`. `accept`/`try_accept` return
 `Option[TcpStream]`; `accept_result` exposes the raw error bridge.
 
 `TcpStream` owns a connected TCP descriptor. `connect` and `try_connect` return
@@ -197,13 +201,15 @@ learn the ephemeral port chosen by the OS. `accept`/`try_accept` return
 `shutdown(Shutdown::Both)` to half-close or fully shut down the stream without
 closing the descriptor owner. Use `write_all(values)` to send every byte in a
 `Slice[u8]`, and `read_exact(output, len)` to fill a caller-owned byte buffer
-or return `false` if the stream closes or errors first.
+or return `false` if the stream closes or errors first. `local_addr()` reports
+the bound local IPv4 socket address after connect or accept.
 
 ## UDP Sockets
 
 `UdpSocket` owns an IPv4 UDP descriptor. `bind`, `try_bind`, and `bind_result`
 match the TCP listener return shapes. Use `local_port()` after binding to port
-`0` to discover the OS-selected port.
+`0` to discover the OS-selected port, or `local_addr()` to retrieve the full
+local IPv4 `SocketAddr`.
 
 The current datagram payload surface is intentionally tiny:
 `send_byte_to(value, addr)` sends one byte to an IPv4 `SocketAddr`,
@@ -325,9 +331,9 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
 | DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` over `getaddrinfo`. |
-| TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result`, `local_port`, accept helpers, descriptor/open helpers, nonblocking setter/query, accept timeout, and explicit close. |
-| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result`, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4 slice: bind helpers, local-port lookup, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
+| TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result`, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking setter/query, accept timeout, and explicit close. |
+| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result`, `local_addr`, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4 slice: bind helpers, local-port and local-address lookup, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
 | Unix domain socket | Current hosted stream slice: `UnixListener` bind/accept helpers and `UnixStream` connect/IO/shutdown plus `read_exact`/`write_all` buffer helpers. |
 | socket options | Current: nonblocking and read/write timeout helpers; future reuse-address, nodelay, buffer size, linger, multicast, and close-on-exec-at-creation options. |
 | timeout | Current: millisecond read/write/accept timeout setters; future `std::time::Duration` overloads and timeout-specific error results. |
@@ -373,12 +379,12 @@ port replacement, and associated/module constructor forms.
 `std-net-address-validation.ari` covers strict and fallible IPv4 octet and
 IPv6 segment accessors.
 `std-net-tcp-loopback.ari` covers IPv6 unsupported errors, IPv4 listener bind,
-ephemeral local-port lookup, stream connect, accept, timeout/nonblocking
-helpers, stream shutdown, byte transfer through both stream methods and
-`std::io::Reader`/`Writer`, and explicit close. On restricted hosts it
-verifies that socket creation reports `PermissionDenied` through the shared
-error bridge.
-`std-net-udp-socket.ari` covers IPv4 UDP bind, local-port lookup,
+ephemeral local-port/local-address lookup, stream connect, accept, stream
+local-address lookup, timeout/nonblocking helpers, stream shutdown, byte
+transfer through both stream methods and `std::io::Reader`/`Writer`, and
+explicit close. On restricted hosts it verifies that socket creation reports
+`PermissionDenied` through the shared error bridge.
+`std-net-udp-socket.ari` covers IPv4 UDP bind, local-port/local-address lookup,
 timeout/nonblocking helpers, single-byte datagram send/receive, unsupported
 IPv6 bind errors, restricted-host fallback, and explicit close.
 `std-net-unix-socket.ari` covers Unix stream listener bind, stream connect,
@@ -391,7 +397,7 @@ lookup shapes, unsupported IPv6 text input, and edge IPv4 addresses.
 
 - Add address parsing and formatting once `std::string` formatting and parse
   policy can express dotted IPv4 and compressed IPv6 cleanly.
-- Add IPv6 TCP and UDP socket handles, peer/local address helpers, and richer
+- Add IPv6 TCP and UDP socket handles, peer address helpers, and richer
   socket-address reporting.
 - Replace raw millisecond timeout setters with `std::time::Duration`-friendly
   helpers once direct `Result[..., Error]` payloads are available.

@@ -43,7 +43,10 @@ fn main() -> i64 {
   let maybe_port = listener.local_port();
   assert(maybe_port.is_some());
   let port = maybe_port.unwrap();
-  if port > 0 as u16 {
+  let maybe_listener_addr = listener.local_addr();
+  assert(maybe_listener_addr.is_some());
+  let listener_addr = maybe_listener_addr.unwrap();
+  if port > 0 as u16 && listener_addr.port() == port && listener_addr.is_loopback() {
     score = score + 4;
   }
 
@@ -51,14 +54,22 @@ fn main() -> i64 {
   let maybe_client = net::TcpStream::connect(connect_addr);
   assert(maybe_client.is_some());
   var client = maybe_client.unwrap();
-  if client.is_open() && client.descriptor().is_valid() {
+  let maybe_client_addr = client.local_addr();
+  assert(maybe_client_addr.is_some());
+  let client_addr = maybe_client_addr.unwrap();
+  if client.is_open() && client.descriptor().is_valid() && client_addr.port() > 0 as u16 &&
+    client_addr.is_loopback() {
     score = score + 8;
   }
 
   let maybe_server = listener.accept();
   assert(maybe_server.is_some());
   var server = maybe_server.unwrap();
-  if server.is_open() && server.descriptor().is_valid() {
+  let maybe_server_addr = server.local_addr();
+  assert(maybe_server_addr.is_some());
+  let server_addr = maybe_server_addr.unwrap();
+  if server.is_open() && server.descriptor().is_valid() && server_addr.port() == port &&
+    server_addr.is_loopback() {
     score = score + 16;
   }
 

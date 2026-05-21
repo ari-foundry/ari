@@ -1190,6 +1190,7 @@ method std::net::TcpListener::close|check-prelude std-net-tcp-loopback explicit 
 method std::net::TcpListener::descriptor|check-prelude std-net-tcp-loopback listener borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::TcpListener::is_nonblocking|check-prelude std-net-tcp-loopback listener nonblocking descriptor query; docs/stdlib/modules/net.md
 method std::net::TcpListener::is_open|check-prelude std-net-tcp-loopback listener open predicate; docs/stdlib/modules/net.md
+method std::net::TcpListener::local_addr|check-prelude std-net-tcp-loopback listener bound IPv4 socket-address lookup; docs/stdlib/modules/net.md
 method std::net::TcpListener::local_port|check-prelude std-net-tcp-loopback listener bound-port lookup; docs/stdlib/modules/net.md
 method std::net::TcpListener::set_accept_timeout_millis|check-prelude std-net-tcp-loopback listener accept timeout setter; docs/stdlib/modules/net.md
 method std::net::TcpListener::set_nonblocking|check-prelude std-net-tcp-loopback listener nonblocking descriptor setter; docs/stdlib/modules/net.md
@@ -1201,6 +1202,7 @@ method std::net::TcpStream::connect_result|check-prelude std-net-tcp-loopback Re
 method std::net::TcpStream::descriptor|check-prelude std-net-tcp-loopback stream borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::TcpStream::is_nonblocking|check-prelude std-net-tcp-loopback stream nonblocking descriptor query; docs/stdlib/modules/net.md
 method std::net::TcpStream::is_open|check-prelude std-net-tcp-loopback stream open predicate; docs/stdlib/modules/net.md
+method std::net::TcpStream::local_addr|check-prelude std-net-tcp-loopback stream local IPv4 socket-address lookup; docs/stdlib/modules/net.md
 method std::net::TcpStream::read_exact|check-prelude std-net-tcp-loopback stream buffer read helper; docs/stdlib/modules/net.md
 method std::net::TcpStream::set_nonblocking|check-prelude std-net-tcp-loopback stream nonblocking descriptor setter; docs/stdlib/modules/net.md
 method std::net::TcpStream::set_read_timeout_millis|check-prelude std-net-tcp-loopback stream read timeout setter; docs/stdlib/modules/net.md
@@ -1215,6 +1217,7 @@ method std::net::UdpSocket::close|check-prelude std-net-udp-socket explicit UDP 
 method std::net::UdpSocket::descriptor|check-prelude std-net-udp-socket UDP borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::UdpSocket::is_nonblocking|check-prelude std-net-udp-socket UDP nonblocking descriptor query; docs/stdlib/modules/net.md
 method std::net::UdpSocket::is_open|check-prelude std-net-udp-socket UDP open predicate; docs/stdlib/modules/net.md
+method std::net::UdpSocket::local_addr|check-prelude std-net-udp-socket UDP local IPv4 socket-address lookup; docs/stdlib/modules/net.md
 method std::net::UdpSocket::local_port|check-prelude std-net-udp-socket UDP bound-port lookup; docs/stdlib/modules/net.md
 method std::net::UdpSocket::recv_byte|check-prelude std-net-udp-socket single-byte UDP datagram receive helper; docs/stdlib/modules/net.md
 method std::net::UdpSocket::send_byte_to|check-prelude std-net-udp-socket single-byte UDP datagram send helper; docs/stdlib/modules/net.md

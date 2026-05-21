@@ -1154,6 +1154,7 @@ TcpListener::bind_result(addr)
 listener.descriptor()
 listener.is_open()
 listener.local_port()
+listener.local_addr()
 listener.is_nonblocking()
 listener.set_nonblocking(enabled)
 listener.set_accept_timeout_millis(millis)
@@ -1167,6 +1168,7 @@ TcpStream::try_connect(addr)
 TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
+stream.local_addr()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
 stream.set_read_timeout_millis(millis)
@@ -1183,6 +1185,7 @@ UdpSocket::bind_result(addr)
 socket.descriptor()
 socket.is_open()
 socket.local_port()
+socket.local_addr()
 socket.is_nonblocking()
 socket.set_nonblocking(enabled)
 socket.set_read_timeout_millis(millis)
@@ -1226,12 +1229,13 @@ known-good indexes and `try_octet`/`try_segment` when validating parsed input.
 `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, and `UnixStream` are
 owned descriptor-backed handles. They support hosted IPv4 TCP bind/connect/
 accept, IPv4 UDP bind/send-byte/receive-byte, Unix stream bind/connect/accept,
-local bound-port lookup where it applies, borrowed descriptor views, explicit
+local bound-port and local IPv4 socket-address lookup where it applies,
+borrowed descriptor views, explicit
 close, nonblocking flags, millisecond timeouts, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
 `read_exact(output, len)` / `write_all(values)` helpers for natural stream
 method syntax. IPv6 socket handles, buffered datagram APIs, richer socket
-options, peer/local address helpers, and direct `Result[..., Error]` payloads
+options, peer address helpers, and direct `Result[..., Error]` payloads
 remain roadmap work.
 
 ## IO And Input
