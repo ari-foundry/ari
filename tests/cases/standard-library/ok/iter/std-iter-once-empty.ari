@@ -1,0 +1,33 @@
+// Covers finite source iterators that do not wrap an existing collection:
+// `once` yields one value, while `empty` yields none.
+
+struct Pair {
+  left: i64,
+  right: i64,
+}
+
+fn main() -> i64 {
+  var zone = zone::create(1024);
+
+  var one_number = iter::once<i64>(42);
+  assert(one_number.next().unwrap() == 42);
+  assert(one_number.next().is_none());
+
+  var no_numbers = iter::empty<i64>();
+  assert(no_numbers.next().is_none());
+
+  var pair_once = iter::once<Pair>(Pair { left: 8, right: 13 });
+  let collected = iter::collect<Pair, std::iter::OnceIter[Pair]>(ref mut zone, pair_once);
+  assert(collected.len() == 1);
+  assert(collected.get(0).left == 8);
+  assert(collected.get(0).right == 13);
+
+  var values = Vec::with_capacity<i64>(ref mut zone, 0);
+  values.extend_iter<std::iter::OnceIter[i64]>(iter::once<i64>(5));
+  values.extend_iter<std::iter::EmptyIter[i64]>(iter::empty<i64>());
+  assert(values.len() == 1);
+  assert(values.get(0) == 5);
+
+  zone::destroy(zone);
+  return 0;
+}

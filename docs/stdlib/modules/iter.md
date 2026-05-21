@@ -9,6 +9,8 @@ turning an iterator into a value.
 ```ari
 iter::range<T>(start, end)
 iter::range_inclusive<T>(start, end)
+iter::empty<T>()
+iter::once<T>(value)
 iter::repeat_with<T>(make_value)
 
 iter::map<T, U, I: std::Iterator[T]>(iter, op)
@@ -46,6 +48,11 @@ Root aliases expose `range(start, end)` and `range_inclusive(start, end)`.
 `iter::collect` is a public alias backed by `std::vec::collect`, so collection
 always names the target allocation zone explicitly.
 
+`empty<T>()` returns a finite source iterator that yields no values.
+`once(value)` returns a finite source iterator that yields `value` once and
+then returns `None<T>()`. The state type is named `OnceIter[T]` to avoid
+confusing it with `std::sync::Once`.
+
 `repeat_with(make_value)` is a generator-backed source iterator. Each `next()`
 calls the zero-argument maker and yields a fresh value, so the iterator itself
 has no natural end. Bound it with `take`, `zip`, or another terminating
@@ -73,10 +80,10 @@ linear/circular collection cursors whose remaining length is stored directly.
 
 ## Lazy And Eager Operations
 
-`repeat_with`, `map`, `filter`, `take`, `skip`, `enumerate`, and `zip` are
-lazy. Constructing one of these adapters stores the source iterator and any
-callback, but does not pull values. Work happens only when `next` is called,
-normally through a `for` loop.
+`empty`, `once`, `repeat_with`, `map`, `filter`, `take`, `skip`, `enumerate`,
+and `zip` are lazy. Constructing one of these adapters stores the source
+iterator and any callback, but does not pull values. Work happens only when
+`next` is called, normally through a `for` loop.
 
 `fold`, `reduce`, and `collect` are eager consumers. They advance the iterator
 until it is exhausted. `reduce` returns `None<T>()` for an empty iterator, while
@@ -128,6 +135,18 @@ var values = iter::collect<
 >(ref mut zone, generated);
 ```
 
+Use `once` and `empty` when a branch needs to produce a small iterator without
+allocating a vector first:
+
+```ari
+var single = iter::once<i64>(42);
+assert(single.next().unwrap() == 42);
+assert(single.next().is_none());
+
+var none = iter::empty<i64>();
+assert(none.next().is_none());
+```
+
 `filter` predicates take a borrowed value so the predicate can inspect an item
 without consuming it before the adapter decides whether to yield it.
 
@@ -175,6 +194,7 @@ Representative coverage lives in:
 ```text
 tests/cases/standard-library/ok/iter/std-iter-adapters.ari
 tests/cases/standard-library/ok/iter/std-iter-repeat-with.ari
+tests/cases/standard-library/ok/iter/std-iter-once-empty.ari
 tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari
 tests/cases/standard-library/ok/iter/std-iter-double-ended.ari
 tests/cases/standard-library/ok/iter/std-iter-exact-size.ari

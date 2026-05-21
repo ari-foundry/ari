@@ -59,6 +59,8 @@ identifies the exact case:
   `collect` behavior over `std::vec::Iter[T]`.
 - `std-iter-repeat-with.ari`: generator-backed `repeat_with` source iterator,
   bounded through `take` and consumed through `collect` / `Vec.extend_iter`.
+- `std-iter-once-empty.ari`: finite `once` and `empty` source iterators,
+  including direct `next`, `collect`, and `Vec.extend_iter` consumption.
 - `std-iter-exact-size.ari`: root `ExactSizeIterator[T]` supertrait behavior,
   including child-bound access to parent `Iterator[T]::next` and exact
   remaining-length checks for vector and slice cursors.

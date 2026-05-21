@@ -2545,6 +2545,8 @@ box.is_empty()
 ```ari
 iter::range<T>(start, end)
 iter::range_inclusive<T>(start, end)
+iter::empty<T>()
+iter::once<T>(value)
 iter::repeat_with<T>(make_value)
 iter::map<T, U, I: std::Iterator[T]>(iter, op)
 iter::filter<T, I: std::Iterator[T]>(iter, keep)
@@ -2576,7 +2578,8 @@ right)` tuples. Map-like collections still use explicit `keys()` and
 explicit.
 
 The adapter constructors are lazy except for `fold`, `reduce`, and `collect`.
-`repeat_with(make_value)` is an infinite source adapter that calls the
+`empty<T>()` yields no values, while `once(value)` yields one value and then
+stops. `repeat_with(make_value)` is an infinite source adapter that calls the
 zero-argument maker on each `next()`, so bound it with `take`, `zip`, or
 another terminating consumer before collecting or extending a vector. Use
 `skip` for the usual drop-count adapter because `drop` is a language operation.

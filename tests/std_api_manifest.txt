@@ -454,10 +454,12 @@ fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude ro
 fn std::io::write_bytes|std io byte slice tests; docs/stdlib/modules/io.md
 fn std::io::write_i64|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_u64|prelude IO and u64 format tests; docs/dev/test-matrix.md Prelude row
+fn std::iter::empty[T]|check-prelude std-iter-once-empty finite empty source iterator; docs/stdlib/modules/iter.md
 fn std::iter::enumerate[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy tuple index/value adapter; docs/stdlib/modules/iter.md
 fn std::iter::filter[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy predicate adapter; docs/stdlib/modules/iter.md
 fn std::iter::fold[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters eager fold consumer; docs/stdlib/modules/iter.md
 fn std::iter::map[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy mapping adapter; docs/stdlib/modules/iter.md
+fn std::iter::once[T]|check-prelude std-iter-once-empty finite single-value source iterator; docs/stdlib/modules/iter.md
 fn std::iter::range[T]|range for-loop tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::range_inclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::reduce[T, I: std::Iterator[T]|check-prelude std-iter-adapters eager optional reduction; docs/stdlib/modules/iter.md
@@ -1907,9 +1909,11 @@ struct std::io::PipeWriter|check-prelude std-io-pipe pipe Writer adapter; docs/s
 struct std::io::Stderr|std io stderr tests; docs/stdlib/modules/io.md
 struct std::io::Stdin|std io trait/cursor tests; docs/stdlib/modules/io.md
 struct std::io::Stdout|std io trait/cursor tests; docs/stdlib/modules/io.md
+struct std::iter::EmptyIter[T]|check-prelude std-iter-once-empty finite empty iterator state; docs/stdlib/modules/iter.md
 struct std::iter::Enumerate[I, T]|check-prelude std-iter-adapters lazy enumerate adapter state; docs/stdlib/modules/iter.md
 struct std::iter::Filter[I, T]|check-prelude std-iter-adapters lazy filter adapter state; docs/stdlib/modules/iter.md
 struct std::iter::Map[I, T, U]|check-prelude std-iter-adapters lazy map adapter state; docs/stdlib/modules/iter.md
+struct std::iter::OnceIter[T]|check-prelude std-iter-once-empty finite single-value iterator state; docs/stdlib/modules/iter.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::RepeatWith[T]|check-prelude std-iter-repeat-with generator-backed infinite iterator state; docs/stdlib/modules/iter.md
