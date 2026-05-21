@@ -2297,6 +2297,9 @@ bits::ceil_power_of_two(value)
 bits::low_mask(width)
 bits::align_down(value, alignment)
 bits::align_up(value, alignment)
+bits::checked_align_down(value, alignment)
+bits::checked_align_up(value, alignment)
+bits::wrapping_align_up(value, alignment)
 bits::count_ones(value)
 bits::population_count(value)
 bits::count_zeros(value)
@@ -2310,9 +2313,13 @@ bits::trailing_ones(value)
 `is_set` requires all bits from `mask`; `any_set` requires at least one
 overlap. `rotate_left` and `rotate_right` assert that `count` is non-negative
 and then rotate modulo 64. `align_down` and `align_up` assert that `alignment`
-is a non-zero power of two. These helpers currently have `u64` signatures and
-intentionally avoid type suffixes so future generic integer APIs can keep the
-same names. The zero value has 64 leading zeros, 64 trailing zeros, zero
+is a non-zero power of two. `checked_align_down` and `checked_align_up` return
+`Option[u64]` instead of asserting on bad alignment; `checked_align_up` also
+returns `None` on `u64` overflow. `wrapping_align_up` keeps the alignment
+assertion but wraps the addition before masking. These helpers currently have
+`u64` signatures and intentionally avoid type suffixes so future generic
+integer APIs can keep the same names. The zero value has 64 leading zeros,
+64 trailing zeros, zero
 leading ones, and zero trailing ones; `~0u64` has 64 leading ones and 64
 trailing ones.
 `bit_width` returns the number of bits needed to represent a value,

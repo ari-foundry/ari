@@ -105,6 +105,31 @@ pub fn align_up(value: u64, alignment: u64) -> u64 {
   return (value + mask) & ~mask;
 }
 
+pub fn checked_align_down(value: u64, alignment: u64) -> std::Option[u64] {
+  if !is_power_of_two(alignment) {
+    return std::None<u64>();
+  }
+  return std::Some<u64>(value & ~(alignment - 1u64));
+}
+
+pub fn checked_align_up(value: u64, alignment: u64) -> std::Option[u64] {
+  if !is_power_of_two(alignment) {
+    return std::None<u64>();
+  }
+
+  let mask = alignment - 1u64;
+  if value > ~0u64 - mask {
+    return std::None<u64>();
+  }
+  return std::Some<u64>((value + mask) & ~mask);
+}
+
+pub fn wrapping_align_up(value: u64, alignment: u64) -> u64 {
+  std::assert(is_power_of_two(alignment));
+  let mask = alignment - 1u64;
+  return (value + mask) & ~mask;
+}
+
 // Bit scans and byte-order helpers use simple source loops for now. Future
 // intrinsic-backed implementations should preserve these names and edge cases.
 pub fn count_ones(value: u64) -> i64 {

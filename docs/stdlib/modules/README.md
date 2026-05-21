@@ -117,8 +117,8 @@ limits, examples, and test files for one module.
   add/sub/mul/div/neg/abs, wrapping/overflowing add/sub/mul, powers, division
   rounding, greatest common divisor, and least common multiple.
 - [std::bits](bits.md): source-only `u64` bit-mask, rotation, power-of-two,
-  low-mask, alignment, byte-swap, population-count, and zero/one-run bit-scan
-  helpers.
+  low-mask, strict/checked/wrapping alignment, byte-swap, population-count,
+  and zero/one-run bit-scan helpers.
 
 ## Guide Shape
 

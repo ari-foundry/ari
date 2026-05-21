@@ -134,7 +134,8 @@ The current `std` package already provides:
 - `std::encoding` ASCII/UTF-8/UTF-16 validation and counting plus lowercase
   hex and standard base64 encode/decode/fallible-decode helpers
 - `std::bits` `u64` mask, rotation, power-of-two, low-mask, alignment,
-  byte-swap, population-count, and zero/one-run bit-scan helpers
+  checked/wrapping alignment, byte-swap, population-count, and zero/one-run
+  bit-scan helpers
 - `std::test` executable unit-test `Report` helpers, generic equality checks,
   scratch-zone construction, and finish/require status helpers
 - `std::log` source stderr logging levels, threshold predicates, byte-slice
@@ -328,7 +329,7 @@ Likely compiler work:
 | `std::cmp` | Derived comparison impl coverage for more aggregate shapes, richer partial-order policy later. | Three-way `Ordering`, `compare`, ordering-chain helpers, generic value helpers, inclusive range predicates, and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
 | `std::convert` | Concrete `From`/`Into` impl patterns and fallible conversion policy. | Identity/from/into behavior, explicit associated calls, and residual conversions. | Trait coherence and inference diagnostics. |
 | `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Sign predicate behavior, integer helper behavior, signed division rounding, checked add/sub/mul/div/rem/neg/abs behavior, saturating add/sub/mul/div/neg/abs behavior, wrapping add/sub/mul behavior, and overflowing add/sub/mul tuple-result behavior. | Current checked/wrapping/overflowing/saturating helpers are pure source Ari; cross-width helpers likely need compiler intrinsics. |
-| `std::bits` | Grow natural helper names from u64 signatures into generic integer helpers. | Mask behavior, rotate count handling, power-of-two rounding, low-mask widths, alignment preconditions, byte-swap behavior, population-count aliasing, zero/one-run scan edge cases, and future overflow-policy diagnostics. | Optional bit-scan/byte-swap intrinsics only after the source policy is stable. |
+| `std::bits` | Grow natural helper names from u64 signatures into generic integer helpers. | Mask behavior, checked/wrapping alignment policy, rotate count handling, power-of-two rounding, low-mask widths, alignment preconditions, byte-swap behavior, population-count aliasing, zero/one-run scan edge cases, and future generic-width diagnostics. | Optional bit-scan/byte-swap intrinsics only after the source policy is stable. |
 
 ## API Landing Checklist
 

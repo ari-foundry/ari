@@ -1,0 +1,44 @@
+// check-stdlib/ok: checked and wrapping alignment helpers define overflow policy.
+fn score_some(value: std::Option[u64], expected: u64, weight: i64) -> i64 {
+  match value {
+    std::Some(actual) => {
+      if actual == expected {
+        return weight;
+      }
+    }
+    std::None => {}
+  }
+  return 0;
+}
+
+fn score_none(value: std::Option[u64], weight: i64) -> i64 {
+  match value {
+    std::Some(_) => {}
+    std::None => {
+      return weight;
+    }
+  }
+  return 0;
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  score = score + score_some(bits::checked_align_down(37u64, 8u64), 32u64, 1);
+  score = score + score_some(bits::checked_align_up(37u64, 8u64), 40u64, 2);
+  score = score + score_some(bits::checked_align_up(32u64, 8u64), 32u64, 3);
+
+  score = score + score_none(bits::checked_align_down(37u64, 0u64), 5);
+  score = score + score_none(bits::checked_align_up(37u64, 3u64), 7);
+  score = score + score_none(bits::checked_align_up(~0u64, 8u64), 11);
+
+  if bits::wrapping_align_up(~0u64, 8u64) == 0u64 {
+    score = score + 13;
+  }
+  if bits::wrapping_align_up(33u64, 16u64) == 48u64 {
+    score = score + 17;
+  }
+
+  assert_eq_i64(score, 59);
+  return score;
+}

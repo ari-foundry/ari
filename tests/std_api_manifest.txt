@@ -82,6 +82,8 @@ fn std::bits::any_set|std bits mask helper tests; docs/stdlib/api-reference.md B
 fn std::bits::bit_width|std bits width helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::byte_swap|std bits byte/population tests; docs/stdlib/modules/bits.md
 fn std::bits::ceil_power_of_two|std bits width helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::checked_align_down|std bits alignment policy tests; docs/stdlib/modules/bits.md
+fn std::bits::checked_align_up|std bits alignment policy tests; docs/stdlib/modules/bits.md
 fn std::bits::clear|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::count_ones|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::count_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
@@ -98,6 +100,7 @@ fn std::bits::set|std bits mask helper tests; docs/stdlib/api-reference.md Bits 
 fn std::bits::toggle|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::trailing_ones|std bits one-run helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::trailing_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::wrapping_align_up|std bits alignment policy tests; docs/stdlib/modules/bits.md
 fn std::boxed::new[T]|check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::c::close|check-prelude std-c-interop dynamic library close wrapper; docs/stdlib/modules/c.md
 fn std::c::errno|check-prelude std-c-interop POSIX errno accessor; docs/stdlib/modules/c.md

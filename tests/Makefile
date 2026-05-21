@@ -1065,6 +1065,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4bits8align_up' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-mask-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-mask-helpers.elf; code=$$?; test $$code -eq 199
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-alignment-policy.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-alignment-policy.ll
+	grep -q '_ARNv3std4bits16checked_align_up' $(BUILD_DIR)/prelude/std-bits-alignment-policy.ll
+	grep -q '_ARNv3std4bits17wrapping_align_up' $(BUILD_DIR)/prelude/std-bits-alignment-policy.ll
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-alignment-policy.ari -o $(BUILD_DIR)/prelude/std-bits-alignment-policy.elf
+	$(BUILD_DIR)/prelude/std-bits-alignment-policy.elf; code=$$?; test $$code -eq 59
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-rotate-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll
 	grep -q '_ARNv3std4bits11rotate_left' $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll
 	grep -q '_ARNv3std4bits12rotate_right' $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll

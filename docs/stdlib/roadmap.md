@@ -83,8 +83,8 @@ first `parse` whole-input integer/bool/decimal-float parsers, `encoding`
 ASCII/UTF-8/UTF-16 validation plus hex/base64 codecs, and `math` sign,
 checked add/sub/mul/div/rem/pow, wrapping/overflowing add/sub/mul/pow, saturating
 arithmetic including powers, division-rounding and
-`bits` numeric helper slices, including byte-swap, population-count, and
-zero/one-run bit scans.
+`bits` numeric helper slices, including checked/wrapping alignment,
+byte-swap, population-count, and zero/one-run bit scans.
 
 ## Essential Library Families
 
@@ -187,8 +187,8 @@ work. Each one should land in small tested slices with natural API names.
   checked add/sub/mul/div/rem/neg/abs/pow, saturating add/sub/mul/div/neg/abs/pow,
   wrapping/overflowing add/sub/mul/pow, powers, division rounding, and divisor helpers.
 - Expand `std::bits` from u64 signatures to generic integer mask, rotation,
-  power-of-two, low-mask, byte-swap, population-count, and bit-scan helpers
-  when the same trait vocabulary exists.
+  power-of-two, low-mask, checked/wrapping alignment, byte-swap,
+  population-count, and bit-scan helpers when the same trait vocabulary exists.
 - Add policy-specific parser overflow handling after compiler diagnostics make
   those operations reliable across integer widths.
 - Add floating helpers only where LLVM lowering and runtime behavior are

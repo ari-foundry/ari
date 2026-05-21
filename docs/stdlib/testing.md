@@ -127,6 +127,7 @@ std-ascii-case-search.ari
 std-ascii-class-helpers.ari
 std-ascii-prefix-parsers.ari
 std-ascii-slice-helpers.ari
+std-bits-alignment-policy.ari
 std-bits-byte-population.ari
 std-bits-rotate-helpers.ari
 std-bits-scan-helpers.ari

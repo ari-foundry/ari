@@ -486,6 +486,8 @@ Checklist:
 - [x] source `std::bits` exposes `leading_ones` and `trailing_ones` as
       complement pairs to the zero-run bit-scan helpers, including `0u64` and
       `~0u64` edge cases
+- [x] source `std::bits` exposes checked and wrapping alignment helpers with
+      invalid-alignment and `u64` overflow policy tests
 - [x] source `std::bits` exposes `byte_swap` and `population_count` with
       focused byte-order and alias tests
 - [x] source `std::math` exposes natural sign predicate names

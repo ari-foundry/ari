@@ -43,7 +43,7 @@ bits::rotate_right(value, count)
 modulo 64, so a count of `64` returns the original value and `65` behaves like
 `1`.
 
-Power-of-two helpers:
+Power-of-two and alignment helpers:
 
 ```ari
 bits::is_power_of_two(value)
@@ -53,6 +53,9 @@ bits::ceil_power_of_two(value)
 bits::low_mask(width)
 bits::align_down(value, alignment)
 bits::align_up(value, alignment)
+bits::checked_align_down(value, alignment)
+bits::checked_align_up(value, alignment)
+bits::wrapping_align_up(value, alignment)
 ```
 
 `bit_width` returns the number of bits needed to represent `value`, with `0`
@@ -63,9 +66,12 @@ next power would overflow `u64`. `low_mask(width)` returns the lowest `width`
 bits set and asserts that `width` is between `0` and `64`.
 
 `align_down` and `align_up` assert that `alignment` is a non-zero power of two.
-They do not define overflow behavior for `value + alignment - 1`; a future
-numeric-policy slice should add `u64` checked/wrapping alignment variants after
-the first `i64` checked/wrapping/saturating helpers in `std::math`.
+`checked_align_down` and `checked_align_up` return `None` when `alignment` is
+not a non-zero power of two. `checked_align_up` also returns `None` when
+rounding would overflow `u64`. `wrapping_align_up` keeps the same power-of-two
+alignment assertion as `align_up`, but its addition wraps before masking. Use
+the checked helpers at API boundaries and `wrapping_align_up` only when modulo
+address arithmetic is the intended policy.
 
 Bit scan and byte-order helpers:
 
@@ -102,6 +108,10 @@ fn enable_write(flags: u64) -> u64 {
   }
   return flags;
 }
+
+fn align_reserved_end(end: u64) -> std::Option[u64] {
+  return bits::checked_align_up(end, 16u64);
+}
 ```
 
 ## Tests
@@ -110,6 +120,7 @@ The focused positive tests are:
 
 ```text
 tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari
+tests/cases/standard-library/ok/bits/std-bits-alignment-policy.ari
 tests/cases/standard-library/ok/bits/std-bits-rotate-helpers.ari
 tests/cases/standard-library/ok/bits/std-bits-scan-helpers.ari
 tests/cases/standard-library/ok/bits/std-bits-one-run-helpers.ari
@@ -127,8 +138,8 @@ The public API is tracked in `tests/std_api_manifest.txt` and checked by
 
 Potential next slices:
 
-- checked/wrapping alignment variants after unsigned overflow policy is
-  documented
+- generic alignment helpers after integer traits can preserve the same natural
+  names across widths
 - generic integer traits so `u8`, `u16`, `u32`, `u64`, and signed variants can
   share the same public names
 - optional intrinsic-backed implementations for the existing bit scan,

@@ -367,6 +367,8 @@ identifies the exact case:
   and integer parsing behavior.
 - `std-bits-mask-helpers.ari`: source `std::bits` u64 mask and alignment
   helper behavior.
+- `std-bits-alignment-policy.ari`: source `std::bits` checked and wrapping
+  alignment policy, including invalid alignment and overflow cases.
 - `std-bits-rotate-helpers.ari`: source `std::bits` u64 rotate behavior and
   modulo-64 count handling.
 - `std-bits-scan-helpers.ari`: source `std::bits` u64 bit-scan and zero edge
