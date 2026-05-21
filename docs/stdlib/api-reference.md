@@ -1456,6 +1456,7 @@ map.len()
 map.capacity()
 map.is_empty()
 map.contains(key)
+map.contains_key(key)
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -1486,13 +1487,14 @@ set.iter()
 
 `collections::hash_i64` is a compatibility helper over `std::hash::value<i64>`.
 
-`HashMap.insert` returns `Option[V]` with the previous value on replacement.
-`HashMap.remove` returns `Option[V]` and leaves a tombstone so later probes
-still find collided keys. `HashMap.keys()` and `HashMap.values()` iterate live
-buckets; this is deterministic for the table state, but it is not insertion
-order. `HashSet` relationship methods compare live membership and ignore
-tombstones; `HashSet.iter()` and direct `for value in set` use the same
-live-bucket cursor.
+`HashMap.contains_key(key)` is the preferred key-membership spelling;
+`HashMap.contains(key)` remains available for compatibility. `HashMap.insert`
+returns `Option[V]` with the previous value on replacement. `HashMap.remove`
+returns `Option[V]` and leaves a tombstone so later probes still find collided
+keys. `HashMap.keys()` and `HashMap.values()` iterate live buckets; this is
+deterministic for the table state, but it is not insertion order. `HashSet`
+relationship methods compare live membership and ignore tombstones;
+`HashSet.iter()` and direct `for value in set` use the same live-bucket cursor.
 
 Tree collections use explicit strict less-than comparators:
 
@@ -1504,6 +1506,7 @@ map.len()
 map.capacity()
 map.is_empty()
 map.contains(key)
+map.contains_key(key)
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -1529,9 +1532,11 @@ set.reserve(ref mut zone, capacity)
 set.iter()
 ```
 
-`TreeSet` relationship methods compare ordered-set membership, not internal
-tree shape. `TreeMap.keys()`, `TreeMap.values()`, `TreeSet.iter()`, and direct
-`for value in tree_set` walk values in ascending comparator order.
+`TreeMap.contains_key(key)` is the preferred key-membership spelling;
+`TreeMap.contains(key)` remains available for compatibility. `TreeSet`
+relationship methods compare ordered-set membership, not internal tree shape.
+`TreeMap.keys()`, `TreeMap.values()`, `TreeSet.iter()`, and direct `for value
+in tree_set` walk values in ascending comparator order.
 
 `std::string::String` is an owned byte string:
 

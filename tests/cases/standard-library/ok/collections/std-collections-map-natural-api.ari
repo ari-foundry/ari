@@ -1,0 +1,44 @@
+// Covers natural key-membership aliases for map types. The legacy contains
+// method remains valid, while contains_key reads better at map call sites.
+fn constant_hash(value: i64) -> u64 {
+  return 3;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  hash.insert(ref mut zone, 1, 10);
+  hash.insert(ref mut zone, 9, 90);
+  if hash.contains_key(9) {
+    score = score + 7;
+  }
+  if !hash.contains_key(2) {
+    score = score + 11;
+  }
+  hash.remove(1);
+  if !hash.contains_key(1) {
+    score = score + 13;
+  }
+  if hash.contains(9) {
+    score = score + 17;
+  }
+
+  tree.insert(ref mut zone, 4, 40);
+  tree.insert(ref mut zone, 2, 20);
+  tree.insert(ref mut zone, 8, 80);
+  if tree.contains_key(2) {
+    score = score + 19;
+  }
+  if !tree.contains_key(7) {
+    score = score + 23;
+  }
+  if tree.contains(8) {
+    score = score + 29;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

@@ -793,6 +793,7 @@ method std::collections::Deque[T]::try_pop_front|check-prelude std-collections-d
 method std::collections::HashMap[K,V]::capacity|check-prelude std-collections-hash hash table capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::clear|check-prelude std-collections-hash drops live hash map entries; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::contains|check-prelude std-collections-hash hash lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::contains_key|check-prelude std-collections-map-natural-api natural hash map key-membership predicate; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get|check-prelude std-collections-hash asserting hash lookup; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::insert|check-prelude std-collections-hash insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::is_empty|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
@@ -899,6 +900,7 @@ method std::collections::Set[T]::try_pop|check-prelude std-collections-set-acces
 method std::collections::TreeMap[K,V]::capacity|check-prelude std-collections-tree tree map capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::clear|check-prelude std-collections-tree drops live tree map nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains|check-prelude std-collections-tree ordered lookup predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::contains_key|check-prelude std-collections-map-natural-api natural ordered map key-membership predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::get|check-prelude std-collections-tree asserting ordered lookup; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::insert|check-prelude std-collections-tree red-black insert-or-replace with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md

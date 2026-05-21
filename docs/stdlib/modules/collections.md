@@ -226,6 +226,7 @@ map.len()
 map.capacity()
 map.is_empty()
 map.contains(key)
+map.contains_key(key)
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -237,10 +238,11 @@ map.values()
 ```
 
 `HashMap.insert` inserts or replaces and returns `Option[V]`: `Some(previous)`
-on replacement, `None` on a new key. `remove` returns the removed value.
-`keys` and `values` iterate live buckets. That order is deterministic for a
-specific table state, but it is not insertion order and should not be used as
-a stable sorting rule.
+on replacement, `None` on a new key. `contains_key` is the preferred
+key-membership spelling; `contains` remains available for compatibility with
+older examples. `remove` returns the removed value. `keys` and `values` iterate
+live buckets. That order is deterministic for a specific table state, but it
+is not insertion order and should not be used as a stable sorting rule.
 
 ```ari
 set.len()
@@ -291,6 +293,7 @@ map.len()
 map.capacity()
 map.is_empty()
 map.contains(key)
+map.contains_key(key)
 map.get(key)
 map.try_get(key)
 map.insert(ref mut zone, key, value)
@@ -300,9 +303,10 @@ map.keys()
 map.values()
 ```
 
-`TreeMap.insert` inserts or replaces and returns `Option[V]`. `keys` yields
-keys in ascending comparator order. `values` yields values in the same
-key-sorted order.
+`TreeMap.insert` inserts or replaces and returns `Option[V]`. `contains_key`
+is the preferred key-membership spelling; `contains` remains available for
+compatibility with older examples. `keys` yields keys in ascending comparator
+order. `values` yields values in the same key-sorted order.
 
 ```ari
 set.len()
@@ -408,6 +412,7 @@ tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-hash.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
+tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari
 tests/cases/standard-library/ok/collections/std-collections-tree.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
@@ -449,8 +454,11 @@ tests/cases/standard-library/errors/collections/std-collections-priority-queue-p
 linear-probing and tombstone paths are exercised.
 `std-collections-hash-set-relations.ari` keeps that collision pressure and
 checks set relationship predicates after a tombstone. `std-collections-hash-iter`
-checks key, value, and set cursors after tombstones. `std-collections-tree.ari`
-inserts mixed key order to exercise red-black rotations.
+checks key, value, and set cursors after tombstones.
+`std-collections-map-natural-api.ari` keeps compatibility `contains` calls
+working while locking down the preferred `contains_key` spelling for hash and
+tree maps. `std-collections-tree.ari` inserts mixed key order to exercise
+red-black rotations.
 `std-collections-tree-set-relations.ari` inserts the same values in different
 orders to verify relationship predicates are membership-based, while
 `std-collections-tree-iter.ari` checks sorted successor traversal.

@@ -690,6 +690,10 @@ pub impl[K, V] std::collections::HashMap[K, V] {
     return hash_map_find_slot<K, V>(self, key) >= 0;
   }
 
+  fn contains_key(self: ref Self, key: K) -> bool {
+    return self.contains(key);
+  }
+
   fn try_get(self: ref Self, key: K) -> std::Option[V] {
     let index = hash_map_find_slot<K, V>(self, key);
     if index < 0 {
@@ -1346,6 +1350,10 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
 
   fn contains(self: ref Self, key: K) -> bool {
     return tree_map_find_slot<K, V>(self, key) >= 0;
+  }
+
+  fn contains_key(self: ref Self, key: K) -> bool {
+    return self.contains(key);
   }
 
   fn try_get(self: ref Self, key: K) -> std::Option[V] {
