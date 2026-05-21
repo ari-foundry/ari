@@ -1,0 +1,51 @@
+// Covers fixed-width integer Hash impls. Different integer widths feed their
+// natural little-endian byte width, so generic hashing matches manual writes.
+fn main() -> i64 {
+  var score = 0;
+
+  var signed8 = hash::new();
+  hash::write_i8(ref mut signed8, -5i8);
+  if hash::finish(ref signed8) == hash::value<i8>(-5i8) {
+    score = score + 1;
+  }
+
+  var signed16 = hash::new();
+  hash::write_i16(ref mut signed16, -1234i16);
+  if hash::finish(ref signed16) == hash::value<i16>(-1234i16) {
+    score = score + 2;
+  }
+
+  var signed32 = hash::new();
+  hash::write_i32(ref mut signed32, -123456i32);
+  if hash::finish(ref signed32) == hash::value<i32>(-123456i32) {
+    score = score + 4;
+  }
+
+  var byte_state = hash::new();
+  hash::write_u8(ref mut byte_state, 250u8);
+  if hash::finish(ref byte_state) == hash::value<u8>(250u8) {
+    score = score + 8;
+  }
+
+  var unsigned16 = hash::new();
+  hash::write_u16(ref mut unsigned16, 50000u16);
+  if hash::finish(ref unsigned16) == hash::value<u16>(50000u16) {
+    score = score + 16;
+  }
+
+  var unsigned32 = hash::new();
+  hash::write_u32(ref mut unsigned32, 3000000000u32);
+  if hash::finish(ref unsigned32) == hash::value<u32>(3000000000u32) {
+    score = score + 32;
+  }
+
+  if hash::value<u8>(1u8) != hash::value<u16>(1u16) {
+    score = score + 64;
+  }
+
+  if hash::value<u16>(1u16) != hash::value<u32>(1u32) {
+    score = score + 128;
+  }
+
+  return score;
+}

@@ -21,6 +21,12 @@ hash::value<T>(value)
 hash::bytes(values)
 hash::write_byte(ref mut state, value)
 hash::write_bytes(ref mut state, values)
+hash::write_u8(ref mut state, value)
+hash::write_i8(ref mut state, value)
+hash::write_u16(ref mut state, value)
+hash::write_i16(ref mut state, value)
+hash::write_u32(ref mut state, value)
+hash::write_i32(ref mut state, value)
 hash::write_u64(ref mut state, value)
 hash::write_i64(ref mut state, value)
 hash::write_bool(ref mut state, value)
@@ -38,9 +44,11 @@ pub trait Hash[T] {
 }
 ```
 
-The current stdlib includes `Hash` impls for `i64`, `u64`, `u8`, and `bool`.
-User types can implement the trait by writing their fields into the supplied
-hasher.
+The current stdlib includes `Hash` impls for `i8`, `i16`, `i32`, `i64`,
+`u8`, `u16`, `u32`, `u64`, and `bool`. Integer helpers feed the natural
+little-endian byte width of the type, so `u8(1)`, `u16(1)`, and `u32(1)` stay
+distinct hash inputs. User types can implement the trait by writing their
+fields into the supplied hasher.
 
 `bytes(values)` hashes a `Slice[u8]` directly. It is the preferred helper for
 byte buffers and byte strings when you already have a slice view.
@@ -107,11 +115,14 @@ impl hash::Hash[Pair] for Pair {
 
 ```text
 tests/cases/standard-library/ok/hash/std-hash-basic.ari
+tests/cases/standard-library/ok/hash/std-hash-integer-widths.ari
 ```
 
 The focused test covers hasher construction, reset, byte writes, byte-slice
 hashing, primitive `Hash[T]` dispatch, and `collections::hash_i64`
-compatibility.
+compatibility. `std-hash-integer-widths.ari` checks fixed-width signed and
+unsigned integer writers, generic `Hash[T]` dispatch, and width-distinct byte
+feeds.
 
 ## Next Work
 
@@ -119,4 +130,4 @@ compatibility.
   trait policy are settled.
 - Add `HashMap`/`HashSet` constructors that use `Hash[T]` and `Eq[T]` instead
   of explicit hash functions.
-- Add more `Hash` impls after aggregate/derive policy is settled.
+- Add more non-integer `Hash` impls after aggregate/derive policy is settled.

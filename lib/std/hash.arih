@@ -52,6 +52,38 @@ pub fn write_bytes(state: ref mut Hasher, values: std::Slice[u8]) -> void {
   }
 }
 
+pub fn write_u8(state: ref mut Hasher, value: u8) -> void {
+  write_byte(state, value);
+}
+
+pub fn write_i8(state: ref mut Hasher, value: i8) -> void {
+  write_u8(state, value as u8);
+}
+
+pub fn write_u16(state: ref mut Hasher, value: u16) -> void {
+  var shift = 0;
+  while shift < 16 {
+    write_byte(state, (((value as u64) >> shift) & 255u64) as u8);
+    shift = shift + 8;
+  }
+}
+
+pub fn write_i16(state: ref mut Hasher, value: i16) -> void {
+  write_u16(state, value as u16);
+}
+
+pub fn write_u32(state: ref mut Hasher, value: u32) -> void {
+  var shift = 0;
+  while shift < 32 {
+    write_byte(state, (((value as u64) >> shift) & 255u64) as u8);
+    shift = shift + 8;
+  }
+}
+
+pub fn write_i32(state: ref mut Hasher, value: i32) -> void {
+  write_u32(state, value as u32);
+}
+
 pub fn write_u64(state: ref mut Hasher, value: u64) -> void {
   var shift = 0;
   while shift < 64 {
@@ -94,15 +126,45 @@ impl std::hash::Hash[i64] for i64 {
   }
 }
 
+impl std::hash::Hash[i8] for i8 {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_i8(state, self);
+  }
+}
+
+impl std::hash::Hash[i16] for i16 {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_i16(state, self);
+  }
+}
+
+impl std::hash::Hash[i32] for i32 {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_i32(state, self);
+  }
+}
+
 impl std::hash::Hash[u64] for u64 {
   fn hash(self, state: ref mut Hasher) -> void {
     write_u64(state, self);
   }
 }
 
+impl std::hash::Hash[u16] for u16 {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_u16(state, self);
+  }
+}
+
+impl std::hash::Hash[u32] for u32 {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_u32(state, self);
+  }
+}
+
 impl std::hash::Hash[u8] for u8 {
   fn hash(self, state: ref mut Hasher) -> void {
-    write_byte(state, self);
+    write_u8(state, self);
   }
 }
 

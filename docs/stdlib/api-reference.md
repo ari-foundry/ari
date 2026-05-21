@@ -2079,6 +2079,12 @@ hash::value<T>(value)
 hash::bytes(values)
 hash::write_byte(ref mut state, value)
 hash::write_bytes(ref mut state, values)
+hash::write_u8(ref mut state, value)
+hash::write_i8(ref mut state, value)
+hash::write_u16(ref mut state, value)
+hash::write_i16(ref mut state, value)
+hash::write_u32(ref mut state, value)
+hash::write_i32(ref mut state, value)
 hash::write_u64(ref mut state, value)
 hash::write_i64(ref mut state, value)
 hash::write_bool(ref mut state, value)
@@ -2086,7 +2092,8 @@ hash::write_bool(ref mut state, value)
 
 Use `hash::value<T>` for a single value with a `Hash[T]` impl, `hash::bytes`
 for a borrowed `Slice[u8]`, and `Hasher` plus `write` calls for incremental
-hashing. Current built-in impls cover `i64`, `u64`, `u8`, and `bool`.
+hashing. Current built-in impls cover fixed-width signed and unsigned integer
+types plus `bool`.
 
 ## Random
 

@@ -29,8 +29,8 @@ limits, examples, and test files for one module.
 - [std::boxed](boxed.md): zone-backed single-value owner with explicit
   allocation, move-out, refill, copy-to-zone, borrow, and raw pointer helpers.
 - [std::hash](hash.md): deterministic non-cryptographic `Hasher`,
-  `Hash[T]`, primitive hashing, byte-slice hashing, and collection hash
-  compatibility notes.
+  `Hash[T]`, fixed-width integer and bool hashing, byte-slice hashing, and
+  collection hash compatibility notes.
 - [std::random](random.md): OS entropy, deterministic non-cryptographic
   `Prng`, booleans, unbiased bounded integers, unit floats, byte filling, and
   slice shuffling.
