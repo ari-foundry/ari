@@ -80,6 +80,6 @@ the same language surface that normal Ari users get.
 - `artifact/ok/pass-summary-basic.summary`: driver-level stage count seed for
   lexer, syntax, module loading, and sema boundaries.
 - `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module, type/trait,
-  and ownership diagnostic-code golden seeds.
+  and ownership diagnostic code/family golden seeds.
 - `artifact/errors/text-line-mismatch.*.txt`: seed mismatch-report fixture for
   text artifact comparisons.

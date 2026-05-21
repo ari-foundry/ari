@@ -214,11 +214,13 @@ Rules:
 - add codes first for stable, user-facing errors
 - document code families before adding many individual codes
 
-Current stage0 bridge:
+Current transitional bridge:
 
 - `--emit-diagnostics` still catches string-based `CompileError` values.
 - `classify_diagnostic_code` maps common messages into the first stable
   families: `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, and `B0001`.
+- `diagnostic_code_family` renders the owning layer name, such as
+  `family=parser`, next to the stable code in diagnostic artifacts.
 - Unknown messages keep the fallback `ari/compiler` code so tools remain
   compatible while individual diagnostics move to explicit codes.
 - This bridge is only for artifact stability. The long-term design is still

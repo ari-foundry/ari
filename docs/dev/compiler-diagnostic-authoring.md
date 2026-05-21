@@ -28,6 +28,7 @@ Each stable diagnostic should be designed as data before text:
 | Field | Rule |
 | --- | --- |
 | Code | Use a stable family such as `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, or `B0001` when the rule is durable. |
+| Family | Emit the owning layer name such as `lexer`, `parser`, `module`, `type`, `ownership`, `ir`, or `backend`. |
 | Severity | Use `error` for rejected source; reserve warnings until warning policy is explicit. |
 | Message | State the rule in user language, not internal helper names. |
 | Primary label | Point at the smallest source span that caused the error. |
@@ -36,8 +37,8 @@ Each stable diagnostic should be designed as data before text:
 | Help | Suggest one concrete next action when Ari has an obvious correction. |
 
 Rendering belongs at the edge. Lexer, parser, resolver, sema, and backend code
-should build diagnostic data or a stage0 equivalent, not format long reports
-inline.
+should build diagnostic data or a transitional equivalent, not format long
+reports inline.
 
 ## Message Style
 
@@ -104,6 +105,10 @@ Start with families, then add individual codes when behavior is stable:
 | `O0001` | ownership, borrowing, moves, drops, and zones |
 | `I0001` | typed IR lowering and resolved compiler facts |
 | `B0001` | LLVM, object, executable, shared library, and artifact emission |
+
+The diagnostic artifact prints both fields, for example
+`code=P0001 family=parser`. The code is the stable search key; the family tells
+contributors which compiler layer should usually own the first fix.
 
 Once a code is documented in a golden artifact, do not reuse it for a different
 rule.

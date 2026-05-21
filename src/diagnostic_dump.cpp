@@ -112,6 +112,17 @@ std::string classify_diagnostic_code(const std::string& message) {
     return "ari/compiler";
 }
 
+std::string diagnostic_code_family(const std::string& code) {
+    if (code == "L0001") return "lexer";
+    if (code == "P0001") return "parser";
+    if (code == "M0001") return "module";
+    if (code == "T0001") return "type";
+    if (code == "O0001") return "ownership";
+    if (code == "I0001") return "ir";
+    if (code == "B0001") return "backend";
+    return "general";
+}
+
 std::string dump_diagnostic_message(const std::string& severity,
                                     const std::string& code,
                                     const std::string& message,
@@ -120,7 +131,9 @@ std::string dump_diagnostic_message(const std::string& severity,
     int column = 0;
     std::string diagnostic = message;
     std::ostringstream out;
-    out << "diagnostic " << severity << " code=" << code;
+    out << "diagnostic " << severity
+        << " code=" << code
+        << " family=" << diagnostic_code_family(code);
     if (parse_location_prefix(message, line, column, diagnostic)) {
         out << " message=" << quote(diagnostic)
             << " @ " << source_name << ":" << line << ":" << column << "\n";

@@ -285,7 +285,8 @@ It currently proves thirteen low-level contracts:
 - `--emit-diagnostics` writes a normalized diagnostic artifact for an expected
   compiler failure
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,
-  and ownership failures with stable diagnostic-code families
+  and ownership failures with stable diagnostic codes and explicit
+  `family=...` layer names
 - `--emit-module-graph` writes deterministic file-backed source, import, and
   item-surface facts without running sema or LLVM codegen
 - `--emit-declaration-index` writes deterministic declaration signatures,
