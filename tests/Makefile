@@ -718,6 +718,18 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari -o $(BUILD_DIR)/prelude/std-fs-metadata.elf
 	$(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 129
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-metadata.elf; $(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 129; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-query-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs15metadata_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs23symlink_metadata_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs16file_type_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs11mode_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs15open_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs15read_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs23read_dir_entries_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs19canonicalize_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs16read_link_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-query-result.ari -o $(BUILD_DIR)/prelude/std-fs-query-result.elf
+	$(BUILD_DIR)/prelude/std-fs-query-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata-times.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
 	grep -q "@ari_builtin_fs_metadata_accessed_nanos" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll
 	grep -q "@ari_builtin_fs_metadata_modified_nanos" $(BUILD_DIR)/prelude/std-fs-metadata-times.ll

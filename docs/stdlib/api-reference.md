@@ -930,25 +930,35 @@ fs::can_write(path)
 fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
+fs::metadata_raw_result(path)
+fs::metadata_result(path)
 fs::try_metadata(path)
 fs::symlink_metadata(path)
+fs::symlink_metadata_raw_result(path)
+fs::symlink_metadata_result(path)
 fs::try_symlink_metadata(path)
+fs::file_type_raw_result(path)
+fs::file_type_result(path)
 fs::try_file_type(path)
 fs::is_file(path)
 fs::is_dir(path)
 fs::is_symlink(path)
 fs::is_other(path)
 fs::mode(path)
+fs::mode_raw_result(path)
+fs::mode_result(path)
 fs::try_mode(path)
 fs::set_mode(path, mode)
 fs::set_permissions(path, permissions)
 fs::canonicalize(ref mut zone, path)
+fs::canonicalize_result(ref mut zone, path)
 fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::read_link(ref mut zone, path)
+fs::read_link_result(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
@@ -962,10 +972,14 @@ fs::remove_dir_raw_result(path)
 fs::remove_dir_result(path)
 fs::remove_dir_all(path)
 fs::open_dir(path)
+fs::open_dir_raw_result(path)
+fs::open_dir_result(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
+fs::read_dir_result(ref mut zone, path)
 fs::try_read_dir(ref mut zone, path)
 fs::read_dir_entries(ref mut zone, path)
+fs::read_dir_entries_result(ref mut zone, path)
 fs::try_read_dir_entries(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
@@ -1126,11 +1140,16 @@ failures because filesystem access can change after the check.
 `try_metadata(path)` returns `Option[Metadata]`, using `None` for missing or
 unstatable paths. `metadata(path)` asserts that metadata is available. These
 helpers follow symbolic links.
+`metadata_result(path)` returns `Result[Metadata, Error]`, preserving
+errno-derived failure kinds, and `metadata_raw_result(path)` keeps the raw
+compatibility bridge.
 `try_symlink_metadata(path)` and `symlink_metadata(path)` use no-follow
 metadata lookup, so a symbolic link reports `FileKind::Symlink` and its stored
 target byte length instead of the target file's metadata. The `Permissions`
 field is still the same access-style snapshot as `permissions(path)`; portable
 symlink permission-bit policy is not part of this slice.
+`symlink_metadata_result(path)` and `symlink_metadata_raw_result(path)` are the
+direct `Error` and raw compatibility versions of that no-follow lookup.
 `Metadata::len` reports host byte length, `Metadata::file_type` returns
 `FileKind` (`Regular`, `Directory`, `Symlink`, or `Other`), and
 `Metadata::permissions` carries the access-style permission snapshot.
@@ -1139,6 +1158,9 @@ symlink permission-bit policy is not part of this slice.
 status-change time respectively. `changed` is not a portable creation time.
 `try_file_type(path)` returns just `Option[FileKind]` without building the full
 metadata/permission snapshot.
+`file_type_result(path)` returns `Result[FileKind, Error]` when the caller
+needs a precise failure reason, and `file_type_raw_result(path)` keeps raw
+errno compatibility.
 `fs::is_file(path)`, `fs::is_dir(path)`, `fs::is_symlink(path)`, and
 `fs::is_other(path)` are direct path predicates that return `false` for
 missing or unstatable paths. `is_symlink` uses the no-follow policy; the other
@@ -1153,17 +1175,22 @@ mode)` for direct chmod-style updates, or `set_permissions(path, permissions)`
 when a `Permissions` value is clearer at the call site. `Permissions::to_mode`
 maps the three booleans to user/group/other bits, so `read_only()` maps to
 `0444` and `all()` maps to `0777`.
+`mode_result(path)` returns `Result[i64, Error]`; `mode_raw_result(path)` is
+the raw compatibility form.
 `try_canonicalize(ref mut zone, path)` returns `Option[String]`, using `None`
 when the host cannot resolve the path. The returned string is absolute, owned
 by the provided zone, and follows the host `realpath` policy. `canonicalize(ref
 mut zone, path)` is the asserting wrapper for code that treats failed
 resolution as a programmer error.
+`canonicalize_result(ref mut zone, path)` returns `Result[String, Error]` for
+tools and libraries that should surface why path resolution failed.
 `try_read_link(ref mut zone, path)` returns `Option[String]` containing the
 stored target bytes of a symbolic link. It returns `None` for missing paths,
 regular files, unreadable links, or runtime-buffer overflow. `read_link(ref
 mut zone, path)` is the asserting wrapper. Use `read_link` when code needs the
 link text itself; use `canonicalize` when code wants the host-resolved
 absolute path.
+`read_link_result(ref mut zone, path)` is the direct `Error` form.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns whether one byte was written. `write_bytes` writes a
 `Slice[u8]` and returns the count written before the first failed byte write.
@@ -1200,12 +1227,15 @@ parent directories, `ensure_dir_all(path)` is the idempotent recursive alias,
 `remove_dir(path)` removes one empty directory, and `remove_dir_all(path)`
 recursively removes a directory tree without following symlink entries outside
 that tree.
-`try_open_dir(path)` returns `Option[Dir]`, `dir.next(ref mut zone)` returns
+`open_dir_result(path)` returns `Result[Dir, Error]` and
+`open_dir_raw_result(path)` keeps raw compatibility. `try_open_dir(path)` returns `Option[Dir]`, `dir.next(ref mut zone)` returns
 the next entry name while skipping `"."` and `".."`, and `dir.close()` closes
 the handle. `try_read_dir(ref mut zone, path)` opens, collects names into
 `std::vec::Vec[String]`, closes, and returns `None` on open/close failure.
-`read_dir(ref mut zone, path)` is the asserting wrapper. Use
+`read_dir_result(ref mut zone, path)` returns `Result[Vec[String], Error]`,
+and `read_dir(ref mut zone, path)` is the asserting wrapper. Use
 `try_read_dir_entries(ref mut zone, path)` or
+`read_dir_entries_result(ref mut zone, path)` or
 `read_dir_entries(ref mut zone, path)` when callers need `DirEntry` values with
 `entry.name()`, `entry.path()`, and lazy metadata/file-kind helpers. Entry
 `metadata`, `try_metadata`, `try_file_type`, `is_file`, `is_dir`, and

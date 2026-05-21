@@ -311,6 +311,40 @@ pub fn try_metadata(path: string) -> std::Option[Metadata] {
   );
 }
 
+pub fn metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
+  let kind = metadata_kind_raw(path);
+  if kind < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let size = metadata_size_raw(path);
+  if size < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let accessed = metadata_accessed_nanos_raw(path);
+  if accessed < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let modified = metadata_modified_nanos_raw(path);
+  if modified < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let changed = metadata_changed_nanos_raw(path);
+  if changed < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  match metadata_from_raw(path, kind, size, accessed, modified, changed) {
+    std::Some(value) => {
+      return std::Ok<Metadata, i64>(value);
+    }
+    std::None => {}
+  }
+  return std::Err<Metadata, i64>(last_errno_error_raw());
+}
+
+pub fn metadata_result(path: string) -> std::Result[Metadata, std::error::Error] {
+  return std::error::from_raw_result<Metadata>(metadata_raw_result(path));
+}
+
 pub fn try_symlink_metadata(path: string) -> std::Option[Metadata] {
   let kind = symlink_metadata_kind_raw(path);
   if kind < 0 {
@@ -325,6 +359,40 @@ pub fn try_symlink_metadata(path: string) -> std::Option[Metadata] {
     symlink_metadata_modified_nanos_raw(path),
     symlink_metadata_changed_nanos_raw(path)
   );
+}
+
+pub fn symlink_metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
+  let kind = symlink_metadata_kind_raw(path);
+  if kind < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let size = symlink_metadata_size_raw(path);
+  if size < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let accessed = symlink_metadata_accessed_nanos_raw(path);
+  if accessed < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let modified = symlink_metadata_modified_nanos_raw(path);
+  if modified < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let changed = symlink_metadata_changed_nanos_raw(path);
+  if changed < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  match metadata_from_raw(path, kind, size, accessed, modified, changed) {
+    std::Some(value) => {
+      return std::Ok<Metadata, i64>(value);
+    }
+    std::None => {}
+  }
+  return std::Err<Metadata, i64>(last_errno_error_raw());
+}
+
+pub fn symlink_metadata_result(path: string) -> std::Result[Metadata, std::error::Error] {
+  return std::error::from_raw_result<Metadata>(symlink_metadata_raw_result(path));
 }
 
 fn try_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
@@ -365,6 +433,18 @@ pub fn try_file_type(path: string) -> std::Option[FileKind] {
     return std::None<FileKind>();
   }
   return std::Some<FileKind>(file_kind_from_raw(kind));
+}
+
+pub fn file_type_raw_result(path: string) -> std::Result[FileKind, i64] {
+  let kind = metadata_kind_raw(path);
+  if kind < 0 {
+    return std::Err<FileKind, i64>(last_errno_error_raw());
+  }
+  return std::Ok<FileKind, i64>(file_kind_from_raw(kind));
+}
+
+pub fn file_type_result(path: string) -> std::Result[FileKind, std::error::Error] {
+  return std::error::from_raw_result<FileKind>(file_type_raw_result(path));
 }
 
 pub fn is_file(path: string) -> bool {
@@ -466,6 +546,18 @@ pub fn try_mode(path: string) -> std::Option[i64] {
   return std::Some<i64>(mode & 511);
 }
 
+pub fn mode_raw_result(path: string) -> std::Result[i64, i64] {
+  let mode = metadata_mode_raw(path);
+  if mode < 0 {
+    return std::Err<i64, i64>(last_errno_error_raw());
+  }
+  return std::Ok<i64, i64>(mode & 511);
+}
+
+pub fn mode_result(path: string) -> std::Result[i64, std::error::Error] {
+  return std::error::from_raw_result<i64>(mode_raw_result(path));
+}
+
 pub fn mode(path: string) -> i64 {
   match try_mode(path) {
     std::Some(value) => {
@@ -518,6 +610,18 @@ pub fn ensure_file(path: string) -> bool {
   return file.close();
 }
 
+pub fn open_dir_raw_result(path: string) -> std::Result[Dir, i64] {
+  let dir = open_dir(path);
+  if dir.is_open() {
+    return std::Ok<Dir, i64>(dir);
+  }
+  return std::Err<Dir, i64>(last_errno_error_raw());
+}
+
+pub fn open_dir_result(path: string) -> std::Result[Dir, std::error::Error] {
+  return std::error::from_raw_result<Dir>(open_dir_raw_result(path));
+}
+
 pub fn try_open_dir(path: string) -> std::Option[Dir] {
   let dir = open_dir(path);
   if dir.is_open() {
@@ -558,6 +662,33 @@ pub fn try_read_dir(zone: ref mut Zone, path: string) -> std::Option[std::vec::V
     std::None => {}
   }
   return std::None<std::vec::Vec[std::string::String]>();
+}
+
+pub fn read_dir_result(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[std::string::String], std::error::Error] {
+  match open_dir_result(path) {
+    std::Ok(dir) => {
+      var entries = std::vec::new<std::string::String>(zone, 8);
+      var reading = true;
+      while reading {
+        match dir.next(zone) {
+          std::Some(name) => {
+            entries.push_in(zone, name);
+          }
+          std::None => {
+            reading = false;
+          }
+        }
+      }
+
+      if dir.close() {
+        return std::Ok<std::vec::Vec[std::string::String], std::error::Error>(entries);
+      }
+      return std::Err<std::vec::Vec[std::string::String], std::error::Error>(std::error::from_raw(last_errno_error_raw()));
+    }
+    std::Err(reason) => {
+      return std::Err<std::vec::Vec[std::string::String], std::error::Error>(reason);
+    }
+  }
 }
 
 pub fn read_dir(zone: ref mut Zone, path: string) -> std::vec::Vec[std::string::String] {
@@ -616,6 +747,33 @@ pub fn try_read_dir_entries(zone: ref mut Zone, path: string) -> std::Option[std
     std::None => {}
   }
   return std::None<std::vec::Vec[DirEntry]>();
+}
+
+pub fn read_dir_entries_result(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
+  match open_dir_result(path) {
+    std::Ok(dir) => {
+      var entries = std::vec::new<DirEntry>(zone, 8);
+      var reading = true;
+      while reading {
+        match dir.next(zone) {
+          std::Some(name) => {
+            entries.push_in(zone, make_dir_entry(zone, path, name));
+          }
+          std::None => {
+            reading = false;
+          }
+        }
+      }
+
+      if dir.close() {
+        return std::Ok<std::vec::Vec[DirEntry], std::error::Error>(entries);
+      }
+      return std::Err<std::vec::Vec[DirEntry], std::error::Error>(std::error::from_raw(last_errno_error_raw()));
+    }
+    std::Err(reason) => {
+      return std::Err<std::vec::Vec[DirEntry], std::error::Error>(reason);
+    }
+  }
 }
 
 fn try_read_dir_entries_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[DirEntry]] {
@@ -715,6 +873,14 @@ pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::st
   return std::Some<std::string::String>(std::string::from(zone, resolved));
 }
 
+pub fn canonicalize_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+  let resolved = canonicalize_raw(path);
+  if std::string::c_len(resolved) == 0 {
+    return std::Err<std::string::String, std::error::Error>(std::error::from_raw(last_errno_error_raw()));
+  }
+  return std::Ok<std::string::String, std::error::Error>(std::string::from(zone, resolved));
+}
+
 pub fn canonicalize(zone: ref mut Zone, path: string) -> std::string::String {
   match try_canonicalize(zone, path) {
     std::Some(value) => {
@@ -732,6 +898,14 @@ pub fn try_read_link(zone: ref mut Zone, path: string) -> std::Option[std::strin
     return std::None<std::string::String>();
   }
   return std::Some<std::string::String>(std::string::from(zone, target));
+}
+
+pub fn read_link_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+  let target = read_link_raw(path);
+  if std::string::c_len(target) == 0 {
+    return std::Err<std::string::String, std::error::Error>(std::error::from_raw(last_errno_error_raw()));
+  }
+  return std::Ok<std::string::String, std::error::Error>(std::string::from(zone, target));
 }
 
 pub fn read_link(zone: ref mut Zone, path: string) -> std::string::String {

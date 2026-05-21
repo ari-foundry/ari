@@ -188,6 +188,9 @@ identifies the exact case:
 - `std-fs-read-result.ari`: `read_result` and `read_to_string_result` direct
   `Error` whole-file reads, including successful owned byte-string reads,
   missing-file `NotFound`, and compatibility `try_read` absence.
+- `std-fs-query-result.ari`: direct `Error` query helpers for metadata,
+  no-follow metadata, path kind, POSIX mode, canonicalization, symbolic-link
+  target reads, directory open, and one-shot directory listings.
 - `std-fs-byte-result.ari`: `write_result`, `append_result`, and
   `copy_result` direct `Error` byte-count results plus raw compatibility open
   failures.

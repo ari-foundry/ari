@@ -12,10 +12,11 @@ targets, query no-follow symbolic-link metadata, ensure a single regular file ex
 directory, ensure a single directory exists without treating an existing
 directory as failure, recursively create missing directory parents, read
 directory entry names through an explicit `Dir` handle, collect `DirEntry`
-values with names, joined paths, and lazy metadata helpers,
-query basic file metadata, ask direct path-kind predicates such as `is_file`
+values with names, joined paths, lazy metadata helpers, and `Error`-returning
+directory query forms, query basic file metadata with `Option` or
+`Result[..., Error]`, ask direct path-kind predicates such as `is_file`
 and `is_dir`, read and change POSIX permission bits, resolve an existing path
-to an absolute canonical path, pass `File` handles to generic `std::io::Reader`
+to an absolute canonical path with `Option` or `Result` failure details, pass `File` handles to generic `std::io::Reader`
 and `std::io::Writer` helpers, inspect and move a file cursor through
 `std::io::Seek`, close the handle, and remove a file.
 
@@ -26,14 +27,15 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `try_read`, `read_to_string_result`, `write`,
 `write_result`, `append`, `append_result`, `try_write`, `try_append`,
 `truncate`, `copy`, `copy_result`, `try_copy`, `metadata`,
-`try_metadata`, `symlink_metadata`, `try_symlink_metadata`,
-`try_file_type`, `is_file`, `is_dir`, `is_symlink`,
-`is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
-`canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
-`symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`, `remove_dir_all`,
-`create_dir_all`, `ensure_dir_all`, `try_open_dir`, `read_dir`,
-`try_read_dir`, `read_dir_entries`,
-`try_read_dir_entries`,
+`metadata_result`, `try_metadata`, `symlink_metadata`,
+`symlink_metadata_result`, `try_symlink_metadata`,
+`file_type_result`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
+`is_other`, `mode`, `mode_result`, `try_mode`, `set_mode`, `set_permissions`,
+`canonicalize`, `canonicalize_result`, `try_canonicalize`, `rename`, `hard_link`,
+`symbolic_link`, `read_link`, `read_link_result`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`, `remove_dir_all`,
+`create_dir_all`, `ensure_dir_all`, `open_dir_result`, `try_open_dir`, `read_dir`,
+`read_dir_result`, `try_read_dir`, `read_dir_entries`,
+`read_dir_entries_result`, `try_read_dir_entries`,
 `read_dir_next`, `position`, `seek`, `close_dir`, `close`, `exists`, and `remove`, not
 type-suffixed names.
 
@@ -46,25 +48,35 @@ fs::can_write(path)
 fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
+fs::metadata_raw_result(path)
+fs::metadata_result(path)
 fs::try_metadata(path)
 fs::symlink_metadata(path)
+fs::symlink_metadata_raw_result(path)
+fs::symlink_metadata_result(path)
 fs::try_symlink_metadata(path)
+fs::file_type_raw_result(path)
+fs::file_type_result(path)
 fs::try_file_type(path)
 fs::is_file(path)
 fs::is_dir(path)
 fs::is_symlink(path)
 fs::is_other(path)
 fs::mode(path)
+fs::mode_raw_result(path)
+fs::mode_result(path)
 fs::try_mode(path)
 fs::set_mode(path, mode)
 fs::set_permissions(path, permissions)
 fs::canonicalize(ref mut zone, path)
+fs::canonicalize_result(ref mut zone, path)
 fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::read_link(ref mut zone, path)
+fs::read_link_result(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
@@ -78,10 +90,14 @@ fs::remove_dir_raw_result(path)
 fs::remove_dir_result(path)
 fs::remove_dir_all(path)
 fs::open_dir(path)
+fs::open_dir_raw_result(path)
+fs::open_dir_result(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
+fs::read_dir_result(ref mut zone, path)
 fs::try_read_dir(ref mut zone, path)
 fs::read_dir_entries(ref mut zone, path)
+fs::read_dir_entries_result(ref mut zone, path)
 fs::try_read_dir_entries(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
@@ -406,6 +422,11 @@ metadata lookups return `None`; successful calls snapshot the byte length,
 programs that treat a missing path as a programmer error. This helper follows
 symbolic links, matching the common "tell me about the thing this path names"
 policy.
+`metadata_result(path)` is the production-friendly form. It returns
+`Result[Metadata, Error]`, preserving errno-derived kinds such as `NotFound`,
+`PermissionDenied`, or `NotDirectory`. `metadata_raw_result(path)` keeps the
+same operation with a compact raw `i64` payload for compatibility-only
+bridges.
 
 `try_symlink_metadata(path)` returns `Option[Metadata]` using a no-follow path
 lookup. For ordinary files and directories it looks like `try_metadata`; for a
@@ -416,6 +437,9 @@ this helper before rewriting or removing links when the distinction between
 the link and its target matters. The embedded `Permissions` value still uses
 the same access-style `permissions(path)` snapshot as ordinary metadata;
 portable symlink permission-bit policy is intentionally not promised yet.
+`symlink_metadata_result(path)` and `symlink_metadata_raw_result(path)` are the
+direct `Error` and raw compatibility variants of the same no-follow metadata
+lookup.
 
 `try_file_type(path)` is the lightweight `Option[FileKind]` helper for code
 that only needs the path kind without building the full metadata/permission
@@ -427,6 +451,9 @@ the link object itself. Missing or unstatable paths return `false`. Prefer
 these predicates at call sites that only branch on the kind, and keep
 `metadata(path)` or `symlink_metadata(path)` for code that also needs size or
 permissions.
+`file_type_result(path)` returns `Result[FileKind, Error]` for callers that
+need to distinguish a missing path from a permission or path-shape failure.
+`file_type_raw_result(path)` is the raw compatibility variant.
 
 `Metadata::len()` returns the byte length reported by the host. Directories and
 special files can have host-specific sizes; only regular-file sizes should be
@@ -449,6 +476,9 @@ decimal literals today: `420` for `0644`, `292` for `0444`, and `511` for
 mode)` uses the host `chmod` path and rejects values outside `0..511`.
 `set_permissions(path, permissions)` is the structured version for code that
 already has a `Permissions` value.
+`mode_result(path)` returns `Result[i64, Error]` and should be used when a
+missing path or permission failure is normal input. `mode_raw_result(path)` is
+kept for compatibility adapters.
 
 `try_canonicalize(ref mut zone, path)` resolves an existing path through the
 host filesystem and returns an owned absolute `String` in the caller-provided
@@ -457,6 +487,9 @@ return `None`. `canonicalize(ref mut zone, path)` is the asserting convenience
 wrapper for code that treats an unresolvable path as a programmer error. The
 current Linux/glibc runtime uses `realpath`, so it follows symbolic links and
 requires the path to exist.
+`canonicalize_result(ref mut zone, path)` returns `Result[String, Error]` so
+tools can report the specific filesystem failure instead of collapsing it to
+`None`.
 
 `rename(source, target)` asks the host to move or rename one path to another.
 On the current Linux/glibc runtime path this follows host `rename` behavior,
@@ -486,6 +519,9 @@ runtime buffer return `None`. `read_link(ref mut zone, path)` is the asserting
 wrapper. This is intentionally different from `canonicalize`: `read_link`
 returns the link text as stored, while `canonicalize` resolves an existing path
 to an absolute host path.
+`read_link_result(ref mut zone, path)` preserves the same stored-link-target
+behavior while returning `Err(Error)` for missing paths, non-links, or host
+read failures.
 
 `ensure_file(path)` is the file counterpart to `ensure_dir`: it creates one
 empty file only when the path is missing and otherwise succeeds only for an
@@ -517,15 +553,19 @@ a directory tree recursively, including regular files and symlinks inside the
 tree. It rejects missing paths and non-directory roots, and it treats symlinks
 as link entries to unlink rather than directories to follow.
 
+`open_dir_result(path)` opens one directory and returns `Result[Dir, Error]`;
+`open_dir_raw_result(path)` keeps the raw compatibility payload.
 `try_open_dir(path)` opens one directory and returns `Option[Dir]`.
 `dir.next(ref mut zone)` returns the next entry name as `Option[String]`,
 skipping the host `"."` and `".."` entries. `dir.close()` closes the directory
 handle. `try_read_dir(ref mut zone, path)` is the convenient one-shot helper:
 it opens the directory, collects names into `std::vec::Vec[String]`, closes the
 handle, and returns `None` when the directory cannot be opened or closed.
-`read_dir(ref mut zone, path)` is the asserting wrapper for code that treats a
-failed directory read as a programmer error. Use
+`read_dir_result(ref mut zone, path)` keeps open/close failures as
+`Result[Vec[String], Error]`. `read_dir(ref mut zone, path)` is the asserting
+wrapper for code that treats a failed directory read as a programmer error. Use
 `try_read_dir_entries(ref mut zone, path)` or
+`read_dir_entries_result(ref mut zone, path)` or
 `read_dir_entries(ref mut zone, path)` when the call site needs the entry name,
 the joined child path, and lazy metadata. `DirEntry::name()` and
 `DirEntry::path()` return borrowed `String` references; the `*_equals` helpers
@@ -549,15 +589,15 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, byte-counting `try_write`, `Error`-returning `write_result`, and raw compatibility `write_raw_result`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, byte-counting `try_append`, `Error`-returning `append_result`, and raw compatibility `append_raw_result`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
-| metadata | Current: `try_metadata(path)`/`metadata(path)` over the Linux/glibc `stat` runtime path, `try_symlink_metadata(path)`/`symlink_metadata(path)` and `is_symlink(path)` over the Linux/glibc `lstat` runtime path, plus `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
-| permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
+| metadata | Current: `try_metadata(path)`/`metadata(path)`, `metadata_result(path)` with `Error`, and raw compatibility `metadata_raw_result(path)` over the Linux/glibc `stat` runtime path; `try_symlink_metadata(path)`/`symlink_metadata(path)`, `symlink_metadata_result(path)` with `Error`, raw compatibility `symlink_metadata_raw_result(path)`, and `is_symlink(path)` over the Linux/glibc `lstat` runtime path; plus `try_file_type(path)`, `file_type_result(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
+| permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, `mode_result` with `Error`, raw compatibility `mode_raw_result`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
 | rename | Current: `rename(source, target)`, `rename_result(source, target)` with `Error`, and raw compatibility `rename_raw_result`; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)`/`remove_result(path)` plus raw compatibility `remove_raw_result`, empty directory removal with `remove_dir(path)`/`remove_dir_result(path)` plus raw compatibility `remove_dir_raw_result`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
 | copy | Current: source streaming `copy(source, target)`, byte-counting `try_copy(source, target)`, `Error`-returning `copy_result(source, target)`, and raw compatibility `copy_raw_result(source, target)` for byte files. |
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
-| symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
-| canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
-| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors and owned OS-resource policy are roadmap. |
+| symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, `read_link_result(ref mut zone, path)` with `Error`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
+| canonicalize | Current: `try_canonicalize(ref mut zone, path)`, `canonicalize_result(ref mut zone, path)` with `Error`, and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
+| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir_result(ref mut zone, path)` with `Error`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries_result(ref mut zone, path)` with `Error`, `read_dir_entries(ref mut zone, path)`, `open_dir_result(path)` with `Error`, raw compatibility `open_dir_raw_result(path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors and owned OS-resource policy are roadmap. |
 | create directory | Current: single-directory `create_dir(path)`, `Error`-returning `create_dir_result(path)`, raw compatibility `create_dir_raw_result(path)`, and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
@@ -884,6 +924,9 @@ read-to-byte-string, missing-file empty reads, and truncating rewrite behavior.
 `std-fs-read-result.ari` covers direct `Error` whole-file read helpers,
 successful byte-string reads, missing-file `NotFound`, and compatibility
 `try_read` absence.
+`std-fs-query-result.ari` covers direct `Error` metadata, no-follow metadata,
+path-kind, mode, canonicalization, symbolic-link target, directory-open, and
+directory-list helpers.
 `std-fs-byte-result.ari` covers `write_result`, `append_result`, and
 `copy_result` direct Error payloads plus raw compatibility helpers.
 `std-fs-try-read.ari` covers `Option[String]` whole-file

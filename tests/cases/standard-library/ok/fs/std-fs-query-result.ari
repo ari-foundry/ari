@@ -1,0 +1,147 @@
+// Covers direct Error-returning filesystem query helpers. The older try_*
+// forms remain useful for compact probes, but production code should prefer
+// these Result shapes when it needs the failure reason.
+fn has_name(values: ref std::vec::Vec[std::string::String], expected: string) -> bool {
+  var index = 0;
+  while index < values.len() {
+    let name = values.get(index);
+    if name.equals_text(expected) {
+      return true;
+    }
+    index = index + 1;
+  }
+  return false;
+}
+
+fn has_entry(values: ref std::vec::Vec[std::fs::DirEntry], expected: string) -> bool {
+  var index = 0;
+  while index < values.len() {
+    let entry = values.get(index);
+    if entry.name_equals(expected) {
+      return true;
+    }
+    index = index + 1;
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  let dir_path = "build/prelude/std-fs-query-result-dir.tmp";
+  let file_path = "build/prelude/std-fs-query-result-dir.tmp/item.txt";
+  let link_path = "build/prelude/std-fs-query-result-dir.tmp/item.link";
+  let missing = "build/prelude/std-fs-query-result-missing.tmp";
+
+  fs::remove(link_path);
+  fs::remove(file_path);
+  fs::remove_dir(dir_path);
+  fs::remove(missing);
+
+  var zone = zone::create(4096);
+  var bytes = [81u8, 82u8, 89u8];
+  var score = 0;
+
+  fs::create_dir(dir_path);
+  fs::write(file_path, bytes.as_slice());
+  fs::symbolic_link(file_path, link_path);
+
+  match fs::metadata_result(file_path) {
+    std::Ok(file_info) => {
+      if file_info.len() == 3 && file_info.is_file() {
+        score = score + 1;
+      }
+    }
+    std::Err(_) => {}
+  }
+
+  match fs::file_type_result(file_path) {
+    std::Ok(kind) => {
+      match kind {
+        fs::Regular => {
+          score = score + 2;
+        }
+        _ => {}
+      }
+    }
+    std::Err(_) => {}
+  }
+
+  match fs::mode_result(file_path) {
+    std::Ok(mode) => {
+      if mode >= 0 {
+        score = score + 4;
+      }
+    }
+    std::Err(_) => {}
+  }
+
+  match fs::metadata_result(missing) {
+    std::Ok(_) => {}
+    std::Err(reason) => {
+      if reason.is_kind(error::NotFound) {
+        score = score + 8;
+      }
+    }
+  }
+
+  match fs::symlink_metadata_result(link_path) {
+    std::Ok(link_info) => {
+      if link_info.is_symlink() {
+        score = score + 16;
+      }
+    }
+    std::Err(_) => {}
+  }
+
+  match fs::read_link_result(ref mut zone, link_path) {
+    std::Ok(target) => {
+      if target.equals_text(file_path) {
+        score = score + 32;
+      }
+    }
+    std::Err(_) => {}
+  }
+
+  match fs::canonicalize_result(ref mut zone, file_path) {
+    std::Ok(resolved) => {
+      if path::is_absolute(resolved.as_slice()) && resolved.ends_with("item.txt") {
+        score = score + 64;
+      }
+    }
+    std::Err(_) => {}
+  }
+
+  var directory_results_ok = false;
+  match fs::open_dir_result(dir_path) {
+    std::Ok(dir) => {
+      directory_results_ok = dir.is_open() && dir.close();
+    }
+    std::Err(_) => {}
+  }
+  match fs::read_dir_result(ref mut zone, dir_path) {
+    std::Ok(names) => {
+      directory_results_ok = directory_results_ok && has_name(ref names, "item.txt");
+    }
+    std::Err(_) => {
+      directory_results_ok = false;
+    }
+  }
+  match fs::read_dir_entries_result(ref mut zone, dir_path) {
+    std::Ok(entries) => {
+      directory_results_ok = directory_results_ok && has_entry(ref entries, "item.link");
+    }
+    std::Err(_) => {
+      directory_results_ok = false;
+    }
+  }
+  if directory_results_ok {
+    score = score + 128;
+  }
+
+  fs::remove(link_path);
+  fs::remove(file_path);
+  fs::remove_dir(dir_path);
+  zone::destroy(zone);
+
+  assert_eq_i64(score, 255);
+  return score;
+}
