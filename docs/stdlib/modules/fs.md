@@ -66,10 +66,12 @@ fs::read_link(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
+fs::create_dir_result(path)
 fs::ensure_dir(path)
 fs::create_dir_all(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
+fs::remove_dir_result(path)
 fs::remove_dir_all(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
@@ -81,6 +83,8 @@ fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::open(path, mode)
 fs::create(path)
+fs::remove_result(path)
+fs::rename_result(source, target)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
@@ -346,7 +350,9 @@ invalid handle returns `false`. The current first slice does not mutate the
 `File` value after closing, so do not reuse a copied handle after `close`.
 
 `exists(path)` checks whether the path exists. `remove(path)` removes a file
-path and returns whether the host accepted the request.
+path and returns whether the host accepted the request. `remove_result(path)`
+is the error-preserving form; it returns `Result[(), i64]` where `Err(raw)` is
+the compact `std::error` raw bridge.
 
 `can_read(path)`, `can_write(path)`, and `can_execute(path)` ask the host
 whether the current process can read, write, or execute/search the path. These
@@ -428,7 +434,9 @@ requires the path to exist.
 On the current Linux/glibc runtime path this follows host `rename` behavior,
 including replacing some existing targets when the OS allows it. Portable
 overwrite policy is still a future documentation point, so tests use a missing
-target path.
+target path. `rename_result(source, target)` keeps the same operation but
+returns `Result[(), i64]` so callers can distinguish failures such as
+`NotFound`.
 
 `hard_link(existing, link_path)` creates a new hard link to an existing file
 and returns whether the host accepted the request. The destination path must
@@ -459,6 +467,9 @@ not recursive and deliberately not an `OpenOptions` replacement; use
 
 `create_dir(path)` creates one directory with the current default permission
 mode used by Ari's runtime shim. It does not create parent directories.
+`create_dir_result(path)` preserves the raw `std::error` bridge for failed
+single-directory creation. `remove_dir_result(path)` does the same for
+`remove_dir(path)`.
 `ensure_dir(path)` is the idempotent single-directory helper: it returns `true`
 when `path` is already a directory, creates it when it is missing, and returns
 `false` when another kind of path already exists or a parent directory is
@@ -510,14 +521,14 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
 | metadata | Current: `try_metadata(path)`/`metadata(path)` over the Linux/glibc `stat` runtime path, `try_symlink_metadata(path)`/`symlink_metadata(path)` and `is_symlink(path)` over the Linux/glibc `lstat` runtime path, plus `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
-| rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
-| remove | Current: file removal with `remove(path)`, empty directory removal with `remove_dir(path)`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
+| rename | Current: `rename(source, target)` hook and raw-error `rename_result(source, target)`; portable overwrite policy is roadmap. |
+| remove | Current: file removal with `remove(path)`/`remove_result(path)`, empty directory removal with `remove_dir(path)`/`remove_dir_result(path)`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
 | copy | Current: source streaming `copy(source, target)` and byte-counting `try_copy(source, target)` for byte files. |
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
 | read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors and owned OS-resource policy are roadmap. |
-| create directory | Current: single-directory `create_dir(path)` and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
+| create directory | Current: single-directory `create_dir(path)`, raw-error `create_dir_result(path)`, and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
 | file locking | Optional roadmap: advisory locking after platform behavior is documented. |
@@ -804,6 +815,7 @@ tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-io-traits.ari
 tests/cases/standard-library/ok/fs/std-fs-seek.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
+tests/cases/standard-library/ok/fs/std-fs-mutation-result.ari
 tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-ensure-file.ari
 tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari
@@ -850,7 +862,9 @@ and invalid-handle trait behavior.
 method syntax, direct module hooks, negative seek rejection, and generic
 `std::io::Seek` dispatch.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
-`create_dir`, and `remove_dir` behavior. `std-fs-ensure-dir.ari` covers
+`create_dir`, and `remove_dir` behavior. `std-fs-mutation-result.ari` covers
+`remove_result`, `rename_result`, `create_dir_result`, and
+`remove_dir_result` success and raw-error cases. `std-fs-ensure-dir.ari` covers
 idempotent single-directory creation, file-path rejection, missing-parent
 failure, and cleanup. `std-fs-create-dir-all.ari` covers recursive parent
 creation, existing-directory idempotence, `ensure_dir_all`, file-path

@@ -217,7 +217,8 @@ work. Each one should land in small tested slices with natural API names.
   fork/wait slice into portable child-process handles. `std::time` and
   `std::fs` now have their first thin wrappers; time should grow toward timers
   and interruption-aware sleep, while filesystem work should next add stronger
-  owned-resource policy, richer per-entry directory errors, portable metadata
+  owned-resource policy, direct `Result[..., Error]` forms for the current
+  raw-error bridges, richer per-entry directory errors, portable metadata
   creation/birth-time policy, owner/group/ACL permission policy,
   owned path values, temporary files, path helpers,
   richer link metadata/platform symlink policy, and optional locking.

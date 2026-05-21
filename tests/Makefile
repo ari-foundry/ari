@@ -579,6 +579,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf
 	$(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mutation-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs13remove_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs13rename_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs17create_dir_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs17remove_dir_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mutation-result.ari -o $(BUILD_DIR)/prelude/std-fs-mutation-result.elf
+	$(BUILD_DIR)/prelude/std-fs-mutation-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll
 	grep -F -q "std2fs10ensure_dir" $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll
 	grep -q "@ari_builtin_fs_create_dir" $(BUILD_DIR)/prelude/std-fs-ensure-dir.ll

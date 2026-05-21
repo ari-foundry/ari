@@ -256,7 +256,8 @@ Likely compiler work:
   time, filesystem, POSIX fork/wait process, function-pointer thread, and
   concrete atomic integer, source mutex, and source once slices are
   implemented; the first descriptor view and explicit owned close wrapper are
-  implemented in `std::os`; portable child-process handles, richer thread
+  implemented in `std::os`; filesystem has raw-error open and mutation result
+  bridges; portable child-process handles, richer thread
   statuses, generic synchronization, blocking locks, directories, metadata,
   duplicate-with-flags policy, and raw OS wrappers still need ownership policy.
 - Keep OS resources explicit. File handles, process handles, and buffers should

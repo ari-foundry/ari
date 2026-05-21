@@ -140,6 +140,13 @@ fn last_errno_error_raw() -> i64 {
   return error.raw();
 }
 
+fn unit_result(ok: bool) -> std::Result[(), i64] {
+  if ok {
+    return std::Ok<(), i64>(());
+  }
+  return std::Err<(), i64>(last_errno_error_raw());
+}
+
 fn supported_open_mode(mode: string) -> bool {
   let bytes = std::string::bytes(mode);
   if bytes.equals("r") {
@@ -179,6 +186,22 @@ fn open_options_valid(options: ref OpenOptions) -> bool {
 
 fn system_time_from_nanos(nanos: i64) -> std::time::SystemTime {
   return std::time::system_from_unix(nanos / 1000000000, nanos % 1000000000);
+}
+
+pub fn remove_result(path: string) -> std::Result[(), i64] {
+  return unit_result(remove(path));
+}
+
+pub fn rename_result(source: string, target: string) -> std::Result[(), i64] {
+  return unit_result(rename(source, target));
+}
+
+pub fn create_dir_result(path: string) -> std::Result[(), i64] {
+  return unit_result(create_dir(path));
+}
+
+pub fn remove_dir_result(path: string) -> std::Result[(), i64] {
+  return unit_result(remove_dir(path));
 }
 
 fn metadata_from_parts(

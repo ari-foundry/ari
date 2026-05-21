@@ -852,10 +852,12 @@ fs::read_link(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
+fs::create_dir_result(path)
 fs::ensure_dir(path)
 fs::create_dir_all(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
+fs::remove_dir_result(path)
 fs::remove_dir_all(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
@@ -867,6 +869,8 @@ fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::open(path, mode)
 fs::create(path)
+fs::remove_result(path)
+fs::rename_result(source, target)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
@@ -1059,7 +1063,11 @@ target)` streams bytes from the source handle into the target opened with
 truncating semantics and returns `Some(byte_count)` on success or `None` on
 open/write/close failure. `copy(source, target)` is the boolean compatibility
 wrapper over `try_copy`. `rename(source, target)` moves or renames one path
-according to the host runtime's current behavior. `create_dir(path)` creates
+according to the host runtime's current behavior, and
+`rename_result(source, target)` preserves a raw `std::error` value on failure.
+`remove_result(path)`, `create_dir_result(path)`, and
+`remove_dir_result(path)` are the same raw-error `Result[(), i64]` shape for
+file removal and single-directory creation/removal. `create_dir(path)` creates
 one directory, `ensure_dir(path)` treats an existing directory as success or
 creates a missing one, `create_dir_all(path)` recursively creates missing
 parent directories, `ensure_dir_all(path)` is the idempotent recursive alias,

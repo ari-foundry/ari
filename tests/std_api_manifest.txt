@@ -294,6 +294,7 @@ fn std::fs::copy|check-prelude std-fs-create-truncate-copy source streaming copy
 fn std::fs::create|check-prelude std-fs-create-truncate-copy source create/truncate open helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir|check-prelude std-fs-rename-dir runtime-backed single-directory creation hook; docs/stdlib/modules/fs.md
 fn std::fs::create_dir_all|check-prelude std-fs-create-dir-all runtime-backed recursive directory creation hook; docs/stdlib/modules/fs.md
+fn std::fs::create_dir_result|check-prelude std-fs-mutation-result Result-returning directory creation helper with raw error bridge; docs/stdlib/modules/fs.md
 fn std::fs::create_result|check-prelude std-fs-open-result Result-returning create helper with raw error bridge; docs/stdlib/modules/fs.md
 fn std::fs::ensure_dir|check-prelude std-fs-ensure-dir idempotent single-directory creation helper; docs/stdlib/modules/fs.md
 fn std::fs::ensure_dir_all|check-prelude std-fs-create-dir-all idempotent recursive directory creation alias; docs/stdlib/modules/fs.md
@@ -325,7 +326,10 @@ fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byt
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir|check-prelude std-fs-rename-dir runtime-backed single-directory removal hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir_all|check-prelude std-fs-remove-dir-all recursive directory tree removal helper; docs/stdlib/modules/fs.md
+fn std::fs::remove_dir_result|check-prelude std-fs-mutation-result Result-returning directory removal helper with raw error bridge; docs/stdlib/modules/fs.md
+fn std::fs::remove_result|check-prelude std-fs-mutation-result Result-returning unlink helper with raw error bridge; docs/stdlib/modules/fs.md
 fn std::fs::rename|check-prelude std-fs-rename-dir runtime-backed file rename hook; docs/stdlib/modules/fs.md
+fn std::fs::rename_result|check-prelude std-fs-mutation-result Result-returning rename helper with raw error bridge; docs/stdlib/modules/fs.md
 fn std::fs::seek|check-prelude std-fs-seek absolute file cursor seek hook; docs/stdlib/modules/fs.md
 fn std::fs::set_mode|check-prelude std-fs-mode chmod-backed permission-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::set_permissions|check-prelude std-fs-mode Permissions-to-mode mutation helper; docs/stdlib/modules/fs.md

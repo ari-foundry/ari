@@ -181,6 +181,8 @@ identifies the exact case:
 - `std-fs-rename-dir.ari`: runtime-backed `rename`, single-directory
   `create_dir`/`remove_dir`, duplicate-create failure, and missing-source
   rename failure.
+- `std-fs-mutation-result.ari`: `remove_result`, `rename_result`,
+  `create_dir_result`, and `remove_dir_result` unit-success raw-error bridges.
 - `std-fs-create-dir-all.ari`: runtime-backed recursive `create_dir_all` and
   source `ensure_dir_all`, existing-directory idempotence, file-path
   rejection, blocked child creation, nested writes, and cleanup.

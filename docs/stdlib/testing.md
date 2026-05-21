@@ -74,6 +74,7 @@ std-fs-read-write.ari
 std-fs-try-read.ari
 std-fs-create-truncate-copy.ari
 std-fs-rename-dir.ari
+std-fs-mutation-result.ari
 std-fs-read-dir.ari
 std-fs-dir-entry-metadata.ari
 std-fs-remove-dir-all.ari
