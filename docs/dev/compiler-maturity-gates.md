@@ -1,10 +1,9 @@
 # Compiler Maturity Gates
 
-This page tracks the work needed before Ari is comfortable enough to develop a
-compiler in Ari. It is not a request to implement bootstrapping now. The goal is
-ordinary compiler development: a reliable frontend, clean semantic boundaries,
-stable diagnostics, deterministic artifacts, and language features that are
-pleasant for any large Ari program.
+This page tracks the work needed for Ari to feel like a practical compiler
+project: a reliable frontend, clean semantic boundaries, stable diagnostics,
+deterministic artifacts, and language features that are pleasant for any large
+Ari program.
 
 Use this page with:
 
@@ -13,7 +12,7 @@ Use this page with:
 - [Compiler Contributor Guide](compiler-contributor-guide.md) for the practical
   edit map, test categories, and small-check loop.
 - [Compiler Readiness Inventory](compiler-readiness-inventory.md) for the
-  current strengths, blocking gaps, backlog, and start gate.
+  current strengths, blocking gaps, backlog, and health scorecard.
 - [Compiler Pass Contracts](compiler-pass-contracts.md) for lexer, parser,
   resolver, sema, IR, and backend boundary rules.
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) for the
@@ -22,17 +21,14 @@ Use this page with:
   package roots, module search paths, metadata, cache policy, and Make targets.
 - [Compiler Artifact Testing](compiler-artifact-testing.md) for stage output,
   normalization, and golden comparison policy.
-- [Production Compiler Design](production-compiler-design.md) for the
-  long-term language contract.
-- [Bootstrap Readiness](bootstrap-readiness.md) for the later self-host start
-  gate.
+- [Production Compiler Design](production-compiler-design.md) for the long-term
+  language contract appendix.
 - [Feature Test Matrix](test-matrix.md) for existing test coverage.
 
 ## Current Estimate
 
-Ari is currently about **38-42% ready** to begin a serious compiler-in-Ari
-track. That leaves about **58-62% remaining** before full self-hosting work is
-likely to be productive.
+Ari is currently about **45-46% through the current compiler-development
+maturity work**.
 
 This estimate is intentionally conservative. Ari already has enough language
 surface to build small tools. The remaining work is about compiler scale:
@@ -53,8 +49,7 @@ The healthiest order is:
 2. Add public Ari language features only when ordinary Ari programs benefit.
 3. Add compiler/tooling packages for source maps, diagnostics, and artifact
    rendering.
-4. Start a small Ari lexer/parser tool only after the gates that feed it are
-   green.
+4. Add broader tools only after the gates that feed them are green.
 
 ## Maturity Gates
 
@@ -70,14 +65,14 @@ The healthiest order is:
 | Allocation model | Zones, scratch arenas, ownership, drops, and borrow diagnostics scale to compiler graphs. | Arena fixture tests, reset/destroy invalidation tests, owned graph cleanup tests. | Partial |
 | IR contract | Sema lowers resolved facts into IR so backend codegen stays mechanical. | IR text checks for names, layouts, ABI, runtime hooks, and symbols. | Partial |
 | Backend artifacts | LLVM IR, object, executable, and shared library output are deterministic enough to inspect. | Focused `--emit-llvm`, `--emit-obj`, symbol, relocation, and exit-code checks. | Good first pass |
-| Tool build flow | A Makefile can build one Ari tool, run its fixtures, and compare outputs without hidden flags. | `make -C tool check-lex`, `check-parse`, `check-report` style targets. | Planned |
+| Tool build flow | A Makefile can build one Ari tool, run its fixtures, and compare outputs without hidden flags. | Focused tool targets that run in seconds and compare artifacts. | Planned |
 | Stage comparison | Token, syntax, HIR, typed IR, LLVM text, and executable behavior have a comparison order. | Normalized text artifact checks, then executable checks only after earlier layers match. | Seeded |
 
 ## Implementation Order
 
 ### 1. Keep The Hosted Compiler Maintainable
 
-The current C++ compiler remains stage0. Improve it as a normal compiler:
+Improve the current C++ compiler as a normal compiler:
 
 - keep lexer/parser diagnostics precise
 - keep sema responsible for source-level resolution
@@ -138,12 +133,9 @@ compiler/
 
 This package can later be reused by lint, LSP, formatter, and package tools.
 
-### 5. Start With A Lexer Tool
+### 5. Keep Tooling Incremental
 
-The first Ari-written compiler component should be a lexer tool, not a full
-self-compile attempt.
-
-The first useful tool should:
+The first useful compiler-adjacent tool should:
 
 - read `.ari` files
 - emit stable token dumps
@@ -152,7 +144,7 @@ The first useful tool should:
 - run in seconds from a focused Make target
 
 Only after that is stable should parser, HIR, type checking, and backend
-artifacts move into Ari.
+artifacts depend on the same workflow.
 
 ## Test Classification
 
@@ -176,7 +168,7 @@ build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/generics/ok/generic-function.ari --emit-llvm build/focused/generic.ll
 make check-language-docs
 make check-compiler-dev-docs
-make check-bootstrap-readiness
+make check-compiler-artifacts
 ```
 
 Run broad `make check` only before handing off large compiler changes.
@@ -203,11 +195,11 @@ Good fixes:
 
 Bad fixes:
 
-- stage1-only keywords
+- private compiler-only keywords
 - hidden compiler-only allocation
 - runtime `std` source-location APIs used only by the compiler
 - codegen rediscovering names or types that sema already resolved
-- one giant "self-host" test as the first signal of progress
+- one giant executable test as the first signal of progress
 
 ## Readiness Formula
 
@@ -223,17 +215,14 @@ readiness =
 - private shortcuts or untested special cases
 ```
 
-The current estimate remains **38-42% ready** because Ari has a substantial
-hosted systems-language base, but diagnostics, compiler-tooling packages,
-module scale, and artifact comparison are not mature enough for a productive
-full self-host attempt.
+The current estimate is about **45-46%** because Ari has a substantial hosted
+systems-language base, but diagnostics, compiler-tooling packages, module
+scale, and artifact comparison still need hardening.
 
 ## Non-Goals For Now
 
-- Do not implement bootstrapping in this phase.
-- Do not create a `bootstrap/` tree until the lexer tool milestone starts.
 - Do not port `src/sema.cpp` first.
-- Do not add bootstrap-only stdlib APIs.
+- Do not add private compiler-only stdlib APIs.
 - Do not require threads, sockets, dynamic loading, kernel APIs, or
   freestanding startup for the first hosted compiler path.
-- Do not treat a compiled lexer as proof that Ari is self-hosted.
+- Do not treat one compiled tool as proof that the compiler is mature.

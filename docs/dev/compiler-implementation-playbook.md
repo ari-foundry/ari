@@ -2,8 +2,8 @@
 
 This page turns the compiler roadmap into small implementation tickets.
 
-It is not a bootstrap plan. Use it when you are changing the hosted compiler
-today and want a practical answer to:
+Use it when you are changing the hosted compiler today and want a practical
+answer to:
 
 - which source files should I read first?
 - which artifact should prove the change?
@@ -30,9 +30,8 @@ Pick work in this order unless a bug report points somewhere sharper:
 5. Move resolved facts from sema into IR when codegen is re-deriving them.
 6. Add focused backend checks only after earlier artifacts explain the change.
 
-Do not start by writing a new compiler in Ari. A future Ari-written compiler is
-useful only if the ordinary hosted compiler and public language are already
-pleasant enough for large programs.
+Start with the compiler surface that exists: source identity, diagnostics,
+modules, sema boundaries, IR, LLVM output, and focused artifacts.
 
 ## Implementation Slices
 
@@ -68,11 +67,11 @@ Docs:
   Which language or developer page changed?
 
 Non-goals:
-  What bootstrap-only shortcut or unrelated refactor did this avoid?
+  What private compiler shortcut or unrelated refactor did this avoid?
 ```
 
 The `Non-goals` line matters. It keeps compiler development focused on
-ordinary Ari language quality instead of drifting into private stage1 behavior.
+ordinary Ari language quality instead of drifting into private tool behavior.
 
 ## Test Placement
 
@@ -84,7 +83,6 @@ Choose the test folder by what the fixture proves:
 | Compiler-shaped data model | `tests/cases/compiler-development/ok/model/` |
 | Deterministic compiler artifact | `tests/cases/compiler-development/artifact/ok/` |
 | Expected compiler diagnostic artifact | `tests/cases/compiler-development/artifact/errors/` |
-| Later bootstrap start-gate pressure | `tests/cases/bootstrap-readiness/` |
 
 Prefer one reason per fixture. If a test starts proving parser recovery,
 generic monomorphization, ownership cleanup, and LLVM layout at once, split it.
@@ -100,8 +98,8 @@ Before calling a compiler implementation slice done:
 - The smallest relevant check passes.
 - A broader target is reserved for handoff, not for every edit loop.
 - No runtime `std` API was added just for compiler source maps or diagnostics.
-- No bootstrap-only keyword, hidden allocation path, or private backend hook was
-  added.
+- No private compiler-only keyword, hidden allocation path, or private backend
+  hook was added.
 
 ## Readiness Impact
 
@@ -114,6 +112,6 @@ repeatable. It helps most when a change adds one of these:
 - a generic aggregate or trait case that removes awkward compiler-shaped code
 - an IR fact that keeps LLVM lowering mechanical
 
-Ari is still about **38-42% ready** to start a serious compiler-in-Ari track.
-The useful work today is to make each normal compiler change smaller, clearer,
-and easier to test.
+Ari is about **45-46% through the current compiler-development maturity work**.
+The useful work is to make each normal compiler change smaller, clearer, and
+easier to test.

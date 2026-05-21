@@ -1,7 +1,6 @@
 # Compiler Diagnostic Authoring
 
-This page explains how to add or change Ari compiler diagnostics. It is for
-ordinary hosted-compiler development, not bootstrap implementation.
+This page explains how to add or change Ari compiler diagnostics.
 
 Diagnostics are part of the language design. A good diagnostic tells users what
 rule they hit, points at the smallest useful source span, and gives maintainers
@@ -162,4 +161,4 @@ Before handing off a diagnostic change, answer:
 - Did the user-facing docs change if the language rule became clearer?
 
 Good diagnostics make Ari easier to use today and make future compiler work
-less surprising without introducing bootstrap-only behavior.
+less surprising without introducing private compiler-only behavior.

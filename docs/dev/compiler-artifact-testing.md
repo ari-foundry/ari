@@ -1,7 +1,7 @@
 # Compiler Artifact Testing
 
 This page defines how Ari compiler work should produce, normalize, and compare
-artifacts. It is compiler-development infrastructure, not bootstrapping work.
+artifacts for the compiler that exists today.
 
 Artifact tests make regressions easier to locate. If a token dump changes, the
 lexer changed. If the token dump is stable but the syntax dump changes, the
@@ -14,7 +14,6 @@ Read this page with:
 - [Compiler Artifact Authoring](compiler-artifact-authoring.md)
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md)
 - [Compiler Development Roadmap](compiler-development-roadmap.md)
-- [Bootstrap Readiness](bootstrap-readiness.md)
 
 ## Goals
 
@@ -26,7 +25,7 @@ Artifact testing should:
 - normalize paths, generated ids, temporary names, and nondeterministic symbol
   order
 - keep each check small enough to run while developing
-- avoid one giant "self-host" test as the first signal of correctness
+- avoid one giant executable test as the first signal of correctness
 
 Artifact testing should not:
 
@@ -162,7 +161,7 @@ remain visible.
 Golden files are committed text outputs. They should be small and local to the
 feature they protect.
 
-Current compiler-development layout before a real Ari compiler tool exists:
+Current compiler-development layout:
 
 ```text
 tests/cases/compiler-development/artifact/ok/
@@ -172,21 +171,6 @@ tests/cases/compiler-development/artifact/errors/
 `artifact/ok` stores fixtures and committed outputs that should compare
 cleanly. `artifact/errors` stores expected compiler diagnostic artifacts and
 seed mismatch reports for the text comparator.
-
-Recommended layout for future Ari compiler tools:
-
-```text
-bootstrap/stage1/tests/fixtures/
-bootstrap/stage1/tests/lex/ok/
-bootstrap/stage1/tests/lex/errors/
-bootstrap/stage1/tests/parse/ok/
-bootstrap/stage1/tests/parse/errors/
-bootstrap/stage1/tests/hir/ok/
-bootstrap/stage1/tests/hir/errors/
-bootstrap/stage1/tests/ir/ok/
-bootstrap/stage1/tests/ir/errors/
-bootstrap/stage1/tests/golden/
-```
 
 Golden update policy:
 
@@ -203,12 +187,6 @@ Small targets should compare one artifact family at a time:
 ```text
 make check-compiler-dev-docs
 make check-compiler-artifacts
-make check-bootstrap-readiness
-make -C bootstrap check-lex
-make -C bootstrap check-parse
-make -C bootstrap check-report
-make -C bootstrap check-hir
-make -C bootstrap check-ir
 ```
 
 For the current C++ compiler, prefer direct focused commands while developing:
@@ -221,7 +199,6 @@ build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/ffi/ok/library-export.ari --shared --emit-llvm build/focused/library-export.ll
-build/ari tests/cases/bootstrap-readiness/ok/formatting/formatting-artifact-line.ari --check
 ```
 
 Run broad `make check` only before handing off larger compiler changes.
@@ -388,8 +365,7 @@ end test.
 
 ## Readiness Impact
 
-Stage comparison remains a major blocker. Ari should stay around the current
-**38-42% ready** estimate until the current capability inventory, token,
-diagnostic, syntax, and typed-IR seeds grow into broader coverage, and HIR plus
-LLVM text comparison exist enough that a future stage1 and stage2 can disagree
-in a useful, localized way.
+Stage comparison remains a major compiler maturity blocker. The estimate should
+move only when the current capability inventory, token, diagnostic, syntax, and
+typed-IR seeds grow into broader coverage, and HIR plus LLVM text comparison
+can localize failures usefully.

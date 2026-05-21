@@ -26,10 +26,6 @@ The docs are split by audience.
   then [Compiler Next Slices](dev/compiler-next-slices.md), then
   [Compiler Change Checklist](dev/compiler-change-checklist.md), then
   [Build And Test](dev/build-test.md).
-- Bootstrap readiness question:
-  [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md) and
-  [Bootstrap Readiness](dev/bootstrap-readiness.md). These are readiness
-  gauges, not instructions to start bootstrapping now.
 
 ## Language Docs
 
@@ -106,14 +102,17 @@ Use these when changing the compiler:
 - [Compiler Project Model](dev/compiler-project-model.md)
 - [Compiler Source And Diagnostics](dev/compiler-source-diagnostics.md)
 - [Compiler Artifact Testing](dev/compiler-artifact-testing.md)
-- [Production Compiler Design](dev/production-compiler-design.md)
-- [Compiler Bootstrap Fixture Plan](dev/bootstrap-fixture-plan.md)
-- [Bootstrap Readiness](dev/bootstrap-readiness.md)
-- [Self-Host Roadmap](dev/self-host-roadmap.md)
 - [Library Testing](dev/library-testing.md)
 - [Roadmap](dev/roadmap.md)
 - [Completed Milestones](dev/completed-milestones.md)
 - [Semantic Checker Decomposition](dev/sema-decomposition.md)
+
+Long-term self-hosting appendix:
+
+- [Production Compiler Design](dev/production-compiler-design.md)
+- [Compiler Bootstrap Fixture Plan](dev/bootstrap-fixture-plan.md)
+- [Bootstrap Readiness](dev/bootstrap-readiness.md)
+- [Self-Host Roadmap](dev/self-host-roadmap.md)
 
 ## Tooling Docs
 

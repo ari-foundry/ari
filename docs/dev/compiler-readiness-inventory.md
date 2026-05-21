@@ -1,33 +1,26 @@
 # Compiler Readiness Inventory
 
 This page is the inventory for Ari compiler development. It answers one
-question: what has to become true before starting an Ari-written compiler track
-is a good engineering decision?
+question: what has to become true for Ari to feel like a practical compiler
+project?
 
-This is not a bootstrap implementation plan. The immediate work is still normal
-compiler development: make the hosted compiler reliable, make the language
-pleasant for large programs, and make compiler behavior easy to test in small
-pieces.
-
-In short: normal compiler development comes first.
+Use it to keep the hosted compiler reliable, make the language pleasant for
+large programs, and make compiler behavior easy to test in small pieces.
 
 ## Current Readiness
 
-Ari is about **38-42% ready** to begin a serious compiler-in-Ari track. That
-leaves about **58-62% remaining** before self-hosting work is likely to be
-productive.
+Ari is about **45-46% through the current compiler-development maturity work**.
 
 The number is conservative because Ari already compiles useful programs, but a
 compiler is a large program with hard requirements: stable diagnostics,
 multi-file project flow, data-heavy generic models, deterministic artifacts,
 and tests that fail near the layer that regressed.
 
-## Readiness Scorecard
+## Compiler Health Scorecard
 
-The 38-42% estimate is a weighted engineering score, not a promise that
-self-hosting is almost ready. The current seed fixture
+The estimate is a weighted engineering score. The current seed fixture
 `tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari`
-models the same shape and returns `40`, keeping the estimate executable as
+models the same shape and returns `40`, keeping the scorecard executable as
 ordinary Ari data.
 
 | Gate | Weight | Current Score | What Moves It |
@@ -41,9 +34,9 @@ ordinary Ari data.
 | Artifact comparison | 16 | 45 | Token, syntax, diagnostic, module graph, declaration, typed IR, HIR, LLVM, object, and executable comparison order. |
 | Tool build flow | 10 | 35 | Focused Make targets for one Ari tool, fixture roots, and golden comparison without hidden flags. |
 
-Weighted together, this lands at roughly 40%. Treat each row as normal compiler
+Weighted together, this lands in the mid-40s. Treat each row as normal compiler
 development: a row moves when ordinary Ari programs, diagnostics, or artifacts
-get more reliable, not when a private bootstrap shortcut is added.
+get more reliable, not when a private shortcut is added.
 
 ## Already Strong
 
@@ -138,8 +131,7 @@ Use this order for general compiler development:
 ## Compiler Development Gates
 
 Use these gates to decide whether Ari is becoming a practical compiler project.
-They also inform a future compiler-in-Ari track, but their first job is to keep
-today's compiler reliable and pleasant to extend:
+Their job is to keep today's compiler reliable and pleasant to extend:
 
 | Gate | Green Signal |
 | --- | --- |
@@ -165,12 +157,12 @@ When compiler code looks ugly, prefer improving the general language surface:
 - use named formatting captures for stable artifact text
 - keep compiler/tooling diagnostics outside runtime `std`
 
-Do not add bootstrap-only keywords, hidden global allocation, or backend hooks
-that ordinary Ari programs cannot use.
+Do not add private compiler-only keywords, hidden global allocation, or backend
+hooks that ordinary Ari programs cannot use.
 
 ## Test Inventory
 
-Current readiness tests:
+Current compiler-development tests:
 
 - `tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari`:
   one-page compiler-development dashboard status, next-action categories, and
@@ -199,14 +191,6 @@ Current readiness tests:
 - `tests/cases/compiler-development/ok/model/compiler-test-authoring.ari`:
   compiler test bucket selection, expected results, and focused-check policy as
   normal Ari data.
-- `tests/cases/bootstrap-readiness/ok/model/model-token-span.ari`: token/span
-  model seed fixture.
-- `tests/cases/bootstrap-readiness/ok/source/source-line-column.ari`: source
-  lookup seed fixture.
-- `tests/cases/bootstrap-readiness/ok/errors/errors-result-flow.ari`:
-  `Result[T, E]` expected-failure fixture.
-- `tests/cases/bootstrap-readiness/ok/formatting/formatting-artifact-line.ari`:
-  stable artifact text seed fixture.
 - `tests/cases/compiler-development/ok/model/compiler-pass-worklist.ari`:
   normal compiler pass/worklist data model.
 - `tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari`:
@@ -237,12 +221,12 @@ Current readiness tests:
   coverage as normal Ari data.
 - `tests/cases/compiler-development/errors/bootstrap-class-keyword.ari`:
   compiler-development policy fixture proving `class` is rejected instead of
-  becoming a bootstrap-only abstraction shortcut.
+  becoming a private abstraction shortcut.
 - `tests/cases/compiler-development/errors/bootstrap-interface-keyword.ari`:
   compiler-development policy fixture proving `interface` is rejected and
   compiler abstraction boundaries should use `trait`.
-  Together these prove class/interface bootstrap-only syntax stays rejected in
-  ordinary compiler-development fixtures.
+  Together these prove class/interface private syntax stays rejected in ordinary
+  compiler-development fixtures.
 - `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari`:
   lexer artifact fixture checked through `--emit-tokens`.
 - `tests/cases/compiler-development/artifact/ok/source-map-file-module.map`:

@@ -5,21 +5,13 @@ summarizes where the compiler is now, what should be built next, which small
 checks prove progress, and how to keep the work useful for real Ari users and
 compiler contributors.
 
-This is not a bootstrap implementation plan. The goal right now is to make the
-hosted compiler and the public Ari language strong enough that a future
-compiler-in-Ari track would be boring, reviewable, and useful to normal Ari
-users too.
-
 ## Current Status
 
-Ari is about **38-42% ready** to begin a serious compiler-in-Ari track. Treat
-the working seed as **40% ready**, with about **58-62% remaining**.
-
-That percentage is a compiler health metric, not a command to start
-bootstrapping. A future bootstrap becomes practical only when normal Ari code
-can express large compiler data models, produce stable diagnostics, build
-multi-file projects, and compare compiler artifacts before relying on linked
-executables.
+Ari is roughly **45-46% through the current compiler-development maturity
+work**. Treat that number as a practical compiler-health estimate, not a
+release promise. It should move when normal Ari code can express larger data
+models, produce stable diagnostics, build multi-file projects, and compare
+compiler artifacts before relying on linked executables.
 
 ## Read First
 
@@ -81,9 +73,8 @@ example, test family, and small check for a language feature.
 
 ## Not Yet
 
-Do not create a real `bootstrap/` tree yet. Do not add bootstrap-only syntax,
-hidden global allocation, special compiler-only runtime APIs, or backend hooks
-that ordinary Ari programs cannot use.
+Do not add private compiler-only syntax, hidden global allocation, special
+runtime APIs, or backend hooks that ordinary Ari programs cannot use.
 
 If compiler-shaped Ari code looks awkward, use that pressure to improve the
 general language and compiler:
@@ -105,7 +96,6 @@ Run the smallest check that proves the slice you touched:
 | Compiler roadmap, dashboard, or dev docs | `make check-compiler-dev-docs` |
 | Compiler-shaped Ari model fixture | `make check-compiler-development` |
 | Stage-plan, capability inventory, token, syntax, diagnostic catalog, diagnostic, module, declaration, typed-IR, or pass-summary golden | `make check-compiler-artifacts` |
-| Long-term self-host readiness docs only | `make check-bootstrap-docs` |
 | One Ari source while iterating | `build/ari path/to/file.ari --check` |
 
 Full `make check` belongs at handoff for broad compiler changes. Sanitizer
@@ -128,8 +118,7 @@ you happened to edit.
 
 ## Compiler Development Gates
 
-Treat these as the gates for making Ari a practical compiler project. They are
-useful before any self-hosting plan matters:
+Treat these as the gates for making Ari a practical compiler project:
 
 | Gate | Green Signal |
 | --- | --- |
@@ -151,4 +140,4 @@ For a normal compiler change, leave a short note with:
 - the explicit non-goal when a request could drift into unrelated work
 
 That keeps Ari moving toward a real compiler without turning every improvement
-into a hidden self-hosting shortcut.
+into an unrelated detour.

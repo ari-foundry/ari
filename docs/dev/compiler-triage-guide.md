@@ -2,10 +2,10 @@
 
 This page helps contributors route a compiler bug, feature request, or artifact
 diff to the first layer that should own it. It is for ordinary hosted compiler
-development, not bootstrap implementation.
+development.
 
 Treat this as ordinary hosted compiler development: it routes today's C++
-compiler work and public Ari behavior, not a private bootstrap tree.
+compiler work and public Ari behavior.
 
 Use it when the symptom is clear but the source file, test bucket, or small
 check is not.
@@ -80,12 +80,10 @@ Small check:
   Which single command should fail before broad checks?
 
 Non-goal:
-  What bootstrap-only shortcut or unrelated refactor is intentionally avoided?
+  What private compiler shortcut or unrelated refactor is intentionally avoided?
 ```
 
-The non-goal keeps the fix on ordinary Ari compiler quality. A future
-compiler-in-Ari track should benefit from the same public language and
-diagnostic improvements as every other Ari tool.
+The non-goal keeps the fix on ordinary Ari compiler quality.
 
 ## Escalation Rules
 
@@ -111,5 +109,5 @@ Before closing a triage-driven compiler change, check:
 - Did the fixture live in the closest test bucket?
 - Did the diagnostic or artifact make the failure reviewable?
 - Did the docs tell the next contributor where to start?
-- Did the change avoid bootstrap-only syntax, hidden allocation, and backend
+- Did the change avoid private compiler-only syntax, hidden allocation, and backend
   shortcuts?

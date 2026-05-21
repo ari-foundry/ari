@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Keep the general compiler development roadmap useful.
 
-This check is deliberately separate from the bootstrap readiness check. Ari is
-developing the compiler first; bootstrapping is a later readiness milestone.
+This check keeps the active compiler-development docs focused on the compiler
+that exists today.
 """
 
 from pathlib import Path
@@ -82,11 +82,8 @@ def main() -> int:
         require(dashboard, heading, dashboard_path)
 
     for needle in [
-        "not a bootstrap implementation plan",
-        "hosted compiler and the public Ari language",
-        "38-42% ready",
-        "58-62% remaining",
-        "40% ready",
+        "45-46% through the current compiler-development maturity",
+        "compiler-health estimate",
         "Compiler Contributor Guide",
         "Compiler Development Roadmap",
         "Compiler Concepts Glossary",
@@ -109,13 +106,12 @@ def main() -> int:
         "Artifact comparison",
         "File-backed project flow",
         "Generic compiler models",
-        "Do not create a real `bootstrap/` tree yet",
+        "Do not add private compiler-only syntax",
         "Result[T, E]",
         "make check-language-docs",
         "make check-compiler-dev-docs",
         "make check-compiler-development",
         "make check-compiler-artifacts",
-        "make check-bootstrap-docs",
         "build/ari path/to/file.ari --check",
         "Full `make check` belongs at handoff",
         "Sanitizer",
@@ -146,7 +142,6 @@ def main() -> int:
         require(glossary, heading, glossary_path)
 
     for needle in [
-        "not a bootstrap implementation plan",
         "hosted",
         "C++ compiler today",
         "Which compiler layer owns this value",
@@ -179,7 +174,7 @@ def main() -> int:
         "source-level name lookup",
         "Artifact order",
         "Public language pressure",
-        "self-hosting readiness as a secondary metric",
+        "unrelated long-term milestones",
     ]:
         require(glossary, needle, glossary_path)
 
@@ -197,7 +192,6 @@ def main() -> int:
 
     for needle in [
         "ordinary hosted compiler development",
-        "not bootstrap implementation",
         "earliest layer that can know the behavior",
         "Do not make LLVM codegen re-resolve Ari source-level names",
         "src/driver.cpp",
@@ -239,8 +233,10 @@ def main() -> int:
         "Compiler Diagnostic Authoring",
         "Compiler Test Authoring",
         "Compiler Readiness Inventory",
+        "Maturity estimate or development gate",
+        "Compiler Maturity Gates",
         "Good new layers make reviews smaller",
-        "normal Ari compiler development rather than bootstrap-only",
+        "normal Ari compiler development rather than private machinery",
     ]:
         require(layer_map, needle, layer_map_path)
 
@@ -257,7 +253,6 @@ def main() -> int:
 
     for needle in [
         "ordinary hosted compiler development",
-        "not bootstrap implementation",
         "Start with the earliest layer that can explain the symptom",
         "Executable output is the last signal",
         "source path -> tokens -> syntax -> module graph -> declaration index",
@@ -292,7 +287,7 @@ def main() -> int:
         "tests/cases/compiler-development/artifact/errors/",
         "tests/cases/compiler-development/ok/model/",
         "Non-goal",
-        "bootstrap-only shortcut",
+        "private compiler shortcut",
         "Sanitizer checks",
         "intentionally outside this triage loop",
     ]:
@@ -314,7 +309,6 @@ def main() -> int:
     for needle in [
         "ordinary",
         "hosted-compiler development",
-        "not bootstrap implementation",
         "Source identity is the base layer",
         "which files were loaded",
         "which `SourceId` belongs to each loaded source",
@@ -373,7 +367,6 @@ def main() -> int:
 
     for needle in [
         "ordinary hosted-compiler development",
-        "not bootstrap implementation",
         "file-backed module and project behavior",
         "`mod name;` loads a file-backed child module",
         "The importing file's directory is searched first",
@@ -432,7 +425,6 @@ def main() -> int:
         "module-metadata-visibility",
         "Does the change help ordinary Ari projects",
         "stale cache behavior fail closed",
-        "future self-hosting",
     ]:
         require(module_project_authoring, needle, module_project_authoring_path)
 
@@ -450,8 +442,6 @@ def main() -> int:
         require(artifact_authoring, heading, artifact_authoring_path)
 
     for needle in [
-        "ordinary hosted-compiler development",
-        "not bootstrap implementation",
         "Artifacts are the compiler's review trail",
         "What is the earliest compiler layer",
         "not rely only on a linked executable",
@@ -510,7 +500,7 @@ def main() -> int:
         "Is this the earliest artifact that can prove the behavior",
         "executable behavior used only after earlier artifacts are stable",
         "ordinary compiler development",
-        "not a bootstrap-only path",
+        "not a private tool path",
     ]:
         require(artifact_authoring, needle, artifact_authoring_path)
 
@@ -528,8 +518,6 @@ def main() -> int:
         require(diagnostic_authoring, heading, diagnostic_authoring_path)
 
     for needle in [
-        "ordinary hosted-compiler development",
-        "not bootstrap implementation",
         "Diagnostics are part of the language design",
         "unsupported syntax is currently accepted too far into the pipeline",
         "ari/compiler",
@@ -586,7 +574,7 @@ def main() -> int:
         "Which layer detected the error first",
         "Does the message describe the Ari rule in user language",
         "Good diagnostics make Ari easier to use today",
-        "without introducing bootstrap-only behavior",
+        "without introducing private compiler-only behavior",
     ]:
         require(diagnostic_authoring, needle, diagnostic_authoring_path)
 
@@ -603,7 +591,6 @@ def main() -> int:
         require(test_authoring, heading, test_authoring_path)
 
     for needle in [
-        "not a bootstrap implementation plan",
         "ordinary",
         "compiler development testable",
         "Pick the bucket by behavior",
@@ -634,8 +621,8 @@ def main() -> int:
         "Artifact tests should make compiler stages reviewable",
         "Which compiler layer owns this behavior",
         "Does the filename name the behavior",
-        "later bootstrap",
-        "start gate",
+        "private",
+        "compiler-only test world",
     ]:
         require(test_authoring, needle, test_authoring_path)
 
@@ -653,17 +640,16 @@ def main() -> int:
         "### Phase 4: Module And Project Ergonomics",
         "### Phase 5: Diagnostic Infrastructure",
         "### Phase 6: IR And Backend Artifacts",
-        "### Phase 7: Bootstrap Start Readiness",
+        "### Phase 7: Production Compiler Hardening",
         "## Test Layout Policy",
-        "## What Not To Do",
-        "## Bootstrap Readiness Estimate",
+        "## Non-Goals",
+        "## Compiler Development Health",
     ]:
         require(roadmap, heading, roadmap_path)
 
     for needle in [
-        "not a plan to start bootstrapping today",
-        "readiness signal",
-        "Improve Ari as a general language",
+        "day-to-day roadmap for developing the Ari compiler",
+        "Improve Ari as a general language and compiler",
         "Compiler Development Dashboard",
         "Compiler Maturity Gates",
         "Compiler Contributor Guide",
@@ -684,7 +670,7 @@ def main() -> int:
         "hosted-compiler changes",
         "Source identity | Stable source ownership",
         "Test classification",
-        "Readiness scorecard",
+        "Compiler health scorecard",
         "tests/cases/compiler-development/ok/model/compiler-stage-gates.ari",
         "tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari",
         "tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari",
@@ -696,7 +682,7 @@ def main() -> int:
         "tests/cases/compiler-development/ok/model/compiler-artifact-authoring.ari",
         "tests/cases/compiler-development/ok/model/compiler-diagnostic-authoring.ari",
         "tests/cases/compiler-development/ok/model/compiler-test-authoring.ari",
-        "Do not solve those problems with",
+        "private compiler-only syntax",
         "`--emit-capability-inventory`, `--emit-source-map`, `--emit-tokens`,",
         "ari --list-capabilities",
         "ari --explain-capability <name>",
@@ -706,9 +692,8 @@ def main() -> int:
         "diagnostic codes",
         "build/ari path/to/test.ari --check",
         "make check-compiler-dev-docs",
-        "Do not implement bootstrapping as the current task",
-        "38-42% ready",
-        "58-62% remaining",
+        "Production Compiler Hardening",
+        "45-46% through the current compiler-development",
     ]:
         require(roadmap, needle, roadmap_path)
 
@@ -728,7 +713,6 @@ def main() -> int:
         require(playbook, heading, playbook_path)
 
     for needle in [
-        "not a bootstrap plan",
         "which source files should I read first",
         "Source identity",
         "Diagnostics",
@@ -743,8 +727,8 @@ def main() -> int:
         "tests/cases/compiler-development/ok/model/",
         "tests/cases/compiler-development/artifact/ok/",
         "tests/cases/compiler-development/artifact/errors/",
-        "No bootstrap-only keyword",
-        "38-42% ready",
+        "No private compiler-only keyword",
+        "45-46% through the current compiler-development",
     ]:
         require(playbook, needle, playbook_path)
 
@@ -753,13 +737,13 @@ def main() -> int:
         "## Selection Rules",
         "## Next Slices",
         "## Ticket Breakdown",
-        "## Not Ready Yet",
+        "## Not In This Slice List",
         "## Readiness Impact",
     ]:
         require(next_slices, heading, next_slices_path)
 
     for needle in [
-        "not about implementing bootstrapping",
+        "hosted compiler and public language quality",
         "Source span edge cases",
         "Diagnostic code expansion",
         "Module metadata reviewability",
@@ -768,8 +752,8 @@ def main() -> int:
         "IR metadata audit",
         "make check-compiler-artifacts",
         "compiler-source-diagnostics.md",
-        "a real `bootstrap/` tree",
-        "38-42% ready",
+        "a full second compiler implementation",
+        "45-46% compiler",
     ]:
         require(next_slices, needle, next_slices_path)
 
@@ -784,7 +768,6 @@ def main() -> int:
         require(change_checklist, heading, change_checklist_path)
 
     for needle in [
-        "not a bootstrap checklist",
         "Scope",
         "Docs",
         "Tests",
@@ -797,7 +780,7 @@ def main() -> int:
         "make check-compiler-artifacts",
         "Full `make check` belongs at handoff",
         "No runtime `std` API",
-        "38-42% ready",
+        "45-46% through the current compiler-development",
     ]:
         require(change_checklist, needle, change_checklist_path)
 
@@ -815,10 +798,8 @@ def main() -> int:
         require(gates, heading, gates_path)
 
     for needle in [
-        "not a request to implement bootstrapping now",
-        "ordinary compiler development",
-        "38-42% ready",
-        "58-62% remaining",
+        "practical compiler",
+        "45-46% through the current compiler-development",
         "compiler/tooling package",
         "SourceId",
         "Diagnostic",
@@ -828,7 +809,7 @@ def main() -> int:
         "Trait selection",
         "Result[T, E]",
         "Stage comparison",
-        "Do not create a `bootstrap/` tree",
+        "Do not add private compiler-only stdlib APIs",
     ]:
         require(gates, needle, gates_path)
 
@@ -855,7 +836,7 @@ def main() -> int:
         require(contributor, heading, contributor_path)
 
     for needle in [
-        "not a bootstrap implementation plan",
+        "reliable, pleasant, general-purpose language",
         "Compiler Development Roadmap",
         "Compiler Readiness Inventory",
         "Compiler Pipeline",
@@ -871,17 +852,15 @@ def main() -> int:
         "make check-language-docs",
         "tests/cases/compiler-development/ok/model/",
         "tests/cases/compiler-development/artifact/ok/",
-        "bootstrap-readiness",
         "Result[T, E]",
-        "38-42% ready",
-        "58-62% remaining",
+        "45-46%",
     ]:
         require(contributor, needle, contributor_path)
 
     for heading in [
         "# Compiler Readiness Inventory",
         "## Current Readiness",
-        "## Readiness Scorecard",
+        "## Compiler Health Scorecard",
         "## Already Strong",
         "## Blocking Gaps",
         "## Recent Compiler Support",
@@ -893,14 +872,12 @@ def main() -> int:
         require(readiness, heading, readiness_path)
 
     for needle in [
-        "not a bootstrap implementation plan",
-        "normal compiler development",
-        "38-42% ready",
-        "58-62% remaining",
+        "practical compiler project",
+        "45-46% through the current compiler-development",
         "Hosted LLVM backend",
         "weighted engineering score",
         "tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari",
-        "Weighted together, this lands at roughly 40%",
+        "Weighted together, this lands in the mid-40s",
         "Core executable language",
         "Generic calls and ADTs",
         "Source identity",
@@ -984,7 +961,6 @@ def main() -> int:
         require(pass_contracts, heading, pass_contracts_path)
 
     for needle in [
-        "not bootstrap implementation",
         "lexer produces tokens with spans",
         "parser produces source-shaped AST",
         "resolver owns module paths",
@@ -1007,8 +983,7 @@ def main() -> int:
         "ownership fact dump",
         "src/llvm_codegen.cpp",
         "src/ir.hpp",
-        "38-42% ready",
-        "58-62%",
+        "compiler-development maturity score",
     ]:
         require(pass_contracts, needle, pass_contracts_path)
 
@@ -1029,7 +1004,6 @@ def main() -> int:
         require(project_model, heading, project_model_path)
 
     for needle in [
-        "not bootstrap implementation",
         "file-backed modules",
         "Compiler Module Project Authoring",
         "package roots",
@@ -1047,7 +1021,7 @@ def main() -> int:
         "--use-module-cache",
         "module graph dump",
         "Makefile",
-        "38-42% ready",
+        "compiler-development maturity estimate",
     ]:
         require(project_model, needle, project_model_path)
 
@@ -1068,7 +1042,6 @@ def main() -> int:
         require(source_diagnostics, heading, source_diagnostics_path)
 
     for needle in [
-        "not bootstrap implementation",
         "Do not put these APIs into runtime `std`",
         "Compiler Source Identity",
         "SourceId",
@@ -1121,7 +1094,7 @@ def main() -> int:
         require(artifact_testing, heading, artifact_testing_path)
 
     for needle in [
-        "compiler-development infrastructure",
+        "compiler that exists today",
         "Compiler Artifact Authoring",
         "Source map dump",
         "Stage plan",
@@ -1140,7 +1113,6 @@ def main() -> int:
         "normalize repository-local paths",
         "Golden files are committed text outputs",
         "make check-compiler-artifacts",
-        "make -C bootstrap check-lex",
         "Text comparator",
         "Path normalizer",
         "Source map dump format",
@@ -1218,7 +1190,7 @@ def main() -> int:
         "tests/check_compiler_capability_cli.py",
         "tests/cases/compiler-development/artifact/ok/",
         "tests/cases/compiler-development/artifact/errors/",
-        "38-42% ready",
+        "compiler maturity blocker",
     ]:
         require(artifact_testing, needle, artifact_testing_path)
 
@@ -1238,7 +1210,7 @@ def main() -> int:
         "next-slices": "Compiler Next Slices",
         "change-checklist": "Compiler Change Checklist",
         "readiness-inventory": "Compiler Readiness Inventory",
-        "readiness-scorecard": "Readiness Scorecard",
+        "readiness-scorecard": "Compiler Health Scorecard",
         "source-identity": "Source identity",
         "diagnostics": "Diagnostics",
         "pass-contracts": "Compiler Pass Contracts",
@@ -1255,7 +1227,7 @@ def main() -> int:
         "artifact-testing": "Compiler Artifact Testing",
         "test-classification": "Test Classification",
         "doc-crosswalk": "language docs-to-tests navigation",
-        "policy-errors": "class/interface bootstrap-only syntax stays rejected",
+        "policy-errors": "class/interface private syntax stays rejected",
         "stage-comparison": "Stage comparison",
     }
     for entry, label in gate_labels.items():

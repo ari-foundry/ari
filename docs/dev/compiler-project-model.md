@@ -1,17 +1,15 @@
 # Compiler Project Model
 
 This page defines the project and file-backed module model Ari needs for large
-compiler work. It is compiler-development infrastructure, not bootstrap
-implementation. In short, this is not bootstrap implementation; it should help
-ordinary Ari tools as much as any future compiler-in-Ari tree.
+compiler work. It is compiler-development infrastructure for ordinary Ari
+tools.
 
 Use this page with [Compiler Development Roadmap](compiler-development-roadmap.md),
 [Compiler Maturity Gates](compiler-maturity-gates.md),
 [Compiler Module Project Authoring](compiler-module-project-authoring.md),
 [Compiler Source And Diagnostics](compiler-source-diagnostics.md),
-[Compiler Artifact Testing](compiler-artifact-testing.md),
-[Production Compiler Design](production-compiler-design.md), and
-[Bootstrap Readiness](bootstrap-readiness.md).
+[Compiler Artifact Testing](compiler-artifact-testing.md), and
+[Production Compiler Design](production-compiler-design.md).
 
 ## Goals
 
@@ -184,7 +182,7 @@ which roots are part of the build so failures can be reproduced from logs.
 
 ## Implementation Slices
 
-These slices are normal compiler work, not a request to start a bootstrap tree:
+These slices are normal compiler work:
 
 1. Project root detection: document and test how an entry file chooses its
    package root.
@@ -215,7 +213,7 @@ tests/packages/
 tests/compiler-projects/
 ```
 
-Future large-tool fixtures can use this shape without becoming bootstrap code:
+Future large-tool fixtures can use this shape:
 
 ```text
 tests/compiler-projects/simple-tool/
@@ -249,12 +247,9 @@ Before accepting project/module changes, check:
 
 ## Readiness Impact
 
-This work does not by itself make Ari self-hosted. It does make the future
-compiler project less fragile by removing hidden assumptions around files,
-roots, imports, and cache reuse.
+This work removes hidden assumptions around files, roots, imports, and cache
+reuse.
 
-After this model is documented and partially checked, the practical estimate
-remains **38-42% ready** to begin a serious compiler-in-Ari track. The number
-should move only when the model has implementation tests: missing-module
-diagnostics, private-item diagnostics, stale-cache checks, and at least one
-multi-file tool built through Make.
+The compiler-development maturity estimate should move only when the model has
+implementation tests: missing-module diagnostics, private-item diagnostics,
+stale-cache checks, and at least one multi-file tool built through Make.

@@ -29,7 +29,6 @@ def main() -> int:
     for needle in [
         "New Ari user",
         "New compiler contributor",
-        "Bootstrap readiness question",
         "[Getting Started](language/getting-started.md)",
         "[Language Tour](language/language-tour.md)",
         "[Quick Reference](language/quick-reference.md)",

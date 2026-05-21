@@ -2,10 +2,10 @@
 
 This page maps Ari compiler layers to the source files, artifacts, docs, and
 small checks a contributor should open first. It is about ordinary hosted
-compiler development, not bootstrap implementation.
+compiler development.
 
 Treat this as an ordinary hosted compiler development map: it points to today's
-C++ source files and public Ari behavior, not to a new bootstrap tree.
+C++ source files and public Ari behavior.
 
 Use it when you know the compiler behavior that changed but do not yet know
 where to edit or how to prove the change.
@@ -86,7 +86,7 @@ from this small-slice loop.
 | Diagnostic code, label, note, or renderer | [Compiler Diagnostic Authoring](compiler-diagnostic-authoring.md) and artifact goldens |
 | New artifact format | [Compiler Artifact Authoring](compiler-artifact-authoring.md) and [Compiler Artifact Testing](compiler-artifact-testing.md) |
 | Test bucket or target | [Compiler Test Authoring](compiler-test-authoring.md), `tests/README.md`, and `tests/Makefile` |
-| Readiness estimate or start gate | [Compiler Readiness Inventory](compiler-readiness-inventory.md) and [Bootstrap Readiness](bootstrap-readiness.md) |
+| Maturity estimate or development gate | [Compiler Readiness Inventory](compiler-readiness-inventory.md) and [Compiler Maturity Gates](compiler-maturity-gates.md) |
 
 ## Adding A New Layer
 
@@ -111,5 +111,4 @@ Before handing off a compiler-layer change, check:
 - Is the artifact order still capability inventory, token, syntax, module,
   declaration, typed facts, LLVM, then executable behavior?
 - Did docs tell a new contributor which file and check to use next?
-- Is the change normal Ari compiler development rather than bootstrap-only
-  machinery?
+- Is the change normal Ari compiler development rather than private machinery?

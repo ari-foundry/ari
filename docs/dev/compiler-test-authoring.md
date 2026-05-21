@@ -4,9 +4,7 @@ This page explains how to add tests for Ari compiler work. It is for
 contributors who are changing the hosted compiler, developer docs, artifacts,
 or compiler-shaped Ari fixtures.
 
-This is not a bootstrap implementation plan. The goal is to keep ordinary
-compiler development testable in small pieces before any future compiler-in-Ari
-track starts.
+The goal is to keep compiler development testable in small pieces.
 
 ## Choose The Test Bucket
 
@@ -73,14 +71,12 @@ intended layer rejected the source.
 Use one short comment at the top of compiler-development model fixtures:
 
 ```ari
-// Covers test authoring policy as ordinary Ari data. This is not bootstrap
-// code; it models normal compiler-development checks.
+// Covers test authoring policy as ordinary Ari data.
 ```
 
 Keep comments useful:
 
 - Say which behavior the fixture protects.
-- Say when a fixture is not bootstrap code.
 - Do not narrate obvious assignment or arithmetic.
 - Put longer rationale in docs, not inside tiny test sources.
 
@@ -107,7 +103,7 @@ Before handing off a compiler test change, answer:
 - Does the filename name the behavior?
 - Is the smallest check documented or wired into `tests/Makefile`?
 - Did docs change when a new user-facing rule became clearer?
-- Is the non-goal clear when the request mentions bootstrapping?
+- Is the non-goal clear when the request could drift into unrelated work?
 
-This keeps tests useful for the hosted compiler now and for a later bootstrap
-start gate without creating a private bootstrap-only test world.
+This keeps tests useful for the hosted compiler without creating a private
+compiler-only test world.

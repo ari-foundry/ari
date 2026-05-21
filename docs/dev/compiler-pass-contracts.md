@@ -1,9 +1,7 @@
 # Compiler Pass Contracts
 
-This page defines the contract between Ari compiler passes. It is about normal
-compiler development, not bootstrap implementation. The same boundaries should
-make today's C++ compiler easier to maintain and make any future Ari-written
-compiler feel like an ordinary production Ari program.
+This page defines the contract between Ari compiler passes. These boundaries
+make today's compiler easier to maintain and review.
 
 Use this page with [Architecture](architecture.md),
 [Compiler Pipeline](compiler-pipeline.md),
@@ -141,7 +139,7 @@ golden file policy.
 
 ## Implementation Slices
 
-These slices are safe compiler-development work before any self-hosting effort:
+These slices are safe compiler-development work:
 
 1. Token dump: expose token kind, spelling class, and span in a deterministic
    text artifact.
@@ -161,8 +159,7 @@ These slices are safe compiler-development work before any self-hosting effort:
 9. IR contract audit: find places where `src/llvm_codegen.cpp` re-derives
    source facts and move those facts into `src/ir.hpp`.
 
-These are not bootstrap tasks. They make the compiler easier to test and review
-now.
+These make the compiler easier to test and review now.
 
 ## Test Layout
 
@@ -177,10 +174,10 @@ tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 ```
 
-Future Ari-written compiler tools can split into dedicated `lex`, `parse`,
-`hir`, and `ir` folders under their own tool tree. Until then, keep current
-compiler artifacts in `tests/cases/compiler-development/artifact/` and ordinary
-language behavior in the feature folder that owns it.
+Future tools can split into dedicated `lex`, `parse`, `hir`, and `ir` folders
+under their own tool tree. Keep current compiler artifacts in
+`tests/cases/compiler-development/artifact/` and ordinary language behavior in
+the feature folder that owns it.
 
 Use names that encode the behavior:
 
@@ -212,15 +209,13 @@ Before accepting a compiler pass change, check:
 - Is there a focused ok or error test for the pass being changed?
 - If LLVM text changes, is the source of the change visible in typed IR or a
   documented lowering rule?
-- Does the change help ordinary Ari language implementation quality, not only
-  a future bootstrap milestone?
+- Does the change help ordinary Ari language implementation quality?
 
 ## Readiness Impact
 
-Ari remains about **38-42% ready** to begin a serious compiler-in-Ari track.
-This pass-contract work does not change that number by itself, but it reduces
-the risk of the remaining **58-62%** by making the compiler easier to split,
-test, and eventually reimplement with public Ari language features.
+Pass-contract work should move the compiler-development maturity score only
+when it becomes executable checks. Its main value is making the compiler easier
+to split, test, and review.
 
 The estimate should improve only when these contracts become executable checks:
 token dumps, syntax dumps, module graph dumps, typed fact dumps, ownership fact

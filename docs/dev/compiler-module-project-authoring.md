@@ -1,12 +1,11 @@
 # Compiler Module Project Authoring
 
 This page explains how to change Ari's file-backed module and project behavior.
-It is ordinary hosted-compiler development, not bootstrap implementation.
+It is ordinary hosted-compiler development.
 
 Compiler-sized Ari programs need predictable files, roots, module paths,
 metadata, and cache behavior. The same rules should help ordinary tools,
-servers, formatters, and package utilities, not only a future compiler-in-Ari
-track.
+servers, formatters, and package utilities.
 
 ## Current Contract
 
@@ -160,7 +159,7 @@ Name tests after behavior: `module-missing-candidates`,
 
 Before handing off module/project work, answer:
 
-- Does the change help ordinary Ari projects, not only future self-hosting?
+- Does the change help ordinary Ari projects?
 - Are package roots and search paths visible in diagnostics or artifacts?
 - Is `.arih` behavior described honestly without implying automatic pairing?
 - Does metadata record every input that can change meaning?

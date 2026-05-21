@@ -2,7 +2,7 @@
 
 This page defines how Ari compiler work should model source files, source ids,
 byte spans, line/column lookup, and source-map artifacts. It is ordinary
-hosted-compiler development, not bootstrap implementation.
+hosted-compiler development.
 
 Source identity is the base layer for diagnostics, module graphs, declaration
 indexes, syntax dumps, typed IR traces, and future compiler tooling. If source
@@ -20,7 +20,7 @@ Source identity should make these facts deterministic:
 - how source paths appear in golden artifacts
 
 This layer should not know type checking, ownership, trait selection, LLVM
-details, or bootstrap-only stage flags.
+details, or private stage flags.
 
 ## Source Kinds
 
@@ -145,5 +145,4 @@ Before handing off source identity work, answer:
 - Did diagnostics improve without moving compiler-only APIs into runtime `std`?
 
 Strong source identity moves Ari toward a real compiler by making every later
-stage reviewable. It should help all Ari tools, not just a future self-hosting
-track.
+stage reviewable. It should help all Ari tools.

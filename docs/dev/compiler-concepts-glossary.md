@@ -3,9 +3,8 @@
 This page explains the compiler terms used across the Ari developer docs. It is
 for contributors who are new to compiler work or new to this codebase.
 
-This is not a bootstrap implementation plan. These concepts describe the hosted
-C++ compiler today and the normal compiler-development shape Ari should keep
-improving before any future compiler-in-Ari track starts.
+These concepts describe the hosted C++ compiler today and the normal
+compiler-development shape Ari should keep improving.
 
 ## Reading Rule
 
@@ -104,7 +103,7 @@ Use these phrases in review notes:
 - Artifact order: compare source maps, tokens, syntax, diagnostics, HIR, typed
   IR, LLVM, objects, and executable behavior in that order.
 - Public language pressure: a compiler-shaped need that should improve Ari for
-  all users, not just future self-hosting work.
+  all users.
 
 ## Example Change Shape
 
@@ -115,8 +114,8 @@ A good compiler change usually looks like this:
 3. Update the user-facing language page or developer doc that explains the
    behavior.
 4. Run the smallest matching check.
-5. Leave self-hosting readiness as a secondary metric, not the current
-   implementation target.
+5. Leave unrelated long-term milestones out of the current implementation
+   target.
 
 That rhythm keeps Ari moving toward a real compiler while preserving a clean
 language design for ordinary programs.

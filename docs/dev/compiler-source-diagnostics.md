@@ -1,11 +1,8 @@
 # Compiler Source And Diagnostics
 
 This page defines the compiler/tooling source-map and diagnostic layer Ari
-needs before a serious compiler-in-Ari track becomes productive.
-
-This is compiler development work, not bootstrap implementation. The same
-layer should also support lint, LSP, formatter, package tools, and any future
-compiler component written in Ari.
+needs for precise errors, stable artifacts, lint, LSP, formatter, and package
+tools.
 
 Do not put these APIs into runtime `std`. Runtime `std` should keep broadly
 useful facilities such as strings, formatting, paths, files, logging, tests,
@@ -19,7 +16,6 @@ Read this page with:
 - [Compiler Source Identity](compiler-source-identity.md)
 - [Compiler Diagnostic Authoring](compiler-diagnostic-authoring.md)
 - [Production Compiler Design](production-compiler-design.md)
-- [Bootstrap Readiness](bootstrap-readiness.md)
 
 ## Goals
 
@@ -45,7 +41,7 @@ It should not provide:
 - runtime panic policy
 - general application logging
 - stack traces or backtraces
-- bootstrap-only shortcuts
+- private compiler-only shortcuts
 - hidden global source storage
 - implicit allocation from a magical heap
 
@@ -270,23 +266,13 @@ line lookup or label rendering.
 
 ## Test Layout
 
-Before a real `bootstrap/` tree exists, keep seed fixtures under the current
-test folders:
+Keep source/diagnostic fixtures under compiler-development artifact or feature
+folders:
 
 ```text
-tests/cases/bootstrap-readiness/ok/source/
-tests/cases/bootstrap-readiness/ok/errors/
-tests/cases/bootstrap-readiness/ok/formatting/
-```
-
-When the first Ari compiler tool starts, use:
-
-```text
-bootstrap/stage1/tests/source/ok/
-bootstrap/stage1/tests/source/errors/
-bootstrap/stage1/tests/report/ok/
-bootstrap/stage1/tests/report/errors/
-bootstrap/stage1/tests/golden/
+tests/cases/compiler-development/artifact/ok/
+tests/cases/compiler-development/artifact/errors/
+tests/cases/<feature>/errors/
 ```
 
 Test names should describe behavior:
@@ -311,8 +297,8 @@ The current C++ compiler should improve in parallel:
 - keep source spans available through parser and sema data
 - add stable substrings or golden output when diagnostics become user-facing
 
-This does not require rewriting the compiler in Ari. It means stage0 should
-produce better diagnostics while the future Ari tooling package is designed.
+This means the current compiler should produce better diagnostics while the
+tooling package shape is designed.
 
 ## Readiness Impact
 
@@ -326,6 +312,5 @@ This layer is one of the largest remaining blockers. It affects:
 - artifact comparison
 - LSP and lint integration
 
-Until this layer has at least source ids, spans, line lookup, labels, notes,
-and plain-text golden rendering, the compiler-in-Ari track should stay in the
-planning/fixture phase.
+This layer becomes mature when source ids, spans, line lookup, labels, notes,
+and plain-text golden rendering are all covered by focused artifacts.

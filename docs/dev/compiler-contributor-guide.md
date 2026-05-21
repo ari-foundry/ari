@@ -1,10 +1,9 @@
 # Compiler Contributor Guide
 
 This page is the practical entry point for people developing the Ari compiler.
-It is not a bootstrap implementation plan. The job today is to make Ari a
-reliable, pleasant, general-purpose language implementation. A future compiler
-written in Ari should be a normal Ari program that benefits from the same
-language, diagnostics, modules, and artifacts as every other large Ari tool.
+The job today is to make Ari a reliable, pleasant, general-purpose language
+implementation with clear diagnostics, predictable modules, stable IR, and
+reviewable backend output.
 
 Use this guide when you are about to change compiler behavior and need to know
 where to edit, what to test, and how the change improves Ari as a real
@@ -31,8 +30,7 @@ For a compiler change, read these in order:
    `build/ari` commands.
 
 Use [Compiler Maturity Gates](compiler-maturity-gates.md) as the health
-scorecard. Treat [Bootstrap Readiness](bootstrap-readiness.md) as a later
-self-hosting appendix, not as the main compiler-development plan.
+scorecard for normal compiler work.
 
 ## Edit Map
 
@@ -59,7 +57,6 @@ Choose the smallest target that observes the behavior you changed:
 | --- | --- |
 | User-facing language docs or navigation | `make check-language-docs` |
 | Compiler roadmap, maturity gates, pass contracts, or readiness docs | `make check-compiler-dev-docs` |
-| Long-term self-host readiness wording or fixture groups | `make check-bootstrap-docs` |
 | Stage-plan, capability inventory, token, source-map, syntax, diagnostic catalog, diagnostic, module-graph, declaration, typed-IR, or pass-summary artifacts | `make check-compiler-artifacts` |
 | Compiler-shaped Ari model fixtures | `make check-compiler-development` |
 | One ordinary Ari program | `build/ari path/to/case.ari --check` |
@@ -105,13 +102,10 @@ tests/cases/<feature>/errors/
 tests/cases/compiler-development/ok/model/
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
-tests/cases/bootstrap-readiness/
 ```
 
 Use `compiler-development` for fixtures that prove normal Ari can model
-compiler-shaped data without starting a bootstrap tree. Use
-`bootstrap-readiness` only for secondary self-host readiness fixtures that
-measure long-term pressure outside the main compiler-development loop.
+compiler-shaped data and compiler artifacts.
 
 Use `artifact/ok` and `artifact/errors` for text artifacts and comparison
 reports. Use ordinary feature folders such as `modules`, `generics`, `traits`,
@@ -146,25 +140,24 @@ Good examples:
 
 Bad examples:
 
-- bootstrap-only keywords
+- private compiler-only keywords
 - hidden global compiler allocation
 - source-map APIs in runtime `std`
 - codegen rediscovering names that sema resolved
-- one giant self-host test as the first signal of progress
+- one giant executable test as the first signal of progress
 
 ## What Counts As Progress
 
 A compiler change is healthy when it:
 
 - keeps pass ownership clear
-- improves ordinary Ari users, not only a future stage1 compiler
+- improves ordinary Ari users and compiler contributors
 - adds a focused ok or error test
 - adds an IR/object/executable check when behavior reaches the backend
 - updates docs when it changes language, ABI, module, diagnostic, or artifact
   behavior
 - leaves unsupported features rejected with clear diagnostics
 
-The current practical readiness remains about **38-42% ready** to begin a
-serious compiler-in-Ari track, with **58-62% remaining** before full
-self-hosting work is likely to be productive. Treat that number as a health
-metric. The work itself is normal compiler development.
+The current practical compiler-development maturity is about **45-46%**. Treat
+that number as a health metric tied to normal compiler surfaces, not a separate
+project goal.

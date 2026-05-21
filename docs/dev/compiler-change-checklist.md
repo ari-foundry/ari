@@ -2,9 +2,9 @@
 
 Use this checklist before handing off a compiler change.
 
-This page is for normal Ari compiler development, not a bootstrap checklist.
-It should not justify private stage1 syntax, hidden allocation, or runtime
-`std` APIs that only compiler tools need.
+This page is for normal Ari compiler development. It should not justify
+private compiler syntax, hidden allocation, or runtime `std` APIs that only
+compiler tools need.
 
 ## Fast Checklist
 
@@ -18,7 +18,7 @@ Before review, answer these questions:
 | Diagnostics | If failure behavior changed, is the diagnostic stable? | The message has a code-family or golden artifact when appropriate. |
 | Sema | Does sema still own source-level facts? | Names, modules, types, traits, and ownership are resolved before backend lowering. |
 | IR | Does codegen consume lowered facts mechanically? | Backend code does not re-resolve source-level names or visibility. |
-| Non-goals | What did this intentionally avoid? | Bootstrap-only syntax, hidden allocation, and unrelated refactors are explicitly avoided. |
+| Non-goals | What did this intentionally avoid? | Private syntax, hidden allocation, and unrelated refactors are explicitly avoided. |
 
 No runtime `std` API should be added only to support compiler source maps,
 diagnostics, or golden renderers. Keep those APIs in compiler/tooling layers.
@@ -51,7 +51,7 @@ Update docs when any of these changes:
 - CLI behavior
 - ABI, symbol, object, shared-library, or runtime hook behavior
 - test placement policy
-- bootstrap readiness estimate or start gate
+- compiler maturity estimate or development gate
 
 When a test is clearer than the docs, improve the docs. Tests protect behavior;
 docs teach people how to use and maintain it.
@@ -72,14 +72,14 @@ Docs:
   <updated docs or why none needed>
 
 Non-goals:
-  <bootstrap-only or unrelated work avoided>
+  <private compiler-only or unrelated work avoided>
 ```
 
 ## Readiness Impact
 
 A change improves the readiness score when it makes normal compiler development
 smaller, clearer, or more deterministic. It does not improve the score merely
-because it resembles bootstrapping.
+because it resembles a long-term side project.
 
-Ari remains about **38-42% ready** to start a serious compiler-in-Ari track.
+Ari is about **45-46% through the current compiler-development maturity work**.
 Use this checklist to keep that progress grounded in ordinary compiler quality.

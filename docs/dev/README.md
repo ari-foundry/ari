@@ -23,9 +23,10 @@ For normal compiler work, read in this order:
 15. [Compiler Readiness Inventory](compiler-readiness-inventory.md)
 16. [Build And Test](build-test.md)
 
-Bootstrapping is a later readiness milestone. The current development rule is
-to improve the hosted compiler and the public language surface first. The
-bootstrap documents are secondary readiness notes for later self-hosting work.
+Keep this path focused on the compiler that exists today: source loading,
+lexing, parsing, sema, IR, LLVM output, diagnostics, modules, artifacts, and
+focused tests. Self-hosting notes live in a separate appendix and should not
+drive ordinary compiler design.
 
 ## Main Pages
 
@@ -58,15 +59,21 @@ bootstrap documents are secondary readiness notes for later self-hosting work.
 - [Compiler Project Model](compiler-project-model.md)
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md)
 - [Compiler Artifact Testing](compiler-artifact-testing.md)
-- [Production Compiler Design](production-compiler-design.md)
-- [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)
-- [Bootstrap Readiness](bootstrap-readiness.md)
-- [Self-Host Roadmap](self-host-roadmap.md)
 - [Library Testing](library-testing.md)
 - [Standard Library Docs](../stdlib/README.md)
 - [Roadmap](roadmap.md)
 - [Completed Milestones](completed-milestones.md)
 - [Semantic Checker Decomposition](sema-decomposition.md)
+
+## Long-Term Self-Hosting Appendix
+
+These pages are not the active compiler roadmap. Use them only when a change
+directly affects future self-hosting constraints:
+
+- [Production Compiler Design](production-compiler-design.md)
+- [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)
+- [Bootstrap Readiness](bootstrap-readiness.md)
+- [Self-Host Roadmap](self-host-roadmap.md)
 
 ## Source Map
 

@@ -1,7 +1,6 @@
 # Compiler Artifact Authoring
 
-This page explains how to add or change compiler artifacts in Ari. It is
-ordinary hosted-compiler development, not bootstrap implementation.
+This page explains how to add or change compiler artifacts in Ari.
 
 Artifacts are the compiler's review trail. They let contributors see whether a
 change belongs to source loading, lexing, parsing, diagnostics, module loading,
@@ -151,8 +150,7 @@ Before handing off an artifact change, answer:
 - Did the golden diff avoid unrelated churn?
 - Did docs change when the artifact format changed?
 - Is executable behavior used only after earlier artifacts are stable?
-- Is this useful for ordinary compiler development, not a bootstrap-only path?
+- Is this useful for ordinary compiler development, not a private tool path?
 
 Good artifacts make Ari compiler work understandable from small diffs. That is
-the path toward a maintainable compiler, regardless of when a later
-compiler-in-Ari track starts.
+the path toward a maintainable compiler.
