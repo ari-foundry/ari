@@ -1236,6 +1236,21 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_remove_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %ok = call i1 @ari_builtin_fs_remove(ptr %path)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "i1 @ari_builtin_fs_rename(ptr %source, ptr %target) {");
         line("entry:");
         line("  %code = call i32 @rename(ptr %source, ptr %target)");
@@ -1338,11 +1353,42 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_remove_dir_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %ok = call i1 @ari_builtin_fs_remove_dir(ptr %path)");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "{ ptr } @ari_builtin_fs_open_dir(ptr %path) {");
         line("entry:");
         line("  %handle = call ptr @opendir(ptr %path)");
         line("  %dir = insertvalue { ptr } undef, ptr %handle, 0");
         line("  ret { ptr } %dir");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ ptr } @ari_builtin_fs_open_dir_bytes(ptr %data, i64 %len) {");
+        line("entry:");
+        line("  %storage = alloca [4096 x i8], align 16");
+        line("  %buffer = getelementptr inbounds [4096 x i8], ptr %storage, i64 0, i64 0");
+        line("  %path = call ptr @ari_runtime_fs_path_from_bytes(ptr %data, i64 %len, ptr %buffer)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %fail, label %check");
+        line("check:");
+        line("  %dir = call { ptr } @ari_builtin_fs_open_dir(ptr %path)");
+        line("  ret { ptr } %dir");
+        line("fail:");
+        line("  %empty = insertvalue { ptr } undef, ptr null, 0");
+        line("  ret { ptr } %empty");
         line("}");
         line();
 

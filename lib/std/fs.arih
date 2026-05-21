@@ -50,6 +50,9 @@ pub extern "ari" fn create_dir_all(path: string) -> bool = "ari_builtin_fs_creat
 pub extern "ari" fn remove_dir(path: string) -> bool = "ari_builtin_fs_remove_dir";
 pub extern "ari" fn open_dir(path: string) -> Dir = "ari_builtin_fs_open_dir";
 pub extern "ari" fn close_dir(dir: Dir) -> bool = "ari_builtin_fs_close_dir";
+extern "ari" fn remove_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_bytes";
+extern "ari" fn remove_dir_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_dir_bytes";
+extern "ari" fn open_dir_bytes_raw(data: ptr u8, len: i64) -> Dir = "ari_builtin_fs_open_dir_bytes";
 // Modes: "r", "w", "a", "rw", "r+", "w+", and "a+".
 pub extern "ari" fn open(path: string, mode: string) -> File = "ari_builtin_fs_open";
 pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";
@@ -366,13 +369,25 @@ pub fn read_dir(zone: ref mut Zone, path: string) -> std::vec::Vec[std::string::
   return std::vec::new<std::string::String>(zone, 0);
 }
 
+fn try_open_dir_bytes(path: std::Slice[u8]) -> std::Option[Dir] {
+  let dir = open_dir_bytes_raw(path.data, path.len);
+  if dir.is_open() {
+    return std::Some<Dir>(dir);
+  }
+  return std::None<Dir>();
+}
+
 // DirEntry stores both strings in the caller's zone so listing results stay
 // valid until that zone is reset or destroyed.
-fn make_dir_entry(zone: ref mut Zone, base: string, name: std::string::String) -> DirEntry {
-  let full_path = std::path::join_in(zone, std::string::bytes(base), name.as_slice());
+fn make_dir_entry_bytes(zone: ref mut Zone, base: std::Slice[u8], name: std::string::String) -> DirEntry {
+  let full_path = std::path::join_in(zone, base, name.as_slice());
   let entry_name = name;
   let entry_path = full_path;
   return DirEntry { name_value: entry_name, path_value: entry_path };
+}
+
+fn make_dir_entry(zone: ref mut Zone, base: string, name: std::string::String) -> DirEntry {
+  return make_dir_entry_bytes(zone, std::string::bytes(base), name);
 }
 
 pub fn try_read_dir_entries(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[DirEntry]] {
@@ -401,6 +416,32 @@ pub fn try_read_dir_entries(zone: ref mut Zone, path: string) -> std::Option[std
   return std::None<std::vec::Vec[DirEntry]>();
 }
 
+fn try_read_dir_entries_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[DirEntry]] {
+  match try_open_dir_bytes(path) {
+    std::Some(dir) => {
+      var entries = std::vec::new<DirEntry>(zone, 8);
+      var reading = true;
+      while reading {
+        match dir.next(zone) {
+          std::Some(name) => {
+            entries.push_in(zone, make_dir_entry_bytes(zone, path, name));
+          }
+          std::None => {
+            reading = false;
+          }
+        }
+      }
+
+      if !dir.close() {
+        return std::None<std::vec::Vec[DirEntry]>();
+      }
+      return std::Some<std::vec::Vec[DirEntry]>(entries);
+    }
+    std::None => {}
+  }
+  return std::None<std::vec::Vec[DirEntry]>();
+}
+
 pub fn read_dir_entries(zone: ref mut Zone, path: string) -> std::vec::Vec[DirEntry] {
   match try_read_dir_entries(zone, path) {
     std::Some(entries) => {
@@ -410,6 +451,58 @@ pub fn read_dir_entries(zone: ref mut Zone, path: string) -> std::vec::Vec[DirEn
   }
   std::panic();
   return std::vec::new<DirEntry>(zone, 0);
+}
+
+fn remove_dir_all_entry_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> bool {
+  match try_symlink_metadata_bytes(path) {
+    std::Some(info) => {
+      if info.is_symlink() || info.is_file() || info.is_other() {
+        return remove_bytes_raw(path.data, path.len);
+      }
+      if info.is_dir() {
+        return remove_dir_all_bytes(zone, path);
+      }
+    }
+    std::None => {}
+  }
+  return false;
+}
+
+fn remove_dir_all_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> bool {
+  match try_symlink_metadata_bytes(path) {
+    std::Some(info) => {
+      if !info.is_dir() || info.is_symlink() {
+        return false;
+      }
+    }
+    std::None => {
+      return false;
+    }
+  }
+
+  match try_read_dir_entries_bytes(zone, path) {
+    std::Some(entries) => {
+      var index = 0;
+      while index < entries.len() {
+        let entry = entries.get(index);
+        if !remove_dir_all_entry_bytes(zone, entry.path_value.as_slice()) {
+          return false;
+        }
+        index = index + 1;
+      }
+    }
+    std::None => {
+      return false;
+    }
+  }
+  return remove_dir_bytes_raw(path.data, path.len);
+}
+
+pub fn remove_dir_all(path: string) -> bool {
+  var zone = std::zone::create(4096);
+  let ok = remove_dir_all_bytes(ref mut zone, std::string::bytes(path));
+  std::zone::destroy(zone);
+  return ok;
 }
 
 pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {

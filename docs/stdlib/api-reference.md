@@ -856,6 +856,7 @@ fs::ensure_dir(path)
 fs::create_dir_all(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
+fs::remove_dir_all(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
@@ -1032,7 +1033,9 @@ according to the host runtime's current behavior. `create_dir(path)` creates
 one directory, `ensure_dir(path)` treats an existing directory as success or
 creates a missing one, `create_dir_all(path)` recursively creates missing
 parent directories, `ensure_dir_all(path)` is the idempotent recursive alias,
-and `remove_dir(path)` removes one empty directory.
+`remove_dir(path)` removes one empty directory, and `remove_dir_all(path)`
+recursively removes a directory tree without following symlink entries outside
+that tree.
 `try_open_dir(path)` returns `Option[Dir]`, `dir.next(ref mut zone)` returns
 the next entry name while skipping `"."` and `".."`, and `dir.close()` closes
 the handle. `try_read_dir(ref mut zone, path)` opens, collects names into

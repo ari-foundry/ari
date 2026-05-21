@@ -74,6 +74,7 @@ std-fs-create-truncate-copy.ari
 std-fs-rename-dir.ari
 std-fs-read-dir.ari
 std-fs-dir-entry-metadata.ari
+std-fs-remove-dir-all.ari
 std-fs-links.ari
 std-fs-permissions.ari
 std-fs-mode.ari

@@ -577,6 +577,13 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_fs_create_dir_all" $(BUILD_DIR)/prelude/std-fs-create-dir-all.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari -o $(BUILD_DIR)/prelude/std-fs-create-dir-all.elf
 	$(BUILD_DIR)/prelude/std-fs-create-dir-all.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-remove-dir-all.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
+	grep -F -q "std2fs14remove_dir_all" $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
+	grep -q "@ari_builtin_fs_remove_bytes" $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
+	grep -q "@ari_builtin_fs_remove_dir_bytes" $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
+	grep -q "@ari_builtin_fs_open_dir_bytes" $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-remove-dir-all.ari -o $(BUILD_DIR)/prelude/std-fs-remove-dir-all.elf
+	$(BUILD_DIR)/prelude/std-fs-remove-dir-all.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-ensure-file.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-ensure-file.ll
 	grep -F -q "std2fs11ensure_file" $(BUILD_DIR)/prelude/std-fs-ensure-file.ll
 	grep -F -q "std2fs10try_create" $(BUILD_DIR)/prelude/std-fs-ensure-file.ll

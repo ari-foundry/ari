@@ -321,6 +321,7 @@ fn std::fs::read_link|check-prelude std-fs-read-link asserting symbolic-link tar
 fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byte-string read helper; docs/stdlib/modules/fs.md
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir|check-prelude std-fs-rename-dir runtime-backed single-directory removal hook; docs/stdlib/modules/fs.md
+fn std::fs::remove_dir_all|check-prelude std-fs-remove-dir-all recursive directory tree removal helper; docs/stdlib/modules/fs.md
 fn std::fs::rename|check-prelude std-fs-rename-dir runtime-backed file rename hook; docs/stdlib/modules/fs.md
 fn std::fs::seek|check-prelude std-fs-seek absolute file cursor seek hook; docs/stdlib/modules/fs.md
 fn std::fs::set_mode|check-prelude std-fs-mode chmod-backed permission-mode mutation helper; docs/stdlib/modules/fs.md

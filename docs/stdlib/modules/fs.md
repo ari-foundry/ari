@@ -28,7 +28,7 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
 `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
-`symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`,
+`symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`, `remove_dir_all`,
 `create_dir_all`, `ensure_dir_all`, `try_open_dir`, `read_dir`,
 `try_read_dir`, `read_dir_entries`,
 `try_read_dir_entries`,
@@ -70,6 +70,7 @@ fs::ensure_dir(path)
 fs::create_dir_all(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
+fs::remove_dir_all(path)
 fs::open_dir(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
@@ -418,7 +419,10 @@ intermediate component cannot be created or searched. `ensure_dir_all(path)` is
 the natural idempotent alias for callers that read the operation as setup
 rather than creation. Both helpers use the runtime's current default directory
 mode for newly created components, with the host process umask still applying.
-`remove_dir(path)` removes one empty directory.
+`remove_dir(path)` removes one empty directory. `remove_dir_all(path)` removes
+a directory tree recursively, including regular files and symlinks inside the
+tree. It rejects missing paths and non-directory roots, and it treats symlinks
+as link entries to unlink rather than directories to follow.
 
 `try_open_dir(path)` opens one directory and returns `Option[Dir]`.
 `dir.next(ref mut zone)` returns the next entry name as `Option[String]`,
@@ -455,7 +459,7 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | metadata | Current: `try_metadata(path)`/`metadata(path)` over the Linux/glibc `stat` runtime path, `try_symlink_metadata(path)`/`symlink_metadata(path)` and `is_symlink(path)` over the Linux/glibc `lstat` runtime path, plus `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, and `FileKind`; richer timestamps are roadmap. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
 | rename | Current: `rename(source, target)` hook; portable overwrite policy is roadmap. |
-| remove | Current: file removal with `remove(path)` and empty directory removal with `remove_dir(path)`. |
+| remove | Current: file removal with `remove(path)`, empty directory removal with `remove_dir(path)`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
 | copy | Current: source streaming `copy(source, target)` and byte-counting `try_copy(source, target)` for byte files. |
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
@@ -563,6 +567,15 @@ Create nested output directories:
 let nested = "build/prelude/example-fs-dir.tmp/cache/shards";
 if fs::create_dir_all(nested) {
   fs::write("build/prelude/example-fs-dir.tmp/cache/shards/data.txt", "ok");
+}
+```
+
+Remove a directory tree:
+
+```ari
+let tree = "build/prelude/example-fs-dir.tmp";
+if fs::remove_dir_all(tree) {
+  assert(!fs::exists(tree));
 }
 ```
 
@@ -698,8 +711,8 @@ if file.is_open() {
 
 ## Current Limits
 
-- This slice is byte-oriented. There is no owned path type, recursive directory
-  removal API, file locking API, temporary-file API, or text encoding policy yet.
+- This slice is byte-oriented. There is no owned path type, file locking API,
+  temporary-file API, or text encoding policy yet.
   Directory reads expose names, joined child paths, and lazy per-entry metadata
   methods, but not per-entry error values. Basic `stat`/`lstat` metadata,
   permission-bit lookup and mutation, and existing-path canonicalization exist,
@@ -739,6 +752,7 @@ tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-ensure-file.ari
 tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari
+tests/cases/standard-library/ok/fs/std-fs-remove-dir-all.ari
 tests/cases/standard-library/ok/fs/std-fs-read-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-dir-entry-metadata.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
@@ -780,6 +794,9 @@ idempotent single-directory creation, file-path rejection, missing-parent
 failure, and cleanup. `std-fs-create-dir-all.ari` covers recursive parent
 creation, existing-directory idempotence, `ensure_dir_all`, file-path
 rejection, blocked child creation, nested writes, and cleanup.
+`std-fs-remove-dir-all.ari` covers recursive tree removal, non-directory root
+rejection, empty-directory removal, missing-path failure, internal file and
+symlink unlinking, and no-follow directory symlink behavior.
 `std-fs-ensure-file.ari` covers idempotent single-file
 creation, existing-file preservation, directory-path rejection, missing-parent
 failure, and cleanup. `std-fs-read-dir.ari` covers
@@ -816,7 +833,6 @@ absolute canonical paths, filename preservation, and missing-path `None`.
 - Expand metadata with modified/accessed/created timestamps.
 - Expand directory reads with richer per-entry error reporting and owned
   OS-resource iterator handles.
-- Add recursive directory removal after creation policy has more mileage.
 - Grow `std::path` from lexical helpers into owned path values after Ari has a
   clearer owned string/path story.
 - Add secure temporary files and optional file locking after the resource and

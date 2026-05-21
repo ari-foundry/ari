@@ -178,6 +178,9 @@ identifies the exact case:
 - `std-fs-create-dir-all.ari`: runtime-backed recursive `create_dir_all` and
   source `ensure_dir_all`, existing-directory idempotence, file-path
   rejection, blocked child creation, nested writes, and cleanup.
+- `std-fs-remove-dir-all.ari`: source recursive `remove_dir_all`, missing-path
+  and non-directory-root rejection, empty-directory removal, file and symlink
+  unlinking inside the tree, and no-follow behavior for directory symlinks.
 - `std-fs-ensure-file.ari`: source `ensure_file` idempotence, existing-file
   preservation, missing-file creation, directory rejection, missing-parent
   failure, and cleanup.

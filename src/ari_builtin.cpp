@@ -393,6 +393,9 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_fs_create_dir_all") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_remove_dir") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_open_dir") return builtin_sig({source_string}, fs_dir);
+    if (symbol == "ari_builtin_fs_remove_bytes") return builtin_sig({ptr_u8, i64}, boolean);
+    if (symbol == "ari_builtin_fs_remove_dir_bytes") return builtin_sig({ptr_u8, i64}, boolean);
+    if (symbol == "ari_builtin_fs_open_dir_bytes") return builtin_sig({ptr_u8, i64}, fs_dir);
     if (symbol == "ari_builtin_fs_close_dir") return builtin_sig({fs_dir}, boolean);
     if (symbol == "ari_builtin_fs_read_dir_next") return builtin_sig({fs_dir}, source_string);
     if (symbol == "ari_builtin_fs_open") return builtin_sig({source_string, source_string}, fs_file);

@@ -1,0 +1,114 @@
+// Covers recursive directory removal. remove_dir_all removes a directory tree,
+// removes file and symlink entries inside it, rejects non-directory roots, and
+// never follows directory symlinks outside the tree.
+fn cleanup_manual(
+  root: string,
+  alpha: string,
+  beta: string,
+  file_path: string,
+  nested_file: string,
+  link_file: string,
+  link_dir: string,
+  outside: string,
+  outside_file: string,
+  standalone: string,
+  empty: string
+) -> void {
+  fs::remove(link_file);
+  fs::remove(link_dir);
+  fs::remove(nested_file);
+  fs::remove(file_path);
+  fs::remove(outside_file);
+  fs::remove(standalone);
+  fs::remove_dir(beta);
+  fs::remove_dir(alpha);
+  fs::remove_dir(root);
+  fs::remove_dir(outside);
+  fs::remove_dir(empty);
+}
+
+fn main() -> i64 {
+  let root = "build/prelude/std-fs-remove-dir-all.tmp";
+  let alpha = "build/prelude/std-fs-remove-dir-all.tmp/alpha";
+  let beta = "build/prelude/std-fs-remove-dir-all.tmp/alpha/beta";
+  let file_path = "build/prelude/std-fs-remove-dir-all.tmp/file.txt";
+  let nested_file = "build/prelude/std-fs-remove-dir-all.tmp/alpha/beta/nested.txt";
+  let link_file = "build/prelude/std-fs-remove-dir-all.tmp/link-file";
+  let link_dir = "build/prelude/std-fs-remove-dir-all.tmp/link-dir";
+  let outside = "build/prelude/std-fs-remove-dir-all-target.tmp";
+  let outside_file = "build/prelude/std-fs-remove-dir-all-target.tmp/keep.txt";
+  let standalone = "build/prelude/std-fs-remove-dir-all-file.tmp";
+  let empty = "build/prelude/std-fs-remove-dir-all-empty.tmp";
+  let missing = "build/prelude/std-fs-remove-dir-all-missing.tmp";
+
+  cleanup_manual(
+    root,
+    alpha,
+    beta,
+    file_path,
+    nested_file,
+    link_file,
+    link_dir,
+    outside,
+    outside_file,
+    standalone,
+    empty
+  );
+
+  var score = 0;
+  if fs::create_dir_all(beta) {
+    score = score + 1;
+  }
+  if fs::write(file_path, "root") && fs::write(nested_file, "nested") {
+    score = score + 2;
+  }
+  if fs::create_dir(outside) && fs::write(outside_file, "keep") {
+    score = score + 4;
+  }
+  if fs::symbolic_link("file.txt", link_file) &&
+     fs::symbolic_link("../std-fs-remove-dir-all-target.tmp", link_dir) {
+    score = score + 8;
+  }
+  if fs::write(standalone, "no") {
+    score = score + 16;
+  }
+  if fs::create_dir(empty) {
+    score = score + 32;
+  }
+  if !fs::remove_dir_all(missing) {
+    score = score + 64;
+  }
+  if !fs::remove_dir_all(standalone) && fs::is_file(standalone) {
+    score = score + 128;
+  }
+  if fs::remove_dir_all(empty) && !fs::exists(empty) {
+    score = score + 256;
+  }
+  if fs::remove_dir_all(root) {
+    score = score + 512;
+  }
+  if !fs::exists(root) && !fs::exists(file_path) && !fs::exists(nested_file) &&
+     !fs::exists(link_file) && !fs::exists(link_dir) {
+    score = score + 1024;
+  }
+  if fs::is_dir(outside) && fs::is_file(outside_file) {
+    score = score + 2048;
+  }
+
+  cleanup_manual(
+    root,
+    alpha,
+    beta,
+    file_path,
+    nested_file,
+    link_file,
+    link_dir,
+    outside,
+    outside_file,
+    standalone,
+    empty
+  );
+
+  assert_eq_i64(score, 4095);
+  return score;
+}
