@@ -1,0 +1,59 @@
+// Covers symbolic-link target reads. This keeps link creation and link
+// inspection separate from canonicalization: read_link returns the stored link
+// target bytes, while canonicalize resolves an existing path.
+fn cleanup(path: string) -> void {
+  fs::remove(path);
+}
+
+fn main() -> i64 {
+  let source = "build/prelude/std-fs-read-link-source.tmp";
+  let link = "build/prelude/std-fs-read-link-symbolic.tmp";
+  let target = "std-fs-read-link-source.tmp";
+  let missing = "build/prelude/std-fs-read-link-missing.tmp";
+  cleanup(link);
+  cleanup(source);
+
+  var data = [82u8, 76u8, 78u8];
+  if !fs::write(source, data.as_slice()) {
+    return 1;
+  }
+
+  var zone = zone::create(512);
+  var score = 0;
+  if fs::symbolic_link(target, link) {
+    score = score + 1;
+  }
+
+  match fs::try_read_link(ref mut zone, link) {
+    std::Some(value) => {
+      if value.equals_text(target) {
+        score = score + 2;
+      }
+    }
+    std::None => {}
+  }
+
+  let direct = fs::read_link(ref mut zone, link);
+  if direct.equals_text(target) {
+    score = score + 4;
+  }
+
+  match fs::try_read_link(ref mut zone, source) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 8;
+    }
+  }
+
+  match fs::try_read_link(ref mut zone, missing) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 16;
+    }
+  }
+
+  zone::destroy(zone);
+  cleanup(link);
+  cleanup(source);
+  return score;
+}

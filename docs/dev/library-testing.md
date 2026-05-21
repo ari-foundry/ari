@@ -189,6 +189,9 @@ identifies the exact case:
   `DirEntry` values whose zone-backed name and path come from different zones.
 - `std-fs-links.ari`: runtime-backed `hard_link` and `symbolic_link`,
   read-through behavior, missing-source failure, and duplicate-link failure.
+- `std-fs-read-link.ari`: runtime-backed symbolic-link target reads,
+  `Option[String]` failure for regular and missing paths, and asserting
+  `read_link` behavior.
 - `std-fs-permissions.ari`: runtime-backed access permission checks,
   `Permissions` method wrappers, directory execute/search checks, and
   missing-path all-false behavior.

@@ -252,6 +252,7 @@ public:
         out << "@ari_cwd_buffer = internal global [4096 x i8] zeroinitializer, align 16\n";
         out << "@ari_executable_path_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_realpath_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
+        out << "@ari_readlink_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_line_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         for (const auto& item : strings_) {
             out << item.name << " = private unnamed_addr constant [" << item.size << " x i8] c\"" << item.bytes << "\", align 1\n";
@@ -522,6 +523,7 @@ private:
             symbol == "ari_builtin_env_current_dir" ||
             symbol == "ari_builtin_env_executable_path" ||
             symbol == "ari_builtin_fs_canonicalize" ||
+            symbol == "ari_builtin_fs_read_link" ||
             symbol == "ari_builtin_fs_read_dir_next" ||
             symbol == "ari_builtin_read_line") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
@@ -676,6 +678,8 @@ private:
         std::string cwd_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_cwd_buffer, i64 0, i64 0)";
         std::string realpath_buffer =
             "getelementptr inbounds ([4096 x i8], ptr @ari_realpath_buffer, i64 0, i64 0)";
+        std::string readlink_buffer =
+            "getelementptr inbounds ([4096 x i8], ptr @ari_readlink_buffer, i64 0, i64 0)";
         std::string context_cwd_buffer =
             "getelementptr inbounds ([4096 x i8], ptr @ari_context_cwd_buffer, i64 0, i64 0)";
         std::string executable_path_buffer =
@@ -1040,6 +1044,23 @@ private:
         line("found:");
         line("  ret ptr " + realpath_buffer);
         line("empty:");
+        line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_fs_read_link(ptr %path) {");
+        line("entry:");
+        line("  %len = call i64 @readlink(ptr %path, ptr " + readlink_buffer + ", i64 4095)");
+        line("  %negative = icmp slt i64 %len, 0");
+        line("  %too_long = icmp sge i64 %len, 4095");
+        line("  %bad = or i1 %negative, %too_long");
+        line("  br i1 %bad, label %empty, label %found");
+        line("found:");
+        line("  %end = getelementptr inbounds i8, ptr " + readlink_buffer + ", i64 %len");
+        line("  store i8 0, ptr %end");
+        line("  ret ptr " + readlink_buffer);
+        line("empty:");
+        line("  store i8 0, ptr " + readlink_buffer);
         line("  ret ptr " + empty);
         line("}");
         line();

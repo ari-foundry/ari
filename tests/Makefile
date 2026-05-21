@@ -606,6 +606,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari -o $(BUILD_DIR)/prelude/std-fs-links.elf
 	$(BUILD_DIR)/prelude/std-fs-links.elf; code=$$?; test $$code -eq 63
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-links.elf; $(BUILD_DIR)/prelude/std-fs-links.elf; code=$$?; test $$code -eq 63; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-link.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-link.ll
+	grep -q "@ari_builtin_fs_read_link" $(BUILD_DIR)/prelude/std-fs-read-link.ll
+	grep -q "declare i64 @readlink" $(BUILD_DIR)/prelude/std-fs-read-link.ll
+	grep -F -q "std2fs13try_read_link" $(BUILD_DIR)/prelude/std-fs-read-link.ll
+	grep -F -q "std2fs9read_link" $(BUILD_DIR)/prelude/std-fs-read-link.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-link.ari -o $(BUILD_DIR)/prelude/std-fs-read-link.elf
+	$(BUILD_DIR)/prelude/std-fs-read-link.elf; code=$$?; test $$code -eq 31
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-permissions.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-permissions.ll
 	grep -q "@ari_builtin_fs_can_read" $(BUILD_DIR)/prelude/std-fs-permissions.ll
 	grep -q "@ari_builtin_fs_can_write" $(BUILD_DIR)/prelude/std-fs-permissions.ll

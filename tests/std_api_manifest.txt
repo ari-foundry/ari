@@ -317,6 +317,7 @@ fn std::fs::read_byte|check-prelude std-fs-basic file byte read hook; docs/stdli
 fn std::fs::read_dir|check-prelude std-fs-read-dir asserting directory name-list helper; docs/stdlib/modules/fs.md
 fn std::fs::read_dir_entries|check-prelude std-fs-read-dir asserting directory entry-list helper; docs/stdlib/modules/fs.md
 fn std::fs::read_dir_next|check-prelude std-fs-read-dir Option-returning directory entry name helper; docs/stdlib/modules/fs.md
+fn std::fs::read_link|check-prelude std-fs-read-link asserting symbolic-link target reader; docs/stdlib/modules/fs.md
 fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byte-string read helper; docs/stdlib/modules/fs.md
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir|check-prelude std-fs-rename-dir runtime-backed single-directory removal hook; docs/stdlib/modules/fs.md
@@ -342,6 +343,7 @@ fn std::fs::try_read|check-prelude std-fs-try-read Option-returning natural whol
 fn std::fs::try_read_byte|check-prelude std-fs-try-byte Option-returning file byte read helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read_dir|check-prelude std-fs-read-dir Option-returning directory name-list helper; docs/stdlib/modules/fs.md
 fn std::fs::try_read_dir_entries|check-prelude std-fs-read-dir Option-returning directory entry-list helper; docs/stdlib/modules/fs.md
+fn std::fs::try_read_link|check-prelude std-fs-read-link Option-returning symbolic-link target reader; docs/stdlib/modules/fs.md
 fn std::fs::try_read_to_string|check-prelude std-fs-try-read Option-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
 fn std::fs::try_write|check-prelude std-fs-read-write Option-returning write byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::write|check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md

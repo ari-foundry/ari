@@ -7,8 +7,8 @@ exists, query access-style read/write/execute permissions, open a byte stream
 with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
 byte-oriented `String` with either compatibility or `Option`-returning absence
-behavior, rename paths, create hard or symbolic links, ensure a single regular
-file exists without truncating an existing file, create or remove one empty
+behavior, rename paths, create hard or symbolic links, read symbolic-link
+targets, ensure a single regular file exists without truncating an existing file, create or remove one empty
 directory, ensure a single directory exists without treating an existing
 directory as failure, recursively create missing directory parents, read
 directory entry names through an explicit `Dir` handle, collect lightweight
@@ -27,7 +27,7 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `try_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
 `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
 `canonicalize`, `try_canonicalize`, `rename`, `hard_link`,
-`symbolic_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`,
+`symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`,
 `create_dir_all`, `ensure_dir_all`, `try_open_dir`, `read_dir`,
 `try_read_dir`, `read_dir_entries`,
 `try_read_dir_entries`,
@@ -59,6 +59,8 @@ fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
+fs::read_link(ref mut zone, path)
+fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
 fs::ensure_dir(path)
@@ -360,6 +362,14 @@ are resolved by the host relative to the directory containing `link_path`, not
 the caller's current directory. Windows-specific file-vs-directory symlink
 behavior remains future platform work.
 
+`try_read_link(ref mut zone, path)` reads the target bytes stored in a symbolic
+link and copies them into a `String` owned by the caller's zone. Missing paths,
+regular files, unreadable links, and targets that do not fit the current
+runtime buffer return `None`. `read_link(ref mut zone, path)` is the asserting
+wrapper. This is intentionally different from `canonicalize`: `read_link`
+returns the link text as stored, while `canonicalize` resolves an existing path
+to an absolute host path.
+
 `ensure_file(path)` is the file counterpart to `ensure_dir`: it creates one
 empty file only when the path is missing and otherwise succeeds only for an
 existing regular file. It returns `false` for directories, symlinks resolved to
@@ -418,7 +428,7 @@ owned/path-to-OS-string boundary slice.
 | remove | Current: file removal with `remove(path)` and empty directory removal with `remove_dir(path)`. |
 | copy | Current: source streaming `copy(source, target)` and byte-counting `try_copy(source, target)` for byte files. |
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
-| symbolic link | Current: `symbolic_link(target, link_path)` runtime hook on the Linux/glibc path; Windows split is roadmap. |
+| symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
 | read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, and `dir.close()` for entry names and joined paths; richer metadata-bearing entries and owned OS-resource policy are roadmap. |
 | create directory | Current: single-directory `create_dir(path)` and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
@@ -680,6 +690,7 @@ tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari
 tests/cases/standard-library/ok/fs/std-fs-read-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
+tests/cases/standard-library/ok/fs/std-fs-read-link.ari
 tests/cases/standard-library/ok/fs/std-fs-permissions.ari
 tests/cases/standard-library/ok/fs/std-fs-mode.ari
 tests/cases/standard-library/ok/fs/std-fs-metadata.ari
@@ -725,7 +736,9 @@ runtime-backed `Dir` open/next/close behavior, one-shot
 missing-directory failure, dot entry skipping, invalid-handle `None`, and
 cleanup. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
-checks. `std-fs-permissions.ari` covers access-style readable/writable/
+checks. `std-fs-read-link.ari` covers runtime-backed symbolic-link target
+reads, `Option[String]` failure behavior for regular and missing paths, and
+the asserting `read_link` helper. `std-fs-permissions.ari` covers access-style readable/writable/
 executable checks, the `Permissions` wrapper methods, and missing-path
 all-false behavior. `std-fs-mode.ari` covers stat-backed mode lookup,
 chmod-backed mutation calls, `Permissions` constructors, mode conversion,
@@ -742,7 +755,7 @@ absolute canonical paths, filename preservation, and missing-path `None`.
 - Add richer permission metadata for owner/group/ACL policy.
 - Add explicit overwrite/platform policy for `rename`.
 - Grow canonicalization toward owned path values and platform-specific policy.
-- Expand link support with metadata/readlink helpers and clearer
+- Expand link support with metadata helpers and clearer
   platform-specific symlink policy.
 - Expand metadata with modified/accessed/created timestamps and a no-follow
   `symlink_metadata` helper.

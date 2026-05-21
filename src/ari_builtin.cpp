@@ -385,6 +385,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_fs_rename") return builtin_sig({source_string, source_string}, boolean);
     if (symbol == "ari_builtin_fs_hard_link") return builtin_sig({source_string, source_string}, boolean);
     if (symbol == "ari_builtin_fs_symbolic_link") return builtin_sig({source_string, source_string}, boolean);
+    if (symbol == "ari_builtin_fs_read_link") return builtin_sig({source_string}, source_string);
     if (symbol == "ari_builtin_fs_create_dir") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_create_dir_all") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_remove_dir") return builtin_sig({source_string}, boolean);

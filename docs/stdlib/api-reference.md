@@ -846,6 +846,8 @@ fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
+fs::read_link(ref mut zone, path)
+fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
 fs::ensure_dir(path)
@@ -982,6 +984,12 @@ when the host cannot resolve the path. The returned string is absolute, owned
 by the provided zone, and follows the host `realpath` policy. `canonicalize(ref
 mut zone, path)` is the asserting wrapper for code that treats failed
 resolution as a programmer error.
+`try_read_link(ref mut zone, path)` returns `Option[String]` containing the
+stored target bytes of a symbolic link. It returns `None` for missing paths,
+regular files, unreadable links, or runtime-buffer overflow. `read_link(ref
+mut zone, path)` is the asserting wrapper. Use `read_link` when code needs the
+link text itself; use `canonicalize` when code wants the host-resolved
+absolute path.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns whether one byte was written. `write_bytes` writes a
 `Slice[u8]` and returns the count written before the first failed byte write.

@@ -44,6 +44,7 @@ pub extern "ari" fn rename(source: string, target: string) -> bool = "ari_builti
 // parent directory, matching POSIX symlink behavior.
 pub extern "ari" fn hard_link(existing: string, link_path: string) -> bool = "ari_builtin_fs_hard_link";
 pub extern "ari" fn symbolic_link(target: string, link_path: string) -> bool = "ari_builtin_fs_symbolic_link";
+extern "ari" fn read_link_raw(path: string) -> string = "ari_builtin_fs_read_link";
 pub extern "ari" fn create_dir(path: string) -> bool = "ari_builtin_fs_create_dir";
 pub extern "ari" fn create_dir_all(path: string) -> bool = "ari_builtin_fs_create_dir_all";
 pub extern "ari" fn remove_dir(path: string) -> bool = "ari_builtin_fs_remove_dir";
@@ -352,6 +353,25 @@ pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::st
 
 pub fn canonicalize(zone: ref mut Zone, path: string) -> std::string::String {
   match try_canonicalize(zone, path) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+  std::panic();
+  return std::string::empty(zone);
+}
+
+pub fn try_read_link(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
+  let target = read_link_raw(path);
+  if std::string::c_len(target) == 0 {
+    return std::None<std::string::String>();
+  }
+  return std::Some<std::string::String>(std::string::from(zone, target));
+}
+
+pub fn read_link(zone: ref mut Zone, path: string) -> std::string::String {
+  match try_read_link(zone, path) {
     std::Some(value) => {
       return value;
     }

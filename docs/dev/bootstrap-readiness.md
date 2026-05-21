@@ -108,7 +108,7 @@ The stage1 compiler should start with a conservative hosted subset:
 | --- | --- |
 | Text | `String`, `Slice[u8]`, `char`, ASCII helpers, UTF-8 validation/decode, split/search/join, trim, parse integer/bool/float. |
 | Collections | `Vec`, `Slice`, `HashMap`, `HashSet`, `TreeMap`, `TreeSet`, iterators, sort, binary search, dedup, copy/fill, and stable comparison helpers. |
-| IO/FS | `read`, `try_read`, `write`, `try_write`, `read_dir`, `read_dir_entries`, path join/normalize/canonicalize, current directory, env args. |
+| IO/FS | `read`, `try_read`, `write`, `try_write`, `read_dir`, `read_dir_entries`, `read_link`, path join/normalize/canonicalize, current directory, env args. |
 | Error reporting | formatting, debug formatting, log output, panic/unreachable messages, test report helpers, and compiler-tooling source spans/maps/report builders/renderers outside production `std`. |
 | Memory | explicit `Zone`, temporary zones, copy-to-zone helpers, same-zone container growth, and reset/destroy invalidation checks. |
 | Process | command-line args and exit codes; do not require spawn/fork for the first lexer/parser stage. |

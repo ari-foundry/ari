@@ -95,7 +95,9 @@ Environment and process-local path hooks stay in the compiler-owned runtime
 table too. `std::env` lowers environment variables through `getenv`, `setenv`,
 and `unsetenv`; current-directory helpers lower through `getcwd`/`chdir`; and
 the current Linux executable-path helper reads `/proc/self/exe` with
-`readlink` into a fixed runtime buffer.
+`readlink` into a fixed runtime buffer. `std::fs::try_read_link` uses the same
+host `readlink` ABI but copies the stored symbolic-link target into the
+caller's zone before returning it.
 
 The compiler keeps Ari-owned builtin source aliases and their `ari_builtin_*`
 symbols in one runtime table. That table is used by `extern "ari"` validation,
