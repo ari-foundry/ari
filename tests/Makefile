@@ -69,6 +69,7 @@ check-compiler-dev-docs:
 check-compiler-artifacts: $(TARGET)
 	mkdir -p $(BUILD_DIR)/compiler-development/artifact
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_artifact_cli.py
+	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_capability_cli.py
 	python3 tests/check_compiler_artifacts.py
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens

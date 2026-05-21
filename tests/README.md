@@ -77,6 +77,8 @@ Use the narrowest target that matches the changed surface:
 Use `python3 tests/check_compiler_artifact_cli.py` when changing artifact CLI
 help, artifact listing, per-artifact explanations, combination rules, or error
 text.
+Use `python3 tests/check_compiler_capability_cli.py` when changing compiler
+capability inventory listing or per-capability explanations.
 Use `python3 tests/check_compiler_diagnostic_cli.py` when changing diagnostic
 catalog listing or diagnostic-code explanation behavior.
 Use `python3 tests/check_compiler_target_cli.py` when changing target triple,

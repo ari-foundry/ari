@@ -127,6 +127,8 @@ static void usage(std::ostream& out) {
            "       ari --help\n"
            "       ari --list-artifacts\n"
            "       ari --explain-artifact option\n"
+           "       ari --list-capabilities [--target triple] [--no-implicit-std]\n"
+           "       ari --explain-capability name\n"
            "       ari --list-diagnostics\n"
            "       ari --explain-diagnostic code\n"
            "       ari --target-info [--target triple]\n";
@@ -236,6 +238,8 @@ int run(int argc, char** argv) {
     bool test_mode = false;
     bool implicit_std = true;
     bool target_info_requested = false;
+    bool list_capabilities_requested = false;
+    std::string capability_explanation;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "-o") {
@@ -333,6 +337,11 @@ int run(int argc, char** argv) {
             target_triple = argv[++i];
         } else if (arg == "--target-info") {
             target_info_requested = true;
+        } else if (arg == "--list-capabilities") {
+            list_capabilities_requested = true;
+        } else if (arg == "--explain-capability") {
+            if (i + 1 >= argc) throw CompileError("--explain-capability expects a capability name");
+            capability_explanation = argv[++i];
         } else if (arg == "-L") {
             if (i + 1 >= argc) throw CompileError("-L expects a path");
             link_args.push_back(std::string("-L") + argv[++i]);
@@ -349,9 +358,25 @@ int run(int argc, char** argv) {
             throw CompileError("unexpected argument '" + arg + "'");
         }
     }
-    if (target_info_requested) {
-        if (!input.empty()) throw CompileError("--target-info does not take an input file");
-        std::cout << dump_target_info(resolve_target_info(target_triple));
+    const int info_command_count = (target_info_requested ? 1 : 0) +
+                                   (list_capabilities_requested ? 1 : 0) +
+                                   (!capability_explanation.empty() ? 1 : 0);
+    if (info_command_count > 0) {
+        if (info_command_count > 1) {
+            throw CompileError("compiler information commands cannot be combined");
+        }
+        const char* command_name = target_info_requested ? "--target-info" :
+                                   list_capabilities_requested ? "--list-capabilities" :
+                                   "--explain-capability";
+        if (!input.empty()) throw CompileError(std::string(command_name) + " does not take an input file");
+        if (target_info_requested) {
+            std::cout << dump_target_info(resolve_target_info(target_triple));
+        } else if (list_capabilities_requested) {
+            TargetInfo target = resolve_target_info(target_triple);
+            std::cout << dump_compiler_capability_inventory(target.triple, implicit_std);
+        } else {
+            std::cout << dump_compiler_capability_explanation(capability_explanation);
+        }
         return 0;
     }
     if (input.empty()) throw CompileError("missing input file");

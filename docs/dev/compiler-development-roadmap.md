@@ -236,6 +236,9 @@ Exit criteria:
 - Keep `--emit-capability-inventory`, `--emit-source-map`, `--emit-tokens`,
   `--emit-syntax`, `--emit-diagnostics`, `--emit-declaration-index`, and
   `--emit-typed-ir` as the first detailed artifact producers.
+- Keep `ari --list-capabilities` and `ari --explain-capability <name>` aligned
+  with the same capability table so contributors can find the owner and first
+  focused check without generating a file artifact.
 - Use `--emit-pass-summary` for quick stage-boundary counts while extending the
   same golden comparison pattern to module graphs, structured diagnostics, HIR,
   and richer typed IR.
@@ -297,6 +300,7 @@ Small focused checks are preferred while developing:
 build/ari path/to/test.ari --check
 build/ari path/to/test.ari --emit-llvm build/focused/name.ll
 build/ari path/to/test.ari -o build/focused/name.elf
+build/ari --explain-capability trait-resolution
 make check-compiler-dev-docs
 make check-bootstrap-readiness
 ```

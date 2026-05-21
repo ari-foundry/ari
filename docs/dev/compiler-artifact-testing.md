@@ -215,7 +215,10 @@ For the current C++ compiler, prefer direct focused commands while developing:
 
 ```text
 python3 tests/check_compiler_artifact_cli.py
+python3 tests/check_compiler_capability_cli.py
 build/ari --list-artifacts
+build/ari --list-capabilities
+build/ari --explain-capability trait-resolution
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/ffi/ok/library-export.ari --shared --emit-llvm build/focused/library-export.ll
 build/ari tests/cases/bootstrap-readiness/ok/formatting/formatting-artifact-line.ari --check
@@ -286,7 +289,7 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves sixteen low-level contracts:
+It currently proves eighteen low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -296,6 +299,10 @@ It currently proves sixteen low-level contracts:
   and development-gate text directly from the compiler driver
 - `--emit-capability-inventory` writes the compiler's implemented, partial,
   planned, and rejected public feature surface with owners and first checks
+- `--list-capabilities` prints the same compiler feature surface without
+  needing an input file
+- `--explain-capability trait-resolution` prints the owner, status, first
+  focused check, and proof purpose for one compiler area
 - `--list-artifacts` prints the available artifact producers without needing a
   source file
 - `--explain-artifact --emit-tokens` prints the owner, first focused check,

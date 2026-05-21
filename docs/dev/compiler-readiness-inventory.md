@@ -108,6 +108,10 @@ Diagnostic artifacts now include stable codes, explicit layer families, and
 parseable source fields such as
 `code=T0001 family=type source="file.ari" line=1 column=19`, so triage can route
 failures without reading the classifier implementation first.
+The hosted compiler also exposes `ari --list-capabilities` and
+`ari --explain-capability <name>` for the same capability table, which makes
+roadmap triage available from the binary without first creating an artifact
+file.
 
 ## Development Backlog
 

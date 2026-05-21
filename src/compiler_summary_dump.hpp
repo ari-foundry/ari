@@ -33,4 +33,8 @@ std::string dump_compiler_stage_plan(const std::string& source_name,
 std::string dump_compiler_capability_inventory(const std::string& target_triple,
                                                bool implicit_std);
 
+// Single-capability view for CLI triage. It lets a contributor ask "what owns
+// this feature surface?" without producing a file-backed inventory artifact.
+std::string dump_compiler_capability_explanation(const std::string& capability_name);
+
 } // namespace ari

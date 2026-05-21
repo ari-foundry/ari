@@ -177,12 +177,17 @@ Useful options:
 --list-artifacts    list compiler-development artifact producers
 --explain-artifact option
                     explain one compiler artifact owner, first check, and purpose
+--list-capabilities list implemented, partial, planned, and rejected compiler capabilities
+--explain-capability name
+                    explain one compiler capability owner and first check
 ```
 
 Use `ari --target-info` or `ari --target x86_64-pc-linux-gnu --target-info`
 when checking which `target("...")` predicates and ABI facts the compiler sees.
 Use `ari --explain-artifact --emit-tokens` when choosing the smallest
 compiler artifact that proves a frontend change.
+Use `ari --list-capabilities` or `ari --explain-capability trait-resolution`
+when deciding which compiler area owns a feature.
 
 ## Runtime Artifacts
 

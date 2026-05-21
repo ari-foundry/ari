@@ -80,6 +80,8 @@ def main() -> int:
         "mod math;",
         "--target-info",
         "--explain-artifact",
+        "--list-capabilities",
+        "--explain-capability",
         "--emit-llvm",
         "--emit-obj",
         "--shared",
@@ -246,6 +248,7 @@ def main() -> int:
         "compiler-readiness-scorecard",
         "compiler-development-dashboard",
         "compiler-test-classification",
+        "tests/check_compiler_capability_cli.py",
     ]:
         require(tests_index, needle, tests_index_path)
 
