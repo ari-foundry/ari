@@ -180,8 +180,10 @@ algorithms.
 
 - Add faster `sort`/`stable_sort` implementations after iterator and
   move-aware temporary storage policy are stronger.
-- Grow `std::hash` with trait-driven collection constructors once `Hash`/`Eq`
-  dispatch policy is stronger.
+- Grow `std::hash` and `std::collections` with trait-driven collection
+  constructors once `Hash`/`Eq` and `Ord` dispatch policy is stronger. Hash
+  containers should derive default policy from `Hash + Eq`; tree and heap
+  containers should derive default policy from `Ord`.
 - Grow `std::encoding` with URL-safe base64 or fallible owned decoders after
   zone-backed enum payloads and richer error values are supported.
 - Keep compression optional unless Ari decides that a specific codec belongs

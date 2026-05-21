@@ -160,6 +160,11 @@ work. Each one should land in small tested slices with natural API names.
 - Keep `HashMap`/`HashSet` and `TreeMap`/`TreeSet` on explicit hash or
   comparator constructors until generic trait-driven `Hash`, `Eq`, and `Ord`
   selection is testable.
+- When trait-driven collection constructors land, make the common constructor
+  names use trait defaults: `HashMap::new`/`HashSet::new` from `Hash + Eq`,
+  and `TreeMap::new`/`TreeSet::new`/heap constructors from `Ord`. Keep custom
+  policy in explicit names such as `with_hash` or `with_less` so unusual
+  ordering remains obvious at call sites.
 - Grow `std::algo` in small source slices: keep the current borrowed-slice
   algorithms simple, then add faster sort implementations only after ownership
   and temporary-storage policy are clearer.

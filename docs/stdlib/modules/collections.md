@@ -228,8 +228,8 @@ front-to-back values in the target zone, leaving free-list holes behind.
 
 Hash collections are real hash tables, not aliases over `Set`. They use linear
 probing, tombstones for removal, and a load-factor growth rule. Until Ari has a
-standard `Hash` trait with dispatch through generic containers, constructors
-take a hash function explicitly.
+standard `Hash`/`Eq` trait pair with dispatch through generic containers,
+constructors take a hash function explicitly.
 For tracked local hash handles, `map.insert(key, value)`, `map.entry(key)`,
 `map.reserve(capacity)`, `map.reserve_extra(additional)`, `set.insert(value)`,
 `set.replace(value)`, `set.reserve(capacity)`, and
@@ -246,6 +246,11 @@ HashSet::new<T>(ref mut zone, capacity, hash)
 The hash function shape is `fn(K) -> u64` for `HashMap[K, V]` and
 `fn(T) -> u64` for `HashSet[T]`. `collections::hash_i64` is kept as a
 compatibility helper for i64 keys and delegates to `std::hash::value<i64>`.
+The planned trait-driven shape is for `HashMap::new<K: Hash[K] + Eq[K], V>`
+and `HashSet::new<T: Hash[T] + Eq[T]>` to select the default hash/equality
+policy automatically. Explicit custom hash policy should remain available
+under a name such as `with_hash` instead of forcing every ordinary map call
+site to pass a function pointer.
 
 ```ari
 map.len()
@@ -387,6 +392,12 @@ TreeSet::new<T>(ref mut zone, capacity, less)
 The comparator shape is `fn(K, K) -> bool` for `TreeMap[K, V]` and
 `fn(T, T) -> bool` for `TreeSet[T]`. `collections::less_i64` is the first
 built-in helper for i64 keys.
+The intended trait-driven constructor shape is for
+`TreeMap::new<K: std::cmp::Ord[K], V>` and
+`TreeSet::new<T: std::cmp::Ord[T]>` to synthesize/select the default
+less-than comparator from `Ord[T]`. Custom orderings should stay explicit,
+for example as `with_less`, so caller-specific sort policy remains readable
+without making the common ordered-map path noisy.
 
 ```ari
 map.len()
@@ -721,10 +732,13 @@ and checked by `make check-std-api`.
   current `Set`/`Vec` source style. Use simple copyable keys and values until
   trait bounds can express copy, hash, equality, and ordering requirements.
 - Hash containers require an explicit hash function. The future API should
-  prefer `HashMap[K: Hash[K], V]` and `HashSet[T: Hash[T]]` once trait
-  dispatch is ready.
+  prefer `HashMap::new<K: Hash[K] + Eq[K], V>` and
+  `HashSet::new<T: Hash[T] + Eq[T]>` once trait dispatch is ready, with
+  explicit custom policy moved to a `with_hash`-style constructor.
 - Tree containers require an explicit comparator. The future API should use
-  `Ord` when generic trait dispatch is strong enough.
+  `Ord`-driven `TreeMap::new<K: Ord[K], V>`, `TreeSet::new<T: Ord[T]>`, and
+  heap/priority-queue defaults when generic trait dispatch is strong enough,
+  with custom policy moved to a `with_less`-style constructor.
 - `values_mut()` uses a `has_next()`/`next()` cursor because Ari does not yet
   lower `Iterator[ref mut T]`/`Option[ref mut T]` as a stable public iterator
   item shape. Map `iter_mut()` therefore yields `MapEntryMut[K,V]` handles

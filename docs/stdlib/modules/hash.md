@@ -133,8 +133,9 @@ impl hash::Hash[Pair] for Pair {
   It is good enough as a stdlib seed, not a promise of long-term ABI-stable
   hash values.
 - `HashMap` and `HashSet` still take explicit hash functions. Future
-  trait-driven constructors can use `Hash[T]` once trait dispatch and equality
-  policy are stronger.
+  trait-driven constructors should use `Hash[T]` plus `Eq[T]` as the default
+  map/set policy once trait dispatch and equality policy are stronger, with
+  custom hash policy kept under explicit names.
 - Hex/base64 encoding lives in `std::encoding`; keep `std::hash` focused on
   deterministic non-cryptographic hash values.
 
@@ -157,6 +158,7 @@ composition, and the `Slice[u8]` `Hash` impl.
 
 - Add derived `Hash` impl patterns for common aggregate/value types after
   derive and trait policy are settled.
-- Add `HashMap`/`HashSet` constructors that use `Hash[T]` and `Eq[T]` instead
-  of explicit hash functions.
+- Add `HashMap::new`/`HashSet::new` constructor paths that use `Hash[T]` and
+  `Eq[T]` instead of explicit hash functions, and keep explicit custom policy
+  in a `with_hash`-style constructor.
 - Add more non-integer `Hash` impls after aggregate/derive policy is settled.
