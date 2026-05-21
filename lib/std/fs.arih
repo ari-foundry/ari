@@ -147,6 +147,16 @@ fn unit_result(ok: bool) -> std::Result[(), i64] {
   return std::Err<(), i64>(last_errno_error_raw());
 }
 
+fn byte_count_option(value: std::Result[i64, i64]) -> std::Option[i64] {
+  match value {
+    std::Ok(count) => {
+      return std::Some<i64>(count);
+    }
+    std::Err(_) => {}
+  }
+  return std::None<i64>();
+}
+
 fn supported_open_mode(mode: string) -> bool {
   let bytes = std::string::bytes(mode);
   if bytes.equals("r") {
@@ -797,17 +807,24 @@ pub fn try_read_byte(file: File) -> std::Option[u8] {
   return std::Some<u8>(byte as u8);
 }
 
-fn try_write_all_with_mode(path: string, mode: string, values: std::Slice[u8]) -> std::Option[i64] {
-  let file = try_open(path, mode).unwrap_or(File::invalid());
-  if !file.is_open() {
-    return std::None<i64>();
+fn write_all_result_with_mode(path: string, mode: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  match open_result(path, mode) {
+    std::Ok(file) => {
+      let written = file.write_bytes(values);
+      if written != values.len {
+        let write_raw = last_errno_error_raw();
+        file.close();
+        return std::Err<i64, i64>(write_raw);
+      }
+      if file.close() {
+        return std::Ok<i64, i64>(written);
+      }
+      return std::Err<i64, i64>(last_errno_error_raw());
+    }
+    std::Err(open_raw) => {
+      return std::Err<i64, i64>(open_raw);
+    }
   }
-  let written = file.write_bytes(values);
-  let closed = file.close();
-  if written == values.len && closed {
-    return std::Some<i64>(written);
-  }
-  return std::None<i64>();
 }
 
 pub fn write(path: string, values: std::Slice[u8]) -> bool {
@@ -818,12 +835,20 @@ pub fn append(path: string, values: std::Slice[u8]) -> bool {
   return try_append(path, values).is_some();
 }
 
+pub fn write_result(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  return write_all_result_with_mode(path, "w", values);
+}
+
+pub fn append_result(path: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  return write_all_result_with_mode(path, "a", values);
+}
+
 pub fn try_write(path: string, values: std::Slice[u8]) -> std::Option[i64] {
-  return try_write_all_with_mode(path, "w", values);
+  return byte_count_option(write_result(path, values));
 }
 
 pub fn try_append(path: string, values: std::Slice[u8]) -> std::Option[i64] {
-  return try_write_all_with_mode(path, "a", values);
+  return byte_count_option(append_result(path, values));
 }
 
 pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {
@@ -880,39 +905,52 @@ pub fn copy(source: string, target: string) -> bool {
   return false;
 }
 
-pub fn try_copy(source: string, target: string) -> std::Option[i64] {
-  let reader = try_open(source, "r").unwrap_or(File::invalid());
-  if !reader.is_open() {
-    return std::None<i64>();
-  }
+pub fn copy_result(source: string, target: string) -> std::Result[i64, i64] {
+  match open_result(source, "r") {
+    std::Ok(reader) => {
+      match open_result(target, "w") {
+        std::Ok(writer) => {
+          // read_byte currently uses one EOF/failure sentinel, so copy_result
+          // preserves open, write, and close errors while keeping read errors
+          // on the existing std::io roadmap.
+          var copied = 0;
+          var byte = reader.read_byte();
+          while byte >= 0 {
+            if !writer.write_byte(byte as u8) {
+              let write_raw = last_errno_error_raw();
+              reader.close();
+              writer.close();
+              return std::Err<i64, i64>(write_raw);
+            } else {
+              copied = copied + 1;
+              byte = reader.read_byte();
+            }
+          }
 
-  let writer = try_open(target, "w").unwrap_or(File::invalid());
-  if !writer.is_open() {
-    reader.close();
-    return std::None<i64>();
-  }
-
-  // Keep copy source-only for now. The current byte API has one EOF/failure
-  // sentinel, so detailed read errors remain future std::io/std::os work.
-  var copied = 0;
-  var byte = reader.read_byte();
-  while byte >= 0 {
-    if !writer.write_byte(byte as u8) {
-      reader.close();
-      writer.close();
-      return std::None<i64>();
-    } else {
-      copied = copied + 1;
-      byte = reader.read_byte();
+          if !reader.close() {
+            let read_close_raw = last_errno_error_raw();
+            writer.close();
+            return std::Err<i64, i64>(read_close_raw);
+          }
+          if writer.close() {
+            return std::Ok<i64, i64>(copied);
+          }
+          return std::Err<i64, i64>(last_errno_error_raw());
+        }
+        std::Err(target_open_raw) => {
+          reader.close();
+          return std::Err<i64, i64>(target_open_raw);
+        }
+      }
+    }
+    std::Err(source_open_raw) => {
+      return std::Err<i64, i64>(source_open_raw);
     }
   }
+}
 
-  let read_closed = reader.close();
-  let write_closed = writer.close();
-  if read_closed && write_closed {
-    return std::Some<i64>(copied);
-  }
-  return std::None<i64>();
+pub fn try_copy(source: string, target: string) -> std::Option[i64] {
+  return byte_count_option(copy_result(source, target));
 }
 
 pub impl std::fs::Permissions {

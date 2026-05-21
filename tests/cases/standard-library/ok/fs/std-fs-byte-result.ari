@@ -1,0 +1,79 @@
+// Covers Result-returning whole-file byte helpers. These keep byte counts on
+// success and preserve the compact std::error raw bridge on ordinary open,
+// write, and close failures.
+fn cleanup(path: string, copy_path: string, missing_source: string, missing_parent: string) -> void {
+  fs::remove(path);
+  fs::remove(copy_path);
+  fs::remove(missing_source);
+  fs::remove_dir(missing_parent);
+}
+
+fn error_matches(raw: i64, kind: error::Kind, code: i64) -> bool {
+  let value = error::from_raw(raw);
+  return value.is_kind(kind) && value.code() == code;
+}
+
+fn byte_result_ok(value: Result[i64, i64], expected: i64) -> bool {
+  match value {
+    Ok(count) => { return count == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn byte_result_error(value: Result[i64, i64], kind: error::Kind, code: i64) -> bool {
+  match value {
+    Ok(_) => { return false; }
+    Err(raw) => { return error_matches(raw, kind, code); }
+  }
+}
+
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-byte-result.tmp";
+  let copy_path = "build/prelude/std-fs-byte-result-copy.tmp";
+  let missing_source = "build/prelude/std-fs-byte-result-missing.tmp";
+  let missing_parent = "build/prelude/std-fs-byte-result-missing-dir";
+  let missing_child = "build/prelude/std-fs-byte-result-missing-dir/child.tmp";
+  cleanup(path, copy_path, missing_source, missing_parent);
+
+  var zone = zone::create(2048);
+  var score = 0;
+
+  var first = [65 as u8, 66 as u8, 67 as u8];
+  if byte_result_ok(fs::write_result(path, first.as_slice()), 3) {
+    score = score + 1;
+  }
+  let after_write = fs::read(ref mut zone, path);
+  if after_write.len() == 3 && after_write.get(0) == 65 as u8 && after_write.get(2) == 67 as u8 {
+    score = score + 2;
+  }
+
+  var tail = [68 as u8, 69 as u8];
+  if byte_result_ok(fs::append_result(path, tail.as_slice()), 2) {
+    score = score + 4;
+  }
+  let after_append = fs::read(ref mut zone, path);
+  if after_append.len() == 5 && after_append.get(4) == 69 as u8 {
+    score = score + 8;
+  }
+
+  if byte_result_error(fs::write_result(missing_child, first.as_slice()), error::NotFound, 2) {
+    score = score + 16;
+  }
+  if byte_result_error(fs::append_result(missing_child, tail.as_slice()), error::NotFound, 2) {
+    score = score + 32;
+  }
+
+  if byte_result_ok(fs::copy_result(path, copy_path), 5) {
+    score = score + 64;
+  }
+  let copied = fs::read(ref mut zone, copy_path);
+  if copied.len() == 5 && copied.get(1) == 66 as u8 && copied.get(4) == 69 as u8 {
+    score = score + 128;
+  }
+
+  assert(byte_result_error(fs::copy_result(missing_source, copy_path), error::NotFound, 2));
+  cleanup(path, copy_path, missing_source, missing_parent);
+  zone::destroy(zone);
+  assert_eq_i64(score, 255);
+  return score;
+}

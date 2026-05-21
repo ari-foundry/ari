@@ -284,6 +284,7 @@ fn std::fmt::write_text[W: std::io::Writer]|check-prelude std-fmt-format-spec Wr
 fn std::fmt::write_unsigned[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_value[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
 fn std::fs::append|check-prelude std-fs-read-write source whole-file append helper; docs/stdlib/modules/fs.md
+fn std::fs::append_result|check-prelude std-fs-byte-result Result-returning whole-file append byte-count helper with raw error bridge; docs/stdlib/modules/fs.md
 fn std::fs::can_execute|check-prelude std-fs-permissions execute/search access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_read|check-prelude std-fs-permissions read access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_write|check-prelude std-fs-permissions write access hook; docs/stdlib/modules/fs.md
@@ -291,6 +292,7 @@ fn std::fs::canonicalize|check-prelude std-fs-canonicalize asserting realpath-ba
 fn std::fs::close|check-prelude std-fs-basic file close hook; docs/stdlib/modules/fs.md
 fn std::fs::close_dir|check-prelude std-fs-read-dir directory close hook; docs/stdlib/modules/fs.md
 fn std::fs::copy|check-prelude std-fs-create-truncate-copy source streaming copy helper; docs/stdlib/modules/fs.md
+fn std::fs::copy_result|check-prelude std-fs-byte-result Result-returning streaming copy byte-count helper with raw error bridge; docs/stdlib/modules/fs.md
 fn std::fs::create|check-prelude std-fs-create-truncate-copy source create/truncate open helper; docs/stdlib/modules/fs.md
 fn std::fs::create_dir|check-prelude std-fs-rename-dir runtime-backed single-directory creation hook; docs/stdlib/modules/fs.md
 fn std::fs::create_dir_all|check-prelude std-fs-create-dir-all runtime-backed recursive directory creation hook; docs/stdlib/modules/fs.md
@@ -359,6 +361,7 @@ fn std::fs::try_write|check-prelude std-fs-read-write Option-returning write byt
 fn std::fs::write|check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md
 fn std::fs::write_byte|check-prelude std-fs-basic file byte write hook; docs/stdlib/modules/fs.md
 fn std::fs::write_bytes|check-prelude std-fs-basic source byte-slice write helper; docs/stdlib/modules/fs.md
+fn std::fs::write_result|check-prelude std-fs-byte-result Result-returning whole-file truncating write byte-count helper with raw error bridge; docs/stdlib/modules/fs.md
 fn std::hash::bytes|check-prelude std-hash-basic byte-slice hasher convenience; docs/stdlib/modules/hash.md
 fn std::hash::combine|check-prelude std-hash-combine-helpers precomputed u64 hash composition helper; docs/stdlib/modules/hash.md
 fn std::hash::finish|check-prelude std-hash-basic hasher finalization; docs/stdlib/modules/hash.md

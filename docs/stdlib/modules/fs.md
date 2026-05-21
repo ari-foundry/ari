@@ -22,8 +22,9 @@ and `std::io::Writer` helpers, inspect and move a file cursor through
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
-`try_read_byte`, `write_byte`, `write_bytes`, `read`, `try_read`, `write`, `append`,
-`try_write`, `try_append`, `truncate`, `copy`, `try_copy`, `metadata`,
+`try_read_byte`, `write_byte`, `write_bytes`, `read`, `try_read`, `write`,
+`write_result`, `append`, `append_result`, `try_write`, `try_append`,
+`truncate`, `copy`, `copy_result`, `try_copy`, `metadata`,
 `try_metadata`, `symlink_metadata`, `try_symlink_metadata`,
 `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
 `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`,
@@ -103,11 +104,14 @@ fs::seek(file, position)
 fs::read(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
+fs::write_result(path, values)
 fs::try_write(path, values)
 fs::append(path, values)
+fs::append_result(path, values)
 fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
+fs::copy_result(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
@@ -306,10 +310,13 @@ control flow; they return `Option[u8]` and hide the sentinel from call sites.
 `write_bytes(file, values)` writes each byte in a `Slice[u8]` until one write
 fails and returns the number of bytes written before that failure.
 
-`try_write(path, values)` opens `path` with `"w"`, writes the whole
-`Slice[u8]`, closes the handle, and returns `Some(byte_count)` when the
-complete write and close succeeded. `try_append(path, values)` does the same
-with `"a"` mode. Failed opens, short writes, or failed closes return `None`.
+`write_result(path, values)` opens `path` with `"w"`, writes the whole
+`Slice[u8]`, closes the handle, and returns `Ok(byte_count)` when the
+complete write and close succeeded. `append_result(path, values)` does the
+same with `"a"` mode. Failed opens, short writes, or failed closes return
+`Err(raw)`, where `raw` is the compact `std::error` bridge.
+`try_write(path, values)` and `try_append(path, values)` are byte-counting
+`Option` wrappers over those raw-error helpers.
 
 `write(path, values)` and `append(path, values)` are compatibility boolean
 wrappers over `try_write` and `try_append`.
@@ -342,6 +349,8 @@ both handles, and returns `Some(byte_count)` when the copy and both closes
 succeeded. Missing sources, failed target opens, failed byte writes, and failed
 closes return `None`. Detailed read error reporting remains future `std::io` or
 `std::os` work because `read_byte` still uses one EOF/failure sentinel.
+`copy_result(source, target)` is the same operation but keeps open/write/close
+failures as `Err(raw)` with the current raw `std::error` bridge.
 
 `copy(source, target)` is the compatibility boolean wrapper over `try_copy`.
 
@@ -516,14 +525,14 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | open | Current: `open(path, mode)`, `try_open(path, mode)`, `open_result(path, mode)`, compatibility wrappers, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open_result`. |
 | create | Current: `create(path)` and `try_create(path)` over `"w"` mode, plus non-truncating `ensure_file(path)` for idempotent file setup. |
 | read | Current: byte `read_byte`, whole-file `read`/`read_to_string`, and fallible `try_read`/`try_read_to_string`. |
-| write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, and byte-counting `try_write`. |
-| append | Current: `"a"`/`"a+"` modes, whole-file `append`, and byte-counting `try_append`. |
+| write | Current: byte `write_byte`, `write_bytes`, whole-file `write`, byte-counting `try_write`, and raw-error `write_result`. |
+| append | Current: `"a"`/`"a+"` modes, whole-file `append`, byte-counting `try_append`, and raw-error `append_result`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
 | metadata | Current: `try_metadata(path)`/`metadata(path)` over the Linux/glibc `stat` runtime path, `try_symlink_metadata(path)`/`symlink_metadata(path)` and `is_symlink(path)` over the Linux/glibc `lstat` runtime path, plus `try_file_type(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
 | rename | Current: `rename(source, target)` hook and raw-error `rename_result(source, target)`; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)`/`remove_result(path)`, empty directory removal with `remove_dir(path)`/`remove_dir_result(path)`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
-| copy | Current: source streaming `copy(source, target)` and byte-counting `try_copy(source, target)` for byte files. |
+| copy | Current: source streaming `copy(source, target)`, byte-counting `try_copy(source, target)`, and raw-error `copy_result(source, target)` for byte files. |
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
@@ -810,6 +819,7 @@ tests/cases/standard-library/ok/fs/std-fs-open-modes.ari
 tests/cases/standard-library/ok/fs/std-fs-open-options.ari
 tests/cases/standard-library/ok/fs/std-fs-open-result.ari
 tests/cases/standard-library/ok/fs/std-fs-read-write.ari
+tests/cases/standard-library/ok/fs/std-fs-byte-result.ari
 tests/cases/standard-library/ok/fs/std-fs-try-read.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-io-traits.ari
@@ -849,6 +859,8 @@ append-with-read behavior, and invalid option combinations.
 exclusive-create failures, and successful handles. `std-fs-read-write.ari` covers source whole-file
 write/append compatibility wrappers, `try_write`/`try_append` byte counts,
 read-to-byte-string, missing-file empty reads, and truncating rewrite behavior.
+`std-fs-byte-result.ari` covers `write_result`, `append_result`, and
+`copy_result` byte-count successes plus raw-error open failures.
 `std-fs-try-read.ari` covers `Option[String]` whole-file
 reads where missing files become `None` and empty files stay `Some(empty)`.
 `std-fs-create-truncate-copy.ari` covers source `create`, `try_create`,

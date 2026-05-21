@@ -889,11 +889,14 @@ fs::seek(file, position)
 fs::read(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
+fs::write_result(path, values)
 fs::try_write(path, values)
 fs::append(path, values)
+fs::append_result(path, values)
 fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
+fs::copy_result(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
@@ -1047,12 +1050,14 @@ absolute path.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
 `write_byte` returns whether one byte was written. `write_bytes` writes a
 `Slice[u8]` and returns the count written before the first failed byte write.
-`try_write(path, values)` truncates or creates a small byte file, writes the
-whole `Slice[u8]`, and returns `Some(byte_count)` when the write and close
-succeed. `try_append(path, values)` creates if needed and appends the whole
-slice with the same `Option[i64]` result policy. `write(path, values)` and
-`append(path, values)` are boolean compatibility wrappers over those fallible
-helpers. `try_read_to_string(ref mut zone, path)` and its short alias
+`write_result(path, values)` truncates or creates a small byte file, writes the
+whole `Slice[u8]`, and returns `Ok(byte_count)` when the write and close
+succeed. `append_result(path, values)` creates if needed and appends the whole
+slice with the same raw-error `Result[i64, i64]` policy.
+`try_write(path, values)` and `try_append(path, values)` are `Option[i64]`
+wrappers over those helpers, and `write(path, values)` and
+`append(path, values)` are boolean compatibility wrappers.
+`try_read_to_string(ref mut zone, path)` and its short alias
 `try_read(ref mut zone, path)` return `Option[String]`, using `None` for a
 missing or unopenable file and `Some(empty)` for an empty file. `read(ref mut
 zone, path)` is the short compatibility alias for `read_to_string(ref mut zone,
@@ -1061,8 +1066,9 @@ an empty `String` when the file cannot be opened. Prefer `try_read` when
 absence matters. `truncate(path)` creates or empties a file. `try_copy(source,
 target)` streams bytes from the source handle into the target opened with
 truncating semantics and returns `Some(byte_count)` on success or `None` on
-open/write/close failure. `copy(source, target)` is the boolean compatibility
-wrapper over `try_copy`. `rename(source, target)` moves or renames one path
+open/write/close failure. `copy_result(source, target)` keeps those
+open/write/close failures as `Err(raw)`, and `copy(source, target)` is the
+boolean compatibility wrapper over `try_copy`. `rename(source, target)` moves or renames one path
 according to the host runtime's current behavior, and
 `rename_result(source, target)` preserves a raw `std::error` value on failure.
 `remove_result(path)`, `create_dir_result(path)`, and

@@ -167,6 +167,8 @@ identifies the exact case:
 - `std-fs-read-write.ari`: source whole-file `write`/`try_write`,
   `append`/`try_append`, `read_to_string`, missing-file empty reads,
   byte-count checks, and truncating rewrite behavior.
+- `std-fs-byte-result.ari`: `write_result`, `append_result`, and
+  `copy_result` byte-count successes plus raw-error open failures.
 - `std-fs-try-read.ari`: `Option[String]` whole-file reads that distinguish
   missing files from empty files.
 - `std-fs-create-truncate-copy.ari`: source `create`, `try_create`, natural

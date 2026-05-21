@@ -265,15 +265,15 @@ value is needed.
 
 `std::fs` is the first filesystem slice. `exists`, access-style permission
 checks, `remove`, mode-string and `OpenOptions` open helpers, raw-error
-open and mutation `Result` helpers, close, single-byte read/write, and file
+open, mutation, and byte-count `Result` helpers, close, single-byte read/write, and file
 cursor `position`/`seek` are runtime-backed because they call host
 file-descriptor APIs. `permissions`,
 `try_open`, `open_result`, `open_options`, compatibility `try_open_*` wrappers, `rename`, `rename_result`, `create_dir`,
 `ensure_dir`, recursive `create_dir_all`/`ensure_dir_all`, `remove_dir`, `remove_dir_all`,
 non-truncating `ensure_file`, `create`/`try_create`,
-`write_bytes`, whole-file `read`, `write`,
-`try_read`, `try_write`, `append`, `try_append`, `truncate`, `copy`,
-byte-counting `try_copy`, byte-string `read_to_string`, fallible
+`write_bytes`, whole-file `read`, `write`, `write_result`,
+`try_read`, `try_write`, `append`, `append_result`, `try_append`, `truncate`, `copy`,
+`copy_result`, byte-counting `try_copy`, byte-string `read_to_string`, fallible
 `try_read_to_string`, `try_read_dir`/`read_dir`,
 `try_read_dir_entries`/`read_dir_entries`,
 `try_open_dir`/`Dir::next`/`Dir::close`,

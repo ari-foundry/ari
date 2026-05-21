@@ -541,6 +541,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari -o $(BUILD_DIR)/prelude/std-fs-read-write.elf
 	$(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 136
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-write.elf; $(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 136; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-byte-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs12write_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs13append_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs11copy_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-byte-result.ari -o $(BUILD_DIR)/prelude/std-fs-byte-result.elf
+	$(BUILD_DIR)/prelude/std-fs-byte-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-try-read.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-try-read.ll
 	grep -F -q "std2fs18try_read_to_string" $(BUILD_DIR)/prelude/std-fs-try-read.ll
 	grep -F -q "std2fs8try_read" $(BUILD_DIR)/prelude/std-fs-try-read.ll
