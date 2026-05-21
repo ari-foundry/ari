@@ -112,6 +112,8 @@ view.sort()
 view.stable_sort()
 view.is_sorted()
 view.binary_search(target)
+view.lower_bound(target)
+view.upper_bound(target)
 view.min()
 view.max()
 ```
@@ -122,6 +124,8 @@ copies the common prefix from `source` into the receiver and returns the number
 of elements written. `dedup` compacts consecutive duplicate values in place and
 returns the logical unique length; callers decide whether to truncate an owning
 container. `partition` accepts a borrowed predicate and returns the split index.
+`lower_bound` and `upper_bound` return sorted insertion indexes, which is useful
+when missing values should be inserted or duplicate ranges must be counted.
 The ordered methods require `T: std::cmp::Ord[T]`.
 
 The free functions remain useful for generic utility code and for cases where
@@ -140,8 +144,8 @@ tests/cases/standard-library/ok/vec/prelude-slice-copy-to.ari
 
 `prelude-slice-sequence.ari` covers `slice`, `split_at`, `find`,
 `contains_slice`, `compare`, `ordering`, `chunks`, `windows`, delimiter `split`, in-place
-reordering, copying/filling, partition/dedup, sorting, binary search, and
-min/max wrappers.
+reordering, copying/filling, partition/dedup, sorting, binary search,
+lower/upper bounds, and min/max wrappers.
 
 ## Limits And Roadmap
 

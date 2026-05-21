@@ -48,6 +48,17 @@ fn main() -> i64 {
     score = score + 1;
   }
 
+  var bounds = [1, 2, 2, 2, 4, 6];
+  let lower_hit = algo::lower_bound<i64>(bounds.as_slice(), 2);
+  let upper_hit = algo::upper_bound<i64>(bounds.as_slice(), 2);
+  let lower_missing = algo::lower_bound<i64>(bounds.as_slice(), 5);
+  let upper_before = algo::upper_bound<i64>(bounds.as_slice(), 0);
+  let upper_after = algo::upper_bound<i64>(bounds.as_slice(), 9);
+  if lower_hit == 1 && upper_hit == 4 &&
+     lower_missing == 5 && upper_before == 0 && upper_after == 6 {
+    score = score + 1;
+  }
+
   let smallest = algo::min<i64>(sorted.as_slice()).unwrap_or(0);
   let largest = algo::max<i64>(sorted.as_slice()).unwrap_or(0);
   let clamped = algo::clamp<i64>(9, 2, 7);

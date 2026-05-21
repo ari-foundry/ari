@@ -187,6 +187,34 @@ pub fn binary_search[T: std::cmp::Ord[T]](values: std::Slice[T], target: T) -> s
   return std::None<i64>();
 }
 
+pub fn lower_bound[T: std::cmp::Ord[T]](values: std::Slice[T], target: T) -> i64 {
+  var low = 0;
+  var high = values.len;
+  while low < high {
+    let mid = low + ((high - low) / 2);
+    if ptr_load(ptr_add(values.data, mid)).lt(target) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
+}
+
+pub fn upper_bound[T: std::cmp::Ord[T]](values: std::Slice[T], target: T) -> i64 {
+  var low = 0;
+  var high = values.len;
+  while low < high {
+    let mid = low + ((high - low) / 2);
+    if !target.lt(ptr_load(ptr_add(values.data, mid))) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
+}
+
 pub fn sort[T: std::cmp::Ord[T]](values: std::Slice[T]) -> void {
   var index = 0;
   while index < values.len {

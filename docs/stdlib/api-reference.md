@@ -1261,6 +1261,8 @@ view.sort()
 view.stable_sort()
 view.is_sorted()
 view.binary_search(value)
+view.lower_bound(value)
+view.upper_bound(value)
 view.min()
 view.max()
 view.copy_to(ref mut zone)
@@ -1277,7 +1279,8 @@ because it returns `cmp::Ordering`. `slice` and `split_at` return borrowed
 views into the same storage. `chunks`, `windows`, and delimiter `split` are lazy
 iterators that yield borrowed `Slice[T]` views. The reordering, fill/copy,
 partition/dedup, sort/search, and min/max receiver methods forward to
-`std::algo`; ordered methods require `T: std::cmp::Ord[T]`.
+`std::algo`; ordered methods require `T: std::cmp::Ord[T]`. `lower_bound` and
+`upper_bound` return sorted insertion indexes.
 
 `std::vec::Vec[T]` is the source growable sequence:
 
@@ -1335,6 +1338,8 @@ vec.sort()
 vec.stable_sort()
 vec.is_sorted()
 vec.binary_search(value)
+vec.lower_bound(value)
+vec.upper_bound(value)
 vec.min()
 vec.max()
 vec.as_slice()
@@ -2025,6 +2030,8 @@ algo::sort_by<T>(values, less)
 algo::stable_sort<T>(values)
 algo::stable_sort_by<T>(values, less)
 algo::binary_search<T>(values, target)
+algo::lower_bound<T>(values, target)
+algo::upper_bound<T>(values, target)
 algo::is_sorted<T>(values)
 algo::reverse<T>(values)
 algo::rotate_left<T>(values, count)
@@ -2040,7 +2047,8 @@ algo::dedup<T>(values)
 ```
 
 The ordered helpers use `cmp::Ord[T]`; the `*_by` helpers take an explicit
-`fn(T, T) -> bool` comparator. `binary_search` returns `Option[i64]`.
+`fn(T, T) -> bool` comparator. `binary_search` returns `Option[i64]`, while
+`lower_bound` and `upper_bound` return sorted insertion indexes.
 `partition` accepts `fn(ref T) -> bool` and returns the split index. `copy`
 returns the number of copied elements. `dedup` compacts consecutive duplicates
 and returns the logical prefix length.

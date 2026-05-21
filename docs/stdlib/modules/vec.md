@@ -154,6 +154,8 @@ vec.sort()
 vec.stable_sort()
 vec.is_sorted()
 vec.binary_search(value)
+vec.lower_bound(value)
+vec.upper_bound(value)
 vec.min()
 vec.max()
 vec.as_slice()
@@ -166,9 +168,11 @@ storage. `chunks`, `windows`, and delimiter `split` return lazy iterators that
 yield borrowed `Slice[T]` views, so they do not allocate. `reverse`, the
 rotation helpers, `sort`, and `stable_sort` mutate the existing storage in
 place through the same algorithm module helpers used for borrowed slices.
-`is_sorted`, `binary_search`, `min`, and `max` are available when `T`
-implements `Ord[T]`. `as_slice` is the whole-vector view. The pointer helpers
-preserve zone provenance in the checker.
+`is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `min`, and `max`
+are available when `T` implements `Ord[T]`. The bound helpers return sorted
+insertion indexes, making them useful for keeping a vector sorted after a
+lookup miss. `as_slice` is the whole-vector view. The pointer helpers preserve
+zone provenance in the checker.
 
 Iterator entry point:
 

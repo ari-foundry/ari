@@ -27,6 +27,7 @@ fn std::algo::copy[T]|check-prelude std-algo-slice-helpers prefix copy between s
 fn std::algo::dedup[T]|check-prelude std-algo-slice-helpers consecutive duplicate compaction; docs/stdlib/modules/algo.md
 fn std::algo::fill[T]|check-prelude std-algo-slice-helpers fill slice values; docs/stdlib/modules/algo.md
 fn std::algo::is_sorted[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers sortedness predicate; docs/stdlib/modules/algo.md
+fn std::algo::lower_bound[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers sorted insertion lower bound; docs/stdlib/modules/algo.md
 fn std::algo::max[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers slice maximum helper; docs/stdlib/modules/algo.md
 fn std::algo::min[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers slice minimum helper; docs/stdlib/modules/algo.md
 fn std::algo::partition[T]|check-prelude std-algo-slice-helpers borrowed-predicate partition; docs/stdlib/modules/algo.md
@@ -38,6 +39,7 @@ fn std::algo::sort_by[T]|check-prelude std-algo-slice-helpers comparator sort; d
 fn std::algo::stable_sort[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers ordered stable sort; docs/stdlib/modules/algo.md
 fn std::algo::stable_sort_by[T]|check-prelude std-algo-slice-helpers comparator stable sort; docs/stdlib/modules/algo.md
 fn std::algo::swap[T]|check-prelude std-algo-slice-helpers element swap; docs/stdlib/modules/algo.md
+fn std::algo::upper_bound[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers sorted insertion upper bound; docs/stdlib/modules/algo.md
 fn std::ascii::contains_ignore_case|std ascii case search tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::digit_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::ends_with_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
@@ -718,6 +720,7 @@ method std::Slice[T]::copy_to|check-prelude prelude-slice-copy-to borrowed recei
 method std::Slice[T]::dedup|check-prelude prelude-slice-sequence consecutive duplicate compaction wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::fill|check-prelude prelude-slice-sequence borrowed target fill wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::is_sorted|check-prelude prelude-slice-sequence ordered borrowed slice sortedness wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::lower_bound|check-prelude prelude-slice-sequence ordered borrowed slice lower-bound wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::max|check-prelude prelude-slice-sequence ordered borrowed slice maximum wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::min|check-prelude prelude-slice-sequence ordered borrowed slice minimum wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::partition|check-prelude prelude-slice-sequence borrowed predicate partition wrapper; docs/stdlib/modules/slice.md
@@ -726,6 +729,7 @@ method std::Slice[T]::rotate_left|check-prelude prelude-slice-sequence borrowed 
 method std::Slice[T]::rotate_right|check-prelude prelude-slice-sequence borrowed slice right rotation wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::sort|check-prelude prelude-slice-sequence ordered borrowed slice sort wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::stable_sort|check-prelude prelude-slice-sequence ordered borrowed slice stable sort wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::upper_bound|check-prelude prelude-slice-sequence ordered borrowed slice upper-bound wrapper; docs/stdlib/modules/slice.md
 method std::boxed::Box[T]::as_mut|check-prelude std-boxed-as-ref-mut mutable value borrow with conflict diagnostic; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::as_mut_ptr|check-prelude std-boxed-as-mut-ptr mutable borrowed receiver with reset invalidation; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::as_ptr|check-prelude std-boxed-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
@@ -1312,6 +1316,7 @@ method std::vec::Vec[T]::is_sorted|check-prelude std-vec-sequence ordered sequen
 method std::vec::Vec[T]::iter|check-prelude std-vec-iter borrowed receiver and Iterator lowering; docs/dev/test-matrix.md Explicit memory zones and Control flow rows
 method std::vec::Vec[T]::last|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::len|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::lower_bound|check-prelude std-vec-sequence ordered sequence lower-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::max|check-prelude std-vec-sequence ordered sequence maximum wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::min|check-prelude std-vec-sequence ordered sequence minimum wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::ordering|check-prelude std-vec-sequence lexicographic Ordering comparison wrapper; docs/stdlib/modules/vec.md
@@ -1341,6 +1346,7 @@ method std::vec::Vec[T]::try_get|check-prelude std-vec-try-access Option-returni
 method std::vec::Vec[T]::try_last|check-prelude std-vec-try-access Option-returning empty-safe access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::vec::Vec[T]::try_remove|check-prelude std-vec-try-remove Option-returning indexed removal; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::upper_bound|check-prelude std-vec-sequence ordered sequence upper-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::windows|check-prelude std-vec-sequence borrowed window iterator wrapper; docs/stdlib/modules/vec.md
 method std::zone::ZoneMetadata::as_ptr|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::equals|std zone backed handle metadata tests; docs/stdlib/modules/zone.md

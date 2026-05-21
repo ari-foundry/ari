@@ -154,6 +154,16 @@ pub impl[T: std::cmp::Ord[T]] std::Slice[T] {
     return std::algo::binary_search<T>(current, target);
   }
 
+  fn lower_bound(self: ref Self, target: T) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::lower_bound<T>(current, target);
+  }
+
+  fn upper_bound(self: ref Self, target: T) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::upper_bound<T>(current, target);
+  }
+
   fn min(self: ref Self) -> super::Option[T] {
     let current = super::Slice<T> { data: self.data, len: self.len };
     return std::algo::min<T>(current);
@@ -557,6 +567,16 @@ pub impl[T: std::cmp::Ord[T]] std::vec::Vec[T] {
   fn binary_search(self: ref Self, target: T) -> super::Option[i64] {
     let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
     return std::algo::binary_search<T>(view, target);
+  }
+
+  fn lower_bound(self: ref Self, target: T) -> i64 {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::lower_bound<T>(view, target);
+  }
+
+  fn upper_bound(self: ref Self, target: T) -> i64 {
+    let view = super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    return std::algo::upper_bound<T>(view, target);
   }
 
   fn min(self: ref Self) -> super::Option[T] {

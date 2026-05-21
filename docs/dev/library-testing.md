@@ -25,15 +25,15 @@ identifies the exact case:
   behavior.
 - `std-vec-sequence.ari`: source `std::vec::Vec[T]` direct borrowed
   `slice`, `split_at`, subsequence search, lexicographic compare, chunks,
-  windows, delimiter splitting, reverse, rotation, sorting, binary search, and
-  min/max wrappers over live storage.
+  windows, delimiter splitting, reverse, rotation, sorting, binary search,
+  lower/upper bounds, and min/max wrappers over live storage.
 - `prelude-slice-metadata.ari`: root `Slice[T]` borrowed metadata helper
   behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access
   behavior.
 - `prelude-slice-sequence.ari`: root `Slice[T]` range views, split views,
   subsequence search, lexicographic compare, chunks, windows, delimiter
-  splitting, and receiver-form algorithm wrappers.
+  splitting, and receiver-form algorithm wrappers including sorted bounds.
 - `std-iter-adapters.ari`: source `std::iter` lazy `map`, `filter`, `take`,
   `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed
   `collect` behavior over `std::vec::Iter[T]`.
@@ -182,8 +182,9 @@ identifies the exact case:
   IP predicates, socket-address construction, port replacement, loopback, and
   unspecified checks.
 - `std-algo-slice-helpers.ari`: source `std::algo` sort/stable sort,
-  comparator sort, binary search, reverse/rotate, partition, min/max/clamp,
-  swap, fill, copy, and dedup behavior over borrowed slices.
+  comparator sort, binary search, lower/upper bounds, reverse/rotate,
+  partition, min/max/clamp, swap, fill, copy, and dedup behavior over borrowed
+  slices.
 - `std-hash-basic.ari`: source `std::hash` deterministic `Hasher`
   construction/reset/finalization, byte-slice hashing, generic `Hash[T]`
   dispatch for primitive values, primitive write helpers, and the

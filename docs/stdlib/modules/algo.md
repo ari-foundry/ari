@@ -20,6 +20,8 @@ algo::sort_by<T>(values, less)
 algo::stable_sort<T>(values)
 algo::stable_sort_by<T>(values, less)
 algo::binary_search<T>(values, target)
+algo::lower_bound<T>(values, target)
+algo::upper_bound<T>(values, target)
 algo::is_sorted<T>(values)
 algo::reverse<T>(values)
 algo::rotate_left<T>(values, count)
@@ -41,7 +43,10 @@ explicit comparator `fn(T, T) -> bool`, which is useful while trait-driven
 constructor and comparator inference are still young.
 
 `binary_search` returns `Option[i64]`: `Some(index)` when it finds an equal
-value under `Ord`, and `None` otherwise. Call it only on a sorted slice.
+value under `Ord`, and `None` otherwise. `lower_bound` returns the first sorted
+insertion index whose value is not less than the target. `upper_bound` returns
+the first index whose value is greater than the target. Call these search
+helpers only on a sorted slice.
 
 `partition(values, keep)` reorders the slice so values accepted by
 `keep: fn(ref T) -> bool` appear before rejected values. It returns the split
@@ -62,7 +67,7 @@ array or vector; use the returned length as the prefix boundary.
 | --- | --- |
 | sort | Current: `sort(values)` and `sort_by(values, less)` over slices. |
 | stable sort | Current: `stable_sort(values)` and `stable_sort_by(values, less)`. |
-| binary search | Current: `binary_search(values, target) -> Option[i64]`. |
+| binary search | Current: `binary_search(values, target) -> Option[i64]`, `lower_bound(values, target) -> i64`, and `upper_bound(values, target) -> i64`. |
 | reverse | Current: `reverse(values)`. |
 | rotate | Current: `rotate_left(values, count)` and `rotate_right(values, count)`. |
 | partition | Current: `partition(values, keep)` with borrowed predicates. |
@@ -95,6 +100,7 @@ let found = algo::binary_search<i64>(values.as_slice(), 4);
 let view = values.as_slice();
 view.sort();
 let again = view.binary_search(4);
+let insert_at = view.lower_bound(2);
 ```
 
 Partition and compact:
@@ -144,9 +150,9 @@ tests/cases/standard-library/ok/vec/prelude-slice-sequence.ari
 ```
 
 The focused test covers sorting, stable sorting, comparator-based sorting,
-binary search, min/max/clamp, reverse, rotation, partition, fill, copy, dedup,
-and swap over `Slice[i64]`. `prelude-slice-sequence.ari` covers the natural
-receiver wrappers over the same algorithms.
+binary search, lower/upper bounds, min/max/clamp, reverse, rotation, partition,
+fill, copy, dedup, and swap over `Slice[i64]`. `prelude-slice-sequence.ari`
+covers the natural receiver wrappers over the same algorithms.
 
 ## Next Work
 
