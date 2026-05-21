@@ -167,6 +167,20 @@ Binding clone_binding_impl(const Binding& binding, CloneContext& context) {
     return copy;
 }
 
+Param clone_param_impl(const Param& param, CloneContext& context) {
+    Param copy;
+    copy.name = param.name;
+    copy.type = param.type;
+    copy.has_pattern = param.has_pattern;
+    copy.binding_mode = param.binding_mode;
+    if (param.has_pattern) {
+        copy.pattern = clone_pattern_with_local_renames(param.pattern, context);
+    } else {
+        add_local_binding_rename(context, copy.name);
+    }
+    return copy;
+}
+
 std::vector<StmtPtr> clone_statement_list(const std::vector<StmtPtr>& statements, CloneContext& context) {
     std::vector<StmtPtr> copies;
     copies.reserve(statements.size());
@@ -222,6 +236,22 @@ void clone_block_payload(const Expr& source,
         std::move(value));
 }
 
+void clone_lambda_payload(const Expr& source,
+                          Expr& target,
+                          CloneContext& context) {
+    if (!source.lambda_payload) return;
+    std::size_t rename_mark = context.local_renames.size();
+    std::vector<Param> params;
+    params.reserve(expr_lambda_params(source).size());
+    for (const Param& param : expr_lambda_params(source)) {
+        params.push_back(clone_param_impl(param, context));
+    }
+    std::vector<StmtPtr> body = clone_statement_list(expr_lambda_body(source), context);
+    ExprPtr value = clone_optional_expression(expr_lambda_value(source), context);
+    context.local_renames.resize(rename_mark);
+    set_expr_lambda_payload(target, std::move(params), std::move(body), std::move(value));
+}
+
 void clone_match_payload(const Expr& source,
                          Expr& target,
                          CloneContext& context) {
@@ -269,6 +299,7 @@ ExprPtr clone_expression_tree_impl(const Expr& expr, CloneContext& context) {
     for (const auto& arg : expr.args) clone->args.push_back(clone_expression_tree_impl(*arg, context));
     clone_if_payload(expr, *clone, context);
     clone_block_payload(expr, *clone, context);
+    clone_lambda_payload(expr, *clone, context);
     clone_match_payload(expr, *clone, context);
     return clone;
 }
@@ -418,6 +449,11 @@ ExprPtr clone_expression_tree_substituting_name_hygienic(const Expr& expr,
     context.replacement = NameReplacement{&name, &replacement};
     context.hygiene_prefix = hygiene_prefix;
     return clone_expression_tree_impl(expr, context);
+}
+
+std::vector<StmtPtr> clone_statement_tree_list(const std::vector<StmtPtr>& statements) {
+    CloneContext context;
+    return clone_statement_list(statements, context);
 }
 
 bool is_assignment_target_expr(const Expr& expr) {

@@ -109,6 +109,8 @@ std::string expression_kind_name(const Expr& expr) {
             return "if-expr";
         case ExprKind::Block:
             return "block-expr";
+        case ExprKind::Lambda:
+            return "lambda";
         case ExprKind::Binary:
             return "binary";
         case ExprKind::Call:

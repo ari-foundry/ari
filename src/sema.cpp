@@ -308,12 +308,18 @@ public:
         std::size_t impl_method_index = 0;
         std::size_t specialization_index = 0;
         std::size_t std_function_index = 0;
+        std::size_t lambda_function_index = 0;
         while (impl_method_index < impl_methods_to_lower_.size() ||
                specialization_index < pending_specializations_.size() ||
-               std_function_index < pending_std_functions_.size()) {
+               std_function_index < pending_std_functions_.size() ||
+               lambda_function_index < lambda_functions_.size()) {
             while (std_function_index < pending_std_functions_.size()) {
                 const FunctionDecl* fn = pending_std_functions_[std_function_index++];
                 ir.functions.push_back(check_function(*fn));
+            }
+            while (lambda_function_index < lambda_functions_.size()) {
+                FunctionDecl fn = std::move(lambda_functions_[lambda_function_index++]);
+                ir.functions.push_back(check_function(fn));
             }
             while (impl_method_index < impl_methods_to_lower_.size()) {
                 ImplMethodInfo item = impl_methods_to_lower_[impl_method_index++];
@@ -479,6 +485,7 @@ private:
     std::map<std::string, const FunctionDecl*> lazy_std_functions_;
     std::vector<const FunctionDecl*> pending_std_functions_;
     std::set<std::string> queued_std_functions_;
+    std::vector<FunctionDecl> lambda_functions_;
     std::map<std::string, std::vector<ImplMethodInfo>> method_impls_;
     std::map<std::string, std::vector<ImplMethodInfo>> associated_impls_;
     std::vector<ImplMethodInfo> generic_method_impls_;
@@ -17139,9 +17146,330 @@ private:
         return make_empty_vector_literal_expr(loc, element);
     }
 
+    static bool lambda_param_has_explicit_type(const Param& param) {
+        return !param.type.name.empty() ||
+               param.type.qualifier != TypeQualifier::Value ||
+               !param.type.args.empty() ||
+               param.type.is_dyn_object ||
+               param.type.nullable ||
+               param.type.is_macro_invocation ||
+               param.type.has_associated_projection;
+    }
+
+    static StmtPtr make_lambda_return_stmt(SourceLocation loc, ExprPtr value) {
+        auto stmt = std::make_unique<Stmt>();
+        stmt->kind = StmtKind::Return;
+        stmt->loc = loc;
+        stmt->expr = std::move(value);
+        return stmt;
+    }
+
+    struct LambdaCaptureUse {
+        std::string name;
+        SourceLocation loc;
+    };
+
+    static void add_pattern_bindings_to_lambda_locals(const Pattern& pattern, std::set<std::string>& local_names) {
+        if (!pattern.rest_alias_name.empty()) local_names.insert(pattern.rest_alias_name);
+        if (pattern.kind == PatternKind::Binding && !pattern.payload_name.empty()) {
+            local_names.insert(pattern.payload_name);
+        }
+        if (pattern.kind == PatternKind::Alias && !pattern.alias_name.empty()) {
+            local_names.insert(pattern.alias_name);
+        }
+        if (pattern.has_payload_binding && !pattern.payload_name.empty()) {
+            local_names.insert(pattern.payload_name);
+        }
+        if (pattern.payload_pattern) add_pattern_bindings_to_lambda_locals(*pattern.payload_pattern, local_names);
+        if (pattern.alias_pattern) add_pattern_bindings_to_lambda_locals(*pattern.alias_pattern, local_names);
+        for (const Pattern& alternative : pattern.alternatives) {
+            add_pattern_bindings_to_lambda_locals(alternative, local_names);
+        }
+        for (const Pattern& element : pattern.elements) {
+            add_pattern_bindings_to_lambda_locals(element, local_names);
+        }
+    }
+
+    std::optional<LambdaCaptureUse> lambda_capture_from_name(
+        SourceLocation loc,
+        const std::string& name,
+        const std::set<std::string>& local_names
+    ) {
+        if (name.empty() || local_names.count(name)) return std::nullopt;
+        if (find_local_slot(name)) return LambdaCaptureUse{name, loc};
+        return std::nullopt;
+    }
+
+    std::optional<LambdaCaptureUse> lambda_capture_from_binding(
+        const Binding& binding,
+        std::set<std::string>& local_names
+    ) {
+        if (auto captured = lambda_capture_from_expr(binding.init.get(), local_names)) return captured;
+        if (binding.has_pattern) {
+            add_pattern_bindings_to_lambda_locals(binding.pattern, local_names);
+        } else if (!binding.name.empty()) {
+            local_names.insert(binding.name);
+        }
+        return std::nullopt;
+    }
+
+    std::optional<LambdaCaptureUse> lambda_capture_from_stmt(
+        const Stmt& stmt,
+        std::set<std::string>& local_names
+    ) {
+        switch (stmt.kind) {
+            case StmtKind::Block:
+                return lambda_capture_from_stmt_list(stmt_statements(stmt), local_names);
+            case StmtKind::VarDecl:
+                return lambda_capture_from_binding(stmt.binding, local_names);
+            case StmtKind::Assign:
+                if (auto captured = lambda_capture_from_name(stmt.loc, stmt_assign_name(stmt), local_names)) return captured;
+                if (auto captured = lambda_capture_from_expr(stmt_assign_target(stmt).get(), local_names)) return captured;
+                return lambda_capture_from_expr(stmt_assign_rhs(stmt).get(), local_names);
+            case StmtKind::ExprStmt:
+            case StmtKind::Return:
+                return lambda_capture_from_expr(stmt.expr.get(), local_names);
+            case StmtKind::If: {
+                if (auto captured = lambda_capture_from_expr(stmt.condition.get(), local_names)) return captured;
+                std::set<std::string> then_names = local_names;
+                if (stmt.has_condition_pattern && stmt.condition_pattern) {
+                    add_pattern_bindings_to_lambda_locals(*stmt.condition_pattern, then_names);
+                }
+                if (auto captured = lambda_capture_from_stmt_list(stmt_then_body(stmt), then_names)) return captured;
+                return lambda_capture_from_stmt_list(stmt_else_body(stmt), local_names);
+            }
+            case StmtKind::While:
+            case StmtKind::WhileLet: {
+                if (auto captured = lambda_capture_from_expr(stmt.condition.get(), local_names)) return captured;
+                std::set<std::string> body_names = local_names;
+                if (stmt.has_condition_pattern && stmt.condition_pattern) {
+                    add_pattern_bindings_to_lambda_locals(*stmt.condition_pattern, body_names);
+                }
+                return lambda_capture_from_stmt_list(stmt_loop_body(stmt), body_names);
+            }
+            case StmtKind::For: {
+                if (auto captured = lambda_capture_from_expr(stmt.for_iterable.get(), local_names)) return captured;
+                std::set<std::string> body_names = local_names;
+                if (stmt.for_pattern) add_pattern_bindings_to_lambda_locals(*stmt.for_pattern, body_names);
+                return lambda_capture_from_stmt_list(stmt_loop_body(stmt), body_names);
+            }
+            case StmtKind::InitWhile: {
+                std::set<std::string> loop_names = local_names;
+                for (const Binding& binding : stmt.init_bindings) {
+                    if (auto captured = lambda_capture_from_binding(binding, loop_names)) return captured;
+                }
+                for (const ExprPtr& update : stmt.updates) {
+                    if (auto captured = lambda_capture_from_expr(update.get(), loop_names)) return captured;
+                }
+                if (auto captured = lambda_capture_from_expr(stmt.condition.get(), loop_names)) return captured;
+                return lambda_capture_from_stmt_list(stmt_loop_body(stmt), loop_names);
+            }
+            case StmtKind::Continue:
+                return std::nullopt;
+            case StmtKind::Break:
+                return lambda_capture_from_expr(stmt_break_value(stmt).get(), local_names);
+            case StmtKind::Match: {
+                if (auto captured = lambda_capture_from_expr(stmt.match_value.get(), local_names)) return captured;
+                for (const MatchArm& arm : *stmt.match_arms) {
+                    std::set<std::string> arm_names = local_names;
+                    add_pattern_bindings_to_lambda_locals(arm.pattern, arm_names);
+                    if (auto captured = lambda_capture_from_stmt_list(arm.body, arm_names)) return captured;
+                }
+                return std::nullopt;
+            }
+            case StmtKind::Drop:
+            case StmtKind::Forget:
+                return lambda_capture_from_name(stmt.loc, stmt_drop_name(stmt), local_names);
+        }
+        return std::nullopt;
+    }
+
+    std::optional<LambdaCaptureUse> lambda_capture_from_expr(
+        const Expr* expr,
+        std::set<std::string> local_names
+    ) {
+        if (!expr) return std::nullopt;
+        switch (expr->kind) {
+            case ExprKind::Integer:
+            case ExprKind::Float:
+            case ExprKind::String:
+            case ExprKind::Bool:
+            case ExprKind::Null:
+            case ExprKind::MacroCall:
+                return std::nullopt;
+            case ExprKind::Name:
+                return lambda_capture_from_name(expr->loc, expr->name, local_names);
+            case ExprKind::Borrow:
+                if (expr_operand(*expr)) return lambda_capture_from_expr(expr_operand(*expr).get(), local_names);
+                return lambda_capture_from_name(expr->loc, expr->name, local_names);
+            case ExprKind::Unary:
+            case ExprKind::Cast:
+            case ExprKind::Try:
+            case ExprKind::TupleIndex:
+            case ExprKind::FieldAccess:
+                return lambda_capture_from_expr(expr_operand(*expr).get(), local_names);
+            case ExprKind::Index:
+            case ExprKind::Binary:
+            case ExprKind::NullCoalesce:
+                if (auto captured = lambda_capture_from_expr(expr_left(*expr).get(), local_names)) return captured;
+                return lambda_capture_from_expr(expr_right(*expr).get(), local_names);
+            case ExprKind::Tuple:
+            case ExprKind::StructLiteral:
+            case ExprKind::Vector:
+            case ExprKind::Call:
+                if (auto captured = lambda_capture_from_expr(expr_operand(*expr).get(), local_names)) return captured;
+                for (const ExprPtr& arg : expr->args) {
+                    if (auto captured = lambda_capture_from_expr(arg.get(), local_names)) return captured;
+                }
+                return std::nullopt;
+            case ExprKind::MethodCall:
+                if (auto captured = lambda_capture_from_expr(expr_operand(*expr).get(), local_names)) return captured;
+                for (const ExprPtr& arg : expr->args) {
+                    if (auto captured = lambda_capture_from_expr(arg.get(), local_names)) return captured;
+                }
+                return std::nullopt;
+            case ExprKind::If: {
+                if (auto captured = lambda_capture_from_expr(expr_if_condition(*expr).get(), local_names)) return captured;
+                std::set<std::string> then_names = local_names;
+                if (expr_if_condition_pattern(*expr)) {
+                    add_pattern_bindings_to_lambda_locals(*expr_if_condition_pattern(*expr), then_names);
+                }
+                if (auto captured = lambda_capture_from_stmt_list(expr_if_then_body(*expr), then_names)) return captured;
+                if (auto captured = lambda_capture_from_expr(expr_if_then_value(*expr).get(), then_names)) return captured;
+                if (auto captured = lambda_capture_from_stmt_list(expr_if_else_body(*expr), local_names)) return captured;
+                return lambda_capture_from_expr(expr_if_else_value(*expr).get(), local_names);
+            }
+            case ExprKind::Block:
+                if (auto captured = lambda_capture_from_stmt_list(expr_block_body(*expr), local_names)) return captured;
+                return lambda_capture_from_expr(expr_block_value(*expr).get(), local_names);
+            case ExprKind::Lambda:
+                return std::nullopt;
+            case ExprKind::Match:
+                if (auto captured = lambda_capture_from_expr(expr_match_value(*expr).get(), local_names)) return captured;
+                for (const ExprMatchArm& arm : expr_match_arms(*expr)) {
+                    std::set<std::string> arm_names = local_names;
+                    add_pattern_bindings_to_lambda_locals(arm.pattern, arm_names);
+                    if (auto captured = lambda_capture_from_expr(arm.value.get(), arm_names)) return captured;
+                }
+                return std::nullopt;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<LambdaCaptureUse> lambda_capture_from_stmt_list(
+        const std::vector<StmtPtr>& statements,
+        std::set<std::string>& local_names
+    ) {
+        for (const StmtPtr& stmt : statements) {
+            if (!stmt) continue;
+            if (auto captured = lambda_capture_from_stmt(*stmt, local_names)) return captured;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<LambdaCaptureUse> lambda_capture_from_body(const Expr& expr) {
+        std::set<std::string> local_names;
+        for (const Param& param : expr_lambda_params(expr)) {
+            if (!param.name.empty()) local_names.insert(param.name);
+            if (param.has_pattern) add_pattern_bindings_to_lambda_locals(param.pattern, local_names);
+        }
+        if (auto captured = lambda_capture_from_stmt_list(expr_lambda_body(expr), local_names)) return captured;
+        return lambda_capture_from_expr(expr_lambda_value(expr).get(), local_names);
+    }
+
+    std::string next_lambda_function_name() const {
+        std::string base = "$lambda" + std::to_string(lambda_functions_.size());
+        return current_module_name_.empty() ? base : current_module_name_ + "::" + base;
+    }
+
+    IrExprPtr check_lambda_expr(const Expr& expr, const IrType& expected) {
+        if (expected.qualifier != TypeQualifier::Value ||
+            expected.primitive != IrPrimitiveKind::Function ||
+            expected.args.empty() ||
+            expected.array_size + 1 != expected.args.size()) {
+            fail(expr.loc,
+                 "lambda expression requires an expected function pointer type; add a fn(...) -> ... annotation");
+        }
+
+        const std::vector<Param>& source_params = expr_lambda_params(expr);
+        const std::size_t param_count = static_cast<std::size_t>(expected.array_size);
+        if (source_params.size() != param_count) {
+            fail(expr.loc,
+                 "lambda parameter count does not match expected " + type_name(expected) +
+                     ": expected " + std::to_string(param_count) +
+                     ", got " + std::to_string(source_params.size()));
+        }
+        if (auto captured = lambda_capture_from_body(expr)) {
+            fail(captured->loc,
+                 "lambda captures local binding '" + captured->name +
+                     "', but capture environments are not supported yet");
+        }
+
+        FunctionDecl lambda;
+        lambda.name = next_lambda_function_name();
+        lambda.module_name = current_module_name_;
+        lambda.loc = expr.loc;
+        lambda.has_body = true;
+        lambda.body = clone_statement_tree_list(expr_lambda_body(expr));
+        if (expr_lambda_value(expr)) {
+            lambda.body.push_back(make_lambda_return_stmt(
+                expr_lambda_value(expr)->loc,
+                clone_expression_tree(*expr_lambda_value(expr))));
+        }
+
+        FunctionSig sig;
+        sig.loc = expr.loc;
+        sig.module_name = current_module_name_;
+        sig.params.reserve(param_count);
+        for (std::size_t i = 0; i < param_count; ++i) {
+            const Param& source = source_params[i];
+            if (source.has_pattern) {
+                fail(source.pattern.loc, "lambda parameter patterns are planned; use a plain named parameter for now");
+            }
+            if (source.binding_mode != BindingMode::Value) {
+                fail(source.type.loc, "lambda parameter binding modes are planned; use a plain named parameter for now");
+            }
+
+            const IrType& expected_param = expected.args[i];
+            if (lambda_param_has_explicit_type(source)) {
+                IrType explicit_param = resolve_executable_type(source.type);
+                bool vec_view = false;
+                explicit_param = vector_parameter_abi_type(
+                    source.type.loc,
+                    explicit_param,
+                    "a lambda parameter",
+                    vec_view);
+                if (!same_type(explicit_param, expected_param)) {
+                    fail(source.type.loc,
+                         "lambda parameter '" + source.name + "' type mismatch: expected " +
+                             type_name(expected_param) + ", got " + type_name(explicit_param));
+                }
+            }
+
+            Param param;
+            param.name = source.name;
+            param.type = source.type;
+            param.binding_mode = BindingMode::Value;
+            lambda.params.push_back(std::move(param));
+            sig.params.push_back(expected_param);
+        }
+        sig.result = expected.args[param_count];
+        set_function_return_contracts(sig);
+
+        auto inserted = functions_.emplace(lambda.name, std::move(sig));
+        if (!inserted.second) fail(expr.loc, "internal error: duplicate generated lambda function '" + lambda.name + "'");
+        IrType lambda_type = expected;
+        lambda_type.loc = expr.loc;
+        lambda_functions_.push_back(std::move(lambda));
+        return make_function_ref_expr(expr.loc, lambda_functions_.back().name, lambda_type);
+    }
+
     IrExprPtr check_expr_with_expected(const Expr& expr, const IrType& expected) {
         if (is_empty_vector_literal_expr(expr)) {
             return make_typed_empty_vector_expr(expr.loc, expected);
+        }
+        if (expr.kind == ExprKind::Lambda) {
+            return check_lambda_expr(expr, expected);
         }
         if (expr.kind == ExprKind::String && is_prelude_u8_slice_type(expected)) {
             return make_string_literal_slice_expr(expr.loc, expr.string_value, expected);
@@ -17337,6 +17665,9 @@ private:
                 return check_if_expr(expr, std::move(lowered));
             case ExprKind::Block:
                 return check_block_expr(expr, std::move(lowered));
+            case ExprKind::Lambda:
+                fail(expr.loc,
+                     "lambda expression requires an expected function pointer type; add a fn(...) -> ... annotation");
             case ExprKind::Call:
                 return check_call(expr, std::move(lowered));
             case ExprKind::Binary:

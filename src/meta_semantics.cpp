@@ -355,6 +355,9 @@ bool supported_ast_return_expr(const Expr& expr,
             return require_if_expr();
         case ExprKind::Block:
             return require_block_expr();
+        case ExprKind::Lambda:
+            reason = "ast meta expression returns cannot contain lambda expressions yet";
+            return false;
         case ExprKind::MacroCall:
             reason =
                 "ast meta expression returns cannot call macros; use decl!(...) for item macro declaration output or pattern!(...) for pattern macro output";

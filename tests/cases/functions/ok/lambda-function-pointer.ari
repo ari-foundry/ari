@@ -1,0 +1,38 @@
+// check-functions/ok: non-capturing lambdas lower to ordinary function pointer values.
+fn apply_i64(op: fn(i64) -> i64, value: i64) -> i64 {
+  return op(value);
+}
+
+fn apply_bool(pred: fn(i64) -> bool, value: i64) -> i64 {
+  if pred(value) {
+    return 5;
+  }
+  return 1;
+}
+
+fn invoke(action: fn() -> void) -> i64 {
+  action();
+  return 4;
+}
+
+fn make_twice() -> fn(i64) -> i64 {
+  fn(value) -> {
+    value * 2
+  }
+}
+
+fn main() -> i64 {
+  let add_one: fn(i64) -> i64 = fn(value) -> {
+    value + 1
+  };
+  let typed_add: fn(i64, i64) -> i64 = fn(left: i64, right: i64) -> {
+    let total = left + right;
+    total
+  };
+  let twice = make_twice();
+  let checked = apply_bool(fn(value) -> {
+    value == 7
+  }, 7);
+  return apply_i64(add_one, 4) + typed_add(10, 20) + twice(3) + checked + invoke(fn() -> {
+  });
+}

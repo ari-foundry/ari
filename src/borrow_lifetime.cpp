@@ -81,6 +81,10 @@ void collect_expr_uses(const Expr* expr, NameUseCounts& counts) {
             collect_stmt_list_uses(expr_block_body(*expr), counts);
             collect_expr_uses(expr_block_value(*expr).get(), counts);
             return;
+        case ExprKind::Lambda:
+            // Non-capturing lambdas lower as separate functions, so their body
+            // does not count as an immediate use in the enclosing scope.
+            return;
         case ExprKind::Match:
             collect_expr_uses(expr_match_value(*expr).get(), counts);
             for (const auto& arm : expr_match_arms(*expr)) {

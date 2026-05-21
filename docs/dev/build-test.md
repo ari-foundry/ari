@@ -98,6 +98,11 @@ arithmetic/comparisons, invalid `?`, invalid `??`, invalid base/escape literals,
 and invalid suffix
 diagnostics.
 
+`make check-functions` runs function-focused tests for direct calls, recursion,
+function pointer values and indirect calls, non-capturing lambdas lowered as
+function pointer values, parameter patterns, vector parameter ABI views, and
+function error diagnostics.
+
 `make check-generics` runs generic-focused tests for function
 monomorphization, repeated specializations, arbitrary generic parameter names,
 generic function pointer specialization from expected `fn(...) -> ...` types,

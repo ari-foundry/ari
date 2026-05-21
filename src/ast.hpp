@@ -173,6 +173,12 @@ struct ExprBlockPayload {
     ExprPtr value;
 };
 
+struct ExprLambdaPayload {
+    std::vector<Param> params;
+    std::vector<StmtPtr> body;
+    ExprPtr value;
+};
+
 struct ExprIfPayload {
     ExprPtr condition;
     std::unique_ptr<Pattern> condition_pattern;
@@ -221,6 +227,7 @@ enum class ExprKind {
     Match,
     If,
     Block,
+    Lambda,
     Binary,
     Call
 };
@@ -246,6 +253,7 @@ struct Expr {
     std::unique_ptr<ExprChildPayload> child_payload;
     std::unique_ptr<ExprIfPayload> if_payload;
     std::unique_ptr<ExprBlockPayload> block_payload;
+    std::unique_ptr<ExprLambdaPayload> lambda_payload;
     ExprArgs args;
     std::unique_ptr<ExprReceiverTypeArgs> receiver_type_args;
     std::unique_ptr<ExprTypeArgs> type_args;
@@ -624,6 +632,50 @@ inline void set_expr_block_payload(Expr& expr,
                                    ExprPtr value) {
     ExprBlockPayload& payload = ensure_expr_block_payload(expr);
     payload.label = std::move(label);
+    payload.body = std::move(body);
+    payload.value = std::move(value);
+}
+
+inline const ExprLambdaPayload& expr_lambda_payload(const Expr& expr) {
+    static const ExprLambdaPayload empty;
+    return expr.lambda_payload ? *expr.lambda_payload : empty;
+}
+
+inline ExprLambdaPayload& ensure_expr_lambda_payload(Expr& expr) {
+    if (!expr.lambda_payload) expr.lambda_payload = std::make_unique<ExprLambdaPayload>();
+    return *expr.lambda_payload;
+}
+
+inline const std::vector<Param>& expr_lambda_params(const Expr& expr) {
+    return expr_lambda_payload(expr).params;
+}
+
+inline std::vector<Param>& expr_lambda_params(Expr& expr) {
+    return ensure_expr_lambda_payload(expr).params;
+}
+
+inline const std::vector<StmtPtr>& expr_lambda_body(const Expr& expr) {
+    return expr_lambda_payload(expr).body;
+}
+
+inline std::vector<StmtPtr>& expr_lambda_body(Expr& expr) {
+    return ensure_expr_lambda_payload(expr).body;
+}
+
+inline const ExprPtr& expr_lambda_value(const Expr& expr) {
+    return expr_lambda_payload(expr).value;
+}
+
+inline ExprPtr& expr_lambda_value(Expr& expr) {
+    return ensure_expr_lambda_payload(expr).value;
+}
+
+inline void set_expr_lambda_payload(Expr& expr,
+                                    std::vector<Param> params,
+                                    std::vector<StmtPtr> body,
+                                    ExprPtr value) {
+    ExprLambdaPayload& payload = ensure_expr_lambda_payload(expr);
+    payload.params = std::move(params);
     payload.body = std::move(body);
     payload.value = std::move(value);
 }

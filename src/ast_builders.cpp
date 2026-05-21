@@ -136,6 +136,17 @@ ExprPtr make_ast_block_expr(SourceLocation loc,
     return expr;
 }
 
+ExprPtr make_ast_lambda_expr(SourceLocation loc,
+                             std::vector<Param> params,
+                             std::vector<StmtPtr> body,
+                             ExprPtr value) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Lambda;
+    expr->loc = loc;
+    set_expr_lambda_payload(*expr, std::move(params), std::move(body), std::move(value));
+    return expr;
+}
+
 ExprPtr make_ast_if_expr(SourceLocation loc,
                          ExprPtr condition,
                          std::unique_ptr<Pattern> condition_pattern,

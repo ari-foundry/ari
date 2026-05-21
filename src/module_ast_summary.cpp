@@ -417,6 +417,26 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             out << value.str();
             return true;
         }
+        case ExprKind::Lambda: {
+            std::ostringstream body;
+            if (!append_body_stmt_list(body, expr_lambda_body(expr))) return false;
+            std::ostringstream value;
+            const bool has_value = static_cast<bool>(expr_lambda_value(expr));
+            if (has_value && !append_const_expr_payload(value, *expr_lambda_value(expr))) return false;
+            append_field(out, "lambda");
+            append_count(out, expr_lambda_params(expr).size());
+            for (const Param& param : expr_lambda_params(expr)) {
+                append_field(out, param.name);
+                append_bool(out, param.has_pattern);
+                if (param.has_pattern) append_pattern_payload(out, param.pattern);
+                append_binding_mode(out, param.binding_mode);
+                append_type(out, param.type);
+            }
+            out << body.str();
+            append_bool(out, has_value);
+            if (has_value) out << value.str();
+            return true;
+        }
         case ExprKind::Match: {
             if (!expr_match_value(expr)) return false;
             std::ostringstream value;
@@ -1595,6 +1615,28 @@ private:
             std::vector<StmtPtr> body = read_body_stmt_list(label + " block body");
             ExprPtr value = read_const_expr(label + " block value");
             set_expr_block_payload(*expr, std::move(block_label), std::move(body), std::move(value));
+            return expr;
+        }
+        if (kind == "lambda") {
+            expr->kind = ExprKind::Lambda;
+            std::uint64_t param_count = read_count(label + " lambda parameter count");
+            std::vector<Param> params;
+            params.reserve(static_cast<std::size_t>(param_count));
+            for (std::uint64_t i = 0; i < param_count; ++i) {
+                Param param;
+                param.name = read_field(label + " lambda parameter name");
+                param.has_pattern = read_bool(label + " lambda parameter pattern flag");
+                if (param.has_pattern) param.pattern = read_pattern(label + " lambda parameter pattern");
+                param.binding_mode = read_binding_mode(label + " lambda parameter binding mode");
+                param.type = read_type(label + " lambda parameter type");
+                params.push_back(std::move(param));
+            }
+            std::vector<StmtPtr> body = read_body_stmt_list(label + " lambda body");
+            ExprPtr value;
+            if (read_bool(label + " lambda value flag")) {
+                value = read_const_expr(label + " lambda value");
+            }
+            set_expr_lambda_payload(*expr, std::move(params), std::move(body), std::move(value));
             return expr;
         }
         if (kind == "match-expr") {

@@ -1,0 +1,7 @@
+// check-function-errors: lambda arity must match the expected function pointer type.
+fn main() -> i64 {
+  let add: fn(i64) -> i64 = fn(left, right) -> {
+    left + right
+  };
+  return add(1);
+}

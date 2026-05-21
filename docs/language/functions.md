@@ -202,6 +202,44 @@ The expected `fn(i64) -> i64` type specializes `identity[T]` as
 `identity[i64]`. A generic parameter that does not appear in the expected
 function pointer signature cannot be inferred.
 
+### Lambda Expressions
+
+A lambda expression creates an anonymous, non-capturing function pointer value.
+Its syntax mirrors Ari's function pointer type syntax but uses a function block
+after `->`:
+
+```ari
+fn apply(op: fn(i64) -> i64, value: i64) -> i64 {
+  op(value)
+}
+
+fn main() -> i64 {
+  let add_one: fn(i64) -> i64 = fn(value) -> {
+    value + 1
+  };
+
+  apply(fn(value) -> {
+    value * 2
+  }, add_one(4))
+}
+```
+
+The compiler currently needs an expected `fn(...) -> ...` type from a binding,
+parameter, return, or other typed context. Lambda parameter types may be omitted
+when the expected function pointer type is known, or written explicitly for
+readability:
+
+```ari
+let add: fn(i64, i64) -> i64 = fn(left: i64, right: i64) -> {
+  left + right
+};
+```
+
+Lambda bodies use the same block rules as functions: a final expression becomes
+the return value, and `fn() -> void` lambdas may use an empty or statement-only
+body. Capturing outer local bindings is not implemented yet; use explicit
+parameters or a named function until closure environment storage lands.
+
 ## Generics
 
 Generic syntax is parsed:

@@ -72,6 +72,7 @@ check-compiler-artifacts: $(TARGET)
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_capability_cli.py
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_pass_cli.py
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_test_bucket_cli.py
+	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_work_item_cli.py
 	python3 tests/check_compiler_artifacts.py
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
@@ -4919,6 +4920,11 @@ check-functions: $(TARGET) check-function-errors
 	$(BUILD_DIR)/functions/function-pointer-call.elf; code=$$?; test $$code -eq 7
 	$(TARGET) tests/cases/functions/ok/function-pointer-call.ari --emit-llvm $(BUILD_DIR)/functions/function-pointer-call.ll
 	grep -q 'call i64 %' $(BUILD_DIR)/functions/function-pointer-call.ll
+	$(TARGET) tests/cases/functions/ok/lambda-function-pointer.ari -o $(BUILD_DIR)/functions/lambda-function-pointer.elf
+	$(BUILD_DIR)/functions/lambda-function-pointer.elf; code=$$?; test $$code -eq 50
+	$(TARGET) tests/cases/functions/ok/lambda-function-pointer.ari --emit-llvm $(BUILD_DIR)/functions/lambda-function-pointer.ll
+	grep -q '_u24lambda' $(BUILD_DIR)/functions/lambda-function-pointer.ll
+	grep -q 'call i64 %' $(BUILD_DIR)/functions/lambda-function-pointer.ll
 	$(TARGET) tests/cases/functions/ok/function-extern-c.ari --emit-llvm $(BUILD_DIR)/functions/function-extern-c.ll
 	grep -q 'declare i64 @"puts"(ptr)' $(BUILD_DIR)/functions/function-extern-c.ll
 	grep -q 'call i64 @"puts"' $(BUILD_DIR)/functions/function-extern-c.ll
@@ -4960,6 +4966,12 @@ check-function-errors: $(TARGET)
 	grep -q "type mismatch: expected void, got i64" $(BUILD_DIR)/functions/errors/function-void-return-value.err
 	if $(TARGET) tests/cases/functions/errors/function-module-private.ari -o $(BUILD_DIR)/functions/errors/function-module-private.elf >$(BUILD_DIR)/functions/errors/function-module-private.err 2>&1; then exit 1; fi
 	grep -q "function 'Secret::hidden' is not public" $(BUILD_DIR)/functions/errors/function-module-private.err
+	if $(TARGET) tests/cases/functions/errors/lambda-missing-expected-type.ari -o $(BUILD_DIR)/functions/errors/lambda-missing-expected-type.elf >$(BUILD_DIR)/functions/errors/lambda-missing-expected-type.err 2>&1; then exit 1; fi
+	grep -q "lambda expression requires an expected function pointer type" $(BUILD_DIR)/functions/errors/lambda-missing-expected-type.err
+	if $(TARGET) tests/cases/functions/errors/lambda-param-count.ari -o $(BUILD_DIR)/functions/errors/lambda-param-count.elf >$(BUILD_DIR)/functions/errors/lambda-param-count.err 2>&1; then exit 1; fi
+	grep -q "lambda parameter count does not match expected fn(i64) -> i64" $(BUILD_DIR)/functions/errors/lambda-param-count.err
+	if $(TARGET) tests/cases/functions/errors/lambda-capture-local.ari -o $(BUILD_DIR)/functions/errors/lambda-capture-local.elf >$(BUILD_DIR)/functions/errors/lambda-capture-local.err 2>&1; then exit 1; fi
+	grep -q "lambda captures local binding 'base'" $(BUILD_DIR)/functions/errors/lambda-capture-local.err
 
 check-errors: $(TARGET) check-function-errors
 	mkdir -p $(BUILD_DIR)/errors

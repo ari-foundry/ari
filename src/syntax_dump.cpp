@@ -436,6 +436,14 @@ private:
                 dump_statements(expr_block_body(expr), indent + 1);
                 if (expr_block_value(expr)) dump_expr(*expr_block_value(expr), indent + 1);
                 break;
+            case ExprKind::Lambda:
+                line(indent, "LambdaExpr" + loc(expr.loc));
+                for (const Param& param : expr_lambda_params(expr)) {
+                    line(indent + 1, "Param name=" + quote(param.name));
+                }
+                dump_statements(expr_lambda_body(expr), indent + 1);
+                if (expr_lambda_value(expr)) dump_expr(*expr_lambda_value(expr), indent + 1);
+                break;
             case ExprKind::Binary:
                 line(indent, "Binary op=" + quote(op_name(expr.op)) + loc(expr.loc));
                 if (expr_left(expr)) dump_expr(*expr_left(expr), indent + 1);

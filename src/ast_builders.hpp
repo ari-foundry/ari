@@ -36,6 +36,10 @@ ExprPtr make_ast_block_expr(SourceLocation loc,
                             std::string label,
                             std::vector<StmtPtr> body,
                             ExprPtr value);
+ExprPtr make_ast_lambda_expr(SourceLocation loc,
+                             std::vector<Param> params,
+                             std::vector<StmtPtr> body,
+                             ExprPtr value);
 ExprPtr make_ast_if_expr(SourceLocation loc,
                          ExprPtr condition,
                          std::unique_ptr<Pattern> condition_pattern,

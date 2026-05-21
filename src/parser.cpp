@@ -1874,6 +1874,7 @@ private:
                kind == TokenKind::KwFalse ||
                kind == TokenKind::KwNull ||
                kind == TokenKind::KwRef ||
+               kind == TokenKind::KwFn ||
                kind == TokenKind::Amp ||
                kind == TokenKind::KwMatch ||
                kind == TokenKind::KwIf ||
@@ -2366,9 +2367,45 @@ private:
                 return parse_match_expression(token.loc);
             case TokenKind::KwIf:
                 return parse_if_expression(token.loc);
+            case TokenKind::KwFn:
+                return parse_lambda_expression(token.loc);
             default:
                 fail(token.loc, "expected expression");
         }
+    }
+
+    Param parse_lambda_param(std::size_t index) {
+        if (check(TokenKind::KwRef) || check(TokenKind::Amp) || check(TokenKind::KwMut)) {
+            fail(peek().loc,
+                 "lambda parameter binding modes are planned; use a plain named parameter for now");
+        }
+        Token name = expect(TokenKind::Identifier, "expected lambda parameter name");
+        if (name.text == "_") {
+            fail(name.loc, "lambda wildcard parameters are planned; use a plain named parameter for now");
+        }
+        Param param;
+        param.name = name.text;
+        param.type.loc = name.loc;
+        if (match(TokenKind::Colon)) {
+            param.type = parse_type();
+        }
+        (void)index;
+        return param;
+    }
+
+    ExprPtr parse_lambda_expression(SourceLocation loc) {
+        std::vector<Param> params;
+        expect(TokenKind::LParen, "expected ( after fn in lambda expression");
+        if (!check(TokenKind::RParen)) {
+            do {
+                params.push_back(parse_lambda_param(params.size()));
+            } while (match(TokenKind::Comma));
+        }
+        expect(TokenKind::RParen, "expected ) after lambda parameter list");
+        expect(TokenKind::Arrow, "expected -> after lambda parameter list");
+        if (!check(TokenKind::LBrace)) fail(peek().loc, "expected { after lambda ->");
+        std::vector<StmtPtr> body = parse_function_block();
+        return make_ast_lambda_expr(loc, std::move(params), std::move(body), nullptr);
     }
 
     ExprPtr parse_struct_literal(ExprPtr name_expr) {
