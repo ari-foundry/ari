@@ -8,7 +8,7 @@ pub struct Set[T] {
 
 pub struct Iter[T] {
   data: ptr T,
-  len: i64,
+  mut len: i64,
   mut index: i64,
 }
 
@@ -89,7 +89,7 @@ pub struct Deque[T] {
 
 pub struct DequeIter[T] {
   data: ptr T,
-  len: i64,
+  mut len: i64,
   capacity: i64,
   head: i64,
   mut index: i64,
@@ -106,7 +106,7 @@ pub struct RingBuffer[T] {
 
 pub struct RingBufferIter[T] {
   data: ptr T,
-  len: i64,
+  mut len: i64,
   capacity: i64,
   head: i64,
   mut index: i64,
@@ -476,6 +476,16 @@ impl[T] std::Iterator[T] for std::collections::Iter[T] {
 impl[T] std::ExactSizeIterator[T] for std::collections::Iter[T] {
   pub fn len(self: ref Self) -> i64 {
     return self.len - self.index;
+  }
+}
+
+impl[T] std::DoubleEndedIterator[T] for std::collections::Iter[T] {
+  pub fn next_back(self: ref mut Self) -> std::Option[T] {
+    if self.index >= self.len {
+      return std::None<T>();
+    }
+    self.len = self.len - 1;
+    return std::Some<T>(ptr_load(ptr_add(self.data, self.len)));
   }
 }
 
@@ -2688,6 +2698,17 @@ impl[T] std::ExactSizeIterator[T] for std::collections::DequeIter[T] {
   }
 }
 
+impl[T] std::DoubleEndedIterator[T] for std::collections::DequeIter[T] {
+  pub fn next_back(self: ref mut Self) -> std::Option[T] {
+    if self.index >= self.len {
+      return std::None<T>();
+    }
+    self.len = self.len - 1;
+    let slot = circular_slot(self.head, self.len, self.capacity);
+    return std::Some<T>(ptr_load(ptr_add(self.data, slot)));
+  }
+}
+
 impl[T] std::IntoIterator[T] for std::collections::Deque[T] {
   pub fn into_iter(self: ref mut Self) -> std::collections::DequeIter[T] {
     return self.iter();
@@ -2860,6 +2881,17 @@ impl[T] std::Iterator[T] for std::collections::RingBufferIter[T] {
 impl[T] std::ExactSizeIterator[T] for std::collections::RingBufferIter[T] {
   pub fn len(self: ref Self) -> i64 {
     return self.len - self.index;
+  }
+}
+
+impl[T] std::DoubleEndedIterator[T] for std::collections::RingBufferIter[T] {
+  pub fn next_back(self: ref mut Self) -> std::Option[T] {
+    if self.index >= self.len {
+      return std::None<T>();
+    }
+    self.len = self.len - 1;
+    let slot = circular_slot(self.head, self.len, self.capacity);
+    return std::Some<T>(ptr_load(ptr_add(self.data, slot)));
   }
 }
 

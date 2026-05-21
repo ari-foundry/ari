@@ -19,10 +19,15 @@ iter::zip<T, U, I: std::Iterator[T], J: std::Iterator[U]>(left, right)
 iter::fold<T, U, I: std::Iterator[T]>(iter, initial, op)
 iter::reduce<T, I: std::Iterator[T]>(iter, op)
 iter::collect<T, I: std::Iterator[T]>(ref mut zone, iter)
+iter::DoubleEndedIterator[T]
 iter::ExactSizeIterator[T]
 
 trait Iterator[T] {
   fn next(self: ref mut Self) -> Option[T];
+}
+
+trait DoubleEndedIterator[T]: Iterator[T] {
+  fn next_back(self: ref mut Self) -> Option[T];
 }
 
 trait ExactSizeIterator[T]: Iterator[T] {
@@ -42,6 +47,14 @@ always names the target allocation zone explicitly.
 
 `skip` is the Ari standard name for the usual drop-count adapter because
 `drop` is already a language operation.
+
+`DoubleEndedIterator[T]` is a supertrait child of `Iterator[T]`. Use it when a
+cursor can yield from both the front and the back without allocating a reversed
+copy. A generic bound such as `I: DoubleEndedIterator[i64]` can call
+`next_back()` from the child trait and `next()` from the parent `Iterator`
+trait. Current double-ended cursors include `std::vec::Iter[T]`, slice
+`chunks()` and `windows()` cursors, linear `Set[T]` cursors, `Deque[T]`
+cursors, and `RingBuffer[T]` cursors.
 
 `ExactSizeIterator[T]` is a supertrait child of `Iterator[T]`. Use it when a
 cursor can report the exact number of values still available without advancing
@@ -131,6 +144,7 @@ Representative coverage lives in:
 
 ```text
 tests/cases/standard-library/ok/iter/std-iter-adapters.ari
+tests/cases/standard-library/ok/iter/std-iter-double-ended.ari
 tests/cases/standard-library/ok/iter/std-iter-exact-size.ari
 tests/cases/standard-library/ok/vec/std-vec-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-set-iter.ari

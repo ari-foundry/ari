@@ -10,7 +10,7 @@ pub struct Vec[T] {
 
 pub struct Iter[T] {
   data: ptr T,
-  len: i64,
+  mut len: i64,
   mut index: i64,
 }
 
@@ -630,6 +630,17 @@ impl[T] super::Iterator[T] for std::vec::Iter[T] {
 impl[T] super::ExactSizeIterator[T] for std::vec::Iter[T] {
   pub fn len(self: ref Self) -> i64 {
     return self.len - self.index;
+  }
+}
+
+impl[T] super::DoubleEndedIterator[T] for std::vec::Iter[T] {
+  pub fn next_back(self: ref mut Self) -> super::Option[T] {
+    if self.index >= self.len {
+      return super::None<T>();
+    }
+    self.len = self.len - 1;
+    let value = ptr_load(ptr_add(self.data, self.len));
+    return super::Some<T>(value);
   }
 }
 

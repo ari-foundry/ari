@@ -41,6 +41,9 @@ identifies the exact case:
 - `std-iter-exact-size.ari`: root `ExactSizeIterator[T]` supertrait behavior,
   including child-bound access to parent `Iterator[T]::next` and exact
   remaining-length checks for vector and slice cursors.
+- `std-iter-double-ended.ari`: root `DoubleEndedIterator[T]` supertrait
+  behavior, including mixed front/back consumption and parent `Iterator[T]`
+  method access for vector, slice, set, deque, and ring-buffer cursors.
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
 - `std-string-append-debug.ari`: source `std::string` generic Debug append
   helper, implicit same-zone lowering, and quoted built-in debug text.

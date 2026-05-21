@@ -99,6 +99,7 @@ pub fn reduce[T, I: std::Iterator[T]](iter: I, op: fn(T, T) -> T) -> std::Option
 
 // Collection is implemented by std::vec because Vec owns the allocation shape.
 pub use std::vec::collect;
+pub use std::DoubleEndedIterator;
 pub use std::ExactSizeIterator;
 
 pub trait Iterable[T] {

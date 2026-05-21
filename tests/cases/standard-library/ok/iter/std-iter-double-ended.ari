@@ -1,0 +1,79 @@
+// Covers std::DoubleEndedIterator as a supertrait child of Iterator. Generic
+// bounds must expose both next_back() and the parent next() method.
+fn drain_both[I: DoubleEndedIterator[i64]](iter: I) -> i64 {
+  var cursor = iter;
+  let first = cursor.next().unwrap_or(0);
+  let last = cursor.next_back().unwrap_or(0);
+  let second = cursor.next().unwrap_or(0);
+  let before_last = cursor.next_back().unwrap_or(0);
+  let empty = if cursor.next().is_none() { 10000 } else { 0 };
+  return first + last * 10 + second * 100 + before_last * 1000 + empty;
+}
+
+fn score_alias[I: iter::DoubleEndedIterator[i64]](iter: I) -> i64 {
+  var cursor = iter;
+  let back = cursor.next_back().unwrap_or(0);
+  let front = cursor.next().unwrap_or(0);
+  return back * 10 + front;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(2048);
+
+  var values = std::vec::new<i64>(ref mut zone, 4);
+  values.push(3);
+  values.push(4);
+  values.push(5);
+  values.push(6);
+  let vec_score = drain_both<std::vec::Iter[i64]>(values.iter());
+  let alias_score = score_alias<std::vec::Iter[i64]>(values.iter());
+
+  var view = values.as_slice();
+  var chunks = view.chunks(2);
+  let chunk_back = chunks.next_back().unwrap();
+  let chunk_front = chunks.next().unwrap();
+  let chunk_empty = if chunks.next_back().is_none() { 7 } else { 0 };
+  let chunk_score =
+    chunk_back[0] * 100 + chunk_back[1] * 10 + chunk_front[0] + chunk_front[1] + chunk_empty;
+
+  var windows = view.windows(3);
+  let window_back = windows.next_back().unwrap();
+  let window_front = windows.next().unwrap();
+  let window_empty = if windows.next_back().is_none() { 7 } else { 0 };
+  let window_score =
+    window_back[0] * 100 + window_back[2] * 10 + window_front[0] + window_front[2] + window_empty;
+
+  var set = collections::new<i64>(ref mut zone, 4);
+  set.insert(ref mut zone, 7);
+  set.insert(ref mut zone, 8);
+  set.insert(ref mut zone, 9);
+  set.insert(ref mut zone, 10);
+  let set_score = drain_both<std::collections::Iter[i64]>(set.iter());
+
+  var deque = Deque::new<i64>(ref mut zone, 2);
+  deque.push_back(ref mut zone, 5);
+  deque.push_back(ref mut zone, 10);
+  deque.push_back(ref mut zone, 20);
+  deque.push_back(ref mut zone, 30);
+  let deque_score = drain_both<std::collections::DequeIter[i64]>(deque.iter());
+
+  var ring = RingBuffer::new<i64>(ref mut zone, 4);
+  ring.push(2);
+  ring.push(3);
+  ring.push(4);
+  ring.push(5);
+  let ring_score = drain_both<std::collections::RingBufferIter[i64]>(ring.iter());
+
+  let total =
+    vec_score +
+    alias_score +
+    chunk_score +
+    window_score +
+    set_score +
+    deque_score +
+    ring_score;
+  assert_eq_i64(total, 82139);
+
+  zone::destroy(zone);
+  return total % 256;
+}

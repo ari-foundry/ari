@@ -58,14 +58,14 @@ pub struct SlicePair[T] {
 
 pub struct SliceChunks[T] {
   data: ptr T,
-  len: i64,
+  mut len: i64,
   mut index: i64,
   size: i64,
 }
 
 pub struct SliceWindows[T] {
   data: ptr T,
-  len: i64,
+  mut len: i64,
   mut index: i64,
   size: i64,
 }
@@ -423,6 +423,23 @@ impl[T] ExactSizeIterator[Slice[T]] for SliceChunks[T] {
   }
 }
 
+impl[T] DoubleEndedIterator[Slice[T]] for SliceChunks[T] {
+  pub fn next_back(self: ref mut Self) -> Option[Slice[T]] {
+    if self.index >= self.len {
+      return None<Slice[T]>();
+    }
+
+    let remaining = self.len - self.index;
+    var length = remaining % self.size;
+    if length == 0 {
+      length = self.size;
+    }
+    self.len = self.len - length;
+    let current = Slice<T> { data: ptr_add(self.data, self.len), len: length };
+    return Some<Slice[T]>(current);
+  }
+}
+
 impl[T] Iterator[Slice[T]] for SliceWindows[T] {
   pub fn next(self: ref mut Self) -> Option[Slice[T]] {
     if self.size > self.len {
@@ -447,6 +464,22 @@ impl[T] ExactSizeIterator[Slice[T]] for SliceWindows[T] {
       return 0;
     }
     return self.len - self.size - self.index + 1;
+  }
+}
+
+impl[T] DoubleEndedIterator[Slice[T]] for SliceWindows[T] {
+  pub fn next_back(self: ref mut Self) -> Option[Slice[T]] {
+    if self.size > self.len {
+      return None<Slice[T]>();
+    }
+    if self.index + self.size > self.len {
+      return None<Slice[T]>();
+    }
+
+    let start = self.len - self.size;
+    let current = Slice<T> { data: ptr_add(self.data, start), len: self.size };
+    self.len = self.len - 1;
+    return Some<Slice[T]>(current);
   }
 }
 
@@ -556,6 +589,10 @@ pub trait Iterator[T] {
 
 pub trait ExactSizeIterator[T]: Iterator[T] {
   fn len(self: ref Self) -> i64;
+}
+
+pub trait DoubleEndedIterator[T]: Iterator[T] {
+  fn next_back(self: ref mut Self) -> std::Option[T];
 }
 
 pub trait IntoIterator[T] {

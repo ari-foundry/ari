@@ -1511,6 +1511,7 @@ struct std::zone::ZoneMetadata|std zone backed handle metadata tests; docs/stdli
 trait std::Clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait std::Copy|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait std::Default|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::DoubleEndedIterator[T]|check-prelude std-iter-double-ended supertrait child of Iterator; docs/stdlib/modules/iter.md
 trait std::Drop|ownership destructor tests; docs/dev/test-matrix.md Ownership row
 trait std::Eq[T]|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait std::ExactSizeIterator[T]|check-prelude std-iter-exact-size supertrait child of Iterator; docs/stdlib/modules/iter.md
@@ -1546,6 +1547,7 @@ trait std::iter::Iterator[T]|iterator module tests; docs/dev/test-matrix.md Cont
 trait std::zone::ZoneBacked|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 trait-method std::Clone::clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::Default::default|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::DoubleEndedIterator[T]::next_back|check-prelude std-iter-double-ended back-to-front cursor method; docs/stdlib/modules/iter.md
 trait-method std::Drop::drop|ownership destructor tests; docs/dev/test-matrix.md Ownership row
 trait-method std::Eq[T]::eq|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::ExactSizeIterator[T]::len|check-prelude std-iter-exact-size exact remaining-length method; docs/stdlib/modules/iter.md
@@ -1616,6 +1618,7 @@ use std::has_arg|std context args root re-export tests; docs/stdlib/modules/cont
 use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::input_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::is_between|std cmp value helper root re-export tests; docs/stdlib/api-reference.md Comparison section
+use std::iter::DoubleEndedIterator|check-prelude std-iter-double-ended module alias for root supertrait; docs/stdlib/modules/iter.md
 use std::iter::ExactSizeIterator|check-prelude std-iter-exact-size module alias for root supertrait; docs/stdlib/modules/iter.md
 use std::iter::collect|check-prelude std-iter-adapters natural iter::collect alias backed by std::vec; docs/stdlib/modules/iter.md
 use std::max|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row

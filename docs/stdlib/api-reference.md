@@ -36,6 +36,7 @@ HashMap[K, V]
 HashSet[T]
 TreeMap[K, V]
 TreeSet[T]
+DoubleEndedIterator[T]
 ExactSizeIterator[T]
 std::Vec[T]
 move(value)
@@ -1908,6 +1909,7 @@ iter::zip<T, U, I: std::Iterator[T], J: std::Iterator[U]>(left, right)
 iter::fold<T, U, I: std::Iterator[T]>(iter, initial, op)
 iter::reduce<T, I: std::Iterator[T]>(iter, op)
 iter::collect<T, I: std::Iterator[T]>(ref mut zone, iter)
+iter::DoubleEndedIterator[T]
 iter::ExactSizeIterator[T]
 iter::Iterator[T]
 iter::IntoIterator[T]
@@ -1916,6 +1918,8 @@ iter::Iterable[T]
 
 Root aliases expose `range(start, end)` and `range_inclusive(start, end)`.
 Source cursors implement `Iterator[T]::next(self: ref mut Self) -> Option[T]`.
+`DoubleEndedIterator[T]` is a child trait of `Iterator[T]` for cursors that
+can also yield from the back with `next_back()`.
 `ExactSizeIterator[T]` is a child trait of `Iterator[T]` for cursors that can
 report an exact remaining `len()`; child bounds can still call parent
 `next()`.
