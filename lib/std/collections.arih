@@ -501,6 +501,15 @@ fn normalized_hash_capacity(capacity: i64) -> i64 {
   return capacity;
 }
 
+// Convert a desired live element count to buckets under the load-factor rule.
+fn hash_capacity_for_len(len: i64) -> i64 {
+  var capacity = normalized_hash_capacity(len + 1);
+  while (len + 1) * 4 >= capacity * 3 {
+    capacity = capacity * 2;
+  }
+  return capacity;
+}
+
 fn bucket_for(hash: u64, capacity: i64) -> i64 {
   return (hash % (capacity as u64)) as i64;
 }
@@ -782,6 +791,11 @@ pub impl[K, V] std::collections::HashMap[K, V] {
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     hash_map_grow_to_capacity<K, V>(self, zone, capacity);
+  }
+
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    hash_map_grow_to_capacity<K, V>(self, zone, hash_capacity_for_len(self.len + additional));
   }
 
   fn keys(self: ref Self) -> std::collections::HashMapKeys[K] {
@@ -1100,6 +1114,11 @@ pub impl[T] std::collections::HashSet[T] {
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     hash_set_grow_to_capacity<T>(self, zone, capacity);
+  }
+
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    hash_set_grow_to_capacity<T>(self, zone, hash_capacity_for_len(self.len + additional));
   }
 
   fn iter(self: ref Self) -> std::collections::HashSetIter[T] {
@@ -1657,6 +1676,11 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     tree_map_grow_to_capacity<K, V>(self, zone, capacity);
   }
 
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    tree_map_grow_to_capacity<K, V>(self, zone, self.len + additional);
+  }
+
   fn keys(self: ref Self) -> std::collections::TreeMapKeys[K] {
     return std::collections::TreeMapKeys<K> {
       keys: self.keys,
@@ -2136,6 +2160,11 @@ pub impl[T] std::collections::TreeSet[T] {
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     tree_set_grow_to_capacity<T>(self, zone, capacity);
+  }
+
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    tree_set_grow_to_capacity<T>(self, zone, self.len + additional);
   }
 
   fn iter(self: ref Self) -> std::collections::TreeSetIter[T] {

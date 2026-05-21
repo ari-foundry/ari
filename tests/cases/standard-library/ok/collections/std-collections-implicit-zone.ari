@@ -14,6 +14,10 @@ fn main() -> i64 {
   if map.capacity() >= 16 {
     score = score + 3;
   }
+  map.reserve_extra(20);
+  if map.capacity() >= map.len() + 20 {
+    score = score + 16;
+  }
 
   var hash_set = collections::hash_set<i64>(ref mut zone, 1, collections::hash_i64);
   if hash_set.insert(2) && !hash_set.insert(2) {
@@ -26,6 +30,10 @@ fn main() -> i64 {
   if hash_set.capacity() >= 16 {
     score = score + 6;
   }
+  hash_set.reserve_extra(20);
+  if hash_set.capacity() >= hash_set.len() + 20 {
+    score = score + 17;
+  }
 
   var tree_map = collections::tree_map<i64, i64>(ref mut zone, 1, collections::less_i64);
   if tree_map.insert(3, 30).is_none() && tree_map.get(3) == 30 {
@@ -34,6 +42,10 @@ fn main() -> i64 {
   tree_map.reserve(16);
   if tree_map.capacity() >= 16 {
     score = score + 8;
+  }
+  tree_map.reserve_extra(20);
+  if tree_map.capacity() >= tree_map.len() + 20 {
+    score = score + 18;
   }
 
   var tree_set = collections::tree_set<i64>(ref mut zone, 1, collections::less_i64);
@@ -46,6 +58,10 @@ fn main() -> i64 {
   tree_set.reserve(16);
   if tree_set.capacity() >= 16 {
     score = score + 11;
+  }
+  tree_set.reserve_extra(20);
+  if tree_set.capacity() >= tree_set.len() + 20 {
+    score = score + 19;
   }
 
   var deque = collections::deque<i64>(ref mut zone, 1);

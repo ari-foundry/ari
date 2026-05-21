@@ -1392,8 +1392,9 @@ set.copy_to(ref mut zone)
 For a local collection handle created from a tracked zone allocation, common
 growth methods may omit the repeated zone argument. Examples include
 `set.insert(value)`, `set.replace(value)`, `map.insert(key, value)`,
-`map.reserve(capacity)`, `deque.push_back(value)`, `list.push_front(value)`,
-and `heap.push(value)`. Keep the explicit `ref mut zone` form for manually
+`map.reserve(capacity)`, `map.reserve_extra(additional)`,
+`deque.push_back(value)`, `list.push_front(value)`, and `heap.push(value)`.
+Keep the explicit `ref mut zone` form for manually
 assembled or otherwise untracked handles.
 
 `insert` returns `true` only for newly inserted values. `replace` returns
@@ -1491,6 +1492,7 @@ map.insert(ref mut zone, key, value)
 map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
+map.reserve_extra(ref mut zone, additional)
 map.keys()
 map.values()
 map.entries()
@@ -1515,6 +1517,7 @@ set.take(value)
 set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
+set.reserve_extra(ref mut zone, additional)
 set.iter()
 ```
 
@@ -1531,7 +1534,9 @@ insertion order. `HashSet` relationship methods compare live membership and
 ignore tombstones;
 `HashMap.entries()` yields `MapEntry[K,V]` values with `.key` and `.value`
 fields over the same live buckets. `HashSet.iter()` and direct
-`for value in set` use the same live-bucket cursor.
+`for value in set` use the same live-bucket cursor. Hash
+`reserve_extra(additional)` grows enough buckets for `len + additional` live
+items without immediately violating the load-factor rule.
 
 Tree collections use explicit strict less-than comparators:
 
@@ -1559,6 +1564,7 @@ map.insert(ref mut zone, key, value)
 map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
+map.reserve_extra(ref mut zone, additional)
 map.keys()
 map.values()
 map.entries()
@@ -1583,6 +1589,7 @@ set.take(value)
 set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
+set.reserve_extra(ref mut zone, additional)
 set.iter()
 ```
 

@@ -221,9 +221,10 @@ Hash collections are real hash tables, not aliases over `Set`. They use linear
 probing, tombstones for removal, and a load-factor growth rule. Until Ari has a
 standard `Hash` trait with dispatch through generic containers, constructors
 take a hash function explicitly.
-For tracked local hash handles, `map.insert(key, value)`, `map.reserve(capacity)`,
-`set.insert(value)`, `set.replace(value)`, and `set.reserve(capacity)` infer the
-constructor zone.
+For tracked local hash handles, `map.insert(key, value)`,
+`map.reserve(capacity)`, `map.reserve_extra(additional)`, `set.insert(value)`,
+`set.replace(value)`, `set.reserve(capacity)`, and
+`set.reserve_extra(additional)` infer the constructor zone.
 
 ```ari
 collections::hash_i64(value)
@@ -250,6 +251,7 @@ map.insert(ref mut zone, key, value)
 map.remove(key)
 map.clear()
 map.reserve(ref mut zone, capacity)
+map.reserve_extra(ref mut zone, additional)
 map.keys()
 map.values()
 map.entries()
@@ -263,7 +265,9 @@ tombstones. `remove` returns the removed value. `keys` and `values` iterate
 live buckets. That order is deterministic for a specific table state, but it
 is not insertion order and should not be used as a stable sorting rule.
 `entries` yields `MapEntry[K, V]` values with `.key` and `.value` fields over
-the same live buckets.
+the same live buckets. `reserve_extra(additional)` reserves enough hash buckets
+for the requested live length without immediately violating the table's load
+factor rule.
 
 ```ari
 set.len()
@@ -280,6 +284,7 @@ set.take(value)
 set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
+set.reserve_extra(ref mut zone, additional)
 set.iter()
 ```
 
@@ -346,8 +351,8 @@ use the `try_*` forms for empty-safe boundary access. `entries` yields
 order. `remove` returns the removed value as `Option[V]`; the current
 implementation compacts the live node arrays and rebuilds tree links in place,
 so removal does not allocate through a zone. For tracked local tree maps,
-`map.insert(key, value)` and `map.reserve(capacity)` infer the constructor
-zone.
+`map.insert(key, value)`, `map.reserve(capacity)`, and
+`map.reserve_extra(additional)` infer the constructor zone.
 
 ```ari
 set.len()
@@ -368,6 +373,7 @@ set.take(value)
 set.remove(value)
 set.clear()
 set.reserve(ref mut zone, capacity)
+set.reserve_extra(ref mut zone, additional)
 set.iter()
 ```
 
@@ -382,7 +388,8 @@ anything was removed. Tree-set removal also compacts live nodes and rebuilds
 links in place without allocating. `TreeSet.iter()` yields values in ascending
 comparator order, and `TreeSet[T]` implements `IntoIterator[T]`. For tracked
 local tree sets, `set.insert(value)`, `set.replace(value)`, and
-`set.reserve(capacity)` infer the constructor zone.
+`set.reserve(capacity)`/`set.reserve_extra(additional)` infer the constructor
+zone.
 
 ## BinaryHeap And PriorityQueue
 

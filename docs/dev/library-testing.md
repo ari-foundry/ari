@@ -221,7 +221,8 @@ identifies the exact case:
   source zone for insert, replace, reserve, and reserve-extra growth methods.
 - `std-collections-implicit-zone.ari`: tracked local hash, tree, deque,
   linked-list, heap, and priority-queue calls infer the source zone for
-  mutating growth methods.
+  mutating growth methods, including spare-capacity `reserve_extra` where the
+  collection can grow after construction.
 - `std-collections-set-iter.ari`: source set cursor iteration, direct
   `for value in set.iter()`, and `IntoIterator` lowering for `for value in set`.
 - `std-collections-set-after-reset.ari`: negative source-zone provenance

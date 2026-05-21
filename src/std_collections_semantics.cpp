@@ -498,8 +498,9 @@ std::optional<StdCollectionsImplicitZoneMethod> std_collections_implicit_zone_me
         if (method_name == "insert" && user_arg_count == 2) {
             return StdCollectionsImplicitZoneMethod{"insert", false};
         }
-        if (method_name == "reserve" && user_arg_count == 1) {
-            return StdCollectionsImplicitZoneMethod{"reserve", false};
+        if ((method_name == "reserve" || method_name == "reserve_extra") &&
+            user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{method_name, false};
         }
         return std::nullopt;
     }
@@ -516,9 +517,7 @@ std::optional<StdCollectionsImplicitZoneMethod> std_collections_implicit_zone_me
         if (method_name == "reserve" && user_arg_count == 1) {
             return StdCollectionsImplicitZoneMethod{"reserve", false};
         }
-        if (is_std_collections_set_handle_type(receiver_value_type) &&
-            method_name == "reserve_extra" &&
-            user_arg_count == 1) {
+        if (method_name == "reserve_extra" && user_arg_count == 1) {
             return StdCollectionsImplicitZoneMethod{"reserve_extra", false};
         }
         return std::nullopt;
