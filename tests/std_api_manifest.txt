@@ -828,6 +828,7 @@ method std::collections::HashSet[T]::clear|check-prelude std-collections-hash dr
 method std::collections::HashSet[T]::contains|check-prelude std-collections-hash hash set lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::copy_to|check-prelude std-collections-copy-to target-zone hash set copy without tombstones; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::equals|check-prelude std-collections-hash-set-relations membership equality predicate; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::get|check-prelude std-collections-set-representatives asserting stored representative lookup; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::insert|check-prelude std-collections-hash hash set insertion with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::is_disjoint|check-prelude std-collections-hash-set-relations live-bucket disjointness predicate; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::is_empty|check-prelude std-collections-hash metadata helper; docs/stdlib/modules/collections.md
@@ -841,6 +842,7 @@ method std::collections::HashSet[T]::replace|check-prelude std-collections-hash 
 method std::collections::HashSet[T]::reserve|check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::reserve_extra|check-prelude std-collections-implicit-zone spare table growth; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::take|check-prelude std-collections-hash Option-returning removal; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::try_get|check-prelude std-collections-set-representatives optional stored representative lookup; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::back|check-prelude std-collections-linked-list asserting back accessor; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::capacity|check-prelude std-collections-linked-list linked list capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::clear|check-prelude std-collections-linked-list drops live linked list values; docs/stdlib/modules/collections.md
@@ -960,6 +962,7 @@ method std::collections::TreeSet[T]::contains|check-prelude std-collections-tree
 method std::collections::TreeSet[T]::copy_to|check-prelude std-collections-copy-to target-zone ordered set copy; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::equals|check-prelude std-collections-tree-set-relations membership equality predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::first|check-prelude std-collections-tree-boundaries asserting smallest-value accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::get|check-prelude std-collections-set-representatives asserting ordered representative lookup; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::insert|check-prelude std-collections-tree red-black set insertion with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::is_disjoint|check-prelude std-collections-tree-set-relations ordered-set disjointness predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::is_empty|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
@@ -976,6 +979,7 @@ method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree 
 method std::collections::TreeSet[T]::reserve_extra|check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::take|check-prelude std-collections-tree-remove Option-returning link-rebuild removal; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::try_first|check-prelude std-collections-tree-boundaries optional smallest-value accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::try_get|check-prelude std-collections-set-representatives optional ordered representative lookup; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::try_last|check-prelude std-collections-tree-boundaries optional largest-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::upper_bound|check-prelude std-collections-tree-bounds optional first value greater than target; docs/stdlib/modules/collections.md
 method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md

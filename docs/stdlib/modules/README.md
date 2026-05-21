@@ -39,7 +39,8 @@ limits, examples, and test files for one module.
   hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree
   `TreeMap[K,V]`/`TreeSet[T]`, natural lookup/update names, explicit
   hash/comparator constructors, collection iterators, copied views,
-  comparator-order bounds, and explicit-zone provenance.
+  set representative lookup, comparator-order bounds, and explicit-zone
+  provenance.
 - [std::iter](iter.md): range constructors plus the minimal iterator traits
   used by `for` loops and collection cursors.
 - [std::fmt](fmt.md): `Debug` and `Display` trait dispatch, source

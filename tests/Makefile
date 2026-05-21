@@ -1625,6 +1625,11 @@ check-prelude: $(TARGET)
 	grep -q 'std__collections__HashSet_i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-hash-iter.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf
 	$(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-representatives.ll
+	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent7try_get' $(BUILD_DIR)/prelude/std-collections-set-representatives.ll
+	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent3get' $(BUILD_DIR)/prelude/std-collections-set-representatives.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari -o $(BUILD_DIR)/prelude/std-collections-set-representatives.elf
+	$(BUILD_DIR)/prelude/std-collections-set-representatives.elf; code=$$?; test $$code -eq 236
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-entries.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent7entries' $(BUILD_DIR)/prelude/std-collections-map-entries.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent7entries' $(BUILD_DIR)/prelude/std-collections-map-entries.ll
@@ -1964,6 +1969,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash.elf; $(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; code=$$?; test $$code -eq 236; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-entries.elf; $(BUILD_DIR)/prelude/std-collections-map-entries.elf; code=$$?; test $$code -eq 71; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 145; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; $(BUILD_DIR)/prelude/std-collections-map-value-predicates.elf; code=$$?; test $$code -eq 90; fi

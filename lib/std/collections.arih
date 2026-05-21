@@ -1049,6 +1049,20 @@ pub impl[T] std::collections::HashSet[T] {
     return hash_set_find_slot<T>(self, value) >= 0;
   }
 
+  fn get(self: ref Self, value: T) -> T {
+    let index = hash_set_find_slot<T>(self, value);
+    std::assert(index >= 0);
+    return ptr_load(ptr_add(self.data, index));
+  }
+
+  fn try_get(self: ref Self, value: T) -> std::Option[T] {
+    let index = hash_set_find_slot<T>(self, value);
+    if index < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(ptr_add(self.data, index)));
+  }
+
   fn is_subset(self: ref Self, other: ref Self) -> bool {
     var index = 0;
     while index < self.capacity {
@@ -2201,6 +2215,20 @@ pub impl[T] std::collections::TreeSet[T] {
 
   fn contains(self: ref Self, value: T) -> bool {
     return tree_set_find_slot<T>(self, value) >= 0;
+  }
+
+  fn get(self: ref Self, value: T) -> T {
+    let node = tree_set_find_slot<T>(self, value);
+    std::assert(node >= 0);
+    return ptr_load(ptr_add(self.data, node));
+  }
+
+  fn try_get(self: ref Self, value: T) -> std::Option[T] {
+    let node = tree_set_find_slot<T>(self, value);
+    if node < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(ptr_add(self.data, node)));
   }
 
   fn first(self: ref Self) -> T {

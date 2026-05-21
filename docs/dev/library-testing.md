@@ -258,6 +258,9 @@ identifies the exact case:
 - `std-collections-hash-iter.ari`: live-bucket `HashMap.keys`,
   `HashMap.values`, `HashSet.iter`, and direct `HashSet` `IntoIterator`
   behavior after tombstone reuse.
+- `std-collections-set-representatives.ari`: `HashSet.get`/`try_get` and
+  `TreeSet.get`/`try_get` representative lookup before and after
+  replacement/removal paths.
 - `std-collections-map-natural-api.ari`: natural map lookup spellings,
   including compatibility `contains`, preferred `contains_key`, and fallback
   `get_or` for both hash and tree maps.

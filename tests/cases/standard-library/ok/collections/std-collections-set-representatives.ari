@@ -1,0 +1,62 @@
+// Covers natural representative lookup for set-style hash and tree
+// collections. try_get is absence-safe; get asserts that membership exists.
+fn constant_hash(value: i64) -> u64 {
+  return 11;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var hash = HashSet::new<i64>(ref mut zone, 1, constant_hash);
+  var tree = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  hash.insert(ref mut zone, 4);
+  hash.insert(ref mut zone, 12);
+  hash.insert(ref mut zone, 20);
+  if hash.try_get(12).unwrap_or(0) == 12 {
+    score = score + 3;
+  }
+  if hash.get(4) == 4 {
+    score = score + 5;
+  }
+  if hash.try_get(99).is_none() {
+    score = score + 7;
+  }
+  if hash.replace(ref mut zone, 12).unwrap_or(0) == 12 {
+    score = score + 11;
+  }
+  if hash.get(12) == 12 {
+    score = score + 13;
+  }
+  hash.take(4);
+  if hash.try_get(4).is_none() {
+    score = score + 17;
+  }
+
+  tree.insert(ref mut zone, 6);
+  tree.insert(ref mut zone, 2);
+  tree.insert(ref mut zone, 9);
+  tree.insert(ref mut zone, 4);
+  if tree.try_get(4).unwrap_or(0) == 4 {
+    score = score + 19;
+  }
+  if tree.get(9) == 9 {
+    score = score + 23;
+  }
+  if tree.try_get(5).is_none() {
+    score = score + 29;
+  }
+  if tree.replace(ref mut zone, 6).unwrap_or(0) == 6 {
+    score = score + 31;
+  }
+  if tree.get(6) == 6 {
+    score = score + 37;
+  }
+  tree.take(2);
+  if tree.try_get(2).is_none() {
+    score = score + 41;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

@@ -1526,6 +1526,8 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.get(value)
+set.try_get(value)
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -1551,8 +1553,9 @@ fallback when the key is absent. `HashMap.insert` returns `Option[V]` with the
 previous value on replacement. `HashMap.remove` returns `Option[V]` and leaves
 a tombstone so later probes still find collided keys. `HashMap.keys()` and
 `HashMap.values()` iterate live buckets; this is deterministic for the table
-state, but it is not insertion order. `HashSet` relationship methods compare
-live membership and ignore tombstones;
+state, but it is not insertion order. `HashSet.get(value)` and
+`HashSet.try_get(value)` read the stored equal representative. `HashSet`
+relationship methods compare live membership and ignore tombstones;
 `HashMap.entries()` yields `MapEntry[K,V]` values with `.key` and `.value`
 fields over the same live buckets. `HashSet.iter()` and direct
 `for value in set` use the same live-bucket cursor. Hash
@@ -1605,6 +1608,8 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.get(value)
+set.try_get(value)
 set.first()
 set.try_first()
 set.last()
@@ -1642,7 +1647,8 @@ ordered-set membership, not internal tree shape.
 `TreeSet.first()` and `TreeSet.last()` read the smallest and largest values,
 with `try_first` and `try_last` for empty-safe access. `TreeSet.lower_bound`
 and `TreeSet.upper_bound` return optional nearest values in comparator order.
-`TreeSet.take(value)` returns the removed value as `Option[T]`;
+`TreeSet.get(value)` and `TreeSet.try_get(value)` read the stored equal
+representative. `TreeSet.take(value)` returns the removed value as `Option[T]`;
 `TreeSet.remove(value)` drops it and returns a boolean. `TreeMap.keys()`,
 `TreeMap.values()`, `TreeMap.entries()`, `TreeSet.iter()`, and direct
 `for value in tree_set` walk values in ascending comparator order. Tree

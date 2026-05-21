@@ -287,6 +287,8 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.get(value)
+set.try_get(value)
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -305,7 +307,9 @@ set.iter()
 `HashSet.insert` returns whether the value was newly inserted. `replace`
 returns the previous equal value when present. `take` moves a removed value out;
 `remove` drops it. `equals`, `is_subset`, `is_superset`, and `is_disjoint`
-compare membership over live buckets and ignore tombstones. `HashSet.iter()`
+compare membership over live buckets and ignore tombstones. `try_get(value)`
+returns the stored equal representative as `Option[T]`, and `get(value)` asserts
+that such a representative exists. `HashSet.iter()`
 yields live buckets, and `HashSet[T]` implements `IntoIterator[T]` so
 `for value in set` works through the same cursor. `copy_to(ref mut target)`
 copies live values into a fresh target-zone hash table without tombstones.
@@ -389,6 +393,8 @@ set.len()
 set.capacity()
 set.is_empty()
 set.contains(value)
+set.get(value)
+set.try_get(value)
 set.first()
 set.try_first()
 set.last()
@@ -418,7 +424,9 @@ in comparator order and assert when the tree is empty; use `try_first` and
 `try_last` when emptiness is ordinary control flow. `lower_bound(value)`
 returns the first stored value that is not less than `value`, and
 `upper_bound(value)` returns the first stored value greater than `value`; both
-return `None` past the right edge. `take` moves a removed value out as
+return `None` past the right edge. `try_get(value)` returns the stored equal
+representative as `Option[T]`, and `get(value)` asserts that it exists. `take`
+moves a removed value out as
 `Option[T]`; `remove` drops the removed value and returns whether anything was
 removed. Tree-set removal also compacts live nodes and rebuilds links in place
 without allocating. `TreeSet.iter()` yields values in ascending comparator
@@ -520,6 +528,7 @@ tests/cases/standard-library/ok/collections/std-collections-structure-copy-to.ar
 tests/cases/standard-library/ok/collections/std-collections-hash.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari
+tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari
 tests/cases/standard-library/ok/collections/std-collections-map-entries.ari
 tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari
 tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari
@@ -586,7 +595,9 @@ tree entries in sorted key order.
 working while locking down the preferred `contains_key` and fallback `get_or`
 spellings for hash and tree maps. `std-collections-map-value-predicates.ari`
 checks `contains_value` for hash live buckets after a tombstone and for tree
-map values independent of key order. `std-collections-tree.ari` inserts mixed
+map values independent of key order. `std-collections-set-representatives.ari`
+checks `HashSet.get`/`try_get` and `TreeSet.get`/`try_get` before and after
+replacement/removal paths. `std-collections-tree.ari` inserts mixed
 key order to exercise red-black rotations. `std-collections-tree-boundaries.ari`
 checks empty-safe and asserting ordered boundary access for tree maps and sets.
 `std-collections-tree-entry-boundaries.ari` checks key/value boundary entry
