@@ -1198,6 +1198,7 @@ method std::net::TcpListener::is_nonblocking|check-prelude std-net-tcp-loopback 
 method std::net::TcpListener::is_open|check-prelude std-net-tcp-loopback listener open predicate; docs/stdlib/modules/net.md
 method std::net::TcpListener::local_addr|check-prelude std-net-tcp-loopback listener bound IPv4 socket-address lookup; docs/stdlib/modules/net.md
 method std::net::TcpListener::local_port|check-prelude std-net-tcp-loopback listener bound-port lookup; docs/stdlib/modules/net.md
+method std::net::TcpListener::set_accept_timeout|check-prelude std-net-tcp-loopback Duration-based listener accept timeout setter; docs/stdlib/modules/net.md
 method std::net::TcpListener::set_accept_timeout_millis|check-prelude std-net-tcp-loopback listener accept timeout setter; docs/stdlib/modules/net.md
 method std::net::TcpListener::set_nonblocking|check-prelude std-net-tcp-loopback listener nonblocking descriptor setter; docs/stdlib/modules/net.md
 method std::net::TcpListener::try_accept|check-prelude std-net-tcp-loopback alias for fallible TCP accept; docs/stdlib/modules/net.md
@@ -1212,7 +1213,9 @@ method std::net::TcpStream::local_addr|check-prelude std-net-tcp-loopback stream
 method std::net::TcpStream::peer_addr|check-prelude std-net-tcp-loopback stream peer IPv4 socket-address lookup; docs/stdlib/modules/net.md
 method std::net::TcpStream::read_exact|check-prelude std-net-tcp-loopback stream buffer read helper; docs/stdlib/modules/net.md
 method std::net::TcpStream::set_nonblocking|check-prelude std-net-tcp-loopback stream nonblocking descriptor setter; docs/stdlib/modules/net.md
+method std::net::TcpStream::set_read_timeout|check-prelude std-net-tcp-loopback Duration-based stream read timeout setter; docs/stdlib/modules/net.md
 method std::net::TcpStream::set_read_timeout_millis|check-prelude std-net-tcp-loopback stream read timeout setter; docs/stdlib/modules/net.md
+method std::net::TcpStream::set_write_timeout|check-prelude std-net-tcp-loopback Duration-based stream write timeout setter; docs/stdlib/modules/net.md
 method std::net::TcpStream::set_write_timeout_millis|check-prelude std-net-tcp-loopback stream write timeout setter; docs/stdlib/modules/net.md
 method std::net::TcpStream::shutdown|check-prelude std-net-tcp-loopback stream half/full shutdown helper; docs/stdlib/modules/net.md
 method std::net::TcpStream::try_connect|check-prelude std-net-tcp-loopback alias for fallible TCP connect; docs/stdlib/modules/net.md
@@ -1229,7 +1232,9 @@ method std::net::UdpSocket::local_port|check-prelude std-net-udp-socket UDP boun
 method std::net::UdpSocket::recv_byte|check-prelude std-net-udp-socket single-byte UDP datagram receive helper; docs/stdlib/modules/net.md
 method std::net::UdpSocket::send_byte_to|check-prelude std-net-udp-socket single-byte UDP datagram send helper; docs/stdlib/modules/net.md
 method std::net::UdpSocket::set_nonblocking|check-prelude std-net-udp-socket UDP nonblocking descriptor setter; docs/stdlib/modules/net.md
+method std::net::UdpSocket::set_read_timeout|check-prelude std-net-udp-socket Duration-based UDP read timeout setter; docs/stdlib/modules/net.md
 method std::net::UdpSocket::set_read_timeout_millis|check-prelude std-net-udp-socket UDP read timeout setter; docs/stdlib/modules/net.md
+method std::net::UdpSocket::set_write_timeout|check-prelude std-net-udp-socket Duration-based UDP write timeout setter; docs/stdlib/modules/net.md
 method std::net::UdpSocket::set_write_timeout_millis|check-prelude std-net-udp-socket UDP write timeout setter; docs/stdlib/modules/net.md
 method std::net::UdpSocket::try_bind|check-prelude std-net-udp-socket alias for fallible UDP bind; docs/stdlib/modules/net.md
 method std::net::UdpSocket::try_recv_byte|check-prelude std-net-udp-socket Option-returning single-byte UDP datagram receive helper; docs/stdlib/modules/net.md
@@ -1252,7 +1257,9 @@ method std::net::UnixStream::is_nonblocking|check-prelude std-net-unix-socket Un
 method std::net::UnixStream::is_open|check-prelude std-net-unix-socket Unix stream open predicate; docs/stdlib/modules/net.md
 method std::net::UnixStream::read_exact|check-prelude std-net-unix-socket Unix stream buffer read helper; docs/stdlib/modules/net.md
 method std::net::UnixStream::set_nonblocking|check-prelude std-net-unix-socket Unix stream nonblocking descriptor setter; docs/stdlib/modules/net.md
+method std::net::UnixStream::set_read_timeout|check-prelude std-net-unix-socket Duration-based Unix stream read timeout setter; docs/stdlib/modules/net.md
 method std::net::UnixStream::set_read_timeout_millis|check-prelude std-net-unix-socket Unix stream read timeout setter; docs/stdlib/modules/net.md
+method std::net::UnixStream::set_write_timeout|check-prelude std-net-unix-socket Duration-based Unix stream write timeout setter; docs/stdlib/modules/net.md
 method std::net::UnixStream::set_write_timeout_millis|check-prelude std-net-unix-socket Unix stream write timeout setter; docs/stdlib/modules/net.md
 method std::net::UnixStream::shutdown|check-prelude std-net-unix-socket Unix stream half/full shutdown helper; docs/stdlib/modules/net.md
 method std::net::UnixStream::try_connect|check-prelude std-net-unix-socket alias for fallible Unix connect; docs/stdlib/modules/net.md

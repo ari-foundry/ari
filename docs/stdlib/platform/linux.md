@@ -28,8 +28,9 @@ Implemented now:
   `dlclose`, and `dlerror`.
 - `std::net` provides IP and socket-address values plus hosted IPv4 DNS
   lookup, IPv4 TCP listener/stream handles, IPv4 UDP single-byte datagrams,
-  Unix stream sockets, nonblocking flags, millisecond timeouts, and stream
-  shutdown over Linux sockets.
+  Unix stream sockets, nonblocking flags, `std::time::Duration` timeouts with
+  raw millisecond compatibility helpers, and stream shutdown over Linux
+  sockets.
 - Hosted executables currently rely on the platform CRT and dynamic linker;
   Ari emits LLVM IR and lets the LLVM driver link.
 

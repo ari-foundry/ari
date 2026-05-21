@@ -99,11 +99,13 @@ fn main() -> i64 {
     }
   }
 
-  if listener.set_accept_timeout_millis(1000) &&
-    client.set_read_timeout_millis(1000) &&
-    client.set_write_timeout_millis(1000) &&
-    server.set_read_timeout_millis(1000) &&
-    server.set_write_timeout_millis(1000) &&
+  let timeout = time::milliseconds(1000);
+  if listener.set_accept_timeout(timeout) &&
+    listener.set_accept_timeout_millis(1000) &&
+    client.set_read_timeout(timeout) &&
+    client.set_write_timeout(timeout) &&
+    server.set_read_timeout(timeout) &&
+    server.set_write_timeout(timeout) &&
     listener.set_nonblocking(false) &&
     client.set_nonblocking(false) &&
     server.set_nonblocking(false) &&

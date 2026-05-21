@@ -528,6 +528,10 @@ pub impl std::net::TcpListener {
     return set_read_timeout_millis_raw(self.handle.raw(), millis);
   }
 
+  fn set_accept_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+    return self.set_accept_timeout_millis(timeout.as_millis());
+  }
+
   fn local_port(self: ref Self) -> std::Option[u16] {
     if !self.is_open() {
       return std::None<u16>();
@@ -613,11 +617,19 @@ pub impl std::net::TcpStream {
     return set_read_timeout_millis_raw(self.handle.raw(), millis);
   }
 
+  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+    return self.set_read_timeout_millis(timeout.as_millis());
+  }
+
   fn set_write_timeout_millis(self: ref Self, millis: i64) -> bool {
     if !self.is_open() {
       return false;
     }
     return set_write_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
+  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+    return self.set_write_timeout_millis(timeout.as_millis());
   }
 
   fn local_addr(self: ref Self) -> std::Option[SocketAddr] {
@@ -726,11 +738,19 @@ pub impl std::net::UdpSocket {
     return set_read_timeout_millis_raw(self.handle.raw(), millis);
   }
 
+  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+    return self.set_read_timeout_millis(timeout.as_millis());
+  }
+
   fn set_write_timeout_millis(self: ref Self, millis: i64) -> bool {
     if !self.is_open() {
       return false;
     }
     return set_write_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
+  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+    return self.set_write_timeout_millis(timeout.as_millis());
   }
 
   fn send_byte_to(self: ref Self, value: u8, addr: SocketAddr) -> bool {
@@ -875,11 +895,19 @@ pub impl std::net::UnixStream {
     return set_read_timeout_millis_raw(self.handle.raw(), millis);
   }
 
+  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+    return self.set_read_timeout_millis(timeout.as_millis());
+  }
+
   fn set_write_timeout_millis(self: ref Self, millis: i64) -> bool {
     if !self.is_open() {
       return false;
     }
     return set_write_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
+  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+    return self.set_write_timeout_millis(timeout.as_millis());
   }
 
   fn shutdown(self: ref Self, mode: Shutdown) -> bool {

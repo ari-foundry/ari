@@ -1157,6 +1157,7 @@ listener.local_port()
 listener.local_addr()
 listener.is_nonblocking()
 listener.set_nonblocking(enabled)
+listener.set_accept_timeout(timeout)
 listener.set_accept_timeout_millis(millis)
 listener.accept()
 listener.try_accept()
@@ -1172,7 +1173,9 @@ stream.local_addr()
 stream.peer_addr()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
+stream.set_read_timeout(timeout)
 stream.set_read_timeout_millis(millis)
+stream.set_write_timeout(timeout)
 stream.set_write_timeout_millis(millis)
 stream.shutdown(mode)
 stream.try_read_byte()
@@ -1189,7 +1192,9 @@ socket.local_port()
 socket.local_addr()
 socket.is_nonblocking()
 socket.set_nonblocking(enabled)
+socket.set_read_timeout(timeout)
 socket.set_read_timeout_millis(millis)
+socket.set_write_timeout(timeout)
 socket.set_write_timeout_millis(millis)
 socket.send_byte_to(value, addr)
 socket.recv_byte()
@@ -1215,7 +1220,9 @@ stream.descriptor()
 stream.is_open()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
+stream.set_read_timeout(timeout)
 stream.set_read_timeout_millis(millis)
+stream.set_write_timeout(timeout)
 stream.set_write_timeout_millis(millis)
 stream.shutdown(mode)
 stream.try_read_byte()
@@ -1231,8 +1238,9 @@ known-good indexes and `try_octet`/`try_segment` when validating parsed input.
 owned descriptor-backed handles. They support hosted IPv4 TCP bind/connect/
 accept, IPv4 UDP bind/send-byte/receive-byte, Unix stream bind/connect/accept,
 local bound-port and local IPv4 socket-address lookup where it applies,
-borrowed descriptor views, explicit
-close, nonblocking flags, millisecond timeouts, and stream shutdown. TCP and
+borrowed descriptor views, explicit close, nonblocking flags,
+`std::time::Duration` timeout setters with raw millisecond compatibility
+helpers, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
 `read_exact(output, len)` / `write_all(values)` helpers for natural stream
 method syntax. IPv6 socket handles, buffered datagram APIs, richer socket

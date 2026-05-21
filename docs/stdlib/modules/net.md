@@ -76,6 +76,7 @@ listener.local_port()
 listener.local_addr()
 listener.is_nonblocking()
 listener.set_nonblocking(enabled)
+listener.set_accept_timeout(timeout)
 listener.set_accept_timeout_millis(millis)
 listener.accept()
 listener.try_accept()
@@ -91,7 +92,9 @@ stream.local_addr()
 stream.peer_addr()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
+stream.set_read_timeout(timeout)
 stream.set_read_timeout_millis(millis)
+stream.set_write_timeout(timeout)
 stream.set_write_timeout_millis(millis)
 stream.shutdown(mode)
 stream.try_read_byte()
@@ -108,7 +111,9 @@ socket.local_port()
 socket.local_addr()
 socket.is_nonblocking()
 socket.set_nonblocking(enabled)
+socket.set_read_timeout(timeout)
 socket.set_read_timeout_millis(millis)
+socket.set_write_timeout(timeout)
 socket.set_write_timeout_millis(millis)
 socket.send_byte_to(value, addr)
 socket.recv_byte()
@@ -134,7 +139,9 @@ stream.descriptor()
 stream.is_open()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
+stream.set_read_timeout(timeout)
 stream.set_read_timeout_millis(millis)
+stream.set_write_timeout(timeout)
 stream.set_write_timeout_millis(millis)
 stream.shutdown(mode)
 stream.try_read_byte()
@@ -238,18 +245,19 @@ buffer-style local message tests and tools.
 
 All socket handles expose `descriptor()` and `is_open()` because they are
 owned descriptor wrappers internally. TCP streams, UDP sockets, and Unix
-streams also expose read/write timeout setters in milliseconds. TCP listeners
-expose `set_accept_timeout_millis(millis)`, which maps to the listener read
-timeout used by `accept`.
+streams expose read/write timeout setters that accept `std::time::Duration`;
+TCP listeners expose `set_accept_timeout(timeout)`, which maps to the listener
+read timeout used by `accept`.
 
 `is_nonblocking()` and `set_nonblocking(enabled)` delegate to
 `std::os::OwnedFd` descriptor flags. They return `Option[bool]` or `bool`
 instead of panicking so invalid or already-closed handles can be handled by
 ordinary control flow.
 
-Timeout setters take raw milliseconds in this first slice. A later API should
-also accept `std::time::Duration` after richer `Result` payloads and timeout
-error categories are available across IO, fs, and net.
+Prefer the `Duration` setters in application and library code. The
+`*_timeout_millis(millis)` forms remain available as low-level compatibility
+helpers for FFI-style callers and tests that need to assert the runtime hook
+boundary directly.
 
 ## Examples
 
@@ -283,12 +291,13 @@ let bind_addr = net::SocketAddr::localhost(0 as u16);
 match net::TcpListener::bind_result(bind_addr) {
   std::Ok(listener) => {
     var server = listener;
-    server.set_accept_timeout_millis(1000);
+    let timeout = time::milliseconds(1000);
+    server.set_accept_timeout(timeout);
     let port = server.local_port().unwrap();
     var client = net::TcpStream::connect(net::SocketAddr::localhost(port)).unwrap();
     var accepted = server.accept().unwrap();
-    client.set_write_timeout_millis(1000);
-    accepted.set_read_timeout_millis(1000);
+    client.set_write_timeout(timeout);
+    accepted.set_read_timeout(timeout);
     var payload = [65u8, 66u8];
     client.write_all(payload.as_slice());
     var output = [0u8, 0u8];
@@ -334,12 +343,12 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
 | DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` over `getaddrinfo`. |
-| TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result`, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking setter/query, accept timeout, and explicit close. |
-| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result`, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4 slice: bind helpers, local-port and local-address lookup, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
-| Unix domain socket | Current hosted stream slice: `UnixListener` bind/accept helpers and `UnixStream` connect/IO/shutdown plus `read_exact`/`write_all` buffer helpers. |
+| TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result`, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond accept timeout setters, and explicit close. |
+| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result`, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4 slice: bind helpers, local-port and local-address lookup, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
+| Unix domain socket | Current hosted stream slice: `UnixListener` bind/accept helpers and `UnixStream` connect/IO/shutdown plus `Duration` and raw-millisecond timeout setters and `read_exact`/`write_all` buffer helpers. |
 | socket options | Current: nonblocking and read/write timeout helpers; future reuse-address, nodelay, buffer size, linger, multicast, and close-on-exec-at-creation options. |
-| timeout | Current: millisecond read/write/accept timeout setters; future `std::time::Duration` overloads and timeout-specific error results. |
+| timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond compatibility helpers; future timeout-specific error results. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
 
 ## Current Limits
@@ -402,8 +411,8 @@ lookup shapes, unsupported IPv6 text input, and edge IPv4 addresses.
   policy can express dotted IPv4 and compressed IPv6 cleanly.
 - Add IPv6 TCP and UDP socket handles, UDP source address helpers, and richer
   socket-address reporting.
-- Replace raw millisecond timeout setters with `std::time::Duration`-friendly
-  helpers once direct `Result[..., Error]` payloads are available.
+- Add Result-returning timeout setters and timeout-specific error categories
+  once the IO, fs, and net modules share direct `std::error::Error` payloads.
 - Add UDP buffer-oriented send and receive helpers, including `recv_from`
   source-address reporting; TCP/Unix stream buffer helpers are available as
   `read_exact` and `write_all`.

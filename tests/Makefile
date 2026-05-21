@@ -774,9 +774,12 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_set_read_timeout_millis" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_shutdown" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpListener8inherent18set_accept_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent9peer_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpStream8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpStream8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent9write_all" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari -o $(BUILD_DIR)/prelude/std-net-tcp-loopback.elf
 	$(BUILD_DIR)/prelude/std-net-tcp-loopback.elf; code=$$?; test $$code -eq 255
@@ -786,12 +789,16 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_udp_send_byte_to_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -q "@ari_builtin_net_udp_recv_byte" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -F -q "std__net__UdpSocket8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -F -q "std__net__UdpSocket8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-udp-socket.ari -o $(BUILD_DIR)/prelude/std-net-udp-socket.elf
 	$(BUILD_DIR)/prelude/std-net-udp-socket.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_listen" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixStream8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixStream8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent9write_all" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari -o $(BUILD_DIR)/prelude/std-net-unix-socket.elf
 	$(BUILD_DIR)/prelude/std-net-unix-socket.elf; code=$$?; test $$code -eq 255
