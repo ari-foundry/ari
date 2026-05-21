@@ -1502,6 +1502,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4iter35fold__G_i64_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
 	grep -q '_ARNv3std4iter33reduce__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
 	grep -q '_ARNv3std3vec34collect__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
+	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-exact-size.ari --emit-llvm $(BUILD_DIR)/prelude/std-iter-exact-size.ll
+	grep -q 'std__ExactSizeIterator3len' $(BUILD_DIR)/prelude/std-iter-exact-size.ll
+	grep -q 'std__Iterator4next' $(BUILD_DIR)/prelude/std-iter-exact-size.ll
+	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-exact-size.ari -o $(BUILD_DIR)/prelude/std-iter-exact-size.elf
+	$(BUILD_DIR)/prelude/std-iter-exact-size.elf; code=$$?; test $$code -eq 210
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-push-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-push-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-push-in.ll
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-insert-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-insert-in.ll
@@ -1959,6 +1964,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-as-mut-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.elf; $(BUILD_DIR)/prelude/std-vec-as-mut-ptr.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-iter.elf; $(BUILD_DIR)/prelude/std-vec-iter.elf; code=$$?; test $$code -eq 31; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/iter/std-iter-adapters.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-iter-adapters.elf; $(BUILD_DIR)/prelude/std-iter-adapters.elf; code=$$?; test $$code -eq 0; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/iter/std-iter-exact-size.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-iter-exact-size.elf; $(BUILD_DIR)/prelude/std-iter-exact-size.elf; code=$$?; test $$code -eq 210; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-push-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-push-in.elf; $(BUILD_DIR)/prelude/std-vec-push-in.elf; code=$$?; test $$code -eq 25; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-insert-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-insert-in.elf; $(BUILD_DIR)/prelude/std-vec-insert-in.elf; code=$$?; test $$code -eq 23; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-extend-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; code=$$?; test $$code -eq 11; fi

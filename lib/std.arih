@@ -413,6 +413,16 @@ impl[T] Iterator[Slice[T]] for SliceChunks[T] {
   }
 }
 
+impl[T] ExactSizeIterator[Slice[T]] for SliceChunks[T] {
+  pub fn len(self: ref Self) -> i64 {
+    if self.index >= self.len {
+      return 0;
+    }
+    let remaining = self.len - self.index;
+    return (remaining + self.size - 1) / self.size;
+  }
+}
+
 impl[T] Iterator[Slice[T]] for SliceWindows[T] {
   pub fn next(self: ref mut Self) -> Option[Slice[T]] {
     if self.size > self.len {
@@ -425,6 +435,18 @@ impl[T] Iterator[Slice[T]] for SliceWindows[T] {
     let current = Slice<T> { data: ptr_add(self.data, self.index), len: self.size };
     self.index = self.index + 1;
     return Some<Slice[T]>(current);
+  }
+}
+
+impl[T] ExactSizeIterator[Slice[T]] for SliceWindows[T] {
+  pub fn len(self: ref Self) -> i64 {
+    if self.size > self.len {
+      return 0;
+    }
+    if self.index + self.size > self.len {
+      return 0;
+    }
+    return self.len - self.size - self.index + 1;
   }
 }
 
@@ -530,6 +552,10 @@ pub trait Iterable[T] {
 
 pub trait Iterator[T] {
   fn next(self: ref mut Self) -> std::Option[T];
+}
+
+pub trait ExactSizeIterator[T]: Iterator[T] {
+  fn len(self: ref Self) -> i64;
 }
 
 pub trait IntoIterator[T] {

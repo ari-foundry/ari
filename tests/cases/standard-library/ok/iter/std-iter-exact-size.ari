@@ -1,0 +1,53 @@
+// Covers the std::ExactSizeIterator supertrait surface. The child bound must
+// expose its own len() method and the parent Iterator::next() method.
+fn score_exact[I: ExactSizeIterator[i64]](iter: I) -> i64 {
+  var cursor = iter;
+  let before = cursor.len();
+  let first = cursor.next().unwrap_or(0);
+  let after_first = cursor.len();
+
+  var rest = 0;
+  for value in ref mut cursor {
+    rest = rest + value;
+  }
+
+  return before * 100 + after_first * 10 + cursor.len() + first + rest;
+}
+
+fn score_alias[I: iter::ExactSizeIterator[i64]](iter: I) -> i64 {
+  var cursor = iter;
+  return cursor.len();
+}
+
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var values = std::vec::new<i64>(ref mut zone, 5);
+  values.push(4);
+  values.push(5);
+  values.push(6);
+  values.push(7);
+  values.push(8);
+
+  let vec_score = score_exact<std::vec::Iter[i64]>(values.iter());
+  let alias_score = score_alias<std::vec::Iter[i64]>(values.iter());
+
+  var view = values.as_slice();
+  var chunks = view.chunks(2);
+  let chunk_before = chunks.len();
+  let first_chunk = chunks.next().unwrap();
+  let chunk_after = chunks.len();
+  let chunk_score = chunk_before * 100 + chunk_after * 10 + first_chunk.len + first_chunk[0];
+
+  var windows = view.windows(3);
+  let window_before = windows.len();
+  let first_window = windows.next().unwrap();
+  let window_after = windows.len();
+  let window_score =
+    window_before * 100 + window_after * 10 + first_window.len + first_window[0] + first_window[2];
+
+  let total = vec_score + alias_score + chunk_score + window_score;
+  assert_eq_i64(total, 1234);
+
+  zone::destroy(zone);
+  return total % 256;
+}

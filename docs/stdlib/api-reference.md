@@ -36,6 +36,7 @@ HashMap[K, V]
 HashSet[T]
 TreeMap[K, V]
 TreeSet[T]
+ExactSizeIterator[T]
 std::Vec[T]
 move(value)
 take(place)
@@ -1907,6 +1908,7 @@ iter::zip<T, U, I: std::Iterator[T], J: std::Iterator[U]>(left, right)
 iter::fold<T, U, I: std::Iterator[T]>(iter, initial, op)
 iter::reduce<T, I: std::Iterator[T]>(iter, op)
 iter::collect<T, I: std::Iterator[T]>(ref mut zone, iter)
+iter::ExactSizeIterator[T]
 iter::Iterator[T]
 iter::IntoIterator[T]
 iter::Iterable[T]
@@ -1914,6 +1916,9 @@ iter::Iterable[T]
 
 Root aliases expose `range(start, end)` and `range_inclusive(start, end)`.
 Source cursors implement `Iterator[T]::next(self: ref mut Self) -> Option[T]`.
+`ExactSizeIterator[T]` is a child trait of `Iterator[T]` for cursors that can
+report an exact remaining `len()`; child bounds can still call parent
+`next()`.
 Collections that implement `IntoIterator[T]` can be used directly in `for`
 loops; `enumerate` yields `(index, value)` tuples and `zip` yields `(left,
 right)` tuples. Map-like collections still use explicit `keys()` and

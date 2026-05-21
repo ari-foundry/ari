@@ -19,9 +19,14 @@ iter::zip<T, U, I: std::Iterator[T], J: std::Iterator[U]>(left, right)
 iter::fold<T, U, I: std::Iterator[T]>(iter, initial, op)
 iter::reduce<T, I: std::Iterator[T]>(iter, op)
 iter::collect<T, I: std::Iterator[T]>(ref mut zone, iter)
+iter::ExactSizeIterator[T]
 
 trait Iterator[T] {
   fn next(self: ref mut Self) -> Option[T];
+}
+
+trait ExactSizeIterator[T]: Iterator[T] {
+  fn len(self: ref Self) -> i64;
 }
 
 trait IntoIterator[T] {
@@ -37,6 +42,14 @@ always names the target allocation zone explicitly.
 
 `skip` is the Ari standard name for the usual drop-count adapter because
 `drop` is already a language operation.
+
+`ExactSizeIterator[T]` is a supertrait child of `Iterator[T]`. Use it when a
+cursor can report the exact number of values still available without advancing
+the cursor. A generic bound such as `I: ExactSizeIterator[i64]` can call both
+`len()` from the child trait and `next()` from the parent `Iterator` trait.
+Current exact-size cursors include `std::vec::Iter[T]`, slice `chunks()` and
+`windows()` cursors, and the linear/circular collection cursors whose remaining
+length is stored directly.
 
 ## Lazy And Eager Operations
 
@@ -118,6 +131,7 @@ Representative coverage lives in:
 
 ```text
 tests/cases/standard-library/ok/iter/std-iter-adapters.ari
+tests/cases/standard-library/ok/iter/std-iter-exact-size.ari
 tests/cases/standard-library/ok/vec/std-vec-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-set-iter.ari
 tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari

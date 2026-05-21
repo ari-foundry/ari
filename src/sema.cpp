@@ -21430,6 +21430,11 @@ private:
                 if (first_bound_failure.empty()) first_bound_failure = bound_failure;
                 continue;
             }
+            std::vector<IrType> candidate_trait_args;
+            candidate_trait_args.reserve(candidate.trait_args.size());
+            for (const auto& arg : candidate.trait_args) {
+                candidate_trait_args.push_back(substitute_inferred_type(arg, substitutions));
+            }
             if (!generic_origin.empty()) {
                 bool has_applicable_bound = false;
                 bool matches_bound = false;
@@ -21442,18 +21447,18 @@ private:
                                 bound.trait_name,
                                 bound.trait_args,
                                 candidate.trait_name,
-                                candidate.trait_args)) {
+                                candidate_trait_args)) {
                             matches_bound = true;
                             break;
                         }
                         continue;
                     }
-                    if (candidate.trait_args.size() != bound.trait_args.size()) continue;
+                    if (candidate_trait_args.size() != bound.trait_args.size()) continue;
                     std::map<std::string, IrType> trait_substitutions = substitutions;
                     bool trait_args_match = true;
                     for (std::size_t i = 0; i < bound.trait_args.size(); ++i) {
                         if (!infer_generic_pattern_type(
-                                candidate.trait_args[i],
+                                candidate_trait_args[i],
                                 bound.trait_args[i],
                                 candidate.generic_names,
                                 trait_substitutions)) {

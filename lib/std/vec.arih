@@ -627,6 +627,12 @@ impl[T] super::Iterator[T] for std::vec::Iter[T] {
   }
 }
 
+impl[T] super::ExactSizeIterator[T] for std::vec::Iter[T] {
+  pub fn len(self: ref Self) -> i64 {
+    return self.len - self.index;
+  }
+}
+
 impl[T] super::IntoIterator[T] for std::vec::Vec[T] {
   pub fn into_iter(self: ref mut Self) -> std::vec::Iter[T] {
     return std::vec::Iter<T> { data: self.raw.data, len: self.raw.len, index: 0 };

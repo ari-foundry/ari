@@ -38,6 +38,9 @@ identifies the exact case:
 - `std-iter-adapters.ari`: source `std::iter` lazy `map`, `filter`, `take`,
   `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed
   `collect` behavior over `std::vec::Iter[T]`.
+- `std-iter-exact-size.ari`: root `ExactSizeIterator[T]` supertrait behavior,
+  including child-bound access to parent `Iterator[T]::next` and exact
+  remaining-length checks for vector and slice cursors.
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
 - `std-string-append-debug.ari`: source `std::string` generic Debug append
   helper, implicit same-zone lowering, and quoted built-in debug text.
