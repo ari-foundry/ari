@@ -130,6 +130,16 @@ pub fn read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> boo
   return true;
 }
 
+pub fn read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::Vec[u8] {
+  var output = std::vec::new<u8>(zone, 16);
+  var value = reader.read_byte();
+  while value >= 0 {
+    output.push_in(zone, value as u8);
+    value = reader.read_byte();
+  }
+  return output;
+}
+
 pub fn write_all[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> bool {
   var index = 0;
   while index < values.len {

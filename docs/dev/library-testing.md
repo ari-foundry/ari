@@ -335,6 +335,9 @@ identifies the exact case:
 - `std-io-traits-cursor.ari`: source `std::io` `Reader`/`Writer`/`Seek`,
   `Cursor`, `stdin`, `stdout`, `read_exact`, `write_all`, and `flush`
   behavior plus generated helper symbol checks.
+- `std-io-read-all.ari`: source `std::io` `read_all` collection over generic
+  `Reader` values, byte order, EOF after collection, and generated generic
+  helper symbol checks.
 - `std-io-stderr.ari`: source `std::io` `Stderr` writer behavior, stderr
   routing, explicit flush success, stdout/stderr separation, and generated
   helper symbol checks.

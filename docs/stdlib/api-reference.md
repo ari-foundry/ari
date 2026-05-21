@@ -1085,6 +1085,7 @@ io::cursor(values)
 io::buf_reader[R: Reader](inner, buffer)
 io::buf_writer[W: Writer](inner, buffer)
 io::read_exact[R: Reader](reader: ref mut R, output, len)
+io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R)
 io::write_all[W: Writer](writer: ref mut W, values)
 io::flush[W: Writer](writer: ref mut W)
 io::write_i64(value)
@@ -1110,6 +1111,9 @@ Borrowed line input uses a reusable runtime buffer; use the owned forms when
 the line must survive later input reads.
 
 `io::Cursor` implements `Reader` and `Seek` over a borrowed `Slice[u8]`.
+`io::read_all(ref mut zone, ref mut reader)` collects the remaining bytes from
+any `Reader` into a zone-backed `Vec[u8]`, stopping at the same EOF sentinel as
+`read_exact`.
 `io::Stdout` and `io::Stderr` implement `Writer` over the current process
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit

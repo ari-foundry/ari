@@ -335,6 +335,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-traits-cursor.ari -o $(BUILD_DIR)/prelude/std-io-traits-cursor.elf
 	$(BUILD_DIR)/prelude/std-io-traits-cursor.elf >$(BUILD_DIR)/prelude/std-io-traits-cursor.out; code=$$?; test $$code -eq 8
 	grep -qx "OK" $(BUILD_DIR)/prelude/std-io-traits-cursor.out
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-read-all.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-read-all.ll
+	grep -q '_ARNv3std2io27read_all__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-read-all.ll
+	grep -q '_ARNv3std2io47read_all__G_std__io__BufReader_std__io__Cursor_' $(BUILD_DIR)/prelude/std-io-read-all.ll
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-read-all.ari -o $(BUILD_DIR)/prelude/std-io-read-all.elf
+	$(BUILD_DIR)/prelude/std-io-read-all.elf; code=$$?; test $$code -eq 4
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-stderr.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-stderr.ll
 	grep -q '_ARNv3std2io28write_all__G_std__io__Stderr' $(BUILD_DIR)/prelude/std-io-stderr.ll
 	grep -q "@ari_builtin_write_error_byte" $(BUILD_DIR)/prelude/std-io-stderr.ll

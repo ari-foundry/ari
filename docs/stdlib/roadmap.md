@@ -45,8 +45,8 @@ Result bridging,
 object/debug format, errno ABI, pointer width, syscall ABI, and Linux
 API-family predicates,
 `io` runtime hooks plus source `Reader`/`Writer`/`Seek`, `Stdin`, `Stdout`,
-`Stderr`, `Cursor`, `BufReader`, `BufWriter`, `read_exact`, `write_all`,
-`flush`, stderr routing, and byte-slice output, current
+`Stderr`, `Cursor`, `BufReader`, `BufWriter`, `read_exact`, `read_all`,
+`write_all`, `flush`, stderr routing, and byte-slice output, current
 `process` id/uid/gid/exit/abort/status/root helpers plus the first POSIX
 fork/wait slice, `thread`
 function-pointer spawn/join/sleep/yield hooks plus runtime ids, available
@@ -93,7 +93,7 @@ work. Each one should land in small tested slices with natural API names.
 
 | Family | Purpose | Current Or Planned APIs |
 | --- | --- | --- |
-| `std::io` | Provide byte-oriented process IO contracts that other libraries can share without hiding raw hooks. | Current `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`, `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `pipe`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, `write_all`, `flush`, stderr routing, pipe adapters over `std::os::Pipe`, and raw scalar/byte/line hooks; future file adapters, zone-owning buffered constructors, and drop-time flush after owned resource policy is settled. |
+| `std::io` | Provide byte-oriented process IO contracts that other libraries can share without hiding raw hooks. | Current `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`, `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `pipe`, `cursor`, `buf_reader`, `buf_writer`, `read_exact`, zone-backed `read_all`, `write_all`, `flush`, stderr routing, pipe adapters over `std::os::Pipe`, and raw scalar/byte/line hooks; future file adapters, zone-owning buffered constructors, and drop-time flush after owned resource policy is settled. |
 | `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `arg_os`, `has_arg`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, `get`, `get_os`, `has`, `try_get`, `try_get_os`, `set`, `remove`, `current_dir`, `current_dir_os`, `current_dir_path`, `try_current_dir`, `try_current_dir_os`, `try_current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`, `try_executable_path`, `try_executable_path_os`; future path normalization and platform-specific expansion. |
 | `std::target` | Report compiler-known target facts without requiring users to parse triples by hand. | Current `triple`, `arch`, `arch_name`, `os`, `os_name`, `env`, `env_name`, `object_format`, `debug_format`, `errno_abi`, `pointer_bits`, `long_bits`, source predicates for Linux/glibc/musl/ELF/DWARF/TLS, Linux syscall ABI classification, and Linux API-family predicates for procfs/sysfs/vDSO/epoll/inotify/eventfd/timerfd/signalfd/memfd plus optional API families; future build-profile facts for static/dynamic/PIE/RELRO/stack-protector only after the driver owns those flags. |
 | `std::c` | Keep C ABI boundary helpers readable without making every program write raw loader and errno bindings. | Current `CStr`, `CString`, `Library`, `Symbol`, borrowed C string wrappers, zone-backed NUL-terminated storage, `errno`/`error`, `dlopen`/`dlsym`/`dlclose`/`dlerror` wrappers, typed dynamic function symbols, and root type aliases; future data-symbol wrappers, fallible string constructors, target-specific errno symbols, return-type generic inference, and explicit FFI escape rules for zone-backed buffers. |

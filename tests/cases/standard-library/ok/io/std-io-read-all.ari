@@ -1,0 +1,40 @@
+// Covers std::io::read_all over generic Reader values. The test reads a whole
+// Cursor, verifies EOF after collection, and repeats the path through BufReader.
+fn main() -> i64 {
+  var score = 0;
+  var zone = zone::create(256);
+
+  var source = [65u8, 66u8, 67u8, 68u8, 69u8];
+  var cursor = io::cursor(source.as_slice());
+  let all = io::read_all<io::Cursor>(ref mut zone, ref mut cursor);
+  if all.len() == 5 &&
+     all.get(0) == 65u8 &&
+     all.get(1) == 66u8 &&
+     all.get(2) == 67u8 &&
+     all.get(3) == 68u8 &&
+     all.get(4) == 69u8 {
+    score = score + 1;
+  }
+  if cursor.read_byte() < 0 {
+    score = score + 1;
+  }
+
+  var buffered_source = [70u8, 71u8, 72u8, 73u8];
+  var buffered_cursor = io::cursor(buffered_source.as_slice());
+  var storage = [0u8, 0u8];
+  var reader = io::buf_reader<io::Cursor>(buffered_cursor, storage.as_slice());
+  let buffered = io::read_all<io::BufReader[io::Cursor]>(ref mut zone, ref mut reader);
+  if buffered.len() == 4 &&
+     buffered.get(0) == 70u8 &&
+     buffered.get(1) == 71u8 &&
+     buffered.get(2) == 72u8 &&
+     buffered.get(3) == 73u8 {
+    score = score + 1;
+  }
+  if reader.read_byte() < 0 {
+    score = score + 1;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

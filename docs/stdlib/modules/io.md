@@ -2,8 +2,8 @@
 
 `std::io` is the byte-oriented process IO module. It keeps the raw runtime
 hooks visible, then layers a small Ari-source interface over them so code can
-talk about readers, writers, exact reads, whole-slice writes, buffered wrappers,
-and seekable in-memory cursors with natural names.
+talk about readers, writers, exact reads, whole-stream reads, whole-slice
+writes, buffered wrappers, and seekable in-memory cursors with natural names.
 
 Use `std::input` for ordinary stdin line/byte helpers, `std::fs` for files, and
 `std::io` when you want the lower-level IO contracts directly.
@@ -20,7 +20,7 @@ Implemented now:
   `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`
 - source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
   `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
-- source helpers: `read_exact`, `write_all`, `flush`
+- source helpers: `read_exact`, `read_all`, `write_all`, `flush`
 
 Roadmap, not implemented yet:
 
@@ -77,6 +77,7 @@ io::BufReader::new<R>(inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::BufWriter::new<W>(inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
 
 io::read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
+io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::Vec[u8]
 io::write_all[W: Writer](writer: ref mut W, values: Slice[u8]) -> bool
 io::flush[W: Writer](writer: ref mut W) -> bool
 
@@ -104,6 +105,9 @@ read_line_owned(ref mut zone)
 `Reader.read_byte` returns the next byte as `i64` or `-1` at EOF. That sentinel
 matches the existing runtime hook and keeps `read_exact` simple: it returns
 `true` only when all requested bytes were copied into `output`.
+`read_all(ref mut zone, ref mut reader)` repeatedly reads until EOF and returns
+a zone-backed `Vec[u8]`. Use it when the caller wants the whole remaining byte
+stream and can make allocation explicit through the zone.
 
 `Writer.write_byte` returns whether the byte was accepted. `write_all` returns
 `false` on the first failed byte write. `flush` delegates to the writer. The
@@ -156,6 +160,18 @@ fn main() -> i64 {
 
 ```ari
 fn main() -> i64 {
+  var zone = zone::create(128);
+  var input = [65u8, 66u8, 67u8];
+  var cursor = io::cursor(input.as_slice());
+  let bytes = io::read_all<io::Cursor>(ref mut zone, ref mut cursor);
+  let count = bytes.len();
+  zone::destroy(zone);
+  return count;
+}
+```
+
+```ari
+fn main() -> i64 {
   var pipe = io::pipe().unwrap();
   var reader = pipe.take_reader();
   var writer = pipe.take_writer();
@@ -187,8 +203,9 @@ handle, prefer `fmt::print_value(ref mut zone, value)` or
 ## Design Notes
 
 The trait names intentionally stay short and conventional: `Reader`, `Writer`,
-`Seek`, `read_exact`, `write_all`, and `flush`. Avoid type-suffixed helper
-names when trait bounds already carry the type information.
+`Seek`, `read_exact`, `read_all`, `write_all`, and `flush`. Avoid
+type-suffixed helper names when trait bounds already carry the type
+information.
 
 The module still separates process IO from filesystem IO. `std::fs::File` will
 implement these traits only after the file handle ownership policy is strong
@@ -202,6 +219,9 @@ enough to explain close, copy, drop, and seek behavior consistently.
 - `tests/cases/standard-library/ok/io/std-io-traits-cursor.ari` checks
   `Reader`, `Writer`, `Seek`, `Cursor`, `stdin`, `stdout`, `read_exact`,
   `write_all`, `flush`, generated helper symbols, and stdout output.
+- `tests/cases/standard-library/ok/io/std-io-read-all.ari` checks
+  `read_all` over `Cursor` and `BufReader[Cursor]`, returned byte order, EOF
+  after collection, and generated generic helper symbols.
 - `tests/cases/standard-library/ok/io/std-io-stderr.ari` checks `Stderr`,
   stderr routing, explicit flush success, generated helper symbols, and
   stdout/stderr stream separation.

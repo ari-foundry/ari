@@ -372,6 +372,7 @@ fn std::io::cursor|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::flush[W: Writer]|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::newline|prelude IO and print tests; docs/dev/test-matrix.md Prelude row
 fn std::io::pipe|check-prelude std-io-pipe pipe Reader/Writer adapter constructor; docs/stdlib/modules/io.md
+fn std::io::read_all[R: Reader]|check-prelude std-io-read-all generic Reader whole-stream collector; docs/stdlib/modules/io.md
 fn std::io::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_exact[R: Reader]|std io trait/cursor tests; docs/stdlib/modules/io.md
 fn std::io::read_line|prelude read_line/input tests; docs/dev/test-matrix.md Prelude row
