@@ -1,4 +1,4 @@
-// Primitive Eq/Ord impls live in std, so generic comparison helpers do not
+// Primitive comparison impls live in std, so generic comparison helpers do not
 // need per-test boilerplate impls for common scalar types.
 fn same[T: cmp::Eq[T]](left: T, right: T) -> bool {
   return left == right;
@@ -8,11 +8,27 @@ fn different[T: cmp::Eq[T]](left: T, right: T) -> bool {
   return left != right;
 }
 
+fn partially_same[T: cmp::PartialEq[T]](left: T, right: T) -> bool {
+  return left == right;
+}
+
+fn partially_different[T: cmp::PartialEq[T]](left: T, right: T) -> bool {
+  return left != right;
+}
+
 fn before[T: cmp::Ord[T]](left: T, right: T) -> bool {
   return left < right;
 }
 
+fn partially_before[T: cmp::PartialOrd[T]](left: T, right: T) -> bool {
+  return left < right;
+}
+
 fn at_least[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left >= right;
+}
+
+fn partially_at_least[T: cmp::PartialOrd[T]](left: T, right: T) -> bool {
   return left >= right;
 }
 
@@ -55,6 +71,20 @@ fn main() -> i64 {
   let ordering = cmp::compare<i64>(12, 7);
   if ordering.is_greater() {
     total = total + cmp::min<i64>(9, 4);
+  }
+
+  if partially_same<bool>(false, false) && partially_different<bool>(true, false) {
+    total = total + 29;
+  }
+  if partially_same<i64>(8, 8) &&
+     partially_before<i64>(8, 13) &&
+     partially_at_least<i64>(13, 13) {
+    total = total + 31;
+  }
+  if partially_same<u32>(8 as u32, 8 as u32) &&
+     partially_before<u32>(8 as u32, 13 as u32) &&
+     partially_at_least<u32>(13 as u32, 13 as u32) {
+    total = total + 37;
   }
 
   return total;

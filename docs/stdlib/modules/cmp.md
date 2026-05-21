@@ -108,9 +108,9 @@ is treated as a programmer error.
 The root prelude re-exports these helpers, so `min<T>`, `max<T>`, `clamp<T>`,
 and `is_between<T>` are aliases for the `std::cmp` implementations.
 
-`std::cmp` provides `Eq` impls for `bool` and all fixed-width integer types,
-plus `Ord` impls for all fixed-width integer types. Application code only
-needs to write an impl for custom value types.
+`std::cmp` provides `Eq` and `PartialEq` impls for `bool` and all fixed-width
+integer types, plus `Ord` and `PartialOrd` impls for all fixed-width integer
+types. Application code only needs to write an impl for custom value types.
 
 ## Example
 

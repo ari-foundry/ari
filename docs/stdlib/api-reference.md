@@ -2065,8 +2065,9 @@ builtin equality comparison, `==` dispatches to `eq` and `!=` dispatches to
 types without builtin numeric ordering, `<` dispatches to `lt`, `>` swaps the
 operands, and `<=`/`>=` negate the opposite `lt` call. `compare`, `min`,
 `max`, `clamp`, and `is_between` use that trait bound, so custom ordered values
-need an `impl cmp::Ord[T] for T`. `std::cmp` already provides `Eq` impls for
-`bool` and fixed-width integers, plus `Ord` impls for fixed-width integers.
+need an `impl cmp::Ord[T] for T`. `std::cmp` already provides `Eq` and
+`PartialEq` impls for `bool` and fixed-width integers, plus `Ord` and
+`PartialOrd` impls for fixed-width integers.
 `Ordering` has `Less`, `Equal`, and `Greater` cases. Use `then`/`then_compare`
 or the matching `Ordering` methods to build lexicographic comparisons without
 inventing numeric sentinel values.

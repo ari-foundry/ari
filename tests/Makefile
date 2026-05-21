@@ -839,7 +839,7 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-primitive-impls.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-primitive-impls.ll
 	grep -F -q 'compare__G_i64' $(BUILD_DIR)/prelude/std-cmp-primitive-impls.ll
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-primitive-impls.ari -o $(BUILD_DIR)/prelude/std-cmp-primitive-impls.elf
-	$(BUILD_DIR)/prelude/std-cmp-primitive-impls.elf; code=$$?; test $$code -eq 105
+	$(BUILD_DIR)/prelude/std-cmp-primitive-impls.elf; code=$$?; test $$code -eq 202
 	$(TARGET) tests/cases/standard-library/ok/cmp/std-cmp-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp10min__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp10max__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll

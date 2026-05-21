@@ -638,9 +638,9 @@ cmp::clamp<T>(value, low, high)
 ```
 
 `clamp` asserts that `low <= high` according to `cmp::Ord[T]` before choosing
-the bounded value. The standard library provides `Eq` impls for `bool` and
-fixed-width integers, and `Ord` impls for fixed-width integers, so common
-numeric helper calls do not need local boilerplate impls.
+the bounded value. The standard library provides `Eq`/`PartialEq` impls for
+`bool` and fixed-width integers, and `Ord`/`PartialOrd` impls for fixed-width
+integers, so common numeric helper calls do not need local boilerplate impls.
 
 The compiler validates trait existence, type-argument count, visibility,
 duplicate impls, declared method conformance, and generic function trait
