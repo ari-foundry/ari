@@ -225,6 +225,10 @@ Current transitional bridge:
   fields instead of requiring tools to parse prose.
 - `--emit-diagnostic-catalog` renders the current code, family, owner, and
   fallback table from compiler code.
+- `--list-diagnostics` renders the same catalog without requiring a source
+  input file.
+- `--explain-diagnostic P0001` renders one code's family, source owner, first
+  check, and artifact route for triage.
 - Unknown messages keep the fallback `ari/compiler` code so tools remain
   compatible while individual diagnostics move to explicit codes.
 - This bridge is only for artifact stability. The long-term design is still

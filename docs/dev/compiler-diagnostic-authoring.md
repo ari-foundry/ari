@@ -119,6 +119,10 @@ catalog is the compiler-owned list of current codes, owning source files, and
 fallback policy; keep it checked before adding more string-pattern
 classification.
 
+Use `ari --list-diagnostics` when you need the current code table without a
+source fixture. Use `ari --explain-diagnostic P0001` to show one code's family,
+owner, first check, and artifact path during triage.
+
 Once a code is documented in a golden artifact, do not reuse it for a different
 rule.
 
@@ -138,6 +142,8 @@ Put diagnostic golden files under
 `tests/cases/compiler-development/artifact/errors/`. Keep paths normalized and
 messages deterministic. Run `make check-compiler-artifacts` when artifact text
 changes and `make check-compiler-dev-docs` when this policy changes.
+Run `python3 tests/check_compiler_diagnostic_cli.py` when changing diagnostic
+catalog CLI behavior.
 
 Full `make check` belongs at handoff for broad changes. Sanitizer checks are
 intentionally separate.

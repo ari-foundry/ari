@@ -15,6 +15,24 @@ struct DiagnosticCatalogEntry {
     const char* proves;
 };
 
+static const DiagnosticCatalogEntry kDiagnosticCatalogEntries[] = {
+    {"L0001", "lexer", "src/lexer.cpp", "characters, escapes, and invalid tokens"},
+    {"P0001", "parser", "src/parser.cpp", "grammar, delimiters, and recovery"},
+    {"M0001", "module", "src/module_loader.cpp", "imports, visibility, metadata, and caches"},
+    {"T0001", "type", "src/type_semantics.cpp", "types, traits, methods, and generic constraints"},
+    {"O0001", "ownership", "src/ownership_semantics.cpp", "ownership, borrowing, moves, drops, and zones"},
+    {"I0001", "ir", "src/ir.hpp", "typed IR lowering and resolved compiler facts"},
+    {"B0001", "backend", "src/llvm_codegen.cpp", "LLVM, object, executable, shared library, and artifact emission"},
+    {"ari/compiler", "general", "src/driver.cpp", "unclassified transitional CompileError text"},
+};
+
+static const DiagnosticCatalogEntry* find_diagnostic_entry(const std::string& code) {
+    for (const DiagnosticCatalogEntry& entry : kDiagnosticCatalogEntries) {
+        if (entry.code == code) return &entry;
+    }
+    return nullptr;
+}
+
 static std::string quote(const std::string& text) {
     std::string escaped = "\"";
     for (unsigned char c : text) {
@@ -131,25 +149,39 @@ std::string diagnostic_code_family(const std::string& code) {
 }
 
 std::string dump_diagnostic_catalog() {
-    static const DiagnosticCatalogEntry entries[] = {
-        {"L0001", "lexer", "src/lexer.cpp", "characters, escapes, and invalid tokens"},
-        {"P0001", "parser", "src/parser.cpp", "grammar, delimiters, and recovery"},
-        {"M0001", "module", "src/module_loader.cpp", "imports, visibility, metadata, and caches"},
-        {"T0001", "type", "src/type_semantics.cpp", "types, traits, methods, and generic constraints"},
-        {"O0001", "ownership", "src/ownership_semantics.cpp", "ownership, borrowing, moves, drops, and zones"},
-        {"I0001", "ir", "src/ir.hpp", "typed IR lowering and resolved compiler facts"},
-        {"B0001", "backend", "src/llvm_codegen.cpp", "LLVM, object, executable, shared library, and artifact emission"},
-        {"ari/compiler", "general", "src/driver.cpp", "unclassified transitional CompileError text"},
-    };
-
     std::ostringstream out;
-    out << "DiagnosticCatalog version=1 entries=" << (sizeof(entries) / sizeof(entries[0])) << "\n";
-    for (const DiagnosticCatalogEntry& entry : entries) {
+    out << "DiagnosticCatalog version=1 entries="
+        << (sizeof(kDiagnosticCatalogEntries) / sizeof(kDiagnosticCatalogEntries[0])) << "\n";
+    for (const DiagnosticCatalogEntry& entry : kDiagnosticCatalogEntries) {
         out << "  code=" << entry.code
             << " family=" << entry.family
             << " owner=" << entry.owner
             << " proves=" << quote(entry.proves) << "\n";
     }
+    return out.str();
+}
+
+std::string dump_diagnostic_explanation(const std::string& code) {
+    std::ostringstream out;
+    const DiagnosticCatalogEntry* entry = find_diagnostic_entry(code);
+    if (entry != nullptr) {
+        out << "DiagnosticExplanation version=1 code=" << entry->code
+            << " status=known"
+            << " family=" << entry->family
+            << " owner=" << entry->owner
+            << " first_check=\"make check-compiler-artifacts\""
+            << " artifact=\"--emit-diagnostics\""
+            << " proves=" << quote(entry->proves) << "\n";
+        return out.str();
+    }
+
+    out << "DiagnosticExplanation version=1 code=" << code
+        << " status=unknown"
+        << " family=" << diagnostic_code_family(code)
+        << " owner=<none>"
+        << " first_check=\"make check-compiler-artifacts\""
+        << " artifact=\"--emit-diagnostic-catalog\""
+        << " proves=\"code is not in the current diagnostic catalog\"\n";
     return out.str();
 }
 

@@ -76,6 +76,8 @@ Use the narrowest target that matches the changed surface:
 
 Use `python3 tests/check_compiler_artifact_cli.py` when changing artifact CLI
 help, artifact listing, combination rules, or error text.
+Use `python3 tests/check_compiler_diagnostic_cli.py` when changing diagnostic
+catalog listing or diagnostic-code explanation behavior.
 
 Documentation checks are intentionally small. For example,
 `make check-bootstrap-docs` only verifies that the bootstrap readiness guide

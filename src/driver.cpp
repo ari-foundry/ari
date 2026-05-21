@@ -125,7 +125,9 @@ static void usage(std::ostream& out) {
            "           [-L path] [-l name] [--link name] [--shared]\n"
            "           [--test] [--cfg-feature name]\n"
            "       ari --help\n"
-           "       ari --list-artifacts\n";
+           "       ari --list-artifacts\n"
+           "       ari --list-diagnostics\n"
+           "       ari --explain-diagnostic code\n";
 }
 
 static void list_artifacts(std::ostream& out) {
@@ -153,6 +155,15 @@ int run(int argc, char** argv) {
         }
         if (arg == "--list-artifacts") {
             list_artifacts(std::cout);
+            return 0;
+        }
+        if (arg == "--list-diagnostics") {
+            std::cout << dump_diagnostic_catalog();
+            return 0;
+        }
+        if (arg == "--explain-diagnostic") {
+            if (i + 1 >= argc) throw CompileError("--explain-diagnostic expects a diagnostic code");
+            std::cout << dump_diagnostic_explanation(argv[i + 1]);
             return 0;
         }
     }
