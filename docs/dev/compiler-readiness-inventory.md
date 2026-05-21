@@ -101,9 +101,10 @@ for normal compiler development: when source loading, lexer, parser,
 diagnostic, module, declaration surface, or typed lowering behavior changes,
 reviewers can inspect a tiny golden diff before LLVM or executable behavior
 changes are involved.
-Diagnostic artifacts now include both stable codes and explicit layer families
-such as `code=T0001 family=type`, so triage can route failures without reading
-the classifier implementation first.
+Diagnostic artifacts now include stable codes, explicit layer families, and
+parseable source fields such as
+`code=T0001 family=type source="file.ari" line=1 column=19`, so triage can route
+failures without reading the classifier implementation first.
 
 ## Development Backlog
 

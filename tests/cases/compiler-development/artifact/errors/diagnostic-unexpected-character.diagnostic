@@ -1,1 +1,1 @@
-diagnostic error code=L0001 family=lexer message="unexpected character '$'" @ tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari:1:1
+diagnostic error code=L0001 family=lexer source="tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari" line=1 column=1 message="unexpected character '$'"

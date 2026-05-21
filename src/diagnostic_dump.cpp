@@ -135,8 +135,10 @@ std::string dump_diagnostic_message(const std::string& severity,
         << " code=" << code
         << " family=" << diagnostic_code_family(code);
     if (parse_location_prefix(message, line, column, diagnostic)) {
-        out << " message=" << quote(diagnostic)
-            << " @ " << source_name << ":" << line << ":" << column << "\n";
+        out << " source=" << quote(source_name)
+            << " line=" << line
+            << " column=" << column
+            << " message=" << quote(diagnostic) << "\n";
     } else {
         out << " message=" << quote(diagnostic) << "\n";
     }

@@ -1,1 +1,1 @@
-diagnostic error code=T0001 family=type message="unknown trait bound 'MissingTrait'" @ tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari:1:19
+diagnostic error code=T0001 family=type source="tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari" line=1 column=19 message="unknown trait bound 'MissingTrait'"

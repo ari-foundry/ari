@@ -221,6 +221,8 @@ Current transitional bridge:
   families: `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, and `B0001`.
 - `diagnostic_code_family` renders the owning layer name, such as
   `family=parser`, next to the stable code in diagnostic artifacts.
+- Diagnostic artifacts render locations as `source=`, `line=`, and `column=`
+  fields instead of requiring tools to parse prose.
 - Unknown messages keep the fallback `ari/compiler` code so tools remain
   compatible while individual diagnostics move to explicit codes.
 - This bridge is only for artifact stability. The long-term design is still

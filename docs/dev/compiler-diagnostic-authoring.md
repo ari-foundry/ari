@@ -30,6 +30,8 @@ Each stable diagnostic should be designed as data before text:
 | Code | Use a stable family such as `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, or `B0001` when the rule is durable. |
 | Family | Emit the owning layer name such as `lexer`, `parser`, `module`, `type`, `ownership`, `ir`, or `backend`. |
 | Severity | Use `error` for rejected source; reserve warnings until warning policy is explicit. |
+| Source | Emit a normalized source path when the error has a source location. |
+| Line and column | Emit one-based `line=` and `column=` fields for tool-friendly parsing. |
 | Message | State the rule in user language, not internal helper names. |
 | Primary label | Point at the smallest source span that caused the error. |
 | Secondary labels | Point at related declarations, previous moves, borrowed values, or module roots. |
@@ -106,9 +108,11 @@ Start with families, then add individual codes when behavior is stable:
 | `I0001` | typed IR lowering and resolved compiler facts |
 | `B0001` | LLVM, object, executable, shared library, and artifact emission |
 
-The diagnostic artifact prints both fields, for example
-`code=P0001 family=parser`. The code is the stable search key; the family tells
-contributors which compiler layer should usually own the first fix.
+The diagnostic artifact prints layer and location fields explicitly, for
+example `code=P0001 family=parser source="source.ari" line=3 column=1`. The
+code is the stable search key; the family tells contributors which compiler
+layer should usually own the first fix and which compiler layer to inspect
+first.
 
 Once a code is documented in a golden artifact, do not reuse it for a different
 rule.

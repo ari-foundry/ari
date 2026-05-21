@@ -221,7 +221,7 @@ Land artifact testing in slices:
 | Path normalizer | Replace repo, build, and temporary paths. | `normalize-repo-path`, `normalize-build-path`, `normalize-temp-path`. |
 | Source map dump format | Stable byte offsets, line lengths, newline policy, and source snippets. | `source-map-file`, `source-map-crlf`, `source-map-empty`. |
 | Token dump format | Stable lexer output for identifiers, literals, comments, and invalid tokens. | `token-basic`, `token-string-escapes`, `token-invalid-char`. |
-| Diagnostic dump format | Stable report output using source maps and labels. | `diagnostic-single-label`, `diagnostic-note-order`. |
+| Diagnostic dump format | Stable field-oriented output for code, family, source, line, column, and message. | `diagnostic-single-label`, `diagnostic-note-order`. |
 | Syntax dump format | Stable parser tree output. | `syntax-function`, `syntax-match`, `syntax-recovery`. |
 | Module graph dump format | Stable file-backed sources, imports, and item surfaces. | `module-graph-file`, `module-graph-search-path`, `module-graph-cfg`. |
 | Declaration index dump format | Stable declaration names, signatures, visibility, and locations. | `declaration-index-basic`, `declaration-index-module`. |
@@ -285,8 +285,9 @@ It currently proves thirteen low-level contracts:
 - `--emit-diagnostics` writes a normalized diagnostic artifact for an expected
   compiler failure
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,
-  and ownership failures with stable diagnostic codes and explicit
-  `family=...` layer names
+  and ownership failures with stable diagnostic codes and `family=...` layer names
+- `--emit-diagnostics` also writes parseable `source=`, `line=`, and `column=` fields
+  for location-aware tooling
 - `--emit-module-graph` writes deterministic file-backed source, import, and
   item-surface facts without running sema or LLVM codegen
 - `--emit-declaration-index` writes deterministic declaration signatures,
