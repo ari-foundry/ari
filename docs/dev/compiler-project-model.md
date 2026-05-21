@@ -150,6 +150,11 @@ When a cache is stale, diagnostics should name the first changed input class:
 source hash, search path, cfg feature, target fact, compiler format version, or
 missing dependency. A stale cache should never silently change program meaning.
 
+Use `ari --target-info` before debugging target-specific cache or module
+behavior. It prints the resolved triple, architecture, pointer and C `long`
+widths, signed `char` policy, and active `target("...")` predicates without
+requiring a source file.
+
 ## Build Flow
 
 Makefiles are the right bridge until Ari has a package manager. A focused tool

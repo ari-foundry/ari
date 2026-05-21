@@ -127,7 +127,8 @@ static void usage(std::ostream& out) {
            "       ari --help\n"
            "       ari --list-artifacts\n"
            "       ari --list-diagnostics\n"
-           "       ari --explain-diagnostic code\n";
+           "       ari --explain-diagnostic code\n"
+           "       ari --target-info [--target triple]\n";
 }
 
 static void list_artifacts(std::ostream& out) {
@@ -200,6 +201,7 @@ int run(int argc, char** argv) {
     bool shared_library = false;
     bool test_mode = false;
     bool implicit_std = true;
+    bool target_info_requested = false;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "-o") {
@@ -295,6 +297,8 @@ int run(int argc, char** argv) {
         } else if (arg == "--target") {
             if (i + 1 >= argc) throw CompileError("--target expects a target triple");
             target_triple = argv[++i];
+        } else if (arg == "--target-info") {
+            target_info_requested = true;
         } else if (arg == "-L") {
             if (i + 1 >= argc) throw CompileError("-L expects a path");
             link_args.push_back(std::string("-L") + argv[++i]);
@@ -310,6 +314,11 @@ int run(int argc, char** argv) {
         } else {
             throw CompileError("unexpected argument '" + arg + "'");
         }
+    }
+    if (target_info_requested) {
+        if (!input.empty()) throw CompileError("--target-info does not take an input file");
+        std::cout << dump_target_info(resolve_target_info(target_triple));
+        return 0;
     }
     if (input.empty()) throw CompileError("missing input file");
     if (shared_library && test_mode) {

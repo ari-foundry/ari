@@ -19,5 +19,6 @@ struct TargetInfo {
 std::string default_target_triple();
 TargetInfo resolve_target_info(const std::string& triple);
 bool target_predicate_active(const TargetInfo& target, const std::string& name);
+std::string dump_target_info(const TargetInfo& target);
 
 } // namespace ari

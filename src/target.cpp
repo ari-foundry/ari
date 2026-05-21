@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <sstream>
 #include <string>
 
 namespace ari {
@@ -122,6 +123,35 @@ bool target_predicate_active(const TargetInfo& target, const std::string& name) 
     if (name == "elf") return target.linux;
     if (name == "dwarf") return target.unix;
     return false;
+}
+
+std::string dump_target_info(const TargetInfo& target) {
+    static const char* predicates[] = {
+        "x86_64", "x86", "aarch64", "arm", "riscv64",
+        "linux", "macos", "darwin", "windows", "unix",
+        "gnu", "glibc", "musl", "elf", "dwarf",
+    };
+
+    std::ostringstream out;
+    out << "TargetInfo version=1"
+        << " triple=" << target.triple
+        << " arch=" << target.arch
+        << " os=" << (target.linux ? "linux" : target.macos ? "macos" : "windows")
+        << " unix=" << (target.unix ? "true" : "false")
+        << " pointer_bits=" << target.pointer_bits
+        << " long_bits=" << target.long_bits
+        << " plain_char_signed=" << (target.plain_char_signed ? "true" : "false")
+        << "\n";
+    out << "  Predicates active=[";
+    bool first = true;
+    for (const char* predicate : predicates) {
+        if (!target_predicate_active(target, predicate)) continue;
+        if (!first) out << ", ";
+        first = false;
+        out << predicate;
+    }
+    out << "]\n";
+    return out.str();
 }
 
 } // namespace ari

@@ -78,6 +78,7 @@ def main() -> int:
         "There is no `class` or `interface` keyword",
         "./build/ari hello.ari --check",
         "mod math;",
+        "--target-info",
         "--emit-llvm",
         "--emit-obj",
         "--shared",

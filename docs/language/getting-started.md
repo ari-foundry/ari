@@ -166,6 +166,7 @@ Useful options:
 -I path             same as --module-path
 --llvm-cc compiler  choose the LLVM IR compiler driver, usually clang
 --target triple     choose the LLVM target triple and C ABI alias layout
+--target-info       print resolved target facts and active target(...) names
 -L path             add a library search path
 -l name             link a library
 --link name         same as -l name
@@ -174,6 +175,9 @@ Useful options:
 --no-implicit-std   require explicit mod std; instead of auto-loading lib/std.arih
 --cfg-feature name  enable feature("name") inside @cfg(...)
 ```
+
+Use `ari --target-info` or `ari --target x86_64-pc-linux-gnu --target-info`
+when checking which `target("...")` predicates and ABI facts the compiler sees.
 
 ## Runtime Artifacts
 

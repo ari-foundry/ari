@@ -101,6 +101,12 @@ Record every input class that can change meaning:
 A stale cache diagnostic should name the first mismatched input class. Silent
 cache reuse is worse than no cache.
 
+Use `ari --target-info` before debugging target-specific module or cache
+behavior. It prints the resolved triple, ABI sizes, and active
+`target("...")` predicates without requiring a source file. Keep those
+predicates visible in module/cache handoff notes so the target-dependent
+surface is easy to search.
+
 ## Artifact Policy
 
 Prefer reviewable artifacts before executable checks:
@@ -123,6 +129,7 @@ Use the smallest command that proves the change:
 
 ```sh
 build/ari tests/cases/modules/ok/file-module-main.ari --check
+build/ari --target x86_64-pc-linux-gnu --target-info
 build/ari tests/cases/modules/ok/file-module-main.ari --emit-module-graph build/focused/module.graph
 build/ari tests/cases/modules/errors/missing-module.ari --emit-diagnostics build/focused/missing.diagnostic
 make check-modules
