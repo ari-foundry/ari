@@ -26,7 +26,8 @@ identifies the exact case:
 - `std-vec-sequence.ari`: source `std::vec::Vec[T]` direct borrowed
   `slice`, `split_at`, subsequence search, lexicographic compare, chunks,
   windows, delimiter splitting, reverse, rotation, sorting, binary search,
-  lower/upper bounds, and min/max wrappers over live storage.
+  lower/upper bounds, owned consecutive deduplication, and min/max wrappers
+  over live storage.
 - `prelude-slice-metadata.ari`: root `Slice[T]` borrowed metadata helper
   behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access

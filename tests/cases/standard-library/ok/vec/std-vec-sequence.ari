@@ -113,6 +113,22 @@ fn main() -> i64 {
   var stable_sorted = [1, 1, 2, 3];
   expect_slice(stable.as_slice(), stable_sorted.as_slice());
 
+  var compact = std::vec::new<i64>(ref mut zone, 8);
+  compact.push(1);
+  compact.push(1);
+  compact.push(2);
+  compact.push(2);
+  compact.push(2);
+  compact.push(3);
+  compact.push(1);
+  compact.push(1);
+  let compact_len = compact.dedup();
+  var compact_expected = [1, 2, 3, 1];
+  assert_eq_i64(compact_len, 4);
+  assert_eq_i64(compact.len(), 4);
+  assert_eq_i64(compact.capacity(), 8);
+  expect_slice(compact.as_slice(), compact_expected.as_slice());
+
   zone::destroy(zone);
   return 0;
 }

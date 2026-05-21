@@ -91,6 +91,7 @@ vec.remove(index)
 vec.try_remove(index)
 vec.truncate(length)
 vec.retain(keep)
+vec.dedup()
 vec.clear()
 ```
 
@@ -99,7 +100,8 @@ vec.clear()
 index is ordinary input. `retain` keeps values accepted by `keep: fn(ref T) ->
 bool`, preserves the order of kept values, and drops rejected values. `set`,
 `clear`, `truncate`, and shrink paths drop removed live elements before
-reducing the logical length.
+reducing the logical length. `dedup` compacts consecutive duplicates, truncates
+the vector to the unique prefix, and returns the new length.
 
 Growth-capable mutation uses the owning zone:
 

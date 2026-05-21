@@ -413,6 +413,12 @@ pub impl[T] std::vec::Vec[T] {
     self.raw.len = write;
   }
 
+  fn dedup(self: ref mut Self) -> i64 {
+    let length = std::algo::dedup<T>(self.as_slice());
+    shrink_to_len<T>(self, length);
+    return length;
+  }
+
   fn index_of(self: ref Self, value: T) -> i64 {
     var index = 0;
     while index < self.raw.len {
