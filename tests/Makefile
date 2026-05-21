@@ -769,8 +769,26 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_tcp_connect_v4" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_tcp_accept" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_local_port" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_set_read_timeout_millis" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_shutdown" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari -o $(BUILD_DIR)/prelude/std-net-tcp-loopback.elf
 	$(BUILD_DIR)/prelude/std-net-tcp-loopback.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-udp-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_udp_bind_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_udp_send_byte_to_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -q "@ari_builtin_net_udp_recv_byte" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-udp-socket.ari -o $(BUILD_DIR)/prelude/std-net-udp-socket.elf
+	$(BUILD_DIR)/prelude/std-net-udp-socket.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -q "@ari_builtin_net_unix_listen" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -q "@ari_builtin_net_unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari -o $(BUILD_DIR)/prelude/std-net-unix-socket.elf
+	$(BUILD_DIR)/prelude/std-net-unix-socket.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-dns-lookup.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -q "@ari_builtin_net_lookup_v4" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -q "@getaddrinfo" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-dns-lookup.ari -o $(BUILD_DIR)/prelude/std-net-dns-lookup.elf
+	$(BUILD_DIR)/prelude/std-net-dns-lookup.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/target/std-target-basic.ari --target x86_64-pc-linux-gnu --emit-llvm $(BUILD_DIR)/prelude/std-target-basic.ll
 	grep -q 'target triple = "x86_64-pc-linux-gnu"' $(BUILD_DIR)/prelude/std-target-basic.ll
 	grep -q "@ari_builtin_target_triple" $(BUILD_DIR)/prelude/std-target-basic.ll

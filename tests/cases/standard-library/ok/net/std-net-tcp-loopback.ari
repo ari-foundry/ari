@@ -27,11 +27,11 @@ fn main() -> i64 {
       Err(bind_raw) => {
         let bind_error = error::from_raw(bind_raw);
         if bind_error.is_kind(error::PermissionDenied) || bind_error.is_kind(error::Unsupported) {
-          score = score + 254;
+          score = score + 510;
         }
       }
     }
-    assert_eq_i64(score, 255);
+    assert_eq_i64(score, 511);
     return score;
   }
   assert(maybe_listener.is_some());
@@ -78,10 +78,22 @@ fn main() -> i64 {
     }
   }
 
+  if listener.set_accept_timeout_millis(1000) &&
+    client.set_read_timeout_millis(1000) &&
+    client.set_write_timeout_millis(1000) &&
+    server.set_read_timeout_millis(1000) &&
+    server.set_write_timeout_millis(1000) &&
+    listener.set_nonblocking(false) &&
+    client.set_nonblocking(false) &&
+    server.set_nonblocking(false) &&
+    client.shutdown(net::Write) {
+    score = score + 256;
+  }
+
   if server.close() && client.close() && listener.close() {
     score = score + 128;
   }
 
-  assert_eq_i64(score, 255);
+  assert_eq_i64(score, 511);
   return score;
 }

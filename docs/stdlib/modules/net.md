@@ -1,15 +1,19 @@
 # std::net
 
-`std::net` is Ari's portable networking module. It exists so programs can name
-network addresses and open the first TCP sockets without declaring raw C
-networking ABIs at every call site.
+`std::net` is Ari's portable networking module. It exists so programs can
+name network addresses, resolve IPv4 host names, and use explicit socket
+handles without declaring raw C networking ABIs at every call site.
 
 The module has two layers today. Address values are plain Ari source structs:
-`Ipv4Addr`, `Ipv6Addr`, `IpAddr`, and `SocketAddr`. The first runtime-backed
-socket slice adds owned IPv4 TCP listener/stream handles through
-`TcpListener` and `TcpStream`. The socket API is intentionally small so error
-policy, descriptor ownership, nonblocking behavior, and timeout support can
-grow without forcing awkward compatibility wrappers later.
+`Ipv4Addr`, `Ipv6Addr`, `IpAddr`, and `SocketAddr`. Runtime-backed handles use
+`std::os::OwnedFd` internally and expose owned TCP, UDP, and Unix stream
+socket shapes through `TcpListener`, `TcpStream`, `UdpSocket`,
+`UnixListener`, and `UnixStream`. Each successful handle should be closed once
+with `close()` until Ari grows drop-time resource cleanup.
+
+The API deliberately keeps simple `Option` helpers beside raw-error
+`Result[..., i64]` helpers. Use `Option` when absence is enough; use
+`*_result` when a caller needs the compact `std::error::Error.raw()` bridge.
 
 ## API
 
@@ -20,11 +24,17 @@ net::IpAddr
 net::SocketAddr
 net::TcpListener
 net::TcpStream
+net::UdpSocket
+net::UnixListener
+net::UnixStream
+net::Shutdown
 
 net::ipv4(a, b, c, d)
 net::ipv6(s0, s1, s2, s3, s4, s5, s6, s7)
 net::socket_addr(ip, port)
 net::localhost(port)
+net::lookup_v4(host, port)
+net::lookup_v4_result(host, port)
 
 Ipv4Addr::new(a, b, c, d)
 Ipv4Addr::any()
@@ -63,6 +73,9 @@ TcpListener::bind_result(addr)
 listener.descriptor()
 listener.is_open()
 listener.local_port()
+listener.is_nonblocking()
+listener.set_nonblocking(enabled)
+listener.set_accept_timeout_millis(millis)
 listener.accept()
 listener.try_accept()
 listener.accept_result()
@@ -73,9 +86,61 @@ TcpStream::try_connect(addr)
 TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
+stream.is_nonblocking()
+stream.set_nonblocking(enabled)
+stream.set_read_timeout_millis(millis)
+stream.set_write_timeout_millis(millis)
+stream.shutdown(mode)
+stream.try_read_byte()
+stream.close()
+
+UdpSocket::bind(addr)
+UdpSocket::try_bind(addr)
+UdpSocket::bind_result(addr)
+socket.descriptor()
+socket.is_open()
+socket.local_port()
+socket.is_nonblocking()
+socket.set_nonblocking(enabled)
+socket.set_read_timeout_millis(millis)
+socket.set_write_timeout_millis(millis)
+socket.send_byte_to(value, addr)
+socket.recv_byte()
+socket.try_recv_byte()
+socket.close()
+
+UnixListener::bind(path)
+UnixListener::try_bind(path)
+UnixListener::bind_result(path)
+listener.descriptor()
+listener.is_open()
+listener.is_nonblocking()
+listener.set_nonblocking(enabled)
+listener.accept()
+listener.try_accept()
+listener.accept_result()
+listener.close()
+
+UnixStream::connect(path)
+UnixStream::try_connect(path)
+UnixStream::connect_result(path)
+stream.descriptor()
+stream.is_open()
+stream.is_nonblocking()
+stream.set_nonblocking(enabled)
+stream.set_read_timeout_millis(millis)
+stream.set_write_timeout_millis(millis)
+stream.shutdown(mode)
 stream.try_read_byte()
 stream.close()
 ```
+
+`TcpStream` and `UnixStream` implement `std::io::Reader` and
+`std::io::Writer`, so byte-oriented helpers such as `stream.write_byte(value)`,
+`stream.read_byte()`, `std::io::write_all`, and `std::io::read_exact` work
+through the common IO trait surface.
+
+## Address Values
 
 `Ipv4Addr` stores four `u8` octets. `Ipv4Addr::any()` returns `0.0.0.0`,
 `Ipv4Addr::localhost()` returns `127.0.0.1`, and `octet(index)` reads octets
@@ -98,6 +163,20 @@ then call `is_v4`, `is_v6`, `is_unspecified`, or `is_loopback`.
 or `SocketAddr::new(ip, port)` when the IP is already known. Use
 `SocketAddr::localhost(port)` or `localhost(port)` for `127.0.0.1:port`.
 
+## DNS Lookup
+
+`lookup_v4(host, port)` resolves one IPv4 address through the hosted
+`getaddrinfo` path and returns `Option[SocketAddr]`. It is intentionally a
+small first slice: the returned address uses the resolved IPv4 octets and the
+caller-provided port.
+
+`lookup_v4_result(host, port)` returns `Result[SocketAddr, i64]` for callers
+that want a failure branch. The current error payload is the compact raw
+`std::error::Error` bridge; detailed `getaddrinfo` error categories and owned
+multi-address result lists are future work.
+
+## TCP Sockets
+
 `TcpListener` owns a listening TCP descriptor. `bind` and `try_bind` return
 `Option[TcpListener]` for simple code. `bind_result` returns
 `Result[TcpListener, i64]`, where the `i64` is the compact raw
@@ -106,12 +185,51 @@ learn the ephemeral port chosen by the OS. `accept`/`try_accept` return
 `Option[TcpStream]`; `accept_result` exposes the raw error bridge.
 
 `TcpStream` owns a connected TCP descriptor. `connect` and `try_connect` return
-`Option[TcpStream]`; `connect_result` preserves OS error detail. `TcpStream`
-implements `std::io::Reader` and `std::io::Writer`, so byte-oriented helpers
-such as `stream.write_byte(value)`, `stream.read_byte()`,
-`std::io::write_all`, and `std::io::read_exact` work without separate raw
-socket functions. Use `try_read_byte()` when EOF or read failure should become
-`None`.
+`Option[TcpStream]`; `connect_result` preserves OS error detail. Use
+`shutdown(Shutdown::Write)`, `shutdown(Shutdown::Read)`, or
+`shutdown(Shutdown::Both)` to half-close or fully shut down the stream without
+closing the descriptor owner.
+
+## UDP Sockets
+
+`UdpSocket` owns an IPv4 UDP descriptor. `bind`, `try_bind`, and `bind_result`
+match the TCP listener return shapes. Use `local_port()` after binding to port
+`0` to discover the OS-selected port.
+
+The current datagram payload surface is intentionally tiny:
+`send_byte_to(value, addr)` sends one byte to an IPv4 `SocketAddr`,
+`recv_byte()` returns a received byte as `i64` or `-1`, and
+`try_recv_byte()` converts that shape to `Option[u8]`. Larger buffers,
+source-address reporting, connected UDP, multicast, and IPv6 UDP are future
+slices.
+
+## Unix Domain Sockets
+
+`UnixListener` and `UnixStream` are Linux/Unix hosted stream socket wrappers.
+`UnixListener::bind(path)` listens on a filesystem path, and
+`UnixStream::connect(path)` connects to it. Remove stale socket files with
+`std::fs::remove(path)` before binding when tests or tools reuse a path.
+
+`UnixListener::accept()` returns a `UnixStream`. `UnixStream` implements the
+same `std::io::Reader` and `std::io::Writer` traits as `TcpStream`, so local
+IPC code can reuse byte-oriented IO helpers.
+
+## Options
+
+All socket handles expose `descriptor()` and `is_open()` because they are
+owned descriptor wrappers internally. TCP streams, UDP sockets, and Unix
+streams also expose read/write timeout setters in milliseconds. TCP listeners
+expose `set_accept_timeout_millis(millis)`, which maps to the listener read
+timeout used by `accept`.
+
+`is_nonblocking()` and `set_nonblocking(enabled)` delegate to
+`std::os::OwnedFd` descriptor flags. They return `Option[bool]` or `bool`
+instead of panicking so invalid or already-closed handles can be handled by
+ordinary control flow.
+
+Timeout setters take raw milliseconds in this first slice. A later API should
+also accept `std::time::Duration` after richer `Result` payloads and timeout
+error categories are available across IO, fs, and net.
 
 ## Examples
 
@@ -126,33 +244,16 @@ if addr.is_loopback() {
 }
 ```
 
-Work with IPv6 segments:
+Resolve a numeric IPv4 host:
 
 ```ari
-let any = net::Ipv6Addr::any();
-if any.is_unspecified() {
-  return any.segment(0) as i64;
-}
-```
-
-Validate parsed address indexes:
-
-```ari
-let addr = net::Ipv4Addr::localhost();
-match addr.try_octet(3) {
-  std::Some(value) => {
-    return value as i64;
+match net::lookup_v4("127.0.0.1", 8080 as u16) {
+  std::Some(addr) => {
+    return addr.port() as i64;
   }
   std::None => {}
 }
 return 1;
-```
-
-Change only the port:
-
-```ari
-let local = net::SocketAddr::localhost(3000 as u16);
-let https = local.with_port(443 as u16);
 ```
 
 Bind a listener and connect a stream:
@@ -162,9 +263,12 @@ let bind_addr = net::SocketAddr::localhost(0 as u16);
 match net::TcpListener::bind_result(bind_addr) {
   std::Ok(listener) => {
     var server = listener;
+    server.set_accept_timeout_millis(1000);
     let port = server.local_port().unwrap();
     var client = net::TcpStream::connect(net::SocketAddr::localhost(port)).unwrap();
     var accepted = server.accept().unwrap();
+    client.set_write_timeout_millis(1000);
+    accepted.set_read_timeout_millis(1000);
     client.write_byte(65u8);
     return accepted.read_byte();
   }
@@ -175,34 +279,60 @@ match net::TcpListener::bind_result(bind_addr) {
 }
 ```
 
+Send one UDP byte to a loopback socket:
+
+```ari
+var server = net::UdpSocket::bind(net::SocketAddr::localhost(0 as u16)).unwrap();
+let port = server.local_port().unwrap();
+var client = net::UdpSocket::bind(net::SocketAddr::localhost(0 as u16)).unwrap();
+client.send_byte_to(42u8, net::SocketAddr::localhost(port));
+return server.recv_byte();
+```
+
+Use a Unix stream socket:
+
+```ari
+let path = "build/prelude/example.sock";
+std::fs::remove(path);
+var listener = net::UnixListener::bind(path).unwrap();
+var client = net::UnixStream::connect(path).unwrap();
+var server = listener.accept().unwrap();
+client.write_byte(7u8);
+return server.read_byte();
+```
+
 ## Feature Status
 
 | Need | Status |
 | --- | --- |
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
-| TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result`, `local_port`, `accept`, `try_accept`, `accept_result`, `descriptor`, `is_open`, `close`. |
-| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result`, `descriptor`, `is_open`, `try_read_byte`, `close`, plus `std::io::Reader`/`Writer` single-byte adapters. |
-| DNS lookup | Roadmap: `lookup(host, service)` or `resolve(host, port)` over `getaddrinfo` with owned result storage and error values. |
-| UDP socket | Roadmap: `UdpSocket::bind(addr)`, `send_to`, `recv_from`, connected UDP helpers. |
-| Unix domain socket | Roadmap: Unix-only `UnixListener`, `UnixStream`, and possibly datagram sockets behind platform docs. |
-| socket options | Roadmap: `set_reuse_addr`, `nodelay`, buffer sizes, linger, multicast options where portable. |
-| nonblocking socket | Roadmap: `set_nonblocking(socket, enabled)` or per-handle methods after OS handle ownership is settled. |
-| timeout | Roadmap: connect/read/write timeout values based on `std::time::Duration`. |
-| shutdown | Roadmap: `Shutdown::{Read, Write, Both}` and `stream.shutdown(mode)`. |
+| DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` over `getaddrinfo`. |
+| TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result`, `local_port`, accept helpers, descriptor/open helpers, nonblocking setter/query, accept timeout, and explicit close. |
+| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result`, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, shutdown, `try_read_byte`, explicit close, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4 slice: bind helpers, local-port lookup, descriptor/open helpers, nonblocking setter/query, read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
+| Unix domain socket | Current hosted stream slice: `UnixListener` bind/accept helpers and `UnixStream` connect/IO/shutdown helpers. |
+| socket options | Current: nonblocking and read/write timeout helpers; future reuse-address, nodelay, buffer size, linger, multicast, and close-on-exec-at-creation options. |
+| timeout | Current: millisecond read/write/accept timeout setters; future `std::time::Duration` overloads and timeout-specific error results. |
+| shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
 
 ## Current Limits
 
-- TCP sockets currently support IPv4 hosted targets only. IPv6 socket handles,
-  DNS lookup, UDP, Unix sockets, socket options, stream shutdown, and timeout
-  policy remain roadmap work.
+- Runtime-backed Internet sockets currently support IPv4 hosted targets only.
+  IPv6 address values exist, but IPv6 TCP/UDP socket handles are still future
+  work.
+- DNS lookup returns one IPv4 address and does not expose canonical names,
+  multiple addresses, service names, or detailed `getaddrinfo` status yet.
+- UDP supports single-byte datagrams only. Buffer-oriented send/receive,
+  source-address return values, connected UDP, multicast, and IPv6 UDP are
+  future slices.
+- Unix sockets are stream-only and path-based. Abstract namespace sockets,
+  Unix datagram sockets, peer credentials, and platform guards need later
+  design.
 - Tests may run on hosts that forbid socket creation. In that case
-  `bind_result` should report `PermissionDenied` through `std::error::Error`;
-  the loopback test treats that as host policy, not a language failure.
-- Runtime-backed networking should use `std::error::Error` for OS error detail
-  instead of growing boolean-only APIs for operations where callers need to
-  distinguish retryable, timeout, refused, unsupported, or invalid-input
-  failures.
+  `*_result` helpers should report `PermissionDenied` or `Unsupported`
+  through `std::error::Error`; socket tests treat that as host policy, not a
+  language failure.
 - Socket handles are owned descriptor wrappers. Close them once with `close()`;
   descriptor duplication and richer drop policy should stay aligned with
   `std::os::OwnedFd`.
@@ -215,6 +345,9 @@ match net::TcpListener::bind_result(bind_addr) {
 tests/cases/standard-library/ok/net/std-net-addresses.ari
 tests/cases/standard-library/ok/net/std-net-address-validation.ari
 tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari
+tests/cases/standard-library/ok/net/std-net-udp-socket.ari
+tests/cases/standard-library/ok/net/std-net-unix-socket.ari
+tests/cases/standard-library/ok/net/std-net-dns-lookup.ari
 ```
 
 `std-net-addresses.ari` covers IPv4/IPv6 constructors, generic `IpAddr`
@@ -223,19 +356,30 @@ port replacement, and associated/module constructor forms.
 `std-net-address-validation.ari` covers strict and fallible IPv4 octet and
 IPv6 segment accessors.
 `std-net-tcp-loopback.ari` covers IPv6 unsupported errors, IPv4 listener bind,
-ephemeral local-port lookup, stream connect, accept, `std::io::Reader`/`Writer`
-byte transfer, and explicit close. On restricted hosts it verifies that socket
-creation reports `PermissionDenied` through the shared error bridge.
+ephemeral local-port lookup, stream connect, accept, timeout/nonblocking
+helpers, stream shutdown, `std::io::Reader`/`Writer` byte transfer, and
+explicit close. On restricted hosts it verifies that socket creation reports
+`PermissionDenied` through the shared error bridge.
+`std-net-udp-socket.ari` covers IPv4 UDP bind, local-port lookup,
+timeout/nonblocking helpers, single-byte datagram send/receive, unsupported
+IPv6 bind errors, restricted-host fallback, and explicit close.
+`std-net-unix-socket.ari` covers Unix stream listener bind, stream connect,
+accept, timeout/nonblocking helpers, bidirectional byte IO through the common
+IO traits, shutdown, close, and test socket-file cleanup.
+`std-net-dns-lookup.ari` covers numeric IPv4 lookup, `Option` and `Result`
+lookup shapes, unsupported IPv6 text input, and edge IPv4 addresses.
 
 ## Next Work
 
 - Add address parsing and formatting once `std::string` formatting and parse
   policy can express dotted IPv4 and compressed IPv6 cleanly.
-- Add DNS lookup as a runtime-backed slice returning `Option` or `Result`
-  values instead of empty/sentinel data.
-- Add IPv6 TCP sockets, peer/local address helpers, shutdown, and socket
-  options once the first IPv4 handle slice has settled.
-- Add UDP handles after owned OS-resource behavior is specified.
-- Add Unix domain sockets behind explicit platform documentation.
-- Add socket options, nonblocking mode, timeouts, and shutdown once error and
-  handle policy are stable.
+- Add IPv6 TCP and UDP socket handles, peer/local address helpers, and richer
+  socket-address reporting.
+- Replace raw millisecond timeout setters with `std::time::Duration`-friendly
+  helpers once direct `Result[..., Error]` payloads are available.
+- Add buffer-oriented TCP/UDP send and receive helpers, including UDP
+  `recv_from` source-address reporting.
+- Add socket options such as reuse-address, nodelay, buffer sizes, linger, and
+  multicast options only with focused platform docs and tests.
+- Add Unix datagram sockets, abstract namespace policy, and peer credential
+  helpers behind explicit Linux/Unix platform documentation.

@@ -23,7 +23,8 @@ Implemented runtime support today:
   libc/environment, object/debug format, errno ABI, pointer width, C `long`
   width, and Linux syscall/API-family classification
 - process IO, input, environment, path, process, thread, sync, time, fs,
-  net-address, and first IPv4 TCP socket support hooks used by current `std`
+  net-address, IPv4 DNS lookup, IPv4 TCP/UDP sockets, Unix stream sockets,
+  socket timeout, and socket shutdown hooks used by current `std`
 - panic/assert stop behavior through `exit(1)`
 - LLVM atomic instructions for the first `AtomicI64` slice
 - byte memory routines: `std::mem::copy_bytes`, `move_bytes`, and `set_bytes`
@@ -77,7 +78,7 @@ The first freestanding profile should prove:
 | `libgcc_s` / compiler-rt replacement | Provide helper routines for arithmetic, unwinding, atomics, and builtins when the host runtime is absent. | Delegated to the LLVM driver, glibc, libgcc_s, or compiler-rt. | Needed for no-libc/freestanding profiles or custom target triples. |
 | atomic and wait helper routines | Provide fallback calls for atomics that cannot lower inline on a target and blocking wait/wake helpers for future locks. | Current `AtomicI64` lowers to LLVM atomic instructions on the host path; source `Mutex`, `RwLock`, and `Once` spin/yield over that primitive. | Add target-specific fallback policy if LLVM emits helper calls or if wider/generic atomics land. Use Linux futex only as an internal implementation detail once blocking `Mutex`, `Condvar`, `RwLock`, barriers, semaphores, or channels have a public ownership policy. |
 | memory builtins | Provide efficient `memcpy`, `memmove`, `memset` behavior. | `std::mem` byte helpers now lower through LLVM memory intrinsics. | Later optimize source library copies to these helpers and document ownership-safe use. |
-| Linux descriptor APIs | Provide epoll, inotify, fanotify, eventfd, timerfd, signalfd, pidfd, memfd, and optional io_uring wrappers. | `std::target` only reports Linux API-family availability. No owned descriptors are exposed yet. | Add a small descriptor owner and errno/result policy before implementing wrappers. |
+| Linux descriptor APIs | Provide epoll, inotify, fanotify, eventfd, timerfd, signalfd, pidfd, memfd, and optional io_uring wrappers. | `std::os::OwnedFd` owns ordinary descriptors; `std::net` uses owned descriptors for hosted IPv4 TCP/UDP and Unix stream sockets. `std::target` reports Linux API-family availability for readiness APIs that are not exposed yet. | Add readiness APIs, richer errno/result policy, and target guards before implementing epoll/eventfd/timerfd/signalfd/memfd wrappers. |
 | Linux kernel views | Provide safe access to procfs, sysfs, cgroups, namespaces, seccomp, and capabilities where appropriate. | `std::env::executable_path()` reads `/proc/self/exe`; the rest are platform-roadmap items. | Keep optional and privilege-aware; do not make them portable `std` APIs. |
 
 ## Implementation Rules

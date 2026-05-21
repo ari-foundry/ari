@@ -1,0 +1,76 @@
+// Covers Unix domain stream sockets on hosted Unix-like targets. The test uses
+// a short pathname socket, transfers bytes through std::io traits, and cleans
+// up the path. Restricted hosts may reject socket creation; that still proves
+// the std::error bridge.
+fn error_is(raw: i64, kind: error::Kind) -> bool {
+  let value = error::from_raw(raw);
+  return value.is_kind(kind);
+}
+
+fn main() -> i64 {
+  let path = "build/prelude/std-net-unix-socket.sock";
+  fs::remove(path);
+
+  var score = 0;
+  let maybe_listener = net::UnixListener::bind(path);
+  if maybe_listener.is_none() {
+    match net::UnixListener::bind_result(path) {
+      Ok(_retry_listener) => {}
+      Err(bind_raw) => {
+        if error_is(bind_raw, error::PermissionDenied) || error_is(bind_raw, error::Unsupported) {
+          score = 255;
+        }
+      }
+    }
+    assert_eq_i64(score, 255);
+    return score;
+  }
+
+  var listener = maybe_listener.unwrap();
+  if listener.is_open() && listener.descriptor().is_valid() {
+    score = score + 1;
+  }
+
+  let maybe_client = net::UnixStream::connect(path);
+  assert(maybe_client.is_some());
+  var client = maybe_client.unwrap();
+  if client.is_open() && client.descriptor().is_valid() {
+    score = score + 2;
+  }
+
+  let maybe_server = listener.accept();
+  assert(maybe_server.is_some());
+  var server = maybe_server.unwrap();
+  if server.is_open() && server.descriptor().is_valid() {
+    score = score + 4;
+  }
+
+  if listener.set_nonblocking(false) &&
+    client.set_nonblocking(false) &&
+    server.set_nonblocking(false) &&
+    client.set_read_timeout_millis(1000) &&
+    client.set_write_timeout_millis(1000) &&
+    server.set_read_timeout_millis(1000) &&
+    server.set_write_timeout_millis(1000) {
+    score = score + 8;
+  }
+
+  if client.write_byte(81u8) && server.read_byte() == 81 {
+    score = score + 16;
+  }
+
+  if server.write_byte(82u8) && client.read_byte() == 82 {
+    score = score + 32;
+  }
+
+  if client.shutdown(net::Write) {
+    score = score + 64;
+  }
+
+  if server.close() && client.close() && listener.close() && fs::remove(path) {
+    score = score + 128;
+  }
+
+  assert_eq_i64(score, 255);
+  return score;
+}

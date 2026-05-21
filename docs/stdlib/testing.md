@@ -96,6 +96,9 @@ std-path-bytes.ari
 std-net-addresses.ari
 std-net-address-validation.ari
 std-net-tcp-loopback.ari
+std-net-udp-socket.ari
+std-net-unix-socket.ari
+std-net-dns-lookup.ari
 std-collections-set.ari
 std-collections-set-access.ari
 std-collections-set-replace.ari

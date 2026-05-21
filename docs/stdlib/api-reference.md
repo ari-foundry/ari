@@ -1105,11 +1105,17 @@ net::IpAddr
 net::SocketAddr
 net::TcpListener
 net::TcpStream
+net::UdpSocket
+net::UnixListener
+net::UnixStream
+net::Shutdown
 
 net::ipv4(a, b, c, d)
 net::ipv6(s0, s1, s2, s3, s4, s5, s6, s7)
 net::socket_addr(ip, port)
 net::localhost(port)
+net::lookup_v4(host, port)
+net::lookup_v4_result(host, port)
 
 Ipv4Addr::new(a, b, c, d)
 Ipv4Addr::any()
@@ -1148,6 +1154,9 @@ TcpListener::bind_result(addr)
 listener.descriptor()
 listener.is_open()
 listener.local_port()
+listener.is_nonblocking()
+listener.set_nonblocking(enabled)
+listener.set_accept_timeout_millis(millis)
 listener.accept()
 listener.try_accept()
 listener.accept_result()
@@ -1158,18 +1167,66 @@ TcpStream::try_connect(addr)
 TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
+stream.is_nonblocking()
+stream.set_nonblocking(enabled)
+stream.set_read_timeout_millis(millis)
+stream.set_write_timeout_millis(millis)
+stream.shutdown(mode)
+stream.try_read_byte()
+stream.close()
+
+UdpSocket::bind(addr)
+UdpSocket::try_bind(addr)
+UdpSocket::bind_result(addr)
+socket.descriptor()
+socket.is_open()
+socket.local_port()
+socket.is_nonblocking()
+socket.set_nonblocking(enabled)
+socket.set_read_timeout_millis(millis)
+socket.set_write_timeout_millis(millis)
+socket.send_byte_to(value, addr)
+socket.recv_byte()
+socket.try_recv_byte()
+socket.close()
+
+UnixListener::bind(path)
+UnixListener::try_bind(path)
+UnixListener::bind_result(path)
+listener.descriptor()
+listener.is_open()
+listener.is_nonblocking()
+listener.set_nonblocking(enabled)
+listener.accept()
+listener.try_accept()
+listener.accept_result()
+listener.close()
+
+UnixStream::connect(path)
+UnixStream::try_connect(path)
+UnixStream::connect_result(path)
+stream.descriptor()
+stream.is_open()
+stream.is_nonblocking()
+stream.set_nonblocking(enabled)
+stream.set_read_timeout_millis(millis)
+stream.set_write_timeout_millis(millis)
+stream.shutdown(mode)
 stream.try_read_byte()
 stream.close()
 ```
 
 Address values are deterministic source structs. Use `octet`/`segment` for
 known-good indexes and `try_octet`/`try_segment` when validating parsed input.
-`TcpListener` and `TcpStream` are the first hosted socket handles. They support
-IPv4 bind/connect/accept, local bound-port lookup, borrowed descriptor views,
-explicit close, and `std::io::Reader`/`Writer` byte adapters. DNS lookup, UDP
-sockets, Unix domain sockets, socket options, IPv6 handles, nonblocking socket
-policy, timeouts, and shutdown are roadmap work for the richer runtime-backed
-`std::net` handle layer.
+`lookup_v4` resolves one IPv4 address through the hosted `getaddrinfo` path.
+`TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, and `UnixStream` are
+owned descriptor-backed handles. They support hosted IPv4 TCP bind/connect/
+accept, IPv4 UDP bind/send-byte/receive-byte, Unix stream bind/connect/accept,
+local bound-port lookup where it applies, borrowed descriptor views, explicit
+close, nonblocking flags, millisecond timeouts, and stream shutdown. TCP and
+Unix streams adapt to `std::io::Reader`/`Writer`. IPv6 socket handles,
+buffered datagram APIs, richer socket options, peer/local address helpers, and
+direct `Result[..., Error]` payloads remain roadmap work.
 
 ## IO And Input
 

@@ -26,8 +26,10 @@ Implemented now:
   reading through the glibc errno location, `std::error` mapping, borrowed and
   owned C strings, and dynamic loading wrappers over `dlopen`, `dlsym`,
   `dlclose`, and `dlerror`.
-- `std::net` provides IP and socket-address values plus the first hosted IPv4
-  TCP listener/stream handles over Linux sockets.
+- `std::net` provides IP and socket-address values plus hosted IPv4 DNS
+  lookup, IPv4 TCP listener/stream handles, IPv4 UDP single-byte datagrams,
+  Unix stream sockets, nonblocking flags, millisecond timeouts, and stream
+  shutdown over Linux sockets.
 - Hosted executables currently rely on the platform CRT and dynamic linker;
   Ari emits LLVM IR and lets the LLVM driver link.
 
@@ -97,8 +99,11 @@ useful for modern systems work.
 | file seek | `std::fs::position(file)` and `std::fs::seek(file, offset)` are backed by hosted `lseek(2)` and surface through `std::io::Seek` on `File`. | Add richer seek origins and typed errors after the filesystem layer grows `Result`-returning operations. |
 | symbolic-link target reads | `std::fs::try_read_link(ref mut zone, path)` and `read_link(ref mut zone, path)` are backed by hosted `readlink(2)` and copy the stored link target into a zone-owned `String`; `try_symlink_metadata(path)`, `symlink_metadata(path)`, and `is_symlink(path)` use hosted `lstat(2)` for no-follow metadata, including access/modification/status-change timestamps. | Add richer link/error policy before exposing platform-specific link management. |
 | close-on-exec | `OwnedFd::close_on_exec()` and `set_close_on_exec(enabled)` are backed by hosted `fcntl(F_GETFD/F_SETFD)`. | Add close-on-exec-at-creation/dup where host APIs support it, then default new descriptors to close-on-exec where possible. |
-| nonblocking mode | `OwnedFd::is_nonblocking()` and `set_nonblocking(enabled)` are backed by hosted `fcntl(F_GETFL/F_SETFL)`. | Add socket-specific tests and document interaction with IO helpers before readiness APIs. |
-| TCP sockets | `std::net::TcpListener` and `std::net::TcpStream` use hosted `socket`, `bind`, `listen`, `accept`, `connect`, and `getsockname` for the first IPv4 handle slice. `TcpStream` adapts to `std::io::Reader`/`Writer` through descriptor byte reads/writes. | Add DNS, IPv6 socket handles, peer/local address helpers, `send`/`recv`, shutdown, socket options, and timeout/nonblocking policy. |
+| nonblocking mode | `OwnedFd::is_nonblocking()` and `set_nonblocking(enabled)` are backed by hosted `fcntl(F_GETFL/F_SETFL)`. `std::net` exposes those helpers on TCP, UDP, and Unix socket handles. | Add readiness APIs and document retry behavior once richer IO/net error values land. |
+| DNS lookup | `std::net::lookup_v4` and `lookup_v4_result` use hosted `getaddrinfo` for a one-address IPv4 slice. | Add multi-address result storage, service names, canonical-name policy, and detailed resolver error mapping. |
+| TCP sockets | `std::net::TcpListener` and `std::net::TcpStream` use hosted `socket`, `bind`, `listen`, `accept`, `connect`, `getsockname`, `setsockopt`, and `shutdown` for the IPv4 handle slice. `TcpStream` adapts to `std::io::Reader`/`Writer` through descriptor byte reads/writes. | Add IPv6 socket handles, peer/local address helpers, buffer-oriented send/recv, nodelay/reuse-address options, and direct `Result[..., Error]` payloads. |
+| UDP sockets | `std::net::UdpSocket` uses hosted IPv4 datagram sockets, `bind`, `getsockname`, `sendto`, `recvfrom`, and timeout/nonblocking descriptor policy for the single-byte datagram slice. | Add slice send/receive, `recv_from` address reporting, connected UDP, multicast, and IPv6 UDP. |
+| Unix stream sockets | `std::net::UnixListener` and `UnixStream` use hosted `AF_UNIX` stream sockets with path-based bind/connect/accept plus common descriptor flags and IO adapters. | Add datagram sockets, abstract namespace policy, peer credentials, and platform guards for non-Linux Unix targets. |
 | pipe | `std::os::pipe()` is backed by the hosted `pipe(2)` ABI and returns an owning `Pipe` value with separate read/write ends; `std::io::pipe()` adapts it into `Reader`/`Writer` ends. | Add `pipe2`-style close-on-exec/nonblocking-at-creation policy where host APIs support it. |
 | fcntl | Not exposed. | Future low-level descriptor module with typed flag helpers. |
 | ioctl | Not exposed. | Keep optional and narrow; prefer typed wrappers for common devices over a raw catch-all. |

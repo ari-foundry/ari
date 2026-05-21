@@ -49,9 +49,9 @@ ones depend on a hosted OS or a specific platform family.
 | --- | --- | --- |
 | core | `option`, `result`, `cmp`, `convert`, `math`, `bits`, `ascii`, `parse`, `encoding`, root `Slice[T]` | Source-first APIs that should stay portable and easy to test without OS state. |
 | alloc | `zone`, `boxed`, `string`, `vec`, `collections`, `iter`, `algo`, `hash`, `random::Prng` | APIs that need explicit `Zone` allocation or collection invariants. They must document provenance and reset/destroy behavior. |
-| hosted | `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time`, `net` TCP handles, `random::entropy`, `random::fill` | APIs that require a hosted runtime, libc, OS handles, sockets, clocks, threads, or entropy. They must document handle ownership and failure behavior. |
-| platform | `target`, `c`, `os`, socket options and platform-specific `net` handles | APIs that expose ABI, loader, errno, syscall, descriptor, or target-specific behavior. They must say which target family they describe. |
-| experimental | future DNS/UDP/Unix/IPv6 socket handles in `net`, future raw `os` wrappers, backtrace, benchmark, fuzzing, async, compression | APIs that should remain roadmap work until ownership, error, and platform policies are tested. |
+| hosted | `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time`, `net` DNS/TCP/UDP/Unix socket handles, `random::entropy`, `random::fill` | APIs that require a hosted runtime, libc, OS handles, sockets, clocks, threads, or entropy. They must document handle ownership and failure behavior. |
+| platform | `target`, `c`, `os`, low-level socket options and platform-specific `net` extensions | APIs that expose ABI, loader, errno, syscall, descriptor, or target-specific behavior. They must say which target family they describe. |
+| experimental | future IPv6 socket handles in `net`, future raw `os` wrappers, backtrace, benchmark, fuzzing, async, compression | APIs that should remain roadmap work until ownership, error, and platform policies are tested. |
 
 Moving an API from experimental to usable requires docs, manifest coverage,
 focused tests, and a short note explaining the failure and ownership policy.
@@ -158,6 +158,6 @@ This is a coarse map for planning, not a replacement for the API manifest:
 | --- | --- | --- |
 | `Option`/`Result`, `cmp`, `convert`, `math`, `bits`, `ascii`, `parse`, `encoding` | usable | More negative tests around trait bounds, overflow, and malformed encodings. |
 | `zone`, `boxed`, `string`, `vec`, `collections`, `iter`, `algo`, `hash`, `random::Prng` | usable | More same-zone, reset/destroy, iterator invalidation, and trait-driven constructor tests. |
-| `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time`, first IPv4 `net` TCP handles | seed to usable | Stronger owned handle policy, richer `Result` error values, socket capability notes, and platform notes. |
-| `target`, `c`, `os`, future socket options/platform handles in `net` | seed | Grow duplicate-with-flags/error policy and broader descriptor flag tests before readiness, signal, mmap, or socket option APIs. |
+| `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time`, IPv4 `net` DNS/TCP/UDP and Unix stream handles | seed to usable | Stronger owned handle policy, richer `Result` error values, socket capability notes, IPv6 handles, buffer-oriented net IO, and platform notes. |
+| `target`, `c`, `os`, future platform-specific socket extensions in `net` | seed | Grow duplicate-with-flags/error policy and broader descriptor flag tests before readiness, signal, mmap, or broad socket option APIs. |
 | backtrace, benchmark, fuzzing, async, compression | planned | Keep out of runtime `std` until runtime, driver, and error contracts are ready. |

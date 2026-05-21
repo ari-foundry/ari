@@ -1,0 +1,51 @@
+// Covers the first DNS/name-resolution API. Numeric IPv4 hosts keep this
+// deterministic while still proving the getaddrinfo-backed lookup path.
+fn main() -> i64 {
+  var score = 0;
+
+  let loopback = net::lookup_v4("127.0.0.1", 8080 as u16);
+  assert(loopback.is_some());
+  let addr = loopback.unwrap();
+  if addr.is_loopback() {
+    score = score + 1;
+  }
+  if addr.port() == 8080 as u16 {
+    score = score + 2;
+  }
+  let ip = addr.ip();
+  if ip.is_v4() && !ip.is_v6() {
+    score = score + 4;
+  }
+  if addr.with_port(8081 as u16).port() == 8081 as u16 {
+    score = score + 8;
+  }
+
+  match net::lookup_v4_result("127.0.0.1", 80 as u16) {
+    Ok(result_addr) => {
+      if result_addr.port() == 80 as u16 && result_addr.is_loopback() {
+        score = score + 16;
+      }
+    }
+    Err(_raw) => {}
+  }
+
+  if net::lookup_v4("::1", 80 as u16).is_none() {
+    score = score + 32;
+  }
+
+  let any = net::lookup_v4("0.0.0.0", 0 as u16);
+  if any.is_some() && any.unwrap().is_unspecified() {
+    score = score + 64;
+  }
+
+  let broadcast = net::lookup_v4("255.255.255.255", 65535 as u16);
+  if broadcast.is_some() {
+    let full = broadcast.unwrap();
+    if full.port() == 65535 as u16 && !full.is_loopback() && !full.is_unspecified() {
+      score = score + 128;
+    }
+  }
+
+  assert_eq_i64(score, 255);
+  return score;
+}

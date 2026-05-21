@@ -70,10 +70,12 @@ helpers, `std::path`
 adds source-only lexical path
 splitting, joining, lightweight normalization, and typed `PathBytes` views,
 and `std::net` adds
-IPv4, IPv6, generic IP, and socket-address values plus the first hosted IPv4
-`TcpListener`/`TcpStream` bind/connect/accept helpers while DNS, UDP, Unix
-sockets, IPv6 socket handles, options, timeouts, and shutdown remain runtime
-roadmap work. Source
+IPv4, IPv6, generic IP, and socket-address values plus hosted IPv4 DNS lookup,
+IPv4 `TcpListener`/`TcpStream` bind/connect/accept helpers, IPv4
+`UdpSocket` single-byte datagrams, Unix stream sockets, nonblocking flags,
+millisecond socket timeouts, and stream shutdown. IPv6 socket handles,
+buffer-oriented datagrams, broader socket options, peer/local address helpers,
+and richer error payloads remain runtime roadmap work. Source
 `std::hash` adds deterministic non-cryptographic `Hasher`/`Hash[T]` helpers
 for primitive values and byte slices, and `std::random` adds OS entropy plus a
 deterministic non-cryptographic `Prng` with booleans, unbiased bounded

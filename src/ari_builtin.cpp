@@ -381,6 +381,17 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_net_tcp_connect_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
     if (symbol == "ari_builtin_net_tcp_accept") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_local_port") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_udp_bind_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
+    if (symbol == "ari_builtin_net_udp_send_byte_to_v4") {
+        return builtin_sig({i64, u8, i64, i64, i64, i64, i64}, boolean);
+    }
+    if (symbol == "ari_builtin_net_udp_recv_byte") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_set_read_timeout_millis") return builtin_sig({i64, i64}, boolean);
+    if (symbol == "ari_builtin_net_set_write_timeout_millis") return builtin_sig({i64, i64}, boolean);
+    if (symbol == "ari_builtin_net_shutdown") return builtin_sig({i64, i64}, boolean);
+    if (symbol == "ari_builtin_net_unix_listen") return builtin_sig({source_string}, i64);
+    if (symbol == "ari_builtin_net_unix_connect") return builtin_sig({source_string}, i64);
+    if (symbol == "ari_builtin_net_lookup_v4") return builtin_sig({source_string, i64}, i64);
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_read") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_write") return builtin_sig({source_string}, boolean);

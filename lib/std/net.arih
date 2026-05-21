@@ -1,8 +1,8 @@
-// Network address and first socket helpers.
+// Network address and socket helpers.
 //
-// Address values stay plain Ari data. TCP sockets are explicit owned
-// descriptor wrappers over the hosted runtime, with Result helpers for callers
-// that need the compact std::error raw bridge.
+// Address values stay plain Ari data. Sockets are explicit owned descriptor
+// wrappers over the hosted runtime, with Result helpers for callers that need
+// the compact std::error raw bridge.
 pub struct Ipv4Addr {
   a: u8,
   b: u8,
@@ -46,12 +46,43 @@ pub struct TcpStream {
   mut handle: std::os::OwnedFd,
 }
 
+pub struct UdpSocket {
+  mut handle: std::os::OwnedFd,
+}
+
+pub struct UnixListener {
+  mut handle: std::os::OwnedFd,
+}
+
+pub struct UnixStream {
+  mut handle: std::os::OwnedFd,
+}
+
+pub enum Shutdown {
+  Read,
+  Write,
+  Both,
+}
+
 extern "ari" fn tcp_listen_v4_raw(a: i64, b: i64, c: i64, d: i64, port: i64) -> i64 =
   "ari_builtin_net_tcp_listen_v4";
 extern "ari" fn tcp_connect_v4_raw(a: i64, b: i64, c: i64, d: i64, port: i64) -> i64 =
   "ari_builtin_net_tcp_connect_v4";
 extern "ari" fn tcp_accept_raw(raw: i64) -> i64 = "ari_builtin_net_tcp_accept";
 extern "ari" fn local_port_raw(raw: i64) -> i64 = "ari_builtin_net_local_port";
+extern "ari" fn udp_bind_v4_raw(a: i64, b: i64, c: i64, d: i64, port: i64) -> i64 =
+  "ari_builtin_net_udp_bind_v4";
+extern "ari" fn udp_send_byte_to_v4_raw(raw: i64, value: u8, a: i64, b: i64, c: i64, d: i64, port: i64) -> bool =
+  "ari_builtin_net_udp_send_byte_to_v4";
+extern "ari" fn udp_recv_byte_raw(raw: i64) -> i64 = "ari_builtin_net_udp_recv_byte";
+extern "ari" fn set_read_timeout_millis_raw(raw: i64, millis: i64) -> bool =
+  "ari_builtin_net_set_read_timeout_millis";
+extern "ari" fn set_write_timeout_millis_raw(raw: i64, millis: i64) -> bool =
+  "ari_builtin_net_set_write_timeout_millis";
+extern "ari" fn shutdown_raw(raw: i64, mode: i64) -> bool = "ari_builtin_net_shutdown";
+extern "ari" fn unix_listen_raw(path: string) -> i64 = "ari_builtin_net_unix_listen";
+extern "ari" fn unix_connect_raw(path: string) -> i64 = "ari_builtin_net_unix_connect";
+extern "ari" fn lookup_v4_raw(host: string, port: i64) -> i64 = "ari_builtin_net_lookup_v4";
 extern "ari" fn read_socket_byte_raw(raw: i64) -> i64 = "ari_builtin_os_read_byte";
 extern "ari" fn write_socket_byte_raw(raw: i64, value: u8) -> bool = "ari_builtin_os_write_byte";
 
@@ -70,6 +101,24 @@ pub fn socket_addr(ip: IpAddr, port: u16) -> SocketAddr {
 pub fn localhost(port: u16) -> SocketAddr {
   let host = Ipv4Addr::localhost();
   return socket_addr(host.as_ip(), port);
+}
+
+pub fn lookup_v4(host: string, port: u16) -> std::Option[SocketAddr] {
+  return lookup_v4_result(host, port).ok();
+}
+
+pub fn lookup_v4_result(host: string, port: u16) -> std::Result[SocketAddr, i64] {
+  let packed = lookup_v4_raw(host, port as i64);
+  if packed < 0 {
+    return std::Err<SocketAddr, i64>(std::error::new(std::error::Other).raw());
+  }
+  let address = packed >> 16;
+  let a = ((address >> 24) & 255) as u8;
+  let b = ((address >> 16) & 255) as u8;
+  let c = ((address >> 8) & 255) as u8;
+  let d = (address & 255) as u8;
+  let resolved_port = (packed & 65535) as u16;
+  return std::Ok<SocketAddr, i64>(socket_addr(ipv4(a, b, c, d).as_ip(), resolved_port));
 }
 
 fn last_errno_error_raw() -> i64 {
@@ -97,6 +146,32 @@ fn tcp_stream_from_raw(raw: i64) -> TcpStream {
   var handle = std::os::OwnedFd::from_raw(raw);
   handle.set_close_on_exec(true);
   return TcpStream { handle: handle };
+}
+
+fn udp_socket_from_raw(raw: i64) -> UdpSocket {
+  var handle = std::os::OwnedFd::from_raw(raw);
+  handle.set_close_on_exec(true);
+  return UdpSocket { handle: handle };
+}
+
+fn unix_listener_from_raw(raw: i64) -> UnixListener {
+  var handle = std::os::OwnedFd::from_raw(raw);
+  handle.set_close_on_exec(true);
+  return UnixListener { handle: handle };
+}
+
+fn unix_stream_from_raw(raw: i64) -> UnixStream {
+  var handle = std::os::OwnedFd::from_raw(raw);
+  handle.set_close_on_exec(true);
+  return UnixStream { handle: handle };
+}
+
+fn shutdown_mode(mode: Shutdown) -> i64 {
+  match mode {
+    Read => { return 0; }
+    Write => { return 1; }
+    Both => { return 2; }
+  }
 }
 
 fn tcp_listen_raw(addr: SocketAddr) -> std::Result[i64, i64] {
@@ -129,6 +204,40 @@ fn tcp_connect_raw(addr: SocketAddr) -> std::Result[i64, i64] {
     ip.s3 as i64,
     addr.port as i64
   );
+  if raw >= 0 {
+    return std::Ok<i64, i64>(raw);
+  }
+  return std::Err<i64, i64>(last_errno_error_raw());
+}
+
+fn udp_bind_raw(addr: SocketAddr) -> std::Result[i64, i64] {
+  let ip = addr.ip;
+  if !ip.is_v4() {
+    return std::Err<i64, i64>(unsupported_address_error_raw());
+  }
+  let raw = udp_bind_v4_raw(
+    ip.s0 as i64,
+    ip.s1 as i64,
+    ip.s2 as i64,
+    ip.s3 as i64,
+    addr.port as i64
+  );
+  if raw >= 0 {
+    return std::Ok<i64, i64>(raw);
+  }
+  return std::Err<i64, i64>(last_errno_error_raw());
+}
+
+fn unix_listen_result_raw(path: string) -> std::Result[i64, i64] {
+  let raw = unix_listen_raw(path);
+  if raw >= 0 {
+    return std::Ok<i64, i64>(raw);
+  }
+  return std::Err<i64, i64>(last_errno_error_raw());
+}
+
+fn unix_connect_result_raw(path: string) -> std::Result[i64, i64] {
+  let raw = unix_connect_raw(path);
   if raw >= 0 {
     return std::Ok<i64, i64>(raw);
   }
@@ -352,6 +461,21 @@ pub impl std::net::TcpListener {
     return self.handle.close();
   }
 
+  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+    return self.handle.is_nonblocking();
+  }
+
+  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_nonblocking(enabled);
+  }
+
+  fn set_accept_timeout_millis(self: ref Self, millis: i64) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_read_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
   fn local_port(self: ref Self) -> std::Option[u16] {
     if !self.is_open() {
       return std::None<u16>();
@@ -415,6 +539,268 @@ pub impl std::net::TcpStream {
     return self.handle.close();
   }
 
+  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+    return self.handle.is_nonblocking();
+  }
+
+  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_nonblocking(enabled);
+  }
+
+  fn set_read_timeout_millis(self: ref Self, millis: i64) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_read_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
+  fn set_write_timeout_millis(self: ref Self, millis: i64) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_write_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
+  fn shutdown(self: ref Self, mode: Shutdown) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return shutdown_raw(self.handle.raw(), shutdown_mode(mode));
+  }
+
+  fn try_read_byte(self: ref mut Self) -> std::Option[u8] {
+    if !self.is_open() {
+      return std::None<u8>();
+    }
+    let byte = read_socket_byte_raw(self.handle.raw());
+    if byte < 0 {
+      return std::None<u8>();
+    }
+    return std::Some<u8>(byte as u8);
+  }
+}
+
+pub impl std::net::UdpSocket {
+  fn bind(addr: SocketAddr) -> std::Option[UdpSocket] {
+    return UdpSocket::bind_result(addr).ok();
+  }
+
+  fn try_bind(addr: SocketAddr) -> std::Option[UdpSocket] {
+    return UdpSocket::bind(addr);
+  }
+
+  fn bind_result(addr: SocketAddr) -> std::Result[UdpSocket, i64] {
+    match udp_bind_raw(addr) {
+      std::Ok(raw) => {
+        return std::Ok<UdpSocket, i64>(udp_socket_from_raw(raw));
+      }
+      std::Err(error) => {
+        return std::Err<UdpSocket, i64>(error);
+      }
+    }
+  }
+
+  fn descriptor(self: ref Self) -> std::os::Fd {
+    return self.handle.as_fd();
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.handle.is_open();
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return self.handle.close();
+  }
+
+  fn local_port(self: ref Self) -> std::Option[u16] {
+    if !self.is_open() {
+      return std::None<u16>();
+    }
+    let port = local_port_raw(self.handle.raw());
+    if port < 0 || port > 65535 {
+      return std::None<u16>();
+    }
+    return std::Some<u16>(port as u16);
+  }
+
+  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+    return self.handle.is_nonblocking();
+  }
+
+  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_nonblocking(enabled);
+  }
+
+  fn set_read_timeout_millis(self: ref Self, millis: i64) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_read_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
+  fn set_write_timeout_millis(self: ref Self, millis: i64) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_write_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
+  fn send_byte_to(self: ref Self, value: u8, addr: SocketAddr) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    let ip = addr.ip;
+    if !ip.is_v4() {
+      return false;
+    }
+    return udp_send_byte_to_v4_raw(
+      self.handle.raw(),
+      value,
+      ip.s0 as i64,
+      ip.s1 as i64,
+      ip.s2 as i64,
+      ip.s3 as i64,
+      addr.port as i64
+    );
+  }
+
+  fn recv_byte(self: ref mut Self) -> i64 {
+    if !self.is_open() {
+      return -1;
+    }
+    return udp_recv_byte_raw(self.handle.raw());
+  }
+
+  fn try_recv_byte(self: ref mut Self) -> std::Option[u8] {
+    let value = self.recv_byte();
+    if value < 0 {
+      return std::None<u8>();
+    }
+    return std::Some<u8>(value as u8);
+  }
+}
+
+pub impl std::net::UnixListener {
+  fn bind(path: string) -> std::Option[UnixListener] {
+    return UnixListener::bind_result(path).ok();
+  }
+
+  fn try_bind(path: string) -> std::Option[UnixListener] {
+    return UnixListener::bind(path);
+  }
+
+  fn bind_result(path: string) -> std::Result[UnixListener, i64] {
+    match unix_listen_result_raw(path) {
+      std::Ok(raw) => {
+        return std::Ok<UnixListener, i64>(unix_listener_from_raw(raw));
+      }
+      std::Err(error) => {
+        return std::Err<UnixListener, i64>(error);
+      }
+    }
+  }
+
+  fn descriptor(self: ref Self) -> std::os::Fd {
+    return self.handle.as_fd();
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.handle.is_open();
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return self.handle.close();
+  }
+
+  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+    return self.handle.is_nonblocking();
+  }
+
+  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_nonblocking(enabled);
+  }
+
+  fn accept(self: ref Self) -> std::Option[UnixStream] {
+    return self.accept_result().ok();
+  }
+
+  fn try_accept(self: ref Self) -> std::Option[UnixStream] {
+    return self.accept();
+  }
+
+  fn accept_result(self: ref Self) -> std::Result[UnixStream, i64] {
+    if !self.is_open() {
+      return std::Err<UnixStream, i64>(invalid_input_error_raw());
+    }
+    let raw = tcp_accept_raw(self.handle.raw());
+    if raw >= 0 {
+      return std::Ok<UnixStream, i64>(unix_stream_from_raw(raw));
+    }
+    return std::Err<UnixStream, i64>(last_errno_error_raw());
+  }
+}
+
+pub impl std::net::UnixStream {
+  fn connect(path: string) -> std::Option[UnixStream] {
+    return UnixStream::connect_result(path).ok();
+  }
+
+  fn try_connect(path: string) -> std::Option[UnixStream] {
+    return UnixStream::connect(path);
+  }
+
+  fn connect_result(path: string) -> std::Result[UnixStream, i64] {
+    match unix_connect_result_raw(path) {
+      std::Ok(raw) => {
+        return std::Ok<UnixStream, i64>(unix_stream_from_raw(raw));
+      }
+      std::Err(error) => {
+        return std::Err<UnixStream, i64>(error);
+      }
+    }
+  }
+
+  fn descriptor(self: ref Self) -> std::os::Fd {
+    return self.handle.as_fd();
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.handle.is_open();
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return self.handle.close();
+  }
+
+  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+    return self.handle.is_nonblocking();
+  }
+
+  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_nonblocking(enabled);
+  }
+
+  fn set_read_timeout_millis(self: ref Self, millis: i64) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_read_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
+  fn set_write_timeout_millis(self: ref Self, millis: i64) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_write_timeout_millis_raw(self.handle.raw(), millis);
+  }
+
+  fn shutdown(self: ref Self, mode: Shutdown) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return shutdown_raw(self.handle.raw(), shutdown_mode(mode));
+  }
+
   fn try_read_byte(self: ref mut Self) -> std::Option[u8] {
     if !self.is_open() {
       return std::None<u8>();
@@ -437,6 +823,28 @@ impl std::io::Reader for std::net::TcpStream {
 }
 
 impl std::io::Writer for std::net::TcpStream {
+  pub fn write_byte(self: ref mut Self, value: u8) -> bool {
+    if !self.handle.is_open() {
+      return false;
+    }
+    return write_socket_byte_raw(self.handle.raw(), value);
+  }
+
+  pub fn flush(self: ref mut Self) -> bool {
+    return self.handle.is_open();
+  }
+}
+
+impl std::io::Reader for std::net::UnixStream {
+  pub fn read_byte(self: ref mut Self) -> i64 {
+    if !self.handle.is_open() {
+      return -1;
+    }
+    return read_socket_byte_raw(self.handle.raw());
+  }
+}
+
+impl std::io::Writer for std::net::UnixStream {
   pub fn write_byte(self: ref mut Self, value: u8) -> bool {
     if !self.handle.is_open() {
       return false;
