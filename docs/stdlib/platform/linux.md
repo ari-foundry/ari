@@ -17,8 +17,9 @@ Implemented now:
   the LLVM driver. `std::thread::available_parallelism()` currently uses
   `sysconf(_SC_NPROCESSORS_ONLN)` and clamps host failure to `1`.
 - `std::process` currently covers process id, user id, group id, explicit exit,
-  explicit abort, POSIX `fork`/`wait`, and the first `Command`/`Child` builder
-  over `fork`, `execvp`, `setenv`, `chdir`, and `kill`.
+  explicit abort, POSIX `fork`/`wait`, and the first
+  `Command`/`Child`/`Output` builder over `fork`, `execvp`, `setenv`, `chdir`,
+  `pipe`, `dup2`, and `kill`.
 - `std::mem::page_size()` reports the hosted runtime page size for alignment
   and future mapping work.
 - `std::random::entropy()` and `std::random::fill(values)` use the hosted Linux
@@ -128,7 +129,8 @@ useful for modern systems work.
 | argv/env | Portable surface exists through `std::context` and `std::env`. | Keep user-facing wrappers portable; reserve raw `environ` access for `std::os` if needed. |
 | current process info | `std::process::id`, `uid`, `gid`, and `is_root` exist. | Add parent id, session/process-group helpers only with clear platform policy. |
 | exit/abort | `std::process::exit` and `abort` exist. | Document destructor/cleanup limits anywhere higher-level runtime teardown is added. |
-| spawn | `Command::spawn` is exposed through a portable-looking builder backed by POSIX `fork`/`execvp` today. | Add Windows mapping and decide stdin/stdout/stderr ownership before broadening the API. |
+| spawn | `Command::spawn` is exposed through a portable-looking builder backed by POSIX `fork`/`execvp` today. | Add Windows mapping and decide stdin ownership before broadening the API. |
+| output capture | `Command::output_in(ref mut zone)` captures small child stdout/stderr into a zone-backed `Output` handle using `pipe(2)` and `dup2(2)`. | Add readiness or nonblocking draining before promising large-output capture, then add stdin redirection and richer status values. |
 | fork | `std::process::fork` exists as a POSIX slice. | Keep marked as sharp; fork-with-threads and async-signal-safe limitations need more docs. |
 | exec | `Command::exec` replaces the current process after applying child setup. | Add richer setup policy and document noreturn behavior in more examples. |
 | wait | `std::process::wait`, `wait_result`, `Command::status`, and `Child::wait` cover normal child exit status. | Replace compact status-only reporting with a richer status/result value. |
@@ -151,8 +153,8 @@ useful for modern systems work.
 1. Keep `std::target` current with compiler target support.
 2. Add explicit `std::os` docs before adding raw wrappers.
 3. Grow `OwnedFd` with duplicate-with-flags and `errno`/error policy.
-4. Add process expansion in order: richer wait status, `kill`, `exec`, then
-   portable `spawn`.
+4. Add process expansion in order: large-output pipe draining, stdin
+   redirection, richer wait status, then portable `spawn` mapping.
 5. Implement descriptor readiness primitives in order: `poll`, then Linux
    `epoll`, `eventfd`, `timerfd`, and `memfd`.
 6. Add memory mapping only after descriptor/error policy and owned mapping

@@ -4,8 +4,8 @@
 child-process control. The implemented surface reads process identity values,
 terminates explicitly with `exit` or `abort`, uses natural status helper names
 in source Ari, and on the current Linux/LLVM path can fork/wait directly or use
-the first `Command` builder for `spawn`, `status`, `exec`, `kill`, environment
-setup, and working-directory setup.
+the first `Command` builder for `spawn`, `status`, `output_in`, `exec`, `kill`,
+environment setup, working-directory setup, and small stdout/stderr capture.
 
 ## Current API
 
@@ -42,7 +42,13 @@ Command::env(env_values)
 Command::current_dir(path)
 Command::spawn()
 Command::status()
+Command::output_in(zone)
 Command::exec()
+
+Output::status()
+Output::is_success()
+Output::stdout()
+Output::stderr()
 
 Child::pid()
 Child::wait()
@@ -90,6 +96,15 @@ argument slice, child environment assignments, and child working directory.
 `spawn()` returns a `Child` handle with `pid`, `wait`, `kill`, and `terminate`
 methods. `exec()` applies the setup and replaces the current process with the
 program; if `execvp` returns, Ari reports the host error.
+
+`output_in(zone)` spawns the command with stdout and stderr redirected to
+temporary pipes, waits for the child, reads both streams into `Vec[u8]` values
+allocated in `zone`, and returns `Result[Output, Error]`. `Output::status()`
+reads the child exit status, `Output::is_success()` checks it against
+`process::success()`, and `Output::stdout()` / `Output::stderr()` expose
+borrowed `Slice[u8]` views over the captured bytes. The `_in` suffix is
+intentional: captured output owns buffers, so the caller chooses the allocation
+zone.
 
 Arguments use `process::arg("...")` rather than raw `string` slices so the
 builder can keep an executable-friendly C argv representation. Environment
@@ -193,16 +208,39 @@ fn main() -> i64 {
 }
 ```
 
+Command output capture:
+
+```ari
+fn main() -> i64 {
+  var zone = zone::temp(512);
+  var args = [process::arg("-c"), process::arg("printf 'ok'")];
+  var cmd = process::command_with_args("sh", args.as_slice());
+
+  match cmd.output_in(ref mut zone) {
+    Err(_) => { return process::failure(); }
+    Ok(value) => {
+      var output = value;
+      if output.status() != process::success() {
+        return process::failure();
+      }
+      return output.stdout().len;
+    }
+  }
+}
+```
+
 ## Current Limits
 
 - `uid`, `gid`, `fork`, `wait`, `Command`, and `kill` are POSIX-flavored hosted
   runtime hooks today. The API shape is intended to stay portable, but Windows
   mapping still needs a separate implementation.
-- `Command` currently supports `spawn`, `status`, `exec`, arguments,
-  environment assignments, working-directory setup, and `Child` wait/kill
-  helpers. Captured `output`, stdout/stderr pipe ownership, stdin redirection,
-  inherited/cleared environment policies, and richer process-status values are
-  future work.
+- `Command` currently supports `spawn`, `status`, `output_in`, `exec`,
+  arguments, environment assignments, working-directory setup, captured stdout
+  and stderr, and `Child` wait/kill helpers. `output_in` is intended for small
+  captured outputs today: large concurrent stdout/stderr streams need future
+  readiness/nonblocking draining to avoid pipe-buffer backpressure. Explicit
+  stdin redirection, inherited/cleared environment policies, and richer
+  process-status values are future work.
 - Exit runs through the host process immediately. Do not expect Ari destructors
   or zone cleanup to run after `process::exit`.
 - Abort also terminates immediately through the host runtime and should be
@@ -230,12 +268,14 @@ tests/cases/standard-library/ok/process/std-process-abort.ari
 tests/cases/standard-library/ok/process/std-process-fork-wait.ari
 tests/cases/standard-library/ok/process/std-process-result.ari
 tests/cases/standard-library/ok/process/std-process-command.ari
+tests/cases/standard-library/ok/process/std-process-output.ari
 ```
 
 `make check-prelude` emits LLVM, checks the runtime hook symbols, and executes
 the programs. The abort fixture compiles and runs only a non-aborting path while
 checking that the abort hook lowers to the host `abort` declaration. The command
 fixture covers argument passing, environment setup, working-directory setup,
-`status`, `spawn`, `Child::wait`, and non-destructive `kill(0)`. Public
-declarations are tracked in `tests/std_api_manifest.txt` and checked by
-`make check-std-api`.
+`status`, `spawn`, `Child::wait`, and non-destructive `kill(0)`. The output
+fixture covers small stdout/stderr capture, exit status accessors, and missing
+command status `127`. Public declarations are tracked in
+`tests/std_api_manifest.txt` and checked by `make check-std-api`.

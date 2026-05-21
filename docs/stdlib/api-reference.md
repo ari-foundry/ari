@@ -488,7 +488,13 @@ Command::env(env_values)
 Command::current_dir(path)
 Command::spawn()
 Command::status()
+Command::output_in(zone)
 Command::exec()
+
+Output::status()
+Output::is_success()
+Output::stdout()
+Output::stderr()
 
 Child::pid()
 Child::wait()
@@ -529,9 +535,24 @@ let status = cmd.status();
 `status()` spawns and waits. `spawn()` returns a `Child` handle. `exec()`
 replaces the current process on success and returns `Err(Error)` only if the
 host `execvp` path fails. `kill(pid, signal)` and `Child::kill(signal)` return
-`Result[(), Error]`; `terminate` sends `SIGTERM`. Portable Windows mapping,
-captured `output`, stdout/stderr pipe ownership, and richer `ExitStatus` values
-are still future process-library work.
+`Result[(), Error]`; `terminate` sends `SIGTERM`.
+
+`output_in(zone)` is the first captured-output helper. It spawns the child with
+stdout and stderr redirected to pipes, waits for it, and returns an `Output`
+whose byte buffers live in the provided zone:
+
+```ari
+var zone = zone::temp(512);
+var args = [process::arg("-c"), process::arg("printf 'ok'")];
+var cmd = process::command_with_args("sh", args.as_slice());
+let result = cmd.output_in(ref mut zone);
+```
+
+Use `Output::status()` for the exit code, `Output::is_success()` for the
+standard success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]`
+views. This slice is meant for small outputs today; large concurrent streams,
+stdin redirection, environment inheritance policy, portable Windows mapping,
+and richer `ExitStatus` values are still future process-library work.
 
 ## OS Descriptor Views
 

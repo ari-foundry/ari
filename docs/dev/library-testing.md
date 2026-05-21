@@ -137,6 +137,9 @@ identifies the exact case:
   argv construction through `process::arg`, child environment setup,
   working-directory setup, `status`, `spawn`, `Child::wait`, and
   non-destructive `kill(0)` probes.
+- `std-process-output.ari`: `Command::output_in` small stdout/stderr capture,
+  `Output` accessors, missing-command `127` status, `pipe`/`dup2` lowering, and
+  compiler zone provenance for the zone-backed `Output` handle.
 - `std-thread-basic.ari`: runtime-backed `std::thread` function-pointer
   spawn/join behavior, child runtime ids, invalid-handle sentinels, root
   `Thread`, method wrappers, and scheduler yield.

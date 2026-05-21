@@ -39,6 +39,7 @@
 #include "std_collections_semantics.hpp"
 #include "std_enum_probe_semantics.hpp"
 #include "std_fs_semantics.hpp"
+#include "std_process_semantics.hpp"
 #include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 #include "symbol_mangle.hpp"
@@ -18475,6 +18476,14 @@ private:
             }
         }
         if (!std_zone_handle_source_field) {
+            std_zone_handle_source_field =
+                std_process_output_zone_handle_source_field_index(struct_type);
+            if (std_zone_handle_source_field) {
+                std_zone_handle_storage_field_paths =
+                    std_process_output_zone_handle_storage_field_path_indices(struct_type);
+            }
+        }
+        if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_string_zone_handle_source_field_index(struct_type);
         }
         const bool std_zone_metadata_literal =
@@ -18495,6 +18504,7 @@ private:
         };
         const bool std_zone_handle_requires_single_source =
             is_std_fs_dir_entry_zone_handle_type(struct_type) ||
+            is_std_process_output_zone_handle_type(struct_type) ||
             is_std_vec_handle_type(struct_type);
         bool std_zone_handle_has_source = false;
         std::string std_zone_handle_source;

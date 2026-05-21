@@ -14,6 +14,7 @@ extern "C" fn raw_execvp(path: ptr c_char, argv: ptr c_void) -> c_int = "execvp"
 extern "C" fn raw_kill(pid: c_int, signal: c_int) -> c_int = "kill";
 extern "C" fn raw_setenv(name: ptr c_char, value: ptr c_char, overwrite: c_int) -> c_int = "setenv";
 extern "C" fn raw_chdir(path: ptr c_char) -> c_int = "chdir";
+extern "C" fn raw_dup2(source: c_int, target: c_int) -> c_int = "dup2";
 
 pub struct Arg {
   value: std::c::CStr,
@@ -33,6 +34,12 @@ pub struct Command {
   mut arg_values: std::Slice[std::process::Arg],
   mut env_values: std::Slice[std::process::EnvVar],
   mut cwd_path: std::Option[std::c::CStr],
+}
+
+pub struct Output {
+  status_value: i64,
+  mut stdout_bytes: std::vec::Vec[u8],
+  mut stderr_bytes: std::vec::Vec[u8],
 }
 
 pub fn success() -> i64 {
@@ -91,6 +98,10 @@ pub fn command_with_args(program: string, args: std::Slice[std::process::Arg]) -
 }
 
 fn non_normal_exit_error() -> std::error::Error {
+  return std::error::new(std::error::Other);
+}
+
+fn pipe_error() -> std::error::Error {
   return std::error::new(std::error::Other);
 }
 
@@ -192,6 +203,28 @@ fn exec_with_argv(command: ref std::process::Command, argv: ptr c_void) -> std::
   return std::Err<(), std::error::Error>(std::c::error());
 }
 
+fn redirect_descriptor(source: i64, target: i64) -> bool {
+  return raw_dup2(source as c_int, target as c_int) >= 0;
+}
+
+pub impl std::process::Output {
+  fn status(self: ref Self) -> i64 {
+    return self.status_value;
+  }
+
+  fn is_success(self: ref Self) -> bool {
+    return std::process::is_success(self.status_value);
+  }
+
+  fn stdout(self: ref mut Self) -> std::Slice[u8] {
+    return self.stdout_bytes.as_slice();
+  }
+
+  fn stderr(self: ref mut Self) -> std::Slice[u8] {
+    return self.stderr_bytes.as_slice();
+  }
+}
+
 pub impl std::process::Child {
   fn pid(self: ref Self) -> i64 {
     return self.pid_value;
@@ -274,5 +307,73 @@ pub impl std::process::Command {
     var scratch = zone::temp(std::process::argv_capacity(self));
     let argv = std::process::build_argv(ref mut scratch, self);
     return std::process::exec_with_argv(self, argv);
+  }
+
+  fn output_in(self: ref Self, zone: ref mut Zone) -> std::Result[std::process::Output, std::error::Error] {
+    let maybe_stdout_pipe = std::io::pipe();
+    if maybe_stdout_pipe.is_none() {
+      return std::Err<std::process::Output, std::error::Error>(std::process::pipe_error());
+    }
+    var stdout_pipe = maybe_stdout_pipe.unwrap();
+
+    let maybe_stderr_pipe = std::io::pipe();
+    if maybe_stderr_pipe.is_none() {
+      stdout_pipe.close();
+      return std::Err<std::process::Output, std::error::Error>(std::process::pipe_error());
+    }
+    var stderr_pipe = maybe_stderr_pipe.unwrap();
+
+    var stdout_reader = stdout_pipe.take_reader();
+    var stdout_writer = stdout_pipe.take_writer();
+    var stderr_reader = stderr_pipe.take_reader();
+    var stderr_writer = stderr_pipe.take_writer();
+    var scratch = zone::temp(std::process::argv_capacity(self));
+    let argv = std::process::build_argv(ref mut scratch, self);
+
+    match std::process::fork_result() {
+      std::Err(reason) => {
+        stdout_reader.close();
+        stdout_writer.close();
+        stderr_reader.close();
+        stderr_writer.close();
+        return std::Err<std::process::Output, std::error::Error>(reason);
+      }
+      std::Ok(pid) => {
+        if std::process::is_child(pid) {
+          stdout_reader.close();
+          stderr_reader.close();
+          if !std::process::redirect_descriptor(stdout_writer.as_fd().raw(), 1) {
+            std::process::exit(127);
+          }
+          if !std::process::redirect_descriptor(stderr_writer.as_fd().raw(), 2) {
+            std::process::exit(127);
+          }
+          stdout_writer.close();
+          stderr_writer.close();
+          std::process::exec_with_argv(self, argv);
+          std::process::exit(127);
+        }
+
+        stdout_writer.close();
+        stderr_writer.close();
+        var stdout_bytes = std::io::read_all<std::io::PipeReader>(zone, ref mut stdout_reader);
+        var stderr_bytes = std::io::read_all<std::io::PipeReader>(zone, ref mut stderr_reader);
+        stdout_reader.close();
+        stderr_reader.close();
+
+        match std::process::wait_result(pid) {
+          std::Err(wait_reason) => {
+            return std::Err<std::process::Output, std::error::Error>(wait_reason);
+          }
+          std::Ok(status) => {
+            return std::Ok<std::process::Output, std::error::Error>(std::process::Output {
+              status_value: status,
+              stdout_bytes: stdout_bytes,
+              stderr_bytes: stderr_bytes,
+            });
+          }
+        }
+      }
+    }
   }
 }

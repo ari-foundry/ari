@@ -1354,9 +1354,14 @@ method std::process::Command::current_dir|check-prelude std-process-command chil
 method std::process::Command::env|check-prelude std-process-command child environment setup; docs/stdlib/modules/process.md
 method std::process::Command::exec|check-prelude std-process-command replace current process with command; docs/stdlib/modules/process.md
 method std::process::Command::new|check-prelude std-process-command associated Command constructor; docs/stdlib/modules/process.md
+method std::process::Command::output_in|check-prelude std-process-output zone-backed stdout/stderr capture helper; docs/stdlib/modules/process.md
 method std::process::Command::spawn|check-prelude std-process-command spawn child process handle; docs/stdlib/modules/process.md
 method std::process::Command::status|check-prelude std-process-command spawn and wait for exit status; docs/stdlib/modules/process.md
 method std::process::Command::with_args|check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md
+method std::process::Output::is_success|check-prelude std-process-output captured exit-success predicate; docs/stdlib/modules/process.md
+method std::process::Output::status|check-prelude std-process-output captured exit-status accessor; docs/stdlib/modules/process.md
+method std::process::Output::stderr|check-prelude std-process-output captured stderr byte view; docs/stdlib/modules/process.md
+method std::process::Output::stdout|check-prelude std-process-output captured stdout byte view; docs/stdlib/modules/process.md
 method std::random::Prng::below|check-prelude std-random-basic unbiased bounded non-crypto PRNG integer method; docs/stdlib/modules/random.md
 method std::random::Prng::boolean|check-prelude std-random-basic deterministic PRNG boolean method; docs/stdlib/modules/random.md
 method std::random::Prng::fill|check-prelude std-random-basic deterministic PRNG byte fill method; docs/stdlib/modules/random.md
@@ -1753,6 +1758,7 @@ struct std::process::Arg|check-prelude std-process-command borrowed C argv argum
 struct std::process::Child|check-prelude std-process-command child process handle; docs/stdlib/modules/process.md
 struct std::process::Command|check-prelude std-process-command process command builder; docs/stdlib/modules/process.md
 struct std::process::EnvVar|check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md
+struct std::process::Output|check-prelude std-process-output captured child output handle; docs/stdlib/modules/process.md
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row

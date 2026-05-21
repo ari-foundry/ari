@@ -80,7 +80,7 @@ limits, examples, and test files for one module.
   `set_current_dir`, and `try_executable_path_os`.
 - [std::process](process.md): current process id, uid/gid, explicit exit and
   abort hooks, status helper functions, POSIX fork/wait direct `Error` result
-  helpers, and the first `Command`/`Child` child-process builder.
+  helpers, and the first `Command`/`Child`/`Output` child-process builder.
 - [std::os](os.md): non-owning file-descriptor views, `OwnedFd` close,
   duplicate, close-on-exec, nonblocking policy, owned `Pipe` pairs, and the
   roadmap for raw OS primitives.

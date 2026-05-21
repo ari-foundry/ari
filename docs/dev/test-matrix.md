@@ -117,12 +117,15 @@ outside narrowing control flow. The remaining owner-path gaps are dynamic
 indexed owner element moves and broader non-static runtime sequence owner paths
 beyond the supported Vec/Slice pattern cases.
 
-Process coverage note: `std-process-command.ari` now covers the first
+Process coverage note: `std-process-command.ari` covers the first
 `std::process::Command`/`Child` slice on the hosted POSIX path: argv wrappers,
 child environment setup, child working-directory setup, `spawn`, `status`,
-`exec` lowering, child wait, and non-destructive `kill(0)` probes. Remaining
-process runtime matrix work is captured output, explicit stdout/stderr pipe
-ownership, stdin redirection, richer status values, and non-POSIX mapping.
+`exec` lowering, child wait, and non-destructive `kill(0)` probes.
+`std-process-output.ari` covers small `Command::output_in` stdout/stderr
+capture, `Output` accessors, missing-command status behavior, `pipe`/`dup2`
+lowering, and compiler zone provenance for the zone-backed `Output` handle.
+Remaining process runtime matrix work is large-output readiness or nonblocking
+draining, stdin redirection, richer status values, and non-POSIX mapping.
 
 ## Completed Sprint: C FFI
 

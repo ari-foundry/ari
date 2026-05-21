@@ -1,0 +1,67 @@
+// Covers Command::output_in: small stdout/stderr capture, exit status, and
+// Output accessors. Larger concurrent output belongs to the future readiness
+// and nonblocking process-pipe slice.
+fn bytes_equal(values: Slice[u8], expected: Slice[u8]) -> bool {
+  if values.len != expected.len {
+    return false;
+  }
+
+  var index = 0;
+  while index < values.len {
+    if values[index] != expected[index] {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+fn main() -> i64 {
+  var zone = zone::temp(512);
+  var score = 0;
+
+  var args = [
+    process::arg("-c"),
+    process::arg("printf 'out'; printf 'err' >&2; exit 7")
+  ];
+  var cmd = process::command_with_args("sh", args.as_slice());
+
+  match cmd.output_in(ref mut zone) {
+    Err(_) => {}
+    Ok(value) => {
+      var output = value;
+      if output.status() == 7 {
+        score = score + 11;
+      }
+      if !output.is_success() {
+        score = score + 13;
+      }
+
+      var expected_stdout = [111u8, 117u8, 116u8];
+      var expected_stderr = [101u8, 114u8, 114u8];
+      if bytes_equal(output.stdout(), expected_stdout.as_slice()) {
+        score = score + 17;
+      }
+      if bytes_equal(output.stderr(), expected_stderr.as_slice()) {
+        score = score + 19;
+      }
+    }
+  }
+
+  var missing = process::command("__ari_missing_command_for_output__");
+  match missing.output_in(ref mut zone) {
+    Err(_) => {}
+    Ok(missing_value) => {
+      var missing_output = missing_value;
+      if missing_output.status() == 127 {
+        score = score + 23;
+      }
+      if missing_output.stdout().len == 0 {
+        score = score + 29;
+      }
+    }
+  }
+
+  assert_eq_i64(score, 112);
+  return score;
+}
