@@ -2,7 +2,11 @@
 // datagram send/receive, timeout/nonblocking options, and explicit close. If
 // the host forbids socket creation, the test accepts PermissionDenied as an
 // environment policy and still verifies the shared error bridge.
-fn error_is(raw: i64, kind: error::Kind) -> bool {
+fn error_is(value: error::Error, kind: error::Kind) -> bool {
+  return value.is_kind(kind);
+}
+
+fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
   let value = error::from_raw(raw);
   return value.is_kind(kind);
 }
@@ -11,10 +15,18 @@ fn main() -> i64 {
   let unsupported = net::socket_addr(net::Ipv6Addr::localhost().as_ip(), 0 as u16);
   var score = 0;
   match net::UdpSocket::bind_result(unsupported) {
-    Ok(_socket) => {}
-    Err(raw) => {
-      if error_is(raw, error::Unsupported) {
+    Ok(_direct_socket) => {}
+    Err(reason) => {
+      if error_is(reason, error::Unsupported) {
         score = score + 1;
+      }
+    }
+  }
+  match net::UdpSocket::bind_raw_result(unsupported) {
+    Ok(_raw_socket) => {}
+    Err(raw) => {
+      if !raw_error_is(raw, error::Unsupported) {
+        panic();
       }
     }
   }
@@ -24,8 +36,8 @@ fn main() -> i64 {
   if maybe_server.is_none() {
     match net::UdpSocket::bind_result(bind_addr) {
       Ok(_retry_socket) => {}
-      Err(bind_raw) => {
-        if error_is(bind_raw, error::PermissionDenied) || error_is(bind_raw, error::Unsupported) {
+      Err(bind_error) => {
+        if error_is(bind_error, error::PermissionDenied) || error_is(bind_error, error::Unsupported) {
           score = score + 254;
         }
       }

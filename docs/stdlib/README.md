@@ -73,7 +73,8 @@ and `std::net` adds
 IPv4, IPv6, generic IP, and socket-address values plus hosted IPv4 DNS lookup,
 IPv4 `TcpListener`/`TcpStream` bind/connect/accept helpers, IPv4
 `UdpSocket` single-byte datagrams, TCP/UDP local-address helpers, TCP peer-address helpers, Unix stream
-sockets, nonblocking flags, `std::time::Duration` socket timeouts with raw
+sockets, direct `Error` result helpers with raw compatibility variants,
+nonblocking flags, `std::time::Duration` socket timeouts with raw
 millisecond compatibility helpers, stream shutdown, and TCP/Unix
 `read_exact`/`write_all` stream buffer helpers. IPv6 socket handles,
 buffer-oriented datagrams, broader socket options, UDP source address helpers, and

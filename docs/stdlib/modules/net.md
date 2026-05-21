@@ -11,9 +11,10 @@ socket shapes through `TcpListener`, `TcpStream`, `UdpSocket`,
 `UnixListener`, and `UnixStream`. Each successful handle should be closed once
 with `close()` until Ari grows drop-time resource cleanup.
 
-The API deliberately keeps simple `Option` helpers beside raw-error
-`Result[..., i64]` helpers. Use `Option` when absence is enough; use
-`*_result` when a caller needs the compact `std::error::Error.raw()` bridge.
+The API deliberately keeps simple `Option` helpers beside `Result[..., Error]`
+helpers. Use `Option` when absence is enough; use `*_result` when a caller needs
+to inspect `std::error::Error`. The `*_raw_result` forms are compatibility-only
+bridges for runtime and low-level tests that still need compact integer errors.
 
 ## API
 
@@ -34,6 +35,7 @@ net::ipv6(s0, s1, s2, s3, s4, s5, s6, s7)
 net::socket_addr(ip, port)
 net::localhost(port)
 net::lookup_v4(host, port)
+net::lookup_v4_raw_result(host, port)
 net::lookup_v4_result(host, port)
 
 Ipv4Addr::new(a, b, c, d)
@@ -69,6 +71,7 @@ addr.is_loopback()
 
 TcpListener::bind(addr)
 TcpListener::try_bind(addr)
+TcpListener::bind_raw_result(addr)
 TcpListener::bind_result(addr)
 listener.descriptor()
 listener.is_open()
@@ -80,11 +83,13 @@ listener.set_accept_timeout(timeout)
 listener.set_accept_timeout_millis(millis)
 listener.accept()
 listener.try_accept()
+listener.accept_raw_result()
 listener.accept_result()
 listener.close()
 
 TcpStream::connect(addr)
 TcpStream::try_connect(addr)
+TcpStream::connect_raw_result(addr)
 TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
@@ -104,6 +109,7 @@ stream.close()
 
 UdpSocket::bind(addr)
 UdpSocket::try_bind(addr)
+UdpSocket::bind_raw_result(addr)
 UdpSocket::bind_result(addr)
 socket.descriptor()
 socket.is_open()
@@ -122,6 +128,7 @@ socket.close()
 
 UnixListener::bind(path)
 UnixListener::try_bind(path)
+UnixListener::bind_raw_result(path)
 UnixListener::bind_result(path)
 listener.descriptor()
 listener.is_open()
@@ -129,11 +136,13 @@ listener.is_nonblocking()
 listener.set_nonblocking(enabled)
 listener.accept()
 listener.try_accept()
+listener.accept_raw_result()
 listener.accept_result()
 listener.close()
 
 UnixStream::connect(path)
 UnixStream::try_connect(path)
+UnixStream::connect_raw_result(path)
 UnixStream::connect_result(path)
 stream.descriptor()
 stream.is_open()
@@ -188,23 +197,25 @@ or `SocketAddr::new(ip, port)` when the IP is already known. Use
 small first slice: the returned address uses the resolved IPv4 octets and the
 caller-provided port.
 
-`lookup_v4_result(host, port)` returns `Result[SocketAddr, i64]` for callers
-that want a failure branch. The current error payload is the compact raw
-`std::error::Error` bridge; detailed `getaddrinfo` error categories and owned
-multi-address result lists are future work.
+`lookup_v4_result(host, port)` returns `Result[SocketAddr, Error]` for callers
+that want a failure branch. `lookup_v4_raw_result(host, port)` keeps the
+compatibility `Result[SocketAddr, i64]` shape. Detailed `getaddrinfo` error
+categories and owned multi-address result lists are future work.
 
 ## TCP Sockets
 
 `TcpListener` owns a listening TCP descriptor. `bind` and `try_bind` return
 `Option[TcpListener]` for simple code. `bind_result` returns
-`Result[TcpListener, i64]`, where the `i64` is the compact raw
-`std::error::Error` bridge. Use `local_port()` after binding to port `0` to
-learn the ephemeral port chosen by the OS, or `local_addr()` when the caller
-needs the complete IPv4 `SocketAddr`. `accept`/`try_accept` return
-`Option[TcpStream]`; `accept_result` exposes the raw error bridge.
+`Result[TcpListener, Error]`, while `bind_raw_result` keeps the old compact
+integer shape. Use `local_port()` after binding to port `0` to learn the
+ephemeral port chosen by the OS, or `local_addr()` when the caller needs the
+complete IPv4 `SocketAddr`. `accept`/`try_accept` return `Option[TcpStream]`;
+`accept_result` exposes `Error`, and `accept_raw_result` is the low-level
+compatibility form.
 
 `TcpStream` owns a connected TCP descriptor. `connect` and `try_connect` return
-`Option[TcpStream]`; `connect_result` preserves OS error detail. Use
+`Option[TcpStream]`; `connect_result` preserves OS error detail as `Error`, and
+`connect_raw_result` keeps raw compatibility. Use
 `shutdown(Shutdown::Write)`, `shutdown(Shutdown::Read)`, or
 `shutdown(Shutdown::Both)` to half-close or fully shut down the stream without
 closing the descriptor owner. Use `write_all(values)` to send every byte in a
@@ -216,8 +227,8 @@ client side and the accepted client address on the server side.
 
 ## UDP Sockets
 
-`UdpSocket` owns an IPv4 UDP descriptor. `bind`, `try_bind`, and `bind_result`
-match the TCP listener return shapes. Use `local_port()` after binding to port
+`UdpSocket` owns an IPv4 UDP descriptor. `bind`, `try_bind`, `bind_result`, and
+`bind_raw_result` match the TCP listener return shapes. Use `local_port()` after binding to port
 `0` to discover the OS-selected port, or `local_addr()` to retrieve the full
 local IPv4 `SocketAddr`.
 
@@ -304,9 +315,8 @@ match net::TcpListener::bind_result(bind_addr) {
     accepted.read_exact(output.as_slice().as_ptr(), 2);
     return ptr_load(output.as_slice().as_ptr()) as i64;
   }
-  std::Err(raw) => {
-    let error = std::error::from_raw(raw);
-    return error.code();
+  std::Err(reason) => {
+    return reason.code();
   }
 }
 ```
@@ -342,11 +352,11 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | --- | --- |
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
-| DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` over `getaddrinfo`. |
-| TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result`, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond accept timeout setters, and explicit close. |
-| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result`, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4 slice: bind helpers, local-port and local-address lookup, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
-| Unix domain socket | Current hosted stream slice: `UnixListener` bind/accept helpers and `UnixStream` connect/IO/shutdown plus `Duration` and raw-millisecond timeout setters and `read_exact`/`write_all` buffer helpers. |
+| DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` with `Error`, and `lookup_v4_raw_result` compatibility over `getaddrinfo`. |
+| TCP listener | Current hosted IPv4 slice: `TcpListener::bind`, `try_bind`, `bind_result` with `Error`, `bind_raw_result` compatibility, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond accept timeout setters, and explicit close. |
+| TCP stream | Current hosted IPv4 slice: `TcpStream::connect`, `try_connect`, `connect_result` with `Error`, `connect_raw_result` compatibility, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4 slice: bind helpers with `Error` and raw compatibility forms, local-port and local-address lookup, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
+| Unix domain socket | Current hosted stream slice: `UnixListener` bind/accept and `UnixStream` connect helpers with `Error` and raw compatibility forms, IO/shutdown plus `Duration` and raw-millisecond timeout setters and `read_exact`/`write_all` buffer helpers. |
 | socket options | Current: nonblocking and read/write timeout helpers; future reuse-address, nodelay, buffer size, linger, multicast, and close-on-exec-at-creation options. |
 | timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond compatibility helpers; future timeout-specific error results. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
@@ -411,8 +421,9 @@ lookup shapes, unsupported IPv6 text input, and edge IPv4 addresses.
   policy can express dotted IPv4 and compressed IPv6 cleanly.
 - Add IPv6 TCP and UDP socket handles, UDP source address helpers, and richer
   socket-address reporting.
-- Add Result-returning timeout setters and timeout-specific error categories
-  once the IO, fs, and net modules share direct `std::error::Error` payloads.
+- Add Result-returning timeout setters and timeout-specific error categories now
+  that socket construction and accept/connect results use direct `Error`
+  payloads.
 - Add UDP buffer-oriented send and receive helpers, including `recv_from`
   source-address reporting; TCP/Unix stream buffer helpers are available as
   `read_exact` and `write_all`.

@@ -2,7 +2,11 @@
 // a short pathname socket, transfers bytes through stream byte and buffer
 // helpers, and cleans up the path. Restricted hosts may reject socket creation;
 // that still proves the std::error bridge.
-fn error_is(raw: i64, kind: error::Kind) -> bool {
+fn error_is(value: error::Error, kind: error::Kind) -> bool {
+  return value.is_kind(kind);
+}
+
+fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
   let value = error::from_raw(raw);
   return value.is_kind(kind);
 }
@@ -16,9 +20,17 @@ fn main() -> i64 {
   if maybe_listener.is_none() {
     match net::UnixListener::bind_result(path) {
       Ok(_retry_listener) => {}
-      Err(bind_raw) => {
-        if error_is(bind_raw, error::PermissionDenied) || error_is(bind_raw, error::Unsupported) {
+      Err(bind_error) => {
+        if error_is(bind_error, error::PermissionDenied) || error_is(bind_error, error::Unsupported) {
           score = 255;
+        }
+      }
+    }
+    match net::UnixListener::bind_raw_result(path) {
+      Ok(_raw_retry_listener) => {}
+      Err(bind_raw) => {
+        if !(raw_error_is(bind_raw, error::PermissionDenied) || raw_error_is(bind_raw, error::Unsupported)) {
+          panic();
         }
       }
     }

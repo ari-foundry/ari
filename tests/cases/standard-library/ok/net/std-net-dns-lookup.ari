@@ -26,7 +26,18 @@ fn main() -> i64 {
         score = score + 16;
       }
     }
-    Err(_raw) => {}
+    Err(_reason) => {}
+  }
+
+  match net::lookup_v4_raw_result("127.0.0.1", 80 as u16) {
+    Ok(raw_addr) => {
+      if !(raw_addr.port() == 80 as u16 && raw_addr.is_loopback()) {
+        panic();
+      }
+    }
+    Err(_raw) => {
+      panic();
+    }
   }
 
   if net::lookup_v4("::1", 80 as u16).is_none() {

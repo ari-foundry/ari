@@ -498,7 +498,8 @@ fn std::net::ipv4|check-prelude std-net-addresses source IPv4 constructor; docs/
 fn std::net::ipv6|check-prelude std-net-addresses source IPv6 constructor; docs/stdlib/modules/net.md
 fn std::net::localhost|check-prelude std-net-addresses source loopback socket address constructor; docs/stdlib/modules/net.md
 fn std::net::lookup_v4|check-prelude std-net-dns-lookup Option-returning IPv4 name lookup; docs/stdlib/modules/net.md
-fn std::net::lookup_v4_result|check-prelude std-net-dns-lookup Result-returning IPv4 name lookup; docs/stdlib/modules/net.md
+fn std::net::lookup_v4_raw_result|check-prelude std-net-dns-lookup raw Result-returning IPv4 name lookup compatibility helper; docs/stdlib/modules/net.md
+fn std::net::lookup_v4_result|check-prelude std-net-dns-lookup Result-returning IPv4 name lookup with Error payload; docs/stdlib/modules/net.md
 fn std::net::socket_addr|check-prelude std-net-addresses source socket address constructor; docs/stdlib/modules/net.md
 fn std::os::fd|check-prelude std-os-fd non-owning descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::invalid|check-prelude std-os-fd invalid descriptor view constructor; docs/stdlib/modules/os.md
@@ -1201,9 +1202,11 @@ method std::net::SocketAddr::new|check-prelude std-net-addresses socket address 
 method std::net::SocketAddr::port|check-prelude std-net-addresses socket address port accessor; docs/stdlib/modules/net.md
 method std::net::SocketAddr::with_port|check-prelude std-net-addresses socket address port replacement; docs/stdlib/modules/net.md
 method std::net::TcpListener::accept|check-prelude std-net-tcp-loopback Option-returning TCP accept helper; docs/stdlib/modules/net.md
-method std::net::TcpListener::accept_result|check-prelude std-net-tcp-loopback Result-returning TCP accept helper; docs/stdlib/modules/net.md
+method std::net::TcpListener::accept_raw_result|check-prelude std-net-tcp-loopback raw Result-returning TCP accept compatibility helper; docs/stdlib/modules/net.md
+method std::net::TcpListener::accept_result|check-prelude std-net-tcp-loopback Result-returning TCP accept helper with Error payload; docs/stdlib/modules/net.md
 method std::net::TcpListener::bind|check-prelude std-net-tcp-loopback Option-returning IPv4 TCP bind helper; docs/stdlib/modules/net.md
-method std::net::TcpListener::bind_result|check-prelude std-net-tcp-loopback Result-returning IPv4 TCP bind helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::TcpListener::bind_raw_result|check-prelude std-net-tcp-loopback raw Result-returning IPv4 TCP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::TcpListener::bind_result|check-prelude std-net-tcp-loopback Result-returning IPv4 TCP bind helper with Error payload; docs/stdlib/modules/net.md
 method std::net::TcpListener::close|check-prelude std-net-tcp-loopback explicit listener descriptor close helper; docs/stdlib/modules/net.md
 method std::net::TcpListener::descriptor|check-prelude std-net-tcp-loopback listener borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::TcpListener::is_nonblocking|check-prelude std-net-tcp-loopback listener nonblocking descriptor query; docs/stdlib/modules/net.md
@@ -1217,7 +1220,8 @@ method std::net::TcpListener::try_accept|check-prelude std-net-tcp-loopback alia
 method std::net::TcpListener::try_bind|check-prelude std-net-tcp-loopback alias for fallible TCP bind; docs/stdlib/modules/net.md
 method std::net::TcpStream::close|check-prelude std-net-tcp-loopback explicit stream descriptor close helper; docs/stdlib/modules/net.md
 method std::net::TcpStream::connect|check-prelude std-net-tcp-loopback Option-returning IPv4 TCP connect helper; docs/stdlib/modules/net.md
-method std::net::TcpStream::connect_result|check-prelude std-net-tcp-loopback Result-returning IPv4 TCP connect helper; docs/stdlib/modules/net.md
+method std::net::TcpStream::connect_raw_result|check-prelude std-net-tcp-loopback raw Result-returning IPv4 TCP connect compatibility helper; docs/stdlib/modules/net.md
+method std::net::TcpStream::connect_result|check-prelude std-net-tcp-loopback Result-returning IPv4 TCP connect helper with Error payload; docs/stdlib/modules/net.md
 method std::net::TcpStream::descriptor|check-prelude std-net-tcp-loopback stream borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::TcpStream::is_nonblocking|check-prelude std-net-tcp-loopback stream nonblocking descriptor query; docs/stdlib/modules/net.md
 method std::net::TcpStream::is_open|check-prelude std-net-tcp-loopback stream open predicate; docs/stdlib/modules/net.md
@@ -1234,7 +1238,8 @@ method std::net::TcpStream::try_connect|check-prelude std-net-tcp-loopback alias
 method std::net::TcpStream::try_read_byte|check-prelude std-net-tcp-loopback Option-returning single-byte stream read helper; docs/stdlib/modules/net.md
 method std::net::TcpStream::write_all|check-prelude std-net-tcp-loopback stream buffer write helper; docs/stdlib/modules/net.md
 method std::net::UdpSocket::bind|check-prelude std-net-udp-socket Option-returning IPv4 UDP bind helper; docs/stdlib/modules/net.md
-method std::net::UdpSocket::bind_result|check-prelude std-net-udp-socket Result-returning IPv4 UDP bind helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::UdpSocket::bind_raw_result|check-prelude std-net-udp-socket raw Result-returning IPv4 UDP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::UdpSocket::bind_result|check-prelude std-net-udp-socket Result-returning IPv4 UDP bind helper with Error payload; docs/stdlib/modules/net.md
 method std::net::UdpSocket::close|check-prelude std-net-udp-socket explicit UDP descriptor close helper; docs/stdlib/modules/net.md
 method std::net::UdpSocket::descriptor|check-prelude std-net-udp-socket UDP borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::UdpSocket::is_nonblocking|check-prelude std-net-udp-socket UDP nonblocking descriptor query; docs/stdlib/modules/net.md
@@ -1251,9 +1256,11 @@ method std::net::UdpSocket::set_write_timeout_millis|check-prelude std-net-udp-s
 method std::net::UdpSocket::try_bind|check-prelude std-net-udp-socket alias for fallible UDP bind; docs/stdlib/modules/net.md
 method std::net::UdpSocket::try_recv_byte|check-prelude std-net-udp-socket Option-returning single-byte UDP datagram receive helper; docs/stdlib/modules/net.md
 method std::net::UnixListener::accept|check-prelude std-net-unix-socket Option-returning Unix stream accept helper; docs/stdlib/modules/net.md
-method std::net::UnixListener::accept_result|check-prelude std-net-unix-socket Result-returning Unix stream accept helper; docs/stdlib/modules/net.md
+method std::net::UnixListener::accept_raw_result|check-prelude std-net-unix-socket raw Result-returning Unix stream accept compatibility helper; docs/stdlib/modules/net.md
+method std::net::UnixListener::accept_result|check-prelude std-net-unix-socket Result-returning Unix stream accept helper with Error payload; docs/stdlib/modules/net.md
 method std::net::UnixListener::bind|check-prelude std-net-unix-socket Option-returning Unix listener bind helper; docs/stdlib/modules/net.md
-method std::net::UnixListener::bind_result|check-prelude std-net-unix-socket Result-returning Unix listener bind helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::UnixListener::bind_raw_result|check-prelude std-net-unix-socket raw Result-returning Unix listener bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md
+method std::net::UnixListener::bind_result|check-prelude std-net-unix-socket Result-returning Unix listener bind helper with Error payload; docs/stdlib/modules/net.md
 method std::net::UnixListener::close|check-prelude std-net-unix-socket explicit Unix listener close helper; docs/stdlib/modules/net.md
 method std::net::UnixListener::descriptor|check-prelude std-net-unix-socket Unix listener borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::UnixListener::is_nonblocking|check-prelude std-net-unix-socket Unix listener nonblocking descriptor query; docs/stdlib/modules/net.md
@@ -1263,7 +1270,8 @@ method std::net::UnixListener::try_accept|check-prelude std-net-unix-socket alia
 method std::net::UnixListener::try_bind|check-prelude std-net-unix-socket alias for fallible Unix bind; docs/stdlib/modules/net.md
 method std::net::UnixStream::close|check-prelude std-net-unix-socket explicit Unix stream close helper; docs/stdlib/modules/net.md
 method std::net::UnixStream::connect|check-prelude std-net-unix-socket Option-returning Unix stream connect helper; docs/stdlib/modules/net.md
-method std::net::UnixStream::connect_result|check-prelude std-net-unix-socket Result-returning Unix stream connect helper; docs/stdlib/modules/net.md
+method std::net::UnixStream::connect_raw_result|check-prelude std-net-unix-socket raw Result-returning Unix stream connect compatibility helper; docs/stdlib/modules/net.md
+method std::net::UnixStream::connect_result|check-prelude std-net-unix-socket Result-returning Unix stream connect helper with Error payload; docs/stdlib/modules/net.md
 method std::net::UnixStream::descriptor|check-prelude std-net-unix-socket Unix stream borrowed descriptor view; docs/stdlib/modules/net.md
 method std::net::UnixStream::is_nonblocking|check-prelude std-net-unix-socket Unix stream nonblocking descriptor query; docs/stdlib/modules/net.md
 method std::net::UnixStream::is_open|check-prelude std-net-unix-socket Unix stream open predicate; docs/stdlib/modules/net.md

@@ -1133,6 +1133,7 @@ net::ipv6(s0, s1, s2, s3, s4, s5, s6, s7)
 net::socket_addr(ip, port)
 net::localhost(port)
 net::lookup_v4(host, port)
+net::lookup_v4_raw_result(host, port)
 net::lookup_v4_result(host, port)
 
 Ipv4Addr::new(a, b, c, d)
@@ -1168,6 +1169,7 @@ addr.is_loopback()
 
 TcpListener::bind(addr)
 TcpListener::try_bind(addr)
+TcpListener::bind_raw_result(addr)
 TcpListener::bind_result(addr)
 listener.descriptor()
 listener.is_open()
@@ -1179,11 +1181,13 @@ listener.set_accept_timeout(timeout)
 listener.set_accept_timeout_millis(millis)
 listener.accept()
 listener.try_accept()
+listener.accept_raw_result()
 listener.accept_result()
 listener.close()
 
 TcpStream::connect(addr)
 TcpStream::try_connect(addr)
+TcpStream::connect_raw_result(addr)
 TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
@@ -1203,6 +1207,7 @@ stream.close()
 
 UdpSocket::bind(addr)
 UdpSocket::try_bind(addr)
+UdpSocket::bind_raw_result(addr)
 UdpSocket::bind_result(addr)
 socket.descriptor()
 socket.is_open()
@@ -1221,6 +1226,7 @@ socket.close()
 
 UnixListener::bind(path)
 UnixListener::try_bind(path)
+UnixListener::bind_raw_result(path)
 UnixListener::bind_result(path)
 listener.descriptor()
 listener.is_open()
@@ -1228,11 +1234,13 @@ listener.is_nonblocking()
 listener.set_nonblocking(enabled)
 listener.accept()
 listener.try_accept()
+listener.accept_raw_result()
 listener.accept_result()
 listener.close()
 
 UnixStream::connect(path)
 UnixStream::try_connect(path)
+UnixStream::connect_raw_result(path)
 UnixStream::connect_result(path)
 stream.descriptor()
 stream.is_open()
@@ -1252,6 +1260,9 @@ stream.close()
 Address values are deterministic source structs. Use `octet`/`segment` for
 known-good indexes and `try_octet`/`try_segment` when validating parsed input.
 `lookup_v4` resolves one IPv4 address through the hosted `getaddrinfo` path.
+Socket and lookup `*_result` helpers return `Result[..., Error]`; matching
+`*_raw_result` helpers are compatibility-only bridges for low-level callers that
+still need raw integer errors.
 `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, and `UnixStream` are
 owned descriptor-backed handles. They support hosted IPv4 TCP bind/connect/
 accept, IPv4 UDP bind/send-byte/receive-byte, Unix stream bind/connect/accept,
@@ -1262,8 +1273,8 @@ helpers, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
 `read_exact(output, len)` / `write_all(values)` helpers for natural stream
 method syntax. IPv6 socket handles, buffered datagram APIs, richer socket
-options, UDP source address helpers, and direct `Result[..., Error]` payloads
-remain roadmap work.
+options, UDP source address helpers, and timeout-specific error results remain
+roadmap work.
 
 ## IO And Input
 
