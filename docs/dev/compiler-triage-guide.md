@@ -51,7 +51,7 @@ Put the test where the first failing layer can see it:
 | Accepted program behavior | `tests/cases/<feature>/ok/` |
 | Rejected source-level rule | `tests/cases/<feature>/errors/` |
 | Compiler-development policy rejection | `tests/cases/compiler-development/errors/` |
-| Stage-plan, source-map, token, syntax, module, declaration, typed-IR, or pass-summary text | `tests/cases/compiler-development/artifact/ok/` |
+| Stage-plan, source-map, token, diagnostic catalog, syntax, module, declaration, typed-IR, or pass-summary text | `tests/cases/compiler-development/artifact/ok/` |
 | Expected diagnostic artifact or artifact mismatch report | `tests/cases/compiler-development/artifact/errors/` |
 | Compiler-shaped data model pressure | `tests/cases/compiler-development/ok/model/` |
 

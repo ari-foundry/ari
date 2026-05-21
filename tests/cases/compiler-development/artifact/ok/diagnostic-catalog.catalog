@@ -1,0 +1,9 @@
+DiagnosticCatalog version=1 entries=8
+  code=L0001 family=lexer owner=src/lexer.cpp proves="characters, escapes, and invalid tokens"
+  code=P0001 family=parser owner=src/parser.cpp proves="grammar, delimiters, and recovery"
+  code=M0001 family=module owner=src/module_loader.cpp proves="imports, visibility, metadata, and caches"
+  code=T0001 family=type owner=src/type_semantics.cpp proves="types, traits, methods, and generic constraints"
+  code=O0001 family=ownership owner=src/ownership_semantics.cpp proves="ownership, borrowing, moves, drops, and zones"
+  code=I0001 family=ir owner=src/ir.hpp proves="typed IR lowering and resolved compiler facts"
+  code=B0001 family=backend owner=src/llvm_codegen.cpp proves="LLVM, object, executable, shared library, and artifact emission"
+  code=ari/compiler family=general owner=src/driver.cpp proves="unclassified transitional CompileError text"

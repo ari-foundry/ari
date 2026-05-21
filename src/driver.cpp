@@ -70,6 +70,7 @@ static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
                  "           [--emit-obj path] [--emit-tokens path] [--emit-syntax path]\n"
                  "           [--emit-diagnostics path] [--emit-source-map path]\n"
+                 "           [--emit-diagnostic-catalog path]\n"
                  "           [--emit-module-graph path] [--emit-declaration-index path]\n"
                  "           [--emit-typed-ir path] [--emit-pass-summary path]\n"
                  "           [--emit-stage-plan path]\n"
@@ -96,6 +97,7 @@ int run(int argc, char** argv) {
     std::string token_output;
     std::string syntax_output;
     std::string diagnostic_output;
+    std::string diagnostic_catalog_output;
     std::string source_map_output;
     std::string module_graph_output;
     std::string declaration_index_output;
@@ -158,6 +160,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-diagnostics") {
             if (i + 1 >= argc) throw CompileError("--emit-diagnostics expects a path");
             diagnostic_output = argv[++i];
+        } else if (arg == "--emit-diagnostic-catalog") {
+            if (i + 1 >= argc) throw CompileError("--emit-diagnostic-catalog expects a path");
+            diagnostic_catalog_output = argv[++i];
         } else if (arg == "--emit-source-map") {
             if (i + 1 >= argc) throw CompileError("--emit-source-map expects a path");
             source_map_output = argv[++i];
@@ -231,6 +236,7 @@ int run(int argc, char** argv) {
     if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
                        !c_header_output.empty() || !source_map_output.empty() ||
+                       !diagnostic_catalog_output.empty() ||
                        !module_graph_output.empty() || !declaration_index_output.empty() ||
                        !typed_ir_output.empty() ||
                        !pass_summary_output.empty() || !stage_plan_output.empty() ||
@@ -244,7 +250,8 @@ int run(int argc, char** argv) {
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
-    if ((!source_map_output.empty() || !module_graph_output.empty() ||
+    if ((!source_map_output.empty() || !diagnostic_catalog_output.empty() ||
+         !module_graph_output.empty() ||
          !declaration_index_output.empty() ||
          !typed_ir_output.empty() || !pass_summary_output.empty() ||
          !stage_plan_output.empty()) &&
@@ -258,6 +265,7 @@ int run(int argc, char** argv) {
     if (!token_output.empty()) ++artifact_output_count;
     if (!syntax_output.empty()) ++artifact_output_count;
     if (!diagnostic_output.empty()) ++artifact_output_count;
+    if (!diagnostic_catalog_output.empty()) ++artifact_output_count;
     if (!source_map_output.empty()) ++artifact_output_count;
     if (!module_graph_output.empty()) ++artifact_output_count;
     if (!declaration_index_output.empty()) ++artifact_output_count;
@@ -266,6 +274,11 @@ int run(int argc, char** argv) {
     if (!stage_plan_output.empty()) ++artifact_output_count;
     if (artifact_output_count > 1) {
         throw CompileError("artifact outputs cannot be combined");
+    }
+    if (!diagnostic_catalog_output.empty()) {
+        write_text_file(diagnostic_catalog_output, dump_diagnostic_catalog());
+        std::cout << "wrote " << diagnostic_catalog_output << " (diagnostic catalog)\n";
+        return 0;
     }
     if (!stage_plan_output.empty()) {
         write_text_file(stage_plan_output,

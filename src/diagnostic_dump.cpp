@@ -8,6 +8,13 @@ namespace ari {
 
 namespace {
 
+struct DiagnosticCatalogEntry {
+    const char* code;
+    const char* family;
+    const char* owner;
+    const char* proves;
+};
+
 static std::string quote(const std::string& text) {
     std::string escaped = "\"";
     for (unsigned char c : text) {
@@ -121,6 +128,29 @@ std::string diagnostic_code_family(const std::string& code) {
     if (code == "I0001") return "ir";
     if (code == "B0001") return "backend";
     return "general";
+}
+
+std::string dump_diagnostic_catalog() {
+    static const DiagnosticCatalogEntry entries[] = {
+        {"L0001", "lexer", "src/lexer.cpp", "characters, escapes, and invalid tokens"},
+        {"P0001", "parser", "src/parser.cpp", "grammar, delimiters, and recovery"},
+        {"M0001", "module", "src/module_loader.cpp", "imports, visibility, metadata, and caches"},
+        {"T0001", "type", "src/type_semantics.cpp", "types, traits, methods, and generic constraints"},
+        {"O0001", "ownership", "src/ownership_semantics.cpp", "ownership, borrowing, moves, drops, and zones"},
+        {"I0001", "ir", "src/ir.hpp", "typed IR lowering and resolved compiler facts"},
+        {"B0001", "backend", "src/llvm_codegen.cpp", "LLVM, object, executable, shared library, and artifact emission"},
+        {"ari/compiler", "general", "src/driver.cpp", "unclassified transitional CompileError text"},
+    };
+
+    std::ostringstream out;
+    out << "DiagnosticCatalog version=1 entries=" << (sizeof(entries) / sizeof(entries[0])) << "\n";
+    for (const DiagnosticCatalogEntry& entry : entries) {
+        out << "  code=" << entry.code
+            << " family=" << entry.family
+            << " owner=" << entry.owner
+            << " proves=" << quote(entry.proves) << "\n";
+    }
+    return out.str();
 }
 
 std::string dump_diagnostic_message(const std::string& severity,

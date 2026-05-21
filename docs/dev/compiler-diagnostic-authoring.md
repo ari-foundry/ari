@@ -114,6 +114,11 @@ code is the stable search key; the family tells contributors which compiler
 layer should usually own the first fix and which compiler layer to inspect
 first.
 
+Use `--emit-diagnostic-catalog` when changing the code table itself. The
+catalog is the compiler-owned list of current codes, owning source files, and
+fallback policy; keep it checked before adding more string-pattern
+classification.
+
 Once a code is documented in a golden artifact, do not reuse it for a different
 rule.
 

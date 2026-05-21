@@ -46,15 +46,16 @@ Compare artifacts in this order:
 | 2 | Source map dump | Prove file text, byte offsets, line tables, and newline policy are stable. | source loader |
 | 3 | Token dump | Prove lexing and source spans are stable. | lexer |
 | 4 | Diagnostic dump | Prove source maps and error rendering are stable. | lexer/parser/sema |
-| 5 | Syntax dump | Prove parsing and recovery are stable. | parser |
-| 6 | Module graph dump | Prove file-backed module loading, imports, and public item surfaces are stable. | module loader |
-| 7 | Declaration index dump | Prove parsed declaration signatures, visibility, and source locations are stable. | parser/module loader |
-| 8 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
-| 9 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
-| 10 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
-| 11 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
-| 12 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
-| 13 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
+| 5 | Diagnostic catalog | Prove diagnostic code ownership and fallback policy are stable. | diagnostics |
+| 6 | Syntax dump | Prove parsing and recovery are stable. | parser |
+| 7 | Module graph dump | Prove file-backed module loading, imports, and public item surfaces are stable. | module loader |
+| 8 | Declaration index dump | Prove parsed declaration signatures, visibility, and source locations are stable. | parser/module loader |
+| 9 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
+| 10 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
+| 11 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
+| 12 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
+| 13 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
+| 14 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
 
 Do not skip directly to executable comparison for compiler frontend work. A
 binary exit code can say "something changed"; it cannot say which compiler
@@ -243,6 +244,7 @@ tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
+tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog
 tests/cases/compiler-development/artifact/ok/source-map-file-module.map
 tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
@@ -261,6 +263,7 @@ ari --emit-tokens path
 ari --emit-source-map path
 ari --emit-syntax path
 ari --emit-diagnostics path
+ari --emit-diagnostic-catalog path
 ari --emit-module-graph path
 ari --emit-declaration-index path
 ari --emit-stage-plan path
@@ -269,7 +272,7 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves thirteen low-level contracts:
+It currently proves fourteen low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -288,6 +291,8 @@ It currently proves thirteen low-level contracts:
   and ownership failures with stable diagnostic codes and `family=...` layer names
 - `--emit-diagnostics` also writes parseable `source=`, `line=`, and `column=` fields
   for location-aware tooling
+- `--emit-diagnostic-catalog` writes the current diagnostic code table, owning
+  compiler source file, family, and fallback policy
 - `--emit-module-graph` writes deterministic file-backed source, import, and
   item-surface facts without running sema or LLVM codegen
 - `--emit-declaration-index` writes deterministic declaration signatures,
@@ -314,6 +319,7 @@ The current compiler already has useful artifact checks:
 - `--emit-source-map` for stable byte offset, line table, and snippet text
 - `--emit-stage-plan` for stable stage-order and first-check routing from the
   compiler binary
+- `--emit-diagnostic-catalog` for stable diagnostic code ownership
 - `--emit-tokens` for stable lexer token text and start locations
 - `--emit-syntax` for stable parser tree text before semantic analysis
 - `--emit-diagnostics` for stable expected-failure text before a full
