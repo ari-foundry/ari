@@ -11,8 +11,8 @@ behavior, rename paths, create hard or symbolic links, read symbolic-link
 targets, query no-follow symbolic-link metadata, ensure a single regular file exists without truncating an existing file, create or remove one empty
 directory, ensure a single directory exists without treating an existing
 directory as failure, recursively create missing directory parents, read
-directory entry names through an explicit `Dir` handle, collect lightweight
-`DirEntry` values with names and joined paths,
+directory entry names through an explicit `Dir` handle, collect `DirEntry`
+values with names, joined paths, and lazy metadata helpers,
 query basic file metadata, ask direct path-kind predicates such as `is_file`
 and `is_dir`, read and change POSIX permission bits, resolve an existing path
 to an absolute canonical path, pass `File` handles to generic `std::io::Reader`
@@ -131,6 +131,15 @@ entry.name()
 entry.path()
 entry.name_equals(value)
 entry.path_equals(value)
+entry.try_metadata()
+entry.metadata()
+entry.try_symlink_metadata()
+entry.symlink_metadata()
+entry.try_file_type()
+entry.is_file()
+entry.is_dir()
+entry.is_symlink()
+entry.is_other()
 
 Permissions::none()
 Permissions::read_only()
@@ -420,15 +429,18 @@ handle, and returns `None` when the directory cannot be opened or closed.
 `read_dir(ref mut zone, path)` is the asserting wrapper for code that treats a
 failed directory read as a programmer error. Use
 `try_read_dir_entries(ref mut zone, path)` or
-`read_dir_entries(ref mut zone, path)` when the call site needs both the entry
-name and the joined child path. `DirEntry::name()` and `DirEntry::path()`
-return borrowed `String` references; the `*_equals` helpers keep common tests
-short. The low-level `open_dir`, `read_dir_next`, and `close_dir` names exist
-for direct runtime-hook coverage, but ordinary code should prefer
-`try_read_dir`/`try_read_dir_entries` for collection-style reads or
-`try_open_dir` plus the `Dir` methods for manual streaming. Current
-`DirEntry` values do not carry metadata yet; metadata-by-entry needs the next
-owned/path-to-OS-string boundary slice.
+`read_dir_entries(ref mut zone, path)` when the call site needs the entry name,
+the joined child path, and lazy metadata. `DirEntry::name()` and
+`DirEntry::path()` return borrowed `String` references; the `*_equals` helpers
+keep common tests short. `entry.try_metadata()`, `entry.metadata()`,
+`entry.try_file_type()`, `entry.is_file()`, `entry.is_dir()`, and
+`entry.is_other()` follow symbolic links, matching the path-level
+`fs::metadata` policy. `entry.try_symlink_metadata()`,
+`entry.symlink_metadata()`, and `entry.is_symlink()` query the entry path with
+the no-follow `lstat` policy. The low-level `open_dir`, `read_dir_next`, and
+`close_dir` names exist for direct runtime-hook coverage, but ordinary code
+should prefer `try_read_dir`/`try_read_dir_entries` for collection-style reads
+or `try_open_dir` plus the `Dir` methods for manual streaming.
 
 ## Feature Status
 
@@ -448,7 +460,7 @@ owned/path-to-OS-string boundary slice.
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)` and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
-| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, and `dir.close()` for entry names and joined paths; richer metadata-bearing entries and owned OS-resource policy are roadmap. |
+| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries(ref mut zone, path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors and owned OS-resource policy are roadmap. |
 | create directory | Current: single-directory `create_dir(path)` and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
@@ -616,6 +628,25 @@ while index < entries.len() {
 zone::destroy(zone);
 ```
 
+Read entry metadata without rebuilding each path:
+
+```ari
+var zone = zone::create(512);
+let entries = fs::read_dir_entries(ref mut zone, "build/prelude");
+var index = 0;
+while index < entries.len() {
+  let entry = entries.get(index);
+  if entry.is_file() {
+    let info = entry.metadata();
+    if info.len() > 0 {
+      index = entries.len();
+    }
+  }
+  index = index + 1;
+}
+zone::destroy(zone);
+```
+
 Create hard and symbolic links to a file:
 
 ```ari
@@ -669,16 +700,17 @@ if file.is_open() {
 
 - This slice is byte-oriented. There is no owned path type, recursive directory
   removal API, file locking API, temporary-file API, or text encoding policy yet.
-  Directory reads currently return names and joined child paths only; they do
-  not expose per-entry metadata or per-entry errors. Basic `stat`/`lstat` metadata,
+  Directory reads expose names, joined child paths, and lazy per-entry metadata
+  methods, but not per-entry error values. Basic `stat`/`lstat` metadata,
   permission-bit lookup and mutation, and existing-path canonicalization exist,
   but richer timestamps, owner/group/ACL policy, richer link metadata, and
   platform-specific symlink policy are still future work.
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
-  `stat`, `lstat`, `chmod`, `realpath`, `unlink`, `rename`, `link`, `symlink`,
-  `mkdir`, `rmdir`, `opendir`, `readdir`, `closedir`, `open`, `read`,
-  `write`, `lseek`, and `close`; the one-shot `read_dir` helpers are source Ari over
-  those hooks.
+  `stat`, `lstat`, `chmod`, `realpath`, `readlink`, `unlink`, `rename`, `link`,
+  `symlink`, `mkdir`, `rmdir`, `opendir`, `readdir`, `closedir`, `open`,
+  `read`, `write`, `lseek`, and `close`; `DirEntry` metadata methods use
+  stack-local byte-path adapters over those same stat/access hooks, and the
+  one-shot `read_dir` helpers are source Ari over the directory hooks.
 - `File` and `Dir` are not tracked `own` resources yet. The caller must close
   each successful handle exactly once by convention. Future ownership work
   should make OS resources harder to copy and accidentally double-close.
@@ -705,8 +737,10 @@ tests/cases/standard-library/ok/fs/std-fs-io-traits.ari
 tests/cases/standard-library/ok/fs/std-fs-seek.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari
+tests/cases/standard-library/ok/fs/std-fs-ensure-file.ari
 tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari
 tests/cases/standard-library/ok/fs/std-fs-read-dir.ari
+tests/cases/standard-library/ok/fs/std-fs-dir-entry-metadata.ari
 tests/cases/standard-library/ok/fs/std-fs-links.ari
 tests/cases/standard-library/ok/fs/std-fs-read-link.ari
 tests/cases/standard-library/ok/fs/std-fs-symlink-metadata.ari
@@ -753,7 +787,9 @@ runtime-backed `Dir` open/next/close behavior, one-shot
 `try_read_dir`/`read_dir` name-list helpers,
 `try_read_dir_entries`/`read_dir_entries` entry-list helpers, joined paths,
 missing-directory failure, dot entry skipping, invalid-handle `None`, and
-cleanup. `std-fs-links.ari` covers
+cleanup. `std-fs-dir-entry-metadata.ari` covers `DirEntry` target-following
+metadata, no-follow symlink metadata, file-kind predicates, byte length,
+permission snapshots, and stored zone path reuse. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
 checks. `std-fs-read-link.ari` covers runtime-backed symbolic-link target
 reads, `Option[String]` failure behavior for regular and missing paths, and
@@ -778,8 +814,8 @@ absolute canonical paths, filename preservation, and missing-path `None`.
 - Grow canonicalization toward owned path values and platform-specific policy.
 - Expand link support with clearer platform-specific symlink policy.
 - Expand metadata with modified/accessed/created timestamps.
-- Expand directory reads with `DirEntry` metadata, richer error reporting, and
-  owned OS-resource iterator handles.
+- Expand directory reads with richer per-entry error reporting and owned
+  OS-resource iterator handles.
 - Add recursive directory removal after creation policy has more mileage.
 - Grow `std::path` from lexical helpers into owned path values after Ari has a
   clearer owned string/path story.

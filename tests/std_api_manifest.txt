@@ -1062,10 +1062,19 @@ method std::fs::Dir::close|check-prelude std-fs-read-dir value directory handle 
 method std::fs::Dir::invalid|check-prelude std-fs-read-dir invalid directory fallback constructor; docs/stdlib/modules/fs.md
 method std::fs::Dir::is_open|check-prelude std-fs-read-dir open directory handle predicate; docs/stdlib/modules/fs.md
 method std::fs::Dir::next|check-prelude std-fs-read-dir value directory handle next-name method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::is_dir|check-prelude std-fs-dir-entry-metadata directory entry target-following directory predicate; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::is_file|check-prelude std-fs-dir-entry-metadata directory entry target-following file predicate; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::is_other|check-prelude std-fs-dir-entry-metadata directory entry target-following other-kind predicate; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::is_symlink|check-prelude std-fs-dir-entry-metadata directory entry no-follow symlink predicate; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::metadata|check-prelude std-fs-dir-entry-metadata asserting target-following directory entry metadata method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::name|check-prelude std-fs-read-dir borrowed directory entry name method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::name_equals|check-prelude std-fs-read-dir directory entry name comparison helper; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::path|check-prelude std-fs-read-dir borrowed joined directory entry path method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::path_equals|check-prelude std-fs-read-dir directory entry path comparison helper; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::symlink_metadata|check-prelude std-fs-dir-entry-metadata asserting no-follow directory entry metadata method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::try_file_type|check-prelude std-fs-dir-entry-metadata Option-returning directory entry file-kind method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::try_metadata|check-prelude std-fs-dir-entry-metadata Option-returning target-following directory entry metadata method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::try_symlink_metadata|check-prelude std-fs-dir-entry-metadata Option-returning no-follow directory entry metadata method; docs/stdlib/modules/fs.md
 method std::fs::File::close|check-prelude std-fs-basic value file handle close method; docs/stdlib/modules/fs.md
 method std::fs::File::descriptor|check-prelude std-os-fd non-owning std::os::Fd view over a file handle; docs/stdlib/modules/fs.md
 method std::fs::File::invalid|check-prelude std-fs-basic invalid file fallback constructor; docs/stdlib/modules/fs.md

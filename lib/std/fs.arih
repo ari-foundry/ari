@@ -62,6 +62,13 @@ extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadat
 extern "ari" fn metadata_mode_raw(path: string) -> i64 = "ari_builtin_fs_metadata_mode";
 extern "ari" fn symlink_metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_size";
 extern "ari" fn symlink_metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_symlink_metadata_kind";
+extern "ari" fn metadata_size_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_size_bytes";
+extern "ari" fn metadata_kind_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_metadata_kind_bytes";
+extern "ari" fn symlink_metadata_size_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_symlink_metadata_size_bytes";
+extern "ari" fn symlink_metadata_kind_bytes_raw(data: ptr u8, len: i64) -> i64 = "ari_builtin_fs_symlink_metadata_kind_bytes";
+extern "ari" fn can_read_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_can_read_bytes";
+extern "ari" fn can_write_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_can_write_bytes";
+extern "ari" fn can_execute_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_can_execute_bytes";
 extern "ari" fn set_mode_raw(path: string, mode: i64) -> bool = "ari_builtin_fs_set_mode";
 extern "ari" fn read_dir_next_raw(dir: Dir) -> string = "ari_builtin_fs_read_dir_next";
 extern "ari" fn canonicalize_raw(path: string) -> string = "ari_builtin_fs_canonicalize";
@@ -98,6 +105,25 @@ fn metadata_from_raw(path: string, kind: i64, size: i64) -> std::Option[Metadata
   });
 }
 
+fn permissions_bytes(path: std::Slice[u8]) -> Permissions {
+  return Permissions {
+    readable: can_read_bytes_raw(path.data, path.len),
+    writable: can_write_bytes_raw(path.data, path.len),
+    executable: can_execute_bytes_raw(path.data, path.len),
+  };
+}
+
+fn metadata_from_bytes(path: std::Slice[u8], kind: i64, size: i64) -> std::Option[Metadata] {
+  if kind < 0 || size < 0 {
+    return std::None<Metadata>();
+  }
+  return std::Some<Metadata>(Metadata {
+    byte_len: size,
+    kind: file_kind_from_raw(kind),
+    permissions: permissions_bytes(path),
+  });
+}
+
 pub fn try_metadata(path: string) -> std::Option[Metadata] {
   let kind = metadata_kind_raw(path);
   if kind < 0 {
@@ -114,6 +140,24 @@ pub fn try_symlink_metadata(path: string) -> std::Option[Metadata] {
   }
   let size = symlink_metadata_size_raw(path);
   return metadata_from_raw(path, kind, size);
+}
+
+fn try_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
+  let kind = metadata_kind_bytes_raw(path.data, path.len);
+  if kind < 0 {
+    return std::None<Metadata>();
+  }
+  let size = metadata_size_bytes_raw(path.data, path.len);
+  return metadata_from_bytes(path, kind, size);
+}
+
+fn try_symlink_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
+  let kind = symlink_metadata_kind_bytes_raw(path.data, path.len);
+  if kind < 0 {
+    return std::None<Metadata>();
+  }
+  let size = symlink_metadata_size_bytes_raw(path.data, path.len);
+  return metadata_from_bytes(path, kind, size);
 }
 
 pub fn try_file_type(path: string) -> std::Option[FileKind] {
@@ -805,5 +849,93 @@ pub impl std::fs::DirEntry {
 
   fn path_equals(self: ref Self, value: string) -> bool {
     return self.path_value.equals_text(value);
+  }
+
+  fn try_metadata(self: ref Self) -> std::Option[Metadata] {
+    return try_metadata_bytes(self.path_value.as_slice());
+  }
+
+  fn metadata(self: ref Self) -> Metadata {
+    match self.try_metadata() {
+      std::Some(value) => {
+        return value;
+      }
+      std::None => {}
+    }
+    std::panic();
+    return Metadata {
+      byte_len: 0,
+      kind: Other,
+      permissions: Permissions::none(),
+    };
+  }
+
+  fn try_symlink_metadata(self: ref Self) -> std::Option[Metadata] {
+    return try_symlink_metadata_bytes(self.path_value.as_slice());
+  }
+
+  fn symlink_metadata(self: ref Self) -> Metadata {
+    match self.try_symlink_metadata() {
+      std::Some(value) => {
+        return value;
+      }
+      std::None => {}
+    }
+    std::panic();
+    return Metadata {
+      byte_len: 0,
+      kind: Other,
+      permissions: Permissions::none(),
+    };
+  }
+
+  fn try_file_type(self: ref Self) -> std::Option[FileKind] {
+    match self.try_metadata() {
+      std::Some(value) => {
+        return std::Some<FileKind>(value.file_type());
+      }
+      std::None => {}
+    }
+    return std::None<FileKind>();
+  }
+
+  fn is_file(self: ref Self) -> bool {
+    match self.try_metadata() {
+      std::Some(value) => {
+        return value.is_file();
+      }
+      std::None => {}
+    }
+    return false;
+  }
+
+  fn is_dir(self: ref Self) -> bool {
+    match self.try_metadata() {
+      std::Some(value) => {
+        return value.is_dir();
+      }
+      std::None => {}
+    }
+    return false;
+  }
+
+  fn is_symlink(self: ref Self) -> bool {
+    match self.try_symlink_metadata() {
+      std::Some(value) => {
+        return value.is_symlink();
+      }
+      std::None => {}
+    }
+    return false;
+  }
+
+  fn is_other(self: ref Self) -> bool {
+    match self.try_metadata() {
+      std::Some(value) => {
+        return value.is_other();
+      }
+      std::None => {}
+    }
+    return false;
   }
 }

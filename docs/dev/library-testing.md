@@ -185,6 +185,10 @@ identifies the exact case:
   `try_read_dir`/`read_dir`, lightweight `DirEntry` name/path helpers,
   dot-entry skip, missing-directory failure, invalid-handle `None`, and
   cleanup.
+- `std-fs-dir-entry-metadata.ari`: lazy metadata helpers on collected
+  `DirEntry` values, including target-following metadata, no-follow symlink
+  metadata, path-kind predicates, byte length, permission snapshots, and reuse
+  of stored zone-backed entry paths.
 - `errors/fs/std-fs-dir-entry-different-zone.ari`: rejects manually constructed
   `DirEntry` values whose zone-backed name and path come from different zones.
 - `std-fs-links.ari`: runtime-backed `hard_link` and `symbolic_link`,

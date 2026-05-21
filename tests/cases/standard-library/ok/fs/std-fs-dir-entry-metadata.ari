@@ -1,0 +1,90 @@
+// Covers metadata helpers on DirEntry values. Directory entries keep a
+// zone-owned path string, and these methods query metadata from that stored
+// path without forcing callers to manually rebuild C-compatible path bytes.
+fn cleanup(root: string, file_path: string, dir_path: string, link_path: string) -> void {
+  fs::remove(link_path);
+  fs::remove(file_path);
+  fs::remove_dir(dir_path);
+  fs::remove_dir(root);
+}
+
+fn main() -> i64 {
+  let root = "build/prelude/std-fs-dir-entry-metadata.tmp";
+  let file_path = "build/prelude/std-fs-dir-entry-metadata.tmp/file.txt";
+  let dir_path = "build/prelude/std-fs-dir-entry-metadata.tmp/nested";
+  let link_path = "build/prelude/std-fs-dir-entry-metadata.tmp/file-link";
+  let link_target = "file.txt";
+  cleanup(root, file_path, dir_path, link_path);
+
+  var score = 0;
+  if fs::create_dir(root) {
+    score = score + 1;
+  }
+  var bytes = ['M', 'E', 'T', 'A'];
+  if fs::write(file_path, bytes.as_slice()) {
+    score = score + 2;
+  }
+  if fs::create_dir(dir_path) {
+    score = score + 3;
+  }
+  if fs::symbolic_link(link_target, link_path) {
+    score = score + 4;
+  }
+
+  var zone = zone::create(4096);
+  match fs::try_read_dir_entries(ref mut zone, root) {
+    std::Some(entries) => {
+      if entries.len() == 3 {
+        score = score + 5;
+      }
+
+      var index = 0;
+      while index < entries.len() {
+        let entry = entries.get(index);
+        if entry.name_equals("file.txt") {
+          let info = entry.metadata();
+          if entry.path_equals(file_path) && entry.is_file() && !entry.is_dir() &&
+             !entry.is_symlink() && info.len() == 4 && info.is_file() &&
+             entry.try_file_type().is_some() {
+            score = score + 6;
+          }
+        }
+
+        if entry.name_equals("nested") {
+          match entry.try_metadata() {
+            std::Some(dir_info) => {
+              if entry.path_equals(dir_path) && entry.is_dir() && !entry.is_file() &&
+                 !entry.is_symlink() && dir_info.is_dir() {
+                score = score + 7;
+              }
+            }
+            std::None => {}
+          }
+        }
+
+        if entry.name_equals("file-link") {
+          match entry.try_symlink_metadata() {
+            std::Some(link_info) => {
+              let followed = entry.metadata();
+              let direct = entry.symlink_metadata();
+              if entry.path_equals(link_path) && entry.is_symlink() &&
+                 entry.is_file() && !entry.is_dir() &&
+                 followed.is_file() && followed.len() == 4 &&
+                 direct.is_symlink() && link_info.is_symlink() &&
+                 link_info.len() == std::string::c_len(link_target) {
+                score = score + 8;
+              }
+            }
+            std::None => {}
+          }
+        }
+        index = index + 1;
+      }
+    }
+    std::None => {}
+  }
+
+  cleanup(root, file_path, dir_path, link_path);
+  zone::destroy(zone);
+  return score;
+}

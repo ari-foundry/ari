@@ -47,7 +47,7 @@ API evolution.
 | `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `Mutex`, `RwLock`, `Once`, atomic `load`/`store`/`swap`/`fetch_add`/`compare_exchange`, mutex helpers, rwlock helpers, `call_once`. |
 | `std::time` | Monotonic time, wall-clock time, sleep, deadlines, and UTC calendar values. | `Duration`, `Instant`, `SystemTime`, `Deadline`, `UtcDateTime`, strict and fallible duration constructors, strict and fallible Unix timestamp constructors, strict and fallible calendar helpers, `now`, `system_now`, `elapsed`, `sleep`, `timeout`, `timeout_after`, `deadline_at`. |
-| `std::fs` | Byte-oriented filesystem handles. | `File`, `Dir`, `DirEntry`, `FileKind`, `Metadata`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `metadata`, `try_metadata`, `symlink_metadata`, `try_symlink_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`, `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`, `canonicalize`, `try_canonicalize`, `remove`, `rename`, `hard_link`, `symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `create_dir_all`, `ensure_dir_all`, `remove_dir`, `try_read_dir`, `read_dir`, `try_read_dir_entries`, `read_dir_entries`, `try_open_dir`, `Dir::next`, `Dir::close`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `try_read_byte`, `write_byte`, `write_bytes`, `position`, `seek`, whole-file `read`, `try_read`, `write`, `try_write`, `append`, `try_append`, `truncate`, `copy`, `try_copy`, `read_to_string`, `try_read_to_string`, `close`. |
+| `std::fs` | Byte-oriented filesystem handles. | `File`, `Dir`, `DirEntry`, `FileKind`, `Metadata`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `metadata`, `try_metadata`, `symlink_metadata`, `try_symlink_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`, `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`, `canonicalize`, `try_canonicalize`, `remove`, `rename`, `hard_link`, `symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `create_dir_all`, `ensure_dir_all`, `remove_dir`, `try_read_dir`, `read_dir`, `try_read_dir_entries`, `read_dir_entries`, `try_open_dir`, `Dir::next`, `Dir::close`, `DirEntry::metadata`, `DirEntry::try_metadata`, `DirEntry::symlink_metadata`, `DirEntry::try_symlink_metadata`, `DirEntry::try_file_type`, `DirEntry::is_file`, `DirEntry::is_dir`, `DirEntry::is_symlink`, `DirEntry::is_other`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `try_read_byte`, `write_byte`, `write_bytes`, `position`, `seek`, whole-file `read`, `try_read`, `write`, `try_write`, `append`, `try_append`, `truncate`, `copy`, `try_copy`, `read_to_string`, `try_read_to_string`, `close`. |
 | `std::path` | Source lexical path manipulation. | `PathBytes`, `bytes`, `from_os`, method-style path-byte helpers, `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `components`, `file_name`, `parent`, `extension`, `stem`, `file_stem`, `has_file_name`, `has_extension`, `has_stem`, `has_file_stem`, `with_file_name_in`, `with_extension_in`, `join_in`, `normalize_in`. |
 | `std::net` | Source network address values. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `ipv4`, `ipv6`, `socket_addr`, `localhost`, strict and fallible indexed address accessors, family/loopback/unspecified predicates, port helpers. |
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
@@ -279,12 +279,13 @@ byte-counting `try_copy`, byte-string `read_to_string`, fallible
 target-following `metadata`/`try_metadata`, no-follow
 `symlink_metadata`/`try_symlink_metadata`, `try_file_type`, direct path-kind predicates,
 permission `mode`/`try_mode`/`set_mode`/`set_permissions`,
-`canonicalize`/`try_canonicalize`, `read_link`/`try_read_link`, and the `File`, `Dir`, `Metadata`, and
-`Permissions` methods are ordinary Ari source or thin runtime hooks over the
-raw OS boundary. The directory API currently returns entry names and joined
-child paths only; metadata-bearing `DirEntry` values are future work. Each
-handle is a visible value today and should become a stronger owned resource
-when OS resource ownership is modeled by the language.
+`canonicalize`/`try_canonicalize`, `read_link`/`try_read_link`, and the `File`,
+`Dir`, `DirEntry`, `Metadata`, and `Permissions` methods are ordinary Ari
+source or thin runtime hooks over the raw OS boundary. Directory entry values
+now expose names, joined child paths, and lazy metadata/file-kind predicates;
+richer per-entry errors remain future work. Each handle is a visible value
+today and should become a stronger owned resource when OS resource ownership is
+modeled by the language.
 
 `std::path` is source-only and deliberately lexical. It works over borrowed
 `Slice[u8]` values, typed `PathBytes` views, borrowed component iterators, and

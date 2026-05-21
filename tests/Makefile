@@ -598,6 +598,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari -o $(BUILD_DIR)/prelude/std-fs-read-dir.elf
 	$(BUILD_DIR)/prelude/std-fs-read-dir.elf; code=$$?; test $$code -eq 253
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-dir.elf; $(BUILD_DIR)/prelude/std-fs-read-dir.elf; code=$$?; test $$code -eq 253; fi
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-dir-entry-metadata.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -q "@ari_builtin_fs_metadata_size_bytes" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -q "@ari_builtin_fs_symlink_metadata_kind_bytes" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -q "@ari_builtin_fs_can_read_bytes" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent12try_metadata" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent20try_symlink_metadata" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent13try_file_type" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-dir-entry-metadata.ari -o $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.elf
+	$(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.elf; code=$$?; test $$code -eq 36
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-links.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-links.ll
 	grep -q "@ari_builtin_fs_hard_link" $(BUILD_DIR)/prelude/std-fs-links.ll
 	grep -q "@ari_builtin_fs_symbolic_link" $(BUILD_DIR)/prelude/std-fs-links.ll

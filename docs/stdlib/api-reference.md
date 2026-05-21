@@ -916,6 +916,15 @@ entry.name()
 entry.path()
 entry.name_equals(value)
 entry.path_equals(value)
+entry.try_metadata()
+entry.metadata()
+entry.try_symlink_metadata()
+entry.symlink_metadata()
+entry.try_file_type()
+entry.is_file()
+entry.is_dir()
+entry.is_symlink()
+entry.is_other()
 
 Permissions::none()
 Permissions::read_only()
@@ -1030,10 +1039,13 @@ the handle. `try_read_dir(ref mut zone, path)` opens, collects names into
 `std::vec::Vec[String]`, closes, and returns `None` on open/close failure.
 `read_dir(ref mut zone, path)` is the asserting wrapper. Use
 `try_read_dir_entries(ref mut zone, path)` or
-`read_dir_entries(ref mut zone, path)` when callers need lightweight
-`DirEntry` values with both `entry.name()` and `entry.path()`. Recursive
-directory helpers, metadata-bearing `DirEntry` values, and owned resource
-policy are future work.
+`read_dir_entries(ref mut zone, path)` when callers need `DirEntry` values with
+`entry.name()`, `entry.path()`, and lazy metadata/file-kind helpers. Entry
+`metadata`, `try_metadata`, `try_file_type`, `is_file`, `is_dir`, and
+`is_other` follow symbolic links. Entry `symlink_metadata`,
+`try_symlink_metadata`, and `is_symlink` use no-follow link metadata. Recursive
+directory removal, richer per-entry errors, and owned resource policy are
+future work.
 The current `File` and `Dir` values are not owned resources yet, so close each
 successful handle once and do not reuse copied handles after closing.
 
