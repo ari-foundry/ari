@@ -549,6 +549,13 @@ check-prelude: $(TARGET)
 	grep -F -q "std2io26write_all__G_std__fs__File" $(BUILD_DIR)/prelude/std-fs-io-traits.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-io-traits.ari -o $(BUILD_DIR)/prelude/std-fs-io-traits.elf
 	$(BUILD_DIR)/prelude/std-fs-io-traits.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-seek.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-seek.ll
+	grep -q "@ari_builtin_fs_position" $(BUILD_DIR)/prelude/std-fs-seek.ll
+	grep -q "@ari_builtin_fs_seek" $(BUILD_DIR)/prelude/std-fs-seek.ll
+	grep -q "declare i64 @lseek" $(BUILD_DIR)/prelude/std-fs-seek.ll
+	grep -F -q "rewind__G_std__fs__File" $(BUILD_DIR)/prelude/std-fs-seek.ll
+	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-seek.ari -o $(BUILD_DIR)/prelude/std-fs-seek.elf
+	$(BUILD_DIR)/prelude/std-fs-seek.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
 	grep -q "@ari_builtin_fs_rename" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll
 	grep -q "@ari_builtin_fs_create_dir" $(BUILD_DIR)/prelude/std-fs-rename-dir.ll

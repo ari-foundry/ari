@@ -169,6 +169,9 @@ identifies the exact case:
 - `std-fs-io-traits.ari`: `File` as generic `std::io::Reader`/`Writer`,
   `read_to_string`, EOF through `read_exact`, file-to-file `try_copy`,
   whole-slice `write_all`, direct-descriptor `flush`, and invalid handles.
+- `std-fs-seek.ari`: runtime-backed `File` cursor positioning, direct
+  `fs::position`/`fs::seek` hooks, method syntax through `std::io::Seek`,
+  generic `S: io::Seek` dispatch, and negative seek rejection.
 - `std-fs-rename-dir.ari`: runtime-backed `rename`, single-directory
   `create_dir`/`remove_dir`, duplicate-create failure, and missing-source
   rename failure.

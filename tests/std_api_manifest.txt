@@ -311,6 +311,7 @@ fn std::fs::open_dir|check-prelude std-fs-read-dir directory open hook; docs/std
 fn std::fs::open_read|check-prelude std-fs-basic compatibility read wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::open_write|check-prelude std-fs-basic compatibility write wrapper over mode-string open; docs/stdlib/modules/fs.md
 fn std::fs::permissions|check-prelude std-fs-permissions access permission wrapper; docs/stdlib/modules/fs.md
+fn std::fs::position|check-prelude std-fs-seek file cursor position hook; docs/stdlib/modules/fs.md
 fn std::fs::read|check-prelude std-fs-create-truncate-copy natural read alias for read_to_string; docs/stdlib/modules/fs.md
 fn std::fs::read_byte|check-prelude std-fs-basic file byte read hook; docs/stdlib/modules/fs.md
 fn std::fs::read_dir|check-prelude std-fs-read-dir asserting directory name-list helper; docs/stdlib/modules/fs.md
@@ -320,6 +321,7 @@ fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byt
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir|check-prelude std-fs-rename-dir runtime-backed single-directory removal hook; docs/stdlib/modules/fs.md
 fn std::fs::rename|check-prelude std-fs-rename-dir runtime-backed file rename hook; docs/stdlib/modules/fs.md
+fn std::fs::seek|check-prelude std-fs-seek absolute file cursor seek hook; docs/stdlib/modules/fs.md
 fn std::fs::set_mode|check-prelude std-fs-mode chmod-backed permission-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::set_permissions|check-prelude std-fs-mode Permissions-to-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::symbolic_link|check-prelude std-fs-links runtime-backed symbolic-link hook; docs/stdlib/modules/fs.md

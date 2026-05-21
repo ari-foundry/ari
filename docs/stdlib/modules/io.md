@@ -4,7 +4,7 @@
 hooks visible, then layers a small Ari-source interface over them so code can
 talk about readers, writers, exact reads, whole-stream reads, whole-stream
 string reads, stream copies, whole-slice writes, buffered wrappers, and
-seekable in-memory cursors with natural names.
+seekable streams with natural names.
 
 Use `std::input` for ordinary stdin line/byte helpers, `std::fs` for files, and
 `std::io` when you want the lower-level IO contracts directly.
@@ -19,6 +19,8 @@ Implemented now:
 - source traits: `Reader`, `Writer`, `Seek`
 - source handles: `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`,
   `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`
+- filesystem adapters: `std::fs::File` implements `Reader`, `Writer`, and
+  `Seek`
 - source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
   `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
 - source helpers: `read_exact`, `read_all`, `read_to_string`, `try_copy`,
@@ -26,8 +28,6 @@ Implemented now:
 
 Roadmap, not implemented yet:
 
-- `File` as `Reader`/`Writer`/`Seek`: should land with the owned file-resource
-  policy so copied handles cannot accidentally double-close.
 - zone-owning buffered constructors and drop-time writer flush: need compiler
   support for new std types that own zone-backed raw buffers and a clear
   generic `Drop`/flush policy.
@@ -252,11 +252,12 @@ The trait names intentionally stay short and conventional: `Reader`, `Writer`,
 already carry the type information.
 
 The module keeps process IO and filesystem construction separate, but
-`std::fs::File` now adapts to `Reader` and `Writer`. Create the file handle in
-`std::fs`, then pass it to generic helpers such as `read_to_string`, `copy`,
-`try_copy`, `write_all`, and `flush`. Close policy still belongs to the file
-handle owner: `File` is not an owned drop resource yet, and `flush` only checks
-that the direct descriptor remains open because `File` itself does not buffer.
+`std::fs::File` now adapts to `Reader`, `Writer`, and `Seek`. Create the file
+handle in `std::fs`, then pass it to generic helpers such as `read_to_string`,
+`copy`, `try_copy`, `write_all`, `flush`, or your own `S: io::Seek` helpers.
+Close policy still belongs to the file handle owner: `File` is not an owned
+drop resource yet, and `flush` only checks that the direct descriptor remains
+open because `File` itself does not buffer.
 
 ## Tests
 
@@ -279,6 +280,9 @@ that the direct descriptor remains open because `File` itself does not buffer.
   filesystem adapter side: `File` as `Reader`/`Writer`, generic
   `read_to_string`, `read_exact`, `try_copy`, `write_all`, `flush`, and
   invalid-handle behavior.
+- `tests/cases/standard-library/ok/fs/std-fs-seek.ari` checks the filesystem
+  seek adapter side: `File` as `Seek`, module `position`/`seek` hooks, method
+  syntax, generic `S: io::Seek` dispatch, and invalid seek behavior.
 - `tests/cases/standard-library/ok/io/std-io-stderr.ari` checks `Stderr`,
   stderr routing, explicit flush success, generated helper symbols, and
   stdout/stderr stream separation.

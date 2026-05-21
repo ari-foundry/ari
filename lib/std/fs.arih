@@ -54,6 +54,8 @@ pub extern "ari" fn open(path: string, mode: string) -> File = "ari_builtin_fs_o
 pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";
 pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
 pub extern "ari" fn write_byte(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
+pub extern "ari" fn position(file: File) -> i64 = "ari_builtin_fs_position";
+pub extern "ari" fn seek(file: File, position: i64) -> bool = "ari_builtin_fs_seek";
 extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadata_size";
 extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
 extern "ari" fn metadata_mode_raw(path: string) -> i64 = "ari_builtin_fs_metadata_mode";
@@ -705,6 +707,22 @@ impl std::io::Writer for std::fs::File {
     // File writes currently go straight through the runtime descriptor hook.
     // This keeps std::io::copy usable for File without inventing buffering.
     return self.fd >= 0;
+  }
+}
+
+impl std::io::Seek for std::fs::File {
+  pub fn position(self: ref Self) -> i64 {
+    if self.fd < 0 {
+      return -1;
+    }
+    return std::fs::position(std::fs::File { fd: self.fd });
+  }
+
+  pub fn seek(self: ref mut Self, position: i64) -> bool {
+    if self.fd < 0 {
+      return false;
+    }
+    return std::fs::seek(std::fs::File { fd: self.fd }, position);
   }
 }
 

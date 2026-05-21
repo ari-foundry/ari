@@ -1,0 +1,60 @@
+// Covers std::fs::File as a std::io::Seek adapter. The test checks direct
+// module hooks, trait method syntax, negative seek rejection, and generic
+// Seek-bound dispatch over the same file handle.
+fn cleanup(path: string) -> void {
+  if fs::exists(path) {
+    fs::remove(path);
+  }
+}
+
+fn rewind[S: io::Seek](stream: ref mut S) -> bool {
+  if stream.position() < 0 {
+    return false;
+  }
+  return stream.seek(0);
+}
+
+fn main() -> i64 {
+  let path = "build/prelude/std-fs-seek.tmp";
+  cleanup(path);
+
+  var score = 0;
+  var seed = [65u8, 66u8, 67u8, 68u8];
+  if fs::write(path, seed.as_slice()) {
+    score = score + 1;
+  }
+
+  var file = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
+  if file.position() == 0 {
+    score = score + 2;
+  }
+  if file.read_byte() == 65 {
+    score = score + 4;
+  }
+  if fs::position(file) == 1 {
+    score = score + 8;
+  }
+  if file.seek(2) {
+    score = score + 16;
+  }
+  if file.position() == 2 {
+    score = score + 32;
+  }
+  if file.read_byte() == 67 {
+    score = score + 64;
+  }
+  if !file.seek(-1) {
+    score = score + 128;
+  }
+
+  let generic_ok = rewind<std::fs::File>(ref mut file) &&
+                   file.position() == 0 &&
+                   file.read_byte() == 65;
+  file.close();
+  cleanup(path);
+
+  if !generic_ok {
+    return 1;
+  }
+  return score;
+}

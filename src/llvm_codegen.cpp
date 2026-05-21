@@ -488,6 +488,7 @@ private:
                symbol == "read" ||
                symbol == "write" ||
                symbol == "close" ||
+               symbol == "lseek" ||
                symbol == "dup" ||
                symbol == "fcntl" ||
                symbol == "pipe" ||
@@ -542,6 +543,7 @@ private:
             symbol == "ari_builtin_fs_close_dir" ||
             symbol == "ari_builtin_fs_close" ||
             symbol == "ari_builtin_fs_write_byte" ||
+            symbol == "ari_builtin_fs_seek" ||
             symbol == "ari_builtin_os_close" ||
             symbol == "ari_builtin_os_set_close_on_exec" ||
             symbol == "ari_builtin_os_set_nonblocking" ||
@@ -620,6 +622,7 @@ private:
         declarations_ << "declare i64 @read(i32, ptr, i64)\n";
         declarations_ << "declare i64 @write(i32, ptr, i64)\n";
         declarations_ << "declare i32 @close(i32)\n";
+        declarations_ << "declare i64 @lseek(i32, i64, i32)\n";
         declarations_ << "declare i32 @dup(i32)\n";
         declarations_ << "declare i32 @fcntl(i32, i32, ...)\n";
         declarations_ << "declare i32 @pipe(ptr)\n";
@@ -1518,6 +1521,37 @@ private:
         line("  store i8 %value, ptr %byte.ptr, align 1");
         line("  %count = call i64 @write(i32 %fd32, ptr %byte.ptr, i64 1)");
         line("  %ok = icmp eq i64 %count, 1");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_fs_position({ i64 } %file) {");
+        line("entry:");
+        line("  %fd = extractvalue { i64 } %file, 0");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %query");
+        line("query:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %position = call i64 @lseek(i32 %fd32, i64 0, i32 1)");
+        line("  ret i64 %position");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_fs_seek({ i64 } %file, i64 %position) {");
+        line("entry:");
+        line("  %fd = extractvalue { i64 } %file, 0");
+        line("  %invalid.fd = icmp slt i64 %fd, 0");
+        line("  %invalid.position = icmp slt i64 %position, 0");
+        line("  %invalid = or i1 %invalid.fd, %invalid.position");
+        line("  br i1 %invalid, label %fail, label %do_seek");
+        line("do_seek:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %result = call i64 @lseek(i32 %fd32, i64 %position, i32 0)");
+        line("  %ok = icmp sge i64 %result, 0");
         line("  ret i1 %ok");
         line("fail:");
         line("  ret i1 false");

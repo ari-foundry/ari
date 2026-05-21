@@ -875,6 +875,8 @@ fs::read_byte(file)
 fs::try_read_byte(file)
 fs::write_byte(file, value)
 fs::write_bytes(file, values)
+fs::position(file)
+fs::seek(file, position)
 fs::read(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
@@ -894,9 +896,12 @@ file.read_byte()
 file.try_read_byte()
 file.write_byte(value)
 file.write_bytes(values)
+file.position()
+file.seek(position)
 
 impl std::io::Reader for File
 impl std::io::Writer for File
+impl std::io::Seek for File
 
 Dir::invalid()
 dir.is_open()
@@ -935,12 +940,18 @@ as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
 `"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
 `try_open_*` variants are compatibility wrappers over those mode strings.
 `create(path)` and `try_create(path)` are the natural create/truncate helpers
-over `"w"` mode. `File` implements `std::io::Reader` and `std::io::Writer`,
-so a handle from `try_open` can be passed to generic IO helpers such as
-`io::read_to_string<std::fs::File>`, `io::copy`, `io::try_copy`,
-`io::write_all`, and `io::flush`. `File` writes are direct descriptor writes;
-`flush` currently reports whether the handle is open rather than draining a
-separate file buffer. `ensure_file(path)` creates an empty file only when the path
+over `"w"` mode. `File` implements `std::io::Reader`, `std::io::Writer`, and
+`std::io::Seek`, so a handle from `try_open` can be passed to generic IO
+helpers such as `io::read_to_string<std::fs::File>`, `io::copy`,
+`io::try_copy`, `io::write_all`, `io::flush`, or a caller's own
+`S: io::Seek` helper. `File` writes are direct descriptor writes; `flush`
+currently reports whether the handle is open rather than draining a separate
+file buffer. `position(file)`/`file.position()` returns the current byte
+offset or `-1` for invalid or unseekable handles. `seek(file, position)` and
+`file.seek(position)` move to an absolute offset from the start of the file and
+return `false` for negative positions, invalid handles, or host seek failures.
+Append-mode writes still follow host append semantics.
+`ensure_file(path)` creates an empty file only when the path
 is missing, treats an existing regular file as success without truncating it,
 and returns `false` for directories, other existing path kinds, or missing
 parents. `can_read`, `can_write`, and `can_execute` are access-style
@@ -1142,9 +1153,9 @@ and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit
 caller-provided `Slice[u8]` buffer, so allocation and buffer lifetime stay
 visible. `io::pipe()` wraps `std::os::Pipe` in `PipeReader` and `PipeWriter`
 adapters. The reader implements `Reader`, the writer implements `Writer`, and
-both expose explicit close helpers. File adapters, zone-owning buffered
-constructors, and drop-time writer flush remain roadmap items until generic
-resource policy is specified.
+both expose explicit close helpers. `std::fs::File` implements `Reader`,
+`Writer`, and `Seek`; zone-owning buffered constructors and drop-time writer
+flush remain roadmap items until generic resource policy is specified.
 
 ## Memory And Zones
 

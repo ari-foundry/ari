@@ -16,8 +16,9 @@ limits, examples, and test files for one module.
   construction, trim views/copies, and whole/prefix parsing helpers.
 - [std::io](io.md): low-level process IO hooks plus `Reader`/`Writer`/`Seek`,
   `stdin`/`stdout`/`stderr`, pipe `Reader`/`Writer` adapters, `Cursor`,
-  caller-buffered `BufReader`/`BufWriter`, exact reads, whole-stream reads,
-  whole-stream string reads, generic stream copies, and whole-slice writes.
+  `std::fs::File` adapters, caller-buffered `BufReader`/`BufWriter`, exact
+  reads, whole-stream reads, whole-stream string reads, generic stream copies,
+  and whole-slice writes.
 - [std::input](input.md): stdin-facing byte and line input, including
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::mem](mem.md): layout queries, raw pointer helpers, byte memory

@@ -32,7 +32,7 @@ low-level runtime context layer.
 `std::io` now has source `Reader`/`Writer`/`Seek` contracts, `Stdin`,
 `Stdout`, `Stderr`, `PipeReader`/`PipeWriter`, `Cursor`, caller-buffered
 `BufReader`/`BufWriter`, `read_exact`, `write_all`, and `flush` on top of the
-raw process IO and descriptor hooks.
+raw process IO, descriptor, and file seek hooks.
 `std::test` adds source executable unit-test reports, generic equality checks,
 and scratch-zone helpers, `std::log` adds level-prefixed `stderr` diagnostic
 lines, and `std::error` adds shared recoverable error categories,
@@ -60,7 +60,7 @@ durations, elapsed-time helpers, monotonic deadlines, UTC calendar conversion,
 and sleep, and `std::fs` adds the first
 byte-oriented file handle slice with mode-string opens for read, write,
 append, and read/write access plus access-permission checks, source create,
-read, write, append, truncate, copy, rename, hard/symbolic links,
+read, write, append, position, seek, truncate, copy, rename, hard/symbolic links,
 single-directory create/remove, and read-to-byte-string helpers, `std::path`
 adds source-only lexical path
 splitting, joining, lightweight normalization, and typed `PathBytes` views,

@@ -16,7 +16,8 @@ directory entry names through an explicit `Dir` handle, collect lightweight
 query basic file metadata, ask direct path-kind predicates such as `is_file`
 and `is_dir`, read and change POSIX permission bits, resolve an existing path
 to an absolute canonical path, pass `File` handles to generic `std::io::Reader`
-and `std::io::Writer` helpers, close the handle, and remove a file.
+and `std::io::Writer` helpers, inspect and move a file cursor through
+`std::io::Seek`, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
@@ -30,7 +31,7 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `create_dir_all`, `ensure_dir_all`, `try_open_dir`, `read_dir`,
 `try_read_dir`, `read_dir_entries`,
 `try_read_dir_entries`,
-`read_dir_next`, `close_dir`, `close`, `exists`, and `remove`, not
+`read_dir_next`, `position`, `seek`, `close_dir`, `close`, `exists`, and `remove`, not
 type-suffixed names.
 
 ## API
@@ -87,6 +88,8 @@ fs::read_byte(file)
 fs::try_read_byte(file)
 fs::write_byte(file, value)
 fs::write_bytes(file, values)
+fs::position(file)
+fs::seek(file, position)
 fs::read(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
@@ -107,9 +110,12 @@ file.read_byte()
 file.try_read_byte()
 file.write_byte(value)
 file.write_bytes(values)
+file.position()
+file.seek(position)
 
 impl std::io::Reader for File
 impl std::io::Writer for File
+impl std::io::Seek for File
 
 Dir::invalid()
 dir.is_open()
@@ -149,8 +155,9 @@ intentionally takes over close responsibility from a file descriptor, wrap the
 raw value with `std::os::OwnedFd::from_raw(file.descriptor().raw())` and do not
 also close the original `File` value.
 
-`File` implements `std::io::Reader` and `std::io::Writer`, so file handles can
-flow through generic IO helpers without a file-specific suffix:
+`File` implements `std::io::Reader`, `std::io::Writer`, and `std::io::Seek`,
+so file handles can flow through generic IO helpers without a file-specific
+suffix:
 
 ```ari
 var zone = zone::create(512);
@@ -169,6 +176,26 @@ zone::destroy(zone);
 The `Writer` `flush` method is currently a direct-descriptor success check:
 file writes are not buffered by `File` itself. Use future or explicit buffered
 wrappers when the library grows owned buffering policy.
+
+`position(file)` returns the current byte offset from the host descriptor or
+`-1` for invalid or unseekable handles. `seek(file, position)` moves to an
+absolute byte offset from the start of the file and returns `false` for invalid
+handles, negative positions, or host seek failures. The trait methods expose
+the same behavior as `file.position()` and `file.seek(position)`, which keeps
+generic `S: io::Seek` code readable:
+
+```ari
+fn rewind[S: io::Seek](stream: ref mut S) -> bool {
+  if stream.position() < 0 {
+    return false;
+  }
+  return stream.seek(0);
+}
+```
+
+Append-mode handles still follow host append semantics for writes: seeking can
+change the read cursor and reported position, but writes on an append descriptor
+may still land at the file end.
 
 `open(path, mode)` takes a small mode string. Ari follows the familiar C/Python
 shape for common modes while also accepting the direct `"rw"` spelling:
@@ -622,7 +649,7 @@ if file.is_open() {
 - Runtime hooks currently target the Linux/glibc LLVM path through `access`,
   `stat`, `chmod`, `realpath`, `unlink`, `rename`, `link`, `symlink`,
   `mkdir`, `rmdir`, `opendir`, `readdir`, `closedir`, `open`, `read`,
-  `write`, and `close`; the one-shot `read_dir` helpers are source Ari over
+  `write`, `lseek`, and `close`; the one-shot `read_dir` helpers are source Ari over
   those hooks.
 - `File` and `Dir` are not tracked `own` resources yet. The caller must close
   each successful handle exactly once by convention. Future ownership work
@@ -647,6 +674,7 @@ tests/cases/standard-library/ok/fs/std-fs-read-write.ari
 tests/cases/standard-library/ok/fs/std-fs-try-read.ari
 tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari
 tests/cases/standard-library/ok/fs/std-fs-io-traits.ari
+tests/cases/standard-library/ok/fs/std-fs-seek.ari
 tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-ensure-dir.ari
 tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari
@@ -679,6 +707,9 @@ reads where missing files become `None` and empty files stay `Some(empty)`.
 `std::io::Writer`, including `read_to_string`, EOF through `read_exact`,
 file-to-file `try_copy`, whole-slice `write_all`, direct-descriptor `flush`,
 and invalid-handle trait behavior.
+`std-fs-seek.ari` covers runtime-backed file cursor `position`/`seek`, trait
+method syntax, direct module hooks, negative seek rejection, and generic
+`std::io::Seek` dispatch.
 `std-fs-rename-dir.ari` covers runtime-backed `rename`,
 `create_dir`, and `remove_dir` behavior. `std-fs-ensure-dir.ari` covers
 idempotent single-directory creation, file-path rejection, missing-parent

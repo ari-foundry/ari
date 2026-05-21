@@ -223,6 +223,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::fs::read_byte", "ari_builtin_fs_read_byte"},
         {"fs::write_byte", "ari_builtin_fs_write_byte"},
         {"std::fs::write_byte", "ari_builtin_fs_write_byte"},
+        {"fs::position", "ari_builtin_fs_position"},
+        {"std::fs::position", "ari_builtin_fs_position"},
+        {"fs::seek", "ari_builtin_fs_seek"},
+        {"std::fs::seek", "ari_builtin_fs_seek"},
         {"mem::copy_bytes", "ari_builtin_mem_copy_bytes"},
         {"std::mem::copy_bytes", "ari_builtin_mem_copy_bytes"},
         {"mem::move_bytes", "ari_builtin_mem_move_bytes"},
@@ -394,6 +398,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_fs_close") return builtin_sig({fs_file}, boolean);
     if (symbol == "ari_builtin_fs_read_byte") return builtin_sig({fs_file}, i64);
     if (symbol == "ari_builtin_fs_write_byte") return builtin_sig({fs_file, u8}, boolean);
+    if (symbol == "ari_builtin_fs_position") return builtin_sig({fs_file}, i64);
+    if (symbol == "ari_builtin_fs_seek") return builtin_sig({fs_file, i64}, boolean);
     if (symbol == "ari_builtin_fs_metadata_size") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_fs_metadata_kind") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_fs_metadata_mode") return builtin_sig({source_string}, i64);
