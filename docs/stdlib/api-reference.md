@@ -1763,6 +1763,7 @@ predicate index in a predicate-partitioned view.
 
 ```ari
 std::vec::new<T>(ref mut zone, capacity)
+Vec::with_capacity<T>(ref mut zone, capacity)
 Vec!(T, ref mut zone, capacity)
 vec.len()
 vec.capacity()
@@ -1794,13 +1795,21 @@ vec.copy_from(source)
 vec.partition(keep)
 vec.clear()
 vec.reserve(capacity)
+vec.try_reserve(capacity)
 vec.reserve_in(ref mut zone, capacity)
 vec.reserve_extra(additional)
 vec.reserve_extra_in(ref mut zone, additional)
+vec.shrink_to_fit()
+vec.extend(values)
 vec.extend_from_slice(values)
 vec.extend_from_slice_in(ref mut zone, values)
+vec.append(ref mut other)
 vec.resize(length, value)
 vec.resize_in(ref mut zone, length, value)
+vec.drain()
+vec.insert_many(index, values)
+vec.remove_range(start, end)
+vec.splice(start, end, replacement)
 vec.index_of(value)
 vec.contains(value)
 vec.count(value)
@@ -1852,9 +1861,20 @@ the desired behavior. `retain(keep)` compacts accepted values in place,
 preserves their order, and drops rejected values. `dedup()` removes consecutive
 duplicate values from the owned vector and returns the new length. `fill`,
 `copy_from`, and `partition` are owned-vector wrappers over the same live-prefix
-policies as `Slice[T]`. `push`, `insert`, `reserve`, `reserve_extra`,
-`extend_from_slice`, and growing `resize` use `ZoneMetadata` stored inside the
-handle; the `_in` forms remain available for explicit capability plumbing.
+policies as `Slice[T]`. `extend(values)` is the natural alias for
+`extend_from_slice(values)`. `append(ref mut other)` moves another vector's
+live values into the receiver and empties the source vector. `insert_many`,
+`remove_range`, and `splice` cover common half-open range edits. `drain()`
+empties the vector and returns a `std::vec::Drain[T]` cursor; unconsumed
+drained values are dropped with the cursor. `shrink_to_fit()` shrinks the
+handle's logical capacity to `len()` by moving live values into a new zone
+allocation, while old bytes remain owned by the zone until reset/destroy.
+`try_reserve(capacity)` returns `false` for negative capacities and otherwise
+uses the same runtime allocation policy as `reserve`. `push`, `insert`,
+`reserve`, `try_reserve`, `reserve_extra`, `extend`, `extend_from_slice`,
+`append`, `insert_many`, `splice`, and growing `resize` use `ZoneMetadata`
+stored inside the handle; the `_in` forms remain available for explicit
+capability plumbing.
 The borrowed sequence helpers
 mirror the root `Slice[T]` vocabulary: `slice` and `split_at` create views over live vector storage,
 `find` and `contains_slice` search for borrowed subsequences, `compare` is

@@ -20,12 +20,14 @@ Constructors allocate in an explicit zone:
 
 ```ari
 std::vec::new<T>(ref mut zone, capacity)
+Vec::with_capacity<T>(ref mut zone, capacity)
 Vec!(T, ref mut zone, capacity)
 std::vec::from_slice_in<T>(ref mut zone, values)
 ```
 
-`new` creates an empty vector with starting capacity. `Vec!` is shorthand for
-the same constructor. `from_slice_in` copies a borrowed `Slice[T]` into a new
+`new` creates an empty vector with starting capacity. `Vec::with_capacity` is
+the associated-constructor spelling for the same operation, and `Vec!` is the
+macro shorthand. `from_slice_in` copies a borrowed `Slice[T]` into a new
 target-zone vector.
 
 Copies also require a target zone:
@@ -98,9 +100,17 @@ vec.copy_from(source)
 vec.partition(keep)
 vec.clear()
 vec.reserve(capacity)
+vec.try_reserve(capacity)
 vec.reserve_extra(additional)
+vec.shrink_to_fit()
+vec.extend(values)
 vec.extend_from_slice(values)
+vec.append(ref mut other)
 vec.resize(length, value)
+vec.drain()
+vec.insert_many(index, values)
+vec.remove_range(start, end)
+vec.splice(start, end, replacement)
 ```
 
 `try_pop` and `try_remove` return `Option[T]`; `pop` asserts when empty and
@@ -112,11 +122,24 @@ reducing the logical length. `dedup` compacts consecutive duplicates, truncates
 the vector to the unique prefix, and returns the new length. `fill` overwrites
 the live prefix with one value, `copy_from` copies the source prefix that fits
 and returns the copied count, and `partition` reorders live values by a
-borrowed predicate and returns the split index. `push`, `insert`, `reserve`,
-`reserve_extra`, `extend_from_slice`, and growing `resize` use `ZoneMetadata`
-captured at construction. The metadata can also be recovered from a non-empty
-backing allocation header, so ordinary callers do not need to pass `ref mut
-zone` after construction.
+borrowed predicate and returns the split index. `extend` is the natural alias
+for `extend_from_slice`. `append` moves every live value from another vector
+into the receiver and leaves the source vector empty. `insert_many` inserts a
+borrowed slice at one index, `remove_range` drops the selected half-open range
+and shifts the tail left, and `splice` replaces a half-open range with a
+borrowed replacement slice. `drain()` empties the vector and returns a
+`std::vec::Drain[T]` cursor over the removed live values; unconsumed drain
+items are dropped when the cursor is dropped. `shrink_to_fit` moves live values
+into a new backing allocation whose logical capacity equals `len()`. Since
+Ari zones are bump-style allocation capabilities, this shrinks the handle's
+capacity but does not reclaim old bytes until the zone is reset or destroyed.
+`try_reserve` returns `false` for negative capacities and otherwise follows
+the same allocation policy as `reserve`; allocation failure is still governed
+by the runtime zone policy. `push`, `insert`, `reserve`, `try_reserve`,
+`reserve_extra`, `extend`, `extend_from_slice`, `append`, `insert_many`,
+`splice`, and growing `resize` use `ZoneMetadata` captured at construction.
+The metadata can also be recovered from a non-empty backing allocation header,
+so ordinary callers do not need to pass `ref mut zone` after construction.
 
 Explicit-zone compatibility forms remain available:
 
@@ -212,8 +235,10 @@ Iterator entry point:
 vec.iter()
 ```
 
-`std::vec::Iter[T]` implements `Iterator[T]`, and `std::vec::Vec[T]`
-implements `IntoIterator[T]` for the current for-loop lowering.
+`std::vec::Iter[T]` implements `Iterator[T]`, and `std::vec::Drain[T]`
+implements `Iterator[T]`, `ExactSizeIterator[T]`, and
+`DoubleEndedIterator[T]`. `std::vec::Vec[T]` implements `IntoIterator[T]` for
+the current for-loop lowering.
 
 ## Slice Accessors
 
@@ -299,6 +324,7 @@ tests/cases/standard-library/ok/vec/std-vec-retain.ari
 tests/cases/standard-library/ok/vec/std-vec-slice-compare.ari
 tests/cases/standard-library/ok/vec/std-vec-sequence.ari
 tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari
+tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari
 tests/cases/standard-library/ok/vec/std-vec-iter.ari
 ```
 
@@ -312,5 +338,7 @@ Potential next slices:
 
 - iterator adapters after general iterator protocol diagnostics mature
 - richer borrow-returning slice APIs after generic lifetime rules are clearer
+- range-drain APIs that return removed values as a fresh `Vec[T]` after
+  zone-backed aggregate provenance can express that construction directly
 - maps, sets, and deques after generic aggregate monomorphization is stronger
 - eventual unification plan for bare local `Vec[T]` and source `std::Vec[T]`

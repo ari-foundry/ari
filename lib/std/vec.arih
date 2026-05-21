@@ -15,6 +15,12 @@ pub struct Iter[T] {
   mut index: i64,
 }
 
+pub struct Drain[T] {
+  data: ptr T,
+  mut len: i64,
+  mut index: i64,
+}
+
 pub fn alloc_buffer[T](zone: ref mut Zone, capacity: i64) -> ptr T {
   return std::zone::alloc_array<T>(zone, capacity);
 }
@@ -88,6 +94,23 @@ fn grow_to_own_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) -> vo
   value.metadata = metadata;
 }
 
+fn rebuild_to_own_capacity[T](value: ref mut std::vec::Vec[T], capacity: i64) -> void {
+  std::assert(capacity >= value.raw.len);
+  let metadata = value.metadata;
+  if capacity == value.raw.capacity {
+    return;
+  }
+  let data = metadata.alloc_array<T>(capacity);
+  var index = 0;
+  while index < value.raw.len {
+    ptr_store(ptr_add(data, index), ptr_load(ptr_add(value.raw.data, index)));
+    index = index + 1;
+  }
+  value.raw.data = data;
+  value.raw.capacity = capacity;
+  value.metadata = metadata;
+}
+
 fn ensure_spare_capacity[T](value: ref mut std::vec::Vec[T]) -> void {
   if value.raw.len >= value.raw.capacity {
     let capacity = next_growth_capacity(value.raw.capacity, value.raw.len + 1);
@@ -125,6 +148,86 @@ fn insert_full[T](value: ref mut std::vec::Vec[T], index: i64, item: T) -> void 
   }
   ptr_store(ptr_add(value.raw.data, index), item);
   value.raw.len = value.raw.len + 1;
+}
+
+fn remove_range_in_place[T](
+  value: ref mut std::vec::Vec[T],
+  start: i64,
+  end: i64
+) -> void {
+  std::assert(start >= 0);
+  std::assert(end >= start);
+  std::assert(end <= value.raw.len);
+  let count = end - start;
+  var index = 0;
+  while index < count {
+    let removed = ptr_load(ptr_add(value.raw.data, start + index));
+    drop removed;
+    index = index + 1;
+  }
+
+  var write = start;
+  var read = end;
+  while read < value.raw.len {
+    ptr_store(ptr_add(value.raw.data, write), ptr_load(ptr_add(value.raw.data, read)));
+    write = write + 1;
+    read = read + 1;
+  }
+  value.raw.len = value.raw.len - count;
+  return;
+}
+
+fn splice_slice[T](
+  value: ref mut std::vec::Vec[T],
+  start: i64,
+  end: i64,
+  replacement: super::Slice[T]
+) -> void {
+  std::assert(start >= 0);
+  std::assert(end >= start);
+  std::assert(end <= value.raw.len);
+  let old_len = value.raw.len;
+  let removed_len = end - start;
+  var index = 0;
+  while index < removed_len {
+    let removed = ptr_load(ptr_add(value.raw.data, start + index));
+    drop removed;
+    index = index + 1;
+  }
+
+  let replacement_len = replacement.len;
+  let new_len = old_len - removed_len + replacement_len;
+  grow_to_own_capacity<T>(value, new_len);
+
+  if replacement_len > removed_len {
+    let extra = replacement_len - removed_len;
+    var cursor = old_len - end;
+    while cursor > 0 {
+      cursor = cursor - 1;
+      ptr_store(
+        ptr_add(value.raw.data, end + extra + cursor),
+        ptr_load(ptr_add(value.raw.data, end + cursor))
+      );
+    }
+  }
+  if replacement_len < removed_len {
+    var shift = 0;
+    while end + shift < old_len {
+      ptr_store(
+        ptr_add(value.raw.data, start + replacement_len + shift),
+        ptr_load(ptr_add(value.raw.data, end + shift))
+      );
+      shift = shift + 1;
+    }
+  }
+
+  index = 0;
+  while index < replacement_len {
+    ptr_store(ptr_add(value.raw.data, start + index), replacement[index]);
+    index = index + 1;
+  }
+  value.raw.len = new_len;
+  return;
 }
 
 pub impl[T] std::Slice[T] {
@@ -275,6 +378,10 @@ pub impl[T: std::cmp::Ord[T]] std::Slice[T] {
 }
 
 pub impl[T] std::vec::Vec[T] {
+  fn with_capacity(zone: ref mut Zone, capacity: i64) -> std::vec::Vec[T] {
+    return std::vec::new<T>(zone, capacity);
+  }
+
   fn len(self: ref Self) -> i64 {
     return self.raw.len;
   }
@@ -409,6 +516,14 @@ pub impl[T] std::vec::Vec[T] {
     grow_to_own_capacity<T>(self, capacity);
   }
 
+  fn try_reserve(self: ref mut Self, capacity: i64) -> bool {
+    if capacity < 0 {
+      return false;
+    }
+    self.reserve(capacity);
+    return true;
+  }
+
   fn reserve_in(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     grow_to_capacity<T>(self, zone, capacity);
   }
@@ -423,6 +538,10 @@ pub impl[T] std::vec::Vec[T] {
     std::assert(additional >= 0);
     let capacity = self.raw.len + additional;
     grow_to_capacity<T>(self, zone, capacity);
+  }
+
+  fn shrink_to_fit(self: ref mut Self) -> void {
+    rebuild_to_own_capacity<T>(self, self.raw.len);
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::vec::Vec[T] {
@@ -467,12 +586,48 @@ pub impl[T] std::vec::Vec[T] {
     insert_full<T>(self, index, value);
   }
 
+  fn insert_many(self: ref mut Self, index: i64, values: super::Slice[T]) -> void {
+    std::assert(index >= 0);
+    std::assert(index <= self.raw.len);
+    if values.len == 0 {
+      return;
+    }
+    grow_to_own_capacity<T>(self, self.raw.len + values.len);
+    var cursor = self.raw.len;
+    while cursor > index {
+      cursor = cursor - 1;
+      ptr_store(ptr_add(self.raw.data, cursor + values.len), ptr_load(ptr_add(self.raw.data, cursor)));
+    }
+    var item = 0;
+    while item < values.len {
+      ptr_store(ptr_add(self.raw.data, index + item), values[item]);
+      item = item + 1;
+    }
+    self.raw.len = self.raw.len + values.len;
+  }
+
   fn extend_from_slice(self: ref mut Self, values: super::Slice[T]) -> void {
     var index = 0;
     while index < values.len {
       self.push(values[index]);
       index = index + 1;
     }
+  }
+
+  fn extend(self: ref mut Self, values: super::Slice[T]) -> void {
+    self.extend_from_slice(values);
+  }
+
+  fn append(self: ref mut Self, other: ref mut std::vec::Vec[T]) -> void {
+    let count = other.raw.len;
+    self.reserve_extra(count);
+    var index = 0;
+    while index < count {
+      ptr_store(ptr_add(self.raw.data, self.raw.len), ptr_load(ptr_add(other.raw.data, index)));
+      self.raw.len = self.raw.len + 1;
+      index = index + 1;
+    }
+    other.raw.len = 0;
   }
 
   fn resize(self: ref mut Self, length: i64, value: T) -> void {
@@ -515,6 +670,22 @@ pub impl[T] std::vec::Vec[T] {
 
   fn truncate(self: ref mut Self, length: i64) -> void {
     shrink_to_len<T>(self, length);
+  }
+
+  fn drain(self: ref mut Self) -> std::vec::Drain[T] {
+    let cursor = std::vec::Drain<T> { data: self.raw.data, len: self.raw.len, index: 0 };
+    self.raw.len = 0;
+    return cursor;
+  }
+
+  fn remove_range(self: ref mut Self, start: i64, end: i64) -> void {
+    remove_range_in_place<T>(self, start, end);
+    return;
+  }
+
+  fn splice(self: ref mut Self, start: i64, end: i64, replacement: super::Slice[T]) -> void {
+    splice_slice<T>(self, start, end, replacement);
+    return;
   }
 
   fn retain(self: ref mut Self, keep: fn(ref T) -> bool) -> void {
@@ -827,9 +998,49 @@ impl[T] super::DoubleEndedIterator[T] for std::vec::Iter[T] {
   }
 }
 
+impl[T] super::Iterator[T] for std::vec::Drain[T] {
+  pub fn next(self: ref mut Self) -> super::Option[T] {
+    if self.index >= self.len {
+      return super::None<T>();
+    }
+    let value = ptr_load(ptr_add(self.data, self.index));
+    self.index = self.index + 1;
+    return super::Some<T>(value);
+  }
+}
+
+impl[T] super::ExactSizeIterator[T] for std::vec::Drain[T] {
+  pub fn len(self: ref Self) -> i64 {
+    return self.len - self.index;
+  }
+}
+
+impl[T] super::DoubleEndedIterator[T] for std::vec::Drain[T] {
+  pub fn next_back(self: ref mut Self) -> super::Option[T] {
+    if self.index >= self.len {
+      return super::None<T>();
+    }
+    self.len = self.len - 1;
+    let value = ptr_load(ptr_add(self.data, self.len));
+    return super::Some<T>(value);
+  }
+}
+
 impl[T] super::IntoIterator[T] for std::vec::Vec[T] {
   pub fn into_iter(self: ref mut Self) -> std::vec::Iter[T] {
     return std::vec::Iter<T> { data: self.raw.data, len: self.raw.len, index: 0 };
+  }
+}
+
+impl[T] std::Drop for std::vec::Drain[T] {
+  fn drop(self) -> void {
+    var cursor = self;
+    while cursor.index < cursor.len {
+      let value = ptr_load(ptr_add(cursor.data, cursor.index));
+      drop value;
+      cursor.index = cursor.index + 1;
+    }
+    return;
   }
 }
 

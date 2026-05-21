@@ -29,6 +29,10 @@ identifies the exact case:
   lower/upper/equal-range bounds, partition point, owned consecutive
   deduplication, live-prefix fill/copy, borrowed-predicate partition, and
   min/max wrappers over live storage.
+- `std-vec-convenience-api.ari`: source `std::vec::Vec[T]` practical
+  convenience surface for associated `with_capacity`, `try_reserve`,
+  `shrink_to_fit`, `extend`, `append`, `insert_many`, `remove_range`,
+  `splice`, `drain`, `truncate`, `resize`, and `clear`.
 - `prelude-slice-metadata.ari`: root `Slice[T]` borrowed metadata helper
   behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access

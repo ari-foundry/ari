@@ -1,0 +1,98 @@
+// Covers the Vec convenience surface expected from a practical growable
+// sequence: capacity management, extension, range mutation, and draining.
+fn main() -> i64 {
+  var zone = zone::create(8192);
+  var score = 0;
+
+  var vec = Vec::with_capacity<i64>(ref mut zone, 2);
+  if vec.len() == 0 && vec.capacity() == 2 {
+    score = score + 3;
+  }
+  if !vec.try_reserve(-1) {
+    score = score + 5;
+  }
+  if vec.try_reserve(6) && vec.capacity() >= 6 {
+    score = score + 7;
+  }
+
+  vec.push(1);
+  vec.push(2);
+  vec.push(3);
+
+  var extra = std::vec::new<i64>(ref mut zone, 3);
+  extra.push(4);
+  extra.push(5);
+  let extra_view = extra.as_slice();
+  vec.extend(extra_view);
+  if vec.len() == 5 && vec.get(3) == 4 && vec.get(4) == 5 {
+    score = score + 11;
+  }
+
+  var tail = std::vec::new<i64>(ref mut zone, 2);
+  tail.push(6);
+  tail.push(7);
+  vec.append(ref mut tail);
+  if vec.len() == 7 && tail.len() == 0 && vec.get(6) == 7 {
+    score = score + 13;
+  }
+
+  var inserted = std::vec::new<i64>(ref mut zone, 2);
+  inserted.push(20);
+  inserted.push(30);
+  let inserted_view = inserted.as_slice();
+  vec.insert_many(2, inserted_view);
+  if vec.len() == 9 && vec.get(2) == 20 && vec.get(3) == 30 && vec.get(4) == 3 {
+    score = score + 17;
+  }
+
+  vec.remove_range(1, 4);
+  if vec.len() == 6 && vec.get(0) == 1 && vec.get(1) == 3 {
+    score = score + 19;
+  }
+  if vec.get(2) == 4 && vec.get(5) == 7 {
+    score = score + 23;
+  }
+
+  var replacement = std::vec::new<i64>(ref mut zone, 4);
+  replacement.push(80);
+  replacement.push(90);
+  replacement.push(100);
+  let replacement_view = replacement.as_slice();
+  vec.splice(2, 4, replacement_view);
+  if vec.len() == 7 && vec.get(0) == 1 && vec.get(1) == 3 {
+    score = score + 29;
+  }
+  if vec.len() == 7 && vec.get(2) == 80 && vec.get(4) == 100 {
+    score = score + 31;
+  }
+
+  vec.truncate(5);
+  vec.resize(7, 42);
+  if vec.len() == 7 && vec.get(5) == 42 && vec.get(6) == 42 {
+    score = score + 37;
+  }
+
+  vec.shrink_to_fit();
+  if vec.capacity() == vec.len() {
+    score = score + 41;
+  }
+
+  var drained = vec.drain();
+  if vec.is_empty() {
+    score = score + 43;
+  }
+  let first = drained.next().unwrap_or(0);
+  let last = drained.next_back().unwrap_or(0);
+  if first == 1 && last == 42 && drained.len() == 5 {
+    score = score + 47;
+  }
+
+  vec.clear();
+  if vec.len() == 0 {
+    score = score + 53;
+  }
+
+  drop drained;
+  zone::destroy(zone);
+  return score;
+}

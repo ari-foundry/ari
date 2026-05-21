@@ -1641,6 +1641,7 @@ method std::time::UtcDateTime::nanosecond|check-prelude std-time-utc-calendar UT
 method std::time::UtcDateTime::second|check-prelude std-time-utc-calendar UTC second accessor; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::try_from_unix|check-prelude std-time-try-unix associated Option-returning UTC Unix conversion; docs/stdlib/modules/time.md
 method std::time::UtcDateTime::year|check-prelude std-time-utc-calendar UTC year accessor; docs/stdlib/modules/time.md
+method std::vec::Vec[T]::append|check-prelude std-vec-convenience-api vector append move helper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::as_mut_ptr|check-prelude std-vec-as-mut-ptr mutable borrowed receiver with reset invalidation; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_slice|check-prelude std-vec-as-slice; docs/dev/test-matrix.md Explicit memory zones row
@@ -1656,10 +1657,12 @@ method std::vec::Vec[T]::copy_from|check-prelude std-vec-sequence owned target p
 method std::vec::Vec[T]::copy_to|check-prelude std-vec-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::dedup|check-prelude std-vec-sequence owned consecutive duplicate compaction and truncation; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::drain|check-prelude std-vec-convenience-api whole-vector draining cursor; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::ends_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::equal_range|check-prelude std-vec-sequence ordered equal-range wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::equal_range_by|check-prelude std-algo-by-helpers comparator equal-range wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::equals|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::extend|check-prelude std-vec-convenience-api natural slice extension alias; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::extend_from_slice|check-prelude std-vec-growth-paths owning-zone slice extension; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::extend_from_slice_in|check-prelude std-vec-extend-from-slice-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::fill|check-prelude std-vec-sequence owned live-prefix fill wrapper; docs/stdlib/modules/vec.md
@@ -1671,6 +1674,7 @@ method std::vec::Vec[T]::get_ref|check-prelude std-vec-get-ref-mut shared elemen
 method std::vec::Vec[T]::index_of|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::insert|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::insert_in|check-prelude std-vec-insert-in; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::insert_many|check-prelude std-vec-convenience-api range insertion from slice; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::is_empty|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::is_sorted|check-prelude std-vec-sequence ordered sequence sortedness wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::is_sorted_by|check-prelude std-algo-by-helpers comparator sequence sortedness wrapper; docs/stdlib/modules/vec.md
@@ -1690,6 +1694,7 @@ method std::vec::Vec[T]::pop|check-prelude std-vec-fixed-ops; docs/dev/test-matr
 method std::vec::Vec[T]::push|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push_in|check-prelude std-vec-push-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::remove|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::remove_range|check-prelude std-vec-convenience-api in-place vector range removal; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::replace|check-prelude std-vec-replace; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::reserve|check-prelude std-vec-reserve owning-zone capacity growth; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::reserve_extra|check-prelude std-vec-reserve-extra owning-zone spare capacity growth; docs/stdlib/modules/vec.md
@@ -1702,9 +1707,11 @@ method std::vec::Vec[T]::reverse|check-prelude std-vec-sequence in-place sequenc
 method std::vec::Vec[T]::rotate_left|check-prelude std-vec-sequence in-place sequence rotation wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::rotate_right|check-prelude std-vec-sequence in-place sequence rotation wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::set|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::shrink_to_fit|check-prelude std-vec-convenience-api logical capacity shrink to length; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::slice|check-prelude std-vec-sequence borrowed range view wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::sort|check-prelude std-vec-sequence ordered in-place sort wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::sort_by|check-prelude std-algo-by-helpers comparator in-place sort wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::splice|check-prelude std-vec-convenience-api in-place vector range replacement; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::split|check-prelude std-vec-sequence borrowed delimiter split iterator wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::split_at|check-prelude std-vec-sequence borrowed split view wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::stable_sort|check-prelude std-vec-sequence ordered in-place stable sort wrapper; docs/stdlib/modules/vec.md
@@ -1717,9 +1724,11 @@ method std::vec::Vec[T]::try_get|check-prelude std-vec-try-access Option-returni
 method std::vec::Vec[T]::try_last|check-prelude std-vec-try-access Option-returning empty-safe access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::vec::Vec[T]::try_remove|check-prelude std-vec-try-remove Option-returning indexed removal; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::try_reserve|check-prelude std-vec-convenience-api fallible-looking vector reserve validation; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::upper_bound|check-prelude std-vec-sequence ordered sequence upper-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::upper_bound_by|check-prelude std-algo-by-helpers comparator sequence upper-bound wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::windows|check-prelude std-vec-sequence borrowed window iterator wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::with_capacity|check-prelude std-vec-convenience-api associated explicit-capacity constructor; docs/stdlib/modules/vec.md
 method std::zone::ZoneMetadata::alloc|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::alloc_array[T]|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 method std::zone::ZoneMetadata::as_ptr|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
@@ -1874,6 +1883,7 @@ struct std::time::Duration|std time duration helper tests; docs/stdlib/modules/t
 struct std::time::Instant|std time monotonic instant tests; docs/stdlib/modules/time.md
 struct std::time::SystemTime|std time wall-clock tests; docs/stdlib/modules/time.md
 struct std::time::UtcDateTime|check-prelude std-time-utc-calendar UTC calendar value; docs/stdlib/modules/time.md
+struct std::vec::Drain[T]|check-prelude std-vec-convenience-api draining cursor tests; docs/stdlib/modules/vec.md
 struct std::vec::Iter[T]|std vec iterator tests; docs/dev/test-matrix.md Explicit memory zones and Control flow rows
 struct std::vec::RawVec[T]|std RawVec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::vec::Vec[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row

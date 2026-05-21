@@ -1867,6 +1867,20 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec27grow_to_own_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec28ensure_spare_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13with_capacity' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent11try_reserve' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13shrink_to_fit' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6extend' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6append' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent5drain' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6splice' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent11insert_many' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent12remove_range' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl20std__vec__Drain_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	grep -q '_ARNv4impl20std__vec__Drain_i64_24std__DoubleEndedIterator9next_back' $(BUILD_DIR)/prelude/std-vec-convenience-api.ll
+	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari -o $(BUILD_DIR)/prelude/std-vec-convenience-api.elf
+	$(BUILD_DIR)/prelude/std-vec-convenience-api.elf; code=$$?; test $$code -eq 123
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7reserve' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
@@ -2368,6 +2382,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; code=$$?; test $$code -eq 40; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-resize-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-resize-in.elf; $(BUILD_DIR)/prelude/std-vec-resize-in.elf; code=$$?; test $$code -eq 37; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-growth-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; code=$$?; test $$code -eq 135; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-convenience-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-convenience-api.elf; $(BUILD_DIR)/prelude/std-vec-convenience-api.elf; code=$$?; test $$code -eq 123; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; code=$$?; test $$code -eq 36; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-try-pop.elf; $(BUILD_DIR)/prelude/std-vec-try-pop.elf; code=$$?; test $$code -eq 25; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/vec/std-vec-try-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-try-remove.elf; $(BUILD_DIR)/prelude/std-vec-try-remove.elf; code=$$?; test $$code -eq 128; fi
