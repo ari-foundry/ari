@@ -345,6 +345,8 @@ identifies the exact case:
 - `std-cmp-value-helpers.ari`: source `std::cmp` trait-bound value selection,
   clamping, inclusive range predicates, root re-export behavior, and generic
   helper dispatch through natural ordering operators.
+- `std-cmp-primitive-impls.ari`: standard `Eq`/`Ord` impl availability for
+  common primitive scalar types without per-test or per-program boilerplate.
 - `std-cmp-equality-operator.ari`: trait-backed `==` and `!=` lowering through
   `cmp::Eq[T]::eq` for concrete and generic values.
 - `std-cmp-order-operators.ari`: trait-backed `<`, `<=`, `>`, and `>=`

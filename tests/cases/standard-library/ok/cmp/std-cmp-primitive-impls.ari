@@ -1,0 +1,61 @@
+// Primitive Eq/Ord impls live in std, so generic comparison helpers do not
+// need per-test boilerplate impls for common scalar types.
+fn same[T: cmp::Eq[T]](left: T, right: T) -> bool {
+  return left == right;
+}
+
+fn different[T: cmp::Eq[T]](left: T, right: T) -> bool {
+  return left != right;
+}
+
+fn before[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left < right;
+}
+
+fn at_least[T: cmp::Ord[T]](left: T, right: T) -> bool {
+  return left >= right;
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  if same<bool>(true, true) {
+    total = total + 1;
+  }
+  if different<bool>(true, false) {
+    total = total + 2;
+  }
+
+  if same<i8>(1 as i8, 1 as i8) && before<i8>(1 as i8, 2 as i8) {
+    total = total + 3;
+  }
+  if same<i16>(2 as i16, 2 as i16) && before<i16>(2 as i16, 3 as i16) {
+    total = total + 5;
+  }
+  if same<i32>(3 as i32, 3 as i32) && before<i32>(3 as i32, 4 as i32) {
+    total = total + 7;
+  }
+  if same<i64>(4, 4) && before<i64>(4, 5) && at_least<i64>(5, 5) {
+    total = total + 11;
+  }
+
+  if same<u8>(1 as u8, 1 as u8) && before<u8>(1 as u8, 2 as u8) {
+    total = total + 13;
+  }
+  if same<u16>(2 as u16, 2 as u16) && before<u16>(2 as u16, 3 as u16) {
+    total = total + 17;
+  }
+  if same<u32>(3 as u32, 3 as u32) && before<u32>(3 as u32, 4 as u32) {
+    total = total + 19;
+  }
+  if same<u64>(4u64, 4u64) && before<u64>(4u64, 5u64) && at_least<u64>(5u64, 5u64) {
+    total = total + 23;
+  }
+
+  let ordering = cmp::compare<i64>(12, 7);
+  if ordering.is_greater() {
+    total = total + cmp::min<i64>(9, 4);
+  }
+
+  return total;
+}

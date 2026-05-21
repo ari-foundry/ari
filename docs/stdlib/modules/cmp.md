@@ -108,15 +108,13 @@ is treated as a programmer error.
 The root prelude re-exports these helpers, so `min<T>`, `max<T>`, `clamp<T>`,
 and `is_between<T>` are aliases for the `std::cmp` implementations.
 
+`std::cmp` provides `Eq` impls for `bool` and all fixed-width integer types,
+plus `Ord` impls for all fixed-width integer types. Application code only
+needs to write an impl for custom value types.
+
 ## Example
 
 ```ari
-impl cmp::Ord[i64] for i64 {
-  fn lt(self, other: i64) -> bool {
-    return self < other;
-  }
-}
-
 struct Score {
   value: i64,
 }

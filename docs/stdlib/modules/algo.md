@@ -89,12 +89,6 @@ array or vector; use the returned length as the prefix boundary.
 Sort and search:
 
 ```ari
-impl cmp::Ord[i64] for i64 {
-  fn lt(self, other: i64) -> bool {
-    return self < other;
-  }
-}
-
 var values = [5, 1, 4, 1, 3];
 algo::sort<i64>(values.as_slice());
 let found = algo::binary_search<i64>(values.as_slice(), 4);

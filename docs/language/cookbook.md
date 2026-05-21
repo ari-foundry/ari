@@ -445,12 +445,6 @@ must outlive the zone that currently owns its storage.
 ## Compare With Traits And Helpers
 
 ```ari
-impl cmp::Ord[i64] for i64 {
-  fn lt(self, other: i64) -> bool {
-    return self < other;
-  }
-}
-
 fn main() -> i64 {
   let low = cmp::min<i64>(7, 3);
   let high = cmp::max<i64>(7, 3);
@@ -460,6 +454,8 @@ fn main() -> i64 {
 ```
 
 `cmp::min`, `cmp::max`, and `cmp::clamp` require an `Ord[T]` implementation.
+The standard library already provides that impl for integer types; custom
+structs and enums should define their own `cmp::Ord[T]` impl.
 
 ## Derive Common Traits
 

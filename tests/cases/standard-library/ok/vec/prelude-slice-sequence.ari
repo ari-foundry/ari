@@ -2,11 +2,6 @@
 // subsequence search, lexicographic comparison, and lazy chunk/window iterators.
 // Both compare() and ordering() are covered so the compatibility integer API
 // and the preferred cmp::Ordering API stay in sync.
-impl cmp::Ord[i64] for i64 {
-  fn lt(self, other: i64) -> bool {
-    return self < other;
-  }
-}
 
 fn expect_slice(values: Slice[i64], expected: Slice[i64]) -> void {
   assert(values.equals(expected));
