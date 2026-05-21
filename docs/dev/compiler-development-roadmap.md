@@ -8,11 +8,10 @@ pleasant, general-purpose language implementation: predictable frontend,
 maintainable semantic analysis, stable IR, testable LLVM output, and clear
 diagnostics for ordinary Ari users.
 
-Read this page before the bootstrap-specific pages:
+Read this page for normal compiler work:
 
 - [Compiler Development Dashboard](compiler-development-dashboard.md) gives the
-  one-page status, next actions, small checks, and bootstrap start-gate
-  estimate.
+  one-page status, next actions, and small checks.
 - [Architecture](architecture.md) explains the current C++ compiler shape.
 - [Compiler Pipeline](compiler-pipeline.md) explains the source-to-LLVM path.
 - [Compiler Contributor Guide](compiler-contributor-guide.md) is the practical
@@ -35,11 +34,11 @@ Read this page before the bootstrap-specific pages:
   turns roadmap items into small implementation tickets with first files,
   artifacts, focused checks, and review criteria.
 - [Compiler Next Slices](compiler-next-slices.md) names the near-term tickets
-  to pick from before any bootstrap tree exists.
+  to pick from while developing the hosted compiler.
 - [Compiler Change Checklist](compiler-change-checklist.md) is the handoff
   checklist for docs, tests, diagnostics, sema, IR, and non-goals.
 - [Compiler Readiness Inventory](compiler-readiness-inventory.md) lists the
-  current strengths, blockers, backlog, and start gate.
+  current strengths, blockers, backlog, and development gates.
 - [Compiler Pass Contracts](compiler-pass-contracts.md) defines the pass
   input/output boundaries and review rules that keep compiler code maintainable.
 - [Feature Test Matrix](test-matrix.md) tracks feature coverage.
@@ -68,8 +67,7 @@ test suite.
 
 The active work is compiler development, not bootstrapping. Use
 [Compiler Maturity Gates](compiler-maturity-gates.md) to judge whether a change
-improves the normal compiler and language surface enough to move the later
-bootstrap start gate.
+improves the normal compiler and language surface.
 
 The compiler is still not production-grade. The main gaps are not ambition;
 they are compiler engineering scale:
@@ -85,25 +83,25 @@ they are compiler engineering scale:
 ## Development Principles
 
 - Improve Ari as a general language, not as a private bootstrap dialect.
-- Keep stage0 changes in the current compiler normal and reviewable.
+- Keep hosted-compiler changes normal and reviewable.
 - Prefer public language features over hidden compiler-only shortcuts.
 - Keep unsupported features rejected with clear diagnostics.
 - Make each compiler feature observable through a focused test.
 - Keep source-level resolution in sema; codegen should consume lowered IR facts.
 - Keep allocation explicit and capability-oriented.
-- Treat bootstrapping percentage as a health metric, not as the current task.
+- Treat self-host readiness as a secondary health metric, not as the current
+  task.
 
 ## Immediate Compiler Work Queue
 
-Use this queue when the request is "make Ari a real compiler" rather than
-"start bootstrapping". Each slice is useful for ordinary Ari users and also
-moves the later compiler-in-Ari start gate.
+Use this queue when the request is "make Ari a real compiler". Each slice is
+useful for ordinary Ari users and compiler contributors on its own.
 
 | Slice | Build | Focused Check | Done When |
 | --- | --- | --- | --- |
 | Source identity | Stable source ownership, source ids, byte spans, line/column lookup, and snippet extraction as compiler/tooling data. | `make check-compiler-development` and source-map artifact checks. | Lexer/parser diagnostics can name files and spans without runtime `std` carrying compiler-only APIs. |
 | Diagnostic data | Diagnostic codes, severity, labels, notes, normalized paths, and golden rendering. | `make check-compiler-artifacts` for `--emit-diagnostics`. | Expected compiler failures are reviewed as deterministic text artifacts. |
-| Project flow | File-backed modules, package roots, `.ari`/`.arih` policy, module metadata, and cache validation. | Module ok/error fixtures plus `--emit-module-graph`. | A multi-directory Ari tool builds from Make without hidden bootstrap flags. |
+| Project flow | File-backed modules, package roots, `.ari`/`.arih` policy, module metadata, and cache validation. | Module ok/error fixtures plus `--emit-module-graph`. | A multi-directory Ari tool builds from Make without hidden stage flags. |
 | Compiler data models | Structs, enum payloads, type aliases, nested generics, tuple returns, and `Result[T, E]` in compiler-shaped code. | `tests/cases/compiler-development/ok/model/compiler-stage-gates.ari`. | Tokens, syntax nodes, pass states, and diagnostics can be expressed naturally in Ari. |
 | Pass artifacts | Token, syntax, HIR, typed IR, LLVM text, object symbols, and executable behavior in comparison order. | `make check-compiler-artifacts`. | Regressions fail near the compiler layer that changed. |
 | Backend contract | LLVM/object/shared output, ABI facts, runtime hooks, and symbol mangling stay deterministic. | Focused `--emit-llvm`, object, and shared-library checks. | Codegen consumes resolved IR facts instead of re-resolving source-level names. |

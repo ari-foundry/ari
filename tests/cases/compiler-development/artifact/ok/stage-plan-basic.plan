@@ -12,4 +12,4 @@ CompilerStagePlan source=tests/cases/compiler-development/artifact/ok/token-dump
   11 LLVM owner=llvm-backend artifact=--emit-llvm first_check="focused --emit-llvm" proves="backend lowering after earlier artifacts match"
   12 Object owner=toolchain artifact=--emit-obj first_check="focused --emit-obj" proves="object emission and exported symbol surface"
   13 Executable owner=toolchain artifact=-o first_check="focused linked run" proves="final runtime behavior"
-  StartGate source_identity=required diagnostics=required modules=required artifacts=ordered executable=last
+  DevelopmentGate source_identity=required diagnostics=required modules=required artifacts=ordered executable=last

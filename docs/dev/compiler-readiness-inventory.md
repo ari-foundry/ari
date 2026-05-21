@@ -123,11 +123,11 @@ Use this order for general compiler development:
 8. Artifact testing: normalize and compare token, diagnostic, syntax, HIR,
    typed IR, LLVM, object symbol, and executable outputs.
 
-## Start Gate
+## Compiler Development Gates
 
-Do not start a compiler-in-Ari tree just because a small lexer can be written.
-Start it when these gates are green enough that the work will improve Ari
-instead of creating a private dialect:
+Use these gates to decide whether Ari is becoming a practical compiler project.
+They also inform a future compiler-in-Ari track, but their first job is to keep
+today's compiler reliable and pleasant to extend:
 
 | Gate | Green Signal |
 | --- | --- |
@@ -215,7 +215,7 @@ Current readiness tests:
   compiler-development readiness gates, percent windows, enum state payloads,
   tuple returns, and `Result`-based not-ready flow as normal Ari data.
 - `tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari`:
-  weighted readiness gates, current percentage scoring, and start-gate pressure
+  weighted readiness gates, current percentage scoring, and compiler pressure
   as normal Ari data.
 - `tests/cases/compiler-development/ok/model/compiler-test-classification.ari`:
   compiler test categories, artifact families, backend/runtime distinction, and
@@ -244,7 +244,7 @@ Current readiness tests:
   declaration signature, visibility, and source-location golden checked through
   `--emit-declaration-index`.
 - `tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan`:
-  stage order, owner, first-check, and start-gate golden checked through
+  stage order, owner, first-check, and development-gate golden checked through
   `--emit-stage-plan`.
 - `tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir`: sema and
   typed-IR artifact golden checked through `--emit-typed-ir`.

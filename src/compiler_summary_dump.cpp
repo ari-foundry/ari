@@ -64,7 +64,7 @@ std::string dump_compiler_stage_plan(const std::string& source_name,
             << " first_check=\"" << row.first_check << "\""
             << " proves=\"" << row.proves << "\"\n";
     }
-    out << "  StartGate source_identity=required diagnostics=required "
+    out << "  DevelopmentGate source_identity=required diagnostics=required "
         << "modules=required artifacts=ordered executable=last\n";
     return out.str();
 }

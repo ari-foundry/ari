@@ -115,7 +115,7 @@ A good compiler change usually looks like this:
 3. Update the user-facing language page or developer doc that explains the
    behavior.
 4. Run the smallest matching check.
-5. Leave the future bootstrap start gate as a readiness metric, not the current
+5. Leave self-hosting readiness as a secondary metric, not the current
    implementation target.
 
 That rhythm keeps Ari moving toward a real compiler while preserving a clean

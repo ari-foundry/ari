@@ -76,7 +76,7 @@ def main() -> int:
         "## Not Yet",
         "## Small Checks",
         "## Test Classification",
-        "## Start Gate",
+        "## Compiler Development Gates",
         "## Handoff Note",
     ]:
         require(dashboard, heading, dashboard_path)
@@ -179,7 +179,7 @@ def main() -> int:
         "source-level name lookup",
         "Artifact order",
         "Public language pressure",
-        "future bootstrap start gate as a readiness metric",
+        "self-hosting readiness as a secondary metric",
     ]:
         require(glossary, needle, glossary_path)
 
@@ -657,7 +657,7 @@ def main() -> int:
         "Compiler Project Model",
         "Compiler Source And Diagnostics",
         "Compiler Artifact Testing",
-        "stage0 changes",
+        "hosted-compiler changes",
         "Source identity | Stable source ownership",
         "Test classification",
         "Readiness scorecard",
@@ -859,7 +859,7 @@ def main() -> int:
         "## Blocking Gaps",
         "## Recent Compiler Support",
         "## Development Backlog",
-        "## Start Gate",
+        "## Compiler Development Gates",
         "## Natural Syntax Pressure",
         "## Test Inventory",
     ]:

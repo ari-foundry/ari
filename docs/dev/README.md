@@ -24,8 +24,8 @@ For normal compiler work, read in this order:
 16. [Build And Test](build-test.md)
 
 Bootstrapping is a later readiness milestone. The current development rule is
-to improve the hosted compiler and the public language surface first, then use
-the bootstrap documents as a start-gate check.
+to improve the hosted compiler and the public language surface first. The
+bootstrap documents are secondary readiness notes for later self-hosting work.
 
 ## Main Pages
 

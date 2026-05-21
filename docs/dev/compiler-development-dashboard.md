@@ -2,8 +2,8 @@
 
 This page is the one-page dashboard for ordinary Ari compiler development. It
 summarizes where the compiler is now, what should be built next, which small
-checks prove progress, and how this work relates to the later bootstrap start
-gate.
+checks prove progress, and how to keep the work useful for real Ari users and
+compiler contributors.
 
 This is not a bootstrap implementation plan. The goal right now is to make the
 hosted compiler and the public Ari language strong enough that a future
@@ -52,7 +52,7 @@ Use this order when joining compiler work:
 13. [Compiler Change Checklist](compiler-change-checklist.md): review and
    handoff checklist for normal compiler changes.
 14. [Compiler Readiness Inventory](compiler-readiness-inventory.md): current
-   strengths, blocking gaps, scorecard, and start gate.
+   strengths, blocking gaps, scorecard, and development gates.
 
 For language behavior while writing Ari fixtures, pair these with
 [Getting Started](../language/getting-started.md),
@@ -105,7 +105,7 @@ Run the smallest check that proves the slice you touched:
 | Compiler roadmap, dashboard, or dev docs | `make check-compiler-dev-docs` |
 | Compiler-shaped Ari model fixture | `make check-compiler-development` |
 | Stage-plan, token, syntax, diagnostic, module, declaration, typed-IR, or pass-summary golden | `make check-compiler-artifacts` |
-| Bootstrap readiness docs only | `make check-bootstrap-docs` |
+| Long-term self-host readiness docs only | `make check-bootstrap-docs` |
 | One Ari source while iterating | `build/ari path/to/file.ari --check` |
 
 Full `make check` belongs at handoff for broad compiler changes. Sanitizer
@@ -126,9 +126,10 @@ Compiler-development tests use these buckets:
 Name each file by the behavior it protects, not by the implementation helper
 you happened to edit.
 
-## Start Gate
+## Compiler Development Gates
 
-A compiler-in-Ari track should wait until these signals are green enough:
+Treat these as the gates for making Ari a practical compiler project. They are
+useful before any self-hosting plan matters:
 
 | Gate | Green Signal |
 | --- | --- |
@@ -147,7 +148,7 @@ For a normal compiler change, leave a short note with:
 - the public Ari behavior clarified
 - the focused check run
 - the docs or test bucket updated
-- the explicit non-goal, especially when a request mentions bootstrapping
+- the explicit non-goal when a request could drift into unrelated work
 
 That keeps Ari moving toward a real compiler without turning every improvement
 into a hidden self-hosting shortcut.

@@ -7,8 +7,8 @@ written in Ari should be a normal Ari program that benefits from the same
 language, diagnostics, modules, and artifacts as every other large Ari tool.
 
 Use this guide when you are about to change compiler behavior and need to know
-where to edit, what to test, and how the change moves Ari toward the later
-bootstrap start gate.
+where to edit, what to test, and how the change improves Ari as a real
+language implementation.
 
 ## Start Here
 
@@ -17,7 +17,7 @@ For a compiler change, read these in order:
 1. [Compiler Development Roadmap](compiler-development-roadmap.md): current
    development phases and non-goals.
 2. [Compiler Readiness Inventory](compiler-readiness-inventory.md): current
-   strengths, blocking gaps, backlog, and the later start gate.
+   strengths, blocking gaps, backlog, and development gates.
 3. [Compiler Layer Map](compiler-layer-map.md): which `src/` files own each
    compiler layer and which small check to run first.
 4. [Compiler Triage Guide](compiler-triage-guide.md): how to route a symptom
@@ -30,9 +30,9 @@ For a compiler change, read these in order:
 8. [Build And Test](build-test.md): focused Make targets and direct
    `build/ari` commands.
 
-Use [Compiler Maturity Gates](compiler-maturity-gates.md) only as the health
-scorecard. Use [Bootstrap Readiness](bootstrap-readiness.md) only to judge
-when a compiler-in-Ari track can begin later.
+Use [Compiler Maturity Gates](compiler-maturity-gates.md) as the health
+scorecard. Treat [Bootstrap Readiness](bootstrap-readiness.md) as a later
+self-hosting appendix, not as the main compiler-development plan.
 
 ## Edit Map
 
@@ -59,7 +59,7 @@ Choose the smallest target that observes the behavior you changed:
 | --- | --- |
 | User-facing language docs or navigation | `make check-language-docs` |
 | Compiler roadmap, maturity gates, pass contracts, or readiness docs | `make check-compiler-dev-docs` |
-| Bootstrap start-gate wording or fixture groups | `make check-bootstrap-docs` |
+| Long-term self-host readiness wording or fixture groups | `make check-bootstrap-docs` |
 | Stage-plan, token, source-map, syntax, diagnostic, module-graph, declaration, typed-IR, or pass-summary artifacts | `make check-compiler-artifacts` |
 | Compiler-shaped Ari model fixtures | `make check-compiler-development` |
 | One ordinary Ari program | `build/ari path/to/case.ari --check` |
@@ -110,8 +110,8 @@ tests/cases/bootstrap-readiness/
 
 Use `compiler-development` for fixtures that prove normal Ari can model
 compiler-shaped data without starting a bootstrap tree. Use
-`bootstrap-readiness` for the later start-gate fixtures that measure whether
-the project is close enough to begin compiler-in-Ari work.
+`bootstrap-readiness` only for secondary self-host readiness fixtures that
+measure long-term pressure outside the main compiler-development loop.
 
 Use `artifact/ok` and `artifact/errors` for text artifacts and comparison
 reports. Use ordinary feature folders such as `modules`, `generics`, `traits`,

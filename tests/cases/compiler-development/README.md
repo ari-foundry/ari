@@ -72,7 +72,7 @@ the same language surface that normal Ari users get.
 - `artifact/ok/declaration-index-basic.*`: declaration signature, visibility,
   module, and source-location golden seed before semantic lowering.
 - `artifact/ok/stage-plan-basic.plan`: compiler artifact order, layer owner,
-  first-check, and start-gate golden seed emitted by the driver.
+  first-check, and development-gate golden seed emitted by the driver.
 - `artifact/ok/token-dump-basic.*`: lexer, parser, and typed-IR golden seed
   generated from one tiny source file.
 - `artifact/ok/module-graph-file-module.graph`: file-backed module graph

@@ -276,7 +276,7 @@ It currently proves thirteen low-level contracts:
   normalize to stable placeholders
 - a line mismatch produces a small report naming the fixture and line
 - `--emit-stage-plan` writes deterministic artifact order, owner, first-check,
-  and start-gate text directly from the compiler driver
+  and development-gate text directly from the compiler driver
 - `--emit-source-map` writes deterministic source file, byte offset, line, and
   newline-policy text for root and file-backed modules
 - `--emit-tokens` writes deterministic lexer output for a small Ari source file
