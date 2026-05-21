@@ -288,6 +288,9 @@ identifies the exact case:
   point, reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup
   behavior over borrowed slices, including custom `Ord` values through natural
   ordering operators.
+- `std-algo-dedup-partition.ari`: source `std::algo` `dedup_by`,
+  `dedup_by_key`, stable partition, and the matching natural `Slice`/`Vec`
+  receiver wrappers, including owned `Vec` truncation after dedup.
 - `std-algo-by-helpers.ari`: source `std::algo` comparator sortedness,
   search/bounds/equal-range, partition point, min/max/clamp, stable comparator
   ordering, and natural `Slice`/`Vec` receiver wrappers over a custom value

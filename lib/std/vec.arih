@@ -270,9 +270,24 @@ pub impl[T] std::Slice[T] {
     return std::algo::partition<T>(current, keep);
   }
 
+  fn stable_partition(self: ref Self, keep: fn(ref T) -> bool) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::stable_partition<T>(current, keep);
+  }
+
   fn dedup(self: ref Self) -> i64 {
     let current = super::Slice<T> { data: self.data, len: self.len };
     return std::algo::dedup<T>(current);
+  }
+
+  fn dedup_by(self: ref Self, same: fn(ref T, ref T) -> bool) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::dedup_by<T>(current, same);
+  }
+
+  fn dedup_by_key[K](self: ref Self, key: fn(ref T) -> K) -> i64 {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::algo::dedup_by_key<T, K>(current, key);
   }
 
   fn sort_by(self: ref Self, less: fn(T, T) -> bool) -> void {
@@ -713,6 +728,18 @@ pub impl[T] std::vec::Vec[T] {
     return length;
   }
 
+  fn dedup_by(self: ref mut Self, same: fn(ref T, ref T) -> bool) -> i64 {
+    let length = std::algo::dedup_by<T>(self.as_slice(), same);
+    shrink_to_len<T>(self, length);
+    return length;
+  }
+
+  fn dedup_by_key[K](self: ref mut Self, key: fn(ref T) -> K) -> i64 {
+    let length = std::algo::dedup_by_key<T, K>(self.as_slice(), key);
+    shrink_to_len<T>(self, length);
+    return length;
+  }
+
   fn fill(self: ref mut Self, value: T) -> void {
     std::algo::fill<T>(self.as_slice(), value);
     return;
@@ -724,6 +751,10 @@ pub impl[T] std::vec::Vec[T] {
 
   fn partition(self: ref mut Self, keep: fn(ref T) -> bool) -> i64 {
     return std::algo::partition<T>(self.as_slice(), keep);
+  }
+
+  fn stable_partition(self: ref mut Self, keep: fn(ref T) -> bool) -> i64 {
+    return std::algo::stable_partition<T>(self.as_slice(), keep);
   }
 
   fn index_of(self: ref Self, value: T) -> i64 {

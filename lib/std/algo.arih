@@ -104,6 +104,28 @@ pub fn partition[T](values: std::Slice[T], keep: fn(ref T) -> bool) -> i64 {
   return left;
 }
 
+pub fn stable_partition[T](values: std::Slice[T], keep: fn(ref T) -> bool) -> i64 {
+  var write = 0;
+  var scan = 0;
+  while scan < values.len {
+    let source = ptr_add(values.data, scan);
+    if keep(ref *source) {
+      if write != scan {
+        let value = ptr_load(source);
+        var cursor = scan;
+        while cursor > write {
+          ptr_store(ptr_add(values.data, cursor), ptr_load(ptr_add(values.data, cursor - 1)));
+          cursor = cursor - 1;
+        }
+        ptr_store(ptr_add(values.data, write), value);
+      }
+      write = write + 1;
+    }
+    scan = scan + 1;
+  }
+  return write;
+}
+
 pub fn dedup[T](values: std::Slice[T]) -> i64 {
   if values.len <= 1 {
     return values.len;
@@ -115,6 +137,48 @@ pub fn dedup[T](values: std::Slice[T]) -> i64 {
     if ptr_load(ptr_add(values.data, read)) != ptr_load(ptr_add(values.data, write - 1)) {
       if write != read {
         ptr_store(ptr_add(values.data, write), ptr_load(ptr_add(values.data, read)));
+      }
+      write = write + 1;
+    }
+    read = read + 1;
+  }
+  return write;
+}
+
+pub fn dedup_by[T](values: std::Slice[T], same: fn(ref T, ref T) -> bool) -> i64 {
+  if values.len <= 1 {
+    return values.len;
+  }
+
+  var write = 1;
+  var read = 1;
+  while read < values.len {
+    let previous = ptr_add(values.data, write - 1);
+    let current = ptr_add(values.data, read);
+    if !same(ref *previous, ref *current) {
+      if write != read {
+        ptr_store(ptr_add(values.data, write), ptr_load(current));
+      }
+      write = write + 1;
+    }
+    read = read + 1;
+  }
+  return write;
+}
+
+pub fn dedup_by_key[T, K](values: std::Slice[T], key: fn(ref T) -> K) -> i64 {
+  if values.len <= 1 {
+    return values.len;
+  }
+
+  var write = 1;
+  var read = 1;
+  while read < values.len {
+    let previous = ptr_add(values.data, write - 1);
+    let current = ptr_add(values.data, read);
+    if key(ref *previous) != key(ref *current) {
+      if write != read {
+        ptr_store(ptr_add(values.data, write), ptr_load(current));
       }
       write = write + 1;
     }

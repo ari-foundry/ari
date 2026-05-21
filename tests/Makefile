@@ -1133,6 +1133,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf
 	$(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 12
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/algo/std-algo-slice-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; $(BUILD_DIR)/prelude/std-algo-slice-helpers.elf; code=$$?; test $$code -eq 12; fi
+	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-dedup-partition.ari --emit-llvm $(BUILD_DIR)/prelude/std-algo-dedup-partition.ll
+	grep -F -q 'std4algo15dedup_by__G_i64' $(BUILD_DIR)/prelude/std-algo-dedup-partition.ll
+	grep -F -q 'dedup_by_key__G_User_i64' $(BUILD_DIR)/prelude/std-algo-dedup-partition.ll
+	grep -F -q 'std4algo23stable_partition__G_i64' $(BUILD_DIR)/prelude/std-algo-dedup-partition.ll
+	grep -F -q 'Slice_i64_8inherent19dedup_by_key__G_i64' $(BUILD_DIR)/prelude/std-algo-dedup-partition.ll
+	grep -F -q 'std__vec__Vec_i64_8inherent19dedup_by_key__G_i64' $(BUILD_DIR)/prelude/std-algo-dedup-partition.ll
+	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-dedup-partition.ari -o $(BUILD_DIR)/prelude/std-algo-dedup-partition.elf
+	$(BUILD_DIR)/prelude/std-algo-dedup-partition.elf; code=$$?; test $$code -eq 26
 	$(TARGET) tests/cases/standard-library/ok/algo/std-algo-by-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
 	grep -F -q 'std4algo21is_sorted_by__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll
 	grep -F -q 'std4algo25binary_search_by__G_Score' $(BUILD_DIR)/prelude/std-algo-by-helpers.ll

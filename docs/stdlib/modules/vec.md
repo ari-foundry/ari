@@ -95,9 +95,12 @@ vec.try_remove(index)
 vec.truncate(length)
 vec.retain(keep)
 vec.dedup()
+vec.dedup_by(same)
+vec.dedup_by_key(key)
 vec.fill(value)
 vec.copy_from(source)
 vec.partition(keep)
+vec.stable_partition(keep)
 vec.clear()
 vec.reserve(capacity)
 vec.try_reserve(capacity)
@@ -118,16 +121,18 @@ vec.splice(start, end, replacement)
 index is ordinary input. `retain` keeps values accepted by `keep: fn(ref T) ->
 bool`, preserves the order of kept values, and drops rejected values. `set`,
 `clear`, `truncate`, and shrink paths drop removed live elements before
-reducing the logical length. `dedup` compacts consecutive duplicates, truncates
-the vector to the unique prefix, and returns the new length. `fill` overwrites
-the live prefix with one value, `copy_from` copies the source prefix that fits
-and returns the copied count, and `partition` reorders live values by a
-borrowed predicate and returns the split index. `extend` is the natural alias
-for `extend_from_slice`. `append` moves every live value from another vector
-into the receiver and leaves the source vector empty. `insert_many` inserts a
-borrowed slice at one index, `remove_range` drops the selected half-open range
-and shifts the tail left, and `splice` replaces a half-open range with a
-borrowed replacement slice. `drain()` empties the vector and returns a
+reducing the logical length. `dedup`, `dedup_by`, and `dedup_by_key` compact
+consecutive duplicates, truncate the vector to the unique prefix, and return
+the new length. `fill` overwrites the live prefix with one value, `copy_from`
+copies the source prefix that fits and returns the copied count, `partition`
+reorders live values by a borrowed predicate and returns the split index, and
+`stable_partition` preserves the relative order of both partitions. `extend`
+is the natural alias for `extend_from_slice`. `append` moves every live value
+from another vector into the receiver and leaves the source vector empty.
+`insert_many` inserts a borrowed slice at one index, `remove_range` drops the
+selected half-open range and shifts the tail left, and `splice` replaces a
+half-open range with a borrowed replacement slice. `drain()` empties the
+vector and returns a
 `std::vec::Drain[T]` cursor over the removed live values; unconsumed drain
 items are dropped when the cursor is dropped. `shrink_to_fit` moves live values
 into a new backing allocation whose logical capacity equals `len()`. Since
@@ -190,6 +195,9 @@ vec.split(delimiter)
 vec.reverse()
 vec.rotate_left(count)
 vec.rotate_right(count)
+vec.stable_partition(keep)
+vec.dedup_by(same)
+vec.dedup_by_key(key)
 vec.sort()
 vec.sort_by(less)
 vec.stable_sort()
@@ -219,6 +227,8 @@ storage. `chunks`, `windows`, and delimiter `split` return lazy iterators that
 yield borrowed `Slice[T]` views, so they do not allocate. `reverse`, the
 rotation helpers, `sort`, and `stable_sort` mutate the existing storage in
 place through the same algorithm module helpers used for borrowed slices.
+The borrowed-view `dedup_by*` forms return a logical length without truncating;
+the owning mutation forms above truncate the vector.
 `is_sorted`, `binary_search`, `lower_bound`, `upper_bound`, `equal_range`,
 `min`, and `max` are available when `T` implements `Ord[T]`. The `*_by` variants take an
 explicit `fn(T, T) -> bool` less-than callback when a vector needs a temporary

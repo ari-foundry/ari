@@ -1,0 +1,125 @@
+// Covers comparator/key-based deduplication and stable partition helpers.
+
+struct User {
+  id: i64,
+  score: i64,
+}
+
+fn same_parity(left: ref i64, right: ref i64) -> bool {
+  let left_raw = (ref left) as ptr i64;
+  let right_raw = (ref right) as ptr i64;
+  return ((*left_raw % 2) == (*right_raw % 2));
+}
+
+fn even(value: ref i64) -> bool {
+  let raw = (ref value) as ptr i64;
+  return (*raw % 2) == 0;
+}
+
+fn parity_key(value: ref i64) -> i64 {
+  let raw = (ref value) as ptr i64;
+  return *raw % 2;
+}
+
+fn user_id(value: ref User) -> i64 {
+  let raw = (ref value) as ptr User;
+  return (*raw).id;
+}
+
+fn main() -> i64 {
+  var parity = [1, 3, 2, 4, 5, 7, 8];
+  let parity_len = algo::dedup_by<i64>(parity.as_slice(), same_parity);
+  assert_eq_i64(parity_len, 4);
+  assert_eq_i64(parity[0], 1);
+  assert_eq_i64(parity[1], 2);
+  assert_eq_i64(parity[2], 5);
+  assert_eq_i64(parity[3], 8);
+
+  var users = [
+    User { id: 1, score: 10 },
+    User { id: 1, score: 11 },
+    User { id: 2, score: 20 },
+    User { id: 2, score: 21 },
+    User { id: 3, score: 30 }
+  ];
+  let user_len = algo::dedup_by_key<User, i64>(users.as_slice(), user_id);
+  assert_eq_i64(user_len, 3);
+  assert_eq_i64(users[0].score, 10);
+  assert_eq_i64(users[1].score, 20);
+  assert_eq_i64(users[2].score, 30);
+
+  var stable = [1, 2, 3, 4, 5, 6];
+  let split = algo::stable_partition<i64>(stable.as_slice(), even);
+  assert_eq_i64(split, 3);
+  assert_eq_i64(stable[0], 2);
+  assert_eq_i64(stable[1], 4);
+  assert_eq_i64(stable[2], 6);
+  assert_eq_i64(stable[3], 1);
+  assert_eq_i64(stable[4], 3);
+  assert_eq_i64(stable[5], 5);
+
+  var slice_values = [10, 12, 11, 13, 14];
+  let slice_len = slice_values.as_slice().dedup_by(same_parity);
+  assert_eq_i64(slice_len, 3);
+  assert_eq_i64(slice_values[0], 10);
+  assert_eq_i64(slice_values[1], 11);
+  assert_eq_i64(slice_values[2], 14);
+
+  var key_values = [4, 6, 7, 9, 10];
+  let key_len = key_values.as_slice().dedup_by_key<i64>(parity_key);
+  assert_eq_i64(key_len, 3);
+  assert_eq_i64(key_values[0], 4);
+  assert_eq_i64(key_values[1], 7);
+  assert_eq_i64(key_values[2], 10);
+
+  var slice_stable = [3, 1, 2, 4];
+  let slice_split = slice_stable.as_slice().stable_partition(even);
+  assert_eq_i64(slice_split, 2);
+  assert_eq_i64(slice_stable[0], 2);
+  assert_eq_i64(slice_stable[1], 4);
+  assert_eq_i64(slice_stable[2], 3);
+  assert_eq_i64(slice_stable[3], 1);
+
+  var zone = zone::create(256);
+  var vec = Vec!(i64, ref mut zone, 8);
+  vec.push(1);
+  vec.push(3);
+  vec.push(2);
+  vec.push(4);
+  vec.push(5);
+  let vec_len = vec.dedup_by(same_parity);
+  assert_eq_i64(vec_len, 3);
+  assert_eq_i64(vec.len(), 3);
+  assert_eq_i64(vec.get(0), 1);
+  assert_eq_i64(vec.get(1), 2);
+  assert_eq_i64(vec.get(2), 5);
+
+  var vec_key = Vec!(i64, ref mut zone, 8);
+  vec_key.push(4);
+  vec_key.push(6);
+  vec_key.push(7);
+  vec_key.push(9);
+  vec_key.push(10);
+  let vec_key_len = vec_key.dedup_by_key<i64>(parity_key);
+  assert_eq_i64(vec_key_len, 3);
+  assert_eq_i64(vec_key.len(), 3);
+  assert_eq_i64(vec_key.get(0), 4);
+  assert_eq_i64(vec_key.get(1), 7);
+  assert_eq_i64(vec_key.get(2), 10);
+
+  var vec_partition = Vec!(i64, ref mut zone, 8);
+  vec_partition.push(1);
+  vec_partition.push(2);
+  vec_partition.push(3);
+  vec_partition.push(4);
+  let vec_split = vec_partition.stable_partition(even);
+  assert_eq_i64(vec_split, 2);
+  assert_eq_i64(vec_partition.get(0), 2);
+  assert_eq_i64(vec_partition.get(1), 4);
+  assert_eq_i64(vec_partition.get(2), 1);
+  assert_eq_i64(vec_partition.get(3), 3);
+  zone::destroy(zone);
+
+  return parity_len + user_len + split + slice_len + key_len + slice_split +
+    vec_len + vec_key_len + vec_split;
+}

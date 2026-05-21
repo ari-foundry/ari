@@ -133,7 +133,10 @@ view.rotate_right(count)
 view.fill(value)
 view.copy_from(source)
 view.partition(keep)
+view.stable_partition(keep)
 view.dedup()
+view.dedup_by(same)
+view.dedup_by_key(key)
 view.sort()
 view.sort_by(less)
 view.stable_sort()
@@ -158,9 +161,11 @@ view.max_by(less)
 These methods forward to `std::algo`, so the algorithm policy still lives in
 one module while call sites can use the natural receiver form. `copy_from`
 copies the common prefix from `source` into the receiver and returns the number
-of elements written. `dedup` compacts consecutive duplicate values in place and
-returns the logical unique length; callers decide whether to truncate an owning
-container. `partition` accepts a borrowed predicate and returns the split index.
+of elements written. `dedup`, `dedup_by`, and `dedup_by_key` compact
+consecutive duplicate values in place and return the logical unique length;
+callers decide whether to truncate an owning container. `partition` accepts a
+borrowed predicate and returns the split index; `stable_partition` keeps the
+relative order of both accepted and rejected elements.
 `lower_bound` and `upper_bound` return sorted insertion indexes, which is useful
 when missing values should be inserted or duplicate ranges must be counted.
 `equal_range` returns the `(lower, upper)` duplicate range directly, and

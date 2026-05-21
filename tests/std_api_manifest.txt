@@ -28,6 +28,8 @@ fn std::algo::clamp[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers cla
 fn std::algo::clamp_by[T]|check-prelude std-algo-by-helpers comparator clamp wrapper over cmp; docs/stdlib/modules/algo.md
 fn std::algo::copy[T]|check-prelude std-algo-slice-helpers prefix copy between slices; docs/stdlib/modules/algo.md
 fn std::algo::dedup[T]|check-prelude std-algo-slice-helpers consecutive duplicate compaction; docs/stdlib/modules/algo.md
+fn std::algo::dedup_by[T]|check-prelude std-algo-dedup-partition comparator consecutive duplicate compaction; docs/stdlib/modules/algo.md
+fn std::algo::dedup_by_key[T, K]|check-prelude std-algo-dedup-partition key-based consecutive duplicate compaction; docs/stdlib/modules/algo.md
 fn std::algo::equal_range[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers ordered equal-range bounds; docs/stdlib/modules/algo.md
 fn std::algo::equal_range_by[T]|check-prelude std-algo-by-helpers comparator equal-range bounds; docs/stdlib/modules/algo.md
 fn std::algo::fill[T]|check-prelude std-algo-slice-helpers fill slice values; docs/stdlib/modules/algo.md
@@ -46,6 +48,7 @@ fn std::algo::rotate_left[T]|check-prelude std-algo-slice-helpers left rotation;
 fn std::algo::rotate_right[T]|check-prelude std-algo-slice-helpers right rotation; docs/stdlib/modules/algo.md
 fn std::algo::sort[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers ordered sort; docs/stdlib/modules/algo.md
 fn std::algo::sort_by[T]|check-prelude std-algo-slice-helpers comparator sort; docs/stdlib/modules/algo.md
+fn std::algo::stable_partition[T]|check-prelude std-algo-dedup-partition stable borrowed-predicate partition; docs/stdlib/modules/algo.md
 fn std::algo::stable_sort[T: std::cmp::Ord[T]|check-prelude std-algo-slice-helpers ordered stable sort; docs/stdlib/modules/algo.md
 fn std::algo::stable_sort_by[T]|check-prelude std-algo-slice-helpers comparator stable sort; docs/stdlib/modules/algo.md
 fn std::algo::swap[T]|check-prelude std-algo-slice-helpers element swap; docs/stdlib/modules/algo.md
@@ -871,6 +874,8 @@ method std::Slice[T]::binary_search_by|check-prelude std-algo-by-helpers compara
 method std::Slice[T]::copy_from|check-prelude prelude-slice-sequence borrowed target copy wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::copy_to|check-prelude prelude-slice-copy-to borrowed receiver and target reset tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 method std::Slice[T]::dedup|check-prelude prelude-slice-sequence consecutive duplicate compaction wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::dedup_by|check-prelude std-algo-dedup-partition comparator dedup wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::dedup_by_key[K]|check-prelude std-algo-dedup-partition key-based dedup wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::equal_range|check-prelude prelude-slice-sequence ordered equal-range wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::equal_range_by|check-prelude std-algo-by-helpers comparator equal-range wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::fill|check-prelude prelude-slice-sequence borrowed target fill wrapper; docs/stdlib/modules/slice.md
@@ -889,6 +894,7 @@ method std::Slice[T]::rotate_left|check-prelude prelude-slice-sequence borrowed 
 method std::Slice[T]::rotate_right|check-prelude prelude-slice-sequence borrowed slice right rotation wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::sort|check-prelude prelude-slice-sequence ordered borrowed slice sort wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::sort_by|check-prelude std-algo-by-helpers comparator borrowed slice sort wrapper; docs/stdlib/modules/slice.md
+method std::Slice[T]::stable_partition|check-prelude std-algo-dedup-partition stable borrowed-predicate partition wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::stable_sort|check-prelude prelude-slice-sequence ordered borrowed slice stable sort wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::stable_sort_by|check-prelude std-algo-by-helpers comparator borrowed slice stable sort wrapper; docs/stdlib/modules/slice.md
 method std::Slice[T]::upper_bound|check-prelude prelude-slice-sequence ordered borrowed slice upper-bound wrapper; docs/stdlib/modules/slice.md
@@ -1670,6 +1676,8 @@ method std::vec::Vec[T]::copy_from|check-prelude std-vec-sequence owned target p
 method std::vec::Vec[T]::copy_to|check-prelude std-vec-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::dedup|check-prelude std-vec-sequence owned consecutive duplicate compaction and truncation; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::dedup_by|check-prelude std-algo-dedup-partition owned comparator dedup and truncation; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::dedup_by_key[K]|check-prelude std-algo-dedup-partition owned key-based dedup and truncation; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::drain|check-prelude std-vec-convenience-api whole-vector draining cursor; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::ends_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::equal_range|check-prelude std-vec-sequence ordered equal-range wrapper; docs/stdlib/modules/vec.md
@@ -1727,6 +1735,7 @@ method std::vec::Vec[T]::sort_by|check-prelude std-algo-by-helpers comparator in
 method std::vec::Vec[T]::splice|check-prelude std-vec-convenience-api in-place vector range replacement; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::split|check-prelude std-vec-sequence borrowed delimiter split iterator wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::split_at|check-prelude std-vec-sequence borrowed split view wrapper; docs/stdlib/modules/vec.md
+method std::vec::Vec[T]::stable_partition|check-prelude std-algo-dedup-partition stable borrowed-predicate partition wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::stable_sort|check-prelude std-vec-sequence ordered in-place stable sort wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::stable_sort_by|check-prelude std-algo-by-helpers comparator in-place stable sort wrapper; docs/stdlib/modules/vec.md
 method std::vec::Vec[T]::starts_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row

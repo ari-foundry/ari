@@ -1732,7 +1732,10 @@ view.rotate_right(count)
 view.fill(value)
 view.copy_from(source)
 view.partition(keep)
+view.stable_partition(keep)
 view.dedup()
+view.dedup_by(same)
+view.dedup_by_key(key)
 view.sort()
 view.sort_by(less)
 view.stable_sort()
@@ -1771,11 +1774,11 @@ return borrowed views into the same storage; endpoint splitting returns
 `Option` so empty slices can be handled directly. `chunks`, `windows`, and
 delimiter `split` are lazy
 iterators that yield borrowed `Slice[T]` views. The reordering, fill/copy,
-partition/dedup, sort/search, and min/max receiver methods forward to
-`std::algo`; ordered methods require `T: std::cmp::Ord[T]`, and `*_by` methods
-take explicit comparators for call-site ordering. `lower_bound` and
-`upper_bound` return sorted insertion indexes. `equal_range` returns the
-matching `(lower, upper)` range, and `partition_point` returns the first false
+stable/unstable partition, dedup variants, sort/search, and min/max receiver
+methods forward to `std::algo`; ordered methods require `T: std::cmp::Ord[T]`,
+and `*_by` methods take explicit comparators for call-site ordering.
+`lower_bound` and `upper_bound` return sorted insertion indexes. `equal_range`
+returns the matching `(lower, upper)` range, and `partition_point` returns the first false
 predicate index in a predicate-partitioned view.
 
 `std::vec::Vec[T]` is the source growable sequence:
@@ -1809,9 +1812,12 @@ vec.try_remove(index)
 vec.truncate(length)
 vec.retain(keep)
 vec.dedup()
+vec.dedup_by(same)
+vec.dedup_by_key(key)
 vec.fill(value)
 vec.copy_from(source)
 vec.partition(keep)
+vec.stable_partition(keep)
 vec.clear()
 vec.reserve(capacity)
 vec.try_reserve(capacity)
@@ -1877,9 +1883,10 @@ The `try_*` accessors return `Option[T]` for empty or out-of-range reads.
 `try_pop` and `try_remove` keep empty or missing-index removal in `Option[T]`.
 Use the non-`try` forms when absence is a programmer error and an assertion is
 the desired behavior. `retain(keep)` compacts accepted values in place,
-preserves their order, and drops rejected values. `dedup()` removes consecutive
-duplicate values from the owned vector and returns the new length. `fill`,
-`copy_from`, and `partition` are owned-vector wrappers over the same live-prefix
+preserves their order, and drops rejected values. `dedup()`, `dedup_by(same)`,
+and `dedup_by_key(key)` remove consecutive duplicate values from the owned
+vector and return the new length. `fill`, `copy_from`, `partition`, and
+`stable_partition` are owned-vector wrappers over the same live-prefix
 policies as `Slice[T]`. `extend(values)` is the natural alias for
 `extend_from_slice(values)`. `append(ref mut other)` moves another vector's
 live values into the receiver and empties the source vector. `insert_many`,
@@ -2681,6 +2688,7 @@ algo::reverse<T>(values)
 algo::rotate_left<T>(values, count)
 algo::rotate_right<T>(values, count)
 algo::partition<T>(values, keep)
+algo::stable_partition<T>(values, keep)
 algo::min<T>(values)
 algo::min_by<T>(values, less)
 algo::max<T>(values)
@@ -2691,6 +2699,8 @@ algo::swap<T>(values, left, right)
 algo::fill<T>(values, value)
 algo::copy<T>(target, source)
 algo::dedup<T>(values)
+algo::dedup_by<T>(values, same)
+algo::dedup_by_key<T, K>(values, key)
 ```
 
 The ordered helpers use `cmp::Ord[T]`; the `*_by` helpers take an explicit
@@ -2699,9 +2709,11 @@ The ordered helpers use `cmp::Ord[T]`; the `*_by` helpers take an explicit
 `equal_range` returns the matching `(lower, upper)` duplicate range, and
 `partition_point` returns the first false predicate index in a
 predicate-partitioned slice.
-`partition` accepts `fn(ref T) -> bool` and returns the split index. `copy`
-returns the number of copied elements. `dedup` compacts consecutive duplicates
-and returns the logical prefix length.
+`partition` accepts `fn(ref T) -> bool` and returns the split index;
+`stable_partition` preserves relative order while producing the same split
+shape. `copy` returns the number of copied elements. `dedup`, `dedup_by`, and
+`dedup_by_key` compact consecutive duplicates and return the logical prefix
+length.
 
 ## Hashing
 
