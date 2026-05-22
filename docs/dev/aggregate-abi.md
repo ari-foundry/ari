@@ -33,6 +33,11 @@ accept classifier-approved `@repr(C)` structs by value, including small struct
 returns, and reject larger, target-unsupported, or non-`repr(C)` aggregate
 spellings.
 
+Unsupported FFI aggregate boundaries are source-aware ABI diagnostics. The
+diagnostic catalog uses `A0001` for ABI layout, C FFI declarations, C-header
+emission, and link-boundary checks; `make check-compiler-artifacts` locks the
+non-`@repr(C)` by-value import rejection as a golden diagnostic artifact.
+
 C-header emission exposes direct by-value aggregate exports through generated C
 wrapper structs when Ari's source spelling is not already C-spellable. Fixed
 arrays use `AriArray_*` wrappers with an `elements` array field. Tuples use

@@ -331,6 +331,9 @@ Current compiler-development tests:
   type and trait diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic`:
   assignment type diagnostic span golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic`:
+  ABI diagnostic-code golden for rejecting non-`@repr(C)` by-value extern C
+  aggregate imports with source spans.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic`:
   ownership diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.diagnostic`,

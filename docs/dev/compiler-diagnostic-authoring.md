@@ -115,6 +115,7 @@ Start with families, then add individual codes when behavior is stable:
 | `T0001` | types, traits, methods, and generic constraints |
 | `O0001` | ownership, borrowing, moves, drops, and zones |
 | `I0001` | typed IR lowering and resolved compiler facts |
+| `A0001` | ABI layout, C FFI declarations, C headers, and link-boundary checks |
 | `B0001` | LLVM, object, executable, shared library, and artifact emission |
 
 The diagnostic artifact prints layer and source facts explicitly. The header

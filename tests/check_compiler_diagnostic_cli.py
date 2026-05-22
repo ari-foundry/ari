@@ -45,6 +45,7 @@ def main():
         run_ari("--list-diagnostics"),
         "DiagnosticCatalog version=1",
         "code=P0001 family=parser owner=src/parser.cpp",
+        "code=A0001 family=abi owner=src/aggregate_abi.cpp",
         "code=ari/compiler family=general owner=src/driver.cpp",
     )
     ok &= require_success(

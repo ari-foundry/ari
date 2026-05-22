@@ -426,6 +426,9 @@ through generated wrapper structs for exports. Local stack tuples and
 aggregate-layout enums remain executable-language features, not direct C import
 layout promises. Aggregate raw-pointer field/element access follows Ari's
 current executable aggregate layout; it is not yet a `repr(C)` guarantee.
+Unsupported aggregate C import surfaces are reported as `A0001` ABI
+diagnostics with source spans; the golden artifact suite includes the
+non-`@repr(C)` by-value struct import rejection.
 
 ## C Header Emission
 

@@ -20,16 +20,17 @@ For each feature:
 
 ## ABI Coverage Note
 
-Non-local aggregate ABI diagnostics are covered by C-header fixtures. The
-shared classifier recognizes value tuples, fixed arrays, structs,
-fixed-capacity vector storage, and aggregate-layout enums, then distinguishes
-direct 64-bit Unix values from indirect or unsupported target/layout cases.
-Header rendering is narrower than classification: public `@repr(C)` structs,
-public non-generic payload-bearing `@repr(C)` enum structs without `own`
-payload slots, and generated fixed-array, tuple, fixed-capacity-vector, and
-aggregate-enum wrapper typedefs are exposed for direct aggregate ABI values.
-Oversized,
-indirect, or target-unsupported aggregate header surfaces remain rejected.
+Non-local aggregate ABI diagnostics are covered by C-header fixtures, direct
+extern C import fixtures, and a source-aware `A0001` diagnostic artifact for a
+non-`@repr(C)` by-value aggregate import. The shared classifier recognizes
+value tuples, fixed arrays, structs, fixed-capacity vector storage, and
+aggregate-layout enums, then distinguishes direct 64-bit Unix values from
+indirect or unsupported target/layout cases. Header rendering is narrower than
+classification: public `@repr(C)` structs, public non-generic payload-bearing
+`@repr(C)` enum structs without `own` payload slots, and generated fixed-array,
+tuple, fixed-capacity-vector, and aggregate-enum wrapper typedefs are exposed
+for direct aggregate ABI values. Oversized, indirect, non-`@repr(C)`, or
+target-unsupported aggregate header/import surfaces remain rejected.
 
 ## Standard Library Coverage Note
 

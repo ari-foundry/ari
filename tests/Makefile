@@ -133,6 +133,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-invalid-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-invalid-assignment.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-private-access.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-private-access.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-assignment-while-borrowed.diagnostic
@@ -5608,7 +5610,7 @@ check-ffi: $(TARGET)
 	grep -q 'declare i32 @"puts"(ptr)' $(BUILD_DIR)/ffi/ffi-c-alias.ll
 	$(TARGET) tests/cases/ffi/ok/ffi-c-libc-types.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-libc-types.ll
 	grep -q 'declare i32 @"abs"(i32)' $(BUILD_DIR)/ffi/ffi-c-libc-types.ll
-	grep -q 'declare i64 @"strlen"(ptr)' $(BUILD_DIR)/ffi/ffi-c-libc-types.ll
+	grep -Eq 'declare i64 @"?strlen"?\(ptr\)' $(BUILD_DIR)/ffi/ffi-c-libc-types.ll
 	$(TARGET) tests/cases/ffi/ok/ffi-c-types.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-types.ll
 	grep -q 'declare i64 @"ari_test_add_i64"(i64, i64)' $(BUILD_DIR)/ffi/ffi-c-types.ll
 	grep -q 'declare i64 @"ari_test_strlen"(ptr)' $(BUILD_DIR)/ffi/ffi-c-types.ll

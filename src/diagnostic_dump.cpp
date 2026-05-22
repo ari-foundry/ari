@@ -25,6 +25,7 @@ static const DiagnosticCatalogEntry kDiagnosticCatalogEntries[] = {
     {"T0001", "type", "src/type_semantics.cpp", "types, traits, methods, and generic constraints"},
     {"O0001", "ownership", "src/ownership_semantics.cpp", "ownership, borrowing, moves, drops, and zones"},
     {"I0001", "ir", "src/ir.hpp", "typed IR lowering and resolved compiler facts"},
+    {"A0001", "abi", "src/aggregate_abi.cpp", "ABI layout, C FFI declarations, C headers, and link-boundary checks"},
     {"B0001", "backend", "src/llvm_codegen.cpp", "LLVM, object, executable, shared library, and artifact emission"},
     {"ari/compiler", "general", "src/driver.cpp", "unclassified transitional CompileError text"},
 };
@@ -270,6 +271,20 @@ std::string classify_diagnostic_code(const std::string& message) {
         return "P0001";
     }
     if (contains(diagnostic, "IR") || contains(diagnostic, "lowering")) return "I0001";
+    if (contains(diagnostic, "extern C") ||
+        contains(diagnostic, "extern \"C\"") ||
+        contains(diagnostic, "extern parameter") ||
+        contains(diagnostic, "C header") ||
+        contains(diagnostic, "C-compatible") ||
+        contains(diagnostic, "C variadic") ||
+        contains(diagnostic, "variadic extern") ||
+        contains(diagnostic, "@repr(C)") ||
+        contains(diagnostic, "target ABI") ||
+        contains(diagnostic, "runtime ABI") ||
+        contains(diagnostic, "link option") ||
+        contains(diagnostic, "link flag")) {
+        return "A0001";
+    }
     if (contains(diagnostic, "LLVM backend") ||
         contains(diagnostic, "artifact") ||
         contains(diagnostic, "object")) {
@@ -285,6 +300,7 @@ std::string diagnostic_code_family(const std::string& code) {
     if (code == "T0001") return "type";
     if (code == "O0001") return "ownership";
     if (code == "I0001") return "ir";
+    if (code == "A0001") return "abi";
     if (code == "B0001") return "backend";
     return "general";
 }

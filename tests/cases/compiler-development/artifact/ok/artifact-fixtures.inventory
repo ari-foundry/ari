@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=124
+CompilerArtifactFixtures version=1 group=all entries=126
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -21,6 +21,8 @@ CompilerArtifactFixtures version=1 group=all entries=124
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-name.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-enum-payload-invalid-move.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-payload-invalid-move.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-ffi-nonrepr-aggregate-import.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-field-assignment-while-borrowed.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-field-assignment-while-borrowed.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-assignment.ari
