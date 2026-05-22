@@ -88,6 +88,8 @@ listener.local_port()
 listener.local_addr()
 listener.is_nonblocking()
 listener.set_nonblocking(enabled)
+listener.reuse_addr()
+listener.set_reuse_addr(enabled)
 listener.set_accept_timeout(timeout)
 listener.set_accept_timeout_millis(millis)
 listener.accept()
@@ -106,6 +108,8 @@ stream.local_addr()
 stream.peer_addr()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
+stream.nodelay()
+stream.set_nodelay(enabled)
 stream.set_read_timeout(timeout)
 stream.set_read_timeout_millis(millis)
 stream.set_write_timeout(timeout)
@@ -126,6 +130,8 @@ socket.local_port()
 socket.local_addr()
 socket.is_nonblocking()
 socket.set_nonblocking(enabled)
+socket.reuse_addr()
+socket.set_reuse_addr(enabled)
 socket.set_read_timeout(timeout)
 socket.set_read_timeout_millis(millis)
 socket.set_write_timeout(timeout)
@@ -280,6 +286,14 @@ read timeout used by `accept`.
 instead of panicking so invalid or already-closed handles can be handled by
 ordinary control flow.
 
+`TcpListener` and `UdpSocket` expose `reuse_addr()` and
+`set_reuse_addr(enabled)` for the common `SO_REUSEADDR` policy used by
+servers, tests, and restartable tools. `TcpStream` exposes `nodelay()` and
+`set_nodelay(enabled)` for `TCP_NODELAY`, so latency-sensitive protocols can
+disable Nagle buffering without dropping to raw C socket APIs. Query methods
+return `Option[bool]`; setters return `false` for closed handles or platform
+failure.
+
 Prefer the `Duration` setters in application and library code. The
 `*_timeout_millis(millis)` forms remain available as low-level compatibility
 helpers for FFI-style callers and tests that need to assert the runtime hook
@@ -368,11 +382,11 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
 | DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` with `Error`, and `lookup_v4_raw_result` compatibility over `getaddrinfo`. |
-| TCP listener | Current hosted IPv4 slice: module-level `listen`/`tcp_listen`, `TcpListener::bind`, `try_bind`, `bind_result` with `Error`, `bind_raw_result` compatibility, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond accept timeout setters, and explicit close. |
-| TCP stream | Current hosted IPv4 slice: module-level `connect`/`tcp_connect`, `TcpStream::connect`, `try_connect`, `connect_result` with `Error`, `connect_raw_result` compatibility, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4 slice: module-level `udp_bind`, bind helpers with `Error` and raw compatibility forms, local-port and local-address lookup, descriptor/open helpers, nonblocking setter/query, `Duration` and raw-millisecond read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
+| TCP listener | Current hosted IPv4 slice: module-level `listen`/`tcp_listen`, `TcpListener::bind`, `try_bind`, `bind_result` with `Error`, `bind_raw_result` compatibility, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking and reuse-address setter/query, `Duration` and raw-millisecond accept timeout setters, and explicit close. |
+| TCP stream | Current hosted IPv4 slice: module-level `connect`/`tcp_connect`, `TcpStream::connect`, `try_connect`, `connect_result` with `Error`, `connect_raw_result` compatibility, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking and TCP nodelay setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4 slice: module-level `udp_bind`, bind helpers with `Error` and raw compatibility forms, local-port and local-address lookup, descriptor/open helpers, nonblocking and reuse-address setter/query, `Duration` and raw-millisecond read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
 | Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect helpers with `Error` and raw compatibility forms, IO/shutdown plus `Duration` and raw-millisecond timeout setters and `read_exact`/`write_all` buffer helpers. |
-| socket options | Current: nonblocking and read/write timeout helpers; future reuse-address, nodelay, buffer size, linger, multicast, and close-on-exec-at-creation options. |
+| socket options | Current: nonblocking, read/write timeout, TCP listener/UDP reuse-address, and TCP nodelay helpers; future buffer size, linger, multicast, and close-on-exec-at-creation options. |
 | timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond compatibility helpers; future timeout-specific error results. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
 
@@ -445,7 +459,7 @@ lookup shapes, unsupported IPv6 text input, and edge IPv4 addresses.
 - Add UDP buffer-oriented send and receive helpers, including `recv_from`
   source-address reporting; TCP/Unix stream buffer helpers are available as
   `read_exact` and `write_all`.
-- Add socket options such as reuse-address, nodelay, buffer sizes, linger, and
-  multicast options only with focused platform docs and tests.
+- Add remaining socket options such as buffer sizes, linger, multicast options,
+  and close-on-exec-at-creation only with focused platform docs and tests.
 - Add Unix datagram sockets, abstract namespace policy, and peer credential
   helpers behind explicit Linux/Unix platform documentation.

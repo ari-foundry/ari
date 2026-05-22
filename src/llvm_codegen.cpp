@@ -503,6 +503,7 @@ private:
                symbol == "sendto" ||
                symbol == "recvfrom" ||
                symbol == "setsockopt" ||
+               symbol == "getsockopt" ||
                symbol == "shutdown" ||
                symbol == "htons" ||
                symbol == "htonl" ||
@@ -571,6 +572,8 @@ private:
             symbol == "ari_builtin_os_close" ||
             symbol == "ari_builtin_os_set_close_on_exec" ||
             symbol == "ari_builtin_os_set_nonblocking" ||
+            symbol == "ari_builtin_net_set_reuse_addr" ||
+            symbol == "ari_builtin_net_set_nodelay" ||
             symbol == "ari_builtin_os_write_byte" ||
             symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
@@ -661,6 +664,7 @@ private:
         declarations_ << "declare i64 @sendto(i32, ptr, i64, i32, ptr, i32)\n";
         declarations_ << "declare i64 @recvfrom(i32, ptr, i64, i32, ptr, ptr)\n";
         declarations_ << "declare i32 @setsockopt(i32, i32, i32, ptr, i32)\n";
+        declarations_ << "declare i32 @getsockopt(i32, i32, i32, ptr, ptr)\n";
         declarations_ << "declare i32 @shutdown(i32, i32)\n";
         declarations_ << "declare i16 @htons(i16)\n";
         declarations_ << "declare i32 @htonl(i32)\n";
@@ -2212,6 +2216,73 @@ private:
         line("define " + runtime_visibility + "i1 @ari_builtin_net_set_write_timeout_millis(i64 %fd, i64 %millis) {");
         line("entry:");
         line("  %ok = call i1 @ari_runtime_net_set_timeout_millis(i64 %fd, i32 21, i64 %millis)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define private i64 @ari_runtime_net_bool_option(i64 %fd, i32 %level, i32 %option) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %get");
+        line("get:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %value.ptr = alloca i32, align 4");
+        line("  %len.ptr = alloca i32, align 4");
+        line("  store i32 4, ptr %len.ptr, align 4");
+        line("  %code = call i32 @getsockopt(i32 %fd32, i32 %level, i32 %option, ptr %value.ptr, ptr %len.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        line("  %value = load i32, ptr %value.ptr, align 4");
+        line("  %enabled = icmp ne i32 %value, 0");
+        line("  %wide = zext i1 %enabled to i64");
+        line("  ret i64 %wide");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define private i1 @ari_runtime_net_set_bool_option(i64 %fd, i32 %level, i32 %option, i1 %enabled) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %set");
+        line("set:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %value.ptr = alloca i32, align 4");
+        line("  %value = zext i1 %enabled to i32");
+        line("  store i32 %value, ptr %value.ptr, align 4");
+        line("  %code = call i32 @setsockopt(i32 %fd32, i32 %level, i32 %option, ptr %value.ptr, i32 4)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_reuse_addr(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_bool_option(i64 %fd, i32 1, i32 2)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_set_reuse_addr(i64 %fd, i1 %enabled) {");
+        line("entry:");
+        line("  %ok = call i1 @ari_runtime_net_set_bool_option(i64 %fd, i32 1, i32 2, i1 %enabled)");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_nodelay(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_bool_option(i64 %fd, i32 6, i32 1)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_set_nodelay(i64 %fd, i1 %enabled) {");
+        line("entry:");
+        line("  %ok = call i1 @ari_runtime_net_set_bool_option(i64 %fd, i32 6, i32 1, i1 %enabled)");
         line("  ret i1 %ok");
         line("}");
         line();

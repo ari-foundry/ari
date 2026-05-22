@@ -84,6 +84,12 @@ extern "ari" fn set_read_timeout_millis_raw(raw: i64, millis: i64) -> bool =
   "ari_builtin_net_set_read_timeout_millis";
 extern "ari" fn set_write_timeout_millis_raw(raw: i64, millis: i64) -> bool =
   "ari_builtin_net_set_write_timeout_millis";
+extern "ari" fn reuse_addr_raw(raw: i64) -> i64 = "ari_builtin_net_reuse_addr";
+extern "ari" fn set_reuse_addr_raw(raw: i64, enabled: bool) -> bool =
+  "ari_builtin_net_set_reuse_addr";
+extern "ari" fn nodelay_raw(raw: i64) -> i64 = "ari_builtin_net_nodelay";
+extern "ari" fn set_nodelay_raw(raw: i64, enabled: bool) -> bool =
+  "ari_builtin_net_set_nodelay";
 extern "ari" fn shutdown_raw(raw: i64, mode: i64) -> bool = "ari_builtin_net_shutdown";
 extern "ari" fn unix_listen_raw(path: string) -> i64 = "ari_builtin_net_unix_listen";
 extern "ari" fn unix_connect_raw(path: string) -> i64 = "ari_builtin_net_unix_connect";
@@ -191,6 +197,13 @@ fn unsupported_address_error_raw() -> i64 {
 fn invalid_input_error_raw() -> i64 {
   let error = std::error::new(std::error::InvalidInput);
   return error.raw();
+}
+
+fn socket_bool_option(value: i64) -> std::Option[bool] {
+  if value < 0 {
+    return std::None<bool>();
+  }
+  return std::Some<bool>(value != 0);
 }
 
 fn read_exact_raw(raw: i64, output: ptr u8, len: i64) -> bool {
@@ -560,6 +573,17 @@ pub impl std::net::TcpListener {
     return self.handle.set_nonblocking(enabled);
   }
 
+  fn reuse_addr(self: ref Self) -> std::Option[bool] {
+    return socket_bool_option(reuse_addr_raw(self.handle.raw()));
+  }
+
+  fn set_reuse_addr(self: ref Self, enabled: bool) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_reuse_addr_raw(self.handle.raw(), enabled);
+  }
+
   fn set_accept_timeout_millis(self: ref Self, millis: i64) -> bool {
     if !self.is_open() {
       return false;
@@ -655,6 +679,17 @@ pub impl std::net::TcpStream {
 
   fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
     return self.handle.set_nonblocking(enabled);
+  }
+
+  fn nodelay(self: ref Self) -> std::Option[bool] {
+    return socket_bool_option(nodelay_raw(self.handle.raw()));
+  }
+
+  fn set_nodelay(self: ref Self, enabled: bool) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_nodelay_raw(self.handle.raw(), enabled);
   }
 
   fn set_read_timeout_millis(self: ref Self, millis: i64) -> bool {
@@ -780,6 +815,17 @@ pub impl std::net::UdpSocket {
 
   fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
     return self.handle.set_nonblocking(enabled);
+  }
+
+  fn reuse_addr(self: ref Self) -> std::Option[bool] {
+    return socket_bool_option(reuse_addr_raw(self.handle.raw()));
+  }
+
+  fn set_reuse_addr(self: ref Self, enabled: bool) -> bool {
+    if !self.is_open() {
+      return false;
+    }
+    return set_reuse_addr_raw(self.handle.raw(), enabled);
   }
 
   fn set_read_timeout_millis(self: ref Self, millis: i64) -> bool {

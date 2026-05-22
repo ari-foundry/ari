@@ -395,6 +395,10 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_net_udp_recv_byte") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_set_read_timeout_millis") return builtin_sig({i64, i64}, boolean);
     if (symbol == "ari_builtin_net_set_write_timeout_millis") return builtin_sig({i64, i64}, boolean);
+    if (symbol == "ari_builtin_net_reuse_addr") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_set_reuse_addr") return builtin_sig({i64, boolean}, boolean);
+    if (symbol == "ari_builtin_net_nodelay") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_set_nodelay") return builtin_sig({i64, boolean}, boolean);
     if (symbol == "ari_builtin_net_shutdown") return builtin_sig({i64, i64}, boolean);
     if (symbol == "ari_builtin_net_unix_listen") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_net_unix_connect") return builtin_sig({source_string}, i64);

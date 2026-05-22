@@ -289,12 +289,13 @@ identifies the exact case:
   and local-address lookup, connect, accept, stream local/peer-address lookup,
   `std::io::Reader`/`Writer` byte transfer, method-style stream
   `read_exact`/`write_all`, explicit close,
-  timeout/nonblocking helpers, stream shutdown, direct `Error` and raw
+  timeout/nonblocking helpers, TCP listener reuse-address, TCP stream nodelay,
+  stream shutdown, direct `Error` and raw
   compatibility result helpers, IPv6 unsupported errors, and
   restricted-host `PermissionDenied` behavior when the test environment
   forbids socket creation.
 - `std-net-udp-socket.ari`: hosted IPv4 UDP bind, local-port/local-address lookup,
-  timeout/nonblocking helpers, single-byte datagram send/receive, direct
+  timeout/nonblocking/reuse-address helpers, single-byte datagram send/receive, direct
   `Error` and raw compatibility result helpers, unsupported IPv6 bind errors,
   restricted-host fallback, and explicit close.
 - `std-net-unix-socket.ari`: hosted Unix stream listener bind, stream connect,

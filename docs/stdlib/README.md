@@ -87,9 +87,10 @@ IPv4 `TcpListener`/`TcpStream` bind/connect/accept helpers, IPv4
 `UdpSocket` single-byte datagrams, TCP/UDP local-address helpers, TCP peer-address helpers, Unix stream
 sockets, direct `Error` result helpers with raw compatibility variants,
 nonblocking flags, `std::time::Duration` socket timeouts with raw
-millisecond compatibility helpers, stream shutdown, and TCP/Unix
+millisecond compatibility helpers, TCP listener/UDP reuse-address options,
+TCP nodelay options, stream shutdown, and TCP/Unix
 `read_exact`/`write_all` stream buffer helpers. IPv6 socket handles,
-buffer-oriented datagrams, broader socket options, UDP source address helpers, and
+buffer-oriented datagrams, remaining socket options, UDP source address helpers, and
 richer error payloads remain runtime roadmap work. Source
 `std::hash` adds deterministic non-cryptographic `Hasher`/`Hash[T]` helpers
 for primitive values and byte slices, and `std::random` adds OS entropy plus a

@@ -137,8 +137,12 @@ fn main() -> i64 {
   let timeout = time::milliseconds(1000);
   if listener.set_accept_timeout(timeout) &&
     listener.set_accept_timeout_millis(1000) &&
+    listener.set_reuse_addr(true) &&
+    listener.reuse_addr().unwrap_or(false) &&
     client.set_read_timeout(timeout) &&
     client.set_write_timeout(timeout) &&
+    client.set_nodelay(true) &&
+    client.nodelay().unwrap_or(false) &&
     server.set_read_timeout(timeout) &&
     server.set_write_timeout(timeout) &&
     listener.set_nonblocking(false) &&
@@ -148,10 +152,14 @@ fn main() -> i64 {
     score = score + 256;
   }
 
+  if server.set_nodelay(true) && server.nodelay().unwrap_or(false) {
+    score = score + 8192;
+  }
+
   if server.close() && client.close() && listener.close() {
     score = score + 128;
   }
 
-  assert_eq_i64(score, 8191);
+  assert_eq_i64(score, 16383);
   return score;
 }

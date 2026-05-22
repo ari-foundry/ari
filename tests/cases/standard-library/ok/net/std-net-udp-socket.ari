@@ -79,12 +79,16 @@ fn main() -> i64 {
   let timeout = time::milliseconds(1000);
   if server.set_read_timeout(timeout) &&
     server.set_read_timeout_millis(1000) &&
+    server.set_reuse_addr(true) &&
+    server.reuse_addr().unwrap_or(false) &&
     client.set_write_timeout(timeout) &&
+    client.set_reuse_addr(true) &&
+    client.reuse_addr().unwrap_or(false) &&
     server.set_nonblocking(false) &&
     client.set_nonblocking(false) &&
     server.is_nonblocking().is_some() &&
     client.is_nonblocking().is_some() {
-    score = score + 16;
+    score = score + 528;
   }
 
   if client.send_byte_to(90u8, net::SocketAddr::localhost(port)) && server.recv_byte() == 90 {
@@ -102,6 +106,6 @@ fn main() -> i64 {
     score = score + 128;
   }
 
-  assert_eq_i64(score, 511);
+  assert_eq_i64(score, 1023);
   return score;
 }
