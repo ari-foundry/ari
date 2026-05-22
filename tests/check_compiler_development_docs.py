@@ -84,7 +84,7 @@ def main() -> int:
         require(dashboard, heading, dashboard_path)
 
     for needle in [
-        "45-46% through the current compiler-development maturity",
+        "46-47% through the current compiler-development maturity",
         "compiler-health estimate",
         "Compiler Onboarding",
         "Compiler Contributor Guide",
@@ -772,7 +772,7 @@ def main() -> int:
         "build/ari path/to/test.ari --check",
         "make check-compiler-dev-docs",
         "Production Compiler Hardening",
-        "45-46% through the current compiler-development",
+        "46-47% through the current compiler-development",
     ]:
         require(roadmap, needle, roadmap_path)
 
@@ -807,7 +807,7 @@ def main() -> int:
         "tests/cases/compiler-development/artifact/ok/",
         "tests/cases/compiler-development/artifact/errors/",
         "No private compiler-only keyword",
-        "45-46% through the current compiler-development",
+        "46-47% through the current compiler-development",
     ]:
         require(playbook, needle, playbook_path)
 
@@ -832,7 +832,7 @@ def main() -> int:
         "make check-compiler-artifacts",
         "compiler-source-diagnostics.md",
         "a full second compiler implementation",
-        "45-46% compiler",
+        "46-47% compiler",
     ]:
         require(next_slices, needle, next_slices_path)
 
@@ -859,7 +859,7 @@ def main() -> int:
         "make check-compiler-artifacts",
         "Full `make check` belongs at handoff",
         "No runtime `std` API",
-        "45-46% through the current compiler-development",
+        "46-47% through the current compiler-development",
     ]:
         require(change_checklist, needle, change_checklist_path)
 
@@ -878,7 +878,7 @@ def main() -> int:
 
     for needle in [
         "practical compiler",
-        "45-46% through the current compiler-development",
+        "46-47% through the current compiler-development",
         "compiler/tooling package",
         "SourceId",
         "Diagnostic",
@@ -939,7 +939,7 @@ def main() -> int:
         "tests/cases/compiler-development/ok/model/",
         "tests/cases/compiler-development/artifact/ok/",
         "Result[T, E]",
-        "45-46%",
+        "46-47%",
     ]:
         require(contributor, needle, contributor_path)
 
@@ -959,7 +959,7 @@ def main() -> int:
 
     for needle in [
         "practical compiler project",
-        "45-46% through the current compiler-development",
+        "46-47% through the current compiler-development",
         "Hosted LLVM backend",
         "weighted engineering score",
         "tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari",

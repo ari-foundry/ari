@@ -325,7 +325,7 @@ are intentionally not required by this document for every small slice.
 
 ## Compiler Development Health
 
-Treat Ari as roughly **45-46% through the current compiler-development
+Treat Ari as roughly **46-47% through the current compiler-development
 maturity work**. That number is intentionally conservative and should move only
 when normal compiler surfaces improve: better diagnostics, cleaner sema
 boundaries, mature generic aggregates and traits, reliable modules, and focused

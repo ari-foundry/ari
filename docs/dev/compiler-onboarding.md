@@ -21,7 +21,7 @@ Read in this order:
 4. [Compiler Test Authoring](compiler-test-authoring.md) before adding or
    moving a fixture.
 5. [Compiler Readiness Inventory](compiler-readiness-inventory.md) for the
-   current 45-46% compiler-development estimate.
+   current 46-47% compiler-development estimate.
 
 When writing Ari source for fixtures, keep
 [Quick Reference](../language/quick-reference.md),

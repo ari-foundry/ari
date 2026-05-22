@@ -1,0 +1,5 @@
+mod cycle_b;
+
+pub fn value() -> i64 {
+  return 1;
+}

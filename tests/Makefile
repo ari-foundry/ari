@@ -125,6 +125,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/source-map-file-module.map $(BUILD_DIR)/compiler-development/artifact/source-map-file-module.map
 	$(TARGET) tests/cases/modules/ok/file-module-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
+	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-project-compiler.graph
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/module-graph-project-compiler.graph $(BUILD_DIR)/compiler-development/artifact/module-graph-project-compiler.graph
 	$(TARGET) tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-declaration-index $(BUILD_DIR)/compiler-development/artifact/declaration-index-basic.decls
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls $(BUILD_DIR)/compiler-development/artifact/declaration-index-basic.decls
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-stage-plan $(BUILD_DIR)/compiler-development/artifact/stage-plan-basic.plan
@@ -3660,6 +3662,12 @@ check-modules: $(TARGET)
 	$(BUILD_DIR)/modules/module-pub-glob-reexport.elf; code=$$?; test $$code -eq 5
 	$(TARGET) tests/cases/modules/ok/file-module-alias-main.ari -o $(BUILD_DIR)/modules/file-module-alias-main.elf
 	$(BUILD_DIR)/modules/file-module-alias-main.elf; code=$$?; test $$code -eq 6
+	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari -o $(BUILD_DIR)/modules/project-compiler-main.elf
+	$(BUILD_DIR)/modules/project-compiler-main.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --emit-module-graph $(BUILD_DIR)/modules/project-compiler-main.graph
+	grep -q "Source module=project_compiler::parser" $(BUILD_DIR)/modules/project-compiler-main.graph
+	grep -q "Import owner=project_compiler module=project_compiler::parser local=parse visibility=pub" $(BUILD_DIR)/modules/project-compiler-main.graph
+	grep -q "Item module=project_compiler::symbols kind=fn name=project_compiler::symbols::private_bias visibility=private" $(BUILD_DIR)/modules/project-compiler-main.graph
 	$(TARGET) --module-path tests/packages tests/cases/modules/ok/package-module-main.ari -o $(BUILD_DIR)/modules/package-module-main.elf
 	$(BUILD_DIR)/modules/package-module-main.elf; code=$$?; test $$code -eq 31
 	$(TARGET) -Itests/packages tests/cases/modules/ok/package-module-main.ari --emit-llvm $(BUILD_DIR)/modules/package-module-main.ll
@@ -3732,8 +3740,7 @@ check-modules: $(TARGET)
 	cmp -s $(BUILD_DIR)/modules/package-cache-body-cache.ll $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	python3 tests/tamper_module_cache_ir_summary.py $(BUILD_DIR)/modules/package-cache-body.aricache $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.aricache cache_bodies '26:cache_bodies::return_value;12:cache_bodies;0:;3:i64;' '26:cache_bodies::return_value;12:cache_bodies;0:;7:Vec[i64;'
 	if $(TARGET) -Itests/packages tests/cases/modules/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.ll >$(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.err 2>&1; then exit 1; fi
-	grep -q "module cache IR replay failed for lowered function 'cache_bodies::return_value'" $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.err
-	grep -Fq "IR summary type replay failed for 'Vec[i64'" $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.err
+	grep -q "has lowered function 'cache_bodies::return_value' return type 'Vec\\[i64' but declaration summary expects 'i64'" $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.err
 	python3 tests/tamper_module_cache_ir_summary.py $(BUILD_DIR)/modules/package-cache-body.aricache $(BUILD_DIR)/modules/package-cache-body-trait-origin-tampered.aricache cache_bodies 'G;11:impl-method;68:impl::cache_bodies__CacheBox_i64_::cache_bodies__CacheSelect::select;1;1:T;3:i64;' 'G;11:impl-method;68:impl::cache_bodies__CacheBox_i64_::cache_bodies__MissingAbcd::select;1;1:T;3:i64;'
 	if $(TARGET) -Itests/packages tests/cases/modules/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body-trait-origin-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-trait-origin-tampered.ll >$(BUILD_DIR)/modules/package-cache-body-trait-origin-tampered.err 2>&1; then exit 1; fi
 	grep -q "unknown impl method origin" $(BUILD_DIR)/modules/package-cache-body-trait-origin-tampered.err
@@ -3919,6 +3926,16 @@ check-modules: $(TARGET)
 	grep -q "super:: path cannot escape the root module" $(BUILD_DIR)/modules/module-super-root.err
 	if $(TARGET) tests/cases/modules/errors/private-nested-module.ari -o $(BUILD_DIR)/modules/private-nested-module.elf >$(BUILD_DIR)/modules/private-nested-module.err 2>&1; then exit 1; fi
 	grep -q "module 'Outer::Inner' is not public" $(BUILD_DIR)/modules/private-nested-module.err
+	if $(TARGET) tests/cases/modules/errors/cyclic-import-main.ari --check >$(BUILD_DIR)/modules/cyclic-import.err 2>&1; then exit 1; fi
+	grep -q "cyclic module import 'cycle_a::cycle_b::cycle_a' through source 'tests/cases/modules/errors/cycle_a.ari'" $(BUILD_DIR)/modules/cyclic-import.err
+	if $(TARGET) tests/cases/modules/errors/duplicate-module-decl.ari --check >$(BUILD_DIR)/modules/duplicate-module-decl.err 2>&1; then exit 1; fi
+	grep -q "duplicate module 'Repeated'" $(BUILD_DIR)/modules/duplicate-module-decl.err
+	if $(TARGET) tests/cases/modules/errors/duplicate-module-file-identity.ari --check >$(BUILD_DIR)/modules/duplicate-module-file-identity.err 2>&1; then exit 1; fi
+	grep -q "module file 'tests/cases/modules/errors/module_identity_source.ari' was already loaded as 'First', not 'Second'" $(BUILD_DIR)/modules/duplicate-module-file-identity.err
+	if $(TARGET) tests/cases/modules/errors/imported-parse-error-main.ari --check >$(BUILD_DIR)/modules/imported-parse-error.err 2>&1; then exit 1; fi
+	grep -q "tests/cases/modules/errors/imported_parse_error.ari:3:1: expected ; after return" $(BUILD_DIR)/modules/imported-parse-error.err
+	if $(TARGET) tests/cases/modules/errors/imported-semantic-error-main.ari --check >$(BUILD_DIR)/modules/imported-semantic-error.err 2>&1; then exit 1; fi
+	grep -q "tests/cases/modules/errors/imported_semantic_error.ari:2:10: unknown name 'missing_value'" $(BUILD_DIR)/modules/imported-semantic-error.err
 
 check-operators: $(TARGET)
 	mkdir -p $(BUILD_DIR)/operators

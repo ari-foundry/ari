@@ -1,0 +1,15 @@
+mod Repeated {
+  pub fn first() -> i64 {
+    return 1;
+  }
+}
+
+mod Repeated {
+  pub fn second() -> i64 {
+    return 2;
+  }
+}
+
+fn main() -> i64 {
+  return Repeated::first();
+}

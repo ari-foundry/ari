@@ -821,6 +821,11 @@ Checklist:
 - [x] header-like `mod name;` loads `name.arih`
 - [x] package search paths work with `--module-path`, `-I path`, and `-Ipath`
 - [x] repeated file-backed module imports are cached by resolved module name
+- [x] project-shaped nested file-backed modules build through a parent
+      facade and package-style child directory
+- [x] module graph artifacts list project-shaped source files, import edges,
+      public/private item surfaces, aliases, cfg features, target, and search
+      paths deterministically
 - [x] compact module metadata can be emitted and read back for source-graph validation
 - [x] metadata records stable source content hashes for cache invalidation
 - [x] metadata/cache checks accept only the centralized current `v0` headers
@@ -983,6 +988,11 @@ Checklist:
 - [x] reject private constant access
 - [x] reject missing file-backed modules
 - [x] reject `super::` paths that escape the root module
+- [x] reject cyclic file-backed imports even when the same source file is
+      reached through a nested module identity
+- [x] reject loading one resolved source file under two module identities
+- [x] report parse errors from imported files with the imported source path
+- [x] report semantic errors from imported files with the imported source path
 
 ## Completed Sprint: Prelude Surface
 

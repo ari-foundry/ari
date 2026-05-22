@@ -1,0 +1,36 @@
+// Project-shaped file-backed module fixture. The parent module owns the public
+// surface while child files model ordinary compiler subsystems.
+pub mod source;
+pub mod symbols;
+pub mod diag;
+pub mod parse as parser;
+
+use self::source::Span as Span
+use self::symbols::Symbol as Symbol
+use self::parser::ParseResult as ParseResult
+
+fn span_score(span: Span) -> i64 {
+  return self::source::span_len(span);
+}
+
+fn symbol_score(symbol: Symbol) -> i64 {
+  return self::symbols::symbol_score(symbol);
+}
+
+fn parse_score(result: ParseResult[Symbol]) -> i64 {
+  return self::parser::parse_score(result);
+}
+
+pub fn run() -> i64 {
+  let span = self::source::span(4, 9);
+  let symbol = self::symbols::symbol(13);
+  let state = self::parser::make_state(symbol);
+  let parsed = self::parser::run_state(state);
+  let diagnostic = self::diag::diagnostic(span, 5);
+
+  return span_score(span) +
+    symbol_score(symbol) +
+    parse_score(parsed) +
+    self::diag::diagnostic_score(diagnostic) -
+    18;
+}

@@ -16,6 +16,13 @@ The current module contract is intentionally small:
 - `-I path` and `--module-path path` add search roots in command-line order.
 - Candidate files are `name.ari`, `name.arih`, `name/mod.ari`, and
   `name/mod.arih`.
+- A file-backed alias such as `mod source as Source;` searches for `source`
+  but exposes declarations under `Source`.
+- A resolved source file has one module identity per compiler invocation.
+  Re-importing the same file as a different module is rejected.
+- Cyclic imports are rejected by module identity and by currently-loading
+  source path, so nested file layouts cannot recurse by spelling the same file
+  under another module name.
 - `.arih` is declaration-like today; it is not yet an automatic pair with a
   matching `.ari` file.
 - `std` is special-cased for the source standard library and should not become
@@ -79,6 +86,23 @@ Module diagnostics should name the facts a user can fix:
 
 Do not report only `module not found` when the compiler already knows which
 paths were searched.
+
+## Coverage Inventory
+
+The production-ready module subset is intentionally narrow and tested:
+
+| Area | Status | Proof |
+| --- | --- | --- |
+| Inline modules and nested visibility | complete | `make check-modules` inline and private diagnostics |
+| File-backed sibling modules | complete | `file-module-main.ari`, `file-module-alias-main.ari` |
+| Package-style child directories | complete | `project-compiler-main.ari` module graph |
+| Ordered search paths | complete | `package-module-main.ari` with `--module-path` and `-I` |
+| Aliased modules and `use` aliases | complete | alias, grouped use, glob use, and duplicate alias diagnostics |
+| Cross-file structs, enums, generics | complete | compiler-shaped project fixture under `project_compiler/` |
+| Cycles and duplicate module identities | complete | `cyclic-import-main.ari`, `duplicate-module-file-identity.ari` |
+| Imported-file parse/sema diagnostics | complete | `imported-parse-error-main.ari`, `imported-semantic-error-main.ari` |
+| Persistent package manifests | unsupported by design | use Makefiles plus explicit `-I` roots |
+| Remote dependencies or registries | unsupported by design | outside the current compiler model |
 
 ## Metadata And Cache Inputs
 
@@ -153,7 +177,8 @@ Use these folders:
 
 Name tests after behavior: `module-missing-candidates`,
 `module-private-item`, `module-graph-file-module`,
-`module-cache-source-hash`, or `module-metadata-visibility`.
+`module-graph-project-compiler`, `module-cache-source-hash`, or
+`module-metadata-visibility`.
 
 ## Review Checklist
 

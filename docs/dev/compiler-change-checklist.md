@@ -81,5 +81,5 @@ A change improves the readiness score when it makes normal compiler development
 smaller, clearer, or more deterministic. It does not improve the score merely
 because it resembles a long-term side project.
 
-Ari is about **45-46% through the current compiler-development maturity work**.
+Ari is about **46-47% through the current compiler-development maturity work**.
 Use this checklist to keep that progress grounded in ordinary compiler quality.

@@ -1,0 +1,23 @@
+pub enum Severity {
+  Info,
+  Error(i64),
+}
+
+pub struct Diagnostic {
+  span: super::source::Span,
+  severity: Severity,
+}
+
+pub fn diagnostic(span: super::source::Span, code: i64) -> Diagnostic {
+  return Diagnostic {
+    span: span,
+    severity: Error(code),
+  };
+}
+
+pub fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
+  return super::source::span_len(diagnostic.span) + match diagnostic.severity {
+    Info => 1,
+    Error(code) => code,
+  };
+}

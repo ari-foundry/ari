@@ -8,6 +8,7 @@
 #include "module_metadata.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
+#include "type_semantics.hpp"
 
 #include <cctype>
 #include <fstream>
@@ -251,17 +252,84 @@ bool is_cache_backed_executable_function(const FunctionDecl& fn) {
     return !fn.meta && !fn.is_extern && fn.has_body && fn.generics.empty();
 }
 
+std::string normalize_module_cache_type_key(std::string key) {
+    const std::vector<std::pair<std::string, std::string>> prelude_aliases = {
+        {"std::Option", "Option"},
+        {"std::Result", "Result"},
+        {"std::Vec", "Vec"},
+        {"std::Slice", "Slice"},
+        {"std::Box", "Box"},
+        {"std::RangeInclusive", "RangeInclusive"},
+        {"std::Range", "Range"},
+    };
+    for (const auto& alias : prelude_aliases) {
+        std::size_t pos = 0;
+        while ((pos = key.find(alias.first, pos)) != std::string::npos) {
+            key.replace(pos, alias.first.size(), alias.second);
+            pos += alias.second.size();
+        }
+    }
+    if (key.size() >= 7 && key.compare(0, 6, "Tuple[") == 0 && key.back() == ']') {
+        key = "(" + key.substr(6, key.size() - 7) + ")";
+    }
+    return key;
+}
+
+bool same_module_cache_type_key(const std::string& left, const std::string& right) {
+    if (left == right) return true;
+    std::string normalized_left = normalize_module_cache_type_key(left);
+    std::string normalized_right = normalize_module_cache_type_key(right);
+    if (normalized_left == normalized_right) return true;
+    const std::string qualified_suffix = "::" + normalized_right;
+    return normalized_right.find("::") == std::string::npos &&
+           normalized_left.size() > qualified_suffix.size() &&
+           normalized_left.compare(
+               normalized_left.size() - qualified_suffix.size(),
+               qualified_suffix.size(),
+               qualified_suffix) == 0;
+}
+
 void require_ir_summary_covers_ast_summary_functions(const Program& declarations,
                                                      const std::vector<ModuleCacheIrFunctionSummary>& ir_functions,
-                                                     const std::string& path) {
-    std::set<std::string> lowered_function_names;
-    for (const auto& fn : ir_functions) lowered_function_names.insert(fn.name);
+                                                     const std::string& path,
+                                                     bool require_all_functions) {
+    std::map<std::string, const ModuleCacheIrFunctionSummary*> lowered_functions;
+    for (const auto& fn : ir_functions) lowered_functions.emplace(fn.name, &fn);
 
     for (const auto& fn : declarations.functions) {
         if (!is_cache_backed_executable_function(fn)) continue;
-        if (lowered_function_names.count(fn.name)) continue;
-        throw CompileError("module cache IR summary for '" + path +
-                           "' is missing lowered function '" + fn.name + "'");
+        auto lowered = lowered_functions.find(fn.name);
+        if (lowered == lowered_functions.end()) {
+            if (!require_all_functions) continue;
+            throw CompileError("module cache IR summary for '" + path +
+                               "' is missing lowered function '" + fn.name + "'");
+        }
+        const std::string expected_return = fn.has_return_type ? type_ref_key(fn.return_type) : "void";
+        if (!same_module_cache_type_key(lowered->second->return_type, expected_return)) {
+            throw CompileError("module cache IR summary for '" + path +
+                               "' has lowered function '" + fn.name +
+                               "' return type '" + lowered->second->return_type +
+                               "' but declaration summary expects '" +
+                               expected_return + "'");
+        }
+        if (lowered->second->params.size() != fn.params.size()) {
+            throw CompileError("module cache IR summary for '" + path +
+                               "' has lowered function '" + fn.name +
+                               "' parameter count " +
+                               std::to_string(lowered->second->params.size()) +
+                               " but declaration summary expects " +
+                               std::to_string(fn.params.size()));
+        }
+        for (std::size_t i = 0; i < fn.params.size(); ++i) {
+            const std::string expected_param = type_ref_key(fn.params[i].type);
+            if (same_module_cache_type_key(lowered->second->params[i].type, expected_param)) continue;
+            throw CompileError("module cache IR summary for '" + path +
+                               "' has lowered function '" + fn.name +
+                               "' parameter " + std::to_string(i) +
+                               " type '" + lowered->second->params[i].type +
+                               "' but declaration summary expects '" +
+                               expected_param + "'");
+        }
     }
 }
 
@@ -555,9 +623,8 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
                 bool can_load_ast_summary = can_load_module_cache_ast_summary_declarations(declarations);
                 if (ir_summary) {
                     ir_functions = materialize_module_cache_ir_summary_functions(*ir_summary, path);
-                    if (!can_load_ast_summary) {
-                        require_ir_summary_covers_ast_summary_functions(declarations, ir_functions, path);
-                    }
+                    require_ir_summary_covers_ast_summary_functions(
+                        declarations, ir_functions, path, !can_load_ast_summary);
                     require_ir_summary_specializations_match_ast_summary(declarations, ir_functions, path);
                     require_ir_summary_cached_impl_calls_resolve(ir_functions, input_cache, path);
                 }
@@ -569,6 +636,25 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
                         cached->source,
                         std::move(ir_functions),
                     };
+                }
+            }
+        }
+        if (allow_summary_materialize && !ast_summaries_preserve_source_spans) {
+            const ModuleCacheAstSummary* summary = find_module_cache_ast_summary(*input_cache, path);
+            if (summary) {
+                Program declarations = materialize_module_cache_ast_summary_declarations(*summary, path);
+                const ModuleCacheIrSummary* ir_summary =
+                    find_module_cache_ir_summary(*input_cache, path);
+                if (ir_summary) {
+                    std::vector<ModuleCacheIrFunctionSummary> ir_functions =
+                        materialize_module_cache_ir_summary_functions(*ir_summary, path);
+                    require_ir_summary_covers_ast_summary_functions(
+                        declarations,
+                        ir_functions,
+                        path,
+                        !can_load_module_cache_ast_summary_declarations(declarations));
+                    require_ir_summary_specializations_match_ast_summary(declarations, ir_functions, path);
+                    require_ir_summary_cached_impl_calls_resolve(ir_functions, input_cache, path);
                 }
             }
         }
@@ -599,6 +685,7 @@ public:
         ParsedModuleFile root = parse_file_in_module(input, {}, options_.cfg_features, options_.target_triple, options_.input_cache, false);
         Program program = std::move(root.program);
         collect_source(input, root, {}, program, true);
+        loaded_source_modules_.emplace(input, "<root>");
         if (options_.implicit_std) load_standard_module(program);
         resolve_imports(program, dirname(input));
         ModuleCache cache;
@@ -620,7 +707,9 @@ private:
     std::vector<ModuleCacheAstSummary> cache_ast_summaries_;
     std::vector<ModuleCacheIrFunctionSummary> cached_ir_functions_;
     std::map<std::string, std::string> loaded_modules_;
+    std::map<std::string, std::string> loaded_source_modules_;
     std::set<std::string> loading_modules_;
+    std::set<std::string> loading_source_paths_;
 
     void collect_source(const std::string& path,
                         const ParsedModuleFile& parsed,
@@ -668,6 +757,7 @@ private:
         collect_source(*path, standard_file, module_path, standard, false);
         move_append(cached_ir_functions_, standard_file.cached_ir_functions);
         loaded_modules_.emplace(name, *path);
+        loaded_source_modules_.emplace(*path, name);
         resolve_imports(standard, dirname(*path));
         append_program(program, std::move(standard));
     }
@@ -695,6 +785,20 @@ private:
                 source_path = find_module_file(import, base_dir, options_.module_search_paths).path;
             }
             add_module_metadata_import(metadata_, import, source_path);
+            if (loading_source_paths_.count(source_path)) {
+                throw CompileError(import.loc,
+                                   "cyclic module import '" + import.name +
+                                       "' through source '" + source_path + "'");
+            }
+            auto loaded_source = loaded_source_modules_.find(source_path);
+            if (loaded_source != loaded_source_modules_.end() &&
+                loaded_source->second != import.name) {
+                throw CompileError(import.loc,
+                                   "module file '" + source_path +
+                                       "' was already loaded as '" +
+                                       loaded_source->second + "', not '" +
+                                       import.name + "'");
+            }
             auto loaded = loaded_modules_.find(import.name);
             if (loaded != loaded_modules_.end()) {
                 if (loaded->second != source_path) {
@@ -707,14 +811,17 @@ private:
             }
 
             loading_modules_.insert(import.name);
+            loading_source_paths_.insert(source_path);
             std::vector<std::string> module_path = split_qualified_path(import.name);
             ParsedModuleFile child_file = parse_file_in_module(source_path, module_path, options_.cfg_features, options_.target_triple, options_.input_cache, true);
             Program child = std::move(child_file.program);
             collect_source(source_path, child_file, module_path, child, false);
             move_append(cached_ir_functions_, child_file.cached_ir_functions);
             resolve_imports(child, dirname(source_path));
+            loading_source_paths_.erase(source_path);
             loading_modules_.erase(import.name);
             loaded_modules_.emplace(import.name, source_path);
+            loaded_source_modules_.emplace(source_path, import.name);
             append_program(program, std::move(child));
         }
     }

@@ -112,6 +112,6 @@ repeatable. It helps most when a change adds one of these:
 - a generic aggregate or trait case that removes awkward compiler-shaped code
 - an IR fact that keeps LLVM lowering mechanical
 
-Ari is about **45-46% through the current compiler-development maturity work**.
+Ari is about **46-47% through the current compiler-development maturity work**.
 The useful work is to make each normal compiler change smaller, clearer, and
 easier to test.

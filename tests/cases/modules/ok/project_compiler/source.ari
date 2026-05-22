@@ -1,0 +1,21 @@
+pub struct Span {
+  start: i64,
+  end: i64,
+}
+
+pub struct SourceFile {
+  id: i64,
+  span: Span,
+}
+
+pub fn span(start: i64, end: i64) -> Span {
+  return Span { start: start, end: end };
+}
+
+pub fn source_file(id: i64, span: Span) -> SourceFile {
+  return SourceFile { id: id, span: span };
+}
+
+pub fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}

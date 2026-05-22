@@ -1,0 +1,15 @@
+pub struct Symbol {
+  id: i64,
+}
+
+pub fn symbol(id: i64) -> Symbol {
+  return Symbol { id: id };
+}
+
+pub fn symbol_score(symbol: Symbol) -> i64 {
+  return symbol.id;
+}
+
+fn private_bias() -> i64 {
+  return 7;
+}

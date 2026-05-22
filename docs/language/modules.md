@@ -65,6 +65,26 @@ forms. Loaded module names are cached during one compiler run, so repeated
 imports of the same module path are resolved once and cycles are diagnosed
 before parsing loops indefinitely.
 
+The entry file's directory is the default project root for sibling module
+lookup. Ari does not infer a manifest root yet, and there is no package
+manager. Larger projects should pass every additional root explicitly with
+`-I` or `--module-path`; those roots are searched exactly in command-line
+order. Diagnostics and module graph artifacts display the resolved source path
+that was used for each module.
+
+File-backed aliases change the module identity, not the file name:
+
+```ari
+mod source_file as Source;
+```
+
+The example above searches for `source_file.ari`, `source_file.arih`,
+`source_file/mod.ari`, and `source_file/mod.arih`, but declarations are exposed
+under `Source`. Loading the same resolved source file under two different
+module identities in one compiler invocation is rejected, because a source file
+must have one module identity for deterministic name resolution and cache
+metadata.
+
 The standard library prelude is special-cased before general library loading:
 when `lib/std.arih` exists, the compiler auto-loads it as the public `std`
 module. User code can write `std::io::write_i64`, `std::io::write_u64`, or
@@ -110,6 +130,12 @@ by treating `name.arih` as the public declaration surface and `name.ari` as the
 private implementation body for the same module. Until that is implemented,
 keep a module's compiled implementation in the single file that `mod name;`
 will actually load, or split private helpers into child modules.
+
+For nested file-backed modules, the parent module can act as a package-style
+directory. A file `project.ari` may declare `pub mod source;`, and if
+`source.ari` is not beside `project.ari`, Ari also checks
+`project/source.ari` and `project/source/mod.ari`. Child modules can refer to
+siblings through `super::source::Name` after the parent imports those children.
 
 Example header module:
 

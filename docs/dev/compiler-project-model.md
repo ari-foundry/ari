@@ -39,11 +39,18 @@ The current compiler already has a useful file module surface:
   model for ordinary compiler projects.
 - `.arih` is a header-like convention today, not an automatic pair with a
   matching `.ari` implementation file.
+- File-backed aliases search by the local file name but expose the alias as
+  the module identity.
+- A resolved source file is allowed only one module identity during a compiler
+  invocation.
+- Cyclic import detection checks both module names and currently-loading source
+  paths.
 
-Diagnostics should eventually show the module name, the importing source file,
-the package root that was active, the module search paths that were checked,
-and the candidate paths that failed. That makes a missing module fixable without
-reading `src/sema.cpp`.
+Missing-module diagnostics show the module name, importing source file, ordered
+module search paths, and candidate paths that failed. Module graph artifacts
+show resolved source paths, import edges, public/private item surfaces, target,
+cfg features, and search paths. That makes project layout bugs fixable without
+reading `src/module_loader.cpp`.
 
 ## Recommended Project Layout
 
@@ -182,21 +189,23 @@ which roots are part of the build so failures can be reproduced from logs.
 
 ## Implementation Slices
 
-These slices are normal compiler work:
+These slices define the supported production subset:
 
-1. Project root detection: document and test how an entry file chooses its
-   package root.
-2. Module path diagnostics: report every checked candidate when a module is
-   missing or ambiguous.
-3. Visibility diagnostics: show the defining module when a private item is used.
-4. Cache validation: add golden diagnostics for stale source hash, cfg, target,
-   search path, and compiler-format mismatches.
-5. Header/source pairing design: specify `.arih` plus `.ari` validation before
-   implementing automatic pairing.
-6. Multi-file tool smoke: compile a small tool with `source`, `report`, `lex`,
-   and `syntax` modules from Make.
-7. Module graph dump: extend the current deterministic `--emit-module-graph`
-   artifact with search-path, cfg, stale-cache, and visibility-edge fixtures.
+1. Project roots: the entry file directory plus explicit `-I` and
+   `--module-path` roots define lookup. Manifest inference is unsupported.
+2. Module path diagnostics: missing modules report checked candidates and
+   ordered search paths.
+3. Visibility diagnostics: private functions, constants, enums, cases, structs,
+   and nested modules are rejected with source locations.
+4. Cache validation: metadata/cache checks fail closed for stale source hash,
+   cfg, target, search path, format, missing import, and item changes.
+5. Header/source policy: `.ari` and `.arih` are alternative candidates today;
+   automatic pairing remains unsupported by design.
+6. Multi-file tool smoke: `project-compiler-main.ari` builds a small
+   source/diagnostic/symbol/parser project through file-backed child modules.
+7. Module graph dump: deterministic `--emit-module-graph` artifacts capture
+   source files, import edges, traversal-independent item order, visibility,
+   search paths, cfg features, and target.
 
 The module graph dump is especially useful because it gives reviewers a compact
 view of imports, resolved files, visibility edges, and eventually cache hits.
@@ -232,6 +241,8 @@ Name tests after the behavior they prove:
 - `module-cache-source-hash.ari`
 - `module-cache-search-path.ari`
 - `module-graph-dump.ari`
+- `module-graph-project-compiler.ari`
+- `module-cyclic-import.ari`
 
 ## Review Checklist
 
@@ -248,8 +259,10 @@ Before accepting project/module changes, check:
 ## Readiness Impact
 
 This work removes hidden assumptions around files, roots, imports, and cache
-reuse.
+reuse, and it feeds the compiler-development maturity estimate by turning
+multi-file projects from a planned surface into a tested compiler capability.
 
-The compiler-development maturity estimate should move only when the model has
-implementation tests: missing-module diagnostics, private-item diagnostics,
-stale-cache checks, and at least one multi-file tool built through Make.
+The current model is ready for ordinary multi-file Ari tools that use explicit
+roots and Makefile-style build commands. Remaining project-management features
+such as manifests, remote dependency fetching, registry support, and automatic
+`.arih`/`.ari` pairing are intentionally outside this compiler subset.

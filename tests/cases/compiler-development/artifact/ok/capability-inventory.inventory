@@ -6,7 +6,7 @@ CompilerCapabilityInventory version=1 target=x86_64-pc-linux-gnu implicit_std=fa
   capability=ownership-checks status=implemented owner=ownership/control-flow first_check="focused ownership fixtures" proves="own, drop, move state, and temporary borrow rejection"
   capability=non-generic-enums-and-match status=implemented owner=parser/sema/backend first_check="make check-match" proves="one-word tagged enums and statement match lowering"
   capability=inline-modules-and-use status=implemented owner=module-loader/sema first_check="make check-modules" proves="inline modules, pub visibility, use imports, and qualified paths"
-  capability=file-backed-modules status=partial owner=module-loader first_check="make check-compiler-artifacts" proves="module source loading, graph artifacts, metadata, and remaining project policy hardening"
+  capability=file-backed-modules status=implemented owner=module-loader first_check="make check-modules" proves="module source loading, graph artifacts, metadata, cache validation, cycles, and project-shaped fixtures"
   capability=prelude-io-formatting status=implemented owner=prelude/sema/backend first_check="focused format fixtures" proves="compiler-known print, println, and formatting hooks"
   capability=extern-c-ffi status=implemented owner=parser/sema/backend first_check="make check-ffi" proves="extern C declarations, explicit link names, and C symbol calls"
   capability=shared-library-output status=implemented owner=driver/backend/toolchain first_check="focused --shared fixture" proves="LLVM shared library emission and exported Ari symbols"

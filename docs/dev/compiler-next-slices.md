@@ -69,6 +69,6 @@ large rewrites become a good idea.
 
 ## Readiness Impact
 
-Completing these slices should move Ari beyond the current **45-46% compiler
+Completing these slices should move Ari beyond the current **46-47% compiler
 maturity** range by improving deterministic source identity, diagnostics,
 modules, generic data modeling, HIR/IR visibility, and backend mechanicalness.

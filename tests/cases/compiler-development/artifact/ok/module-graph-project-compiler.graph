@@ -1,0 +1,48 @@
+ModuleGraph source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-pc-linux-gnu implicit_std=false
+  SearchPaths count=0
+  CfgFeatures count=0
+  Sources count=6
+    Source module=<root> root=true path=tests/cases/modules/ok/project-compiler-main.ari
+    Source module=project_compiler root=false path=tests/cases/modules/ok/project_compiler.ari
+    Source module=project_compiler::diag root=false path=tests/cases/modules/ok/project_compiler/diag.ari
+    Source module=project_compiler::parser root=false path=tests/cases/modules/ok/project_compiler/parse.ari
+    Source module=project_compiler::source root=false path=tests/cases/modules/ok/project_compiler/source.ari
+    Source module=project_compiler::symbols root=false path=tests/cases/modules/ok/project_compiler/symbols.ari
+  Imports count=5
+    Import owner=<root> module=project_compiler local=project_compiler visibility=private source=tests/cases/modules/ok/project_compiler.ari
+    Import owner=project_compiler module=project_compiler::diag local=diag visibility=pub source=tests/cases/modules/ok/project_compiler/diag.ari
+    Import owner=project_compiler module=project_compiler::parser local=parse visibility=pub source=tests/cases/modules/ok/project_compiler/parse.ari
+    Import owner=project_compiler module=project_compiler::source local=source visibility=pub source=tests/cases/modules/ok/project_compiler/source.ari
+    Import owner=project_compiler module=project_compiler::symbols local=symbols visibility=pub source=tests/cases/modules/ok/project_compiler/symbols.ari
+  Items count=31
+    Item module=<root> kind=fn name=main visibility=private
+    Item module=<root> kind=module name=project_compiler visibility=private
+    Item module=project_compiler kind=fn name=project_compiler::parse_score visibility=private
+    Item module=project_compiler kind=fn name=project_compiler::run visibility=pub
+    Item module=project_compiler kind=fn name=project_compiler::span_score visibility=private
+    Item module=project_compiler kind=fn name=project_compiler::symbol_score visibility=private
+    Item module=project_compiler kind=module name=project_compiler::diag visibility=pub
+    Item module=project_compiler kind=module name=project_compiler::parser visibility=pub
+    Item module=project_compiler kind=module name=project_compiler::source visibility=pub
+    Item module=project_compiler kind=module name=project_compiler::symbols visibility=pub
+    Item module=project_compiler kind=use name=self::parser::ParseResult as ParseResult visibility=private
+    Item module=project_compiler kind=use name=self::source::Span as Span visibility=private
+    Item module=project_compiler kind=use name=self::symbols::Symbol as Symbol visibility=private
+    Item module=project_compiler::diag kind=enum name=project_compiler::diag::Severity visibility=pub
+    Item module=project_compiler::diag kind=fn name=project_compiler::diag::diagnostic visibility=pub
+    Item module=project_compiler::diag kind=fn name=project_compiler::diag::diagnostic_score visibility=pub
+    Item module=project_compiler::diag kind=struct name=project_compiler::diag::Diagnostic visibility=pub
+    Item module=project_compiler::parser kind=enum name=project_compiler::parser::ParseResult visibility=pub
+    Item module=project_compiler::parser kind=fn name=project_compiler::parser::make_state visibility=pub
+    Item module=project_compiler::parser kind=fn name=project_compiler::parser::parse_score visibility=pub
+    Item module=project_compiler::parser kind=fn name=project_compiler::parser::run_state visibility=pub
+    Item module=project_compiler::parser kind=struct name=project_compiler::parser::ParserState visibility=pub
+    Item module=project_compiler::source kind=fn name=project_compiler::source::source_file visibility=pub
+    Item module=project_compiler::source kind=fn name=project_compiler::source::span visibility=pub
+    Item module=project_compiler::source kind=fn name=project_compiler::source::span_len visibility=pub
+    Item module=project_compiler::source kind=struct name=project_compiler::source::SourceFile visibility=pub
+    Item module=project_compiler::source kind=struct name=project_compiler::source::Span visibility=pub
+    Item module=project_compiler::symbols kind=fn name=project_compiler::symbols::private_bias visibility=private
+    Item module=project_compiler::symbols kind=fn name=project_compiler::symbols::symbol visibility=pub
+    Item module=project_compiler::symbols kind=fn name=project_compiler::symbols::symbol_score visibility=pub
+    Item module=project_compiler::symbols kind=struct name=project_compiler::symbols::Symbol visibility=pub

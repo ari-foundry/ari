@@ -9,7 +9,7 @@ large programs, and make compiler behavior easy to test in small pieces.
 
 ## Current Readiness
 
-Ari is about **45-46% through the current compiler-development maturity work**.
+Ari is about **46-47% through the current compiler-development maturity work**.
 
 The number is conservative because Ari already compiles useful programs, but a
 compiler is a large program with hard requirements: stable diagnostics,
@@ -28,7 +28,7 @@ ordinary Ari data.
 | Frontend reliability | 10 | 55 | Span-aware lexer/parser errors, recovery fixtures, and syntax docs that match parser behavior. |
 | Source identity | 12 | 30 | Owned source maps/files, canonical/display paths, stable `SourceId`, byte spans, line tables, EOF offsets, and snippets. |
 | Diagnostics | 13 | 30 | Diagnostic codes, labels, notes, source rendering, and normalized golden output. |
-| Module projects | 12 | 45 | Predictable package roots, `.ari`/`.arih` policy, visibility errors, metadata, and cache invalidation. |
+| Module projects | 12 | 55 | Predictable roots/search paths, `.ari`/`.arih` policy, visibility errors, cycles, source identity, metadata, and cache invalidation. |
 | Compiler data models | 15 | 60 | Nested generic aggregates, `Result` payloads, vectors/maps/sets, compiler-shaped ownership patterns, and stable rejection of infinite value layouts. |
 | Trait selection | 12 | 45 | The minimum static subset is locked; broader trait objects, associated-type solving, and collection defaults can still deepen it. |
 | Artifact comparison | 16 | 45 | Token, syntax, diagnostic, module graph, declaration, typed IR, HIR, LLVM, object, and executable comparison order. |
@@ -48,6 +48,7 @@ get more reliable, not when a private shortcut is added.
 | Generic aggregate scale | Nested structs, enums, aliases, vectors, maps, `Result` payloads, ownership-qualified generic fields, and recursive-value diagnostics have production-focused coverage. | Compiler data models can grow through the general generic aggregate path rather than one-off container or bootstrap scaffolds. |
 | Minimum static traits | Trait declarations, impl conformance, deterministic static dispatch, generic bounds, Eq/Ord/Hash/Debug-like fixtures, iterator-shaped helpers, and missing/ambiguous diagnostics are locked by `make check-traits`. | Compiler-shaped data can compare, hash, format, and traverse values through normal trait behavior instead of name-specific shortcuts. |
 | SourceMap and diagnostics | `SourceMap`, `SourceId`, `SourceFile`, `Span`, `SourceLocation`, line/column lookup, snippets, diagnostic codes, labels, notes, and source-aware golden artifacts are locked by `make check-source-map-unit` and `make check-compiler-artifacts`. | User-facing compiler errors keep source identity and deterministic artifact rows across lexer, parser, module, semantic, trait, and ownership paths. |
+| File-backed projects | Entry-file roots, explicit `-I`/`--module-path` roots, `.ari`/`.arih` candidate policy, aliases, package-style child directories, visibility, cycles, duplicate source identities, imported-file diagnostics, metadata, cache invalidation, and module graph artifacts are locked by `make check-modules` and `make check-compiler-artifacts`. | Multi-file Ari tools can be structured as ordinary source/diagnostic/symbol/parser modules without package-manager or bootstrap scaffolding. |
 | Ownership checks | Move, borrow, drop, and explicit-zone checks catch many unsafe flows. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
 | Focused test culture | Many feature folders already separate `ok` and `errors` tests. | New compiler behavior can be guarded with one small fixture at a time. |
 
@@ -55,10 +56,9 @@ get more reliable, not when a private shortcut is added.
 
 | Gap | Needed State | First Work |
 | --- | --- | --- |
-| File-backed projects | Predictable module roots, `.ari`/`.arih` policy, metadata, cache invalidation, and Makefile flows. | Harden module search and add stale/private/missing file diagnostics. |
 | Trait selection beyond the minimum subset | Trait objects, associated-type solving, trait-driven collection defaults, and richer iterator ownership policies need the same stability as the static subset. | Keep minimum-subset fixtures green while adding one focused advanced trait fixture at a time. |
 | Pass artifacts | Token, syntax, HIR, typed IR, LLVM, object, executable, and shared outputs need a comparison order. | Add normalized text dumps before broad executable checks. |
-| Build ergonomics | Large Ari tools need boring Make targets before a package manager exists. | Keep `make check-compiler-development` small and add one target per compiler slice. |
+| Build ergonomics | Large Ari tools need boring Make targets and project fixtures before a package manager exists. | Keep `make check-compiler-development` small and add one target per compiler slice. |
 
 ## Recent Compiler Support
 

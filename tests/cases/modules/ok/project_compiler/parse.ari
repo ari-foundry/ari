@@ -1,0 +1,37 @@
+pub enum ParseResult[T] {
+  Parsed(T),
+  Failed(super::diag::Diagnostic),
+}
+
+pub struct ParserState[T] {
+  file: super::source::SourceFile,
+  current: T,
+  diagnostic: super::diag::Diagnostic,
+}
+
+pub fn make_state(symbol: super::symbols::Symbol) -> ParserState[super::symbols::Symbol] {
+  let span = super::source::span(10, 16);
+  return ParserState<super::symbols::Symbol> {
+    file: super::source::source_file(2, span),
+    current: symbol,
+    diagnostic: super::diag::diagnostic(span, 3),
+  };
+}
+
+pub fn run_state(state: ParserState[super::symbols::Symbol]) -> ParseResult[super::symbols::Symbol] {
+  if super::source::span_len(state.file.span) > 0 {
+    return Parsed<super::symbols::Symbol>(state.current);
+  }
+  return Failed<super::symbols::Symbol>(state.diagnostic);
+}
+
+pub fn parse_score(result: ParseResult[super::symbols::Symbol]) -> i64 {
+  match result {
+    Parsed(symbol) => {
+      return super::symbols::symbol_score(symbol);
+    }
+    Failed(diagnostic) => {
+      return super::diag::diagnostic_score(diagnostic);
+    }
+  }
+}
