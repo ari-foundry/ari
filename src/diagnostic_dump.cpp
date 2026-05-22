@@ -234,6 +234,7 @@ std::string classify_diagnostic_code(const std::string& message) {
         return "M0001";
     }
     if (contains(diagnostic, "borrow") ||
+        contains(diagnostic, "compact enum payload reference binding") ||
         contains(diagnostic, "moved binding") ||
         contains(diagnostic, "cannot move ") ||
         contains(diagnostic, "owning aggregate") ||

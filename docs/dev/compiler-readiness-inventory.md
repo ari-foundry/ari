@@ -299,9 +299,11 @@ Current compiler-development tests:
   `diagnostic-loop-break-live-owner.diagnostic`,
   `diagnostic-loop-continue-live-owner.diagnostic`,
   `diagnostic-borrow-after-move.diagnostic`, `diagnostic-double-move.diagnostic`,
-  and `diagnostic-enum-payload-invalid-move.diagnostic`: source-aware
+  `diagnostic-enum-payload-invalid-move.diagnostic`, and
+  `diagnostic-compact-enum-payload-ref.diagnostic`: source-aware
   ownership diagnostic goldens for borrow conflicts, live-owner control-flow
-  exits, repeated moves, and invalid enum payload moves.
+  exits, repeated moves, invalid enum payload moves, and rejected compact enum
+  payload reference patterns.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
@@ -333,12 +335,14 @@ Current compiler-development tests:
   `tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-owner.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic`,
   and `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-temporary-element-move.diagnostic`:
   source-aware ownership diagnostics for representative move, borrow,
-  control-flow live-owner, partial-move, unsupported container-element, and
-  temporary aggregate element ownership failures.
+  control-flow live-owner, rejected compact enum payload reference patterns,
+  partial-move, unsupported container-element, and temporary aggregate element
+  ownership failures.
 
 The first command to run after changing this area is:
 

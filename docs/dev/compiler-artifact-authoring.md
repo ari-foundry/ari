@@ -143,6 +143,7 @@ Keep fixture names behavior-based:
 - `diagnostic-borrow-after-move.diagnostic`
 - `diagnostic-double-move.diagnostic`
 - `diagnostic-enum-payload-invalid-move.diagnostic`
+- `diagnostic-compact-enum-payload-ref.diagnostic`
 - `diagnostic-use-after-move.diagnostic`
 - `diagnostic-move-borrowed-owner.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`

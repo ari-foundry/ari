@@ -14,6 +14,7 @@ Coverage is grouped by behavior:
 - compiler-shaped parser state, generic aggregate, vector work-item, and
   result-like ownership flow
 - owner state joins across loops, branches, `match`, `if let`, and `while let`
+- compact enum payload ref-pattern rejection for non-addressable payload slots
 - explicit `forget` behavior for live or maybe-unavailable owners
 
 `make check-ownership` is the small smoke target for this folder. It runs one
@@ -35,6 +36,7 @@ diagnostics and review-sized LLVM drop fragments:
 - `diagnostic-loop-break-live-owner.diagnostic`
 - `diagnostic-loop-continue-live-owner.diagnostic`
 - `diagnostic-enum-payload-invalid-move.diagnostic`
+- `diagnostic-compact-enum-payload-ref.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
 - `diagnostic-ownership-temporary-element-move.diagnostic`

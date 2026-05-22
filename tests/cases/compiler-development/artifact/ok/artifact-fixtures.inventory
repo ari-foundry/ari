@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=118
+CompilerArtifactFixtures version=1 group=all entries=120
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -7,6 +7,8 @@ CompilerArtifactFixtures version=1 group=all entries=118
   Fixture group=errors kind=diagnostic path=errors/diagnostic-borrow-after-move.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-borrow-conflict.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-borrow-conflict.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-compact-enum-payload-ref.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-compact-enum-payload-ref.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-core-use-before-declaration.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-core-use-before-declaration.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-cyclic-module.ari
