@@ -145,7 +145,9 @@ are source Ari. Cryptographic streams remain future work.
 `std::test::Report` aggregates checks, generic `equal`/`not_equal` stay
 naturally named, `scratch` simply creates an explicit `Zone` for tests, and
 small temp-path, snapshot/golden comparison, and benchmark timing helpers cover
-common test fixtures.
+common test fixtures. The compiler-generated runner also writes progress and
+failure markers to `stderr` so aborting tests leave the running test name in
+the output.
 `std::log` writes level-prefixed diagnostic lines to `stderr` through
 `std::io::Stderr`. `std::error`
 defines compact recoverable error values, stable error categories, POSIX errno

@@ -4145,11 +4145,19 @@ check-meta: $(TARGET)
 	$(TARGET) --target x86_64-unknown-linux-musl tests/cases/attributes/ok/attribute-cfg-target-env.ari --emit-llvm $(BUILD_DIR)/meta/attribute-cfg-target-env-musl.ll
 	grep -q 'target triple = "x86_64-unknown-linux-musl"' $(BUILD_DIR)/meta/attribute-cfg-target-env-musl.ll
 	$(TARGET) --test tests/cases/attributes/ok/attribute-test-runner.ari -o $(BUILD_DIR)/meta/attribute-test-runner.elf
-	$(BUILD_DIR)/meta/attribute-test-runner.elf; code=$$?; test $$code -eq 0
+	$(BUILD_DIR)/meta/attribute-test-runner.elf >$(BUILD_DIR)/meta/attribute-test-runner.out 2>$(BUILD_DIR)/meta/attribute-test-runner.err; code=$$?; test $$code -eq 0
+	grep -q "test smoke ..." $(BUILD_DIR)/meta/attribute-test-runner.err
+	grep -q "ok returns_zero" $(BUILD_DIR)/meta/attribute-test-runner.err
 	$(TARGET) test tests/cases/attributes/ok/attribute-test-filter.ari --filter selected -o $(BUILD_DIR)/meta/attribute-test-filter.elf
-	$(BUILD_DIR)/meta/attribute-test-filter.elf; code=$$?; test $$code -eq 0
+	$(BUILD_DIR)/meta/attribute-test-filter.elf >$(BUILD_DIR)/meta/attribute-test-filter.out 2>$(BUILD_DIR)/meta/attribute-test-filter.err; code=$$?; test $$code -eq 0
+	grep -q "test selected_smoke ..." $(BUILD_DIR)/meta/attribute-test-filter.err
+	if grep -q "ignored_failure" $(BUILD_DIR)/meta/attribute-test-filter.err; then exit 1; fi
 	$(TARGET) --test tests/cases/attributes/ok/attribute-test-status.ari -o $(BUILD_DIR)/meta/attribute-test-status.elf
-	$(BUILD_DIR)/meta/attribute-test-status.elf; code=$$?; test $$code -eq 5
+	$(BUILD_DIR)/meta/attribute-test-status.elf >$(BUILD_DIR)/meta/attribute-test-status.out 2>$(BUILD_DIR)/meta/attribute-test-status.err; code=$$?; test $$code -eq 5
+	grep -q "failed second_fails" $(BUILD_DIR)/meta/attribute-test-status.err
+	$(TARGET) --test tests/cases/attributes/ok/attribute-test-panic-marker.ari -o $(BUILD_DIR)/meta/attribute-test-panic-marker.elf
+	$(BUILD_DIR)/meta/attribute-test-panic-marker.elf >$(BUILD_DIR)/meta/attribute-test-panic-marker.out 2>$(BUILD_DIR)/meta/attribute-test-panic-marker.err; code=$$?; test $$code -eq 1
+	grep -q "test panic_marker ..." $(BUILD_DIR)/meta/attribute-test-panic-marker.err
 	$(TARGET) tests/cases/attributes/ok/attribute-export-symbols.ari --shared --emit-llvm $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'define i64 @"ari_public_add"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'define i64 @"increment"' $(BUILD_DIR)/meta/attribute-export-symbols.ll

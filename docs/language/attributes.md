@@ -98,6 +98,9 @@ runner treats a normally returning `void` test as success. For `i64` tests,
 `0` means success; a non-zero return value stops the runner and becomes the
 process exit status. Assertion helpers such as `assert` and `assert_eq_i64`
 can stop the process with a non-zero status through the current panic hook.
+The runner writes progress lines such as `test name ...`, `ok name`, and
+`failed name` to `stderr`; if a panic aborts the process, the last `test`
+line identifies the running test.
 Use `--test-filter name` with `--test`, or `--filter name` with the `ari test`
 subcommand, to keep only tests whose function names contain the substring. A
 filter that matches no tests is a compile error.

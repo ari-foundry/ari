@@ -4272,6 +4272,7 @@ private:
             auto sig = functions_.find(test->name);
             if (sig == functions_.end()) throw CompileError("internal error: missing @test function '" + test->name + "'");
 
+            append_test_runner_stderr(fn.body, test->loc, "test " + test->name + " ...\n");
             if (sig->second.result.primitive == IrPrimitiveKind::I64) {
                 const std::string status_name = "$test_status" + std::to_string(test_index++);
                 fn.body.push_back(make_ir_var_decl(
@@ -4287,6 +4288,7 @@ private:
                 return_stmt->expr = make_local_lvalue_expr(test->loc, status_name, sig->second.result);
 
                 std::vector<IrStmtPtr> then_body;
+                append_test_runner_stderr(then_body, test->loc, "failed " + test->name + "\n");
                 then_body.push_back(std::move(return_stmt));
 
                 auto stmt = std::make_unique<IrStmt>();
@@ -4300,6 +4302,7 @@ private:
                 stmt->body_payload = std::make_unique<IrStmtBodyPayload>();
                 stmt->body_payload->then_body = std::move(then_body);
                 fn.body.push_back(std::move(stmt));
+                append_test_runner_stderr(fn.body, test->loc, "ok " + test->name + "\n");
                 continue;
             }
 
@@ -4308,6 +4311,7 @@ private:
             stmt->loc = test->loc;
             stmt->expr = make_ir_call_expr(test->loc, test->name, sig->second.result);
             fn.body.push_back(std::move(stmt));
+            append_test_runner_stderr(fn.body, test->loc, "ok " + test->name + "\n");
         }
 
         auto ret = std::make_unique<IrStmt>();
@@ -4317,6 +4321,25 @@ private:
         fn.body.push_back(std::move(ret));
 
         return fn;
+    }
+
+    void append_test_runner_stderr(std::vector<IrStmtPtr>& body,
+                                   SourceLocation loc,
+                                   const std::string& text) const {
+        for (unsigned char byte : text) {
+            std::vector<IrExprPtr> args;
+            args.push_back(make_integer_literal(loc, u8_type(loc), byte));
+
+            auto stmt = std::make_unique<IrStmt>();
+            stmt->kind = IrStmtKind::ExprStmt;
+            stmt->loc = loc;
+            stmt->expr = make_builtin_call(
+                loc,
+                "std::io::write_error_byte",
+                std::move(args),
+                i64_type(loc));
+            body.push_back(std::move(stmt));
+        }
     }
 
     void require_main() const {
@@ -4370,6 +4393,10 @@ private:
 
     static IrType i64_type(SourceLocation loc) {
         return integer_type(IrPrimitiveKind::I64, loc);
+    }
+
+    static IrType u8_type(SourceLocation loc) {
+        return integer_type(IrPrimitiveKind::U8, loc);
     }
 
     static IrType bool_type(SourceLocation loc) {

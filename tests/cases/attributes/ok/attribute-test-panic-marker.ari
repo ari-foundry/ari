@@ -1,0 +1,4 @@
+@test
+fn panic_marker() {
+  panic();
+}

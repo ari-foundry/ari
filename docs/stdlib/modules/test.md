@@ -137,9 +137,22 @@ ari test tests/cases/attributes/ok/attribute-test-runner.ari --filter smoke -o b
 In `--test` mode, Ari collects `@test` functions in source order and emits a
 generated `main`. `void` tests are considered successful if they return normally.
 `i64` tests may return `0` for success or any non-zero status to stop the runner
-and become the process exit status. Use `--test-filter name` with `--test`, or
-`--filter name` with the `ari test` subcommand, to select tests whose function
-names contain a substring. A filter that matches nothing is a compile error.
+and become the process exit status. The runner writes progress lines to
+`stderr`:
+
+```text
+test smoke ...
+ok smoke
+test exits_with_status ...
+failed exits_with_status
+```
+
+This is the current panic-capture bridge: Ari does not unwind through panics
+yet, so an `assert`/`panic` abort still exits the process, but the last
+`test name ...` line identifies the running test. Use `--test-filter name` with
+`--test`, or `--filter name` with the `ari test` subcommand, to select tests
+whose function names contain a substring. A filter that matches nothing is a
+compile error.
 
 `@test` functions cannot take parameters, be generic, be extern, be meta
 functions, or be named `main`.
@@ -190,4 +203,6 @@ test runner ownership before they become public API guarantees.
 - `tests/cases/attributes/ok/attribute-test-filter.ari`: `ari test --filter`
   substring selection.
 - `tests/cases/attributes/ok/attribute-test-status.ari`: non-zero `i64`
-  test-status propagation.
+  test-status propagation and failed-name output.
+- `tests/cases/attributes/ok/attribute-test-panic-marker.ari`: panic-path
+  running-test marker output.

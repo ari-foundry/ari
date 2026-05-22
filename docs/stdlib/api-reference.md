@@ -169,8 +169,10 @@ friendlier `ari test file.ari` subcommand. `--test-filter name` and
 `ari test ... --filter name` select `@test` functions whose names contain the
 given substring. `void` tests pass when they return normally; `i64` tests may
 return a non-zero status to stop the generated runner and become the process
-exit code. Panic/assert failures still stop the process through the current
-panic hook rather than being captured per test.
+exit code. The runner writes `test name ...`, `ok name`, and `failed name`
+progress lines to `stderr`. Panic/assert failures still stop the process
+through the current panic hook, but the last `test name ...` line identifies
+the running test.
 
 Debug printing can use `print`/`println` with `{:?}` for built-in printable
 values, `format_in!(ref mut zone, "{:?}", value)` for values implementing

@@ -38,8 +38,9 @@ writes, stream copies, and flushes, plus bool/Option compatibility wrappers on
 top of the raw process IO, descriptor, and file seek hooks.
 `std::test` adds source executable unit-test reports, generic equality checks,
 scratch-zone helpers, temporary path helpers, snapshot/golden comparisons,
-minimal benchmark timers, and compiler `@test` runner integration. `std::log`
-adds level-prefixed `stderr` diagnostic lines, and `std::error` adds shared
+minimal benchmark timers, and compiler `@test` runner integration with stderr
+progress/failure markers. `std::log` adds level-prefixed `stderr` diagnostic
+lines, and `std::error` adds shared
 recoverable error categories,
 compact error values, POSIX errno mapping, module-local `Error` aliases, and
 stable `Display`/`Debug` output while per-test panic/log capture, doctests,
