@@ -10,6 +10,9 @@ Read this page for normal compiler work:
 
 - [Compiler Development Dashboard](compiler-development-dashboard.md) gives the
   one-page status, next actions, and small checks.
+- [Compiler Onboarding](compiler-onboarding.md) gives the first-day path for
+  reading docs, choosing a compiler layer, placing a fixture, and keeping
+  unrelated library work out of compiler-design commits.
 - [Architecture](architecture.md) explains the current C++ compiler shape.
 - [Compiler Pipeline](compiler-pipeline.md) explains the source-to-LLVM path.
 - [Compiler Contributor Guide](compiler-contributor-guide.md) is the practical
@@ -119,6 +122,7 @@ future Ari-written compiler plan.
 | P0 | Test classification | Keep compiler fixtures grouped by `model`, `artifact`, `ok`, and `errors`, and name each file by the behavior it protects. | `make check-language-docs` and `make check-compiler-development`. |
 | P0 | Compiler health scorecard | Keep the maturity estimate tied to weighted compiler-development gates instead of a vague long-term milestone. | `tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari`. |
 | P0 | Development dashboard | Keep current status, next actions, small checks, and non-goals visible from one page. | `tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari`. |
+| P0 | Compiler onboarding | Keep the first-day compiler-development path, fixture bucket choice, focused checks, and dirty-worktree scoping easy to follow. | `tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari`. |
 | P0 | Concepts glossary | Keep compiler layer terms, artifact vocabulary, and review language understandable to first-time compiler contributors. | `tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari`. |
 | P0 | Compiler layer map | Keep source-file ownership, first artifacts, docs, and focused checks discoverable for each compiler layer. | `tests/cases/compiler-development/ok/model/compiler-layer-map.ari`. |
 | P0 | Compiler triage guide | Route symptoms, bug reports, and artifact diffs to the earliest owning layer and smallest useful check. | `tests/cases/compiler-development/ok/model/compiler-triage-guide.ari`. |

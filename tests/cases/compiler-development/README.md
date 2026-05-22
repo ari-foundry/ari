@@ -60,6 +60,9 @@ the same language surface that normal Ari users get.
   data.
 - `ok/model/compiler-doc-crosswalk.ari`: language docs-to-tests navigation,
   focused checks, and feature-family coverage as normal Ari data.
+- `ok/model/compiler-onboarding-workflow.ari`: first-day compiler contributor
+  path, layer choice, fixture bucket choice, focused checks, and non-bootstrap
+  scope as normal Ari data.
 - `errors/bootstrap-class-keyword.ari`: rejects `class` as a compiler-development
   shortcut; compiler code should use normal Ari structs, enums, functions, and
   traits.

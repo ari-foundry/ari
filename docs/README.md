@@ -11,6 +11,7 @@ The docs are split by audience.
   [Feature Crosswalk](language/feature-crosswalk.md).
 - New compiler contributor:
   [Compiler Development Dashboard](dev/compiler-development-dashboard.md), then
+  [Compiler Onboarding](dev/compiler-onboarding.md), then
   [Compiler Contributor Guide](dev/compiler-contributor-guide.md), then
   [Compiler Concepts Glossary](dev/compiler-concepts-glossary.md), then
   [Compiler Layer Map](dev/compiler-layer-map.md), then
@@ -81,6 +82,7 @@ Use these when changing the compiler:
 - [Architecture](dev/architecture.md)
 - [Compiler Pipeline](dev/compiler-pipeline.md)
 - [Compiler Development Dashboard](dev/compiler-development-dashboard.md)
+- [Compiler Onboarding](dev/compiler-onboarding.md)
 - [Compiler Contributor Guide](dev/compiler-contributor-guide.md)
 - [Compiler Concepts Glossary](dev/compiler-concepts-glossary.md)
 - [Compiler Layer Map](dev/compiler-layer-map.md)

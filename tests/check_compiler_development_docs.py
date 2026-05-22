@@ -28,6 +28,8 @@ def main() -> int:
     roadmap = read(roadmap_path)
     dashboard_path = "docs/dev/compiler-development-dashboard.md"
     dashboard = read(dashboard_path)
+    onboarding_path = "docs/dev/compiler-onboarding.md"
+    onboarding = read(onboarding_path)
     gates_path = "docs/dev/compiler-maturity-gates.md"
     gates = read(gates_path)
     contributor_path = "docs/dev/compiler-contributor-guide.md"
@@ -84,6 +86,7 @@ def main() -> int:
     for needle in [
         "45-46% through the current compiler-development maturity",
         "compiler-health estimate",
+        "Compiler Onboarding",
         "Compiler Contributor Guide",
         "Compiler Development Roadmap",
         "Compiler Concepts Glossary",
@@ -127,6 +130,50 @@ def main() -> int:
         "Developer loop",
     ]:
         require(dashboard, needle, dashboard_path)
+
+    for heading in [
+        "# Compiler Onboarding",
+        "## First Day Path",
+        "## Working Loop",
+        "## Test Bucket Picker",
+        "## Docs-Only Ari Fixture Path",
+        "## Working Beside Library Changes",
+        "## Handoff Checklist",
+    ]:
+        require(onboarding, heading, onboarding_path)
+
+    for needle in [
+        "ordinary hosted compiler development",
+        "not a bootstrap implementation plan",
+        "Compiler Development Dashboard",
+        "Compiler Contributor Guide",
+        "Compiler Layer Map",
+        "Compiler Test Authoring",
+        "Compiler Readiness Inventory",
+        "Quick Reference",
+        "Feature Status",
+        "Feature Crosswalk",
+        "source loading -> lexer -> parser -> module graph",
+        "build/ari --explain-pass sema",
+        "build/ari --explain-test-bucket compiler-artifact-ok",
+        "make check-compiler-dev-docs",
+        "make check-compiler-development",
+        "make check-compiler-artifacts",
+        "Full `make check` belongs at handoff",
+        "Sanitizer checks are intentionally separate",
+        "tests/cases/compiler-development/ok/model/",
+        "tests/cases/compiler-development/artifact/ok/",
+        "tests/cases/compiler-development/artifact/errors/",
+        "tests/cases/compiler-development/errors/",
+        "compiler-onboarding-workflow.ari",
+        "Ari has no `class` or `interface` keyword",
+        "Option[T]",
+        "Result[T, E]",
+        "git status --short",
+        "Do not stage `lib/`",
+        "Which bootstrap-only or library-only work stayed out of scope",
+    ]:
+        require(onboarding, needle, onboarding_path)
 
     for heading in [
         "# Compiler Concepts Glossary",
@@ -672,6 +719,7 @@ def main() -> int:
         "day-to-day roadmap for developing the Ari compiler",
         "Improve Ari as a general language and compiler",
         "Compiler Development Dashboard",
+        "Compiler Onboarding",
         "Compiler Maturity Gates",
         "Compiler Contributor Guide",
         "Compiler Concepts Glossary",
@@ -695,6 +743,7 @@ def main() -> int:
         "tests/cases/compiler-development/ok/model/compiler-stage-gates.ari",
         "tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari",
         "tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari",
+        "tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari",
         "tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari",
         "tests/cases/compiler-development/ok/model/compiler-layer-map.ari",
         "tests/cases/compiler-development/ok/model/compiler-triage-guide.ari",
@@ -868,6 +917,7 @@ def main() -> int:
     for needle in [
         "reliable, pleasant, general-purpose language",
         "Compiler Development Roadmap",
+        "Compiler Onboarding",
         "Compiler Readiness Inventory",
         "Compiler Pipeline",
         "Compiler Pass Contracts",
@@ -935,6 +985,7 @@ def main() -> int:
         "tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari",
         "tests/cases/compiler-development/ok/model/compiler-diagnostic-authoring.ari",
         "tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari",
+        "tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari",
         "tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari",
         "tests/cases/compiler-development/ok/model/compiler-source-identity.ari",
         "tests/cases/compiler-development/ok/model/compiler-module-project-authoring.ari",
@@ -1255,6 +1306,7 @@ def main() -> int:
     gate_labels = {
         "frontend-grammar": "Frontend grammar",
         "development-dashboard": "Compiler Development Dashboard",
+        "compiler-onboarding": "Compiler Onboarding",
         "contributor-guide": "Compiler Contributor Guide",
         "concepts-glossary": "Compiler Concepts Glossary",
         "layer-map": "Compiler Layer Map",
@@ -1292,6 +1344,8 @@ def main() -> int:
         require(manifest, entry, manifest_path)
         if entry == "development-dashboard":
             require(dashboard, label, dashboard_path)
+        elif entry == "compiler-onboarding":
+            require(onboarding, label, onboarding_path)
         elif entry == "contributor-guide":
             require(contributor, label, contributor_path)
         elif entry == "concepts-glossary":
@@ -1338,6 +1392,7 @@ def main() -> int:
     for index_path in ["docs/README.md", "docs/dev/README.md"]:
         index = read(index_path)
         require(index, "Compiler Development Dashboard", index_path)
+        require(index, "Compiler Onboarding", index_path)
         require(index, "Compiler Development Roadmap", index_path)
         require(index, "Compiler Contributor Guide", index_path)
         require(index, "Compiler Concepts Glossary", index_path)

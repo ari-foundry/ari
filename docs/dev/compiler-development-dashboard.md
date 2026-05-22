@@ -19,31 +19,34 @@ Use this order when joining compiler work:
 
 1. [Compiler Contributor Guide](compiler-contributor-guide.md): where to edit,
    how to choose a focused test, and what counts as progress.
-2. [Compiler Concepts Glossary](compiler-concepts-glossary.md): layer terms,
+2. [Compiler Onboarding](compiler-onboarding.md): the first-day path for
+   reading docs, picking a layer, choosing a fixture bucket, and staying out of
+   unrelated library work.
+3. [Compiler Concepts Glossary](compiler-concepts-glossary.md): layer terms,
    artifact vocabulary, and review language for first-time compiler work.
-3. [Compiler Layer Map](compiler-layer-map.md): which `src/` files own each
+4. [Compiler Layer Map](compiler-layer-map.md): which `src/` files own each
    layer, which artifact proves it, and which small check to run first.
-4. [Compiler Triage Guide](compiler-triage-guide.md): how to route a symptom,
+5. [Compiler Triage Guide](compiler-triage-guide.md): how to route a symptom,
    bug report, or artifact diff to the first owning compiler layer.
-5. [Compiler Source Identity](compiler-source-identity.md): how source files,
+6. [Compiler Source Identity](compiler-source-identity.md): how source files,
    ids, byte spans, line/column lookup, and source-map artifacts should work.
-6. [Compiler Module Project Authoring](compiler-module-project-authoring.md):
+7. [Compiler Module Project Authoring](compiler-module-project-authoring.md):
    how file modules, roots, search paths, metadata, caches, and module graph
    artifacts should be changed.
-7. [Compiler Artifact Authoring](compiler-artifact-authoring.md): how to add
+8. [Compiler Artifact Authoring](compiler-artifact-authoring.md): how to add
    deterministic artifact producers, goldens, normalization, and review rules.
-8. [Compiler Diagnostic Authoring](compiler-diagnostic-authoring.md): how to
+9. [Compiler Diagnostic Authoring](compiler-diagnostic-authoring.md): how to
    choose diagnostic codes, messages, labels, notes, and golden tests.
-9. [Compiler Test Authoring](compiler-test-authoring.md): how to choose test
+10. [Compiler Test Authoring](compiler-test-authoring.md): how to choose test
    buckets, names, focused checks, and artifact updates.
-10. [Compiler Development Roadmap](compiler-development-roadmap.md): the long
+11. [Compiler Development Roadmap](compiler-development-roadmap.md): the long
    compiler plan and implementation phases.
-11. [Compiler Implementation Playbook](compiler-implementation-playbook.md):
+12. [Compiler Implementation Playbook](compiler-implementation-playbook.md):
    how to turn roadmap entries into small tickets.
-12. [Compiler Next Slices](compiler-next-slices.md): the near-term queue.
-13. [Compiler Change Checklist](compiler-change-checklist.md): review and
+13. [Compiler Next Slices](compiler-next-slices.md): the near-term queue.
+14. [Compiler Change Checklist](compiler-change-checklist.md): review and
    handoff checklist for normal compiler changes.
-14. [Compiler Readiness Inventory](compiler-readiness-inventory.md): current
+15. [Compiler Readiness Inventory](compiler-readiness-inventory.md): current
    strengths, blocking gaps, scorecard, and development gates.
 
 For language behavior while writing Ari fixtures, pair these with

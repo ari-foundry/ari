@@ -7,6 +7,7 @@
 
 frontend-grammar: ok and error fixtures for lexer/parser syntax surfaces
 development-dashboard: one-page compiler-development status, next actions, small checks, and readiness seed
+compiler-onboarding: first-day compiler contributor path, docs-only Ari fixture workflow, test buckets, focused checks, and dirty-worktree scoping
 contributor-guide: edit map, small-check loop, test categories, natural Ari design rules
 concepts-glossary: compiler layer terms, artifact vocabulary, review language, and ownership boundaries
 layer-map: source files, layer ownership, first artifacts, docs, and focused checks

@@ -170,6 +170,9 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari`:
   one-page compiler-development dashboard status, next-action categories, and
   the 40% readiness seed as normal Ari data.
+- `tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari`:
+  first-day compiler contributor path, layer choice, fixture bucket choice,
+  focused checks, and non-bootstrap scope as normal Ari data.
 - `tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari`:
   compiler layer concepts, review vocabulary, and artifact ownership as normal
   Ari data.

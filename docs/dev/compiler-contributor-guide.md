@@ -15,18 +15,20 @@ For a compiler change, read these in order:
 
 1. [Compiler Development Roadmap](compiler-development-roadmap.md): current
    development phases and non-goals.
-2. [Compiler Readiness Inventory](compiler-readiness-inventory.md): current
+2. [Compiler Onboarding](compiler-onboarding.md): first-day reading path,
+   focused loop, test bucket picker, and dirty-worktree scoping.
+3. [Compiler Readiness Inventory](compiler-readiness-inventory.md): current
    strengths, blocking gaps, backlog, and development gates.
-3. [Compiler Layer Map](compiler-layer-map.md): which `src/` files own each
+4. [Compiler Layer Map](compiler-layer-map.md): which `src/` files own each
    compiler layer and which small check to run first.
-4. [Compiler Triage Guide](compiler-triage-guide.md): how to route a symptom
+5. [Compiler Triage Guide](compiler-triage-guide.md): how to route a symptom
    to the earliest layer, closest test bucket, and smallest check.
-5. [Compiler Pipeline](compiler-pipeline.md): how source becomes LLVM output.
-6. [Compiler Pass Contracts](compiler-pass-contracts.md): what each pass owns
+6. [Compiler Pipeline](compiler-pipeline.md): how source becomes LLVM output.
+7. [Compiler Pass Contracts](compiler-pass-contracts.md): what each pass owns
    and what data it may hand to the next pass.
-7. [Feature Test Matrix](test-matrix.md): which feature families already have
+8. [Feature Test Matrix](test-matrix.md): which feature families already have
    ok, error, IR, and executable coverage.
-8. [Build And Test](build-test.md): focused Make targets and direct
+9. [Build And Test](build-test.md): focused Make targets and direct
    `build/ari` commands.
 
 Use [Compiler Maturity Gates](compiler-maturity-gates.md) as the health

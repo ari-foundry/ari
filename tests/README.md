@@ -57,7 +57,7 @@ Within each feature directory, tests still use readable file prefixes:
   behavior without creating a `bootstrap/` tree.
   Examples: `compiler-readiness-scorecard.ari`,
   `compiler-development-dashboard.ari`, `compiler-test-classification.ari`,
-  `bootstrap-class-keyword.ari`.
+  `compiler-onboarding-workflow.ari`, `bootstrap-class-keyword.ari`.
 
 See `docs/dev/library-testing.md` for the full standard library testing policy.
 
@@ -71,7 +71,7 @@ Use the narrowest target that matches the changed surface:
 | `make check-compiler-dev-docs` | Compiler roadmap, maturity gates, pass contracts, project model, source diagnostics, and artifact-testing docs. |
 | `make check-source-map-unit` | Direct C++ SourceMap API checks for line/column, EOF, CRLF, UTF-8 byte columns, invalid spans, multi-file ids, and snippets. |
 | `make check-compiler-artifacts` | Deterministic capability inventory, source-map, token, syntax, diagnostic, module graph, declaration index, typed IR, and pass-summary artifacts. |
-| `make check-compiler-development` | Ari fixtures that model compiler pass worklists, diagnostics, source maps, readiness gates, and test classification as ordinary language code. |
+| `make check-compiler-development` | Ari fixtures that model compiler pass worklists, diagnostics, source maps, readiness gates, onboarding, and test classification as ordinary language code. |
 | `make check-bootstrap-docs` | Later bootstrap start-gate docs and fixture-group manifest. |
 | `make check-bootstrap-readiness` | Small pre-bootstrap Ari fixtures under `tests/cases/bootstrap-readiness/`. |
 

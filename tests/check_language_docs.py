@@ -36,6 +36,7 @@ def main() -> int:
         "[Feature Status](language/feature-status.md)",
         "[Feature Crosswalk](language/feature-crosswalk.md)",
         "[Examples And Tests](language/examples-and-tests.md)",
+        "[Compiler Onboarding](dev/compiler-onboarding.md)",
         "[Compiler Contributor Guide](dev/compiler-contributor-guide.md)",
     ]:
         require(docs_index, needle, docs_index_path)
@@ -254,6 +255,7 @@ def main() -> int:
         "compiler-readiness-scorecard",
         "compiler-development-dashboard",
         "compiler-test-classification",
+        "compiler-onboarding-workflow",
         "tests/check_compiler_capability_cli.py",
         "tests/check_compiler_pass_cli.py",
         "tests/check_compiler_test_bucket_cli.py",
@@ -284,6 +286,7 @@ def main() -> int:
         "`errors/`",
         "`artifact/ok`",
         "compiler-test-classification.ari",
+        "compiler-onboarding-workflow.ari",
     ]:
         require(cases_index, needle, cases_index_path)
 

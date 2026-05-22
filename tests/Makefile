@@ -194,6 +194,10 @@ check-compiler-development: $(TARGET)
 	$(TARGET) tests/cases/compiler-development/ok/model/compiler-doc-crosswalk.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-doc-crosswalk.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-doc-crosswalk.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-doc-crosswalk.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-doc-crosswalk.elf; $(BUILD_DIR)/compiler-development/compiler-doc-crosswalk.elf; code=$$?; test $$code -eq 229; fi
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari --check
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.ll
+	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.elf; $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.elf; code=$$?; test $$code -eq 250; fi
 	if $(TARGET) tests/cases/compiler-development/errors/bootstrap-class-keyword.ari --check >$(BUILD_DIR)/compiler-development/bootstrap-class-keyword.err 2>&1; then exit 1; fi
 	grep -q "expected top-level declaration" $(BUILD_DIR)/compiler-development/bootstrap-class-keyword.err
 	if $(TARGET) tests/cases/compiler-development/errors/bootstrap-interface-keyword.ari --check >$(BUILD_DIR)/compiler-development/bootstrap-interface-keyword.err 2>&1; then exit 1; fi
