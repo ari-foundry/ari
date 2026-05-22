@@ -79,6 +79,15 @@ Front-end or planned surface:
   into IR.
 - Keep all executable and object emission on the LLVM path.
 - Keep allocation explicit and capability-oriented. Avoid a magical global heap.
+- For zone-backed stdlib containers, entries, iterators, and helper views, do
+  not store redundant `zone`, `allocator`, `arena`, or metadata handles when a
+  stable zone allocation pointer already exists. Recover the zone from the
+  allocation header via `zone::of(ptr)` or `ptr.zone()` at growth/allocation
+  sites. Normal payload access must keep using the returned user pointer
+  directly; only allocator/zone recovery code may inspect the fixed header at
+  `ptr - 8`. Empty containers need a real fallback such as a zone-owned
+  sentinel/backing allocation or another owning zone-backed pointer, not a
+  per-entry/per-helper cached zone field.
 - Preserve user changes in a dirty worktree; do not revert unrelated files.
 
 ## Docs Map
