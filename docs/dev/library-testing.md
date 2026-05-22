@@ -180,8 +180,8 @@ identifies the exact case:
   `available_parallelism`, source `sleep` wrapper over `std::time`, child
   thread use of both helpers, and `sysconf`/sleep hook lowering checks.
 - `std-thread-builder.ari`: source `std::thread::Builder` option accessors,
-  builder-based spawn, root alias coverage, advisory `is_finished`, and
-  `pthread_kill` hook lowering checks.
+  builder-based configured spawn, root alias coverage, advisory `is_finished`,
+  and pthread name/stack/completion hook lowering checks.
 - `std-thread-local.ari`: explicit zone-backed `ThreadLocal[T]` construction,
   current-thread get/set/mutable access, lazy initialization, value removal,
   root alias coverage, and thread-local zone provenance.

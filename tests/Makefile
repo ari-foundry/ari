@@ -1010,7 +1010,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-runtime-helpers.ari -o $(BUILD_DIR)/prelude/std-thread-runtime-helpers.elf
 	$(BUILD_DIR)/prelude/std-thread-runtime-helpers.elf; code=$$?; test $$code -eq 24
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-builder.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-builder.ll
+	grep -q "@ari_builtin_thread_spawn_configured" $(BUILD_DIR)/prelude/std-thread-builder.ll
 	grep -q "@ari_builtin_thread_is_finished" $(BUILD_DIR)/prelude/std-thread-builder.ll
+	grep -q "declare i32 @pthread_attr_init" $(BUILD_DIR)/prelude/std-thread-builder.ll
+	grep -q "declare i32 @pthread_attr_setstacksize" $(BUILD_DIR)/prelude/std-thread-builder.ll
+	grep -q "declare i32 @pthread_setname_np" $(BUILD_DIR)/prelude/std-thread-builder.ll
 	grep -q "declare i32 @pthread_kill" $(BUILD_DIR)/prelude/std-thread-builder.ll
 	grep -F -q "std__thread__Builder" $(BUILD_DIR)/prelude/std-thread-builder.ll
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-builder.ari -o $(BUILD_DIR)/prelude/std-thread-builder.elf

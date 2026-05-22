@@ -797,6 +797,7 @@ fn std::thread::is_main|check-prelude std-thread-basic source main-thread predic
 fn std::thread::join|check-prelude std-thread-basic thread join hook; docs/stdlib/modules/thread.md
 fn std::thread::sleep|check-prelude std-thread-runtime-helpers duration sleep convenience wrapper; docs/stdlib/modules/thread.md
 fn std::thread::spawn|check-prelude std-thread-basic function-pointer spawn hook; docs/stdlib/modules/thread.md
+fn std::thread::spawn_configured|check-prelude std-thread-builder builder-backed configured spawn hook; docs/stdlib/modules/thread.md
 fn std::thread::thread_local[T]|check-prelude std-thread-local default-capacity thread-local handle constructor; docs/stdlib/modules/thread.md
 fn std::thread::thread_local_with_capacity[T]|check-prelude std-thread-local explicit-capacity thread-local handle constructor; docs/stdlib/modules/thread.md
 fn std::thread::yield_now|check-prelude std-thread-basic scheduler yield hook; docs/stdlib/modules/thread.md

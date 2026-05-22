@@ -27,6 +27,7 @@ pub struct ThreadLocal[T] {
 }
 
 pub extern "ari" fn spawn(entry: fn() -> i64) -> Thread = "ari_builtin_thread_spawn";
+pub extern "ari" fn spawn_configured(entry: fn() -> i64, name: string, stack_size: i64) -> Thread = "ari_builtin_thread_spawn_configured";
 pub extern "ari" fn join(thread: Thread) -> i64 = "ari_builtin_thread_join";
 pub extern "ari" fn is_finished(thread: Thread) -> bool = "ari_builtin_thread_is_finished";
 pub extern "ari" fn yield_now() -> void = "ari_builtin_thread_yield";
@@ -136,10 +137,7 @@ pub impl std::thread::Builder {
   }
 
   fn spawn(self: ref Self, entry: fn() -> i64) -> std::thread::Thread {
-    // The first builder slice records the requested policy and delegates to
-    // the existing pthread-backed spawn hook. Runtime enforcement of name and
-    // stack size should land with platform-specific thread attributes.
-    return std::thread::spawn(entry);
+    return std::thread::spawn_configured(entry, self.name, self.stack_size_bytes);
   }
 }
 

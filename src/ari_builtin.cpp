@@ -145,6 +145,8 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::process::wait", "ari_builtin_process_wait"},
         {"thread::spawn", "ari_builtin_thread_spawn"},
         {"std::thread::spawn", "ari_builtin_thread_spawn"},
+        {"thread::spawn_configured", "ari_builtin_thread_spawn_configured"},
+        {"std::thread::spawn_configured", "ari_builtin_thread_spawn_configured"},
         {"thread::join", "ari_builtin_thread_join"},
         {"std::thread::join", "ari_builtin_thread_join"},
         {"thread::is_finished", "ari_builtin_thread_is_finished"},
@@ -361,6 +363,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_process_wait") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_mem_page_size") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_thread_spawn") return builtin_sig({thread_entry}, thread_handle);
+    if (symbol == "ari_builtin_thread_spawn_configured") return builtin_sig({thread_entry, source_string, i64}, thread_handle);
     if (symbol == "ari_builtin_thread_join") return builtin_sig({thread_handle}, i64);
     if (symbol == "ari_builtin_thread_is_finished") return builtin_sig({thread_handle}, boolean);
     if (symbol == "ari_builtin_thread_yield") return builtin_sig({}, void_type);

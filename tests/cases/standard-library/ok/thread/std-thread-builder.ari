@@ -1,15 +1,15 @@
-// Covers the first Thread builder shape and advisory completion predicate.
+// Covers Thread builder runtime options and the advisory completion predicate.
 fn worker() -> i64 {
   thread::yield_now();
   return 23;
 }
 
 fn main() -> i64 {
-  let builder = thread::builder().name("ari-worker").stack_size(0);
+  let builder = thread::builder().name("ari-worker").stack_size(1048576);
   if !std::string::bytes(builder.configured_name()).equals("ari-worker") {
     return 1;
   }
-  if builder.configured_stack_size() != 0 {
+  if builder.configured_stack_size() != 1048576 {
     return 2;
   }
 

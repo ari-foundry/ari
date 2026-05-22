@@ -468,6 +468,10 @@ private:
                symbol == "fork" ||
                symbol == "waitpid" ||
                symbol == "pthread_create" ||
+               symbol == "pthread_attr_init" ||
+               symbol == "pthread_attr_destroy" ||
+               symbol == "pthread_attr_setstacksize" ||
+               symbol == "pthread_setname_np" ||
                symbol == "pthread_join" ||
                symbol == "pthread_kill" ||
                symbol == "sched_yield" ||
@@ -628,6 +632,10 @@ private:
         declarations_ << "declare i32 @fork()\n";
         declarations_ << "declare i32 @waitpid(i32, ptr, i32)\n";
         declarations_ << "declare i32 @pthread_create(ptr, ptr, ptr, ptr)\n";
+        declarations_ << "declare i32 @pthread_attr_init(ptr)\n";
+        declarations_ << "declare i32 @pthread_attr_destroy(ptr)\n";
+        declarations_ << "declare i32 @pthread_attr_setstacksize(ptr, i64)\n";
+        declarations_ << "declare i32 @pthread_setname_np(i64, ptr)\n";
         declarations_ << "declare i32 @pthread_join(i64, ptr)\n";
         declarations_ << "declare i32 @pthread_kill(i64, i32)\n";
         declarations_ << "declare i32 @sched_yield()\n";
@@ -2725,7 +2733,16 @@ private:
 
         line("define " + runtime_visibility + "{ i64, i64 } @ari_builtin_thread_spawn(ptr %start) {");
         line("entry:");
+        line("  %thread = call { i64, i64 } @ari_builtin_thread_spawn_configured(ptr %start, ptr null, i64 0)");
+        line("  ret { i64, i64 } %thread");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ i64, i64 } @ari_builtin_thread_spawn_configured(ptr %start, ptr %name, i64 %stack_size) {");
+        line("entry:");
         line("  %native.ptr = alloca i64, align 8");
+        line("  %attr.storage = alloca [128 x i8], align 8");
+        line("  %attr.ptr = getelementptr [128 x i8], ptr %attr.storage, i64 0, i64 0");
         line("  %packet = call ptr @malloc(i64 16)");
         line("  %alloc.failed = icmp eq ptr %packet, null");
         line("  br i1 %alloc.failed, label %fail, label %prepare");
@@ -2734,11 +2751,40 @@ private:
         line("  %id.ptr = getelementptr i8, ptr %packet, i64 8");
         line("  %id = atomicrmw add ptr @ari_next_thread_id, i64 1 monotonic");
         line("  store i64 %id, ptr %id.ptr, align 8");
+        line("  %use.attr = icmp sgt i64 %stack_size, 0");
+        line("  br i1 %use.attr, label %attr_init, label %create_plain");
+        line("attr_init:");
+        line("  %attr.init.code = call i32 @pthread_attr_init(ptr %attr.ptr)");
+        line("  %attr.init.failed = icmp ne i32 %attr.init.code, 0");
+        line("  br i1 %attr.init.failed, label %create_fail, label %attr_stack");
+        line("attr_stack:");
+        line("  %attr.stack.code = call i32 @pthread_attr_setstacksize(ptr %attr.ptr, i64 %stack_size)");
+        line("  %attr.stack.failed = icmp ne i32 %attr.stack.code, 0");
+        line("  br i1 %attr.stack.failed, label %attr_fail, label %create_attr");
+        line("create_attr:");
+        line("  %code.attr = call i32 @pthread_create(ptr %native.ptr, ptr %attr.ptr, ptr @ari_thread_trampoline, ptr %packet)");
+        line("  %attr.destroy.after = call i32 @pthread_attr_destroy(ptr %attr.ptr)");
+        line("  %create.attr.failed = icmp ne i32 %code.attr, 0");
+        line("  br i1 %create.attr.failed, label %create_fail, label %ok");
+        line("attr_fail:");
+        line("  %attr.destroy.fail = call i32 @pthread_attr_destroy(ptr %attr.ptr)");
+        line("  br label %create_fail");
+        line("create_plain:");
         line("  %code = call i32 @pthread_create(ptr %native.ptr, ptr null, ptr @ari_thread_trampoline, ptr %packet)");
         line("  %create.failed = icmp ne i32 %code, 0");
         line("  br i1 %create.failed, label %create_fail, label %ok");
         line("ok:");
         line("  %native = load i64, ptr %native.ptr, align 8");
+        line("  %name.null = icmp eq ptr %name, null");
+        line("  br i1 %name.null, label %return_ok, label %maybe_name");
+        line("maybe_name:");
+        line("  %name.len = call i64 @strlen(ptr %name)");
+        line("  %has.name = icmp sgt i64 %name.len, 0");
+        line("  br i1 %has.name, label %apply_name, label %return_ok");
+        line("apply_name:");
+        line("  %ignored.name = call i32 @pthread_setname_np(i64 %native, ptr %name)");
+        line("  br label %return_ok");
+        line("return_ok:");
         line("  %with.native = insertvalue { i64, i64 } undef, i64 %native, 0");
         line("  %with.id = insertvalue { i64, i64 } %with.native, i64 %id, 1");
         line("  ret { i64, i64 } %with.id");

@@ -868,12 +868,12 @@ positive. `yield_now()` is a host scheduler hint, not synchronization.
 `sleep(duration)` forwards to `std::time::sleep`. `available_parallelism()`
 returns the hosted runtime's online processor count and falls back to `1` when
 the platform call fails. `is_finished` is advisory and does not replace `join`.
-`Builder` records a requested thread name and stack size; the current runtime
-keeps those options visible but still delegates creation to the plain spawn
-hook. `ThreadLocal[T]` is an explicit zone-backed handle for per-thread
-values. It is the user-facing API available today; compiler-level
-`thread_local` declarations, TLS destructors, and applied stack attributes
-remain roadmap work.
+`Builder` records a requested thread name and stack size and delegates through
+`spawn_configured`; the LLVM/Linux pthread backend applies stack size with
+thread attributes and applies the name as a best-effort host hint.
+`ThreadLocal[T]` is an explicit zone-backed handle for per-thread values. It is
+the user-facing API available today; compiler-level `thread_local`
+declarations and TLS destructors remain roadmap work.
 
 Synchronization helpers live in `std::sync`:
 

@@ -3,7 +3,7 @@
 `std::thread` is Ari's hosted thread module. It can start a plain function
 pointer on the current LLVM/Linux runtime path, join the returned handle, yield
 or sleep the current OS thread, read Ari's runtime thread id, query hosted
-parallelism, use a small `Builder` value for future thread options, and keep
+parallelism, use a small `Builder` value for thread options, and keep
 per-thread values in an explicit `ThreadLocal[T]` handle.
 
 The API is deliberately explicit. Thread entries are still `fn() -> i64`, not
@@ -24,6 +24,7 @@ thread::is_main() -> bool
 thread::available_parallelism() -> i64
 thread::is_join_error(status: i64) -> bool
 thread::builder() -> Builder
+thread::spawn_configured(entry: fn() -> i64, name: string, stack_size: i64) -> Thread
 thread::thread_local<T>(ref mut Zone) -> ThreadLocal[T]
 thread::thread_local_with_capacity<T>(ref mut Zone, capacity: i64) -> ThreadLocal[T]
 
@@ -69,11 +70,13 @@ pthread-backed LLVM host it treats invalid handles as finished and asks
 `pthread_kill(handle, 0)` whether the native handle still exists. It does not
 consume the handle and it is not a replacement for `join`.
 
-`Builder` records a requested name and stack size in a plain value. The current
-`Builder::spawn` delegates to `thread::spawn`; runtime enforcement of names and
-custom stack sizes is reserved for the platform-specific thread-attribute
-slice. Keeping the builder shape now lets user code and docs settle on natural
-method names without pretending that every backend option is already wired.
+`Builder` records a requested name and stack size in a plain value.
+`Builder::spawn` delegates to `thread::spawn_configured`, which applies the
+requested stack size through pthread attributes on the current LLVM/Linux host
+backend when `stack_size > 0`. Non-empty names are passed to
+`pthread_setname_np` after successful creation as a best-effort host hint; Linux
+thread names are short and rejected names do not make spawn fail. Plain
+`thread::spawn` remains the zero-option helper.
 
 `yield_now()` asks the host scheduler to let another runnable thread make
 progress. It is only a hint and does not create a synchronization boundary.
@@ -152,8 +155,9 @@ fn main() -> i64 {
   status type.
 - `is_finished` is advisory and backend-specific. It should be used for status
   checks, not resource reclamation.
-- `Builder` records name and stack-size options, but the current runtime does
-  not apply those options to `pthread_create` yet.
+- `Builder` options are implemented on the LLVM/Linux pthread backend. Other
+  backends need equivalent thread-attribute hooks before they can promise the
+  same behavior.
 - `ThreadLocal[T]` is explicit handle storage. Ari still needs declaration
   sugar for `thread_local` statics, destructor policy for compiler-owned TLS,
   and captured thread entries before cross-thread shared handles become
@@ -170,7 +174,8 @@ fn main() -> i64 {
   checks `available_parallelism`, `thread::sleep`, child thread use of both
   helpers, and runtime hooks they lower through.
 - `tests/cases/standard-library/ok/thread/std-thread-builder.ari` checks the
-  `Builder` method surface and the advisory `is_finished` hook.
+  `Builder` method surface, configured pthread spawn hook, stack-size lowering,
+  thread-name hook, and the advisory `is_finished` hook.
 - `tests/cases/standard-library/ok/thread/std-thread-local.ari` checks
   explicit `ThreadLocal[T]` construction, current-thread get/set/mutable
   access, lazy initialization, removal, root alias coverage, and zone-backed
