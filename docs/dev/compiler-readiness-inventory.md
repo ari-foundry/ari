@@ -30,7 +30,7 @@ ordinary Ari data.
 | Diagnostics | 13 | 30 | Diagnostic codes, labels, notes, source rendering, and normalized golden output. |
 | Module projects | 12 | 45 | Predictable package roots, `.ari`/`.arih` policy, visibility errors, metadata, and cache invalidation. |
 | Compiler data models | 15 | 50 | Nested generic aggregates, `Result` payloads, vectors/maps/sets, and compiler-shaped ownership patterns. |
-| Trait selection | 12 | 35 | Deterministic `Drop`, `Debug`, formatting, `Eq`, `Ord`, `Hash`, and iterator dispatch. |
+| Trait selection | 12 | 45 | The minimum static subset is locked; broader trait objects, associated-type solving, and collection defaults can still deepen it. |
 | Artifact comparison | 16 | 45 | Token, syntax, diagnostic, module graph, declaration, typed IR, HIR, LLVM, object, and executable comparison order. |
 | Tool build flow | 10 | 35 | Focused Make targets for one Ari tool, fixture roots, and golden comparison without hidden flags. |
 
@@ -45,6 +45,7 @@ get more reliable, not when a private shortcut is added.
 | Hosted LLVM backend | Ari emits LLVM IR, objects, executables, and shared libraries through the LLVM path. | Compiler work can be validated as real artifacts instead of toy interpreter behavior. |
 | Core executable language | Functions, locals, scalar operators, casts, blocks, branches, loops, `break`, `continue`, and returns are locked by `make check-core-language`; richer enums, structs, modules, FFI, and formatting are covered by their focused suites. | Compiler-shaped fixtures can be written as ordinary Ari programs on top of a stable scalar/control-flow base. |
 | Generic calls and ADTs | Generic functions, generic structs, generic enums, `Option[T]`, and `Result[T, E]` exist. | Source models, tokens, AST nodes, and expected failures can use natural types. |
+| Minimum static traits | Trait declarations, impl conformance, deterministic static dispatch, generic bounds, Eq/Ord/Hash/Debug-like fixtures, iterator-shaped helpers, and missing/ambiguous diagnostics are locked by `make check-traits`. | Compiler-shaped data can compare, hash, format, and traverse values through normal trait behavior instead of name-specific shortcuts. |
 | Ownership checks | Move, borrow, drop, and explicit-zone checks catch many unsafe flows. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
 | Focused test culture | Many feature folders already separate `ok` and `errors` tests. | New compiler behavior can be guarded with one small fixture at a time. |
 
@@ -56,7 +57,7 @@ get more reliable, not when a private shortcut is added.
 | Diagnostics | Stable codes, labels, notes, and normalized golden output. | Move errors toward data-first diagnostics before polishing renderer text. |
 | File-backed projects | Predictable module roots, `.ari`/`.arih` policy, metadata, cache invalidation, and Makefile flows. | Harden module search and add stale/private/missing file diagnostics. |
 | Generic aggregate scale | Nested structs, enums, aliases, vectors, maps, sets, and `Result` payloads have a production-hardening first pass without stdlib name special cases. | Keep adding compiler-shaped model fixtures under `tests/cases/compiler-development/ok/model/` and generic aggregate diagnostics under `tests/cases/generics/errors/`. |
-| Trait selection | `Eq`, `Ord`, `Hash`, `Debug`, formatting, `Drop`, and iterator dispatch need stable ambiguity errors. | Add positive dispatch tests and negative ambiguous-impl tests. |
+| Trait selection beyond the minimum subset | Trait objects, associated-type solving, trait-driven collection defaults, and richer iterator ownership policies need the same stability as the static subset. | Keep minimum-subset fixtures green while adding one focused advanced trait fixture at a time. |
 | Pass artifacts | Token, syntax, HIR, typed IR, LLVM, object, executable, and shared outputs need a comparison order. | Add normalized text dumps before broad executable checks. |
 | Build ergonomics | Large Ari tools need boring Make targets before a package manager exists. | Keep `make check-compiler-development` small and add one target per compiler slice. |
 

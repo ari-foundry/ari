@@ -1,0 +1,4 @@
+diagnostic error code=ari/compiler family=general message="type i64 does not implement trait 'NeedsScore' required by generic parameter 'T'" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-trait-bound-missing-impl.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-trait-bound-missing-impl.ari" bytes=169
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-trait-bound-missing-impl.ari" line=10 column=10 end_line=10 end_column=19 byte_start=148 byte_end=157 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-trait-bound-missing-impl.ari:10:10\n    |\n 10 |   return use_score<i64>(4);\n    |          ^^^^^^^^^"

@@ -95,6 +95,10 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-missing-module.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-trait-bound-missing-impl.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-bound-missing-impl.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-bound-missing-impl.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-bound-missing-impl.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-method-ambiguous.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-method-ambiguous.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-core-use-before-declaration.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-core-use-before-declaration.diagnostic
@@ -117,6 +121,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
 	$(TARGET) tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/core-language-scalar-flow.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ir $(BUILD_DIR)/compiler-development/artifact/core-language-scalar-flow.ir
+	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/trait-minimum-static-dispatch.ir
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/trait-minimum-static-dispatch.ir $(BUILD_DIR)/compiler-development/artifact/trait-minimum-static-dispatch.ir
 	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/generic-aggregate-monomorphization.ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-pass-summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
@@ -4678,6 +4684,14 @@ check-traits: $(TARGET)
 	$(BUILD_DIR)/traits/trait-object-ref-supertrait-upcast.elf; code=$$?; test $$code -eq 12
 	$(TARGET) tests/cases/traits/ok/trait-bound-static-dispatch.ari -o $(BUILD_DIR)/traits/trait-bound-static-dispatch.elf
 	$(BUILD_DIR)/traits/trait-bound-static-dispatch.elf; code=$$?; test $$code -eq 6
+	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari -o $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf
+	$(BUILD_DIR)/traits/trait-minimum-compiler-shaped.elf; code=$$?; test $$code -eq 74
+	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari --emit-llvm $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
+	grep -q "_ARNv17same__G_TokenKind" $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
+	grep -q "_ARNv4impl10SymbolName8Hashable9hash_code" $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
+	grep -q "_ARNv4impl15DebugBox_Token_10Debuggable11debug_score" $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
+	$(TARGET) tests/cases/traits/ok/trait-minimum-stdlib-like.ari -o $(BUILD_DIR)/traits/trait-minimum-stdlib-like.elf
+	$(BUILD_DIR)/traits/trait-minimum-stdlib-like.elf; code=$$?; test $$code -eq 31
 	$(TARGET) tests/cases/traits/ok/trait-supertrait-static.ari -o $(BUILD_DIR)/traits/trait-supertrait-static.elf
 	$(BUILD_DIR)/traits/trait-supertrait-static.elf; code=$$?; test $$code -eq 56
 	$(TARGET) tests/cases/traits/ok/trait-qualified-call.ari -o $(BUILD_DIR)/traits/trait-qualified-call.elf
@@ -4800,6 +4814,8 @@ check-traits: $(TARGET)
 	grep -q "method 'eq' parameter 2 type mismatch: expected i64, got bool" $(BUILD_DIR)/traits/trait-impl-param-mismatch.err
 	if $(TARGET) tests/cases/traits/errors/trait-impl-return-mismatch.ari -o $(BUILD_DIR)/traits/trait-impl-return-mismatch.elf >$(BUILD_DIR)/traits/trait-impl-return-mismatch.err 2>&1; then exit 1; fi
 	grep -q "method 'show' return type mismatch: expected i64, got bool" $(BUILD_DIR)/traits/trait-impl-return-mismatch.err
+	if $(TARGET) tests/cases/traits/errors/trait-impl-receiver-mismatch.ari -o $(BUILD_DIR)/traits/trait-impl-receiver-mismatch.elf >$(BUILD_DIR)/traits/trait-impl-receiver-mismatch.err 2>&1; then exit 1; fi
+	grep -q "method 'score' parameter 1 type mismatch: expected ref i64, got i64" $(BUILD_DIR)/traits/trait-impl-receiver-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-trait-method-count.ari -o $(BUILD_DIR)/traits/generic-trait-method-count.elf >$(BUILD_DIR)/traits/generic-trait-method-count.err 2>&1; then exit 1; fi
 	grep -q "method 'keep' generic parameter count mismatch: trait expects 1, impl has 0" $(BUILD_DIR)/traits/generic-trait-method-count.err
 	if $(TARGET) tests/cases/generics/errors/generic-trait-method-bound-missing.ari -o $(BUILD_DIR)/traits/generic-trait-method-bound-missing.elf >$(BUILD_DIR)/traits/generic-trait-method-bound-missing.err 2>&1; then exit 1; fi

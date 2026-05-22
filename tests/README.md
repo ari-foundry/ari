@@ -74,6 +74,7 @@ Use the narrowest target that matches the changed surface:
 | `make check-compiler-artifacts` | Deterministic capability inventory, source-map, token, syntax, diagnostic, module graph, declaration index, typed IR, and pass-summary artifacts. |
 | `make check-compiler-development` | Ari fixtures that model compiler pass worklists, diagnostics, source maps, readiness gates, onboarding, and test classification as ordinary language code. |
 | `make check-core-language` | Executable core language smoke tests plus representative stable diagnostics for functions, locals, operators, casts, blocks, branches, loops, `break`, `continue`, and returns. |
+| `make check-traits` | Minimum static trait subset plus trait objects, impl conformance, generic trait dispatch, compiler-shaped Eq/Hash/Debug/Ord fixtures, and trait diagnostics. |
 | `make check-bootstrap-docs` | Later bootstrap start-gate docs and fixture-group manifest. |
 | `make check-bootstrap-readiness` | Small pre-bootstrap Ari fixtures under `tests/cases/bootstrap-readiness/`. |
 

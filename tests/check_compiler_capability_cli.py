@@ -78,7 +78,7 @@ def main():
     )
     ok &= require_success(
         run_ari("--explain-capability", "trait-resolution"),
-        "CompilerCapability version=1 capability=trait-resolution status=partial",
+        "CompilerCapability version=1 capability=trait-resolution status=implemented",
         'first_check="make check-traits"',
         "Rule status_values=[implemented, partial, planned, rejected] ordinary_compiler_work=true",
     )

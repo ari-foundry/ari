@@ -1,0 +1,173 @@
+trait Equatable[T] {
+  fn same(self, other: T) -> bool
+}
+
+trait Hashable {
+  fn hash_code(self) -> i64
+}
+
+trait Debuggable {
+  fn debug_score(self) -> i64
+}
+
+trait Comparable[T] {
+  fn before(self, other: T) -> bool
+}
+
+enum TokenKind {
+  Ident,
+  Number,
+  Eof,
+}
+
+struct SourcePos {
+  line: i64,
+  column: i64,
+}
+
+struct Span {
+  start: SourcePos,
+  end: SourcePos,
+}
+
+struct SymbolName {
+  id: i64,
+  len: i64,
+}
+
+struct Token {
+  kind: TokenKind,
+  span: Span,
+  name: SymbolName,
+}
+
+struct DebugBox[T] {
+  value: T,
+}
+
+struct WorkItem[T] {
+  token: T,
+  priority: SourcePos,
+}
+
+impl Equatable[TokenKind] for TokenKind {
+  fn same(self, other: TokenKind) -> bool {
+    return match self {
+      Ident => match other {
+        Ident => true,
+        Number => false,
+        Eof => false,
+      },
+      Number => match other {
+        Ident => false,
+        Number => true,
+        Eof => false,
+      },
+      Eof => match other {
+        Ident => false,
+        Number => false,
+        Eof => true,
+      },
+    };
+  }
+}
+
+impl Hashable for SymbolName {
+  fn hash_code(self) -> i64 {
+    return self.id * 31 + self.len;
+  }
+}
+
+impl Comparable[SourcePos] for SourcePos {
+  fn before(self, other: SourcePos) -> bool {
+    if self.line == other.line {
+      return self.column < other.column;
+    }
+    return self.line < other.line;
+  }
+}
+
+impl Debuggable for Token {
+  fn debug_score(self) -> i64 {
+    let kind_score = match self.kind {
+      Ident => 10,
+      Number => 20,
+      Eof => 30,
+    };
+    return kind_score + self.span.start.line * 10 + self.span.start.column + self.name.hash_code();
+  }
+}
+
+impl[T: Debuggable] Debuggable for DebugBox[T] {
+  fn debug_score(self) -> i64 {
+    return self.value.debug_score() + 1000;
+  }
+}
+
+fn same[T: Equatable[T]](left: T, right: T) -> bool {
+  return left.same(right);
+}
+
+fn earlier[T: Comparable[T]](left: T, right: T) -> bool {
+  return left.before(right);
+}
+
+fn bucket_hash[Key: Hashable](key: Key) -> i64 {
+  return key.hash_code() % 97;
+}
+
+fn dump[Value: Debuggable](value: Value) -> i64 {
+  return value.debug_score();
+}
+
+fn nested_dump[Value: Debuggable](value: DebugBox[Value]) -> i64 {
+  return value.debug_score();
+}
+
+fn make_token(kind: TokenKind, line: i64, column: i64, id: i64, len: i64) -> Token {
+  return Token {
+    kind: kind,
+    span: Span {
+      start: SourcePos { line: line, column: column },
+      end: SourcePos { line: line, column: column + len },
+    },
+    name: SymbolName { id: id, len: len },
+  };
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  if same<TokenKind>(Ident, Ident) && !same<TokenKind>(Number, Eof) {
+    score = score + 1;
+  }
+
+  let start = SourcePos { line: 2, column: 4 };
+  let end = SourcePos { line: 2, column: 9 };
+  if earlier<SourcePos>(start, end) {
+    score = score + 2;
+  }
+
+  let name = SymbolName { id: 3, len: 5 };
+  if bucket_hash<SymbolName>(name) == 1 {
+    score = score + 4;
+  }
+
+  let token = make_token(Ident, 2, 4, 3, 5);
+  score = score + dump<Token>(token) % 50;
+
+  let boxed = DebugBox {
+    value: make_token(Eof, 5, 6, 1, 1),
+  };
+  score = score + nested_dump<Token>(boxed) % 50;
+
+  let item: WorkItem[DebugBox[Token]] = WorkItem {
+    token: DebugBox {
+      value: make_token(Number, 1, 2, 2, 3),
+    },
+    priority: start,
+  };
+  score = score + item.token.debug_score() % 20;
+
+  return score;
+}

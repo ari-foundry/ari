@@ -23,8 +23,9 @@ For normal compiler work, read in this order:
 15. [Compiler Change Checklist](compiler-change-checklist.md)
 16. [Compiler Readiness Inventory](compiler-readiness-inventory.md)
 17. [Core Language Readiness](core-language-readiness.md)
-18. [Generic Aggregate Monomorphization](generic-aggregate-monomorphization.md)
-19. [Build And Test](build-test.md)
+18. [Minimum Trait Readiness](trait-minimum-readiness.md)
+19. [Generic Aggregate Monomorphization](generic-aggregate-monomorphization.md)
+20. [Build And Test](build-test.md)
 
 Keep this path focused on the compiler that exists today: source loading,
 lexing, parsing, sema, IR, LLVM output, diagnostics, modules, artifacts, and
@@ -52,6 +53,7 @@ drive ordinary compiler design.
 - [Compiler Readiness Inventory](compiler-readiness-inventory.md)
 - [Compiler Pass Contracts](compiler-pass-contracts.md)
 - [Core Language Readiness](core-language-readiness.md)
+- [Minimum Trait Readiness](trait-minimum-readiness.md)
 - [Generic Aggregate Monomorphization](generic-aggregate-monomorphization.md)
 - [Trait-Backed Operators](operator-trait-design.md)
 - [Build And Test](build-test.md)

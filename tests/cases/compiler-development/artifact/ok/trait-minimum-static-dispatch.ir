@@ -1,0 +1,265 @@
+IrProgram source=tests/cases/traits/ok/trait-minimum-compiler-shaped.ari target=x86_64-pc-linux-gnu require_main=true
+  Function name=make_token return=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:127:4
+    Param name=kind type=TokenKind
+    Param name=line type=i64
+    Param name=column type=i64
+    Param name=id type=i64
+    Param name=len type=i64
+    Body
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:128:10
+        Tuple type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:128:10
+          Local name=kind type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:129:11
+          Tuple type=Span @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:130:11
+            Tuple type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:131:14
+              Local name=line type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:131:32
+              Local name=column type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:131:46
+            Tuple type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:132:12
+              Local name=line type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:132:30
+              Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:132:51
+                Local name=column type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:132:44
+                Local name=len type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:132:53
+          Tuple type=SymbolName @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:134:11
+            Local name=id type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:134:28
+            Local name=len type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:134:37
+  Function name=main return=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:138:4
+    Body
+      VarDecl name=score type=i64 mut @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:139:7
+        Integer type=i64 value=0 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:139:15
+      If @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:141:6
+        Binary op="&&" type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:141:36
+          Call name=same__G_TokenKind type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:141:6
+            EnumConstruct enum=TokenKind case=Ident type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:141:22
+            EnumConstruct enum=TokenKind case=Ident type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:141:29
+          Unary op="!" type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:141:39
+            Call name=same__G_TokenKind type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:141:40
+              EnumConstruct enum=TokenKind case=Number type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:141:56
+              EnumConstruct enum=TokenKind case=Eof type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:141:64
+        Then
+          Assign name=score @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:142:5
+            Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:142:19
+              Local name=score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:142:13
+              Integer type=i64 value=1 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:142:21
+      VarDecl name=start type=SourcePos let @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:145:7
+        Tuple type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:145:15
+          Integer type=i64 value=2 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:145:33
+          Integer type=i64 value=4 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:145:44
+      VarDecl name=end type=SourcePos let @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:146:7
+        Tuple type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:146:13
+          Integer type=i64 value=2 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:146:31
+          Integer type=i64 value=9 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:146:42
+      If @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:147:6
+        Call name=earlier__G_SourcePos type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:147:6
+          Local name=start type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:147:25
+          Local name=end type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:147:32
+        Then
+          Assign name=score @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:148:5
+            Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:148:19
+              Local name=score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:148:13
+              Integer type=i64 value=2 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:148:21
+      VarDecl name=name type=SymbolName let @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:151:7
+        Tuple type=SymbolName @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:151:14
+          Integer type=i64 value=3 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:151:31
+          Integer type=i64 value=5 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:151:39
+      If @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:152:6
+        Binary op="==" type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:152:36
+          Call name=bucket_hash__G_SymbolName type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:152:6
+            Local name=name type=SymbolName @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:152:30
+          Integer type=i64 value=1 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:152:39
+        Then
+          Assign name=score @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:153:5
+            Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:153:19
+              Local name=score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:153:13
+              Integer type=i64 value=4 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:153:21
+      VarDecl name=token type=Token let @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:156:7
+        Call name=make_token type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:156:15
+          EnumConstruct enum=TokenKind case=Ident type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:156:26
+          Integer type=i64 value=2 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:156:33
+          Integer type=i64 value=4 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:156:36
+          Integer type=i64 value=3 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:156:39
+          Integer type=i64 value=5 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:156:42
+      Assign name=score @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:157:3
+        Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:157:17
+          Local name=score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:157:11
+          Binary op="%" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:157:38
+            Call name=dump__G_Token type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:157:19
+              Local name=token type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:157:31
+            Integer type=i64 value=50 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:157:40
+      VarDecl name=boxed type=DebugBox[Token] let @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:159:7
+        Tuple type=DebugBox[Token] @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:159:15
+          Call name=make_token type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:160:12
+            EnumConstruct enum=TokenKind case=Eof type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:160:23
+            Integer type=i64 value=5 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:160:28
+            Integer type=i64 value=6 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:160:31
+            Integer type=i64 value=1 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:160:34
+            Integer type=i64 value=1 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:160:37
+      Assign name=score @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:162:3
+        Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:162:17
+          Local name=score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:162:11
+          Binary op="%" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:162:45
+            Call name=nested_dump__G_Token type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:162:19
+              Local name=boxed type=DebugBox[Token] @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:162:38
+            Integer type=i64 value=50 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:162:47
+      VarDecl name=item type=WorkItem[DebugBox[Token]] let @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:164:7
+        Tuple type=WorkItem[DebugBox[Token]] @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:164:41
+          Tuple type=DebugBox[Token] @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:165:12
+            Call name=make_token type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:166:14
+              EnumConstruct enum=TokenKind case=Number type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:166:25
+              Integer type=i64 value=1 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:166:33
+              Integer type=i64 value=2 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:166:36
+              Integer type=i64 value=2 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:166:39
+              Integer type=i64 value=3 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:166:42
+          Local name=start type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:168:15
+      Assign name=score @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:170:3
+        Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:170:17
+          Local name=score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:170:11
+          Binary op="%" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:170:44
+            Call name=impl::DebugBox_Token_::Debuggable::debug_score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:170:30
+              TupleIndex index=0 type=DebugBox[Token] @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:170:24
+                Local name=item type=WorkItem[DebugBox[Token]] @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:170:19
+            Integer type=i64 value=20 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:170:46
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:172:10
+        Local name=score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:172:10
+  Function name=impl::DebugBox_Token_::Debuggable::debug_score return=i64 specialization=impl-method origin=impl::DebugBox_Token_::Debuggable::debug_score @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:102:6
+    Param name=self type=DebugBox[Token]
+    Body
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:103:12
+        Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:103:37
+          Call name=impl::Token::Debuggable::debug_score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:103:23
+            TupleIndex index=0 type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:103:17
+              Local name=self type=DebugBox[Token] @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:103:12
+          Integer type=i64 value=1000 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:103:39
+  Function name=impl::Token::Debuggable::debug_score return=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:91:6
+    Param name=self type=Token
+    Body
+      VarDecl name=kind_score type=i64 let @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:92:9
+        MatchExpr type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:92:22
+          TupleIndex index=0 type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:92:33
+            Local name=self type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:92:28
+          Arm case=Ident @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:93:7
+            Integer type=i64 value=10 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:93:16
+          Arm case=Number @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:94:7
+            Integer type=i64 value=20 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:94:17
+          Arm case=Eof @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:95:7
+            Integer type=i64 value=30 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:95:14
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:12
+        Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:76
+          Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:51
+            Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:23
+              Local name=kind_score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:12
+              Binary op="*" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:46
+                TupleIndex index=0 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:41
+                  TupleIndex index=0 type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:35
+                    TupleIndex index=1 type=Span @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:30
+                      Local name=self type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:25
+                Integer type=i64 value=10 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:48
+            TupleIndex index=1 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:69
+              TupleIndex index=0 type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:63
+                TupleIndex index=1 type=Span @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:58
+                  Local name=self type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:53
+          Call name=impl::SymbolName::Hashable::hash_code type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:88
+            TupleIndex index=2 type=SymbolName @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:83
+              Local name=self type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:97:78
+  Function name=impl::SymbolName::Hashable::hash_code return=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:76:6
+    Param name=self type=SymbolName
+    Body
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:77:12
+        Binary op="+" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:77:25
+          Binary op="*" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:77:20
+            TupleIndex index=0 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:77:17
+              Local name=self type=SymbolName @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:77:12
+            Integer type=i64 value=31 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:77:22
+          TupleIndex index=1 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:77:32
+            Local name=self type=SymbolName @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:77:27
+  Function name=same__G_TokenKind return=bool specialization=generic-function origin=same @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:107:4
+    Param name=left type=TokenKind
+    Param name=right type=TokenKind
+    Body
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:108:10
+        Call name=impl::TokenKind::Equatable::same type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:108:15
+          Local name=left type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:108:10
+          Local name=right type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:108:20
+  Function name=earlier__G_SourcePos return=bool specialization=generic-function origin=earlier @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:111:4
+    Param name=left type=SourcePos
+    Param name=right type=SourcePos
+    Body
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:112:10
+        Call name=impl::SourcePos::Comparable::before type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:112:15
+          Local name=left type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:112:10
+          Local name=right type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:112:22
+  Function name=bucket_hash__G_SymbolName return=i64 specialization=generic-function origin=bucket_hash @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:115:4
+    Param name=key type=SymbolName
+    Body
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:116:10
+        Binary op="%" type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:116:26
+          Call name=impl::SymbolName::Hashable::hash_code type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:116:14
+            Local name=key type=SymbolName @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:116:10
+          Integer type=i64 value=97 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:116:28
+  Function name=dump__G_Token return=i64 specialization=generic-function origin=dump @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:119:4
+    Param name=value type=Token
+    Body
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:120:10
+        Call name=impl::Token::Debuggable::debug_score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:120:16
+          Local name=value type=Token @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:120:10
+  Function name=nested_dump__G_Token return=i64 specialization=generic-function origin=nested_dump @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:123:4
+    Param name=value type=DebugBox[Token]
+    Body
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:124:10
+        Call name=impl::DebugBox_Token_::Debuggable::debug_score type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:124:16
+          Local name=value type=DebugBox[Token] @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:124:10
+  Function name=impl::TokenKind::Equatable::same return=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:54:6
+    Param name=self type=TokenKind
+    Param name=other type=TokenKind
+    Body
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:55:12
+        MatchExpr type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:55:12
+          Local name=self type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:55:18
+          Arm case=Ident @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:56:7
+            MatchExpr type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:56:16
+              Local name=other type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:56:22
+              Arm case=Ident @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:57:9
+                Bool type=bool value=true @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:57:18
+              Arm case=Number @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:58:9
+                Bool type=bool value=false @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:58:19
+              Arm case=Eof @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:59:9
+                Bool type=bool value=false @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:59:16
+          Arm case=Number @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:61:7
+            MatchExpr type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:61:17
+              Local name=other type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:61:23
+              Arm case=Ident @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:62:9
+                Bool type=bool value=false @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:62:18
+              Arm case=Number @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:63:9
+                Bool type=bool value=true @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:63:19
+              Arm case=Eof @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:64:9
+                Bool type=bool value=false @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:64:16
+          Arm case=Eof @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:66:7
+            MatchExpr type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:66:14
+              Local name=other type=TokenKind @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:66:20
+              Arm case=Ident @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:67:9
+                Bool type=bool value=false @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:67:18
+              Arm case=Number @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:68:9
+                Bool type=bool value=false @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:68:19
+              Arm case=Eof @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:69:9
+                Bool type=bool value=true @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:69:16
+  Function name=impl::SourcePos::Comparable::before return=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:82:6
+    Param name=self type=SourcePos
+    Param name=other type=SourcePos
+    Body
+      If @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:83:8
+        Binary op="==" type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:83:18
+          TupleIndex index=0 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:83:13
+            Local name=self type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:83:8
+          TupleIndex index=0 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:83:27
+            Local name=other type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:83:21
+        Then
+          Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:84:14
+            Binary op="<" type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:84:26
+              TupleIndex index=1 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:84:19
+                Local name=self type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:84:14
+              TupleIndex index=1 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:84:34
+                Local name=other type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:84:28
+      Return @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:86:12
+        Binary op="<" type=bool @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:86:22
+          TupleIndex index=0 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:86:17
+            Local name=self type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:86:12
+          TupleIndex index=0 type=i64 @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:86:30
+            Local name=other type=SourcePos @tests/cases/traits/ok/trait-minimum-compiler-shaped.ari:86:24

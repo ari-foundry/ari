@@ -134,6 +134,10 @@ impl[T: Score] Box[T] {
 
 The bound is checked when the impl method is specialized for a concrete
 receiver. Calling `Box[i64].score()` requires `i64` to implement `Score`.
+Bounds are currently written on functions, methods, and impl blocks. Generic
+type declarations such as `struct Box[T: Score]` are intentionally outside the
+minimum supported subset; keep the data declaration unconstrained and place the
+behavioral requirement on the helper function or impl that needs it.
 
 ## Supertraits
 
@@ -520,6 +524,27 @@ generic calls already lower through static dispatch. `Hash` is intentionally
 not reserved in the prelude; use the explicit `std::hash` module when a public
 API needs hash behavior.
 
+## Minimum Production Subset
+
+The production-ready minimum trait subset is static dispatch first:
+
+- trait declarations and method signatures
+- concrete and generic impls with conformance checks
+- trait bounds on generic functions and generic impls
+- deterministic static method dispatch from concrete receivers and bounds
+- trait-qualified calls for disambiguation
+- Eq-like, Ord-like, Hash-like, Debug/Display-like, and Iterator-like usage
+  through user-defined traits and the documented stdlib traits
+- stable diagnostics for missing impls, ambiguous method calls, duplicate or
+  overlapping impls, missing/extra methods, receiver mismatches, and signature
+  mismatches
+
+The compiler-shaped readiness contract and test inventory live in
+[Minimum Trait Readiness](../dev/trait-minimum-readiness.md). Advanced features
+such as specialization, negative impls, multiple bounds on one parameter,
+implicit dynamic dispatch, and object-safe dispatch for generic trait methods
+remain outside this subset.
+
 ## Intended Model
 
 Traits should describe behavior without class-style inheritance:
@@ -644,7 +669,9 @@ values on LLVM, including vtables built from generic impl specializations and
 inherited object-safe supertrait methods. `own dyn Trait[...]` is executable
 from zone-tracked concrete pointers and lowers with an erased drop thunk.
 Generic trait methods are deliberately static-only for dyn
-objects. Associated types remain planned.
+objects. Associated type declarations, impl witnesses, and unique projection
+lowering have focused seed support; broader associated-type solving remains a
+separate hardening area.
 Dyn-to-dyn upcasts are executable when the target is the same trait or an
 inherited supertrait, including `own dyn` upcasts; unrelated dyn casts are
 rejected.

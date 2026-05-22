@@ -1,0 +1,24 @@
+trait LeftScore {
+  fn score(self) -> i64
+}
+
+trait RightScore {
+  fn score(self) -> i64
+}
+
+impl LeftScore for i64 {
+  fn score(self) -> i64 {
+    return 1;
+  }
+}
+
+impl RightScore for i64 {
+  fn score(self) -> i64 {
+    return 2;
+  }
+}
+
+fn main() -> i64 {
+  let value = 1;
+  return value.score();
+}

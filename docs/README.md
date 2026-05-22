@@ -27,6 +27,7 @@ The docs are split by audience.
   then [Compiler Next Slices](dev/compiler-next-slices.md), then
   [Compiler Change Checklist](dev/compiler-change-checklist.md), then
   [Core Language Readiness](dev/core-language-readiness.md), then
+  [Minimum Trait Readiness](dev/trait-minimum-readiness.md), then
   [Build And Test](dev/build-test.md).
 
 ## Language Docs
@@ -98,6 +99,7 @@ Use these when changing the compiler:
 - [Compiler Next Slices](dev/compiler-next-slices.md)
 - [Compiler Change Checklist](dev/compiler-change-checklist.md)
 - [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)
+- [Minimum Trait Readiness](dev/trait-minimum-readiness.md)
 - [Compiler Pass Contracts](dev/compiler-pass-contracts.md)
 - [Core Language Readiness](dev/core-language-readiness.md)
 - [Generic Aggregate Monomorphization](dev/generic-aggregate-monomorphization.md)

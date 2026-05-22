@@ -1,0 +1,13 @@
+trait RefScore {
+  fn score(self: ref Self) -> i64
+}
+
+impl RefScore for i64 {
+  fn score(self) -> i64 {
+    return self;
+  }
+}
+
+fn main() -> i64 {
+  return 0;
+}

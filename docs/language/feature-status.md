@@ -53,10 +53,11 @@ Status meanings:
 | Feature | Status | Read | Tests |
 | --- | --- | --- | --- |
 | trait declarations and concrete impls | implemented | [Traits](traits.md) | `tests/cases/traits/` |
-| constrained static dispatch | implemented for supported bounds | [Traits](traits.md) | `tests/cases/traits/`, `tests/cases/generics/` |
-| generic impls and generic trait methods | partial | [Traits](traits.md), [Front-End Only Syntax](front-end-only.md) | `tests/cases/traits/`, `tests/cases/generics/` |
+| minimum static trait subset | complete for current executable subset | [Traits](traits.md), [Minimum Trait Readiness](../dev/trait-minimum-readiness.md) | `make check-traits` |
+| constrained static dispatch | implemented for supported bounds | [Traits](traits.md), [Minimum Trait Readiness](../dev/trait-minimum-readiness.md) | `tests/cases/traits/`, `tests/cases/generics/` |
+| generic impls and generic trait methods | implemented for static dispatch; advanced solving still scoped separately | [Traits](traits.md), [Front-End Only Syntax](front-end-only.md) | `tests/cases/traits/`, `tests/cases/generics/` |
 | `dyn Trait` | partial/front-end only depending on shape | [Traits](traits.md), [Front-End Only Syntax](front-end-only.md) | `tests/cases/traits/` |
-| associated types and broader trait resolution | partial/planned | [Traits](traits.md) | `tests/cases/traits/` |
+| associated type projections and broader trait resolution | implemented seed; broader solving partial | [Traits](traits.md) | `tests/cases/traits/` |
 
 ## Memory And Runtime Boundaries
 

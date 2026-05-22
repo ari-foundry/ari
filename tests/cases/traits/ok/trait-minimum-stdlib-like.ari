@@ -1,0 +1,135 @@
+enum TokenKind {
+  Ident,
+  Number,
+  Eof,
+}
+
+struct SourcePos {
+  line: i64,
+  column: i64,
+}
+
+struct SymbolName {
+  id: i64,
+  len: i64,
+}
+
+struct Token {
+  kind: TokenKind,
+  pos: SourcePos,
+  name: SymbolName,
+}
+
+struct TokenCursor {
+  token: Token,
+}
+
+impl cmp::Eq[TokenKind] for TokenKind {
+  fn eq(self, other: TokenKind) -> bool {
+    return match self {
+      Ident => match other {
+        Ident => true,
+        Number => false,
+        Eof => false,
+      },
+      Number => match other {
+        Ident => false,
+        Number => true,
+        Eof => false,
+      },
+      Eof => match other {
+        Ident => false,
+        Number => false,
+        Eof => true,
+      },
+    };
+  }
+}
+
+impl cmp::Ord[SourcePos] for SourcePos {
+  fn lt(self, other: SourcePos) -> bool {
+    if self.line == other.line {
+      return self.column < other.column;
+    }
+    return self.line < other.line;
+  }
+}
+
+impl hash::Hash[SymbolName] for SymbolName {
+  fn hash(self, state: ref mut hash::Hasher) -> void {
+    hash::write_i64(state, self.id);
+    hash::write_i64(state, self.len);
+    return;
+  }
+}
+
+impl fmt::Debug for Token {
+  fn debug_in(self: ref Self, zone: ref mut Zone) -> String {
+    var output = std::string::new(zone, 16);
+    output.append_string_in(zone, "Token(");
+    output.append_i64_in(zone, self.name.id);
+    output.append_string_in(zone, ":");
+    output.append_i64_in(zone, self.name.len);
+    output.append_string_in(zone, ")");
+    return output;
+  }
+}
+
+impl Iterator[Token] for TokenCursor {
+  fn next(self) -> Option[Token] {
+    return Some(self.token);
+  }
+}
+
+fn make_token(kind: TokenKind, line: i64, column: i64, id: i64, len: i64) -> Token {
+  return Token {
+    kind: kind,
+    pos: SourcePos { line: line, column: column },
+    name: SymbolName { id: id, len: len },
+  };
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  if Ident == Ident && Ident != Number {
+    score = score + 1;
+  }
+
+  let early = SourcePos { line: 1, column: 8 };
+  let late = SourcePos { line: 2, column: 1 };
+  if early < late {
+    score = score + 2;
+  }
+
+  let name = SymbolName { id: 7, len: 3 };
+  let same_hash = hash::value<SymbolName>(name) == hash::value<SymbolName>(name);
+  let different_hash = hash::value<SymbolName>(name) != hash::value<SymbolName>(SymbolName { id: 8, len: 3 });
+  if same_hash && different_hash {
+    score = score + 4;
+  }
+
+  var zone = zone::create(256);
+  let token = make_token(Ident, 3, 5, 7, 3);
+  let text = fmt::debug_value<Token>(ref mut zone, token);
+  if text.len() == 10 && text.get(0) == 'T' && text.get(6) == '7' && text.get(8) == '3' {
+    score = score + 8;
+  }
+
+  let cursor = TokenCursor {
+    token: make_token(Ident, 4, 1, 9, 16),
+  };
+  var iter_score = 0;
+  for item in cursor {
+    if item.kind == Ident {
+      iter_score = iter_score + item.name.len;
+    }
+    break;
+  }
+  if iter_score == 16 {
+    score = score + 16;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

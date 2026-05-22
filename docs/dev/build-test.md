@@ -125,12 +125,15 @@ parameters, aggregate payload mismatches, receiver mismatches, invalid field
 access, and use-after-move through generic payloads. It also checks LLVM output
 for nested aggregate enum layout.
 
-`make check-traits` covers concrete trait impls, trait-bound static dispatch,
-generic trait impl method and associated-function specialization, generic trait
-method type-argument inference, method-level bounds on generic trait methods,
-generic impl bounds, `dyn Trait[...]` type surface validation, concrete and
-generic-impl-specialized LLVM dyn dispatch, dyn object-safety diagnostics for
-generic trait methods, and trait impl coherence diagnostics.
+`make check-traits` covers the production-ready minimum trait subset: concrete
+trait impls, user-defined Eq/Hash/Debug/Ord-like compiler-shaped fixtures,
+stdlib-like `cmp::Eq`, `cmp::Ord`, `hash::Hash`, `fmt::Debug`, iterator-shaped
+dispatch, trait-bound static dispatch, generic trait impl method and
+associated-function specialization, generic trait method type-argument
+inference, method-level bounds on generic trait methods, generic impl bounds,
+`dyn Trait[...]` type surface validation, concrete and generic-impl-specialized
+LLVM dyn dispatch, dyn object-safety diagnostics for generic trait methods,
+and trait impl coherence diagnostics.
 
 `make check-meta` runs attribute and meta-syntax tests for built-in attributes,
 `@repr(C)` layout guard diagnostics, `@cfg(true/false)` declaration pruning,
