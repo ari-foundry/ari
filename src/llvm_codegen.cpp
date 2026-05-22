@@ -511,6 +511,7 @@ private:
                symbol == "strlen" ||
                symbol == "getaddrinfo" ||
                symbol == "freeaddrinfo" ||
+               symbol == "__errno_location" ||
                symbol == "malloc" ||
                symbol == "free" ||
                symbol == "exit" ||
@@ -668,6 +669,7 @@ private:
         declarations_ << "declare i64 @strlen(ptr)\n";
         declarations_ << "declare i32 @getaddrinfo(ptr, ptr, ptr, ptr)\n";
         declarations_ << "declare void @freeaddrinfo(ptr)\n";
+        declarations_ << "declare ptr @__errno_location()\n";
         declarations_ << "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memmove.p0.p0.i64(ptr, ptr, i64, i1)\n";
         declarations_ << "declare void @llvm.memset.p0.i64(ptr, i8, i64, i1)\n";

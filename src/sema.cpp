@@ -10318,6 +10318,40 @@ private:
     }
 
     bool try_build_tracked_aggregate_access(const Expr& expr, TrackedAggregateAccess& out) {
+        if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
+            const Expr* pointer_source = expr_operand(expr).get();
+            if (!pointer_source) return false;
+
+            const Expr* borrowed_source = nullptr;
+            if (pointer_source->kind == ExprKind::Cast && expr_operand(*pointer_source)) {
+                borrowed_source = expr_operand(*pointer_source).get();
+            }
+            if (!borrowed_source || borrowed_source->kind != ExprKind::Name) return false;
+
+            LocalInfo* local_slot = find_local_slot(borrowed_source->name);
+            if (!local_slot) return false;
+            LocalInfo& local = *local_slot;
+            if (auto error = local_unavailable_binding_error(borrowed_source->name, local)) {
+                fail(expr.loc, *error);
+            }
+            if (!is_borrow_type(local.type)) return false;
+
+            IrExprPtr pointer = check_expr(*pointer_source);
+            if (!is_raw_pointer_type(pointer->type)) return false;
+            IrType element_type = raw_pointer_pointee_type(pointer->type);
+
+            out.base_name = borrowed_source->name;
+            out.base_type = local.type;
+            out.type = element_type;
+            out.path.clear();
+            out.expr = make_pointer_load_expr(expr.loc, std::move(pointer), element_type);
+            out.has_final_field_mutability = false;
+            out.final_field_mutable = true;
+            out.final_field_label.clear();
+            out.final_container_name.clear();
+            return true;
+        }
+
         if (expr.kind == ExprKind::Name) {
             LocalInfo* local_slot = find_local_slot(expr.name);
             if (!local_slot) return false;
@@ -10500,8 +10534,30 @@ private:
         return true;
     }
 
+    bool try_build_tracked_pointer_cast_access(const Expr& expr, TrackedAggregateAccess& out) {
+        if (expr.kind != ExprKind::Cast || !expr_operand(expr)) return false;
+
+        TrackedAggregateAccess base;
+        if (!try_build_tracked_aggregate_access(*expr_operand(expr), base)) return false;
+
+        IrExprPtr pointer = check_expr(expr);
+        if (!is_raw_pointer_type(pointer->type)) return false;
+
+        out.base_name = std::move(base.base_name);
+        out.base_type = std::move(base.base_type);
+        out.type = pointer->type;
+        out.path = std::move(base.path);
+        out.expr = std::move(pointer);
+        out.has_final_field_mutability = false;
+        out.final_field_mutable = true;
+        out.final_field_label.clear();
+        out.final_container_name.clear();
+        return true;
+    }
+
     bool try_build_tracked_pointer_borrow_operand(const Expr& expr, TrackedAggregateAccess& out) {
         if (try_build_tracked_aggregate_access(expr, out)) return true;
+        if (try_build_tracked_pointer_cast_access(expr, out)) return true;
         return try_build_tracked_pointer_add_access(expr, out);
     }
 

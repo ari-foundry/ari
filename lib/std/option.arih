@@ -3,102 +3,91 @@
 fn __is_some[T](value: ref std::Option[T]) -> bool;
 fn __is_none[T](value: ref std::Option[T]) -> bool;
 
-pub struct OptionRef[T] {
-  data: ptr T,
-  present: bool,
+pub enum OptionRef[T] {
+  NoneRef,
+  SomeRef(ptr T),
 }
 
-pub struct OptionMut[T] {
-  data: ptr T,
-  present: bool,
+pub enum OptionMut[T] {
+  NoneMut,
+  SomeMut(ptr T),
 }
 
 fn none_ref[T]() -> std::option::OptionRef[T] {
-  return std::option::OptionRef<T> {
-    data: 0u64 as ptr T,
-    present: false,
-  };
+  return std::option::NoneRef<T>();
 }
 
 fn some_ref[T](value: ref T) -> std::option::OptionRef[T] {
-  return std::option::OptionRef<T> {
-    data: value as ptr T,
-    present: true,
-  };
+  return std::option::SomeRef<T>(value as ptr T);
 }
 
 fn some_ref_ptr[T](value: ptr T) -> std::option::OptionRef[T] {
-  return std::option::OptionRef<T> {
-    data: value,
-    present: true,
-  };
+  return std::option::SomeRef<T>(value);
 }
 
 fn none_mut[T]() -> std::option::OptionMut[T] {
-  return std::option::OptionMut<T> {
-    data: 0u64 as ptr T,
-    present: false,
-  };
+  return std::option::NoneMut<T>();
 }
 
 fn some_mut[T](value: ref mut T) -> std::option::OptionMut[T] {
-  return std::option::OptionMut<T> {
-    data: value as ptr T,
-    present: true,
-  };
+  return std::option::SomeMut<T>(value as ptr T);
 }
 
 fn some_mut_ptr[T](value: ptr T) -> std::option::OptionMut[T] {
-  return std::option::OptionMut<T> {
-    data: value,
-    present: true,
-  };
+  return std::option::SomeMut<T>(value);
 }
 
 pub impl[T] std::option::OptionRef[T] {
   fn is_some(self: ref Self) -> bool {
-    return self.present;
+    let raw: ptr Self = self as ptr Self;
+    return match *raw {
+      std::option::SomeRef(_) => true,
+      std::option::NoneRef => false;
+    };
   }
 
   fn is_none(self: ref Self) -> bool {
-    return !self.present;
+    return !self.is_some();
   }
 
   fn unwrap(self: ref Self) -> ref T {
-    std::assert(self.present);
-    return ref *self.data;
+    std::assert(self.is_some());
+    return ref *((*(self as ptr Self)).0 as ptr T);
   }
 
   fn expect(self: ref Self, message: string) -> ref T {
-    std::assert(self.present);
-    return ref *self.data;
+    return self.unwrap();
   }
 }
 
 pub impl[T] std::option::OptionMut[T] {
   fn is_some(self: ref Self) -> bool {
-    return self.present;
+    let raw: ptr Self = self as ptr Self;
+    return match *raw {
+      std::option::SomeMut(_) => true,
+      std::option::NoneMut => false;
+    };
   }
 
   fn is_none(self: ref Self) -> bool {
-    return !self.present;
+    return !self.is_some();
   }
 
   fn unwrap(self: ref mut Self) -> ref mut T {
-    std::assert(self.present);
-    return ref mut *self.data;
+    std::assert(self.is_some());
+    return ref mut *((*(self as ptr Self)).0 as ptr T);
   }
 
   fn expect(self: ref mut Self, message: string) -> ref mut T {
-    std::assert(self.present);
-    return ref mut *self.data;
+    return self.unwrap();
   }
 
   fn as_ref(self: ref Self) -> std::option::OptionRef[T] {
-    if self.present {
-      return std::option::some_ref<T>(ref *self.data);
-    }
-    return std::option::none_ref<T>();
+    let raw: ptr Self = self as ptr Self;
+    return match *raw {
+      std::option::SomeMut(data) => std::option::SomeRef<T>(data),
+      std::option::NoneMut => std::option::NoneRef<T>();
+    };
   }
 }
 

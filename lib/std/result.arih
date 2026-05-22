@@ -3,126 +3,101 @@
 fn __is_ok[T, E](value: ref std::Result[T, E]) -> bool;
 fn __is_err[T, E](value: ref std::Result[T, E]) -> bool;
 
-pub struct ResultRef[T, E] {
-  ok_value: ptr T,
-  err_value: ptr E,
-  ok_present: bool,
+pub enum ResultRef[T, E] {
+  ErrRef(ptr E),
+  OkRef(ptr T),
 }
 
-pub struct ResultMut[T, E] {
-  ok_value: ptr T,
-  err_value: ptr E,
-  ok_present: bool,
+pub enum ResultMut[T, E] {
+  ErrMut(ptr E),
+  OkMut(ptr T),
 }
 
 fn ok_ref[T, E](value: ref T) -> std::result::ResultRef[T, E] {
-  return std::result::ResultRef<T, E> {
-    ok_value: value as ptr T,
-    err_value: 0u64 as ptr E,
-    ok_present: true,
-  };
+  return std::result::OkRef<T, E>(value as ptr T);
 }
 
 fn err_ref[T, E](error: ref E) -> std::result::ResultRef[T, E] {
-  return std::result::ResultRef<T, E> {
-    ok_value: 0u64 as ptr T,
-    err_value: error as ptr E,
-    ok_present: false,
-  };
+  return std::result::ErrRef<T, E>(error as ptr E);
 }
 
 fn ok_ref_ptr[T, E](value: ptr T) -> std::result::ResultRef[T, E] {
-  return std::result::ResultRef<T, E> {
-    ok_value: value,
-    err_value: 0u64 as ptr E,
-    ok_present: true,
-  };
+  return std::result::OkRef<T, E>(value);
 }
 
 fn err_ref_ptr[T, E](error: ptr E) -> std::result::ResultRef[T, E] {
-  return std::result::ResultRef<T, E> {
-    ok_value: 0u64 as ptr T,
-    err_value: error,
-    ok_present: false,
-  };
+  return std::result::ErrRef<T, E>(error);
 }
 
 fn ok_mut[T, E](value: ref mut T) -> std::result::ResultMut[T, E] {
-  return std::result::ResultMut<T, E> {
-    ok_value: value as ptr T,
-    err_value: 0u64 as ptr E,
-    ok_present: true,
-  };
+  return std::result::OkMut<T, E>(value as ptr T);
 }
 
 fn err_mut[T, E](error: ref mut E) -> std::result::ResultMut[T, E] {
-  return std::result::ResultMut<T, E> {
-    ok_value: 0u64 as ptr T,
-    err_value: error as ptr E,
-    ok_present: false,
-  };
+  return std::result::ErrMut<T, E>(error as ptr E);
 }
 
 fn ok_mut_ptr[T, E](value: ptr T) -> std::result::ResultMut[T, E] {
-  return std::result::ResultMut<T, E> {
-    ok_value: value,
-    err_value: 0u64 as ptr E,
-    ok_present: true,
-  };
+  return std::result::OkMut<T, E>(value);
 }
 
 fn err_mut_ptr[T, E](error: ptr E) -> std::result::ResultMut[T, E] {
-  return std::result::ResultMut<T, E> {
-    ok_value: 0u64 as ptr T,
-    err_value: error,
-    ok_present: false,
-  };
+  return std::result::ErrMut<T, E>(error);
 }
 
 pub impl[T, E] std::result::ResultRef[T, E] {
   fn is_ok(self: ref Self) -> bool {
-    return self.ok_present;
+    let raw: ptr Self = self as ptr Self;
+    return match *raw {
+      std::result::OkRef(_) => true,
+      std::result::ErrRef(_) => false;
+    };
   }
 
   fn is_err(self: ref Self) -> bool {
-    return !self.ok_present;
+    return !self.is_ok();
   }
 
   fn unwrap(self: ref Self) -> ref T {
-    std::assert(self.ok_present);
-    return ref *self.ok_value;
+    std::assert(self.is_ok());
+    return ref *((*(self as ptr Self)).0 as ptr T);
   }
 
   fn unwrap_err(self: ref Self) -> ref E {
-    std::assert(!self.ok_present);
-    return ref *self.err_value;
+    std::assert(self.is_err());
+    return ref *((*(self as ptr Self)).0 as ptr E);
   }
 }
 
 pub impl[T, E] std::result::ResultMut[T, E] {
   fn is_ok(self: ref Self) -> bool {
-    return self.ok_present;
+    let raw: ptr Self = self as ptr Self;
+    return match *raw {
+      std::result::OkMut(_) => true,
+      std::result::ErrMut(_) => false;
+    };
   }
 
   fn is_err(self: ref Self) -> bool {
-    return !self.ok_present;
+    return !self.is_ok();
   }
 
   fn unwrap(self: ref mut Self) -> ref mut T {
-    std::assert(self.ok_present);
-    return ref mut *self.ok_value;
+    std::assert(self.is_ok());
+    return ref mut *((*(self as ptr Self)).0 as ptr T);
   }
 
   fn unwrap_err(self: ref mut Self) -> ref mut E {
-    std::assert(!self.ok_present);
-    return ref mut *self.err_value;
+    std::assert(self.is_err());
+    return ref mut *((*(self as ptr Self)).0 as ptr E);
   }
 
   fn as_ref(self: ref Self) -> std::result::ResultRef[T, E] {
-    if self.ok_present {
-      return std::result::ok_ref<T, E>(ref *self.ok_value);
-    }
-    return std::result::err_ref<T, E>(ref *self.err_value);
+    let raw: ptr Self = self as ptr Self;
+    return match *raw {
+      std::result::OkMut(value) => std::result::OkRef<T, E>(value),
+      std::result::ErrMut(error) => std::result::ErrRef<T, E>(error);
+    };
   }
 }
 

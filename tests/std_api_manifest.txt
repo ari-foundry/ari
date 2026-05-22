@@ -15,6 +15,10 @@ enum std::error::Kind|check-prelude std-error-basic shared recoverable error cat
 enum std::fs::FileKind|check-prelude std-fs-metadata file/directory/symlink/other metadata classifier; docs/stdlib/modules/fs.md
 enum std::log::Level|check-prelude std-log-basic source logging level enum; docs/stdlib/modules/log.md
 enum std::net::Shutdown|check-prelude std-net-tcp-loopback and std-net-unix-socket stream shutdown mode enum; docs/stdlib/modules/net.md
+enum std::option::OptionMut[T]|check-prelude prelude-option-result-ref-access mutable borrowed option payload view union; docs/stdlib/modules/option-result.md
+enum std::option::OptionRef[T]|check-prelude prelude-option-result-ref-access shared borrowed option payload view union; docs/stdlib/modules/option-result.md
+enum std::result::ResultMut[T, E]|check-prelude prelude-option-result-ref-access mutable borrowed result payload view union; docs/stdlib/modules/option-result.md
+enum std::result::ResultRef[T, E]|check-prelude prelude-option-result-ref-access shared borrowed result payload view union; docs/stdlib/modules/option-result.md
 enum std::target::Arch|check-prelude std-target-basic compiler-known architecture enum; docs/stdlib/modules/target.md
 enum std::target::DebugFormat|check-prelude std-target-basic compiler-known debug format enum; docs/stdlib/modules/target.md
 enum std::target::Env|check-prelude std-target-basic compiler-known target environment enum; docs/stdlib/modules/target.md
@@ -1968,8 +1972,6 @@ struct std::net::TcpStream|check-prelude std-net-tcp-loopback owned TCP stream h
 struct std::net::UdpSocket|check-prelude std-net-udp-socket owned UDP datagram socket handle; docs/stdlib/modules/net.md
 struct std::net::UnixListener|check-prelude std-net-unix-socket owned Unix domain listener handle; docs/stdlib/modules/net.md
 struct std::net::UnixStream|check-prelude std-net-unix-socket owned Unix domain stream handle and IO traits; docs/stdlib/modules/net.md
-struct std::option::OptionMut[T]|check-prelude prelude-option-result-ref-access mutable borrowed option payload view handle; docs/stdlib/modules/option-result.md
-struct std::option::OptionRef[T]|check-prelude prelude-option-result-ref-access shared borrowed option payload view handle; docs/stdlib/modules/option-result.md
 struct std::os::Fd|check-prelude std-os-fd non-owning file descriptor view; docs/stdlib/modules/os.md
 struct std::os::OwnedFd|check-prelude std-os-owned-fd owning file descriptor close wrapper; docs/stdlib/modules/os.md
 struct std::os::Pipe|check-prelude std-os-pipe owning pipe descriptor pair; docs/stdlib/modules/os.md
@@ -1982,8 +1984,6 @@ struct std::process::EnvVar|check-prelude std-process-command child environment 
 struct std::process::ExitStatus|check-prelude std-process-exit-status typed child exit status value; docs/stdlib/modules/process.md
 struct std::process::Output|check-prelude std-process-output captured child output handle; docs/stdlib/modules/process.md
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
-struct std::result::ResultMut[T, E]|check-prelude prelude-option-result-ref-access mutable borrowed result payload view handle; docs/stdlib/modules/option-result.md
-struct std::result::ResultRef[T, E]|check-prelude prelude-option-result-ref-access shared borrowed result payload view handle; docs/stdlib/modules/option-result.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row

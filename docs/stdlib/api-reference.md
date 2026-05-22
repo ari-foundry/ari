@@ -1691,7 +1691,7 @@ fallback is expensive or should only run on the missing/error branch. Use
 `inspect_err` to observe borrowed payloads while preserving the original
 control-flow value. Use `as_ref` and `as_mut` when the payload must be borrowed
 without consuming the enum; they return `OptionRef`/`OptionMut` and
-`ResultRef`/`ResultMut` view handles with branch predicates and borrowed
+`ResultRef`/`ResultMut` tagged-union view handles with branch predicates and borrowed
 `unwrap` helpers. `Option::take` moves the payload out and leaves `None<T>()`;
 `Option::replace(next)` stores the new payload and returns the previous
 option. Use

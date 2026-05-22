@@ -1,6 +1,6 @@
 // Covers borrowed view helpers for Option and Result. Ari does not yet expose
 // reference-valued generic payloads as Option[ref T], so the public API uses
-// small OptionRef/OptionMut and ResultRef/ResultMut handles.
+// tagged-union OptionRef/OptionMut and ResultRef/ResultMut view handles.
 
 fn read_i64(value: ref i64) -> i64 {
   let raw: ptr i64 = value as ptr i64;

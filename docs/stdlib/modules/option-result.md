@@ -54,9 +54,9 @@ value.ok_or_else<E>(op)
 `unwrap_or_else`, `match`, or `?` in normal control flow.
 
 `as_ref` and `as_mut` borrow the payload without consuming the option. They
-return `std::option::OptionRef[T]` and `std::option::OptionMut[T]` handles
+return `std::option::OptionRef[T]` and `std::option::OptionMut[T]` tagged union handles
 instead of `Option[ref T]` because Ari's generic reference-valued enum payloads
-are still a compiler roadmap item. The handles expose `is_some`, `is_none`,
+are still a compiler roadmap item. The view unions expose `is_some`, `is_none`,
 `unwrap`, and `expect`; `OptionMut.as_ref()` downgrades a mutable view to a
 shared view. `take` moves the current payload out and leaves `None<T>()`.
 `replace(next)` stores `Some(next)` and returns the previous option.
@@ -122,9 +122,9 @@ value.transpose()
 
 `as_ref` and `as_mut` borrow the active success or error payload without
 consuming the result. They return `std::result::ResultRef[T, E]` and
-`std::result::ResultMut[T, E]` handles. `ResultRef` exposes `is_ok`, `is_err`,
+`std::result::ResultMut[T, E]` tagged union handles. `ResultRef` exposes `is_ok`, `is_err`,
 `unwrap`, and `unwrap_err`; `ResultMut` exposes the same mutable unwrapping
-operations plus `as_ref()`. These handles are the current source-level spelling
+operations plus `as_ref()`. These view unions are the current source-level spelling
 for borrowed Result payload access until `Result[ref T, ref E]`-style generic
 reference payloads are supported directly.
 
