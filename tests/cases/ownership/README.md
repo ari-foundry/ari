@@ -37,6 +37,7 @@ diagnostics and review-sized LLVM drop fragments:
 - `diagnostic-enum-payload-invalid-move.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
+- `diagnostic-ownership-temporary-element-move.diagnostic`
 - `backend-ownership-drop-aggregate.llvm-frag`
 - `backend-ownership-drop-runtime-enum.llvm-frag`
 - `backend-ownership-compiler-shaped.llvm-frag`

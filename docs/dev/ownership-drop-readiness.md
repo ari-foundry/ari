@@ -87,6 +87,7 @@ The artifact suite currently locks these ownership/drop surfaces:
 - `diagnostic-enum-payload-invalid-move.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
+- `diagnostic-ownership-temporary-element-move.diagnostic`
 - `backend-ownership-drop-aggregate.llvm-frag`
 - `backend-ownership-drop-runtime-enum.llvm-frag`
 - `backend-ownership-compiler-shaped.llvm-frag`
@@ -99,7 +100,8 @@ The diagnostic goldens above lock assignment-while-borrowed, field assignment
 while a subpath is borrowed, borrow-after-move, double-move, live-owner
 return/break/continue exits, invalid enum payload-slot moves, partial aggregate
 moves, and dynamic indexed container owner moves as source-aware ownership
-errors.
+errors. The temporary aggregate element owner moves use the same O0001 artifact
+family.
 
 ## Adding Tests
 

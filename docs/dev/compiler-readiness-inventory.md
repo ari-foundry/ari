@@ -334,10 +334,11 @@ Current compiler-development tests:
   `tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-owner.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic`,
-  and `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic`:
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic`,
+  and `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-temporary-element-move.diagnostic`:
   source-aware ownership diagnostics for representative move, borrow,
-  control-flow live-owner, partial-move, and unsupported container-element
-  ownership failures.
+  control-flow live-owner, partial-move, unsupported container-element, and
+  temporary aggregate element ownership failures.
 
 The first command to run after changing this area is:
 

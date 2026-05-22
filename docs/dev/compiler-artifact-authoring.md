@@ -147,6 +147,7 @@ Keep fixture names behavior-based:
 - `diagnostic-move-borrowed-owner.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
+- `diagnostic-ownership-temporary-element-move.diagnostic`
 - `diagnostic-parser-expected.diagnostic`
 
 ## Focused Checks

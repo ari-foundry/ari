@@ -236,6 +236,8 @@ std::string classify_diagnostic_code(const std::string& message) {
     if (contains(diagnostic, "borrow") ||
         contains(diagnostic, "moved binding") ||
         contains(diagnostic, "cannot move ") ||
+        contains(diagnostic, "owning aggregate") ||
+        contains(diagnostic, "ownership-carrying") ||
         contains(diagnostic, "owning binding") ||
         contains(diagnostic, "owning expression") ||
         contains(diagnostic, "use after move") ||

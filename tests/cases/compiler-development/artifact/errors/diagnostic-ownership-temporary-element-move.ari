@@ -1,0 +1,9 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  let token = [make_owned(1), make_owned(2)][0];
+  drop token;
+  return 0;
+}

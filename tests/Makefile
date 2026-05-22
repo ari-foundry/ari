@@ -159,6 +159,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-partial-move.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-vector-dynamic-move.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-vector-dynamic-move.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-temporary-element-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-temporary-element-move.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ownership-temporary-element-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-temporary-element-move.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-diagnostic-catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-capability-inventory $(BUILD_DIR)/compiler-development/artifact/capability-inventory.inventory
@@ -246,6 +248,8 @@ check-ownership: $(TARGET)
 	grep -q "cannot move partially moved owning binding 'holder'" $(BUILD_DIR)/ownership/ownership-aggregate-partial-move.err
 	if $(TARGET) tests/cases/ownership/errors/ownership-vector-dynamic-element-move.ari --check >$(BUILD_DIR)/ownership/ownership-vector-dynamic-element-move.err 2>&1; then exit 1; fi
 	grep -q "moving owning aggregate elements through dynamic indexes is not supported; use a constant index or move the whole aggregate" $(BUILD_DIR)/ownership/ownership-vector-dynamic-element-move.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-temporary-element-move.ari --check >$(BUILD_DIR)/ownership/diagnostic-ownership-temporary-element-move.err 2>&1; then exit 1; fi
+	grep -q "moving owning aggregate elements out of temporary values is not supported; bind the aggregate first" $(BUILD_DIR)/ownership/diagnostic-ownership-temporary-element-move.err
 	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.ari --check >$(BUILD_DIR)/ownership/diagnostic-assignment-while-borrowed.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/ownership/diagnostic-assignment-while-borrowed.err
 	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.ari --check >$(BUILD_DIR)/ownership/diagnostic-field-assignment-while-borrowed.err 2>&1; then exit 1; fi

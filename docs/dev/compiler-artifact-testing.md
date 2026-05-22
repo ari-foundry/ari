@@ -311,6 +311,7 @@ tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.
 tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ownership-temporary-element-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari
