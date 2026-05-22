@@ -1,8 +1,11 @@
 # Compiler Source And Diagnostics
 
-This page defines the compiler/tooling source-map and diagnostic layer Ari
-needs for precise errors, stable artifacts, lint, LSP, formatter, and package
-tools.
+This page defines the compiler/tooling source-map and diagnostic layer Ari uses
+for precise errors and stable artifacts. The current C++ compiler has the
+production-ready baseline for the supported surface: loaded sources receive
+`SourceId`s, tokens and AST locations retain byte spans, common lexer, parser,
+module, semantic, trait, and ownership errors render with source-backed labels,
+and golden diagnostic artifacts record deterministic source data.
 
 Do not put these APIs into runtime `std`. Runtime `std` should keep broadly
 useful facilities such as strings, formatting, paths, files, logging, tests,
@@ -19,11 +22,10 @@ Read this page with:
 
 ## Goals
 
-The source/diagnostic layer should make compiler errors precise, stable, and
-pleasant to maintain. Its renderer owns stable golden rendering for compiler
-tests.
+The source/diagnostic layer makes compiler errors precise, stable, and pleasant
+to maintain. Its renderer owns stable golden rendering for compiler tests.
 
-It should provide:
+The supported C++ layer provides:
 
 - stable source identity through `SourceId`
 - owned source files through `SourceFile`
@@ -33,8 +35,11 @@ It should provide:
 - diagnostic codes and severity
 - primary and secondary labels
 - notes and help text
-- optional fix-it edits
 - deterministic rendering for golden tests
+
+Future Ari tooling packages may add fix-it edits, color, richer multi-primary
+diagnostics, and LSP-specific projections. Those are extensions to this source
+contract, not replacements for it.
 
 It should not provide:
 
@@ -214,6 +219,15 @@ Policy:
 - diagnostics may contain multiple labels
 - each label's `Span` carries its own `SourceId`, so multi-file diagnostics are
   represented without borrowing the primary label's file identity
+- every common user-facing error must retain source identity through `SourceId`
+  or a registered source path
+- artifact rows for located diagnostics include severity, diagnostic code,
+  family, message, source id, source path, byte start/end, line, column,
+  end-line, end-column, label role, notes/help, and snippets when source text is
+  available
+- line and column values in user-facing output are one-based byte columns; byte
+  spans remain zero-based and half-open
+- labels, notes, and help entries keep deterministic insertion order
 - stage0 diagnostics should preserve the original lexer/parser `SourceLocation`
   through module loading and sema. `CompileError(SourceLocation, message)` is
   the current bridge; `CompileError(where(loc) + ": ...")` is only for
@@ -289,6 +303,9 @@ Current transitional bridge:
 - `--emit-diagnostics` still catches string-based `CompileError` values.
 - `classify_diagnostic_code` maps common messages into the first stable
   families: `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, and `B0001`.
+  The covered user-facing semantic patterns include unknown names, duplicate
+  declarations, wrong argument counts, assignment errors, return errors, type
+  mismatches, private visibility access, trait failures, and ownership failures.
 - `diagnostic_code_family` renders the owning layer name, such as
   `family=parser`, next to the stable code in diagnostic artifacts.
 - Diagnostic artifacts render `Source`, `Label`, `Snippet`, `Note`, and `Help`
@@ -307,10 +324,29 @@ Current transitional bridge:
 - `--explain-diagnostic P0001` renders one code's family, source owner, first
   check, and artifact route for triage.
 - Unknown messages keep the fallback `ari/compiler` code so tools remain
-  compatible while individual diagnostics move to explicit codes.
-- This bridge is only for artifact stability. The long-term design is still
-  data-first diagnostics created at lexer, parser, resolver, sema, ownership,
-  IR, or backend throw sites.
+  compatible for source-less driver/backend/internal failures while individual
+  diagnostics move to explicit codes.
+- This bridge is for artifact stability and compatibility. New diagnostics
+  should prefer data-first construction at lexer, parser, resolver, sema,
+  ownership, IR, or backend throw sites.
+
+## Current Integration Audit
+
+The current compiler paths are classified as follows.
+
+| Path | Status | Contract |
+| --- | --- | --- |
+| `SourceId`, `SourceFile`, `Span`, `SourceMap`, `SourceLocation` | already SourceId/Span-backed | `src/common.*` owns source registration, line tables, EOF offsets, byte-span helpers, line/column lookup, CRLF handling, UTF-8 byte-column policy, snippet extraction, and missing-source fallback. |
+| Lexer diagnostics | already SourceId/Span-backed | Tokens and lexer errors carry spans. `diagnostic-unexpected-character.diagnostic` verifies code, source id/path, byte span, line/column, label, and snippet. |
+| Parser diagnostics | already SourceId/Span-backed | Expected/unexpected token failures use token spans. `diagnostic-parser-expected.diagnostic` is the representative golden. |
+| Module/import/visibility diagnostics | already SourceId/Span-backed for common paths | Missing module files and private access preserve the source of the import or qualified access. `diagnostic-missing-module.diagnostic` and `diagnostic-private-access.diagnostic` verify the artifact rows. |
+| Semantic/type/name diagnostics | already SourceId/Span-backed for common paths | Unknown names, duplicate declarations, type mismatch, wrong arity, wrong argument type, invalid return, and invalid assignment are covered by focused diagnostic artifacts. |
+| Trait diagnostics | already SourceId/Span-backed for the minimum subset | Unknown trait, missing impl, ambiguous method, duplicate/wrong impl checks flow through semantic locations and golden diagnostics. |
+| Ownership/borrow/drop diagnostics | already SourceId/Span-backed for supported ownership checks | Borrow conflict and use-after-move-style checks point at the expression or binding span; `diagnostic-borrow-conflict.diagnostic` is the golden fixture. |
+| `CompileError(SourceLocation, message)` | structured bridge | Keeps `SourceId`, byte range, cached line/column, primary label, and snippet. This is the preferred C++ bridge while the compiler still throws `CompileError`. |
+| `CompileError(where(loc) + text)` | SourceLocation-backed transitional path | Older helpers that accept strings still parse structured `:bytes=start..end` prefixes back into source-aware labels. Keep this path only while migrating call sites. |
+| String-only diagnostics | justified fallback | CLI misuse, missing input files, artifact option conflicts, backend/toolchain failures, and internal generated errors may be source-less because no user source span exists. They use `ari/compiler`, `B0001`, or another layer code as appropriate and must not be used for common source-level errors. |
+| Deferred features | intentionally unsupported | Fix-its, terminal color, LSP display-width columns, multi-primary diagnostics, and a fully data-first non-exception pipeline remain future tooling work. |
 
 ## Ownership And Allocation
 
@@ -376,30 +412,42 @@ Test names should describe behavior:
 
 ## Integration With The Current Compiler
 
-The current C++ compiler should improve in parallel:
+The current C++ compiler treats source-aware diagnostics as the normal path for
+source-level failures:
 
 - use `--emit-source-map` to review source files, byte offsets, line lengths,
   newline kind, and snippets before lexer or parser output is involved
-- keep frontend diagnostics specific
+- keep frontend diagnostics specific and anchored to the token, AST node,
+  declaration, import, or expression that caused the failure
 - avoid backend diagnostics for source-level mistakes
-- move repeated diagnostic spelling into helpers
-- keep source spans available through parser and sema data
-- add stable substrings or golden output when diagnostics become user-facing
+- move repeated diagnostic spelling into helpers when the same rule appears in
+  several semantic paths
+- keep source spans available through parser, sema, trait, ownership, and IR
+  data instead of re-resolving source names later
+- add or refresh a golden diagnostic artifact when a user-facing diagnostic is
+  introduced or its source span changes
+- document any remaining source-less diagnostic as driver, backend, generated,
+  internal, or deferred
 
-This means the current compiler should produce better diagnostics while the
-tooling package shape is designed.
+This means source identity is part of the compiler contract today. The future
+tooling package shape can make diagnostics nicer to author, but it should not
+weaken the current `SourceId`/`Span` artifact guarantees.
 
 ## Readiness Impact
 
-This layer is one of the largest remaining blockers. It affects:
+SourceMap and diagnostic integration is production-ready for the current
+compiler surface. The protected contract covers:
 
-- lexer diagnostics
-- parser recovery
-- module errors
-- type and trait errors
-- ownership errors
-- artifact comparison
-- LSP and lint integration
+- SourceId assignment, lookup, replacement, generated sources, and invalid
+  source fallback
+- byte spans, EOF spans, empty files, multi-line files, CRLF files, UTF-8 byte
+  columns, and snippet extraction
+- lexer, parser, module, semantic, trait, and ownership representative
+  diagnostics
+- deterministic diagnostic artifacts with source rows, labels, byte ranges,
+  line/column data, snippets, notes, and help rows where available
 
-This layer becomes mature when source ids, spans, line lookup, labels, notes,
-and plain-text golden rendering are all covered by focused artifacts.
+Remaining work is intentionally scoped to future polish rather than correctness:
+individual rule-specific code expansion beyond the first stable families,
+fix-its, color, LSP column projections, richer multi-label authoring helpers,
+and continued migration away from transitional string constructors.

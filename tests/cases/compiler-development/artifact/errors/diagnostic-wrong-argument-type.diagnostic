@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari" bytes=98
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari" line=6 column=19 end_line=6 end_column=23 byte_start=89 byte_end=93 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari:6:19\n   |\n 6 |   return take_i64(true);\n   |                   ^^^^"

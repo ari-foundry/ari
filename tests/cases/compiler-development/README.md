@@ -76,7 +76,8 @@ the same language surface that normal Ari users get.
   normalization fixture for future golden artifact checks.
 - `tests/source_map_unit.cpp`: direct C++ SourceMap test for empty files,
   one-line and multi-line files, EOF, CRLF, UTF-8 byte columns, invalid spans,
-  multi-file ids, and snippets.
+  multi-file ids, source replacement identity, generated sources, missing
+  source fallback, and snippets.
 - `artifact/ok/source-map-file-module.map`: source byte, line, and newline
   golden seed for root plus file-backed child module sources.
 - `artifact/ok/declaration-index-basic.*`: declaration signature, visibility,
@@ -97,7 +98,8 @@ the same language surface that normal Ari users get.
   concrete user-defined generic aggregate instantiations, nested enum payloads,
   method specialization, and owned generic fields.
 - `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module,
-  assignment type, trait, and ownership diagnostic code/family/span golden
+  unknown-name, duplicate-name, wrong-arity, wrong-argument, invalid-return,
+  invalid-assignment, trait, and ownership diagnostic code/family/span golden
   seeds.
 - `artifact/errors/text-line-mismatch.*.txt`: seed mismatch-report fixture for
   text artifact comparisons.

@@ -46,6 +46,7 @@ get more reliable, not when a private shortcut is added.
 | Core executable language | Functions, locals, scalar operators, casts, blocks, branches, loops, `break`, `continue`, and returns are locked by `make check-core-language`; richer enums, structs, modules, FFI, and formatting are covered by their focused suites. | Compiler-shaped fixtures can be written as ordinary Ari programs on top of a stable scalar/control-flow base. |
 | Generic calls and ADTs | Generic functions, generic structs, generic enums, `Option[T]`, and `Result[T, E]` exist. | Source models, tokens, AST nodes, and expected failures can use natural types. |
 | Minimum static traits | Trait declarations, impl conformance, deterministic static dispatch, generic bounds, Eq/Ord/Hash/Debug-like fixtures, iterator-shaped helpers, and missing/ambiguous diagnostics are locked by `make check-traits`. | Compiler-shaped data can compare, hash, format, and traverse values through normal trait behavior instead of name-specific shortcuts. |
+| SourceMap and diagnostics | `SourceMap`, `SourceId`, `SourceFile`, `Span`, `SourceLocation`, line/column lookup, snippets, diagnostic codes, labels, notes, and source-aware golden artifacts are locked by `make check-source-map-unit` and `make check-compiler-artifacts`. | User-facing compiler errors keep source identity and deterministic artifact rows across lexer, parser, module, semantic, trait, and ownership paths. |
 | Ownership checks | Move, borrow, drop, and explicit-zone checks catch many unsafe flows. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
 | Focused test culture | Many feature folders already separate `ok` and `errors` tests. | New compiler behavior can be guarded with one small fixture at a time. |
 
@@ -53,8 +54,6 @@ get more reliable, not when a private shortcut is added.
 
 | Gap | Needed State | First Work |
 | --- | --- | --- |
-| Source identity | Stable `SourceMap`, `SourceId`, owned `SourceFile` text, canonical/display paths, line tables, EOF offsets, canonical `Span` helpers, line/column lookup, and snippets for every diagnostic. | Add compiler/tooling source-map fixtures and golden source rendering checks. |
-| Diagnostics | Stable codes, labels, notes, and normalized golden output. | Move errors toward data-first diagnostics before polishing renderer text. |
 | File-backed projects | Predictable module roots, `.ari`/`.arih` policy, metadata, cache invalidation, and Makefile flows. | Harden module search and add stale/private/missing file diagnostics. |
 | Generic aggregate scale | Nested structs, enums, aliases, vectors, maps, sets, and `Result` payloads have a production-hardening first pass without stdlib name special cases. | Keep adding compiler-shaped model fixtures under `tests/cases/compiler-development/ok/model/` and generic aggregate diagnostics under `tests/cases/generics/errors/`. |
 | Trait selection beyond the minimum subset | Trait objects, associated-type solving, trait-driven collection defaults, and richer iterator ownership policies need the same stability as the static subset. | Keep minimum-subset fixtures green while adding one focused advanced trait fixture at a time. |
@@ -115,11 +114,14 @@ Use this order for general compiler development:
 
 1. Frontend contracts: lexer/parser span accuracy, literal behavior, recovery,
    and malformed syntax diagnostics.
-2. Source model: `SourceMap`, `SourceFile`, `SourceId`, `Span`,
-   canonical/display paths, byte offsets, line tables, EOF offsets, line/column
-   conversion, and snippet extraction as compiler/tooling concepts.
-3. Diagnostic model: diagnostic codes, severity, primary/secondary labels,
-   notes, stable sorting, and path normalization.
+2. Source model maintenance: keep `SourceMap`, `SourceFile`, `SourceId`,
+   `Span`, canonical/display paths, byte offsets, line tables, EOF offsets,
+   line/column conversion, and snippet extraction covered as new compiler paths
+   are added.
+3. Diagnostic model polish: keep diagnostic codes, severity,
+   primary/secondary labels, notes, stable sorting, and path normalization
+   covered while expanding rule-specific codes and retiring transitional string
+   constructors.
 4. Module projects: file-backed modules, project roots, header/source
    separation, module metadata, and module caches.
 5. Type and trait maturity: generic aggregate monomorphization, associated

@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="duplicate struct 'DuplicatePoint'" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-name.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-name.ari" bytes=107
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-name.ari" line=5 column=8 end_line=5 end_column=22 byte_start=44 byte_end=58 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-name.ari:5:8\n   |\n 5 | struct DuplicatePoint {\n   |        ^^^^^^^^^^^^^^"

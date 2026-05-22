@@ -223,6 +223,7 @@ std::string classify_diagnostic_code(const std::string& message) {
     // patterns with explicit codes at the throw site.
     if (contains(diagnostic, "unexpected character")) return "L0001";
     if (contains(diagnostic, "cannot find module file") ||
+        contains(diagnostic, "is not public") ||
         contains(diagnostic, "module cache") ||
         contains(diagnostic, "module metadata")) {
         return "M0001";
@@ -234,10 +235,20 @@ std::string classify_diagnostic_code(const std::string& message) {
         return "O0001";
     }
     if (contains(diagnostic, "unknown type") ||
+        contains(diagnostic, "unknown name") ||
         contains(diagnostic, "unknown trait") ||
         contains(diagnostic, "trait bound") ||
         contains(diagnostic, "cannot infer") ||
+        contains(diagnostic, "cannot assign") ||
         contains(diagnostic, "type mismatch") ||
+        contains(diagnostic, "wrong argument count") ||
+        contains(diagnostic, "missing return") ||
+        contains(diagnostic, "return type") ||
+        contains(diagnostic, "duplicate type") ||
+        contains(diagnostic, "duplicate function") ||
+        contains(diagnostic, "duplicate struct") ||
+        contains(diagnostic, "duplicate enum") ||
+        contains(diagnostic, "duplicate trait") ||
         contains(diagnostic, "no matching") ||
         contains(diagnostic, "ambiguous")) {
         return "T0001";

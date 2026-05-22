@@ -185,6 +185,38 @@ void test_multi_file_source_map() {
     expect_eq(map.span(second, 0, 1).source_id.value, second.value, "second span source id");
 }
 
+void test_source_registration_identity() {
+    ari::SourceMap map;
+    ari::SourceId first = map.add_source("same.ari", "old-display.ari", "a\n", ari::SourceKind::File);
+    ari::SourceId generated = map.add_in_memory("generated.ari", "bb", ari::SourceKind::Generated);
+    ari::SourceId second = map.add_source("same.ari", "new-display.ari", "ccc\n", ari::SourceKind::File);
+
+    expect_eq(first.value, 0, "first registered source id");
+    expect_eq(generated.value, 1, "generated source id follows file source");
+    expect_eq(second.value, first.value, "duplicate path keeps source id");
+    expect_eq(map.eof_offset(first), static_cast<std::size_t>(4), "duplicate path updates source text");
+    expect_eq(map.id_for_name("same.ari").value, first.value, "canonical path resolves to stable id");
+    expect_eq(map.id_for_name("old-display.ari").value,
+              ari::kInvalidSourceIdValue,
+              "old display name removed after replacement");
+    expect_eq(map.id_for_name("new-display.ari").value, first.value, "new display name resolves to stable id");
+
+    const ari::SourceFile* generated_file = map.get(generated);
+    expect_true(generated_file != nullptr, "generated source registered");
+    if (generated_file != nullptr) {
+        expect_eq(ari::source_kind_text(generated_file->kind), std::string("generated"), "generated source kind");
+        expect_eq(generated_file->display_name, std::string("generated.ari"), "generated display name");
+    }
+}
+
+void test_missing_source_snippet_fallback() {
+    ari::SourceMap map;
+    ari::SourceSnippet snippet = map.snippet(ari::Span{ari::SourceId{99}, 0, 1});
+    expect_false(snippet.valid, "missing source snippet invalid");
+    expect_eq(snippet.lines.size(), static_cast<std::size_t>(0), "missing source snippet has no lines");
+    expect_eq(ari::render_source_snippet(snippet), std::string(""), "missing source snippet renders empty");
+}
+
 void test_snippet_single_line() {
     ari::SourceMap map;
     ari::SourceId id = add_file(map, "snippet-one.ari", "let value = 42;\n");
@@ -228,6 +260,8 @@ int main() {
     test_utf8_byte_columns_and_multibyte_text();
     test_invalid_span();
     test_multi_file_source_map();
+    test_source_registration_identity();
+    test_missing_source_snippet_fallback();
     test_snippet_single_line();
     test_snippet_multi_line();
 
