@@ -850,6 +850,8 @@ method Slice[T]::try_last|check-prelude prelude-slice-option-access Option-retur
 method Slice[T]::windows|check-prelude prelude-slice-sequence lazy borrowed window iterator; docs/stdlib/modules/slice.md
 method std::Option[T]::and[U]|check-prelude prelude-option-result-combinators eager present-branch combinator; docs/stdlib/modules/option-result.md
 method std::Option[T]::and_then[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::as_mut|check-prelude prelude-option-result-ref-access mutable borrowed option payload view handle; docs/stdlib/modules/option-result.md
+method std::Option[T]::as_ref|check-prelude prelude-option-result-ref-access shared borrowed option payload view handle; docs/stdlib/modules/option-result.md
 method std::Option[T]::contains|check-prelude prelude-option-result-predicates exact value-membership predicate; docs/stdlib/modules/option-result.md
 method std::Option[T]::expect|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::filter|check-prelude prelude-option-filter borrowed predicate helper; docs/stdlib/api-reference.md Option and Result section
@@ -865,6 +867,8 @@ method std::Option[T]::ok_or[E]|check-prelude prelude-option-result-conversions;
 method std::Option[T]::ok_or_else[E]|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Option[T]::or|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::or_else|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::replace|check-prelude prelude-option-result-ref-access replace payload and return previous option; docs/stdlib/modules/option-result.md
+method std::Option[T]::take|check-prelude prelude-option-result-ref-access move payload out and leave None; docs/stdlib/modules/option-result.md
 method std::Option[T]::unwrap|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::unwrap_or_else|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
@@ -873,6 +877,8 @@ method std::Option[std::Option[T]]::flatten|check-prelude prelude-option-flatten
 method std::Option[std::Result[T,E]]::transpose|check-prelude prelude-option-transpose; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::and[U]|check-prelude prelude-option-result-combinators eager success-branch combinator; docs/stdlib/modules/option-result.md
 method std::Result[T,E]::and_then[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::as_mut|check-prelude prelude-option-result-ref-access mutable borrowed result payload view handle; docs/stdlib/modules/option-result.md
+method std::Result[T,E]::as_ref|check-prelude prelude-option-result-ref-access shared borrowed result payload view handle; docs/stdlib/modules/option-result.md
 method std::Result[T,E]::contains|check-prelude prelude-option-result-predicates exact success value-membership predicate; docs/stdlib/modules/option-result.md
 method std::Result[T,E]::contains_err|check-prelude prelude-option-result-predicates exact error value-membership predicate; docs/stdlib/modules/option-result.md
 method std::Result[T,E]::err|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
@@ -1431,6 +1437,15 @@ method std::net::UnixStream::shutdown|check-prelude std-net-unix-socket Unix str
 method std::net::UnixStream::try_connect|check-prelude std-net-unix-socket alias for fallible Unix connect; docs/stdlib/modules/net.md
 method std::net::UnixStream::try_read_byte|check-prelude std-net-unix-socket Option-returning single-byte Unix stream read helper; docs/stdlib/modules/net.md
 method std::net::UnixStream::write_all|check-prelude std-net-unix-socket Unix stream buffer write helper; docs/stdlib/modules/net.md
+method std::option::OptionMut[T]::as_ref|check-prelude prelude-option-result-ref-access downgrade mutable option payload view to shared view; docs/stdlib/modules/option-result.md
+method std::option::OptionMut[T]::expect|check-prelude prelude-option-result-ref-access mutable option payload expect handle; docs/stdlib/modules/option-result.md
+method std::option::OptionMut[T]::is_none|check-prelude prelude-option-result-ref-access mutable option payload absence predicate; docs/stdlib/modules/option-result.md
+method std::option::OptionMut[T]::is_some|check-prelude prelude-option-result-ref-access mutable option payload presence predicate; docs/stdlib/modules/option-result.md
+method std::option::OptionMut[T]::unwrap|check-prelude prelude-option-result-ref-access mutable option payload unwrap handle; docs/stdlib/modules/option-result.md
+method std::option::OptionRef[T]::expect|check-prelude prelude-option-result-ref-access shared option payload expect handle; docs/stdlib/modules/option-result.md
+method std::option::OptionRef[T]::is_none|check-prelude prelude-option-result-ref-access shared option payload absence predicate; docs/stdlib/modules/option-result.md
+method std::option::OptionRef[T]::is_some|check-prelude prelude-option-result-ref-access shared option payload presence predicate; docs/stdlib/modules/option-result.md
+method std::option::OptionRef[T]::unwrap|check-prelude prelude-option-result-ref-access shared option payload unwrap handle; docs/stdlib/modules/option-result.md
 method std::os::Fd::equals|check-prelude std-os-fd descriptor identity comparison; docs/stdlib/modules/os.md
 method std::os::Fd::is_invalid|check-prelude std-os-fd invalid descriptor predicate; docs/stdlib/modules/os.md
 method std::os::Fd::is_standard|check-prelude std-os-fd standard descriptor predicate; docs/stdlib/modules/os.md
@@ -1526,6 +1541,15 @@ method std::random::Prng::seed_from_os_result|check-prelude std-random-result Er
 method std::random::Prng::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle method; docs/stdlib/modules/random.md
 method std::random::Prng::try_below|check-prelude std-random-try-bounds Option-returning unbiased bounded PRNG integer method; docs/stdlib/modules/random.md
 method std::random::Prng::try_range|check-prelude std-random-try-bounds Option-returning unbiased PRNG range method; docs/stdlib/modules/random.md
+method std::result::ResultMut[T,E]::as_ref|check-prelude prelude-option-result-ref-access downgrade mutable result payload view to shared view; docs/stdlib/modules/option-result.md
+method std::result::ResultMut[T,E]::is_err|check-prelude prelude-option-result-ref-access mutable result error predicate; docs/stdlib/modules/option-result.md
+method std::result::ResultMut[T,E]::is_ok|check-prelude prelude-option-result-ref-access mutable result success predicate; docs/stdlib/modules/option-result.md
+method std::result::ResultMut[T,E]::unwrap|check-prelude prelude-option-result-ref-access mutable result success unwrap handle; docs/stdlib/modules/option-result.md
+method std::result::ResultMut[T,E]::unwrap_err|check-prelude prelude-option-result-ref-access mutable result error unwrap handle; docs/stdlib/modules/option-result.md
+method std::result::ResultRef[T,E]::is_err|check-prelude prelude-option-result-ref-access shared result error predicate; docs/stdlib/modules/option-result.md
+method std::result::ResultRef[T,E]::is_ok|check-prelude prelude-option-result-ref-access shared result success predicate; docs/stdlib/modules/option-result.md
+method std::result::ResultRef[T,E]::unwrap|check-prelude prelude-option-result-ref-access shared result success unwrap handle; docs/stdlib/modules/option-result.md
+method std::result::ResultRef[T,E]::unwrap_err|check-prelude prelude-option-result-ref-access shared result error unwrap handle; docs/stdlib/modules/option-result.md
 method std::string::OsStr::as_slice|check-prelude std-string-text-kinds borrowed OS string byte accessor; docs/stdlib/modules/string.md
 method std::string::OsStr::is_empty|check-prelude std-string-text-kinds OS string empty predicate; docs/stdlib/modules/string.md
 method std::string::OsStr::is_utf8|check-prelude std-string-text-kinds OS string UTF-8 validation predicate; docs/stdlib/modules/string.md
@@ -1944,6 +1968,8 @@ struct std::net::TcpStream|check-prelude std-net-tcp-loopback owned TCP stream h
 struct std::net::UdpSocket|check-prelude std-net-udp-socket owned UDP datagram socket handle; docs/stdlib/modules/net.md
 struct std::net::UnixListener|check-prelude std-net-unix-socket owned Unix domain listener handle; docs/stdlib/modules/net.md
 struct std::net::UnixStream|check-prelude std-net-unix-socket owned Unix domain stream handle and IO traits; docs/stdlib/modules/net.md
+struct std::option::OptionMut[T]|check-prelude prelude-option-result-ref-access mutable borrowed option payload view handle; docs/stdlib/modules/option-result.md
+struct std::option::OptionRef[T]|check-prelude prelude-option-result-ref-access shared borrowed option payload view handle; docs/stdlib/modules/option-result.md
 struct std::os::Fd|check-prelude std-os-fd non-owning file descriptor view; docs/stdlib/modules/os.md
 struct std::os::OwnedFd|check-prelude std-os-owned-fd owning file descriptor close wrapper; docs/stdlib/modules/os.md
 struct std::os::Pipe|check-prelude std-os-pipe owning pipe descriptor pair; docs/stdlib/modules/os.md
@@ -1956,6 +1982,8 @@ struct std::process::EnvVar|check-prelude std-process-command child environment 
 struct std::process::ExitStatus|check-prelude std-process-exit-status typed child exit status value; docs/stdlib/modules/process.md
 struct std::process::Output|check-prelude std-process-output captured child output handle; docs/stdlib/modules/process.md
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
+struct std::result::ResultMut[T, E]|check-prelude prelude-option-result-ref-access mutable borrowed result payload view handle; docs/stdlib/modules/option-result.md
+struct std::result::ResultRef[T, E]|check-prelude prelude-option-result-ref-access shared borrowed result payload view handle; docs/stdlib/modules/option-result.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row

@@ -23,6 +23,10 @@ library code.
 ```ari
 value.is_some()
 value.is_none()
+value.as_ref()
+value.as_mut()
+value.take()
+value.replace(next)
 value.is_some_and(op)
 value.is_none_or(op)
 value.contains(value)
@@ -48,6 +52,14 @@ value.ok_or_else<E>(op)
 
 `unwrap` and `expect` panic on `None`. Prefer `unwrap_or`,
 `unwrap_or_else`, `match`, or `?` in normal control flow.
+
+`as_ref` and `as_mut` borrow the payload without consuming the option. They
+return `std::option::OptionRef[T]` and `std::option::OptionMut[T]` handles
+instead of `Option[ref T]` because Ari's generic reference-valued enum payloads
+are still a compiler roadmap item. The handles expose `is_some`, `is_none`,
+`unwrap`, and `expect`; `OptionMut.as_ref()` downgrades a mutable view to a
+shared view. `take` moves the current payload out and leaves `None<T>()`.
+`replace(next)` stores `Some(next)` and returns the previous option.
 
 `is_some_and` and `is_none_or` consume the `Option[T]` and pass the payload to
 `op` only for `Some`. `contains(value)` consumes the option and compares a
@@ -81,6 +93,8 @@ outer `None<Option[T]>()` as `None<T>()`.
 ```ari
 value.is_ok()
 value.is_err()
+value.as_ref()
+value.as_mut()
 value.is_ok_and(op)
 value.is_err_and(op)
 value.contains(value)
@@ -105,6 +119,14 @@ value.or<F>(fallback)
 value.or_else<F>(op)
 value.transpose()
 ```
+
+`as_ref` and `as_mut` borrow the active success or error payload without
+consuming the result. They return `std::result::ResultRef[T, E]` and
+`std::result::ResultMut[T, E]` handles. `ResultRef` exposes `is_ok`, `is_err`,
+`unwrap`, and `unwrap_err`; `ResultMut` exposes the same mutable unwrapping
+operations plus `as_ref()`. These handles are the current source-level spelling
+for borrowed Result payload access until `Result[ref T, ref E]`-style generic
+reference payloads are supported directly.
 
 `ok` keeps the success payload as `Option[T]`. `err` keeps the error payload as
 `Option[E]`. `unwrap_or_else` receives the error and returns a fallback success
@@ -148,6 +170,7 @@ Focused positive tests:
 
 ```text
 tests/cases/standard-library/ok/prelude/prelude-option-result-methods.ari
+tests/cases/standard-library/ok/prelude/prelude-option-result-ref-access.ari
 tests/cases/standard-library/ok/prelude/prelude-option-result-predicates.ari
 tests/cases/standard-library/ok/prelude/prelude-option-filter.ari
 tests/cases/standard-library/ok/prelude/prelude-option-flatten.ari
@@ -160,6 +183,9 @@ tests/cases/standard-library/ok/prelude/prelude-option-result-unwrap.ari
 
 `prelude-option-result-predicates.ari` covers consuming payload predicates and
 exact value-membership predicates for `Option` and `Result`.
+
+`prelude-option-result-ref-access.ari` covers shared and mutable payload view
+handles plus `Option.take` and `Option.replace`.
 
 `prelude-option-result-combinators.ari` covers `map`, eager/lazy
 `map_or` fallback mapping, borrowed `inspect`/`inspect_err`, eager `and`/`or`,

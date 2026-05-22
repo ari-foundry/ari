@@ -129,9 +129,9 @@ Use this table when writing code from docs alone:
 | Write generic byte-output helpers. | `io::Writer`, `io::BufWriter`, `io::write_all_result[W: io::Writer](writer: ref mut W, bytes)`, `io::write_all[W: io::Writer](writer: ref mut W, bytes)`, `io::flush_result[W: io::Writer](writer: ref mut W)`, `io::flush[W: io::Writer](writer: ref mut W)` | `io::Stdout`, `io::Stderr`, `io::PipeWriter`, buffered writers, and `std::fs::File` implement `Writer` now. Prefer result helpers when failure matters; bool wrappers are compatibility helpers. `BufWriter` uses a caller-provided `Slice[u8]` buffer and flushes explicitly. File close ownership is still manual. |
 | Seek within byte streams. | `io::Seek`, `file.position()`, `file.seek(offset)`, `fs::position(file)`, `fs::seek(file, offset)` | `io::Cursor` and `std::fs::File` implement `Seek`. File seeking uses absolute byte offsets and returns `false` for invalid handles, negative offsets, or host seek failures. |
 | Test parser or binary read logic without host stdin. | `io::cursor(bytes)`, `io::BufReader`, `io::Reader`, `io::Seek`, `io::read_exact_result[R: io::Reader](reader: ref mut R, output, len)`, `io::read_exact[R: io::Reader](reader: ref mut R, output, len)` | `Cursor` reads from a borrowed `Slice[u8]`, supports `position()` and `seek(position)`, and returns `-1` at EOF through `Reader.read_byte()`. `read_exact_result` returns `Error(UnexpectedEof)` for short input; `read_exact` is the bool wrapper. `BufReader` uses a caller-provided `Slice[u8]` buffer. |
-| Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.unwrap_or`, `.map<U>`, `.and_then<U>`, `.filter()`, `.flatten()`, `.transpose()`, `?`, or `??` when that reads better than `match`. |
+| Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.as_ref()`/`.as_mut()` for borrowed payload views, `.take()` or `.replace(next)` for in-place state changes, and `.unwrap_or`, `.map<U>`, `.and_then<U>`, `.filter()`, `.flatten()`, `.transpose()`, `?`, or `??` when that reads better than `match`. |
 | Convert missing values into failures. | `option.ok_or<E>(error)`, `option.ok_or_else<E>(op)` | Lazy form builds the error only for `None`. |
-| Represent success/failure. | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` | Use `.map<U>`, `.and_then<U>`, `.transpose()`, `.or<F>`, `.or_else<F>`, or `?` when that reads better than `match`. |
+| Represent success/failure. | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` | Use `.as_ref()`/`.as_mut()` for borrowed success/error payload views, and `.map<U>`, `.and_then<U>`, `.transpose()`, `.or<F>`, `.or_else<F>`, or `?` when that reads better than `match`. |
 | Convert failures back to optional values. | `result.ok()`, `result.err()` | Keeps only the selected payload branch. |
 | Work with borrowed contiguous data. | `Slice[T]`, `slice(data, len)`, `.as_slice()`, `.slice(start, end)`, `.split_at(index)`, `.split_first()`, `.split_last()`, `.strip_prefix(prefix)`, `.strip_suffix(suffix)`, `.iter()`, `.iter_mut()`, `.find(needle)`, `.find_if(predicate)`, `.position(predicate)`, `.rposition(predicate)`, `.any(predicate)`, `.all(predicate)`, `.count_if(predicate)`, `.chunks(size)`, `.windows(size)`, `.split(delimiter)`, `.copy_within(start, end, target)`, `.fill_range(start, end, value)`, `.reverse_range(start, end)`, `.rotate_range(start, end, count)`, `.sort()`, `.sort_by(less)`, `.binary_search(value)`, `.binary_search_by(value, less)`, `.equal_range(value)`, `.partition_point(predicate)`, `.stable_partition(predicate)`, `.dedup_by(same)`, `.dedup_by_key(key)` | Slice methods borrow the view; use `try_get` when absence is expected, `get_mut`/`first_mut`/`last_mut` or `iter_mut` value handles for writable views, `iter`/`collect` for iterator workflows, `find`/`contains_slice` for subslice search, predicate helpers for borrowed element scans, lazy chunks/windows/split for allocation-free views, `copy_to(ref mut zone)` when an owned collection is needed, and direct algorithm wrappers for in-place reordering, range edits, fill/copy, stable or unstable partitioning, deduplication, sorting, search, equal-range lookup, partition-point lookup, and min/max. The non-`_by` ordering wrappers require `Ord`; the `*_by` wrappers take an explicit comparator. |
 | Store a small local literal sequence. | Bare `Vec[T]` from `[a, b, c]` | This is compiler-known local vector storage, not `std::vec::Vec[T]`. Empty `[]` needs an expected type. |
@@ -177,6 +177,10 @@ Use this table when writing code from docs alone:
 ```ari
 value.is_some()
 value.is_none()
+value.as_ref()
+value.as_mut()
+value.take()
+value.replace(next)
 value.is_some_and(fn_name)
 value.is_none_or(fn_name)
 value.unwrap_or(fallback)
@@ -200,6 +204,8 @@ value.ok_or_else<E>(fn_name)
 ```ari
 value.is_ok()
 value.is_err()
+value.as_ref()
+value.as_mut()
 value.is_ok_and(fn_name)
 value.is_err_and(fn_name)
 value.unwrap_or(fallback)

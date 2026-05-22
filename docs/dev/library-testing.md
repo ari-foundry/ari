@@ -580,6 +580,8 @@ identifies the exact case:
   vector, set, map, sequence, linked list, heap, and priority queue handles.
 - `std-boxed-as-ptr-after-reset.ari`: negative zone provenance diagnostic.
 - `prelude-option-result-methods.ari`: root prelude ADT method behavior.
+- `prelude-option-result-ref-access.ari`: Option/Result borrowed view handles
+  plus `Option.take` and `Option.replace` state changes.
 - `prelude-option-result-predicates.ari`: consuming Option/Result payload
   predicates and exact value-membership helpers.
 - `prelude-option-filter.ari`: borrowed-predicate Option filtering behavior.

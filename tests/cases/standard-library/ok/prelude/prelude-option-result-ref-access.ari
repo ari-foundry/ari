@@ -1,0 +1,75 @@
+// Covers borrowed view helpers for Option and Result. Ari does not yet expose
+// reference-valued generic payloads as Option[ref T], so the public API uses
+// small OptionRef/OptionMut and ResultRef/ResultMut handles.
+
+fn read_i64(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn write_i64(value: ref mut i64, replacement: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = replacement;
+}
+
+fn main() -> i64 {
+  var option = Some<i64>(10);
+  var none = None<i64>();
+
+  {
+    var option_ref = option.as_ref();
+    if !option_ref.is_some() { return 10; }
+    if read_i64(option_ref.unwrap()) != 10 { return 11; }
+    if !none.as_ref().is_none() { return 12; }
+  }
+
+  {
+    var option_mut = option.as_mut();
+    write_i64(option_mut.unwrap(), 15);
+    if !option_mut.as_ref().is_some() { return 20; }
+  }
+  if option.unwrap_or(0) != 15 { return 21; }
+
+  let taken = option.take();
+  if taken.unwrap_or(0) != 15 { return 30; }
+  if !option.is_none() { return 31; }
+  let empty_take = option.take();
+  if !empty_take.is_none() { return 32; }
+
+  let replaced_none = option.replace(21);
+  if !replaced_none.is_none() { return 40; }
+  let replaced_some = option.replace(22);
+  if replaced_some.unwrap_or(0) != 21 { return 41; }
+  if option.unwrap_or(0) != 22 { return 42; }
+
+  var ok_result: Result[i64, i64] = Ok<i64, i64>(30);
+  var err_result: Result[i64, i64] = Err<i64, i64>(4);
+
+  {
+    var ok_ref = ok_result.as_ref();
+    if !ok_ref.is_ok() { return 50; }
+    if read_i64(ok_ref.unwrap()) != 30 { return 51; }
+  }
+
+  {
+    var err_ref = err_result.as_ref();
+    if !err_ref.is_err() { return 60; }
+    if read_i64(err_ref.unwrap_err()) != 4 { return 61; }
+  }
+
+  {
+    var ok_mut = ok_result.as_mut();
+    write_i64(ok_mut.unwrap(), 35);
+    if !ok_mut.as_ref().is_ok() { return 70; }
+  }
+  if ok_result.unwrap_or(0) != 35 { return 71; }
+
+  {
+    var err_mut = err_result.as_mut();
+    write_i64(err_mut.unwrap_err(), 9);
+    if !err_mut.as_ref().is_err() { return 80; }
+  }
+  if err_result.unwrap_err() != 9 { return 81; }
+
+  return 0;
+}

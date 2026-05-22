@@ -1149,7 +1149,9 @@ Ari-layout aggregate, or supported aggregate enum memory access through raw
 pointers. `*pointer` provides the same dereference operation, and
 `(*pointer).field`, `(*pointer).0`, or `(*pointer)[index]` can read and write
 scalar slots inside a raw pointer to a struct, tuple struct, tuple, fixed
-array, or aggregate enum payload slot. Whole raw-pointer copies
+array, or aggregate enum payload slot. These raw-pointer-backed slots can also
+be borrowed directly when the pointer expression is rooted in a trackable local,
+for example `ref mut (*pointer).0`. Whole raw-pointer copies
 are intentionally rejected for values that contain `own`, `ref`, or `ref mut`
 state until the zone and ownership diagnostics are broadened.
 

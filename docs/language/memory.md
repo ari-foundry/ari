@@ -216,7 +216,9 @@ move as one value. Borrow-valued aggregate bindings track source borrows per
 field path, so local aggregate reassignment and borrow-field reassignment can
 release replaced sources while keeping unrelated borrow fields live. Fields and
 elements can be borrowed directly with `ref value.field`, `ref mut value.0`, or
-constant `ref value[index]`, and those borrows block only overlapping paths. Non-owned
+constant `ref value[index]`, and raw-pointer-backed aggregate slots can be
+borrowed with forms such as `ref mut (*raw).0`. Those borrows block only
+overlapping local paths when the compiler can track the base. Non-owned
 fields of owning structs and tuple structs can be read or assigned without
 moving the whole aggregate. Owned struct and tuple-struct fields, nested owned
 field paths, and constant fixed-array/vector indexes can be moved independently

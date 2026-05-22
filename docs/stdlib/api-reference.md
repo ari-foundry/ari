@@ -1615,6 +1615,10 @@ Some(value)
 None<T>()
 value.is_some()
 value.is_none()
+value.as_ref()
+value.as_mut()
+value.take()
+value.replace(next)
 value.is_some_and(op)
 value.is_none_or(op)
 value.contains(value)
@@ -1645,6 +1649,8 @@ Ok<T, E>(value)
 Err<T, E>(error)
 value.is_ok()
 value.is_err()
+value.as_ref()
+value.as_mut()
 value.is_ok_and(op)
 value.is_err_and(op)
 value.contains(value)
@@ -1683,7 +1689,12 @@ fallback is expensive or should only run on the missing/error branch. Use
 `map_or` and `map_or_else` when the desired result is not another
 `Option`/`Result`, but a direct fallback-or-mapped value. Use `inspect` and
 `inspect_err` to observe borrowed payloads while preserving the original
-control-flow value. Use
+control-flow value. Use `as_ref` and `as_mut` when the payload must be borrowed
+without consuming the enum; they return `OptionRef`/`OptionMut` and
+`ResultRef`/`ResultMut` view handles with branch predicates and borrowed
+`unwrap` helpers. `Option::take` moves the payload out and leaves `None<T>()`;
+`Option::replace(next)` stores the new payload and returns the previous
+option. Use
 `Option::and` and `Result::and` when the next value is already available and
 should be selected only from the present/success branch. Use
 `ok_or` and `ok_or_else` when an optional value needs to enter a
