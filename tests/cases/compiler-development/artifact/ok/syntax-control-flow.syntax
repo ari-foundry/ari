@@ -18,7 +18,7 @@ Program source=tests/cases/compiler-development/artifact/ok/syntax-control-flow.
             Name value=index @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:9:8 source_id=0 bytes=130..135
             Integer value=2 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:9:17 source_id=0 bytes=139..140
           Then
-            Continue @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:10:15 source_id=0 bytes=157..158
+            Continue @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:10:7 source_id=0 bytes=149..157
           Else
             Assign name=total @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:12:7 source_id=0 bytes=178..183
               Binary op="+" @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:12:21 source_id=0 bytes=192..193

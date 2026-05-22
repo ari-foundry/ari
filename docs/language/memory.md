@@ -530,6 +530,9 @@ diagnostic that names both the pointer binding and the temporary zone source.
 `zone::reset` only rewinds the allocation cursor; it does not destroy placed
 values. Non-temporary `own Zone` values must be passed to `zone::destroy`;
 plain `drop zone` is rejected so the release operation stays visible in source.
+Other `own` locals still cannot silently cross `return`, `break`, or
+`continue`; a live owner must be moved, returned, dropped, or forgotten before
+that control-flow exit.
 The checker tracks direct local pointers produced by `zone::alloc<T>` and
 `zone::new<T>`, plus calls to pointer-returning functions or associated
 constructors that take exactly one `ref Zone` or `ref mut Zone` parameter. Using

@@ -295,10 +295,13 @@ Current compiler-development tests:
   enum matching, and deterministic `Drop` calls.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic`,
   `diagnostic-field-assignment-while-borrowed.diagnostic`,
+  `diagnostic-return-live-owner.diagnostic`,
+  `diagnostic-loop-break-live-owner.diagnostic`,
+  `diagnostic-loop-continue-live-owner.diagnostic`,
   `diagnostic-borrow-after-move.diagnostic`, `diagnostic-double-move.diagnostic`,
   and `diagnostic-enum-payload-invalid-move.diagnostic`: source-aware
-  ownership diagnostic goldens for borrow conflicts, repeated moves, and
-  invalid enum payload moves.
+  ownership diagnostic goldens for borrow conflicts, live-owner control-flow
+  exits, repeated moves, and invalid enum payload moves.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
@@ -326,11 +329,15 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic`:
   ownership diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-owner.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic`,
   and `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic`:
-  source-aware ownership diagnostics for representative move, borrow, partial
-  move, and unsupported container-element ownership failures.
+  source-aware ownership diagnostics for representative move, borrow,
+  control-flow live-owner, partial-move, and unsupported container-element
+  ownership failures.
 
 The first command to run after changing this area is:
 

@@ -38,7 +38,7 @@ IrProgram source=tests/cases/compiler-development/artifact/ok/core-language-scal
             Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:8
             Integer type=i64 value=2 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:17
           Then
-            Continue @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:16:15
+            Continue @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:16:7
         If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:8
           Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:14
             Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:8

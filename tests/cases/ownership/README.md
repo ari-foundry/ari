@@ -6,7 +6,8 @@ exist.
 
 Coverage is grouped by behavior:
 
-- local owner moves, use-after-move, and explicit `drop`
+- local owner moves, use-after-move, explicit `drop`, and live-owner
+  return/break/continue rejection
 - aggregate field moves, nested field moves, and partial-move diagnostics
 - fixed-array and local `Vec[own T]` element moves
 - aggregate and runtime enum payload drop lowering
@@ -30,6 +31,9 @@ diagnostics and review-sized LLVM drop fragments:
 - `diagnostic-move-borrowed-owner.diagnostic`
 - `diagnostic-assignment-while-borrowed.diagnostic`
 - `diagnostic-field-assignment-while-borrowed.diagnostic`
+- `diagnostic-return-live-owner.diagnostic`
+- `diagnostic-loop-break-live-owner.diagnostic`
+- `diagnostic-loop-continue-live-owner.diagnostic`
 - `diagnostic-enum-payload-invalid-move.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`

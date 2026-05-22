@@ -40,7 +40,7 @@ before cleaning payload storage so inactive variants are not dropped.
 
 | Area | Status | Coverage |
 | --- | --- | --- |
-| Local moves and use-after-move | complete | `make check-errors`, `diagnostic-use-after-move.diagnostic` |
+| Local moves and use-after-move | complete | `make check-errors`, `diagnostic-use-after-move.diagnostic`, live-owner return/break/continue diagnostics |
 | Copy vs move behavior | complete | scalar copy fixtures and owning `Token`/`Diagnostic` fixtures |
 | Shared and mutable borrows | complete for current path model | `borrow-reborrow-paths.ari`, borrow conflict diagnostics |
 | Field moves and partial moves | complete for supported local aggregate paths | `ownership-aggregate-field-move.ari`, partial-move diagnostics |
@@ -81,6 +81,9 @@ The artifact suite currently locks these ownership/drop surfaces:
 - `diagnostic-move-borrowed-owner.diagnostic`
 - `diagnostic-assignment-while-borrowed.diagnostic`
 - `diagnostic-field-assignment-while-borrowed.diagnostic`
+- `diagnostic-return-live-owner.diagnostic`
+- `diagnostic-loop-break-live-owner.diagnostic`
+- `diagnostic-loop-continue-live-owner.diagnostic`
 - `diagnostic-enum-payload-invalid-move.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
@@ -93,9 +96,10 @@ The artifact suite currently locks these ownership/drop surfaces:
 borrows, generic `Box`/`Slot` field ownership, `Vec[WorkItem]` owner moves and
 reinitialization, result-like enum matching, and deterministic `Drop` calls.
 The diagnostic goldens above lock assignment-while-borrowed, field assignment
-while a subpath is borrowed, borrow-after-move, double-move, invalid enum payload-slot moves,
-partial aggregate moves, and dynamic indexed container owner moves as
-source-aware ownership errors.
+while a subpath is borrowed, borrow-after-move, double-move, live-owner
+return/break/continue exits, invalid enum payload-slot moves, partial aggregate
+moves, and dynamic indexed container owner moves as source-aware ownership
+errors.
 
 ## Adding Tests
 

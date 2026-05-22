@@ -139,6 +139,12 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-assignment-while-borrowed.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-field-assignment-while-borrowed.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-field-assignment-while-borrowed.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-return-live-owner.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-return-live-owner.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-loop-break-live-owner.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-loop-break-live-owner.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-owner.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-loop-continue-live-owner.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-owner.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-loop-continue-live-owner.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-use-after-move.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-use-after-move.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-after-move.diagnostic
@@ -244,6 +250,12 @@ check-ownership: $(TARGET)
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/ownership/diagnostic-assignment-while-borrowed.err
 	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.ari --check >$(BUILD_DIR)/ownership/diagnostic-field-assignment-while-borrowed.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed field 'pair.0'" $(BUILD_DIR)/ownership/diagnostic-field-assignment-while-borrowed.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.ari --check >$(BUILD_DIR)/ownership/diagnostic-return-live-owner.err 2>&1; then exit 1; fi
+	grep -q "owning binding 'token' must be moved or dropped before return" $(BUILD_DIR)/ownership/diagnostic-return-live-owner.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.ari --check >$(BUILD_DIR)/ownership/diagnostic-loop-break-live-owner.err 2>&1; then exit 1; fi
+	grep -q "owning binding 'token' must be moved or dropped before break" $(BUILD_DIR)/ownership/diagnostic-loop-break-live-owner.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-owner.ari --check >$(BUILD_DIR)/ownership/diagnostic-loop-continue-live-owner.err 2>&1; then exit 1; fi
+	grep -q "owning binding 'token' must be moved or dropped before continue" $(BUILD_DIR)/ownership/diagnostic-loop-continue-live-owner.err
 	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.ari --check >$(BUILD_DIR)/ownership/diagnostic-borrow-after-move.err 2>&1; then exit 1; fi
 	grep -q "cannot use moved binding 'token'" $(BUILD_DIR)/ownership/diagnostic-borrow-after-move.err
 	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-double-move.ari --check >$(BUILD_DIR)/ownership/diagnostic-double-move.err 2>&1; then exit 1; fi

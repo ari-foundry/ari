@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let token: own i64 = 7;
+  return 0;
+}

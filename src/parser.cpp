@@ -1492,9 +1492,10 @@ private:
     }
 
     StmtPtr parse_continue() {
+        Token continue_token = tokens_[pos_ - 1];
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::Continue;
-        stmt->loc = peek().loc;
+        stmt->loc = continue_token.loc;
         if (starts_expression(peek().kind)) {
             stmt->updates = parse_expression_list();
         }

@@ -137,6 +137,9 @@ Keep fixture names behavior-based:
 - `runtime-output-trait.stdout`
 - `diagnostic-assignment-while-borrowed.diagnostic`
 - `diagnostic-field-assignment-while-borrowed.diagnostic`
+- `diagnostic-return-live-owner.diagnostic`
+- `diagnostic-loop-break-live-owner.diagnostic`
+- `diagnostic-loop-continue-live-owner.diagnostic`
 - `diagnostic-borrow-after-move.diagnostic`
 - `diagnostic-double-move.diagnostic`
 - `diagnostic-enum-payload-invalid-move.diagnostic`

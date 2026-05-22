@@ -280,6 +280,9 @@ tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.di
 tests/cases/compiler-development/artifact/errors/diagnostic-double-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-owner.diagnostic
 tests/cases/compiler-development/artifact/ok/object-library-export.symbols
 tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir
 tests/cases/compiler-development/artifact/ok/project-compiler.ir
