@@ -157,6 +157,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-enum-payload-invalid-move.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-compact-enum-payload-ref.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-compact-enum-payload-ref.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-aggregate-enum-payload.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-aggregate-enum-payload.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-partial-move.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-partial-move.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-vector-dynamic-move.diagnostic
@@ -270,6 +272,8 @@ check-ownership: $(TARGET)
 	grep -q "cannot move runtime-dependent owning enum payload slot 'item.0' outside match" $(BUILD_DIR)/ownership/diagnostic-enum-payload-invalid-move.err
 	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.ari --check >$(BUILD_DIR)/ownership/diagnostic-compact-enum-payload-ref.err 2>&1; then exit 1; fi
 	grep -q "compact enum payload reference binding for i32 is value-only" $(BUILD_DIR)/ownership/diagnostic-compact-enum-payload-ref.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.ari --check >$(BUILD_DIR)/ownership/diagnostic-ownership-aggregate-enum-payload.err 2>&1; then exit 1; fi
+	grep -q "ownership-carrying aggregate enum payloads are not supported yet" $(BUILD_DIR)/ownership/diagnostic-ownership-aggregate-enum-payload.err
 
 check-compiler-development: $(TARGET)
 	mkdir -p $(BUILD_DIR)/compiler-development

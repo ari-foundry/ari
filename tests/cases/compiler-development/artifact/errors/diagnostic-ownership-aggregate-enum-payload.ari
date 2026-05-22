@@ -1,0 +1,23 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+struct Token {
+  kind: i64,
+  payload: own i64,
+}
+
+struct Slot[T] {
+  value: T,
+}
+
+enum Event {
+  Empty,
+  TokenSlot(Slot[Token]),
+}
+
+fn main() -> i64 {
+  return 0;
+}

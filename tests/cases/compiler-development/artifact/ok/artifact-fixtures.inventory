@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=120
+CompilerArtifactFixtures version=1 group=all entries=122
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -33,6 +33,8 @@ CompilerArtifactFixtures version=1 group=all entries=120
   Fixture group=errors kind=diagnostic path=errors/diagnostic-missing-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-move-borrowed-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-move-borrowed-owner.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-ownership-aggregate-enum-payload.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ownership-aggregate-enum-payload.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-ownership-partial-move.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ownership-partial-move.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-ownership-temporary-element-move.ari

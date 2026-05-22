@@ -3804,6 +3804,16 @@ private:
         if (payload_needs_aggregate &&
             !unresolved_generic_payload &&
             !is_aggregate_enum_payload_type(payload_type)) {
+            if (is_owner_type(payload_type)) {
+                fail(loc,
+                     "ownership-carrying aggregate enum payloads are not supported yet; use a direct own i64/u64 payload or store the owner outside the enum payload, got " +
+                         type_name(payload_type));
+            }
+            if (contains_borrow_type(payload_type)) {
+                fail(loc,
+                     "borrow-carrying aggregate enum payloads are not supported yet; store the borrow outside the enum payload, got " +
+                         type_name(payload_type));
+            }
             fail(loc,
                  "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, owned i64/u64, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum values, got " +
                      type_name(payload_type));
