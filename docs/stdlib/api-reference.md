@@ -2000,6 +2000,7 @@ set.take(value)
 set.pop()
 set.try_pop()
 set.clear()
+set.retain(keep)
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.as_slice()
@@ -2024,8 +2025,10 @@ instead of insertion order and borrow the other set explicitly. `first`,
 `last`, and `get` assert that the requested element exists, while
 `try_first`/`try_last`/`try_get` return `Option[T]`. `pop` removes the last
 insertion-order value, and `try_pop` returns `None` on an empty set.
-`reserve` and `reserve_extra` grow through the same source zone. The set
-preserves insertion order in accessors, `index_of`, `as_slice`,
+`retain(fn(ref T) -> bool)` filters in place, keeps insertion order for
+retained values, and drops removed values. `reserve` and `reserve_extra` grow
+through the same source zone. The set preserves insertion order in accessors,
+`index_of`, `as_slice`,
 `iter`, and `copy_to`. `std::collections::Iter[T]` implements `Iterator[T]`,
 and `Set[T]` implements `IntoIterator[T]`, so `for value in set` works through
 the standard iterator path. `drain()` yields insertion-order values and leaves
@@ -2127,6 +2130,7 @@ map.entry(key)
 map.remove(key)
 map.remove_entry(key)
 map.clear()
+map.retain(keep)
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
 map.copy_to(ref mut target)
@@ -2155,6 +2159,7 @@ set.replace(ref mut zone, value)
 set.take(value)
 set.remove(value)
 set.clear()
+set.retain(keep)
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.copy_to(ref mut target)
@@ -2180,7 +2185,10 @@ natural `entry(key)` spelling. `or_default` requires `V: Default`, while
 `insert_entry(value)` stores `value` and returns the entry handle for continued
 chaining.
 `HashMap.remove` returns `Option[V]` and leaves
-a tombstone so later probes still find collided keys. `HashMap.keys()` and
+a tombstone so later probes still find collided keys. `HashMap.retain(keep)`
+visits live buckets in place with `fn(ref K, ref mut V) -> bool`; retained
+values may be mutated, and rejected key/value pairs are dropped and replaced by
+tombstones. `HashMap.keys()` and
 `HashMap.values()` iterate live buckets; this is deterministic for the table
 state, but it is not insertion order. `HashMap.values_mut()` is a mutable
 value cursor with `has_next()` and `next() -> ref mut V`. `HashMap.iter()` is
@@ -2196,7 +2204,9 @@ and `key()`/`value()` accessors over the same live buckets.
 `Option[MapEntry[K,V]]` so callers can keep both removed key and value.
 `HashSet.iter()` and direct
 `for value in set` use the same live-bucket cursor. `HashSet.drain()` leaves
-the set empty while yielding drained values. Hash
+the set empty while yielding drained values. `HashSet.retain(keep)` filters
+live buckets with `fn(ref T) -> bool`, drops rejected values, and leaves
+tombstones for probing correctness. Hash
 `reserve_extra(additional)` grows enough buckets for `len + additional` live
 items without immediately violating the load-factor rule. Hash `copy_to`
 methods copy only live entries into the target zone, leaving tombstones behind.

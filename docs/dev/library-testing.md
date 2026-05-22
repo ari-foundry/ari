@@ -421,6 +421,9 @@ identifies the exact case:
 - `std-collections-map-entry-defaults.ari`: `HashMapEntry`/`TreeMapEntry`
   `or_default` insertion through `Default` and `insert_entry` chaining after
   insertion or replacement.
+- `std-collections-retain.ari`: `Set`, `HashSet`, and `HashMap` in-place
+  retain filtering, including hash-table tombstone reuse and `HashMap` value
+  mutation through the retain predicate.
 - `std-collections-view-api.ari`: `HashMap`/`TreeMap` `values_mut` cursors,
   map `iter()` aliases, `MapEntryMut`-based `iter_mut()` cursors, direct map
   `IntoIterator`, and draining cursors for linear, hash, and tree maps/sets.

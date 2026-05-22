@@ -1,0 +1,66 @@
+// Covers retain-style filtering for linear sets and hash-table collections.
+// HashMap::retain also verifies that predicates may mutate retained values.
+
+fn constant_hash(value: i64) -> u64 {
+  return 5;
+}
+
+fn keep_odd(value: ref i64) -> bool {
+  let raw: ptr i64 = value as ptr i64;
+  return (*raw % 2) == 1;
+}
+
+fn keep_large_key_and_bump(key: ref i64, value: ref mut i64) -> bool {
+  let raw_key: ptr i64 = key as ptr i64;
+  let raw_value: ptr i64 = value as ptr i64;
+  if *raw_key >= 10 {
+    *raw_value = *raw_value + 1;
+    return true;
+  }
+  return false;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(8192);
+
+  var set = Set::new<i64>(ref mut zone, 1);
+  set.insert(ref mut zone, 1);
+  set.insert(ref mut zone, 2);
+  set.insert(ref mut zone, 3);
+  set.insert(ref mut zone, 4);
+  set.retain(keep_odd);
+  assert(set.len() == 2);
+  assert(set.contains(1));
+  assert(set.contains(3));
+  assert(!set.contains(2));
+  assert(!set.contains(4));
+
+  var hash_set = HashSet::new<i64>(ref mut zone, 1, constant_hash);
+  hash_set.insert(ref mut zone, 5);
+  hash_set.insert(ref mut zone, 6);
+  hash_set.insert(ref mut zone, 7);
+  hash_set.insert(ref mut zone, 8);
+  hash_set.retain(keep_odd);
+  assert(hash_set.len() == 2);
+  assert(hash_set.contains(5));
+  assert(hash_set.contains(7));
+  assert(!hash_set.contains(6));
+  assert(!hash_set.contains(8));
+  assert(hash_set.insert(ref mut zone, 9));
+  assert(hash_set.contains(9));
+
+  var map = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  map.insert(ref mut zone, 1, 10);
+  map.insert(ref mut zone, 10, 100);
+  map.insert(ref mut zone, 20, 200);
+  map.retain(keep_large_key_and_bump);
+  assert(map.len() == 2);
+  assert(!map.contains_key(1));
+  assert(map.get(10) == 101);
+  assert(map.get(20) == 201);
+  map.insert(ref mut zone, 30, 300);
+  assert(map.get(30) == 300);
+
+  zone::destroy(zone);
+  return 0;
+}

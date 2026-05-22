@@ -1038,6 +1038,7 @@ method std::collections::HashMap[K,V]::remove_entry|check-prelude std-collection
 method std::collections::HashMap[K,V]::replace|check-prelude std-collections-map-mut-access named hash map insert-or-replace helper; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::reserve|check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::reserve_extra|check-prelude std-collections-implicit-zone spare table growth; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::retain|check-prelude std-collections-retain hash map in-place predicate filtering; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::try_get|check-prelude std-collections-hash Option-returning hash lookup; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::try_get_mut|check-prelude std-collections-map-mut-access optional hash map mutable value handle lookup; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::values|check-prelude std-collections-hash-iter bucket-order value iterator; docs/stdlib/modules/collections.md
@@ -1061,6 +1062,7 @@ method std::collections::HashSet[T]::remove|check-prelude std-collections-hash d
 method std::collections::HashSet[T]::replace|check-prelude std-collections-hash replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::reserve|check-prelude std-collections-hash same-zone table growth; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::reserve_extra|check-prelude std-collections-implicit-zone spare table growth; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::retain|check-prelude std-collections-retain hash set in-place predicate filtering; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::take|check-prelude std-collections-hash Option-returning removal; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::try_get|check-prelude std-collections-set-representatives optional stored representative lookup; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::back|check-prelude std-collections-linked-list asserting back accessor; docs/stdlib/modules/collections.md
@@ -1146,6 +1148,7 @@ method std::collections::Set[T]::remove|check-prelude std-collections-set member
 method std::collections::Set[T]::replace|check-prelude std-collections-set-replace replace-or-insert behavior and same-zone diagnostic; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::reserve|check-prelude std-collections-set-access same-zone capacity growth; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::reserve_extra|check-prelude std-collections-set-access same-zone spare-capacity growth; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::retain|check-prelude std-collections-retain linear set in-place predicate filtering; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::take|check-prelude std-collections-set Option-returning removal; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::try_first|check-prelude std-collections-set-access optional first accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::try_get|check-prelude std-collections-set-access optional indexed accessor; docs/stdlib/modules/collections.md

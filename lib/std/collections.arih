@@ -565,6 +565,19 @@ pub impl[T] std::collections::Set[T] {
     drop_values<T>(self);
   }
 
+  fn retain(self: ref mut Self, keep: fn(ref T) -> bool) -> void {
+    var index = 0;
+    while index < self.len {
+      let current = ptr_add(self.data, index);
+      if keep(ref *current) {
+        index = index + 1;
+      } else {
+        let removed = remove_at<T>(self, index);
+        drop removed;
+      }
+    }
+  }
+
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
     grow_to_capacity<T>(self, zone, capacity);
   }
@@ -1044,6 +1057,25 @@ pub impl[K, V] std::collections::HashMap[K, V] {
 
   fn clear(self: ref mut Self) -> void {
     hash_map_drop_values<K, V>(self);
+  }
+
+  fn retain(self: ref mut Self, keep: fn(ref K, ref mut V) -> bool) -> void {
+    var bucket = next_live_bucket(self.states, self.capacity, 0);
+    while bucket >= 0 {
+      let key_ptr = ptr_add(self.keys, bucket);
+      let value_ptr = ptr_add(self.values, bucket);
+      if keep(ref *key_ptr, ref mut *value_ptr) {
+        bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
+      } else {
+        let key = ptr_load(key_ptr);
+        let value = ptr_load(value_ptr);
+        drop key;
+        drop value;
+        ptr_store(ptr_add(self.states, bucket), 2);
+        self.len = self.len - 1;
+        bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
+      }
+    }
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
@@ -1620,6 +1652,22 @@ pub impl[T] std::collections::HashSet[T] {
 
   fn clear(self: ref mut Self) -> void {
     hash_set_drop_values<T>(self);
+  }
+
+  fn retain(self: ref mut Self, keep: fn(ref T) -> bool) -> void {
+    var bucket = next_live_bucket(self.states, self.capacity, 0);
+    while bucket >= 0 {
+      let value_ptr = ptr_add(self.data, bucket);
+      if keep(ref *value_ptr) {
+        bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
+      } else {
+        let value = ptr_load(value_ptr);
+        drop value;
+        ptr_store(ptr_add(self.states, bucket), 2);
+        self.len = self.len - 1;
+        bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
+      }
+    }
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {

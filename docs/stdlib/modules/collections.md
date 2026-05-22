@@ -74,6 +74,7 @@ set.take(value)
 set.pop()
 set.try_pop()
 set.clear()
+set.retain(keep)
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.as_slice()
@@ -85,6 +86,8 @@ set.copy_to(ref mut target)
 `insert` returns `true` only for a newly inserted value. `replace` returns
 `Some(previous)` when an equal value already existed, otherwise it inserts and
 returns `None`. `take` moves the removed value out, while `remove` drops it.
+`retain(fn(ref T) -> bool)` keeps insertion order while dropping values whose
+predicate returns `false`.
 `equals`, `is_subset`, `is_superset`, and `is_disjoint` compare membership,
 not insertion order, and borrow the other set explicitly.
 When a local `Set[T]` comes from a tracked zone allocation, the common growth
@@ -271,6 +274,7 @@ map.entry(key)
 map.remove(key)
 map.remove_entry(key)
 map.clear()
+map.retain(keep)
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
 map.copy_to(ref mut target)
@@ -304,8 +308,11 @@ spelling, and `HashMap[K,V]` implements `IntoIterator[MapEntry[K,V]]`, so
 mutable value cursor with `has_next()` and `next() -> ref mut V`; use it when
 keys must stay fixed but stored values should be updated in place. `iter_mut()`
 yields `MapEntryMut[K,V]` handles with `key()`, `value()`, and `value_mut()` so
-code can read the copied key while mutating the stored value. `drain()` marks
-the current live entries as drained, leaves the map empty, and returns a
+code can read the copied key while mutating the stored value.
+`retain(fn(ref K, ref mut V) -> bool)` scans live buckets in place. The
+predicate can mutate retained values; a `false` result drops the key/value pair
+and leaves a tombstone so later collision probes remain correct. `drain()`
+marks the current live entries as drained, leaves the map empty, and returns a
 draining entry cursor.
 `reserve_extra(additional)` reserves enough hash buckets
 for the requested live length without immediately violating the table's load
@@ -363,6 +370,7 @@ set.replace(ref mut zone, value)
 set.take(value)
 set.remove(value)
 set.clear()
+set.retain(keep)
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.copy_to(ref mut target)
@@ -377,9 +385,12 @@ compare membership over live buckets and ignore tombstones. `try_get(value)`
 returns the stored equal representative as `Option[T]`, and `get(value)` asserts
 that such a representative exists. `HashSet.iter()`
 yields live buckets, and `HashSet[T]` implements `IntoIterator[T]` so
-`for value in set` works through the same cursor. `HashSet.drain()` returns a
-live-bucket draining cursor and leaves the set empty. `copy_to(ref mut target)`
-copies live values into a fresh target-zone hash table without tombstones.
+`for value in set` works through the same cursor. `retain(fn(ref T) -> bool)`
+drops values whose predicate returns `false` and marks those buckets as
+tombstones; later inserts can still reuse the table normally. `HashSet.drain()`
+returns a live-bucket draining cursor and leaves the set empty.
+`copy_to(ref mut target)` copies live values into a fresh target-zone hash
+table without tombstones.
 
 ## TreeMap And TreeSet
 

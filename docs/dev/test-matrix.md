@@ -657,16 +657,17 @@ Checklist:
       insertion-order set with `new`, `Set::new`, `from_slice_in`, metadata,
       `first`/`last`/`get`, `try_first`/`try_last`/`try_get`, `contains`,
       `index_of`, `insert`, `replace`, `remove`, `take`, `pop`, `try_pop`,
-      `clear`, `reserve`, `reserve_extra`, `as_slice`, `iter`, and `copy_to`,
-      plus reset/destroy invalidation, iterator invalidation, and same-zone
-      growth diagnostics
+      `clear`, `retain`, `reserve`, `reserve_extra`, `as_slice`, `iter`,
+      and `copy_to`, plus reset/destroy invalidation, iterator invalidation,
+      and same-zone growth diagnostics
 - [x] source `std::collections::HashMap<K,V>`/`HashSet<T>` and
       `TreeMap<K,V>`/`TreeSet<T>` expose tracked hash-table and red-black-tree
       containers with explicit hash/comparator functions, lookup, insertion,
       replacement, `HashMapEntry`/`TreeMapEntry` update handles with insert,
       `insert_entry`, `or_default`, remove, access, and mutable-value
       borrowing, `remove_entry`, reserve growth, tracked-local zone inference
-      for common mutation calls, hash/tree
+      for common mutation calls, in-place `HashMap`/`HashSet` retain
+      filtering, hash/tree
       iterator invalidation, reset/destroy invalidation, and same-zone growth
       diagnostics
 - [x] source `std::collections::Deque<T>`, `RingBuffer<T>`,

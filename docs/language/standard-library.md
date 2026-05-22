@@ -54,7 +54,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, `Drain[T]`, constructors including `with_capacity`, metadata, checked and `Option` element access, mutation, growth, `resize_with`, capacity convenience, slice/iterator `extend`, `append`, `swap_remove`, `split_off`, whole and range draining, range insert/remove/splice, half-open `copy_within`/`fill_range`/`reverse_range`/`rotate_range`, copy, direct borrowed `slice`/`split_at`/`find`/`contains_slice`/`compare`/`chunks`/`windows`/`split`, in-place `reverse`/rotation/introsort/merge-stable-sort/search/equal-range/partition-point helpers, explicit-zone and `Result` stable-sort forms, stable/unstable partitioning, dedup variants, raw pointer access, `iter`/`iter_mut` iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
 | `std::hash` | Deterministic non-cryptographic hashing. | `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `pair`, `combine`, `bytes`, primitive write helpers. | Source-only helpers for values, byte slices, two-value composition, and precomputed hash composition. Hash-table constructors still take explicit hash functions until trait-driven collection constructors land. |
 | `std::random` | OS entropy and deterministic non-cryptographic random streams. | `Prng`, `entropy`, `entropy_result`, `fill`, `fill_result`, `seed`, `from_entropy`, `from_entropy_result`, `seed_from_os`, `seed_from_os_result`, `next`, `boolean`, unbiased `below`/`range`, `float`, `fill_from`, `shuffle`. | `entropy` is runtime-backed on Linux through `getrandom` with `/dev/urandom` fallback. Result forms return `std::error::Error` instead of terminating. `Prng` and shuffle are source Ari and are not cryptographic. |
-| `std::collections` | Zone-backed collection handles beyond sequences. | Linear `Set[T]`/`Iter[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, future trait-driven `Hash + Eq` and `Ord` default constructors, queue/list/heap operations, lookup, insertion, replacement, entry update handles, key-value removal, reserve, clear, hash bucket iterators, sorted tree iterators, mutable map value cursors, map `iter()`/`iter_mut()`/direct `for entry in map`, and draining cursors. | Implemented in source Ari with compiler provenance recognition for reset/destroy and same-zone growth checks. |
+| `std::collections` | Zone-backed collection handles beyond sequences. | Linear `Set[T]`/`Iter[T]`, `Deque[T]`, `RingBuffer[T]`, `LinkedList[T]`, `BinaryHeap[T]`, `PriorityQueue[T]`, hash-table `HashMap[K,V]`/`HashSet[T]`, red-black-tree `TreeMap[K,V]`/`TreeSet[T]`, explicit hash/comparator constructors, future trait-driven `Hash + Eq` and `Ord` default constructors, queue/list/heap operations, lookup, insertion, replacement, entry update handles, key-value removal, reserve, clear, retain filtering for linear/hash collections, hash bucket iterators, sorted tree iterators, mutable map value cursors, map `iter()`/`iter_mut()`/direct `for entry in map`, and draining cursors. | Implemented in source Ari with compiler provenance recognition for reset/destroy and same-zone growth checks. |
 | `std::iter` | Iteration traits, range constructors, lazy adapters, and eager consumers. | `range`, `range_inclusive`, `empty`, `once`, `repeat_with`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`, `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `count`, `count_if`, `nth`, `last`, `find_if`, `position`, `any`, `all`, `fold`, `reduce`, `collect`, plus Slice/Vec iterator sources. | Adapter callbacks are plain function pointers today; non-capturing lambdas can fill those slots when an expected `fn(...) -> ...` type is present. `empty` and `once` are finite source iterators; `repeat_with` is an infinite generator source, so pair it with `take`, `zip`, or another terminating consumer. Predicate consumers take `fn(ref T) -> bool`, `position` returns `-1` on absence, and `all` is true for empty iterators. Mutable Slice/Vec iteration yields value handles until reference-valued iterator items land. Capturing closure-aware iterator adapter traits remain future work. |
 | `std::fmt` | Formatting traits and explicit formatting helpers. Root `Display`/`Debug` are aliases for these traits. | `Debug::debug_in`, `Display::format_in`, `FormatSpec`, `decimal`, `hex`, `binary`, `octal`, width/precision/alignment modifiers, allocator-backed `*_in` helpers including `float_in`, `debug_value`, `write_value`, `write_debug`, `print_value`, `println_value`, `print_debug`, `println_debug`, and type-specific `write_*` helpers for `io::Writer`. | Formatting macros still use compiler lowering. `{}` maps to Display, `{:?}` maps to Debug where an explicit zone is available, and `FormatSpec` covers source hex/binary/octal, width, precision, and alignment for unsigned integers. |
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, primitive scalar impls, `Ordering`, `compare`, `compare_by`, `then_compare`, `then_compare_by`, `min`, `max`, `clamp`, `is_between`, and comparator-based `*_by` value helpers. | Implemented for source-level trait-bound static dispatch and explicit comparator call sites. |
@@ -260,13 +260,14 @@ delimiter `split` are available on `Slice[T]` and `std::vec::Vec[T]`; on
 `std::collections::Set[T]` also includes `insert(ref mut zone, value)`,
 `replace(ref mut zone, value)`, `remove(value)`, `take(value)`, `pop()`,
 `try_pop()`, `reserve(ref mut zone, capacity)`,
-`reserve_extra(ref mut zone, additional)`, and `clear()`. For tracked local
-sets, `insert(value)`, `replace(value)`, `reserve(capacity)`, and
+`reserve_extra(ref mut zone, additional)`, `retain(keep)`, and `clear()`.
+For tracked local sets, `insert(value)`, `replace(value)`, `reserve(capacity)`, and
 `reserve_extra(additional)` use the same source zone. Its accessors,
 `index_of`, `as_slice`, and `iter()` preserve insertion order, and the handle
 implements `IntoIterator[T]` for direct `for value in set` loops. `drain()`
 empties the set and yields the values that were live when the drain cursor was
-created.
+created. `retain(fn(ref T) -> bool)` filters in place and drops rejected
+values while keeping the retained insertion order.
 
 `std::collections::HashMap[K,V]` and `TreeMap[K,V]` share `len`, `capacity`,
 `is_empty`, `contains`, `contains_key`, `contains_value`, `get`, `get_or`,
@@ -285,14 +286,17 @@ a `has_next()`/`next() -> ref mut V` cursor, and direct `for entry in map`
 uses the same copied-entry order as `iter()`. `iter_mut()` yields
 `MapEntryMut[K,V]` handles with copied keys and mutable stored values.
 `try_get_mut()` returns `Option[MapValueMut[V]]`; unwrap the handle and call
-`value_mut()` when absence is a normal branch.
+`value_mut()` when absence is a normal branch. `HashMap` additionally has
+`retain(fn(ref K, ref mut V) -> bool)` for filtering and mutating retained
+values in place.
 
 `std::collections::HashSet[T]` and `TreeSet[T]` share `len`, `capacity`,
 `is_empty`, `contains`, `insert(ref mut zone, value)`,
 `replace(ref mut zone, value)`, `reserve(ref mut zone, capacity)`, and
-`clear`. Both have `iter()`, `drain()`, and direct `for value in set` support. `HashSet`
-also has `take(value)` and `remove(value)`. Hash set iteration walks live
-buckets; tree set iteration walks ascending comparator order.
+`clear`. Both have `iter()`, `drain()`, and direct `for value in set` support.
+`HashSet` also has `take(value)`, `remove(value)`, and `retain(keep)`.
+Hash set iteration and retain filtering walk live buckets; tree set iteration
+walks ascending comparator order.
 
 `std::fs::File` methods include `invalid`, `is_open`, `close`, `read_byte`,
 `try_read_byte`, `write_byte`, `write_bytes`, `position`, and `seek`. Use
