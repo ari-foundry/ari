@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Seed checks for compiler artifact comparison.
 
-The real Ari compiler artifact runner will grow from this contract: normalize
-host-specific text first, then compare small golden files with useful mismatch
-reports. Keeping this as a tiny Python check gives compiler-development docs a
-working target before token/HIR/typed-IR dump producers exist.
+The Ari artifact runner normalizes host-specific text first, then compares
+small golden files with useful mismatch reports. It also exposes an explicit
+update mode so golden regeneration stays reviewable instead of automatic.
 """
 
 from __future__ import annotations
@@ -12,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import sys
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -82,6 +82,21 @@ def require_report(expected_report: str, expected: str, actual: str, label: str)
     require_equal(expected_report, report, label + " report")
 
 
+def require_update_mode() -> None:
+    with tempfile.TemporaryDirectory(prefix="ari-artifact-") as temp:
+        directory = Path(temp)
+        expected = directory / "expected.txt"
+        actual = directory / "actual.txt"
+        expected.write_text("old\n", encoding="utf-8")
+        actual.write_text("$ROOT/path 0x1234\n", encoding="utf-8")
+        update_artifact_file(str(expected), str(actual), normalize=True)
+        require_equal(
+            "<repo>/path <ptr>\n",
+            expected.read_text(encoding="utf-8"),
+            "tests/check_compiler_artifacts.py --update",
+        )
+
+
 def resolve_user_path(value: str) -> Path:
     path = Path(value)
     if path.is_absolute():
@@ -105,6 +120,16 @@ def compare_artifact_files(expected_path: str, actual_path: str, normalize: bool
     return 0
 
 
+def update_artifact_file(expected_path: str, actual_path: str, normalize: bool) -> int:
+    expected_file = resolve_user_path(expected_path)
+    actual_file = resolve_user_path(actual_path)
+    actual = actual_file.read_text(encoding="utf-8")
+    if normalize:
+        actual = normalize_artifact_text(expand_fixture_paths(actual))
+    expected_file.write_text(actual, encoding="utf-8")
+    return 0
+
+
 def run_seed_checks() -> int:
     require_equal(
         read_fixture("ok/text-equal.expected.txt"),
@@ -124,6 +149,7 @@ def run_seed_checks() -> int:
         read_fixture("errors/text-line-mismatch.actual.txt"),
         "tests/cases/compiler-development/artifact/errors/text-line-mismatch",
     )
+    require_update_mode()
     return 0
 
 
@@ -131,14 +157,20 @@ def main(argv: list[str]) -> int:
     if len(argv) == 1:
         return run_seed_checks()
     normalize = False
+    update = False
     args = argv[1:]
-    if args and args[0] == "--normalize":
-        normalize = True
+    while args and args[0] in {"--normalize", "--update"}:
+        if args[0] == "--normalize":
+            normalize = True
+        elif args[0] == "--update":
+            update = True
         args = args[1:]
     if len(args) == 2:
+        if update:
+            return update_artifact_file(args[0], args[1], normalize)
         return compare_artifact_files(args[0], args[1], normalize)
     print(
-        "usage: check_compiler_artifacts.py [--normalize] expected actual",
+        "usage: check_compiler_artifacts.py [--normalize] [--update] expected actual",
         file=sys.stderr,
     )
     return 2

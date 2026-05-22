@@ -188,7 +188,8 @@ seed mismatch reports for the text comparator.
 Golden update policy:
 
 - do not auto-update golden files in normal checks
-- provide a separate future `update-golden` target
+- use `python3 tests/check_compiler_artifacts.py --update expected actual`
+  only after reviewing the actual output
 - require review of golden diffs
 - keep expected output close to the fixture name
 - include one behavior per fixture when possible
@@ -248,8 +249,8 @@ mismatch fixture when the behavior can fail.
 
 ## Current Seed Implementation
 
-The current repository has a tiny artifact comparison seed plus the first real
-frontend producer:
+The current repository has a tiny artifact comparison seed plus frontend,
+middle-end, backend-fragment, and runtime-output producers:
 
 ```text
 tests/check_compiler_artifacts.py
@@ -258,15 +259,21 @@ tests/source_map_unit.cpp
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/capability-inventory.inventory
+tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag
+tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
 tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog
+tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout
 tests/cases/compiler-development/artifact/ok/source-map-file-module.map
+tests/cases/compiler-development/artifact/ok/source-map-utf8.map
 tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
+tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.tokens
 tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph
 tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary
 tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan
+tests/cases/compiler-development/artifact/ok/syntax-declarations.syntax
 tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
 tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
 tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.diagnostic
@@ -298,7 +305,7 @@ ari --emit-typed-ir path
 make check-compiler-artifacts
 ```
 
-It currently proves twenty-four low-level contracts:
+It currently proves more than two dozen low-level contracts:
 
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
@@ -331,10 +338,13 @@ It currently proves twenty-four low-level contracts:
   `--emit-tokens, --emit-syntax`
 - `--emit-source-map` writes deterministic source file identity, kind,
   canonical path, display name, EOF offset, line table size, byte offset, line,
-  and newline-policy text for root and file-backed modules
-- `--emit-tokens` writes deterministic lexer output for a small Ari source file
+  and newline-policy text for root, file-backed modules, and a UTF-8 fixture
+- `--emit-tokens` writes deterministic lexer output for small and lexical
+  surface Ari source files, including comments, strings, literal suffixes,
+  compound operators, EOF, and UTF-8 byte spans
 - `--emit-syntax` writes deterministic parser output with AST `source_id=` and
-  byte spans before sema and backend behavior are involved
+  byte spans before sema and backend behavior are involved, including a
+  declaration-surface fixture with modules, generics, traits, impls, and match
 - `--emit-diagnostics` writes a normalized diagnostic artifact for an expected
   compiler failure
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,
@@ -355,15 +365,20 @@ It currently proves twenty-four low-level contracts:
   file without involving LLVM codegen
 - `--emit-pass-summary` writes deterministic stage counts for lexing, syntax,
   module loading, and sema
+- `--emit-llvm` is checked through review-sized function fragments for core
+  control flow and generic aggregate lowering instead of committing the whole
+  runtime-heavy LLVM file
+- executable stdout is checked through a small runtime-output golden after the
+  earlier source, syntax, typed IR, and LLVM checks pass
 
 The first typed-IR golden uses `--no-implicit-std` so the fixture protects the
 source file's lowered facts instead of recording every implicit prelude
 declaration. Add separate std/prelude IR fixtures only when that behavior is
 the thing being tested.
 
-This is deliberately small. Future structured diagnostic, HIR, richer typed-IR,
-and backend artifact producers should plug into the same shape instead of
-inventing unrelated golden comparison rules.
+This is deliberately small. Future HIR, object-symbol, shared-library, richer
+typed-IR, and broader backend artifact producers should plug into the same
+shape instead of inventing unrelated golden comparison rules.
 
 ## Current Compiler Integration
 
@@ -391,10 +406,11 @@ The current compiler already has useful artifact checks:
 - `--emit-typed-ir` for stable sema output before LLVM lowering
 - `--emit-pass-summary` for quick stage-boundary counts in compiler-development
   tests
-- `--emit-llvm` for LLVM text
+- `--emit-llvm` for LLVM text and extracted review-sized function fragments
 - `--emit-obj` for object files
 - `--shared` for shared-library visibility
-- executable exit-code checks where LLVM driver support is available
+- executable exit-code and stdout golden checks where LLVM driver support is
+  available
 
 Keep adding narrow checks rather than relying only on broad suite runs. For
 backend changes, inspect the generated LLVM or object symbol table when the
@@ -417,7 +433,7 @@ end test.
 
 ## Readiness Impact
 
-Stage comparison remains a major compiler maturity blocker. The estimate should
-move only when the current capability inventory, token, diagnostic, syntax, and
-typed-IR seeds grow into broader coverage, and HIR plus LLVM text comparison
-can localize failures usefully.
+Stage comparison remains a compiler maturity blocker, but the artifact bucket
+now covers frontend, source identity, diagnostics, module graphs, declarations,
+typed IR, LLVM fragments, and one stdout golden. The remaining larger gaps are
+HIR, object/shared symbol goldens, and broader backend/runtime fixture breadth.

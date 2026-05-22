@@ -81,12 +81,14 @@ changed intentionally:
 1. Run the producer into `build/`.
 2. Compare expected and actual output.
 3. Read the diff before accepting it.
-4. Update only the affected golden file.
+4. Update only the affected golden with
+   `python3 tests/check_compiler_artifacts.py --update expected actual`.
 5. Update docs if the artifact format or compiler rule changed.
 6. Run the narrow artifact check.
 
-Do not auto-update goldens as part of normal checks. A future update target can
-exist, but it should be explicit and reviewable.
+Do not auto-update goldens as part of normal checks. The comparator's
+`--update` mode is explicit and reviewable; a future make target may wrap it,
+but should never run during normal checks.
 
 ## Test Placement
 
@@ -103,14 +105,20 @@ Use these locations:
 Keep fixture names behavior-based:
 
 - `source-map-file-module.map`
+- `source-map-utf8.map`
 - `token-dump-basic.tokens`
+- `token-dump-lexical-surface.tokens`
 - `syntax-dump-basic.syntax`
+- `syntax-declarations.syntax`
 - `module-graph-file-module.graph`
 - `declaration-index-basic.decls`
 - `capability-inventory.inventory`
 - `diagnostic-catalog.catalog`
 - `stage-plan-basic.plan`
 - `typed-ir-basic.ir`
+- `backend-core.llvm-frag`
+- `backend-generic-aggregate.llvm-frag`
+- `runtime-output-basic.stdout`
 - `diagnostic-parser-expected.diagnostic`
 
 ## Focused Checks
@@ -131,6 +139,7 @@ build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens build/focused/token.tokens
 python3 tests/check_compiler_artifacts.py expected actual
+python3 tests/check_compiler_artifacts.py --update expected actual
 make check-compiler-artifacts
 ```
 

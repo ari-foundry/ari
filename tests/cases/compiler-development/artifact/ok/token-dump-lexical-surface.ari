@@ -1,0 +1,11 @@
+// Comments are intentionally absent from token dumps.
+pub fn main() -> i64 {
+  let label = "café";
+  let escaped = "line\nnext";
+  var value = 0x2a + 7u8 as i64;
+  value += 1;
+  if value >= 42 && !(false || true) {
+    return 1;
+  }
+  return value & 15;
+}

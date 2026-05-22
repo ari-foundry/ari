@@ -1,0 +1,48 @@
+LLVMFunctionExtract source=build/compiler-development/artifact/backend-generic-aggregate.ll functions=3
+  Function symbol=_ARNv14make_token_box
+    define { { i64, { i64, i64 } } } @"_ARNv14make_token_box"(i64 %arg0) {
+    entry:
+      %kind.addr.0 = alloca i64
+      store i64 %arg0, ptr %kind.addr.0
+      %t0 = load i64, ptr %kind.addr.0
+      %t1 = call { i64, { i64, i64 } } @"_ARNv10make_token"(i64 %t0, i64 2, i64 8)
+      %t2 = insertvalue { { i64, { i64, i64 } } } undef, { i64, { i64, i64 } } %t1, 0
+      ret { { i64, { i64, i64 } } } %t2
+    }
+  Function symbol=_ARNv11maybe_score
+    define i64 @"_ARNv11maybe_score"({ i32, { i64, { i64, i64 } } } %arg0) {
+    entry:
+      %value.addr.0 = alloca { i32, { i64, { i64, i64 } } }
+      %token.addr.1 = alloca { i64, { i64, i64 } }
+      store { i32, { i64, { i64, i64 } } } %arg0, ptr %value.addr.0
+      %t0 = load { i32, { i64, { i64, i64 } } }, ptr %value.addr.0
+      %t1 = extractvalue { i32, { i64, { i64, i64 } } } %t0, 0
+      br label %match.test.3
+    match.test.3:
+      %t2 = icmp eq i32 %t1, 1
+      br i1 %t2, label %match.arm.1, label %match.test.4
+    match.test.4:
+      %t3 = icmp eq i32 %t1, 0
+      br i1 %t3, label %match.arm.2, label %match.arm.2
+    match.arm.1:
+      %t4 = extractvalue { i32, { i64, { i64, i64 } } } %t0, 1
+      store { i64, { i64, i64 } } %t4, ptr %token.addr.1
+      %t5 = load { i64, { i64, i64 } }, ptr %token.addr.1
+      %t6 = call i64 @"_ARNv11token_score"({ i64, { i64, i64 } } %t5)
+      ret i64 %t6
+    match.arm.2:
+      ret i64 0
+    match.end.0:
+      ret i64 0
+    }
+  Function symbol=_ARNv13consume_owned
+    define i64 @"_ARNv13consume_owned"({ i64 } %arg0) {
+    entry:
+      %value.addr.0 = alloca { i64 }
+      %moved.addr.1 = alloca i64
+      store { i64 } %arg0, ptr %value.addr.0
+      %t0 = load { i64 }, ptr %value.addr.0
+      %t1 = extractvalue { i64 } %t0, 0
+      store i64 %t1, ptr %moved.addr.1
+      ret i64 17
+    }

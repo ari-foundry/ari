@@ -166,6 +166,6 @@ A compiler change is healthy when it:
   behavior
 - leaves unsupported features rejected with clear diagnostics
 
-The current practical compiler-development maturity is about **46-47%**. Treat
+The current practical compiler-development maturity is about **48-49%**. Treat
 that number as a health metric tied to normal compiler surfaces, not a separate
 project goal.

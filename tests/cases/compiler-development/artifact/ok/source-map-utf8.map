@@ -1,0 +1,7 @@
+SourceMap source=tests/cases/compiler-development/artifact/ok/source-map-utf8.ari files=1
+  File module=<root> source_id=0 kind=file root=true path=tests/cases/compiler-development/artifact/ok/source-map-utf8.ari display="tests/cases/compiler-development/artifact/ok/source-map-utf8.ari" bytes=80 eof_offset=80 line_starts=6 lines=5 trailing_newline=true
+    Line number=1 byte_start=0 byte_len=18 newline=lf text="fn main() -> i64 {"
+    Line number=2 byte_start=19 byte_len=20 newline=lf text="  let text = \"cafe\";"
+    Line number=3 byte_start=40 byte_len=25 newline=lf text="  let unicode = \"한글\";"
+    Line number=4 byte_start=66 byte_len=11 newline=lf text="  return 0;"
+    Line number=5 byte_start=78 byte_len=1 newline=lf text="}"

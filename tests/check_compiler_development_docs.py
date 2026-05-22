@@ -84,7 +84,7 @@ def main() -> int:
         require(dashboard, heading, dashboard_path)
 
     for needle in [
-        "46-47% through the current compiler-development maturity",
+        "48-49% through the current compiler-development maturity",
         "compiler-health estimate",
         "Compiler Onboarding",
         "Compiler Contributor Guide",
@@ -772,7 +772,7 @@ def main() -> int:
         "build/ari path/to/test.ari --check",
         "make check-compiler-dev-docs",
         "Production Compiler Hardening",
-        "46-47% through the current compiler-development",
+        "48-49% through the current compiler-development",
     ]:
         require(roadmap, needle, roadmap_path)
 
@@ -807,7 +807,7 @@ def main() -> int:
         "tests/cases/compiler-development/artifact/ok/",
         "tests/cases/compiler-development/artifact/errors/",
         "No private compiler-only keyword",
-        "46-47% through the current compiler-development",
+        "48-49% through the current compiler-development",
     ]:
         require(playbook, needle, playbook_path)
 
@@ -832,7 +832,7 @@ def main() -> int:
         "make check-compiler-artifacts",
         "compiler-source-diagnostics.md",
         "a full second compiler implementation",
-        "46-47% compiler",
+        "48-49% compiler",
     ]:
         require(next_slices, needle, next_slices_path)
 
@@ -859,7 +859,7 @@ def main() -> int:
         "make check-compiler-artifacts",
         "Full `make check` belongs at handoff",
         "No runtime `std` API",
-        "46-47% through the current compiler-development",
+        "48-49% through the current compiler-development",
     ]:
         require(change_checklist, needle, change_checklist_path)
 
@@ -878,7 +878,7 @@ def main() -> int:
 
     for needle in [
         "practical compiler",
-        "46-47% through the current compiler-development",
+        "48-49% through the current compiler-development",
         "compiler/tooling package",
         "SourceId",
         "Diagnostic",
@@ -939,7 +939,7 @@ def main() -> int:
         "tests/cases/compiler-development/ok/model/",
         "tests/cases/compiler-development/artifact/ok/",
         "Result[T, E]",
-        "46-47%",
+        "48-49%",
     ]:
         require(contributor, needle, contributor_path)
 
@@ -959,11 +959,11 @@ def main() -> int:
 
     for needle in [
         "practical compiler project",
-        "46-47% through the current compiler-development",
+        "48-49% through the current compiler-development",
         "Hosted LLVM backend",
         "weighted engineering score",
         "tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari",
-        "Weighted together, this lands in the mid-40s",
+        "Weighted together, this lands in the high-40s",
         "Core executable language",
         "Generic calls and ADTs",
         "Source identity",
@@ -1268,15 +1268,20 @@ def main() -> int:
         "`--emit-typed-ir` for stable sema output",
         "`--emit-pass-summary` for quick stage-boundary counts",
         "source-map-file-module.map",
+        "source-map-utf8.map",
         "tests/source_map_unit.cpp",
         "declaration-index-basic.decls",
         "token-dump-basic.ari",
         "token-dump-basic.tokens",
+        "token-dump-lexical-surface.tokens",
         "module-graph-file-module.graph",
         "capability-inventory.inventory",
         "diagnostic-catalog.catalog",
         "stage-plan-basic.plan",
         "pass-summary-basic.summary",
+        "backend-core.llvm-frag",
+        "runtime-output-basic.stdout",
+        "syntax-declarations.syntax",
         "syntax-dump-basic.syntax",
         "typed-ir-basic.ir",
         "diagnostic-unexpected-character.ari",

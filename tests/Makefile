@@ -85,8 +85,12 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
+	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-lexical-surface.tokens
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-lexical-surface.tokens
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-dump-basic.syntax
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-dump-basic.syntax
+	$(TARGET) tests/cases/compiler-development/artifact/ok/syntax-declarations.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-declarations.syntax
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-declarations.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-declarations.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-unexpected-character.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unexpected-character.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-expected.diagnostic
@@ -127,6 +131,10 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/capability-inventory.inventory $(BUILD_DIR)/compiler-development/artifact/capability-inventory.inventory
 	$(TARGET) tests/cases/modules/ok/file-module-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-source-map $(BUILD_DIR)/compiler-development/artifact/source-map-file-module.map
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/source-map-file-module.map $(BUILD_DIR)/compiler-development/artifact/source-map-file-module.map
+	$(TARGET) tests/cases/compiler-development/artifact/ok/source-map-utf8.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-source-map $(BUILD_DIR)/compiler-development/artifact/source-map-utf8.map
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/source-map-utf8.map $(BUILD_DIR)/compiler-development/artifact/source-map-utf8.map
+	$(TARGET) tests/cases/compiler-development/artifact/ok/source-map-utf8.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-source-map $(BUILD_DIR)/compiler-development/artifact/source-map-utf8.repeat.map
+	cmp -s $(BUILD_DIR)/compiler-development/artifact/source-map-utf8.map $(BUILD_DIR)/compiler-development/artifact/source-map-utf8.repeat.map
 	$(TARGET) tests/cases/modules/ok/file-module-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-project-compiler.graph
@@ -145,6 +153,13 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/generic-aggregate-monomorphization.ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-pass-summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
+	$(TARGET) tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-core.ll
+	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-core.ll _ARNv3add _ARNv7compute _ARNv4main >$(BUILD_DIR)/compiler-development/artifact/backend-core.llvm-frag
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-core.llvm-frag
+	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.ll
+	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.ll _ARNv14make_token_box _ARNv11maybe_score _ARNv13consume_owned >$(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.llvm-frag
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.llvm-frag
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/artifact/ok/runtime-output-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/artifact/runtime-output-basic.elf; $(BUILD_DIR)/compiler-development/artifact/runtime-output-basic.elf >$(BUILD_DIR)/compiler-development/artifact/runtime-output-basic.stdout; python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout $(BUILD_DIR)/compiler-development/artifact/runtime-output-basic.stdout; fi
 
 check-compiler-development: $(TARGET)
 	mkdir -p $(BUILD_DIR)/compiler-development
@@ -215,7 +230,7 @@ check-compiler-development: $(TARGET)
 	$(TARGET) tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari --check
 	$(TARGET) tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.elf; $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.elf; code=$$?; test $$code -eq 40; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.elf; $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.elf; code=$$?; test $$code -eq 49; fi
 	$(TARGET) tests/cases/compiler-development/ok/model/compiler-test-classification.ari --check
 	$(TARGET) tests/cases/compiler-development/ok/model/compiler-test-classification.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-test-classification.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-test-classification.ll

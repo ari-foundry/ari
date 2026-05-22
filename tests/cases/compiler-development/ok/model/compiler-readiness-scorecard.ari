@@ -87,26 +87,26 @@ fn main() -> i64 {
   });
   gates.push(GateScore {
     gate: ModuleProjects,
-    state: Partial(45),
+    state: Partial(55),
     weight: 12,
     marker: 'M',
   });
   gates.push(GateScore {
     gate: DataModels,
-    state: Partial(50),
+    state: Partial(60),
     weight: 15,
     marker: 'A',
   });
   gates.push(GateScore {
     gate: TraitSelection,
-    state: Partial(35),
+    state: Partial(45),
     weight: 12,
     marker: 'T',
   });
   gates.push(GateScore {
     gate: Artifacts,
-    state: Partial(45),
-    weight: 16,
+    state: Partial(65),
+    weight: 24,
     marker: 'R',
   });
   gates.push(GateScore {

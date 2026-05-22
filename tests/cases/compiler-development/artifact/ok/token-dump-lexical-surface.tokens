@@ -1,0 +1,54 @@
+token KwPub "pub" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:2:1 source_id=0 bytes=55..58
+token KwFn "fn" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:2:5 source_id=0 bytes=59..61
+token Identifier "main" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:2:8 source_id=0 bytes=62..66
+token LParen "(" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:2:12 source_id=0 bytes=66..67
+token RParen ")" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:2:13 source_id=0 bytes=67..68
+token Arrow "->" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:2:15 source_id=0 bytes=69..71
+token Identifier "i64" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:2:18 source_id=0 bytes=72..75
+token LBrace "{" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:2:22 source_id=0 bytes=76..77
+token KwLet "let" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:3:3 source_id=0 bytes=80..83
+token Identifier "label" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:3:7 source_id=0 bytes=84..89
+token Equal "=" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:3:13 source_id=0 bytes=90..91
+token String "café" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:3:15 source_id=0 bytes=92..99
+token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:3:22 source_id=0 bytes=99..100
+token KwLet "let" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:4:3 source_id=0 bytes=103..106
+token Identifier "escaped" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:4:7 source_id=0 bytes=107..114
+token Equal "=" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:4:15 source_id=0 bytes=115..116
+token String "line\nnext" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:4:17 source_id=0 bytes=117..129
+token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:4:29 source_id=0 bytes=129..130
+token KwVar "var" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:5:3 source_id=0 bytes=133..136
+token Identifier "value" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:5:7 source_id=0 bytes=137..142
+token Equal "=" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:5:13 source_id=0 bytes=143..144
+token Integer "0x2a" value=42 @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:5:15 source_id=0 bytes=145..149
+token Plus "+" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:5:20 source_id=0 bytes=150..151
+token Integer "7" value=7 suffix="u8" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:5:22 source_id=0 bytes=152..155
+token KwAs "as" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:5:26 source_id=0 bytes=156..158
+token Identifier "i64" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:5:29 source_id=0 bytes=159..162
+token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:5:32 source_id=0 bytes=162..163
+token Identifier "value" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:6:3 source_id=0 bytes=166..171
+token PlusEqual "+=" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:6:9 source_id=0 bytes=172..174
+token Integer "1" value=1 @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:6:12 source_id=0 bytes=175..176
+token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:6:13 source_id=0 bytes=176..177
+token KwIf "if" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:3 source_id=0 bytes=180..182
+token Identifier "value" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:6 source_id=0 bytes=183..188
+token GreaterEq ">=" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:12 source_id=0 bytes=189..191
+token Integer "42" value=42 @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:15 source_id=0 bytes=192..194
+token AmpAmp "&&" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:18 source_id=0 bytes=195..197
+token Bang "!" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:21 source_id=0 bytes=198..199
+token LParen "(" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:22 source_id=0 bytes=199..200
+token KwFalse "false" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:23 source_id=0 bytes=200..205
+token PipePipe "||" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:29 source_id=0 bytes=206..208
+token KwTrue "true" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:32 source_id=0 bytes=209..213
+token RParen ")" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:36 source_id=0 bytes=213..214
+token LBrace "{" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:7:38 source_id=0 bytes=215..216
+token KwReturn "return" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:8:5 source_id=0 bytes=221..227
+token Integer "1" value=1 @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:8:12 source_id=0 bytes=228..229
+token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:8:13 source_id=0 bytes=229..230
+token RBrace "}" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:9:3 source_id=0 bytes=233..234
+token KwReturn "return" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:10:3 source_id=0 bytes=237..243
+token Identifier "value" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:10:10 source_id=0 bytes=244..249
+token Amp "&" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:10:16 source_id=0 bytes=250..251
+token Integer "15" value=15 @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:10:18 source_id=0 bytes=252..254
+token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:10:20 source_id=0 bytes=254..255
+token RBrace "}" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:11:1 source_id=0 bytes=256..257
+token End "" @ tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari:12:1 source_id=0 bytes=258..258

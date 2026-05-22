@@ -9,7 +9,7 @@ large programs, and make compiler behavior easy to test in small pieces.
 
 ## Current Readiness
 
-Ari is about **46-47% through the current compiler-development maturity work**.
+Ari is about **48-49% through the current compiler-development maturity work**.
 
 The number is conservative because Ari already compiles useful programs, but a
 compiler is a large program with hard requirements: stable diagnostics,
@@ -20,7 +20,7 @@ and tests that fail near the layer that regressed.
 
 The estimate is a weighted engineering score. The current seed fixture
 `tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari`
-models the same shape and returns `40`, keeping the scorecard executable as
+models the same shape and returns `49`, keeping the scorecard executable as
 ordinary Ari data.
 
 | Gate | Weight | Current Score | What Moves It |
@@ -31,10 +31,10 @@ ordinary Ari data.
 | Module projects | 12 | 55 | Predictable roots/search paths, `.ari`/`.arih` policy, visibility errors, cycles, source identity, metadata, and cache invalidation. |
 | Compiler data models | 15 | 60 | Nested generic aggregates, `Result` payloads, vectors/maps/sets, compiler-shaped ownership patterns, and stable rejection of infinite value layouts. |
 | Trait selection | 12 | 45 | The minimum static subset is locked; broader trait objects, associated-type solving, and collection defaults can still deepen it. |
-| Artifact comparison | 16 | 45 | Token, syntax, diagnostic, module graph, declaration, typed IR, HIR, LLVM, object, and executable comparison order. |
+| Artifact comparison | 24 | 65 | Token, syntax, diagnostic, source-map, module graph, declaration, typed IR, LLVM-fragment, runtime stdout, HIR, object, and executable comparison order. |
 | Tool build flow | 10 | 35 | Focused Make targets for one Ari tool, fixture roots, and golden comparison without hidden flags. |
 
-Weighted together, this lands in the mid-40s. Treat each row as normal compiler
+Weighted together, this lands in the high-40s. Treat each row as normal compiler
 development: a row moves when ordinary Ari programs, diagnostics, or artifacts
 get more reliable, not when a private shortcut is added.
 
@@ -57,7 +57,7 @@ get more reliable, not when a private shortcut is added.
 | Gap | Needed State | First Work |
 | --- | --- | --- |
 | Trait selection beyond the minimum subset | Trait objects, associated-type solving, trait-driven collection defaults, and richer iterator ownership policies need the same stability as the static subset. | Keep minimum-subset fixtures green while adding one focused advanced trait fixture at a time. |
-| Pass artifacts | Token, syntax, HIR, typed IR, LLVM, object, executable, and shared outputs need a comparison order. | Add normalized text dumps before broad executable checks. |
+| Pass artifacts | HIR, object, shared-symbol, and broader executable-output goldens still need the same coverage as token, syntax, typed IR, LLVM-fragment, and stdout artifacts. | Add normalized text dumps before broad executable checks. |
 | Build ergonomics | Large Ari tools need boring Make targets and project fixtures before a package manager exists. | Keep `make check-compiler-development` small and add one target per compiler slice. |
 
 ## Recent Compiler Support
@@ -98,12 +98,12 @@ routing, compiler capability status tables, source byte/line tables, lexer token
 parser tree text, expected-failure diagnostic text,
 diagnostic code ownership tables,
 file-backed source/import/item graph text, declaration signature text,
-sema-lowered typed IR, and stage-boundary counts, all checked by
-`make check-compiler-artifacts`. This is the first small stage-comparison step
-for normal compiler development: when source loading, lexer, parser,
-diagnostic, module, declaration surface, or typed lowering behavior changes,
-reviewers can inspect a tiny golden diff before LLVM or executable behavior
-changes are involved.
+sema-lowered typed IR, and stage-boundary counts. `make check-compiler-artifacts`
+also extracts review-sized LLVM fragments and compares one stdout golden. This is
+the current stage-comparison path for normal compiler development: when source
+loading, lexer, parser, diagnostic, module, declaration surface, typed lowering,
+backend lowering, or runtime output changes, reviewers can inspect a focused
+golden diff before reaching for a broad suite run.
 Diagnostic artifacts now include stable codes, explicit layer families,
 source ids, parseable label byte spans, note/help location policy, and
 snippets such as
@@ -243,12 +243,16 @@ Current compiler-development tests:
   compiler abstraction boundaries should use `trait`.
   Together these prove class/interface private syntax stays rejected in ordinary
   compiler-development fixtures.
-- `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari`:
-  lexer artifact fixture checked through `--emit-tokens`.
+- `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari` and
+  `token-dump-lexical-surface.ari`: lexer artifact fixtures checked through
+  `--emit-tokens`.
 - `tests/cases/compiler-development/artifact/ok/source-map-file-module.map`:
   source byte/line table golden checked through `--emit-source-map`.
-- `tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax`:
-  parser artifact golden checked through `--emit-syntax`.
+- `tests/cases/compiler-development/artifact/ok/source-map-utf8.map`:
+  UTF-8 byte/line table golden checked through `--emit-source-map`.
+- `tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax` and
+  `syntax-declarations.syntax`: parser artifact goldens checked through
+  `--emit-syntax`.
 - `tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph`:
   file-backed source/import/item graph golden checked through
   `--emit-module-graph`.
@@ -268,6 +272,11 @@ Current compiler-development tests:
   typed-IR artifact golden checked through `--emit-typed-ir`.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
+- `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag` and
+  `backend-generic-aggregate.llvm-frag`: extracted LLVM backend fragments
+  checked after full `--emit-llvm` generation.
+- `tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout`:
+  executable stdout golden checked when the LLVM driver is available.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic`:
   lexer diagnostic golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic`:

@@ -1,0 +1,34 @@
+mod Inner {
+  pub fn value() -> i64 {
+    return 1;
+  }
+}
+
+use Inner::value as inner_value
+
+struct Box[T] {
+  mut value: T,
+}
+
+enum Maybe[T] {
+  Nothing,
+  Just(T),
+}
+
+trait Score[T] {
+  fn score(self, other: T) -> i64
+}
+
+impl Score[Box[i64]] for Box[i64] {
+  fn score(self, other: Box[i64]) -> i64 {
+    return self.value + other.value;
+  }
+}
+
+fn main() -> i64 {
+  let item = Just(3);
+  return match item {
+    Just(value) => value,
+    Nothing => inner_value(),
+  };
+}

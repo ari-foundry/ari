@@ -7,7 +7,7 @@ compiler contributors.
 
 ## Current Status
 
-Ari is roughly **46-47% through the current compiler-development maturity
+Ari is roughly **48-49% through the current compiler-development maturity
 work**. Treat that number as a practical compiler-health estimate, not a
 release promise. It should move when normal Ari code can express larger data
 models, produce stable diagnostics, build multi-file projects, and compare

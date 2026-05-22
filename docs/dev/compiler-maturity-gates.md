@@ -27,7 +27,7 @@ Use this page with:
 
 ## Current Estimate
 
-Ari is currently about **46-47% through the current compiler-development
+Ari is currently about **48-49% through the current compiler-development
 maturity work**.
 
 This estimate is intentionally conservative. Ari already has enough language
@@ -215,7 +215,7 @@ readiness =
 - private shortcuts or untested special cases
 ```
 
-The current estimate is about **46-47%** because Ari has a substantial hosted
+The current estimate is about **48-49%** because Ari has a substantial hosted
 systems-language base, but diagnostics, compiler-tooling packages, module
 scale, and artifact comparison still need hardening.
 

@@ -1,0 +1,41 @@
+Program source=tests/cases/compiler-development/artifact/ok/syntax-declarations.ari
+  Use path=Inner::value alias=inner_value @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:7:5 source_id=0 bytes=63..68
+  Module name=Inner @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:1:5 source_id=0 bytes=4..9
+  Struct name=Box[T] @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:9:8 source_id=0 bytes=99..102
+    Field name=value type=T mut @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:10:7 source_id=0 bytes=114..119
+  Enum name=Maybe[T] @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:13:6 source_id=0 bytes=132..137
+    Case name=Nothing @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:14:3 source_id=0 bytes=145..152
+    Case name=Just payloads=T @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:15:3 source_id=0 bytes=156..160
+  Trait name=Score[T] @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:18:7 source_id=0 bytes=174..179
+    Function name=score return=i64 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:19:6 source_id=0 bytes=190..195
+      Param name=self type=Self
+      Param name=other type=T
+  Impl trait=Score[Box[i64]] for=Box[i64] @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:22:6 source_id=0 bytes=227..232
+    Function name=score return=i64 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:23:6 source_id=0 bytes=263..268
+      Param name=self type=Self
+      Param name=other type=Box[i64]
+      Body
+        Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:12 source_id=0 bytes=312..316
+          Binary op="+" @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:23 source_id=0 bytes=323..324
+            Field name=value @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:17 source_id=0 bytes=317..322
+              Name value=self @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:12 source_id=0 bytes=312..316
+            Field name=value @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:31 source_id=0 bytes=331..336
+              Name value=other @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:25 source_id=0 bytes=325..330
+  Function name=Inner::value pub return=i64 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:2:10 source_id=0 bytes=21..26
+    Body
+      Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:3:12 source_id=0 bytes=49..50
+        Integer value=1 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:3:12 source_id=0 bytes=49..50
+  Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:28:4 source_id=0 bytes=348..352
+    Body
+      VarDecl name=item let @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:29:7 source_id=0 bytes=370..374
+        Call name=Just @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:29:14 source_id=0 bytes=377..381
+          Integer value=3 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:29:19 source_id=0 bytes=382..383
+      Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:30:10 source_id=0 bytes=395..400
+        MatchExpr @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:30:10 source_id=0 bytes=395..400
+          Name value=item @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:30:16 source_id=0 bytes=401..405
+          Arm @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:31:5 source_id=0 bytes=412..416
+            Pattern EnumCase name=Just @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:31:5 source_id=0 bytes=412..416
+            Name value=value @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:31:20 source_id=0 bytes=427..432
+          Arm @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:32:5 source_id=0 bytes=438..445
+            Pattern EnumCase name=Nothing @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:32:5 source_id=0 bytes=438..445
+            Call name=inner_value @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:32:16 source_id=0 bytes=449..460
