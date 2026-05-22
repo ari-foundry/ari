@@ -168,9 +168,10 @@ Rules currently checked:
 - bare borrow expression statements are rejected
 
 The focused ownership smoke is `make check-ownership`; it proves path
-reborrowing together with move/drop fixtures. `make check-errors` keeps the
-larger negative matrix for borrow conflicts, invalid returns, local escapes,
-and control-flow mismatch cases.
+reborrowing together with move/drop fixtures and the compiler-shaped
+`ownership-compiler-shaped.ari` program. `make check-errors` keeps the larger
+negative matrix for borrow conflicts, invalid returns, local escapes, and
+control-flow mismatch cases.
 
 Named borrow lifetimes are shortened for local straight-line code. After the
 last visible use of a named borrow in the current statement scope, Ari releases
@@ -201,8 +202,10 @@ Runtime-dependent aggregate enum drops check the active tag before dropping
 owned payload slots, so inactive variants are not cleaned as though they were
 active. The backend artifact goldens
 `backend-ownership-drop-aggregate.llvm-frag` and
-`backend-ownership-drop-runtime-enum.llvm-frag` lock that lowering without
-committing the full prelude-heavy LLVM output.
+`backend-ownership-drop-runtime-enum.llvm-frag` lock that lowering, while
+`backend-ownership-compiler-shaped.llvm-frag` covers parser-state borrows,
+generic aggregate fields, vector-stored work items, and result-like enum
+matching without committing the full prelude-heavy LLVM output.
 
 ## Forget
 

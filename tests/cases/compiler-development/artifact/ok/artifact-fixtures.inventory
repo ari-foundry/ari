@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=99
+CompilerArtifactFixtures version=1 group=all entries=100
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-borrow-conflict.ari
@@ -51,6 +51,7 @@ CompilerArtifactFixtures version=1 group=all entries=99
   Fixture group=ok kind=inventory path=ok/artifact-fixtures.inventory
   Fixture group=ok kind=llvm-fragment path=ok/backend-core.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-generic-aggregate.llvm-frag
+  Fixture group=ok kind=llvm-fragment path=ok/backend-ownership-compiler-shaped.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-ownership-drop-aggregate.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-ownership-drop-runtime-enum.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-trait-dispatch.llvm-frag

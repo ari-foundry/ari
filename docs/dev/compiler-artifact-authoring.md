@@ -129,6 +129,7 @@ Keep fixture names behavior-based:
 - `backend-generic-aggregate.llvm-frag`
 - `backend-ownership-drop-aggregate.llvm-frag`
 - `backend-ownership-drop-runtime-enum.llvm-frag`
+- `backend-ownership-compiler-shaped.llvm-frag`
 - `backend-trait-dispatch.llvm-frag`
 - `object-library-export.symbols`
 - `shared-visibility.symbols`

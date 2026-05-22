@@ -66,6 +66,8 @@ def main() -> int:
     source_diagnostics = read(source_diagnostics_path)
     artifact_testing_path = "docs/dev/compiler-artifact-testing.md"
     artifact_testing = read(artifact_testing_path)
+    ownership_readiness_path = "docs/dev/ownership-drop-readiness.md"
+    ownership_readiness = read(ownership_readiness_path)
     manifest_path = "tests/compiler_development_manifest.txt"
     manifest = read(manifest_path)
 
@@ -1298,6 +1300,7 @@ def main() -> int:
         "backend-core.llvm-frag",
         "backend-ownership-drop-aggregate.llvm-frag",
         "backend-ownership-drop-runtime-enum.llvm-frag",
+        "backend-ownership-compiler-shaped.llvm-frag",
         "backend-trait-dispatch.llvm-frag",
         "object-library-export.symbols",
         "shared-visibility.symbols",
@@ -1339,6 +1342,31 @@ def main() -> int:
     ]:
         require(artifact_testing, needle, artifact_testing_path)
 
+    for heading in [
+        "# Ownership Drop Readiness",
+        "## Goals",
+        "## Production Contract",
+        "## Coverage Inventory",
+        "## Unsupported Patterns",
+        "## Artifact Coverage",
+        "## Adding Tests",
+    ]:
+        require(ownership_readiness, heading, ownership_readiness_path)
+
+    for needle in [
+        "ownership-compiler-shaped.ari",
+        "backend-ownership-compiler-shaped.llvm-frag",
+        "diagnostic-use-after-move.diagnostic",
+        "diagnostic-move-borrowed-owner.diagnostic",
+        "diagnostic-ownership-partial-move.diagnostic",
+        "diagnostic-ownership-vector-dynamic-move.diagnostic",
+        "moving owning aggregate elements through dynamic indexes",
+        "aggregate enum payloads that themselves contain nested owned fields",
+        "make check-ownership",
+        "make check-compiler-artifacts",
+    ]:
+        require(ownership_readiness, needle, ownership_readiness_path)
+
     gate_labels = {
         "frontend-grammar": "Frontend grammar",
         "development-dashboard": "Compiler Development Dashboard",
@@ -1350,6 +1378,7 @@ def main() -> int:
         "source-identity-authoring": "Compiler Source Identity",
         "module-project-authoring": "Compiler Module Project Authoring",
         "artifact-authoring": "Compiler Artifact Authoring",
+        "ownership-drop-readiness": "Ownership Drop Readiness",
         "diagnostic-authoring": "Compiler Diagnostic Authoring",
         "test-authoring": "Compiler Test Authoring",
         "implementation-playbook": "Compiler Implementation Playbook",
@@ -1396,6 +1425,8 @@ def main() -> int:
             require(module_project_authoring, label, module_project_authoring_path)
         elif entry == "artifact-authoring":
             require(artifact_authoring, label, artifact_authoring_path)
+        elif entry == "ownership-drop-readiness":
+            require(ownership_readiness, label, ownership_readiness_path)
         elif entry == "diagnostic-authoring":
             require(diagnostic_authoring, label, diagnostic_authoring_path)
         elif entry == "test-authoring":
@@ -1437,6 +1468,7 @@ def main() -> int:
         require(index, "Compiler Source Identity", index_path)
         require(index, "Compiler Module Project Authoring", index_path)
         require(index, "Compiler Artifact Authoring", index_path)
+        require(index, "Ownership Drop Readiness", index_path)
         require(index, "Compiler Diagnostic Authoring", index_path)
         require(index, "Compiler Test Authoring", index_path)
         require(index, "Compiler Implementation Playbook", index_path)

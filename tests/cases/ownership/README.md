@@ -10,12 +10,15 @@ Coverage is grouped by behavior:
 - aggregate field moves, nested field moves, and partial-move diagnostics
 - fixed-array and local `Vec[own T]` element moves
 - aggregate and runtime enum payload drop lowering
+- compiler-shaped parser state, generic aggregate, vector work-item, and
+  result-like ownership flow
 - owner state joins across loops, branches, `match`, `if let`, and `while let`
 - explicit `forget` behavior for live or maybe-unavailable owners
 
 `make check-ownership` is the small smoke target for this folder. It runs one
-runtime field-move fixture, one borrow-reborrow fixture, two LLVM drop-lowering
-checks, and the representative ownership diagnostics. Broader ownership
+runtime field-move fixture, one borrow-reborrow fixture, the compiler-shaped
+ownership fixture, LLVM drop-lowering checks, and the representative ownership
+diagnostics. Broader ownership
 coverage remains in `make check-variables` and `make check-errors`.
 
 The compiler-development artifact bucket also locks source-aware ownership
@@ -27,6 +30,7 @@ diagnostics and review-sized LLVM drop fragments:
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
 - `backend-ownership-drop-aggregate.llvm-frag`
 - `backend-ownership-drop-runtime-enum.llvm-frag`
+- `backend-ownership-compiler-shaped.llvm-frag`
 
 Wire new cases into the matching target in `tests/Makefile` and keep each file
 centered on one behavior.

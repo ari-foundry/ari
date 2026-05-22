@@ -49,7 +49,7 @@ get more reliable, not when a private shortcut is added.
 | Minimum static traits | Trait declarations, impl conformance, deterministic static dispatch, generic bounds, Eq/Ord/Hash/Debug-like fixtures, iterator-shaped helpers, and missing/ambiguous diagnostics are locked by `make check-traits`. | Compiler-shaped data can compare, hash, format, and traverse values through normal trait behavior instead of name-specific shortcuts. |
 | SourceMap and diagnostics | `SourceMap`, `SourceId`, `SourceFile`, `Span`, `SourceLocation`, line/column lookup, snippets, diagnostic codes, labels, notes, and source-aware golden artifacts are locked by `make check-source-map-unit` and `make check-compiler-artifacts`. | User-facing compiler errors keep source identity and deterministic artifact rows across lexer, parser, module, semantic, trait, and ownership paths. |
 | File-backed projects | Entry-file roots, explicit `-I`/`--module-path` roots, `.ari`/`.arih` candidate policy, aliases, package-style child directories, visibility, cycles, duplicate source identities, imported-file diagnostics, metadata, cache invalidation, and module graph artifacts are locked by `make check-modules` and `make check-compiler-artifacts`. | Multi-file Ari tools can be structured as ordinary source/diagnostic/symbol/parser modules without package-manager or bootstrap scaffolding. |
-| Ownership checks | Move, borrow, drop, aggregate field moves, active enum payload cleanup, and explicit-zone checks are locked by `make check-ownership`, `make check-errors`, `make check-variables`, and ownership artifact goldens. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
+| Ownership checks | Move, borrow, drop, aggregate field moves, compiler-shaped owner movement, active enum payload cleanup, and explicit-zone checks are locked by `make check-ownership`, `make check-errors`, `make check-variables`, and ownership artifact goldens. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
 | Focused test culture | Many feature folders already separate `ok` and `errors` tests. | New compiler behavior can be guarded with one small fixture at a time. |
 
 ## Blocking Gaps
@@ -289,6 +289,10 @@ Current compiler-development tests:
   and `backend-ownership-drop-runtime-enum.llvm-frag`: review-sized LLVM
   fragments for aggregate field drop calls and runtime-tagged active enum
   payload cleanup.
+- `tests/cases/compiler-development/artifact/ok/backend-ownership-compiler-shaped.llvm-frag`:
+  review-sized LLVM fragment for the compiler-shaped ownership fixture covering
+  generic aggregate field moves, local `Vec[WorkItem]` owner moves, result-like
+  enum matching, and deterministic `Drop` calls.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,

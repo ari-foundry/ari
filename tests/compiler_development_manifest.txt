@@ -15,6 +15,7 @@ triage-guide: symptoms, first owning layer, artifact choice, test bucket, and sm
 source-identity-authoring: source kinds, stable source ids, byte spans, line-column lookup, and source-map policy
 module-project-authoring: file modules, roots, search paths, metadata, caches, and module graph policy
 artifact-authoring: artifact order, golden files, normalization, focused checks, and executable-last policy
+ownership-drop-readiness: move, borrow, drop, aggregate ownership, unsupported ownership shapes, and focused checks
 diagnostic-authoring: diagnostic code families, messages, labels, notes, source spans, and golden tests
 test-authoring: fixture buckets, behavior-based file names, expected results, and artifact update policy
 implementation-playbook: small compiler implementation slices, first files, first checks, and review criteria

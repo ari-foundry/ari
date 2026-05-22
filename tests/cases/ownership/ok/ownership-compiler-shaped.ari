@@ -1,0 +1,190 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+struct Span {
+  start: i64,
+  end: i64,
+}
+
+struct Token {
+  kind: i64,
+  payload: own i64,
+}
+
+struct ParserState {
+  mut cursor: i64,
+  mut last_kind: i64,
+}
+
+struct AstNode {
+  id: i64,
+  token: Token,
+}
+
+struct WorkItem {
+  mut pass: i64,
+  node: AstNode,
+}
+
+struct Diagnostic {
+  span: Span,
+  code: own i64,
+}
+
+struct PassSummary {
+  pass: i64,
+  node_id: i64,
+  kind: i64,
+}
+
+struct PlainDiagnostic {
+  span: Span,
+  code: i64,
+}
+
+struct Box[T] {
+  value: T,
+}
+
+struct Slot[T] {
+  mut value: T,
+  mut seen: i64,
+}
+
+enum PassOutput {
+  Passed(PassSummary),
+  Failed(PlainDiagnostic),
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn make_token(kind: i64, payload: i64) -> Token {
+  return Token { kind: kind, payload: make_owned(payload) };
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn inspect_token(token: ref Token) -> i64 {
+  return token.kind;
+}
+
+fn advance(state: ref mut ParserState, token: ref Token) -> i64 {
+  state.cursor = state.cursor + 1;
+  state.last_kind = inspect_token(token);
+  return state.cursor + state.last_kind;
+}
+
+fn consume_token(token: Token) -> i64 {
+  let kind = token.kind;
+  let payload = token.payload;
+  drop payload;
+  return kind;
+}
+
+fn consume_boxed(boxed: Box[Token]) -> i64 {
+  let token = boxed.value;
+  return consume_token(token) + 5;
+}
+
+fn score_slot(slot: ref mut Slot[Token]) -> i64 {
+  let kind = inspect_token(ref slot.value);
+  slot.seen = slot.seen + kind;
+  return slot.seen;
+}
+
+fn finish_work(item: WorkItem) -> PassSummary {
+  let pass = item.pass;
+  let id = item.node.id;
+  let token = item.node.token;
+  return PassSummary { pass: pass, node_id: id, kind: consume_token(token) };
+}
+
+fn analyze(output: PassOutput) -> i64 {
+  match output {
+    Passed(summary) => {
+      return summary.pass + summary.node_id + summary.kind;
+    }
+    Failed(diagnostic) => {
+      let width = diagnostic.span.end - diagnostic.span.start;
+      return width + diagnostic.code;
+    }
+  }
+}
+
+fn main() -> i64 {
+  var state = ParserState { cursor: 0, last_kind: 0 };
+  var slot: Slot[Token] = Slot<Token> {
+    value: make_token(3, 30),
+    seen: 10,
+  };
+
+  let borrow_score = advance(ref mut state, ref slot.value) +
+    score_slot(ref mut slot);
+
+  let boxed: Box[Token] = Box<Token> { value: make_token(4, 40) };
+  let boxed_score = consume_boxed(boxed);
+
+  var work: Vec[WorkItem] = [
+    WorkItem {
+      pass: 2,
+      node: AstNode { id: 5, token: make_token(6, 60) },
+    },
+    WorkItem {
+      pass: 3,
+      node: AstNode { id: 7, token: make_token(8, 80) },
+    }
+  ];
+
+  let first = work[0];
+  let first_score = analyze(Passed(finish_work(first)));
+  work[0] = WorkItem {
+    pass: 11,
+    node: AstNode { id: 13, token: make_token(17, 170) },
+  };
+
+  {
+    let ref mut [
+      WorkItem { pass: first_pass, node: AstNode { id: _, token: _ } },
+      WorkItem { pass: second_pass, node: AstNode { id: _, token: _ } }
+    ] = work;
+    write(first_pass, 1);
+    write(second_pass, 2);
+  }
+
+  let second = work[1];
+  let second_score = analyze(Passed(finish_work(second)));
+  work[1] = WorkItem {
+    pass: 19,
+    node: AstNode { id: 23, token: make_token(29, 290) },
+  };
+
+  let diagnostic = Diagnostic {
+    span: Span { start: 1, end: 4 },
+    code: make_owned(90),
+  };
+  let diagnostic_code = diagnostic.code;
+  drop diagnostic_code;
+  let error_score = analyze(Failed(PlainDiagnostic {
+    span: Span { start: 1, end: 4 },
+    code: 7,
+  }));
+
+  drop work;
+  drop slot;
+
+  return borrow_score + boxed_score + first_score + second_score +
+    error_score + state.last_kind;
+}
