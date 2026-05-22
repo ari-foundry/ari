@@ -194,10 +194,11 @@ identifies the exact case:
 - `std-sync-rwlock.ari`: source `std::sync::RwLock` read/write lock
   transitions, reader-count diagnostics, method wrappers, root alias, and
   compare-exchange/fetch-add-backed lowering.
-- `std-sync-concurrency-api.ari`: explicit `Ordering` validation,
-  `AtomicBool`, `AtomicUsize`, `AtomicPtr`, `OnceLock`, generation-based
-  `Condvar`, reusable `Barrier`, single-slot channel send/receive/close
-  behavior, and sync zone-pointer provenance for channel handles.
+- `std-sync-concurrency-api.ari`: explicit `Ordering` validation and
+  order-specific LLVM lowering, `AtomicBool`, `AtomicUsize`, `AtomicPtr`,
+  `OnceLock`, generation-based `Condvar`, reusable `Barrier`, single-slot
+  channel send/receive/close behavior, and sync zone-pointer provenance for
+  channel handles.
 - `std-time-basic.ari`: runtime-backed monotonic and wall-clock nanosecond
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
 - `std-time-timeout.ari`: source monotonic `Deadline`/timeout helpers,

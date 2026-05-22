@@ -580,7 +580,8 @@ private:
             symbol == "ari_builtin_net_set_reuse_addr" ||
             symbol == "ari_builtin_net_set_nodelay" ||
             symbol == "ari_builtin_os_write_byte" ||
-            symbol == "ari_builtin_sync_atomic_i64_compare_exchange") {
+            symbol == "ari_builtin_sync_atomic_i64_compare_exchange" ||
+            symbol == "ari_builtin_sync_atomic_i64_compare_exchange_order") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_panic" ||
@@ -591,6 +592,7 @@ private:
             symbol == "ari_builtin_mem_move_bytes" ||
             symbol == "ari_builtin_mem_set_bytes" ||
             symbol == "ari_builtin_sync_atomic_i64_store" ||
+            symbol == "ari_builtin_sync_atomic_i64_store_order" ||
             symbol == "ari_builtin_time_sleep_nanos" ||
             symbol == "ari_builtin_random_fill" ||
             symbol == "ari_builtin_zone_reset" ||
@@ -2854,15 +2856,45 @@ private:
 
         line("define " + runtime_visibility + "i64 @ari_builtin_sync_atomic_i64_load(ptr %cell) {");
         line("entry:");
-        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
-        line("  %value = load atomic i64, ptr %value.ptr seq_cst, align 8");
+        line("  %value = call i64 @ari_builtin_sync_atomic_i64_load_order(ptr %cell, i64 4)");
         line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_sync_atomic_i64_load_order(ptr %cell, i64 %order) {");
+        line("entry:");
+        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  switch i64 %order, label %load.seq [ i64 0, label %load.relaxed i64 1, label %load.acquire ]");
+        line("load.relaxed:");
+        line("  %value.relaxed = load atomic i64, ptr %value.ptr monotonic, align 8");
+        line("  ret i64 %value.relaxed");
+        line("load.acquire:");
+        line("  %value.acquire = load atomic i64, ptr %value.ptr acquire, align 8");
+        line("  ret i64 %value.acquire");
+        line("load.seq:");
+        line("  %value.seq = load atomic i64, ptr %value.ptr seq_cst, align 8");
+        line("  ret i64 %value.seq");
         line("}");
         line();
 
         line("define " + runtime_visibility + "void @ari_builtin_sync_atomic_i64_store(ptr %cell, i64 %next) {");
         line("entry:");
+        line("  call void @ari_builtin_sync_atomic_i64_store_order(ptr %cell, i64 %next, i64 4)");
+        line("  ret void");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_sync_atomic_i64_store_order(ptr %cell, i64 %next, i64 %order) {");
+        line("entry:");
         line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  switch i64 %order, label %store.seq [ i64 0, label %store.relaxed i64 2, label %store.release ]");
+        line("store.relaxed:");
+        line("  store atomic i64 %next, ptr %value.ptr monotonic, align 8");
+        line("  ret void");
+        line("store.release:");
+        line("  store atomic i64 %next, ptr %value.ptr release, align 8");
+        line("  ret void");
+        line("store.seq:");
         line("  store atomic i64 %next, ptr %value.ptr seq_cst, align 8");
         line("  ret void");
         line("}");
@@ -2870,26 +2902,119 @@ private:
 
         line("define " + runtime_visibility + "i64 @ari_builtin_sync_atomic_i64_swap(ptr %cell, i64 %next) {");
         line("entry:");
-        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
-        line("  %previous = atomicrmw xchg ptr %value.ptr, i64 %next seq_cst");
+        line("  %previous = call i64 @ari_builtin_sync_atomic_i64_swap_order(ptr %cell, i64 %next, i64 4)");
         line("  ret i64 %previous");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_sync_atomic_i64_swap_order(ptr %cell, i64 %next, i64 %order) {");
+        line("entry:");
+        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  switch i64 %order, label %swap.seq [ i64 0, label %swap.relaxed i64 1, label %swap.acquire i64 2, label %swap.release i64 3, label %swap.acqrel ]");
+        line("swap.relaxed:");
+        line("  %previous.relaxed = atomicrmw xchg ptr %value.ptr, i64 %next monotonic");
+        line("  ret i64 %previous.relaxed");
+        line("swap.acquire:");
+        line("  %previous.acquire = atomicrmw xchg ptr %value.ptr, i64 %next acquire");
+        line("  ret i64 %previous.acquire");
+        line("swap.release:");
+        line("  %previous.release = atomicrmw xchg ptr %value.ptr, i64 %next release");
+        line("  ret i64 %previous.release");
+        line("swap.acqrel:");
+        line("  %previous.acqrel = atomicrmw xchg ptr %value.ptr, i64 %next acq_rel");
+        line("  ret i64 %previous.acqrel");
+        line("swap.seq:");
+        line("  %previous.seq = atomicrmw xchg ptr %value.ptr, i64 %next seq_cst");
+        line("  ret i64 %previous.seq");
         line("}");
         line();
 
         line("define " + runtime_visibility + "i64 @ari_builtin_sync_atomic_i64_fetch_add(ptr %cell, i64 %amount) {");
         line("entry:");
-        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
-        line("  %previous = atomicrmw add ptr %value.ptr, i64 %amount seq_cst");
+        line("  %previous = call i64 @ari_builtin_sync_atomic_i64_fetch_add_order(ptr %cell, i64 %amount, i64 4)");
         line("  ret i64 %previous");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_sync_atomic_i64_fetch_add_order(ptr %cell, i64 %amount, i64 %order) {");
+        line("entry:");
+        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  switch i64 %order, label %fetch.seq [ i64 0, label %fetch.relaxed i64 1, label %fetch.acquire i64 2, label %fetch.release i64 3, label %fetch.acqrel ]");
+        line("fetch.relaxed:");
+        line("  %previous.relaxed = atomicrmw add ptr %value.ptr, i64 %amount monotonic");
+        line("  ret i64 %previous.relaxed");
+        line("fetch.acquire:");
+        line("  %previous.acquire = atomicrmw add ptr %value.ptr, i64 %amount acquire");
+        line("  ret i64 %previous.acquire");
+        line("fetch.release:");
+        line("  %previous.release = atomicrmw add ptr %value.ptr, i64 %amount release");
+        line("  ret i64 %previous.release");
+        line("fetch.acqrel:");
+        line("  %previous.acqrel = atomicrmw add ptr %value.ptr, i64 %amount acq_rel");
+        line("  ret i64 %previous.acqrel");
+        line("fetch.seq:");
+        line("  %previous.seq = atomicrmw add ptr %value.ptr, i64 %amount seq_cst");
+        line("  ret i64 %previous.seq");
         line("}");
         line();
 
         line("define " + runtime_visibility + "i1 @ari_builtin_sync_atomic_i64_compare_exchange(ptr %cell, i64 %expected, i64 %next) {");
         line("entry:");
-        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
-        line("  %result = cmpxchg ptr %value.ptr, i64 %expected, i64 %next seq_cst seq_cst");
-        line("  %exchanged = extractvalue { i64, i1 } %result, 1");
+        line("  %exchanged = call i1 @ari_builtin_sync_atomic_i64_compare_exchange_order(ptr %cell, i64 %expected, i64 %next, i64 4, i64 4)");
         line("  ret i1 %exchanged");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_sync_atomic_i64_compare_exchange_order(ptr %cell, i64 %expected, i64 %next, i64 %success, i64 %failure) {");
+        line("entry:");
+        line("  %value.ptr = getelementptr inbounds { i64 }, ptr %cell, i32 0, i32 0");
+        line("  switch i64 %success, label %cas.seq.dispatch [ i64 0, label %cas.relaxed.dispatch i64 1, label %cas.acquire.dispatch i64 2, label %cas.release.dispatch i64 3, label %cas.acqrel.dispatch ]");
+        line("cas.relaxed.dispatch:");
+        line("  switch i64 %failure, label %cas.relaxed.relaxed [ i64 0, label %cas.relaxed.relaxed ]");
+        line("cas.acquire.dispatch:");
+        line("  switch i64 %failure, label %cas.acquire.acquire [ i64 0, label %cas.acquire.relaxed i64 1, label %cas.acquire.acquire ]");
+        line("cas.release.dispatch:");
+        line("  switch i64 %failure, label %cas.release.relaxed [ i64 0, label %cas.release.relaxed ]");
+        line("cas.acqrel.dispatch:");
+        line("  switch i64 %failure, label %cas.acqrel.acquire [ i64 0, label %cas.acqrel.relaxed i64 1, label %cas.acqrel.acquire ]");
+        line("cas.seq.dispatch:");
+        line("  switch i64 %failure, label %cas.seq.seq [ i64 0, label %cas.seq.relaxed i64 1, label %cas.seq.acquire i64 4, label %cas.seq.seq ]");
+        line("cas.relaxed.relaxed:");
+        line("  %result.relaxed.relaxed = cmpxchg ptr %value.ptr, i64 %expected, i64 %next monotonic monotonic");
+        line("  %exchanged.relaxed.relaxed = extractvalue { i64, i1 } %result.relaxed.relaxed, 1");
+        line("  ret i1 %exchanged.relaxed.relaxed");
+        line("cas.acquire.relaxed:");
+        line("  %result.acquire.relaxed = cmpxchg ptr %value.ptr, i64 %expected, i64 %next acquire monotonic");
+        line("  %exchanged.acquire.relaxed = extractvalue { i64, i1 } %result.acquire.relaxed, 1");
+        line("  ret i1 %exchanged.acquire.relaxed");
+        line("cas.acquire.acquire:");
+        line("  %result.acquire.acquire = cmpxchg ptr %value.ptr, i64 %expected, i64 %next acquire acquire");
+        line("  %exchanged.acquire.acquire = extractvalue { i64, i1 } %result.acquire.acquire, 1");
+        line("  ret i1 %exchanged.acquire.acquire");
+        line("cas.release.relaxed:");
+        line("  %result.release.relaxed = cmpxchg ptr %value.ptr, i64 %expected, i64 %next release monotonic");
+        line("  %exchanged.release.relaxed = extractvalue { i64, i1 } %result.release.relaxed, 1");
+        line("  ret i1 %exchanged.release.relaxed");
+        line("cas.acqrel.relaxed:");
+        line("  %result.acqrel.relaxed = cmpxchg ptr %value.ptr, i64 %expected, i64 %next acq_rel monotonic");
+        line("  %exchanged.acqrel.relaxed = extractvalue { i64, i1 } %result.acqrel.relaxed, 1");
+        line("  ret i1 %exchanged.acqrel.relaxed");
+        line("cas.acqrel.acquire:");
+        line("  %result.acqrel.acquire = cmpxchg ptr %value.ptr, i64 %expected, i64 %next acq_rel acquire");
+        line("  %exchanged.acqrel.acquire = extractvalue { i64, i1 } %result.acqrel.acquire, 1");
+        line("  ret i1 %exchanged.acqrel.acquire");
+        line("cas.seq.relaxed:");
+        line("  %result.seq.relaxed = cmpxchg ptr %value.ptr, i64 %expected, i64 %next seq_cst monotonic");
+        line("  %exchanged.seq.relaxed = extractvalue { i64, i1 } %result.seq.relaxed, 1");
+        line("  ret i1 %exchanged.seq.relaxed");
+        line("cas.seq.acquire:");
+        line("  %result.seq.acquire = cmpxchg ptr %value.ptr, i64 %expected, i64 %next seq_cst acquire");
+        line("  %exchanged.seq.acquire = extractvalue { i64, i1 } %result.seq.acquire, 1");
+        line("  ret i1 %exchanged.seq.acquire");
+        line("cas.seq.seq:");
+        line("  %result.seq.seq = cmpxchg ptr %value.ptr, i64 %expected, i64 %next seq_cst seq_cst");
+        line("  %exchanged.seq.seq = extractvalue { i64, i1 } %result.seq.seq, 1");
+        line("  ret i1 %exchanged.seq.seq");
         line("}");
         line();
 

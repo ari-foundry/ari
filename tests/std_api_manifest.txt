@@ -711,6 +711,7 @@ fn std::sync::call_once|check-prelude std-sync-mutex-once source once execution 
 fn std::sync::channel[T]|check-prelude std-sync-concurrency-api single-slot MPSC channel constructor; docs/stdlib/modules/sync.md
 fn std::sync::compare_exchange|check-prelude std-sync-atomic-i64 atomic compare-and-exchange hook; docs/stdlib/modules/sync.md
 fn std::sync::fetch_add|check-prelude std-sync-atomic-i64 atomic fetch-add hook; docs/stdlib/modules/sync.md
+fn std::sync::is_compare_exchange_order|check-prelude std-sync-concurrency-api memory-order validation helper for compare-exchange success/failure pairs; docs/stdlib/modules/sync.md
 fn std::sync::is_completed|check-prelude std-sync-mutex-once source once completion predicate; docs/stdlib/modules/sync.md
 fn std::sync::is_load_order|check-prelude std-sync-concurrency-api memory-order validation helper for loads; docs/stdlib/modules/sync.md
 fn std::sync::is_locked|check-prelude std-sync-mutex-once source mutex state predicate; docs/stdlib/modules/sync.md

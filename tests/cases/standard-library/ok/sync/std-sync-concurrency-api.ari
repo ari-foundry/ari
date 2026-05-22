@@ -19,7 +19,11 @@ fn main() -> i64 {
   if sync::is_load_order(sync::Acquire) &&
      !sync::is_load_order(sync::Release) &&
      sync::is_store_order(sync::Release) &&
-     !sync::is_store_order(sync::Acquire) {
+     !sync::is_store_order(sync::Acquire) &&
+     sync::is_compare_exchange_order(sync::SeqCst, sync::SeqCst) &&
+     sync::is_compare_exchange_order(sync::AcqRel, sync::Acquire) &&
+     !sync::is_compare_exchange_order(sync::Release, sync::Acquire) &&
+     !sync::is_compare_exchange_order(sync::Acquire, sync::SeqCst) {
     score = score + 1;
   }
 

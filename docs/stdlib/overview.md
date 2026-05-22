@@ -294,14 +294,15 @@ interior mutability through `Cell`, runtime-checked `RefCell`, and zone-backed
 `Arc`, and `Weak` shared ownership handles. Atomic method names are the names
 developers expect:
 `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`. The runtime
-hooks lower directly to LLVM atomic operations with sequentially consistent
-ordering; `Ordering` names the intended memory contract early. `Mutex` and
-`RwLock` are primitive spin/yield locks without protected payloads or guards,
-`Condvar` and `Barrier` are source coordination primitives, and channels carry
-only a shared state pointer rather than redundant zone handles. `Arc` uses an
-atomic control block, but send/share trait policy, value-protecting locks,
-semaphores, futex-backed blocking locks, timeout waits, and target-native
-relaxed memory ordering remain future work.
+hooks lower directly to LLVM atomic operations. Default methods are
+sequentially consistent, while explicit-order methods lower Ari `Ordering`
+values to the matching LLVM ordering for load/store/RMW/compare-exchange.
+`Mutex` and `RwLock` are primitive spin/yield locks without protected payloads
+or guards, `Condvar` and `Barrier` are source coordination primitives, and
+channels carry only a shared state pointer rather than redundant zone handles.
+`Arc` uses an atomic control block, but send/share trait policy,
+value-protecting locks, semaphores, futex-backed blocking locks, timeout waits,
+and non-LLVM target atomic policy remain future work.
 
 `std::time` follows the same OS-facing pattern. `monotonic_nanos`,
 `unix_nanos`, and `sleep_nanos` are runtime-backed because they call the host

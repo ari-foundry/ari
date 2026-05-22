@@ -895,6 +895,7 @@ sync::seq_cst()
 sync::is_load_order(ordering)
 sync::is_store_order(ordering)
 sync::is_rmw_order(ordering)
+sync::is_compare_exchange_order(success, failure)
 sync::load(ref value)
 sync::store(ref mut value, replacement)
 sync::swap(ref mut value, replacement)
@@ -966,10 +967,11 @@ receiver.recv()
 
 The atomic slice now has `AtomicI64`, `AtomicBool`, `AtomicUsize`, and
 `AtomicPtr[T]`. `AtomicI64` lowers to LLVM atomic operations; the other wrappers
-compose over it. Operations are still effectively sequentially consistent, but
-the explicit `Ordering` enum is available so APIs can name load/store/RMW
-contracts early. `fetch_add` and `swap` return the previous value;
-`compare_exchange` returns whether the replacement happened.
+compose over it. Default methods are sequentially consistent; explicit-order
+methods lower `Relaxed`, `Acquire`, `Release`, `AcqRel`, and `SeqCst` to the
+matching LLVM atomic ordering where that operation allows it. `fetch_add` and
+`swap` return the previous value; `compare_exchange` returns whether the
+replacement happened.
 
 `Mutex` is a source spin/yield lock built on `AtomicI64`. It is not a
 value-protecting `Mutex[T]` and has no guard type yet, so keep lock/unlock

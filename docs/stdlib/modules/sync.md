@@ -5,12 +5,12 @@ small production vocabulary that other standard-library modules need first:
 concrete atomics, primitive locks, condition variables, one-time initialization,
 a reusable barrier, and a first MPSC channel shape.
 
-The current implementations are intentionally teachable source-level building
-blocks. `AtomicI64` lowers to LLVM atomics on the hosted backend; wider wrappers
-compose over it. `Mutex`, `RwLock`, `Condvar`, `Barrier`, `Once`, `OnceLock`,
-and channels spin/yield instead of using a futex-backed blocking runtime yet.
-That keeps the API useful while preserving space for later guard, poisoning,
-send/share, and wait/wake policy.
+The current implementations are intentionally teachable building blocks.
+`AtomicI64` lowers to LLVM atomics on the hosted backend, including explicit
+memory-order variants; wider wrappers compose over it. `Mutex`, `RwLock`,
+`Condvar`, `Barrier`, `Once`, `OnceLock`, and channels spin/yield instead of
+using a futex-backed blocking runtime yet. That keeps the API useful while
+preserving space for later guard, poisoning, send/share, and wait/wake policy.
 
 ## Memory Ordering
 
@@ -27,16 +27,24 @@ sync::seq_cst() -> sync::Ordering
 sync::is_load_order(ordering) -> bool
 sync::is_store_order(ordering) -> bool
 sync::is_rmw_order(ordering) -> bool
+sync::is_compare_exchange_order(success, failure) -> bool
 ```
 
-All current atomic lowering is sequentially consistent. The explicit
-`Ordering` enum exists so APIs can name their contract now, and so user code can
-be written in the same shape that weaker backend lowering will use later.
-Invalid ordering combinations assert:
+Default atomic methods are sequentially consistent. Explicit-order methods
+lower to matching LLVM atomic orderings on the hosted backend:
 
-- loads accept `Relaxed`, `Acquire`, and `SeqCst`
-- stores accept `Relaxed`, `Release`, and `SeqCst`
-- read-modify-write operations accept all current variants
+- `Relaxed` lowers to LLVM `monotonic`
+- `Acquire` lowers to LLVM `acquire`
+- `Release` lowers to LLVM `release`
+- `AcqRel` lowers to LLVM `acq_rel`
+- `SeqCst` lowers to LLVM `seq_cst`
+
+Invalid ordering combinations assert before reaching the runtime hook. Loads
+accept `Relaxed`, `Acquire`, and `SeqCst`; stores accept `Relaxed`, `Release`,
+and `SeqCst`; read-modify-write operations accept every current variant.
+Compare-exchange validates both success and failure orderings: failure may be
+`Relaxed`, may be `Acquire` only when the success ordering observes reads, and
+may be `SeqCst` only when success is also `SeqCst`.
 
 ## Atomic API
 
@@ -257,8 +265,6 @@ fn main() -> i64 {
 
 ## Current Limits
 
-- Atomic lowering is still effectively sequentially consistent even when APIs
-  accept `Ordering` values.
 - `AtomicBool`, `AtomicUsize`, and `AtomicPtr[T]` are wrappers over
   `AtomicI64`, not target-specialized native atomic widths yet.
 - `Mutex`, `RwLock`, `Condvar`, `Barrier`, and channels spin/yield; they do not
@@ -275,7 +281,7 @@ fn main() -> i64 {
 | Feature | Status |
 | --- | --- |
 | Atomic types | Current `AtomicI64`, `AtomicBool`, `AtomicUsize`, and `AtomicPtr[T]`; future target-native width policy and more integer widths. |
-| Memory ordering | Current explicit `Ordering` vocabulary with SeqCst lowering; future relaxed/acquire/release backend mapping and examples. |
+| Memory ordering | Current explicit `Ordering` vocabulary with LLVM hosted lowering for load/store/RMW/compare-exchange; future examples and non-LLVM backend policy. |
 | Mutex/RwLock | Current primitive lock state; future value-protecting guards, poisoning/no-poisoning, fairness, and futex-backed parking. |
 | Condvar | Current generation-based source API; future blocking wait/wake, spurious wake documentation, and timeout waits. |
 | Once/OnceLock | Current source one-time execution and value slot; future panic/poison policy and optional `LazyLock`. |
@@ -295,8 +301,9 @@ fn main() -> i64 {
   `RwLock` read/write state transitions, method wrappers, root alias, reader
   counts, and compare-exchange/fetch-add lowering.
 - `tests/cases/standard-library/ok/sync/std-sync-concurrency-api.ari` checks
-  explicit order validation, `AtomicBool`, `AtomicUsize`, `AtomicPtr[T]`,
-  `OnceLock`, `Condvar`, `Barrier`, and the single-slot channel API.
+  explicit order validation, order-specific LLVM lowering, `AtomicBool`,
+  `AtomicUsize`, `AtomicPtr[T]`, `OnceLock`, `Condvar`, `Barrier`, and the
+  single-slot channel API.
 
 For small sync edits, run `make check-std-api`, then compile the relevant test
 with `--emit-llvm` and run the resulting executable. Use the broader prelude

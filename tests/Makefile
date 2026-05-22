@@ -1063,6 +1063,13 @@ check-prelude: $(TARGET)
 	grep -F -q "std__sync__Sender" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
 	grep -F -q "std__sync__Receiver" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
 	grep -F -q "_ARNv3std4sync14channel" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -q "@ari_builtin_sync_atomic_i64_load_order" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -q "@ari_builtin_sync_atomic_i64_store_order" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -q "@ari_builtin_sync_atomic_i64_compare_exchange_order" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -q "load atomic i64.*acquire" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -q "store atomic i64.*release" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -q "atomicrmw add.*acq_rel" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -q "cmpxchg.*seq_cst acquire" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
 	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-concurrency-api.ari -o $(BUILD_DIR)/prelude/std-sync-concurrency-api.elf
 	$(BUILD_DIR)/prelude/std-sync-concurrency-api.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-basic.ll

@@ -78,6 +78,27 @@ pub extern "ari" fn store(value: ref mut AtomicI64, replacement: i64) -> void = 
 pub extern "ari" fn swap(value: ref mut AtomicI64, replacement: i64) -> i64 = "ari_builtin_sync_atomic_i64_swap";
 pub extern "ari" fn fetch_add(value: ref mut AtomicI64, amount: i64) -> i64 = "ari_builtin_sync_atomic_i64_fetch_add";
 pub extern "ari" fn compare_exchange(value: ref mut AtomicI64, expected: i64, replacement: i64) -> bool = "ari_builtin_sync_atomic_i64_compare_exchange";
+extern "ari" fn load_order_raw(value: ref AtomicI64, ordering: i64) -> i64 = "ari_builtin_sync_atomic_i64_load_order";
+extern "ari" fn store_order_raw(value: ref mut AtomicI64, replacement: i64, ordering: i64) -> void = "ari_builtin_sync_atomic_i64_store_order";
+extern "ari" fn swap_order_raw(value: ref mut AtomicI64, replacement: i64, ordering: i64) -> i64 = "ari_builtin_sync_atomic_i64_swap_order";
+extern "ari" fn fetch_add_order_raw(value: ref mut AtomicI64, amount: i64, ordering: i64) -> i64 = "ari_builtin_sync_atomic_i64_fetch_add_order";
+extern "ari" fn compare_exchange_order_raw(
+  value: ref mut AtomicI64,
+  expected: i64,
+  replacement: i64,
+  success: i64,
+  failure: i64
+) -> bool = "ari_builtin_sync_atomic_i64_compare_exchange_order";
+
+fn ordering_code(ordering: std::sync::Ordering) -> i64 {
+  match ordering {
+    std::sync::Relaxed => { return 0; }
+    std::sync::Acquire => { return 1; }
+    std::sync::Release => { return 2; }
+    std::sync::AcqRel => { return 3; }
+    std::sync::SeqCst => { return 4; }
+  }
+}
 
 pub fn seq_cst() -> std::sync::Ordering {
   return std::sync::SeqCst;
@@ -105,6 +126,25 @@ pub fn is_store_order(ordering: std::sync::Ordering) -> bool {
 
 pub fn is_rmw_order(ordering: std::sync::Ordering) -> bool {
   return true;
+}
+
+pub fn is_compare_exchange_order(success: std::sync::Ordering, failure: std::sync::Ordering) -> bool {
+  if !std::sync::is_rmw_order(success) || !std::sync::is_load_order(failure) {
+    return false;
+  }
+  match failure {
+    std::sync::Relaxed => { return true; }
+    std::sync::Acquire => {
+      return success == std::sync::Acquire ||
+             success == std::sync::AcqRel ||
+             success == std::sync::SeqCst;
+    }
+    std::sync::SeqCst => {
+      return success == std::sync::SeqCst;
+    }
+    std::sync::Release => { return false; }
+    std::sync::AcqRel => { return false; }
+  }
 }
 
 pub fn try_lock(lock: ref mut std::sync::Mutex) -> bool {
@@ -230,7 +270,7 @@ pub impl std::sync::AtomicI64 {
 
   fn load_order(self: ref Self, ordering: std::sync::Ordering) -> i64 {
     std::assert(std::sync::is_load_order(ordering));
-    return self.load();
+    return std::sync::load_order_raw(self, std::sync::ordering_code(ordering));
   }
 
   fn store(self: ref mut Self, replacement: i64) -> void {
@@ -239,7 +279,7 @@ pub impl std::sync::AtomicI64 {
 
   fn store_order(self: ref mut Self, replacement: i64, ordering: std::sync::Ordering) -> void {
     std::assert(std::sync::is_store_order(ordering));
-    self.store(replacement);
+    std::sync::store_order_raw(self, replacement, std::sync::ordering_code(ordering));
   }
 
   fn swap(self: ref mut Self, replacement: i64) -> i64 {
@@ -248,7 +288,7 @@ pub impl std::sync::AtomicI64 {
 
   fn swap_order(self: ref mut Self, replacement: i64, ordering: std::sync::Ordering) -> i64 {
     std::assert(std::sync::is_rmw_order(ordering));
-    return self.swap(replacement);
+    return std::sync::swap_order_raw(self, replacement, std::sync::ordering_code(ordering));
   }
 
   fn fetch_add(self: ref mut Self, amount: i64) -> i64 {
@@ -257,7 +297,7 @@ pub impl std::sync::AtomicI64 {
 
   fn fetch_add_order(self: ref mut Self, amount: i64, ordering: std::sync::Ordering) -> i64 {
     std::assert(std::sync::is_rmw_order(ordering));
-    return self.fetch_add(amount);
+    return std::sync::fetch_add_order_raw(self, amount, std::sync::ordering_code(ordering));
   }
 
   fn compare_exchange(self: ref mut Self, expected: i64, replacement: i64) -> bool {
@@ -271,9 +311,14 @@ pub impl std::sync::AtomicI64 {
     success: std::sync::Ordering,
     failure: std::sync::Ordering
   ) -> bool {
-    std::assert(std::sync::is_rmw_order(success));
-    std::assert(std::sync::is_load_order(failure));
-    return self.compare_exchange(expected, replacement);
+    std::assert(std::sync::is_compare_exchange_order(success, failure));
+    return std::sync::compare_exchange_order_raw(
+      self,
+      expected,
+      replacement,
+      std::sync::ordering_code(success),
+      std::sync::ordering_code(failure)
+    );
   }
 }
 
@@ -339,9 +384,16 @@ pub impl std::sync::AtomicBool {
     success: std::sync::Ordering,
     failure: std::sync::Ordering
   ) -> bool {
-    std::assert(std::sync::is_rmw_order(success));
-    std::assert(std::sync::is_load_order(failure));
-    return self.compare_exchange(expected, replacement);
+    std::assert(std::sync::is_compare_exchange_order(success, failure));
+    var expected_raw = 0;
+    var replacement_raw = 0;
+    if expected {
+      expected_raw = 1;
+    }
+    if replacement {
+      replacement_raw = 1;
+    }
+    return self.bits.compare_exchange_order(expected_raw, replacement_raw, success, failure);
   }
 }
 
@@ -397,9 +449,8 @@ pub impl std::sync::AtomicUsize {
     success: std::sync::Ordering,
     failure: std::sync::Ordering
   ) -> bool {
-    std::assert(std::sync::is_rmw_order(success));
-    std::assert(std::sync::is_load_order(failure));
-    return self.compare_exchange(expected, replacement);
+    std::assert(std::sync::is_compare_exchange_order(success, failure));
+    return self.bits.compare_exchange_order(expected as i64, replacement as i64, success, failure);
   }
 }
 
@@ -450,9 +501,8 @@ pub impl[T] std::sync::AtomicPtr[T] {
     success: std::sync::Ordering,
     failure: std::sync::Ordering
   ) -> bool {
-    std::assert(std::sync::is_rmw_order(success));
-    std::assert(std::sync::is_load_order(failure));
-    return self.compare_exchange(expected, replacement);
+    std::assert(std::sync::is_compare_exchange_order(success, failure));
+    return self.bits.compare_exchange_order(expected as u64, replacement as u64, success, failure);
   }
 }
 

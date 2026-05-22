@@ -373,6 +373,11 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_sync_atomic_i64_swap") return builtin_sig({ref_mut_atomic_i64, i64}, i64);
     if (symbol == "ari_builtin_sync_atomic_i64_fetch_add") return builtin_sig({ref_mut_atomic_i64, i64}, i64);
     if (symbol == "ari_builtin_sync_atomic_i64_compare_exchange") return builtin_sig({ref_mut_atomic_i64, i64, i64}, boolean);
+    if (symbol == "ari_builtin_sync_atomic_i64_load_order") return builtin_sig({ref_atomic_i64, i64}, i64);
+    if (symbol == "ari_builtin_sync_atomic_i64_store_order") return builtin_sig({ref_mut_atomic_i64, i64, i64}, void_type);
+    if (symbol == "ari_builtin_sync_atomic_i64_swap_order") return builtin_sig({ref_mut_atomic_i64, i64, i64}, i64);
+    if (symbol == "ari_builtin_sync_atomic_i64_fetch_add_order") return builtin_sig({ref_mut_atomic_i64, i64, i64}, i64);
+    if (symbol == "ari_builtin_sync_atomic_i64_compare_exchange_order") return builtin_sig({ref_mut_atomic_i64, i64, i64, i64, i64}, boolean);
     if (symbol == "ari_builtin_time_monotonic_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_unix_nanos") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);
