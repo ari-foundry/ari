@@ -3466,6 +3466,10 @@ lower float enum payloads yet.
 ```ari
 encoding::is_ascii(bytes)
 encoding::is_unicode_scalar(scalar)
+encoding::Utf8ErrorKind
+encoding::Utf8Error
+encoding::utf8_error(bytes)
+encoding::validate_utf8(bytes)
 encoding::utf8_count(bytes)
 encoding::is_utf8(bytes)
 encoding::utf8_width(first_byte)
@@ -3491,16 +3495,19 @@ encoding::try_decode_base64_in(ref mut zone, bytes)
 ```
 
 `utf8_count` and `utf16_count` validate and return code-point counts through
-`Option[i64]`; the `is_*` forms return only a bool. `Utf8Char` is the decoded
-UTF-8 scalar wrapper with `scalar()`, `len()`, and `next_index(byte_index)`.
-`utf8_at` validates at one byte offset, while `utf8_width` only classifies a
-lead byte. `encode_utf8_in` returns an owned byte `String` for one Unicode
-scalar and panics for invalid scalar values. Use `try_encode_utf8_in` for
-untrusted scalar input. Hex encoding emits lowercase digits and decoding
-accepts ASCII hex digits. Base64 uses the standard `+`/`/` alphabet with `=`
-padding. Decoders have `try_decode_*_in` forms that return `Option[String]`
-for untrusted input. The plain `decode_*_in` helpers are asserting forms and
-panic on invalid input.
+`Option[i64]`; the `is_*` forms return only a bool. `utf8_error` and
+`validate_utf8` return `None` for valid UTF-8 or `Some(Utf8Error)` with the
+failing byte index, byte value, and a `Utf8ErrorKind` such as
+`InvalidContinuation`, `OverlongEncoding`, or `SurrogateCodePoint`.
+`Utf8Char` is the decoded UTF-8 scalar wrapper with `scalar()`, `len()`, and
+`next_index(byte_index)`. `utf8_at` validates at one byte offset, while
+`utf8_width` only classifies a lead byte. `encode_utf8_in` returns an owned
+byte `String` for one Unicode scalar and panics for invalid scalar values. Use
+`try_encode_utf8_in` for untrusted scalar input. Hex encoding emits lowercase
+digits and decoding accepts ASCII hex digits. Base64 uses the standard
+`+`/`/` alphabet with `=` padding. Decoders have `try_decode_*_in` forms that
+return `Option[String]` for untrusted input. The plain `decode_*_in` helpers
+are asserting forms and panic on invalid input.
 
 ## Choosing The Right Collection
 

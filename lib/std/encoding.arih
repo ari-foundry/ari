@@ -9,6 +9,21 @@ pub struct Utf8Char {
   len: i64,
 }
 
+pub enum Utf8ErrorKind {
+  InvalidLead,
+  UnexpectedEnd,
+  InvalidContinuation,
+  OverlongEncoding,
+  SurrogateCodePoint,
+  OutOfRangeCodePoint,
+}
+
+pub struct Utf8Error {
+  index: i64,
+  byte: u8,
+  kind_id: i64,
+}
+
 pub impl std::encoding::Utf8Char {
   fn scalar(self: ref Self) -> u32 {
     return self.scalar;
@@ -21,6 +36,72 @@ pub impl std::encoding::Utf8Char {
   fn next_index(self: ref Self, index: i64) -> i64 {
     return index + self.len;
   }
+}
+
+pub impl std::encoding::Utf8Error {
+  fn index(self: ref Self) -> i64 {
+    return self.index;
+  }
+
+  fn byte(self: ref Self) -> u8 {
+    return self.byte;
+  }
+
+  fn kind(self: ref Self) -> std::encoding::Utf8ErrorKind {
+    return utf8_error_kind_from_id(self.kind_id);
+  }
+
+  fn is_invalid_lead(self: ref Self) -> bool {
+    return self.kind_id == utf8_error_kind_id(std::encoding::InvalidLead);
+  }
+
+  fn is_unexpected_end(self: ref Self) -> bool {
+    return self.kind_id == utf8_error_kind_id(std::encoding::UnexpectedEnd);
+  }
+
+  fn is_invalid_continuation(self: ref Self) -> bool {
+    return self.kind_id == utf8_error_kind_id(std::encoding::InvalidContinuation);
+  }
+
+  fn is_overlong(self: ref Self) -> bool {
+    return self.kind_id == utf8_error_kind_id(std::encoding::OverlongEncoding);
+  }
+
+  fn is_surrogate(self: ref Self) -> bool {
+    return self.kind_id == utf8_error_kind_id(std::encoding::SurrogateCodePoint);
+  }
+
+  fn is_out_of_range(self: ref Self) -> bool {
+    return self.kind_id == utf8_error_kind_id(std::encoding::OutOfRangeCodePoint);
+  }
+}
+
+fn utf8_error_kind_id(kind: std::encoding::Utf8ErrorKind) -> i64 {
+  match kind {
+    InvalidLead => { return 1; }
+    UnexpectedEnd => { return 2; }
+    InvalidContinuation => { return 3; }
+    OverlongEncoding => { return 4; }
+    SurrogateCodePoint => { return 5; }
+    OutOfRangeCodePoint => { return 6; }
+  }
+}
+
+fn utf8_error_kind_from_id(id: i64) -> std::encoding::Utf8ErrorKind {
+  if id == 1 { return InvalidLead; }
+  if id == 2 { return UnexpectedEnd; }
+  if id == 3 { return InvalidContinuation; }
+  if id == 4 { return OverlongEncoding; }
+  if id == 5 { return SurrogateCodePoint; }
+  return OutOfRangeCodePoint;
+}
+
+fn utf8_error_at(index: i64, byte: u8, kind: std::encoding::Utf8ErrorKind) -> std::encoding::Utf8Error {
+  return std::encoding::Utf8Error {
+    index: index,
+    byte: byte,
+    kind_id: utf8_error_kind_id(kind),
+  };
 }
 
 fn hex_digit(value: i64) -> u8 {
@@ -110,6 +191,125 @@ pub fn is_ascii(values: std::Slice[u8]) -> bool {
 
 pub fn is_unicode_scalar(value: u32) -> bool {
   return value <= 1114111u32 && !is_surrogate_scalar(value);
+}
+
+pub fn utf8_error(values: std::Slice[u8]) -> std::Option[std::encoding::Utf8Error] {
+  var index = 0;
+  while index != values.len {
+    let first = values[index];
+    if first <= (127 as u8) {
+      index = index + 1;
+    } else if first >= (194 as u8) && first <= (223 as u8) {
+      if index + 1 >= values.len {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::UnexpectedEnd)
+        );
+      }
+      let second2 = values[index + 1];
+      if !is_utf8_continuation(second2) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index + 1, second2, std::encoding::InvalidContinuation)
+        );
+      }
+      index = index + 2;
+    } else if first >= (224 as u8) && first <= (239 as u8) {
+      if index + 1 >= values.len {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::UnexpectedEnd)
+        );
+      }
+      let second3 = values[index + 1];
+      if !is_utf8_continuation(second3) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index + 1, second3, std::encoding::InvalidContinuation)
+        );
+      }
+      if first == (224 as u8) && second3 < (160 as u8) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::OverlongEncoding)
+        );
+      }
+      if first == (237 as u8) && second3 >= (160 as u8) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::SurrogateCodePoint)
+        );
+      }
+      if index + 2 >= values.len {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::UnexpectedEnd)
+        );
+      }
+      let third3 = values[index + 2];
+      if !is_utf8_continuation(third3) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index + 2, third3, std::encoding::InvalidContinuation)
+        );
+      }
+      index = index + 3;
+    } else if first >= (240 as u8) && first <= (244 as u8) {
+      if index + 1 >= values.len {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::UnexpectedEnd)
+        );
+      }
+      let second4 = values[index + 1];
+      if !is_utf8_continuation(second4) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index + 1, second4, std::encoding::InvalidContinuation)
+        );
+      }
+      if first == (240 as u8) && second4 < (144 as u8) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::OverlongEncoding)
+        );
+      }
+      if first == (244 as u8) && second4 >= (144 as u8) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::OutOfRangeCodePoint)
+        );
+      }
+      if index + 2 >= values.len {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::UnexpectedEnd)
+        );
+      }
+      let third4 = values[index + 2];
+      if !is_utf8_continuation(third4) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index + 2, third4, std::encoding::InvalidContinuation)
+        );
+      }
+      if index + 3 >= values.len {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index, first, std::encoding::UnexpectedEnd)
+        );
+      }
+      let fourth4 = values[index + 3];
+      if !is_utf8_continuation(fourth4) {
+        return std::Some<std::encoding::Utf8Error>(
+          utf8_error_at(index + 3, fourth4, std::encoding::InvalidContinuation)
+        );
+      }
+      index = index + 4;
+    } else if first == (192 as u8) || first == (193 as u8) {
+      return std::Some<std::encoding::Utf8Error>(
+        utf8_error_at(index, first, std::encoding::OverlongEncoding)
+      );
+    } else if first >= (245 as u8) {
+      return std::Some<std::encoding::Utf8Error>(
+        utf8_error_at(index, first, std::encoding::OutOfRangeCodePoint)
+      );
+    } else {
+      return std::Some<std::encoding::Utf8Error>(
+        utf8_error_at(index, first, std::encoding::InvalidLead)
+      );
+    }
+  }
+  return std::None<std::encoding::Utf8Error>();
+}
+
+pub fn validate_utf8(values: std::Slice[u8]) -> std::Option[std::encoding::Utf8Error] {
+  return utf8_error(values);
 }
 
 pub fn utf8_width(first: u8) -> std::Option[i64] {

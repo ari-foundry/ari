@@ -1406,6 +1406,8 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding8is_ascii' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding10utf8_count' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding7is_utf8' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding10utf8_error' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding13validate_utf8' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding11utf16_count' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding8is_utf16' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-text.ari -o $(BUILD_DIR)/prelude/std-encoding-text.elf

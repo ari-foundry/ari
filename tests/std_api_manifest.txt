@@ -11,6 +11,7 @@
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::cmp::Ordering|check-prelude std-cmp-ordering three-way comparison result; docs/stdlib/modules/cmp.md
+enum std::encoding::Utf8ErrorKind|check-prelude std-encoding-text detailed UTF-8 validation failure categories; docs/stdlib/modules/encoding.md
 enum std::error::Kind|check-prelude std-error-basic shared recoverable error categories; docs/stdlib/modules/error.md
 enum std::fs::FileKind|check-prelude std-fs-metadata file/directory/symlink/other metadata classifier; docs/stdlib/modules/fs.md
 enum std::log::Level|check-prelude std-log-basic source logging level enum; docs/stdlib/modules/log.md
@@ -227,8 +228,10 @@ fn std::encoding::utf16_count|check-prelude std-encoding-text UTF-16 code-point 
 fn std::encoding::utf8_at|check-prelude std-encoding-utf8-codepoints UTF-8 scalar decode at byte offset; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_count|check-prelude std-encoding-text UTF-8 code-point count validator; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_encoded_len|check-prelude std-encoding-utf8-codepoints UTF-8 scalar encoded length helper; docs/stdlib/modules/encoding.md
+fn std::encoding::utf8_error|check-prelude std-encoding-text detailed UTF-8 validation failure locator; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_next_index|check-prelude std-encoding-utf8-codepoints UTF-8 next byte offset helper; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_width|check-prelude std-encoding-utf8-codepoints UTF-8 lead-byte width helper; docs/stdlib/modules/encoding.md
+fn std::encoding::validate_utf8|check-prelude std-encoding-text alias for detailed UTF-8 validation; docs/stdlib/modules/encoding.md
 fn std::env::arg|check-prelude std-env-args argument wrapper; docs/stdlib/modules/env.md
 fn std::env::arg_count|check-prelude std-env-args argument count wrapper; docs/stdlib/modules/env.md
 fn std::env::arg_os|check-prelude std-env-os-path-views OS-string argument view; docs/stdlib/modules/env.md
@@ -1375,6 +1378,15 @@ method std::collections::TreeSet[T]::upper_bound|check-prelude std-collections-t
 method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints decoded UTF-8 byte length accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::next_index|check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::scalar|check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::byte|check-prelude std-encoding-text failing UTF-8 byte accessor; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::index|check-prelude std-encoding-text failing UTF-8 byte index accessor; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::is_invalid_continuation|check-prelude std-encoding-text UTF-8 invalid-continuation predicate; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::is_invalid_lead|check-prelude std-encoding-text UTF-8 invalid-lead predicate; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::is_out_of_range|check-prelude std-encoding-text UTF-8 out-of-range scalar predicate; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::is_overlong|check-prelude std-encoding-text UTF-8 overlong-encoding predicate; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::is_surrogate|check-prelude std-encoding-text UTF-8 surrogate scalar predicate; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::is_unexpected_end|check-prelude std-encoding-text UTF-8 truncated-sequence predicate; docs/stdlib/modules/encoding.md
+method std::encoding::Utf8Error::kind|check-prelude std-encoding-text UTF-8 failure kind accessor; docs/stdlib/modules/encoding.md
 method std::error::Error::code|check-prelude std-error-basic error platform code method; docs/stdlib/modules/error.md
 method std::error::Error::is_connection_refused|check-prelude std-error-integration connection-refused predicate method; docs/stdlib/modules/error.md
 method std::error::Error::is_interrupted|check-prelude std-error-basic interrupted predicate method; docs/stdlib/modules/error.md
@@ -2210,6 +2222,7 @@ struct std::collections::TreeSetIter[T]|std collections tree iterator tests; doc
 struct std::collections::TreeSetRange[T]|std collections tree set range tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
 struct std::encoding::Utf8Char|check-prelude std-encoding-utf8-codepoints decoded UTF-8 scalar value; docs/stdlib/modules/encoding.md
+struct std::encoding::Utf8Error|check-prelude std-encoding-text detailed UTF-8 validation failure value; docs/stdlib/modules/encoding.md
 struct std::error::Error|check-prelude std-error-basic compact shared error value; docs/stdlib/modules/error.md
 struct std::fmt::FormatSpec|check-prelude std-fmt-format-spec source formatting options; docs/stdlib/modules/fmt.md
 struct std::fs::Dir|std fs directory handle tests; docs/stdlib/modules/fs.md

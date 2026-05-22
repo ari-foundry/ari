@@ -355,8 +355,8 @@ identifies the exact case:
 - `std-parse-basic.ari`: source `std::parse` ASCII-trimmed signed
   decimal/radix/hex/binary/octal integer, bool, decimal float
   validation/conversion, fallback, and invalid whole-input behavior.
-- `std-encoding-text.ari`: source `std::encoding` ASCII, UTF-8, and UTF-16
-  validation/counting behavior.
+- `std-encoding-text.ari`: source `std::encoding` ASCII, UTF-8, detailed
+  UTF-8 failure diagnostics, and UTF-16 validation/counting behavior.
 - `std-encoding-utf8-codepoints.ari`: source `std::encoding` UTF-8 lead-byte
   width, Unicode scalar validation, byte-offset decoding, next-index, and
   scalar encoding behavior.

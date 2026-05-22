@@ -15,15 +15,80 @@ fn check_utf8() -> bool {
   var utf8_text = [65u8, 195u8, 169u8, 240u8, 159u8, 152u8, 128u8];
   var overlong = [192u8, 128u8];
   var surrogate = [237u8, 160u8, 128u8];
+  var truncated = [240u8, 159u8, 152u8];
+  var bad_continuation = [226u8, 40u8, 161u8];
+  var out_of_range = [244u8, 144u8, 128u8, 128u8];
   if encoding::is_utf8(utf8_text.as_slice()) {
     if encoding::utf8_count(utf8_text.as_slice()).unwrap_or(0) != 3 {
       return false;
     }
+    match encoding::utf8_error(utf8_text.as_slice()) {
+      Some(_) => {
+        return false;
+      }
+      None => {}
+    }
     if encoding::is_utf8(overlong.as_slice()) {
       return false;
     }
+    match encoding::validate_utf8(overlong.as_slice()) {
+      Some(overlong_reason) => {
+        if !overlong_reason.is_overlong() || overlong_reason.index() != 0 || overlong_reason.byte() != 192u8 {
+          return false;
+        }
+      }
+      None => {
+        return false;
+      }
+    }
     if encoding::is_utf8(surrogate.as_slice()) {
       return false;
+    }
+    match encoding::utf8_error(surrogate.as_slice()) {
+      Some(surrogate_reason) => {
+        if !surrogate_reason.is_surrogate() {
+          return false;
+        }
+        match surrogate_reason.kind() {
+          encoding::SurrogateCodePoint => {}
+          _ => {
+            return false;
+          }
+        }
+      }
+      None => {
+        return false;
+      }
+    }
+    match encoding::utf8_error(truncated.as_slice()) {
+      Some(truncated_reason) => {
+        if !truncated_reason.is_unexpected_end() || truncated_reason.index() != 0 {
+          return false;
+        }
+      }
+      None => {
+        return false;
+      }
+    }
+    match encoding::utf8_error(bad_continuation.as_slice()) {
+      Some(continuation_reason) => {
+        if !continuation_reason.is_invalid_continuation() || continuation_reason.index() != 1 || continuation_reason.byte() != 40u8 {
+          return false;
+        }
+      }
+      None => {
+        return false;
+      }
+    }
+    match encoding::utf8_error(out_of_range.as_slice()) {
+      Some(range_reason) => {
+        if !range_reason.is_out_of_range() {
+          return false;
+        }
+      }
+      None => {
+        return false;
+      }
     }
     return true;
   }

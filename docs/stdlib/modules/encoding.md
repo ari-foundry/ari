@@ -14,6 +14,10 @@ Validation helpers:
 ```ari
 encoding::is_ascii(bytes) -> bool
 encoding::is_unicode_scalar(value) -> bool
+encoding::Utf8ErrorKind
+encoding::Utf8Error
+encoding::utf8_error(bytes) -> Option[Utf8Error]
+encoding::validate_utf8(bytes) -> Option[Utf8Error]
 encoding::utf8_count(bytes) -> Option[i64]
 encoding::is_utf8(bytes) -> bool
 encoding::utf16_count(words) -> Option[i64]
@@ -24,6 +28,14 @@ encoding::is_utf16(words) -> bool
 and returns the number of Unicode scalar values represented by the byte slice.
 It rejects overlong encodings, surrogate code points, invalid continuation
 bytes, and values above `U+10FFFF`. `is_utf8` is the boolean form.
+`utf8_error` and its alias `validate_utf8` return `None` for valid UTF-8 and
+`Some(Utf8Error)` for invalid input. `Utf8Error` records the failing byte
+index, the byte that best identifies the failure, and a `Utf8ErrorKind`:
+`InvalidLead`, `UnexpectedEnd`, `InvalidContinuation`, `OverlongEncoding`,
+`SurrogateCodePoint`, or `OutOfRangeCodePoint`. Use `index()`, `byte()`, and
+`kind()` when reporting diagnostics, or the predicate helpers
+`is_invalid_lead()`, `is_unexpected_end()`, `is_invalid_continuation()`,
+`is_overlong()`, `is_surrogate()`, and `is_out_of_range()` when branching.
 
 `utf16_count` validates `Slice[u16]` input and counts code points, treating a
 valid surrogate pair as one code point. It rejects lone high surrogates, lone
@@ -122,7 +134,8 @@ tests/cases/standard-library/ok/encoding/std-encoding-utf8-codepoints.ari
 tests/cases/standard-library/ok/encoding/std-encoding-codec.ari
 ```
 
-`std-encoding-text.ari` covers ASCII, UTF-8, and UTF-16 validation/counting.
+`std-encoding-text.ari` covers ASCII, UTF-8, UTF-8 diagnostic details, and
+UTF-16 validation/counting.
 `std-encoding-utf8-codepoints.ari` covers scalar validation, UTF-8 lead-byte
 width, byte-offset decoding, next-index helpers, asserting scalar encoding,
 and fallible scalar encoding.
