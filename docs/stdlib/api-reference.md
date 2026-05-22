@@ -474,6 +474,9 @@ process::exit(code)
 process::abort()
 process::success()
 process::failure()
+process::exit_code(value)
+process::success_code()
+process::failure_code()
 process::is_success(code)
 process::is_failure(code)
 process::is_root()
@@ -486,6 +489,13 @@ process::is_child(pid)
 process::is_parent(pid)
 process::is_fork_error(pid)
 process::is_wait_error(status)
+process::signal(value)
+process::sig_check()
+process::sighup()
+process::sigint()
+process::sigquit()
+process::sigkill()
+process::sigterm()
 process::arg(value)
 process::env_var(name, value)
 process::command(program)
@@ -494,30 +504,59 @@ process::spawn(command)
 process::status(command)
 process::exit_status(command)
 process::output_in(command, zone)
+process::output(command, zone)
 process::exec(command)
 process::kill(pid, signal)
+process::kill_signal(pid, signal)
 process::terminate(pid)
+process::current_dir()
+process::try_current_dir()
+process::executable_path()
+process::try_executable_path()
+process::temp_file(zone)
+process::temp_file_in(zone, prefix)
+process::temp_dir(zone)
+process::temp_dir_in(zone, prefix)
+
+process::ChildStdin
+process::ChildStdout
+process::ChildStderr
 
 process::Command::new(program)
 process::Command::with_args(program, args)
+Command::arg(zone, value)
+Command::arg_value(zone, value)
 Command::args(args)
 Command::env(env_values)
+Command::env_var(zone, name, value)
+Command::env_value(zone, value)
 Command::current_dir(path)
 Command::spawn()
 Command::status()
 Command::exit_status()
 Command::output_in(zone)
+Command::output(zone)
 Command::exec()
+
+ExitCode::raw()
+ExitCode::code()
+ExitCode::is_success()
+ExitCode::is_failure()
+ExitCode::exit()
 
 ExitStatus::raw()
 ExitStatus::exited()
 ExitStatus::signaled()
 ExitStatus::code()
 ExitStatus::code_or(fallback)
+ExitStatus::exit_code()
 ExitStatus::signal()
 ExitStatus::signal_or(fallback)
 ExitStatus::is_success()
 ExitStatus::is_failure()
+
+Signal::raw()
+Signal::is_check()
 
 Output::status()
 Output::exit_status()
@@ -525,10 +564,23 @@ Output::is_success()
 Output::stdout()
 Output::stderr()
 
+TempFile::path()
+TempFile::as_c_str()
+TempFile::as_fd()
+TempFile::is_open()
+TempFile::close()
+TempFile::remove()
+TempFile::close_and_remove()
+
+TempDir::path()
+TempDir::as_c_str()
+TempDir::remove()
+
 Child::pid()
 Child::wait()
 Child::wait_status()
 Child::kill(signal)
+Child::signal(signal)
 Child::terminate()
 ```
 
@@ -537,7 +589,8 @@ current user and group ids. `is_root()` is the source convenience check for
 `uid() == 0`. `exit(code)` terminates the process and does not return.
 `abort()` terminates through the host abnormal-termination path. The status
 helpers are source functions for the common `0` success and `1` failure
-convention.
+convention. `ExitCode` is the typed wrapper for code values before returning
+or calling `exit`.
 
 `fork_result()` and `wait_status_result(pid)` are the preferred POSIX
 child-process helpers when failure matters. `fork_result()` returns `Ok(0)` in
@@ -554,11 +607,16 @@ parent, and a negative value on failure; use `is_child`, `is_parent`, and
 child exit status or `-1`; use `is_wait_error` for that sentinel.
 
 `Command` is the higher-level child-process builder. Use `process::arg` for
-argv entries and `process::env_var` for child environment assignments:
+argv entries and `process::env_var` for child environment assignments, or use
+the explicit-zone appenders `Command::arg(ref mut zone, value)` and
+`Command::env_var(ref mut zone, name, value)` when the builder should grow one
+item at a time:
 
 ```ari
-var args = [process::arg("-c"), process::arg("exit 7")];
-var cmd = process::command_with_args("sh", args.as_slice());
+var zone = zone::temp(128);
+var cmd = process::Command::new("sh");
+cmd.arg(ref mut zone, "-c");
+cmd.arg(ref mut zone, "exit 7");
 let status = cmd.status();
 ```
 
@@ -567,16 +625,20 @@ let status = cmd.status();
 distinguish normal exit from signal termination. `spawn()` returns a `Child`
 handle. `exec()` replaces the current process on success and returns
 `Err(Error)` only if the host `execvp` path fails. `kill(pid, signal)` and
-`Child::kill(signal)` return `Result[(), Error]`; `terminate` sends `SIGTERM`.
+`Child::kill(signal)` return `Result[(), Error]`; `kill_signal` and
+`Child::signal` use the typed `Signal` wrapper. `sig_check()` is signal `0`,
+and `terminate` sends `SIGTERM`.
 Module-level `process::spawn(ref cmd)`, `process::status(ref cmd)`,
 `process::exit_status(ref cmd)`, `process::output_in(ref cmd, ref mut zone)`,
-and `process::exec(ref cmd)` are direct wrappers over the matching `Command`
-methods for call sites that prefer function-style process APIs.
+`process::output(ref cmd, ref mut zone)`, and `process::exec(ref cmd)` are
+direct wrappers over the matching `Command` methods for call sites that prefer
+function-style process APIs.
 
 `ExitStatus::code()` returns `Some(code)` only for normal exits.
 `ExitStatus::signal()` returns `Some(signal)` only for signal termination.
 `code_or` and `signal_or` are convenience fallbacks for compact control flow,
-and `raw()` exposes the hosted wait-status bits for diagnostics.
+`exit_code()` returns the typed `ExitCode` form. `raw()` exposes the hosted
+wait-status bits for diagnostics.
 
 `output_in(zone)` is the first captured-output helper. It spawns the child with
 stdout and stderr redirected to pipes, waits for it, and returns an `Output`
@@ -586,7 +648,7 @@ whose byte buffers live in the provided zone:
 var zone = zone::temp(512);
 var args = [process::arg("-c"), process::arg("printf 'ok'")];
 var cmd = process::command_with_args("sh", args.as_slice());
-let result = cmd.output_in(ref mut zone);
+let result = cmd.output(ref mut zone);
 ```
 
 Use `Output::exit_status()` for typed status, `Output::status()` for the normal
@@ -595,6 +657,13 @@ success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views. This
 slice is meant for small outputs today; large concurrent streams, stdin
 redirection, environment inheritance policy, portable Windows mapping, and
 platform-specific status detail are still future process-library work.
+
+`ChildStdin`, `ChildStdout`, and `ChildStderr` name the current pipe endpoint
+types used by future streaming process IO. `current_dir`,
+`try_current_dir`, `executable_path`, and `try_executable_path` are
+process-oriented wrappers around the `std::env` path helpers. `temp_file` and
+`temp_dir` create unique hosted paths under `/tmp`; removal is explicit through
+`TempFile::close_and_remove`, `TempFile::remove`, or `TempDir::remove`.
 
 ## OS Descriptor Views
 

@@ -18,6 +18,12 @@ extern "C" fn raw_kill(pid: c_int, signal: c_int) -> c_int = "kill";
 extern "C" fn raw_setenv(name: ptr c_char, value: ptr c_char, overwrite: c_int) -> c_int = "setenv";
 extern "C" fn raw_chdir(path: ptr c_char) -> c_int = "chdir";
 extern "C" fn raw_dup2(source: c_int, target: c_int) -> c_int = "dup2";
+extern "C" fn raw_mkstemp(template_path: ptr c_char) -> c_int = "mkstemp";
+extern "C" fn raw_mkdtemp(template_path: ptr c_char) -> ptr c_char = "mkdtemp";
+extern "C" fn raw_unlink(path: ptr c_char) -> c_int = "unlink";
+extern "C" fn raw_rmdir(path: ptr c_char) -> c_int = "rmdir";
+extern "C" fn raw_malloc(size: i64) -> ptr c_void = "malloc";
+extern "C" fn raw_free(data: ptr c_void) -> void = "free";
 
 pub struct Arg {
   value: std::c::CStr,
@@ -32,7 +38,19 @@ pub struct Child {
   pid_value: i64,
 }
 
+pub type ChildStdin = std::io::PipeWriter;
+pub type ChildStdout = std::io::PipeReader;
+pub type ChildStderr = std::io::PipeReader;
+
+pub struct ExitCode {
+  raw_value: i64,
+}
+
 pub struct ExitStatus {
+  raw_value: i64,
+}
+
+pub struct Signal {
   raw_value: i64,
 }
 
@@ -41,6 +59,22 @@ pub struct Command {
   mut arg_values: std::Slice[std::process::Arg],
   mut env_values: std::Slice[std::process::EnvVar],
   mut cwd_path: std::Option[std::c::CStr],
+}
+
+struct TempPath {
+  data: ptr u8,
+  len: i64,
+}
+
+pub struct TempFile {
+  path_data: ptr u8,
+  path_len: i64,
+  mut fd_value: std::os::OwnedFd,
+}
+
+pub struct TempDir {
+  path_data: ptr u8,
+  path_len: i64,
 }
 
 pub struct Output {
@@ -55,6 +89,18 @@ pub fn success() -> i64 {
 
 pub fn failure() -> i64 {
   return 1;
+}
+
+pub fn exit_code(value: i64) -> std::process::ExitCode {
+  return std::process::ExitCode { raw_value: value & 255 };
+}
+
+pub fn success_code() -> std::process::ExitCode {
+  return std::process::exit_code(std::process::success());
+}
+
+pub fn failure_code() -> std::process::ExitCode {
+  return std::process::exit_code(std::process::failure());
 }
 
 pub fn is_success(code: i64) -> bool {
@@ -83,6 +129,34 @@ pub fn is_fork_error(pid: i64) -> bool {
 
 pub fn is_wait_error(status: i64) -> bool {
   return status < 0;
+}
+
+pub fn signal(value: i64) -> std::process::Signal {
+  return std::process::Signal { raw_value: value };
+}
+
+pub fn sig_check() -> std::process::Signal {
+  return std::process::signal(0);
+}
+
+pub fn sighup() -> std::process::Signal {
+  return std::process::signal(1);
+}
+
+pub fn sigint() -> std::process::Signal {
+  return std::process::signal(2);
+}
+
+pub fn sigquit() -> std::process::Signal {
+  return std::process::signal(3);
+}
+
+pub fn sigkill() -> std::process::Signal {
+  return std::process::signal(9);
+}
+
+pub fn sigterm() -> std::process::Signal {
+  return std::process::signal(15);
 }
 
 pub fn arg(value: string) -> std::process::Arg {
@@ -122,6 +196,26 @@ pub fn exec(command: ref std::process::Command) -> std::Result[(), std::error::E
 
 pub fn output_in(command: ref std::process::Command, zone: ref mut Zone) -> std::Result[std::process::Output, std::error::Error] {
   return command.output_in(zone);
+}
+
+pub fn output(command: ref std::process::Command, zone: ref mut Zone) -> std::Result[std::process::Output, std::error::Error] {
+  return command.output(zone);
+}
+
+pub fn executable_path() -> string {
+  return std::env::executable_path();
+}
+
+pub fn try_executable_path() -> std::Option[string] {
+  return std::env::try_executable_path();
+}
+
+pub fn current_dir() -> string {
+  return std::env::current_dir();
+}
+
+pub fn try_current_dir() -> std::Option[string] {
+  return std::env::try_current_dir();
 }
 
 fn non_normal_exit_error() -> std::error::Error {
@@ -259,6 +353,112 @@ fn redirect_descriptor(source: i64, target: i64) -> bool {
   return raw_dup2(source as c_int, target as c_int) >= 0;
 }
 
+fn temp_template_in(zone: ref mut Zone, prefix: string) -> std::process::TempPath {
+  var path = std::string::new(zone, 64);
+  path.append_string_in(zone, prefix);
+  path.append_i64_in(zone, std::process::id());
+  path.append_string_in(zone, "-");
+  path.append_i64_in(zone, std::time::unix_nanos());
+  path.append_string_in(zone, "-XXXXXX");
+  let bytes = path.as_slice();
+  let raw = raw_malloc(bytes.len + 1) as ptr u8;
+  if std::c::is_null(raw as ptr c_void) {
+    return std::process::TempPath { data: raw, len: 0 };
+  }
+  var index = 0;
+  while index < bytes.len {
+    ptr_store(ptr_add(raw, index), bytes[index]);
+    index = index + 1;
+  }
+  ptr_store(ptr_add(raw, bytes.len), 0u8);
+  return std::process::TempPath { data: raw, len: bytes.len };
+}
+
+pub fn temp_file_in(
+  zone: ref mut Zone,
+  prefix: string
+) -> std::Result[std::process::TempFile, std::error::Error] {
+  let path = std::process::temp_template_in(zone, prefix);
+  if std::c::is_null(path.data as ptr c_void) {
+    return std::Err<std::process::TempFile, std::error::Error>(std::error::new(std::error::OutOfMemory));
+  }
+  let raw_path = path.data as ptr c_char;
+  let fd = raw_mkstemp(raw_path);
+  if fd < 0 {
+    raw_free(path.data as ptr c_void);
+    return std::Err<std::process::TempFile, std::error::Error>(std::c::error());
+  }
+  return std::Ok<std::process::TempFile, std::error::Error>(std::process::TempFile {
+    path_data: path.data,
+    path_len: path.len,
+    fd_value: std::os::OwnedFd::from_raw(fd as i64),
+  });
+}
+
+pub fn temp_file(zone: ref mut Zone) -> std::Result[std::process::TempFile, std::error::Error] {
+  return std::process::temp_file_in(zone, "/tmp/ari-file-");
+}
+
+pub fn temp_dir_in(
+  zone: ref mut Zone,
+  prefix: string
+) -> std::Result[std::process::TempDir, std::error::Error] {
+  let path = std::process::temp_template_in(zone, prefix);
+  if std::c::is_null(path.data as ptr c_void) {
+    return std::Err<std::process::TempDir, std::error::Error>(std::error::new(std::error::OutOfMemory));
+  }
+  let raw_path = path.data as ptr c_char;
+  let created = raw_mkdtemp(raw_path);
+  if std::c::is_null(created as ptr c_void) {
+    raw_free(path.data as ptr c_void);
+    return std::Err<std::process::TempDir, std::error::Error>(std::c::error());
+  }
+  return std::Ok<std::process::TempDir, std::error::Error>(std::process::TempDir {
+    path_data: path.data,
+    path_len: path.len,
+  });
+}
+
+pub fn temp_dir(zone: ref mut Zone) -> std::Result[std::process::TempDir, std::error::Error] {
+  return std::process::temp_dir_in(zone, "/tmp/ari-dir-");
+}
+
+pub fn kill_signal(pid: i64, signal: std::process::Signal) -> std::Result[(), std::error::Error] {
+  return std::process::kill(pid, signal.raw());
+}
+
+pub impl std::process::ExitCode {
+  fn raw(self: ref Self) -> i64 {
+    return self.raw_value;
+  }
+
+  fn code(self: ref Self) -> i64 {
+    return self.raw_value;
+  }
+
+  fn is_success(self: ref Self) -> bool {
+    return std::process::is_success(self.raw_value);
+  }
+
+  fn is_failure(self: ref Self) -> bool {
+    return std::process::is_failure(self.raw_value);
+  }
+
+  fn exit(self: ref Self) -> void {
+    std::process::exit(self.raw_value);
+  }
+}
+
+pub impl std::process::Signal {
+  fn raw(self: ref Self) -> i64 {
+    return self.raw_value;
+  }
+
+  fn is_check(self: ref Self) -> bool {
+    return self.raw_value == 0;
+  }
+}
+
 pub impl std::process::ExitStatus {
   fn raw(self: ref Self) -> i64 {
     return self.raw_value;
@@ -291,6 +491,16 @@ pub impl std::process::ExitStatus {
     }
   }
 
+  fn exit_code(self: ref Self) -> std::Option[std::process::ExitCode] {
+    match self.code() {
+      std::Some(code) => {
+        return std::Some<std::process::ExitCode>(std::process::exit_code(code));
+      }
+      std::None => {}
+    }
+    return std::None<std::process::ExitCode>();
+  }
+
   fn signal(self: ref Self) -> std::Option[i64] {
     if self.signaled() {
       return std::Some<i64>(std::process::signal_from_raw(self.raw_value));
@@ -315,6 +525,61 @@ pub impl std::process::ExitStatus {
 
   fn is_failure(self: ref Self) -> bool {
     return !self.is_success();
+  }
+}
+
+pub impl std::process::TempFile {
+  fn path(self: ref Self) -> std::Slice[u8] {
+    return std::Slice<u8> { data: self.path_data, len: self.path_len };
+  }
+
+  fn as_c_str(self: ref Self) -> std::c::CStr {
+    return std::c::from_ptr(self.path_data as ptr c_char);
+  }
+
+  fn as_fd(self: ref Self) -> std::os::Fd {
+    return self.fd_value.as_fd();
+  }
+
+  fn is_open(self: ref Self) -> bool {
+    return self.fd_value.is_open();
+  }
+
+  fn close(self: ref mut Self) -> bool {
+    return self.fd_value.close();
+  }
+
+  fn remove(self: ref Self) -> std::Result[(), std::error::Error] {
+    let raw_path = self.path_data as ptr c_char;
+    if raw_unlink(raw_path) == 0 {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(std::c::error());
+  }
+
+  fn close_and_remove(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    if self.fd_value.is_open() {
+      self.fd_value.close();
+    }
+    return self.remove();
+  }
+}
+
+pub impl std::process::TempDir {
+  fn path(self: ref Self) -> std::Slice[u8] {
+    return std::Slice<u8> { data: self.path_data, len: self.path_len };
+  }
+
+  fn as_c_str(self: ref Self) -> std::c::CStr {
+    return std::c::from_ptr(self.path_data as ptr c_char);
+  }
+
+  fn remove(self: ref Self) -> std::Result[(), std::error::Error] {
+    let raw_path = self.path_data as ptr c_char;
+    if raw_rmdir(raw_path) == 0 {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(std::c::error());
   }
 }
 
@@ -357,6 +622,10 @@ pub impl std::process::Child {
     return std::process::kill(self.pid_value, signal);
   }
 
+  fn signal(self: ref Self, signal: std::process::Signal) -> std::Result[(), std::error::Error] {
+    return std::process::kill_signal(self.pid_value, signal);
+  }
+
   fn terminate(self: ref Self) -> std::Result[(), std::error::Error] {
     return std::process::terminate(self.pid_value);
   }
@@ -385,8 +654,40 @@ pub impl std::process::Command {
     self.arg_values = values;
   }
 
+  fn arg(self: ref mut Self, zone: ref mut Zone, value: string) -> void {
+    self.arg_value(zone, std::process::arg(value));
+  }
+
+  fn arg_value(self: ref mut Self, zone: ref mut Zone, value: std::process::Arg) -> void {
+    let old_len = self.arg_values.len;
+    let storage = std::zone::alloc_array<std::process::Arg>(zone, old_len + 1);
+    var index = 0;
+    while index < old_len {
+      ptr_store(ptr_add(storage, index), self.arg_values[index]);
+      index = index + 1;
+    }
+    ptr_store(ptr_add(storage, old_len), value);
+    self.arg_values = std::Slice<std::process::Arg> { data: storage, len: old_len + 1 };
+  }
+
   fn env(self: ref mut Self, values: std::Slice[std::process::EnvVar]) -> void {
     self.env_values = values;
+  }
+
+  fn env_var(self: ref mut Self, zone: ref mut Zone, name: string, value: string) -> void {
+    self.env_value(zone, std::process::env_var(name, value));
+  }
+
+  fn env_value(self: ref mut Self, zone: ref mut Zone, value: std::process::EnvVar) -> void {
+    let old_len = self.env_values.len;
+    let storage = std::zone::alloc_array<std::process::EnvVar>(zone, old_len + 1);
+    var index = 0;
+    while index < old_len {
+      ptr_store(ptr_add(storage, index), self.env_values[index]);
+      index = index + 1;
+    }
+    ptr_store(ptr_add(storage, old_len), value);
+    self.env_values = std::Slice<std::process::EnvVar> { data: storage, len: old_len + 1 };
   }
 
   fn current_dir(self: ref mut Self, path: string) -> void {
@@ -511,6 +812,30 @@ pub impl std::process::Command {
           }
         }
       }
+    }
+  }
+
+  fn output(self: ref Self, zone: ref mut Zone) -> std::Result[std::process::Output, std::error::Error] {
+    return self.output_in(zone);
+  }
+}
+
+impl std::Drop for std::process::TempFile {
+  fn drop(self) -> void {
+    var fd = self.fd_value;
+    if fd.is_open() {
+      fd.close();
+    }
+    if !std::c::is_null(self.path_data as ptr c_void) {
+      raw_free(self.path_data as ptr c_void);
+    }
+  }
+}
+
+impl std::Drop for std::process::TempDir {
+  fn drop(self) -> void {
+    if !std::c::is_null(self.path_data as ptr c_void) {
+      raw_free(self.path_data as ptr c_void);
     }
   }
 }

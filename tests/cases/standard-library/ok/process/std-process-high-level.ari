@@ -1,0 +1,132 @@
+// Covers the high-level process polish layer: explicit-zone Command::arg
+// builder growth, typed ExitCode and Signal wrappers, child-stream aliases,
+// current path wrappers, and temp file/temp dir constructors.
+fn status_is(value: Result[i64, error::Error], expected: i64) -> bool {
+  match value {
+    Ok(status) => { return status == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn unit_ok(value: Result[(), error::Error]) -> bool {
+  match value {
+    Ok(_) => { return true; }
+    Err(_) => { return false; }
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::temp(2048);
+  var score = 0;
+
+  var cmd = process::Command::new("sh");
+  cmd.arg(ref mut zone, "-c");
+  cmd.arg(ref mut zone, "test \"$ARI_HIGH_LEVEL\" = yes && exit 12");
+  cmd.env_var(ref mut zone, "ARI_HIGH_LEVEL", "yes");
+  if status_is(cmd.status(), 12) {
+    score = score + 11;
+  }
+
+  var out_cmd = process::Command::new("sh");
+  out_cmd.arg(ref mut zone, "-c");
+  out_cmd.arg(ref mut zone, "printf 'x'");
+  match out_cmd.output(ref mut zone) {
+    Ok(output_value) => {
+      var output = output_value;
+      if output.is_success() && output.stdout().len == 1 {
+        score = score + 13;
+      }
+    }
+    Err(_) => {}
+  }
+
+  let ok = process::success_code();
+  let fail = process::failure_code();
+  if ok.is_success() && fail.is_failure() && process::exit_code(44).raw() == 44 {
+    score = score + 17;
+  }
+
+  var status_args = [process::arg("-c"), process::arg("exit 6")];
+  var status_cmd = process::command_with_args("sh", status_args.as_slice());
+  match status_cmd.exit_status() {
+    Ok(status) => {
+      match status.exit_code() {
+        Some(code) => {
+          if code.raw() == 6 {
+            score = score + 19;
+          }
+        }
+        None => {}
+      }
+    }
+    Err(_) => {}
+  }
+
+  if process::sig_check().is_check() && unit_ok(process::kill_signal(process::id(), process::sig_check())) {
+    score = score + 23;
+  }
+
+  var child_args = [process::arg("-c"), process::arg("exit 4")];
+  var child_cmd = process::command_with_args("sh", child_args.as_slice());
+  match child_cmd.spawn() {
+    Ok(child) => {
+      if unit_ok(child.signal(process::sig_check())) && status_is(child.wait(), 4) {
+        score = score + 29;
+      }
+    }
+    Err(_) => {}
+  }
+
+  let maybe_pipe = std::io::pipe();
+  if maybe_pipe.is_some() {
+    var pipe = maybe_pipe.unwrap();
+    var child_out: process::ChildStdout = pipe.take_reader();
+    var child_in: process::ChildStdin = pipe.take_writer();
+    if child_out.is_open() && child_in.is_open() {
+      score = score + 31;
+    }
+    child_out.close();
+    child_in.close();
+  }
+
+  let maybe_err_pipe = std::io::pipe();
+  if maybe_err_pipe.is_some() {
+    var err_pipe = maybe_err_pipe.unwrap();
+    var child_err: process::ChildStderr = err_pipe.take_reader();
+    var err_sink = err_pipe.take_writer();
+    if child_err.is_open() && err_sink.is_open() {
+      score = score + 53;
+    }
+    child_err.close();
+    err_sink.close();
+  }
+
+  if process::try_current_dir().is_some() {
+    score = score + 37;
+  }
+  if process::try_executable_path().is_some() {
+    score = score + 41;
+  }
+
+  match process::temp_file(ref mut zone) {
+    Ok(temp_value) => {
+      var temp = temp_value;
+      if temp.path().len > 0 && temp.is_open() && unit_ok(temp.close_and_remove()) {
+        score = score + 43;
+      }
+    }
+    Err(_) => {}
+  }
+
+  match process::temp_dir(ref mut zone) {
+    Ok(dir) => {
+      if dir.path().len > 0 && unit_ok(dir.remove()) {
+        score = score + 47;
+      }
+    }
+    Err(_) => {}
+  }
+
+  assert_eq_i64(score, 364);
+  return score;
+}

@@ -61,6 +61,7 @@ bool is_zone_pointer_trackable_type(const IrType& type) {
            is_std_cell_zone_handle_type(value_type) ||
            is_std_collections_zone_handle_type(value_type) ||
            is_std_fs_dir_entry_zone_handle_type(value_type) ||
+           is_std_process_command_zone_handle_type(value_type) ||
            is_std_process_output_zone_handle_type(value_type) ||
            is_std_rc_handle_type(value_type) ||
            is_std_string_zone_handle_type(value_type) ||
@@ -150,6 +151,13 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
         }
         return found_any;
     }
+    if (source.kind == IrExprKind::Tuple && is_std_process_command_zone_handle_type(source.type)) {
+        bool found_any = false;
+        for (const auto& arg : source.args) {
+            merge_source(arg, found_any);
+        }
+        return found_any;
+    }
     if (source.kind == IrExprKind::Tuple && is_std_string_zone_handle_type(source.type)) {
         std::optional<std::size_t> source_index = std_string_zone_handle_source_field_index(source.type);
         if (!source_index || *source_index >= source.args.size()) return false;
@@ -203,6 +211,10 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
             return zone_pointer_source_name_from_expr(operand, resolver, out);
         }
         if (is_std_process_output_zone_handle_type(operand.type) &&
+            source.tuple_index < operand.type.field_types.size()) {
+            return zone_pointer_source_name_from_expr(operand, resolver, out);
+        }
+        if (is_std_process_command_zone_handle_type(operand.type) &&
             source.tuple_index < operand.type.field_types.size()) {
             return zone_pointer_source_name_from_expr(operand, resolver, out);
         }

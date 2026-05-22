@@ -126,8 +126,11 @@ capture, `Output` accessors, missing-command status behavior, `pipe`/`dup2`
 lowering, and compiler zone provenance for the zone-backed `Output` handle.
 `std-process-exit-status.ari` covers typed `ExitStatus` values,
 `Command::exit_status`, `Child::wait_status`, normal exit-code access, signal
-termination access, and compatibility `status`. Remaining process runtime matrix
-work is large-output readiness or nonblocking draining, stdin redirection,
+termination access, and compatibility `status`. `std-process-high-level.ari`
+covers explicit-zone `Command::arg`/`env_var`, typed `ExitCode`, typed
+`Signal`, child stream endpoint aliases, current/executable path wrappers, and
+temp file/temp dir constructors. Remaining process runtime matrix work is
+large-output readiness or nonblocking draining, stdin redirection,
 richer platform status fields, and non-POSIX mapping.
 
 ## Completed Sprint: C FFI

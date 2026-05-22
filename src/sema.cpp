@@ -10127,6 +10127,7 @@ private:
     bool assignment_target_allows_zone_pointer_storage(const IrExpr& target) {
         if (current_module_name_ != "std::boxed" &&
             current_module_name_ != "std::collections" &&
+            current_module_name_ != "std::process" &&
             current_module_name_ != "std::vec" &&
             current_module_name_ != "std::string") {
             return false;
@@ -10149,6 +10150,14 @@ private:
         if (current_module_name_ == "std::collections") {
             std::vector<std::vector<std::size_t>> data_paths =
                 std_collections_zone_handle_storage_field_path_indices(value_qualified_type(local->type));
+            for (const std::vector<std::size_t>& data_path : data_paths) {
+                if (path == local_owned_field_path_from_indices(data_path)) return true;
+            }
+            return false;
+        }
+        if (current_module_name_ == "std::process") {
+            std::vector<std::vector<std::size_t>> data_paths =
+                std_process_command_zone_handle_storage_field_path_indices(value_qualified_type(local->type));
             for (const std::vector<std::size_t>& data_path : data_paths) {
                 if (path == local_owned_field_path_from_indices(data_path)) return true;
             }
@@ -18567,6 +18576,9 @@ private:
                     std_collections_zone_handle_storage_field_path_indices(struct_type);
             }
         }
+        if (!std_zone_handle_source_field && is_prelude_slice_type(struct_type)) {
+            std_zone_handle_source_field = 0;
+        }
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_box_zone_handle_source_field_index(struct_type);
         }
@@ -18584,6 +18596,14 @@ private:
             if (std_zone_handle_source_field) {
                 std_zone_handle_storage_field_paths =
                     std_process_output_zone_handle_storage_field_path_indices(struct_type);
+            }
+        }
+        if (!std_zone_handle_source_field) {
+            std_zone_handle_source_field =
+                std_process_command_zone_handle_source_field_index(struct_type);
+            if (std_zone_handle_source_field) {
+                std_zone_handle_storage_field_paths =
+                    std_process_command_zone_handle_storage_field_path_indices(struct_type);
             }
         }
         if (!std_zone_handle_source_field) {

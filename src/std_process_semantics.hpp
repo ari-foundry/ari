@@ -11,5 +11,8 @@ namespace ari {
 bool is_std_process_output_zone_handle_type(const IrType& type);
 std::optional<std::size_t> std_process_output_zone_handle_source_field_index(const IrType& type);
 std::vector<std::vector<std::size_t>> std_process_output_zone_handle_storage_field_path_indices(const IrType& type);
+bool is_std_process_command_zone_handle_type(const IrType& type);
+std::optional<std::size_t> std_process_command_zone_handle_source_field_index(const IrType& type);
+std::vector<std::vector<std::size_t>> std_process_command_zone_handle_storage_field_path_indices(const IrType& type);
 
 } // namespace ari

@@ -1,13 +1,13 @@
-# Source std public API manifest.
+
 #
-# Format:
+#
 #   <extracted API>|<focused coverage note>
-#
+# Format:
+# Source std public API manifest.
 # `make check-std-api` compares the left side of each entry with the public
 # declarations in lib/std. Add or remove entries only with focused tests,
 # docs/dev/test-matrix.md coverage, and language docs when the API is user
 # visible.
-
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::cmp::Ordering|check-prelude std-cmp-ordering three-way comparison result; docs/stdlib/modules/cmp.md
@@ -615,11 +615,15 @@ fn std::process::abort|check-prelude std-process-abort explicit process abort ho
 fn std::process::arg|check-prelude std-process-command C-argv argument wrapper for Command; docs/stdlib/modules/process.md
 fn std::process::command|check-prelude std-process-command natural Command constructor; docs/stdlib/modules/process.md
 fn std::process::command_with_args|check-prelude std-process-command Command constructor with argv slice; docs/stdlib/modules/process.md
+fn std::process::current_dir|check-prelude std-process-high-level process-facing current directory wrapper; docs/stdlib/modules/process.md
 fn std::process::env_var|check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md
 fn std::process::exec|check-prelude std-process-command module-level Command exec wrapper returning Error; docs/stdlib/modules/process.md
+fn std::process::executable_path|check-prelude std-process-high-level process-facing executable path wrapper; docs/stdlib/modules/process.md
 fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
+fn std::process::exit_code|check-prelude std-process-high-level typed exit code constructor; docs/stdlib/modules/process.md
 fn std::process::exit_status|check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::failure|check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md
+fn std::process::failure_code|check-prelude std-process-high-level typed failure exit code helper; docs/stdlib/modules/process.md
 fn std::process::fork|check-prelude std-process-fork-wait POSIX fork hook; docs/stdlib/modules/process.md
 fn std::process::fork_result|check-prelude std-process-result POSIX fork direct Error result helper; docs/stdlib/modules/process.md
 fn std::process::gid|check-prelude std-process-identity current process group id hook; docs/stdlib/modules/process.md
@@ -632,11 +636,27 @@ fn std::process::is_root|check-prelude std-process-identity source root-user pre
 fn std::process::is_success|check-prelude std-process-basic source status predicate; docs/stdlib/modules/process.md
 fn std::process::is_wait_error|check-prelude std-process-fork-wait source wait failure predicate; docs/stdlib/modules/process.md
 fn std::process::kill|check-prelude std-process-command POSIX signal helper returning Error on failure; docs/stdlib/modules/process.md
+fn std::process::kill_signal|check-prelude std-process-high-level typed signal send helper; docs/stdlib/modules/process.md
+fn std::process::output|check-prelude std-process-high-level natural Command output capture wrapper; docs/stdlib/modules/process.md
 fn std::process::output_in|check-prelude std-process-output module-level Command output capture wrapper returning Error; docs/stdlib/modules/process.md
+fn std::process::sig_check|check-prelude std-process-high-level POSIX signal-zero check helper; docs/stdlib/modules/process.md
+fn std::process::sighup|check-prelude std-process-high-level POSIX SIGHUP typed signal helper; docs/stdlib/modules/process.md
+fn std::process::sigint|check-prelude std-process-high-level POSIX SIGINT typed signal helper; docs/stdlib/modules/process.md
+fn std::process::sigkill|check-prelude std-process-high-level POSIX SIGKILL typed signal helper; docs/stdlib/modules/process.md
+fn std::process::signal|check-prelude std-process-high-level typed signal constructor; docs/stdlib/modules/process.md
+fn std::process::sigquit|check-prelude std-process-high-level POSIX SIGQUIT typed signal helper; docs/stdlib/modules/process.md
+fn std::process::sigterm|check-prelude std-process-high-level POSIX SIGTERM typed signal helper; docs/stdlib/modules/process.md
 fn std::process::spawn|check-prelude std-process-command module-level Command spawn wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::status|check-prelude std-process-command module-level Command exit-code wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::success|check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md
+fn std::process::success_code|check-prelude std-process-high-level typed success exit code helper; docs/stdlib/modules/process.md
+fn std::process::temp_dir|check-prelude std-process-high-level default temp directory constructor; docs/stdlib/modules/process.md
+fn std::process::temp_dir_in|check-prelude std-process-high-level prefixed temp directory constructor; docs/stdlib/modules/process.md
+fn std::process::temp_file|check-prelude std-process-high-level default temp file constructor; docs/stdlib/modules/process.md
+fn std::process::temp_file_in|check-prelude std-process-high-level prefixed temp file constructor; docs/stdlib/modules/process.md
 fn std::process::terminate|check-prelude std-process-command SIGTERM convenience helper; docs/stdlib/modules/process.md
+fn std::process::try_current_dir|check-prelude std-process-high-level optional current directory wrapper; docs/stdlib/modules/process.md
+fn std::process::try_executable_path|check-prelude std-process-high-level optional executable path wrapper; docs/stdlib/modules/process.md
 fn std::process::uid|check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md
 fn std::process::wait|check-prelude std-process-fork-wait POSIX wait hook and exit-status decode; docs/stdlib/modules/process.md
 fn std::process::wait_result|check-prelude std-process-result POSIX wait direct Error result helper; docs/stdlib/modules/process.md
@@ -1593,21 +1613,33 @@ method std::path::PathBytes::with_extension_in|check-prelude std-path-edit typed
 method std::path::PathBytes::with_file_name_in|check-prelude std-path-edit typed path final-component replacement wrapper; docs/stdlib/modules/path.md
 method std::process::Child::kill|check-prelude std-process-command child signal helper; docs/stdlib/modules/process.md
 method std::process::Child::pid|check-prelude std-process-command child pid accessor; docs/stdlib/modules/process.md
+method std::process::Child::signal|check-prelude std-process-high-level typed child signal helper; docs/stdlib/modules/process.md
 method std::process::Child::terminate|check-prelude std-process-command child SIGTERM convenience helper; docs/stdlib/modules/process.md
 method std::process::Child::wait|check-prelude std-process-command child wait Result helper; docs/stdlib/modules/process.md
 method std::process::Child::wait_status|check-prelude std-process-exit-status child typed ExitStatus wait helper; docs/stdlib/modules/process.md
+method std::process::Command::arg|check-prelude std-process-high-level explicit-zone single argv append helper; docs/stdlib/modules/process.md
+method std::process::Command::arg_value|check-prelude std-process-high-level explicit-zone Arg append helper; docs/stdlib/modules/process.md
 method std::process::Command::args|check-prelude std-process-command replace command argument slice; docs/stdlib/modules/process.md
 method std::process::Command::current_dir|check-prelude std-process-command child working-directory setup; docs/stdlib/modules/process.md
 method std::process::Command::env|check-prelude std-process-command child environment setup; docs/stdlib/modules/process.md
+method std::process::Command::env_value|check-prelude std-process-high-level explicit-zone EnvVar append helper; docs/stdlib/modules/process.md
+method std::process::Command::env_var|check-prelude std-process-high-level explicit-zone single environment append helper; docs/stdlib/modules/process.md
 method std::process::Command::exec|check-prelude std-process-command replace current process with command; docs/stdlib/modules/process.md
 method std::process::Command::exit_status|check-prelude std-process-exit-status spawn and wait for typed ExitStatus; docs/stdlib/modules/process.md
 method std::process::Command::new|check-prelude std-process-command associated Command constructor; docs/stdlib/modules/process.md
+method std::process::Command::output|check-prelude std-process-high-level natural output capture alias; docs/stdlib/modules/process.md
 method std::process::Command::output_in|check-prelude std-process-output zone-backed stdout/stderr capture helper; docs/stdlib/modules/process.md
 method std::process::Command::spawn|check-prelude std-process-command spawn child process handle; docs/stdlib/modules/process.md
 method std::process::Command::status|check-prelude std-process-command spawn and wait for exit status; docs/stdlib/modules/process.md
 method std::process::Command::with_args|check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md
+method std::process::ExitCode::code|check-prelude std-process-high-level typed exit code accessor; docs/stdlib/modules/process.md
+method std::process::ExitCode::exit|check-prelude std-process-high-level typed process exit helper; docs/stdlib/modules/process.md
+method std::process::ExitCode::is_failure|check-prelude std-process-high-level typed failure predicate; docs/stdlib/modules/process.md
+method std::process::ExitCode::is_success|check-prelude std-process-high-level typed success predicate; docs/stdlib/modules/process.md
+method std::process::ExitCode::raw|check-prelude std-process-high-level raw exit code accessor; docs/stdlib/modules/process.md
 method std::process::ExitStatus::code|check-prelude std-process-exit-status optional normal exit code accessor; docs/stdlib/modules/process.md
 method std::process::ExitStatus::code_or|check-prelude std-process-exit-status normal exit code fallback accessor; docs/stdlib/modules/process.md
+method std::process::ExitStatus::exit_code|check-prelude std-process-high-level typed ExitCode extraction from status; docs/stdlib/modules/process.md
 method std::process::ExitStatus::exited|check-prelude std-process-exit-status normal exit predicate; docs/stdlib/modules/process.md
 method std::process::ExitStatus::is_failure|check-prelude std-process-exit-status typed exit failure predicate; docs/stdlib/modules/process.md
 method std::process::ExitStatus::is_success|check-prelude std-process-exit-status typed exit success predicate; docs/stdlib/modules/process.md
@@ -1620,6 +1652,18 @@ method std::process::Output::is_success|check-prelude std-process-output capture
 method std::process::Output::status|check-prelude std-process-output captured exit-status accessor; docs/stdlib/modules/process.md
 method std::process::Output::stderr|check-prelude std-process-output captured stderr byte view; docs/stdlib/modules/process.md
 method std::process::Output::stdout|check-prelude std-process-output captured stdout byte view; docs/stdlib/modules/process.md
+method std::process::Signal::is_check|check-prelude std-process-high-level signal-zero predicate; docs/stdlib/modules/process.md
+method std::process::Signal::raw|check-prelude std-process-high-level raw signal accessor; docs/stdlib/modules/process.md
+method std::process::TempDir::as_c_str|check-prelude std-process-high-level temp directory C path view; docs/stdlib/modules/process.md
+method std::process::TempDir::path|check-prelude std-process-high-level temp directory byte path view; docs/stdlib/modules/process.md
+method std::process::TempDir::remove|check-prelude std-process-high-level temp directory removal helper; docs/stdlib/modules/process.md
+method std::process::TempFile::as_c_str|check-prelude std-process-high-level temp file C path view; docs/stdlib/modules/process.md
+method std::process::TempFile::as_fd|check-prelude std-process-high-level temp file descriptor view; docs/stdlib/modules/process.md
+method std::process::TempFile::close|check-prelude std-process-high-level temp file close helper; docs/stdlib/modules/process.md
+method std::process::TempFile::close_and_remove|check-prelude std-process-high-level temp file cleanup helper; docs/stdlib/modules/process.md
+method std::process::TempFile::is_open|check-prelude std-process-high-level temp file open-state predicate; docs/stdlib/modules/process.md
+method std::process::TempFile::path|check-prelude std-process-high-level temp file byte path view; docs/stdlib/modules/process.md
+method std::process::TempFile::remove|check-prelude std-process-high-level temp file unlink helper; docs/stdlib/modules/process.md
 method std::random::Prng::below|check-prelude std-random-basic unbiased bounded non-crypto PRNG integer method; docs/stdlib/modules/random.md
 method std::random::Prng::boolean|check-prelude std-random-basic deterministic PRNG boolean method; docs/stdlib/modules/random.md
 method std::random::Prng::fill|check-prelude std-random-basic deterministic PRNG byte fill method; docs/stdlib/modules/random.md
@@ -2108,8 +2152,12 @@ struct std::process::Arg|check-prelude std-process-command borrowed C argv argum
 struct std::process::Child|check-prelude std-process-command child process handle; docs/stdlib/modules/process.md
 struct std::process::Command|check-prelude std-process-command process command builder; docs/stdlib/modules/process.md
 struct std::process::EnvVar|check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md
+struct std::process::ExitCode|check-prelude std-process-high-level typed process exit code value; docs/stdlib/modules/process.md
 struct std::process::ExitStatus|check-prelude std-process-exit-status typed child exit status value; docs/stdlib/modules/process.md
 struct std::process::Output|check-prelude std-process-output captured child output handle; docs/stdlib/modules/process.md
+struct std::process::Signal|check-prelude std-process-high-level typed POSIX signal value; docs/stdlib/modules/process.md
+struct std::process::TempDir|check-prelude std-process-high-level temp directory handle; docs/stdlib/modules/process.md
+struct std::process::TempFile|check-prelude std-process-high-level temp file handle; docs/stdlib/modules/process.md
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
 struct std::rc::Arc[T]|check-prelude std-rc-arc-weak atomic-count shared owner handle; docs/stdlib/modules/rc.md
 struct std::rc::Rc[T]|check-prelude std-rc-arc-weak shared owner handle; docs/stdlib/modules/rc.md
@@ -2216,6 +2264,9 @@ type std::net::Error|check-prelude std-error-integration shared networking error
 type std::net::ErrorKind|check-prelude std-error-integration shared networking error-kind alias; docs/stdlib/modules/net.md
 type std::os::Error|check-prelude std-error-integration shared OS error alias; docs/stdlib/modules/os.md
 type std::os::ErrorKind|check-prelude std-error-integration shared OS error-kind alias; docs/stdlib/modules/os.md
+type std::process::ChildStderr|check-prelude std-process-high-level child stderr pipe alias; docs/stdlib/modules/process.md
+type std::process::ChildStdin|check-prelude std-process-high-level child stdin pipe alias; docs/stdlib/modules/process.md
+type std::process::ChildStdout|check-prelude std-process-high-level child stdout pipe alias; docs/stdlib/modules/process.md
 type std::process::Error|check-prelude std-error-integration shared process error alias; docs/stdlib/modules/process.md
 type std::process::ErrorKind|check-prelude std-error-integration shared process error-kind alias; docs/stdlib/modules/process.md
 use std::Arc|check-prelude std-rc-arc-weak root alias for std::rc::Arc[T]; docs/stdlib/modules/rc.md

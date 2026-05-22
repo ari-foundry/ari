@@ -43,4 +43,28 @@ std::vector<std::vector<std::size_t>> std_process_output_zone_handle_storage_fie
     return {{1}, {2}};
 }
 
+bool is_std_process_command_zone_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::process::Command";
+}
+
+std::optional<std::size_t> std_process_command_zone_handle_source_field_index(const IrType& type) {
+    if (!is_std_process_command_zone_handle_type(type)) return std::nullopt;
+    if (type.field_names.empty() && type.field_types.empty()) return 1;
+    if (type.field_names.size() != 4 || type.field_types.size() != 4) return std::nullopt;
+    if (type.field_names[0] != "program" ||
+        type.field_names[1] != "arg_values" ||
+        type.field_names[2] != "env_values" ||
+        type.field_names[3] != "cwd_path") {
+        return std::nullopt;
+    }
+    return 1;
+}
+
+std::vector<std::vector<std::size_t>> std_process_command_zone_handle_storage_field_path_indices(const IrType& type) {
+    if (!std_process_command_zone_handle_source_field_index(type)) return {};
+    return {{1}, {1, 0}, {2}, {2, 0}};
+}
+
 } // namespace ari

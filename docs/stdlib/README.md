@@ -50,10 +50,11 @@ handles over `dlopen`/`dlsym`.
 starts the OS-facing surface with current
 process id, explicit exit helpers, and the first POSIX fork/wait slice with
 direct `Error` results plus raw compatibility helpers, then adds the first
-`Command`/`Child`/`ExitStatus`/`Output` builder for argument passing, child
-environment setup, working-directory setup, `spawn`, `status`, `exit_status`,
-`output_in`, `exec`, `kill`, typed status inspection, and small stdout/stderr
-capture,
+`Command`/`Child`/`ExitCode`/`ExitStatus`/`Signal`/`Output` builder surface
+for argument passing, child environment setup, working-directory setup,
+`spawn`, `status`, `exit_status`, `output`, `output_in`, `exec`, `kill`,
+`kill_signal`, typed status inspection, child stream aliases, temp file/temp
+dir helpers, and small stdout/stderr capture,
 `std::os` introduces non-owning `Fd` descriptor views and `OwnedFd` wrappers
 for raw descriptor close, duplicate, close-on-exec, and nonblocking policy,
 plus `Pipe` for owned read/write descriptor pairs,
