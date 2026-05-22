@@ -1,0 +1,12 @@
+struct View {
+  value: ref i64,
+}
+
+enum Event {
+  Empty,
+  Borrowed(View),
+}
+
+fn main() -> i64 {
+  return 0;
+}

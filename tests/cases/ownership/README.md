@@ -11,7 +11,7 @@ Coverage is grouped by behavior:
 - aggregate field moves, nested field moves, and partial-move diagnostics
 - fixed-array and local `Vec[own T]` element moves
 - aggregate and runtime enum payload drop lowering
-- ownership-carrying aggregate enum payload rejection
+- ownership- or borrow-carrying aggregate enum payload rejection
 - compiler-shaped parser state, generic aggregate, vector work-item, and
   result-like ownership flow
 - owner state joins across loops, branches, `match`, `if let`, and `while let`
@@ -39,6 +39,7 @@ diagnostics and review-sized LLVM drop fragments:
 - `diagnostic-enum-payload-invalid-move.diagnostic`
 - `diagnostic-compact-enum-payload-ref.diagnostic`
 - `diagnostic-ownership-aggregate-enum-payload.diagnostic`
+- `diagnostic-borrow-aggregate-enum-payload.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
 - `diagnostic-ownership-temporary-element-move.diagnostic`

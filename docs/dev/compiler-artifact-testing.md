@@ -281,6 +281,7 @@ tests/cases/compiler-development/artifact/errors/diagnostic-double-move.diagnost
 tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-borrow-aggregate-enum-payload.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.diagnostic

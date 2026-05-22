@@ -46,7 +46,7 @@ before cleaning payload storage so inactive variants are not dropped.
 | Field moves and partial moves | complete for supported local aggregate paths | `ownership-aggregate-field-move.ari`, partial-move diagnostics |
 | Fixed array and local `Vec[own T]` element moves | complete for constant and tracked pattern paths | variables/ownership fixtures plus dynamic-index rejection |
 | Whole aggregate moves | complete | `ownership-compiler-shaped.ari`, generic aggregate fixtures |
-| Enum payload moves | partial | direct owner payloads and runtime active payload cleanup are covered; ownership-carrying aggregate enum payloads remain rejected with a source-aware diagnostic |
+| Enum payload moves | partial | direct owner payloads and runtime active payload cleanup are covered; ownership-carrying aggregate enum payloads and borrow-carrying aggregate enum payloads remain rejected with source-aware diagnostics |
 | Pattern and match ownership | complete for current pattern surface | match, `if let`, `while let`, vector pattern fixtures, and compact enum payload ref-pattern rejection |
 | Generic aggregate ownership | complete for monomorphized fields in supported aggregate layouts | `Box[Token]`, `Slot[Token]`, and generic aggregate fixtures |
 | Container ownership | partial | local `Vec` storage and std collection handle drops are covered; arbitrary dynamic element owner moves are rejected |
@@ -87,6 +87,7 @@ The artifact suite currently locks these ownership/drop surfaces:
 - `diagnostic-enum-payload-invalid-move.diagnostic`
 - `diagnostic-compact-enum-payload-ref.diagnostic`
 - `diagnostic-ownership-aggregate-enum-payload.diagnostic`
+- `diagnostic-borrow-aggregate-enum-payload.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
 - `diagnostic-ownership-temporary-element-move.diagnostic`
