@@ -172,6 +172,7 @@ Useful options:
 --link name         same as -l name
 --shared            build a shared library instead of an executable
 --test              build a generated test runner for @test functions
+--test-filter name  keep @test functions whose names contain name
 --no-implicit-std   require explicit mod std; instead of auto-loading lib/std.arih
 --cfg-feature name  enable feature("name") inside @cfg(...)
 --list-artifacts    list compiler-development artifact producers
@@ -192,6 +193,8 @@ Useful options:
 
 Use `ari --target-info` or `ari --target x86_64-pc-linux-gnu --target-info`
 when checking which `target("...")` predicates and ABI facts the compiler sees.
+Use `ari test input.ari --filter name -o build/tests.elf` as the friendlier
+subcommand form of `ari --test input.ari --test-filter name -o build/tests.elf`.
 Use `ari --explain-artifact --emit-tokens` when choosing the smallest
 compiler artifact that proves a frontend change.
 Use `ari --list-passes` or `ari --explain-pass sema` when deciding which

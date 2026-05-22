@@ -38,6 +38,7 @@ Useful compiler modes:
 ./build/ari program.ari --emit-obj build/program.o
 ./build/ari program.ari --shared -o build/libprogram.so
 ./build/ari program.ari --test -o build/program-tests.elf
+./build/ari test program.ari --filter smoke -o build/program-tests.elf
 ```
 
 Use `-I path` or `--module-path path` for file-backed modules.

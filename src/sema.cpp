@@ -290,6 +290,9 @@ public:
         std::vector<const FunctionDecl*> test_functions = collect_test_functions();
         if (options_.require_main) require_main();
         if (options_.test_mode && test_functions.empty()) {
+            if (!options_.test_filters.empty()) {
+                throw CompileError("test filter matched no @test functions");
+            }
             throw CompileError("test mode requires at least one @test function");
         }
 
@@ -4242,6 +4245,16 @@ private:
             if (result.primitive != IrPrimitiveKind::Void && result.primitive != IrPrimitiveKind::I64) {
                 fail(fn.loc, "@test functions must return i64 or void");
             }
+            if (!options_.test_filters.empty()) {
+                bool matched = false;
+                for (const auto& filter : options_.test_filters) {
+                    if (fn.name.find(filter) != std::string::npos) {
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) return;
+            }
             tests.push_back(&fn);
         });
         return tests;
@@ -4254,9 +4267,41 @@ private:
         fn.return_type = i64_type(loc);
         fn.loc = loc;
 
+        std::size_t test_index = 0;
         for (const FunctionDecl* test : test_functions) {
             auto sig = functions_.find(test->name);
             if (sig == functions_.end()) throw CompileError("internal error: missing @test function '" + test->name + "'");
+
+            if (sig->second.result.primitive == IrPrimitiveKind::I64) {
+                const std::string status_name = "$test_status" + std::to_string(test_index++);
+                fn.body.push_back(make_ir_var_decl(
+                    test->loc,
+                    status_name,
+                    sig->second.result,
+                    make_ir_call_expr(test->loc, test->name, sig->second.result),
+                    false));
+
+                auto return_stmt = std::make_unique<IrStmt>();
+                return_stmt->kind = IrStmtKind::Return;
+                return_stmt->loc = test->loc;
+                return_stmt->expr = make_local_lvalue_expr(test->loc, status_name, sig->second.result);
+
+                std::vector<IrStmtPtr> then_body;
+                then_body.push_back(std::move(return_stmt));
+
+                auto stmt = std::make_unique<IrStmt>();
+                stmt->kind = IrStmtKind::If;
+                stmt->loc = test->loc;
+                stmt->condition = make_bool_binary_expr(
+                    test->loc,
+                    IrBinaryOp::Ne,
+                    make_local_lvalue_expr(test->loc, status_name, sig->second.result),
+                    make_integer_zero(test->loc, sig->second.result));
+                stmt->body_payload = std::make_unique<IrStmtBodyPayload>();
+                stmt->body_payload->then_body = std::move(then_body);
+                fn.body.push_back(std::move(stmt));
+                continue;
+            }
 
             auto stmt = std::make_unique<IrStmt>();
             stmt->kind = IrStmtKind::ExprStmt;

@@ -558,11 +558,13 @@ Build and run:
 
 ```sh
 ./build/ari sample_test.ari --test -o build/sample_test.elf
+./build/ari test sample_test.ari --filter adds -o build/sample_test.elf
 ./build/sample_test.elf
 ```
 
-`@test` functions cannot take parameters, be generic, be extern, or return a
-value.
+`@test` functions cannot take parameters, be generic, be extern, or be named
+`main`. They may return `void` or `i64`; a non-zero `i64` return stops the
+generated runner with that process status.
 
 ## Choose The Right Collection
 

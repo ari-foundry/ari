@@ -1,9 +1,9 @@
 # std::test
 
 `std::test` is the small source helper module for executable unit-style tests.
-It does not replace the repository test harness yet. Instead, it gives library
-and application authors a plain Ari `Report` value that counts checks and turns
-the final result into a process status code.
+It pairs with the compiler's `@test` runner path and gives library and
+application authors a plain Ari `Report` value that counts checks and turns the
+final result into a process status code.
 
 Use it when a test should keep running after one failed check, or when a test
 needs a short-lived allocation zone.
@@ -12,12 +12,20 @@ needs a short-lived allocation zone.
 
 ```ari
 test::Report
+test::Bench
 
 test::report()
 test::scratch(capacity)
+test::temp_file(ref mut zone)
+test::temp_dir(ref mut zone)
+test::bench(iterations)
+test::benchmark(iterations)
 test::check(ref mut report, condition)
 test::equal<T>(ref mut report, left, right)
 test::not_equal<T>(ref mut report, left, right)
+test::matches_snapshot(actual, expected)
+test::golden_matches(actual, expected)
+test::check_snapshot(ref mut report, actual, expected)
 test::passed(ref report)
 test::failed(ref report)
 test::ok(ref report)
@@ -32,6 +40,11 @@ report.failed()
 report.ok()
 report.finish()
 report.require()
+
+bench.elapsed()
+bench.iterations()
+bench.elapsed_nanos()
+bench.nanos_per_iter()
 ```
 
 `report()` creates a zeroed `Report`. `check` records one pass or one failure
@@ -65,6 +78,22 @@ fn main() -> i64 {
 }
 ```
 
+`temp_file(zone)` and `temp_dir(zone)` forward to `std::process` temporary path
+helpers and return `Result[..., std::error::Error]`. They are meant for tests
+that exercise filesystem or process APIs and need paths that can be explicitly
+removed at the end of the test.
+
+`bench(iterations)` and `benchmark(iterations)` create a small elapsed-time
+measurement handle around `std::time::Instant`. The benchmark helper is
+intentionally minimal: it records a start time and iteration count, then exposes
+elapsed nanoseconds and nanoseconds-per-iteration. It does not yet run a closure
+or stabilize timing statistically.
+
+`matches_snapshot`, `golden_matches`, and `check_snapshot` are lightweight
+golden/snapshot helpers for byte slices. They compare the actual bytes with the
+expected bytes supplied by the test source or fixture. They do not yet read or
+update snapshot files automatically.
+
 ## Existing Prelude Diagnostics
 
 The root prelude already provides immediate assertion and panic helpers:
@@ -97,8 +126,26 @@ metadata to those failures.
 
 ## Test Runner Integration
 
-Repository tests are still Makefile-driven fixtures under
-`tests/cases/standard-library/`. The current pattern is:
+The compiler can synthesize an executable test runner for `@test` functions:
+
+```sh
+ari --test tests/cases/attributes/ok/attribute-test-runner.ari -o build/test-runner
+ari test tests/cases/attributes/ok/attribute-test-runner.ari -o build/test-runner
+ari test tests/cases/attributes/ok/attribute-test-runner.ari --filter smoke -o build/test-runner
+```
+
+In `--test` mode, Ari collects `@test` functions in source order and emits a
+generated `main`. `void` tests are considered successful if they return normally.
+`i64` tests may return `0` for success or any non-zero status to stop the runner
+and become the process exit status. Use `--test-filter name` with `--test`, or
+`--filter name` with the `ari test` subcommand, to select tests whose function
+names contain a substring. A filter that matches nothing is a compile error.
+
+`@test` functions cannot take parameters, be generic, be extern, be meta
+functions, or be named `main`.
+
+Repository fixtures under `tests/cases/standard-library/` still use the normal
+Makefile buckets. The current source-library pattern is:
 
 1. Write a small executable test.
 2. Use `test::report()` for aggregated checks.
@@ -106,12 +153,9 @@ Repository tests are still Makefile-driven fixtures under
 4. Add LLVM symbol checks when a public helper or generic specialization should
    be visible.
 
-The first coverage file is
-`tests/cases/standard-library/ok/test/std-test-report.ari`.
-
-Future test-runner work should add a first-class `ari test` or `@test` path
-that discovers test functions, runs each test independently, reports names and
-locations, and integrates with the existing repository fixtures.
+The first stdlib coverage file is
+`tests/cases/standard-library/ok/test/std-test-report.ari`. The compiler-runner
+fixtures live under `tests/cases/attributes/ok/attribute-test-*.ari`.
 
 ## Debugging And Logging Roadmap
 
@@ -129,13 +173,21 @@ messages, string messages, and convenience functions. Rich log records should
 wait until source location and owned formatting policy are clear enough that
 records can include stable file, line, function, and optional target metadata.
 
-Backtrace, stack trace, panic payloads, source location values, benchmark
-helpers, and fuzzing hooks are still roadmap items. They need runtime support
-for call-frame metadata, stable panic reporting, and test runner ownership
-before they become public API guarantees.
+Per-test panic capture, source locations, stack traces, backtraces, log capture,
+automatic doctests, snapshot-file updating, statistical benchmarks, and fuzzing
+hooks are still roadmap items. They need runtime support for call-frame
+metadata, stable panic reporting, subprocess/per-test isolation policy, and
+test runner ownership before they become public API guarantees.
 
 ## Tests
 
 - `tests/cases/standard-library/ok/test/std-test-report.ari`: `Report`
   construction, aggregated `check`, generic `equal`/`not_equal`, method
-  wrappers, scratch zone creation, and explicit finish status.
+  wrappers, scratch zone creation, temporary directory helpers, snapshot
+  comparison helpers, benchmark timing helpers, and explicit finish status.
+- `tests/cases/attributes/ok/attribute-test-runner.ari`: generated `@test`
+  runner basics.
+- `tests/cases/attributes/ok/attribute-test-filter.ari`: `ari test --filter`
+  substring selection.
+- `tests/cases/attributes/ok/attribute-test-status.ari`: non-zero `i64`
+  test-status propagation.

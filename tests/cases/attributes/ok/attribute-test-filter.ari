@@ -1,0 +1,10 @@
+@test
+fn selected_smoke() -> i64 {
+  assert(true);
+  return 0;
+}
+
+@test
+fn ignored_failure() -> i64 {
+  return 7;
+}

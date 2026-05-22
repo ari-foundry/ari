@@ -123,7 +123,8 @@ static void usage(std::ostream& out) {
            "           [--emit-module-cache path] [--use-module-cache path]\n"
            "           [--no-implicit-std]\n"
            "           [-L path] [-l name] [--link name] [--shared]\n"
-           "           [--test] [--cfg-feature name]\n"
+           "           [--test] [--test-filter name] [--cfg-feature name]\n"
+           "       ari test <input.ari> [-o output] [--filter name]\n"
            "       ari --help\n"
            "       ari --list-artifacts\n"
            "       ari --explain-artifact option\n"
@@ -242,6 +243,7 @@ int run(int argc, char** argv) {
     bool llvm_compiler_explicit = false;
     bool shared_library = false;
     bool test_mode = false;
+    bool test_subcommand = false;
     bool implicit_std = true;
     bool target_info_requested = false;
     bool list_passes_requested = false;
@@ -252,7 +254,14 @@ int run(int argc, char** argv) {
     std::string test_bucket_explanation;
     std::string work_item_explanation;
     std::string capability_explanation;
-    for (int i = 1; i < argc; ++i) {
+    int first_arg = 1;
+    if (argc > 1 && std::string(argv[1]) == "test") {
+        test_mode = true;
+        test_subcommand = true;
+        first_arg = 2;
+    }
+    std::vector<std::string> test_filters;
+    for (int i = first_arg; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "-o") {
             if (i + 1 >= argc) throw CompileError("-o expects a path");
@@ -264,6 +273,9 @@ int run(int argc, char** argv) {
             shared_library = true;
         } else if (arg == "--test") {
             test_mode = true;
+        } else if (arg == "--test-filter" || (test_subcommand && arg == "--filter")) {
+            if (i + 1 >= argc) throw CompileError(arg + " expects a test name substring");
+            test_filters.push_back(argv[++i]);
         } else if (arg == "--no-implicit-std") {
             implicit_std = false;
         } else if (arg == "--cfg-feature" || arg == "--feature") {
@@ -433,6 +445,9 @@ int run(int argc, char** argv) {
     if (input.empty()) throw CompileError("missing input file");
     if (shared_library && test_mode) {
         throw CompileError("--test cannot be combined with --shared");
+    }
+    if (!test_mode && !test_filters.empty()) {
+        throw CompileError("--test-filter requires --test");
     }
     std::vector<std::string> requested_artifacts;
     const std::pair<const char*, const std::string*> artifact_options[] = {
@@ -623,6 +638,7 @@ int run(int argc, char** argv) {
     sema_options.cfg_features = cfg_features;
     sema_options.cached_ir_function_names =
         module_cache_ir_function_names(loaded.cached_ir_functions);
+    sema_options.test_filters = std::move(test_filters);
     sema_options.target_triple = target.triple;
     IrProgram ir = check_program(program, std::move(sema_options));
     std::vector<IrFunction> cached_ir_functions =

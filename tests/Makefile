@@ -434,8 +434,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4test6report' $(BUILD_DIR)/prelude/std-test-report.ll
 	grep -q '_ARNv3std4test12equal__G_i64' $(BUILD_DIR)/prelude/std-test-report.ll
 	grep -q '_ARNv3std4test7scratch' $(BUILD_DIR)/prelude/std-test-report.ll
+	grep -q '_ARNv3std4test16matches_snapshot' $(BUILD_DIR)/prelude/std-test-report.ll
+	grep -q '_ARNv3std4test5bench' $(BUILD_DIR)/prelude/std-test-report.ll
+	grep -q '_ARNv3std4test8temp_dir' $(BUILD_DIR)/prelude/std-test-report.ll
 	$(TARGET) tests/cases/standard-library/ok/test/std-test-report.ari -o $(BUILD_DIR)/prelude/std-test-report.elf
-	$(BUILD_DIR)/prelude/std-test-report.elf; code=$$?; test $$code -eq 8
+	$(BUILD_DIR)/prelude/std-test-report.elf; code=$$?; test $$code -eq 16
 	$(TARGET) tests/cases/match/ok/rare-payload-packing.ari --emit-llvm $(BUILD_DIR)/prelude/rare-payload-packing.ll
 	grep -q "@ari_builtin_assert_eq_i64" $(BUILD_DIR)/prelude/rare-payload-packing.ll
 	grep -q "@ari_builtin_assert_ne_bool" $(BUILD_DIR)/prelude/rare-payload-packing.ll
@@ -4143,6 +4146,10 @@ check-meta: $(TARGET)
 	grep -q 'target triple = "x86_64-unknown-linux-musl"' $(BUILD_DIR)/meta/attribute-cfg-target-env-musl.ll
 	$(TARGET) --test tests/cases/attributes/ok/attribute-test-runner.ari -o $(BUILD_DIR)/meta/attribute-test-runner.elf
 	$(BUILD_DIR)/meta/attribute-test-runner.elf; code=$$?; test $$code -eq 0
+	$(TARGET) test tests/cases/attributes/ok/attribute-test-filter.ari --filter selected -o $(BUILD_DIR)/meta/attribute-test-filter.elf
+	$(BUILD_DIR)/meta/attribute-test-filter.elf; code=$$?; test $$code -eq 0
+	$(TARGET) --test tests/cases/attributes/ok/attribute-test-status.ari -o $(BUILD_DIR)/meta/attribute-test-status.elf
+	$(BUILD_DIR)/meta/attribute-test-status.elf; code=$$?; test $$code -eq 5
 	$(TARGET) tests/cases/attributes/ok/attribute-export-symbols.ari --shared --emit-llvm $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'define i64 @"ari_public_add"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'define i64 @"increment"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
@@ -4474,6 +4481,8 @@ check-meta: $(TARGET)
 	grep -q "attribute '@no_mangle' does not take arguments" $(BUILD_DIR)/meta/attribute-no-mangle-argument.err
 	if $(TARGET) --test tests/cases/attributes/errors/attribute-test-param.ari -o $(BUILD_DIR)/meta/attribute-test-param.elf >$(BUILD_DIR)/meta/attribute-test-param.err 2>&1; then exit 1; fi
 	grep -q "@test functions cannot take parameters" $(BUILD_DIR)/meta/attribute-test-param.err
+	if $(TARGET) --test --test-filter missing tests/cases/attributes/ok/attribute-test-filter.ari -o $(BUILD_DIR)/meta/attribute-test-filter-missing.elf >$(BUILD_DIR)/meta/attribute-test-filter-missing.err 2>&1; then exit 1; fi
+	grep -q "test filter matched no @test functions" $(BUILD_DIR)/meta/attribute-test-filter-missing.err
 	if $(TARGET) tests/cases/meta/errors/meta-function-bad-param.ari -o $(BUILD_DIR)/meta/meta-function-bad-param.elf >$(BUILD_DIR)/meta/meta-function-bad-param.err 2>&1; then exit 1; fi
 	grep -q "meta function parameters must use token_stream, ast, or type, got i64" $(BUILD_DIR)/meta/meta-function-bad-param.err
 	if $(TARGET) tests/cases/meta/errors/meta-function-generic.ari -o $(BUILD_DIR)/meta/meta-function-generic.elf >$(BUILD_DIR)/meta/meta-function-generic.err 2>&1; then exit 1; fi

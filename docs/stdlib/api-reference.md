@@ -119,12 +119,20 @@ Aggregated executable test helpers live in `std::test`:
 
 ```ari
 test::Report
+test::Bench
 
 test::report()
 test::scratch(capacity)
+test::temp_file(ref mut zone)
+test::temp_dir(ref mut zone)
+test::bench(iterations)
+test::benchmark(iterations)
 test::check(ref mut report, condition)
 test::equal<T>(ref mut report, left, right)
 test::not_equal<T>(ref mut report, left, right)
+test::matches_snapshot(actual, expected)
+test::golden_matches(actual, expected)
+test::check_snapshot(ref mut report, actual, expected)
 test::passed(ref report)
 test::failed(ref report)
 test::ok(ref report)
@@ -139,6 +147,11 @@ report.failed()
 report.ok()
 report.finish()
 report.require()
+
+bench.elapsed()
+bench.iterations()
+bench.elapsed_nanos()
+bench.nanos_per_iter()
 ```
 
 `Report` stores pass/fail counts. `equal` and `not_equal` use generic
@@ -146,6 +159,18 @@ comparison, so the public names stay natural rather than type-suffixed.
 `finish()` returns `0` when no failures were recorded and `1` otherwise.
 `scratch(capacity)` creates an owned `Zone` for tests; destroy it explicitly
 with `zone::destroy(zone)` when the test is done.
+`temp_file` and `temp_dir` return `Result[..., Error]` wrappers around the
+process temp-path helpers. `bench`/`benchmark` provide a minimal elapsed-time
+handle. `matches_snapshot`, `golden_matches`, and `check_snapshot` compare
+actual bytes with expected golden bytes supplied by the test.
+
+The compiler test runner is available as either `ari --test file.ari` or the
+friendlier `ari test file.ari` subcommand. `--test-filter name` and
+`ari test ... --filter name` select `@test` functions whose names contain the
+given substring. `void` tests pass when they return normally; `i64` tests may
+return a non-zero status to stop the generated runner and become the process
+exit code. Panic/assert failures still stop the process through the current
+panic hook rather than being captured per test.
 
 Debug printing can use `print`/`println` with `{:?}` for built-in printable
 values, `format_in!(ref mut zone, "{:?}", value)` for values implementing

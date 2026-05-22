@@ -88,14 +88,19 @@ they may return tracked Ari borrow values.
 
 ```sh
 ari --test tests/cases/attributes/ok/attribute-test-runner.ari -o build/test-runner
+ari test tests/cases/attributes/ok/attribute-test-runner.ari --filter smoke -o build/test-runner
 ```
 
 In test mode, Ari synthesizes a `main` that calls all `@test` functions in
 source order. Test functions cannot take parameters, be generic, be extern,
 be meta functions, or be named `main`. They may return `void` or `i64`; the
-runner ignores returned values and exits `0` after all tests return. Assertion
-helpers such as `assert` and `assert_eq_i64` can stop the process with a
-non-zero status.
+runner treats a normally returning `void` test as success. For `i64` tests,
+`0` means success; a non-zero return value stops the runner and becomes the
+process exit status. Assertion helpers such as `assert` and `assert_eq_i64`
+can stop the process with a non-zero status through the current panic hook.
+Use `--test-filter name` with `--test`, or `--filter name` with the `ari test`
+subcommand, to keep only tests whose function names contain the substring. A
+filter that matches no tests is a compile error.
 
 `@export`, `@export("symbol")`, and `@no_mangle` may be used on non-generic
 Ari functions to choose the emitted C symbol. `@export` and `@no_mangle`

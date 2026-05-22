@@ -37,7 +37,7 @@ API evolution.
 | `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`, `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `pipe`, `cursor`, `buf_reader`, `buf_writer`, direct `Error` helpers `read_exact_result`, `copy_result`, `write_all_result`, `flush_result`, compatibility `read_exact`, `read_all`, `read_to_string`, `try_copy`, `copy`, `write_all`, `flush`, `write_bytes`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, startup `cwd`, startup `executable_path`, `has_arg`, `user_arg_count`, `is_main_thread`. |
-| `std::test` | Executable unit-test helpers. | `Report`, `report`, `scratch`, `check`, `equal`, `not_equal`, `passed`, `failed`, `ok`, `finish`, `require`. |
+| `std::test` | Executable unit-test helpers. | `Report`, `Bench`, `report`, `scratch`, `temp_file`, `temp_dir`, `bench`, `benchmark`, `check`, `equal`, `not_equal`, `matches_snapshot`, `golden_matches`, `check_snapshot`, pass/fail accessors, `ok`, `finish`, `require`. |
 | `std::log` | Level-prefixed stderr diagnostics. | `Level`, `rank`, `name`, `enabled`, `write`, `message`, `trace`, `debug`, `info`, `warn`, `error`. |
 | `std::error` | Shared recoverable error values. | `Kind`, `Error`, strict and fallible constructors, `from_errno`, `from_raw`, `kind`, `code`, `raw`, `is_kind`, `is_not_found`, `is_interrupted`, `is_retryable`, `name`, `message`. |
 | `std::c` | C ABI boundary helpers. | `CStr`, `CString`, `Library`, `Symbol`, `from_string`, `from_ptr`, `from_slice_in`, `from_cstr_in`, `is_null`, `errno`, `error`, `open`, `main_program`, `symbol`, `function`, `close`, `last_error`, `lazy`, `now`, `local`, `global`. |
@@ -143,15 +143,18 @@ are source Ari. Cryptographic streams remain future work.
 
 `std::test`, `std::log`, and `std::error` are also source-first.
 `std::test::Report` aggregates checks, generic `equal`/`not_equal` stay
-naturally named, and `scratch` simply creates an explicit `Zone` for tests.
+naturally named, `scratch` simply creates an explicit `Zone` for tests, and
+small temp-path, snapshot/golden comparison, and benchmark timing helpers cover
+common test fixtures.
 `std::log` writes level-prefixed diagnostic lines to `stderr` through
 `std::io::Stderr`. `std::error`
 defines compact recoverable error values, stable error categories, POSIX errno
 mapping, fallible boundary validation, direct `Result[T, Error]` bridges, and
 raw scalar compatibility conversion for runtime/FFI boundaries.
-Rich test discovery, compiler-owned source text and filename storage,
-structured logging, stack traces, backtraces, owned error messages, and richer
-structured error fields remain runtime, driver, and compiler roadmap work.
+Per-test panic/log capture, compiler-owned source text and filename storage,
+doctests, structured logging, stack traces, backtraces, owned error messages,
+and richer structured error fields remain runtime, driver, and compiler roadmap
+work.
 
 `std::c` is source Ari around compiler-known C ABI primitives. The compiler
 owns `c_int`, `c_char`, `c_void`, `size_t`, and target-sensitive C width

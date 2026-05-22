@@ -791,16 +791,23 @@ fn std::target::uses_elf|check-prelude std-target-basic source object format pre
 fn std::target::uses_glibc|check-prelude std-target-basic source glibc target predicate; docs/stdlib/modules/target.md
 fn std::target::uses_musl|check-prelude std-target-basic source musl target predicate; docs/stdlib/modules/target.md
 fn std::target::uses_posix_errno|check-prelude std-target-basic source errno ABI predicate; docs/stdlib/modules/target.md
+fn std::test::bench|check-prelude std-test-report minimal benchmark timer; docs/stdlib/modules/test.md
+fn std::test::benchmark|check-prelude std-test-report benchmark alias; docs/stdlib/modules/test.md
 fn std::test::check|check-prelude std-test-report source unit-test condition aggregation; docs/stdlib/modules/test.md
+fn std::test::check_snapshot|check-prelude std-test-report snapshot/golden comparison aggregation; docs/stdlib/modules/test.md
 fn std::test::equal[T]|check-prelude std-test-report generic equality check aggregation; docs/stdlib/modules/test.md
 fn std::test::failed|check-prelude std-test-report failed-check count accessor; docs/stdlib/modules/test.md
 fn std::test::finish|check-prelude std-test-report executable status helper; docs/stdlib/modules/test.md
+fn std::test::golden_matches|check-prelude std-test-report golden byte comparison helper; docs/stdlib/modules/test.md
+fn std::test::matches_snapshot|check-prelude std-test-report snapshot byte comparison helper; docs/stdlib/modules/test.md
 fn std::test::not_equal[T]|check-prelude std-test-report generic inequality check aggregation; docs/stdlib/modules/test.md
 fn std::test::ok|check-prelude std-test-report report success predicate; docs/stdlib/modules/test.md
 fn std::test::passed|check-prelude std-test-report passed-check count accessor; docs/stdlib/modules/test.md
 fn std::test::report|check-prelude std-test-report unit-test report constructor; docs/stdlib/modules/test.md
 fn std::test::require|check-prelude std-test-report panic-on-failure helper; docs/stdlib/modules/test.md
 fn std::test::scratch|check-prelude std-test-report explicit scratch zone constructor; docs/stdlib/modules/test.md
+fn std::test::temp_dir|check-prelude std-test-report temporary directory result helper; docs/stdlib/modules/test.md
+fn std::test::temp_file|check-prelude std-test-report temporary file result helper; docs/stdlib/modules/test.md
 fn std::thread::available_parallelism|check-prelude std-thread-runtime-helpers runtime online processor count helper; docs/stdlib/modules/thread.md
 fn std::thread::builder|check-prelude std-thread-builder thread builder constructor helper; docs/stdlib/modules/thread.md
 fn std::thread::id|check-prelude std-thread-basic source wrapper around context thread id; docs/stdlib/modules/thread.md
@@ -1946,6 +1953,10 @@ method std::sync::RwLock::write_unlock|check-prelude std-sync-rwlock rwlock meth
 method std::sync::Sender[T]::close|check-prelude std-sync-concurrency-api sender-side channel close helper; docs/stdlib/modules/sync.md
 method std::sync::Sender[T]::is_closed|check-prelude std-sync-concurrency-api sender closed predicate; docs/stdlib/modules/sync.md
 method std::sync::Sender[T]::send|check-prelude std-sync-concurrency-api nonblocking single-slot send helper; docs/stdlib/modules/sync.md
+method std::test::Bench::elapsed|check-prelude std-test-report benchmark elapsed duration; docs/stdlib/modules/test.md
+method std::test::Bench::elapsed_nanos|check-prelude std-test-report benchmark elapsed nanoseconds; docs/stdlib/modules/test.md
+method std::test::Bench::iterations|check-prelude std-test-report benchmark iteration count; docs/stdlib/modules/test.md
+method std::test::Bench::nanos_per_iter|check-prelude std-test-report benchmark per-iteration nanoseconds; docs/stdlib/modules/test.md
 method std::test::Report::check|check-prelude std-test-report method condition aggregation; docs/stdlib/modules/test.md
 method std::test::Report::equal[T]|check-prelude std-test-report method generic equality aggregation; docs/stdlib/modules/test.md
 method std::test::Report::failed|check-prelude std-test-report method failed-count accessor; docs/stdlib/modules/test.md
@@ -2306,6 +2317,7 @@ struct std::sync::OnceLock[T]|check-prelude std-sync-concurrency-api source thre
 struct std::sync::Receiver[T]|check-prelude std-sync-concurrency-api channel receiver handle; docs/stdlib/modules/sync.md
 struct std::sync::RwLock|check-prelude std-sync-rwlock source reader-writer lock primitive; docs/stdlib/modules/sync.md
 struct std::sync::Sender[T]|check-prelude std-sync-concurrency-api channel sender handle; docs/stdlib/modules/sync.md
+struct std::test::Bench|check-prelude std-test-report benchmark timing handle; docs/stdlib/modules/test.md
 struct std::test::Report|check-prelude std-test-report unit-test report counts; docs/stdlib/modules/test.md
 struct std::thread::Builder|check-prelude std-thread-builder thread builder options handle; docs/stdlib/modules/thread.md
 struct std::thread::Thread|check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md

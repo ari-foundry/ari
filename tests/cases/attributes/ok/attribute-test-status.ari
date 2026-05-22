@@ -1,0 +1,9 @@
+@test
+fn first_ok() -> i64 {
+  return 0;
+}
+
+@test
+fn second_fails() -> i64 {
+  return 5;
+}

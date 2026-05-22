@@ -66,7 +66,8 @@ limits, examples, and test files for one module.
 - [std::context](context.md): runtime-backed program argument, startup path,
   and thread-id access plus source predicates and root argument aliases.
 - [std::test](test.md): source executable unit-test reports, generic equality
-  checks, scratch zones for tests, and diagnostics/test-runner roadmap notes.
+  checks, scratch zones, temp path helpers, snapshot/golden comparisons,
+  minimal benchmark timers, and compiler `@test` runner notes.
 - [std::log](log.md): source-only stderr logging levels, byte-slice messages,
   string messages, convenience level functions, and diagnostics roadmap notes.
 - [std::error](error.md): shared recoverable error categories, compact error

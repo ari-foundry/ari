@@ -9,12 +9,37 @@ pub struct Report {
   mut failed: i64,
 }
 
+pub struct Bench {
+  start: std::time::Instant,
+  iterations: i64,
+}
+
 pub fn report() -> Report {
   return Report { passed: 0, failed: 0 };
 }
 
 pub fn scratch(capacity: i64) -> own Zone {
   return std::zone::create(capacity);
+}
+
+pub fn temp_file(zone: ref mut Zone) -> std::Result[std::process::TempFile, std::error::Error] {
+  return std::process::temp_file(zone);
+}
+
+pub fn temp_dir(zone: ref mut Zone) -> std::Result[std::process::TempDir, std::error::Error] {
+  return std::process::temp_dir(zone);
+}
+
+pub fn bench(iterations: i64) -> Bench {
+  std::assert(iterations >= 0);
+  return Bench {
+    start: std::time::now(),
+    iterations: iterations,
+  };
+}
+
+pub fn benchmark(iterations: i64) -> Bench {
+  return bench(iterations);
 }
 
 pub fn passed(result: ref Report) -> i64 {
@@ -51,6 +76,22 @@ pub fn equal[T](result: ref mut Report, left: T, right: T) -> bool {
 
 pub fn not_equal[T](result: ref mut Report, left: T, right: T) -> bool {
   return check(result, left != right);
+}
+
+pub fn matches_snapshot(actual: std::Slice[u8], expected: std::Slice[u8]) -> bool {
+  return actual.equals(expected);
+}
+
+pub fn golden_matches(actual: std::Slice[u8], expected: std::Slice[u8]) -> bool {
+  return matches_snapshot(actual, expected);
+}
+
+pub fn check_snapshot(
+  result: ref mut Report,
+  actual: std::Slice[u8],
+  expected: std::Slice[u8]
+) -> bool {
+  return check(result, matches_snapshot(actual, expected));
 }
 
 pub fn require(result: ref Report) -> void {
@@ -90,5 +131,26 @@ pub impl std::test::Report {
 
   fn require(self: ref Self) -> void {
     std::test::require(self);
+  }
+}
+
+pub impl std::test::Bench {
+  fn elapsed(self: ref Self) -> std::time::Duration {
+    return self.start.elapsed();
+  }
+
+  fn iterations(self: ref Self) -> i64 {
+    return self.iterations;
+  }
+
+  fn elapsed_nanos(self: ref Self) -> i64 {
+    return self.elapsed().as_nanos();
+  }
+
+  fn nanos_per_iter(self: ref Self) -> i64 {
+    if self.iterations <= 0 {
+      return 0;
+    }
+    return self.elapsed_nanos() / self.iterations;
   }
 }

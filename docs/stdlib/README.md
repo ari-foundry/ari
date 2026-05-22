@@ -37,12 +37,14 @@ low-level runtime context layer.
 writes, stream copies, and flushes, plus bool/Option compatibility wrappers on
 top of the raw process IO, descriptor, and file seek hooks.
 `std::test` adds source executable unit-test reports, generic equality checks,
-and scratch-zone helpers, `std::log` adds level-prefixed `stderr` diagnostic
-lines, and `std::error` adds shared recoverable error categories,
+scratch-zone helpers, temporary path helpers, snapshot/golden comparisons,
+minimal benchmark timers, and compiler `@test` runner integration. `std::log`
+adds level-prefixed `stderr` diagnostic lines, and `std::error` adds shared
+recoverable error categories,
 compact error values, POSIX errno mapping, module-local `Error` aliases, and
-stable `Display`/`Debug` output while richer runner, compiler-tooling source
-maps, structured logging, remaining `Result[T, Error]` rollout, and backtrace
-support remain roadmap work.
+stable `Display`/`Debug` output while per-test panic/log capture, doctests,
+compiler-tooling source maps, structured logging, remaining `Result[T, Error]`
+rollout, and backtrace support remain roadmap work.
 `std::c` adds the narrow C ABI boundary layer with borrowed
 `CStr`, zone-backed `CString`, POSIX `errno`, and hosted dynamic loading
 handles over `dlopen`/`dlsym`.

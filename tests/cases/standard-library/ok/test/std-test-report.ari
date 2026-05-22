@@ -1,13 +1,31 @@
 // Covers the source std::test report helpers used by executable unit-style tests.
 fn main() -> i64 {
   var report = test::report();
-  var zone = test::scratch(64);
+  var zone = test::scratch(4096);
 
   report.check(true);
   report.equal(21, 21);
   report.not_equal(21, 22);
   test::equal(ref mut report, true, true);
   test::not_equal(ref mut report, false, true);
+  report.check(test::matches_snapshot("golden text", "golden text"));
+  report.check(!test::matches_snapshot("golden text", "changed text"));
+  test::check_snapshot(ref mut report, "snapshot", "snapshot");
+
+  let bench = test::bench(4);
+  report.equal(bench.iterations(), 4);
+  report.check(bench.elapsed_nanos() >= 0);
+  report.check(bench.nanos_per_iter() >= 0);
+
+  match test::temp_dir(ref mut zone) {
+    std::Ok(dir) => {
+      report.check(dir.path().len > 0);
+      report.check(dir.remove().is_ok());
+    }
+    std::Err(_) => {
+      report.check(false);
+    }
+  }
 
   var text = std::string::new(ref mut zone, 8);
   text.push_in(ref mut zone, 65u8);
@@ -21,7 +39,7 @@ fn main() -> i64 {
   let status = report.finish();
   zone::destroy(zone);
 
-  assert_eq_i64(passed, 8);
+  assert_eq_i64(passed, 16);
   assert_eq_i64(failed, 0);
   assert_eq_i64(status, 0);
   return passed + failed + status;
