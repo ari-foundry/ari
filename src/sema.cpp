@@ -22409,7 +22409,10 @@ private:
                 }
                 args[i] = std::move(slice_arg);
             } else {
-                coerce_expr_to_expected(*args[i], param_type);
+                args[i] = coerce_checked_call_argument_or_implicit_slice(
+                    *expr.args[i],
+                    std::move(args[i]),
+                    param_type);
             }
             require_assignable(expr.loc, param_type, args[i]->type);
             param_types.push_back(param_type);

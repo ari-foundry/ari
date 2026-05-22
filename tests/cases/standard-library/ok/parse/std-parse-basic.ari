@@ -15,6 +15,15 @@ fn main() -> i64 {
   assert(parse::integer("-9223372036854775808").unwrap_or(0) == min);
   assert(parse::integer("9223372036854775808").is_none());
   assert(parse::integer("-9223372036854775809").is_none());
+  assert(parse::unsigned("18446744073709551615").unwrap_or(0u64) == 18446744073709551615u64);
+  assert(parse::unsigned("+42").unwrap_or(0u64) == 42u64);
+  assert(parse::unsigned("18446744073709551616").is_none());
+  assert(parse::unsigned("-1").is_none());
+  assert(parse::unsigned_radix("ff", 16).unwrap_or(0u64) == 255u64);
+  assert(parse::unsigned_radix_or("zz", 36, 0u64) == 1295u64);
+  assert(parse::unsigned_radix_or("bad", 10, 6u64) == 6u64);
+  assert(parse::is_unsigned_radix("10", 2));
+  assert(!parse::is_unsigned_radix("2", 2));
   assert(parse::integer_radix("7f", 16).unwrap_or(0) == 127);
   assert(parse::integer_radix("-101", 2).unwrap_or(0) == -5);
   assert(parse::integer_radix("z", 36).unwrap_or(0) == 35);
@@ -62,6 +71,20 @@ fn main() -> i64 {
   assert((parse::float(float_text.as_slice()) as i64) == -1250);
   assert(!parse::is_float(invalid_float.as_slice()));
   assert((parse::float_or(invalid_float.as_slice(), 7.0f64) as i64) == 7);
+  assert(parse::parse[i64](" -44 ") == -44);
+  assert(parse::parse[u64]("44") == 44u64);
+  assert(parse::parse[bool]("true"));
+  assert((parse::parse[f64]("1.5e1") as i64) == 15);
+  assert(parse::parse_or[i64]("bad", 9) == 9);
+  assert(parse::parse_or[u64]("bad", 9u64) == 9u64);
+  assert(parse::parse_or[bool]("bad", true));
+  assert((parse::parse_or[f64]("bad", 9.0f64) as i64) == 9);
+  assert(parse::is_parse[i64]("12"));
+  assert(!parse::is_parse[i64]("12x"));
+  assert(parse::is_parse[u64]("+12"));
+  assert(!parse::is_parse[u64]("-12"));
+  assert(parse::is_parse[bool]("false"));
+  assert(parse::is_parse[f64](".25"));
 
   return 9;
 }

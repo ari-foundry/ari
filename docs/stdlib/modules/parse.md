@@ -7,16 +7,29 @@ names for common value parsing: `integer`, `boolean`, and `float`.
 Use this module when the entire `Slice[u8]` should be one value. Use
 `std::ascii::parse_decimal_prefix` or `parse_hex_prefix` when a parser needs
 to consume only a leading digit run and leave the rest of the bytes alone.
+For call sites that should read like typed parsing, use the `Parse` trait entry
+points: `parse::parse[T](bytes)`, `parse::parse_or[T](bytes, fallback)`, and
+`parse::is_parse[T](bytes)`.
 
 ## API
 
 ```ari
+trait Parse
+parse::parse[T: Parse](bytes) -> T
+parse::parse_or[T: Parse](bytes, fallback) -> T
+parse::is_parse[T: Parse](bytes) -> bool
 parse::integer(bytes) -> Option[i64]
 parse::is_integer(bytes) -> bool
 parse::integer_or(bytes, fallback) -> i64
 parse::integer_radix(bytes, radix) -> Option[i64]
 parse::is_integer_radix(bytes, radix) -> bool
 parse::integer_radix_or(bytes, radix, fallback) -> i64
+parse::unsigned(bytes) -> Option[u64]
+parse::is_unsigned(bytes) -> bool
+parse::unsigned_or(bytes, fallback) -> u64
+parse::unsigned_radix(bytes, radix) -> Option[u64]
+parse::is_unsigned_radix(bytes, radix) -> bool
+parse::unsigned_radix_or(bytes, radix, fallback) -> u64
 parse::hex_integer(bytes) -> Option[i64]
 parse::is_hex_integer(bytes) -> bool
 parse::hex_integer_or(bytes, fallback) -> i64
@@ -52,6 +65,11 @@ the parser. `hex_integer` and `binary_integer` are readable wrappers for bases
 other byte-oriented formats. All three wrappers have matching `is_*` and
 `*_or` forms.
 
+`unsigned` and `unsigned_radix` mirror the signed integer parsers for `u64`.
+They trim ASCII whitespace, accept an optional leading `+`, reject `-`, and
+reject values larger than `18446744073709551615`. Use them for ids, bitmasks,
+wire-format counters, and other fields where negative numbers are not valid.
+
 `boolean` trims ASCII whitespace and accepts only lowercase `true` or `false`.
 It intentionally does not accept titlecase, uppercase, `1`, `0`, `yes`, or
 `no`; those policies should be explicit at the call site. `is_boolean` checks
@@ -74,6 +92,21 @@ underscores are future policy work.
 `float` is the asserting form: it panics if `is_float(bytes)` is false, then
 returns the parsed `f64`.
 
+The `Parse` trait gives generic code one spelling for common built-in types:
+
+```ari
+let count = parse::parse[i64]("42");
+let size = parse::parse[u64]("18446744073709551615");
+let enabled = parse::parse[bool]("true");
+let ratio = parse::parse[f64]("1.25e2");
+let fallback = parse::parse_or[i64]("not an int", 0);
+```
+
+The trait-backed `parse` function is the asserting form for every implemented
+type. Use `parse_or` or `is_parse` when invalid input is ordinary. `Parse` is
+currently implemented for `i64`, `u64`, `bool`, and `f64`; user types can add
+their own impls when they have a stable parsing policy.
+
 ## Why `float` Does Not Return `Option[f64]` Yet
 
 The natural future API is `parse::float(bytes) -> Option[f64]` or
@@ -93,6 +126,10 @@ changing the public API.
 ```ari
 fn read_count(bytes: Slice[u8]) -> i64 {
   return parse::integer_or(bytes, 0);
+}
+
+fn read_size(bytes: Slice[u8]) -> u64 {
+  return parse::unsigned_or(bytes, 0u64);
 }
 
 fn read_hex_color(bytes: Slice[u8]) -> i64 {
@@ -119,9 +156,10 @@ tests/cases/standard-library/ok/parse/std-parse-basic.ari
 ```
 
 The focused test covers ASCII-trimmed signed integer parsing, radix wrappers
-for binary, octal, and hexadecimal input, boolean parsing, float validation,
-float conversion, and invalid whole-input cases. It is wired into
-`make check-prelude` with LLVM symbol checks for the public helpers.
+for binary, octal, and hexadecimal input, unsigned integer parsing, boolean
+parsing, float validation, float conversion, trait-backed typed parsing, and
+invalid whole-input cases. It is wired into `make check-prelude` with LLVM
+symbol checks for the public helpers.
 
 ## Future Work
 

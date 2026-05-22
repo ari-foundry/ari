@@ -35,6 +35,10 @@ fn i64_min_value() -> i64 {
   return -9223372036854775807 - 1;
 }
 
+fn u64_max_value() -> u64 {
+  return 18446744073709551615u64;
+}
+
 fn radix_digit_value(value: char, radix: i64) -> std::Option[i64] {
   if radix < 2 || radix > 36 {
     return std::None<i64>();
@@ -53,6 +57,24 @@ fn radix_digit_value(value: char, radix: i64) -> std::Option[i64] {
     return std::Some<i64>(digit);
   }
   return std::None<i64>();
+}
+
+pub trait Parse {
+  fn parse(values: std::Slice[u8]) -> Self;
+  fn parse_or(values: std::Slice[u8], fallback: Self) -> Self;
+  fn is_parse(values: std::Slice[u8]) -> bool;
+}
+
+pub fn parse[T: std::parse::Parse](values: std::Slice[u8]) -> T {
+  return std::parse::Parse::parse<T>(values);
+}
+
+pub fn parse_or[T: std::parse::Parse](values: std::Slice[u8], fallback: T) -> T {
+  return std::parse::Parse::parse_or<T>(values, fallback);
+}
+
+pub fn is_parse[T: std::parse::Parse](values: std::Slice[u8]) -> bool {
+  return std::parse::Parse::is_parse<T>(values);
 }
 
 pub fn integer_radix(values: std::Slice[u8], radix: i64) -> std::Option[i64] {
@@ -104,6 +126,69 @@ pub fn integer_radix(values: std::Slice[u8], radix: i64) -> std::Option[i64] {
   return std::Some<i64>(result as i64);
 }
 
+pub fn unsigned_radix(values: std::Slice[u8], radix: i64) -> std::Option[u64] {
+  let input = std::ascii::trim(values);
+  if input.len == 0 {
+    return std::None<u64>();
+  }
+  if radix < 2 || radix > 36 {
+    return std::None<u64>();
+  }
+
+  var index = 0;
+  if input[0] == '+' {
+    index = 1;
+  } else if input[0] == '-' {
+    return std::None<u64>();
+  }
+
+  if index >= input.len {
+    return std::None<u64>();
+  }
+
+  let limit = u64_max_value();
+  let radix_value = radix as u64;
+  var result = 0u64;
+  while index < input.len {
+    match radix_digit_value(input[index], radix) {
+      std::Some(value) => {
+        let digit = value as u64;
+        if result > (limit - digit) / radix_value {
+          return std::None<u64>();
+        }
+        result = (result * radix_value) + digit;
+      }
+      std::None => {
+        return std::None<u64>();
+      }
+    }
+    index = index + 1;
+  }
+  return std::Some<u64>(result);
+}
+
+pub fn is_unsigned_radix(values: std::Slice[u8], radix: i64) -> bool {
+  match unsigned_radix(values, radix) {
+    std::Some(_) => {
+      return true;
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+pub fn unsigned_radix_or(values: std::Slice[u8], radix: i64, fallback: u64) -> u64 {
+  match unsigned_radix(values, radix) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {
+      return fallback;
+    }
+  }
+}
+
 pub fn is_integer_radix(values: std::Slice[u8], radix: i64) -> bool {
   match integer_radix(values, radix) {
     std::Some(_) => {
@@ -143,6 +228,32 @@ pub fn is_integer(values: std::Slice[u8]) -> bool {
 
 pub fn integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
   match integer(values) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {
+      return fallback;
+    }
+  }
+}
+
+pub fn unsigned(values: std::Slice[u8]) -> std::Option[u64] {
+  return unsigned_radix(values, 10);
+}
+
+pub fn is_unsigned(values: std::Slice[u8]) -> bool {
+  match unsigned(values) {
+    std::Some(_) => {
+      return true;
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+pub fn unsigned_or(values: std::Slice[u8], fallback: u64) -> u64 {
+  match unsigned(values) {
     std::Some(value) => {
       return value;
     }
@@ -416,4 +527,81 @@ pub fn float(values: std::Slice[u8]) -> f64 {
     std::panic();
   }
   return float_or(values, 0.0f64);
+}
+
+impl std::parse::Parse for i64 {
+  fn parse(values: std::Slice[u8]) -> i64 {
+    match std::parse::integer(values) {
+      std::Some(value) => {
+        return value;
+      }
+      std::None => {
+        std::panic();
+      }
+    }
+  }
+
+  fn parse_or(values: std::Slice[u8], fallback: i64) -> i64 {
+    return std::parse::integer_or(values, fallback);
+  }
+
+  fn is_parse(values: std::Slice[u8]) -> bool {
+    return std::parse::is_integer(values);
+  }
+}
+
+impl std::parse::Parse for u64 {
+  fn parse(values: std::Slice[u8]) -> u64 {
+    match std::parse::unsigned(values) {
+      std::Some(value) => {
+        return value;
+      }
+      std::None => {
+        std::panic();
+      }
+    }
+  }
+
+  fn parse_or(values: std::Slice[u8], fallback: u64) -> u64 {
+    return std::parse::unsigned_or(values, fallback);
+  }
+
+  fn is_parse(values: std::Slice[u8]) -> bool {
+    return std::parse::is_unsigned(values);
+  }
+}
+
+impl std::parse::Parse for bool {
+  fn parse(values: std::Slice[u8]) -> bool {
+    match std::parse::boolean(values) {
+      std::Some(value) => {
+        return value;
+      }
+      std::None => {
+        std::panic();
+      }
+    }
+  }
+
+  fn parse_or(values: std::Slice[u8], fallback: bool) -> bool {
+    return std::parse::boolean_or(values, fallback);
+  }
+
+  fn is_parse(values: std::Slice[u8]) -> bool {
+    return std::parse::is_boolean(values);
+  }
+}
+
+impl std::parse::Parse for f64 {
+  fn parse(values: std::Slice[u8]) -> f64 {
+    return std::parse::float(values);
+  }
+
+  fn parse_or(values: std::Slice[u8], fallback: f64) -> f64 {
+    return std::parse::float_or(values, fallback);
+  }
+
+  fn is_parse(values: std::Slice[u8]) -> bool {
+    return std::parse::is_float(values);
+  }
 }

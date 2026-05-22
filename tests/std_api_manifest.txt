@@ -595,8 +595,17 @@ fn std::parse::is_hex_integer|check-prelude std-parse-basic signed hexadecimal i
 fn std::parse::is_integer|check-prelude std-parse-basic signed integer parser validator; docs/stdlib/modules/parse.md
 fn std::parse::is_integer_radix|check-prelude std-parse-basic signed radix integer parser validator; docs/stdlib/modules/parse.md
 fn std::parse::is_octal_integer|check-prelude std-parse-basic signed octal integer parser validator; docs/stdlib/modules/parse.md
+fn std::parse::is_parse[T: std::parse::Parse]|check-prelude std-parse-basic trait-backed typed parser validator; docs/stdlib/modules/parse.md
+fn std::parse::is_unsigned|check-prelude std-parse-basic unsigned integer parser validator; docs/stdlib/modules/parse.md
+fn std::parse::is_unsigned_radix|check-prelude std-parse-basic unsigned radix integer parser validator; docs/stdlib/modules/parse.md
 fn std::parse::octal_integer|check-prelude std-parse-basic signed octal integer parser; docs/stdlib/modules/parse.md
 fn std::parse::octal_integer_or|check-prelude std-parse-basic signed octal integer parser with fallback; docs/stdlib/modules/parse.md
+fn std::parse::parse[T: std::parse::Parse]|check-prelude std-parse-basic trait-backed typed parser dispatch; docs/stdlib/modules/parse.md
+fn std::parse::parse_or[T: std::parse::Parse]|check-prelude std-parse-basic trait-backed typed parser fallback dispatch; docs/stdlib/modules/parse.md
+fn std::parse::unsigned|check-prelude std-parse-basic unsigned decimal integer parser; docs/stdlib/modules/parse.md
+fn std::parse::unsigned_or|check-prelude std-parse-basic unsigned decimal integer parser with fallback; docs/stdlib/modules/parse.md
+fn std::parse::unsigned_radix|check-prelude std-parse-basic unsigned radix integer parser; docs/stdlib/modules/parse.md
+fn std::parse::unsigned_radix_or|check-prelude std-parse-basic unsigned radix integer parser with fallback; docs/stdlib/modules/parse.md
 fn std::path::bytes|check-prelude std-path-bytes typed borrowed path-byte view constructor; docs/stdlib/modules/path.md
 fn std::path::components|check-prelude std-path-components borrowed lexical component iterator; docs/stdlib/modules/path.md
 fn std::path::ends_with|check-prelude std-path-affixes component-aware suffix predicate; docs/stdlib/modules/path.md
@@ -2348,6 +2357,7 @@ trait std::iter::IntoIterator[T]|iterator module tests; docs/dev/test-matrix.md 
 trait std::iter::Iterable[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait std::iter::Iterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait std::net::ToSocketAddrs|check-prelude std-net-dns-lookup host-port endpoint resolver trait seed; docs/stdlib/modules/net.md
+trait std::parse::Parse|check-prelude std-parse-basic typed parser dispatch trait; docs/stdlib/modules/parse.md
 trait std::zone::ZoneBacked|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 trait-method std::Clone::clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::Default::default|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
@@ -2384,6 +2394,9 @@ trait-method std::io::Writer::write_byte|std io trait/cursor tests; docs/stdlib/
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::net::ToSocketAddrs::to_socket_addrs|check-prelude std-net-dns-lookup trait-qualified host-port endpoint resolution; docs/stdlib/modules/net.md
+trait-method std::parse::Parse::is_parse|check-prelude std-parse-basic typed parser validator method; docs/stdlib/modules/parse.md
+trait-method std::parse::Parse::parse|check-prelude std-parse-basic typed parser strict method; docs/stdlib/modules/parse.md
+trait-method std::parse::Parse::parse_or|check-prelude std-parse-basic typed parser fallback method; docs/stdlib/modules/parse.md
 trait-method std::zone::ZoneBacked::zone|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 type std::char|check-generics type-alias-char/no-implicit-std tests; docs/language/types.md Type Aliases section
 type std::error::ErrorKind|check-prelude std-error-integration module-local alias for std::error::Kind; docs/stdlib/modules/error.md

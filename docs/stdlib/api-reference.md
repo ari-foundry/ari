@@ -3422,12 +3422,22 @@ instead of a partial wrapped value.
 values:
 
 ```ari
+parse::Parse
+parse::parse[T: Parse](bytes)
+parse::parse_or[T: Parse](bytes, fallback)
+parse::is_parse[T: Parse](bytes)
 parse::integer(bytes)
 parse::is_integer(bytes)
 parse::integer_or(bytes, fallback)
 parse::integer_radix(bytes, radix)
 parse::is_integer_radix(bytes, radix)
 parse::integer_radix_or(bytes, radix, fallback)
+parse::unsigned(bytes)
+parse::is_unsigned(bytes)
+parse::unsigned_or(bytes, fallback)
+parse::unsigned_radix(bytes, radix)
+parse::is_unsigned_radix(bytes, radix)
+parse::unsigned_radix_or(bytes, radix, fallback)
 parse::hex_integer(bytes)
 parse::is_hex_integer(bytes)
 parse::hex_integer_or(bytes, fallback)
@@ -3451,14 +3461,32 @@ fallback on invalid input. Decimal and radix integer parsers reject values
 outside the `i64` range instead of wrapping. `integer_radix` accepts bases `2`
 through `36` with ASCII alphanumeric digits, and `hex_integer` /
 `binary_integer` / `octal_integer` are readable wrappers for common bases.
+`unsigned` and `unsigned_radix` are the matching `u64` parsers: they accept an
+optional leading `+`, reject `-`, check overflow against `u64::MAX`, and have
+matching `is_*` and `*_or` helpers.
 These radix parsers trim whitespace but do not recognize prefixes such as
 `0x`, `0b`, or leading-zero octal policy. `boolean`
 returns `Option[bool]` and accepts only lowercase `true` and `false`;
 `is_boolean` and `boolean_or` provide the same validator/fallback pattern.
 `is_float` validates a decimal float shape with optional sign, fraction, and
 exponent. `float_or` returns a fallback for invalid input, while `float` panics
-on invalid input. `Option[f64]` is future work because the compiler does not
-lower float enum payloads yet.
+on invalid input.
+
+Use `parse::parse[T]` when the target type should choose the parser. It is the
+asserting typed entry point, `parse::parse_or[T]` is the fallback form, and
+`parse::is_parse[T]` validates without returning a value. The built-in `Parse`
+impls cover `i64`, `u64`, `bool`, and `f64`:
+
+```ari
+let count = parse::parse[i64]("42");
+let size = parse::parse[u64]("18446744073709551615");
+let enabled = parse::parse[bool]("true");
+let ratio = parse::parse[f64]("1.25e2");
+```
+
+`Option[f64]` remains future work because the compiler does not lower float
+enum payloads yet; the typed `f64` parser therefore follows the existing
+asserting/fallback `float` and `float_or` policy.
 
 ## Encoding
 

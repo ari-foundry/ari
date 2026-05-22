@@ -1398,6 +1398,12 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5parse7integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10is_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse8unsigned' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse11is_unsigned' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse11unsigned_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse14unsigned_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse17is_unsigned_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse17unsigned_radix_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse11hex_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14is_hex_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14hex_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
@@ -1413,6 +1419,18 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5parse8is_float' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse8float_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse5float' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse12parse__G_i64' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse12parse__G_u64' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse12parse__G_f64' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse13parse__G_bool' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse15parse_or__G_i64' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse15parse_or__G_u64' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse15parse_or__G_f64' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse16parse_or__G_bool' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse15is_parse__G_i64' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse15is_parse__G_u64' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse15is_parse__G_f64' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse16is_parse__G_bool' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/parse/std-parse-basic.ari -o $(BUILD_DIR)/prelude/std-parse-basic.elf
 	$(BUILD_DIR)/prelude/std-parse-basic.elf; code=$$?; test $$code -eq 9
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-text.ari --emit-llvm $(BUILD_DIR)/prelude/std-encoding-text.ll
