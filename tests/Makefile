@@ -93,6 +93,10 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-expected.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-missing-module.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-missing-module.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ambiguous-module.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ambiguous-module.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-cyclic-module.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-cyclic-module.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-cyclic-module.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-cyclic-module.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-trait-bound-missing-impl.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-bound-missing-impl.diagnostic

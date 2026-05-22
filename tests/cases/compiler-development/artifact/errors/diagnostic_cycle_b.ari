@@ -1,0 +1,5 @@
+mod diagnostic_cycle_a;
+
+pub fn value() -> i64 {
+  return 2;
+}

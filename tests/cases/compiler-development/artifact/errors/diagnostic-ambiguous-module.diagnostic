@@ -1,0 +1,5 @@
+diagnostic error code=M0001 family=module message="ambiguous module file for 'diagnostic_ambiguous_module'; candidates tests/cases/compiler-development/artifact/errors/diagnostic_ambiguous_module.ari, tests/cases/compiler-development/artifact/errors/diagnostic_ambiguous_module/mod.ari" sources=1 labels=1 notes=0 helps=1
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.ari" bytes=67
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.ari" line=1 column=5 end_line=1 end_column=32 byte_start=4 byte_end=31 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.ari:1:5\n   |\n 1 | mod diagnostic_ambiguous_module;\n   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+  Help index=0 location=none message="keep only one of name.ari, name.arih, name/mod.ari, or name/mod.arih in a search root"

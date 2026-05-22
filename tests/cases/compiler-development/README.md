@@ -97,9 +97,9 @@ the same language surface that normal Ari users get.
 - `artifact/ok/generic-aggregate-monomorphization.ir`: typed IR golden for
   concrete user-defined generic aggregate instantiations, nested enum payloads,
   method specialization, and owned generic fields.
-- `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module,
-  unknown-name, duplicate-name, wrong-arity, wrong-argument, invalid-return,
-  invalid-assignment, trait, and ownership diagnostic code/family/span golden
-  seeds.
+- `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module
+  missing/ambiguous/cyclic validation, unknown-name, duplicate-name,
+  wrong-arity, wrong-argument, invalid-return, invalid-assignment, trait, and
+  ownership diagnostic code/family/span golden seeds.
 - `artifact/errors/text-line-mismatch.*.txt`: seed mismatch-report fixture for
   text artifact comparisons.

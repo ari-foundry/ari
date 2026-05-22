@@ -223,6 +223,11 @@ std::string classify_diagnostic_code(const std::string& message) {
     // patterns with explicit codes at the throw site.
     if (contains(diagnostic, "unexpected character")) return "L0001";
     if (contains(diagnostic, "cannot find module file") ||
+        contains(diagnostic, "ambiguous module file") ||
+        contains(diagnostic, "cyclic module import") ||
+        contains(diagnostic, "duplicate module") ||
+        contains(diagnostic, "module file") ||
+        contains(diagnostic, "super:: path cannot escape") ||
         contains(diagnostic, "is not public") ||
         contains(diagnostic, "module cache") ||
         contains(diagnostic, "module metadata")) {

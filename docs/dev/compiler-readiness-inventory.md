@@ -274,6 +274,9 @@ Current compiler-development tests:
   parser diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic`:
   module diagnostic-code golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.diagnostic`
+  and `diagnostic-cyclic-module.diagnostic`: module graph validation
+  diagnostic goldens checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic`:
   type and trait diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic`:

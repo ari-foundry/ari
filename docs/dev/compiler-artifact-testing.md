@@ -269,7 +269,9 @@ tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary
 tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan
 tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
 tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
+tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-cyclic-module.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic
