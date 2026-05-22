@@ -112,8 +112,9 @@ Rules:
 - `byte_offset(source_id, line, column)` maps a one-based diagnostic coordinate
   back to a byte offset. It returns no value when the source id, line, or column
   is outside the registered source.
-- `snippet(span)` returns source name, line text, and caret marker data without
-  requiring a diagnostic renderer.
+- `snippet(span)` returns source name, source lines, and caret marker data
+  without requiring a diagnostic renderer. `snippet(span, context_lines)` adds
+  unmarked surrounding lines for richer diagnostic renderers.
 - The hosted compiler's legacy free functions call `default_source_map()` so
   existing lexer/parser/sema code keeps using the same source model.
 
@@ -281,6 +282,64 @@ The source-map artifact should make this policy reviewable with tiny examples,
 including empty files, trailing newlines, multi-line spans, and file-backed
 module sources.
 
+## Snippet Extraction
+
+`SourceMap::snippet` turns a byte span into source text slices and marker ranges
+that a diagnostic renderer can print without rescanning files. It is data, not
+the final diagnostic string.
+
+Current C++ data shape:
+
+```cpp
+struct SourceSnippetLine {
+    std::size_t line_number;    // one-based
+    std::size_t byte_start;     // zero-based source byte offset
+    std::string text;           // line text without newline bytes
+    std::size_t marker_start;   // byte offset in or just after text
+    std::size_t marker_len;     // number of carets to render
+    bool has_marker;
+    bool truncated_start;
+    bool truncated_end;
+};
+
+struct SourceSnippet {
+    Span span;
+    LineColumn start;
+    std::string source_name;
+    std::vector<SourceSnippetLine> lines;
+    std::size_t context_lines;
+    bool truncated;
+    bool valid;
+};
+```
+
+Policy:
+
+- `snippet(span)` uses zero context lines by default, preserving compact
+  single-line diagnostics.
+- `snippet(span, context_lines)` includes up to that many surrounding lines
+  before the span start and after the span end. Context lines have
+  `has_marker=false`.
+- A multi-line span returns one `SourceSnippetLine` per touched source line.
+  Each touched line carries its own marker range, so the renderer can underline
+  the first line, middle lines, and final line independently.
+- Empty spans are valid insertion points and render one caret at the insertion
+  byte. EOF insertion spans point at the final valid insertion position.
+- Marker ranges are byte ranges in the returned snippet line, or just after it
+  for EOF and end-of-line insertion points. They are not Unicode display
+  columns. UTF-8 display-width handling belongs in a future renderer adapter.
+- Tabs are kept in line text. The plain-text renderer copies tabs while
+  building marker padding, so caret alignment follows the user's terminal tab
+  stops instead of replacing tabs with a fixed width.
+- CRLF newline handling follows line lookup: `\r` is hidden from snippet text,
+  and neither newline byte appears in a returned line.
+- Long lines are truncated to at most 120 rendered bytes. Truncated lines use
+  `...` at the hidden start or end, adjust marker positions to the rendered
+  window, and set `truncated_start`, `truncated_end`, and the snippet-level
+  `truncated` flag.
+- A span with an unknown or invalid `SourceId` returns `valid=false`; renderers
+  must treat that as a graceful message-only fallback.
+
 ## Artifact Policy
 
 Use deterministic artifacts before relying on executable behavior:
@@ -355,6 +414,8 @@ Before handing off source identity work, answer:
 - Does line/column rendering stay one-based for users?
 - Is the capability inventory, source-map, token, syntax, declaration, module,
   or diagnostic artifact the closest proof?
+- Do source snippets cover single-line spans, multi-line spans, empty spans,
+  tabs, long-line truncation, and missing-source fallback?
 - Did diagnostics improve without moving compiler-only APIs into runtime `std`?
 - Does every committed diagnostic/token/source-map golden avoid
   `source_id=invalid`?

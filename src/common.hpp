@@ -46,10 +46,24 @@ struct LineColumn {
     std::size_t byte_offset = 0;
 };
 
+struct SourceSnippetLine {
+    std::size_t line_number = 1;
+    std::size_t byte_start = 0;
+    std::string text;
+    std::size_t marker_start = 0;
+    std::size_t marker_len = 0;
+    bool has_marker = false;
+    bool truncated_start = false;
+    bool truncated_end = false;
+};
+
 struct SourceSnippet {
     Span span;
     LineColumn start;
     std::string source_name;
+    std::vector<SourceSnippetLine> lines;
+    std::size_t context_lines = 0;
+    bool truncated = false;
     std::string line_text;
     std::size_t line_number = 1;
     std::size_t marker_start = 0;
@@ -102,6 +116,7 @@ public:
     SourceLocation location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end) const;
     SourceLocation end_location(const std::string& source_name) const;
     SourceSnippet snippet(Span span) const;
+    SourceSnippet snippet(Span span, std::size_t context_lines) const;
 
 private:
     std::vector<SourceFile> sources_;

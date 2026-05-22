@@ -112,6 +112,27 @@ struct SourceMap {
   // byte_offset(id, line, column) -> Option[BytePos]
   // snippet(span) -> SourceSnippet
 }
+
+struct SourceSnippetLine {
+  line_number: i64,
+  byte_start: BytePos,
+  text: std::string::String,
+  marker_start: BytePos,
+  marker_len: BytePos,
+  has_marker: bool,
+  truncated_start: bool,
+  truncated_end: bool,
+}
+
+struct SourceSnippet {
+  span: Span,
+  start: LineColumn,
+  source_name: std::string::String,
+  lines: std::vec::Vec[SourceSnippetLine],
+  context_lines: i64,
+  truncated: bool,
+  valid: bool,
+}
 ```
 
 Policy:
@@ -139,6 +160,11 @@ Policy:
   a user-facing diagnostic span
 - `SourceMap` is the only component that should need source text to answer
   line/column or snippet questions
+- `SourceSnippet` is source-map output. It owns rendered line slices and marker
+  byte ranges, while the diagnostic renderer owns gutter text, severity text,
+  notes, and color policy.
+- `SourceSnippet.valid=false` is the missing-source fallback. Renderers should
+  omit the source excerpt instead of inventing a misleading file or byte range.
 - C++ tokens store `Span` directly; AST/IR nodes use `SourceLocation`, whose
   `loc.span` is the same canonical `Span` plus cached rendering coordinates
 - use `merge_spans`, `span_contains`, `span_intersects`, and
@@ -215,6 +241,16 @@ Initial rules:
 - normalize repository-local paths in golden tests
 - use one-based line and column numbers for users
 - keep internal byte offsets zero-based
+- request source excerpts through `SourceMap::snippet` instead of slicing
+  source text inside diagnostic code
+- keep zero context lines for compact default diagnostics; request explicit
+  context only when a renderer or artifact needs surrounding lines
+- render every marked line in a multi-line span with its own caret range
+- render empty spans and EOF spans with one caret at the insertion point
+- preserve tabs in marker padding so caret alignment follows the line text
+- respect snippet truncation flags and keep `...` in golden output for long
+  lines
+- omit snippets gracefully when `SourceSnippet.valid=false`
 - sort diagnostics by first primary span, then insertion order
 - keep note order exactly as emitted
 - avoid terminal color in golden output
@@ -302,7 +338,7 @@ Land this layer in small slices:
 | Span | Byte range construction, validation, merge, contains, and intersects helpers. | empty span, single-byte span, end-before-start normalization/rejection, source mismatch merge. |
 | Line lookup | Byte offset to line/column mapping and one-based line/column back to byte offset. | start, middle, newline, EOF, CRLF, UTF-8 byte-column policy. |
 | Source map artifact | Deterministic source ids, kind, canonical/display paths, EOF offsets, line tables, byte, line, and snippet text. | `source-map-file-module.map`, CRLF policy. |
-| Snippets | Extract source line and underline span. | single-line, empty span, tab policy, EOF span. |
+| Snippets | Extract source lines, context lines, underline ranges, and truncation flags. | single-line, multi-line, empty span, tab policy, long line, missing source, EOF span. |
 | Diagnostic values | Severity, code, label, note data structures. | label ordering, note ordering, optional code. |
 | Renderer | Stable plain-text diagnostic rendering. | single label, multi-label, notes, path normalization. |
 | Golden runner | Compare expected and actual text outputs. | mismatch report, update policy documentation. |

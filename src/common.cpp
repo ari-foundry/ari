@@ -12,6 +12,10 @@ namespace ari {
 
 namespace {
 
+constexpr std::size_t kDefaultSnippetContextLines = 0;
+constexpr std::size_t kMaxSnippetLineBytes = 120;
+constexpr std::size_t kSnippetEllipsisBytes = 3;
+
 std::vector<std::size_t> build_line_starts(const std::string& text) {
     std::vector<std::size_t> starts;
     starts.push_back(0);
@@ -48,10 +52,6 @@ std::size_t line_index_for_offset(const SourceFile& file, std::size_t offset) {
     return static_cast<std::size_t>((found - file.line_starts.begin()) - 1);
 }
 
-std::size_t line_start_for_offset(const SourceFile& file, std::size_t offset) {
-    return file.line_starts[line_index_for_offset(file, offset)];
-}
-
 std::size_t line_end_for_start(const SourceFile& file, std::size_t line_start) {
     std::size_t line_end = file.text.find('\n', line_start);
     if (line_end == std::string::npos) line_end = file.eof_offset;
@@ -65,6 +65,146 @@ int display_column_for_offset(const SourceFile& file, std::size_t line_index, st
     std::size_t line_end = line_end_for_start(file, line_start);
     std::size_t display_offset = std::min(offset, line_end);
     return static_cast<int>(display_offset - line_start + 1);
+}
+
+std::size_t decimal_width(std::size_t value) {
+    return std::to_string(value).size();
+}
+
+std::size_t last_line_index(const SourceFile& file) {
+    if (file.line_starts.empty()) return 0;
+    return file.line_starts.size() - 1;
+}
+
+void choose_truncated_window(std::size_t text_size,
+                             std::size_t anchor,
+                             std::size_t& window_start,
+                             std::size_t& window_len) {
+    std::size_t capacity = kMaxSnippetLineBytes;
+    if (capacity > text_size) capacity = text_size;
+    window_start = 0;
+    window_len = capacity;
+
+    for (int iteration = 0; iteration < 3; ++iteration) {
+        bool truncates_start = window_start > 0;
+        bool truncates_end = window_start + window_len < text_size;
+        std::size_t marker_bytes = (truncates_start ? kSnippetEllipsisBytes : 0) +
+                                   (truncates_end ? kSnippetEllipsisBytes : 0);
+        capacity = kMaxSnippetLineBytes > marker_bytes ? kMaxSnippetLineBytes - marker_bytes : 1;
+        capacity = std::min(capacity, text_size);
+
+        if (anchor > capacity / 2) {
+            window_start = anchor - capacity / 2;
+        } else {
+            window_start = 0;
+        }
+        if (window_start + capacity > text_size) {
+            window_start = text_size - capacity;
+        }
+        window_len = capacity;
+    }
+}
+
+void truncate_snippet_line(SourceSnippetLine& line) {
+    if (line.text.size() <= kMaxSnippetLineBytes) return;
+
+    std::size_t original_size = line.text.size();
+    std::size_t marker_start = std::min(line.marker_start, original_size);
+    std::size_t marker_end = marker_start;
+    if (line.has_marker) {
+        marker_end = std::min(original_size, marker_start + std::max<std::size_t>(line.marker_len, 1));
+    }
+
+    std::size_t window_start = 0;
+    std::size_t window_len = 0;
+    if (line.has_marker) {
+        choose_truncated_window(original_size, marker_start, window_start, window_len);
+    } else {
+        window_len = kMaxSnippetLineBytes - kSnippetEllipsisBytes;
+    }
+
+    bool truncates_start = window_start > 0;
+    bool truncates_end = window_start + window_len < original_size;
+    std::string rendered;
+    if (truncates_start) rendered += "...";
+    rendered += line.text.substr(window_start, window_len);
+    if (truncates_end) rendered += "...";
+    line.text = std::move(rendered);
+    line.truncated_start = truncates_start;
+    line.truncated_end = truncates_end;
+
+    if (!line.has_marker) return;
+
+    std::size_t rendered_prefix = truncates_start ? kSnippetEllipsisBytes : 0;
+    std::size_t visible_marker_start = std::max(marker_start, window_start);
+    std::size_t visible_marker_end = std::min(marker_end, window_start + window_len);
+    line.marker_start = rendered_prefix + (visible_marker_start - window_start);
+    if (visible_marker_end > visible_marker_start) {
+        line.marker_len = visible_marker_end - visible_marker_start;
+    } else {
+        line.marker_len = 1;
+    }
+}
+
+SourceSnippetLine build_snippet_line(const SourceFile& file,
+                                     std::size_t line_index,
+                                     Span normalized,
+                                     std::size_t start_line,
+                                     std::size_t end_line) {
+    SourceSnippetLine line;
+    line.line_number = line_index + 1;
+    line.byte_start = file.line_starts[line_index];
+    std::size_t line_end = line_end_for_start(file, line.byte_start);
+    line.text = file.text.substr(line.byte_start, line_end - line.byte_start);
+
+    if (start_line <= line_index && line_index <= end_line) {
+        line.has_marker = true;
+        std::size_t marker_begin = line_index == start_line
+            ? std::min(normalized.start, line_end)
+            : line.byte_start;
+        std::size_t marker_end = marker_begin;
+        if (!span_is_empty(normalized)) {
+            marker_end = line_index == end_line
+                ? std::min(normalized.end, line_end)
+                : line_end;
+        }
+        line.marker_start = marker_begin - line.byte_start;
+        if (marker_end > marker_begin) {
+            line.marker_len = marker_end - marker_begin;
+        } else {
+            line.marker_len = 1;
+        }
+    }
+
+    truncate_snippet_line(line);
+    return line;
+}
+
+void set_legacy_snippet_fields(SourceSnippet& snippet, std::size_t start_line) {
+    if (snippet.lines.empty()) return;
+    const SourceSnippetLine* selected = &snippet.lines.front();
+    for (const SourceSnippetLine& line : snippet.lines) {
+        if (line.line_number == start_line + 1) {
+            selected = &line;
+            break;
+        }
+    }
+    snippet.line_text = selected->text;
+    snippet.line_number = selected->line_number;
+    snippet.marker_start = selected->marker_start;
+    snippet.marker_len = selected->marker_len;
+}
+
+void append_marker_padding(std::ostringstream& out,
+                           const std::string& text,
+                           std::size_t marker_start) {
+    std::size_t text_padding = std::min(marker_start, text.size());
+    for (std::size_t i = 0; i < text_padding; ++i) {
+        out << (text[i] == '\t' ? '\t' : ' ');
+    }
+    for (std::size_t i = text_padding; i < marker_start; ++i) {
+        out << ' ';
+    }
 }
 
 std::optional<std::size_t> byte_offset_for_line_column(const SourceFile& file, int line, int column) {
@@ -479,23 +619,40 @@ SourceLocation SourceMap::end_location(const std::string& source_name) const {
 }
 
 SourceSnippet SourceMap::snippet(Span source_span) const {
+    return snippet(source_span, kDefaultSnippetContextLines);
+}
+
+SourceSnippet SourceMap::snippet(Span source_span, std::size_t context_lines) const {
     SourceSnippet result;
     const SourceFile* file = get(source_span.source_id);
     if (file == nullptr) return result;
 
     Span normalized = span(source_span.source_id, source_span.start, source_span.end);
-    std::size_t line_start = line_start_for_offset(*file, normalized.start);
-    std::size_t line_end = line_end_for_start(*file, line_start);
-    std::size_t span_end = std::min(normalized.end, file->eof_offset);
+    std::size_t start_line = line_index_for_offset(*file, normalized.start);
+    std::size_t end_offset = normalized.end > normalized.start ? normalized.end - 1 : normalized.start;
+    std::size_t end_line = line_index_for_offset(*file, end_offset);
+    if (end_line < start_line) end_line = start_line;
+
+    std::size_t final_line = last_line_index(*file);
+    std::size_t first_snippet_line = context_lines > start_line ? 0 : start_line - context_lines;
+    std::size_t last_snippet_line = end_line;
+    if (context_lines > final_line - end_line) {
+        last_snippet_line = final_line;
+    } else {
+        last_snippet_line = end_line + context_lines;
+    }
 
     result.span = normalized;
     result.start = location(normalized.source_id, normalized.start);
     result.source_name = file->display_name;
-    result.line_text = file->text.substr(line_start, line_end - line_start);
-    result.line_number = static_cast<std::size_t>(result.start.line);
-    result.marker_start = std::min(normalized.start, line_end) - line_start;
-    std::size_t marker_end = std::min(std::max(span_end, normalized.start + 1), line_end);
-    result.marker_len = marker_end > normalized.start ? marker_end - normalized.start : 1;
+    result.context_lines = context_lines;
+    result.lines.reserve(last_snippet_line - first_snippet_line + 1);
+    for (std::size_t line_index = first_snippet_line; line_index <= last_snippet_line; ++line_index) {
+        result.lines.push_back(build_snippet_line(*file, line_index, normalized, start_line, end_line));
+        const SourceSnippetLine& line = result.lines.back();
+        result.truncated = result.truncated || line.truncated_start || line.truncated_end;
+    }
+    set_legacy_snippet_fields(result, start_line);
     result.valid = true;
     return result;
 }
@@ -643,17 +800,41 @@ SourceLocation source_end_location(const std::string& source_name) {
 
 std::string render_source_snippet(const SourceSnippet& snippet) {
     if (!snippet.valid) return "";
-    std::string line_number = std::to_string(snippet.line_number);
+
+    if (snippet.lines.empty()) {
+        std::string line_number = std::to_string(snippet.line_number);
+        std::ostringstream out;
+        out << "  --> " << snippet.source_name << ":" << snippet.start.line << ":" << snippet.start.column << "\n"
+            << "   |\n"
+            << " " << line_number << " | " << snippet.line_text << "\n"
+            << "   | ";
+        append_marker_padding(out, snippet.line_text, snippet.marker_start);
+        for (std::size_t i = 0; i < std::max<std::size_t>(snippet.marker_len, 1); ++i) out << '^';
+        return out.str();
+    }
+
+    std::size_t width = 1;
+    for (const SourceSnippetLine& line : snippet.lines) {
+        width = std::max(width, decimal_width(line.line_number));
+    }
+    std::string gutter_space(width, ' ');
     std::ostringstream out;
     out << "  --> " << snippet.source_name << ":" << snippet.start.line << ":" << snippet.start.column << "\n"
-        << "   |\n"
-        << " " << line_number << " | " << snippet.line_text << "\n"
-        << "   | ";
-    for (std::size_t i = 0; i < snippet.marker_start; ++i) {
-        out << (snippet.line_text[i] == '\t' ? '\t' : ' ');
+        << " " << gutter_space << " |\n";
+    for (std::size_t line_index = 0; line_index < snippet.lines.size(); ++line_index) {
+        const SourceSnippetLine& line = snippet.lines[line_index];
+        std::string line_number = std::to_string(line.line_number);
+        out << " " << std::string(width - line_number.size(), ' ') << line_number << " | " << line.text << "\n";
+        if (line.has_marker) {
+            out << " " << gutter_space << " | ";
+            append_marker_padding(out, line.text, line.marker_start);
+            for (std::size_t i = 0; i < std::max<std::size_t>(line.marker_len, 1); ++i) out << '^';
+            if (line_index + 1 < snippet.lines.size()) out << "\n";
+        }
     }
-    for (std::size_t i = 0; i < snippet.marker_len; ++i) out << '^';
-    return out.str();
+    std::string rendered = out.str();
+    if (!rendered.empty() && rendered.back() == '\n') rendered.pop_back();
+    return rendered;
 }
 
 std::string render_source_snippet(Span span) {
