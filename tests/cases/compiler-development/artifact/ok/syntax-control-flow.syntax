@@ -1,0 +1,47 @@
+Program source=tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari
+  Enum name=Step @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:1:6 source_id=0 bytes=5..9
+    Case name=Stop @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:2:3 source_id=0 bytes=14..18
+    Case name=More payloads=i64 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:3:3 source_id=0 bytes=22..26
+  Function name=choose return=i64 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:6:4 source_id=0 bytes=39..45
+    Param name=limit type=i64
+    Body
+      VarDecl name=total mut @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:7:7 source_id=0 bytes=73..78
+        Integer value=0 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:7:15 source_id=0 bytes=81..82
+      InitWhile @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:8:8 source_id=0 bytes=91..96
+        Init name=index mut @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:8:8 source_id=0 bytes=91..96
+          Integer value=0 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:8:16 source_id=0 bytes=99..100
+        Binary op="<" @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:8:30 source_id=0 bytes=113..114
+          Name value=index @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:8:24 source_id=0 bytes=107..112
+          Name value=limit @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:8:32 source_id=0 bytes=115..120
+        If @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:9:8 source_id=0 bytes=130..135
+          Binary op="==" @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:9:14 source_id=0 bytes=136..138
+            Name value=index @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:9:8 source_id=0 bytes=130..135
+            Integer value=2 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:9:17 source_id=0 bytes=139..140
+          Then
+            Continue @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:10:15 source_id=0 bytes=157..158
+          Else
+            Assign name=total @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:12:7 source_id=0 bytes=178..183
+              Binary op="+" @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:12:21 source_id=0 bytes=192..193
+                Name value=total @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:12:15 source_id=0 bytes=186..191
+                Name value=index @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:12:23 source_id=0 bytes=194..199
+        If @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:15:8 source_id=0 bytes=215..220
+          Binary op=">" @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:15:14 source_id=0 bytes=221..222
+            Name value=total @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:15:8 source_id=0 bytes=215..220
+            Integer value=4 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:15:16 source_id=0 bytes=223..224
+          Then
+            Break @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:16:7 source_id=0 bytes=233..238
+      Return @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:20:10 source_id=0 bytes=275..280
+        MatchExpr @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:20:10 source_id=0 bytes=275..280
+          Call name=More @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:20:16 source_id=0 bytes=281..285
+            Name value=total @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:20:21 source_id=0 bytes=286..291
+          Arm @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:21:5 source_id=0 bytes=299..303
+            Pattern EnumCase name=More @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:21:5 source_id=0 bytes=299..303
+            Name value=value @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:21:20 source_id=0 bytes=314..319
+          Arm @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:22:5 source_id=0 bytes=325..329
+            Pattern EnumCase name=Stop @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:22:5 source_id=0 bytes=325..329
+            Integer value=0 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:22:13 source_id=0 bytes=333..334
+  Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:26:4 source_id=0 bytes=347..351
+    Body
+      Return @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:27:10 source_id=0 bytes=372..378
+        Call name=choose @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:27:10 source_id=0 bytes=372..378
+          Integer value=5 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:27:17 source_id=0 bytes=379..380

@@ -255,24 +255,33 @@ middle-end, backend-fragment, and runtime-output producers:
 ```text
 tests/check_compiler_artifacts.py
 tests/check_compiler_artifact_cli.py
+tests/materialize_crlf_fixture.py
 tests/source_map_unit.cpp
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/capability-inventory.inventory
 tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag
+tests/cases/compiler-development/artifact/ok/backend-trait-dispatch.llvm-frag
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
 tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog
+tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir
+tests/cases/compiler-development/artifact/ok/project-compiler.ir
 tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout
+tests/cases/compiler-development/artifact/ok/runtime-output-trait.stdout
+tests/cases/compiler-development/artifact/ok/source-map-crlf.map
+tests/cases/compiler-development/artifact/ok/source-map-empty.map
 tests/cases/compiler-development/artifact/ok/source-map-file-module.map
 tests/cases/compiler-development/artifact/ok/source-map-utf8.map
 tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
 tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens
+tests/cases/compiler-development/artifact/ok/token-dump-crlf.tokens
 tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.tokens
 tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph
 tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary
 tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan
+tests/cases/compiler-development/artifact/ok/syntax-control-flow.syntax
 tests/cases/compiler-development/artifact/ok/syntax-declarations.syntax
 tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax
 tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
@@ -338,13 +347,19 @@ It currently proves more than two dozen low-level contracts:
   `--emit-tokens, --emit-syntax`
 - `--emit-source-map` writes deterministic source file identity, kind,
   canonical path, display name, EOF offset, line table size, byte offset, line,
-  and newline-policy text for root, file-backed modules, and a UTF-8 fixture
+  and newline-policy text for root, file-backed modules, empty files, CRLF
+  files, and UTF-8 fixtures
+- CRLF input bytes are materialized into `build/` from an LF-normalized fixture
+  template, `source-map-crlf-template.ari`, so committed sources keep passing
+  whitespace checks while source artifacts still prove real CRLF behavior
 - `--emit-tokens` writes deterministic lexer output for small and lexical
   surface Ari source files, including comments, strings, literal suffixes,
-  compound operators, EOF, and UTF-8 byte spans
+  compound operators, EOF, CRLF line starts, and UTF-8 byte spans
 - `--emit-syntax` writes deterministic parser output with AST `source_id=` and
   byte spans before sema and backend behavior are involved, including a
-  declaration-surface fixture with modules, generics, traits, impls, and match
+  declaration-surface fixture with modules, generics, traits, impls, and match,
+  plus a control-flow fixture with `init while`, `continue`, `break`, and
+  match expression shape
 - `--emit-diagnostics` writes a normalized diagnostic artifact for an expected
   compiler failure
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,
@@ -361,15 +376,17 @@ It currently proves more than two dozen low-level contracts:
   item-surface facts without running sema or LLVM codegen
 - `--emit-declaration-index` writes deterministic declaration signatures,
   visibility, module names, and source locations before sema or LLVM codegen
-- `--emit-typed-ir` writes deterministic sema-lowered IR for a small Ari source
-  file without involving LLVM codegen
+- `--emit-typed-ir` writes deterministic sema-lowered IR for small Ari, core
+  scalar flow, trait dispatch, generic aggregate, file-backed module, and
+  ownership/drop fixtures without involving LLVM codegen
 - `--emit-pass-summary` writes deterministic stage counts for lexing, syntax,
   module loading, and sema
 - `--emit-llvm` is checked through review-sized function fragments for core
-  control flow and generic aggregate lowering instead of committing the whole
-  runtime-heavy LLVM file
-- executable stdout is checked through a small runtime-output golden after the
-  earlier source, syntax, typed IR, and LLVM checks pass
+  control flow, generic aggregate lowering, and static trait dispatch instead
+  of committing the whole runtime-heavy LLVM file
+- executable stdout is checked through small runtime-output goldens, including
+  one trait-bound dispatch program, after the earlier source, syntax, typed IR,
+  and LLVM checks pass
 
 The first typed-IR golden uses `--no-implicit-std` so the fixture protects the
 source file's lowered facts instead of recording every implicit prelude
@@ -435,5 +452,6 @@ end test.
 
 Stage comparison remains a compiler maturity blocker, but the artifact bucket
 now covers frontend, source identity, diagnostics, module graphs, declarations,
-typed IR, LLVM fragments, and one stdout golden. The remaining larger gaps are
-HIR, object/shared symbol goldens, and broader backend/runtime fixture breadth.
+typed IR for modules/ownership/generics/traits, LLVM fragments, and stdout
+goldens. The remaining larger gaps are HIR, object/shared symbol goldens, and
+broader backend/runtime fixture breadth.

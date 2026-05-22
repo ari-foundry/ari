@@ -106,19 +106,27 @@ Keep fixture names behavior-based:
 
 - `source-map-file-module.map`
 - `source-map-utf8.map`
+- `source-map-empty.map`
+- `source-map-crlf.map`
 - `token-dump-basic.tokens`
 - `token-dump-lexical-surface.tokens`
+- `token-dump-crlf.tokens`
 - `syntax-dump-basic.syntax`
 - `syntax-declarations.syntax`
+- `syntax-control-flow.syntax`
 - `module-graph-file-module.graph`
 - `declaration-index-basic.decls`
 - `capability-inventory.inventory`
 - `diagnostic-catalog.catalog`
 - `stage-plan-basic.plan`
 - `typed-ir-basic.ir`
+- `project-compiler.ir`
+- `ownership-aggregate-field-move.ir`
 - `backend-core.llvm-frag`
 - `backend-generic-aggregate.llvm-frag`
+- `backend-trait-dispatch.llvm-frag`
 - `runtime-output-basic.stdout`
+- `runtime-output-trait.stdout`
 - `diagnostic-parser-expected.diagnostic`
 
 ## Focused Checks
@@ -138,6 +146,7 @@ build/ari --explain-work-item generic-aggregate-stress
 build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens build/focused/token.tokens
+python3 tests/materialize_crlf_fixture.py tests/cases/compiler-development/artifact/ok/source-map-crlf-template.ari build/focused/source-map-crlf.ari
 python3 tests/check_compiler_artifacts.py expected actual
 python3 tests/check_compiler_artifacts.py --update expected actual
 make check-compiler-artifacts

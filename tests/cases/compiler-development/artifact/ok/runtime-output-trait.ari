@@ -1,0 +1,23 @@
+trait Scored {
+  fn score(self) -> i64
+}
+
+struct Token {
+  kind: i64,
+}
+
+impl Scored for Token {
+  fn score(self) -> i64 {
+    return self.kind + 10;
+  }
+}
+
+fn score_item[T: Scored](value: T) -> i64 {
+  return value.score();
+}
+
+fn main() -> i64 {
+  let token = Token { kind: 7 };
+  println("trait-dispatch={}", score_item<Token>(token));
+  return 0;
+}

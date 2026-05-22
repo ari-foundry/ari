@@ -1,0 +1,17 @@
+token KwFn "fn" @ build/compiler-development/artifact/source-map-crlf.ari:1:1 source_id=0 bytes=0..2
+token Identifier "main" @ build/compiler-development/artifact/source-map-crlf.ari:1:4 source_id=0 bytes=3..7
+token LParen "(" @ build/compiler-development/artifact/source-map-crlf.ari:1:8 source_id=0 bytes=7..8
+token RParen ")" @ build/compiler-development/artifact/source-map-crlf.ari:1:9 source_id=0 bytes=8..9
+token Arrow "->" @ build/compiler-development/artifact/source-map-crlf.ari:1:11 source_id=0 bytes=10..12
+token Identifier "i64" @ build/compiler-development/artifact/source-map-crlf.ari:1:14 source_id=0 bytes=13..16
+token LBrace "{" @ build/compiler-development/artifact/source-map-crlf.ari:1:18 source_id=0 bytes=17..18
+token KwLet "let" @ build/compiler-development/artifact/source-map-crlf.ari:2:3 source_id=0 bytes=22..25
+token Identifier "value" @ build/compiler-development/artifact/source-map-crlf.ari:2:7 source_id=0 bytes=26..31
+token Equal "=" @ build/compiler-development/artifact/source-map-crlf.ari:2:13 source_id=0 bytes=32..33
+token Integer "3" value=3 @ build/compiler-development/artifact/source-map-crlf.ari:2:15 source_id=0 bytes=34..35
+token Semicolon ";" @ build/compiler-development/artifact/source-map-crlf.ari:2:16 source_id=0 bytes=35..36
+token KwReturn "return" @ build/compiler-development/artifact/source-map-crlf.ari:3:3 source_id=0 bytes=40..46
+token Identifier "value" @ build/compiler-development/artifact/source-map-crlf.ari:3:10 source_id=0 bytes=47..52
+token Semicolon ";" @ build/compiler-development/artifact/source-map-crlf.ari:3:15 source_id=0 bytes=52..53
+token RBrace "}" @ build/compiler-development/artifact/source-map-crlf.ari:4:1 source_id=0 bytes=55..56
+token End "" @ build/compiler-development/artifact/source-map-crlf.ari:5:1 source_id=0 bytes=58..58

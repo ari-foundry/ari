@@ -1,0 +1,121 @@
+LLVMFunctionExtract source=build/compiler-development/artifact/trait-minimum-static-dispatch.ll functions=4
+  Function symbol=_ARNv17same__G_TokenKind
+    define i1 @"_ARNv17same__G_TokenKind"(i64 %arg0, i64 %arg1) {
+    entry:
+      %left.addr.0 = alloca i64
+      %right.addr.1 = alloca i64
+      store i64 %arg0, ptr %left.addr.0
+      store i64 %arg1, ptr %right.addr.1
+      %t0 = load i64, ptr %left.addr.0
+      %t1 = load i64, ptr %right.addr.1
+      %t2 = call i1 @"_ARNv4impl9TokenKind9Equatable4same"(i64 %t0, i64 %t1)
+      ret i1 %t2
+    }
+  Function symbol=_ARNv4impl9TokenKind9Equatable4same
+    define i1 @"_ARNv4impl9TokenKind9Equatable4same"(i64 %arg0, i64 %arg1) {
+    entry:
+      %self.addr.0 = alloca i64
+      %other.addr.1 = alloca i64
+      store i64 %arg0, ptr %self.addr.0
+      store i64 %arg1, ptr %other.addr.1
+      %t0 = load i64, ptr %self.addr.0
+      %t1 = trunc i64 %t0 to i32
+      br label %match.expr.test.4
+    match.expr.test.4:
+      %t2 = icmp eq i32 %t1, 0
+      br i1 %t2, label %match.expr.arm.1, label %match.expr.test.5
+    match.expr.test.5:
+      %t3 = icmp eq i32 %t1, 1
+      br i1 %t3, label %match.expr.arm.2, label %match.expr.test.6
+    match.expr.test.6:
+      br label %match.expr.arm.3
+    match.expr.arm.1:
+      %t4 = load i64, ptr %other.addr.1
+      %t5 = trunc i64 %t4 to i32
+      br label %match.expr.test.11
+    match.expr.test.11:
+      %t6 = icmp eq i32 %t5, 0
+      br i1 %t6, label %match.expr.arm.8, label %match.expr.test.12
+    match.expr.test.12:
+      %t7 = icmp eq i32 %t5, 1
+      br i1 %t7, label %match.expr.arm.9, label %match.expr.test.13
+    match.expr.test.13:
+      br label %match.expr.arm.10
+    match.expr.arm.8:
+      br label %match.expr.end.7
+    match.expr.arm.9:
+      br label %match.expr.end.7
+    match.expr.arm.10:
+      br label %match.expr.end.7
+    match.expr.end.7:
+      %t8 = phi i1 [1, %match.expr.arm.8], [0, %match.expr.arm.9], [0, %match.expr.arm.10]
+      br label %match.expr.end.0
+    match.expr.arm.2:
+      %t9 = load i64, ptr %other.addr.1
+      %t10 = trunc i64 %t9 to i32
+      br label %match.expr.test.18
+    match.expr.test.18:
+      %t11 = icmp eq i32 %t10, 0
+      br i1 %t11, label %match.expr.arm.15, label %match.expr.test.19
+    match.expr.test.19:
+      %t12 = icmp eq i32 %t10, 1
+      br i1 %t12, label %match.expr.arm.16, label %match.expr.test.20
+    match.expr.test.20:
+      br label %match.expr.arm.17
+    match.expr.arm.15:
+      br label %match.expr.end.14
+    match.expr.arm.16:
+      br label %match.expr.end.14
+    match.expr.arm.17:
+      br label %match.expr.end.14
+    match.expr.end.14:
+      %t13 = phi i1 [0, %match.expr.arm.15], [1, %match.expr.arm.16], [0, %match.expr.arm.17]
+      br label %match.expr.end.0
+    match.expr.arm.3:
+      %t14 = load i64, ptr %other.addr.1
+      %t15 = trunc i64 %t14 to i32
+      br label %match.expr.test.25
+    match.expr.test.25:
+      %t16 = icmp eq i32 %t15, 0
+      br i1 %t16, label %match.expr.arm.22, label %match.expr.test.26
+    match.expr.test.26:
+      %t17 = icmp eq i32 %t15, 1
+      br i1 %t17, label %match.expr.arm.23, label %match.expr.test.27
+    match.expr.test.27:
+      br label %match.expr.arm.24
+    match.expr.arm.22:
+      br label %match.expr.end.21
+    match.expr.arm.23:
+      br label %match.expr.end.21
+    match.expr.arm.24:
+      br label %match.expr.end.21
+    match.expr.end.21:
+      %t18 = phi i1 [0, %match.expr.arm.22], [0, %match.expr.arm.23], [1, %match.expr.arm.24]
+      br label %match.expr.end.0
+    match.expr.end.0:
+      %t19 = phi i1 [%t8, %match.expr.end.7], [%t13, %match.expr.end.14], [%t18, %match.expr.end.21]
+      ret i1 %t19
+    }
+  Function symbol=_ARNv25bucket_hash__G_SymbolName
+    define i64 @"_ARNv25bucket_hash__G_SymbolName"({ i64, i64 } %arg0) {
+    entry:
+      %key.addr.0 = alloca { i64, i64 }
+      store { i64, i64 } %arg0, ptr %key.addr.0
+      %t0 = load { i64, i64 }, ptr %key.addr.0
+      %t1 = call i64 @"_ARNv4impl10SymbolName8Hashable9hash_code"({ i64, i64 } %t0)
+      %t2 = srem i64 %t1, 97
+      ret i64 %t2
+    }
+  Function symbol=_ARNv4impl10SymbolName8Hashable9hash_code
+    define i64 @"_ARNv4impl10SymbolName8Hashable9hash_code"({ i64, i64 } %arg0) {
+    entry:
+      %self.addr.0 = alloca { i64, i64 }
+      store { i64, i64 } %arg0, ptr %self.addr.0
+      %t0 = load { i64, i64 }, ptr %self.addr.0
+      %t1 = extractvalue { i64, i64 } %t0, 0
+      %t2 = mul i64 %t1, 31
+      %t3 = load { i64, i64 }, ptr %self.addr.0
+      %t4 = extractvalue { i64, i64 } %t3, 1
+      %t5 = add i64 %t2, %t4
+      ret i64 %t5
+    }

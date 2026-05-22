@@ -78,9 +78,11 @@ the same language surface that normal Ari users get.
   one-line and multi-line files, EOF, CRLF, UTF-8 byte columns, invalid spans,
   multi-file ids, source replacement identity, generated sources, missing
   source fallback, and snippets.
-- `artifact/ok/source-map-file-module.map` and `source-map-utf8.map`: source
-  byte, line, newline, and UTF-8 golden seeds for root plus file-backed child
-  module sources.
+- `artifact/ok/source-map-file-module.map`, `source-map-empty.map`,
+  `source-map-crlf.map`, and `source-map-utf8.map`: source byte, line, EOF,
+  newline, CRLF, and UTF-8 golden seeds for root plus file-backed child module
+  sources. The CRLF input is materialized into `build/` from
+  `source-map-crlf-template.ari` so committed fixtures remain LF-normalized.
 - `artifact/ok/declaration-index-basic.*`: declaration signature, visibility,
   module, and source-location golden seed before semantic lowering.
 - `artifact/ok/stage-plan-basic.plan`: compiler artifact order, layer owner,
@@ -89,11 +91,14 @@ the same language surface that normal Ari users get.
   and rejected compiler capability status emitted by the driver.
 - `artifact/ok/diagnostic-catalog.catalog`: diagnostic code, family, owner,
   and fallback-policy golden seed emitted by the driver.
-- `artifact/ok/token-dump-basic.*` and `token-dump-lexical-surface.*`: lexer
-  token spans, comments, strings, literal suffixes, compound operators, EOF,
-  parser AST spans, and typed-IR golden seeds.
+- `artifact/ok/token-dump-basic.*`, `token-dump-lexical-surface.*`, and
+  `token-dump-crlf.tokens`: lexer token spans, comments, strings, literal
+  suffixes, compound operators, EOF, CRLF byte offsets, parser AST spans, and
+  typed-IR golden seeds.
 - `artifact/ok/syntax-declarations.*`: parser declaration-surface golden for
   inline modules, use aliases, generic structs/enums, traits, impls, and match.
+- `artifact/ok/syntax-control-flow.*`: parser control-flow golden for
+  `init while`, `continue`, `break`, `else`, and match expression shape.
 - `artifact/ok/module-graph-file-module.graph`: file-backed module graph
   golden seed for resolved sources, imports, and item surfaces.
 - `artifact/ok/pass-summary-basic.summary`: driver-level stage count seed for
@@ -101,11 +106,17 @@ the same language surface that normal Ari users get.
 - `artifact/ok/generic-aggregate-monomorphization.ir`: typed IR golden for
   concrete user-defined generic aggregate instantiations, nested enum payloads,
   method specialization, and owned generic fields.
+- `artifact/ok/project-compiler.ir`: typed IR golden for compiler-shaped
+  file-backed modules, cross-file calls, qualified types, generic module
+  payloads, and enum matching.
+- `artifact/ok/ownership-aggregate-field-move.ir`: typed IR golden for `own`
+  field moves, field replacement, explicit `drop`, and aggregate storage.
 - `artifact/ok/backend-*.llvm-frag`: extracted LLVM function fragments for core
-  control flow and generic aggregate backend lowering, kept smaller than full
-  runtime-heavy LLVM files.
-- `artifact/ok/runtime-output-basic.*`: executable stdout golden that runs only
-  after earlier frontend, typed IR, and backend artifacts are stable.
+  control flow, generic aggregate backend lowering, and static trait dispatch,
+  kept smaller than full runtime-heavy LLVM files.
+- `artifact/ok/runtime-output-basic.*` and `runtime-output-trait.*`:
+  executable stdout goldens that run only after earlier frontend, typed IR, and
+  backend artifacts are stable.
 - `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module
   missing/ambiguous/cyclic validation, unknown-name, duplicate-name,
   wrong-arity, wrong-argument, invalid-return, invalid-assignment, trait, and

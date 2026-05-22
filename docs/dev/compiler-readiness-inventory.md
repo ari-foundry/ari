@@ -243,16 +243,19 @@ Current compiler-development tests:
   compiler abstraction boundaries should use `trait`.
   Together these prove class/interface private syntax stays rejected in ordinary
   compiler-development fixtures.
-- `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari` and
-  `token-dump-lexical-surface.ari`: lexer artifact fixtures checked through
-  `--emit-tokens`.
+- `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari`,
+  `token-dump-lexical-surface.ari`, and `token-dump-crlf.tokens`: lexer
+  artifact fixtures checked through `--emit-tokens`.
 - `tests/cases/compiler-development/artifact/ok/source-map-file-module.map`:
   source byte/line table golden checked through `--emit-source-map`.
-- `tests/cases/compiler-development/artifact/ok/source-map-utf8.map`:
-  UTF-8 byte/line table golden checked through `--emit-source-map`.
+- `tests/cases/compiler-development/artifact/ok/source-map-empty.map`,
+  `source-map-crlf.map`, and `source-map-utf8.map`: empty-file, CRLF, and
+  UTF-8 byte/line table goldens checked through `--emit-source-map`.
 - `tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax` and
   `syntax-declarations.syntax`: parser artifact goldens checked through
   `--emit-syntax`.
+- `tests/cases/compiler-development/artifact/ok/syntax-control-flow.syntax`:
+  parser control-flow artifact golden checked through `--emit-syntax`.
 - `tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph`:
   file-backed source/import/item graph golden checked through
   `--emit-module-graph`.
@@ -270,13 +273,19 @@ Current compiler-development tests:
   `--emit-diagnostic-catalog`.
 - `tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir`: sema and
   typed-IR artifact golden checked through `--emit-typed-ir`.
+- `tests/cases/compiler-development/artifact/ok/project-compiler.ir`:
+  compiler-shaped file-backed module typed-IR artifact golden checked through
+  `--emit-typed-ir`.
+- `tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir`:
+  ownership/drop typed-IR artifact golden checked through `--emit-typed-ir`.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
-- `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag` and
-  `backend-generic-aggregate.llvm-frag`: extracted LLVM backend fragments
-  checked after full `--emit-llvm` generation.
-- `tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout`:
-  executable stdout golden checked when the LLVM driver is available.
+- `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
+  `backend-generic-aggregate.llvm-frag`, and `backend-trait-dispatch.llvm-frag`:
+  extracted LLVM backend fragments checked after full `--emit-llvm` generation.
+- `tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout` and
+  `runtime-output-trait.stdout`: executable stdout goldens checked when the LLVM
+  driver is available.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic`:
   lexer diagnostic golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic`:

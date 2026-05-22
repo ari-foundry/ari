@@ -1,0 +1,28 @@
+enum Step {
+  Stop,
+  More(i64),
+}
+
+fn choose(limit: i64) -> i64 {
+  var total = 0;
+  init index = 0 while index < limit {
+    if index == 2 {
+      continue;
+    } else {
+      total = total + index;
+    }
+
+    if total > 4 {
+      break;
+    }
+  } next index + 1
+
+  return match More(total) {
+    More(value) => value,
+    Stop => 0,
+  };
+}
+
+fn main() -> i64 {
+  return choose(5);
+}

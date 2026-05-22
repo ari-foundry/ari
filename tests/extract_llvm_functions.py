@@ -7,6 +7,17 @@ from pathlib import Path
 import sys
 
 
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def display_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
 def extract_function(lines: list[str], symbol: str) -> list[str]:
     needle = f'@"{symbol}"'
     for index, line in enumerate(lines):
@@ -30,7 +41,7 @@ def main(argv: list[str]) -> int:
 
     path = Path(argv[1])
     lines = path.read_text(encoding="utf-8").splitlines()
-    print(f"LLVMFunctionExtract source={path.as_posix()} functions={len(argv) - 2}")
+    print(f"LLVMFunctionExtract source={display_path(path)} functions={len(argv) - 2}")
     for symbol in argv[2:]:
         print(f"  Function symbol={symbol}")
         for line in extract_function(lines, symbol):

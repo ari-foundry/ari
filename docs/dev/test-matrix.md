@@ -196,10 +196,14 @@ Checklist:
 - [x] inspect generated LLVM IR for Ari `main` and host wrapper
 - [x] compare review-sized LLVM function fragments for core control flow and
       generic aggregate lowering in `make check-compiler-artifacts`
+- [x] compare review-sized LLVM function fragments for static trait dispatch
+      selection and impl targets in `make check-compiler-artifacts`
 - [x] run parser/module/sema diagnostics without backend output using `--check`
 - [x] reject removed generated-C++ options
 - [x] compile and run a Linux executable with the LLVM backend
 - [x] compare a stable stdout golden for a linked executable when the LLVM
+      driver is available
+- [x] compare a stable stdout golden for trait-bound dispatch when the LLVM
       driver is available
 - [x] LLVM output is executable without a test-side `chmod +x`
 - [x] emit LLVM-driver relocatable objects with

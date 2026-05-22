@@ -1,0 +1,45 @@
+IrProgram source=tests/cases/ownership/ok/ownership-aggregate-field-move.ari target=x86_64-pc-linux-gnu require_main=true
+  Function name=make_owned return=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:7:4
+    Param name=value type=i64
+    Body
+      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:8:10
+        Local name=value type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:8:10
+  Function name=consume return=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:11:4
+    Param name=value type=own i64
+    Body
+      Drop name=value @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:12:8
+      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:13:10
+        Integer type=i64 value=5 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:13:10
+  Function name=main return=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:16:4
+    Body
+      VarDecl name=holder type=Holder mut @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:7
+        Tuple type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:16
+          Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:32
+            Integer type=i64 value=1 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:43
+          Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:55
+            Integer type=i64 value=2 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:66
+          Integer type=i64 value=3 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:77
+      VarDecl name=token type=own i64 let @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:18:7
+        TupleIndex index=0 type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:18:22
+          Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:18:15
+      Assign name= @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:3
+        TupleIndex index=2 type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:10
+          Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:3
+        Binary op="+" type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:31
+          TupleIndex index=2 type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:25
+            Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:18
+          Integer type=i64 value=4 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:33
+      VarDecl name=score type=i64 let @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:7
+        Binary op="+" type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:30
+          Call name=consume type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:15
+            Local name=token type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:23
+          TupleIndex index=2 type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:39
+            Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:32
+      Assign name= @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:3
+        TupleIndex index=0 type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:10
+          Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:3
+        Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:18
+          Integer type=i64 value=9 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:29
+      Drop name=holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:22:8
+      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:23:10
+        Local name=score type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:23:10
