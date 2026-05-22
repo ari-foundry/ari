@@ -91,6 +91,14 @@ versioned `clang-21` through `clang-14`, and common `/usr/lib/llvm-*` install
 paths. Set `LLVM_CC=/path/to/clang` for make recipes or `ARI_LLVM_CC` for the
 driver default when using a custom toolchain.
 
+`make check-core-language` runs the focused readiness gate for the executable
+core language: calls, multiple parameters, recursion, locals, assignment,
+inference, scalar arithmetic/comparison/boolean/bitwise/unary operators,
+explicit casts, blocks, `if`, `while`, `for` over ranges, `break`, `continue`,
+and branch/block returns. It also rechecks representative stable diagnostics for
+wrong calls, return errors, assignment errors, use-before-declaration, invalid
+operators, invalid casts, loop-control misuse, and branch type mismatches.
+
 `make check-operators` runs operator and literal-focused tests for integer and
 float literal suffixes, integer base prefixes, string escapes, bitwise-not,
 postfix `?`, Option/Result-style `??`, `f32`/`f64`/`f128` LLVM

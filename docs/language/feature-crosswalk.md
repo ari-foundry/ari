@@ -24,6 +24,7 @@ in executable code. Parsed syntax is not always lowered all the way to LLVM.
 
 | Feature | Read | Example | Tests | Small check |
 | --- | --- | --- | --- | --- |
+| Core language readiness | [Feature Status](feature-status.md), [Functions](functions.md), [Variables](variables.md), [Operators](operators.md), [Control Flow](control-flow.md) | `tests/cases/core-language/ok/core-language-readiness.ari` | `tests/cases/core-language/` | `make check-core-language` |
 | Program entry and return code | [Getting Started](getting-started.md), [Functions](functions.md) | `examples/hello.ari`, `examples/count.ari` | `tests/cases/functions/ok/` | `build/ari path/to/file.ari --check` |
 | Local values and mutation | [Variables](variables.md) | [Language Tour](language-tour.md) | `tests/cases/variables/` | `make check-variables` |
 | Integer, bool, char, and string literals | [Literals](literals.md), [Types](types.md) | [Quick Reference](quick-reference.md) | `tests/cases/literals/`, `tests/cases/operators/` | `build/ari path/to/file.ari --check` |

@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-source-map-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-source-map-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -12,7 +12,7 @@ check-sanitize: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_o
 check-sanitize: TOOL_ARI := $(SANITIZE_TARGET)
 check-sanitize: $(SANITIZE_TARGET) check
 
-check: check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-bootstrap-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
+check: check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-bootstrap-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
 	mkdir -p $(BUILD_DIR)/ir
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/ir/count.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/ir/count.ll
@@ -97,6 +97,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-core-use-before-declaration.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-core-use-before-declaration.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-core-use-before-declaration.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-core-use-before-declaration.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-diagnostic-catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog
@@ -113,6 +115,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan $(BUILD_DIR)/compiler-development/artifact/stage-plan-basic.plan
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
+	$(TARGET) tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/core-language-scalar-flow.ir
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ir $(BUILD_DIR)/compiler-development/artifact/core-language-scalar-flow.ir
 	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/generic-aggregate-monomorphization.ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-pass-summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
@@ -2945,6 +2949,47 @@ check-prelude: $(TARGET)
 	grep -q "assert_eq! arguments must both be integer values or both be bool values" $(BUILD_DIR)/prelude/prelude-macro-assert-eq-type.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-assert-type.ari -o $(BUILD_DIR)/prelude/prelude-assert-type.elf >$(BUILD_DIR)/prelude/prelude-assert-type.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected bool, got i64" $(BUILD_DIR)/prelude/prelude-assert-type.err
+
+check-core-language: $(TARGET)
+	mkdir -p $(BUILD_DIR)/core-language
+	$(TARGET) tests/cases/core-language/ok/core-language-readiness.ari --check
+	$(TARGET) tests/cases/core-language/ok/core-language-readiness.ari -o $(BUILD_DIR)/core-language/core-language-readiness.elf
+	$(BUILD_DIR)/core-language/core-language-readiness.elf; code=$$?; test $$code -eq 115
+	$(TARGET) tests/cases/core-language/ok/core-language-readiness.ari --emit-llvm $(BUILD_DIR)/core-language/core-language-readiness.ll
+	grep -q 'define i64 @"_ARNv3add"' $(BUILD_DIR)/core-language/core-language-readiness.ll
+	grep -q 'define i64 @"_ARNv7combine"' $(BUILD_DIR)/core-language/core-language-readiness.ll
+	grep -q 'call i64 @"_ARNv4fact"' $(BUILD_DIR)/core-language/core-language-readiness.ll
+	grep -q "while.cond" $(BUILD_DIR)/core-language/core-language-readiness.ll
+	grep -q "for.cond" $(BUILD_DIR)/core-language/core-language-readiness.ll
+	grep -q "srem i64" $(BUILD_DIR)/core-language/core-language-readiness.ll
+	grep -q "shl i64" $(BUILD_DIR)/core-language/core-language-readiness.ll
+	grep -q "icmp" $(BUILD_DIR)/core-language/core-language-readiness.ll
+	if $(TARGET) tests/cases/functions/errors/function-wrong-arg-count.ari -o $(BUILD_DIR)/core-language/function-wrong-arg-count.elf >$(BUILD_DIR)/core-language/function-wrong-arg-count.err 2>&1; then exit 1; fi
+	grep -q "wrong argument count for 'add'" $(BUILD_DIR)/core-language/function-wrong-arg-count.err
+	if $(TARGET) tests/cases/functions/errors/function-arg-type-mismatch.ari -o $(BUILD_DIR)/core-language/function-arg-type-mismatch.elf >$(BUILD_DIR)/core-language/function-arg-type-mismatch.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/core-language/function-arg-type-mismatch.err
+	if $(TARGET) tests/cases/functions/errors/function-missing-return.ari -o $(BUILD_DIR)/core-language/function-missing-return.elf >$(BUILD_DIR)/core-language/function-missing-return.err 2>&1; then exit 1; fi
+	grep -q "function 'main' must return a value on all paths" $(BUILD_DIR)/core-language/function-missing-return.err
+	if $(TARGET) tests/cases/functions/errors/function-return-type-mismatch.ari -o $(BUILD_DIR)/core-language/function-return-type-mismatch.elf >$(BUILD_DIR)/core-language/function-return-type-mismatch.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/core-language/function-return-type-mismatch.err
+	if $(TARGET) tests/cases/variables/errors/variables-assign-immutable.ari -o $(BUILD_DIR)/core-language/variables-assign-immutable.elf >$(BUILD_DIR)/core-language/variables-assign-immutable.err 2>&1; then exit 1; fi
+	grep -q "cannot assign to immutable binding 'value'" $(BUILD_DIR)/core-language/variables-assign-immutable.err
+	if $(TARGET) tests/cases/variables/errors/variables-assign-type-mismatch.ari -o $(BUILD_DIR)/core-language/variables-assign-type-mismatch.elf >$(BUILD_DIR)/core-language/variables-assign-type-mismatch.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected i32, got bool" $(BUILD_DIR)/core-language/variables-assign-type-mismatch.err
+	if $(TARGET) tests/cases/core-language/errors/core-use-before-declaration.ari -o $(BUILD_DIR)/core-language/core-use-before-declaration.elf >$(BUILD_DIR)/core-language/core-use-before-declaration.err 2>&1; then exit 1; fi
+	grep -q "unknown name 'later'" $(BUILD_DIR)/core-language/core-use-before-declaration.err
+	if $(TARGET) tests/cases/core-language/errors/core-invalid-binary-operator.ari -o $(BUILD_DIR)/core-language/core-invalid-binary-operator.elf >$(BUILD_DIR)/core-language/core-invalid-binary-operator.err 2>&1; then exit 1; fi
+	grep -q "numeric operands must have the same numeric type, got bool and bool" $(BUILD_DIR)/core-language/core-invalid-binary-operator.err
+	if $(TARGET) tests/cases/core-language/errors/core-invalid-unary-minus.ari -o $(BUILD_DIR)/core-language/core-invalid-unary-minus.elf >$(BUILD_DIR)/core-language/core-invalid-unary-minus.err 2>&1; then exit 1; fi
+	grep -q "numeric operands must have the same numeric type, got i64 and bool" $(BUILD_DIR)/core-language/core-invalid-unary-minus.err
+	if $(TARGET) tests/cases/operators/errors/invalid-cast.ari -o $(BUILD_DIR)/core-language/invalid-cast.elf >$(BUILD_DIR)/core-language/invalid-cast.err 2>&1; then exit 1; fi
+	grep -q "explicit casts currently require integer types, float types, integer/float casts, or raw pointer casts, got bool as i64" $(BUILD_DIR)/core-language/invalid-cast.err
+	if $(TARGET) tests/cases/control-flow/errors/break-outside-loop.ari -o $(BUILD_DIR)/core-language/break-outside-loop.elf >$(BUILD_DIR)/core-language/break-outside-loop.err 2>&1; then exit 1; fi
+	grep -q "break used outside a loop" $(BUILD_DIR)/core-language/break-outside-loop.err
+	if $(TARGET) tests/cases/control-flow/errors/continue-outside-loop.ari -o $(BUILD_DIR)/core-language/continue-outside-loop.elf >$(BUILD_DIR)/core-language/continue-outside-loop.err 2>&1; then exit 1; fi
+	grep -q "continue used outside a loop" $(BUILD_DIR)/core-language/continue-outside-loop.err
+	if $(TARGET) tests/cases/control-flow/errors/if-expression-type-mismatch.ari -o $(BUILD_DIR)/core-language/if-expression-type-mismatch.elf >$(BUILD_DIR)/core-language/if-expression-type-mismatch.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/core-language/if-expression-type-mismatch.err
 
 check-control-flow: $(TARGET)
 	mkdir -p $(BUILD_DIR)/control-flow

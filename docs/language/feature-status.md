@@ -19,13 +19,13 @@ Status meanings:
 
 | Feature | Status | Read | Tests |
 | --- | --- | --- | --- |
-| `fn main() -> i64`, calls, recursion, returns | implemented | [Functions](functions.md) | `tests/cases/functions/` |
-| `let`, `var`, assignment, local inference | implemented | [Variables](variables.md) | `tests/cases/variables/` |
+| `fn main() -> i64`, calls, recursion, returns | implemented | [Functions](functions.md) | `tests/cases/functions/`, `make check-core-language` |
+| `let`, `var`, assignment, local inference | implemented | [Variables](variables.md) | `tests/cases/variables/`, `make check-core-language` |
 | integers, bool, `char`, strings, floats | partial | [Literals](literals.md), [Types](types.md) | `tests/cases/literals/`, `tests/cases/operators/` |
-| arithmetic, bit, comparison, logical operators | implemented | [Operators](operators.md) | `tests/cases/operators/` |
-| explicit casts with `as` | implemented | [Operators](operators.md), [Types](types.md) | `tests/cases/operators/` |
-| blocks, `if`, `while`, `break`, `continue` | implemented | [Control Flow](control-flow.md) | `tests/cases/control-flow/` |
-| ranges and `for` loops | implemented | [Control Flow](control-flow.md), [Cookbook](cookbook.md) | `tests/cases/control-flow/` |
+| arithmetic, bit, comparison, logical operators | implemented | [Operators](operators.md) | `tests/cases/operators/`, `make check-core-language` |
+| explicit casts with `as` | implemented | [Operators](operators.md), [Types](types.md) | `tests/cases/operators/`, `make check-core-language` |
+| blocks, `if`, `while`, `break`, `continue` | implemented | [Control Flow](control-flow.md) | `tests/cases/control-flow/`, `make check-core-language` |
+| ranges and `for` loops | implemented | [Control Flow](control-flow.md), [Cookbook](cookbook.md) | `tests/cases/control-flow/`, `make check-core-language` |
 | `Option`, `Result`, `?`, `??` | implemented | [Operators](operators.md), [Cookbook](cookbook.md) | `tests/cases/operators/`, `tests/cases/generics/` |
 
 ## Data Modeling

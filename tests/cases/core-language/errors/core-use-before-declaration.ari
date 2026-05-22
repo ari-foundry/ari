@@ -1,0 +1,5 @@
+fn main() -> i64 {
+  let value = later + 1;
+  let later = 2;
+  return value;
+}

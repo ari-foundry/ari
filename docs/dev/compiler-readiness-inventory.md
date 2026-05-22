@@ -43,7 +43,7 @@ get more reliable, not when a private shortcut is added.
 | Area | Current Strength | Why It Matters |
 | --- | --- | --- |
 | Hosted LLVM backend | Ari emits LLVM IR, objects, executables, and shared libraries through the LLVM path. | Compiler work can be validated as real artifacts instead of toy interpreter behavior. |
-| Core executable language | Functions, locals, control flow, integers, bools, enums, structs, modules, FFI, and formatting are available. | Compiler-shaped fixtures can be written as ordinary Ari programs. |
+| Core executable language | Functions, locals, scalar operators, casts, blocks, branches, loops, `break`, `continue`, and returns are locked by `make check-core-language`; richer enums, structs, modules, FFI, and formatting are covered by their focused suites. | Compiler-shaped fixtures can be written as ordinary Ari programs on top of a stable scalar/control-flow base. |
 | Generic calls and ADTs | Generic functions, generic structs, generic enums, `Option[T]`, and `Result[T, E]` exist. | Source models, tokens, AST nodes, and expected failures can use natural types. |
 | Ownership checks | Move, borrow, drop, and explicit-zone checks catch many unsafe flows. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
 | Focused test culture | Many feature folders already separate `ok` and `errors` tests. | New compiler behavior can be guarded with one small fixture at a time. |

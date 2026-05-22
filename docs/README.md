@@ -26,6 +26,7 @@ The docs are split by audience.
   [Compiler Implementation Playbook](dev/compiler-implementation-playbook.md),
   then [Compiler Next Slices](dev/compiler-next-slices.md), then
   [Compiler Change Checklist](dev/compiler-change-checklist.md), then
+  [Core Language Readiness](dev/core-language-readiness.md), then
   [Build And Test](dev/build-test.md).
 
 ## Language Docs
@@ -98,6 +99,7 @@ Use these when changing the compiler:
 - [Compiler Change Checklist](dev/compiler-change-checklist.md)
 - [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)
 - [Compiler Pass Contracts](dev/compiler-pass-contracts.md)
+- [Core Language Readiness](dev/core-language-readiness.md)
 - [Generic Aggregate Monomorphization](dev/generic-aggregate-monomorphization.md)
 - [Trait-Backed Operators](dev/operator-trait-design.md)
 - [Build And Test](dev/build-test.md)

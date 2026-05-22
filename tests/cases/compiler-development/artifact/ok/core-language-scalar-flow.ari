@@ -1,0 +1,33 @@
+fn add(left: i64, right: i64) -> i64 {
+  return left + right;
+}
+
+fn compute(value: i64) -> i64 {
+  let adjusted = if value > 3 {
+    value * 2
+  } else {
+    value + 1
+  };
+  var index = 0;
+  var total = 0;
+  while index < adjusted {
+    index = index + 1;
+    if index == 2 {
+      continue;
+    }
+    if index == 5 {
+      break;
+    }
+    total = total + index;
+  }
+  return total;
+}
+
+fn main() -> i64 {
+  let byte: u8 = 7u8;
+  let flags = ((12 & 10) | 1) ^ 3;
+  if flags == 10 && !(false || false) {
+    return add(compute(3), byte as i64);
+  }
+  return 0;
+}
