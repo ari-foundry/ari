@@ -74,6 +74,11 @@ Front-end or planned surface:
 ## Design Rules
 
 - Ari has no `class` keyword and no `interface` keyword. Use `trait`.
+- Before modeling state with a `struct` plus nullable pointers, boolean tags,
+  or parallel fields, check whether an Ari `enum` tagged union is the more
+  natural representation. Prefer union-style ADTs for result/option/view/entry
+  handles when the value is one of several exclusive variants; use structs for
+  product data where all fields are simultaneously meaningful.
 - Keep unsupported features rejected with clear diagnostics.
 - Do not make codegen re-resolve source-level names if sema can lower metadata
   into IR.
