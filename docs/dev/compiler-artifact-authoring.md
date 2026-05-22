@@ -105,6 +105,7 @@ Use these locations:
 Keep fixture names behavior-based:
 
 - `source-map-file-module.map`
+- `artifact-fixtures.inventory`
 - `source-map-utf8.map`
 - `source-map-empty.map`
 - `source-map-crlf.map`
@@ -150,6 +151,7 @@ build/ari --explain-work-item generic-aggregate-stress
 build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens build/focused/token.tokens
+python3 tests/check_compiler_artifacts.py --list-fixtures ok
 python3 tests/materialize_crlf_fixture.py tests/cases/compiler-development/artifact/ok/source-map-crlf-template.ari build/focused/source-map-crlf.ari
 python3 tests/extract_symbol_names.py build/focused/library-export.o _ARNv3add _ARNv4main
 python3 tests/check_compiler_artifacts.py expected actual

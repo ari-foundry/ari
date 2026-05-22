@@ -83,6 +83,11 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_test_bucket_cli.py
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_work_item_cli.py
 	python3 tests/check_compiler_artifacts.py
+	python3 tests/check_compiler_artifacts.py --list-fixtures >$(BUILD_DIR)/compiler-development/artifact/artifact-fixtures.inventory
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/artifact-fixtures.inventory $(BUILD_DIR)/compiler-development/artifact/artifact-fixtures.inventory
+	python3 tests/check_compiler_artifacts.py --list-fixtures ok >$(BUILD_DIR)/compiler-development/artifact/artifact-fixtures-ok.inventory
+	grep -q 'CompilerArtifactFixtures version=1 group=ok' $(BUILD_DIR)/compiler-development/artifact/artifact-fixtures-ok.inventory
+	if grep -q ' group=errors ' $(BUILD_DIR)/compiler-development/artifact/artifact-fixtures-ok.inventory; then exit 1; fi
 	python3 tests/materialize_crlf_fixture.py tests/cases/compiler-development/artifact/ok/source-map-crlf-template.ari $(BUILD_DIR)/compiler-development/artifact/source-map-crlf.ari
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens

@@ -209,6 +209,8 @@ Checklist:
       symbols and absent executable-only symbols in `make check-compiler-artifacts`
 - [x] compare normalized linked shared-library dynamic symbol artifacts for
       public/exported-only ABI surfaces in `make check-compiler-artifacts`
+- [x] compare a deterministic artifact fixture inventory and check focused ok
+      fixture listing in `make check-compiler-artifacts`
 - [x] LLVM output is executable without a test-side `chmod +x`
 - [x] emit LLVM-driver relocatable objects with
       `--emit-obj`

@@ -60,6 +60,7 @@ def compare_text(expected: str, actual: str, label: str) -> str | None:
         if expected_line != actual_line:
             return (
                 f"artifact mismatch: {label}\n"
+                f"summary: expected_lines={len(expected_lines)} actual_lines={len(actual_lines)}\n"
                 f"line {index + 1}:\n"
                 f"  expected: {expected_line}\n"
                 f"    actual: {actual_line}\n"
@@ -130,6 +131,68 @@ def update_artifact_file(expected_path: str, actual_path: str, normalize: bool) 
     return 0
 
 
+def artifact_kind(path: Path) -> str:
+    name = path.name
+    suffix = path.suffix
+    if name.endswith(".llvm-frag"):
+        return "llvm-fragment"
+    if suffix == ".ari":
+        return "source"
+    if suffix == ".catalog":
+        return "diagnostic-catalog"
+    if suffix == ".decls":
+        return "declaration-index"
+    if suffix == ".diagnostic":
+        return "diagnostic"
+    if suffix == ".graph":
+        return "module-graph"
+    if suffix == ".inventory":
+        return "inventory"
+    if suffix == ".ir":
+        return "typed-ir"
+    if suffix == ".map":
+        return "source-map"
+    if suffix == ".plan":
+        return "stage-plan"
+    if suffix == ".stdout":
+        return "runtime-output"
+    if suffix == ".summary":
+        return "pass-summary"
+    if suffix == ".symbols":
+        return "symbols"
+    if suffix == ".syntax":
+        return "syntax"
+    if suffix == ".tokens":
+        return "tokens"
+    if suffix == ".txt":
+        return "text"
+    return "unknown"
+
+
+def iter_fixture_entries(group: str) -> list[tuple[str, str, str]]:
+    groups = ["ok", "errors"] if group == "all" else [group]
+    entries: list[tuple[str, str, str]] = []
+    for fixture_group in groups:
+        directory = FIXTURES / fixture_group
+        for path in sorted(directory.rglob("*")):
+            if not path.is_file():
+                continue
+            relative = path.relative_to(FIXTURES).as_posix()
+            entries.append((fixture_group, artifact_kind(path), relative))
+    return sorted(entries, key=lambda entry: entry[2])
+
+
+def list_fixtures(group: str) -> int:
+    if group not in {"all", "ok", "errors"}:
+        print("fixture group must be one of: all, ok, errors", file=sys.stderr)
+        return 2
+    entries = iter_fixture_entries(group)
+    print(f"CompilerArtifactFixtures version=1 group={group} entries={len(entries)}")
+    for fixture_group, kind, relative in entries:
+        print(f"  Fixture group={fixture_group} kind={kind} path={relative}")
+    return 0
+
+
 def run_seed_checks() -> int:
     require_equal(
         read_fixture("ok/text-equal.expected.txt"),
@@ -156,6 +219,12 @@ def run_seed_checks() -> int:
 def main(argv: list[str]) -> int:
     if len(argv) == 1:
         return run_seed_checks()
+    if argv[1] == "--list-fixtures":
+        group = argv[2] if len(argv) == 3 else "all"
+        if len(argv) > 3:
+            print("usage: check_compiler_artifacts.py --list-fixtures [all|ok|errors]", file=sys.stderr)
+            return 2
+        return list_fixtures(group)
     normalize = False
     update = False
     args = argv[1:]

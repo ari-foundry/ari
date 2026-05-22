@@ -211,6 +211,7 @@ python3 tests/check_compiler_capability_cli.py
 python3 tests/check_compiler_pass_cli.py
 python3 tests/check_compiler_test_bucket_cli.py
 python3 tests/check_compiler_work_item_cli.py
+python3 tests/check_compiler_artifacts.py --list-fixtures ok
 build/ari --list-artifacts
 build/ari --list-passes
 build/ari --explain-pass sema
@@ -261,6 +262,7 @@ tests/materialize_crlf_fixture.py
 tests/source_map_unit.cpp
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
+tests/cases/compiler-development/artifact/ok/artifact-fixtures.inventory
 tests/cases/compiler-development/artifact/ok/capability-inventory.inventory
 tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag
@@ -317,6 +319,7 @@ ari --emit-declaration-index path
 ari --emit-stage-plan path
 ari --emit-pass-summary path
 ari --emit-typed-ir path
+python3 tests/check_compiler_artifacts.py --list-fixtures [all|ok|errors]
 make check-compiler-artifacts
 ```
 
@@ -325,7 +328,10 @@ It currently proves more than two dozen low-level contracts:
 - equal expected/actual text passes without output
 - repository paths, build paths, temporary names, and pointer addresses
   normalize to stable placeholders
-- a line mismatch produces a small report naming the fixture and line
+- `--list-fixtures` writes a deterministic inventory of registered ok/error
+  artifact fixtures, their groups, and their artifact kinds
+- a line mismatch produces a small report naming the fixture, line, expected
+  and actual text, and expected/actual line counts
 - `--emit-stage-plan` writes deterministic artifact order, owner, first-check,
   and development-gate text directly from the compiler driver
 - `--emit-capability-inventory` writes the compiler's implemented, partial,

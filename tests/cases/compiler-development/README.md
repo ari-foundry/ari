@@ -74,6 +74,8 @@ the same language surface that normal Ari users get.
   compiler-development shortcut; Ari uses `trait`.
 - `artifact/ok/normalize-paths.*.txt`: seed path, temp-name, and pointer
   normalization fixture for golden artifact checks.
+- `artifact/ok/artifact-fixtures.inventory`: deterministic inventory of
+  compiler artifact ok/error fixtures, groups, and artifact kinds.
 - `tests/source_map_unit.cpp`: direct C++ SourceMap test for empty files,
   one-line and multi-line files, EOF, CRLF, UTF-8 byte columns, invalid spans,
   multi-file ids, source replacement identity, generated sources, missing
