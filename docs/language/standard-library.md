@@ -67,15 +67,16 @@ hooks because the current language cannot express those primitives directly.
 
 Allocation APIs take a `ref mut Zone` or return values tied to a zone. The
 `_in` suffix means "use this explicit zone for growth or copying".
-`std::vec::Vec[T]` stores `ZoneMetadata` in the handle, so common growth
-methods such as `push`, `insert`, `reserve`, `reserve_extra`,
-`extend_from_slice`, and `resize` can recover the runtime zone without a zone
-argument after construction. For tracked local `std::string::String` handles, Ari can infer
-the same source zone for common byte-growth methods. `std::collections` handles
-keep growth explicit today: `Set`, `HashMap`, `HashSet`, `TreeMap`, and
-`TreeSet`, plus `Deque`, `LinkedList`, `BinaryHeap`, and `PriorityQueue`,
-spell `ref mut zone` on methods that may allocate, such as `insert`,
-`entry`, `replace`, `push`, `push_front`, `push_back`, `reserve`, and
+`std::vec::Vec[T]` and `std::string::String` recover `ZoneMetadata` from their
+backing allocation headers, so common growth methods such as `push`, `insert`,
+`reserve`, `reserve_extra`, `extend_from_slice`, byte appends, and `resize`
+can recover the runtime zone without a zone argument after construction.
+`std::collections` handles keep explicit-zone compatibility spellings today,
+but their internal growth paths recover the zone from the owning backing
+allocation after construction: `Set`, `HashMap`, `HashSet`, `TreeMap`,
+`TreeSet`, `Deque`, `LinkedList`, `BinaryHeap`, and `PriorityQueue` still spell
+`ref mut zone` on methods that may allocate, such as `insert`, `entry`,
+`replace`, `push`, `push_front`, `push_back`, `reserve`, and
 `reserve_extra` where that method exists. Tracked local map handles can infer
 the same source zone for `map.entry(key)`. `RingBuffer` is fixed-capacity after
 construction.

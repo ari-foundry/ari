@@ -1963,8 +1963,8 @@ allocation, while old bytes remain owned by the zone until reset/destroy.
 uses the same runtime allocation policy as `reserve`. `push`, `insert`,
 `reserve`, `try_reserve`, `reserve_extra`, `extend`, `extend_from_slice`,
 `append`, `insert_many`, `splice`, growing `resize`, and `resize_with` use
-`ZoneMetadata` stored inside the handle; the `_in` forms remain available for
-explicit capability plumbing. `resize_with(length, make_value)` calls the
+`ZoneMetadata` recovered from the backing allocation header; the `_in` forms
+remain available for explicit capability plumbing. `resize_with(length, make_value)` calls the
 zero-argument maker once per new slot, which is the natural growth spelling
 when one repeated value is not the right contract.
 The borrowed sequence helpers

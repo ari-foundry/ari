@@ -76,7 +76,7 @@ capability and returns a tracked `ptr T`; `std::vec::with_capacity<T>(ref mut
 zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
 `data`, mutable `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
 capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed
-and stores `ZoneMetadata` inside the handle.
+and recovers its zone from the backing allocation header when it later grows.
 The prelude expression macro `Vec!(T, ref mut zone, capacity)` is shorthand for
 that `std::vec::new<T>(ref mut zone, capacity)` constructor; it is allocator
 construction sugar, not a root `Vec[T]` ABI workaround.
@@ -94,8 +94,8 @@ The source handle currently exposes element methods: `len`, `capacity`,
 `reserve_extra_in(ref mut zone, additional)`, `copy_to(ref mut zone)`,
 top-level `std::vec::from_slice_in<T>(ref mut zone, values)`, `as_ptr()`,
 `as_mut_ptr()`, `iter()`, and `as_slice`. The natural growth methods use
-metadata stored in the handle; the `_in` forms remain available when code
-needs to spell the capability directly. Metadata, checked reads, search, Slice comparison,
+metadata recovered from the backing allocation header; the `_in` forms remain
+available when code needs to spell the capability directly. Metadata, checked reads, search, Slice comparison,
 `copy_to(ref mut zone)`, `get_ref(index)`, `as_ptr()`, and `iter()` borrow the
 handle receiver instead of copying it. `get_ref(index)` returns a shared borrow
 of the indexed element, while `get_mut(index)` returns a mutable element borrow
@@ -835,7 +835,7 @@ builds a source `RawVec<T>` handle around that allocation, and
 `std::vec::new<T>(ref mut Zone, capacity)` wraps it in source
 `std::vec::Vec<T>`. `Vec!(T, ref mut Zone, capacity)` lowers to the same source
 constructor and keeps the same zone provenance. The source handle has methods
-for metadata, checked
+for zone metadata recovery, checked
 read/write/replace, push/pop, owning-zone grow-on-demand `push(value)` and
 `insert(index, value)`, grow-only `reserve(capacity)`,
 `reserve_extra(additional)`, `resize(length, value)`, explicit compatibility
@@ -859,15 +859,18 @@ returns a tracked `std::vec::Iter<T>`, and `std::vec::Vec<T>` implements
 Metadata, checked read, element-borrow, search, iterator, target-zone copy, and
 raw-pointer methods borrow the source handle receiver instead of copying it.
 Natural growth methods copy existing elements into a larger allocation through
-the handle's `ZoneMetadata` when growth is needed and keep old storage under
-the zone's bulk lifetime. Dropping the source `Vec<T>` handle
+the backing allocation's header-recovered `ZoneMetadata` when growth is needed
+and keep old storage under the zone's bulk lifetime. Dropping the source
+`Vec<T>` handle
 consumes it and drops each current element while leaving all backing storage
 under the explicit zone's bulk lifetime. Callers can also keep using
 `vec.raw.data` with `ptr_store`, `ptr_load`, and `ptr_add` directly for
 lower-level experiments.
 `std::string::alloc_buffer(ref mut Zone, capacity)` is the analogous raw
 byte-buffer seed for owned string storage. It returns `ptr u8` tied to the
-source zone; `std::string::String`/`String` builds the length/capacity handle
+source zone; raw zero-capacity buffers can be null, while `String`
+constructors establish a recoverable backing allocation even for logical
+capacity zero. `std::string::String`/`String` builds the length/capacity handle
 and lowercase `string` copying on top of that same explicit-zone storage.
 
 ## Aggregate Surfaces

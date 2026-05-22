@@ -79,10 +79,12 @@ through that recovered runtime zone handle; this is the preferred internal
 building block for heap handles that need to grow without carrying an explicit
 `ref mut Zone` argument.
 
-Raw header recovery requires an actual backing allocation. Empty or
-zero-capacity handles may have no data pointer header to read, so use
-`from_zone(ref mut zone)` or a handle API that caches `ZoneMetadata` when code
-needs a zone before the first allocation.
+Raw header recovery requires an actual backing allocation. Heap-backed stdlib
+handles therefore create a small backing allocation even when their logical
+capacity is zero if later growth needs to recover the zone. Raw zero-count
+allocation helpers may still return null, so use `from_zone(ref mut zone)` or a
+constructor that establishes backing storage when code needs a zone before the
+first logical element.
 
 `reset(ref mut zone)` invalidates allocations from the zone while keeping the
 zone object alive. `destroy(zone)` consumes the owning zone handle and releases

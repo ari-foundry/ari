@@ -322,7 +322,12 @@ pub struct TreeSet[T] {
 }
 
 pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::collections::Set[T] {
-  let data = std::zone::alloc_array<T>(zone, capacity);
+  std::assert(capacity >= 0);
+  var allocation_capacity = capacity;
+  if allocation_capacity == 0 {
+    allocation_capacity = 1;
+  }
+  let data = std::zone::alloc_array<T>(zone, allocation_capacity);
   return std::collections::Set<T> {
     data: data,
     len: 0,
@@ -356,13 +361,14 @@ fn next_growth_capacity(current: i64, minimum: i64) -> i64 {
   return capacity;
 }
 
-fn grow_to_capacity[T](set: ref mut std::collections::Set[T], zone: ref mut Zone, capacity: i64) -> void {
+fn grow_to_capacity[T](set: ref mut std::collections::Set[T], capacity: i64) -> void {
   std::assert(capacity >= 0);
   if capacity <= set.capacity {
     return;
   }
   // Zones own backing storage; growth copies live values into a larger buffer.
-  let data = std::zone::alloc_array<T>(zone, capacity);
+  let metadata = set.zone();
+  let data = metadata.alloc_array<T>(capacity);
   var index = 0;
   while index < set.len {
     ptr_store(ptr_add(data, index), ptr_load(ptr_add(set.data, index)));
@@ -372,10 +378,10 @@ fn grow_to_capacity[T](set: ref mut std::collections::Set[T], zone: ref mut Zone
   set.capacity = capacity;
 }
 
-fn ensure_spare_capacity[T](set: ref mut std::collections::Set[T], zone: ref mut Zone) -> void {
+fn ensure_spare_capacity[T](set: ref mut std::collections::Set[T]) -> void {
   if set.len >= set.capacity {
     let capacity = next_growth_capacity(set.capacity, set.len + 1);
-    grow_to_capacity<T>(set, zone, capacity);
+    grow_to_capacity<T>(set, capacity);
   }
 }
 
@@ -512,7 +518,7 @@ pub impl[T] std::collections::Set[T] {
     if self.contains(value) {
       return false;
     }
-    ensure_spare_capacity<T>(self, zone);
+    ensure_spare_capacity<T>(self);
     ptr_store(ptr_add(self.data, self.len), value);
     self.len = self.len + 1;
     return true;
@@ -577,12 +583,12 @@ pub impl[T] std::collections::Set[T] {
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
-    grow_to_capacity<T>(self, zone, capacity);
+    grow_to_capacity<T>(self, capacity);
   }
 
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
-    grow_to_capacity<T>(self, zone, self.len + additional);
+    grow_to_capacity<T>(self, self.len + additional);
   }
 
   fn as_slice(self: ref Self) -> std::Slice[T] {
@@ -672,7 +678,6 @@ impl[T] std::IntoIterator[T] for std::collections::Set[T] {
 
 impl[T] std::zone::ZoneBacked for std::collections::Set[T] {
   pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
-    std::assert(self.capacity > 0);
     return std::zone::metadata(self.data as ptr u8);
   }
 }
@@ -848,11 +853,10 @@ fn hash_map_place_existing[K, V](map: ref mut std::collections::HashMap[K, V], k
 
 fn hash_map_insert_absent_slot[K, V](
   map: ref mut std::collections::HashMap[K, V],
-  zone: ref mut Zone,
   key: K,
   value: V
 ) -> i64 {
-  hash_map_ensure_spare_capacity<K, V>(map, zone);
+  hash_map_ensure_spare_capacity<K, V>(map);
   let index = hash_map_find_insert_slot<K, V>(map, key);
   std::assert(index >= 0);
   ptr_store(ptr_add(map.keys, index), key);
@@ -864,7 +868,6 @@ fn hash_map_insert_absent_slot[K, V](
 
 fn hash_map_grow_to_capacity[K, V](
   map: ref mut std::collections::HashMap[K, V],
-  zone: ref mut Zone,
   capacity: i64
 ) -> void {
   let actual = normalized_hash_capacity(capacity);
@@ -875,9 +878,10 @@ fn hash_map_grow_to_capacity[K, V](
   let old_values = map.values;
   let old_states = map.states;
   let old_capacity = map.capacity;
-  let new_keys = std::zone::alloc_array<K>(zone, actual);
-  let new_values = std::zone::alloc_array<V>(zone, actual);
-  let new_states = std::zone::alloc_array<i64>(zone, actual);
+  let metadata = map.zone();
+  let new_keys = metadata.alloc_array<K>(actual);
+  let new_values = metadata.alloc_array<V>(actual);
+  let new_states = metadata.alloc_array<i64>(actual);
   init_states(new_states, actual);
   map.keys = new_keys;
   map.values = new_values;
@@ -898,11 +902,10 @@ fn hash_map_grow_to_capacity[K, V](
 }
 
 fn hash_map_ensure_spare_capacity[K, V](
-  map: ref mut std::collections::HashMap[K, V],
-  zone: ref mut Zone
+  map: ref mut std::collections::HashMap[K, V]
 ) -> void {
   if (map.len + 1) * 4 >= map.capacity * 3 {
-    hash_map_grow_to_capacity<K, V>(map, zone, map.capacity * 2);
+    hash_map_grow_to_capacity<K, V>(map, map.capacity * 2);
   }
 }
 
@@ -1007,7 +1010,7 @@ pub impl[K, V] std::collections::HashMap[K, V] {
       ptr_store(ptr_add(self.values, existing), value);
       return std::Some<V>(previous);
     }
-    hash_map_insert_absent_slot<K, V>(self, zone, key, value);
+    hash_map_insert_absent_slot<K, V>(self, key, value);
     return std::None<V>();
   }
 
@@ -1076,12 +1079,12 @@ pub impl[K, V] std::collections::HashMap[K, V] {
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
-    hash_map_grow_to_capacity<K, V>(self, zone, capacity);
+    hash_map_grow_to_capacity<K, V>(self, capacity);
   }
 
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
-    hash_map_grow_to_capacity<K, V>(self, zone, hash_capacity_for_len(self.len + additional));
+    hash_map_grow_to_capacity<K, V>(self, hash_capacity_for_len(self.len + additional));
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::HashMap[K, V] {
@@ -1207,10 +1210,7 @@ pub impl[K, V] std::collections::HashMapEntry[K, V] {
       return std::Some<V>(previous);
     }
 
-    let metadata = map.zone();
-    let zone_ptr = metadata.as_zone_ptr();
-    let zone: ref mut Zone = ref mut *zone_ptr;
-    hash_map_insert_absent_slot<K, V>(map, zone, self.key, value);
+    hash_map_insert_absent_slot<K, V>(map, self.key, value);
     return std::None<V>();
   }
 
@@ -1225,10 +1225,7 @@ pub impl[K, V] std::collections::HashMapEntry[K, V] {
         drop previous;
         ptr_store(ptr_add(map.values, existing), value);
       } else {
-        let metadata = map.zone();
-        let zone_ptr = metadata.as_zone_ptr();
-        let zone: ref mut Zone = ref mut *zone_ptr;
-        hash_map_insert_absent_slot<K, V>(map, zone, key, value);
+        hash_map_insert_absent_slot<K, V>(map, key, value);
       }
     }
     return std::collections::HashMapEntry<K, V> {
@@ -1249,10 +1246,7 @@ pub impl[K, V] std::collections::HashMapEntry[K, V] {
       return ref mut *ptr_add(map.values, existing);
     }
 
-    let metadata = map.zone();
-    let zone_ptr = metadata.as_zone_ptr();
-    let zone: ref mut Zone = ref mut *zone_ptr;
-    let inserted = hash_map_insert_absent_slot<K, V>(map, zone, self.key, value);
+    let inserted = hash_map_insert_absent_slot<K, V>(map, self.key, value);
     return ref mut *ptr_add(map.values, inserted);
   }
 
@@ -1263,10 +1257,7 @@ pub impl[K, V] std::collections::HashMapEntry[K, V] {
       return ref mut *ptr_add(map.values, existing);
     }
 
-    let metadata = map.zone();
-    let zone_ptr = metadata.as_zone_ptr();
-    let zone: ref mut Zone = ref mut *zone_ptr;
-    let inserted = hash_map_insert_absent_slot<K, V>(map, zone, self.key, make_value());
+    let inserted = hash_map_insert_absent_slot<K, V>(map, self.key, make_value());
     return ref mut *ptr_add(map.values, inserted);
   }
 }
@@ -1279,12 +1270,8 @@ pub impl[K, V: std::Default] std::collections::HashMapEntry[K, V] {
       return ref mut *ptr_add(map.values, existing);
     }
 
-    let metadata = map.zone();
-    let zone_ptr = metadata.as_zone_ptr();
-    let zone: ref mut Zone = ref mut *zone_ptr;
     let inserted = hash_map_insert_absent_slot<K, V>(
       map,
-      zone,
       self.key,
       std::Default::default<V>()
     );
@@ -1494,7 +1481,6 @@ fn hash_set_place_existing[T](set: ref mut std::collections::HashSet[T], value: 
 
 fn hash_set_grow_to_capacity[T](
   set: ref mut std::collections::HashSet[T],
-  zone: ref mut Zone,
   capacity: i64
 ) -> void {
   let actual = normalized_hash_capacity(capacity);
@@ -1504,8 +1490,9 @@ fn hash_set_grow_to_capacity[T](
   let old_data = set.data;
   let old_states = set.states;
   let old_capacity = set.capacity;
-  let new_data = std::zone::alloc_array<T>(zone, actual);
-  let new_states = std::zone::alloc_array<i64>(zone, actual);
+  let metadata = set.zone();
+  let new_data = metadata.alloc_array<T>(actual);
+  let new_states = metadata.alloc_array<i64>(actual);
   init_states(new_states, actual);
   set.data = new_data;
   set.states = new_states;
@@ -1521,11 +1508,10 @@ fn hash_set_grow_to_capacity[T](
 }
 
 fn hash_set_ensure_spare_capacity[T](
-  set: ref mut std::collections::HashSet[T],
-  zone: ref mut Zone
+  set: ref mut std::collections::HashSet[T]
 ) -> void {
   if (set.len + 1) * 4 >= set.capacity * 3 {
-    hash_set_grow_to_capacity<T>(set, zone, set.capacity * 2);
+    hash_set_grow_to_capacity<T>(set, set.capacity * 2);
   }
 }
 
@@ -1622,7 +1608,7 @@ pub impl[T] std::collections::HashSet[T] {
     if hash_set_find_slot_mut<T>(self, value) >= 0 {
       return false;
     }
-    hash_set_ensure_spare_capacity<T>(self, zone);
+    hash_set_ensure_spare_capacity<T>(self);
     hash_set_place_existing<T>(self, value);
     return true;
   }
@@ -1683,12 +1669,12 @@ pub impl[T] std::collections::HashSet[T] {
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
-    hash_set_grow_to_capacity<T>(self, zone, capacity);
+    hash_set_grow_to_capacity<T>(self, capacity);
   }
 
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
-    hash_set_grow_to_capacity<T>(self, zone, hash_capacity_for_len(self.len + additional));
+    hash_set_grow_to_capacity<T>(self, hash_capacity_for_len(self.len + additional));
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::HashSet[T] {
@@ -2288,7 +2274,6 @@ fn tree_next_node(node: i64, left: ptr i64, right: ptr i64, parent: ptr i64) -> 
 
 fn tree_map_grow_to_capacity[K, V](
   map: ref mut std::collections::TreeMap[K, V],
-  zone: ref mut Zone,
   capacity: i64
 ) -> void {
   let actual = normalized_tree_capacity(capacity);
@@ -2301,12 +2286,13 @@ fn tree_map_grow_to_capacity[K, V](
   let old_right = map.right;
   let old_parent = map.parent;
   let old_colors = map.colors;
-  let new_keys = std::zone::alloc_array<K>(zone, actual);
-  let new_values = std::zone::alloc_array<V>(zone, actual);
-  let new_left = std::zone::alloc_array<i64>(zone, actual);
-  let new_right = std::zone::alloc_array<i64>(zone, actual);
-  let new_parent = std::zone::alloc_array<i64>(zone, actual);
-  let new_colors = std::zone::alloc_array<i64>(zone, actual);
+  let metadata = map.zone();
+  let new_keys = metadata.alloc_array<K>(actual);
+  let new_values = metadata.alloc_array<V>(actual);
+  let new_left = metadata.alloc_array<i64>(actual);
+  let new_right = metadata.alloc_array<i64>(actual);
+  let new_parent = metadata.alloc_array<i64>(actual);
+  let new_colors = metadata.alloc_array<i64>(actual);
   var index = 0;
   while index < map.len {
     ptr_store(ptr_add(new_keys, index), ptr_load(ptr_add(old_keys, index)));
@@ -2328,12 +2314,11 @@ fn tree_map_grow_to_capacity[K, V](
 
 fn tree_map_insert_absent_slot[K, V](
   map: ref mut std::collections::TreeMap[K, V],
-  zone: ref mut Zone,
   key: K,
   value: V
 ) -> i64 {
   if map.len >= map.capacity {
-    tree_map_grow_to_capacity<K, V>(map, zone, map.capacity * 2);
+    tree_map_grow_to_capacity<K, V>(map, map.capacity * 2);
   }
 
   let less = map.less;
@@ -2599,7 +2584,7 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
       ptr_store(ptr_add(self.values, existing), value);
       return std::Some<V>(previous);
     }
-    tree_map_insert_absent_slot<K, V>(self, zone, key, value);
+    tree_map_insert_absent_slot<K, V>(self, key, value);
     return std::None<V>();
   }
 
@@ -2653,12 +2638,12 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
-    tree_map_grow_to_capacity<K, V>(self, zone, capacity);
+    tree_map_grow_to_capacity<K, V>(self, capacity);
   }
 
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
-    tree_map_grow_to_capacity<K, V>(self, zone, self.len + additional);
+    tree_map_grow_to_capacity<K, V>(self, self.len + additional);
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::TreeMap[K, V] {
@@ -2786,10 +2771,7 @@ pub impl[K, V] std::collections::TreeMapEntry[K, V] {
       return std::Some<V>(previous);
     }
 
-    let metadata = map.zone();
-    let zone_ptr = metadata.as_zone_ptr();
-    let zone: ref mut Zone = ref mut *zone_ptr;
-    tree_map_insert_absent_slot<K, V>(map, zone, self.key, value);
+    tree_map_insert_absent_slot<K, V>(map, self.key, value);
     return std::None<V>();
   }
 
@@ -2804,10 +2786,7 @@ pub impl[K, V] std::collections::TreeMapEntry[K, V] {
         drop previous;
         ptr_store(ptr_add(map.values, existing), value);
       } else {
-        let metadata = map.zone();
-        let zone_ptr = metadata.as_zone_ptr();
-        let zone: ref mut Zone = ref mut *zone_ptr;
-        tree_map_insert_absent_slot<K, V>(map, zone, key, value);
+        tree_map_insert_absent_slot<K, V>(map, key, value);
       }
     }
     return std::collections::TreeMapEntry<K, V> {
@@ -2828,10 +2807,7 @@ pub impl[K, V] std::collections::TreeMapEntry[K, V] {
       return ref mut *ptr_add(map.values, existing);
     }
 
-    let metadata = map.zone();
-    let zone_ptr = metadata.as_zone_ptr();
-    let zone: ref mut Zone = ref mut *zone_ptr;
-    let inserted = tree_map_insert_absent_slot<K, V>(map, zone, self.key, value);
+    let inserted = tree_map_insert_absent_slot<K, V>(map, self.key, value);
     return ref mut *ptr_add(map.values, inserted);
   }
 
@@ -2842,10 +2818,7 @@ pub impl[K, V] std::collections::TreeMapEntry[K, V] {
       return ref mut *ptr_add(map.values, existing);
     }
 
-    let metadata = map.zone();
-    let zone_ptr = metadata.as_zone_ptr();
-    let zone: ref mut Zone = ref mut *zone_ptr;
-    let inserted = tree_map_insert_absent_slot<K, V>(map, zone, self.key, make_value());
+    let inserted = tree_map_insert_absent_slot<K, V>(map, self.key, make_value());
     return ref mut *ptr_add(map.values, inserted);
   }
 }
@@ -2858,12 +2831,8 @@ pub impl[K, V: std::Default] std::collections::TreeMapEntry[K, V] {
       return ref mut *ptr_add(map.values, existing);
     }
 
-    let metadata = map.zone();
-    let zone_ptr = metadata.as_zone_ptr();
-    let zone: ref mut Zone = ref mut *zone_ptr;
     let inserted = tree_map_insert_absent_slot<K, V>(
       map,
-      zone,
       self.key,
       std::Default::default<V>()
     );
@@ -3398,7 +3367,6 @@ fn tree_set_link_existing_node[T](set: ref mut std::collections::TreeSet[T], ind
 
 fn tree_set_grow_to_capacity[T](
   set: ref mut std::collections::TreeSet[T],
-  zone: ref mut Zone,
   capacity: i64
 ) -> void {
   let actual = normalized_tree_capacity(capacity);
@@ -3410,11 +3378,12 @@ fn tree_set_grow_to_capacity[T](
   let old_right = set.right;
   let old_parent = set.parent;
   let old_colors = set.colors;
-  let new_data = std::zone::alloc_array<T>(zone, actual);
-  let new_left = std::zone::alloc_array<i64>(zone, actual);
-  let new_right = std::zone::alloc_array<i64>(zone, actual);
-  let new_parent = std::zone::alloc_array<i64>(zone, actual);
-  let new_colors = std::zone::alloc_array<i64>(zone, actual);
+  let metadata = set.zone();
+  let new_data = metadata.alloc_array<T>(actual);
+  let new_left = metadata.alloc_array<i64>(actual);
+  let new_right = metadata.alloc_array<i64>(actual);
+  let new_parent = metadata.alloc_array<i64>(actual);
+  let new_colors = metadata.alloc_array<i64>(actual);
   var index = 0;
   while index < set.len {
     ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, index)));
@@ -3578,7 +3547,7 @@ pub impl[T] std::collections::TreeSet[T] {
       }
     }
     if self.len >= self.capacity {
-      tree_set_grow_to_capacity<T>(self, zone, self.capacity * 2);
+      tree_set_grow_to_capacity<T>(self, self.capacity * 2);
     }
     let index = self.len;
     ptr_store(ptr_add(self.data, index), value);
@@ -3640,12 +3609,12 @@ pub impl[T] std::collections::TreeSet[T] {
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
-    tree_set_grow_to_capacity<T>(self, zone, capacity);
+    tree_set_grow_to_capacity<T>(self, capacity);
   }
 
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
-    tree_set_grow_to_capacity<T>(self, zone, self.len + additional);
+    tree_set_grow_to_capacity<T>(self, self.len + additional);
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::TreeSet[T] {
@@ -3775,7 +3744,6 @@ pub fn deque[T](zone: ref mut Zone, capacity: i64) -> std::collections::Deque[T]
 
 fn deque_grow_to_capacity[T](
   deque: ref mut std::collections::Deque[T],
-  zone: ref mut Zone,
   capacity: i64
 ) -> void {
   let actual = normalized_sequence_capacity(capacity);
@@ -3785,7 +3753,8 @@ fn deque_grow_to_capacity[T](
   let old_data = deque.data;
   let old_capacity = deque.capacity;
   let old_head = deque.head;
-  let new_data = std::zone::alloc_array<T>(zone, actual);
+  let metadata = deque.zone();
+  let new_data = metadata.alloc_array<T>(actual);
   var index = 0;
   while index < deque.len {
     let old_slot = circular_slot(old_head, index, old_capacity);
@@ -3797,9 +3766,9 @@ fn deque_grow_to_capacity[T](
   deque.head = 0;
 }
 
-fn deque_ensure_spare_capacity[T](deque: ref mut std::collections::Deque[T], zone: ref mut Zone) -> void {
+fn deque_ensure_spare_capacity[T](deque: ref mut std::collections::Deque[T]) -> void {
   if deque.len >= deque.capacity {
-    deque_grow_to_capacity<T>(deque, zone, next_growth_capacity(deque.capacity, deque.len + 1));
+    deque_grow_to_capacity<T>(deque, next_growth_capacity(deque.capacity, deque.len + 1));
   }
 }
 
@@ -3875,14 +3844,14 @@ pub impl[T] std::collections::Deque[T] {
   }
 
   fn push_back(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
-    deque_ensure_spare_capacity<T>(self, zone);
+    deque_ensure_spare_capacity<T>(self);
     let slot = circular_slot(self.head, self.len, self.capacity);
     ptr_store(ptr_add(self.data, slot), value);
     self.len = self.len + 1;
   }
 
   fn push_front(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
-    deque_ensure_spare_capacity<T>(self, zone);
+    deque_ensure_spare_capacity<T>(self);
     self.head = (self.head + self.capacity - 1) % self.capacity;
     ptr_store(ptr_add(self.data, self.head), value);
     self.len = self.len + 1;
@@ -3929,12 +3898,12 @@ pub impl[T] std::collections::Deque[T] {
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
-    deque_grow_to_capacity<T>(self, zone, capacity);
+    deque_grow_to_capacity<T>(self, capacity);
   }
 
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
-    deque_grow_to_capacity<T>(self, zone, self.len + additional);
+    deque_grow_to_capacity<T>(self, self.len + additional);
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::Deque[T] {
@@ -4213,7 +4182,6 @@ pub fn linked_list[T](zone: ref mut Zone, capacity: i64) -> std::collections::Li
 
 fn linked_list_grow_to_capacity[T](
   list: ref mut std::collections::LinkedList[T],
-  zone: ref mut Zone,
   capacity: i64
 ) -> void {
   let actual = normalized_sequence_capacity(capacity);
@@ -4223,9 +4191,10 @@ fn linked_list_grow_to_capacity[T](
   let old_data = list.data;
   let old_next = list.next_node;
   let old_prev = list.prev;
-  let new_data = std::zone::alloc_array<T>(zone, actual);
-  let new_next = std::zone::alloc_array<i64>(zone, actual);
-  let new_prev = std::zone::alloc_array<i64>(zone, actual);
+  let metadata = list.zone();
+  let new_data = metadata.alloc_array<T>(actual);
+  let new_next = metadata.alloc_array<i64>(actual);
+  let new_prev = metadata.alloc_array<i64>(actual);
   var node = list.head;
   while node >= 0 {
     ptr_store(ptr_add(new_data, node), ptr_load(ptr_add(old_data, node)));
@@ -4243,14 +4212,14 @@ fn linked_list_grow_to_capacity[T](
   list.capacity = actual;
 }
 
-fn linked_list_alloc_node[T](list: ref mut std::collections::LinkedList[T], zone: ref mut Zone) -> i64 {
+fn linked_list_alloc_node[T](list: ref mut std::collections::LinkedList[T]) -> i64 {
   if list.free >= 0 {
     let reused = list.free;
     list.free = ptr_load(ptr_add(list.next_node, reused));
     return reused;
   }
   if list.next_slot >= list.capacity {
-    linked_list_grow_to_capacity<T>(list, zone, next_growth_capacity(list.capacity, list.next_slot + 1));
+    linked_list_grow_to_capacity<T>(list, next_growth_capacity(list.capacity, list.next_slot + 1));
   }
   let node = list.next_slot;
   list.next_slot = list.next_slot + 1;
@@ -4385,7 +4354,7 @@ pub impl[T] std::collections::LinkedList[T] {
   }
 
   fn push_front(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
-    let node = linked_list_alloc_node<T>(self, zone);
+    let node = linked_list_alloc_node<T>(self);
     ptr_store(ptr_add(self.data, node), value);
     ptr_store(ptr_add(self.prev, node), -1);
     ptr_store(ptr_add(self.next_node, node), self.head);
@@ -4399,7 +4368,7 @@ pub impl[T] std::collections::LinkedList[T] {
   }
 
   fn push_back(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
-    let node = linked_list_alloc_node<T>(self, zone);
+    let node = linked_list_alloc_node<T>(self);
     ptr_store(ptr_add(self.data, node), value);
     ptr_store(ptr_add(self.next_node, node), -1);
     ptr_store(ptr_add(self.prev, node), self.tail);
@@ -4455,12 +4424,12 @@ pub impl[T] std::collections::LinkedList[T] {
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
-    linked_list_grow_to_capacity<T>(self, zone, capacity);
+    linked_list_grow_to_capacity<T>(self, capacity);
   }
 
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
-    linked_list_grow_to_capacity<T>(self, zone, self.len + additional);
+    linked_list_grow_to_capacity<T>(self, self.len + additional);
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::LinkedList[T] {
@@ -4538,7 +4507,6 @@ pub fn binary_heap[T](
 
 fn binary_heap_grow_to_capacity[T](
   heap: ref mut std::collections::BinaryHeap[T],
-  zone: ref mut Zone,
   capacity: i64
 ) -> void {
   let actual = normalized_sequence_capacity(capacity);
@@ -4546,7 +4514,8 @@ fn binary_heap_grow_to_capacity[T](
     return;
   }
   let old_data = heap.data;
-  let new_data = std::zone::alloc_array<T>(zone, actual);
+  let metadata = heap.zone();
+  let new_data = metadata.alloc_array<T>(actual);
   var index = 0;
   while index < heap.len {
     ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, index)));
@@ -4637,7 +4606,7 @@ pub impl[T] std::collections::BinaryHeap[T] {
 
   fn push(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
     if self.len >= self.capacity {
-      binary_heap_grow_to_capacity<T>(self, zone, next_growth_capacity(self.capacity, self.len + 1));
+      binary_heap_grow_to_capacity<T>(self, next_growth_capacity(self.capacity, self.len + 1));
     }
     ptr_store(ptr_add(self.data, self.len), value);
     self.len = self.len + 1;
@@ -4668,12 +4637,12 @@ pub impl[T] std::collections::BinaryHeap[T] {
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
-    binary_heap_grow_to_capacity<T>(self, zone, capacity);
+    binary_heap_grow_to_capacity<T>(self, capacity);
   }
 
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
-    binary_heap_grow_to_capacity<T>(self, zone, self.len + additional);
+    binary_heap_grow_to_capacity<T>(self, self.len + additional);
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::BinaryHeap[T] {
@@ -4720,7 +4689,6 @@ pub fn priority_queue[T](
 
 fn priority_queue_grow_to_capacity[T](
   queue: ref mut std::collections::PriorityQueue[T],
-  zone: ref mut Zone,
   capacity: i64
 ) -> void {
   let actual = normalized_sequence_capacity(capacity);
@@ -4728,7 +4696,8 @@ fn priority_queue_grow_to_capacity[T](
     return;
   }
   let old_data = queue.data;
-  let new_data = std::zone::alloc_array<T>(zone, actual);
+  let metadata = queue.zone();
+  let new_data = metadata.alloc_array<T>(actual);
   var index = 0;
   while index < queue.len {
     ptr_store(ptr_add(new_data, index), ptr_load(ptr_add(old_data, index)));
@@ -4819,7 +4788,7 @@ pub impl[T] std::collections::PriorityQueue[T] {
 
   fn push(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
     if self.len >= self.capacity {
-      priority_queue_grow_to_capacity<T>(self, zone, next_growth_capacity(self.capacity, self.len + 1));
+      priority_queue_grow_to_capacity<T>(self, next_growth_capacity(self.capacity, self.len + 1));
     }
     ptr_store(ptr_add(self.data, self.len), value);
     self.len = self.len + 1;
@@ -4850,12 +4819,12 @@ pub impl[T] std::collections::PriorityQueue[T] {
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
-    priority_queue_grow_to_capacity<T>(self, zone, capacity);
+    priority_queue_grow_to_capacity<T>(self, capacity);
   }
 
   fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
     std::assert(additional >= 0);
-    priority_queue_grow_to_capacity<T>(self, zone, self.len + additional);
+    priority_queue_grow_to_capacity<T>(self, self.len + additional);
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::PriorityQueue[T] {

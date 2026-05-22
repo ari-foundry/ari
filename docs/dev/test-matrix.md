@@ -420,7 +420,7 @@ Checklist:
       reset/destroy invalidation
 - [x] `std::string::with_capacity(ref mut Zone, capacity)` and
       `std::string::new(ref mut Zone, capacity)` wrap byte storage in tracked
-      `RawString` / source `std::string::String` handles with metadata,
+      `RawString` / source `std::string::String` handles with backing metadata,
       borrowed receiver lowering for metadata, byte reads, and `as_ptr`,
       fixed-capacity byte operations, `as_slice`, top-level
       `std::string::copy_to(ref value, ref mut Zone)`, and no-op Drop handling
@@ -583,9 +583,9 @@ Checklist:
       stable-sort wrappers, `is_sorted`, `binary_search`, `min`, and `max`
       wrappers over its live element storage
 - [x] source `std::vec::Vec<T>.reserve(capacity)` grows the handle with a
-      larger allocation from the `ZoneMetadata` stored in the handle
+      larger allocation from the backing allocation's recovered `ZoneMetadata`
 - [x] source `std::vec::Vec<T>.reserve_extra(additional)` grows capacity to at
-      least `len + additional` through the handle's stored zone metadata
+      least `len + additional` through the recovered backing zone metadata
 - [x] source `std::vec::Vec<T>.push_in(ref mut Zone, value)` appends through the
       explicit compatibility capability and grows capacity on demand
 - [x] source `std::vec::Vec<T>.insert_in(ref mut Zone, index, value)` inserts
@@ -599,16 +599,17 @@ Checklist:
       by dropping removed tail values or grows through the explicit
       compatibility capability
 - [x] source `std::vec::Vec<T>.resize_with(length, make_value)` grows through
-      stored zone metadata and calls the zero-argument maker once per new slot,
-      covered by `std-vec-resize-with`
+      recovered backing-zone metadata and calls the zero-argument maker once
+      per new slot, covered by `std-vec-resize-with`
 - [x] source `std::vec::Vec<T>.try_pop()` returns `Option<T>` for empty-aware
       last-element move-out without an assertion
 - [x] source `std::vec::Vec<T>` owning-zone `push`, `insert`, `reserve`,
       `reserve_extra`, `extend_from_slice`, `resize`, and `resize_with` share
       one private capacity/copy growth path, covered by `std-vec-growth-paths`
       and `std-vec-resize-with`
-- [x] source `std::vec::Vec<T>` stores `ZoneMetadata` in the handle so
-      natural growth calls work without compiler-synthesized zone arguments
+- [x] source `std::vec::Vec<T>` recovers `ZoneMetadata` from its backing
+      allocation header so natural growth calls work without
+      compiler-synthesized zone arguments
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
       whose zone provenance is invalidated after reset/destroy
 - [x] source `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current

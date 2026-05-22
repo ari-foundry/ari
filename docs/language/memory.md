@@ -448,13 +448,14 @@ zone)` captures the same metadata from an explicit zone capability before any
 payload allocation exists. `ZoneMetadata` exposes `as_ptr()`,
 `as_zone_ptr()`, `alloc(bytes, align)`, and `alloc_array<T>(count)` for runtime
 helpers that need to recover the backing zone from heap metadata. Empty source
-String and Vec buffers may still use a null data pointer, so raw
-`metadata(data)` queries require a non-null allocation pointer.
+String and Vec handles establish a small backing allocation even when logical
+capacity is zero so `value.zone()` remains recoverable. Raw zero-count buffer
+helpers may still return a null data pointer, so raw `metadata(data)` queries
+require a non-null allocation pointer.
 For stdlib heap handles, prefer `zone::of(ref value)` or `value.zone()` through
 `std::zone::ZoneBacked`; they expose the same typed metadata for supported
 handles, including map update-entry handles that recover through their backing
-map. Some handles, such as `Vec<T>`, keep construction metadata even before the
-first payload allocation. Raw header recovery through `metadata(data)` still
+map. Raw header recovery through `metadata(data)` still
 requires a non-null backing allocation.
 
 `zone::scratch<T>(capacity, value)` is local-binding sugar for the common
@@ -531,10 +532,10 @@ through a mutable receiver. A `std::boxed::Box<T>`, `std::string::String`, or
 the target zone, not the original source zone. When a
 source `std::string::String` grows through an explicit zone argument, that
 argument must be the same source zone that created the handle. Source
-`std::vec::Vec<T>` stores `ZoneMetadata` in the handle, so `push(value)`,
-`insert(index, value)`, `reserve(capacity)`, `reserve_extra(additional)`,
-`extend_from_slice(values)`, and `resize(length, value)` grow through that
-recovered runtime zone. A tracked local
+`std::vec::Vec<T>` recovers `ZoneMetadata` from its backing allocation header,
+so `push(value)`, `insert(index, value)`, `reserve(capacity)`,
+`reserve_extra(additional)`, `extend_from_slice(values)`, and
+`resize(length, value)` grow through that recovered runtime zone. A tracked local
 `std::string::String` receiver can infer the same zone for its byte growth
 methods and for
 `append_string`/`append_i64`/`append_u64`/`append_bool`/`append_f32`/`append_f64`.

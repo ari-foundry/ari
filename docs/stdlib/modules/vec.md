@@ -160,12 +160,11 @@ capacity but does not reclaim old bytes until the zone is reset or destroyed.
 the same allocation policy as `reserve`; allocation failure is still governed
 by the runtime zone policy. `push`, `insert`, `reserve`, `try_reserve`,
 `reserve_extra`, `extend`, `extend_from_slice`, `append`, `insert_many`,
-`splice`, growing `resize`, and `resize_with` use `ZoneMetadata` captured at
-construction. `resize_with(length, make_value)` calls `make_value()` once per
-new slot, making it the natural growth API when one repeated value is not the
-right contract.
-The metadata can also be recovered from a non-empty backing allocation header,
-so ordinary callers do not need to pass `ref mut zone` after construction.
+`splice`, growing `resize`, and `resize_with` use `ZoneMetadata` recovered
+from the backing allocation header. `resize_with(length, make_value)` calls
+`make_value()` once per new slot, making it the natural growth API when one
+repeated value is not the right contract. Ordinary callers do not need to pass
+`ref mut zone` after construction.
 
 ### Element Movement Contract
 

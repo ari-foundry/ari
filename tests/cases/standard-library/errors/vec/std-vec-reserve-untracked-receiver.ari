@@ -6,7 +6,6 @@ fn main() -> i64 {
       len: 0,
       capacity: 0,
     },
-    metadata: std::zone::metadata(0u64 as ptr u8),
   };
 
   vec.reserve(1);

@@ -3076,11 +3076,19 @@ private:
 
         line("define " + runtime_visibility + "{ ptr, i64, i64 } @ari_builtin_string_with_capacity(ptr %zone.slot, i64 %capacity) {");
         line("entry:");
-        line("  %data = call ptr @ari_builtin_string_alloc_buffer(ptr %zone.slot, i64 %capacity)");
+        line("  %valid = icmp sge i64 %capacity, 0");
+        line("  br i1 %valid, label %ok, label %fail");
+        line("ok:");
+        line("  %empty = icmp eq i64 %capacity, 0");
+        line("  %alloc.capacity = select i1 %empty, i64 1, i64 %capacity");
+        line("  %data = call ptr @ari_builtin_string_alloc_buffer(ptr %zone.slot, i64 %alloc.capacity)");
         line("  %with.data = insertvalue { ptr, i64, i64 } undef, ptr %data, 0");
         line("  %with.len = insertvalue { ptr, i64, i64 } %with.data, i64 0, 1");
         line("  %with.capacity = insertvalue { ptr, i64, i64 } %with.len, i64 %capacity, 2");
         line("  ret { ptr, i64, i64 } %with.capacity");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
         line("}");
         line();
 

@@ -699,9 +699,10 @@ exposes checked methods over the raw allocation.
 The bare root `Vec[T]` type is still the current local vector literal
 storage and borrowed parameter-view surface. `std::Vec[T]` is instead the
 explicit-zone source handle alias. Source `std::vec::Vec<T>.reserve`
-is grow-only: it allocates a larger buffer from the zone stored in the handle,
-copies the current elements, preserves `len`, and leaves the old buffer to the
-zone's bulk lifetime. `std::vec::Vec<T>.reserve_extra(additional)` grows to at
+is grow-only: it allocates a larger buffer from the backing allocation's
+recovered zone metadata, copies the current elements, preserves `len`, and
+leaves the old buffer to the zone's bulk lifetime.
+`std::vec::Vec<T>.reserve_extra(additional)` grows to at
 least `len + additional`, which lets callers reserve append room without
 recomputing the current length. `std::vec::Vec<T>.push(value)` and
 `insert(index, value)` use the same stored zone and grow when the current

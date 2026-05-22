@@ -74,12 +74,12 @@ API evolution.
 Anything that allocates takes a `ref mut Zone` or returns a handle tied to a
 zone. Methods with an `_in` suffix take an explicit zone for growth or copying;
 methods with a `_to` suffix copy a derived value into a target zone.
-`std::vec::Vec[T]` stores `ZoneMetadata` in the handle, so natural growth
-methods such as `vec.push(value)` and `vec.reserve(capacity)` can allocate
-through the recovered runtime zone without a zone argument after construction.
-For tracked local
-`std::string::String` and linear `std::collections` handles, Ari can infer the
-same source zone for common mutating methods on tracked locals.
+Heap-backed handles recover `ZoneMetadata` from their own backing allocation
+headers, so natural growth methods such as `vec.push(value)`,
+`vec.reserve(capacity)`, and `String` byte appends allocate through the
+recovered runtime zone after construction. For tracked local
+`std::collections` handles, Ari can infer the same source zone for common
+mutating methods on tracked locals.
 `map.insert(key, value)`,
 `set.insert(value)`, `deque.push_back(value)`, `list.push_front(value)`, and
 `heap.push(value)` are natural forms over handles whose constructor established
@@ -387,9 +387,8 @@ authors. `allocation_zone(data)` is the raw allocation-header reader, while
 captures metadata from an explicit zone capability, and `ZoneMetadata` can
 allocate directly through that recovered runtime handle. `ZoneBacked` plus
 `zone::of(ref value)`/`value.zone()` give higher-level handles a standard way
-to expose the same typed metadata, either from cached construction metadata or
-from a real backing allocation, including zone-backed collection and map-entry
-handles.
+to expose the same typed metadata from a real backing allocation, including
+zone-backed collection and map-entry handles.
 
 `std::input` follows that pattern for stdin. `read_byte`, `line`, and
 `owned_line` are runtime hooks, while `try_read_byte` is source Ari that turns
