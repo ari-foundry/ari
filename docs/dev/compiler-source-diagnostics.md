@@ -97,7 +97,10 @@ struct LineColumn {
 struct SourceFile {
   id: SourceId,
   path: std::string::OsStr,
+  display_name: std::string::String,
   text: std::string::String,
+  line_starts: std::vec::Vec[BytePos],
+  eof_offset: BytePos,
 }
 ```
 
@@ -107,6 +110,10 @@ Policy:
 - `Span.end` is exclusive.
 - spans are byte ranges, not Unicode scalar ranges
 - line and column lookup is derived from source text
+- `SourceFile` owns the line start table and EOF offset so diagnostics do not
+  rescan source text for every lookup
+- file-backed sources may use different canonical `path` and diagnostic
+  `display_name` values
 - columns should start as byte columns; Unicode display-width policy can come
   later
 - `SourceId` is stable within one compiler invocation, not across builds
@@ -245,6 +252,8 @@ Recommended policy:
 
 - long-lived source text lives in a compiler-owned arena or source map owner
 - spans store `SourceId` and byte offsets, not borrowed string slices
+- source owners store canonical path, display name, line start offsets, and EOF
+  offset together with the text
 - diagnostics that point at source must carry the same `SourceId` as the token,
   AST node, or generated source they describe
 - diagnostics own their messages or allocate them in a report arena
@@ -261,9 +270,10 @@ Land this layer in small slices:
 | Slice | Deliverable | Focused Tests |
 | --- | --- | --- |
 | SourceId | Stable source ids and file registration. | `source-id-stability`, duplicate path handling. |
+| SourceFile | Canonical path, display name, owned text, line table, EOF offset, and in-memory source registration. | `source-map-file-module.map`, in-memory source API smoke tests. |
 | Span | Byte range construction and validation. | empty span, single-byte span, end-before-start rejection. |
 | Line lookup | Byte offset to line/column mapping. | start, middle, newline, EOF, CRLF policy. |
-| Source map artifact | Deterministic file, byte, line, and snippet text. | `source-map-file-module.map`, CRLF policy. |
+| Source map artifact | Deterministic source ids, kind, canonical/display paths, EOF offsets, line tables, byte, line, and snippet text. | `source-map-file-module.map`, CRLF policy. |
 | Snippets | Extract source line and underline span. | single-line, empty span, tab policy, EOF span. |
 | Diagnostic values | Severity, code, label, note data structures. | label ordering, note ordering, optional code. |
 | Renderer | Stable plain-text diagnostic rendering. | single label, multi-label, notes, path normalization. |

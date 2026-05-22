@@ -10,8 +10,6 @@ namespace ari {
 struct SourceMapDumpFile {
     SourceId source_id;
     std::string module_name;
-    std::string path;
-    std::string text;
     bool is_root = false;
 };
 

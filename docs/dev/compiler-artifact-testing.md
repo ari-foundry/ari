@@ -69,7 +69,7 @@ Source map dump example:
 
 ```text
 SourceMap source=src/main.ari files=1
-  File module=<root> root=true path=src/main.ari bytes=20 lines=1 trailing_newline=true
+  File module=<root> source_id=0 kind=file root=true path=src/main.ari display="src/main.ari" bytes=20 eof_offset=20 line_starts=2 lines=1 trailing_newline=true
     Line number=1 byte_start=0 byte_len=19 newline=lf text="fn main() -> i64 {}"
 ```
 
@@ -320,8 +320,9 @@ It currently proves twenty-four low-level contracts:
   and proof purpose for one producer
 - artifact CLI misuse names the exact conflicting artifact options, such as
   `--emit-tokens, --emit-syntax`
-- `--emit-source-map` writes deterministic source file, byte offset, line, and
-  newline-policy text for root and file-backed modules
+- `--emit-source-map` writes deterministic source file identity, kind,
+  canonical path, display name, EOF offset, line table size, byte offset, line,
+  and newline-policy text for root and file-backed modules
 - `--emit-tokens` writes deterministic lexer output for a small Ari source file
 - `--emit-syntax` writes deterministic parser output before sema and backend
   behavior are involved
@@ -332,6 +333,8 @@ It currently proves twenty-four low-level contracts:
 - `--emit-diagnostics` also writes parseable `source_id=`, `source=`, `line=`,
   `column=`, `byte_start=`, `byte_end=`, and `snippet=` fields for
   location-aware tooling
+- The legacy `source=`, `line=`, and `column=` fields remain present beside
+  `source_id=` for tools that already parse diagnostic artifacts.
 - `--emit-diagnostic-catalog` writes the current diagnostic code table, owning
   compiler source file, family, and fallback policy
 - `--emit-module-graph` writes deterministic file-backed source, import, and
@@ -357,8 +360,10 @@ inventing unrelated golden comparison rules.
 The current compiler already has useful artifact checks:
 
 - `--check` for frontend and sema diagnostics
-- `--emit-source-map` for stable source ids, byte offsets, line tables, and
-  snippet text
+- `--emit-source-map` for stable source ids, canonical/display paths, EOF
+  offsets, byte offsets, line tables, and snippet text
+- `--emit-source-map` for stable byte offset review remains the smallest proof
+  before parser or sema behavior is involved
 - `--emit-stage-plan` for stable stage-order and first-check routing from the
   compiler binary
 - `--emit-capability-inventory` for stable public compiler feature status,

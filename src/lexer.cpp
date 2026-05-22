@@ -13,6 +13,9 @@ public:
     explicit Lexer(std::string source, std::string source_name = {})
         : source_(std::move(source)), source_name_(std::move(source_name)) {
         source_id_ = register_source_text(source_name_, source_);
+        if (const SourceFile* file = find_source_file(source_id_)) {
+            source_name_ = file->display_name;
+        }
     }
 
     std::vector<Token> lex() {

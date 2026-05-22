@@ -47,21 +47,27 @@ std::string escape_text(const std::string& text) {
     return escaped;
 }
 
-std::vector<SourceLine> source_lines(const std::string& text) {
+std::string quote_text(const std::string& text) {
+    return "\"" + escape_text(text) + "\"";
+}
+
+std::vector<SourceLine> source_lines(const SourceFile& source) {
+    const std::string& text = source.text;
     std::vector<SourceLine> lines;
     if (text.empty()) {
         lines.push_back(SourceLine{1, 0, 0, "none", ""});
         return lines;
     }
 
-    std::size_t line_start = 0;
-    std::size_t line_number = 1;
-    while (line_start < text.size()) {
+    std::size_t line_count = source.line_starts.size();
+    if (!text.empty() && text.back() == '\n' && line_count > 1) --line_count;
+    for (std::size_t i = 0; i < line_count; ++i) {
+        std::size_t line_start = source.line_starts[i];
         std::size_t newline_pos = text.find('\n', line_start);
         if (newline_pos == std::string::npos) {
             std::string line_text = text.substr(line_start);
-            lines.push_back(SourceLine{line_number, line_start, line_text.size(), "none", std::move(line_text)});
-            break;
+            lines.push_back(SourceLine{i + 1, line_start, line_text.size(), "none", std::move(line_text)});
+            continue;
         }
 
         std::size_t line_end = newline_pos;
@@ -71,15 +77,15 @@ std::vector<SourceLine> source_lines(const std::string& text) {
             newline = "crlf";
         }
         std::string line_text = text.substr(line_start, line_end - line_start);
-        lines.push_back(SourceLine{line_number, line_start, line_text.size(), newline, std::move(line_text)});
-        line_start = newline_pos + 1;
-        ++line_number;
+        lines.push_back(SourceLine{i + 1, line_start, line_text.size(), newline, std::move(line_text)});
     }
     return lines;
 }
 
 std::string source_key(const SourceMapDumpFile& file) {
-    return file.module_name + "\t" + file.path + "\t" + (file.is_root ? "1" : "0");
+    const SourceFile* source = find_source_file(file.source_id);
+    std::string path = source == nullptr ? source_id_text(file.source_id) : source->path;
+    return file.module_name + "\t" + path + "\t" + (file.is_root ? "1" : "0");
 }
 
 } // namespace
@@ -92,13 +98,25 @@ std::string dump_source_map(const std::string& source_name, std::vector<SourceMa
     std::ostringstream out;
     out << "SourceMap source=" << source_name << " files=" << files.size() << "\n";
     for (const auto& file : files) {
-        std::vector<SourceLine> lines = source_lines(file.text);
-        bool trailing_newline = !file.text.empty() && file.text.back() == '\n';
+        const SourceFile* source = find_source_file(file.source_id);
+        if (source == nullptr) {
+            out << "  File module=" << module_name_text(file.module_name)
+                << " source_id=" << source_id_text(file.source_id)
+                << " root=" << bool_text(file.is_root)
+                << " missing_source=true\n";
+            continue;
+        }
+        std::vector<SourceLine> lines = source_lines(*source);
+        bool trailing_newline = !source->text.empty() && source->text.back() == '\n';
         out << "  File module=" << module_name_text(file.module_name)
             << " source_id=" << source_id_text(file.source_id)
+            << " kind=" << source_kind_text(source->kind)
             << " root=" << bool_text(file.is_root)
-            << " path=" << file.path
-            << " bytes=" << file.text.size()
+            << " path=" << source->path
+            << " display=" << quote_text(source->display_name)
+            << " bytes=" << source->text.size()
+            << " eof_offset=" << source->eof_offset
+            << " line_starts=" << source->line_starts.size()
             << " lines=" << lines.size()
             << " trailing_newline=" << bool_text(trailing_newline) << "\n";
         for (const auto& line : lines) {
@@ -106,7 +124,7 @@ std::string dump_source_map(const std::string& source_name, std::vector<SourceMa
                 << " byte_start=" << line.byte_start
                 << " byte_len=" << line.byte_len
                 << " newline=" << line.newline
-                << " text=\"" << escape_text(line.text) << "\"\n";
+                << " text=" << quote_text(line.text) << "\n";
         }
     }
     return out.str();

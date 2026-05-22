@@ -28,15 +28,22 @@ The hosted C++ compiler keeps the first source identity bridge in
 `src/common.hpp` and `src/common.cpp`:
 
 - `SourceId` is a small wrapper around an integer value.
-- `SourceFile` stores `id`, `kind`, display `name`, and owned source `text`.
+- `SourceFile` stores `id`, `kind`, canonical `path`, diagnostic
+  `display_name`, owned source `text`, `line_starts`, and `eof_offset`.
 - `SourceLocation` stores `source_id`, one-based `line` and `column`,
   zero-based `byte_start` and `byte_end`, a `has_byte_range` flag, and the
   display `source_name`.
 - `CompileError(SourceLocation, message)` is the preferred diagnostic path.
   The old string-based `CompileError(where(loc) + ": ...")` bridge remains so
   older throw sites can preserve structured locations while they migrate.
-- `register_source_text(name, text, kind)` registers or updates source text and
-  returns the stable id for that compiler invocation.
+- `register_source_file(path, display_name, text, kind)` registers or updates
+  a source with separate identity and diagnostic names.
+- `register_source_text(name, text, kind)` is the compatibility wrapper for
+  file-backed sources where path and display are the same. An empty name is
+  treated as an in-memory source with `Unknown` kind unless the caller passes a
+  more specific non-file kind.
+- `register_in_memory_source(display_name, text, kind)` creates a deterministic
+  `<memory:N>` identity for test, REPL, generated, or virtual source text.
 
 Registration currently happens at the source ingestion edge:
 
@@ -48,20 +55,37 @@ Registration currently happens at the source ingestion edge:
   summaries do not preserve source spans. The loader falls back to cached source
   text, lexes it, and keeps normal source identity.
 
+## SourceFile Ownership
+
+One `SourceFile` owns all stable facts needed to locate source bytes:
+
+- `path`: the canonical identity key used for registration and de-duplication.
+- `display_name`: the text shown in diagnostics and committed artifacts.
+- `text`: the complete source text bytes.
+- `line_starts`: zero-based byte offsets for each line start, including the EOF
+  line start when the source ends in a newline.
+- `eof_offset`: the byte offset of the end of the file, equal to `text.size()`.
+
+File-backed sources usually pass the same normalized project path for `path`
+and `display_name`. Tools may pass a stable canonical path plus a shorter
+display name when diagnostics should hide host-specific absolute paths.
+In-memory sources must use `register_in_memory_source` unless they already have
+a stable caller-owned path-like identity.
+
 ## Source Kinds
 
 Ari should distinguish source origin without changing span math:
 
 | Kind | Meaning | Example |
 | --- | --- | --- |
-| `File` | Bytes loaded from a real `.ari` or `.arih` path. | Entry files and file-backed modules. |
-| `Generated` | Compiler-created source-like text with stable ownership. | Future test runners or macro expansion artifacts. |
-| `Builtin` | Compiler-known source that did not come from a project file. | Future built-in prelude snippets or synthesized declarations. |
-| `Unknown` | Registered text whose origin is not classified yet. | Transitional tool buffers or migration cases. |
+| File source, `File` | Bytes loaded from a real `.ari` or `.arih` path. | Entry files and file-backed modules. |
+| Generated source, `Generated` | Compiler-created source-like text with stable ownership. | Future test runners or macro expansion artifacts. |
+| Builtin source, `Builtin` | Compiler-known source that did not come from a project file. | Future built-in prelude snippets or synthesized declarations. |
+| Virtual source, `Unknown` | Registered text whose origin is not classified yet. | Transitional tool buffers or migration cases. |
 
-Every registered source kind receives a `SourceId`. Generated, built-in, and
-tool-provided sources should be visible in artifacts instead of borrowing
-another file's identity.
+Every kind still receives a `SourceId`. Generated, built-in, and tool-provided
+sources should be visible in artifacts instead of borrowing another file's
+identity.
 
 ## Invalid SourceId Policy
 
@@ -91,7 +115,7 @@ User-facing spans must not rely on invalid ids:
 - keep the entry file first
 - record file-backed child modules when they are resolved
 - do not recycle ids during one invocation
-- store source kind and display path beside the id
+- store source kind, canonical path, and display name beside the id
 - normalize repository-local paths in golden text
 - keep absolute host paths out of committed artifacts when possible
 
@@ -146,6 +170,8 @@ Lookup policy:
 - line starts at `1`
 - column starts at `1`
 - newline bytes advance the line and reset the column
+- line/column lookup should use `SourceFile.line_starts`, not a fresh scan of
+  source text at each diagnostic render
 - CRLF should be normalized or explicitly represented in source-map artifacts
 - EOF spans should render at the final valid insertion point
 - invalid spans should fail before rendering
@@ -160,7 +186,7 @@ Use deterministic artifacts before relying on executable behavior:
 
 | Artifact | Proves |
 | --- | --- |
-| `--emit-source-map` | Loaded sources, source ids, byte lengths, line starts, and display paths. |
+| `--emit-source-map` | Loaded sources, source ids, source kind, canonical path, display name, EOF offset, line table size, byte lengths, and line starts. |
 | `--emit-tokens` | Token spans, source ids, and source ownership after lexing. |
 | `--emit-syntax` | AST spans and source-shaped parser output. |
 | `--emit-declaration-index` | Declaration spans, names, visibility, and module ownership. |
@@ -176,8 +202,8 @@ artifact represents a valid source map or an expected diagnostic.
 
 Use these slices for normal compiler work:
 
-1. Source table: one owner for loaded source bytes, source kind, display path,
-   and stable ids.
+1. Source table: one owner for loaded source bytes, source kind, canonical path,
+   display name, line starts, EOF offset, and stable ids.
 2. Span validation: reject invalid source ids, negative byte positions,
    reversed ranges, and out-of-bounds ranges.
 3. Line table: derive line starts from bytes and expose byte-column lookup.
@@ -206,13 +232,16 @@ When adding or changing a diagnostic:
 
 When adding a new source origin:
 
-1. Register the source text once at the ingestion edge with
-   `register_source_text`.
+1. Register file-backed source text once at the ingestion edge with
+   `register_source_file` when canonical path and display name differ, or
+   `register_source_text` when they are the same.
 2. Choose `File`, `Generated`, `Builtin`, or `Unknown` explicitly.
 3. Store and pass the returned `SourceId`; do not infer identity from a path
    string later if the id is already available.
 4. Keep artifact output as `source_id=N`, plus a separate display path or source
    name field.
+5. Use `register_in_memory_source` for test buffers, REPL snippets, generated
+   source, or virtual sources that do not have a filesystem path.
 
 ## Review Checklist
 

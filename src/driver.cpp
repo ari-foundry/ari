@@ -613,8 +613,6 @@ int run(int argc, char** argv) {
             files.push_back(SourceMapDumpFile{
                 source_id_for_name(source.path),
                 source.module_name,
-                source.path,
-                read_text_file(source.path),
                 source.is_root,
             });
         }

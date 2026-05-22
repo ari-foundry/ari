@@ -203,7 +203,7 @@ std::string dump_diagnostic_message(const std::string& severity,
         }
         if (loc.source_name.empty()) {
             if (const SourceFile* file = find_source_file(loc.source_id)) {
-                loc.source_name = file->name;
+                loc.source_name = file->display_name;
             } else {
                 loc.source_name = source_name;
             }
