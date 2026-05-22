@@ -214,6 +214,10 @@ Policy:
 - diagnostics may contain multiple labels
 - each label's `Span` carries its own `SourceId`, so multi-file diagnostics are
   represented without borrowing the primary label's file identity
+- stage0 diagnostics should preserve the original lexer/parser `SourceLocation`
+  through module loading and sema. `CompileError(SourceLocation, message)` is
+  the current bridge; `CompileError(where(loc) + ": ...")` is only for
+  transitional helpers that still accept text.
 - one diagnostic should have at most one primary label unless a future design
   explicitly supports multiple primaries
 - notes are ordered and deterministic

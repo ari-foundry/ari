@@ -6621,13 +6621,13 @@ private:
         }
         specialize_vector_storage_from_init(declared, *init);
         coerce_expr_to_expected(*init, declared);
-        require_nullable_pointer_initializer(stmt.loc, stmt.binding, declared, *init);
-        require_assignable(stmt.loc, declared, init->type);
+        require_nullable_pointer_initializer(stmt.binding.init->loc, stmt.binding, declared, *init);
+        require_assignable(stmt.binding.init->loc, declared, init->type);
         VectorKnownLength init_vector_length =
             vector_known_length_from_source_expr(declared, *stmt.binding.init, *init);
         bool borrow_binding = is_borrow_type(declared);
         if (borrow_binding && !borrow_result_source(*init)) {
-            fail(stmt.loc, "borrow bindings must be initialized from ref, ref mut, or compatible borrow control-flow results");
+            fail(stmt.binding.init->loc, "borrow bindings must be initialized from ref, ref mut, or compatible borrow control-flow results");
         }
         std::string generic_origin = stmt.binding.has_type
             ? generic_origin_from_type_ref(stmt.binding.type)
@@ -6675,8 +6675,8 @@ private:
         }
         specialize_vector_storage_from_init(declared, *init);
         coerce_expr_to_expected(*init, declared);
-        require_nullable_pointer_initializer(stmt.loc, stmt.binding, declared, *init);
-        require_assignable(stmt.loc, declared, init->type);
+        require_nullable_pointer_initializer(stmt.binding.init->loc, stmt.binding, declared, *init);
+        require_assignable(stmt.binding.init->loc, declared, init->type);
         VectorKnownLength init_vector_length =
             vector_known_length_from_source_expr(declared, *stmt.binding.init, *init);
         if (is_borrow_type(declared)) {
@@ -10286,7 +10286,7 @@ private:
             std::size_t borrow_mark = temporary_borrow_mark();
             IrExprPtr value = check_expr_with_expected(*rhs, target_type);
             coerce_expr_to_expected(*value, target_type);
-            require_assignable(stmt.loc, target_type, value->type);
+            require_assignable(rhs->loc, target_type, value->type);
             if (!assignment_target_allows_zone_pointer_storage(*target)) {
                 require_no_zone_pointer_escape(rhs->loc, *value, "aggregate or raw-pointer storage");
             }
@@ -10307,7 +10307,7 @@ private:
         IrExprPtr value = check_expr_with_expected(*rhs, target.type);
         widen_vector_storage_for_assignment(target, *value);
         coerce_expr_to_expected(*value, target.type);
-        require_assignable(stmt.loc, target.type, value->type);
+        require_assignable(rhs->loc, target.type, value->type);
         VectorKnownLength assigned_vector_length =
             vector_known_length_from_source_expr(target.type, *rhs, *value);
         if (contains_borrow_type(target.type)) {
@@ -10563,7 +10563,7 @@ private:
             }
             IrExprPtr index = check_expr(*expr_right(expr));
             if (!is_value_integer_type(index->type)) {
-                fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
+                fail(expr_right(expr)->loc, "index expression must be an integer, got " + type_name(index->type));
             }
             if (index->kind != IrExprKind::Integer || index->int_negative) {
                 if (is_owner_type(base.type.args[0])) {
@@ -10802,7 +10802,7 @@ private:
         }
         IrExprPtr index = check_expr(*expr_right(expr));
         if (!is_value_integer_type(index->type)) {
-            fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
+            fail(expr_right(expr)->loc, "index expression must be an integer, got " + type_name(index->type));
         }
         if (index->kind == IrExprKind::Integer && index->int_negative) {
             fail(expr.loc, "Slice index must be non-negative");
@@ -11133,7 +11133,7 @@ private:
             coerce_expr_to_expected(*value, current_return_);
             actual = value->type;
         }
-        require_assignable(stmt.loc, current_return_, actual);
+        require_assignable(stmt.expr ? stmt.expr->loc : stmt.loc, current_return_, actual);
         if (is_borrow_type(actual)) {
             require_borrow_return_source(stmt.loc, *value);
             release_temporary_borrows(borrow_mark);
@@ -18413,7 +18413,7 @@ private:
             return check_slice_range_index(expr, std::move(lowered), std::move(operand), std::move(index));
         }
         if (!is_value_integer_type(index->type)) {
-            fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
+            fail(expr_right(expr)->loc, "index expression must be an integer, got " + type_name(index->type));
         }
         if (!slice_index &&
             (operand->type.primitive != IrPrimitiveKind::Vector || operand->type.args.size() != 1) &&
@@ -25439,7 +25439,7 @@ private:
     }
 
     [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
-        throw CompileError(where(loc) + ": " + message);
+        throw CompileError(std::move(loc), message);
     }
 };
 

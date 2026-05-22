@@ -29,6 +29,7 @@ hidden to review well.
 | Source snippet | Source-map data for one diagnostic excerpt: source name, touched lines, optional context lines, caret byte ranges, and truncation flags. | `SourceMap::snippet`, `render_source_snippet`, diagnostics. |
 | Token | The lexer output for one syntactic item, such as an identifier or number. | `src/lexer.cpp`, `--emit-tokens`. |
 | AST | The parser output shaped like the source syntax. | `src/parser.cpp`, `src/ast.hpp`, `--emit-syntax`. |
+| Synthetic node | A compiler-created AST/IR node that inherits the source span of the token that caused the generated work, or points into registered generated source text. | Parser desugaring, sema lowering. |
 | Declaration | A top-level item surface such as a function, type, module, trait, or impl. | Declaration-index artifacts. |
 
 Frontend work should preserve source facts. Do not make the parser guess type

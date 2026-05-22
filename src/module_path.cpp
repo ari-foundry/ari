@@ -66,7 +66,7 @@ std::string resolve_relative_path(SourceLocation loc,
     } else {
         while (i < parts.size() && parts[i] == "super") {
             if (resolved.empty()) {
-                throw CompileError(where(loc) + ": super:: path cannot escape the root module");
+                throw CompileError(loc, "super:: path cannot escape the root module");
             }
             resolved.pop_back();
             ++i;

@@ -2258,7 +2258,7 @@ private:
                 SourceLocation dot_loc = tokens_[pos_ - 1].loc;
                 if (check(TokenKind::Integer)) {
                     Token index = expect(TokenKind::Integer, "expected tuple index after .");
-                    expr = make_ast_tuple_index_expr(dot_loc, std::move(expr), index.int_value);
+                    expr = make_ast_tuple_index_expr(index.loc, std::move(expr), index.int_value);
                     continue;
                 }
                 Token field = expect_identifier_or_contextual_name_keyword("expected field name after .");
@@ -2281,7 +2281,7 @@ private:
                     }
                     expect(TokenKind::RParen, "expected ) after method call arguments");
                     expr = make_ast_method_call_expr(
-                        dot_loc,
+                        field.loc,
                         std::move(expr),
                         field.text,
                         std::move(method_type_args),
@@ -2291,7 +2291,7 @@ private:
                 if (!method_type_args.empty()) {
                     fail(dot_loc, "generic method type arguments must be followed by a call");
                 }
-                expr = make_ast_field_access_expr(dot_loc, std::move(expr), field.text);
+                expr = make_ast_field_access_expr(field.loc, std::move(expr), field.text);
                 continue;
             }
 

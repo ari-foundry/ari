@@ -61,6 +61,16 @@ Span policy:
 - `Span.start` is inclusive and `Span.end` is exclusive
 - internal offsets are byte offsets
 - rendered line and column values are one-based
+- lexer errors should use the offending token or character span
+- parser errors should use the current token for "expected here" errors, or
+  the opening token for unterminated constructs
+- module import errors should use the `mod name;` name span
+- sema type mismatches should usually use the value expression span, while
+  invalid type names and generic constraints should use the written type span
+- return and assignment type errors should point at the returned or assigned
+  expression, not merely the `return` keyword or assignment target
+- generated/desugared nodes should inherit the invoking token span or register
+  generated source text before they can become diagnostic primaries
 - a diagnostic should have one primary label unless a future policy explicitly
   allows multiple primaries
 - secondary labels should explain relationships, not decorate the same span

@@ -195,8 +195,9 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
         }
     }
 
-    throw CompileError(where(import.loc) + ": cannot find module file for '" + import.name +
-                       "'; searched " + searched_paths_text(result.searched));
+    throw CompileError(import.loc,
+                       "cannot find module file for '" + import.name +
+                           "'; searched " + searched_paths_text(result.searched));
 }
 
 std::optional<std::string> find_standard_header_file() {
@@ -670,16 +671,17 @@ private:
 
         for (const auto& import : imports) {
             if (loading_modules_.count(import.name)) {
-                throw CompileError(where(import.loc) + ": cyclic module import '" + import.name + "'");
+                throw CompileError(import.loc, "cyclic module import '" + import.name + "'");
             }
 
             std::string source_path;
             if (options_.input_cache) {
                 const ModuleMetadataImport* cached = find_module_cache_import(*options_.input_cache, import);
                 if (!cached) {
-                    throw CompileError(where(import.loc) + ": module cache is missing validated import '" +
-                                       import.name + "' in module '" +
-                                       (import.module_name.empty() ? "<root>" : import.module_name) + "'");
+                    throw CompileError(import.loc,
+                                       "module cache is missing validated import '" +
+                                           import.name + "' in module '" +
+                                           (import.module_name.empty() ? "<root>" : import.module_name) + "'");
                 }
                 source_path = cached->source_path;
             } else {
@@ -689,9 +691,10 @@ private:
             auto loaded = loaded_modules_.find(import.name);
             if (loaded != loaded_modules_.end()) {
                 if (loaded->second != source_path) {
-                    throw CompileError(where(import.loc) + ": module '" + import.name +
-                                       "' was already loaded from '" + loaded->second +
-                                       "', not '" + source_path + "'");
+                    throw CompileError(import.loc,
+                                       "module '" + import.name +
+                                           "' was already loaded from '" + loaded->second +
+                                           "', not '" + source_path + "'");
                 }
                 continue;
             }

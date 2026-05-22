@@ -125,6 +125,41 @@ for compatibility, and that location carries the same canonical `Span` in
 one diagnostic can point at the use site in one file and a declaration or import
 site in another file.
 
+## Stage0 Span Propagation
+
+The hosted stage0 path threads source identity through the compiler layers in
+one direction:
+
+1. The lexer registers the source text and gives every token a `Span` with a
+   valid `SourceId`, including the EOF token as an empty insertion span.
+2. The parser builds AST `SourceLocation` values from token locations. Names,
+   literals, type references, patterns, statements, module imports, and common
+   postfix expressions keep the token that users should see if that node is the
+   primary diagnostic subject.
+3. The module loader reports file-backed `mod name;` failures at the module
+   name token span, not at the root file or a synthesized search path.
+4. Sema diagnostics should pass the AST location that caused the rule failure
+   directly to `CompileError(SourceLocation, message)`. Do not stringify with
+   `where(loc)` unless the callee still accepts only text.
+
+When a semantic rule has both a target and a value, choose the span that lets
+the user fix the mistake fastest:
+
+- unknown names, functions, fields, methods, traits, and modules point at the
+  written name
+- type annotations point at the written type when the type itself is invalid
+- initializer, assignment, argument, return, break, and index type mismatches
+  point at the value expression that has the wrong type
+- ownership and borrow errors point at the illegal use, with future secondary
+  labels reserved for the earlier borrow, move, or declaration
+
+Synthetic nodes are allowed, but they must inherit a real source location from
+the construct that caused them. Compound assignment lowers through a generated
+binary expression located at the compound assignment operator. Macro,
+desugaring, and prelude-generated nodes should either point at the invoking
+token or register generated source text with `SourceKind::Generated`; they
+should not borrow an unrelated file span.
+
 ## Source Kinds
 
 Ari should distinguish source origin without changing span math:
