@@ -25,7 +25,12 @@ The compiler-development artifact bucket also locks source-aware ownership
 diagnostics and review-sized LLVM drop fragments:
 
 - `diagnostic-use-after-move.diagnostic`
+- `diagnostic-borrow-after-move.diagnostic`
+- `diagnostic-double-move.diagnostic`
 - `diagnostic-move-borrowed-owner.diagnostic`
+- `diagnostic-assignment-while-borrowed.diagnostic`
+- `diagnostic-field-assignment-while-borrowed.diagnostic`
+- `diagnostic-enum-payload-invalid-move.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
 - `backend-ownership-drop-aggregate.llvm-frag`

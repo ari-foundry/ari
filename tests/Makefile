@@ -135,10 +135,20 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-private-access.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-assignment-while-borrowed.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-assignment-while-borrowed.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-field-assignment-while-borrowed.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-field-assignment-while-borrowed.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-use-after-move.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-use-after-move.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-after-move.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-after-move.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-double-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-double-move.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-double-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-double-move.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-move-borrowed-owner.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-move-borrowed-owner.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-enum-payload-invalid-move.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-enum-payload-invalid-move.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-partial-move.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-partial-move.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-vector-dynamic-move.diagnostic
@@ -230,6 +240,16 @@ check-ownership: $(TARGET)
 	grep -q "cannot move partially moved owning binding 'holder'" $(BUILD_DIR)/ownership/ownership-aggregate-partial-move.err
 	if $(TARGET) tests/cases/ownership/errors/ownership-vector-dynamic-element-move.ari --check >$(BUILD_DIR)/ownership/ownership-vector-dynamic-element-move.err 2>&1; then exit 1; fi
 	grep -q "moving owning aggregate elements through dynamic indexes is not supported; use a constant index or move the whole aggregate" $(BUILD_DIR)/ownership/ownership-vector-dynamic-element-move.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.ari --check >$(BUILD_DIR)/ownership/diagnostic-assignment-while-borrowed.err 2>&1; then exit 1; fi
+	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/ownership/diagnostic-assignment-while-borrowed.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.ari --check >$(BUILD_DIR)/ownership/diagnostic-field-assignment-while-borrowed.err 2>&1; then exit 1; fi
+	grep -q "cannot assign to borrowed field 'pair.0'" $(BUILD_DIR)/ownership/diagnostic-field-assignment-while-borrowed.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.ari --check >$(BUILD_DIR)/ownership/diagnostic-borrow-after-move.err 2>&1; then exit 1; fi
+	grep -q "cannot use moved binding 'token'" $(BUILD_DIR)/ownership/diagnostic-borrow-after-move.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-double-move.ari --check >$(BUILD_DIR)/ownership/diagnostic-double-move.err 2>&1; then exit 1; fi
+	grep -q "cannot use moved binding 'token'" $(BUILD_DIR)/ownership/diagnostic-double-move.err
+	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid-move.ari --check >$(BUILD_DIR)/ownership/diagnostic-enum-payload-invalid-move.err 2>&1; then exit 1; fi
+	grep -q "cannot move runtime-dependent owning enum payload slot 'item.0' outside match" $(BUILD_DIR)/ownership/diagnostic-enum-payload-invalid-move.err
 
 check-compiler-development: $(TARGET)
 	mkdir -p $(BUILD_DIR)/compiler-development

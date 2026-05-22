@@ -235,6 +235,9 @@ std::string classify_diagnostic_code(const std::string& message) {
     }
     if (contains(diagnostic, "borrow") ||
         contains(diagnostic, "moved binding") ||
+        contains(diagnostic, "cannot move ") ||
+        contains(diagnostic, "owning binding") ||
+        contains(diagnostic, "owning expression") ||
         contains(diagnostic, "use after move") ||
         contains(diagnostic, "drop")) {
         return "O0001";

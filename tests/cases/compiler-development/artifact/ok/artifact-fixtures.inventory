@@ -1,14 +1,24 @@
-CompilerArtifactFixtures version=1 group=all entries=100
+CompilerArtifactFixtures version=1 group=all entries=110
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-assignment-while-borrowed.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-borrow-after-move.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-borrow-after-move.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-borrow-conflict.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-borrow-conflict.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-core-use-before-declaration.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-core-use-before-declaration.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-cyclic-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-cyclic-module.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-double-move.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-double-move.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-duplicate-name.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-name.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-enum-payload-invalid-move.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-payload-invalid-move.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-field-assignment-while-borrowed.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-field-assignment-while-borrowed.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-assignment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-return.ari

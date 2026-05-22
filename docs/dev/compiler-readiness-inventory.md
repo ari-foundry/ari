@@ -293,6 +293,12 @@ Current compiler-development tests:
   review-sized LLVM fragment for the compiler-shaped ownership fixture covering
   generic aggregate field moves, local `Vec[WorkItem]` owner moves, result-like
   enum matching, and deterministic `Drop` calls.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic`,
+  `diagnostic-field-assignment-while-borrowed.diagnostic`,
+  `diagnostic-borrow-after-move.diagnostic`, `diagnostic-double-move.diagnostic`,
+  and `diagnostic-enum-payload-invalid-move.diagnostic`: source-aware
+  ownership diagnostic goldens for borrow conflicts, repeated moves, and
+  invalid enum payload moves.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,

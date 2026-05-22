@@ -172,6 +172,9 @@ reborrowing together with move/drop fixtures and the compiler-shaped
 `ownership-compiler-shaped.ari` program. `make check-errors` keeps the larger
 negative matrix for borrow conflicts, invalid returns, local escapes, and
 control-flow mismatch cases.
+Source-aware ownership goldens also lock assignment while a binding or field is
+borrowed, borrow-after-move, double-move, and invalid runtime-dependent enum
+payload moves.
 
 Named borrow lifetimes are shortened for local straight-line code. After the
 last visible use of a named borrow in the current statement scope, Ari releases

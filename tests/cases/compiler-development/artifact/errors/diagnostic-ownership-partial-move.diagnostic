@@ -1,4 +1,4 @@
-diagnostic error code=ari/compiler family=general message="cannot move partially moved owning binding 'holder'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=O0001 family=ownership message="cannot move partially moved owning binding 'holder'" sources=1 labels=1 notes=0 helps=0
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari" bytes=343
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari" line=18 column=24 end_line=18 end_column=30 byte_start=301 byte_end=307 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari:18:24\n    |\n 18 |   let result = consume(holder);\n    |                        ^^^^^^"

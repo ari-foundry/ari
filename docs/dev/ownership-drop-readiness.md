@@ -76,7 +76,12 @@ The artifact suite currently locks these ownership/drop surfaces:
 - `ownership-aggregate-field-move.ir` for typed IR after sema has resolved
   field moves
 - `diagnostic-use-after-move.diagnostic`
+- `diagnostic-borrow-after-move.diagnostic`
+- `diagnostic-double-move.diagnostic`
 - `diagnostic-move-borrowed-owner.diagnostic`
+- `diagnostic-assignment-while-borrowed.diagnostic`
+- `diagnostic-field-assignment-while-borrowed.diagnostic`
+- `diagnostic-enum-payload-invalid-move.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
 - `diagnostic-ownership-vector-dynamic-move.diagnostic`
 - `backend-ownership-drop-aggregate.llvm-frag`
@@ -87,6 +92,10 @@ The artifact suite currently locks these ownership/drop surfaces:
 `ownership-compiler-shaped.ari` and covers a compiler-like mix of parser-state
 borrows, generic `Box`/`Slot` field ownership, `Vec[WorkItem]` owner moves and
 reinitialization, result-like enum matching, and deterministic `Drop` calls.
+The diagnostic goldens above lock assignment-while-borrowed, field assignment
+while a subpath is borrowed, borrow-after-move, double-move, invalid enum payload-slot moves,
+partial aggregate moves, and dynamic indexed container owner moves as
+source-aware ownership errors.
 
 ## Adding Tests
 

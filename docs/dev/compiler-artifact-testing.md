@@ -275,6 +275,11 @@ tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
 tests/cases/compiler-development/artifact/ok/declaration-index-generic-aggregate.decls
 tests/cases/compiler-development/artifact/ok/declaration-index-project-compiler.decls
 tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog
+tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-double-move.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid-move.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.diagnostic
 tests/cases/compiler-development/artifact/ok/object-library-export.symbols
 tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir
 tests/cases/compiler-development/artifact/ok/project-compiler.ir
