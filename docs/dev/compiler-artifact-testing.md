@@ -222,6 +222,7 @@ build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/ffi/ok/library-export.ari --shared --emit-llvm build/focused/library-export.ll
+python3 tests/extract_symbol_names.py build/focused/library-export.o _ARNv3add _ARNv4main
 ```
 
 Run broad `make check` only before handing off larger compiler changes.
@@ -239,7 +240,7 @@ Land artifact testing in slices:
 | Diagnostic dump format | Stable field-oriented output for code, family, sources, labels, spans, snippets, notes, help, and message. | `diagnostic-single-label`, `diagnostic-note-order`. |
 | Syntax dump format | Stable parser tree output. | `syntax-function`, `syntax-match`, `syntax-recovery`. |
 | Module graph dump format | Stable file-backed sources, imports, and item surfaces. | `module-graph-file`, `module-graph-search-path`, `module-graph-cfg`. |
-| Declaration index dump format | Stable declaration names, signatures, visibility, and locations. | `declaration-index-basic`, `declaration-index-module`. |
+| Declaration index dump format | Stable declaration names, signatures, visibility, and locations. | `declaration-index-basic`, `declaration-index-module`, `declaration-index-generic`. |
 | HIR dump format | Stable lowered structure and symbol ids. | `hir-module-path`, `hir-patterns`, `hir-imports`. |
 | Typed IR dump format | Stable typed facts after sema. | `ir-types`, `ir-ownership`, `ir-trait-call`. |
 | LLVM normalizer | Normalize paths and harmless temporary symbol noise. | `llvm-symbols`, `llvm-aggregate-layout`. |
@@ -253,8 +254,9 @@ The current repository has a tiny artifact comparison seed plus frontend,
 middle-end, backend-fragment, and runtime-output producers:
 
 ```text
-tests/check_compiler_artifacts.py
 tests/check_compiler_artifact_cli.py
+tests/check_compiler_artifacts.py
+tests/extract_symbol_names.py
 tests/materialize_crlf_fixture.py
 tests/source_map_unit.cpp
 tests/cases/compiler-development/artifact/ok/
@@ -265,11 +267,15 @@ tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-trait-dispatch.llvm-frag
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
+tests/cases/compiler-development/artifact/ok/declaration-index-generic-aggregate.decls
+tests/cases/compiler-development/artifact/ok/declaration-index-project-compiler.decls
 tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog
+tests/cases/compiler-development/artifact/ok/object-library-export.symbols
 tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir
 tests/cases/compiler-development/artifact/ok/project-compiler.ir
 tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout
 tests/cases/compiler-development/artifact/ok/runtime-output-trait.stdout
+tests/cases/compiler-development/artifact/ok/shared-visibility.symbols
 tests/cases/compiler-development/artifact/ok/source-map-crlf.map
 tests/cases/compiler-development/artifact/ok/source-map-empty.map
 tests/cases/compiler-development/artifact/ok/source-map-file-module.map
@@ -375,7 +381,9 @@ It currently proves more than two dozen low-level contracts:
 - `--emit-module-graph` writes deterministic file-backed source, import, and
   item-surface facts without running sema or LLVM codegen
 - `--emit-declaration-index` writes deterministic declaration signatures,
-  visibility, module names, and source locations before sema or LLVM codegen
+  visibility, module names, and source locations before sema or LLVM codegen,
+  including a compiler-shaped file-backed project and a generic aggregate
+  surface with aliases, generic impls, and nested payload declarations
 - `--emit-typed-ir` writes deterministic sema-lowered IR for small Ari, core
   scalar flow, trait dispatch, generic aggregate, file-backed module, and
   ownership/drop fixtures without involving LLVM codegen
@@ -384,6 +392,9 @@ It currently proves more than two dozen low-level contracts:
 - `--emit-llvm` is checked through review-sized function fragments for core
   control flow, generic aggregate lowering, and static trait dispatch instead
   of committing the whole runtime-heavy LLVM file
+- `tests/extract_symbol_names.py` turns object and linked shared-library symbol
+  tables into a deterministic allow-list artifact, so exported Ari symbols,
+  hidden helpers, absent `main`, and hidden builtins are reviewed as text
 - executable stdout is checked through small runtime-output goldens, including
   one trait-bound dispatch program, after the earlier source, syntax, typed IR,
   and LLVM checks pass
@@ -424,8 +435,9 @@ The current compiler already has useful artifact checks:
 - `--emit-pass-summary` for quick stage-boundary counts in compiler-development
   tests
 - `--emit-llvm` for LLVM text and extracted review-sized function fragments
-- `--emit-obj` for object files
-- `--shared` for shared-library visibility
+- `--emit-obj` plus `tests/extract_symbol_names.py` for object symbol goldens
+- `--shared` plus `tests/extract_symbol_names.py --dynamic` for linked
+  shared-library symbol goldens
 - executable exit-code and stdout golden checks where LLVM driver support is
   available
 
@@ -451,7 +463,9 @@ end test.
 ## Readiness Impact
 
 Stage comparison remains a compiler maturity blocker, but the artifact bucket
-now covers frontend, source identity, diagnostics, module graphs, declarations,
-typed IR for modules/ownership/generics/traits, LLVM fragments, and stdout
-goldens. The remaining larger gaps are HIR, object/shared symbol goldens, and
-broader backend/runtime fixture breadth.
+now covers frontend, source identity, diagnostics, module graphs, declarations
+for single-file, file-backed, and generic surfaces, typed IR for
+modules/ownership/generics/traits, LLVM fragments, object/shared symbol
+goldens, and stdout goldens. The remaining larger gaps are HIR, richer
+object/header/relocation inventories, and broader backend/runtime fixture
+breadth.

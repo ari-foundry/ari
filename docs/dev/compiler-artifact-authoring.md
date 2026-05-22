@@ -116,6 +116,8 @@ Keep fixture names behavior-based:
 - `syntax-control-flow.syntax`
 - `module-graph-file-module.graph`
 - `declaration-index-basic.decls`
+- `declaration-index-project-compiler.decls`
+- `declaration-index-generic-aggregate.decls`
 - `capability-inventory.inventory`
 - `diagnostic-catalog.catalog`
 - `stage-plan-basic.plan`
@@ -125,6 +127,8 @@ Keep fixture names behavior-based:
 - `backend-core.llvm-frag`
 - `backend-generic-aggregate.llvm-frag`
 - `backend-trait-dispatch.llvm-frag`
+- `object-library-export.symbols`
+- `shared-visibility.symbols`
 - `runtime-output-basic.stdout`
 - `runtime-output-trait.stdout`
 - `diagnostic-parser-expected.diagnostic`
@@ -147,6 +151,7 @@ build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens build/focused/token.tokens
 python3 tests/materialize_crlf_fixture.py tests/cases/compiler-development/artifact/ok/source-map-crlf-template.ari build/focused/source-map-crlf.ari
+python3 tests/extract_symbol_names.py build/focused/library-export.o _ARNv3add _ARNv4main
 python3 tests/check_compiler_artifacts.py expected actual
 python3 tests/check_compiler_artifacts.py --update expected actual
 make check-compiler-artifacts

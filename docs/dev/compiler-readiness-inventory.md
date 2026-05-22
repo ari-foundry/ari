@@ -57,7 +57,7 @@ get more reliable, not when a private shortcut is added.
 | Gap | Needed State | First Work |
 | --- | --- | --- |
 | Trait selection beyond the minimum subset | Trait objects, associated-type solving, trait-driven collection defaults, and richer iterator ownership policies need the same stability as the static subset. | Keep minimum-subset fixtures green while adding one focused advanced trait fixture at a time. |
-| Pass artifacts | HIR, object, shared-symbol, and broader executable-output goldens still need the same coverage as token, syntax, typed IR, LLVM-fragment, and stdout artifacts. | Add normalized text dumps before broad executable checks. |
+| Pass artifacts | HIR plus richer object/header/relocation and broader executable-output goldens still need the same depth as token, syntax, typed IR, LLVM-fragment, stdout, and seeded object/shared-symbol artifacts. | Add normalized text dumps before broad executable checks. |
 | Build ergonomics | Large Ari tools need boring Make targets and project fixtures before a package manager exists. | Keep `make check-compiler-development` small and add one target per compiler slice. |
 
 ## Recent Compiler Support
@@ -99,11 +99,12 @@ parser tree text, expected-failure diagnostic text,
 diagnostic code ownership tables,
 file-backed source/import/item graph text, declaration signature text,
 sema-lowered typed IR, and stage-boundary counts. `make check-compiler-artifacts`
-also extracts review-sized LLVM fragments and compares one stdout golden. This is
-the current stage-comparison path for normal compiler development: when source
-loading, lexer, parser, diagnostic, module, declaration surface, typed lowering,
-backend lowering, or runtime output changes, reviewers can inspect a focused
-golden diff before reaching for a broad suite run.
+also extracts review-sized LLVM fragments, compares seeded object/shared symbol
+inventories, and compares stdout goldens. This is the current
+stage-comparison path for normal compiler development: when source loading,
+lexer, parser, diagnostic, module, declaration surface, typed lowering,
+backend lowering, ABI visibility, or runtime output changes, reviewers can
+inspect a focused golden diff before reaching for a broad suite run.
 Diagnostic artifacts now include stable codes, explicit layer families,
 source ids, parseable label byte spans, note/help location policy, and
 snippets such as
@@ -262,6 +263,12 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls`:
   declaration signature, visibility, and source-location golden checked through
   `--emit-declaration-index`.
+- `tests/cases/compiler-development/artifact/ok/declaration-index-project-compiler.decls`:
+  compiler-shaped file-backed project declaration inventory checked through
+  `--emit-declaration-index`.
+- `tests/cases/compiler-development/artifact/ok/declaration-index-generic-aggregate.decls`:
+  generic aggregate aliases, impls, nested payloads, and owned-field
+  declaration inventory checked through `--emit-declaration-index`.
 - `tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan`:
   stage order, owner, first-check, and development-gate golden checked through
   `--emit-stage-plan`.
@@ -283,6 +290,9 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
   `backend-generic-aggregate.llvm-frag`, and `backend-trait-dispatch.llvm-frag`:
   extracted LLVM backend fragments checked after full `--emit-llvm` generation.
+- `tests/cases/compiler-development/artifact/ok/object-library-export.symbols`
+  and `shared-visibility.symbols`: normalized object and linked shared-library
+  symbol inventories checked through `tests/extract_symbol_names.py`.
 - `tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout` and
   `runtime-output-trait.stdout`: executable stdout goldens checked when the LLVM
   driver is available.

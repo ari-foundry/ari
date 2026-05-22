@@ -85,6 +85,13 @@ the same language surface that normal Ari users get.
   `source-map-crlf-template.ari` so committed fixtures remain LF-normalized.
 - `artifact/ok/declaration-index-basic.*`: declaration signature, visibility,
   module, and source-location golden seed before semantic lowering.
+- `artifact/ok/declaration-index-project-compiler.decls`: declaration
+  inventory golden for a compiler-shaped file-backed project with public and
+  private functions, imports, nested modules, generic parser state, and enum
+  payloads.
+- `artifact/ok/declaration-index-generic-aggregate.decls`: declaration
+  inventory golden for user-defined generic structs, enums, aliases, impls,
+  nested payloads, and owned generic fields.
 - `artifact/ok/stage-plan-basic.plan`: compiler artifact order, layer owner,
   first-check, and development-gate golden seed emitted by the driver.
 - `artifact/ok/capability-inventory.inventory`: implemented, partial, planned,
@@ -114,6 +121,9 @@ the same language surface that normal Ari users get.
 - `artifact/ok/backend-*.llvm-frag`: extracted LLVM function fragments for core
   control flow, generic aggregate backend lowering, and static trait dispatch,
   kept smaller than full runtime-heavy LLVM files.
+- `artifact/ok/object-library-export.symbols` and
+  `shared-visibility.symbols`: normalized `nm` symbol inventories for object
+  and linked shared-library export surfaces.
 - `artifact/ok/runtime-output-basic.*` and `runtime-output-trait.*`:
   executable stdout goldens that run only after earlier frontend, typed IR, and
   backend artifacts are stable.

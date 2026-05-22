@@ -1,0 +1,6 @@
+SymbolExtract kind=dynamic-symbols source=build/compiler-development/artifact/shared-visibility.so symbols=5
+  Symbol name=_ARNv10public_api state=defined
+  Symbol name=ari_named_private state=defined
+  Symbol name=_ARNv6helper state=missing
+  Symbol name=_ARNv4main state=missing
+  Symbol name=ari_builtin_write_i64 state=missing

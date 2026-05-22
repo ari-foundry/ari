@@ -1,0 +1,3 @@
+SymbolExtract kind=object-symbols source=build/compiler-development/artifact/library-export.o symbols=2
+  Symbol name=_ARNv3add state=defined
+  Symbol name=_ARNv4main state=missing
