@@ -45,6 +45,7 @@ pointer and key only, then recover the growth zone from the backing map with
 ```ari
 collections::new<T>(ref mut zone, capacity)
 Set::new<T>(ref mut zone, capacity)
+Set::from_iter<T, I>(ref mut zone, iter)
 collections::from_slice_in<T>(ref mut zone, values)
 ```
 
@@ -78,6 +79,8 @@ set.pop()
 set.try_pop()
 set.clear()
 set.retain(keep)
+set.extend_iter(iter)
+set.extend(iter)
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.as_slice()
@@ -90,7 +93,10 @@ set.copy_to(ref mut target)
 `Some(previous)` when an equal value already existed, otherwise it inserts and
 returns `None`. `take` moves the removed value out, while `remove` drops it.
 `retain(fn(ref T) -> bool)` keeps insertion order while dropping values whose
-predicate returns `false`.
+predicate returns `false`. `Set::from_iter(ref mut zone, iter)` and
+`extend_iter(iter)` insert only new values from an `Iterator[T]`; duplicates
+from the iterator are dropped, preserving the first representative already in
+the set.
 `equals`, `is_subset`, `is_superset`, and `is_disjoint` compare membership,
 not insertion order, and borrow the other set explicitly.
 When a local `Set[T]` comes from a tracked zone allocation, the common growth
@@ -112,6 +118,7 @@ logical front-to-back order.
 ```ari
 collections::deque<T>(ref mut zone, capacity)
 Deque::new<T>(ref mut zone, capacity)
+Deque::from_iter<T, I>(ref mut zone, iter)
 ```
 
 Important methods:
@@ -133,6 +140,8 @@ deque.try_pop_front()
 deque.pop_back()
 deque.try_pop_back()
 deque.clear()
+deque.extend_iter(iter)
+deque.extend(iter)
 deque.reserve(ref mut zone, capacity)
 deque.reserve_extra(ref mut zone, additional)
 deque.copy_to(ref mut target)
@@ -141,8 +150,9 @@ deque.iter()
 
 Use `Deque[T]` when both ends matter. For tracked local deque handles,
 `push_front(value)`, `push_back(value)`, `reserve(capacity)`, and
-`reserve_extra(additional)` infer the constructor zone. Keep the explicit
-`ref mut zone` form for manually assembled handles. `copy_to(ref mut target)`
+`reserve_extra(additional)` infer the constructor zone. `Deque::from_iter` and
+`extend_iter` append iterator values at the back in logical order. Keep the
+explicit `ref mut zone` form for manually assembled handles. `copy_to(ref mut target)`
 copies the logical front-to-back contents into the target zone, so the copy can
 outlive a reset or destroy of the source zone. `iter` and `for value in deque`
 yield logical front-to-back order, not physical storage order.
@@ -194,6 +204,7 @@ by later pushes.
 ```ari
 collections::linked_list<T>(ref mut zone, capacity)
 LinkedList::new<T>(ref mut zone, capacity)
+LinkedList::from_iter<T, I>(ref mut zone, iter)
 ```
 
 Important methods:
@@ -217,6 +228,8 @@ list.try_pop_back()
 list.remove_at(index)
 list.try_remove_at(index)
 list.clear()
+list.extend_iter(iter)
+list.extend(iter)
 list.reserve(ref mut zone, capacity)
 list.reserve_extra(ref mut zone, additional)
 list.copy_to(ref mut target)
@@ -224,9 +237,11 @@ list.iter()
 ```
 
 `get` and `remove_at` traverse from the head, so they are O(n). Prefer
-front/back operations for queue-like code. For tracked local linked-list
-handles, `push_front(value)`, `push_back(value)`, `reserve(capacity)`, and
-`reserve_extra(additional)` infer the constructor zone. `iter` yields
+front/back operations for queue-like code. `LinkedList::from_iter` and
+`extend_iter` append values at the back, preserving iterator order. For tracked
+local linked-list handles, `push_front(value)`, `push_back(value)`,
+`reserve(capacity)`, and `reserve_extra(additional)` infer the constructor
+zone. `iter` yields
 front-to-back values. `copy_to(ref mut target)` rebuilds only the live
 front-to-back values in the target zone, leaving free-list holes behind.
 
@@ -245,8 +260,10 @@ For tracked local hash handles, `map.insert(key, value)`, `map.entry(key)`,
 collections::hash_i64(value)
 collections::hash_map<K, V>(ref mut zone, capacity, hash)
 HashMap::new<K, V>(ref mut zone, capacity, hash)
+HashMap::from_iter<K, V, I>(ref mut zone, capacity, hash, iter)
 collections::hash_set<T>(ref mut zone, capacity, hash)
 HashSet::new<T>(ref mut zone, capacity, hash)
+HashSet::from_iter<T, I>(ref mut zone, capacity, hash, iter)
 ```
 
 The hash function shape is `fn(K) -> u64` for `HashMap[K, V]` and
@@ -270,10 +287,6 @@ map.get_or(key, fallback)
 map.try_get(key)
 map.get_mut(key)
 map.try_get_mut(key)
-map.lower_bound(key)
-map.upper_bound(key)
-map.range(start, end)
-map.range_mut(start, end)
 map.insert(ref mut zone, key, value)
 map.replace(ref mut zone, key, value)
 map.entry(ref mut zone, key)
@@ -282,6 +295,8 @@ map.remove(key)
 map.remove_entry(key)
 map.clear()
 map.retain(keep)
+map.extend_iter(iter)
+map.extend(iter)
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
 map.copy_to(ref mut target)
@@ -318,7 +333,10 @@ yields `MapEntryMut[K,V]` handles with `key()`, `value()`, and `value_mut()` so
 code can read the copied key while mutating the stored value.
 `retain(fn(ref K, ref mut V) -> bool)` scans live buckets in place. The
 predicate can mutate retained values; a `false` result drops the key/value pair
-and leaves a tombstone so later collision probes remain correct. `drain()`
+and leaves a tombstone so later collision probes remain correct.
+`HashMap::from_iter(ref mut zone, capacity, hash, iter)` and `extend_iter(iter)`
+consume `Iterator[MapEntry[K,V]]`; an incoming duplicate key replaces the stored
+value and drops the previous key/value pair. `drain()`
 marks the current live entries as drained, leaves the map empty, and returns a
 draining entry cursor.
 `reserve_extra(additional)` reserves enough hash buckets
@@ -379,6 +397,8 @@ set.take(value)
 set.remove(value)
 set.clear()
 set.retain(keep)
+set.extend_iter(iter)
+set.extend(iter)
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.copy_to(ref mut target)
@@ -397,6 +417,8 @@ yields live buckets, and `HashSet[T]` implements `IntoIterator[T]` so
 drops values whose predicate returns `false` and marks those buckets as
 tombstones; later inserts can still reuse the table normally. `HashSet.drain()`
 returns a live-bucket draining cursor and leaves the set empty.
+`HashSet::from_iter` and `extend_iter` consume `Iterator[T]`; duplicate values
+are dropped and the first stored representative is retained.
 `copy_to(ref mut target)` copies live values into a fresh target-zone hash
 table without tombstones.
 
@@ -411,8 +433,10 @@ strict less-than comparator.
 collections::less_i64(left, right)
 collections::tree_map<K, V>(ref mut zone, capacity, less)
 TreeMap::new<K, V>(ref mut zone, capacity, less)
+TreeMap::from_iter<K, V, I>(ref mut zone, capacity, less, iter)
 collections::tree_set<T>(ref mut zone, capacity, less)
 TreeSet::new<T>(ref mut zone, capacity, less)
+TreeSet::from_iter<T, I>(ref mut zone, capacity, less, iter)
 ```
 
 The comparator shape is `fn(K, K) -> bool` for `TreeMap[K, V]` and
@@ -449,13 +473,25 @@ map.get_or(key, fallback)
 map.try_get(key)
 map.get_mut(key)
 map.try_get_mut(key)
+map.lower_bound(key)
+map.upper_bound(key)
+map.range(start, end)
+map.range_mut(start, end)
 map.insert(ref mut zone, key, value)
 map.replace(ref mut zone, key, value)
 map.entry(ref mut zone, key)
 map.entry(key)
 map.remove(key)
 map.remove_entry(key)
+map.pop_first()
+map.pop_last()
+map.split_off(ref mut zone, start)
+map.split_off(start)
+map.append(ref mut zone, ref mut other)
+map.append(ref mut other)
 map.clear()
+map.extend_iter(iter)
+map.extend(iter)
 map.reserve(ref mut zone, capacity)
 map.reserve_extra(ref mut zone, additional)
 map.copy_to(ref mut target)
@@ -496,13 +532,20 @@ mutable cursor; call `has_next()` before `next() -> ref mut V`. `iter_mut()`
 walks sorted `MapEntryMut[K,V]` handles for copied-key plus mutable-value
 updates.
 `drain()` returns entries in sorted key order and immediately leaves the source
-tree map empty. `remove`
+tree map empty. `pop_first()` and `pop_last()` remove and return the smallest
+or largest entry as `Option[MapEntry[K,V]]`. `split_off(start)` moves every
+entry in `[start, +inf)` into a same-zone tree map and leaves smaller keys in
+the source. `append(ref mut other)` drains `other` into `self`, replacing
+duplicate keys in `self` and dropping the replaced key/value pair.
+`TreeMap::from_iter` and `extend_iter` consume sorted-map style
+`Iterator[MapEntry[K,V]]` values with the same replacement rule. `remove`
 returns the removed value as `Option[V]`; deletion now uses red-black delete
 fixup, then compacts the live node arrays by moving the final live slot into
 the removed slot and updating only the affected parent/child/root references.
 Removal does not allocate through a zone and no longer rebuilds every tree
 link. For tracked local tree maps,
-`map.insert(key, value)`, `map.entry(key)`, `map.reserve(capacity)`, and
+`map.insert(key, value)`, `map.entry(key)`, `map.split_off(start)`,
+`map.append(ref mut other)`, `map.reserve(capacity)`, and
 `map.reserve_extra(additional)` infer the constructor zone. `copy_to(ref mut
 target)` rebuilds the map in the target zone with the same comparator.
 
@@ -538,7 +581,13 @@ set.insert(ref mut zone, value)
 set.replace(ref mut zone, value)
 set.take(value)
 set.remove(value)
+set.split_off(ref mut zone, start)
+set.split_off(start)
+set.append(ref mut zone, ref mut other)
+set.append(ref mut other)
 set.clear()
+set.extend_iter(iter)
+set.extend(iter)
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.copy_to(ref mut target)
@@ -562,10 +611,15 @@ moves a removed value out as
 removed. Tree-set removal uses direct red-black delete fixup and compacting
 slot movement without allocating or rebuilding all links. `TreeSet.iter()` yields values in ascending comparator
 order, and `TreeSet[T]` implements `IntoIterator[T]`. `TreeSet.drain()` yields
-values in ascending comparator order and leaves the source tree set empty. For tracked local tree
-sets, `set.insert(value)`, `set.replace(value)`, and
-`set.reserve(capacity)`/`set.reserve_extra(additional)` infer the constructor
-zone. `copy_to(ref mut target)` rebuilds the ordered set in the target zone
+values in ascending comparator order and leaves the source tree set empty.
+`split_off(start)` moves values in `[start, +inf)` into a same-zone ordered
+set. `append(ref mut other)` drains `other` into `self`; duplicate values are
+dropped and the existing representative stays. `TreeSet::from_iter` and
+`extend_iter` use the same insertion rule. For tracked local tree sets,
+`set.insert(value)`, `set.replace(value)`, `set.split_off(start)`,
+`set.append(ref mut other)`, and `set.reserve(capacity)`/
+`set.reserve_extra(additional)` infer the constructor zone.
+`copy_to(ref mut target)` rebuilds the ordered set in the target zone
 with the same comparator.
 
 ## BinaryHeap And PriorityQueue
@@ -577,8 +631,10 @@ With `collections::less_i64`, larger integers pop first.
 ```ari
 collections::binary_heap<T>(ref mut zone, capacity, less)
 BinaryHeap::new<T>(ref mut zone, capacity, less)
+BinaryHeap::from_iter<T, I>(ref mut zone, capacity, less, iter)
 collections::priority_queue<T>(ref mut zone, capacity, less)
 PriorityQueue::new<T>(ref mut zone, capacity, less)
+PriorityQueue::from_iter<T, I>(ref mut zone, capacity, less, iter)
 ```
 
 Important methods:
@@ -593,6 +649,8 @@ heap.push(ref mut zone, value)
 heap.pop()
 heap.try_pop()
 heap.clear()
+heap.extend_iter(iter)
+heap.extend(iter)
 heap.reserve(ref mut zone, capacity)
 heap.reserve_extra(ref mut zone, additional)
 heap.copy_to(ref mut target)
@@ -608,7 +666,9 @@ edits it, and dropping the guard sifts the root down so the heap invariant is
 restored. The guard keeps only heap/value pointers and does not store a zone
 handle. `into_sorted_vec()` drains the heap into a `Vec[T]` ordered from low
 priority to high priority for the comparator; with `less_i64`, the resulting
-vector is ascending.
+vector is ascending. `BinaryHeap::from_iter`/`PriorityQueue::from_iter` and
+`extend_iter` consume `Iterator[T]`, append every value, and sift it into the
+heap invariant.
 For tracked local heap and priority-queue handles, `push(value)`,
 `reserve(capacity)`, and `reserve_extra(additional)` infer the constructor
 zone. `copy_to(ref mut target)` copies the heap storage and comparator into the
@@ -681,6 +741,7 @@ tests/cases/standard-library/ok/collections/std-collections-tree-bounds.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari
 tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari
+tests/cases/standard-library/ok/collections/std-collections-polish-api.ari
 tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari
 tests/cases/standard-library/ok/collections/ring-buffer/std-collections-ring-buffer.ari
 tests/cases/standard-library/ok/collections/linked-list/std-collections-linked-list.ari
@@ -758,6 +819,9 @@ red-black deletion with compacting slot movement.
 orders to verify relationship predicates are membership-based, while
 `std-collections-tree-iter.ari` checks sorted successor traversal plus tree
 map/set range cursors and mutable range value updates.
+`std-collections-polish-api.ari` checks iterator-driven constructors and
+extension across set/map/sequence/heap collections, plus tree boundary pops,
+`split_off`, and `append`.
 `std-collections-deque.ari` checks circular growth and both-end operations.
 `std-collections-ring-buffer.ari` checks bounded push failure, overwrite, and
 FIFO iteration. `std-collections-linked-list.ari` checks front/back operations,

@@ -542,6 +542,8 @@ bool std_collections_set_method_requires_same_zone_argument(const std::string& m
            method_name == "reserve_extra" ||
            method_name == "replace" ||
            method_name == "entry" ||
+           method_name == "split_off" ||
+           method_name == "append" ||
            method_name == "insert" ||
            method_name == "push_back" ||
            method_name == "push_front" ||
@@ -563,6 +565,12 @@ std::optional<StdCollectionsImplicitZoneMethod> std_collections_implicit_zone_me
         if (method_name == "insert" && user_arg_count == 2) {
             return StdCollectionsImplicitZoneMethod{"insert", false};
         }
+        if (method_name == "split_off" && user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"split_off", false};
+        }
+        if (method_name == "append" && user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"append", false};
+        }
         if ((method_name == "reserve" || method_name == "reserve_extra") &&
             user_arg_count == 1) {
             return StdCollectionsImplicitZoneMethod{method_name, false};
@@ -578,6 +586,12 @@ std::optional<StdCollectionsImplicitZoneMethod> std_collections_implicit_zone_me
         }
         if (method_name == "replace" && user_arg_count == 1) {
             return StdCollectionsImplicitZoneMethod{"replace", false};
+        }
+        if (method_name == "split_off" && user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"split_off", false};
+        }
+        if (method_name == "append" && user_arg_count == 1) {
+            return StdCollectionsImplicitZoneMethod{"append", false};
         }
         if (method_name == "reserve" && user_arg_count == 1) {
             return StdCollectionsImplicitZoneMethod{"reserve", false};

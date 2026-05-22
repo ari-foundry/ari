@@ -451,6 +451,12 @@ pub impl[T] std::collections::Set[T] {
     return std::collections::new<T>(zone, capacity);
   }
 
+  fn from_iter[I: std::Iterator[T]](zone: ref mut Zone, iter: I) -> std::collections::Set[T] {
+    var output = std::collections::new<T>(zone, 4);
+    output.extend_iter<I>(iter);
+    return output;
+  }
+
   fn len(self: ref Self) -> i64 {
     return self.len;
   }
@@ -617,6 +623,27 @@ pub impl[T] std::collections::Set[T] {
         drop removed;
       }
     }
+  }
+
+  fn extend_iter[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      let value = item.unwrap();
+      if self.contains(value) {
+        drop value;
+        item = cursor.next();
+        continue;
+      }
+      ensure_spare_capacity<T>(self);
+      ptr_store(ptr_add(self.data, self.len), value);
+      self.len = self.len + 1;
+      item = cursor.next();
+    }
+  }
+
+  fn extend[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    self.extend_iter<I>(iter);
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
@@ -970,6 +997,17 @@ pub impl[K, V] std::collections::HashMap[K, V] {
     return std::collections::hash_map<K, V>(zone, capacity, hash);
   }
 
+  fn from_iter[I: std::Iterator[std::collections::MapEntry[K, V]]](
+    zone: ref mut Zone,
+    capacity: i64,
+    hash: fn(K) -> u64,
+    iter: I
+  ) -> std::collections::HashMap[K, V] {
+    var output = std::collections::hash_map<K, V>(zone, capacity, hash);
+    output.extend_iter<I>(iter);
+    return output;
+  }
+
   fn len(self: ref Self) -> i64 {
     return self.len;
   }
@@ -1113,6 +1151,30 @@ pub impl[K, V] std::collections::HashMap[K, V] {
         bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
       }
     }
+  }
+
+  fn extend_iter[I: std::Iterator[std::collections::MapEntry[K, V]]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      let entry = item.unwrap();
+      let existing = hash_map_find_slot_mut<K, V>(self, entry.key);
+      if existing >= 0 {
+        let old_key = ptr_load(ptr_add(self.keys, existing));
+        let previous = ptr_load(ptr_add(self.values, existing));
+        drop old_key;
+        drop previous;
+        ptr_store(ptr_add(self.keys, existing), entry.key);
+        ptr_store(ptr_add(self.values, existing), entry.value);
+      } else {
+        hash_map_insert_absent_slot<K, V>(self, entry.key, entry.value);
+      }
+      item = cursor.next();
+    }
+  }
+
+  fn extend[I: std::Iterator[std::collections::MapEntry[K, V]]](self: ref mut Self, iter: I) -> void {
+    self.extend_iter<I>(iter);
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
@@ -1574,6 +1636,17 @@ pub impl[T] std::collections::HashSet[T] {
     return std::collections::hash_set<T>(zone, capacity, hash);
   }
 
+  fn from_iter[I: std::Iterator[T]](
+    zone: ref mut Zone,
+    capacity: i64,
+    hash: fn(T) -> u64,
+    iter: I
+  ) -> std::collections::HashSet[T] {
+    var output = std::collections::hash_set<T>(zone, capacity, hash);
+    output.extend_iter<I>(iter);
+    return output;
+  }
+
   fn len(self: ref Self) -> i64 {
     return self.len;
   }
@@ -1703,6 +1776,27 @@ pub impl[T] std::collections::HashSet[T] {
         bucket = next_live_bucket(self.states, self.capacity, bucket + 1);
       }
     }
+  }
+
+  fn extend_iter[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      let value = item.unwrap();
+      let existing = hash_set_find_slot_mut<T>(self, value);
+      if existing >= 0 {
+        drop value;
+        item = cursor.next();
+        continue;
+      }
+      hash_set_ensure_spare_capacity<T>(self);
+      hash_set_place_existing<T>(self, value);
+      item = cursor.next();
+    }
+  }
+
+  fn extend[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    self.extend_iter<I>(iter);
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
@@ -2221,6 +2315,22 @@ fn tree_map_lower_bound_node[K, V](map: ref std::collections::TreeMap[K, V], key
   return best;
 }
 
+fn tree_map_lower_bound_node_mut[K, V](map: ref mut std::collections::TreeMap[K, V], key: K) -> i64 {
+  let less = map.less;
+  var node = map.root;
+  var best = -1;
+  while node >= 0 {
+    let node_key = ptr_load(ptr_add(map.keys, node));
+    if less(node_key, key) {
+      node = ptr_load(ptr_add(map.right, node));
+    } else {
+      best = node;
+      node = ptr_load(ptr_add(map.left, node));
+    }
+  }
+  return best;
+}
+
 fn tree_map_upper_bound_node[K, V](map: ref std::collections::TreeMap[K, V], key: K) -> i64 {
   let less = map.less;
   var node = map.root;
@@ -2396,6 +2506,24 @@ fn tree_map_insert_absent_slot[K, V](
   return index;
 }
 
+fn tree_map_insert_or_replace_drop[K, V](
+  map: ref mut std::collections::TreeMap[K, V],
+  key: K,
+  value: V
+) -> void {
+  let existing = tree_map_find_slot_mut<K, V>(map, key);
+  if existing >= 0 {
+    let old_key = ptr_load(ptr_add(map.keys, existing));
+    let previous = ptr_load(ptr_add(map.values, existing));
+    drop old_key;
+    drop previous;
+    ptr_store(ptr_add(map.keys, existing), key);
+    ptr_store(ptr_add(map.values, existing), value);
+    return;
+  }
+  tree_map_insert_absent_slot<K, V>(map, key, value);
+}
+
 fn tree_map_drop_values[K, V](map: ref mut std::collections::TreeMap[K, V]) -> void {
   var index = 0;
   while index < map.len {
@@ -2416,6 +2544,17 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     less: fn(K, K) -> bool
   ) -> std::collections::TreeMap[K, V] {
     return std::collections::tree_map<K, V>(zone, capacity, less);
+  }
+
+  fn from_iter[I: std::Iterator[std::collections::MapEntry[K, V]]](
+    zone: ref mut Zone,
+    capacity: i64,
+    less: fn(K, K) -> bool,
+    iter: I
+  ) -> std::collections::TreeMap[K, V] {
+    var output = std::collections::tree_map<K, V>(zone, capacity, less);
+    output.extend_iter<I>(iter);
+    return output;
   }
 
   fn len(self: ref Self) -> i64 {
@@ -2545,6 +2684,44 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
       std::collections::MapEntry<K, V> {
         key: ptr_load(ptr_add(self.keys, node)),
         value: ptr_load(ptr_add(self.values, node)),
+      }
+    );
+  }
+
+  fn pop_first(self: ref mut Self) -> std::Option[std::collections::MapEntry[K, V]] {
+    let node = tree_first_node(self.root, self.left);
+    if node < 0 {
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    let removed_key = ptr_load(ptr_add(self.keys, node));
+    let removed_value = ptr_load(ptr_add(self.values, node));
+    let last = self.len - 1;
+    tree_map_delete_slot<K, V>(self, node);
+    tree_map_move_last_slot<K, V>(self, node, last);
+    self.len = last;
+    return std::Some<std::collections::MapEntry[K, V]>(
+      std::collections::MapEntry<K, V> {
+        key: removed_key,
+        value: removed_value,
+      }
+    );
+  }
+
+  fn pop_last(self: ref mut Self) -> std::Option[std::collections::MapEntry[K, V]] {
+    let node = tree_last_node(self.root, self.right);
+    if node < 0 {
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    let removed_key = ptr_load(ptr_add(self.keys, node));
+    let removed_value = ptr_load(ptr_add(self.values, node));
+    let last = self.len - 1;
+    tree_map_delete_slot<K, V>(self, node);
+    tree_map_move_last_slot<K, V>(self, node, last);
+    self.len = last;
+    return std::Some<std::collections::MapEntry[K, V]>(
+      std::collections::MapEntry<K, V> {
+        key: removed_key,
+        value: removed_value,
       }
     );
   }
@@ -2696,6 +2873,45 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
         value: removed_value,
       }
     );
+  }
+
+  fn split_off(self: ref mut Self, zone: ref mut Zone, start: K) -> std::collections::TreeMap[K, V] {
+    var output = std::collections::tree_map<K, V>(zone, self.len, self.less);
+    var node = tree_map_lower_bound_node_mut<K, V>(self, start);
+    while node >= 0 {
+      let moved_key = ptr_load(ptr_add(self.keys, node));
+      let moved_value = ptr_load(ptr_add(self.values, node));
+      let last = self.len - 1;
+      tree_map_delete_slot<K, V>(self, node);
+      tree_map_move_last_slot<K, V>(self, node, last);
+      self.len = last;
+      tree_map_insert_absent_slot<K, V>(ref mut output, moved_key, moved_value);
+      node = tree_map_lower_bound_node_mut<K, V>(self, start);
+    }
+    return output;
+  }
+
+  fn append(self: ref mut Self, zone: ref mut Zone, other: ref mut std::collections::TreeMap[K, V]) -> void {
+    var item = other.pop_first();
+    while item.is_some() {
+      let entry = item.unwrap();
+      tree_map_insert_or_replace_drop<K, V>(self, entry.key, entry.value);
+      item = other.pop_first();
+    }
+  }
+
+  fn extend_iter[I: std::Iterator[std::collections::MapEntry[K, V]]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      let entry = item.unwrap();
+      tree_map_insert_or_replace_drop<K, V>(self, entry.key, entry.value);
+      item = cursor.next();
+    }
+  }
+
+  fn extend[I: std::Iterator[std::collections::MapEntry[K, V]]](self: ref mut Self, iter: I) -> void {
+    self.extend_iter<I>(iter);
   }
 
   fn clear(self: ref mut Self) -> void {
@@ -3426,6 +3642,22 @@ fn tree_set_lower_bound_node[T](set: ref std::collections::TreeSet[T], value: T)
   return best;
 }
 
+fn tree_set_lower_bound_node_mut[T](set: ref mut std::collections::TreeSet[T], value: T) -> i64 {
+  let less = set.less;
+  var node = set.root;
+  var best = -1;
+  while node >= 0 {
+    let node_value = ptr_load(ptr_add(set.data, node));
+    if less(node_value, value) {
+      node = ptr_load(ptr_add(set.right, node));
+    } else {
+      best = node;
+      node = ptr_load(ptr_add(set.left, node));
+    }
+  }
+  return best;
+}
+
 fn tree_set_upper_bound_node[T](set: ref std::collections::TreeSet[T], value: T) -> i64 {
   let less = set.less;
   var node = set.root;
@@ -3472,6 +3704,46 @@ fn tree_set_link_existing_node[T](set: ref mut std::collections::TreeSet[T], ind
     ptr_store(ptr_add(set.right, parent), index);
   }
   tree_set_fix_insert<T>(set, index);
+}
+
+fn tree_set_insert_or_drop[T](set: ref mut std::collections::TreeSet[T], value: T) -> bool {
+  let less = set.less;
+  var parent = -1;
+  var node = set.root;
+  var place_left = false;
+  while node >= 0 {
+    parent = node;
+    let node_value = ptr_load(ptr_add(set.data, node));
+    if less(value, node_value) {
+      node = ptr_load(ptr_add(set.left, node));
+      place_left = true;
+    } else if less(node_value, value) {
+      node = ptr_load(ptr_add(set.right, node));
+      place_left = false;
+    } else {
+      drop value;
+      return false;
+    }
+  }
+  if set.len >= set.capacity {
+    tree_set_grow_to_capacity<T>(set, set.capacity * 2);
+  }
+  let index = set.len;
+  ptr_store(ptr_add(set.data, index), value);
+  ptr_store(ptr_add(set.left, index), -1);
+  ptr_store(ptr_add(set.right, index), -1);
+  ptr_store(ptr_add(set.parent, index), parent);
+  ptr_store(ptr_add(set.colors, index), 1);
+  if parent < 0 {
+    set.root = index;
+  } else if place_left {
+    ptr_store(ptr_add(set.left, parent), index);
+  } else {
+    ptr_store(ptr_add(set.right, parent), index);
+  }
+  set.len = set.len + 1;
+  tree_set_fix_insert<T>(set, index);
+  return true;
 }
 
 fn tree_set_grow_to_capacity[T](
@@ -3528,6 +3800,17 @@ pub impl[T] std::collections::TreeSet[T] {
     less: fn(T, T) -> bool
   ) -> std::collections::TreeSet[T] {
     return std::collections::tree_set<T>(zone, capacity, less);
+  }
+
+  fn from_iter[I: std::Iterator[T]](
+    zone: ref mut Zone,
+    capacity: i64,
+    less: fn(T, T) -> bool,
+    iter: I
+  ) -> std::collections::TreeSet[T] {
+    var output = std::collections::tree_set<T>(zone, capacity, less);
+    output.extend_iter<I>(iter);
+    return output;
   }
 
   fn len(self: ref Self) -> i64 {
@@ -3723,6 +4006,46 @@ pub impl[T] std::collections::TreeSet[T] {
     }
     self.insert(zone, value);
     return std::None<T>();
+  }
+
+  fn split_off(self: ref mut Self, zone: ref mut Zone, start: T) -> std::collections::TreeSet[T] {
+    var output = std::collections::tree_set<T>(zone, self.len, self.less);
+    var node = tree_set_lower_bound_node_mut<T>(self, start);
+    while node >= 0 {
+      let moved = ptr_load(ptr_add(self.data, node));
+      let last = self.len - 1;
+      tree_set_delete_slot<T>(self, node);
+      tree_set_move_last_slot<T>(self, node, last);
+      self.len = last;
+      tree_set_insert_or_drop<T>(ref mut output, moved);
+      node = tree_set_lower_bound_node_mut<T>(self, start);
+    }
+    return output;
+  }
+
+  fn append(self: ref mut Self, zone: ref mut Zone, other: ref mut std::collections::TreeSet[T]) -> void {
+    while other.len > 0 {
+      let node = tree_first_node(other.root, other.left);
+      let moved = ptr_load(ptr_add(other.data, node));
+      let last = other.len - 1;
+      tree_set_delete_slot<T>(other, node);
+      tree_set_move_last_slot<T>(other, node, last);
+      other.len = last;
+      tree_set_insert_or_drop<T>(self, moved);
+    }
+  }
+
+  fn extend_iter[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      tree_set_insert_or_drop<T>(self, item.unwrap());
+      item = cursor.next();
+    }
+  }
+
+  fn extend[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    self.extend_iter<I>(iter);
   }
 
   fn clear(self: ref mut Self) -> void {
@@ -3927,6 +4250,12 @@ pub impl[T] std::collections::Deque[T] {
     return std::collections::deque<T>(zone, capacity);
   }
 
+  fn from_iter[I: std::Iterator[T]](zone: ref mut Zone, iter: I) -> std::collections::Deque[T] {
+    var output = std::collections::deque<T>(zone, 4);
+    output.extend_iter<I>(iter);
+    return output;
+  }
+
   fn len(self: ref Self) -> i64 {
     return self.len;
   }
@@ -4033,6 +4362,22 @@ pub impl[T] std::collections::Deque[T] {
 
   fn clear(self: ref mut Self) -> void {
     deque_drop_values<T>(self);
+  }
+
+  fn extend_iter[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      deque_ensure_spare_capacity<T>(self);
+      let slot = circular_slot(self.head, self.len, self.capacity);
+      ptr_store(ptr_add(self.data, slot), item.unwrap());
+      self.len = self.len + 1;
+      item = cursor.next();
+    }
+  }
+
+  fn extend[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    self.extend_iter<I>(iter);
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
@@ -4441,6 +4786,12 @@ pub impl[T] std::collections::LinkedList[T] {
     return std::collections::linked_list<T>(zone, capacity);
   }
 
+  fn from_iter[I: std::Iterator[T]](zone: ref mut Zone, iter: I) -> std::collections::LinkedList[T] {
+    var output = std::collections::linked_list<T>(zone, 4);
+    output.extend_iter<I>(iter);
+    return output;
+  }
+
   fn len(self: ref Self) -> i64 {
     return self.len;
   }
@@ -4559,6 +4910,29 @@ pub impl[T] std::collections::LinkedList[T] {
 
   fn clear(self: ref mut Self) -> void {
     linked_list_drop_values<T>(self);
+  }
+
+  fn extend_iter[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      let node = linked_list_alloc_node<T>(self);
+      ptr_store(ptr_add(self.data, node), item.unwrap());
+      ptr_store(ptr_add(self.next_node, node), -1);
+      ptr_store(ptr_add(self.prev, node), self.tail);
+      if self.tail >= 0 {
+        ptr_store(ptr_add(self.next_node, self.tail), node);
+      } else {
+        self.head = node;
+      }
+      self.tail = node;
+      self.len = self.len + 1;
+      item = cursor.next();
+    }
+  }
+
+  fn extend[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    self.extend_iter<I>(iter);
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
@@ -4718,6 +5092,17 @@ pub impl[T] std::collections::BinaryHeap[T] {
     return std::collections::binary_heap<T>(zone, capacity, less);
   }
 
+  fn from_iter[I: std::Iterator[T]](
+    zone: ref mut Zone,
+    capacity: i64,
+    less: fn(T, T) -> bool,
+    iter: I
+  ) -> std::collections::BinaryHeap[T] {
+    var output = std::collections::binary_heap<T>(zone, capacity, less);
+    output.extend_iter<I>(iter);
+    return output;
+  }
+
   fn len(self: ref Self) -> i64 {
     return self.len;
   }
@@ -4780,6 +5165,24 @@ pub impl[T] std::collections::BinaryHeap[T] {
 
   fn clear(self: ref mut Self) -> void {
     binary_heap_drop_values<T>(self);
+  }
+
+  fn extend_iter[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      if self.len >= self.capacity {
+        binary_heap_grow_to_capacity<T>(self, next_growth_capacity(self.capacity, self.len + 1));
+      }
+      ptr_store(ptr_add(self.data, self.len), item.unwrap());
+      self.len = self.len + 1;
+      binary_heap_sift_up<T>(self, self.len - 1);
+      item = cursor.next();
+    }
+  }
+
+  fn extend[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    self.extend_iter<I>(iter);
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
@@ -4941,6 +5344,17 @@ pub impl[T] std::collections::PriorityQueue[T] {
     return std::collections::priority_queue<T>(zone, capacity, less);
   }
 
+  fn from_iter[I: std::Iterator[T]](
+    zone: ref mut Zone,
+    capacity: i64,
+    less: fn(T, T) -> bool,
+    iter: I
+  ) -> std::collections::PriorityQueue[T] {
+    var output = std::collections::priority_queue<T>(zone, capacity, less);
+    output.extend_iter<I>(iter);
+    return output;
+  }
+
   fn len(self: ref Self) -> i64 {
     return self.len;
   }
@@ -4995,6 +5409,24 @@ pub impl[T] std::collections::PriorityQueue[T] {
 
   fn clear(self: ref mut Self) -> void {
     priority_queue_drop_values<T>(self);
+  }
+
+  fn extend_iter[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    var cursor = iter;
+    var item = cursor.next();
+    while item.is_some() {
+      if self.len >= self.capacity {
+        priority_queue_grow_to_capacity<T>(self, next_growth_capacity(self.capacity, self.len + 1));
+      }
+      ptr_store(ptr_add(self.data, self.len), item.unwrap());
+      self.len = self.len + 1;
+      priority_queue_sift_up<T>(self, self.len - 1);
+      item = cursor.next();
+    }
+  }
+
+  fn extend[I: std::Iterator[T]](self: ref mut Self, iter: I) -> void {
+    self.extend_iter<I>(iter);
   }
 
   fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {

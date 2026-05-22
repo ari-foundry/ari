@@ -1,0 +1,84 @@
+// Covers Rust-style collection polish: boundary pops, split/append,
+// iterator-driven extension, and from_iter constructors.
+fn main() -> i64 {
+  var zone = zone::create(32768);
+
+  var set_seed = [1, 2, 2, 3];
+  var set: Set[i64] = Set::from_iter<i64, SliceIter[i64]>(ref mut zone, set_seed.as_slice().iter());
+  assert(set.len() == 3 && set.contains(1) && set.contains(3));
+  var set_more = [3, 4, 5];
+  set.extend_iter<SliceIter[i64]>(set_more.as_slice().iter());
+  assert(set.len() == 5 && set.contains(5));
+
+  var hash_set_seed = [5, 6, 6, 7];
+  var hash_set: HashSet[i64] =
+    HashSet::from_iter<i64, SliceIter[i64]>(ref mut zone, 1, collections::hash_i64, hash_set_seed.as_slice().iter());
+  assert(hash_set.len() == 3 && hash_set.contains(7));
+  var hash_set_more = [7, 8];
+  hash_set.extend_iter<SliceIter[i64]>(hash_set_more.as_slice().iter());
+  assert(hash_set.len() == 4 && hash_set.contains(8));
+
+  var tree_set_seed = [8, 2, 6, 4];
+  var tree_set: TreeSet[i64] =
+    TreeSet::from_iter<i64, SliceIter[i64]>(ref mut zone, 1, collections::less_i64, tree_set_seed.as_slice().iter());
+  var high_set = tree_set.split_off(6);
+  assert(tree_set.len() == 2 && high_set.len() == 2);
+  assert(tree_set.contains(2) && tree_set.contains(4));
+  assert(high_set.contains(6) && high_set.contains(8));
+  tree_set.append(ref mut high_set);
+  assert(high_set.is_empty() && tree_set.len() == 4 && tree_set.contains(8));
+
+  var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  map.insert(4, 40);
+  map.insert(1, 10);
+  map.insert(7, 70);
+  map.insert(3, 30);
+  let first = map.pop_first().unwrap_or(MapEntry { key: 0, value: 0 });
+  let last = map.pop_last().unwrap_or(MapEntry { key: 0, value: 0 });
+  assert(first.key == 1 && first.value == 10);
+  assert(last.key == 7 && last.value == 70);
+
+  var tail = map.split_off(4);
+  assert(map.len() == 1 && map.contains_key(3));
+  assert(tail.len() == 1 && tail.contains_key(4));
+  map.append(ref mut tail);
+  assert(tail.is_empty() && map.len() == 2 && map.get(4) == 40);
+
+  var hash_source = HashMap::new<i64, i64>(ref mut zone, 1, collections::hash_i64);
+  hash_source.insert(1, 100);
+  hash_source.insert(2, 200);
+  var hash_target = HashMap::new<i64, i64>(ref mut zone, 1, collections::hash_i64);
+  hash_target.extend_iter<HashMapEntries[i64, i64]>(hash_source.entries());
+  assert(hash_target.len() == 2 && hash_target.get(2) == 200);
+  var hash_built: HashMap[i64, i64] =
+    HashMap::from_iter<i64, i64, HashMapEntries[i64, i64]>(ref mut zone, 1, collections::hash_i64, hash_source.entries());
+  assert(hash_built.len() == 2 && hash_built.get(1) == 100);
+
+  var tree_source = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  tree_source.insert(9, 90);
+  tree_source.insert(8, 80);
+  var tree_target: TreeMap[i64, i64] =
+    TreeMap::from_iter<i64, i64, TreeMapEntries[i64, i64]>(ref mut zone, 1, collections::less_i64, tree_source.entries());
+  assert(tree_target.len() == 2 && tree_target.first_key() == 8 && tree_target.last_key() == 9);
+
+  var deque_seed = [1, 2, 3];
+  var deque: Deque[i64] = Deque::from_iter<i64, SliceIter[i64]>(ref mut zone, deque_seed.as_slice().iter());
+  assert(deque.len() == 3 && deque.front() == 1 && deque.back() == 3);
+
+  var list_seed = [4, 5, 6];
+  var list: LinkedList[i64] = LinkedList::from_iter<i64, SliceIter[i64]>(ref mut zone, list_seed.as_slice().iter());
+  assert(list.len() == 3 && list.front() == 4 && list.back() == 6);
+
+  var heap_seed = [2, 9, 5];
+  var heap: BinaryHeap[i64] =
+    BinaryHeap::from_iter<i64, SliceIter[i64]>(ref mut zone, 1, collections::less_i64, heap_seed.as_slice().iter());
+  assert(heap.pop() == 9 && heap.pop() == 5 && heap.pop() == 2);
+
+  var queue_seed = [3, 1, 7];
+  var queue: PriorityQueue[i64] =
+    PriorityQueue::from_iter<i64, SliceIter[i64]>(ref mut zone, 1, collections::less_i64, queue_seed.as_slice().iter());
+  assert(queue.pop() == 7 && queue.pop() == 3 && queue.pop() == 1);
+
+  zone::destroy(zone);
+  return 0;
+}

@@ -992,6 +992,9 @@ method std::collections::BinaryHeapPeekMut[T]::value_mut|check-prelude std-colle
 method std::collections::BinaryHeap[T]::capacity|check-prelude std-collections-heap binary heap capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::clear|check-prelude std-collections-heap drops live heap values; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone binary heap copy preserving priority order; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::extend[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator alias for binary heap extension; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::extend_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven binary heap insertion and sift-up; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::from_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven binary heap constructor; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::into_sorted_vec|check-prelude std-collections-heap draining sorted Vec conversion; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::is_empty|check-prelude std-collections-heap binary heap emptiness predicate; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::len|check-prelude std-collections-heap binary heap length metadata; docs/stdlib/modules/collections.md
@@ -1008,6 +1011,9 @@ method std::collections::Deque[T]::back|check-prelude std-collections-deque asse
 method std::collections::Deque[T]::capacity|check-prelude std-collections-deque deque capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::clear|check-prelude std-collections-deque drops live deque values; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone deque copy preserving logical order; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::extend[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator alias for deque back extension; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::extend_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven deque back extension; docs/stdlib/modules/collections.md
+method std::collections::Deque[T]::from_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven deque constructor; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::front|check-prelude std-collections-deque asserting front accessor; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::get|check-prelude std-collections-deque logical indexed read through circular storage; docs/stdlib/modules/collections.md
 method std::collections::Deque[T]::is_empty|check-prelude std-collections-deque deque emptiness predicate; docs/stdlib/modules/collections.md
@@ -1046,6 +1052,9 @@ method std::collections::HashMap[K,V]::copy_to|check-prelude std-collections-cop
 method std::collections::HashMap[K,V]::drain|check-prelude std-collections-view-api hash map draining entry cursor; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::entries|check-prelude std-collections-map-entries live-bucket key-value entry iterator; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::entry|check-prelude std-collections-map-entry-api hash map update entry handle with same-zone growth; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::extend[I: std::Iterator[std::collections::MapEntry[K, V]|check-prelude std-collections-polish-api iterator alias for hash map entry extension; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::extend_iter[I: std::Iterator[std::collections::MapEntry[K, V]|check-prelude std-collections-polish-api iterator-driven hash map entry extension; docs/stdlib/modules/collections.md
+method std::collections::HashMap[K,V]::from_iter[I: std::Iterator[std::collections::MapEntry[K, V]|check-prelude std-collections-polish-api iterator-driven hash map constructor; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get|check-prelude std-collections-hash asserting hash lookup; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get_mut|check-prelude std-collections-map-mut-access asserting mutable hash lookup; docs/stdlib/modules/collections.md
 method std::collections::HashMap[K,V]::get_or|check-prelude std-collections-map-natural-api fallback hash lookup helper; docs/stdlib/modules/collections.md
@@ -1072,6 +1081,9 @@ method std::collections::HashSet[T]::contains|check-prelude std-collections-hash
 method std::collections::HashSet[T]::copy_to|check-prelude std-collections-copy-to target-zone hash set copy without tombstones; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::drain|check-prelude std-collections-view-api hash set draining value cursor; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::equals|check-prelude std-collections-hash-set-relations membership equality predicate; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::extend[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator alias for hash set insertion; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::extend_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven hash set insertion; docs/stdlib/modules/collections.md
+method std::collections::HashSet[T]::from_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven hash set constructor; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::get|check-prelude std-collections-set-representatives asserting stored representative lookup; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::insert|check-prelude std-collections-hash hash set insertion with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::HashSet[T]::is_disjoint|check-prelude std-collections-hash-set-relations live-bucket disjointness predicate; docs/stdlib/modules/collections.md
@@ -1092,6 +1104,9 @@ method std::collections::LinkedList[T]::back|check-prelude std-collections-linke
 method std::collections::LinkedList[T]::capacity|check-prelude std-collections-linked-list linked list capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::clear|check-prelude std-collections-linked-list drops live linked list values; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone linked-list copy preserving logical order; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::extend[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator alias for linked-list back extension; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::extend_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven linked-list back extension; docs/stdlib/modules/collections.md
+method std::collections::LinkedList[T]::from_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven linked-list constructor; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::front|check-prelude std-collections-linked-list asserting front accessor; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::get|check-prelude std-collections-linked-list indexed traversal read; docs/stdlib/modules/collections.md
 method std::collections::LinkedList[T]::is_empty|check-prelude std-collections-linked-list linked list emptiness predicate; docs/stdlib/modules/collections.md
@@ -1121,6 +1136,9 @@ method std::collections::MapValueMut[V]::value_mut|check-prelude std-collections
 method std::collections::PriorityQueue[T]::capacity|check-prelude std-collections-heap priority queue capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::clear|check-prelude std-collections-heap drops live priority queue values; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone priority queue copy preserving priority order; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::extend[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator alias for priority queue insertion; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::extend_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven priority queue insertion; docs/stdlib/modules/collections.md
+method std::collections::PriorityQueue[T]::from_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven priority queue constructor; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::is_empty|check-prelude std-collections-heap priority queue emptiness predicate; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::len|check-prelude std-collections-heap priority queue length metadata; docs/stdlib/modules/collections.md
 method std::collections::PriorityQueue[T]::new|check-prelude std-collections-heap associated priority queue constructor; docs/stdlib/modules/collections.md
@@ -1154,7 +1172,10 @@ method std::collections::Set[T]::contains|check-prelude std-collections-set line
 method std::collections::Set[T]::copy_to|check-prelude std-collections-set target-zone copy; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::drain|check-prelude std-collections-view-api insertion-order draining value cursor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::equals|check-prelude std-collections-set-relations membership equality predicate; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::extend[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator alias for linear set insertion; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::extend_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven linear set insertion; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::first|check-prelude std-collections-set-access insertion-order first accessor; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::from_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven linear set constructor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::get|check-prelude std-collections-set-access insertion-order indexed accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::index_of|check-prelude std-collections-set stable insertion-order index lookup; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::insert|check-prelude std-collections-set same-zone insertion and duplicate rejection; docs/stdlib/modules/collections.md
@@ -1189,6 +1210,7 @@ method std::collections::TreeMapEntry[K,V]::value|check-prelude std-collections-
 method std::collections::TreeMapEntry[K,V]::value_mut|check-prelude std-collections-map-entry-accessors tree map entry mutable value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMapValuesMut[V]::has_next|check-prelude std-collections-view-api mutable tree map value cursor availability predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeMapValuesMut[V]::next|check-prelude std-collections-view-api mutable tree map value cursor accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::append|check-prelude std-collections-polish-api same-zone ordered map drain append; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::capacity|check-prelude std-collections-tree tree map capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::clear|check-prelude std-collections-tree drops live tree map nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::contains|check-prelude std-collections-tree ordered lookup predicate; docs/stdlib/modules/collections.md
@@ -1198,9 +1220,12 @@ method std::collections::TreeMap[K,V]::copy_to|check-prelude std-collections-cop
 method std::collections::TreeMap[K,V]::drain|check-prelude std-collections-view-api sorted draining entry cursor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::entries|check-prelude std-collections-map-entries sorted key-value entry iterator; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::entry|check-prelude std-collections-map-entry-api tree map update entry handle with same-zone growth; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::extend[I: std::Iterator[std::collections::MapEntry[K, V]|check-prelude std-collections-polish-api iterator alias for ordered map entry extension; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::extend_iter[I: std::Iterator[std::collections::MapEntry[K, V]|check-prelude std-collections-polish-api iterator-driven ordered map entry extension; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_entry|check-prelude std-collections-tree-entry-boundaries asserting smallest key-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_key|check-prelude std-collections-tree-boundaries asserting smallest-key accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::first_value|check-prelude std-collections-tree-boundaries asserting value for smallest key; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::from_iter[I: std::Iterator[std::collections::MapEntry[K, V]|check-prelude std-collections-polish-api iterator-driven ordered map constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::get|check-prelude std-collections-tree asserting ordered lookup; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::get_mut|check-prelude std-collections-map-mut-access asserting mutable ordered lookup; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::get_or|check-prelude std-collections-map-natural-api fallback ordered lookup helper; docs/stdlib/modules/collections.md
@@ -1215,6 +1240,8 @@ method std::collections::TreeMap[K,V]::last_value|check-prelude std-collections-
 method std::collections::TreeMap[K,V]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::lower_bound|check-prelude std-collections-tree-bounds optional first entry not less than key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::pop_first|check-prelude std-collections-polish-api optional smallest entry removal; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::pop_last|check-prelude std-collections-polish-api optional largest entry removal; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::range|check-prelude std-collections-tree-iter half-open sorted map range cursor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::range_mut|check-prelude std-collections-tree-iter half-open mutable sorted map range cursor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::remove|check-prelude std-collections-tree-remove direct red-black deletion returning removed value; docs/stdlib/modules/collections.md
@@ -1222,6 +1249,7 @@ method std::collections::TreeMap[K,V]::remove_entry|check-prelude std-collection
 method std::collections::TreeMap[K,V]::replace|check-prelude std-collections-map-mut-access named ordered map insert-or-replace helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::reserve_extra|check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::split_off|check-prelude std-collections-polish-api same-zone ordered map split at lower bound; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::try_first_entry|check-prelude std-collections-tree-entry-boundaries optional smallest key-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::try_first_key|check-prelude std-collections-tree-boundaries optional smallest-key accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::try_first_value|check-prelude std-collections-tree-boundaries optional value for smallest key; docs/stdlib/modules/collections.md
@@ -1233,13 +1261,17 @@ method std::collections::TreeMap[K,V]::try_last_value|check-prelude std-collecti
 method std::collections::TreeMap[K,V]::upper_bound|check-prelude std-collections-tree-bounds optional first entry greater than key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::values|check-prelude std-collections-tree-iter sorted-by-key value iterator; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::values_mut|check-prelude std-collections-view-api mutable sorted-by-key value cursor; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::append|check-prelude std-collections-polish-api same-zone ordered set drain append; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::capacity|check-prelude std-collections-tree tree set capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::clear|check-prelude std-collections-tree drops live tree set nodes; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::contains|check-prelude std-collections-tree ordered set lookup predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::copy_to|check-prelude std-collections-copy-to target-zone ordered set copy; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::drain|check-prelude std-collections-view-api sorted draining value cursor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::equals|check-prelude std-collections-tree-set-relations membership equality predicate; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::extend[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator alias for ordered set insertion; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::extend_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven ordered set insertion; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::first|check-prelude std-collections-tree-boundaries asserting smallest-value accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::from_iter[I: std::Iterator[T]|check-prelude std-collections-polish-api iterator-driven ordered set constructor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::get|check-prelude std-collections-set-representatives asserting ordered representative lookup; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::insert|check-prelude std-collections-tree red-black set insertion with same-zone growth; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::is_disjoint|check-prelude std-collections-tree-set-relations ordered-set disjointness predicate; docs/stdlib/modules/collections.md
@@ -1256,6 +1288,7 @@ method std::collections::TreeSet[T]::remove|check-prelude std-collections-tree-r
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve_extra|check-prelude std-collections-implicit-zone spare tree storage growth; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::split_off|check-prelude std-collections-polish-api same-zone ordered set split at lower bound; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::take|check-prelude std-collections-tree-remove Option-returning direct red-black deletion; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::try_first|check-prelude std-collections-tree-boundaries optional smallest-value accessor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::try_get|check-prelude std-collections-set-representatives optional ordered representative lookup; docs/stdlib/modules/collections.md
