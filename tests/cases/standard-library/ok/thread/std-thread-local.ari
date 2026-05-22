@@ -1,0 +1,47 @@
+// Covers the first explicit ThreadLocal handle. Ari does not have thread-local
+// static syntax yet, so this test exercises the zone-backed handle API on the
+// current thread.
+fn make_thread_value() -> i64 {
+  return 88;
+}
+
+fn read_i64(value: ref i64) -> i64 {
+  return ptr_load(value as ptr i64);
+}
+
+fn write_i64(value: ref mut i64, replacement: i64) -> void {
+  ptr_store(value as ptr i64, replacement);
+  return;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var local = thread::thread_local_with_capacity<i64>(ref mut zone, 2);
+
+  assert(local.capacity() == 2);
+  assert(!local.is_initialized());
+  assert(local.get().is_none());
+  assert(local.set(10).is_none());
+  assert(local.is_initialized());
+  let first_value = local.get();
+  assert(read_i64(first_value.unwrap()) == 10);
+
+  var view = local.get_mut();
+  write_i64(view.unwrap(), 11);
+  let mutated_value = local.get();
+  assert(read_i64(mutated_value.unwrap()) == 11);
+  let replaced_value = local.set(12);
+  assert(replaced_value.unwrap_or(0) == 11);
+  let existing_value = local.get_or_init(make_thread_value);
+  assert(read_i64(existing_value.unwrap()) == 12);
+  let taken_value = local.take();
+  assert(taken_value.unwrap_or(0) == 12);
+  let removed_value = local.remove();
+  assert(removed_value.is_none());
+  let initialized_value = local.get_or_init(make_thread_value);
+  assert(read_i64(initialized_value.unwrap()) == 88);
+
+  drop local;
+  zone::destroy(zone);
+  return 73;
+}

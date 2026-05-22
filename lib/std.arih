@@ -183,6 +183,7 @@ pub use sync::RwLock;
 pub use sync::Sender;
 pub use thread::Builder;
 pub use thread::Thread;
+pub use thread::ThreadLocal;
 
 pub impl[T] Slice[T] {
   fn len(self: ref Self) -> i64 {

@@ -11,6 +11,21 @@ pub struct Builder {
   stack_size_bytes: i64,
 }
 
+struct ThreadLocalSlot[T] {
+  mut thread_id: i64,
+  mut value: std::Option[T],
+}
+
+struct ThreadLocalState[T] {
+  mut lock: std::sync::Mutex,
+  slots: ptr std::thread::ThreadLocalSlot[T],
+  capacity: i64,
+}
+
+pub struct ThreadLocal[T] {
+  state: ptr std::thread::ThreadLocalState[T],
+}
+
 pub extern "ari" fn spawn(entry: fn() -> i64) -> Thread = "ari_builtin_thread_spawn";
 pub extern "ari" fn join(thread: Thread) -> i64 = "ari_builtin_thread_join";
 pub extern "ari" fn is_finished(thread: Thread) -> bool = "ari_builtin_thread_is_finished";
@@ -19,6 +34,66 @@ pub extern "ari" fn available_parallelism() -> i64 = "ari_builtin_thread_availab
 
 pub fn builder() -> std::thread::Builder {
   return std::thread::Builder::new();
+}
+
+fn thread_local_slot[T](state: ptr std::thread::ThreadLocalState[T], index: i64) -> ptr std::thread::ThreadLocalSlot[T] {
+  return ptr_add((*state).slots, index);
+}
+
+fn thread_local_find[T](state: ptr std::thread::ThreadLocalState[T], thread_id: i64) -> i64 {
+  var index = 0;
+  while index < (*state).capacity {
+    let slot = std::thread::thread_local_slot<T>(state, index);
+    if (*slot).thread_id == thread_id {
+      return index;
+    }
+    index = index + 1;
+  }
+  return -1;
+}
+
+fn thread_local_empty_slot[T](state: ptr std::thread::ThreadLocalState[T]) -> i64 {
+  var index = 0;
+  while index < (*state).capacity {
+    let slot = std::thread::thread_local_slot<T>(state, index);
+    if (*slot).thread_id < 0 {
+      return index;
+    }
+    index = index + 1;
+  }
+  return -1;
+}
+
+fn thread_local_value_ptr[T](slot: ptr std::thread::ThreadLocalSlot[T]) -> ptr T {
+  return (ref mut (*((ref mut (*slot).value) as ptr std::Option[T])).0) as ptr T;
+}
+
+fn thread_local_option_ptr[T](slot: ptr std::thread::ThreadLocalSlot[T]) -> ptr std::Option[T] {
+  return (ref mut (*slot).value) as ptr std::Option[T];
+}
+
+fn thread_local_state_ptr[T](local: ptr std::thread::ThreadLocal[T]) -> ptr std::thread::ThreadLocalState[T] {
+  return (*local).state;
+}
+
+fn thread_local_lock[T](state: ptr std::thread::ThreadLocalState[T]) -> void {
+  let state_ref: ref mut std::thread::ThreadLocalState[T] = ref mut *state;
+  state_ref.lock.lock();
+  return;
+}
+
+fn thread_local_unlock[T](state: ptr std::thread::ThreadLocalState[T]) -> void {
+  let state_ref: ref mut std::thread::ThreadLocalState[T] = ref mut *state;
+  state_ref.lock.unlock();
+  return;
+}
+
+pub fn thread_local[T](zone: ref mut Zone) -> std::thread::ThreadLocal[T] {
+  return std::thread::ThreadLocal<T>::new(zone);
+}
+
+pub fn thread_local_with_capacity[T](zone: ref mut Zone, capacity: i64) -> std::thread::ThreadLocal[T] {
+  return std::thread::ThreadLocal<T>::with_capacity(zone, capacity);
 }
 
 pub fn sleep(duration: std::time::Duration) -> void {
@@ -92,5 +167,193 @@ pub impl std::thread::Thread {
 
   fn join(self) -> i64 {
     return std::thread::join(self);
+  }
+}
+
+pub impl[T] std::thread::ThreadLocal[T] {
+  fn new(zone: ref mut Zone) -> std::thread::ThreadLocal[T] {
+    return std::thread::ThreadLocal<T>::with_capacity(zone, 16);
+  }
+
+  fn with_capacity(zone: ref mut Zone, capacity: i64) -> std::thread::ThreadLocal[T] {
+    std::assert(capacity > 0);
+    let slots = std::zone::alloc_array<std::thread::ThreadLocalSlot[T]>(zone, capacity);
+    var index = 0;
+    while index < capacity {
+      ptr_store(
+        ptr_add(slots, index),
+        std::thread::ThreadLocalSlot<T> {
+          thread_id: -1,
+          value: std::None<T>(),
+        }
+      );
+      index = index + 1;
+    }
+    let state = std::zone::new<std::thread::ThreadLocalState[T]>(
+      zone,
+      std::thread::ThreadLocalState<T> {
+        lock: std::sync::Mutex::new(),
+        slots: slots,
+        capacity: capacity,
+      }
+    );
+    return std::thread::ThreadLocal<T> { state: state };
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
+    let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
+    let state: ref std::thread::ThreadLocalState[T] = ref *state_ptr;
+    return state.capacity;
+  }
+
+  fn is_initialized(self: ref Self) -> bool {
+    let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
+    let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
+    std::thread::thread_local_lock<T>(state_ptr);
+    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id());
+    if index < 0 {
+      std::thread::thread_local_unlock<T>(state_ptr);
+      return false;
+    }
+    let slot = std::thread::thread_local_slot<T>(state_ptr, index);
+    let initialized = (*slot).value.is_some();
+    std::thread::thread_local_unlock<T>(state_ptr);
+    return initialized;
+  }
+
+  fn set(self: ref Self, value: T) -> std::Option[T] {
+    let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
+    let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
+    std::thread::thread_local_lock<T>(state_ptr);
+    let thread_id = std::thread::id();
+    var index = std::thread::thread_local_find<T>(state_ptr, thread_id);
+    if index < 0 {
+      index = std::thread::thread_local_empty_slot<T>(state_ptr);
+      std::assert(index >= 0);
+      let new_slot = std::thread::thread_local_slot<T>(state_ptr, index);
+      (*new_slot).thread_id = thread_id;
+    }
+    let slot = std::thread::thread_local_slot<T>(state_ptr, index);
+    let option_ptr = std::thread::thread_local_option_ptr<T>(slot);
+    let value_slot: ref mut std::Option[T] = ref mut *option_ptr;
+    let previous = value_slot.replace(value);
+    std::thread::thread_local_unlock<T>(state_ptr);
+    return previous;
+  }
+
+  fn get(self: ref Self) -> std::option::OptionRef[T] {
+    let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
+    let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
+    std::thread::thread_local_lock<T>(state_ptr);
+    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id());
+    if index < 0 {
+      std::thread::thread_local_unlock<T>(state_ptr);
+      return std::option::NoneRef<T>();
+    }
+    let slot = std::thread::thread_local_slot<T>(state_ptr, index);
+    let option_ptr = std::thread::thread_local_option_ptr<T>(slot);
+    let value_slot: ref std::Option[T] = ref *option_ptr;
+    if value_slot.is_none() {
+      std::thread::thread_local_unlock<T>(state_ptr);
+      return std::option::NoneRef<T>();
+    }
+    let data = std::thread::thread_local_value_ptr<T>(slot);
+    std::thread::thread_local_unlock<T>(state_ptr);
+    return std::option::SomeRef<T>(data);
+  }
+
+  fn get_mut(self: ref mut Self) -> std::option::OptionMut[T] {
+    let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
+    let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
+    std::thread::thread_local_lock<T>(state_ptr);
+    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id());
+    if index < 0 {
+      std::thread::thread_local_unlock<T>(state_ptr);
+      return std::option::NoneMut<T>();
+    }
+    let slot = std::thread::thread_local_slot<T>(state_ptr, index);
+    let option_ptr = std::thread::thread_local_option_ptr<T>(slot);
+    let value_slot: ref std::Option[T] = ref *option_ptr;
+    if value_slot.is_none() {
+      std::thread::thread_local_unlock<T>(state_ptr);
+      return std::option::NoneMut<T>();
+    }
+    let data = std::thread::thread_local_value_ptr<T>(slot);
+    std::thread::thread_local_unlock<T>(state_ptr);
+    return std::option::SomeMut<T>(data);
+  }
+
+  fn get_or_init(self: ref Self, initializer: fn() -> T) -> std::option::OptionRef[T] {
+    let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
+    let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
+    std::thread::thread_local_lock<T>(state_ptr);
+    let thread_id = std::thread::id();
+    var index = std::thread::thread_local_find<T>(state_ptr, thread_id);
+    if index < 0 {
+      index = std::thread::thread_local_empty_slot<T>(state_ptr);
+      std::assert(index >= 0);
+      let new_slot = std::thread::thread_local_slot<T>(state_ptr, index);
+      (*new_slot).thread_id = thread_id;
+    }
+    let slot = std::thread::thread_local_slot<T>(state_ptr, index);
+    let option_ptr = std::thread::thread_local_option_ptr<T>(slot);
+    let value_slot: ref mut std::Option[T] = ref mut *option_ptr;
+    if value_slot.is_none() {
+      let previous = value_slot.replace(initializer());
+      drop previous;
+    }
+    let data = std::thread::thread_local_value_ptr<T>(slot);
+    std::thread::thread_local_unlock<T>(state_ptr);
+    return std::option::SomeRef<T>(data);
+  }
+
+  fn take(self: ref mut Self) -> std::Option[T] {
+    let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
+    let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
+    std::thread::thread_local_lock<T>(state_ptr);
+    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id());
+    if index < 0 {
+      std::thread::thread_local_unlock<T>(state_ptr);
+      return std::None<T>();
+    }
+    let slot = std::thread::thread_local_slot<T>(state_ptr, index);
+    let option_ptr = std::thread::thread_local_option_ptr<T>(slot);
+    let value_slot: ref mut std::Option[T] = ref mut *option_ptr;
+    let previous = value_slot.take();
+    if previous.is_some() {
+      (*slot).thread_id = -1;
+    }
+    std::thread::thread_local_unlock<T>(state_ptr);
+    return previous;
+  }
+
+  fn remove(self: ref mut Self) -> std::Option[T] {
+    return self.take();
+  }
+}
+
+impl[T] std::zone::ZoneBacked for std::thread::ThreadLocal[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return std::zone::metadata(self.state as ptr u8);
+  }
+}
+
+impl[T] std::Drop for std::thread::ThreadLocal[T] {
+  fn drop(self) -> void {
+    let state_ptr = self.state;
+    std::thread::thread_local_lock<T>(state_ptr);
+    var index = 0;
+    while index < (*state_ptr).capacity {
+      let slot = std::thread::thread_local_slot<T>(state_ptr, index);
+      let option_ptr = std::thread::thread_local_option_ptr<T>(slot);
+      let value_slot: ref mut std::Option[T] = ref mut *option_ptr;
+      let previous = value_slot.take();
+      drop previous;
+      (*slot).thread_id = -1;
+      index = index + 1;
+    }
+    std::thread::thread_local_unlock<T>(state_ptr);
+    return;
   }
 }

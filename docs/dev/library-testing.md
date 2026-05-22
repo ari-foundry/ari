@@ -182,6 +182,9 @@ identifies the exact case:
 - `std-thread-builder.ari`: source `std::thread::Builder` option accessors,
   builder-based spawn, root alias coverage, advisory `is_finished`, and
   `pthread_kill` hook lowering checks.
+- `std-thread-local.ari`: explicit zone-backed `ThreadLocal[T]` construction,
+  current-thread get/set/mutable access, lazy initialization, value removal,
+  root alias coverage, and thread-local zone provenance.
 - `std-sync-atomic-i64.ari`: runtime-backed `std::sync::AtomicI64`
   load/store/swap/fetch-add/compare-exchange behavior, method wrappers, root
   alias, and LLVM atomic lowering.

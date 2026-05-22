@@ -281,9 +281,10 @@ the host threading or process APIs and install Ari's per-thread runtime id
 before source code runs. `sleep` delegates to `std::time`, while `id`,
 `is_main`, `is_join_error`, the `Builder` accessors, and most `Thread` methods
 are source helpers. `Builder` records a requested name and stack size, but
-runtime application of those options remains platform work. Capturing closures,
-user-facing thread-local storage, richer result/status values, and send/share
-typing remain richer thread-policy work.
+runtime application of those options remains platform work. `ThreadLocal[T]`
+is an explicit zone-backed handle for current-thread values; compiler-level
+`thread_local` statics, capturing closures, richer result/status values, and
+send/share typing remain richer thread-policy work.
 
 `std::sync` now starts with `AtomicI64`, `AtomicBool`, `AtomicUsize`,
 `AtomicPtr[T]`, source `Mutex`, `RwLock`, `Once`, `OnceLock`, `Condvar`,

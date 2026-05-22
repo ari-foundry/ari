@@ -264,8 +264,9 @@ fn main() -> i64 {
 - `Mutex`, `RwLock`, `Condvar`, `Barrier`, and channels spin/yield; they do not
   park on futexes or condition-variable OS primitives.
 - There are no value-protecting `Mutex[T]` or `RwLock[T]` guard types yet.
-- There is no `LazyLock[T]`, semaphore, timeout wait, or user-facing
-  `thread_local` storage yet.
+- There is no `LazyLock[T]`, semaphore, or timeout wait yet. Explicit
+  `ThreadLocal[T]` handles live in `std::thread`; compiler-level
+  `thread_local` declarations remain future work.
 - Send/share trait checking is still roadmap work, so cross-thread value
   transfer APIs remain conservative.
 
@@ -280,7 +281,7 @@ fn main() -> i64 {
 | Once/OnceLock | Current source one-time execution and value slot; future panic/poison policy and optional `LazyLock`. |
 | Barrier | Current source reusable barrier; future parking implementation. |
 | MPSC channel | Current single-slot MPSC shape; future bounded queues, blocking wake, unsent-value return, and close semantics. |
-| Thread local | Roadmap after generic static storage and destructor policy. |
+| Thread local | Current explicit `std::thread::ThreadLocal[T]` handles; future compiler-level static TLS declarations and destructor policy. |
 
 ## Tests
 

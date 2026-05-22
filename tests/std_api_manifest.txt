@@ -797,6 +797,8 @@ fn std::thread::is_main|check-prelude std-thread-basic source main-thread predic
 fn std::thread::join|check-prelude std-thread-basic thread join hook; docs/stdlib/modules/thread.md
 fn std::thread::sleep|check-prelude std-thread-runtime-helpers duration sleep convenience wrapper; docs/stdlib/modules/thread.md
 fn std::thread::spawn|check-prelude std-thread-basic function-pointer spawn hook; docs/stdlib/modules/thread.md
+fn std::thread::thread_local[T]|check-prelude std-thread-local default-capacity thread-local handle constructor; docs/stdlib/modules/thread.md
+fn std::thread::thread_local_with_capacity[T]|check-prelude std-thread-local explicit-capacity thread-local handle constructor; docs/stdlib/modules/thread.md
 fn std::thread::yield_now|check-prelude std-thread-basic scheduler yield hook; docs/stdlib/modules/thread.md
 fn std::time::days_in_month|check-prelude std-time-utc-calendar UTC calendar month length helper; docs/stdlib/modules/time.md
 fn std::time::deadline_at|check-prelude std-time-timeout absolute deadline constructor; docs/stdlib/modules/time.md
@@ -1941,6 +1943,16 @@ method std::thread::Thread::is_finished|check-prelude std-thread-builder advisor
 method std::thread::Thread::is_valid|check-prelude std-thread-basic handle validity predicate; docs/stdlib/modules/thread.md
 method std::thread::Thread::join|check-prelude std-thread-basic handle join helper; docs/stdlib/modules/thread.md
 method std::thread::Thread::spawn|check-prelude std-thread-basic associated function-pointer spawn helper; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::capacity|check-prelude std-thread-local thread-local slot capacity accessor; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::get|check-prelude std-thread-local current-thread shared value view; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::get_mut|check-prelude std-thread-local current-thread mutable value view; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::get_or_init|check-prelude std-thread-local current-thread lazy initialization helper; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::is_initialized|check-prelude std-thread-local current-thread initialized predicate; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::new|check-prelude std-thread-local default-capacity thread-local constructor; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::remove|check-prelude std-thread-local current-thread value removal alias; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::set|check-prelude std-thread-local current-thread value replacement helper; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::take|check-prelude std-thread-local current-thread value extraction helper; docs/stdlib/modules/thread.md
+method std::thread::ThreadLocal[T]::with_capacity|check-prelude std-thread-local explicit-capacity thread-local constructor; docs/stdlib/modules/thread.md
 method std::time::Deadline::after|check-prelude std-time-timeout associated timeout constructor; docs/stdlib/modules/time.md
 method std::time::Deadline::at|check-prelude std-time-timeout associated absolute deadline constructor; docs/stdlib/modules/time.md
 method std::time::Deadline::has_expired|check-prelude std-time-timeout deadline expiry predicate; docs/stdlib/modules/time.md
@@ -2273,6 +2285,7 @@ struct std::sync::Sender[T]|check-prelude std-sync-concurrency-api channel sende
 struct std::test::Report|check-prelude std-test-report unit-test report counts; docs/stdlib/modules/test.md
 struct std::thread::Builder|check-prelude std-thread-builder thread builder options handle; docs/stdlib/modules/thread.md
 struct std::thread::Thread|check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md
+struct std::thread::ThreadLocal[T]|check-prelude std-thread-local explicit thread-local storage handle; docs/stdlib/modules/thread.md
 struct std::time::Deadline|check-prelude std-time-timeout monotonic deadline helper; docs/stdlib/modules/time.md
 struct std::time::Duration|std time duration helper tests; docs/stdlib/modules/time.md
 struct std::time::Instant|std time monotonic instant tests; docs/stdlib/modules/time.md
@@ -2412,6 +2425,7 @@ use std::Set|check-prelude std-collections-set root alias for std::collections::
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::Symbol|check-prelude std-c-interop root alias for std::c::Symbol; docs/stdlib/modules/c.md
 use std::Thread|check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md
+use std::ThreadLocal|check-prelude std-thread-local root alias for std::thread::ThreadLocal[T]; docs/stdlib/modules/thread.md
 use std::TreeMap|check-prelude std-collections-tree root alias for std::collections::TreeMap[K, V]; docs/stdlib/modules/collections.md
 use std::TreeSet|check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md
 use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row

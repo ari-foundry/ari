@@ -6,6 +6,7 @@
 #include "std_fs_semantics.hpp"
 #include "std_rc_semantics.hpp"
 #include "std_string_semantics.hpp"
+#include "std_thread_semantics.hpp"
 #include "std_vec_semantics.hpp"
 
 #include <algorithm>
@@ -68,6 +69,7 @@ bool is_zone_pointer_return_type(const IrType& type) {
            is_std_fs_dir_entry_zone_handle_type(value_type) ||
            is_std_rc_handle_type(value_type) ||
            is_std_string_zone_handle_type(value_type) ||
+           is_std_thread_zone_handle_type(value_type) ||
            is_std_vec_zone_handle_type(value_type) ||
            std::any_of(value_type.args.begin(), value_type.args.end(), is_zone_pointer_return_type) ||
            std::any_of(value_type.field_types.begin(), value_type.field_types.end(), is_zone_pointer_return_type);

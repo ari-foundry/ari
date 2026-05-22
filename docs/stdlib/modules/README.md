@@ -92,8 +92,8 @@ limits, examples, and test files for one module.
   roadmap for raw OS primitives.
 - [std::thread](thread.md): function-pointer thread spawn/join, `Builder`,
   advisory completion checks, runtime thread ids, invalid-handle sentinels,
-  cooperative sleep/yield, available parallelism, and thread-local roadmap
-  notes.
+  cooperative sleep/yield, available parallelism, and explicit
+  `ThreadLocal[T]` handles.
 - [std::sync](sync.md): `Ordering`, concrete atomic wrappers, source `Mutex`,
   `RwLock`, `Once`, `OnceLock`, `Condvar`, `Barrier`, single-slot channels,
   current memory-order policy, and blocking/runtime roadmap.

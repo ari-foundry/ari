@@ -831,6 +831,8 @@ thread::is_main()
 thread::available_parallelism()
 thread::is_join_error(status)
 thread::builder()
+thread::thread_local<T>(ref mut zone)
+thread::thread_local_with_capacity<T>(ref mut zone, capacity)
 
 Builder::new()
 builder.name(value)
@@ -844,6 +846,17 @@ thread.id()
 thread.is_valid()
 thread.is_finished()
 thread.join()
+
+ThreadLocal::new<T>(ref mut zone)
+ThreadLocal::with_capacity<T>(ref mut zone, capacity)
+thread_local.capacity()
+thread_local.is_initialized()
+thread_local.set(value)
+thread_local.get()
+thread_local.get_mut()
+thread_local.get_or_init(initializer)
+thread_local.take()
+thread_local.remove()
 ```
 
 `spawn(entry)` starts a thread from a plain `fn() -> i64` entry function and
@@ -857,8 +870,10 @@ returns the hosted runtime's online processor count and falls back to `1` when
 the platform call fails. `is_finished` is advisory and does not replace `join`.
 `Builder` records a requested thread name and stack size; the current runtime
 keeps those options visible but still delegates creation to the plain spawn
-hook. User-facing thread-local storage and applied stack attributes remain
-roadmap work.
+hook. `ThreadLocal[T]` is an explicit zone-backed handle for per-thread
+values. It is the user-facing API available today; compiler-level
+`thread_local` declarations, TLS destructors, and applied stack attributes
+remain roadmap work.
 
 Synchronization helpers live in `std::sync`:
 
@@ -968,8 +983,8 @@ internals until Ari grows blocking wait/wake runtime support.
 
 Shared-ownership handles live in `std::rc` as `Rc`, `Arc`, and `Weak`.
 `LazyLock`, semaphores, futex-backed blocking locks, timeout waits, send/share
-trait checks, user-facing thread-local storage, and target-native relaxed
-ordering remain future concurrency work.
+trait checks, compiler-owned `thread_local` declarations, and target-native
+relaxed ordering remain future concurrency work.
 
 Runtime-backed time helpers live in `std::time`:
 
