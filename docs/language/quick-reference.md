@@ -74,6 +74,7 @@ Omit the semicolon only for the final value expression in a function, block,
 | void function | `fn log() { println("done"); return; }` |
 | unit-returning function | `fn mark() -> () { () }` |
 | generic function | `fn id[T](value: T) -> T { value }` |
+| generic aggregate | `struct Box[T] { value: T, }`, `enum Maybe[T] { Nothing, Just(T), }` |
 | struct | `struct Point { x: i64, mut y: i64, }` |
 | tuple struct | `struct Pair(i64, mut i64)` |
 | enum | `enum OptionI64 { None, Some(i64), }` |
@@ -355,6 +356,7 @@ a future explicit FFI escape policy.
 - Function, generic, and call rules: [Functions](functions.md)
 - Bindings and destructuring: [Variables](variables.md)
 - Type details and aggregate layout: [Types](types.md)
+- Generic structs, enums, aliases, and nested monomorphization: [Generic Aggregates](generic-aggregates.md)
 - Operators: [Operators](operators.md)
 - Loops, matches, and block expressions: [Control Flow](control-flow.md)
 - Enums and pattern matching: [Enums And Pattern Matching](enums-patterns.md)

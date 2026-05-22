@@ -136,8 +136,8 @@ work. Each one should land in small tested slices with natural API names.
 
 ## Phase 2: Pull More Behavior Into Ari Source
 
-- Replace compiler hooks with source code when generic aggregates, trait
-  dispatch, and module cache summaries can model them safely.
+- Replace compiler hooks with source code when trait dispatch, module cache
+  summaries, and the remaining runtime contracts can model them safely.
 - Keep compiler-known declarations as compatibility shims only when required.
 - Improve diagnostics for partial custom `std` packages.
 

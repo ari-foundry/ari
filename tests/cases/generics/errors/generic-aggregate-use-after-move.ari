@@ -1,0 +1,16 @@
+struct Box[T] {
+  value: T,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  let value: Box[own i64] = Box { value: make_owned(1) };
+  let first = value.value;
+  let second = value.value;
+  drop first;
+  drop second;
+  return 0;
+}

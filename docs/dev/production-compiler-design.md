@@ -270,7 +270,8 @@ Exit criteria:
 
 ### Phase 2: Compiler-Scale Data Modeling
 
-- Finish generic aggregate/type monomorphization for nested compiler data.
+- Maintain generic aggregate/type monomorphization for nested compiler data and
+  keep extending compiler-shaped fixtures.
 - Keep type aliases visible enough in diagnostics to make domain code readable.
 - Stress structs, enums, tuples, `Vec`, maps, sets, and `Result` payloads in
   compiler-sized fixtures.

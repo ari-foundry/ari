@@ -35,7 +35,7 @@ Status meanings:
 | structs, tuple structs, field access | implemented for local/runtime-supported shapes | [Types](types.md), [Front-End Only Syntax](front-end-only.md) | `tests/cases/structs/` |
 | field `mut` assignment checks | implemented | [Types](types.md), [Variables](variables.md) | `tests/cases/structs/`, `tests/cases/variables/` |
 | non-generic enums and `match` | implemented | [Enums And Pattern Matching](enums-patterns.md) | `tests/cases/match/` |
-| generic structs and enums | partial | [Types](types.md), [Generics sections in Quick Reference](quick-reference.md) | `tests/cases/generics/` |
+| generic structs, enums, and aliases | implemented for local/codegen-supported aggregate monomorphization | [Generic Aggregates](generic-aggregates.md), [Types](types.md), [Generics sections in Quick Reference](quick-reference.md) | `tests/cases/generics/`, `make check-generics` |
 | tuple, fixed array, local `Vec[T]`, `Slice[T]` | partial | [Types](types.md), [Variables](variables.md) | `tests/cases/variables/`, `tests/cases/vectors/` |
 | aggregate destructuring | partial | [Variables](variables.md), [Front-End Only Syntax](front-end-only.md) | `tests/cases/patterns/` |
 

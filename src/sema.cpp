@@ -4632,7 +4632,9 @@ private:
         auto substitution = current_type_substitutions_.find(ast_type.name);
         if (substitution != current_type_substitutions_.end() && ast_type.args.empty()) {
             IrType type = substitution->second;
-            type.qualifier = ast_type.qualifier;
+            if (ast_type.qualifier != TypeQualifier::Value) {
+                type.qualifier = ast_type.qualifier;
+            }
             type.loc = ast_type.loc;
             return type;
         }
@@ -24070,6 +24072,15 @@ private:
         if (base_info.is_generic && !has_type_args) {
             type_args = enum_constructor_type_args(expr, base_info, arg_types);
             info = specialize_enum_case_info(expr.loc, base_info, type_args);
+        }
+        for (std::size_t i = 0; i < args.size(); ++i) {
+            if (args[i]->type.primitive == IrPrimitiveKind::Struct &&
+                info.payloads[i].primitive == IrPrimitiveKind::Struct &&
+                !same_type(args[i]->type, info.payloads[i])) {
+                require_assignable(expr.args[i]->loc, info.payloads[i], args[i]->type);
+            }
+            coerce_expr_to_expected(*args[i], info.payloads[i]);
+            require_assignable(expr.args[i]->loc, info.payloads[i], args[i]->type);
         }
         return make_enum_construct(expr.loc, info, std::move(args));
     }

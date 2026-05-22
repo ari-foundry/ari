@@ -62,8 +62,11 @@ enum Option[T] {
 }
 ```
 
-Non-generic enums lower today, including LLVM aggregate layout for multi-payload
-and single `i64`/`u64` payload cases. Generic enum monomorphization is planned.
+Generic and non-generic enums lower today for local/codegen-supported shapes,
+including LLVM aggregate layout for multi-payload cases, single `i64`/`u64`
+payload cases, and nested concrete generic payloads. See
+[Generic Aggregates](generic-aggregates.md) for the current monomorphization
+contract.
 
 `..` can ignore the rest of a struct, tuple, array, or multi-payload ADT pattern.
 Slice patterns are still planned.
@@ -86,8 +89,8 @@ or inferred method-level generic calls such as `value.replace<i64>(next)`,
 also specialize into function pointer values when an expected `fn(...) -> ...`
 type selects the concrete parameter and result types. Generic aggregate
 monomorphization now covers structs, enums, and integer range values; the
-remaining planned aggregate work is broader ABI support and allocation-backed
-prelude ADTs.
+remaining aggregate work is broader ABI exposure and allocation-backed stdlib
+handle ergonomics.
 
 ## Attributes
 

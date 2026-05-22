@@ -1,0 +1,21 @@
+enum PassResult[T, E] {
+  Failed(E),
+  Passed(T),
+}
+
+struct Token {
+  kind: i64,
+}
+
+struct LexError {
+  code: i64,
+}
+
+fn main() -> i64 {
+  let value: PassResult[Token, LexError] =
+    Passed<Token, LexError>(LexError { code: 1 });
+  match value {
+    Passed(token) => token.kind,
+    Failed(error) => error.code,
+  }
+}

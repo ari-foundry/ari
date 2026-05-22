@@ -113,6 +113,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan $(BUILD_DIR)/compiler-development/artifact/stage-plan-basic.plan
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
+	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/generic-aggregate-monomorphization.ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-pass-summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
 
@@ -198,6 +200,10 @@ check-compiler-development: $(TARGET)
 	$(TARGET) tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.elf; $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.elf; code=$$?; test $$code -eq 250; fi
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari --check
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-generic-aggregates.ll
+	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-generic-aggregates.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-generic-aggregates.elf; $(BUILD_DIR)/compiler-development/compiler-generic-aggregates.elf; code=$$?; test $$code -eq 92; fi
 	if $(TARGET) tests/cases/compiler-development/errors/bootstrap-class-keyword.ari --check >$(BUILD_DIR)/compiler-development/bootstrap-class-keyword.err 2>&1; then exit 1; fi
 	grep -q "expected top-level declaration" $(BUILD_DIR)/compiler-development/bootstrap-class-keyword.err
 	if $(TARGET) tests/cases/compiler-development/errors/bootstrap-interface-keyword.ari --check >$(BUILD_DIR)/compiler-development/bootstrap-interface-keyword.err 2>&1; then exit 1; fi
@@ -4048,6 +4054,13 @@ check-generics: $(TARGET)
 	$(BUILD_DIR)/generics/trait-generic-impl.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/generics/ok/generic-adt-surface.ari -o $(BUILD_DIR)/generics/generic-adt-surface.elf
 	$(BUILD_DIR)/generics/generic-adt-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari -o $(BUILD_DIR)/generics/generic-aggregate-monomorphization.elf
+	$(BUILD_DIR)/generics/generic-aggregate-monomorphization.elf; code=$$?; test $$code -eq 34
+	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari --emit-llvm $(BUILD_DIR)/generics/generic-aggregate-monomorphization.ll
+	grep -q "impl10Box_Token_8inherent6unwrap" $(BUILD_DIR)/generics/generic-aggregate-monomorphization.ll
+	grep -Fq "[128 x i8]" $(BUILD_DIR)/generics/generic-aggregate-monomorphization.ll
+	$(TARGET) tests/cases/generics/ok/generic-aggregate-stdlib-stress.ari -o $(BUILD_DIR)/generics/generic-aggregate-stdlib-stress.elf
+	$(BUILD_DIR)/generics/generic-aggregate-stdlib-stress.elf; code=$$?; test $$code -eq 94
 	$(TARGET) tests/cases/generics/ok/generic-enum-constructors.ari --emit-llvm $(BUILD_DIR)/generics/generic-enum-constructors.ll
 	grep -q "insertvalue { i32, i64 }" $(BUILD_DIR)/generics/generic-enum-constructors.ll
 	$(TARGET) tests/cases/generics/ok/generic-enum-try.ari --emit-llvm $(BUILD_DIR)/generics/generic-enum-try.ll
@@ -4072,6 +4085,18 @@ check-generics: $(TARGET)
 	grep -q "enum 'std::Option' expects 1 type argument" $(BUILD_DIR)/generics/generic-enum-constructor-arity.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-constructor-mismatch.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-mismatch.elf >$(BUILD_DIR)/generics/generic-enum-constructor-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected std::Option\\[i64\\], got std::Option\\[bool\\]" $(BUILD_DIR)/generics/generic-enum-constructor-mismatch.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-field-mismatch.ari --check >$(BUILD_DIR)/generics/generic-aggregate-field-mismatch.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected Token, got i64" $(BUILD_DIR)/generics/generic-aggregate-field-mismatch.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari --check >$(BUILD_DIR)/generics/generic-aggregate-nested-mismatch.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected Box\\[Box\\[Token\\]\\], got Box\\[Box\\[Span\\]\\]" $(BUILD_DIR)/generics/generic-aggregate-nested-mismatch.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-enum-payload-mismatch.ari --check >$(BUILD_DIR)/generics/generic-aggregate-enum-payload-mismatch.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected Token, got LexError" $(BUILD_DIR)/generics/generic-aggregate-enum-payload-mismatch.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-field-access.ari --check >$(BUILD_DIR)/generics/generic-aggregate-field-access.err 2>&1; then exit 1; fi
+	grep -q "struct 'Box' has no field 'missing'" $(BUILD_DIR)/generics/generic-aggregate-field-access.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-method-receiver.ari --check >$(BUILD_DIR)/generics/generic-aggregate-method-receiver.err 2>&1; then exit 1; fi
+	grep -q "unknown method 'id' for type Box\\[bool\\]" $(BUILD_DIR)/generics/generic-aggregate-method-receiver.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-use-after-move.ari --check >$(BUILD_DIR)/generics/generic-aggregate-use-after-move.err 2>&1; then exit 1; fi
+	grep -q "cannot use moved owned field 'value.0'" $(BUILD_DIR)/generics/generic-aggregate-use-after-move.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-null-coalescing-type.ari -o $(BUILD_DIR)/generics/generic-enum-null-coalescing-type.elf >$(BUILD_DIR)/generics/generic-enum-null-coalescing-type.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/generics/generic-enum-null-coalescing-type.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-pattern-type.ari -o $(BUILD_DIR)/generics/generic-enum-pattern-type.elf >$(BUILD_DIR)/generics/generic-enum-pattern-type.err 2>&1; then exit 1; fi

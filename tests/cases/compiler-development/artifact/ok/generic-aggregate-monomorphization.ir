@@ -1,0 +1,301 @@
+IrProgram source=tests/cases/generics/ok/generic-aggregate-monomorphization.ari target=x86_64-pc-linux-gnu require_main=true
+  Function name=span_len return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:87:4
+    Param name=span type=Span
+    Body
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:88:10
+        Binary op="-" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:88:19
+          TupleIndex index=1 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:88:15
+            Local name=span type=Span @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:88:10
+          TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:88:26
+            Local name=span type=Span @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:88:21
+  Function name=token_score return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:91:4
+    Param name=token type=Token
+    Body
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:92:10
+        Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:92:21
+          TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:92:16
+            Local name=token type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:92:10
+          Call name=span_len type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:92:23
+            TupleIndex index=1 type=Span @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:92:38
+              Local name=token type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:92:32
+  Function name=make_token return=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:95:4
+    Param name=kind type=i64
+    Param name=start type=i64
+    Param name=end type=i64
+    Body
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:96:10
+        Tuple type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:96:10
+          Local name=kind type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:96:24
+          Tuple type=Span @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:96:36
+            Local name=start type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:96:50
+            Local name=end type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:96:62
+  Function name=make_token_box return=Box[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:99:4
+    Param name=kind type=i64
+    Body
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:100:10
+        Tuple type=Box[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:100:10
+          Call name=make_token type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:100:30
+            Local name=kind type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:100:41
+            Integer type=i64 value=2 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:100:47
+            Integer type=i64 value=8 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:100:50
+  Function name=maybe_score return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:103:4
+    Param name=value type=Maybe[Token]
+    Body
+      Match @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:104:3
+        Local name=value type=Maybe[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:104:9
+        Arm case=Just @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:105:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:106:14
+            Call name=token_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:106:14
+              Local name=token type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:106:26
+        Arm case=Nothing @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:108:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:109:14
+            Integer type=i64 value=0 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:109:14
+  Function name=either_score return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:114:4
+    Param name=value type=Either[LexError, Token]
+    Body
+      Match @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:115:3
+        Local name=value type=Either[LexError, Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:115:9
+        Arm case=Left @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:116:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:117:14
+            Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:117:25
+              TupleIndex index=1 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:117:20
+                Local name=error type=LexError @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:117:14
+              Call name=span_len type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:117:27
+                TupleIndex index=0 type=Span @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:117:42
+                  Local name=error type=LexError @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:117:36
+        Arm case=Right @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:119:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:120:14
+            Call name=token_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:120:14
+              Local name=token type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:120:26
+  Function name=pass_score return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:125:4
+    Param name=value type=PassResult[AstSlot[Token], Diagnostic]
+    Body
+      Match @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:126:3
+        Local name=value type=PassResult[AstSlot[Token], Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:126:9
+        Arm case=Passed @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:127:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:128:14
+            Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:128:22
+              TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:128:19
+                Local name=slot type=AstSlot[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:128:14
+              Call name=maybe_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:128:24
+                TupleIndex index=1 type=Maybe[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:128:41
+                  Local name=slot type=AstSlot[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:128:36
+        Arm case=Failed @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:130:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:131:14
+            Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:131:34
+              TupleIndex index=1 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:131:25
+                Local name=diagnostic type=Diagnostic @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:131:14
+              Call name=span_len type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:131:36
+                TupleIndex index=0 type=Span @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:131:56
+                  Local name=diagnostic type=Diagnostic @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:131:45
+  Function name=nested_score return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:136:4
+    Param name=value type=PassResult[Box[Token], Maybe[Diagnostic]]
+    Body
+      Match @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:137:3
+        Local name=value type=PassResult[Box[Token], Maybe[Diagnostic]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:137:9
+        Arm case=Passed @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:138:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:139:14
+            Call name=token_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:139:14
+              TupleIndex index=0 type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:139:32
+                Local name=boxed type=Box[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:139:26
+        Arm case=Failed @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:141:5
+          Match @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:142:7
+            Local name=maybe_diagnostic type=Maybe[Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:142:13
+            Arm case=Just @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:143:9
+              Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:144:18
+                Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:144:38
+                  TupleIndex index=1 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:144:29
+                    Local name=diagnostic type=Diagnostic @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:144:18
+                  Call name=span_len type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:144:40
+                    TupleIndex index=0 type=Span @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:144:60
+                      Local name=diagnostic type=Diagnostic @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:144:49
+            Arm case=Nothing @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:146:9
+              Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:147:18
+                Integer type=i64 value=1 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:147:18
+  Function name=frame_score return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:154:4
+    Param name=frame type=ParseFrame[Token, Diagnostic]
+    Body
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:10
+        Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:156:30
+          Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:66
+            Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:31
+              TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:24
+                TupleIndex index=0 type=ParserBox[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:16
+                  Local name=frame type=ParseFrame[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:10
+              Call name=token_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:33
+                TupleIndex index=1 type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:59
+                  TupleIndex index=0 type=ParserBox[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:51
+                    Local name=frame type=ParseFrame[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:155:45
+            Call name=pass_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:156:5
+              TupleIndex index=2 type=PassResult[AstSlot[Token], Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:156:22
+                Local name=frame type=ParseFrame[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:156:16
+          MatchExpr type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:156:32
+            TupleIndex index=1 type=Maybe[AstSlot[Token]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:156:44
+              Local name=frame type=ParseFrame[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:156:38
+            Arm case=Just @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:157:7
+              Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:157:29
+                TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:157:26
+                  Local name=slot type=AstSlot[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:157:21
+                Call name=maybe_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:157:31
+                  TupleIndex index=1 type=Maybe[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:157:48
+                    Local name=slot type=AstSlot[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:157:43
+            Arm case=Nothing @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:158:7
+              Integer type=i64 value=0 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:158:18
+  Function name=envelope_score return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:162:4
+    Param name=value type=AggregateEnvelope[Token, Diagnostic]
+    Body
+      Match @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:163:3
+        Local name=value type=AggregateEnvelope[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:163:9
+        Arm case=Empty @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:164:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:165:14
+            Integer type=i64 value=0 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:165:14
+        Arm case=Item @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:167:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:168:14
+            Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:168:37
+              Call name=token_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:168:14
+                TupleIndex index=0 type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:168:31
+                  Local name=pair type=Pair[Token, Maybe[Diagnostic]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:168:26
+              MatchExpr type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:168:39
+                TupleIndex index=1 type=Maybe[Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:168:50
+                  Local name=pair type=Pair[Token, Maybe[Diagnostic]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:168:45
+                Arm case=Just @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:169:9
+                  Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:169:49
+                    TupleIndex index=1 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:169:40
+                      Local name=diagnostic type=Diagnostic @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:169:29
+                    Call name=span_len type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:169:51
+                      TupleIndex index=0 type=Span @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:169:71
+                        Local name=diagnostic type=Diagnostic @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:169:60
+                Arm case=Nothing @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:170:9
+                  Integer type=i64 value=0 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:170:20
+        Arm case=State @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:173:5
+          Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:174:14
+            Call name=frame_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:174:14
+              Local name=frame type=ParseFrame[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:174:26
+  Function name=mutate_slot return=void @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:179:4
+    Param name=slot type=ref mut AstSlot[Token]
+    Body
+      Assign name= @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:180:3
+        TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:180:8
+          Local name=slot type=ref mut AstSlot[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:180:3
+        Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:180:21
+          TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:180:18
+            Local name=slot type=ref mut AstSlot[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:180:13
+          Integer type=i64 value=1 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:180:23
+  Function name=make_owned return=own i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:183:4
+    Param name=value type=i64
+    Body
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:184:10
+        Local name=value type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:184:10
+  Function name=consume_owned return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:187:4
+    Param name=value type=Box[own i64]
+    Body
+      VarDecl name=moved type=own i64 let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:188:7
+        TupleIndex index=0 type=own i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:188:21
+          Local name=value type=Box[own i64] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:188:15
+      Drop name=moved @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:189:8
+      Drop name=value @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:190:8
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:191:10
+        Integer type=i64 value=17 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:191:10
+  Function name=main return=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:194:4
+    Body
+      VarDecl name=token type=Token let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:195:7
+        Call name=make_token type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:195:15
+          Integer type=i64 value=5 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:195:26
+          Integer type=i64 value=10 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:195:29
+          Integer type=i64 value=17 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:195:33
+      VarDecl name=boxed type=Box[Token] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:196:7
+        Tuple type=Box[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:196:15
+          Local name=token type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:196:35
+      VarDecl name=from_method type=Token let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:197:7
+        Call name=impl::Box_Token_::inherent::unwrap type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:197:27
+          Local name=boxed type=Box[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:197:21
+      VarDecl name=alias_box type=Box[Token] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:198:7
+        Call name=make_token_box type=Box[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:198:29
+          Integer type=i64 value=7 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:198:44
+      VarDecl name=pair type=Pair[Token, Maybe[Diagnostic]] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:199:7
+        Tuple type=Pair[Token, Maybe[Diagnostic]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:199:14
+          Local name=from_method type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:200:11
+          EnumConstruct enum=Maybe case=Just type=Maybe[Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:201:12
+      VarDecl name=slot type=AstSlot[Token] mut @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:204:7
+        Tuple type=AstSlot[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:204:32
+          Integer type=i64 value=11 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:205:9
+          EnumConstruct enum=Maybe case=Just type=Maybe[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:206:14
+      ExprStmt @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:208:3
+        Call name=mutate_slot type=void @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:208:3
+          BorrowMut type=ref mut AstSlot[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:208:15
+            Local name=slot type=AstSlot[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:208:23
+      VarDecl name=passed type=PassResult[AstSlot[Token], Diagnostic] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:210:7
+        EnumConstruct enum=PassResult case=Passed type=PassResult[AstSlot[Token], Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:210:55
+      VarDecl name=frame type=ParseFrame[Token, Diagnostic] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:211:7
+        Tuple type=ParseFrame[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:211:15
+          Tuple type=ParserBox[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:212:14
+            Integer type=i64 value=19 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:212:41
+            Call name=make_token type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:212:52
+              Integer type=i64 value=2 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:212:63
+              Integer type=i64 value=20 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:212:66
+              Integer type=i64 value=24 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:212:70
+          EnumConstruct enum=Maybe case=Nothing type=Maybe[AstSlot[Token]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:213:15
+          Local name=passed type=PassResult[AstSlot[Token], Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:214:13
+      VarDecl name=envelope type=AggregateEnvelope[Token, Diagnostic] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:216:7
+        EnumConstruct enum=AggregateEnvelope case=State type=AggregateEnvelope[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:216:18
+      VarDecl name=nested_ok type=PassResult[Box[Token], Maybe[Diagnostic]] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:217:7
+        EnumConstruct enum=PassResult case=Passed type=PassResult[Box[Token], Maybe[Diagnostic]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:218:5
+      VarDecl name=nested_err type=PassResult[Box[Token], Maybe[Diagnostic]] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:219:7
+        EnumConstruct enum=PassResult case=Failed type=PassResult[Box[Token], Maybe[Diagnostic]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:220:5
+      VarDecl name=identity_left type=Either[LexError, Token] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:223:7
+        EnumConstruct enum=Either case=Left type=Either[LexError, Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:224:5
+      VarDecl name=identity_right type=Either[LexError, Token] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:225:7
+        EnumConstruct enum=Either case=Right type=Either[LexError, Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:225:49
+      VarDecl name=method_pair type=Pair[i64, bool] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:226:7
+        Tuple type=Pair[i64, bool] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:226:21
+          Integer type=i64 value=1 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:226:45
+          Bool type=bool value=true @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:226:55
+      VarDecl name=method_score type=i64 let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:227:7
+        IfExpr type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:227:22
+          Call name=impl::Pair_i64__bool_::inherent::right_value type=bool @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:227:37
+            Local name=method_pair type=Pair[i64, bool] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:227:25
+          Integer type=i64 value=1 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:227:53
+          Integer type=i64 value=0 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:227:64
+      VarDecl name=owned_box type=Box[own i64] let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:228:7
+        Tuple type=Box[own i64] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:228:33
+          Call name=make_owned type=own i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:228:46
+            Integer type=i64 value=1 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:228:57
+      VarDecl name=owned_score type=i64 let @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:229:7
+        Call name=consume_owned type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:229:21
+          Local name=owned_box type=Box[own i64] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:229:35
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:231:10
+        Binary op="-" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:238:17
+          Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:237:18
+            Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:236:51
+              Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:235:34
+                Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:234:33
+                  Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:233:30
+                    Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:232:29
+                      Binary op="+" type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:231:35
+                        Call name=envelope_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:231:10
+                          Local name=envelope type=AggregateEnvelope[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:231:25
+                        Call name=nested_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:232:5
+                          Local name=nested_ok type=PassResult[Box[Token], Maybe[Diagnostic]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:232:18
+                      Call name=nested_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:233:5
+                        Local name=nested_err type=PassResult[Box[Token], Maybe[Diagnostic]] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:233:18
+                    Call name=either_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:234:5
+                      Local name=identity_left type=Either[LexError, Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:234:18
+                  Call name=either_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:235:5
+                    Local name=identity_right type=Either[LexError, Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:235:18
+                Call name=envelope_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:236:5
+                  EnumConstruct enum=AggregateEnvelope case=Item type=AggregateEnvelope[Token, Diagnostic] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:236:20
+              Local name=method_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:237:5
+            Local name=owned_score type=i64 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:238:5
+          Integer type=i64 value=100 @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:239:5
+  Function name=impl::Box_Token_::inherent::unwrap return=Token specialization=impl-method origin=impl::Box_Token_::inherent::unwrap @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:76:6
+    Param name=self type=Box[Token]
+    Body
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:77:12
+        TupleIndex index=0 type=Token @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:77:17
+          Local name=self type=Box[Token] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:77:12
+  Function name=impl::Pair_i64__bool_::inherent::right_value return=bool specialization=impl-method origin=impl::Pair_i64__bool_::inherent::right_value @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:82:6
+    Param name=self type=Pair[i64, bool]
+    Body
+      Return @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:83:12
+        TupleIndex index=1 type=bool @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:83:17
+          Local name=self type=Pair[i64, bool] @tests/cases/generics/ok/generic-aggregate-monomorphization.ari:83:12

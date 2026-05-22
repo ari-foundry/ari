@@ -107,11 +107,15 @@ function error diagnostics.
 `make check-generics` runs generic-focused tests for function
 monomorphization, repeated specializations, arbitrary generic parameter names,
 generic function pointer specialization from expected `fn(...) -> ...` types,
-generic structs, generic trait impl syntax, generic inherent associated
+generic structs, generic enums, generic aliases, nested generic aggregate
+substitution and identity, generic enum payload layout, ownership-qualified
+generic payloads, generic trait impl syntax, generic inherent associated
 functions, explicit and inferred method-level generic inherent impl and
 associated calls, generic ADT surfaces, inference conflicts, uninferred
-function pointer parameters, uninferred parameters, and duplicate generic
-parameters.
+function pointer parameters, uninferred parameters, duplicate generic
+parameters, aggregate payload mismatches, receiver mismatches, invalid field
+access, and use-after-move through generic payloads. It also checks LLVM output
+for nested aggregate enum layout.
 
 `make check-traits` covers concrete trait impls, trait-bound static dispatch,
 generic trait impl method and associated-function specialization, generic trait

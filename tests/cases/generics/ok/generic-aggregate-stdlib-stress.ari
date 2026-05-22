@@ -1,0 +1,156 @@
+// Stdlib generic aggregate stress fixture. The checked behavior belongs to
+// generic aggregate monomorphization generally; Vec, Option, Result, and
+// HashMap are only convenient large users of that machinery.
+struct Span {
+  start: i64,
+  end: i64,
+}
+
+struct Token {
+  kind: i64,
+  span: Span,
+}
+
+struct LexError {
+  code: i64,
+  span: Span,
+}
+
+struct Diagnostic {
+  severity: i64,
+  span: Span,
+}
+
+struct Symbol {
+  id: i64,
+}
+
+fn symbol_hash(value: i64) -> u64 {
+  return value as u64;
+}
+
+fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}
+
+fn token(kind: i64, start: i64, end: i64) -> Token {
+  return Token { kind: kind, span: Span { start: start, end: end } };
+}
+
+fn token_score(value: Token) -> i64 {
+  return value.kind + span_len(value.span);
+}
+
+fn lex_score(error: LexError) -> i64 {
+  return error.code + span_len(error.span);
+}
+
+fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
+  return diagnostic.severity + span_len(diagnostic.span);
+}
+
+fn option_span_score(value: Option[Span]) -> i64 {
+  match value {
+    Some(span) => {
+      return span_len(span);
+    }
+    None => {
+      return 0;
+    }
+  }
+}
+
+fn result_token_score(value: Result[Token, LexError]) -> i64 {
+  match value {
+    Ok(payload) => {
+      return token_score(payload);
+    }
+    Err(error) => {
+      return lex_score(error);
+    }
+  }
+}
+
+fn vec_result_score(values: std::vec::Vec[Result[Token, LexError]]) -> i64 {
+  return values.len() +
+    result_token_score(values.get(0)) +
+    result_token_score(values.get(1));
+}
+
+fn result_vec_score(value: Result[std::vec::Vec[Token], Diagnostic]) -> i64 {
+  match value {
+    Ok(tokens) => {
+      return tokens.len() + token_score(tokens.get(0)) + token_score(tokens.get(1));
+    }
+    Err(diagnostic) => {
+      return diagnostic_score(diagnostic);
+    }
+  }
+}
+
+fn option_result_score(value: Option[Result[Token, LexError]]) -> i64 {
+  match value {
+    Some(result) => {
+      return result_token_score(result);
+    }
+    None => {
+      return 0;
+    }
+  }
+}
+
+fn vec_option_span_score(values: std::vec::Vec[Option[Span]]) -> i64 {
+  return values.len() +
+    option_span_score(values.get(0)) +
+    option_span_score(values.get(1));
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+
+  var tokens = std::vec::new<Token>(ref mut zone, 2);
+  tokens.push(token(3, 10, 14));
+  tokens.push(token(5, 20, 23));
+
+  let span_option: Option[Span] = Some<Span>(Span { start: 1, end: 6 });
+  let token_result: Result[Token, LexError] = Ok<Token, LexError>(token(7, 30, 34));
+  let nested_option: Option[Result[Token, LexError]] =
+    Some<Result[Token, LexError]>(Err<Token, LexError>(
+      LexError { code: 9, span: Span { start: 40, end: 43 } }
+    ));
+
+  var result_values = std::vec::new<Result[Token, LexError]>(ref mut zone, 2);
+  result_values.push(token_result);
+  result_values.push(Err<Token, LexError>(LexError {
+    code: 11,
+    span: Span { start: 50, end: 55 },
+  }));
+
+  var span_options = std::vec::new<Option[Span]>(ref mut zone, 2);
+  span_options.push(span_option);
+  span_options.push(None<Span>());
+
+  var token_vector = std::vec::new<Token>(ref mut zone, 2);
+  token_vector.push(token(13, 60, 63));
+  token_vector.push(token(17, 70, 72));
+  let vector_result: Result[std::vec::Vec[Token], Diagnostic] =
+    Ok<std::vec::Vec[Token], Diagnostic>(token_vector);
+
+  var symbols = HashMap::new<i64, Symbol>(ref mut zone, 2, symbol_hash);
+  symbols.insert(ref mut zone, 101, Symbol { id: 19 });
+  symbols.insert(ref mut zone, 202, Symbol { id: 23 });
+  let symbol_score = symbols.get(101).id + symbols.get(202).id;
+
+  let total =
+    option_span_score(span_option) +
+    result_token_score(token_result) +
+    vec_result_score(result_values) +
+    result_vec_score(vector_result) +
+    option_result_score(nested_option) +
+    vec_option_span_score(span_options) +
+    symbol_score +
+    tokens.len();
+
+  zone::destroy(zone);
+  return total - 51;
+}

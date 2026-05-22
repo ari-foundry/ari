@@ -1,0 +1,22 @@
+struct Box[T] {
+  value: T,
+}
+
+struct Token {
+  kind: i64,
+}
+
+struct Span {
+  start: i64,
+}
+
+fn accept(value: Box[Box[Token]]) -> i64 {
+  return value.value.value.kind;
+}
+
+fn main() -> i64 {
+  let value: Box[Box[Span]] = Box<Box[Span]> {
+    value: Box<Span> { value: Span { start: 1 } },
+  };
+  return accept(value);
+}

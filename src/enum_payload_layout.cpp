@@ -46,6 +46,17 @@ bool is_enum_payload_byte_storage_type(const IrType& type) {
            type.args[0].primitive == IrPrimitiveKind::U8;
 }
 
+bool contains_unresolved_generic_type(const IrType& type) {
+    if (type.primitive == IrPrimitiveKind::Unknown) return true;
+    for (const auto& arg : type.args) {
+        if (contains_unresolved_generic_type(arg)) return true;
+    }
+    for (const auto& field : type.field_types) {
+        if (contains_unresolved_generic_type(field)) return true;
+    }
+    return false;
+}
+
 } // namespace
 
 IrType enum_tag_storage_type(SourceLocation loc) {
@@ -69,6 +80,11 @@ IrType enum_payload_byte_storage_type(SourceLocation loc, std::uint64_t size_byt
 
 IrType enum_payload_slot_storage_type(SourceLocation loc, const IrType& payload_type) {
     if (is_owned_word_enum_payload_type(payload_type)) return payload_type;
+    // Generic declarations, aliases, and signatures are validated with
+    // placeholder IrType::Unknown arguments. Their final aggregate size is
+    // only known after monomorphization, so keep the placeholder slot compact
+    // and let concrete enum applications recompute exact storage later.
+    if (contains_unresolved_generic_type(payload_type)) return enum_payload_storage_type(loc);
     if (is_inline_payload_storage_type(payload_type)) return payload_type;
     return enum_payload_storage_type(loc);
 }

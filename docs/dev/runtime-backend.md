@@ -135,7 +135,7 @@ carried through IR as a distinct builtin ABI.
 The LLVM backend still intentionally rejects or does not ABI-lower:
 
 - bare root `Vec[T]` non-local ownership values
-- generic type declarations beyond simple function-call monomorphization
+- public/non-local ABI exposure for some concrete generic aggregate values
 - raw pointer operations outside scalar and plain Ari-layout aggregate local layouts
 - imported C aggregate calls beyond classifier-approved `@repr(C)` structs
 

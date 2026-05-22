@@ -1,0 +1,14 @@
+struct Box[T] {
+  value: T,
+}
+
+impl Box[i64] {
+  fn id(self) -> i64 {
+    return self.value;
+  }
+}
+
+fn main() -> i64 {
+  let value = Box<bool> { value: true };
+  return value.id();
+}

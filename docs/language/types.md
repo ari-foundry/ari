@@ -384,6 +384,14 @@ impl[T] Inner[T] for Box[T] {
 }
 ```
 
+For the full supported surface, identity rules, nested enum payload behavior,
+ownership examples, and focused tests, see
+[Generic Aggregates](generic-aggregates.md). Generic aggregate
+monomorphization is executable for local/codegen-supported structs, enums, and
+aliases; remaining limits are about recursive value layout, zone-backed stdlib
+handle provenance, and public external ABI exposure rather than a planned
+generic-aggregate feature gap.
+
 Generic impl parameters can have trait bounds:
 
 ```ari

@@ -1,0 +1,240 @@
+// General generic aggregate fixture. Keep stdlib containers out of this file:
+// it should fail if user-defined structs, enums, aliases, or methods lose
+// substitution, identity, layout, or ownership fidelity.
+struct Box[T] {
+  value: T,
+}
+
+struct Pair[A, B] {
+  left: A,
+  right: B,
+}
+
+enum Maybe[T] {
+  Nothing,
+  Just(T),
+}
+
+enum Either[L, R] {
+  Left(L),
+  Right(R),
+}
+
+enum PassResult[T, E] {
+  Failed(E),
+  Passed(T),
+}
+
+struct Span {
+  start: i64,
+  end: i64,
+}
+
+struct Token {
+  kind: i64,
+  span: Span,
+}
+
+struct LexError {
+  span: Span,
+  code: i64,
+}
+
+struct Diagnostic {
+  primary: Span,
+  severity: i64,
+}
+
+struct ParserBox[T] {
+  cursor: i64,
+  value: T,
+}
+
+struct AstSlot[T] {
+  mut id: i64,
+  payload: Maybe[T],
+}
+
+struct ParseFrame[T, E] {
+  current: ParserBox[T],
+  previous: Maybe[AstSlot[T]],
+  status: PassResult[AstSlot[T], E],
+}
+
+enum AggregateEnvelope[T, E] {
+  Empty,
+  Item(Pair[T, Maybe[E]]),
+  State(ParseFrame[T, E]),
+}
+
+type TokenBox = Box[Token];
+type SlotAlias[T] = AstSlot[T];
+type PassAlias[T, E] = PassResult[T, E];
+type NestedAlias[T, E] = PassResult[Box[T], Maybe[E]];
+
+impl[T] Box[T] {
+  fn unwrap(self) -> T {
+    return self.value;
+  }
+}
+
+impl[A, B] Pair[A, B] {
+  fn right_value(self) -> B {
+    return self.right;
+  }
+}
+
+fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}
+
+fn token_score(token: Token) -> i64 {
+  return token.kind + span_len(token.span);
+}
+
+fn make_token(kind: i64, start: i64, end: i64) -> Token {
+  return Token { kind: kind, span: Span { start: start, end: end } };
+}
+
+fn make_token_box(kind: i64) -> TokenBox {
+  return Box<Token> { value: make_token(kind, 2, 8) };
+}
+
+fn maybe_score(value: Maybe[Token]) -> i64 {
+  match value {
+    Just(token) => {
+      return token_score(token);
+    }
+    Nothing => {
+      return 0;
+    }
+  }
+}
+
+fn either_score(value: Either[LexError, Token]) -> i64 {
+  match value {
+    Left(error) => {
+      return error.code + span_len(error.span);
+    }
+    Right(token) => {
+      return token_score(token);
+    }
+  }
+}
+
+fn pass_score(value: PassAlias[AstSlot[Token], Diagnostic]) -> i64 {
+  match value {
+    Passed(slot) => {
+      return slot.id + maybe_score(slot.payload);
+    }
+    Failed(diagnostic) => {
+      return diagnostic.severity + span_len(diagnostic.primary);
+    }
+  }
+}
+
+fn nested_score(value: NestedAlias[Token, Diagnostic]) -> i64 {
+  match value {
+    Passed(boxed) => {
+      return token_score(boxed.value);
+    }
+    Failed(maybe_diagnostic) => {
+      match maybe_diagnostic {
+        Just(diagnostic) => {
+          return diagnostic.severity + span_len(diagnostic.primary);
+        }
+        Nothing => {
+          return 1;
+        }
+      }
+    }
+  }
+}
+
+fn frame_score(frame: ParseFrame[Token, Diagnostic]) -> i64 {
+  return frame.current.cursor + token_score(frame.current.value) +
+    pass_score(frame.status) + match frame.previous {
+      Just(slot) => slot.id + maybe_score(slot.payload),
+      Nothing => 0,
+    };
+}
+
+fn envelope_score(value: AggregateEnvelope[Token, Diagnostic]) -> i64 {
+  match value {
+    Empty => {
+      return 0;
+    }
+    Item(pair) => {
+      return token_score(pair.left) + match pair.right {
+        Just(diagnostic) => diagnostic.severity + span_len(diagnostic.primary),
+        Nothing => 0,
+      };
+    }
+    State(frame) => {
+      return frame_score(frame);
+    }
+  }
+}
+
+fn mutate_slot(slot: ref mut AstSlot[Token]) -> void {
+  slot.id = slot.id + 1;
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume_owned(value: Box[own i64]) -> i64 {
+  let moved = value.value;
+  drop moved;
+  drop value;
+  return 17;
+}
+
+fn main() -> i64 {
+  let token = make_token(5, 10, 17);
+  let boxed = Box<Token> { value: token };
+  let from_method = boxed.unwrap();
+  let alias_box: TokenBox = make_token_box(7);
+  let pair = Pair<Token, Maybe[Diagnostic]> {
+    left: from_method,
+    right: Just<Diagnostic>(Diagnostic { primary: Span { start: 1, end: 5 }, severity: 3 }),
+  };
+
+  var slot: SlotAlias[Token] = AstSlot<Token> {
+    id: 11,
+    payload: Just<Token>(alias_box.value),
+  };
+  mutate_slot(ref mut slot);
+
+  let passed: PassAlias[AstSlot[Token], Diagnostic] = Passed<AstSlot[Token], Diagnostic>(slot);
+  let frame = ParseFrame<Token, Diagnostic> {
+    current: ParserBox<Token> { cursor: 19, value: make_token(2, 20, 24) },
+    previous: Nothing<AstSlot[Token]>(),
+    status: passed,
+  };
+  let envelope = State<Token, Diagnostic>(frame);
+  let nested_ok: NestedAlias[Token, Diagnostic] =
+    Passed<Box[Token], Maybe[Diagnostic]>(Box<Token> { value: make_token(4, 30, 35) });
+  let nested_err: NestedAlias[Token, Diagnostic] =
+    Failed<Box[Token], Maybe[Diagnostic]>(
+      Just<Diagnostic>(Diagnostic { primary: Span { start: 40, end: 44 }, severity: 6 })
+    );
+  let identity_left: Either[LexError, Token] =
+    Left<LexError, Token>(LexError { span: Span { start: 50, end: 55 }, code: 8 });
+  let identity_right: Either[LexError, Token] = Right<LexError, Token>(make_token(9, 60, 66));
+  let method_pair = Pair<i64, bool> { left: 1, right: true };
+  let method_score = if method_pair.right_value() { 1 } else { 0 };
+  let owned_box: Box[own i64] = Box { value: make_owned(1) };
+  let owned_score = consume_owned(owned_box);
+
+  return envelope_score(envelope) +
+    nested_score(nested_ok) +
+    nested_score(nested_err) +
+    either_score(identity_left) +
+    either_score(identity_right) +
+    envelope_score(Item<Token, Diagnostic>(pair)) +
+    method_score +
+    owned_score -
+    100;
+}

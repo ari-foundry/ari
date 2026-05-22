@@ -124,10 +124,10 @@ bootstrap path should not wait for one.
 | --- | --- | --- |
 | Source IO | Good enough for small tools through `std::fs`, `std::path`, `std::env`, and `std::io`. | Richer file errors, stable owned path buffers, owner/group/ACL metadata, and portable creation/birth-time policy. |
 | Text | Good enough for byte strings, UTF-8 validation, C strings, OS string views, formatting, and encoding helpers. | Owned UTF-8/OS/path string policies, richer parse errors, and less special-case formatting lowering. |
-| Collections | Good first pass: `Vec`, `Slice`, hash/tree maps and sets, queues, lists, heaps, and iterators exist. | Trait-driven `Hash`/`Eq`/`Ord`, deletion/comparator policy completion, stress tests, and cleaner nested generic aggregate behavior. |
+| Collections | Good first pass: `Vec`, `Slice`, hash/tree maps and sets, queues, lists, heaps, iterators, and generic aggregate stress fixtures exist. | Trait-driven `Hash`/`Eq`/`Ord`, deletion/comparator policy completion, and broader compiler-shaped collection coverage. |
 | Error reporting | Basic logging, panic, formatting, errors, and test helpers exist in runtime `std`. | Compiler/tooling source spans, owned filename/source-text maps, structured report values, multi-label builders, multiple notes, fix-it text, and stable golden output. |
-| Parser support | Ari can express basic parser code with structs, enums, loops, functions, modules, and collections. | More ergonomic strings, file-backed modules, better generic aggregate diagnostics, and parser-specific tests. |
-| Semantic model | Current compiler supports many front-end surfaces, but not all are comfortable to reimplement in Ari. | Stable generic aggregates, trait dispatch, associated-type ergonomics, richer `Result[T, Error]`, and clearer ownership errors. |
+| Parser support | Ari can express basic parser code with structs, enums, loops, functions, modules, generic aggregates, and collections. | More ergonomic strings, file-backed modules, and parser-specific tests. |
+| Semantic model | Current compiler supports many front-end surfaces, but not all are comfortable to reimplement in Ari. | Broader trait dispatch, associated-type ergonomics, richer `Result[T, Error]`, and clearer ownership errors. |
 | Memory model | Explicit zones, provenance checks, source `String`/`Vec`, and low-level memory helpers exist. | Stronger long-lived arena policy, escape rules for compiler-owned graphs, drop policy for nested structures, and allocation profiling hooks. |
 | Backend | Current compiler emits LLVM IR and can link through LLVM drivers. | A stage1 backend strategy: initially emit comparable HIR/IR text, then LLVM IR text, then object/executable output. |
 | Build/test | `make` and focused stdlib/compiler checks exist. | Bootstrap-specific fixture runner, stage comparison, golden updater policy, and a small self-compile smoke path. |
@@ -252,7 +252,7 @@ compiler path is stable.
 
 - first-class source span and diagnostic APIs
 - stable owned compiler data structures over zones
-- stronger generic aggregate and enum payload behavior
+- broader compiler-shaped generic aggregate and enum payload fixtures
 - trait-driven collection defaults and formatting dispatch
 - file-backed modules and multi-file build ergonomics
 - clear `Result[T, Error]` payload policy

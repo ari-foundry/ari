@@ -63,6 +63,10 @@ the same language surface that normal Ari users get.
 - `ok/model/compiler-onboarding-workflow.ari`: first-day compiler contributor
   path, layer choice, fixture bucket choice, focused checks, and non-bootstrap
   scope as normal Ari data.
+- `ok/model/compiler-generic-aggregates.ari`: TokenStream, ParserState,
+  AstNode, AstArena, DiagnosticBuilder, SymbolTable, PassWorklist, WorkItem,
+  PassError, and Result-like pass outputs built from normal generic
+  aggregates.
 - `errors/bootstrap-class-keyword.ari`: rejects `class` as a compiler-development
   shortcut; compiler code should use normal Ari structs, enums, functions, and
   traits.
@@ -89,6 +93,9 @@ the same language surface that normal Ari users get.
   golden seed for resolved sources, imports, and item surfaces.
 - `artifact/ok/pass-summary-basic.summary`: driver-level stage count seed for
   lexer, syntax, module loading, and sema boundaries.
+- `artifact/ok/generic-aggregate-monomorphization.ir`: typed IR golden for
+  concrete user-defined generic aggregate instantiations, nested enum payloads,
+  method specialization, and owned generic fields.
 - `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module,
   assignment type, trait, and ownership diagnostic code/family/span golden
   seeds.
