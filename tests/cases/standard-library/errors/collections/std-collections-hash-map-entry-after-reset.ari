@@ -1,0 +1,10 @@
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var map = collections::hash_map<i64, i64>(ref mut zone, 1, collections::hash_i64);
+
+  var entry = map.entry(1);
+  zone::reset(ref mut zone);
+
+  entry.or_insert(10) += 0;
+  return 0;
+}

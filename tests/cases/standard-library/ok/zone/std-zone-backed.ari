@@ -57,6 +57,11 @@ fn main() -> i64 {
   if map_zone.equals(ref raw_values_zone) {
     score = score + 3;
   }
+  var map_entry = map.entry(4);
+  let map_entry_zone = zone::of(ref map_entry);
+  if map_entry_zone.equals(ref raw_values_zone) {
+    score = score + 31;
+  }
 
   var hash_set = std::collections::hash_set<i64>(
     ref mut arena,
@@ -78,6 +83,11 @@ fn main() -> i64 {
   let tree_map_zone = zone::of(ref tree_map);
   if tree_map_zone.equals(ref raw_values_zone) {
     score = score + 7;
+  }
+  var tree_map_entry = tree_map.entry(6);
+  let tree_entry_zone = tree_map_entry.zone();
+  if tree_entry_zone.equals(ref raw_values_zone) {
+    score = score + 29;
   }
 
   var tree_set = std::collections::tree_set<i64>(

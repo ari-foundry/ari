@@ -452,9 +452,10 @@ String and Vec buffers may still use a null data pointer, so raw
 `metadata(data)` queries require a non-null allocation pointer.
 For stdlib heap handles, prefer `zone::of(ref value)` or `value.zone()` through
 `std::zone::ZoneBacked`; they expose the same typed metadata for supported
-handles. Some handles, such as `Vec<T>`, keep construction metadata even before
-the first payload allocation. Raw header recovery through `metadata(data)`
-still requires a non-null backing allocation.
+handles, including map update-entry handles that recover through their backing
+map. Some handles, such as `Vec<T>`, keep construction metadata even before the
+first payload allocation. Raw header recovery through `metadata(data)` still
+requires a non-null backing allocation.
 
 `zone::scratch<T>(capacity, value)` is local-binding sugar for the common
 temporary-object case. It can only appear as the initializer of a local `let` or

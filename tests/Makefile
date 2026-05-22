@@ -1482,13 +1482,17 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-zone-alloc-array.elf; code=$$?; test $$code -eq 72
 	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --emit-llvm $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -q '_ARNv3std4zone24of__G_std__vec__Vec_i64_' $(BUILD_DIR)/prelude/std-zone-backed.ll
+	grep -F -q 'define { ptr, i64 } @"_ARNv4impl35std__collections__HashMap_i64__i64_8inherent5entry"' $(BUILD_DIR)/prelude/std-zone-backed.ll
+	grep -F -q 'define { ptr, i64 } @"_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent5entry"' $(BUILD_DIR)/prelude/std-zone-backed.ll
+	grep -q '_ARNv3std4zone46of__G_std__collections__HashMapEntry_i64__i64_' $(BUILD_DIR)/prelude/std-zone-backed.ll
+	grep -q '_ARNv4impl40std__collections__TreeMapEntry_i64__i64_21std__zone__ZoneBacked4zone' $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -q '_ARNv3std4zone9from_zone' $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -q '_ARNv3std4zone8metadata' $(BUILD_DIR)/prelude/std-zone-backed.ll
 	grep -q '@ari_builtin_zone_allocation_zone' $(BUILD_DIR)/prelude/std-zone-backed.ll
 	$(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari -o $(BUILD_DIR)/prelude/std-zone-backed.elf
-	$(BUILD_DIR)/prelude/std-zone-backed.elf; code=$$?; test $$code -eq 189
+	$(BUILD_DIR)/prelude/std-zone-backed.elf; code=$$?; test $$code -eq 249
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-alloc-array.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; $(BUILD_DIR)/prelude/std-zone-alloc-array.elf; code=$$?; test $$code -eq 72; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-backed.elf; $(BUILD_DIR)/prelude/std-zone-backed.elf; code=$$?; test $$code -eq 189; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/zone/std-zone-backed.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-zone-backed.elf; $(BUILD_DIR)/prelude/std-zone-backed.elf; code=$$?; test $$code -eq 249; fi
 	$(TARGET) tests/cases/standard-library/ok/vec/std-vec-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
 	grep -q '_ARNv3std3vec19alloc_buffer__G_i64' $(BUILD_DIR)/prelude/std-vec-alloc-buffer.ll
@@ -2660,6 +2664,8 @@ check-prelude: $(TARGET)
 	grep -q "std::collections::HashMap.reserve receiver must come from a tracked zone allocation to infer its zone" $(BUILD_DIR)/prelude/std-collections-implicit-zone-untracked.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-hash-map-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-hash-map-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-hash-map-entry-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-entry-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-entry-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'entry' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-hash-map-entry-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-hash-map-keys-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-keys-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-keys-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'cursor' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-hash-map-keys-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-hash-map-values-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-hash-map-values-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-hash-map-values-after-reset.err 2>&1; then exit 1; fi
@@ -2670,6 +2676,8 @@ check-prelude: $(TARGET)
 	grep -q "std::collections::HashMap.insert zone argument must match the hash map allocation zone" $(BUILD_DIR)/prelude/std-collections-hash-map-insert-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-tree-map-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'map' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-tree-map-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-tree-map-entry-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-tree-map-entry-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-tree-map-entry-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'entry' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-tree-map-entry-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-tree-map-keys-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-tree-map-keys-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-tree-map-keys-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'cursor' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-tree-map-keys-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/collections/std-collections-tree-map-values-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-tree-map-values-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-tree-map-values-after-reset.err 2>&1; then exit 1; fi

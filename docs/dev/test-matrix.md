@@ -556,7 +556,7 @@ Checklist:
       allocation-header zone recovery through `zone::metadata(data)`,
       `zone::from_zone(ref mut zone)`, `metadata.alloc_array<T>(count)`,
       `metadata.as_zone_ptr()`, `zone::of(ref value)`, and `value.zone()` for
-      backed std handles
+      backed std handles, including map update-entry handles
 - [x] control-flow expressions that select source `std::vec::Vec<T>` handles
       from the same zone keep reset/destroy provenance on the selected handle
 - [x] source `std::vec::Vec<T>` exposes tracked read-only metadata methods
@@ -665,8 +665,9 @@ Checklist:
       containers with explicit hash/comparator functions, lookup, insertion,
       replacement, `HashMapEntry`/`TreeMapEntry` update handles with insert,
       `insert_entry`, `or_default`, remove, access, and mutable-value
-      borrowing, `remove_entry`, reserve growth, tracked-local zone inference
-      for common mutation calls, in-place `HashMap`/`HashSet` retain
+      borrowing, entry-handle zone recovery from backing-map metadata,
+      `remove_entry`, reserve growth, tracked-local zone inference for common
+      mutation calls, in-place `HashMap`/`HashSet` retain
       filtering, hash/tree
       iterator invalidation, reset/destroy invalidation, and same-zone growth
       diagnostics

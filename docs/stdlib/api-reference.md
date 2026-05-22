@@ -1597,8 +1597,8 @@ allocation and returns the raw opaque handle. Prefer `metadata(data)`, which
 wraps that handle as `ZoneMetadata`. `from_zone(ref mut zone)` captures
 metadata directly from an explicit zone capability. `zone::of(ref value)` and
 `value.zone()` use the `ZoneBacked` trait to expose `ZoneMetadata` from
-supported heap-backed stdlib values such as `Box[T]`, `String`, `Vec[T]`, and
-zone-backed `std::collections` handles.
+supported heap-backed stdlib values such as `Box[T]`, `String`, `Vec[T]`,
+zone-backed `std::collections` handles, and map update-entry handles.
 `metadata.as_ptr()` is the raw escape hatch, `metadata.as_zone_ptr()` exposes
 the same address as `ptr Zone`, and `metadata.equals(ref other)` checks handle
 identity. `metadata.alloc(bytes, align)` and `metadata.alloc_array<T>(count)`
@@ -2192,7 +2192,9 @@ value on replacement. `HashMap.entry(key)` returns a
 `HashMapEntry[K,V]` update handle with `or_insert`, `or_insert_with`,
 `or_default`, `and_modify`, `insert`, `insert_entry`, `remove`, `key`,
 `value`, and `value_mut`; tracked local maps infer the allocation zone for the
-natural `entry(key)` spelling. `or_default` requires `V: Default`, while
+natural `entry(key)` spelling. The entry handle stores only the map pointer and
+key; allocation uses `map.zone()`/allocation-header metadata. `or_default`
+requires `V: Default`, while
 `insert_entry(value)` stores `value` and returns the entry handle for continued
 chaining.
 `HashMap.remove` returns `Option[V]` and leaves
@@ -2313,6 +2315,8 @@ value like `insert`. `TreeMap.entry(key)` returns a `TreeMapEntry[K,V]` update
 handle with `or_insert`, `or_insert_with`, `or_default`, `and_modify`,
 `insert`, `insert_entry`, `remove`, `key`, `value`, and `value_mut`; tracked
 local maps infer the allocation zone for the natural `entry(key)` spelling.
+Like hash entries, tree entries recover allocation from `map.zone()` instead of
+carrying a separate zone pointer.
 `or_default` requires `V: Default`, while `insert_entry(value)` stores `value`
 and returns the entry handle for continued chaining.
 `TreeMap.remove(key)` returns `Option[V]` and rebuilds links

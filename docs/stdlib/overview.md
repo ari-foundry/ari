@@ -370,7 +370,8 @@ keeping `contains` compatible, `contains_value` for value membership scans, and
 `or_insert_with`, `or_default`, `and_modify`, direct `insert`, `insert_entry`,
 direct `remove`, `key`, `value`, and `value_mut`, and `remove_entry(key)`
 returns copied `MapEntry[K,V]` key-value pairs for removal cases that need both
-fields.
+fields. Update-entry handles keep only the backing map pointer and key; growth
+recovers the zone from allocation metadata.
 Tree removal compacts live nodes and rebuilds links in place, so the public
 API does not need a zone argument. Hash, tree, and heap constructors take
 explicit policy functions until trait dispatch is strong enough for fully
@@ -387,7 +388,8 @@ captures metadata from an explicit zone capability, and `ZoneMetadata` can
 allocate directly through that recovered runtime handle. `ZoneBacked` plus
 `zone::of(ref value)`/`value.zone()` give higher-level handles a standard way
 to expose the same typed metadata, either from cached construction metadata or
-from a real backing allocation, including the zone-backed collection handles.
+from a real backing allocation, including zone-backed collection and map-entry
+handles.
 
 `std::input` follows that pattern for stdin. `read_byte`, `line`, and
 `owned_line` are runtime hooks, while `try_read_byte` is source Ari that turns

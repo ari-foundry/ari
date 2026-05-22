@@ -286,7 +286,9 @@ short-lived `HashMapEntry[K,V]` or `TreeMapEntry[K,V]` update handle with
 `or_insert`, `or_insert_with`, `or_default`, `and_modify`, `insert`,
 `insert_entry`, `remove`, `key`, `value`, and `value_mut`; copied iterator,
 boundary, and removal results use
-`MapEntry[K,V]` with `key()` and `value()` accessors. Hash map iterators walk
+`MapEntry[K,V]` with `key()` and `value()` accessors. Entry handles recover the
+backing zone with `map.zone()` rather than carrying a separate zone field.
+Hash map iterators walk
 live buckets; tree map iterators walk ascending key order. `values_mut()` uses
 a `has_next()`/`next() -> ref mut V` cursor, and direct `for entry in map`
 uses the same copied-entry order as `iter()`. `iter_mut()` yields

@@ -70,9 +70,10 @@ an existing zone capability without requiring a prior payload allocation.
 `ZoneBacked` is the high-level wrapper for library handles that own
 zone-backed storage. `zone::of(ref value)` and `value.zone()` expose
 `ZoneMetadata` for supported handles such as `Box[T]`, `String`, `Vec[T]`, and
-the zone-backed `std::collections` handles. `metadata.as_ptr()` exposes the
-raw opaque handle, `metadata.as_zone_ptr()` gives the same address typed as
-`ptr Zone`, and `metadata.equals(ref other)` checks handle identity.
+the zone-backed `std::collections` handles, including map update-entry handles.
+`metadata.as_ptr()` exposes the raw opaque handle, `metadata.as_zone_ptr()`
+gives the same address typed as `ptr Zone`, and `metadata.equals(ref other)`
+checks handle identity.
 `metadata.alloc(bytes, align)` and `metadata.alloc_array<T>(count)` allocate
 through that recovered runtime zone handle; this is the preferred internal
 building block for heap handles that need to grow without carrying an explicit
@@ -128,8 +129,8 @@ behavior.
   `ZoneMetadata`, `ZoneBacked`, `zone::metadata(data)`, `zone::from_zone`,
   `metadata.alloc_array<T>`, `metadata.as_ptr()`,
   `metadata.as_zone_ptr()`, `zone::of(ref value)`, `value.zone()`, and raw
-  allocation-header agreement for box, string, vector, set, map, sequence,
-  linked list, heap, and priority queue handles.
+  allocation-header agreement for box, string, vector, set, map, map entry,
+  sequence, linked list, heap, and priority queue handles.
 - Existing zone, vector, string, and boxed tests cover reset/destroy
   invalidation and zone-backed handle provenance.
 

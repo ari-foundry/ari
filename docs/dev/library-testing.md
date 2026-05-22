@@ -577,7 +577,8 @@ identifies the exact case:
 - `std-zone-backed.ari`: source `std::zone::ZoneMetadata`,
   `std::zone::ZoneBacked`, `zone::metadata(data)`, `zone::of(ref value)`, and
   `value.zone()` agree with allocation-header metadata for boxed, string,
-  vector, set, map, sequence, linked list, heap, and priority queue handles.
+  vector, set, map, map entry, sequence, linked list, heap, and priority queue
+  handles.
 - `std-boxed-as-ptr-after-reset.ari`: negative zone provenance diagnostic.
 - `prelude-option-result-methods.ari`: root prelude ADT method behavior.
 - `prelude-option-result-ref-access.ari`: Option/Result borrowed view handles

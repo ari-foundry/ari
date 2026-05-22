@@ -21,11 +21,6 @@ bool is_i64_ptr_type(const IrType& type) {
            type.primitive == IrPrimitiveKind::I64;
 }
 
-bool is_zone_ptr_type(const IrType& type) {
-    return type.qualifier == TypeQualifier::Ptr &&
-           type.primitive == IrPrimitiveKind::Zone;
-}
-
 bool ptr_field_matches_type_arg(const IrType& field_type, const IrType& type, std::size_t arg_index) {
     if (field_type.qualifier != TypeQualifier::Ptr) return false;
     if (arg_index >= type.args.size()) return true;
@@ -256,7 +251,7 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
     if (!is_std_collections_zone_handle_type(type)) return std::nullopt;
     if (type.field_names.empty() && type.field_types.empty()) {
         if (is_std_collections_map_update_entry_handle_type(type)) {
-            return 1;
+            return 0;
         }
         if (is_std_collections_hash_map_handle_type(type) ||
             is_std_collections_hash_set_handle_type(type) ||
@@ -271,7 +266,6 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
 
     if (is_std_collections_map_update_entry_handle_type(type)) {
         std::optional<std::size_t> map_index;
-        std::optional<std::size_t> zone_index;
         bool has_key = false;
         for (std::size_t i = 0; i < type.field_names.size(); ++i) {
             const std::string& name = type.field_names[i];
@@ -282,9 +276,6 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
                     return std::nullopt;
                 }
                 map_index = i;
-            } else if (name == "zone") {
-                if (!is_zone_ptr_type(field_type)) return std::nullopt;
-                zone_index = i;
             } else if (name == "key") {
                 if (!type.args.empty()) {
                     IrType expected = type.args[0];
@@ -296,8 +287,8 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
                 return std::nullopt;
             }
         }
-        if (!map_index || !zone_index || !has_key) return std::nullopt;
-        return zone_index;
+        if (!map_index || !has_key) return std::nullopt;
+        return map_index;
     }
 
     std::optional<std::size_t> data_index;
@@ -488,7 +479,7 @@ std::optional<std::vector<std::size_t>> std_collections_set_zone_handle_data_fie
 std::vector<std::vector<std::size_t>> std_collections_zone_handle_storage_field_path_indices(const IrType& type) {
     if (!std_collections_set_zone_handle_source_field_index(type)) return {};
     if (type.field_names.empty() && type.field_types.empty()) {
-        if (is_std_collections_map_update_entry_handle_type(type)) return {{0}, {1}};
+        if (is_std_collections_map_update_entry_handle_type(type)) return {{0}};
         if (is_std_collections_hash_map_handle_type(type)) return {{1}, {2}, {3}};
         if (is_std_collections_hash_map_keys_handle_type(type)) return {{0}, {1}};
         if (is_std_collections_hash_map_values_handle_type(type)) return {{0}, {1}};
@@ -512,14 +503,11 @@ std::vector<std::vector<std::size_t>> std_collections_zone_handle_storage_field_
 
     if (is_std_collections_map_update_entry_handle_type(type)) {
         std::optional<std::size_t> map_index;
-        std::optional<std::size_t> zone_index;
         for (std::size_t i = 0; i < type.field_names.size(); ++i) {
             if (type.field_names[i] == "map") map_index = i;
-            if (type.field_names[i] == "zone") zone_index = i;
         }
         std::vector<std::vector<std::size_t>> paths;
         if (map_index) paths.push_back({*map_index});
-        if (zone_index) paths.push_back({*zone_index});
         return paths;
     }
 
