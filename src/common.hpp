@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <exception>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -30,6 +31,29 @@ struct SourceFile {
     std::size_t eof_offset = 0;
 };
 
+struct SourceSpan {
+    SourceId source_id;
+    std::size_t byte_start = 0;
+    std::size_t byte_end = 0;
+};
+
+struct LineColumn {
+    int line = 1;
+    int column = 1;
+    std::size_t byte_offset = 0;
+};
+
+struct SourceSnippet {
+    SourceSpan span;
+    LineColumn start;
+    std::string source_name;
+    std::string line_text;
+    std::size_t line_number = 1;
+    std::size_t marker_start = 0;
+    std::size_t marker_len = 0;
+    bool valid = false;
+};
+
 struct SourceLocation {
     SourceId source_id;
     int line = 1;
@@ -38,6 +62,45 @@ struct SourceLocation {
     std::size_t byte_end = 0;
     bool has_byte_range = false;
     std::string source_name;
+};
+
+struct DiagnosticLabel {
+    SourceSpan span;
+    std::string message;
+    bool primary = false;
+};
+
+class SourceMap {
+public:
+    SourceId add_file(const std::string& path, const std::string& text);
+    SourceId add_source(const std::string& path,
+                        const std::string& display_name,
+                        const std::string& text,
+                        SourceKind kind = SourceKind::File);
+    SourceId add_in_memory(const std::string& display_name,
+                           const std::string& text,
+                           SourceKind kind = SourceKind::Generated);
+
+    bool valid(SourceId id) const;
+    const SourceFile* get(SourceId id) const;
+    const std::string* text(SourceId id) const;
+    const std::string* text(const std::string& source_name) const;
+    SourceId id_for_name(const std::string& source_name) const;
+    std::size_t eof_offset(SourceId id) const;
+
+    SourceSpan span(SourceId id, std::size_t byte_start, std::size_t byte_end) const;
+    LineColumn location(SourceId id, std::size_t byte_offset) const;
+    SourceLocation location_for_offset(SourceId id, std::size_t byte_offset) const;
+    SourceLocation location_for_span(SourceSpan span) const;
+    SourceLocation location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end) const;
+    SourceLocation end_location(const std::string& source_name) const;
+    SourceSnippet snippet(SourceSpan span) const;
+
+private:
+    std::vector<SourceFile> sources_;
+    std::map<std::string, SourceId> path_index_;
+    std::map<std::string, SourceId> display_index_;
+    std::size_t in_memory_count_ = 0;
 };
 
 struct CompileError : std::exception {
@@ -55,6 +118,8 @@ private:
     SourceLocation loc_;
     bool has_location_ = false;
 };
+
+SourceMap& default_source_map();
 
 std::string where(const SourceLocation& loc);
 bool valid_source_id(SourceId id);
@@ -80,6 +145,8 @@ std::size_t source_eof_offset(SourceId id);
 SourceLocation source_location_for_offset(SourceId id, std::size_t byte_offset);
 SourceLocation source_location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end);
 SourceLocation source_end_location(const std::string& source_name);
+std::string render_source_snippet(const SourceSnippet& snippet);
+std::string render_source_snippet(const SourceSpan& span);
 std::string render_source_snippet(const SourceLocation& loc);
 
 } // namespace ari

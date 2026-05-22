@@ -72,6 +72,45 @@ display name when diagnostics should hide host-specific absolute paths.
 In-memory sources must use `register_in_memory_source` unless they already have
 a stable caller-owned path-like identity.
 
+## SourceMap API
+
+`SourceMap` is the owner that turns source bytes into stable lookup data. If a
+tool has a `SourceMap`, it can answer which file owns any byte span and which
+one-based line and column that span starts at.
+
+Current C++ API shape:
+
+```cpp
+SourceMap sources;
+SourceId main = sources.add_file("src/main.ari", main_text);
+const SourceFile* file = sources.get(main);
+SourceSpan name = sources.span(main, 3, 7);
+LineColumn point = sources.location(main, 3);
+SourceSnippet rendered = sources.snippet(name);
+```
+
+Rules:
+
+- `add_file(path, text)` registers file-backed text with `path` as both the
+  canonical identity and the diagnostic display name.
+- `add_source(path, display_name, text, kind)` is for callers that need
+  canonical and display names to differ.
+- `add_in_memory(display_name, text, kind)` creates deterministic in-memory
+  identities such as `<memory:0>`.
+- `get(SourceId)` returns the stable `SourceFile` for source-level lookup.
+- `span(source_id, start, end)` creates a half-open byte span tied to that
+  source id.
+- `location(source_id, byte_offset)` uses the file's line table to return a
+  one-based `LineColumn`.
+- `snippet(span)` returns source name, line text, and caret marker data without
+  requiring a diagnostic renderer.
+- The hosted compiler's legacy free functions call `default_source_map()` so
+  existing lexer/parser/sema code keeps using the same source model.
+
+Diagnostic labels should store `SourceSpan`, not a bare byte range. Each label
+can carry a different `SourceId`, so one diagnostic can point at the use site in
+one file and a declaration or import site in another file.
+
 ## Source Kinds
 
 Ari should distinguish source origin without changing span math:

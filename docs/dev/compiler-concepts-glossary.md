@@ -22,6 +22,7 @@ hidden to review well.
 | Term | Meaning | Current Home |
 | --- | --- | --- |
 | Source file | One loaded Ari input with a canonical path, display name, owned bytes, line start table, and EOF offset. | `src/common.hpp`, `src/driver.cpp`, source-map artifacts. |
+| SourceMap | The owner that registers sources and answers span, line/column, and snippet lookups by `SourceId`. | `src/common.hpp`, `--emit-source-map`. |
 | `SourceId` | A small per-invocation identity for a registered source file, generated source, built-in source, or unknown source. | `src/common.hpp`, `source_id=` artifact fields. |
 | Byte span | Half-open byte range in a source file, carried with a `SourceId`. | Lexer/parser diagnostics and source-map fixtures. |
 | Token | The lexer output for one syntactic item, such as an identifier or number. | `src/lexer.cpp`, `--emit-tokens`. |

@@ -12,31 +12,6 @@ namespace ari {
 
 namespace {
 
-std::vector<SourceFile>& source_files() {
-    static std::vector<SourceFile> sources;
-    return sources;
-}
-
-std::map<std::string, SourceId>& source_path_index() {
-    static std::map<std::string, SourceId> index;
-    return index;
-}
-
-std::map<std::string, SourceId>& source_display_index() {
-    static std::map<std::string, SourceId> index;
-    return index;
-}
-
-std::size_t& in_memory_source_count() {
-    static std::size_t count = 0;
-    return count;
-}
-
-bool source_id_in_bounds(SourceId id) {
-    return id.value >= 0 &&
-           static_cast<std::size_t>(id.value) < source_files().size();
-}
-
 std::vector<std::size_t> build_line_starts(const std::string& text) {
     std::vector<std::size_t> starts;
     starts.push_back(0);
@@ -52,13 +27,6 @@ void reset_source_file_text(SourceFile& file, const std::string& text) {
     file.line_starts = build_line_starts(file.text);
 }
 
-void erase_source_display_index(SourceId id, const std::string& display_name) {
-    auto found = source_display_index().find(display_name);
-    if (found != source_display_index().end() && found->second.value == id.value) {
-        source_display_index().erase(found);
-    }
-}
-
 std::string fallback_display_name(const std::string& path,
                                   const std::string& display_name) {
     if (!display_name.empty()) return display_name;
@@ -71,17 +39,6 @@ std::string fallback_source_path(const std::string& path,
     if (!path.empty()) return path;
     if (!display_name.empty()) return display_name;
     return "<memory>";
-}
-
-const SourceFile* source_file_for_location(SourceLocation& loc) {
-    if (!valid_source_id(loc.source_id) && !loc.source_name.empty()) {
-        loc.source_id = source_id_for_name(loc.source_name);
-    }
-    const SourceFile* file = find_source_file(loc.source_id);
-    if (file != nullptr && loc.source_name.empty()) {
-        loc.source_name = file->display_name;
-    }
-    return file;
 }
 
 std::size_t line_index_for_offset(const SourceFile& file, std::size_t offset) {
@@ -100,6 +57,29 @@ std::size_t line_end_for_start(const SourceFile& file, std::size_t line_start) {
     if (line_end == std::string::npos) line_end = file.eof_offset;
     if (line_end > line_start && file.text[line_end - 1] == '\r') --line_end;
     return line_end;
+}
+
+void fill_source_location_from_file(SourceLocation& loc, const SourceFile& file, std::size_t byte_offset) {
+    byte_offset = std::min(byte_offset, file.eof_offset);
+    std::size_t line_index = line_index_for_offset(file, byte_offset);
+    loc.source_id = file.id;
+    loc.source_name = file.display_name;
+    loc.line = static_cast<int>(line_index + 1);
+    loc.column = static_cast<int>(byte_offset - file.line_starts[line_index] + 1);
+    loc.byte_start = byte_offset;
+    loc.byte_end = byte_offset;
+    loc.has_byte_range = true;
+}
+
+const SourceFile* source_file_for_location(SourceLocation& loc) {
+    if (!default_source_map().valid(loc.source_id) && !loc.source_name.empty()) {
+        loc.source_id = default_source_map().id_for_name(loc.source_name);
+    }
+    const SourceFile* file = default_source_map().get(loc.source_id);
+    if (file != nullptr && loc.source_name.empty()) {
+        loc.source_name = file->display_name;
+    }
+    return file;
 }
 
 bool decimal_text(const std::string& text) {
@@ -238,6 +218,173 @@ std::string render_compile_error(const SourceLocation* loc, const std::string& m
 
 } // namespace
 
+SourceMap& default_source_map() {
+    static SourceMap map;
+    return map;
+}
+
+SourceId SourceMap::add_file(const std::string& path, const std::string& text) {
+    return add_source(path, path, text, SourceKind::File);
+}
+
+SourceId SourceMap::add_source(const std::string& path,
+                               const std::string& display_name,
+                               const std::string& text,
+                               SourceKind kind) {
+    std::string source_path = fallback_source_path(path, display_name);
+    if (source_path.empty()) return SourceId{};
+    std::string source_display = fallback_display_name(source_path, display_name);
+
+    auto found = path_index_.find(source_path);
+    if (found != path_index_.end()) {
+        SourceId id = found->second;
+        SourceFile* file = nullptr;
+        if (valid(id)) file = &sources_[static_cast<std::size_t>(id.value)];
+        if (file != nullptr) {
+            auto display_found = display_index_.find(file->display_name);
+            if (display_found != display_index_.end() && display_found->second.value == id.value) {
+                display_index_.erase(display_found);
+            }
+            file->kind = kind;
+            file->path = source_path;
+            file->display_name = source_display;
+            reset_source_file_text(*file, text);
+            display_index_[file->display_name] = id;
+        }
+        return id;
+    }
+
+    SourceId id{static_cast<int>(sources_.size())};
+    SourceFile file;
+    file.id = id;
+    file.kind = kind;
+    file.path = std::move(source_path);
+    file.display_name = std::move(source_display);
+    reset_source_file_text(file, text);
+    sources_.push_back(std::move(file));
+    const SourceFile& stored = sources_.back();
+    path_index_.emplace(stored.path, id);
+    display_index_[stored.display_name] = id;
+    return id;
+}
+
+SourceId SourceMap::add_in_memory(const std::string& display_name,
+                                  const std::string& text,
+                                  SourceKind kind) {
+    std::string source_path = "<memory:" + std::to_string(in_memory_count_++) + ">";
+    std::string source_display = display_name.empty() ? source_path : display_name;
+    return add_source(source_path, source_display, text, kind);
+}
+
+bool SourceMap::valid(SourceId id) const {
+    return id.value >= 0 && static_cast<std::size_t>(id.value) < sources_.size();
+}
+
+const SourceFile* SourceMap::get(SourceId id) const {
+    if (!valid(id)) return nullptr;
+    return &sources_[static_cast<std::size_t>(id.value)];
+}
+
+const std::string* SourceMap::text(SourceId id) const {
+    const SourceFile* file = get(id);
+    if (file == nullptr) return nullptr;
+    return &file->text;
+}
+
+const std::string* SourceMap::text(const std::string& source_name) const {
+    return text(id_for_name(source_name));
+}
+
+SourceId SourceMap::id_for_name(const std::string& source_name) const {
+    auto found = path_index_.find(source_name);
+    if (found != path_index_.end()) return found->second;
+    found = display_index_.find(source_name);
+    if (found == display_index_.end()) return SourceId{};
+    return found->second;
+}
+
+std::size_t SourceMap::eof_offset(SourceId id) const {
+    const SourceFile* file = get(id);
+    if (file == nullptr) return 0;
+    return file->eof_offset;
+}
+
+SourceSpan SourceMap::span(SourceId id, std::size_t byte_start, std::size_t byte_end) const {
+    SourceSpan result;
+    result.source_id = id;
+    const SourceFile* file = get(id);
+    if (file == nullptr) {
+        result.byte_start = byte_start;
+        result.byte_end = std::max(byte_end, byte_start);
+        return result;
+    }
+    result.byte_start = std::min(byte_start, file->eof_offset);
+    result.byte_end = std::min(std::max(byte_end, byte_start), file->eof_offset);
+    return result;
+}
+
+LineColumn SourceMap::location(SourceId id, std::size_t byte_offset) const {
+    LineColumn result;
+    const SourceFile* file = get(id);
+    if (file == nullptr) return result;
+    byte_offset = std::min(byte_offset, file->eof_offset);
+    std::size_t line_index = line_index_for_offset(*file, byte_offset);
+    result.line = static_cast<int>(line_index + 1);
+    result.column = static_cast<int>(byte_offset - file->line_starts[line_index] + 1);
+    result.byte_offset = byte_offset;
+    return result;
+}
+
+SourceLocation SourceMap::location_for_offset(SourceId id, std::size_t byte_offset) const {
+    SourceLocation loc;
+    const SourceFile* file = get(id);
+    if (file == nullptr) return loc;
+    fill_source_location_from_file(loc, *file, byte_offset);
+    return loc;
+}
+
+SourceLocation SourceMap::location_for_span(SourceSpan source_span) const {
+    SourceLocation loc = location_for_offset(source_span.source_id, source_span.byte_start);
+    const SourceFile* file = get(source_span.source_id);
+    if (file == nullptr) return loc;
+    SourceSpan normalized = span(source_span.source_id, source_span.byte_start, source_span.byte_end);
+    loc.byte_start = normalized.byte_start;
+    loc.byte_end = normalized.byte_end;
+    loc.has_byte_range = true;
+    return loc;
+}
+
+SourceLocation SourceMap::location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end) const {
+    return location_for_span(span(id, byte_start, byte_end));
+}
+
+SourceLocation SourceMap::end_location(const std::string& source_name) const {
+    SourceId id = id_for_name(source_name);
+    return location_for_offset(id, eof_offset(id));
+}
+
+SourceSnippet SourceMap::snippet(SourceSpan source_span) const {
+    SourceSnippet result;
+    const SourceFile* file = get(source_span.source_id);
+    if (file == nullptr) return result;
+
+    SourceSpan normalized = span(source_span.source_id, source_span.byte_start, source_span.byte_end);
+    std::size_t line_start = line_start_for_offset(*file, normalized.byte_start);
+    std::size_t line_end = line_end_for_start(*file, line_start);
+    std::size_t span_end = std::min(normalized.byte_end, file->eof_offset);
+
+    result.span = normalized;
+    result.start = location(normalized.source_id, normalized.byte_start);
+    result.source_name = file->display_name;
+    result.line_text = file->text.substr(line_start, line_end - line_start);
+    result.line_number = static_cast<std::size_t>(result.start.line);
+    result.marker_start = std::min(normalized.byte_start, line_end) - line_start;
+    std::size_t marker_end = std::min(std::max(span_end, normalized.byte_start + 1), line_end);
+    result.marker_len = marker_end > normalized.byte_start ? marker_end - normalized.byte_start : 1;
+    result.valid = true;
+    return result;
+}
+
 CompileError::CompileError(std::string message) {
     SourceLocation parsed_loc;
     std::string parsed_message;
@@ -290,7 +437,7 @@ std::string where(const SourceLocation& loc) {
 }
 
 bool valid_source_id(SourceId id) {
-    return source_id_in_bounds(id);
+    return default_source_map().valid(id);
 }
 
 std::string source_id_text(SourceId id) {
@@ -320,45 +467,13 @@ SourceId register_source_file(const std::string& path,
                               const std::string& display_name,
                               const std::string& text,
                               SourceKind kind) {
-    std::string source_path = fallback_source_path(path, display_name);
-    if (source_path.empty()) return SourceId{};
-    std::string source_display = fallback_display_name(source_path, display_name);
-
-    auto found = source_path_index().find(source_path);
-    if (found != source_path_index().end()) {
-        SourceId id = found->second;
-        if (SourceFile* file = const_cast<SourceFile*>(find_source_file(id))) {
-            erase_source_display_index(id, file->display_name);
-            file->kind = kind;
-            file->path = source_path;
-            file->display_name = source_display;
-            reset_source_file_text(*file, text);
-            source_display_index()[file->display_name] = id;
-        }
-        return id;
-    }
-
-    SourceId id{static_cast<int>(source_files().size())};
-    SourceFile file;
-    file.id = id;
-    file.kind = kind;
-    file.path = std::move(source_path);
-    file.display_name = std::move(source_display);
-    reset_source_file_text(file, text);
-    source_files().push_back(std::move(file));
-    const SourceFile& stored = source_files().back();
-    source_path_index().emplace(stored.path, id);
-    source_display_index()[stored.display_name] = id;
-    return id;
+    return default_source_map().add_source(path, display_name, text, kind);
 }
 
 SourceId register_in_memory_source(const std::string& display_name,
                                    const std::string& text,
                                    SourceKind kind) {
-    std::size_t index = in_memory_source_count()++;
-    std::string source_path = "<memory:" + std::to_string(index) + ">";
-    std::string source_display = display_name.empty() ? source_path : display_name;
-    return register_source_file(source_path, source_display, text, kind);
+    return default_source_map().add_in_memory(display_name, text, kind);
 }
 
 SourceId register_source_text(const std::string& source_name,
@@ -372,95 +487,66 @@ SourceId register_source_text(const std::string& source_name,
 }
 
 SourceId source_id_for_name(const std::string& source_name) {
-    auto found = source_path_index().find(source_name);
-    if (found != source_path_index().end()) return found->second;
-    found = source_display_index().find(source_name);
-    if (found == source_display_index().end()) return SourceId{};
-    return found->second;
+    return default_source_map().id_for_name(source_name);
 }
 
 const SourceFile* find_source_file(SourceId id) {
-    if (!source_id_in_bounds(id)) return nullptr;
-    return &source_files()[static_cast<std::size_t>(id.value)];
+    return default_source_map().get(id);
 }
 
 const std::string* find_source_text(SourceId id) {
-    const SourceFile* file = find_source_file(id);
-    if (file == nullptr) return nullptr;
-    return &file->text;
+    return default_source_map().text(id);
 }
 
 const std::string* find_source_text(const std::string& source_name) {
-    return find_source_text(source_id_for_name(source_name));
+    return default_source_map().text(source_name);
 }
 
 std::size_t source_eof_offset(SourceId id) {
-    const SourceFile* file = find_source_file(id);
-    if (file == nullptr) return 0;
-    return file->eof_offset;
+    return default_source_map().eof_offset(id);
 }
 
 SourceLocation source_location_for_offset(SourceId id, std::size_t byte_offset) {
-    SourceLocation loc;
-    loc.source_id = id;
-    const SourceFile* file = find_source_file(id);
-    if (file == nullptr) return loc;
-
-    byte_offset = std::min(byte_offset, file->eof_offset);
-    std::size_t line_index = line_index_for_offset(*file, byte_offset);
-    loc.source_name = file->display_name;
-    loc.line = static_cast<int>(line_index + 1);
-    loc.column = static_cast<int>(byte_offset - file->line_starts[line_index] + 1);
-    loc.byte_start = byte_offset;
-    loc.byte_end = byte_offset;
-    loc.has_byte_range = true;
-    return loc;
+    return default_source_map().location_for_offset(id, byte_offset);
 }
 
 SourceLocation source_location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end) {
-    SourceLocation loc = source_location_for_offset(id, byte_start);
-    const SourceFile* file = find_source_file(id);
-    if (file == nullptr) return loc;
-    loc.byte_start = std::min(byte_start, file->eof_offset);
-    loc.byte_end = std::min(std::max(byte_end, byte_start), file->eof_offset);
-    loc.has_byte_range = true;
-    return loc;
+    return default_source_map().location_for_span(id, byte_start, byte_end);
 }
 
 SourceLocation source_end_location(const std::string& source_name) {
-    SourceId id = source_id_for_name(source_name);
-    return source_location_for_offset(id, source_eof_offset(id));
+    return default_source_map().end_location(source_name);
+}
+
+std::string render_source_snippet(const SourceSnippet& snippet) {
+    if (!snippet.valid) return "";
+    std::string line_number = std::to_string(snippet.line_number);
+    std::ostringstream out;
+    out << "  --> " << snippet.source_name << ":" << snippet.start.line << ":" << snippet.start.column << "\n"
+        << "   |\n"
+        << " " << line_number << " | " << snippet.line_text << "\n"
+        << "   | ";
+    for (std::size_t i = 0; i < snippet.marker_start; ++i) {
+        out << (snippet.line_text[i] == '\t' ? '\t' : ' ');
+    }
+    for (std::size_t i = 0; i < snippet.marker_len; ++i) out << '^';
+    return out.str();
+}
+
+std::string render_source_snippet(const SourceSpan& span) {
+    return render_source_snippet(default_source_map().snippet(span));
 }
 
 std::string render_source_snippet(const SourceLocation& loc) {
-    if (!has_source_name(loc)) return "";
+    if (!has_source_name(loc) || !has_byte_span(loc)) return "";
     SourceLocation normalized = loc;
     const SourceFile* file = source_file_for_location(normalized);
     if (file == nullptr) return "";
-    if (!has_byte_span(normalized) || normalized.byte_start > file->eof_offset) return "";
-
-    std::size_t span_start = normalized.byte_start;
-    std::size_t span_end = std::max(normalized.byte_end, normalized.byte_start);
-    span_end = std::min(span_end, file->eof_offset);
-    std::size_t line_start = line_start_for_offset(*file, span_start);
-    std::size_t line_end = line_end_for_start(*file, line_start);
-    std::string line_text = file->text.substr(line_start, line_end - line_start);
-
-    std::size_t marker_start = std::min(span_start, line_end) - line_start;
-    std::size_t marker_end = std::min(std::max(span_end, span_start + 1), line_end);
-    std::size_t marker_len = marker_end > span_start ? marker_end - span_start : 1;
-
-    std::string line_number = std::to_string(normalized.line);
-    std::ostringstream out;
-    out << "  --> " << normalized.source_name << ":" << normalized.line << ":" << normalized.column << "\n"
-        << "   |\n"
-        << " " << line_number << " | " << line_text << "\n"
-        << "   | ";
-    for (std::size_t i = 0; i < marker_start; ++i) {
-        out << (line_text[i] == '\t' ? '\t' : ' ');
-    }
-    for (std::size_t i = 0; i < marker_len; ++i) out << '^';
-    return out.str();
+    return render_source_snippet(SourceSpan{
+        normalized.source_id,
+        normalized.byte_start,
+        normalized.byte_end,
+    });
 }
 
 } // namespace ari

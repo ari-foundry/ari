@@ -26,7 +26,7 @@ ordinary Ari data.
 | Gate | Weight | Current Score | What Moves It |
 | --- | --- | --- | --- |
 | Frontend reliability | 10 | 55 | Span-aware lexer/parser errors, recovery fixtures, and syntax docs that match parser behavior. |
-| Source identity | 12 | 30 | Owned source files, canonical/display paths, stable `SourceId`, byte spans, line tables, EOF offsets, and snippets. |
+| Source identity | 12 | 30 | Owned source maps/files, canonical/display paths, stable `SourceId`, byte spans, line tables, EOF offsets, and snippets. |
 | Diagnostics | 13 | 30 | Diagnostic codes, labels, notes, source rendering, and normalized golden output. |
 | Module projects | 12 | 45 | Predictable package roots, `.ari`/`.arih` policy, visibility errors, metadata, and cache invalidation. |
 | Compiler data models | 15 | 50 | Nested generic aggregates, `Result` payloads, vectors/maps/sets, and compiler-shaped ownership patterns. |
@@ -52,7 +52,7 @@ get more reliable, not when a private shortcut is added.
 
 | Gap | Needed State | First Work |
 | --- | --- | --- |
-| Source identity | Stable `SourceId`, owned `SourceFile` text, canonical/display paths, line tables, EOF offsets, byte spans, line/column lookup, and snippets for every diagnostic. | Add compiler/tooling source-map fixtures and golden source rendering checks. |
+| Source identity | Stable `SourceMap`, `SourceId`, owned `SourceFile` text, canonical/display paths, line tables, EOF offsets, byte spans, line/column lookup, and snippets for every diagnostic. | Add compiler/tooling source-map fixtures and golden source rendering checks. |
 | Diagnostics | Stable codes, labels, notes, and normalized golden output. | Move errors toward data-first diagnostics before polishing renderer text. |
 | File-backed projects | Predictable module roots, `.ari`/`.arih` policy, metadata, cache invalidation, and Makefile flows. | Harden module search and add stale/private/missing file diagnostics. |
 | Generic aggregate scale | Nested structs, enums, vectors, maps, sets, and `Result` payloads need fewer edge cases. | Keep adding compiler-shaped model fixtures under `tests/cases/compiler-development/ok/model/`. |
@@ -113,9 +113,9 @@ Use this order for general compiler development:
 
 1. Frontend contracts: lexer/parser span accuracy, literal behavior, recovery,
    and malformed syntax diagnostics.
-2. Source model: `SourceFile`, `SourceId`, `Span`, canonical/display paths,
-   byte offsets, line tables, EOF offsets, line/column conversion, and snippet
-   extraction as compiler/tooling concepts.
+2. Source model: `SourceMap`, `SourceFile`, `SourceId`, `Span`,
+   canonical/display paths, byte offsets, line tables, EOF offsets, line/column
+   conversion, and snippet extraction as compiler/tooling concepts.
 3. Diagnostic model: diagnostic codes, severity, primary/secondary labels,
    notes, stable sorting, and path normalization.
 4. Module projects: file-backed modules, project roots, header/source

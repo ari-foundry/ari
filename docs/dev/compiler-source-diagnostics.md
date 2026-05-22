@@ -102,6 +102,14 @@ struct SourceFile {
   line_starts: std::vec::Vec[BytePos],
   eof_offset: BytePos,
 }
+
+struct SourceMap {
+  // add_file(path, text) -> SourceId
+  // get(id) -> SourceFile
+  // span(id, start, end) -> Span
+  // location(id, byte_offset) -> LineColumn
+  // snippet(span) -> SourceSnippet
+}
 ```
 
 Policy:
@@ -120,6 +128,8 @@ Policy:
 - generated sources should still receive a `SourceId`
 - invalid/null source is represented by a sentinel id and must not be used for
   a user-facing diagnostic span
+- `SourceMap` is the only component that should need source text to answer
+  line/column or snippet questions
 
 This byte-first policy keeps lexer and parser code simple. Unicode-aware
 display width can be added to the renderer without changing the compiler's
@@ -163,6 +173,8 @@ Policy:
 
 - parser and sema should create diagnostics, not print them directly
 - diagnostics may contain multiple labels
+- each label's `Span` carries its own `SourceId`, so multi-file diagnostics are
+  represented without borrowing the primary label's file identity
 - one diagnostic should have at most one primary label unless a future design
   explicitly supports multiple primaries
 - notes are ordered and deterministic
@@ -271,6 +283,7 @@ Land this layer in small slices:
 | --- | --- | --- |
 | SourceId | Stable source ids and file registration. | `source-id-stability`, duplicate path handling. |
 | SourceFile | Canonical path, display name, owned text, line table, EOF offset, and in-memory source registration. | `source-map-file-module.map`, in-memory source API smoke tests. |
+| SourceMap | `add_file`, `get`, `span`, `location`, and `snippet` APIs over one source owner. | multi-file SourceMap smoke tests. |
 | Span | Byte range construction and validation. | empty span, single-byte span, end-before-start rejection. |
 | Line lookup | Byte offset to line/column mapping. | start, middle, newline, EOF, CRLF policy. |
 | Source map artifact | Deterministic source ids, kind, canonical/display paths, EOF offsets, line tables, byte, line, and snippet text. | `source-map-file-module.map`, CRLF policy. |
