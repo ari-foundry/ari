@@ -88,6 +88,15 @@ fn main() -> i64 {
     Err(_trait_reason) => {}
   }
 
+  match net::to_socket_addrs("127.0.0.1:8085") {
+    Ok(module_addr) => {
+      if module_addr.is_loopback() && module_addr.port() == 8085 as u16 {
+        score = score + 16384;
+      }
+    }
+    Err(_module_reason) => {}
+  }
+
   match net::connect_host("127.0.0.1") {
     Ok(_unexpected_stream) => {
       panic();
@@ -121,6 +130,6 @@ fn main() -> i64 {
     }
   }
 
-  assert_eq_i64(score, 16383);
+  assert_eq_i64(score, 32767);
   return score;
 }

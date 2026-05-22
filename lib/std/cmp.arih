@@ -225,20 +225,20 @@ pub enum Ordering {
   Greater,
 }
 
-pub impl Ordering {
-  fn reverse(self) -> Ordering {
+pub impl std::cmp::Ordering {
+  fn reverse(self) -> std::cmp::Ordering {
     return reverse(self);
   }
 
-  fn then(self, ordering: Ordering) -> Ordering {
+  fn then(self, ordering: std::cmp::Ordering) -> std::cmp::Ordering {
     return then(self, ordering);
   }
 
-  fn then_compare[T: Ord[T]](self, left: T, right: T) -> Ordering {
+  fn then_compare[T: Ord[T]](self, left: T, right: T) -> std::cmp::Ordering {
     return then_compare<T>(self, left, right);
   }
 
-  fn then_compare_by[T](self, left: T, right: T, less: fn(T, T) -> bool) -> Ordering {
+  fn then_compare_by[T](self, left: T, right: T, less: fn(T, T) -> bool) -> std::cmp::Ordering {
     return then_compare_by<T>(self, left, right, less);
   }
 
@@ -263,7 +263,7 @@ pub impl Ordering {
   }
 }
 
-pub fn compare[T: Ord[T]](left: T, right: T) -> Ordering {
+pub fn compare[T: Ord[T]](left: T, right: T) -> std::cmp::Ordering {
   if left < right {
     return Less;
   }
@@ -273,7 +273,7 @@ pub fn compare[T: Ord[T]](left: T, right: T) -> Ordering {
   return Equal;
 }
 
-pub fn compare_by[T](left: T, right: T, less: fn(T, T) -> bool) -> Ordering {
+pub fn compare_by[T](left: T, right: T, less: fn(T, T) -> bool) -> std::cmp::Ordering {
   if less(left, right) {
     return Less;
   }
@@ -283,7 +283,7 @@ pub fn compare_by[T](left: T, right: T, less: fn(T, T) -> bool) -> Ordering {
   return Equal;
 }
 
-pub fn reverse(ordering: Ordering) -> Ordering {
+pub fn reverse(ordering: std::cmp::Ordering) -> std::cmp::Ordering {
   match ordering {
     Less => {
       return Greater;
@@ -297,7 +297,7 @@ pub fn reverse(ordering: Ordering) -> Ordering {
   }
 }
 
-pub fn then(first: Ordering, second: Ordering) -> Ordering {
+pub fn then(first: std::cmp::Ordering, second: std::cmp::Ordering) -> std::cmp::Ordering {
   match first {
     Equal => {
       return second;
@@ -308,7 +308,7 @@ pub fn then(first: Ordering, second: Ordering) -> Ordering {
   }
 }
 
-pub fn then_compare[T: Ord[T]](ordering: Ordering, left: T, right: T) -> Ordering {
+pub fn then_compare[T: Ord[T]](ordering: std::cmp::Ordering, left: T, right: T) -> std::cmp::Ordering {
   match ordering {
     Equal => {
       return compare<T>(left, right);
@@ -319,7 +319,7 @@ pub fn then_compare[T: Ord[T]](ordering: Ordering, left: T, right: T) -> Orderin
   }
 }
 
-pub fn then_compare_by[T](ordering: Ordering, left: T, right: T, less: fn(T, T) -> bool) -> Ordering {
+pub fn then_compare_by[T](ordering: std::cmp::Ordering, left: T, right: T, less: fn(T, T) -> bool) -> std::cmp::Ordering {
   match ordering {
     Equal => {
       return compare_by<T>(left, right, less);
@@ -330,7 +330,7 @@ pub fn then_compare_by[T](ordering: Ordering, left: T, right: T, less: fn(T, T) 
   }
 }
 
-pub fn is_less(ordering: Ordering) -> bool {
+pub fn is_less(ordering: std::cmp::Ordering) -> bool {
   match ordering {
     Less => {
       return true;
@@ -341,7 +341,7 @@ pub fn is_less(ordering: Ordering) -> bool {
   }
 }
 
-pub fn is_equal(ordering: Ordering) -> bool {
+pub fn is_equal(ordering: std::cmp::Ordering) -> bool {
   match ordering {
     Equal => {
       return true;
@@ -352,7 +352,7 @@ pub fn is_equal(ordering: Ordering) -> bool {
   }
 }
 
-pub fn is_greater(ordering: Ordering) -> bool {
+pub fn is_greater(ordering: std::cmp::Ordering) -> bool {
   match ordering {
     Greater => {
       return true;
@@ -363,11 +363,11 @@ pub fn is_greater(ordering: Ordering) -> bool {
   }
 }
 
-pub fn is_less_or_equal(ordering: Ordering) -> bool {
+pub fn is_less_or_equal(ordering: std::cmp::Ordering) -> bool {
   return !is_greater(ordering);
 }
 
-pub fn is_greater_or_equal(ordering: Ordering) -> bool {
+pub fn is_greater_or_equal(ordering: std::cmp::Ordering) -> bool {
   return !is_less(ordering);
 }
 

@@ -24,6 +24,7 @@ std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std
     std::vector<Diagnostic> diagnostics;
     std::istringstream in(text);
     std::string line;
+    const std::regex ari_file_pattern(R"(^ari: (error|warning|note|hint)(?:\[([^\]]+)\])?: (.+):([0-9]+):([0-9]+): (.*)$)");
     const std::regex ari_pattern(R"(^ari: (error|warning|note|hint)(?:\[([^\]]+)\])?: ([0-9]+):([0-9]+): (.*)$)");
     const std::regex file_pattern(R"(^(.+):([0-9]+):([0-9]+): (error|warning|note|hint)(?:\[([^\]]+)\])?: (.*)$)");
     const std::regex general_pattern(R"(^ari: (error|warning|note|hint)(?:\[([^\]]+)\])?: (.*)$)");
@@ -31,6 +32,20 @@ std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std
     while (std::getline(in, line)) {
         line = trim_carriage_return(line);
         std::smatch match;
+        if (std::regex_match(line, match, ari_file_pattern)) {
+            diagnostics.push_back(Diagnostic{
+                match[3].str(),
+                std::max(1, std::stoi(match[4].str())),
+                std::max(1, std::stoi(match[5].str())),
+                parse_severity_name(match[1].str()).value_or(DiagnosticSeverity::Error),
+                match[6].str(),
+                "ari",
+                diagnostic_code(match[2], match[6].str()),
+                0,
+                0,
+            });
+            continue;
+        }
         if (std::regex_match(line, match, ari_pattern)) {
             diagnostics.push_back(Diagnostic{
                 fallback_file,

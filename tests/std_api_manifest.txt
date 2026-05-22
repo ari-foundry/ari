@@ -865,15 +865,6 @@ fn std::zone::new[T]|placement construction tests; docs/dev/test-matrix.md Expli
 fn std::zone::of[T: std::zone::ZoneBacked]|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 fn std::zone::promote[T]|scratch promotion tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::reset|zone reset invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
-method Ordering::is_equal|check-prelude std-cmp-ordering natural Ordering equality method; docs/stdlib/modules/cmp.md
-method Ordering::is_greater|check-prelude std-cmp-ordering natural Ordering greater-than method; docs/stdlib/modules/cmp.md
-method Ordering::is_greater_or_equal|check-prelude std-cmp-ordering natural Ordering greater-or-equal method; docs/stdlib/modules/cmp.md
-method Ordering::is_less|check-prelude std-cmp-ordering natural Ordering less-than method; docs/stdlib/modules/cmp.md
-method Ordering::is_less_or_equal|check-prelude std-cmp-ordering natural Ordering less-or-equal method; docs/stdlib/modules/cmp.md
-method Ordering::reverse|check-prelude std-cmp-ordering natural Ordering reverse method; docs/stdlib/modules/cmp.md
-method Ordering::then|check-prelude std-cmp-ordering natural Ordering chain method; docs/stdlib/modules/cmp.md
-method Ordering::then_compare[T: Ord[T]|check-prelude std-cmp-ordering natural generic Ordering chain method; docs/stdlib/modules/cmp.md
-method Ordering::then_compare_by[T]|check-prelude std-cmp-by-helpers natural comparator-based Ordering chain method; docs/stdlib/modules/cmp.md
 method SlicePair[T]::left|check-prelude prelude-slice-sequence split_at left half accessor; docs/stdlib/modules/slice.md
 method SlicePair[T]::right|check-prelude prelude-slice-sequence split_at right half accessor; docs/stdlib/modules/slice.md
 method SliceValueMut[T]::value|check-prelude std-iter-slice-vec mutable slice cursor value copy accessor; docs/stdlib/modules/slice.md
@@ -1084,6 +1075,15 @@ method std::cell::RefMut[T]::replace|check-prelude std-cell-basic RefMut replace
 method std::cell::RefMut[T]::set|check-prelude std-cell-basic RefMut setter; docs/stdlib/modules/cell.md
 method std::cell::Ref[T]::as_ref|check-prelude std-cell-basic Ref shared pointer accessor; docs/stdlib/modules/cell.md
 method std::cell::Ref[T]::get|check-prelude std-cell-basic Ref copied value read; docs/stdlib/modules/cell.md
+method std::cmp::Ordering::is_equal|check-prelude std-cmp-ordering natural Ordering equality method; docs/stdlib/modules/cmp.md
+method std::cmp::Ordering::is_greater|check-prelude std-cmp-ordering natural Ordering greater-than method; docs/stdlib/modules/cmp.md
+method std::cmp::Ordering::is_greater_or_equal|check-prelude std-cmp-ordering natural Ordering greater-or-equal method; docs/stdlib/modules/cmp.md
+method std::cmp::Ordering::is_less|check-prelude std-cmp-ordering natural Ordering less-than method; docs/stdlib/modules/cmp.md
+method std::cmp::Ordering::is_less_or_equal|check-prelude std-cmp-ordering natural Ordering less-or-equal method; docs/stdlib/modules/cmp.md
+method std::cmp::Ordering::reverse|check-prelude std-cmp-ordering natural Ordering reverse method; docs/stdlib/modules/cmp.md
+method std::cmp::Ordering::then|check-prelude std-cmp-ordering natural Ordering chain method; docs/stdlib/modules/cmp.md
+method std::cmp::Ordering::then_compare[T: Ord[T]|check-prelude std-cmp-ordering natural generic Ordering chain method; docs/stdlib/modules/cmp.md
+method std::cmp::Ordering::then_compare_by[T]|check-prelude std-cmp-by-helpers natural comparator-based Ordering chain method; docs/stdlib/modules/cmp.md
 method std::collections::BinaryHeapPeekMut[T]::value|check-prelude std-collections-heap mutable top guard shared read; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeapPeekMut[T]::value_mut|check-prelude std-collections-heap mutable top guard payload access; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::capacity|check-prelude std-collections-heap binary heap capacity metadata; docs/stdlib/modules/collections.md

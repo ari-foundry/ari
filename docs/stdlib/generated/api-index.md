@@ -51,14 +51,14 @@ platform notes.
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 298 |
+| `std` | `core` | 289 |
 | `std::algo` | `alloc` | 41 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
 | `std::boxed` | `alloc` | 19 |
 | `std::c` | `platform` | 40 |
 | `std::cell` | `alloc` | 44 |
-| `std::cmp` | `core` | 29 |
+| `std::cmp` | `core` | 38 |
 | `std::collections` | `alloc` | 361 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
@@ -126,15 +126,6 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
-| `method Ordering::is_equal` | check-prelude std-cmp-ordering natural Ordering equality method; docs/stdlib/modules/cmp.md |
-| `method Ordering::is_greater` | check-prelude std-cmp-ordering natural Ordering greater-than method; docs/stdlib/modules/cmp.md |
-| `method Ordering::is_greater_or_equal` | check-prelude std-cmp-ordering natural Ordering greater-or-equal method; docs/stdlib/modules/cmp.md |
-| `method Ordering::is_less` | check-prelude std-cmp-ordering natural Ordering less-than method; docs/stdlib/modules/cmp.md |
-| `method Ordering::is_less_or_equal` | check-prelude std-cmp-ordering natural Ordering less-or-equal method; docs/stdlib/modules/cmp.md |
-| `method Ordering::reverse` | check-prelude std-cmp-ordering natural Ordering reverse method; docs/stdlib/modules/cmp.md |
-| `method Ordering::then` | check-prelude std-cmp-ordering natural Ordering chain method; docs/stdlib/modules/cmp.md |
-| `method Ordering::then_compare[T: Ord[T]` | check-prelude std-cmp-ordering natural generic Ordering chain method; docs/stdlib/modules/cmp.md |
-| `method Ordering::then_compare_by[T]` | check-prelude std-cmp-by-helpers natural comparator-based Ordering chain method; docs/stdlib/modules/cmp.md |
 | `method SlicePair[T]::left` | check-prelude prelude-slice-sequence split_at left half accessor; docs/stdlib/modules/slice.md |
 | `method SlicePair[T]::right` | check-prelude prelude-slice-sequence split_at right half accessor; docs/stdlib/modules/slice.md |
 | `method SliceValueMut[T]::value` | check-prelude std-iter-slice-vec mutable slice cursor value copy accessor; docs/stdlib/modules/slice.md |
@@ -784,6 +775,20 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::cmp::then` | check-prelude std-cmp-ordering lexicographic comparison chaining helper; docs/stdlib/modules/cmp.md |
 | `fn std::cmp::then_compare[T: Ord[T]` | check-prelude std-cmp-ordering lazy-ish generic compare chaining helper; docs/stdlib/modules/cmp.md |
 | `fn std::cmp::then_compare_by[T]` | check-prelude std-cmp-by-helpers comparator-based Ordering chain helper; docs/stdlib/modules/cmp.md |
+
+### method
+
+| API | Coverage note |
+| --- | --- |
+| `method std::cmp::Ordering::is_equal` | check-prelude std-cmp-ordering natural Ordering equality method; docs/stdlib/modules/cmp.md |
+| `method std::cmp::Ordering::is_greater` | check-prelude std-cmp-ordering natural Ordering greater-than method; docs/stdlib/modules/cmp.md |
+| `method std::cmp::Ordering::is_greater_or_equal` | check-prelude std-cmp-ordering natural Ordering greater-or-equal method; docs/stdlib/modules/cmp.md |
+| `method std::cmp::Ordering::is_less` | check-prelude std-cmp-ordering natural Ordering less-than method; docs/stdlib/modules/cmp.md |
+| `method std::cmp::Ordering::is_less_or_equal` | check-prelude std-cmp-ordering natural Ordering less-or-equal method; docs/stdlib/modules/cmp.md |
+| `method std::cmp::Ordering::reverse` | check-prelude std-cmp-ordering natural Ordering reverse method; docs/stdlib/modules/cmp.md |
+| `method std::cmp::Ordering::then` | check-prelude std-cmp-ordering natural Ordering chain method; docs/stdlib/modules/cmp.md |
+| `method std::cmp::Ordering::then_compare[T: Ord[T]` | check-prelude std-cmp-ordering natural generic Ordering chain method; docs/stdlib/modules/cmp.md |
+| `method std::cmp::Ordering::then_compare_by[T]` | check-prelude std-cmp-by-helpers natural comparator-based Ordering chain method; docs/stdlib/modules/cmp.md |
 
 ### module
 

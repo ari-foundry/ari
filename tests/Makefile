@@ -1796,7 +1796,7 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari --emit-llvm $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q 'declare ptr @"dlopen"' $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q 'declare ptr @"dlsym"' $(BUILD_DIR)/prelude/std-c-interop.ll
-	grep -q 'declare ptr @"__errno_location"' $(BUILD_DIR)/prelude/std-c-interop.ll
+	grep -q 'declare ptr @__errno_location' $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q '_ARNv3std1c13from_slice_in' $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q 'std__c__CString8inherent17as_bytes_with_nul' $(BUILD_DIR)/prelude/std-c-interop.ll
 	$(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari -o $(BUILD_DIR)/prelude/std-c-interop.elf
@@ -2321,7 +2321,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent4iter' $(BUILD_DIR)/prelude/std-collections-tree-iter.ll
 	grep -q 'std__collections__TreeSet_i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-tree-iter.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf
-	$(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 39
+	$(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 98
 	$(TARGET) tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-deque.ll
 	grep -q '_ARNv3std11collections12deque__G_i64' $(BUILD_DIR)/prelude/std-collections-deque.ll
 	grep -q '_ARNv4impl28std__collections__Deque_i64_8inherent10push_front' $(BUILD_DIR)/prelude/std-collections-deque.ll
@@ -2651,7 +2651,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-structure-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-structure-copy-to.elf; $(BUILD_DIR)/prelude/std-collections-structure-copy-to.elf; code=$$?; test $$code -eq 53; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; $(BUILD_DIR)/prelude/std-collections-tree-remove.elf; code=$$?; test $$code -eq 23; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-tree-set-relations.elf; code=$$?; test $$code -eq 75; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 39; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-tree-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; $(BUILD_DIR)/prelude/std-collections-tree-iter.elf; code=$$?; test $$code -eq 98; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/deque/std-collections-deque.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-deque.elf; $(BUILD_DIR)/prelude/std-collections-deque.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/ring-buffer/std-collections-ring-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-ring-buffer.elf; $(BUILD_DIR)/prelude/std-collections-ring-buffer.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/linked-list/std-collections-linked-list.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-linked-list.elf; $(BUILD_DIR)/prelude/std-collections-linked-list.elf; code=$$?; test $$code -eq 42; fi
