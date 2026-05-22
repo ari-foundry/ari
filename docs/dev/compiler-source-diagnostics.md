@@ -340,12 +340,12 @@ Land this layer in small slices:
 | Slice | Deliverable | Focused Tests |
 | --- | --- | --- |
 | SourceId | Stable source ids and file registration. | `source-id-stability`, duplicate path handling. |
-| SourceFile | Canonical path, display name, owned text, line table, EOF offset, and in-memory source registration. | `source-map-file-module.map`, in-memory source API smoke tests. |
-| SourceMap | `add_file`, `get`, `span`, `location`, and `snippet` APIs over one source owner. | multi-file SourceMap smoke tests. |
+| SourceFile | Canonical path, display name, owned text, line table, EOF offset, and in-memory source registration. | `tests/source_map_unit.cpp`, `source-map-file-module.map`. |
+| SourceMap | `add_file`, `get`, `span`, `location`, and `snippet` APIs over one source owner. | `make check-source-map-unit`, multi-file SourceMap smoke tests. |
 | Span | Byte range construction, validation, merge, contains, and intersects helpers. | empty span, single-byte span, end-before-start normalization/rejection, source mismatch merge. |
-| Line lookup | Byte offset to line/column mapping and one-based line/column back to byte offset. | start, middle, newline, EOF, CRLF, UTF-8 byte-column policy. |
+| Line lookup | Byte offset to line/column mapping and one-based line/column back to byte offset. | empty file, one-line, multi-line, EOF, CRLF, UTF-8 byte-column policy in `tests/source_map_unit.cpp`. |
 | Source map artifact | Deterministic source ids, kind, canonical/display paths, EOF offsets, line tables, byte, line, and snippet text. | `source-map-file-module.map`, CRLF policy. |
-| Snippets | Extract source lines, context lines, underline ranges, and truncation flags. | single-line, multi-line, empty span, tab policy, long line, missing source, EOF span. |
+| Snippets | Extract source lines, context lines, underline ranges, and truncation flags. | single-line, multi-line, empty span, EOF span, tab policy, long line, missing source. |
 | Diagnostic values | Severity, code, label, note data structures. | label ordering, note ordering, optional code. |
 | Renderer | Stable plain-text diagnostic rendering. | single label, multi-label, notes, path normalization. |
 | Golden runner | Compare expected and actual text outputs. | mismatch report, update policy documentation. |

@@ -254,6 +254,7 @@ frontend producer:
 ```text
 tests/check_compiler_artifacts.py
 tests/check_compiler_artifact_cli.py
+tests/source_map_unit.cpp
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 tests/cases/compiler-development/artifact/ok/capability-inventory.inventory
@@ -330,8 +331,8 @@ It currently proves twenty-four low-level contracts:
   canonical path, display name, EOF offset, line table size, byte offset, line,
   and newline-policy text for root and file-backed modules
 - `--emit-tokens` writes deterministic lexer output for a small Ari source file
-- `--emit-syntax` writes deterministic parser output before sema and backend
-  behavior are involved
+- `--emit-syntax` writes deterministic parser output with AST `source_id=` and
+  byte spans before sema and backend behavior are involved
 - `--emit-diagnostics` writes a normalized diagnostic artifact for an expected
   compiler failure
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,

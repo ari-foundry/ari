@@ -247,6 +247,7 @@ def main() -> int:
     for needle in [
         "## Focused Targets",
         "make check-language-docs",
+        "make check-source-map-unit",
         "make check-compiler-development",
         "tests/cases/compiler-development/ok/model/",
         "tests/cases/compiler-development/artifact/ok/",

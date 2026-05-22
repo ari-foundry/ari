@@ -39,7 +39,14 @@ private:
     }
 
     std::string loc(SourceLocation loc) const {
-        return " @" + source_name_ + ":" + std::to_string(loc.line) + ":" + std::to_string(loc.column);
+        std::string text = " @" + source_name_ + ":" +
+            std::to_string(loc.line) + ":" + std::to_string(loc.column);
+        Span span = span_from_location(loc);
+        if (span_has_source(span)) {
+            text += " source_id=" + source_id_text(span.source_id) +
+                " bytes=" + std::to_string(span.start) + ".." + std::to_string(span.end);
+        }
+        return text;
     }
 
     static std::string quote(const std::string& text) {

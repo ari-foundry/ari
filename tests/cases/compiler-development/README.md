@@ -67,8 +67,11 @@ the same language surface that normal Ari users get.
   compiler-development shortcut; Ari uses `trait`.
 - `artifact/ok/normalize-paths.*.txt`: seed path, temp-name, and pointer
   normalization fixture for future golden artifact checks.
-- `artifact/ok/source-map-file-module.map`: source byte, line, newline, and
-  snippet golden seed for root plus file-backed child module sources.
+- `tests/source_map_unit.cpp`: direct C++ SourceMap test for empty files,
+  one-line and multi-line files, EOF, CRLF, UTF-8 byte columns, invalid spans,
+  multi-file ids, and snippets.
+- `artifact/ok/source-map-file-module.map`: source byte, line, and newline
+  golden seed for root plus file-backed child module sources.
 - `artifact/ok/declaration-index-basic.*`: declaration signature, visibility,
   module, and source-location golden seed before semantic lowering.
 - `artifact/ok/stage-plan-basic.plan`: compiler artifact order, layer owner,
@@ -77,8 +80,8 @@ the same language surface that normal Ari users get.
   and rejected compiler capability status emitted by the driver.
 - `artifact/ok/diagnostic-catalog.catalog`: diagnostic code, family, owner,
   and fallback-policy golden seed emitted by the driver.
-- `artifact/ok/token-dump-basic.*`: lexer, parser, and typed-IR golden seed
-  generated from one tiny source file.
+- `artifact/ok/token-dump-basic.*`: lexer token spans, parser AST spans, and
+  typed-IR golden seed generated from one tiny source file.
 - `artifact/ok/module-graph-file-module.graph`: file-backed module graph
   golden seed for resolved sources, imports, and item surfaces.
 - `artifact/ok/pass-summary-basic.summary`: driver-level stage count seed for

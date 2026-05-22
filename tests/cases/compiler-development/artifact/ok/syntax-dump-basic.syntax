@@ -1,7 +1,7 @@
 Program source=tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
-  Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:4
+  Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:4 source_id=0 bytes=3..7
     Body
-      VarDecl name=value let @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:7
-        Integer value=42 suffix=i64 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:15
-      Return @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10
-        Name value=value @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10
+      VarDecl name=value let @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:7 source_id=0 bytes=25..30
+        Integer value=42 suffix=i64 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:15 source_id=0 bytes=33..38
+      Return @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10 source_id=0 bytes=49..54
+        Name value=value @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10 source_id=0 bytes=49..54

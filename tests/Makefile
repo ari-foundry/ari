@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-source-map-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -70,7 +70,12 @@ check-stdlib-docs:
 check-compiler-dev-docs:
 	python3 tests/check_compiler_development_docs.py
 
-check-compiler-artifacts: $(TARGET)
+check-source-map-unit:
+	mkdir -p $(BUILD_DIR)/source-map
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -Isrc tests/source_map_unit.cpp src/common.cpp -o $(BUILD_DIR)/source-map/source-map-unit$(EXEEXT)
+	$(BUILD_DIR)/source-map/source-map-unit$(EXEEXT)
+
+check-compiler-artifacts: $(TARGET) check-source-map-unit
 	mkdir -p $(BUILD_DIR)/compiler-development/artifact
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_artifact_cli.py
 	ARI="$(TOOL_ARI)" $(TOOL_ENV) python3 tests/check_compiler_capability_cli.py
