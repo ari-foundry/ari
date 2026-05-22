@@ -403,6 +403,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_net_unix_listen") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_net_unix_connect") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_net_lookup_v4") return builtin_sig({source_string, i64}, i64);
+    if (symbol == "ari_builtin_net_lookup_v4_endpoint") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_read") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_write") return builtin_sig({source_string}, boolean);

@@ -873,8 +873,15 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-net-unix-socket.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-dns-lookup.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -q "@ari_builtin_net_lookup_v4" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -q "@ari_builtin_net_lookup_v4_endpoint" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -q "@getaddrinfo" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net20lookup_v4_raw_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net7resolve" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net18resolve_raw_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net14resolve_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net15to_socket_addrs" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net12connect_host" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net16tcp_connect_host" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-dns-lookup.ari -o $(BUILD_DIR)/prelude/std-net-dns-lookup.elf
 	$(BUILD_DIR)/prelude/std-net-dns-lookup.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/target/std-target-basic.ari --target x86_64-pc-linux-gnu --emit-llvm $(BUILD_DIR)/prelude/std-target-basic.ll

@@ -23,8 +23,9 @@ Implemented runtime support today:
   libc/environment, object/debug format, errno ABI, pointer width, C `long`
   width, and Linux syscall/API-family classification
 - process IO, input, environment, path, process, thread, sync, time, fs,
-  net-address, IPv4 DNS lookup, IPv4 TCP/UDP sockets, Unix stream sockets,
-  socket timeout, and socket shutdown hooks used by current `std`
+  net-address, IPv4 DNS lookup and host-port endpoint resolution, IPv4 TCP/UDP
+  sockets, Unix stream sockets, socket options, socket timeout, and socket
+  shutdown hooks used by current `std`
 - panic/assert stop behavior through `exit(1)`
 - LLVM atomic instructions for the first `AtomicI64` slice
 - byte memory routines: `std::mem::copy_bytes`, `move_bytes`, and `set_bytes`

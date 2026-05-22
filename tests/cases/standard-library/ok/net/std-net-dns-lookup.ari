@@ -1,5 +1,10 @@
 // Covers the first DNS/name-resolution API. Numeric IPv4 hosts keep this
 // deterministic while still proving the getaddrinfo-backed lookup path.
+fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
+  let value = error::from_raw(raw);
+  return value.is_kind(kind);
+}
+
 fn main() -> i64 {
   var score = 0;
 
@@ -57,6 +62,65 @@ fn main() -> i64 {
     }
   }
 
-  assert_eq_i64(score, 255);
+  let endpoint = net::resolve("127.0.0.1:8082");
+  if endpoint.is_some() {
+    let resolved = endpoint.unwrap();
+    if resolved.is_loopback() && resolved.port() == 8082 as u16 {
+      score = score + 256;
+    }
+  }
+
+  match net::resolve_result("127.0.0.1:8083") {
+    Ok(resolved_result) => {
+      if resolved_result.is_loopback() && resolved_result.port() == 8083 as u16 {
+        score = score + 512;
+      }
+    }
+    Err(_endpoint_reason) => {}
+  }
+
+  match net::ToSocketAddrs::to_socket_addrs("127.0.0.1:8084") {
+    Ok(trait_addr) => {
+      if trait_addr.is_loopback() && trait_addr.port() == 8084 as u16 {
+        score = score + 1024;
+      }
+    }
+    Err(_trait_reason) => {}
+  }
+
+  match net::connect_host("127.0.0.1") {
+    Ok(_unexpected_stream) => {
+      panic();
+    }
+    Err(connect_reason) => {
+      if connect_reason.is_kind(error::InvalidInput) {
+        score = score + 2048;
+      }
+    }
+  }
+
+  match net::resolve_raw_result("127.0.0.1:bad") {
+    Ok(_bad_addr) => {
+      panic();
+    }
+    Err(raw_reason) => {
+      if raw_error_is(raw_reason, error::InvalidInput) {
+        score = score + 4096;
+      }
+    }
+  }
+
+  match net::tcp_connect_host("127.0.0.1") {
+    Ok(_unexpected_explicit_stream) => {
+      panic();
+    }
+    Err(explicit_reason) => {
+      if explicit_reason.is_kind(error::InvalidInput) {
+        score = score + 8192;
+      }
+    }
+  }
+
+  assert_eq_i64(score, 16383);
   return score;
 }

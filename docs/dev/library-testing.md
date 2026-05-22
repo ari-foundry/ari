@@ -303,8 +303,9 @@ identifies the exact case:
   timeout/nonblocking helpers, bidirectional byte and buffer IO, stream
   shutdown, close, and socket-file cleanup.
 - `std-net-dns-lookup.ari`: hosted IPv4 numeric lookup through both `Option`
-  and direct `Error`/raw compatibility `Result` APIs, unsupported IPv6 text
-  input, and edge IPv4 addresses.
+  and direct `Error`/raw compatibility `Result` APIs, `"host:port"` endpoint
+  resolution, `ToSocketAddrs`, host-connect input validation, unsupported IPv6
+  text input, and edge IPv4 addresses.
 - `std-algo-slice-helpers.ari`: source `std::algo` sort/stable sort,
   comparator sort, binary search, lower/upper/equal-range bounds, partition
   point, reverse/rotate, partition, min/max/clamp, swap, fill, copy, and dedup

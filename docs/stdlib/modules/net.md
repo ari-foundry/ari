@@ -39,13 +39,21 @@ net::localhost(port)
 net::lookup_v4(host, port)
 net::lookup_v4_raw_result(host, port)
 net::lookup_v4_result(host, port)
+net::resolve(endpoint)
+net::resolve_raw_result(endpoint)
+net::resolve_result(endpoint)
+net::to_socket_addrs(endpoint)
 net::listen(addr)
 net::tcp_listen(addr)
 net::connect(addr)
 net::tcp_connect(addr)
+net::connect_host(endpoint)
+net::tcp_connect_host(endpoint)
 net::udp_bind(addr)
 net::unix_listen(path)
 net::unix_connect(path)
+
+ToSocketAddrs::to_socket_addrs()
 
 Ipv4Addr::new(a, b, c, d)
 Ipv4Addr::any()
@@ -214,16 +222,33 @@ caller-provided port.
 
 `lookup_v4_result(host, port)` returns `Result[SocketAddr, Error]` for callers
 that want a failure branch. `lookup_v4_raw_result(host, port)` keeps the
-compatibility `Result[SocketAddr, i64]` shape. Detailed `getaddrinfo` error
-categories and owned multi-address result lists are future work.
+compatibility `Result[SocketAddr, i64]` shape.
+
+`resolve(endpoint)` accepts the common `"host:port"` spelling and returns
+`Option[SocketAddr]`. `resolve_result(endpoint)` returns `Result[SocketAddr,
+Error]`, while `resolve_raw_result(endpoint)` preserves the compatibility
+`Result[SocketAddr, i64]` bridge. The endpoint form rejects missing hosts,
+missing ports, non-decimal ports, and ports outside `0..65535` as
+`InvalidInput` before it calls the hosted resolver.
+
+`to_socket_addrs(endpoint)` is the module-level convenience wrapper for code
+that wants the same shape as the `ToSocketAddrs` trait. The current trait is a
+single-address seed rather than an iterator because the runtime resolver still
+returns one IPv4 address. `string` implements `ToSocketAddrs`, so generic code
+can ask a host-port string for a socket address without spelling the resolver
+function directly.
+
+Detailed `getaddrinfo` error categories, service names, canonical names, and
+owned multi-address result lists are future work.
 
 ## TCP Sockets
 
 At module level, `listen(addr)` and `tcp_listen(addr)` are natural aliases for
 `TcpListener::bind_result(addr)`, and `connect(addr)`/`tcp_connect(addr)` are
-aliases for `TcpStream::connect_result(addr)`. Use the short names for ordinary
-TCP code and the explicit `tcp_*` names where UDP or Unix socket code appears
-nearby.
+aliases for `TcpStream::connect_result(addr)`. `connect_host(endpoint)` and
+`tcp_connect_host(endpoint)` combine `"host:port"` resolution with
+`TcpStream::connect_result`. Use the short names for ordinary TCP code and the
+explicit `tcp_*` names where UDP or Unix socket code appears nearby.
 
 `TcpListener` owns a listening TCP descriptor. `bind` and `try_bind` return
 `Option[TcpListener]` for simple code. `bind_result` returns
@@ -324,6 +349,19 @@ match net::lookup_v4("127.0.0.1", 8080 as u16) {
 return 1;
 ```
 
+Resolve a host-port endpoint:
+
+```ari
+match net::resolve_result("127.0.0.1:8080") {
+  std::Ok(addr) => {
+    return addr.port() as i64;
+  }
+  std::Err(reason) => {
+    return reason.code();
+  }
+}
+```
+
 Bind a listener and connect a stream:
 
 ```ari
@@ -381,9 +419,9 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | --- | --- |
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
-| DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` with `Error`, and `lookup_v4_raw_result` compatibility over `getaddrinfo`. |
+| DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` with `Error`, `lookup_v4_raw_result` compatibility, `"host:port"` `resolve`/`resolve_result`/`resolve_raw_result`, module-level `to_socket_addrs`, and the `ToSocketAddrs` trait seed over `getaddrinfo`. |
 | TCP listener | Current hosted IPv4 slice: module-level `listen`/`tcp_listen`, `TcpListener::bind`, `try_bind`, `bind_result` with `Error`, `bind_raw_result` compatibility, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking and reuse-address setter/query, `Duration` and raw-millisecond accept timeout setters, and explicit close. |
-| TCP stream | Current hosted IPv4 slice: module-level `connect`/`tcp_connect`, `TcpStream::connect`, `try_connect`, `connect_result` with `Error`, `connect_raw_result` compatibility, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking and TCP nodelay setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
+| TCP stream | Current hosted IPv4 slice: module-level `connect`/`tcp_connect` plus host-port `connect_host`/`tcp_connect_host`, `TcpStream::connect`, `try_connect`, `connect_result` with `Error`, `connect_raw_result` compatibility, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking and TCP nodelay setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
 | UDP socket | Current hosted IPv4 slice: module-level `udp_bind`, bind helpers with `Error` and raw compatibility forms, local-port and local-address lookup, descriptor/open helpers, nonblocking and reuse-address setter/query, `Duration` and raw-millisecond read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
 | Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect helpers with `Error` and raw compatibility forms, IO/shutdown plus `Duration` and raw-millisecond timeout setters and `read_exact`/`write_all` buffer helpers. |
 | socket options | Current: nonblocking, read/write timeout, TCP listener/UDP reuse-address, and TCP nodelay helpers; future buffer size, linger, multicast, and close-on-exec-at-creation options. |
@@ -397,6 +435,8 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
   work.
 - DNS lookup returns one IPv4 address and does not expose canonical names,
   multiple addresses, service names, or detailed `getaddrinfo` status yet.
+  The endpoint parser accepts only the simple `"host:port"` form; bracketed
+  IPv6 endpoints and service-name ports are future work.
 - UDP supports single-byte datagrams only. Buffer-oriented send/receive,
   source-address return values, connected UDP, multicast, and IPv6 UDP are
   future slices.
@@ -445,7 +485,9 @@ Unix stream listener bind, stream connect,
 accept, timeout/nonblocking helpers, bidirectional byte and buffer IO,
 shutdown, close, and test socket-file cleanup.
 `std-net-dns-lookup.ari` covers numeric IPv4 lookup, `Option` and `Result`
-lookup shapes, unsupported IPv6 text input, and edge IPv4 addresses.
+lookup shapes, `"host:port"` endpoint resolution, `ToSocketAddrs`,
+host-connect input validation, unsupported IPv6 text input, and edge IPv4
+addresses.
 
 ## Next Work
 

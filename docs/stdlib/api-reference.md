@@ -1360,13 +1360,21 @@ net::localhost(port)
 net::lookup_v4(host, port)
 net::lookup_v4_raw_result(host, port)
 net::lookup_v4_result(host, port)
+net::resolve(endpoint)
+net::resolve_raw_result(endpoint)
+net::resolve_result(endpoint)
+net::to_socket_addrs(endpoint)
 net::listen(addr)
 net::tcp_listen(addr)
 net::connect(addr)
 net::tcp_connect(addr)
+net::connect_host(endpoint)
+net::tcp_connect_host(endpoint)
 net::udp_bind(addr)
 net::unix_listen(path)
 net::unix_connect(path)
+
+ToSocketAddrs::to_socket_addrs()
 
 Ipv4Addr::new(a, b, c, d)
 Ipv4Addr::any()
@@ -1498,12 +1506,18 @@ stream.close()
 Address values are deterministic source structs. Use `octet`/`segment` for
 known-good indexes and `try_octet`/`try_segment` when validating parsed input.
 `lookup_v4` resolves one IPv4 address through the hosted `getaddrinfo` path.
+`resolve("host:port")`, `resolve_result`, and `resolve_raw_result` parse the
+common host-port endpoint spelling and reject malformed endpoints as
+`InvalidInput` before calling the resolver. `to_socket_addrs(endpoint)` mirrors
+the `ToSocketAddrs` trait shape, and `string` implements that trait for the
+current single-address IPv4 resolver seed.
 Socket and lookup `*_result` helpers return `Result[..., Error]`; matching
 `*_raw_result` helpers are compatibility-only bridges for low-level callers that
 still need raw integer errors.
 `net::listen`/`net::connect` are TCP-focused module-level `Result` helpers;
-use `tcp_listen`/`tcp_connect`, `udp_bind`, `unix_listen`, and `unix_connect`
-when the socket family should be explicit at the call site.
+use `tcp_listen`/`tcp_connect`, `connect_host`/`tcp_connect_host`, `udp_bind`,
+`unix_listen`, and `unix_connect` when the socket family should be explicit at
+the call site.
 `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, and `UnixStream` are
 owned descriptor-backed handles. They support hosted IPv4 TCP bind/connect/
 accept, IPv4 UDP bind/send-byte/receive-byte, Unix stream bind/connect/accept,
@@ -1514,8 +1528,10 @@ reuse-address helpers for TCP listeners and UDP sockets, TCP nodelay helpers,
 helpers, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
 `read_exact(output, len)` / `write_all(values)` helpers for natural stream
-method syntax. IPv6 socket handles, buffered datagram APIs, richer socket
-options beyond the first common booleans, UDP source address helpers, and timeout-specific error results remain
+method syntax. Host-port `connect_host` first resolves through
+`resolve_result`, then delegates to `TcpStream::connect_result`. IPv6 socket
+handles, buffered datagram APIs, richer socket options beyond the first common
+booleans, UDP source address helpers, multi-address DNS iteration, and timeout-specific error results remain
 roadmap work.
 
 ## IO And Input

@@ -41,6 +41,10 @@ pub struct SocketAddr {
   port: u16,
 }
 
+pub trait ToSocketAddrs {
+  fn to_socket_addrs(self) -> std::Result[std::net::SocketAddr, std::error::Error];
+}
+
 pub struct TcpListener {
   mut handle: std::os::OwnedFd,
 }
@@ -94,6 +98,7 @@ extern "ari" fn shutdown_raw(raw: i64, mode: i64) -> bool = "ari_builtin_net_shu
 extern "ari" fn unix_listen_raw(path: string) -> i64 = "ari_builtin_net_unix_listen";
 extern "ari" fn unix_connect_raw(path: string) -> i64 = "ari_builtin_net_unix_connect";
 extern "ari" fn lookup_v4_raw(host: string, port: i64) -> i64 = "ari_builtin_net_lookup_v4";
+extern "ari" fn lookup_v4_endpoint_raw(endpoint: string) -> i64 = "ari_builtin_net_lookup_v4_endpoint";
 extern "ari" fn read_socket_byte_raw(raw: i64) -> i64 = "ari_builtin_os_read_byte";
 extern "ari" fn write_socket_byte_raw(raw: i64, value: u8) -> bool = "ari_builtin_os_write_byte";
 
@@ -130,6 +135,68 @@ pub fn lookup_v4_result(host: string, port: u16) -> std::Result[SocketAddr, std:
   return std::error::from_raw_result<SocketAddr>(lookup_v4_raw_result(host, port));
 }
 
+fn endpoint_port(endpoint: string) -> std::Option[u16] {
+  let bytes = std::string::bytes(endpoint);
+  var colon = -1;
+  var index = 0;
+  while index < bytes.len {
+    if bytes[index] == ':' {
+      if colon >= 0 {
+        return std::None<u16>();
+      }
+      colon = index;
+    }
+    index = index + 1;
+  }
+
+  if colon <= 0 || colon + 1 >= bytes.len {
+    return std::None<u16>();
+  }
+
+  var port = 0;
+  index = colon + 1;
+  while index < bytes.len {
+    match std::ascii::digit_value(bytes[index]) {
+      std::Some(digit) => {
+        port = (port * 10) + digit;
+        if port > 65535 {
+          return std::None<u16>();
+        }
+      }
+      std::None => {
+        return std::None<u16>();
+      }
+    }
+    index = index + 1;
+  }
+
+  return std::Some<u16>(port as u16);
+}
+
+pub fn resolve(endpoint: string) -> std::Option[SocketAddr] {
+  return resolve_result(endpoint).ok();
+}
+
+pub fn resolve_raw_result(endpoint: string) -> std::Result[SocketAddr, i64] {
+  if endpoint_port(endpoint).is_none() {
+    return std::Err<SocketAddr, i64>(invalid_input_error_raw());
+  }
+
+  let packed = lookup_v4_endpoint_raw(endpoint);
+  if packed < 0 {
+    return std::Err<SocketAddr, i64>(std::error::new(std::error::Other).raw());
+  }
+  return std::Ok<SocketAddr, i64>(socket_addr_from_packed_v4(packed));
+}
+
+pub fn resolve_result(endpoint: string) -> std::Result[SocketAddr, std::error::Error] {
+  return std::error::from_raw_result<SocketAddr>(resolve_raw_result(endpoint));
+}
+
+pub fn to_socket_addrs(endpoint: string) -> std::Result[SocketAddr, std::error::Error] {
+  return resolve_result(endpoint);
+}
+
 pub fn listen(addr: SocketAddr) -> std::Result[TcpListener, std::error::Error] {
   return TcpListener::bind_result(addr);
 }
@@ -144,6 +211,21 @@ pub fn connect(addr: SocketAddr) -> std::Result[TcpStream, std::error::Error] {
 
 pub fn tcp_connect(addr: SocketAddr) -> std::Result[TcpStream, std::error::Error] {
   return TcpStream::connect_result(addr);
+}
+
+pub fn connect_host(endpoint: string) -> std::Result[TcpStream, std::error::Error] {
+  match resolve_result(endpoint) {
+    std::Ok(addr) => {
+      return TcpStream::connect_result(addr);
+    }
+    std::Err(reason) => {
+      return std::Err<TcpStream, std::error::Error>(reason);
+    }
+  }
+}
+
+pub fn tcp_connect_host(endpoint: string) -> std::Result[TcpStream, std::error::Error] {
+  return connect_host(endpoint);
 }
 
 pub fn udp_bind(addr: SocketAddr) -> std::Result[UdpSocket, std::error::Error] {
@@ -271,6 +353,12 @@ fn shutdown_mode(mode: Shutdown) -> i64 {
     Read => { return 0; }
     Write => { return 1; }
     Both => { return 2; }
+  }
+}
+
+impl std::net::ToSocketAddrs for string {
+  pub fn to_socket_addrs(self) -> std::Result[std::net::SocketAddr, std::error::Error] {
+    return std::net::resolve_result(self);
   }
 }
 

@@ -546,6 +546,7 @@ fn std::mem::size_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::swap[T]|std mem value helper tests; docs/dev/test-matrix.md Prelude and C FFI rows
 fn std::move[T]|explicit move tests; docs/dev/test-matrix.md Ownership row
 fn std::net::connect|check-prelude std-net-tcp-loopback module-level TCP connect helper returning Error; docs/stdlib/modules/net.md
+fn std::net::connect_host|check-prelude std-net-dns-lookup host-port TCP connect helper input validation; docs/stdlib/modules/net.md
 fn std::net::ipv4|check-prelude std-net-addresses source IPv4 constructor; docs/stdlib/modules/net.md
 fn std::net::ipv6|check-prelude std-net-addresses source IPv6 constructor; docs/stdlib/modules/net.md
 fn std::net::listen|check-prelude std-net-tcp-loopback module-level TCP listener helper returning Error; docs/stdlib/modules/net.md
@@ -553,9 +554,14 @@ fn std::net::localhost|check-prelude std-net-addresses source loopback socket ad
 fn std::net::lookup_v4|check-prelude std-net-dns-lookup Option-returning IPv4 name lookup; docs/stdlib/modules/net.md
 fn std::net::lookup_v4_raw_result|check-prelude std-net-dns-lookup raw Result-returning IPv4 name lookup compatibility helper; docs/stdlib/modules/net.md
 fn std::net::lookup_v4_result|check-prelude std-net-dns-lookup Result-returning IPv4 name lookup with Error payload; docs/stdlib/modules/net.md
+fn std::net::resolve|check-prelude std-net-dns-lookup Option-returning host-port endpoint resolver; docs/stdlib/modules/net.md
+fn std::net::resolve_raw_result|check-prelude std-net-dns-lookup raw Result-returning host-port endpoint resolver; docs/stdlib/modules/net.md
+fn std::net::resolve_result|check-prelude std-net-dns-lookup Error-returning host-port endpoint resolver; docs/stdlib/modules/net.md
 fn std::net::socket_addr|check-prelude std-net-addresses source socket address constructor; docs/stdlib/modules/net.md
 fn std::net::tcp_connect|check-prelude std-net-tcp-loopback explicit TCP connect helper returning Error; docs/stdlib/modules/net.md
+fn std::net::tcp_connect_host|check-prelude std-net-dns-lookup explicit host-port TCP connect helper; docs/stdlib/modules/net.md
 fn std::net::tcp_listen|check-prelude std-net-tcp-loopback explicit TCP listener helper returning Error; docs/stdlib/modules/net.md
+fn std::net::to_socket_addrs|check-prelude std-net-dns-lookup module-level ToSocketAddrs-shaped endpoint resolver; docs/stdlib/modules/net.md
 fn std::net::udp_bind|check-prelude std-net-udp-socket module-level UDP bind helper returning Error; docs/stdlib/modules/net.md
 fn std::net::unix_connect|check-prelude std-net-unix-socket module-level Unix stream connect helper returning Error; docs/stdlib/modules/net.md
 fn std::net::unix_listen|check-prelude std-net-unix-socket module-level Unix listener helper returning Error; docs/stdlib/modules/net.md
@@ -2224,6 +2230,7 @@ trait std::io::Writer|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait std::iter::IntoIterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait std::iter::Iterable[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait std::iter::Iterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
+trait std::net::ToSocketAddrs|check-prelude std-net-dns-lookup host-port endpoint resolver trait seed; docs/stdlib/modules/net.md
 trait std::zone::ZoneBacked|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 trait-method std::Clone::clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::Default::default|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
@@ -2259,6 +2266,7 @@ trait-method std::io::Writer::flush|std io trait/cursor tests; docs/stdlib/modul
 trait-method std::io::Writer::write_byte|std io trait/cursor tests; docs/stdlib/modules/io.md
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
+trait-method std::net::ToSocketAddrs::to_socket_addrs|check-prelude std-net-dns-lookup trait-qualified host-port endpoint resolution; docs/stdlib/modules/net.md
 trait-method std::zone::ZoneBacked::zone|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 type std::char|check-generics type-alias-char/no-implicit-std tests; docs/language/types.md Type Aliases section
 type std::error::ErrorKind|check-prelude std-error-integration module-local alias for std::error::Kind; docs/stdlib/modules/error.md

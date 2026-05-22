@@ -82,7 +82,8 @@ helpers, `std::path`
 adds source-only lexical path
 splitting, joining, lightweight normalization, and typed `PathBytes` views,
 and `std::net` adds
-IPv4, IPv6, generic IP, and socket-address values plus hosted IPv4 DNS lookup,
+IPv4, IPv6, generic IP, and socket-address values plus hosted IPv4 DNS lookup
+and `"host:port"` endpoint resolution,
 IPv4 `TcpListener`/`TcpStream` bind/connect/accept helpers, IPv4
 `UdpSocket` single-byte datagrams, TCP/UDP local-address helpers, TCP peer-address helpers, Unix stream
 sockets, direct `Error` result helpers with raw compatibility variants,
