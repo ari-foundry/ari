@@ -62,6 +62,7 @@ std::size_t line_end_for_start(const SourceFile& file, std::size_t line_start) {
 void fill_source_location_from_file(SourceLocation& loc, const SourceFile& file, std::size_t byte_offset) {
     byte_offset = std::min(byte_offset, file.eof_offset);
     std::size_t line_index = line_index_for_offset(file, byte_offset);
+    loc.span = Span{file.id, byte_offset, byte_offset};
     loc.source_id = file.id;
     loc.source_name = file.display_name;
     loc.line = static_cast<int>(line_index + 1);
@@ -78,6 +79,15 @@ const SourceFile* source_file_for_location(SourceLocation& loc) {
     const SourceFile* file = default_source_map().get(loc.source_id);
     if (file != nullptr && loc.source_name.empty()) {
         loc.source_name = file->display_name;
+    }
+    if (file != nullptr && loc.has_byte_range) {
+        Span derived = source_span(loc.source_id, loc.byte_start, loc.byte_end);
+        if (!span_has_source(loc.span) ||
+            loc.span.source_id.value != derived.source_id.value ||
+            loc.span.start != derived.start ||
+            loc.span.end != derived.end) {
+            loc.span = derived;
+        }
     }
     return file;
 }
@@ -190,11 +200,10 @@ bool parse_structured_location_prefix(const std::string& raw,
     if (text_start < raw.size() && raw[text_start] == ' ') ++text_start;
     loc.line = line;
     loc.column = column;
-    loc.byte_start = byte_start;
-    loc.byte_end = byte_end;
     loc.has_byte_range = true;
     loc.source_name = std::move(source_name);
     loc.source_id = source_id_for_name(loc.source_name);
+    set_location_span(loc, source_span(loc.source_id, byte_start, byte_end));
     message = raw.substr(text_start);
     return true;
 }
@@ -208,8 +217,9 @@ std::string render_compile_error(const SourceLocation* loc, const std::string& m
     if (has_source_name(normalized)) out << normalized.source_name << ":";
     out << normalized.line << ":" << normalized.column << ": " << message;
     if (has_byte_span(normalized)) {
+        Span span = span_from_location(normalized);
         out << "\n  source id: " << source_id_text(normalized.source_id)
-            << "\n  byte span: [" << normalized.byte_start << ", " << normalized.byte_end << ")";
+            << "\n  byte span: [" << span.start << ", " << span.end << ")";
     }
     std::string snippet = render_source_snippet(normalized);
     if (!snippet.empty()) out << "\n" << snippet;
@@ -221,6 +231,77 @@ std::string render_compile_error(const SourceLocation* loc, const std::string& m
 SourceMap& default_source_map() {
     static SourceMap map;
     return map;
+}
+
+Span invalid_span() {
+    return Span{};
+}
+
+Span source_span(SourceId id, std::size_t byte_start, std::size_t byte_end) {
+    return Span{id, byte_start, std::max(byte_end, byte_start)};
+}
+
+bool span_has_source(Span span) {
+    return span.source_id.value != kInvalidSourceIdValue;
+}
+
+bool span_has_valid_order(Span span) {
+    return span.start <= span.end;
+}
+
+bool span_is_empty(Span span) {
+    return span_has_source(span) && span_has_valid_order(span) && span.start == span.end;
+}
+
+std::size_t span_length(Span span) {
+    if (!span_has_valid_order(span)) return 0;
+    return span.end - span.start;
+}
+
+Span span_from_location(const SourceLocation& loc) {
+    if (span_has_source(loc.span) && span_has_valid_order(loc.span)) return loc.span;
+    if (!loc.has_byte_range) return invalid_span();
+    return source_span(loc.source_id, loc.byte_start, loc.byte_end);
+}
+
+void set_location_span(SourceLocation& loc, Span span) {
+    loc.span = span;
+    loc.source_id = span.source_id;
+    loc.byte_start = span.start;
+    loc.byte_end = span.end;
+    loc.has_byte_range = span_has_source(span) && span_has_valid_order(span);
+}
+
+SourceLocation source_location_for_span(Span span) {
+    return default_source_map().location_for_span(span);
+}
+
+bool span_contains(Span span, std::size_t byte_offset) {
+    if (!span_has_source(span)) return false;
+    if (!span_has_valid_order(span)) return false;
+    return span.start <= byte_offset && byte_offset < span.end;
+}
+
+bool span_contains(Span outer, Span inner) {
+    if (!span_has_source(outer) || !span_has_source(inner)) return false;
+    if (outer.source_id.value != inner.source_id.value) return false;
+    if (!span_has_valid_order(outer) || !span_has_valid_order(inner)) return false;
+    return outer.start <= inner.start && inner.end <= outer.end;
+}
+
+bool span_intersects(Span lhs, Span rhs) {
+    if (!span_has_source(lhs) || !span_has_source(rhs)) return false;
+    if (lhs.source_id.value != rhs.source_id.value) return false;
+    if (!span_has_valid_order(lhs) || !span_has_valid_order(rhs)) return false;
+    return std::max(lhs.start, rhs.start) < std::min(lhs.end, rhs.end);
+}
+
+Span merge_spans(Span lhs, Span rhs) {
+    if (!span_has_source(lhs)) return rhs;
+    if (!span_has_source(rhs)) return lhs;
+    if (lhs.source_id.value != rhs.source_id.value) return invalid_span();
+    if (!span_has_valid_order(lhs) || !span_has_valid_order(rhs)) return invalid_span();
+    return Span{lhs.source_id, std::min(lhs.start, rhs.start), std::max(lhs.end, rhs.end)};
 }
 
 SourceId SourceMap::add_file(const std::string& path, const std::string& text) {
@@ -309,18 +390,24 @@ std::size_t SourceMap::eof_offset(SourceId id) const {
     return file->eof_offset;
 }
 
-SourceSpan SourceMap::span(SourceId id, std::size_t byte_start, std::size_t byte_end) const {
-    SourceSpan result;
+Span SourceMap::span(SourceId id, std::size_t byte_start, std::size_t byte_end) const {
+    Span result;
     result.source_id = id;
     const SourceFile* file = get(id);
     if (file == nullptr) {
-        result.byte_start = byte_start;
-        result.byte_end = std::max(byte_end, byte_start);
+        result.start = byte_start;
+        result.end = std::max(byte_end, byte_start);
         return result;
     }
-    result.byte_start = std::min(byte_start, file->eof_offset);
-    result.byte_end = std::min(std::max(byte_end, byte_start), file->eof_offset);
+    result.start = std::min(byte_start, file->eof_offset);
+    result.end = std::min(std::max(byte_end, byte_start), file->eof_offset);
     return result;
+}
+
+bool SourceMap::valid_span(Span source_span) const {
+    const SourceFile* file = get(source_span.source_id);
+    if (file == nullptr) return false;
+    return span_has_valid_order(source_span) && source_span.end <= file->eof_offset;
 }
 
 LineColumn SourceMap::location(SourceId id, std::size_t byte_offset) const {
@@ -343,13 +430,12 @@ SourceLocation SourceMap::location_for_offset(SourceId id, std::size_t byte_offs
     return loc;
 }
 
-SourceLocation SourceMap::location_for_span(SourceSpan source_span) const {
-    SourceLocation loc = location_for_offset(source_span.source_id, source_span.byte_start);
+SourceLocation SourceMap::location_for_span(Span source_span) const {
+    SourceLocation loc = location_for_offset(source_span.source_id, source_span.start);
     const SourceFile* file = get(source_span.source_id);
     if (file == nullptr) return loc;
-    SourceSpan normalized = span(source_span.source_id, source_span.byte_start, source_span.byte_end);
-    loc.byte_start = normalized.byte_start;
-    loc.byte_end = normalized.byte_end;
+    Span normalized = span(source_span.source_id, source_span.start, source_span.end);
+    set_location_span(loc, normalized);
     loc.has_byte_range = true;
     return loc;
 }
@@ -363,24 +449,24 @@ SourceLocation SourceMap::end_location(const std::string& source_name) const {
     return location_for_offset(id, eof_offset(id));
 }
 
-SourceSnippet SourceMap::snippet(SourceSpan source_span) const {
+SourceSnippet SourceMap::snippet(Span source_span) const {
     SourceSnippet result;
     const SourceFile* file = get(source_span.source_id);
     if (file == nullptr) return result;
 
-    SourceSpan normalized = span(source_span.source_id, source_span.byte_start, source_span.byte_end);
-    std::size_t line_start = line_start_for_offset(*file, normalized.byte_start);
+    Span normalized = span(source_span.source_id, source_span.start, source_span.end);
+    std::size_t line_start = line_start_for_offset(*file, normalized.start);
     std::size_t line_end = line_end_for_start(*file, line_start);
-    std::size_t span_end = std::min(normalized.byte_end, file->eof_offset);
+    std::size_t span_end = std::min(normalized.end, file->eof_offset);
 
     result.span = normalized;
-    result.start = location(normalized.source_id, normalized.byte_start);
+    result.start = location(normalized.source_id, normalized.start);
     result.source_name = file->display_name;
     result.line_text = file->text.substr(line_start, line_end - line_start);
     result.line_number = static_cast<std::size_t>(result.start.line);
-    result.marker_start = std::min(normalized.byte_start, line_end) - line_start;
-    std::size_t marker_end = std::min(std::max(span_end, normalized.byte_start + 1), line_end);
-    result.marker_len = marker_end > normalized.byte_start ? marker_end - normalized.byte_start : 1;
+    result.marker_start = std::min(normalized.start, line_end) - line_start;
+    std::size_t marker_end = std::min(std::max(span_end, normalized.start + 1), line_end);
+    result.marker_len = marker_end > normalized.start ? marker_end - normalized.start : 1;
     result.valid = true;
     return result;
 }
@@ -430,8 +516,8 @@ std::string where(const SourceLocation& loc) {
     if (has_source_name(normalized)) text += normalized.source_name + ":";
     text += std::to_string(normalized.line) + ":" + std::to_string(normalized.column);
     if (has_byte_span(normalized)) {
-        text += ":bytes=" + std::to_string(normalized.byte_start) + ".." +
-                std::to_string(normalized.byte_end);
+        Span span = span_from_location(normalized);
+        text += ":bytes=" + std::to_string(span.start) + ".." + std::to_string(span.end);
     }
     return text;
 }
@@ -460,7 +546,7 @@ bool has_source_name(const SourceLocation& loc) {
 }
 
 bool has_byte_span(const SourceLocation& loc) {
-    return loc.has_byte_range;
+    return loc.has_byte_range && span_has_valid_order(span_from_location(loc));
 }
 
 SourceId register_source_file(const std::string& path,
@@ -533,7 +619,7 @@ std::string render_source_snippet(const SourceSnippet& snippet) {
     return out.str();
 }
 
-std::string render_source_snippet(const SourceSpan& span) {
+std::string render_source_snippet(Span span) {
     return render_source_snippet(default_source_map().snippet(span));
 }
 
@@ -542,7 +628,7 @@ std::string render_source_snippet(const SourceLocation& loc) {
     SourceLocation normalized = loc;
     const SourceFile* file = source_file_for_location(normalized);
     if (file == nullptr) return "";
-    return render_source_snippet(SourceSpan{
+    return render_source_snippet(Span{
         normalized.source_id,
         normalized.byte_start,
         normalized.byte_end,

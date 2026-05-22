@@ -107,6 +107,7 @@ struct SourceMap {
   // add_file(path, text) -> SourceId
   // get(id) -> SourceFile
   // span(id, start, end) -> Span
+  // valid_span(span) -> bool
   // location(id, byte_offset) -> LineColumn
   // snippet(span) -> SourceSnippet
 }
@@ -117,6 +118,7 @@ Policy:
 - `Span.start` is inclusive.
 - `Span.end` is exclusive.
 - spans are byte ranges, not Unicode scalar ranges
+- empty spans are valid insertion points and EOF locations
 - line and column lookup is derived from source text
 - `SourceFile` owns the line start table and EOF offset so diagnostics do not
   rescan source text for every lookup
@@ -130,6 +132,10 @@ Policy:
   a user-facing diagnostic span
 - `SourceMap` is the only component that should need source text to answer
   line/column or snippet questions
+- C++ tokens store `Span` directly; AST/IR nodes use `SourceLocation`, whose
+  `loc.span` is the same canonical `Span` plus cached rendering coordinates
+- use `merge_spans`, `span_contains`, `span_intersects`, and
+  `SourceMap::valid_span` instead of open-coded byte arithmetic
 
 This byte-first policy keeps lexer and parser code simple. Unicode-aware
 display width can be added to the renderer without changing the compiler's
@@ -268,6 +274,8 @@ Recommended policy:
   offset together with the text
 - diagnostics that point at source must carry the same `SourceId` as the token,
   AST node, or generated source they describe
+- generated and built-in diagnostics should point into registered
+  `Generated`/`Builtin` sources; they should not reuse an unrelated file span
 - diagnostics own their messages or allocate them in a report arena
 - temporary render buffers can use a scratch zone
 - golden comparisons should not depend on pointer identity or allocation order
@@ -284,7 +292,7 @@ Land this layer in small slices:
 | SourceId | Stable source ids and file registration. | `source-id-stability`, duplicate path handling. |
 | SourceFile | Canonical path, display name, owned text, line table, EOF offset, and in-memory source registration. | `source-map-file-module.map`, in-memory source API smoke tests. |
 | SourceMap | `add_file`, `get`, `span`, `location`, and `snippet` APIs over one source owner. | multi-file SourceMap smoke tests. |
-| Span | Byte range construction and validation. | empty span, single-byte span, end-before-start rejection. |
+| Span | Byte range construction, validation, merge, contains, and intersects helpers. | empty span, single-byte span, end-before-start normalization/rejection, source mismatch merge. |
 | Line lookup | Byte offset to line/column mapping. | start, middle, newline, EOF, CRLF policy. |
 | Source map artifact | Deterministic source ids, kind, canonical/display paths, EOF offsets, line tables, byte, line, and snippet text. | `source-map-file-module.map`, CRLF policy. |
 | Snippets | Extract source line and underline span. | single-line, empty span, tab policy, EOF span. |

@@ -178,11 +178,13 @@ private:
         loc.source_id = source_id_;
         loc.line = line_;
         loc.column = column_;
-        loc.byte_start = index_;
-        loc.byte_end = index_;
-        loc.has_byte_range = true;
+        set_location_span(loc, source_span(source_id_, index_, index_));
         loc.source_name = source_name_;
         return loc;
+    }
+
+    void finish_location(SourceLocation& loc, std::size_t byte_end) const {
+        set_location_span(loc, default_source_map().span(loc.source_id, loc.byte_start, byte_end));
     }
 
     char advance() {
@@ -243,8 +245,7 @@ private:
     }
 
     static Token simple(TokenKind kind, std::string text, SourceLocation loc) {
-        loc.byte_end = loc.byte_start + text.size();
-        loc.has_byte_range = true;
+        set_location_span(loc, source_span(loc.source_id, loc.byte_start, loc.byte_start + text.size()));
         return Token{kind, std::move(text), 0, loc, 0.0, ""};
     }
 
@@ -291,7 +292,7 @@ private:
             {"false", TokenKind::KwFalse}
         };
         auto found = keywords.find(text);
-        loc.byte_end = index_;
+        finish_location(loc, index_);
         if (found != keywords.end()) return Token{found->second, text, 0, loc, 0.0, ""};
         return Token{TokenKind::Identifier, text, 0, loc, 0.0, ""};
     }
@@ -331,7 +332,7 @@ private:
         }
         if (is_float) {
             try {
-                loc.byte_end = index_;
+                finish_location(loc, index_);
                 Token token{TokenKind::Float, text, 0, loc, 0.0, ""};
                 token.literal_suffix = std::move(suffix);
                 token.float_value = std::stod(text);
@@ -343,7 +344,7 @@ private:
             }
         }
         try {
-            loc.byte_end = index_;
+            finish_location(loc, index_);
             Token token{TokenKind::Integer, text, parse_integer_digits(loc, text, 10, "decimal"), loc, 0.0, ""};
             token.literal_suffix = std::move(suffix);
             return token;
@@ -392,7 +393,7 @@ private:
             if (!is_integer_suffix(suffix)) fail(loc, "unsupported numeric literal suffix '" + suffix + "'");
         }
 
-        loc.byte_end = index_;
+        finish_location(loc, index_);
         Token token{TokenKind::Integer, text, parse_integer_digits(loc, digits, base, kind), loc, 0.0, ""};
         token.literal_suffix = std::move(suffix);
         return token;
@@ -404,7 +405,7 @@ private:
             char c = advance();
             if (c == '\0' || c == '\n') fail(loc, "unterminated string literal");
             if (c == '"') {
-                loc.byte_end = index_;
+                finish_location(loc, index_);
                 return Token{TokenKind::String, text, 0, loc, 0.0, ""};
             }
             if (c == '\\') {
@@ -420,7 +421,7 @@ private:
         if (!match('\'')) {
             fail(loc, "byte character literal must contain exactly one byte");
         }
-        loc.byte_end = index_;
+        finish_location(loc, index_);
         Token token{TokenKind::Integer, "", value, loc, 0.0, ""};
         token.literal_suffix = "char";
         return token;
@@ -589,6 +590,7 @@ private:
                 loc.byte_end = loc.byte_start + 1;
             }
         }
+        set_location_span(loc, default_source_map().span(loc.source_id, loc.byte_start, loc.byte_end));
         throw CompileError(std::move(loc), message);
     }
 };

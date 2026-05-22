@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 
 namespace ari {
 
@@ -104,9 +105,44 @@ struct Token {
     TokenKind kind = TokenKind::End;
     std::string text;
     std::uint64_t int_value = 0;
+    Span span;
     SourceLocation loc;
     double float_value = 0.0;
     std::string literal_suffix;
+
+    Token() = default;
+
+    Token(TokenKind kind,
+          std::string text,
+          std::uint64_t int_value,
+          SourceLocation loc,
+          double float_value,
+          std::string literal_suffix)
+        : kind(kind),
+          text(std::move(text)),
+          int_value(int_value),
+          span(span_from_location(loc)),
+          loc(std::move(loc)),
+          float_value(float_value),
+          literal_suffix(std::move(literal_suffix)) {}
+
+    Token(TokenKind kind,
+          std::string text,
+          std::uint64_t int_value,
+          Span span,
+          double float_value,
+          std::string literal_suffix)
+        : kind(kind),
+          text(std::move(text)),
+          int_value(int_value),
+          span(span),
+          loc(source_location_for_span(span)),
+          float_value(float_value),
+          literal_suffix(std::move(literal_suffix)) {
+        if (!has_byte_span(loc) && span_has_source(span)) {
+            set_location_span(loc, span);
+        }
+    }
 };
 
 } // namespace ari

@@ -138,9 +138,11 @@ std::string dump_tokens(const std::vector<Token>& tokens, const std::string& sou
             out << " suffix=\"" << escape_text(token.literal_suffix) << "\"";
         }
         const std::string& token_source = token.loc.source_name.empty() ? source_name : token.loc.source_name;
+        Span span = token.span;
+        if (!span_has_source(span)) span = span_from_location(token.loc);
         out << " @ " << token_source << ":" << token.loc.line << ":" << token.loc.column
-            << " source_id=" << source_id_text(token.loc.source_id)
-            << " bytes=" << token.loc.byte_start << ".." << token.loc.byte_end << "\n";
+            << " source_id=" << source_id_text(span.source_id)
+            << " bytes=" << span.start << ".." << span.end << "\n";
     }
     return out.str();
 }

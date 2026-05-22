@@ -1410,6 +1410,7 @@ private:
         token.float_value = double_from_bits(read_count(label + " float bits"));
         token.literal_suffix = read_field(label + " literal suffix");
         token.loc = default_loc();
+        token.span = span_from_location(token.loc);
         return token;
     }
 

@@ -35,6 +35,7 @@ Program parse_item_macro_tokens(const std::vector<Token>& source_tokens,
     Token end;
     end.kind = TokenKind::End;
     end.loc = loc;
+    end.span = span_from_location(end.loc);
     tokens.push_back(end);
     return parse_tokens_in_module(std::move(tokens), module_path_for_macro(module_name));
 }

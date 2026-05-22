@@ -2641,6 +2641,7 @@ std::vector<ExprPtr> parse_macro_argument_expressions(std::vector<Token> tokens,
     Token end;
     end.kind = TokenKind::End;
     end.loc = loc;
+    end.span = span_from_location(end.loc);
     tokens.push_back(end);
     Parser parser(std::move(tokens));
     return parser.parse_expression_arguments_until_end(loc);
@@ -2650,6 +2651,7 @@ ExprPtr parse_macro_expression(std::vector<Token> tokens, SourceLocation loc) {
     Token end;
     end.kind = TokenKind::End;
     end.loc = loc;
+    end.span = span_from_location(end.loc);
     tokens.push_back(end);
     Parser parser(std::move(tokens));
     return parser.parse_expression_until_end(loc);
@@ -2659,6 +2661,7 @@ TypeRef parse_macro_type_ref(std::vector<Token> tokens, SourceLocation loc) {
     Token end;
     end.kind = TokenKind::End;
     end.loc = loc;
+    end.span = span_from_location(end.loc);
     tokens.push_back(end);
     Parser parser(std::move(tokens));
     return parser.parse_type_until_end(loc);
@@ -2668,6 +2671,7 @@ Pattern parse_macro_pattern(std::vector<Token> tokens, SourceLocation loc) {
     Token end;
     end.kind = TokenKind::End;
     end.loc = loc;
+    end.span = span_from_location(end.loc);
     tokens.push_back(end);
     Parser parser(std::move(tokens));
     return parser.parse_pattern_until_end(loc);

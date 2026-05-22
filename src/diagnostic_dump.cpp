@@ -217,8 +217,9 @@ std::string dump_diagnostic_message(const std::string& severity,
             << " line=" << loc.line
             << " column=" << loc.column;
         if (has_byte_span(loc)) {
-            out << " byte_start=" << loc.byte_start
-                << " byte_end=" << loc.byte_end;
+            Span span = span_from_location(loc);
+            out << " byte_start=" << span.start
+                << " byte_end=" << span.end;
         }
         out << " message=" << quote(error.message());
         std::string snippet = render_source_snippet(loc);

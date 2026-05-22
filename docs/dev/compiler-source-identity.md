@@ -30,9 +30,11 @@ The hosted C++ compiler keeps the first source identity bridge in
 - `SourceId` is a small wrapper around an integer value.
 - `SourceFile` stores `id`, `kind`, canonical `path`, diagnostic
   `display_name`, owned source `text`, `line_starts`, and `eof_offset`.
-- `SourceLocation` stores `source_id`, one-based `line` and `column`,
-  zero-based `byte_start` and `byte_end`, a `has_byte_range` flag, and the
-  display `source_name`.
+- `Span` stores `source_id`, zero-based byte `start`, and zero-based byte
+  `end`. `SourceSpan` is a compatibility alias for the same C++ type.
+- `SourceLocation` stores the canonical `Span` plus one-based `line` and
+  `column`, legacy `byte_start` and `byte_end` cache fields, a
+  `has_byte_range` flag, and the display `source_name`.
 - `CompileError(SourceLocation, message)` is the preferred diagnostic path.
   The old string-based `CompileError(where(loc) + ": ...")` bridge remains so
   older throw sites can preserve structured locations while they migrate.
@@ -84,7 +86,7 @@ Current C++ API shape:
 SourceMap sources;
 SourceId main = sources.add_file("src/main.ari", main_text);
 const SourceFile* file = sources.get(main);
-SourceSpan name = sources.span(main, 3, 7);
+Span name = sources.span(main, 3, 7);
 LineColumn point = sources.location(main, 3);
 SourceSnippet rendered = sources.snippet(name);
 ```
@@ -99,7 +101,11 @@ Rules:
   identities such as `<memory:0>`.
 - `get(SourceId)` returns the stable `SourceFile` for source-level lookup.
 - `span(source_id, start, end)` creates a half-open byte span tied to that
-  source id.
+  source id. The `SourceMap` constructor clamps to the file EOF and normalizes
+  reversed input into an empty insertion span, so callers do not accidentally
+  manufacture out-of-range spans.
+- `valid_span(span)` verifies that a span's source id is registered, that
+  `start <= end`, and that `end` is within the owning source.
 - `location(source_id, byte_offset)` uses the file's line table to return a
   one-based `LineColumn`.
 - `snippet(span)` returns source name, line text, and caret marker data without
@@ -107,9 +113,12 @@ Rules:
 - The hosted compiler's legacy free functions call `default_source_map()` so
   existing lexer/parser/sema code keeps using the same source model.
 
-Diagnostic labels should store `SourceSpan`, not a bare byte range. Each label
-can carry a different `SourceId`, so one diagnostic can point at the use site in
-one file and a declaration or import site in another file.
+Tokens store `Span` directly. AST and IR nodes currently expose `SourceLocation`
+for compatibility, and that location carries the same canonical `Span` in
+`loc.span`; line and column are derived display data. Diagnostic labels store
+`Span`, not a bare byte range. Each label can carry a different `SourceId`, so
+one diagnostic can point at the use site in one file and a declaration or import
+site in another file.
 
 ## Source Kinds
 
@@ -187,7 +196,8 @@ Rules:
 - `Span.start` is inclusive
 - `Span.end` is exclusive
 - `start <= end`
-- empty spans are allowed for insertion points
+- empty spans are allowed for insertion points, EOF diagnostics, and parser
+  "expected here" errors
 - spans must stay within the source byte length
 - spans are byte ranges, not Unicode scalar or display-width ranges
 - line/column lookup is derived from byte offsets and source text
@@ -195,9 +205,38 @@ Rules:
 Use byte spans in lexer, parser, sema, and artifacts. Add Unicode display-width
 later inside rendering, not inside core span math.
 
-In C++ code, `SourceLocation` is the current span carrier. Set
-`has_byte_range=true` only when `byte_start` and `byte_end` describe a range in
-the source named by `source_id`.
+In C++ code, `Span` is the canonical range. `SourceLocation` is the diagnostic
+view that keeps `loc.span` together with cached line/column and display-name
+data. Set `has_byte_range=true` only when `loc.span`, `source_id`,
+`byte_start`, and `byte_end` describe the same range. Prefer
+`set_location_span(loc, span)` over writing those fields by hand.
+
+Current helper API:
+
+- `source_span(id, start, end)` constructs a half-open span and normalizes
+  `end < start` to an empty span at `start`.
+- `span_from_location(loc)` extracts the canonical span from a diagnostic
+  location.
+- `set_location_span(loc, span)` keeps `loc.span`, `source_id`, `byte_start`,
+  `byte_end`, and `has_byte_range` synchronized.
+- `span_has_valid_order(span)` checks `start <= end`.
+- `span_is_empty(span)` reports insertion spans.
+- `span_length(span)` returns `end - start` for valid ordered spans.
+- `span_contains(span, byte_offset)` follows half-open range rules. Empty spans
+  contain no bytes.
+- `span_contains(outer, inner)` accepts empty inner spans when the insertion
+  point lies inside the outer range.
+- `span_intersects(lhs, rhs)` is false for empty spans and spans from different
+  sources.
+- `merge_spans(lhs, rhs)` returns the smallest span covering both ranges when
+  they belong to the same source. Merging different sources returns an invalid
+  span, so multi-file diagnostics must keep separate labels instead.
+
+Generated and built-in spans follow the same rules as file spans: register the
+source text with `Generated` or `Builtin` kind, keep its `SourceId`, and point
+spans into that registered text. Do not borrow a user file's source id for
+compiler-created nodes. Use `SourceId{-1}` only when there is truly no
+user-facing span to render.
 
 ## Line And Column Lookup
 
@@ -213,7 +252,8 @@ Lookup policy:
   source text at each diagnostic render
 - CRLF should be normalized or explicitly represented in source-map artifacts
 - EOF spans should render at the final valid insertion point
-- invalid spans should fail before rendering
+- invalid spans should fail before rendering or fall back to a message-only
+  diagnostic
 
 The source-map artifact should make this policy reviewable with tiny examples,
 including empty files, trailing newlines, multi-line spans, and file-backed

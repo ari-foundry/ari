@@ -31,11 +31,13 @@ struct SourceFile {
     std::size_t eof_offset = 0;
 };
 
-struct SourceSpan {
+struct Span {
     SourceId source_id;
-    std::size_t byte_start = 0;
-    std::size_t byte_end = 0;
+    std::size_t start = 0;
+    std::size_t end = 0;
 };
+
+using SourceSpan = Span;
 
 struct LineColumn {
     int line = 1;
@@ -44,7 +46,7 @@ struct LineColumn {
 };
 
 struct SourceSnippet {
-    SourceSpan span;
+    Span span;
     LineColumn start;
     std::string source_name;
     std::string line_text;
@@ -55,6 +57,7 @@ struct SourceSnippet {
 };
 
 struct SourceLocation {
+    Span span;
     SourceId source_id;
     int line = 1;
     int column = 1;
@@ -65,7 +68,7 @@ struct SourceLocation {
 };
 
 struct DiagnosticLabel {
-    SourceSpan span;
+    Span span;
     std::string message;
     bool primary = false;
 };
@@ -88,13 +91,14 @@ public:
     SourceId id_for_name(const std::string& source_name) const;
     std::size_t eof_offset(SourceId id) const;
 
-    SourceSpan span(SourceId id, std::size_t byte_start, std::size_t byte_end) const;
+    Span span(SourceId id, std::size_t byte_start, std::size_t byte_end) const;
+    bool valid_span(Span span) const;
     LineColumn location(SourceId id, std::size_t byte_offset) const;
     SourceLocation location_for_offset(SourceId id, std::size_t byte_offset) const;
-    SourceLocation location_for_span(SourceSpan span) const;
+    SourceLocation location_for_span(Span span) const;
     SourceLocation location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end) const;
     SourceLocation end_location(const std::string& source_name) const;
-    SourceSnippet snippet(SourceSpan span) const;
+    SourceSnippet snippet(Span span) const;
 
 private:
     std::vector<SourceFile> sources_;
@@ -121,6 +125,20 @@ private:
 
 SourceMap& default_source_map();
 
+Span invalid_span();
+Span source_span(SourceId id, std::size_t byte_start, std::size_t byte_end);
+Span span_from_location(const SourceLocation& loc);
+void set_location_span(SourceLocation& loc, Span span);
+SourceLocation source_location_for_span(Span span);
+bool span_has_source(Span span);
+bool span_has_valid_order(Span span);
+bool span_is_empty(Span span);
+std::size_t span_length(Span span);
+bool span_contains(Span span, std::size_t byte_offset);
+bool span_contains(Span outer, Span inner);
+bool span_intersects(Span lhs, Span rhs);
+Span merge_spans(Span lhs, Span rhs);
+
 std::string where(const SourceLocation& loc);
 bool valid_source_id(SourceId id);
 std::string source_id_text(SourceId id);
@@ -146,7 +164,7 @@ SourceLocation source_location_for_offset(SourceId id, std::size_t byte_offset);
 SourceLocation source_location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end);
 SourceLocation source_end_location(const std::string& source_name);
 std::string render_source_snippet(const SourceSnippet& snippet);
-std::string render_source_snippet(const SourceSpan& span);
+std::string render_source_snippet(Span span);
 std::string render_source_snippet(const SourceLocation& loc);
 
 } // namespace ari

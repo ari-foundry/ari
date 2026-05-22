@@ -52,7 +52,7 @@ get more reliable, not when a private shortcut is added.
 
 | Gap | Needed State | First Work |
 | --- | --- | --- |
-| Source identity | Stable `SourceMap`, `SourceId`, owned `SourceFile` text, canonical/display paths, line tables, EOF offsets, byte spans, line/column lookup, and snippets for every diagnostic. | Add compiler/tooling source-map fixtures and golden source rendering checks. |
+| Source identity | Stable `SourceMap`, `SourceId`, owned `SourceFile` text, canonical/display paths, line tables, EOF offsets, canonical `Span` helpers, line/column lookup, and snippets for every diagnostic. | Add compiler/tooling source-map fixtures and golden source rendering checks. |
 | Diagnostics | Stable codes, labels, notes, and normalized golden output. | Move errors toward data-first diagnostics before polishing renderer text. |
 | File-backed projects | Predictable module roots, `.ari`/`.arih` policy, metadata, cache invalidation, and Makefile flows. | Harden module search and add stale/private/missing file diagnostics. |
 | Generic aggregate scale | Nested structs, enums, vectors, maps, sets, and `Result` payloads need fewer edge cases. | Keep adding compiler-shaped model fixtures under `tests/cases/compiler-development/ok/model/`. |

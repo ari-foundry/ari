@@ -24,7 +24,7 @@ hidden to review well.
 | Source file | One loaded Ari input with a canonical path, display name, owned bytes, line start table, and EOF offset. | `src/common.hpp`, `src/driver.cpp`, source-map artifacts. |
 | SourceMap | The owner that registers sources and answers span, line/column, and snippet lookups by `SourceId`. | `src/common.hpp`, `--emit-source-map`. |
 | `SourceId` | A small per-invocation identity for a registered source file, generated source, built-in source, or unknown source. | `src/common.hpp`, `source_id=` artifact fields. |
-| Byte span | Half-open byte range in a source file, carried with a `SourceId`. | Lexer/parser diagnostics and source-map fixtures. |
+| Byte span | Half-open byte range in a source file, carried with a `SourceId`; in C++ this is the canonical `Span` type. | `src/common.hpp`, lexer/parser diagnostics, source-map fixtures. |
 | Token | The lexer output for one syntactic item, such as an identifier or number. | `src/lexer.cpp`, `--emit-tokens`. |
 | AST | The parser output shaped like the source syntax. | `src/parser.cpp`, `src/ast.hpp`, `--emit-syntax`. |
 | Declaration | A top-level item surface such as a function, type, module, trait, or impl. | Declaration-index artifacts. |
