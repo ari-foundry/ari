@@ -37,6 +37,10 @@ target-unsupported aggregate header/import surfaces remain rejected. The
 `backend-layout-aggregate.llvm-frag` golden checks the LLVM lowering for the
 supported aggregate layout surface: mixed primitive struct fields, tuple and
 fixed-array `size_of`/`align_of` constants, and payload enum tag/value access.
+`tests/layout_unit.cpp` locks the underlying primitive sizes/alignments, field
+offsets, aggregate enum storage records, root-`Vec` layout-unavailable
+classification, and the direct/indirect/unsupported aggregate ABI classifier
+before LLVM emission.
 
 ## Standard Library Coverage Note
 

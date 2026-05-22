@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-source-map-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-source-map-unit check-layout-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -74,6 +74,11 @@ check-source-map-unit:
 	mkdir -p $(BUILD_DIR)/source-map
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -Isrc tests/source_map_unit.cpp src/common.cpp -o $(BUILD_DIR)/source-map/source-map-unit$(EXEEXT)
 	$(BUILD_DIR)/source-map/source-map-unit$(EXEEXT)
+
+check-layout-unit:
+	mkdir -p $(BUILD_DIR)/layout
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -Isrc tests/layout_unit.cpp src/layout.cpp src/aggregate_abi.cpp src/target.cpp src/common.cpp -o $(BUILD_DIR)/layout/layout-unit$(EXEEXT)
+	$(BUILD_DIR)/layout/layout-unit$(EXEEXT)
 
 check-compiler-artifacts: $(TARGET) check-source-map-unit
 	mkdir -p $(BUILD_DIR)/compiler-development/artifact
@@ -5609,7 +5614,7 @@ check-variables: $(TARGET)
 	grep -q "struct binding pattern requires a struct value, got i64" $(BUILD_DIR)/variables/variables-struct-pattern-non-struct.err
 	if $(TARGET) tests/cases/variables/errors/variables-struct-pattern-field.ari -o $(BUILD_DIR)/variables/variables-struct-pattern-field.elf >$(BUILD_DIR)/variables/variables-struct-pattern-field.err 2>&1; then exit 1; fi
 	grep -q "struct 'Point' has no field 'y'" $(BUILD_DIR)/variables/variables-struct-pattern-field.err
-check-ffi: $(TARGET)
+check-ffi: $(TARGET) check-layout-unit
 	mkdir -p $(BUILD_DIR)/ffi
 	$(TARGET) tests/cases/ffi/ok/ffi-c-puts.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-puts.ll
 	grep -q 'declare i32 @"puts"(ptr)' $(BUILD_DIR)/ffi/ffi-c-puts.ll

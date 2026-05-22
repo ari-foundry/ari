@@ -71,6 +71,7 @@ Use the narrowest target that matches the changed surface:
 | `make check-language-docs` | Language docs, docs-only reading path, and test-layout navigation. |
 | `make check-compiler-dev-docs` | Compiler roadmap, maturity gates, pass contracts, project model, source diagnostics, and artifact-testing docs. |
 | `make check-source-map-unit` | Direct C++ SourceMap API checks for line/column, EOF, CRLF, UTF-8 byte columns, invalid spans, multi-file ids, and snippets. |
+| `make check-layout-unit` | Direct C++ layout and non-local aggregate ABI checks for primitive sizes/alignments, field offsets, aggregate enum storage, and target classifier reasons. |
 | `make check-compiler-artifacts` | Deterministic fixture inventory, capability inventory, source-map, token, syntax, diagnostic, module graph, declaration index, typed IR, ownership/drop, pass-summary, LLVM-fragment, object/shared-symbol, and runtime-output artifacts. |
 | `make check-compiler-development` | Ari fixtures that model compiler pass worklists, diagnostics, source maps, readiness gates, onboarding, and test classification as ordinary language code. |
 | `make check-core-language` | Executable core language smoke tests plus representative stable diagnostics for functions, locals, operators, casts, blocks, branches, loops, `break`, `continue`, and returns. |

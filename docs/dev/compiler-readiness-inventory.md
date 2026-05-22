@@ -315,6 +315,10 @@ Current compiler-development tests:
   checked after full `--emit-llvm` generation. The layout fragment locks mixed
   struct field GEPs, tuple and fixed-array `size_of`/`align_of` constants, and
   payload enum tag/value lowering.
+- `tests/layout_unit.cpp`: direct C++ layout service and non-local aggregate ABI
+  classifier checks for primitive size/alignment, struct/tuple/array field
+  offsets, aggregate enum storage, root-`Vec` layout-unavailable rejection, and
+  64-bit Unix direct aggregate ABI limits.
 - `tests/cases/compiler-development/artifact/ok/c-header-repr-struct.h`,
   `c-header-repr-payload-enum.h`, and `c-header-generated-aggregates.h`:
   C header golden artifacts for public `@repr(C)` structs, fieldless enums,
