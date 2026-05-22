@@ -5,6 +5,10 @@ broad prototype into a dependable systems-programming library. It complements
 the API reference and roadmap: the roadmap says what to build, while this page
 says what "done enough to rely on" means.
 
+Use [stability.md](stability.md) for the detailed stable/usable/experimental
+policy and [verification-matrix.md](verification-matrix.md) for platform, CI,
+and fuzz/property-test coverage.
+
 ## Release Bar
 
 Every public `std` API should satisfy these rules before it is treated as
@@ -31,7 +35,8 @@ stable:
 
 ## Stability Levels
 
-Use these labels in roadmap notes when a module is being hardened:
+Use these labels in roadmap notes when a module is being hardened. The detailed
+promotion and deprecation rules live in [stability.md](stability.md).
 
 | Level | Meaning |
 | --- | --- |

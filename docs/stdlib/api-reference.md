@@ -4,6 +4,11 @@ This is a compact guide to the current public `std` surface. The source of
 truth is still `lib/std.arih`, `lib/std/*.arih`, and
 `tests/std_api_manifest.txt`.
 
+For an exhaustive generated spelling list, use
+[generated/api-index.md](generated/api-index.md). This hand-written page keeps
+the common APIs readable; the generated index keeps every public declaration
+findable and tied to its manifest coverage note.
+
 ## Prelude Root
 
 Common programs can use these names through implicit `std` loading:

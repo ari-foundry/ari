@@ -11,6 +11,8 @@ hiding allocation, ownership, or backend behavior.
 - Keep allocation explicit through `Zone`; there is no invisible global heap.
 - Make ownership and borrowing behavior visible in API signatures.
 - Track every public declaration in `tests/std_api_manifest.txt`.
+- Regenerate `docs/stdlib/generated/api-index.md` from the manifest so users
+  can find every current public spelling.
 - Keep tests focused enough that a new contributor can copy a nearby pattern.
 
 ## Return Shape Policy

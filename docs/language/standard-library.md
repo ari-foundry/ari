@@ -3,7 +3,11 @@
 The dedicated standard library docs live in [docs/stdlib](../stdlib/README.md).
 This language page is kept as a broad user-facing map; use the dedicated
 folder for the API reference, library development guide, testing guide, and
-implementation roadmap.
+implementation roadmap. For exact public spellings, use the generated
+[standard-library API index](../stdlib/generated/api-index.md); for stability
+labels and platform support, use
+[stability policy](../stdlib/stability.md) and
+[verification matrix](../stdlib/verification-matrix.md).
 
 This page is the map for Ari's source standard library. It explains what the
 current libraries are for, which APIs are already usable, and which library

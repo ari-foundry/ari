@@ -8,6 +8,12 @@ under `lib/std/`.
 
 - [Overview](overview.md): library purpose, module map, and design rules.
 - [API Reference](api-reference.md): current public APIs grouped by module.
+- [Generated API Index](generated/api-index.md): exhaustive manifest-derived
+  public API spelling and coverage index.
+- [Example Index](examples.md): task-oriented entry points and representative
+  executable examples for each module.
+- [Stability Policy](stability.md): stable, usable, platform-backed,
+  platform-specific, and experimental API rules.
 - [Text And Path Kinds](text-kinds.md): when to use byte strings, UTF-8
   views, OS string bytes, path bytes, and C strings.
 - [Value Movement Contracts](value-contracts.md): copy, move, clone, drop, and
@@ -21,6 +27,8 @@ under `lib/std/`.
 - [Production Readiness](production-readiness.md): quality bar for stable,
   dependable standard library APIs, including module tiers, failure policy,
   platform policy, non-goals, and release acceptance checks.
+- [Verification Matrix](verification-matrix.md): local checks, platform
+  support, CI jobs, and fuzz/property-test strategy.
 - [Testing](testing.md): test names, check targets, and coverage expectations.
 - [Roadmap](roadmap.md): staged implementation plan and next library families.
 
@@ -40,10 +48,9 @@ top of the raw process IO, descriptor, and file seek hooks.
 scratch-zone helpers, temporary path helpers, snapshot/golden comparisons,
 minimal benchmark timers, and compiler `@test` runner integration with stderr
 progress/failure markers. `std::log` adds level-prefixed `stderr` diagnostic
-lines, and `std::error` adds shared
-recoverable error categories,
-compact error values, POSIX errno mapping, module-local `Error` aliases, and
-stable `Display`/`Debug` output while per-test panic/log capture, doctests,
+lines, and `std::error` adds shared recoverable error categories, compact error
+values, POSIX errno mapping, module-local `Error` aliases, and stable
+`Display`/`Debug` output while per-test panic/log capture, doctests,
 compiler-tooling source maps, structured logging, remaining `Result[T, Error]`
 rollout, and backtrace support remain roadmap work.
 `std::c` adds the narrow C ABI boundary layer with borrowed

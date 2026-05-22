@@ -40,6 +40,14 @@ def main() -> int:
     roadmap = read(roadmap_path)
     readme_path = "docs/stdlib/README.md"
     readme = read(readme_path)
+    generated_index_path = "docs/stdlib/generated/api-index.md"
+    generated_index = read(generated_index_path)
+    examples_path = "docs/stdlib/examples.md"
+    examples = read(examples_path)
+    stability_path = "docs/stdlib/stability.md"
+    stability = read(stability_path)
+    verification_path = "docs/stdlib/verification-matrix.md"
+    verification = read(verification_path)
     tests_makefile_path = "tests/Makefile"
     tests_makefile = read(tests_makefile_path)
     lib_makefile_path = "lib/Makefile"
@@ -102,11 +110,66 @@ def main() -> int:
         require(development, needle, development_path)
 
     require(testing, "Docs readiness", testing_path)
+    require(testing, "tools/generate_std_api_docs.py --check", testing_path)
     require(testing, "make check-stdlib-docs", testing_path)
     require(readme, "module tiers", readme_path)
     require(readme, "failure policy", readme_path)
     require(readme, "non-goals", readme_path)
+    require(readme, "Generated API Index", readme_path)
+    require(readme, "Example Index", readme_path)
+    require(readme, "Stability Policy", readme_path)
+    require(readme, "Verification Matrix", readme_path)
     require(modules_readme, "Guide Shape", modules_readme_path)
+
+    for needle in [
+        "# Generated Standard Library API Index",
+        "tests/std_api_manifest.txt",
+        "Coverage note",
+        "## Modules",
+        "`std::vec`",
+        "`std::net`",
+    ]:
+        require(generated_index, needle, generated_index_path)
+
+    for needle in [
+        "# Standard Library Example Index",
+        "## First Examples To Read",
+        "## Module Example Map",
+        "`std::process`",
+        "`std::sync`",
+        "`std::zone`",
+    ]:
+        require(examples, needle, examples_path)
+
+    for needle in [
+        "# Standard Library Stability Policy",
+        "## Stability Labels",
+        "## What Makes An API Stable",
+        "## Generated API Docs",
+        "## Stable Versus Experimental",
+        "## Deprecation Policy",
+        "## Self-Review Rule",
+        "stable",
+        "usable",
+        "platform-backed",
+        "platform-specific",
+        "experimental",
+    ]:
+        require(stability, needle, stability_path)
+
+    for needle in [
+        "# Standard Library Verification Matrix",
+        "## Local Checks",
+        "## Platform Support Matrix",
+        "## CI Matrix",
+        "## Fuzz And Property Test Plan",
+        "## Documentation Review Checklist",
+        "Linux x86_64 glibc hosted",
+        "macOS",
+        "Windows",
+        "Freestanding/kernel",
+    ]:
+        require(verification, needle, verification_path)
 
     require(tests_makefile, "check-stdlib-docs", tests_makefile_path)
     require(tests_makefile, "python3 tests/check_stdlib_docs.py", tests_makefile_path)

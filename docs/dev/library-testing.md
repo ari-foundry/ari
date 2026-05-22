@@ -8,11 +8,12 @@ contributors adding APIs under `lib/std.arih` or `lib/std/`.
 | Layer | Purpose | Where |
 | --- | --- | --- |
 | API manifest | Prevent public `std` APIs from changing accidentally. | `tests/std_api_manifest.txt`, checked by `make check-std-api`. |
+| Generated API index | Keep a browsable public API list in sync with the manifest. | `docs/stdlib/generated/api-index.md`, checked by `python3 tools/generate_std_api_docs.py --check`. |
 | Positive source behavior | Compile and run valid library use. | `tests/cases/standard-library/ok/<feature>/std-<module>-<case>.ari`, `tests/cases/standard-library/ok/prelude/prelude-<case>.ari`. |
 | Negative diagnostics | Lock down misuse and unsupported surfaces. | `tests/cases/standard-library/errors/<feature>/std-<module>-<case>.ari`, `tests/cases/standard-library/errors/prelude/prelude-<case>.ari`. |
 | Backend checks | Inspect LLVM, symbols, runtime hooks, and executable output. | `tests/Makefile` under the relevant check target. |
 | Cross-library smoke | Exercise several library families together. | `tests/cases/standard-library/ok/smoke/std-library-smoke.ari`. |
-| Docs coverage | Explain user-visible behavior and remaining limits. | `docs/language/standard-library.md`, focused language docs, `docs/dev/test-matrix.md`. |
+| Docs coverage | Explain user-visible behavior, examples, stability labels, platform support, and remaining limits. | `docs/language/standard-library.md`, `docs/stdlib/examples.md`, `docs/stdlib/stability.md`, `docs/stdlib/verification-matrix.md`, focused language docs, `docs/dev/test-matrix.md`. |
 
 ## Naming Scheme
 

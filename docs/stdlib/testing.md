@@ -8,6 +8,7 @@ through `tests/Makefile`.
 | Layer | Purpose | Command |
 | --- | --- | --- |
 | API manifest | Detect accidental public API drift. | `make check-std-api` |
+| Generated API docs | Keep the exhaustive public API index in sync with the manifest. | `python3 tools/generate_std_api_docs.py --check` |
 | Docs readiness | Keep production readiness, module tier, failure, non-goal, and per-module guide policy documented. | `make check-stdlib-docs` |
 | Focused source behavior | Compile and usually run one valid behavior. | `make check-prelude` |
 | Negative diagnostics | Lock down bad uses and planned gaps. | `make check-prelude` |
@@ -181,3 +182,8 @@ For a public API, aim for:
 
 Runtime assertions do not need negative compile tests unless the checker can
 reject the misuse statically.
+
+For platform coverage, CI layout, and fuzz/property-test strategy, see
+[verification-matrix.md](verification-matrix.md). For the exact public API list
+that must stay in sync with the manifest, see
+[generated/api-index.md](generated/api-index.md).

@@ -14,7 +14,9 @@ This guide is for contributors adding or changing source libraries under
 6. Add the test to `tests/Makefile`.
 7. Update `tests/std_api_manifest.txt`.
 8. Update this `docs/stdlib/` folder and any focused language docs.
-9. Run `make check-stdlib-docs` when the API changes docs, stability policy,
+9. Regenerate `docs/stdlib/generated/api-index.md` when the public API
+   manifest changes.
+10. Run `make check-stdlib-docs` when the API changes docs, stability policy,
    or module guide coverage.
 
 Compiler changes belong in `src/` only when source Ari cannot model the
@@ -96,8 +98,11 @@ readiness tiers:
 - experimental: APIs that need more ownership, error, or runtime design first
 
 Every tier decision should be reflected in `docs/stdlib/production-readiness.md`
-or the focused module guide. If the answer is "only a future compiler would use
-this", it is probably not a runtime `std` API.
+or the focused module guide. The detailed labels and deprecation policy live in
+`docs/stdlib/stability.md`; platform, CI, and fuzz/property coverage live in
+`docs/stdlib/verification-matrix.md`. If the answer is
+"only a future compiler would use this", it is probably not a runtime `std`
+API.
 
 Every public child module in `lib/std/*.arih` needs a focused guide under
 `docs/stdlib/modules/`. `std::option` and `std::result` intentionally share
@@ -125,6 +130,13 @@ python3 tests/check_std_api_manifest.py --print
 
 Copy only the new entries you meant to expose, then replace the placeholder
 note with the focused test and docs coverage. Keep entries sorted.
+
+Then regenerate and check the browsable API index:
+
+```sh
+python3 tools/generate_std_api_docs.py
+python3 tools/generate_std_api_docs.py --check
+```
 
 ## Library Build Entry Point
 
@@ -160,5 +172,7 @@ an ad hoc library where a symbol check is not useful.
 - Positive behavior has an executable or LLVM check.
 - Misuse has a negative test when it can be caught before runtime.
 - `make check-std-api` passes.
+- `python3 tools/generate_std_api_docs.py --check` passes when the manifest
+  changed.
 - `make check-stdlib-docs` passes when docs or stability policy changed.
 - A narrow build/test target passes before broader `make check`.

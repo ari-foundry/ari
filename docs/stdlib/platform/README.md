@@ -8,6 +8,8 @@ kernel, libc, or runtime startup contract.
 
 - [Linux Platform Plan](linux.md): target ABI, libc, ELF/DWARF, syscall and
   errno ABI, procfs/sysfs, and Linux-specific event/file-descriptor families.
+- [Verification Matrix](../verification-matrix.md): current platform support
+  reading, CI jobs, and the checks needed before calling an API portable.
 
 ## Policy
 

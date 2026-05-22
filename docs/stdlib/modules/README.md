@@ -4,6 +4,10 @@ This folder holds focused guides for individual `std` modules. Use these pages
 when the compact API reference is not enough and you need the purpose, current
 limits, examples, and test files for one module.
 
+For a task-oriented path through the examples, see
+[../examples.md](../examples.md). For exact public spellings, see
+[../generated/api-index.md](../generated/api-index.md).
+
 ## Available Guides
 
 - [std::option and std::result](option-result.md): ADT helpers for absence,
