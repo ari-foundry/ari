@@ -1,0 +1,5 @@
+SymbolExtract kind=object-symbols source=build/compiler-development/artifact/object-aggregate-extern-link.o symbols=4
+  Symbol name=ari_make_object_pair state=defined
+  Symbol name=ari_take_object_pair state=defined
+  Symbol name=ari_test_add_i64 state=undefined
+  Symbol name=_ARNv4main state=missing

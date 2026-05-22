@@ -324,9 +324,12 @@ Current compiler-development tests:
   C header golden artifacts for public `@repr(C)` structs, fieldless enums,
   payload-bearing enums, generated tuple/array/vector wrappers, and ABI-facing
   function prototypes.
-- `tests/cases/compiler-development/artifact/ok/object-library-export.symbols`
-  and `shared-visibility.symbols`: normalized object and linked shared-library
-  symbol inventories checked through `tests/extract_symbol_names.py`.
+- `tests/cases/compiler-development/artifact/ok/object-library-export.symbols`,
+  `object-aggregate-extern-link.symbols`, and `shared-visibility.symbols`:
+  normalized object and linked shared-library symbol inventories checked
+  through `tests/extract_symbol_names.py`. The aggregate object artifact locks
+  exported `@repr(C)` aggregate symbols, unresolved C helper imports, and the
+  no-`main` library-object surface.
 - `tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout` and
   `runtime-output-trait.stdout`: executable stdout goldens checked when the LLVM
   driver is available.

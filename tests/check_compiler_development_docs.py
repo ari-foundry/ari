@@ -1316,6 +1316,7 @@ def main() -> int:
         "c-header-repr-payload-enum.h",
         "c-header-generated-aggregates.h",
         "object-library-export.symbols",
+        "object-aggregate-extern-link.symbols",
         "shared-visibility.symbols",
         "runtime-output-basic.stdout",
         "runtime-output-trait.stdout",

@@ -41,6 +41,10 @@ fixed-array `size_of`/`align_of` constants, and payload enum tag/value access.
 offsets, aggregate enum storage records, root-`Vec` layout-unavailable
 classification, and the direct/indirect/unsupported aggregate ABI classifier
 before LLVM emission.
+`object-aggregate-extern-link.symbols` checks the relocatable object boundary
+for a compiler-emitted `@repr(C)` aggregate API: exported C symbols are defined,
+the imported C helper remains unresolved for the linker, and no `main` symbol is
+emitted.
 
 ## Standard Library Coverage Note
 

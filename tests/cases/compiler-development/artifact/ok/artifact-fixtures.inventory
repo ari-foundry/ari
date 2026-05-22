@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=130
+CompilerArtifactFixtures version=1 group=all entries=131
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -98,6 +98,7 @@ CompilerArtifactFixtures version=1 group=all entries=130
   Fixture group=ok kind=module-graph path=ok/module-graph-project-compiler.graph
   Fixture group=ok kind=text path=ok/normalize-paths.actual.txt
   Fixture group=ok kind=text path=ok/normalize-paths.expected.txt
+  Fixture group=ok kind=symbols path=ok/object-aggregate-extern-link.symbols
   Fixture group=ok kind=symbols path=ok/object-library-export.symbols
   Fixture group=ok kind=typed-ir path=ok/ownership-aggregate-field-move.ir
   Fixture group=ok kind=pass-summary path=ok/pass-summary-basic.summary

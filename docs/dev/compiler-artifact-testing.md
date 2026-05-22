@@ -292,6 +292,7 @@ tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-whi
 tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-owner.diagnostic
+tests/cases/compiler-development/artifact/ok/object-aggregate-extern-link.symbols
 tests/cases/compiler-development/artifact/ok/object-library-export.symbols
 tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir
 tests/cases/compiler-development/artifact/ok/project-compiler.ir
