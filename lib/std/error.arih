@@ -28,6 +28,7 @@ pub enum Kind {
   StorageFull,
   CrossDevice,
   Other,
+  ConnectionRefused,
 }
 
 pub type ErrorKind = std::error::Kind;
@@ -60,6 +61,7 @@ fn kind_id(kind: std::error::Kind) -> i64 {
     StorageFull => { return 18; }
     CrossDevice => { return 19; }
     Other => { return 20; }
+    ConnectionRefused => { return 21; }
   }
 }
 
@@ -83,6 +85,7 @@ fn kind_from_id(id: i64) -> std::error::Kind {
   if id == 17 { return DirectoryNotEmpty; }
   if id == 18 { return StorageFull; }
   if id == 19 { return CrossDevice; }
+  if id == 21 { return ConnectionRefused; }
   return Other;
 }
 
@@ -169,6 +172,9 @@ pub fn from_errno(code: i64) -> std::error::Error {
   }
   if code == 110 {
     return std::error::with_code(TimedOut, code);
+  }
+  if code == 111 {
+    return std::error::with_code(ConnectionRefused, code);
   }
   if code == 32 {
     return std::error::with_code(BrokenPipe, code);
@@ -257,6 +263,10 @@ pub fn is_interrupted(value: ref std::error::Error) -> bool {
   return std::error::is_kind(value, Interrupted);
 }
 
+pub fn is_connection_refused(value: ref std::error::Error) -> bool {
+  return std::error::is_kind(value, ConnectionRefused);
+}
+
 pub fn is_retryable(value: ref std::error::Error) -> bool {
   if std::error::is_kind(value, Interrupted) {
     return true;
@@ -292,6 +302,7 @@ pub fn name(kind: std::error::Kind) -> string {
     StorageFull => { return "storage full"; }
     CrossDevice => { return "cross-device operation"; }
     Other => { return "other error"; }
+    ConnectionRefused => { return "connection refused"; }
   }
 }
 
@@ -322,6 +333,10 @@ pub impl std::error::Error {
 
   fn is_interrupted(self: ref Self) -> bool {
     return std::error::is_interrupted(self);
+  }
+
+  fn is_connection_refused(self: ref Self) -> bool {
+    return std::error::is_connection_refused(self);
   }
 
   fn is_retryable(self: ref Self) -> bool {

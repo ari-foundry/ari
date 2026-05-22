@@ -261,6 +261,7 @@ fn std::error::from_os_code|check-prelude std-error-integration target OS error-
 fn std::error::from_os_code_result[T]|check-prelude std-error-integration Result[T, OS code] to Result[T, Error] bridge; docs/stdlib/modules/error.md
 fn std::error::from_raw|check-prelude std-error-basic compact Result-compatible error reconstruction; docs/stdlib/modules/error.md
 fn std::error::from_raw_result[T]|check-prelude std-error-basic Result[T, i64] to Result[T, Error] compatibility bridge; docs/stdlib/modules/error.md
+fn std::error::is_connection_refused|check-prelude std-error-integration connection-refused predicate helper; docs/stdlib/modules/error.md
 fn std::error::is_interrupted|check-prelude std-error-basic interrupted predicate helper; docs/stdlib/modules/error.md
 fn std::error::is_kind|check-prelude std-error-basic error-kind predicate helper; docs/stdlib/modules/error.md
 fn std::error::is_not_found|check-prelude std-error-basic not-found predicate helper; docs/stdlib/modules/error.md
@@ -1253,6 +1254,7 @@ method std::encoding::Utf8Char::len|check-prelude std-encoding-utf8-codepoints d
 method std::encoding::Utf8Char::next_index|check-prelude std-encoding-utf8-codepoints decoded UTF-8 next byte offset accessor; docs/stdlib/modules/encoding.md
 method std::encoding::Utf8Char::scalar|check-prelude std-encoding-utf8-codepoints decoded Unicode scalar accessor; docs/stdlib/modules/encoding.md
 method std::error::Error::code|check-prelude std-error-basic error platform code method; docs/stdlib/modules/error.md
+method std::error::Error::is_connection_refused|check-prelude std-error-integration connection-refused predicate method; docs/stdlib/modules/error.md
 method std::error::Error::is_interrupted|check-prelude std-error-basic interrupted predicate method; docs/stdlib/modules/error.md
 method std::error::Error::is_kind|check-prelude std-error-basic error-kind predicate method; docs/stdlib/modules/error.md
 method std::error::Error::is_not_found|check-prelude std-error-basic not-found predicate method; docs/stdlib/modules/error.md

@@ -128,7 +128,8 @@ identifies the exact case:
   direct `Result[T, Error]` conversion, and raw scalar compatibility bridges.
 - `std-error-integration.ari`: shared `Error`/`ErrorKind` aliases in
   fs/io/net/os/process, errno-result conversion, conversion trait adapters, and
-  `Display`/`Debug` output stability.
+  `ConnectionRefused`/`ECONNREFUSED` mapping, and `Display`/`Debug` output
+  stability.
 - `std-c-interop.ari`: source `std::c` C ABI string views, zone-backed
   NUL-terminated `CString`, libc alias calls, POSIX errno mapping, dynamic
   loader handles, and root aliases.

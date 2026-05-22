@@ -401,6 +401,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5error12from_os_code' $(BUILD_DIR)/prelude/std-error-integration.ll
 	grep -q '_ARNv3std5error24from_errno_result__G_i64' $(BUILD_DIR)/prelude/std-error-integration.ll
 	grep -q '_ARNv3std5error26from_os_code_result__G_i64' $(BUILD_DIR)/prelude/std-error-integration.ll
+	grep -q '_ARNv3std5error21is_connection_refused' $(BUILD_DIR)/prelude/std-error-integration.ll
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-integration.ari -o $(BUILD_DIR)/prelude/std-error-integration.elf
 	$(BUILD_DIR)/prelude/std-error-integration.elf; code=$$?; test $$code -eq 45
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-buffered.ll

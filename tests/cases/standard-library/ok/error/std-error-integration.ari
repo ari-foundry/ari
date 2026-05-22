@@ -39,6 +39,14 @@ fn main() -> i64 {
     return 14;
   }
 
+  let refused: net::Error = error::from_errno(111);
+  if !refused.is_kind(error::ConnectionRefused) {
+    return 15;
+  }
+  if !refused.is_connection_refused() {
+    return 16;
+  }
+
   let raw: i64 = convert::into<i64, error::Error>(net_reason);
   if !error::from_raw(raw).is_kind(error::TimedOut) {
     return 4;
@@ -75,7 +83,7 @@ fn main() -> i64 {
   }
 
   var zone = zone::create(512);
-  var display = format_in!(ref mut zone, "{}|{:?}|{:?}", fs_reason, error::InvalidInput, fs_reason);
+  var display = format_in!(ref mut zone, "{}|{:?}|{:?}|{}", fs_reason, error::InvalidInput, fs_reason, refused);
   if !display.contains_text("not found") {
     zone::destroy(zone);
     return 9;
@@ -87,6 +95,10 @@ fn main() -> i64 {
   if !display.contains_text("Error(not found, code=2)") {
     zone::destroy(zone);
     return 11;
+  }
+  if !display.contains_text("connection refused") {
+    zone::destroy(zone);
+    return 17;
   }
 
   zone::destroy(zone);

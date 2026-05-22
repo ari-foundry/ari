@@ -29,6 +29,7 @@ enum Kind {
   StorageFull,
   CrossDevice,
   Other,
+  ConnectionRefused,
 }
 
 struct Error
@@ -54,6 +55,7 @@ raw(ref Error) -> i64
 is_kind(ref Error, kind: Kind) -> bool
 is_not_found(ref Error) -> bool
 is_interrupted(ref Error) -> bool
+is_connection_refused(ref Error) -> bool
 is_retryable(ref Error) -> bool
 name(kind: Kind) -> string
 message(ref Error) -> string
@@ -131,7 +133,7 @@ match error::try_from_errno(code_from_c) {
 preserves the platform code when one exists. `from_errno` maps common
 POSIX/Linux `errno` values such as `ENOENT`, `EACCES`, `EEXIST`, `EINVAL`,
 `EINTR`, `EAGAIN`, `ETIMEDOUT`, `EPIPE`, `ENOMEM`, `EBUSY`, `ENOTDIR`,
-`EISDIR`, `ENOTEMPTY`, `ENOSPC`, and `EXDEV`.
+`EISDIR`, `ENOTEMPTY`, `ENOSPC`, `EXDEV`, and `ECONNREFUSED`.
 
 Use `is_retryable` when an operation may be worth trying again. It currently
 returns true for `Interrupted`, `WouldBlock`, `TimedOut`, and `InProgress`.
