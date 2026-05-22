@@ -155,7 +155,8 @@ drop only the active payload.
 ## Current Limits
 
 - Recursive aggregate values still need an indirection such as a pointer or a
-  zone-backed handle; directly infinite value layout is unsupported.
+  zone-backed handle; directly infinite value layout is rejected with
+  `recursive aggregate value type 'Name[...]' requires indirection`.
 - Generic aggregate values are reliable for local executable code and the LLVM
   backend paths covered by tests. External ABI exposure is narrower and still
   follows the aggregate ABI docs.
@@ -167,6 +168,7 @@ drop only the active payload.
 
 - `tests/cases/generics/ok/generic-aggregate-monomorphization.ari`
 - `tests/cases/generics/ok/generic-aggregate-stdlib-stress.ari`
+- `tests/cases/generics/ok/generic-aggregate-recursive-pointer.ari`
 - `tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari`
 - `tests/cases/generics/errors/generic-aggregate-*.ari`
 

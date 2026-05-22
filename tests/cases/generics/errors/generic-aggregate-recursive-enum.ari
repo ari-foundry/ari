@@ -1,0 +1,16 @@
+enum Tree[T] {
+  Empty,
+  Child(Tree[T]),
+}
+
+fn main() -> i64 {
+  let value: Tree[i64] = Empty<i64>();
+  match value {
+    Empty => {
+      return 0;
+    }
+    Child(child) => {
+      return 1;
+    }
+  }
+}

@@ -14,9 +14,9 @@ those names are special-cased.
 | Generic type aliases | supported | Generic aliases expand before identity, layout, and codegen. Recursive aliases are rejected. |
 | Nested generic types | supported | Concrete keys and typed IR include nested applications such as `PassResult[Box[Token], Maybe[Diagnostic]]`. |
 | Generic methods and receivers | supported | Receiver type identity is concrete; mismatched receivers are rejected. |
-| Ownership/drop through generic payloads | supported first pass | `Box[own i64]` style payloads preserve qualifiers, detect use-after-move, and drop active aggregate/enum payloads. |
+| Ownership/drop through generic payloads | supported | `Box[own i64]` style payloads preserve qualifiers, detect use-after-move, and drop active aggregate/enum payloads. |
 | Stdlib generic fixtures | stress coverage | `Vec`, `Option`, `Result`, and `HashMap` are fixtures, not correctness targets. |
-| Recursive value aggregates | unsupported by design | Require pointer/zone indirection before layout can be finite. |
+| Recursive value aggregates | unsupported by design | Direct value recursion is rejected with a stable diagnostic; pointer/zone indirection is required before layout can be finite. |
 | External aggregate ABI | partial | Local/codegen paths are covered; public C/extern ABI stays under aggregate ABI rules. |
 
 ## Implementation Map
@@ -77,9 +77,11 @@ Prefer diagnostics that name the concrete source-level type:
 - `struct 'Box' has no field 'missing'`
 - `unknown method 'id' for type Box[bool]`
 - `cannot use moved owned field 'value.0'`
+- `recursive aggregate value type 'Node[T]' requires indirection`
 
 These are more valuable than only testing arity errors because they prove
-substitution, identity, method receiver selection, and owner-path tracking.
+substitution, identity, method receiver selection, owner-path tracking, and
+layout-cycle protection.
 
 ## Test Inventory
 
@@ -87,6 +89,7 @@ Positive fixtures:
 
 - `tests/cases/generics/ok/generic-aggregate-monomorphization.ari`
 - `tests/cases/generics/ok/generic-aggregate-stdlib-stress.ari`
+- `tests/cases/generics/ok/generic-aggregate-recursive-pointer.ari`
 - `tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari`
 
 Negative fixtures:
@@ -97,6 +100,9 @@ Negative fixtures:
 - `tests/cases/generics/errors/generic-aggregate-field-access.ari`
 - `tests/cases/generics/errors/generic-aggregate-method-receiver.ari`
 - `tests/cases/generics/errors/generic-aggregate-use-after-move.ari`
+- `tests/cases/generics/errors/generic-aggregate-recursive-struct.ari`
+- `tests/cases/generics/errors/generic-aggregate-recursive-enum.ari`
+- `tests/cases/generics/errors/generic-aggregate-recursive-growth.ari`
 
 Artifact coverage:
 

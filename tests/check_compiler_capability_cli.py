@@ -69,7 +69,7 @@ def main():
         "CompilerCapabilityInventory version=1",
         "entries=26",
         "capability=functions status=implemented owner=parser/sema/backend",
-        "capability=generic-aggregate-monomorphization status=planned",
+        "capability=generic-aggregate-monomorphization status=implemented",
         "capability=class-keyword status=rejected",
     )
     ok &= require_success(

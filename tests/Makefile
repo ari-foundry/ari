@@ -4124,6 +4124,7 @@ check-generics: $(TARGET)
 	grep -Fq "[128 x i8]" $(BUILD_DIR)/generics/generic-aggregate-monomorphization.ll
 	$(TARGET) tests/cases/generics/ok/generic-aggregate-stdlib-stress.ari -o $(BUILD_DIR)/generics/generic-aggregate-stdlib-stress.elf
 	$(BUILD_DIR)/generics/generic-aggregate-stdlib-stress.elf; code=$$?; test $$code -eq 94
+	$(TARGET) tests/cases/generics/ok/generic-aggregate-recursive-pointer.ari --check
 	$(TARGET) tests/cases/generics/ok/generic-enum-constructors.ari --emit-llvm $(BUILD_DIR)/generics/generic-enum-constructors.ll
 	grep -q "insertvalue { i32, i64 }" $(BUILD_DIR)/generics/generic-enum-constructors.ll
 	$(TARGET) tests/cases/generics/ok/generic-enum-try.ari --emit-llvm $(BUILD_DIR)/generics/generic-enum-try.ll
@@ -4160,6 +4161,12 @@ check-generics: $(TARGET)
 	grep -q "unknown method 'id' for type Box\\[bool\\]" $(BUILD_DIR)/generics/generic-aggregate-method-receiver.err
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-use-after-move.ari --check >$(BUILD_DIR)/generics/generic-aggregate-use-after-move.err 2>&1; then exit 1; fi
 	grep -q "cannot use moved owned field 'value.0'" $(BUILD_DIR)/generics/generic-aggregate-use-after-move.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-recursive-struct.ari --check >$(BUILD_DIR)/generics/generic-aggregate-recursive-struct.err 2>&1; then exit 1; fi
+	grep -q "recursive aggregate value type 'Node\\[T\\]' requires indirection" $(BUILD_DIR)/generics/generic-aggregate-recursive-struct.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-recursive-enum.ari --check >$(BUILD_DIR)/generics/generic-aggregate-recursive-enum.err 2>&1; then exit 1; fi
+	grep -q "recursive aggregate value type 'Tree\\[i64\\]' requires indirection" $(BUILD_DIR)/generics/generic-aggregate-recursive-enum.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-recursive-growth.ari --check >$(BUILD_DIR)/generics/generic-aggregate-recursive-growth.err 2>&1; then exit 1; fi
+	grep -q "recursive aggregate value type 'Node\\[Wrapper\\[Wrapper\\[T\\]\\]\\]' requires indirection" $(BUILD_DIR)/generics/generic-aggregate-recursive-growth.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-null-coalescing-type.ari -o $(BUILD_DIR)/generics/generic-enum-null-coalescing-type.elf >$(BUILD_DIR)/generics/generic-enum-null-coalescing-type.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/generics/generic-enum-null-coalescing-type.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-pattern-type.ari -o $(BUILD_DIR)/generics/generic-enum-pattern-type.elf >$(BUILD_DIR)/generics/generic-enum-pattern-type.err 2>&1; then exit 1; fi

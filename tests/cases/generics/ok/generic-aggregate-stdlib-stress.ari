@@ -105,6 +105,12 @@ fn vec_option_span_score(values: std::vec::Vec[Option[Span]]) -> i64 {
     option_span_score(values.get(1));
 }
 
+fn vec_diagnostic_score(values: std::vec::Vec[Diagnostic]) -> i64 {
+  return values.len() +
+    diagnostic_score(values.get(0)) +
+    diagnostic_score(values.get(1));
+}
+
 fn main() -> i64 {
   var zone = zone::create(4096);
 
@@ -130,6 +136,16 @@ fn main() -> i64 {
   span_options.push(span_option);
   span_options.push(None<Span>());
 
+  var diagnostics = std::vec::new<Diagnostic>(ref mut zone, 2);
+  diagnostics.push(Diagnostic {
+    severity: 2,
+    span: Span { start: 80, end: 84 },
+  });
+  diagnostics.push(Diagnostic {
+    severity: 4,
+    span: Span { start: 90, end: 95 },
+  });
+
   var token_vector = std::vec::new<Token>(ref mut zone, 2);
   token_vector.push(token(13, 60, 63));
   token_vector.push(token(17, 70, 72));
@@ -148,9 +164,10 @@ fn main() -> i64 {
     result_vec_score(vector_result) +
     option_result_score(nested_option) +
     vec_option_span_score(span_options) +
+    vec_diagnostic_score(diagnostics) +
     symbol_score +
     tokens.len();
 
   zone::destroy(zone);
-  return total - 51;
+  return total - 68;
 }

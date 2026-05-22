@@ -1,0 +1,11 @@
+struct Wrapper[T] {
+  value: T,
+}
+
+struct Node[T] {
+  child: Node[Wrapper[T]],
+}
+
+fn main() -> i64 {
+  return 0;
+}

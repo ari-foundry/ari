@@ -472,6 +472,22 @@ private:
         std::uint64_t vtable_offset = 0;
     };
 
+    struct AggregateTypeResolutionGuard {
+        std::vector<std::string>& stack;
+
+        AggregateTypeResolutionGuard(std::vector<std::string>& stack_ref, std::string key)
+            : stack(stack_ref) {
+            stack.push_back(std::move(key));
+        }
+
+        AggregateTypeResolutionGuard(const AggregateTypeResolutionGuard&) = delete;
+        AggregateTypeResolutionGuard& operator=(const AggregateTypeResolutionGuard&) = delete;
+
+        ~AggregateTypeResolutionGuard() {
+            stack.pop_back();
+        }
+    };
+
     const Program& program_;
     SemaOptions options_;
     TargetInfo target_ = resolve_target_info(options_.target_triple);
@@ -493,6 +509,7 @@ private:
     std::vector<LoopInfo> loops_;
     std::map<std::string, IrType> current_type_substitutions_;
     std::set<std::string> resolving_type_aliases_;
+    std::vector<std::string> resolving_aggregate_types_;
     std::vector<GenericTraitBound> current_generic_bounds_;
     std::vector<IrFunction> specialized_functions_;
     std::vector<PendingSpecialization> pending_specializations_;
@@ -585,6 +602,33 @@ private:
             if (!(std::isalnum(ch) || c == '_')) return false;
         }
         return true;
+    }
+
+    static IrType aggregate_identity_type(IrType type) {
+        type.qualifier = TypeQualifier::Value;
+        type.field_names.clear();
+        type.field_types.clear();
+        type.field_mutable.clear();
+        return type;
+    }
+
+    static std::string aggregate_resolution_key(const IrType& type) {
+        std::string kind;
+        if (type.primitive == IrPrimitiveKind::Struct) kind = "struct ";
+        else if (type.primitive == IrPrimitiveKind::Enum) kind = "enum ";
+        else kind = "aggregate ";
+        return kind + type.name;
+    }
+
+    bool aggregate_resolution_is_recursive(const IrType& type) const {
+        const std::string key = aggregate_resolution_key(type);
+        return std::find(resolving_aggregate_types_.begin(), resolving_aggregate_types_.end(), key) !=
+               resolving_aggregate_types_.end();
+    }
+
+    void fail_recursive_aggregate_value(SourceLocation loc, const IrType& type) const {
+        fail(loc, "recursive aggregate value type '" + type_name(aggregate_identity_type(type)) +
+                      "' requires indirection");
     }
 
     static std::string qualify_in_module(const std::string& module_name, const std::string& name) {
@@ -3772,7 +3816,8 @@ private:
     IrType resolve_enum_type_application(
         SourceLocation loc,
         const EnumInfo& info,
-        const std::vector<IrType>& type_args
+        const std::vector<IrType>& type_args,
+        TypeQualifier requested_qualifier = TypeQualifier::Value
     ) {
         std::map<std::string, IrType> substitutions =
             enum_type_arg_substitutions(loc, info, type_args);
@@ -3783,6 +3828,15 @@ private:
         type.name = info.name;
         type.loc = loc;
         type.args = type_args;
+
+        if (aggregate_resolution_is_recursive(type)) {
+            if (requested_qualifier == TypeQualifier::Value) {
+                fail_recursive_aggregate_value(loc, type);
+            }
+            return type;
+        }
+
+        AggregateTypeResolutionGuard resolving(resolving_aggregate_types_, aggregate_resolution_key(type));
 
         bool aggregate_layout = false;
         std::size_t max_payloads = 0;
@@ -4860,6 +4914,15 @@ private:
                     substitutions.emplace(info.generic_names[i], arg);
                 }
 
+                if (aggregate_resolution_is_recursive(type)) {
+                    if (type.qualifier == TypeQualifier::Value) {
+                        fail_recursive_aggregate_value(ast_type.loc, type);
+                    }
+                    return type;
+                }
+
+                AggregateTypeResolutionGuard resolving(resolving_aggregate_types_, aggregate_resolution_key(type));
+
                 std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
                 std::string previous_module = current_module_name_;
                 current_module_name_ = info.module_name;
@@ -4895,7 +4958,12 @@ private:
                     for (const auto& arg : ast_type.args) {
                         type_args.push_back(resolve_executable_type(arg));
                     }
-                    type = resolve_enum_type_application(ast_type.loc, enum_found->second, type_args);
+                    type = resolve_enum_type_application(
+                        ast_type.loc,
+                        enum_found->second,
+                        type_args,
+                        requested_qualifier
+                    );
                     type.qualifier = requested_qualifier;
                     type.loc = ast_type.loc;
                 } else {

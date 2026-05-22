@@ -1,0 +1,8 @@
+struct Node[T] {
+  payload: T,
+  child: Node[T],
+}
+
+fn main() -> i64 {
+  return 0;
+}

@@ -291,6 +291,14 @@ Checklist:
 - [x] specialize generic function names into function pointer values from expected `fn(...) -> ...` types
 - [x] lower explicit generic struct literals and tuple-struct constructors
 - [x] infer generic struct literal and tuple-struct constructor type arguments from field/argument values
+- [x] monomorphize generic structs, tuple structs, enums, and aliases with
+      nested aggregate payloads through field access, enum construction,
+      match bindings, pass/return, typed IR, and LLVM lowering
+- [x] stress generic aggregate support with user-defined compiler-shaped
+      models and stdlib `Vec`/`Option`/`Result`/`HashMap` fixtures without
+      stdlib name-specific correctness hooks
+- [x] reject directly recursive aggregate value layouts with a stable
+      indirection diagnostic
 - [x] specialize generic inherent impl methods with `self` receivers
 - [x] specialize generic trait impl methods with `self` receivers
 - [x] enforce generic impl bounds at specialization sites

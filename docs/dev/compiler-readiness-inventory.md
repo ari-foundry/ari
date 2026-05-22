@@ -29,7 +29,7 @@ ordinary Ari data.
 | Source identity | 12 | 30 | Owned source maps/files, canonical/display paths, stable `SourceId`, byte spans, line tables, EOF offsets, and snippets. |
 | Diagnostics | 13 | 30 | Diagnostic codes, labels, notes, source rendering, and normalized golden output. |
 | Module projects | 12 | 45 | Predictable package roots, `.ari`/`.arih` policy, visibility errors, metadata, and cache invalidation. |
-| Compiler data models | 15 | 50 | Nested generic aggregates, `Result` payloads, vectors/maps/sets, and compiler-shaped ownership patterns. |
+| Compiler data models | 15 | 60 | Nested generic aggregates, `Result` payloads, vectors/maps/sets, compiler-shaped ownership patterns, and stable rejection of infinite value layouts. |
 | Trait selection | 12 | 45 | The minimum static subset is locked; broader trait objects, associated-type solving, and collection defaults can still deepen it. |
 | Artifact comparison | 16 | 45 | Token, syntax, diagnostic, module graph, declaration, typed IR, HIR, LLVM, object, and executable comparison order. |
 | Tool build flow | 10 | 35 | Focused Make targets for one Ari tool, fixture roots, and golden comparison without hidden flags. |
@@ -44,7 +44,8 @@ get more reliable, not when a private shortcut is added.
 | --- | --- | --- |
 | Hosted LLVM backend | Ari emits LLVM IR, objects, executables, and shared libraries through the LLVM path. | Compiler work can be validated as real artifacts instead of toy interpreter behavior. |
 | Core executable language | Functions, locals, scalar operators, casts, blocks, branches, loops, `break`, `continue`, and returns are locked by `make check-core-language`; richer enums, structs, modules, FFI, and formatting are covered by their focused suites. | Compiler-shaped fixtures can be written as ordinary Ari programs on top of a stable scalar/control-flow base. |
-| Generic calls and ADTs | Generic functions, generic structs, generic enums, `Option[T]`, and `Result[T, E]` exist. | Source models, tokens, AST nodes, and expected failures can use natural types. |
+| Generic calls and ADTs | Generic functions, generic structs, generic enums, generic aliases, nested aggregate payloads, stdlib generic stress cases, and compiler-shaped generic models are locked by `make check-generics` and `make check-compiler-development`. | Source models, tokens, AST nodes, pass results, diagnostics, and expected failures can use natural types without stdlib name-specific shortcuts. |
+| Generic aggregate scale | Nested structs, enums, aliases, vectors, maps, `Result` payloads, ownership-qualified generic fields, and recursive-value diagnostics have production-focused coverage. | Compiler data models can grow through the general generic aggregate path rather than one-off container or bootstrap scaffolds. |
 | Minimum static traits | Trait declarations, impl conformance, deterministic static dispatch, generic bounds, Eq/Ord/Hash/Debug-like fixtures, iterator-shaped helpers, and missing/ambiguous diagnostics are locked by `make check-traits`. | Compiler-shaped data can compare, hash, format, and traverse values through normal trait behavior instead of name-specific shortcuts. |
 | SourceMap and diagnostics | `SourceMap`, `SourceId`, `SourceFile`, `Span`, `SourceLocation`, line/column lookup, snippets, diagnostic codes, labels, notes, and source-aware golden artifacts are locked by `make check-source-map-unit` and `make check-compiler-artifacts`. | User-facing compiler errors keep source identity and deterministic artifact rows across lexer, parser, module, semantic, trait, and ownership paths. |
 | Ownership checks | Move, borrow, drop, and explicit-zone checks catch many unsafe flows. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
@@ -55,7 +56,6 @@ get more reliable, not when a private shortcut is added.
 | Gap | Needed State | First Work |
 | --- | --- | --- |
 | File-backed projects | Predictable module roots, `.ari`/`.arih` policy, metadata, cache invalidation, and Makefile flows. | Harden module search and add stale/private/missing file diagnostics. |
-| Generic aggregate scale | Nested structs, enums, aliases, vectors, maps, sets, and `Result` payloads have a production-hardening first pass without stdlib name special cases. | Keep adding compiler-shaped model fixtures under `tests/cases/compiler-development/ok/model/` and generic aggregate diagnostics under `tests/cases/generics/errors/`. |
 | Trait selection beyond the minimum subset | Trait objects, associated-type solving, trait-driven collection defaults, and richer iterator ownership policies need the same stability as the static subset. | Keep minimum-subset fixtures green while adding one focused advanced trait fixture at a time. |
 | Pass artifacts | Token, syntax, HIR, typed IR, LLVM, object, executable, and shared outputs need a comparison order. | Add normalized text dumps before broad executable checks. |
 | Build ergonomics | Large Ari tools need boring Make targets before a package manager exists. | Keep `make check-compiler-development` small and add one target per compiler slice. |
@@ -80,6 +80,13 @@ payload bindings.
 This is deliberately a general language feature. It is useful for any large
 Ari program that returns structured errors, not only for a future compiler
 written in Ari.
+
+Generic aggregate monomorphization is now treated as implemented for local
+executable/compiler-model code. User-defined fixtures cover generic structs,
+enums, aliases, nested payloads, methods, match bindings, ownership-qualified
+fields, and stable recursive-value diagnostics; stdlib fixtures use `Vec`,
+`Option`, `Result`, `HashMap`, and diagnostic vectors only as stress cases for
+the same general machinery.
 
 The hosted compiler now also has the first artifact producers:
 `--emit-stage-plan path`, `--emit-capability-inventory path`,
@@ -124,8 +131,8 @@ Use this order for general compiler development:
    constructors.
 4. Module projects: file-backed modules, project roots, header/source
    separation, module metadata, and module caches.
-5. Type and trait maturity: generic aggregate monomorphization, associated
-   types, trait selection, and clear ambiguity diagnostics.
+5. Type and trait maturity: advanced generic constraints, associated types,
+   trait selection beyond the static subset, and clear ambiguity diagnostics.
 6. Ownership scale: arena/zone patterns for compiler graphs, borrowed views,
    scratch reset rules, and predictable drops.
 7. IR contract: lower resolved facts into typed IR so LLVM codegen is mostly a
