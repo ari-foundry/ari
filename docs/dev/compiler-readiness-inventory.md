@@ -310,11 +310,15 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
-  `backend-generic-aggregate.llvm-frag`, `backend-layout-aggregate.llvm-frag`,
-  and `backend-trait-dispatch.llvm-frag`: extracted LLVM backend fragments
-  checked after full `--emit-llvm` generation. The layout fragment locks mixed
-  struct field GEPs, tuple and fixed-array `size_of`/`align_of` constants, and
-  payload enum tag/value lowering.
+  `backend-generic-aggregate.llvm-frag`,
+  `backend-aggregate-match-model.llvm-frag`,
+  `backend-layout-aggregate.llvm-frag`, and `backend-trait-dispatch.llvm-frag`:
+  extracted LLVM backend fragments checked after full `--emit-llvm` generation.
+  The aggregate match model fragment locks compiler-shaped struct construction,
+  nested enum payload matches, branch lowering, and byte-backed aggregate enum
+  payload extraction. The layout fragment locks mixed struct field GEPs, tuple
+  and fixed-array `size_of`/`align_of` constants, and payload enum tag/value
+  lowering.
 - `tests/layout_unit.cpp`: direct C++ layout service and non-local aggregate ABI
   classifier checks for primitive size/alignment, struct/tuple/array field
   offsets, aggregate enum storage, root-`Vec` layout-unavailable rejection, and
