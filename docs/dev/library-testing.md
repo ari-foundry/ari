@@ -418,6 +418,9 @@ identifies the exact case:
 - `std-collections-map-entry-accessors.ari`: live `HashMapEntry` and
   `TreeMapEntry` key/value access, mutable value borrowing, direct replacement,
   direct entry removal, and copied `MapEntry.key()`/`value()` accessors.
+- `std-collections-map-entry-defaults.ari`: `HashMapEntry`/`TreeMapEntry`
+  `or_default` insertion through `Default` and `insert_entry` chaining after
+  insertion or replacement.
 - `std-collections-view-api.ari`: `HashMap`/`TreeMap` `values_mut` cursors,
   map `iter()` aliases, `MapEntryMut`-based `iter_mut()` cursors, direct map
   `IntoIterator`, and draining cursors for linear, hash, and tree maps/sets.

@@ -1183,6 +1183,29 @@ pub impl[K, V] std::collections::HashMapEntry[K, V] {
     return std::None<V>();
   }
 
+  fn insert_entry(self, value: V) -> Self {
+    let map_ptr = self.map;
+    let zone_ptr = self.zone;
+    let key = self.key;
+    {
+      let map: ref mut std::collections::HashMap[K, V] = ref mut *map_ptr;
+      let existing = hash_map_find_slot_mut<K, V>(map, key);
+      if existing >= 0 {
+        let previous = ptr_load(ptr_add(map.values, existing));
+        drop previous;
+        ptr_store(ptr_add(map.values, existing), value);
+      } else {
+        let zone: ref mut Zone = ref mut *zone_ptr;
+        hash_map_insert_absent_slot<K, V>(map, zone, key, value);
+      }
+    }
+    return std::collections::HashMapEntry<K, V> {
+      map: map_ptr,
+      zone: zone_ptr,
+      key: key,
+    };
+  }
+
   fn remove(self: ref mut Self) -> std::Option[V] {
     let map: ref mut std::collections::HashMap[K, V] = ref mut *self.map;
     return map.remove(self.key);
@@ -1209,6 +1232,25 @@ pub impl[K, V] std::collections::HashMapEntry[K, V] {
 
     let zone: ref mut Zone = ref mut *self.zone;
     let inserted = hash_map_insert_absent_slot<K, V>(map, zone, self.key, make_value());
+    return ref mut *ptr_add(map.values, inserted);
+  }
+}
+
+pub impl[K, V: std::Default] std::collections::HashMapEntry[K, V] {
+  fn or_default(self: ref mut Self) -> ref mut V {
+    let map: ref mut std::collections::HashMap[K, V] = ref mut *self.map;
+    let existing = hash_map_find_slot_mut<K, V>(map, self.key);
+    if existing >= 0 {
+      return ref mut *ptr_add(map.values, existing);
+    }
+
+    let zone: ref mut Zone = ref mut *self.zone;
+    let inserted = hash_map_insert_absent_slot<K, V>(
+      map,
+      zone,
+      self.key,
+      std::Default::default<V>()
+    );
     return ref mut *ptr_add(map.values, inserted);
   }
 }
@@ -2690,6 +2732,29 @@ pub impl[K, V] std::collections::TreeMapEntry[K, V] {
     return std::None<V>();
   }
 
+  fn insert_entry(self, value: V) -> Self {
+    let map_ptr = self.map;
+    let zone_ptr = self.zone;
+    let key = self.key;
+    {
+      let map: ref mut std::collections::TreeMap[K, V] = ref mut *map_ptr;
+      let existing = tree_map_find_slot_mut<K, V>(map, key);
+      if existing >= 0 {
+        let previous = ptr_load(ptr_add(map.values, existing));
+        drop previous;
+        ptr_store(ptr_add(map.values, existing), value);
+      } else {
+        let zone: ref mut Zone = ref mut *zone_ptr;
+        tree_map_insert_absent_slot<K, V>(map, zone, key, value);
+      }
+    }
+    return std::collections::TreeMapEntry<K, V> {
+      map: map_ptr,
+      zone: zone_ptr,
+      key: key,
+    };
+  }
+
   fn remove(self: ref mut Self) -> std::Option[V] {
     let map: ref mut std::collections::TreeMap[K, V] = ref mut *self.map;
     return map.remove(self.key);
@@ -2716,6 +2781,25 @@ pub impl[K, V] std::collections::TreeMapEntry[K, V] {
 
     let zone: ref mut Zone = ref mut *self.zone;
     let inserted = tree_map_insert_absent_slot<K, V>(map, zone, self.key, make_value());
+    return ref mut *ptr_add(map.values, inserted);
+  }
+}
+
+pub impl[K, V: std::Default] std::collections::TreeMapEntry[K, V] {
+  fn or_default(self: ref mut Self) -> ref mut V {
+    let map: ref mut std::collections::TreeMap[K, V] = ref mut *self.map;
+    let existing = tree_map_find_slot_mut<K, V>(map, self.key);
+    if existing >= 0 {
+      return ref mut *ptr_add(map.values, existing);
+    }
+
+    let zone: ref mut Zone = ref mut *self.zone;
+    let inserted = tree_map_insert_absent_slot<K, V>(
+      map,
+      zone,
+      self.key,
+      std::Default::default<V>()
+    );
     return ref mut *ptr_add(map.values, inserted);
   }
 }

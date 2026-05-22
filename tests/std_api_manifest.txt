@@ -1004,7 +1004,9 @@ method std::collections::Deque[T]::try_pop_back|check-prelude std-collections-de
 method std::collections::Deque[T]::try_pop_front|check-prelude std-collections-deque optional front removal; docs/stdlib/modules/collections.md
 method std::collections::HashMapEntry[K,V]::and_modify|check-prelude std-collections-map-entry-api hash map occupied-entry mutation hook; docs/stdlib/modules/collections.md
 method std::collections::HashMapEntry[K,V]::insert|check-prelude std-collections-map-entry-accessors hash map entry replacement helper; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::insert_entry|check-prelude std-collections-map-entry-defaults hash map insert and return entry helper; docs/stdlib/modules/collections.md
 method std::collections::HashMapEntry[K,V]::key|check-prelude std-collections-map-entry-accessors hash map entry key accessor; docs/stdlib/modules/collections.md
+method std::collections::HashMapEntry[K,V]::or_default|check-prelude std-collections-map-entry-defaults hash map Default-backed entry insertion; docs/stdlib/modules/collections.md
 method std::collections::HashMapEntry[K,V]::or_insert|check-prelude std-collections-map-entry-api hash map eager entry insertion returning ref mut value; docs/stdlib/modules/collections.md
 method std::collections::HashMapEntry[K,V]::or_insert_with|check-prelude std-collections-map-entry-api hash map lazy entry insertion returning ref mut value; docs/stdlib/modules/collections.md
 method std::collections::HashMapEntry[K,V]::remove|check-prelude std-collections-map-entry-accessors hash map entry value removal helper; docs/stdlib/modules/collections.md
@@ -1151,7 +1153,9 @@ method std::collections::Set[T]::try_last|check-prelude std-collections-set-acce
 method std::collections::Set[T]::try_pop|check-prelude std-collections-set-access optional last-value removal; docs/stdlib/modules/collections.md
 method std::collections::TreeMapEntry[K,V]::and_modify|check-prelude std-collections-map-entry-api tree map occupied-entry mutation hook; docs/stdlib/modules/collections.md
 method std::collections::TreeMapEntry[K,V]::insert|check-prelude std-collections-map-entry-accessors tree map entry replacement helper; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::insert_entry|check-prelude std-collections-map-entry-defaults tree map insert and return entry helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMapEntry[K,V]::key|check-prelude std-collections-map-entry-accessors tree map entry key accessor; docs/stdlib/modules/collections.md
+method std::collections::TreeMapEntry[K,V]::or_default|check-prelude std-collections-map-entry-defaults tree map Default-backed entry insertion; docs/stdlib/modules/collections.md
 method std::collections::TreeMapEntry[K,V]::or_insert|check-prelude std-collections-map-entry-api tree map eager entry insertion returning ref mut value; docs/stdlib/modules/collections.md
 method std::collections::TreeMapEntry[K,V]::or_insert_with|check-prelude std-collections-map-entry-api tree map lazy entry insertion returning ref mut value; docs/stdlib/modules/collections.md
 method std::collections::TreeMapEntry[K,V]::remove|check-prelude std-collections-map-entry-accessors tree map entry value removal helper; docs/stdlib/modules/collections.md

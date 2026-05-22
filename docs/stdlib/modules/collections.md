@@ -323,7 +323,9 @@ created the map.
 map.entry(word).or_insert(0) += 1
 map.entry(key).and_modify(update).or_insert(fallback) += 0
 map.entry(key).or_insert_with(make_value) += 0
+map.entry(key).or_default() += 1
 map.entry(key).insert(value)
+map.entry(key).insert_entry(value).value_mut() += 1
 map.entry(key).value_mut() += 1
 map.entry(key).remove()
 map.remove_entry(key)
@@ -331,11 +333,16 @@ map.remove_entry(key)
 
 `or_insert(value)` inserts `value` when the key is absent and returns
 `ref mut V`. `or_insert_with(make_value)` calls `make_value` only when the key
-is absent. `and_modify(fn(ref mut V) -> void)` runs only when the key already
-exists and returns the entry handle for chaining. `insert(value)` replaces the
-stored value and returns the previous value as `Option[V]`, or inserts a new
-value and returns `None`. `remove()` removes through the entry handle and
-returns `Option[V]`. `key()` returns the handle key; `value()` and
+is absent. `or_default()` is available when `V: Default`; it inserts
+`Default::default<V>()` only when the key is absent and returns `ref mut V`.
+`and_modify(fn(ref mut V) -> void)` runs only when the key already exists and
+returns the entry handle for chaining. `insert(value)` replaces the stored
+value and returns the previous value as `Option[V]`, or inserts a new value and
+returns `None`. `insert_entry(value)` stores `value` and returns the same
+entry handle so callers can continue with `key()`, `value()`, or
+`value_mut()`; if a value was already present, the old value is dropped instead
+of returned. `remove()` removes through the entry handle and returns
+`Option[V]`. `key()` returns the handle key; `value()` and
 `value_mut()` assert that the key exists, then return the stored value by value
 or by mutable reference. `remove_entry(key)` returns
 `Option[MapEntry[K, V]]`, preserving both the removed key and value.
@@ -478,8 +485,9 @@ target)` rebuilds the map in the target zone with the same comparator.
 
 `TreeMap.entry(key)` mirrors `HashMap.entry(key)`, but lookup follows the map's
 strict less-than comparator. `TreeMapEntry[K, V]` supports the same
-`or_insert`, `or_insert_with`, `and_modify`, `insert`, `remove`, `key`,
-`value`, and `value_mut` methods, and `remove_entry(key)` returns
+`or_insert`, `or_insert_with`, `or_default`, `and_modify`, `insert`,
+`insert_entry`, `remove`, `key`, `value`, and `value_mut` methods, and
+`remove_entry(key)` returns
 `Option[MapEntry[K, V]]` after the same direct red-black deletion and storage
 compaction path.
 

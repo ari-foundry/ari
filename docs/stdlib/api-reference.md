@@ -2174,8 +2174,11 @@ exists and returns `ref mut V`; `HashMap.try_get_mut(key)` returns
 `HashMap.insert` and `HashMap.replace` return `Option[V]` with the previous
 value on replacement. `HashMap.entry(key)` returns a
 `HashMapEntry[K,V]` update handle with `or_insert`, `or_insert_with`,
-`and_modify`, `insert`, `remove`, `key`, `value`, and `value_mut`; tracked local
-maps infer the allocation zone for the natural `entry(key)` spelling.
+`or_default`, `and_modify`, `insert`, `insert_entry`, `remove`, `key`,
+`value`, and `value_mut`; tracked local maps infer the allocation zone for the
+natural `entry(key)` spelling. `or_default` requires `V: Default`, while
+`insert_entry(value)` stores `value` and returns the entry handle for continued
+chaining.
 `HashMap.remove` returns `Option[V]` and leaves
 a tombstone so later probes still find collided keys. `HashMap.keys()` and
 `HashMap.values()` iterate live buckets; this is deterministic for the table
@@ -2286,9 +2289,11 @@ returns `ref mut V`; `TreeMap.try_get_mut(key)` returns
 `Option[MapValueMut[V]]` with `value()` and `value_mut()` helpers.
 `TreeMap.replace` is the named insert-or-replace form and returns the previous
 value like `insert`. `TreeMap.entry(key)` returns a `TreeMapEntry[K,V]` update
-handle with `or_insert`, `or_insert_with`, `and_modify`, `insert`, `remove`,
-`key`, `value`, and `value_mut`; tracked local maps infer the allocation zone
-for the natural `entry(key)` spelling.
+handle with `or_insert`, `or_insert_with`, `or_default`, `and_modify`,
+`insert`, `insert_entry`, `remove`, `key`, `value`, and `value_mut`; tracked
+local maps infer the allocation zone for the natural `entry(key)` spelling.
+`or_default` requires `V: Default`, while `insert_entry(value)` stores `value`
+and returns the entry handle for continued chaining.
 `TreeMap.remove(key)` returns `Option[V]` and rebuilds links
 in place after compacting live storage. `TreeMap` boundary methods read the
 smallest or largest key and the value attached to that key in comparator order;

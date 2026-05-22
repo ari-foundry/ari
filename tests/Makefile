@@ -2132,6 +2132,13 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl40std__collections__TreeMapEntry_i64__i64_8inherent6remove' $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-accessors.ari -o $(BUILD_DIR)/prelude/std-collections-map-entry-accessors.elf
 	$(BUILD_DIR)/prelude/std-collections-map-entry-accessors.elf; code=$$?; test $$code -eq 131
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-defaults.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-entry-defaults.ll
+	grep -q '_ARNv4impl40std__collections__HashMapEntry_i64__i64_8inherent10or_default' $(BUILD_DIR)/prelude/std-collections-map-entry-defaults.ll
+	grep -q '_ARNv4impl40std__collections__HashMapEntry_i64__i64_8inherent12insert_entry' $(BUILD_DIR)/prelude/std-collections-map-entry-defaults.ll
+	grep -q '_ARNv4impl40std__collections__TreeMapEntry_i64__i64_8inherent10or_default' $(BUILD_DIR)/prelude/std-collections-map-entry-defaults.ll
+	grep -q '_ARNv4impl40std__collections__TreeMapEntry_i64__i64_8inherent12insert_entry' $(BUILD_DIR)/prelude/std-collections-map-entry-defaults.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entry-defaults.ari -o $(BUILD_DIR)/prelude/std-collections-map-entry-defaults.elf
+	$(BUILD_DIR)/prelude/std-collections-map-entry-defaults.elf
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-value-predicates.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
 	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll
 	grep -q '_ARNv4impl35std__collections__TreeMap_i64__i64_8inherent14contains_value' $(BUILD_DIR)/prelude/std-collections-map-value-predicates.ll

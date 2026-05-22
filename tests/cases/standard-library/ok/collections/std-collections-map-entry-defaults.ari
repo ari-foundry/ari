@@ -1,0 +1,62 @@
+// Covers the remaining ergonomic map entry helpers: default insertion and
+// insert-then-entry chaining for both hash-table and ordered-tree maps.
+
+impl Default for i64 {
+  fn default() -> i64 {
+    return 0;
+  }
+}
+
+fn constant_hash(value: i64) -> u64 {
+  return 17;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(8192);
+  var hash = HashMap::new<i64, i64>(ref mut zone, 1, constant_hash);
+  var tree = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
+  var score = 0;
+
+  hash.entry(1).or_default() += 4;
+  hash.entry(1).or_default() += 1;
+  if hash.get(1) == 5 {
+    score = score + 3;
+  }
+
+  var hash_inserted = hash.entry(2).insert_entry(20);
+  if hash_inserted.key() == 2 && hash_inserted.value() == 20 && hash.get(2) == 20 {
+    score = score + 5;
+  }
+  hash.entry(2).value_mut() += 2;
+  if hash.get(2) == 22 {
+    score = score + 7;
+  }
+
+  var hash_replaced = hash.entry(2).insert_entry(30);
+  if hash_replaced.value() == 30 && hash.get(2) == 30 {
+    score = score + 9;
+  }
+
+  tree.entry(4).or_default() += 6;
+  tree.entry(4).or_default() += 2;
+  if tree.get(4) == 8 {
+    score = score + 11;
+  }
+
+  var tree_inserted = tree.entry(8).insert_entry(80);
+  if tree_inserted.key() == 8 && tree_inserted.value() == 80 && tree.get(8) == 80 {
+    score = score + 13;
+  }
+  tree.entry(8).value_mut() += 3;
+  if tree.get(8) == 83 {
+    score = score + 17;
+  }
+
+  var tree_replaced = tree.entry(8).insert_entry(90);
+  if tree_replaced.value() == 90 && tree.get(8) == 90 {
+    score = score + 19;
+  }
+
+  zone::destroy(zone);
+  return score - 84;
+}
