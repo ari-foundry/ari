@@ -1,0 +1,125 @@
+LLVMFunctionExtract source=build/compiler-development/artifact/backend-layout-aggregate.ll functions=3
+  Function symbol=_ARNv10enum_score
+    define i64 @"_ARNv10enum_score"({ i32, i64, i64 } %arg0) {
+    entry:
+      %value.addr.0 = alloca { i32, i64, i64 }
+      %left.addr.1 = alloca i8
+      %right.addr.2 = alloca i64
+      %amount.addr.3 = alloca i16
+      store { i32, i64, i64 } %arg0, ptr %value.addr.0
+      %t0 = load { i32, i64, i64 }, ptr %value.addr.0
+      %t1 = extractvalue { i32, i64, i64 } %t0, 0
+      br label %match.expr.test.4
+    match.expr.test.4:
+      %t2 = icmp eq i32 %t1, 0
+      br i1 %t2, label %match.expr.arm.1, label %match.expr.test.5
+    match.expr.test.5:
+      %t3 = icmp eq i32 %t1, 1
+      br i1 %t3, label %match.expr.arm.2, label %match.expr.test.6
+    match.expr.test.6:
+      br label %match.expr.arm.3
+    match.expr.arm.1:
+      %t4 = extractvalue { i32, i64, i64 } %t0, 1
+      %t5 = trunc i64 %t4 to i8
+      store i8 %t5, ptr %left.addr.1
+      %t6 = extractvalue { i32, i64, i64 } %t0, 2
+      store i64 %t6, ptr %right.addr.2
+      %t7 = load i8, ptr %left.addr.1
+      %t8 = sext i8 %t7 to i64
+      %t9 = load i64, ptr %right.addr.2
+      %t10 = add i64 %t8, %t9
+      br label %match.expr.end.0
+    match.expr.arm.2:
+      %t11 = extractvalue { i32, i64, i64 } %t0, 1
+      %t12 = trunc i64 %t11 to i16
+      store i16 %t12, ptr %amount.addr.3
+      %t13 = load i16, ptr %amount.addr.3
+      %t14 = zext i16 %t13 to i64
+      br label %match.expr.end.0
+    match.expr.arm.3:
+      br label %match.expr.end.0
+    match.expr.end.0:
+      %t15 = phi i64 [%t10, %match.expr.arm.1], [%t14, %match.expr.arm.2], [0, %match.expr.arm.3]
+      ret i64 %t15
+    }
+  Function symbol=_ARNv11field_score
+    define i64 @"_ARNv11field_score"() {
+    entry:
+      %mixed.addr.0 = alloca { i8, i64, i16 }
+      %mixed_ptr.addr.1 = alloca ptr
+      %tiny.addr.2 = alloca { i8, i16 }
+      %tiny_ptr.addr.3 = alloca ptr
+      %t0 = insertvalue { i8, i64, i16 } undef, i8 1, 0
+      %t1 = insertvalue { i8, i64, i16 } %t0, i64 20, 1
+      %t2 = insertvalue { i8, i64, i16 } %t1, i16 3, 2
+      store { i8, i64, i16 } %t2, ptr %mixed.addr.0
+      store ptr %mixed.addr.0, ptr %mixed_ptr.addr.1
+      %t3 = load ptr, ptr %mixed_ptr.addr.1
+      %t4 = getelementptr inbounds { i8, i64, i16 }, ptr %t3, i32 0, i32 1
+      %t5 = load i64, ptr %t4
+      %t6 = add i64 %t5, 1
+      %t7 = load ptr, ptr %mixed_ptr.addr.1
+      %t8 = getelementptr inbounds { i8, i64, i16 }, ptr %t7, i32 0, i32 1
+      store i64 %t6, ptr %t8
+      %t9 = load ptr, ptr %mixed_ptr.addr.1
+      %t10 = getelementptr inbounds { i8, i64, i16 }, ptr %t9, i32 0, i32 2
+      %t11 = load i16, ptr %t10
+      %t12 = add i16 %t11, 2
+      %t13 = load ptr, ptr %mixed_ptr.addr.1
+      %t14 = getelementptr inbounds { i8, i64, i16 }, ptr %t13, i32 0, i32 2
+      store i16 %t12, ptr %t14
+      %t15 = insertvalue { i8, i16 } undef, i8 4, 0
+      %t16 = insertvalue { i8, i16 } %t15, i16 5, 1
+      store { i8, i16 } %t16, ptr %tiny.addr.2
+      store ptr %tiny.addr.2, ptr %tiny_ptr.addr.3
+      %t17 = load ptr, ptr %mixed_ptr.addr.1
+      %t18 = getelementptr inbounds { i8, i64, i16 }, ptr %t17, i32 0, i32 2
+      %t19 = load i16, ptr %t18
+      %t20 = load ptr, ptr %tiny_ptr.addr.3
+      %t21 = getelementptr inbounds { i8, i16 }, ptr %t20, i32 0, i32 1
+      store i16 %t19, ptr %t21
+      %t22 = load ptr, ptr %mixed_ptr.addr.1
+      %t23 = getelementptr inbounds { i8, i64, i16 }, ptr %t22, i32 0, i32 0
+      %t24 = load i8, ptr %t23
+      %t25 = sext i8 %t24 to i64
+      %t26 = load ptr, ptr %mixed_ptr.addr.1
+      %t27 = getelementptr inbounds { i8, i64, i16 }, ptr %t26, i32 0, i32 1
+      %t28 = load i64, ptr %t27
+      %t29 = add i64 %t25, %t28
+      %t30 = load ptr, ptr %mixed_ptr.addr.1
+      %t31 = getelementptr inbounds { i8, i64, i16 }, ptr %t30, i32 0, i32 2
+      %t32 = load i16, ptr %t31
+      %t33 = zext i16 %t32 to i64
+      %t34 = add i64 %t29, %t33
+      %t35 = load ptr, ptr %tiny_ptr.addr.3
+      %t36 = getelementptr inbounds { i8, i16 }, ptr %t35, i32 0, i32 0
+      %t37 = load i8, ptr %t36
+      %t38 = sext i8 %t37 to i64
+      %t39 = add i64 %t34, %t38
+      %t40 = load ptr, ptr %tiny_ptr.addr.3
+      %t41 = getelementptr inbounds { i8, i16 }, ptr %t40, i32 0, i32 1
+      %t42 = load i16, ptr %t41
+      %t43 = zext i16 %t42 to i64
+      %t44 = add i64 %t39, %t43
+      ret i64 %t44
+    }
+  Function symbol=_ARNv4main
+    define i64 @"_ARNv4main"() {
+    entry:
+      %t0 = add i64 24, 8
+      %t1 = add i64 %t0, 24
+      %t2 = add i64 %t1, 8
+      %t3 = add i64 %t2, 6
+      %t4 = add i64 %t3, 2
+      %t5 = add i64 %t4, 24
+      %t6 = add i64 %t5, 8
+      %t7 = call i64 @"_ARNv11field_score"()
+      %t8 = add i64 %t6, %t7
+      %t9 = insertvalue { i32, i64, i64 } zeroinitializer, i32 0, 0
+      %t10 = sext i8 5 to i64
+      %t11 = insertvalue { i32, i64, i64 } %t9, i64 %t10, 1
+      %t12 = insertvalue { i32, i64, i64 } %t11, i64 7, 2
+      %t13 = call i64 @"_ARNv10enum_score"({ i32, i64, i64 } %t12)
+      %t14 = add i64 %t8, %t13
+      ret i64 %t14
+    }

@@ -1307,6 +1307,7 @@ def main() -> int:
         "stage-plan-basic.plan",
         "pass-summary-basic.summary",
         "backend-core.llvm-frag",
+        "backend-layout-aggregate.llvm-frag",
         "backend-ownership-drop-aggregate.llvm-frag",
         "backend-ownership-drop-runtime-enum.llvm-frag",
         "backend-ownership-compiler-shaped.llvm-frag",

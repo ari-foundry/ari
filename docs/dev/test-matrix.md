@@ -33,7 +33,10 @@ public `@repr(C)` structs, public non-generic payload-bearing `@repr(C)` enum
 structs without `own` payload slots, and generated fixed-array, tuple,
 fixed-capacity-vector, and aggregate-enum wrapper typedefs are exposed for
 direct aggregate ABI values. Oversized, indirect, non-`@repr(C)`, or
-target-unsupported aggregate header/import surfaces remain rejected.
+target-unsupported aggregate header/import surfaces remain rejected. The
+`backend-layout-aggregate.llvm-frag` golden checks the LLVM lowering for the
+supported aggregate layout surface: mixed primitive struct fields, tuple and
+fixed-array `size_of`/`align_of` constants, and payload enum tag/value access.
 
 ## Standard Library Coverage Note
 

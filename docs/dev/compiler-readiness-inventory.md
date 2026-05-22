@@ -310,8 +310,11 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
-  `backend-generic-aggregate.llvm-frag`, and `backend-trait-dispatch.llvm-frag`:
-  extracted LLVM backend fragments checked after full `--emit-llvm` generation.
+  `backend-generic-aggregate.llvm-frag`, `backend-layout-aggregate.llvm-frag`,
+  and `backend-trait-dispatch.llvm-frag`: extracted LLVM backend fragments
+  checked after full `--emit-llvm` generation. The layout fragment locks mixed
+  struct field GEPs, tuple and fixed-array `size_of`/`align_of` constants, and
+  payload enum tag/value lowering.
 - `tests/cases/compiler-development/artifact/ok/c-header-repr-struct.h`,
   `c-header-repr-payload-enum.h`, and `c-header-generated-aggregates.h`:
   C header golden artifacts for public `@repr(C)` structs, fieldless enums,

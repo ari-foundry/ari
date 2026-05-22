@@ -127,6 +127,7 @@ Keep fixture names behavior-based:
 - `ownership-aggregate-field-move.ir`
 - `backend-core.llvm-frag`
 - `backend-generic-aggregate.llvm-frag`
+- `backend-layout-aggregate.llvm-frag`
 - `backend-ownership-drop-aggregate.llvm-frag`
 - `backend-ownership-drop-runtime-enum.llvm-frag`
 - `backend-ownership-compiler-shaped.llvm-frag`

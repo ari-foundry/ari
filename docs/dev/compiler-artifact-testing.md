@@ -267,6 +267,7 @@ tests/cases/compiler-development/artifact/ok/artifact-fixtures.inventory
 tests/cases/compiler-development/artifact/ok/capability-inventory.inventory
 tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag
+tests/cases/compiler-development/artifact/ok/backend-layout-aggregate.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-ownership-drop-aggregate.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-ownership-drop-runtime-enum.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-ownership-compiler-shaped.llvm-frag
