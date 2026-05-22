@@ -1,17 +1,17 @@
-token KwFn "fn" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:1
-token Identifier "main" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:4
-token LParen "(" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:8
-token RParen ")" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:9
-token Arrow "->" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:11
-token Identifier "i64" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:14
-token LBrace "{" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:18
-token KwLet "let" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:3
-token Identifier "value" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:7
-token Equal "=" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:13
-token Integer "42" value=42 suffix="i64" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:15
-token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:20
-token KwReturn "return" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:3
-token Identifier "value" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10
-token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:15
-token RBrace "}" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:4:1
-token End "" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:5:1
+token KwFn "fn" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:1 source_id=0 bytes=0..2
+token Identifier "main" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:4 source_id=0 bytes=3..7
+token LParen "(" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:8 source_id=0 bytes=7..8
+token RParen ")" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:9 source_id=0 bytes=8..9
+token Arrow "->" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:11 source_id=0 bytes=10..12
+token Identifier "i64" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:14 source_id=0 bytes=13..16
+token LBrace "{" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:18 source_id=0 bytes=17..18
+token KwLet "let" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:3 source_id=0 bytes=21..24
+token Identifier "value" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:7 source_id=0 bytes=25..30
+token Equal "=" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:13 source_id=0 bytes=31..32
+token Integer "42" value=42 suffix="i64" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:15 source_id=0 bytes=33..38
+token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:20 source_id=0 bytes=38..39
+token KwReturn "return" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:3 source_id=0 bytes=42..48
+token Identifier "value" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10 source_id=0 bytes=49..54
+token Semicolon ";" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:15 source_id=0 bytes=54..55
+token RBrace "}" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:4:1 source_id=0 bytes=56..57
+token End "" @ tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:5:1 source_id=0 bytes=58..58

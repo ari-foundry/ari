@@ -536,7 +536,8 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
     if (input_cache) {
         const ModuleCacheSource* cached = find_module_cache_source(*input_cache, path);
         if (!cached) throw CompileError("module cache is missing source '" + path + "'");
-        if (allow_summary_materialize) {
+        const bool ast_summaries_preserve_source_spans = false;
+        if (allow_summary_materialize && ast_summaries_preserve_source_spans) {
             const ModuleCacheAstSummary* summary = find_module_cache_ast_summary(*input_cache, path);
             if (summary) {
                 Program declarations = materialize_module_cache_ast_summary_declarations(*summary, path);
@@ -568,7 +569,7 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
         source = read_file(path);
     }
     std::string content_hash = module_metadata_source_hash(source);
-    std::vector<Token> tokens = lex_source(source);
+    std::vector<Token> tokens = lex_source(source, path);
     return ParsedModuleFile{
         parse_tokens_in_module(std::move(tokens), module_path, cfg_features, target_triple),
         std::move(content_hash),
@@ -650,7 +651,7 @@ private:
         decl.name = name;
         decl.module_name = "";
         decl.is_public = true;
-        decl.loc = SourceLocation{1, 1};
+        decl.loc = SourceLocation{};
         program.modules.push_back(std::move(decl));
 
         std::vector<std::string> module_path{name};

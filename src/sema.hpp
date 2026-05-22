@@ -17,6 +17,7 @@ struct SemaOptions {
     std::set<std::string> cached_ir_function_names;
     std::vector<std::string> test_filters;
     std::string target_triple;
+    std::string source_name;
 };
 
 IrProgram check_program(const Program& program, SemaOptions options = {});

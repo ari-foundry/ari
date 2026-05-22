@@ -97,10 +97,11 @@ for normal compiler development: when source loading, lexer, parser,
 diagnostic, module, declaration surface, or typed lowering behavior changes,
 reviewers can inspect a tiny golden diff before LLVM or executable behavior
 changes are involved.
-Diagnostic artifacts now include stable codes, explicit layer families, and
-parseable source fields such as
-`code=T0001 family=type source="file.ari" line=1 column=19`, so triage can route
-failures without reading the classifier implementation first.
+Diagnostic artifacts now include stable codes, explicit layer families,
+source ids, parseable byte spans, and snippets such as
+`code=T0001 family=type source_id=0 source="file.ari" line=1 column=19 byte_start=18 byte_end=30`,
+so triage can route failures without reading the classifier implementation
+first.
 The hosted compiler also exposes `ari --list-capabilities` and
 `ari --explain-capability <name>` for the same capability table, which makes
 roadmap triage available from the binary without first creating an artifact

@@ -1,1 +1,1 @@
-diagnostic error code=P0001 family=parser source="tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.ari" line=3 column=1 message="unterminated function body"
+diagnostic error code=P0001 family=parser source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.ari" line=3 column=1 byte_start=31 byte_end=31 message="unterminated function body" snippet="  --> tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.ari:3:1\n   |\n 3 | \n   | ^"

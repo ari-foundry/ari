@@ -1,11 +1,11 @@
 SourceMap source=tests/cases/modules/ok/file-module-main.ari files=2
-  File module=<root> root=true path=tests/cases/modules/ok/file-module-main.ari bytes=65 lines=5 trailing_newline=true
+  File module=<root> source_id=0 root=true path=tests/cases/modules/ok/file-module-main.ari bytes=65 lines=5 trailing_newline=true
     Line number=1 byte_start=0 byte_len=12 newline=lf text="mod mathlib;"
     Line number=2 byte_start=13 byte_len=0 newline=lf text=""
     Line number=3 byte_start=14 byte_len=18 newline=lf text="fn main() -> i64 {"
     Line number=4 byte_start=33 byte_len=29 newline=lf text="  return mathlib::add(20, 2);"
     Line number=5 byte_start=63 byte_len=1 newline=lf text="}"
-  File module=mathlib root=false path=tests/cases/modules/ok/mathlib.ari bytes=68 lines=3 trailing_newline=true
+  File module=mathlib source_id=1 root=false path=tests/cases/modules/ok/mathlib.ari bytes=68 lines=3 trailing_newline=true
     Line number=1 byte_start=0 byte_len=42 newline=lf text="pub fn add(left: i64, right: i64) -> i64 {"
     Line number=2 byte_start=43 byte_len=22 newline=lf text="  return left + right;"
     Line number=3 byte_start=66 byte_len=1 newline=lf text="}"

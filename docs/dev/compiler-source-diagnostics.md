@@ -111,6 +111,8 @@ Policy:
   later
 - `SourceId` is stable within one compiler invocation, not across builds
 - generated sources should still receive a `SourceId`
+- invalid/null source is represented by a sentinel id and must not be used for
+  a user-facing diagnostic span
 
 This byte-first policy keeps lexer and parser code simple. Unicode-aware
 display width can be added to the renderer without changing the compiler's
@@ -217,8 +219,12 @@ Current transitional bridge:
   families: `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, and `B0001`.
 - `diagnostic_code_family` renders the owning layer name, such as
   `family=parser`, next to the stable code in diagnostic artifacts.
-- Diagnostic artifacts render locations as `source=`, `line=`, and `column=`
-  fields instead of requiring tools to parse prose.
+- Diagnostic artifacts render locations as `source_id=`, `source=`, `line=`,
+  `column=`, `byte_start=`, `byte_end=`, and `snippet=` fields instead of
+  requiring tools to parse prose.
+- Diagnostic artifacts suppress structured source fields when an error has no
+  valid source id, so a byte range without source ownership does not flow into
+  golden diagnostics.
 - `--emit-diagnostic-catalog` renders the current code, family, owner, and
   fallback table from compiler code.
 - `--list-diagnostics` renders the same catalog without requiring a source
@@ -239,6 +245,8 @@ Recommended policy:
 
 - long-lived source text lives in a compiler-owned arena or source map owner
 - spans store `SourceId` and byte offsets, not borrowed string slices
+- diagnostics that point at source must carry the same `SourceId` as the token,
+  AST node, or generated source they describe
 - diagnostics own their messages or allocate them in a report arena
 - temporary render buffers can use a scratch zone
 - golden comparisons should not depend on pointer identity or allocation order

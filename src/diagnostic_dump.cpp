@@ -187,22 +187,45 @@ std::string dump_diagnostic_explanation(const std::string& code) {
 
 std::string dump_diagnostic_message(const std::string& severity,
                                     const std::string& code,
-                                    const std::string& message,
+                                    const CompileError& error,
                                     const std::string& source_name) {
-    int line = 0;
-    int column = 0;
-    std::string diagnostic = message;
     std::ostringstream out;
     out << "diagnostic " << severity
         << " code=" << code
         << " family=" << diagnostic_code_family(code);
-    if (parse_location_prefix(message, line, column, diagnostic)) {
-        out << " source=" << quote(source_name)
-            << " line=" << line
-            << " column=" << column
-            << " message=" << quote(diagnostic) << "\n";
+    if (error.has_location()) {
+        SourceLocation loc = error.location();
+        if (!valid_source_id(loc.source_id) && has_source_name(loc)) {
+            loc.source_id = source_id_for_name(loc.source_name);
+        }
+        if (!valid_source_id(loc.source_id) && !source_name.empty()) {
+            loc.source_id = source_id_for_name(source_name);
+        }
+        if (loc.source_name.empty()) {
+            if (const SourceFile* file = find_source_file(loc.source_id)) {
+                loc.source_name = file->name;
+            } else {
+                loc.source_name = source_name;
+            }
+        }
+        if (!valid_source_id(loc.source_id)) {
+            out << " message=" << quote(error.message()) << "\n";
+            return out.str();
+        }
+        out << " source_id=" << source_id_text(loc.source_id)
+            << " source=" << quote(loc.source_name)
+            << " line=" << loc.line
+            << " column=" << loc.column;
+        if (has_byte_span(loc)) {
+            out << " byte_start=" << loc.byte_start
+                << " byte_end=" << loc.byte_end;
+        }
+        out << " message=" << quote(error.message());
+        std::string snippet = render_source_snippet(loc);
+        if (!snippet.empty()) out << " snippet=" << quote(snippet);
+        out << "\n";
     } else {
-        out << " message=" << quote(diagnostic) << "\n";
+        out << " message=" << quote(error.message()) << "\n";
     }
     return out.str();
 }

@@ -1199,7 +1199,10 @@ private:
     }
 
     SourceLocation default_loc() const {
-        return SourceLocation{1, 1};
+        SourceLocation loc;
+        loc.line = 1;
+        loc.column = 1;
+        return loc;
     }
 
     void consume_header() {

@@ -20,7 +20,10 @@ namespace ari {
 namespace {
 
 SourceLocation replay_loc() {
-    return SourceLocation{1, 1};
+    SourceLocation loc;
+    loc.line = 1;
+    loc.column = 1;
+    return loc;
 }
 
 std::uint32_t to_u32(std::uint64_t value, const std::string& label) {

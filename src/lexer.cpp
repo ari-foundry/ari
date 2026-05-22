@@ -10,15 +10,19 @@ namespace ari {
 
 class Lexer {
 public:
-    explicit Lexer(std::string source) : source_(std::move(source)) {}
+    explicit Lexer(std::string source, std::string source_name = {})
+        : source_(std::move(source)), source_name_(std::move(source_name)) {
+        source_id_ = register_source_text(source_name_, source_);
+    }
 
     std::vector<Token> lex() {
         std::vector<Token> tokens;
         for (;;) {
             skip_space_and_comments();
-            SourceLocation loc{line_, column_};
+            SourceLocation loc = current_location();
             char c = peek();
             if (c == '\0') {
+                loc.byte_end = loc.byte_start;
                 tokens.push_back(Token{TokenKind::End, "", 0, loc, 0.0, ""});
                 return tokens;
             }
@@ -129,6 +133,8 @@ public:
 
 private:
     std::string source_;
+    std::string source_name_;
+    SourceId source_id_;
     std::size_t index_ = 0;
     int line_ = 1;
     int column_ = 1;
@@ -162,6 +168,18 @@ private:
         std::size_t at = index_ + static_cast<std::size_t>(offset);
         if (at >= source_.size()) return '\0';
         return source_[at];
+    }
+
+    SourceLocation current_location() const {
+        SourceLocation loc;
+        loc.source_id = source_id_;
+        loc.line = line_;
+        loc.column = column_;
+        loc.byte_start = index_;
+        loc.byte_end = index_;
+        loc.has_byte_range = true;
+        loc.source_name = source_name_;
+        return loc;
     }
 
     char advance() {
@@ -201,7 +219,7 @@ private:
     }
 
     void skip_block_comment() {
-        SourceLocation loc{line_, column_};
+        SourceLocation loc = current_location();
         advance();
         advance();
         int depth = 1;
@@ -222,6 +240,8 @@ private:
     }
 
     static Token simple(TokenKind kind, std::string text, SourceLocation loc) {
+        loc.byte_end = loc.byte_start + text.size();
+        loc.has_byte_range = true;
         return Token{kind, std::move(text), 0, loc, 0.0, ""};
     }
 
@@ -268,6 +288,7 @@ private:
             {"false", TokenKind::KwFalse}
         };
         auto found = keywords.find(text);
+        loc.byte_end = index_;
         if (found != keywords.end()) return Token{found->second, text, 0, loc, 0.0, ""};
         return Token{TokenKind::Identifier, text, 0, loc, 0.0, ""};
     }
@@ -307,6 +328,7 @@ private:
         }
         if (is_float) {
             try {
+                loc.byte_end = index_;
                 Token token{TokenKind::Float, text, 0, loc, 0.0, ""};
                 token.literal_suffix = std::move(suffix);
                 token.float_value = std::stod(text);
@@ -318,6 +340,7 @@ private:
             }
         }
         try {
+            loc.byte_end = index_;
             Token token{TokenKind::Integer, text, parse_integer_digits(loc, text, 10, "decimal"), loc, 0.0, ""};
             token.literal_suffix = std::move(suffix);
             return token;
@@ -355,9 +378,9 @@ private:
         if (digits.empty()) fail(loc, kind + " literal requires at least one digit after " + text);
         if ((base == 2 || base == 8) && is_digit(peek())) {
             char invalid = peek();
-            fail(SourceLocation{line_, column_}, "invalid digit '" + std::string(1, invalid) + "' in " + kind + " literal");
+            fail(current_location(), "invalid digit '" + std::string(1, invalid) + "' in " + kind + " literal");
         }
-        if (peek() == '.') fail(SourceLocation{line_, column_}, "non-decimal float literals are not supported");
+        if (peek() == '.') fail(current_location(), "non-decimal float literals are not supported");
 
         std::string suffix;
         if (is_alpha(peek())) {
@@ -366,6 +389,7 @@ private:
             if (!is_integer_suffix(suffix)) fail(loc, "unsupported numeric literal suffix '" + suffix + "'");
         }
 
+        loc.byte_end = index_;
         Token token{TokenKind::Integer, text, parse_integer_digits(loc, digits, base, kind), loc, 0.0, ""};
         token.literal_suffix = std::move(suffix);
         return token;
@@ -376,7 +400,10 @@ private:
         for (;;) {
             char c = advance();
             if (c == '\0' || c == '\n') fail(loc, "unterminated string literal");
-            if (c == '"') return Token{TokenKind::String, text, 0, loc, 0.0, ""};
+            if (c == '"') {
+                loc.byte_end = index_;
+                return Token{TokenKind::String, text, 0, loc, 0.0, ""};
+            }
             if (c == '\\') {
                 append_string_escape(text, loc);
             } else {
@@ -390,13 +417,14 @@ private:
         if (!match('\'')) {
             fail(loc, "byte character literal must contain exactly one byte");
         }
+        loc.byte_end = index_;
         Token token{TokenKind::Integer, "", value, loc, 0.0, ""};
         token.literal_suffix = "char";
         return token;
     }
 
     std::uint64_t byte_char_value(SourceLocation literal_loc) {
-        SourceLocation loc{line_, column_};
+        SourceLocation loc = current_location();
         char c = advance();
         if (c == '\0' || c == '\n') fail(literal_loc, "unterminated byte character literal");
         if (c == '\'') fail(literal_loc, "empty byte character literal");
@@ -410,7 +438,7 @@ private:
     }
 
     std::uint64_t byte_char_escape(SourceLocation literal_loc) {
-        SourceLocation escape_loc{line_, column_};
+        SourceLocation escape_loc = current_location();
         char escaped = advance();
         switch (escaped) {
             case 'a': return '\a';
@@ -440,7 +468,7 @@ private:
     }
 
     void append_string_escape(std::string& text, SourceLocation string_loc) {
-        SourceLocation escape_loc{line_, column_};
+        SourceLocation escape_loc = current_location();
         char escaped = advance();
         switch (escaped) {
             case 'a': text.push_back('\a'); break;
@@ -499,7 +527,7 @@ private:
         if (fixed_digits == 4 && match('{')) {
             while (peek() != '}') {
                 if (peek() == '\0' || peek() == '\n') fail(loc, "unterminated Unicode escape");
-                if (!is_digit_for_base(peek(), 16)) fail(SourceLocation{line_, column_}, "invalid digit in Unicode escape");
+                if (!is_digit_for_base(peek(), 16)) fail(current_location(), "invalid digit in Unicode escape");
                 digits.push_back(advance());
             }
             advance();
@@ -531,7 +559,7 @@ private:
         if (fixed_digits == 4 && match('{')) {
             while (peek() != '}') {
                 if (peek() == '\0' || peek() == '\n') fail(loc, "unterminated Unicode escape");
-                if (!is_digit_for_base(peek(), 16)) fail(SourceLocation{line_, column_}, "invalid digit in Unicode escape");
+                if (!is_digit_for_base(peek(), 16)) fail(current_location(), "invalid digit in Unicode escape");
                 digits.push_back(advance());
             }
             advance();
@@ -549,13 +577,26 @@ private:
         append_utf8(text, loc, static_cast<std::uint32_t>(value));
     }
 
-    [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
-        throw CompileError(where(loc) + ": " + message);
+    [[noreturn]] void fail(SourceLocation loc, const std::string& message) const {
+        loc.has_byte_range = true;
+        if (loc.byte_end == loc.byte_start) {
+            if (loc.byte_start < index_) {
+                loc.byte_end = index_;
+            } else if (loc.byte_start < source_.size()) {
+                loc.byte_end = loc.byte_start + 1;
+            }
+        }
+        throw CompileError(std::move(loc), message);
     }
 };
 
 std::vector<Token> lex_source(std::string source) {
     Lexer lexer(std::move(source));
+    return lexer.lex();
+}
+
+std::vector<Token> lex_source(std::string source, std::string source_name) {
+    Lexer lexer(std::move(source), std::move(source_name));
     return lexer.lex();
 }
 

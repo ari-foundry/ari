@@ -1,11 +1,14 @@
 #pragma once
 
+#include "common.hpp"
+
 #include <string>
 #include <vector>
 
 namespace ari {
 
 struct SourceMapDumpFile {
+    SourceId source_id;
     std::string module_name;
     std::string path;
     std::string text;

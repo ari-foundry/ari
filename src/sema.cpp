@@ -291,9 +291,9 @@ public:
         if (options_.require_main) require_main();
         if (options_.test_mode && test_functions.empty()) {
             if (!options_.test_filters.empty()) {
-                throw CompileError("test filter matched no @test functions");
+                fail_program("test filter matched no @test functions");
             }
-            throw CompileError("test mode requires at least one @test function");
+            fail_program("test mode requires at least one @test function");
         }
 
         IrProgram ir;
@@ -345,6 +345,13 @@ public:
         ir.trait_object_vtables = trait_object_vtables_;
         ir.warnings = warnings_;
         return ir;
+    }
+
+    [[noreturn]] void fail_program(const std::string& message) const {
+        if (!options_.source_name.empty()) {
+            throw CompileError(source_end_location(options_.source_name), message);
+        }
+        throw CompileError(message);
     }
 
 private:
@@ -1257,7 +1264,7 @@ private:
                                const std::string& path) {
         auto& scope = uses_[module_name];
         if (scope.count(alias) || module_declares_alias(module_name, alias)) return;
-        scope.emplace(alias, UseInfo{path, module_name, false, SourceLocation{1, 1}});
+        scope.emplace(alias, UseInfo{path, module_name, false, SourceLocation{}});
     }
 
     void collect_implicit_std_prelude_uses() {
@@ -4261,7 +4268,7 @@ private:
     }
 
     IrFunction make_test_main(const std::vector<const FunctionDecl*>& test_functions) const {
-        SourceLocation loc{1, 1};
+        SourceLocation loc;
         IrFunction fn;
         fn.name = "main";
         fn.return_type = i64_type(loc);
@@ -4344,7 +4351,7 @@ private:
 
     void require_main() const {
         auto found = functions_.find("main");
-        if (found == functions_.end()) throw CompileError("missing executable function 'main'");
+        if (found == functions_.end()) fail_program("missing executable function 'main'");
         if (!found->second.params.empty()) fail(found->second.loc, "main cannot take parameters");
         if (found->second.result.qualifier != TypeQualifier::Value ||
             found->second.result.primitive != IrPrimitiveKind::I64) {

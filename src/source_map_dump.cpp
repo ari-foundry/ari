@@ -95,6 +95,7 @@ std::string dump_source_map(const std::string& source_name, std::vector<SourceMa
         std::vector<SourceLine> lines = source_lines(file.text);
         bool trailing_newline = !file.text.empty() && file.text.back() == '\n';
         out << "  File module=" << module_name_text(file.module_name)
+            << " source_id=" << source_id_text(file.source_id)
             << " root=" << bool_text(file.is_root)
             << " path=" << file.path
             << " bytes=" << file.text.size()

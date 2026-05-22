@@ -329,8 +329,9 @@ It currently proves twenty-four low-level contracts:
   compiler failure
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,
   and ownership failures with stable diagnostic codes and `family=...` layer names
-- `--emit-diagnostics` also writes parseable `source=`, `line=`, and `column=` fields
-  for location-aware tooling
+- `--emit-diagnostics` also writes parseable `source_id=`, `source=`, `line=`,
+  `column=`, `byte_start=`, `byte_end=`, and `snippet=` fields for
+  location-aware tooling
 - `--emit-diagnostic-catalog` writes the current diagnostic code table, owning
   compiler source file, family, and fallback policy
 - `--emit-module-graph` writes deterministic file-backed source, import, and
@@ -356,13 +357,15 @@ inventing unrelated golden comparison rules.
 The current compiler already has useful artifact checks:
 
 - `--check` for frontend and sema diagnostics
-- `--emit-source-map` for stable byte offset, line table, and snippet text
+- `--emit-source-map` for stable source ids, byte offsets, line tables, and
+  snippet text
 - `--emit-stage-plan` for stable stage-order and first-check routing from the
   compiler binary
 - `--emit-capability-inventory` for stable public compiler feature status,
   owners, and next-check routing
 - `--emit-diagnostic-catalog` for stable diagnostic code ownership
-- `--emit-tokens` for stable lexer token text and start locations
+- `--emit-tokens` for stable lexer token text, source ids, ownership, and byte
+  spans
 - `--emit-syntax` for stable parser tree text before semantic analysis
 - `--emit-diagnostics` for stable expected-failure text before a full
   multi-label diagnostic model exists

@@ -528,7 +528,7 @@ int run(int argc, char** argv) {
             !module_search_paths.empty() || !link_args.empty()) {
             throw CompileError("--emit-tokens cannot be combined with checking, backend, module, or linking options");
         }
-        std::vector<Token> tokens = lex_source(read_text_file(input));
+        std::vector<Token> tokens = lex_source(read_text_file(input), input);
         write_text_file(token_output, dump_tokens(tokens, input));
         std::cout << "wrote " << token_output << " (token dump)\n";
         return 0;
@@ -541,7 +541,7 @@ int run(int argc, char** argv) {
             !module_search_paths.empty() || !link_args.empty()) {
             throw CompileError("--emit-syntax cannot be combined with checking, backend, module, or linking options");
         }
-        std::vector<Token> tokens = lex_source(read_text_file(input));
+        std::vector<Token> tokens = lex_source(read_text_file(input), input);
         Program syntax = parse_tokens(std::move(tokens), cfg_features, target.triple);
         write_text_file(syntax_output, dump_syntax(syntax, input));
         std::cout << "wrote " << syntax_output << " (syntax dump)\n";
@@ -568,10 +568,11 @@ int run(int argc, char** argv) {
             sema_options.implicit_std = implicit_std;
             sema_options.cfg_features = cfg_features;
             sema_options.target_triple = target.triple;
+            sema_options.source_name = input;
             (void)check_program(program, std::move(sema_options));
         } catch (const CompileError& error) {
             diagnostic_artifact =
-                dump_diagnostic_message("error", classify_diagnostic_code(error.what()), error.what(), input);
+                dump_diagnostic_message("error", classify_diagnostic_code(error.message()), error, input);
         }
         write_text_file(diagnostic_output, diagnostic_artifact);
         std::cout << "wrote " << diagnostic_output << " (diagnostic dump)\n";
@@ -580,7 +581,7 @@ int run(int argc, char** argv) {
 
     std::size_t pass_summary_token_count = 0;
     if (!pass_summary_output.empty()) {
-        pass_summary_token_count = lex_source(read_text_file(input)).size();
+        pass_summary_token_count = lex_source(read_text_file(input), input).size();
     }
 
     ModuleLoadOptions load_options;
@@ -610,6 +611,7 @@ int run(int argc, char** argv) {
         std::vector<SourceMapDumpFile> files;
         for (const auto& source : loaded.metadata.sources) {
             files.push_back(SourceMapDumpFile{
+                source_id_for_name(source.path),
                 source.module_name,
                 source.path,
                 read_text_file(source.path),
@@ -640,6 +642,7 @@ int run(int argc, char** argv) {
         module_cache_ir_function_names(loaded.cached_ir_functions);
     sema_options.test_filters = std::move(test_filters);
     sema_options.target_triple = target.triple;
+    sema_options.source_name = input;
     IrProgram ir = check_program(program, std::move(sema_options));
     std::vector<IrFunction> cached_ir_functions =
         replay_module_cache_ir_functions(loaded.cached_ir_functions, program);

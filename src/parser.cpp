@@ -109,7 +109,7 @@ private:
     }
 
     [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
-        throw CompileError(where(loc) + ": " + message);
+        throw CompileError(std::move(loc), message);
     }
 
     void optional_separator() {
