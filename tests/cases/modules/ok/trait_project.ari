@@ -1,0 +1,7 @@
+pub mod model;
+pub mod ops;
+
+pub fn run() -> i64 {
+  let symbol = self::model::symbol(11);
+  return self::ops::hash<self::model::Symbol>(symbol);
+}

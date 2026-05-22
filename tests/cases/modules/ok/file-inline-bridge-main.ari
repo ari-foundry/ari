@@ -1,0 +1,5 @@
+mod file_inline_bridge;
+
+fn main() -> i64 {
+  return file_inline_bridge::run();
+}

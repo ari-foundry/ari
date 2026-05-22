@@ -23,6 +23,8 @@ The current module contract is intentionally small:
 - Cyclic imports are rejected by module identity and by currently-loading
   source path, so nested file layouts cannot recurse by spelling the same file
   under another module name.
+- Within one search root, duplicate physical layouts such as `name.ari` and
+  `name/mod.ari` are rejected as ambiguous module files.
 - `.arih` is declaration-like today; it is not yet an automatic pair with a
   matching `.ari` file.
 - `std` is special-cased for the source standard library and should not become
@@ -93,13 +95,15 @@ The production-ready module subset is intentionally narrow and tested:
 
 | Area | Status | Proof |
 | --- | --- | --- |
-| Inline modules and nested visibility | complete | `make check-modules` inline and private diagnostics |
+| Inline modules and nested visibility | complete | `make check-modules` inline, file-backed bridge, and private diagnostics |
 | File-backed sibling modules | complete | `file-module-main.ari`, `file-module-alias-main.ari` |
 | Package-style child directories | complete | `project-compiler-main.ari` module graph |
 | Ordered search paths | complete | `package-module-main.ari` with `--module-path` and `-I` |
 | Aliased modules and `use` aliases | complete | alias, grouped use, glob use, and duplicate alias diagnostics |
-| Cross-file structs, enums, generics | complete | compiler-shaped project fixture under `project_compiler/` |
-| Cycles and duplicate module identities | complete | `cyclic-import-main.ari`, `duplicate-module-file-identity.ari` |
+| Cross-file structs, enums, generics, traits | complete | compiler-shaped project fixture plus `trait-project-main.ari` |
+| Diamond-shaped shared modules | complete | `diamond-project-main.ari` imports shared definitions once through a parent facade |
+| Cycles and duplicate module identities | complete | `cyclic-import-main.ari`, `self-import-main.ari`, `duplicate-module-file-identity.ari` |
+| Ambiguous module candidates | complete | `ambiguous-module-main.ari` |
 | Imported-file parse/sema diagnostics | complete | `imported-parse-error-main.ari`, `imported-semantic-error-main.ari` |
 | Persistent package manifests | unsupported by design | use Makefiles plus explicit `-I` roots |
 | Remote dependencies or registries | unsupported by design | outside the current compiler model |
@@ -177,7 +181,8 @@ Use these folders:
 
 Name tests after behavior: `module-missing-candidates`,
 `module-private-item`, `module-graph-file-module`,
-`module-graph-project-compiler`, `module-cache-source-hash`, or
+`module-graph-project-compiler`, `module-inline-file-bridge`,
+`module-ambiguous-candidate`, `module-cache-source-hash`, or
 `module-metadata-visibility`.
 
 ## Review Checklist

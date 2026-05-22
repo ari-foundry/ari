@@ -1,0 +1,7 @@
+pub mod shared;
+pub mod left;
+pub mod right;
+
+pub fn run() -> i64 {
+  return self::left::value() + self::right::value() + self::shared::base();
+}

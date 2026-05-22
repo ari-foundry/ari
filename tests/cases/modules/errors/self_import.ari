@@ -1,0 +1,5 @@
+mod self_import;
+
+pub fn value() -> i64 {
+  return 1;
+}

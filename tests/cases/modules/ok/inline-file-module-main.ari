@@ -1,0 +1,13 @@
+mod Host {
+  pub mod inline_file_helper as Helper;
+
+  use self::Helper::value as helper_value
+
+  pub fn run() -> i64 {
+    return helper_value() + self::Helper::bonus();
+  }
+}
+
+fn main() -> i64 {
+  return Host::run();
+}

@@ -176,7 +176,7 @@ static const CapabilityRow kCapabilityRows[] = {
     {"inline-modules-and-use", "implemented", "module-loader/sema", "make check-modules",
      "inline modules, pub visibility, use imports, and qualified paths"},
     {"file-backed-modules", "implemented", "module-loader", "make check-modules",
-     "module source loading, graph artifacts, metadata, cache validation, cycles, and project-shaped fixtures"},
+     "module source loading, graph source ids, metadata, cache validation, cycles, ambiguity checks, and project fixtures"},
     {"prelude-io-formatting", "implemented", "prelude/sema/backend", "focused format fixtures",
      "compiler-known print, println, and formatting hooks"},
     {"extern-c-ffi", "implemented", "parser/sema/backend", "make check-ffi",

@@ -45,12 +45,15 @@ The current compiler already has a useful file module surface:
   invocation.
 - Cyclic import detection checks both module names and currently-loading source
   paths.
+- Duplicate physical candidates inside one search root are rejected as
+  ambiguous, so a project cannot accidentally provide both `name.ari` and
+  `name/mod.ari` for the same import.
 
 Missing-module diagnostics show the module name, importing source file, ordered
 module search paths, and candidate paths that failed. Module graph artifacts
-show resolved source paths, import edges, public/private item surfaces, target,
-cfg features, and search paths. That makes project layout bugs fixable without
-reading `src/module_loader.cpp`.
+show deterministic source row ids, resolved source paths, import edges,
+public/private item surfaces, target, cfg features, and search paths. That
+makes project layout bugs fixable without reading `src/module_loader.cpp`.
 
 ## Recommended Project Layout
 
@@ -194,7 +197,8 @@ These slices define the supported production subset:
 1. Project roots: the entry file directory plus explicit `-I` and
    `--module-path` roots define lookup. Manifest inference is unsupported.
 2. Module path diagnostics: missing modules report checked candidates and
-   ordered search paths.
+   ordered search paths. Ambiguous physical candidates inside one root are
+   rejected with a stable diagnostic.
 3. Visibility diagnostics: private functions, constants, enums, cases, structs,
    and nested modules are rejected with source locations.
 4. Cache validation: metadata/cache checks fail closed for stale source hash,
@@ -204,8 +208,8 @@ These slices define the supported production subset:
 6. Multi-file tool smoke: `project-compiler-main.ari` builds a small
    source/diagnostic/symbol/parser project through file-backed child modules.
 7. Module graph dump: deterministic `--emit-module-graph` artifacts capture
-   source files, import edges, traversal-independent item order, visibility,
-   search paths, cfg features, and target.
+   source row ids, source files, import edges, traversal-independent item
+   order, visibility, search paths, cfg features, and target.
 
 The module graph dump is especially useful because it gives reviewers a compact
 view of imports, resolved files, visibility edges, and eventually cache hits.
@@ -243,6 +247,8 @@ Name tests after the behavior they prove:
 - `module-graph-dump.ari`
 - `module-graph-project-compiler.ari`
 - `module-cyclic-import.ari`
+- `module-self-import.ari`
+- `module-ambiguous-candidate.ari`
 
 ## Review Checklist
 

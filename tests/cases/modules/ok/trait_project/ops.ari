@@ -1,0 +1,3 @@
+pub fn hash[T: super::model::Hashable](value: T) -> i64 {
+  return value.hash_code();
+}

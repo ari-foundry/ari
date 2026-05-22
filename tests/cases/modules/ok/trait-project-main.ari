@@ -1,0 +1,5 @@
+mod trait_project;
+
+fn main() -> i64 {
+  return trait_project::run();
+}

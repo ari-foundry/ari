@@ -1,0 +1,17 @@
+pub trait Hashable {
+  fn hash_code(self) -> i64
+}
+
+pub struct Symbol {
+  id: i64,
+}
+
+pub fn symbol(id: i64) -> Symbol {
+  return Symbol { id: id };
+}
+
+impl Hashable for Symbol {
+  pub fn hash_code(self) -> i64 {
+    return self.id * 2;
+  }
+}

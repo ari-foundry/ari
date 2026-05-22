@@ -30,6 +30,10 @@ struct ModuleFileSearch {
     std::vector<std::string> searched;
 };
 
+struct ModuleCandidateGroup {
+    std::vector<std::string> paths;
+};
+
 struct ParsedModuleFile {
     Program program;
     std::string content_hash;
@@ -77,6 +81,16 @@ void add_module_candidates(const std::string& dir,
     candidates.push_back(path_join(dir, local_name + ".arih"));
     candidates.push_back(path_join(path_join(dir, local_name), "mod.ari"));
     candidates.push_back(path_join(path_join(dir, local_name), "mod.arih"));
+}
+
+void add_module_candidate_group(const std::string& dir,
+                                const std::string& local_name,
+                                ModuleFileSearch& result,
+                                std::vector<ModuleCandidateGroup>& groups) {
+    ModuleCandidateGroup group;
+    add_module_candidates(dir, local_name, group.paths);
+    result.searched.insert(result.searched.end(), group.paths.begin(), group.paths.end());
+    groups.push_back(std::move(group));
 }
 
 std::string searched_paths_text(const std::vector<std::string>& paths) {
@@ -178,20 +192,37 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
                                   const std::string& base_dir,
                                   const std::vector<std::string>& module_search_paths) {
     ModuleFileSearch result;
-    add_module_candidates(base_dir, import.local_name, result.searched);
+    std::vector<ModuleCandidateGroup> candidate_groups;
+    add_module_candidate_group(base_dir, import.local_name, result, candidate_groups);
     if (!import.module_name.empty()) {
-        add_module_candidates(
+        add_module_candidate_group(
             path_join(base_dir, qualified_basename(import.module_name)),
             import.local_name,
-            result.searched);
+            result,
+            candidate_groups);
     }
     for (const auto& search_path : module_search_paths) {
-        if (!search_path.empty()) add_module_candidates(search_path, import.local_name, result.searched);
+        if (!search_path.empty()) {
+            add_module_candidate_group(search_path, import.local_name, result, candidate_groups);
+        }
     }
 
-    for (const auto& candidate : result.searched) {
-        if (file_exists(candidate)) {
-            result.path = candidate;
+    for (const auto& group : candidate_groups) {
+        std::vector<std::string> matches;
+        for (const auto& candidate : group.paths) {
+            if (file_exists(candidate)) matches.push_back(candidate);
+        }
+        if (matches.size() > 1) {
+            CompileError error(import.loc,
+                               "ambiguous module file for '" + import.name +
+                                   "'; candidates " + searched_paths_text(matches));
+            error.add_note(DiagnosticNote{std::nullopt,
+                                          "keep only one of name.ari, name.arih, name/mod.ari, or name/mod.arih in a search root",
+                                          DiagnosticNoteKind::Help});
+            throw error;
+        }
+        if (matches.size() == 1) {
+            result.path = matches.front();
             return result;
         }
     }

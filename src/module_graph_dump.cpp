@@ -67,8 +67,10 @@ std::string dump_module_graph(const ModuleMetadata& metadata, const std::string&
     }
 
     out << "  Sources count=" << sources.size() << "\n";
-    for (const auto& source : sources) {
-        out << "    Source module=" << module_name_text(source.module_name)
+    for (std::size_t i = 0; i < sources.size(); ++i) {
+        const auto& source = sources[i];
+        out << "    Source id=" << i
+            << " module=" << module_name_text(source.module_name)
             << " root=" << bool_text(source.is_root)
             << " path=" << source.path << "\n";
     }

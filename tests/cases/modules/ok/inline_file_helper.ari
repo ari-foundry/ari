@@ -1,0 +1,7 @@
+pub fn value() -> i64 {
+  return 9;
+}
+
+pub fn bonus() -> i64 {
+  return 4;
+}

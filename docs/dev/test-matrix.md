@@ -823,9 +823,15 @@ Checklist:
 - [x] repeated file-backed module imports are cached by resolved module name
 - [x] project-shaped nested file-backed modules build through a parent
       facade and package-style child directory
+- [x] inline modules can import file-backed children, and file-backed children
+      can reference public inline siblings through `super::`
+- [x] diamond-shaped project modules share one parent-imported dependency
+      without duplicate source loading
+- [x] cross-file trait declarations, impls, and generic bounds work through
+      file-backed modules when impl methods are public
 - [x] module graph artifacts list project-shaped source files, import edges,
       public/private item surfaces, aliases, cfg features, target, and search
-      paths deterministically
+      paths deterministically, including stable source row ids
 - [x] compact module metadata can be emitted and read back for source-graph validation
 - [x] metadata records stable source content hashes for cache invalidation
 - [x] metadata/cache checks accept only the centralized current `v0` headers
@@ -990,7 +996,11 @@ Checklist:
 - [x] reject `super::` paths that escape the root module
 - [x] reject cyclic file-backed imports even when the same source file is
       reached through a nested module identity
+- [x] reject self-importing file-backed modules
 - [x] reject loading one resolved source file under two module identities
+- [x] reject ambiguous module candidates inside one search root
+- [x] reject invalid module path syntax
+- [x] reject unknown imported symbol use and type/value namespace confusion
 - [x] report parse errors from imported files with the imported source path
 - [x] report semantic errors from imported files with the imported source path
 

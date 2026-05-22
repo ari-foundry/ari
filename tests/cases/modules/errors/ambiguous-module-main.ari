@@ -1,0 +1,5 @@
+mod ambiguous_module;
+
+fn main() -> i64 {
+  return ambiguous_module::value();
+}

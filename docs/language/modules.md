@@ -119,11 +119,18 @@ still use `extern "C"`.
 
 `*.arih` and `*.ari` files are both Ari source files to the current compiler.
 For one `mod name;` import, the loader chooses one file in this order:
-`name.ari`, `name.arih`, `name/mod.ari`, then `name/mod.arih`. If both
-`name.ari` and `name.arih` exist today, they are not automatically paired;
-the `.ari` file wins because it appears first in the lookup order. That means
-the standard library currently keeps public declarations and small source
-implementations together in `lib/std.arih` and `lib/std/name.arih`.
+`name.ari`, `name.arih`, `name/mod.ari`, then `name/mod.arih`. These forms
+are alternatives, not an automatic header/source pair. If more than one
+alternative exists in the same search root, Ari rejects the module import as
+ambiguous. The standard library currently keeps public declarations and small
+source implementations together in `lib/std.arih` and `lib/std/name.arih`.
+
+Within one search root, only one physical layout may exist for a module. If
+two forms such as `name.ari` and `name/mod.ari` are present in the same root,
+Ari rejects the import as ambiguous instead of silently choosing one layout.
+Across different roots, the documented search order still applies: the
+importing file's directory first, then explicit `-I` and `--module-path`
+entries in command-line order.
 
 A future header/source pairing mode can build on this convention, for example
 by treating `name.arih` as the public declaration surface and `name.ari` as the
@@ -136,6 +143,9 @@ directory. A file `project.ari` may declare `pub mod source;`, and if
 `source.ari` is not beside `project.ari`, Ari also checks
 `project/source.ari` and `project/source/mod.ari`. Child modules can refer to
 siblings through `super::source::Name` after the parent imports those children.
+Inline modules and file-backed modules share the same namespace rules: an
+inline parent can import a file-backed child, and a file-backed child can refer
+to a public inline sibling through `super::Sibling::item`.
 
 Example header module:
 

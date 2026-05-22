@@ -1,0 +1,11 @@
+mod Api {
+  pub fn value() -> i64 {
+    return 1;
+  }
+}
+
+use Api::missing as missing
+
+fn main() -> i64 {
+  return missing();
+}

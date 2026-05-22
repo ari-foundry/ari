@@ -1,0 +1,12 @@
+mod Api {
+  pub fn Token() -> i64 {
+    return 1;
+  }
+}
+
+use Api::Token as Token
+
+fn main() -> i64 {
+  let value: Token = 1;
+  return value;
+}

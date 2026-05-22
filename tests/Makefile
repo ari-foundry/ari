@@ -3662,10 +3662,18 @@ check-modules: $(TARGET)
 	$(BUILD_DIR)/modules/module-pub-glob-reexport.elf; code=$$?; test $$code -eq 5
 	$(TARGET) tests/cases/modules/ok/file-module-alias-main.ari -o $(BUILD_DIR)/modules/file-module-alias-main.elf
 	$(BUILD_DIR)/modules/file-module-alias-main.elf; code=$$?; test $$code -eq 6
+	$(TARGET) tests/cases/modules/ok/inline-file-module-main.ari -o $(BUILD_DIR)/modules/inline-file-module-main.elf
+	$(BUILD_DIR)/modules/inline-file-module-main.elf; code=$$?; test $$code -eq 13
+	$(TARGET) tests/cases/modules/ok/file-inline-bridge-main.ari -o $(BUILD_DIR)/modules/file-inline-bridge-main.elf
+	$(BUILD_DIR)/modules/file-inline-bridge-main.elf; code=$$?; test $$code -eq 14
+	$(TARGET) tests/cases/modules/ok/diamond-project-main.ari -o $(BUILD_DIR)/modules/diamond-project-main.elf
+	$(BUILD_DIR)/modules/diamond-project-main.elf; code=$$?; test $$code -eq 18
+	$(TARGET) tests/cases/modules/ok/trait-project-main.ari -o $(BUILD_DIR)/modules/trait-project-main.elf
+	$(BUILD_DIR)/modules/trait-project-main.elf; code=$$?; test $$code -eq 22
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari -o $(BUILD_DIR)/modules/project-compiler-main.elf
 	$(BUILD_DIR)/modules/project-compiler-main.elf; code=$$?; test $$code -eq 23
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --emit-module-graph $(BUILD_DIR)/modules/project-compiler-main.graph
-	grep -q "Source module=project_compiler::parser" $(BUILD_DIR)/modules/project-compiler-main.graph
+	grep -q "Source id=3 module=project_compiler::parser" $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -q "Import owner=project_compiler module=project_compiler::parser local=parse visibility=pub" $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -q "Item module=project_compiler::symbols kind=fn name=project_compiler::symbols::private_bias visibility=private" $(BUILD_DIR)/modules/project-compiler-main.graph
 	$(TARGET) --module-path tests/packages tests/cases/modules/ok/package-module-main.ari -o $(BUILD_DIR)/modules/package-module-main.elf
@@ -3928,10 +3936,20 @@ check-modules: $(TARGET)
 	grep -q "module 'Outer::Inner' is not public" $(BUILD_DIR)/modules/private-nested-module.err
 	if $(TARGET) tests/cases/modules/errors/cyclic-import-main.ari --check >$(BUILD_DIR)/modules/cyclic-import.err 2>&1; then exit 1; fi
 	grep -q "cyclic module import 'cycle_a::cycle_b::cycle_a' through source 'tests/cases/modules/errors/cycle_a.ari'" $(BUILD_DIR)/modules/cyclic-import.err
+	if $(TARGET) tests/cases/modules/errors/self-import-main.ari --check >$(BUILD_DIR)/modules/self-import.err 2>&1; then exit 1; fi
+	grep -q "cyclic module import 'self_import::self_import' through source 'tests/cases/modules/errors/self_import.ari'" $(BUILD_DIR)/modules/self-import.err
+	if $(TARGET) tests/cases/modules/errors/ambiguous-module-main.ari --check >$(BUILD_DIR)/modules/ambiguous-module.err 2>&1; then exit 1; fi
+	grep -q "ambiguous module file for 'ambiguous_module'" $(BUILD_DIR)/modules/ambiguous-module.err
 	if $(TARGET) tests/cases/modules/errors/duplicate-module-decl.ari --check >$(BUILD_DIR)/modules/duplicate-module-decl.err 2>&1; then exit 1; fi
 	grep -q "duplicate module 'Repeated'" $(BUILD_DIR)/modules/duplicate-module-decl.err
 	if $(TARGET) tests/cases/modules/errors/duplicate-module-file-identity.ari --check >$(BUILD_DIR)/modules/duplicate-module-file-identity.err 2>&1; then exit 1; fi
 	grep -q "module file 'tests/cases/modules/errors/module_identity_source.ari' was already loaded as 'First', not 'Second'" $(BUILD_DIR)/modules/duplicate-module-file-identity.err
+	if $(TARGET) tests/cases/modules/errors/unknown-imported-symbol.ari --check >$(BUILD_DIR)/modules/unknown-imported-symbol.err 2>&1; then exit 1; fi
+	grep -q "unknown function or enum case 'missing'" $(BUILD_DIR)/modules/unknown-imported-symbol.err
+	if $(TARGET) tests/cases/modules/errors/type-value-namespace-confusion.ari --check >$(BUILD_DIR)/modules/type-value-namespace-confusion.err 2>&1; then exit 1; fi
+	grep -q "unsupported executable type 'Token'" $(BUILD_DIR)/modules/type-value-namespace-confusion.err
+	if $(TARGET) tests/cases/modules/errors/invalid-module-path-syntax.ari --check >$(BUILD_DIR)/modules/invalid-module-path-syntax.err 2>&1; then exit 1; fi
+	grep -q "expected { after module name" $(BUILD_DIR)/modules/invalid-module-path-syntax.err
 	if $(TARGET) tests/cases/modules/errors/imported-parse-error-main.ari --check >$(BUILD_DIR)/modules/imported-parse-error.err 2>&1; then exit 1; fi
 	grep -q "tests/cases/modules/errors/imported_parse_error.ari:3:1: expected ; after return" $(BUILD_DIR)/modules/imported-parse-error.err
 	if $(TARGET) tests/cases/modules/errors/imported-semantic-error-main.ari --check >$(BUILD_DIR)/modules/imported-semantic-error.err 2>&1; then exit 1; fi

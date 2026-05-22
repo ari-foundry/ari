@@ -1,0 +1,11 @@
+pub mod child;
+
+pub mod Shared {
+  pub fn seed() -> i64 {
+    return 6;
+  }
+}
+
+pub fn run() -> i64 {
+  return self::child::value() + self::Shared::seed();
+}
