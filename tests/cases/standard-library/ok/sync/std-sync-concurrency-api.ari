@@ -1,0 +1,114 @@
+// Covers concurrency API polish that is currently expressible in Ari source:
+// explicit memory-order names, wider atomic wrappers, barrier/condvar seeds,
+// OnceLock, and the first single-slot MPSC channel shape.
+fn always_false() -> bool {
+  return false;
+}
+
+fn make_value() -> i64 {
+  return 77;
+}
+
+fn touch_i64(value: ref i64) -> void {
+  return;
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  if sync::is_load_order(sync::Acquire) &&
+     !sync::is_load_order(sync::Release) &&
+     sync::is_store_order(sync::Release) &&
+     !sync::is_store_order(sync::Acquire) {
+    score = score + 1;
+  }
+
+  var number = AtomicI64::new(10);
+  number.store_order(12, sync::SeqCst);
+  if number.load_order(sync::Acquire) == 12 &&
+     number.fetch_add_order(3, sync::AcqRel) == 12 &&
+     number.compare_exchange_order(15, 21, sync::SeqCst, sync::Acquire) {
+    score = score + 2;
+  }
+
+  var flag = AtomicBool::new(false);
+  flag.store(true);
+  if flag.load() &&
+     flag.swap_order(false, sync::AcqRel) &&
+     !flag.load_order(sync::Relaxed) &&
+     flag.compare_exchange_order(false, true, sync::SeqCst, sync::Acquire) {
+    score = score + 4;
+  }
+
+  var size = AtomicUsize::new(5u64);
+  if size.fetch_add_order(7u64, sync::AcqRel) == 5u64 &&
+     size.swap_order(12u64, sync::SeqCst) == 12u64 &&
+     size.compare_exchange_order(12u64, 13u64, sync::SeqCst, sync::Acquire) &&
+     size.load() == 13u64 {
+    score = score + 8;
+  }
+
+  var pointed = 31;
+  var pointer = AtomicPtr::new<i64>((ref mut pointed) as ptr i64);
+  let loaded = pointer.load();
+  if ptr_load(loaded) == 31 {
+    ptr_store(loaded, 32);
+    if pointed == 32 &&
+       pointer.compare_exchange_order(loaded, 0u64 as ptr i64, sync::SeqCst, sync::Acquire) {
+      score = score + 16;
+    }
+  }
+
+  var once = OnceLock::new<i64>();
+  let was_empty = once.is_empty();
+  let set_once = once.set(41);
+  let set_twice = once.set(42);
+  let once_ref = once.get();
+  if was_empty && set_once && !set_twice && once_ref.unwrap() == 41 {
+    score = score + 32;
+  }
+  let taken_once = once.take().unwrap_or(0);
+  touch_i64(once.get_or_init(make_value));
+  let initialized_ref = once.get();
+  if taken_once == 41 && initialized_ref.unwrap() == 77 {
+    score = score + 64;
+  }
+
+  var mutex = Mutex::new();
+  var condvar = Condvar::new();
+  mutex.lock();
+  condvar.wait_while(ref mut mutex, always_false);
+  if mutex.is_locked() {
+    score = score + 128;
+  }
+  mutex.unlock();
+  let before_notify = condvar.generation();
+  condvar.notify_all();
+  if condvar.generation() == before_notify + 1 {
+    score = score + 256;
+  }
+
+  var barrier = Barrier::new(1);
+  if barrier.parties() == 1 && barrier.wait() {
+    score = score + 512;
+  }
+
+  var zone = zone::create(4096);
+  let channel = sync::channel<i64>(ref mut zone);
+  var sender = channel.sender();
+  var receiver = channel.receiver();
+  if receiver.is_empty() && sender.send(99) && !sender.send(100) {
+    score = score + 1024;
+  }
+  if receiver.try_recv().unwrap_or(0) == 99 && receiver.is_empty() {
+    score = score + 2048;
+  }
+  sender.close();
+  if receiver.recv().is_none() && sender.is_closed() {
+    score = score + 4096;
+  }
+  zone::destroy(zone);
+
+  assert_eq_i64(score, 8191);
+  return score;
+}

@@ -469,6 +469,7 @@ private:
                symbol == "waitpid" ||
                symbol == "pthread_create" ||
                symbol == "pthread_join" ||
+               symbol == "pthread_kill" ||
                symbol == "sched_yield" ||
                symbol == "sysconf" ||
                symbol == "clock_gettime" ||
@@ -628,6 +629,7 @@ private:
         declarations_ << "declare i32 @waitpid(i32, ptr, i32)\n";
         declarations_ << "declare i32 @pthread_create(ptr, ptr, ptr, ptr)\n";
         declarations_ << "declare i32 @pthread_join(i64, ptr)\n";
+        declarations_ << "declare i32 @pthread_kill(i64, i32)\n";
         declarations_ << "declare i32 @sched_yield()\n";
         declarations_ << "declare i64 @sysconf(i32)\n";
         declarations_ << "declare i32 @clock_gettime(i32, ptr)\n";
@@ -2766,6 +2768,22 @@ private:
         line("  ret i64 %result");
         line("fail:");
         line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_thread_is_finished({ i64, i64 } %thread) {");
+        line("entry:");
+        line("  %native = extractvalue { i64, i64 } %thread, 0");
+        line("  %invalid = icmp slt i64 %native, 0");
+        line("  br i1 %invalid, label %finished, label %probe");
+        line("probe:");
+        line("  %code = call i32 @pthread_kill(i64 %native, i32 0)");
+        line("  %missing = icmp ne i32 %code, 0");
+        line("  br i1 %missing, label %finished, label %running");
+        line("finished:");
+        line("  ret i1 true");
+        line("running:");
+        line("  ret i1 false");
         line("}");
         line();
 

@@ -160,6 +160,6 @@ This is a coarse map for planning, not a replacement for the API manifest:
 | --- | --- | --- |
 | `Option`/`Result`, `cmp`, `convert`, `math`, `bits`, `ascii`, `parse`, `encoding` | usable | More negative tests around trait bounds, overflow, and malformed encodings. |
 | `zone`, `boxed`, `string`, `vec`, `collections`, `iter`, `algo`, `hash`, `random::Prng` | usable | More same-zone, reset/destroy, iterator invalidation, and trait-driven constructor tests. |
-| `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time`, IPv4 `net` DNS/host-port/TCP/UDP and Unix stream handles | seed to usable | Stronger owned handle policy, richer `Result` error values, socket capability notes, IPv6 handles, multi-address DNS iteration, buffer-oriented net IO, and platform notes. |
+| `io`, `input`, `env`, `fs`, `process`, `thread`, `sync`, `time`, IPv4 `net` DNS/host-port/TCP/UDP and Unix stream handles | seed to usable | Stronger owned handle policy, richer `Result` error values, applied thread builder options, blocking sync internals, socket capability notes, IPv6 handles, multi-address DNS iteration, buffer-oriented net IO, and platform notes. |
 | `target`, `c`, `os`, future platform-specific socket extensions in `net` | seed | Grow duplicate-with-flags/error policy and broader descriptor flag tests before readiness, signal, mmap, or broad socket option APIs. |
 | backtrace, benchmark, fuzzing, async, compression | planned | Keep out of runtime `std` until runtime, driver, and error contracts are ready. |

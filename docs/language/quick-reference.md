@@ -242,10 +242,10 @@ Or-pattern alternatives must bind the same names with compatible types.
 | current process | `process::id()`, `process::exit(code)`, `process::success()`, `process::failure()` |
 | POSIX child process | `process::fork_result()`, `process::wait_result(pid)`, `process::is_child(pid)`, `process::is_parent(pid)`, raw `process::fork()`, raw `process::wait(pid)` |
 | process command | `process::arg(value)`, `process::env_var(name, value)`, `process::command(program)`, `process::command_with_args(program, args)`, `process::spawn(ref cmd)`, `process::status(ref cmd)`, `process::exit_status(ref cmd)`, `process::output_in(ref cmd, ref mut zone)`, `process::exec(ref cmd)`, `cmd.spawn()`, `cmd.status()`, `cmd.exit_status()`, `cmd.output_in(ref mut zone)`, `cmd.exec()`, `child.wait()`, `child.wait_status()`, `child.kill(signal)`, `status.code()`, `status.signal()`, `output.stdout()`, `output.stderr()`, `process::kill(pid, signal)` |
-| thread | `thread::spawn(entry)`, `thread::join(handle)`, `handle.join()`, `thread::id()`, `thread::yield_now()`, `thread::sleep(duration)`, `thread::available_parallelism()` |
+| thread | `thread::spawn(entry)`, `thread::builder().name("worker").spawn(entry)`, `thread::join(handle)`, `handle.join()`, `handle.is_finished()`, `thread::id()`, `thread::yield_now()`, `thread::sleep(duration)`, `thread::available_parallelism()` |
 | time | `time::now()`, `time::system_now()`, `time::milliseconds(n)`, `time::timeout(duration)`, `deadline.remaining()`, `deadline.has_expired()`, `system_time.to_utc()` |
-| atomic i64 | `AtomicI64::new(value)`, `.load()`, `.store(replacement)`, `.fetch_add(amount)`, `.compare_exchange(expected, replacement)` |
-| locks | `Mutex::new()`, `.lock()`, `.unlock()`, `RwLock::new()`, `.read_lock()`, `.read_unlock()`, `.write_lock()`, `.write_unlock()`, `Once::new()`, `.call_once(init)` |
+| sync | `AtomicI64::new(value)`, `AtomicBool::new(false)`, `AtomicUsize::new(0u64)`, `AtomicPtr::new<T>(ptr)`, `.load_order(sync::Acquire)`, `.store_order(value, sync::Release)`, `.fetch_add(amount)`, `.compare_exchange(expected, replacement)` |
+| locks/channels | `Mutex::new()`, `.lock()`, `.unlock()`, `RwLock::new()`, `.read_lock()`, `.read_unlock()`, `.write_lock()`, `.write_unlock()`, `Once::new()`, `.call_once(init)`, `OnceLock::new<T>()`, `Condvar::new()`, `Barrier::new(parties)`, `sync::channel<T>(ref mut zone)` |
 | input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(&mut zone)` |
 | raw IO | `io::Reader`, `io::Writer`, `io::Seek`, `io::BufReader`, `io::BufWriter`, `io::cursor(bytes)`, `io::read_exact`, `io::stdout()`, `io::stderr()`, `io::write_all`, `io::flush`, `io::write_bytes`, `io::newline` |
 | layout | `size_of<T>()`, `align_of<T>()` |

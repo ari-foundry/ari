@@ -823,17 +823,26 @@ Thread helpers live in `std::thread`:
 ```ari
 thread::spawn(entry)
 thread::join(thread)
+thread::is_finished(thread)
 thread::yield_now()
 thread::sleep(duration)
 thread::id()
 thread::is_main()
 thread::available_parallelism()
 thread::is_join_error(status)
+thread::builder()
 
+Builder::new()
+builder.name(value)
+builder.stack_size(bytes)
+builder.configured_name()
+builder.configured_stack_size()
+builder.spawn(entry)
 Thread::spawn(entry)
 Thread::invalid()
 thread.id()
 thread.is_valid()
+thread.is_finished()
 thread.join()
 ```
 
@@ -845,17 +854,32 @@ current Ari runtime thread id, with main thread `0` and spawned threads
 positive. `yield_now()` is a host scheduler hint, not synchronization.
 `sleep(duration)` forwards to `std::time::sleep`. `available_parallelism()`
 returns the hosted runtime's online processor count and falls back to `1` when
-the platform call fails. User-facing thread-local storage and stack-size
-configuration remain roadmap work.
+the platform call fails. `is_finished` is advisory and does not replace `join`.
+`Builder` records a requested thread name and stack size; the current runtime
+keeps those options visible but still delegates creation to the plain spawn
+hook. User-facing thread-local storage and applied stack attributes remain
+roadmap work.
 
 Synchronization helpers live in `std::sync`:
 
 ```ari
 AtomicI64::new(value)
+AtomicBool::new(value)
+AtomicUsize::new(value)
+AtomicPtr::new<T>(ptr)
 Mutex::new()
 RwLock::new()
 Once::new()
+OnceLock::new<T>()
+Condvar::new()
+Barrier::new(parties)
 
+sync::channel<T>(ref mut zone)
+sync::mpsc_channel<T>(ref mut zone)
+sync::seq_cst()
+sync::is_load_order(ordering)
+sync::is_store_order(ordering)
+sync::is_rmw_order(ordering)
 sync::load(ref value)
 sync::store(ref mut value, replacement)
 sync::swap(ref mut value, replacement)
@@ -878,10 +902,13 @@ sync::call_once(ref mut once, action)
 sync::is_completed(ref once)
 
 atomic.load()
+atomic.load_order(ordering)
 atomic.store(replacement)
+atomic.store_order(replacement, ordering)
 atomic.swap(replacement)
 atomic.fetch_add(amount)
 atomic.compare_exchange(expected, replacement)
+atomic.compare_exchange_order(expected, replacement, success, failure)
 
 mutex.try_lock()
 mutex.lock()
@@ -901,25 +928,48 @@ rwlock.is_locked()
 
 once.call_once(action)
 once.is_completed()
+
+once_lock.set(value)
+once_lock.get()
+once_lock.get_mut()
+once_lock.get_or_init(initializer)
+once_lock.take()
+
+condvar.notify_one()
+condvar.notify_all()
+condvar.wait(ref mut mutex)
+condvar.wait_while(ref mut mutex, condition)
+
+barrier.wait()
+
+channel.sender()
+channel.receiver()
+sender.send(value)
+receiver.try_recv()
+receiver.recv()
 ```
 
-The atomic slice is concrete: `AtomicI64` only. Operations use sequentially
-consistent ordering and keep the API name natural by putting the type in the
-value, not in every method name. `fetch_add` and `swap` return the previous
-value; `compare_exchange` returns whether the replacement happened.
+The atomic slice now has `AtomicI64`, `AtomicBool`, `AtomicUsize`, and
+`AtomicPtr[T]`. `AtomicI64` lowers to LLVM atomic operations; the other wrappers
+compose over it. Operations are still effectively sequentially consistent, but
+the explicit `Ordering` enum is available so APIs can name load/store/RMW
+contracts early. `fetch_add` and `swap` return the previous value;
+`compare_exchange` returns whether the replacement happened.
 
 `Mutex` is a source spin/yield lock built on `AtomicI64`. It is not a
 value-protecting `Mutex[T]` and has no guard type yet, so keep lock/unlock
 scopes explicit and small. `RwLock` is a source reader/writer primitive built
 on the same atomic. It allows multiple readers or one writer, but it is not a
 value-protecting `RwLock[T]` and has no read/write guards yet. `Once` runs a
-plain `fn() -> void` at most once and reports whether the current caller ran
-it.
+plain `fn() -> void` at most once and reports whether the current caller ran it.
+`OnceLock[T]` is the sync-facing one-time value slot. `Condvar`, `Barrier`, and
+single-slot MPSC channels provide the standard shapes now, using spin/yield
+internals until Ari grows blocking wait/wake runtime support.
 
 Shared-ownership handles live in `std::rc` as `Rc`, `Arc`, and `Weak`.
-`Condvar`, sync-facing `OnceLock`/`LazyLock`, barriers, semaphores, MPSC
-channels, futex-backed blocking locks, send/share trait checks, and weaker
-memory-order options remain future concurrency work.
+`LazyLock`, semaphores, futex-backed blocking locks, timeout waits, send/share
+trait checks, user-facing thread-local storage, and target-native relaxed
+ordering remain future concurrency work.
 
 Runtime-backed time helpers live in `std::time`:
 

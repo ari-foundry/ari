@@ -1,10 +1,30 @@
 // Small synchronization primitives.
 //
-// The first sync slice exposes one concrete atomic integer. It deliberately
-// keeps memory ordering out of the public API until Ari has enough concurrency
-// surface to make ordering choices teachable and testable.
+// Atomics are sequentially consistent by default. The explicit Ordering
+// overloads are accepted now so concurrent APIs can name their memory contract
+// before Ari grows target-specific relaxed lowering.
+pub enum Ordering {
+  Relaxed,
+  Acquire,
+  Release,
+  AcqRel,
+  SeqCst,
+}
+
 pub struct AtomicI64 {
   mut value: i64,
+}
+
+pub struct AtomicBool {
+  mut bits: AtomicI64,
+}
+
+pub struct AtomicUsize {
+  mut bits: AtomicI64,
+}
+
+pub struct AtomicPtr[T] {
+  mut bits: AtomicUsize,
 }
 
 pub struct Mutex {
@@ -19,11 +39,73 @@ pub struct Once {
   mut state: AtomicI64,
 }
 
+pub struct Condvar {
+  mut sequence: AtomicI64,
+}
+
+pub struct Barrier {
+  parties: i64,
+  mut arrived: AtomicI64,
+  mut generation: AtomicI64,
+}
+
+pub struct OnceLock[T] {
+  mut state: AtomicI64,
+  mut value: std::Option[T],
+}
+
+struct MpscState[T] {
+  mut ready: AtomicI64,
+  mut closed: AtomicI64,
+  mut slot: std::Option[T],
+}
+
+pub struct Sender[T] {
+  state: ptr std::sync::MpscState[T],
+}
+
+pub struct Receiver[T] {
+  state: ptr std::sync::MpscState[T],
+}
+
+pub struct Channel[T] {
+  sender: std::sync::Sender[T],
+  receiver: std::sync::Receiver[T],
+}
+
 pub extern "ari" fn load(value: ref AtomicI64) -> i64 = "ari_builtin_sync_atomic_i64_load";
 pub extern "ari" fn store(value: ref mut AtomicI64, replacement: i64) -> void = "ari_builtin_sync_atomic_i64_store";
 pub extern "ari" fn swap(value: ref mut AtomicI64, replacement: i64) -> i64 = "ari_builtin_sync_atomic_i64_swap";
 pub extern "ari" fn fetch_add(value: ref mut AtomicI64, amount: i64) -> i64 = "ari_builtin_sync_atomic_i64_fetch_add";
 pub extern "ari" fn compare_exchange(value: ref mut AtomicI64, expected: i64, replacement: i64) -> bool = "ari_builtin_sync_atomic_i64_compare_exchange";
+
+pub fn seq_cst() -> std::sync::Ordering {
+  return std::sync::SeqCst;
+}
+
+pub fn is_load_order(ordering: std::sync::Ordering) -> bool {
+  match ordering {
+    std::sync::Relaxed => { return true; }
+    std::sync::Acquire => { return true; }
+    std::sync::Release => { return false; }
+    std::sync::AcqRel => { return false; }
+    std::sync::SeqCst => { return true; }
+  }
+}
+
+pub fn is_store_order(ordering: std::sync::Ordering) -> bool {
+  match ordering {
+    std::sync::Relaxed => { return true; }
+    std::sync::Acquire => { return false; }
+    std::sync::Release => { return true; }
+    std::sync::AcqRel => { return false; }
+    std::sync::SeqCst => { return true; }
+  }
+}
+
+pub fn is_rmw_order(ordering: std::sync::Ordering) -> bool {
+  return true;
+}
 
 pub fn try_lock(lock: ref mut std::sync::Mutex) -> bool {
   return lock.state.compare_exchange(0, 1);
@@ -115,6 +197,28 @@ pub fn is_completed(once: ref std::sync::Once) -> bool {
   return once.state.load() == 2;
 }
 
+fn new_mpsc_state[T](zone: ref mut Zone) -> ptr std::sync::MpscState[T] {
+  return std::zone::new<std::sync::MpscState[T]>(
+    zone,
+    std::sync::MpscState<T> {
+      ready: AtomicI64::new(0),
+      closed: AtomicI64::new(0),
+      slot: std::None<T>(),
+    }
+  );
+}
+
+pub fn channel[T](zone: ref mut Zone) -> std::sync::Channel[T] {
+  let state = std::sync::new_mpsc_state<T>(zone);
+  let sender = std::sync::Sender<T> { state: state };
+  let receiver = std::sync::Receiver<T> { state: state };
+  return std::sync::Channel<T> { sender: sender, receiver: receiver };
+}
+
+pub fn mpsc_channel[T](zone: ref mut Zone) -> std::sync::Channel[T] {
+  return std::sync::channel<T>(zone);
+}
+
 pub impl std::sync::AtomicI64 {
   fn new(value: i64) -> AtomicI64 {
     return AtomicI64 { value: value };
@@ -124,20 +228,231 @@ pub impl std::sync::AtomicI64 {
     return std::sync::load(self);
   }
 
+  fn load_order(self: ref Self, ordering: std::sync::Ordering) -> i64 {
+    std::assert(std::sync::is_load_order(ordering));
+    return self.load();
+  }
+
   fn store(self: ref mut Self, replacement: i64) -> void {
     std::sync::store(self, replacement);
+  }
+
+  fn store_order(self: ref mut Self, replacement: i64, ordering: std::sync::Ordering) -> void {
+    std::assert(std::sync::is_store_order(ordering));
+    self.store(replacement);
   }
 
   fn swap(self: ref mut Self, replacement: i64) -> i64 {
     return std::sync::swap(self, replacement);
   }
 
+  fn swap_order(self: ref mut Self, replacement: i64, ordering: std::sync::Ordering) -> i64 {
+    std::assert(std::sync::is_rmw_order(ordering));
+    return self.swap(replacement);
+  }
+
   fn fetch_add(self: ref mut Self, amount: i64) -> i64 {
     return std::sync::fetch_add(self, amount);
   }
 
+  fn fetch_add_order(self: ref mut Self, amount: i64, ordering: std::sync::Ordering) -> i64 {
+    std::assert(std::sync::is_rmw_order(ordering));
+    return self.fetch_add(amount);
+  }
+
   fn compare_exchange(self: ref mut Self, expected: i64, replacement: i64) -> bool {
     return std::sync::compare_exchange(self, expected, replacement);
+  }
+
+  fn compare_exchange_order(
+    self: ref mut Self,
+    expected: i64,
+    replacement: i64,
+    success: std::sync::Ordering,
+    failure: std::sync::Ordering
+  ) -> bool {
+    std::assert(std::sync::is_rmw_order(success));
+    std::assert(std::sync::is_load_order(failure));
+    return self.compare_exchange(expected, replacement);
+  }
+}
+
+pub impl std::sync::AtomicBool {
+  fn new(value: bool) -> std::sync::AtomicBool {
+    if value {
+      return std::sync::AtomicBool { bits: AtomicI64::new(1) };
+    }
+    return std::sync::AtomicBool { bits: AtomicI64::new(0) };
+  }
+
+  fn load(self: ref Self) -> bool {
+    return self.bits.load() != 0;
+  }
+
+  fn load_order(self: ref Self, ordering: std::sync::Ordering) -> bool {
+    std::assert(std::sync::is_load_order(ordering));
+    return self.load();
+  }
+
+  fn store(self: ref mut Self, replacement: bool) -> void {
+    if replacement {
+      self.bits.store(1);
+    } else {
+      self.bits.store(0);
+    }
+  }
+
+  fn store_order(self: ref mut Self, replacement: bool, ordering: std::sync::Ordering) -> void {
+    std::assert(std::sync::is_store_order(ordering));
+    self.store(replacement);
+  }
+
+  fn swap(self: ref mut Self, replacement: bool) -> bool {
+    var raw = 0;
+    if replacement {
+      raw = 1;
+    }
+    return self.bits.swap(raw) != 0;
+  }
+
+  fn swap_order(self: ref mut Self, replacement: bool, ordering: std::sync::Ordering) -> bool {
+    std::assert(std::sync::is_rmw_order(ordering));
+    return self.swap(replacement);
+  }
+
+  fn compare_exchange(self: ref mut Self, expected: bool, replacement: bool) -> bool {
+    var expected_raw = 0;
+    var replacement_raw = 0;
+    if expected {
+      expected_raw = 1;
+    }
+    if replacement {
+      replacement_raw = 1;
+    }
+    return self.bits.compare_exchange(expected_raw, replacement_raw);
+  }
+
+  fn compare_exchange_order(
+    self: ref mut Self,
+    expected: bool,
+    replacement: bool,
+    success: std::sync::Ordering,
+    failure: std::sync::Ordering
+  ) -> bool {
+    std::assert(std::sync::is_rmw_order(success));
+    std::assert(std::sync::is_load_order(failure));
+    return self.compare_exchange(expected, replacement);
+  }
+}
+
+pub impl std::sync::AtomicUsize {
+  fn new(value: u64) -> std::sync::AtomicUsize {
+    return std::sync::AtomicUsize { bits: AtomicI64::new(value as i64) };
+  }
+
+  fn load(self: ref Self) -> u64 {
+    return self.bits.load() as u64;
+  }
+
+  fn load_order(self: ref Self, ordering: std::sync::Ordering) -> u64 {
+    std::assert(std::sync::is_load_order(ordering));
+    return self.load();
+  }
+
+  fn store(self: ref mut Self, replacement: u64) -> void {
+    self.bits.store(replacement as i64);
+  }
+
+  fn store_order(self: ref mut Self, replacement: u64, ordering: std::sync::Ordering) -> void {
+    std::assert(std::sync::is_store_order(ordering));
+    self.store(replacement);
+  }
+
+  fn swap(self: ref mut Self, replacement: u64) -> u64 {
+    return self.bits.swap(replacement as i64) as u64;
+  }
+
+  fn swap_order(self: ref mut Self, replacement: u64, ordering: std::sync::Ordering) -> u64 {
+    std::assert(std::sync::is_rmw_order(ordering));
+    return self.swap(replacement);
+  }
+
+  fn fetch_add(self: ref mut Self, amount: u64) -> u64 {
+    return self.bits.fetch_add(amount as i64) as u64;
+  }
+
+  fn fetch_add_order(self: ref mut Self, amount: u64, ordering: std::sync::Ordering) -> u64 {
+    std::assert(std::sync::is_rmw_order(ordering));
+    return self.fetch_add(amount);
+  }
+
+  fn compare_exchange(self: ref mut Self, expected: u64, replacement: u64) -> bool {
+    return self.bits.compare_exchange(expected as i64, replacement as i64);
+  }
+
+  fn compare_exchange_order(
+    self: ref mut Self,
+    expected: u64,
+    replacement: u64,
+    success: std::sync::Ordering,
+    failure: std::sync::Ordering
+  ) -> bool {
+    std::assert(std::sync::is_rmw_order(success));
+    std::assert(std::sync::is_load_order(failure));
+    return self.compare_exchange(expected, replacement);
+  }
+}
+
+pub impl[T] std::sync::AtomicPtr[T] {
+  fn new(value: ptr T) -> std::sync::AtomicPtr[T] {
+    return std::sync::AtomicPtr<T> { bits: AtomicUsize::new(value as u64) };
+  }
+
+  fn null_ptr() -> std::sync::AtomicPtr[T] {
+    return std::sync::AtomicPtr<T>::new(0u64 as ptr T);
+  }
+
+  fn load(self: ref Self) -> ptr T {
+    return self.bits.load() as ptr T;
+  }
+
+  fn load_order(self: ref Self, ordering: std::sync::Ordering) -> ptr T {
+    std::assert(std::sync::is_load_order(ordering));
+    return self.load();
+  }
+
+  fn store(self: ref mut Self, replacement: ptr T) -> void {
+    self.bits.store(replacement as u64);
+  }
+
+  fn store_order(self: ref mut Self, replacement: ptr T, ordering: std::sync::Ordering) -> void {
+    std::assert(std::sync::is_store_order(ordering));
+    self.store(replacement);
+  }
+
+  fn swap(self: ref mut Self, replacement: ptr T) -> ptr T {
+    return self.bits.swap(replacement as u64) as ptr T;
+  }
+
+  fn swap_order(self: ref mut Self, replacement: ptr T, ordering: std::sync::Ordering) -> ptr T {
+    std::assert(std::sync::is_rmw_order(ordering));
+    return self.swap(replacement);
+  }
+
+  fn compare_exchange(self: ref mut Self, expected: ptr T, replacement: ptr T) -> bool {
+    return self.bits.compare_exchange(expected as u64, replacement as u64);
+  }
+
+  fn compare_exchange_order(
+    self: ref mut Self,
+    expected: ptr T,
+    replacement: ptr T,
+    success: std::sync::Ordering,
+    failure: std::sync::Ordering
+  ) -> bool {
+    std::assert(std::sync::is_rmw_order(success));
+    std::assert(std::sync::is_load_order(failure));
+    return self.compare_exchange(expected, replacement);
   }
 }
 
@@ -220,5 +535,206 @@ pub impl std::sync::Once {
 
   fn is_completed(self: ref Self) -> bool {
     return std::sync::is_completed(self);
+  }
+}
+
+pub impl std::sync::Condvar {
+  fn new() -> std::sync::Condvar {
+    return std::sync::Condvar { sequence: AtomicI64::new(0) };
+  }
+
+  fn notify_one(self: ref mut Self) -> void {
+    self.sequence.fetch_add(1);
+  }
+
+  fn notify_all(self: ref mut Self) -> void {
+    self.sequence.fetch_add(1);
+  }
+
+  fn generation(self: ref Self) -> i64 {
+    return self.sequence.load();
+  }
+
+  fn wait(self: ref mut Self, lock: ref mut std::sync::Mutex) -> void {
+    let seen = self.sequence.load();
+    lock.unlock();
+    while self.sequence.load() == seen {
+      std::thread::yield_now();
+    }
+    lock.lock();
+  }
+
+  fn wait_while(self: ref mut Self, lock: ref mut std::sync::Mutex, condition: fn() -> bool) -> void {
+    while condition() {
+      self.wait(lock);
+    }
+  }
+}
+
+pub impl std::sync::Barrier {
+  fn new(parties: i64) -> std::sync::Barrier {
+    std::assert(parties > 0);
+    return std::sync::Barrier {
+      parties: parties,
+      arrived: AtomicI64::new(0),
+      generation: AtomicI64::new(0),
+    };
+  }
+
+  fn wait(self: ref mut Self) -> bool {
+    let generation = self.generation.load();
+    let arrived = self.arrived.fetch_add(1) + 1;
+    if arrived >= self.parties {
+      self.arrived.store(0);
+      self.generation.fetch_add(1);
+      return true;
+    }
+    while self.generation.load() == generation {
+      std::thread::yield_now();
+    }
+    return false;
+  }
+
+  fn parties(self: ref Self) -> i64 {
+    return self.parties;
+  }
+}
+
+pub impl[T] std::sync::OnceLock[T] {
+  fn new() -> std::sync::OnceLock[T] {
+    return std::sync::OnceLock<T> { state: AtomicI64::new(0), value: std::None<T>() };
+  }
+
+  fn is_initialized(self: ref Self) -> bool {
+    return self.state.load() == 2;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return !self.is_initialized();
+  }
+
+  fn set(self: ref mut Self, value: T) -> bool {
+    if self.state.compare_exchange(0, 1) {
+      let previous = self.value.replace(value);
+      drop previous;
+      self.state.store(2);
+      return true;
+    }
+    drop value;
+    return false;
+  }
+
+  fn get(self: ref Self) -> std::option::OptionRef[T] {
+    if self.is_initialized() {
+      return self.value.as_ref();
+    }
+    return std::option::NoneRef<T>();
+  }
+
+  fn get_mut(self: ref mut Self) -> std::option::OptionMut[T] {
+    if self.is_initialized() {
+      return self.value.as_mut();
+    }
+    return std::option::NoneMut<T>();
+  }
+
+  fn get_or_init(self: ref mut Self, initializer: fn() -> T) -> ref T {
+    if self.state.load() == 0 && self.state.compare_exchange(0, 1) {
+      let previous = self.value.replace(initializer());
+      drop previous;
+      self.state.store(2);
+    }
+    while self.state.load() == 1 {
+      std::thread::yield_now();
+    }
+    return ref *((ref (*((ref self.value) as ptr std::Option[T])).0) as ptr T);
+  }
+
+  fn take(self: ref mut Self) -> std::Option[T] {
+    if self.state.load() == 2 {
+      self.state.store(0);
+      return self.value.take();
+    }
+    return std::None<T>();
+  }
+}
+
+pub impl[T] std::sync::Sender[T] {
+  fn send(self: ref mut Self, value: T) -> bool {
+    let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
+    if state.closed.load() != 0 {
+      drop value;
+      return false;
+    }
+    if state.ready.compare_exchange(0, -1) {
+      let previous = state.slot.replace(value);
+      drop previous;
+      state.ready.store(1);
+      return true;
+    }
+    drop value;
+    return false;
+  }
+
+  fn close(self: ref mut Self) -> void {
+    let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
+    state.closed.store(1);
+  }
+
+  fn is_closed(self: ref Self) -> bool {
+    let state: ref std::sync::MpscState[T] = ref *self.state;
+    return state.closed.load() != 0;
+  }
+}
+
+pub impl[T] std::sync::Receiver[T] {
+  fn try_recv(self: ref mut Self) -> std::Option[T] {
+    let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
+    if state.ready.compare_exchange(1, -1) {
+      let value = state.slot.take();
+      state.ready.store(0);
+      return value;
+    }
+    return std::None<T>();
+  }
+
+  fn recv(self: ref mut Self) -> std::Option[T] {
+    while !self.is_closed() {
+      let value = self.try_recv();
+      if value.is_some() {
+        return value;
+      }
+      std::thread::yield_now();
+    }
+    return self.try_recv();
+  }
+
+  fn close(self: ref mut Self) -> void {
+    let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
+    state.closed.store(1);
+  }
+
+  fn is_closed(self: ref Self) -> bool {
+    let state: ref std::sync::MpscState[T] = ref *self.state;
+    return state.closed.load() != 0;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    let state: ref std::sync::MpscState[T] = ref *self.state;
+    return state.ready.load() != 1;
+  }
+}
+
+pub impl[T] std::sync::Channel[T] {
+  fn split(self) -> std::sync::Channel[T] {
+    return self;
+  }
+
+  fn sender(self: ref Self) -> std::sync::Sender[T] {
+    return self.sender;
+  }
+
+  fn receiver(self: ref Self) -> std::sync::Receiver[T] {
+    return self.receiver;
   }
 }

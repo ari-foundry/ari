@@ -1009,6 +1009,12 @@ check-prelude: $(TARGET)
 	grep -F -q "std6thread5sleep" $(BUILD_DIR)/prelude/std-thread-runtime-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-runtime-helpers.ari -o $(BUILD_DIR)/prelude/std-thread-runtime-helpers.elf
 	$(BUILD_DIR)/prelude/std-thread-runtime-helpers.elf; code=$$?; test $$code -eq 24
+	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-builder.ari --emit-llvm $(BUILD_DIR)/prelude/std-thread-builder.ll
+	grep -q "@ari_builtin_thread_is_finished" $(BUILD_DIR)/prelude/std-thread-builder.ll
+	grep -q "declare i32 @pthread_kill" $(BUILD_DIR)/prelude/std-thread-builder.ll
+	grep -F -q "std__thread__Builder" $(BUILD_DIR)/prelude/std-thread-builder.ll
+	$(TARGET) tests/cases/standard-library/ok/thread/std-thread-builder.ari -o $(BUILD_DIR)/prelude/std-thread-builder.elf
+	$(BUILD_DIR)/prelude/std-thread-builder.elf; code=$$?; test $$code -eq 42
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/thread/std-thread-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-thread-basic.elf; $(BUILD_DIR)/prelude/std-thread-basic.elf; code=$$?; test $$code -eq 42; fi
 	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-atomic-i64.ari --emit-llvm $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
 	grep -q "@ari_builtin_sync_atomic_i64_load" $(BUILD_DIR)/prelude/std-sync-atomic-i64.ll
@@ -1038,6 +1044,18 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_sync_atomic_i64_fetch_add" $(BUILD_DIR)/prelude/std-sync-rwlock.ll
 	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-rwlock.ari -o $(BUILD_DIR)/prelude/std-sync-rwlock.elf
 	$(BUILD_DIR)/prelude/std-sync-rwlock.elf; code=$$?; test $$code -eq 43
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-concurrency-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -F -q "std__sync__AtomicBool" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -F -q "std__sync__AtomicUsize" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -F -q "std__sync__AtomicPtr" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -F -q "std__sync__OnceLock" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -F -q "std__sync__Condvar" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -F -q "std__sync__Barrier" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -F -q "std__sync__Sender" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -F -q "std__sync__Receiver" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	grep -F -q "_ARNv3std4sync14channel" $(BUILD_DIR)/prelude/std-sync-concurrency-api.ll
+	$(TARGET) tests/cases/standard-library/ok/sync/std-sync-concurrency-api.ari -o $(BUILD_DIR)/prelude/std-sync-concurrency-api.elf
+	$(BUILD_DIR)/prelude/std-sync-concurrency-api.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/time/std-time-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_monotonic_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll
 	grep -q "@ari_builtin_time_unix_nanos" $(BUILD_DIR)/prelude/std-time-basic.ll

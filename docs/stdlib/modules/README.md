@@ -90,12 +90,13 @@ limits, examples, and test files for one module.
 - [std::os](os.md): non-owning file-descriptor views, `OwnedFd` close,
   duplicate, close-on-exec, nonblocking policy, owned `Pipe` pairs, and the
   roadmap for raw OS primitives.
-- [std::thread](thread.md): function-pointer thread spawn/join, runtime thread
-  ids, invalid-handle sentinels, cooperative sleep/yield, available
-  parallelism, and thread-local/stack-size roadmap notes.
-- [std::sync](sync.md): concrete `AtomicI64` operations, source `Mutex`,
-  `RwLock`, and `Once` helpers, current memory-order policy, and lock/channel
-  roadmap.
+- [std::thread](thread.md): function-pointer thread spawn/join, `Builder`,
+  advisory completion checks, runtime thread ids, invalid-handle sentinels,
+  cooperative sleep/yield, available parallelism, and thread-local roadmap
+  notes.
+- [std::sync](sync.md): `Ordering`, concrete atomic wrappers, source `Mutex`,
+  `RwLock`, `Once`, `OnceLock`, `Condvar`, `Barrier`, single-slot channels,
+  current memory-order policy, and blocking/runtime roadmap.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock
   timestamps, non-negative durations, elapsed-time helpers, monotonic
   deadlines/timeouts, UTC calendar conversion, and sleep.

@@ -19,6 +19,7 @@ enum std::option::OptionMut[T]|check-prelude prelude-option-result-ref-access mu
 enum std::option::OptionRef[T]|check-prelude prelude-option-result-ref-access shared borrowed option payload view union; docs/stdlib/modules/option-result.md
 enum std::result::ResultMut[T, E]|check-prelude prelude-option-result-ref-access mutable borrowed result payload view union; docs/stdlib/modules/option-result.md
 enum std::result::ResultRef[T, E]|check-prelude prelude-option-result-ref-access shared borrowed result payload view union; docs/stdlib/modules/option-result.md
+enum std::sync::Ordering|check-prelude std-sync-concurrency-api explicit atomic memory-order vocabulary; docs/stdlib/modules/sync.md
 enum std::target::Arch|check-prelude std-target-basic compiler-known architecture enum; docs/stdlib/modules/target.md
 enum std::target::DebugFormat|check-prelude std-target-basic compiler-known debug format enum; docs/stdlib/modules/target.md
 enum std::target::Env|check-prelude std-target-basic compiler-known target environment enum; docs/stdlib/modules/target.md
@@ -707,17 +708,23 @@ fn std::string::os_str|check-prelude std-string-text-kinds typed borrowed OS-str
 fn std::string::utf8|check-prelude std-string-text-kinds validated borrowed UTF-8 byte view constructor; docs/stdlib/modules/string.md
 fn std::string::with_capacity|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::sync::call_once|check-prelude std-sync-mutex-once source once execution helper; docs/stdlib/modules/sync.md
+fn std::sync::channel[T]|check-prelude std-sync-concurrency-api single-slot MPSC channel constructor; docs/stdlib/modules/sync.md
 fn std::sync::compare_exchange|check-prelude std-sync-atomic-i64 atomic compare-and-exchange hook; docs/stdlib/modules/sync.md
 fn std::sync::fetch_add|check-prelude std-sync-atomic-i64 atomic fetch-add hook; docs/stdlib/modules/sync.md
 fn std::sync::is_completed|check-prelude std-sync-mutex-once source once completion predicate; docs/stdlib/modules/sync.md
+fn std::sync::is_load_order|check-prelude std-sync-concurrency-api memory-order validation helper for loads; docs/stdlib/modules/sync.md
 fn std::sync::is_locked|check-prelude std-sync-mutex-once source mutex state predicate; docs/stdlib/modules/sync.md
 fn std::sync::is_read_locked|check-prelude std-sync-rwlock source read-lock diagnostic predicate; docs/stdlib/modules/sync.md
+fn std::sync::is_rmw_order|check-prelude std-sync-concurrency-api memory-order validation helper for RMW operations; docs/stdlib/modules/sync.md
+fn std::sync::is_store_order|check-prelude std-sync-concurrency-api memory-order validation helper for stores; docs/stdlib/modules/sync.md
 fn std::sync::is_write_locked|check-prelude std-sync-rwlock source write-lock diagnostic predicate; docs/stdlib/modules/sync.md
 fn std::sync::load|check-prelude std-sync-atomic-i64 atomic load hook; docs/stdlib/modules/sync.md
 fn std::sync::lock|check-prelude std-sync-mutex-once source mutex spin lock helper; docs/stdlib/modules/sync.md
+fn std::sync::mpsc_channel[T]|check-prelude std-sync-concurrency-api explicit MPSC channel constructor alias; docs/stdlib/modules/sync.md
 fn std::sync::read_lock|check-prelude std-sync-rwlock source read lock helper; docs/stdlib/modules/sync.md
 fn std::sync::read_unlock|check-prelude std-sync-rwlock source read unlock helper; docs/stdlib/modules/sync.md
 fn std::sync::reader_count|check-prelude std-sync-rwlock source reader count helper; docs/stdlib/modules/sync.md
+fn std::sync::seq_cst|check-prelude std-sync-concurrency-api SeqCst memory-order convenience helper; docs/stdlib/modules/sync.md
 fn std::sync::store|check-prelude std-sync-atomic-i64 atomic store hook; docs/stdlib/modules/sync.md
 fn std::sync::swap|check-prelude std-sync-atomic-i64 atomic exchange hook; docs/stdlib/modules/sync.md
 fn std::sync::try_lock|check-prelude std-sync-mutex-once source mutex nonblocking lock helper; docs/stdlib/modules/sync.md
@@ -782,7 +789,9 @@ fn std::test::report|check-prelude std-test-report unit-test report constructor;
 fn std::test::require|check-prelude std-test-report panic-on-failure helper; docs/stdlib/modules/test.md
 fn std::test::scratch|check-prelude std-test-report explicit scratch zone constructor; docs/stdlib/modules/test.md
 fn std::thread::available_parallelism|check-prelude std-thread-runtime-helpers runtime online processor count helper; docs/stdlib/modules/thread.md
+fn std::thread::builder|check-prelude std-thread-builder thread builder constructor helper; docs/stdlib/modules/thread.md
 fn std::thread::id|check-prelude std-thread-basic source wrapper around context thread id; docs/stdlib/modules/thread.md
+fn std::thread::is_finished|check-prelude std-thread-builder advisory thread completion predicate hook; docs/stdlib/modules/thread.md
 fn std::thread::is_join_error|check-prelude std-thread-basic join sentinel helper; docs/stdlib/modules/thread.md
 fn std::thread::is_main|check-prelude std-thread-basic source main-thread predicate; docs/stdlib/modules/thread.md
 fn std::thread::join|check-prelude std-thread-basic thread join hook; docs/stdlib/modules/thread.md
@@ -1824,12 +1833,59 @@ method std::string::Utf8::codepoint_at|check-prelude std-string-text-kinds valid
 method std::string::Utf8::codepoint_count|check-prelude std-string-text-kinds validated UTF-8 scalar count; docs/stdlib/modules/string.md
 method std::string::Utf8::is_empty|check-prelude std-string-text-kinds UTF-8 byte empty predicate; docs/stdlib/modules/string.md
 method std::string::Utf8::len|check-prelude std-string-text-kinds UTF-8 byte length accessor; docs/stdlib/modules/string.md
+method std::sync::AtomicBool::compare_exchange|check-prelude std-sync-concurrency-api bool compare-and-exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicBool::compare_exchange_order|check-prelude std-sync-concurrency-api bool atomic explicit-order compare-and-exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicBool::load|check-prelude std-sync-concurrency-api bool atomic load wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicBool::load_order|check-prelude std-sync-concurrency-api bool atomic explicit-order load wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicBool::new|check-prelude std-sync-concurrency-api bool atomic constructor; docs/stdlib/modules/sync.md
+method std::sync::AtomicBool::store|check-prelude std-sync-concurrency-api bool atomic store wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicBool::store_order|check-prelude std-sync-concurrency-api bool atomic explicit-order store wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicBool::swap|check-prelude std-sync-concurrency-api bool atomic exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicBool::swap_order|check-prelude std-sync-concurrency-api bool atomic explicit-order exchange wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::compare_exchange|check-prelude std-sync-atomic-i64 compare-and-exchange method wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::compare_exchange_order|check-prelude std-sync-concurrency-api explicit-order compare-and-exchange wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::fetch_add|check-prelude std-sync-atomic-i64 fetch-add method wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::fetch_add_order|check-prelude std-sync-concurrency-api explicit-order fetch-add wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::load|check-prelude std-sync-atomic-i64 load method wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::load_order|check-prelude std-sync-concurrency-api explicit-order load wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::new|check-prelude std-sync-atomic-i64 associated constructor; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::store|check-prelude std-sync-atomic-i64 store method wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::store_order|check-prelude std-sync-concurrency-api explicit-order store wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicI64::swap|check-prelude std-sync-atomic-i64 exchange method wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicI64::swap_order|check-prelude std-sync-concurrency-api explicit-order exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::compare_exchange|check-prelude std-sync-concurrency-api pointer atomic compare-and-exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::compare_exchange_order|check-prelude std-sync-concurrency-api pointer atomic explicit-order compare-and-exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::load|check-prelude std-sync-concurrency-api pointer atomic load wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::load_order|check-prelude std-sync-concurrency-api pointer atomic explicit-order load wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::new|check-prelude std-sync-concurrency-api pointer atomic constructor; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::null_ptr|check-prelude std-sync-concurrency-api null pointer atomic constructor; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::store|check-prelude std-sync-concurrency-api pointer atomic store wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::store_order|check-prelude std-sync-concurrency-api pointer atomic explicit-order store wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::swap|check-prelude std-sync-concurrency-api pointer atomic exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicPtr[T]::swap_order|check-prelude std-sync-concurrency-api pointer atomic explicit-order exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::compare_exchange|check-prelude std-sync-concurrency-api usize atomic compare-and-exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::compare_exchange_order|check-prelude std-sync-concurrency-api usize atomic explicit-order compare-and-exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::fetch_add|check-prelude std-sync-concurrency-api usize atomic fetch-add wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::fetch_add_order|check-prelude std-sync-concurrency-api usize atomic explicit-order fetch-add wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::load|check-prelude std-sync-concurrency-api usize atomic load wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::load_order|check-prelude std-sync-concurrency-api usize atomic explicit-order load wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::new|check-prelude std-sync-concurrency-api usize atomic constructor; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::store|check-prelude std-sync-concurrency-api usize atomic store wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::store_order|check-prelude std-sync-concurrency-api usize atomic explicit-order store wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::swap|check-prelude std-sync-concurrency-api usize atomic exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::AtomicUsize::swap_order|check-prelude std-sync-concurrency-api usize atomic explicit-order exchange wrapper; docs/stdlib/modules/sync.md
+method std::sync::Barrier::new|check-prelude std-sync-concurrency-api barrier constructor; docs/stdlib/modules/sync.md
+method std::sync::Barrier::parties|check-prelude std-sync-concurrency-api barrier party-count accessor; docs/stdlib/modules/sync.md
+method std::sync::Barrier::wait|check-prelude std-sync-concurrency-api barrier wait coordinator; docs/stdlib/modules/sync.md
+method std::sync::Channel[T]::receiver|check-prelude std-sync-concurrency-api channel receiver accessor; docs/stdlib/modules/sync.md
+method std::sync::Channel[T]::sender|check-prelude std-sync-concurrency-api channel sender accessor; docs/stdlib/modules/sync.md
+method std::sync::Channel[T]::split|check-prelude std-sync-concurrency-api channel split helper; docs/stdlib/modules/sync.md
+method std::sync::Condvar::generation|check-prelude std-sync-concurrency-api condition-variable notification generation; docs/stdlib/modules/sync.md
+method std::sync::Condvar::new|check-prelude std-sync-concurrency-api condition-variable constructor; docs/stdlib/modules/sync.md
+method std::sync::Condvar::notify_all|check-prelude std-sync-concurrency-api condition-variable broadcast notification; docs/stdlib/modules/sync.md
+method std::sync::Condvar::notify_one|check-prelude std-sync-concurrency-api condition-variable single notification; docs/stdlib/modules/sync.md
+method std::sync::Condvar::wait|check-prelude std-sync-concurrency-api condition-variable wait helper; docs/stdlib/modules/sync.md
+method std::sync::Condvar::wait_while|check-prelude std-sync-concurrency-api predicate condition-variable wait helper; docs/stdlib/modules/sync.md
 method std::sync::Mutex::is_locked|check-prelude std-sync-mutex-once mutex method state predicate; docs/stdlib/modules/sync.md
 method std::sync::Mutex::lock|check-prelude std-sync-mutex-once mutex method spin lock helper; docs/stdlib/modules/sync.md
 method std::sync::Mutex::new|check-prelude std-sync-mutex-once mutex associated constructor; docs/stdlib/modules/sync.md
@@ -1838,6 +1894,19 @@ method std::sync::Mutex::unlock|check-prelude std-sync-mutex-once mutex method u
 method std::sync::Once::call_once|check-prelude std-sync-mutex-once once method execution helper; docs/stdlib/modules/sync.md
 method std::sync::Once::is_completed|check-prelude std-sync-mutex-once once method completion predicate; docs/stdlib/modules/sync.md
 method std::sync::Once::new|check-prelude std-sync-mutex-once once associated constructor; docs/stdlib/modules/sync.md
+method std::sync::OnceLock[T]::get|check-prelude std-sync-concurrency-api thread-facing once-lock shared value view; docs/stdlib/modules/sync.md
+method std::sync::OnceLock[T]::get_mut|check-prelude std-sync-concurrency-api thread-facing once-lock mutable value view; docs/stdlib/modules/sync.md
+method std::sync::OnceLock[T]::get_or_init|check-prelude std-sync-concurrency-api thread-facing lazy initialization helper; docs/stdlib/modules/sync.md
+method std::sync::OnceLock[T]::is_empty|check-prelude std-sync-concurrency-api once-lock empty predicate; docs/stdlib/modules/sync.md
+method std::sync::OnceLock[T]::is_initialized|check-prelude std-sync-concurrency-api once-lock initialized predicate; docs/stdlib/modules/sync.md
+method std::sync::OnceLock[T]::new|check-prelude std-sync-concurrency-api once-lock constructor; docs/stdlib/modules/sync.md
+method std::sync::OnceLock[T]::set|check-prelude std-sync-concurrency-api once-lock one-time setter; docs/stdlib/modules/sync.md
+method std::sync::OnceLock[T]::take|check-prelude std-sync-concurrency-api once-lock value extraction helper; docs/stdlib/modules/sync.md
+method std::sync::Receiver[T]::close|check-prelude std-sync-concurrency-api receiver-side channel close helper; docs/stdlib/modules/sync.md
+method std::sync::Receiver[T]::is_closed|check-prelude std-sync-concurrency-api receiver closed predicate; docs/stdlib/modules/sync.md
+method std::sync::Receiver[T]::is_empty|check-prelude std-sync-concurrency-api receiver empty predicate; docs/stdlib/modules/sync.md
+method std::sync::Receiver[T]::recv|check-prelude std-sync-concurrency-api yielding channel receive helper; docs/stdlib/modules/sync.md
+method std::sync::Receiver[T]::try_recv|check-prelude std-sync-concurrency-api nonblocking channel receive helper; docs/stdlib/modules/sync.md
 method std::sync::RwLock::is_locked|check-prelude std-sync-rwlock rwlock method any-lock predicate; docs/stdlib/modules/sync.md
 method std::sync::RwLock::is_read_locked|check-prelude std-sync-rwlock rwlock method read-lock predicate; docs/stdlib/modules/sync.md
 method std::sync::RwLock::is_write_locked|check-prelude std-sync-rwlock rwlock method write-lock predicate; docs/stdlib/modules/sync.md
@@ -1849,6 +1918,9 @@ method std::sync::RwLock::try_read_lock|check-prelude std-sync-rwlock rwlock met
 method std::sync::RwLock::try_write_lock|check-prelude std-sync-rwlock rwlock method nonblocking write lock helper; docs/stdlib/modules/sync.md
 method std::sync::RwLock::write_lock|check-prelude std-sync-rwlock rwlock method write lock helper; docs/stdlib/modules/sync.md
 method std::sync::RwLock::write_unlock|check-prelude std-sync-rwlock rwlock method write unlock helper; docs/stdlib/modules/sync.md
+method std::sync::Sender[T]::close|check-prelude std-sync-concurrency-api sender-side channel close helper; docs/stdlib/modules/sync.md
+method std::sync::Sender[T]::is_closed|check-prelude std-sync-concurrency-api sender closed predicate; docs/stdlib/modules/sync.md
+method std::sync::Sender[T]::send|check-prelude std-sync-concurrency-api nonblocking single-slot send helper; docs/stdlib/modules/sync.md
 method std::test::Report::check|check-prelude std-test-report method condition aggregation; docs/stdlib/modules/test.md
 method std::test::Report::equal[T]|check-prelude std-test-report method generic equality aggregation; docs/stdlib/modules/test.md
 method std::test::Report::failed|check-prelude std-test-report method failed-count accessor; docs/stdlib/modules/test.md
@@ -1857,8 +1929,15 @@ method std::test::Report::not_equal[T]|check-prelude std-test-report method gene
 method std::test::Report::ok|check-prelude std-test-report method success predicate; docs/stdlib/modules/test.md
 method std::test::Report::passed|check-prelude std-test-report method passed-count accessor; docs/stdlib/modules/test.md
 method std::test::Report::require|check-prelude std-test-report method panic-on-failure helper; docs/stdlib/modules/test.md
+method std::thread::Builder::configured_name|check-prelude std-thread-builder builder configured name accessor; docs/stdlib/modules/thread.md
+method std::thread::Builder::configured_stack_size|check-prelude std-thread-builder builder stack-size accessor; docs/stdlib/modules/thread.md
+method std::thread::Builder::name|check-prelude std-thread-builder builder name setter; docs/stdlib/modules/thread.md
+method std::thread::Builder::new|check-prelude std-thread-builder builder constructor; docs/stdlib/modules/thread.md
+method std::thread::Builder::spawn|check-prelude std-thread-builder builder spawn helper; docs/stdlib/modules/thread.md
+method std::thread::Builder::stack_size|check-prelude std-thread-builder builder stack-size setter; docs/stdlib/modules/thread.md
 method std::thread::Thread::id|check-prelude std-thread-basic handle id accessor; docs/stdlib/modules/thread.md
 method std::thread::Thread::invalid|check-prelude std-thread-basic invalid handle sentinel; docs/stdlib/modules/thread.md
+method std::thread::Thread::is_finished|check-prelude std-thread-builder advisory handle completion predicate; docs/stdlib/modules/thread.md
 method std::thread::Thread::is_valid|check-prelude std-thread-basic handle validity predicate; docs/stdlib/modules/thread.md
 method std::thread::Thread::join|check-prelude std-thread-basic handle join helper; docs/stdlib/modules/thread.md
 method std::thread::Thread::spawn|check-prelude std-thread-basic associated function-pointer spawn helper; docs/stdlib/modules/thread.md
@@ -2178,11 +2257,21 @@ struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS 
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::Utf8|check-prelude std-string-text-kinds typed validated UTF-8 byte view; docs/stdlib/modules/string.md
+struct std::sync::AtomicBool|check-prelude std-sync-concurrency-api bool atomic wrapper; docs/stdlib/modules/sync.md
 struct std::sync::AtomicI64|check-prelude std-sync-atomic-i64 atomic primitive value; docs/stdlib/modules/sync.md
+struct std::sync::AtomicPtr[T]|check-prelude std-sync-concurrency-api pointer atomic wrapper; docs/stdlib/modules/sync.md
+struct std::sync::AtomicUsize|check-prelude std-sync-concurrency-api pointer-sized atomic wrapper; docs/stdlib/modules/sync.md
+struct std::sync::Barrier|check-prelude std-sync-concurrency-api source barrier primitive; docs/stdlib/modules/sync.md
+struct std::sync::Channel[T]|check-prelude std-sync-concurrency-api single-slot channel pair; docs/stdlib/modules/sync.md
+struct std::sync::Condvar|check-prelude std-sync-concurrency-api source condition variable primitive; docs/stdlib/modules/sync.md
 struct std::sync::Mutex|check-prelude std-sync-mutex-once source mutex primitive; docs/stdlib/modules/sync.md
 struct std::sync::Once|check-prelude std-sync-mutex-once source one-time initialization primitive; docs/stdlib/modules/sync.md
+struct std::sync::OnceLock[T]|check-prelude std-sync-concurrency-api source thread-facing one-time slot; docs/stdlib/modules/sync.md
+struct std::sync::Receiver[T]|check-prelude std-sync-concurrency-api channel receiver handle; docs/stdlib/modules/sync.md
 struct std::sync::RwLock|check-prelude std-sync-rwlock source reader-writer lock primitive; docs/stdlib/modules/sync.md
+struct std::sync::Sender[T]|check-prelude std-sync-concurrency-api channel sender handle; docs/stdlib/modules/sync.md
 struct std::test::Report|check-prelude std-test-report unit-test report counts; docs/stdlib/modules/test.md
+struct std::thread::Builder|check-prelude std-thread-builder thread builder options handle; docs/stdlib/modules/thread.md
 struct std::thread::Thread|check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md
 struct std::time::Deadline|check-prelude std-time-timeout monotonic deadline helper; docs/stdlib/modules/time.md
 struct std::time::Duration|std time duration helper tests; docs/stdlib/modules/time.md
@@ -2284,12 +2373,19 @@ type std::process::ChildStdout|check-prelude std-process-high-level child stdout
 type std::process::Error|check-prelude std-error-integration shared process error alias; docs/stdlib/modules/process.md
 type std::process::ErrorKind|check-prelude std-error-integration shared process error-kind alias; docs/stdlib/modules/process.md
 use std::Arc|check-prelude std-rc-arc-weak root alias for std::rc::Arc[T]; docs/stdlib/modules/rc.md
+use std::AtomicBool|check-prelude std-sync-concurrency-api root alias for std::sync::AtomicBool; docs/stdlib/modules/sync.md
 use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md
+use std::AtomicPtr|check-prelude std-sync-concurrency-api root alias for std::sync::AtomicPtr[T]; docs/stdlib/modules/sync.md
+use std::AtomicUsize|check-prelude std-sync-concurrency-api root alias for std::sync::AtomicUsize; docs/stdlib/modules/sync.md
+use std::Barrier|check-prelude std-sync-concurrency-api root alias for std::sync::Barrier; docs/stdlib/modules/sync.md
 use std::BinaryHeap|check-prelude std-collections-heap root alias for std::collections::BinaryHeap[T]; docs/stdlib/modules/collections.md
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row
+use std::Builder|check-prelude std-thread-builder root alias for std::thread::Builder; docs/stdlib/modules/thread.md
 use std::CStr|check-prelude std-c-interop root alias for std::c::CStr; docs/stdlib/modules/c.md
 use std::CString|check-prelude std-c-interop root alias for std::c::CString; docs/stdlib/modules/c.md
 use std::Cell|check-prelude std-cell-basic root alias for std::cell::Cell[T]; docs/stdlib/modules/cell.md
+use std::Channel|check-prelude std-sync-concurrency-api root alias for std::sync::Channel[T]; docs/stdlib/modules/sync.md
+use std::Condvar|check-prelude std-sync-concurrency-api root alias for std::sync::Condvar; docs/stdlib/modules/sync.md
 use std::Debug|check-prelude std-string-append-value root alias for std::fmt::Debug; docs/stdlib/modules/fmt.md
 use std::Deque|check-prelude std-collections-deque root alias for std::collections::Deque[T]; docs/stdlib/modules/collections.md
 use std::Display|check-prelude std-string-append-value root alias for std::fmt::Display; docs/stdlib/modules/fmt.md
@@ -2303,12 +2399,15 @@ use std::LinkedList|check-prelude std-collections-linked-list root alias for std
 use std::Mutex|check-prelude std-sync-mutex-once root alias for std::sync::Mutex; docs/stdlib/modules/sync.md
 use std::Once|check-prelude std-sync-mutex-once root alias for std::sync::Once; docs/stdlib/modules/sync.md
 use std::OnceCell|check-prelude std-cell-basic root alias for std::cell::OnceCell[T]; docs/stdlib/modules/cell.md
+use std::OnceLock|check-prelude std-sync-concurrency-api root alias for std::sync::OnceLock[T]; docs/stdlib/modules/sync.md
 use std::PriorityQueue|check-prelude std-collections-heap root alias for std::collections::PriorityQueue[T]; docs/stdlib/modules/collections.md
 use std::Prng|check-prelude std-random-basic root alias for std::random::Prng; docs/stdlib/modules/random.md
 use std::Rc|check-prelude std-rc-arc-weak root alias for std::rc::Rc[T]; docs/stdlib/modules/rc.md
+use std::Receiver|check-prelude std-sync-concurrency-api root alias for std::sync::Receiver[T]; docs/stdlib/modules/sync.md
 use std::RefCell|check-prelude std-cell-basic root alias for std::cell::RefCell[T]; docs/stdlib/modules/cell.md
 use std::RingBuffer|check-prelude std-collections-ring-buffer root alias for std::collections::RingBuffer[T]; docs/stdlib/modules/collections.md
 use std::RwLock|check-prelude std-sync-rwlock root alias for std::sync::RwLock; docs/stdlib/modules/sync.md
+use std::Sender|check-prelude std-sync-concurrency-api root alias for std::sync::Sender[T]; docs/stdlib/modules/sync.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::Symbol|check-prelude std-c-interop root alias for std::c::Symbol; docs/stdlib/modules/c.md

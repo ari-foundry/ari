@@ -1,64 +1,76 @@
 # std::thread
 
-`std::thread` is the first Ari thread module. It starts deliberately small:
-spawn a plain function pointer, join the returned handle, ask for the current
-Ari runtime thread id, sleep/yield the current OS thread, and ask the runtime
-how much parallelism is available.
+`std::thread` is Ari's hosted thread module. It can start a plain function
+pointer on the current LLVM/Linux runtime path, join the returned handle, yield
+or sleep the current OS thread, read Ari's runtime thread id, query hosted
+parallelism, and use a small `Builder` value for future thread options.
 
-The API is thin because thread ownership needs a strong foundation. Capturing
-closures, shared ownership, locks, and typed result handles should grow in
-later `std::sync` and richer `std::thread` slices instead of being hidden
-behind a too-broad first wrapper. The first atomic primitive now lives in
-`std::sync`, but thread entry capture and shared-state policy are still future
-work.
+The API is deliberately explicit. Thread entries are still `fn() -> i64`, not
+capturing closures, because cross-thread ownership transfer needs send/share
+rules before Ari can make that surface safe. Shared-state primitives live in
+`std::sync`.
 
 ## API
 
 ```ari
 thread::spawn(entry: fn() -> i64) -> Thread
 thread::join(thread: Thread) -> i64
+thread::is_finished(thread: Thread) -> bool
 thread::yield_now() -> void
 thread::sleep(duration: std::time::Duration) -> void
 thread::id() -> i64
 thread::is_main() -> bool
 thread::available_parallelism() -> i64
 thread::is_join_error(status: i64) -> bool
+thread::builder() -> Builder
 
 Thread::spawn(entry: fn() -> i64) -> Thread
 Thread::invalid() -> Thread
 thread.id() -> i64
 thread.is_valid() -> bool
+thread.is_finished() -> bool
 thread.join() -> i64
+
+Builder::new() -> Builder
+builder.name(value: string) -> Builder
+builder.stack_size(bytes: i64) -> Builder
+builder.configured_name() -> string
+builder.configured_stack_size() -> i64
+builder.spawn(entry: fn() -> i64) -> Thread
 ```
 
-`spawn(entry)` starts a new OS thread on the current LLVM/Linux runtime path.
-The entry function must have the shape `fn() -> i64`. This is intentional:
-captured values and ownership transfer need explicit send/share rules before
-the standard library promises closure-like thread entry.
+`spawn(entry)` starts a new OS thread on the hosted runtime path. The spawned
+thread installs a positive Ari runtime id before it enters source code. The main
+thread id is `0`. `thread::id()` reads the current id through
+`std::context::thread_id()`, and `thread::is_main()` is the readable predicate.
 
-`Thread` is a visible value handle with two pieces of runtime state: the native
-thread handle and the Ari runtime id assigned to the spawned thread. The main
-thread id is `0`; spawned Ari threads receive positive ids before they enter
-source code. `thread::id()` reads the current runtime id through
-`std::context::thread_id()`, and `thread::is_main()` is the readable predicate
-for the main-thread check.
+`Thread` is a visible value handle with the native thread handle and the Ari
+runtime id. Join a native handle at most once. `join(thread)` waits for the
+entry result and returns `-1` on join failure or for an invalid handle; use
+`is_join_error(status)` for that sentinel. A successful worker may also return
+`-1`, so typed thread results remain future work.
 
-`join(thread)` waits for a thread and returns the `i64` value returned by the
-entry function. It returns `-1` on join failure or for an invalid handle; use
-`is_join_error(status)` for that sentinel. A successful thread may also return
-`-1`, so a richer result type is future work.
+`is_finished(thread)` is an advisory completion predicate. On the current
+pthread-backed LLVM host it treats invalid handles as finished and asks
+`pthread_kill(handle, 0)` whether the native handle still exists. It does not
+consume the handle and it is not a replacement for `join`.
+
+`Builder` records a requested name and stack size in a plain value. The current
+`Builder::spawn` delegates to `thread::spawn`; runtime enforcement of names and
+custom stack sizes is reserved for the platform-specific thread-attribute
+slice. Keeping the builder shape now lets user code and docs settle on natural
+method names without pretending that every backend option is already wired.
 
 `yield_now()` asks the host scheduler to let another runnable thread make
-progress. It is only a hint; it does not create a synchronization boundary.
-`sleep(duration)` delegates to `std::time::sleep` so users can write
-thread-oriented code without reaching into the time module at every call site.
-`available_parallelism()` returns the number of online processors reported by
-the hosted runtime and clamps host failures to `1`.
+progress. It is only a hint and does not create a synchronization boundary.
+`sleep(duration)` delegates to `std::time::sleep`. `available_parallelism()`
+returns the number of online processors reported by the host and clamps
+failures to `1`.
 
-Ari already uses thread-local runtime storage internally for the current
-thread id. General user-facing `ThreadLocal[T]` storage is not exposed yet
-because it needs generic static storage, destructor, and ownership-transfer
-policy.
+Ari already uses thread-local runtime storage internally for the current thread
+id. General user-facing `ThreadLocal[T]` or `thread_local` storage is not
+exposed yet because it needs generic static storage, destructor policy, and
+ownership-transfer rules.
 
 ## Example
 
@@ -73,9 +85,16 @@ fn worker() -> i64 {
 }
 
 fn main() -> i64 {
-  let handle = thread::spawn(worker);
+  let handle = thread::builder()
+    .name("worker")
+    .stack_size(0)
+    .spawn(worker);
+
   if !handle.is_valid() {
     return 1;
+  }
+  if handle.is_finished() {
+    // Advisory only. Always join to collect the result.
   }
 
   let child_id = handle.id();
@@ -94,20 +113,16 @@ fn main() -> i64 {
 ## Current Limits
 
 - Thread entry is a plain `fn() -> i64`, not a closure with captured state.
-- The first handle is a value shape. Do not join the same copied native handle
-  more than once.
+- `Thread` is a value handle. Do not join the same copied native handle more
+  than once.
 - Join failure is represented by `-1` until Ari has a richer thread result or
   status type.
-- There is no captured shared-state API yet. `std::sync::AtomicI64`,
-  primitive `Mutex`, and `Once` exist, but value-protecting locks, `Shared`,
-  channels, and send/share rules remain future `std::sync` work.
-- There is no user-facing thread-local storage API yet. The runtime TLS slot
-  currently stores only Ari's own thread id.
-- Stack size is not configurable yet. A future `Builder` or
-  `spawn_with_options` API should own custom stack size, names, and platform
-  error details together.
-- The current backend implementation uses pthreads on the LLVM/Linux path.
-  Cross-platform thread policy remains roadmap work.
+- `is_finished` is advisory and backend-specific. It should be used for status
+  checks, not resource reclamation.
+- `Builder` records name and stack-size options, but the current runtime does
+  not apply those options to `pthread_create` yet.
+- User-facing thread-local storage remains roadmap work.
+- Cross-platform thread policy still needs non-pthread implementations.
 
 ## Tests
 
@@ -117,7 +132,9 @@ fn main() -> i64 {
   scheduler yield lowering.
 - `tests/cases/standard-library/ok/thread/std-thread-runtime-helpers.ari`
   checks `available_parallelism`, `thread::sleep`, child thread use of both
-  helpers, and the runtime hooks they lower through.
+  helpers, and runtime hooks they lower through.
+- `tests/cases/standard-library/ok/thread/std-thread-builder.ari` checks the
+  `Builder` method surface and the advisory `is_finished` hook.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for
 the focused source/runtime coverage.

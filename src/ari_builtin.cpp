@@ -147,6 +147,8 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::thread::spawn", "ari_builtin_thread_spawn"},
         {"thread::join", "ari_builtin_thread_join"},
         {"std::thread::join", "ari_builtin_thread_join"},
+        {"thread::is_finished", "ari_builtin_thread_is_finished"},
+        {"std::thread::is_finished", "ari_builtin_thread_is_finished"},
         {"thread::yield_now", "ari_builtin_thread_yield"},
         {"std::thread::yield_now", "ari_builtin_thread_yield"},
         {"thread::available_parallelism", "ari_builtin_thread_available_parallelism"},
@@ -360,6 +362,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_mem_page_size") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_thread_spawn") return builtin_sig({thread_entry}, thread_handle);
     if (symbol == "ari_builtin_thread_join") return builtin_sig({thread_handle}, i64);
+    if (symbol == "ari_builtin_thread_is_finished") return builtin_sig({thread_handle}, boolean);
     if (symbol == "ari_builtin_thread_yield") return builtin_sig({}, void_type);
     if (symbol == "ari_builtin_thread_available_parallelism") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_sync_atomic_i64_load") return builtin_sig({ref_atomic_i64}, i64);

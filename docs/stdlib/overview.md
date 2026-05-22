@@ -44,8 +44,8 @@ API evolution.
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
 | `std::env` | User-facing process argument, environment-variable, OS-string, and path-state helpers. | `arg_count`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, `get`, `get_os`, `try_get`, `try_get_os`, `set`, `remove`, `current_dir`, `current_dir_os`, `current_dir_path`, `try_current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `ExitCode`, typed `Signal`, direct `Error` helpers `fork_result`, `wait_status_result`, `wait_result`, raw compatibility `fork`, `wait`, `Arg`, `EnvVar`, `Command`, `Child`, `ChildStdin`/`ChildStdout`/`ChildStderr`, `ExitStatus`, `Output`, `TempFile`, `TempDir`, `arg`, `env_var`, `command`, `command_with_args`, `kill`, `kill_signal`, `terminate`, command `arg`/`args`/`env`/`env_var`/`current_dir`/`spawn`/`status`/`exit_status`/`output`/`output_in`/`exec`, current/executable path wrappers, temp file/dir constructors, status/output/child accessors. |
-| `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, `is_join_error`. |
-| `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `Mutex`, `RwLock`, `Once`, atomic `load`/`store`/`swap`/`fetch_add`/`compare_exchange`, mutex helpers, rwlock helpers, `call_once`. |
+| `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `Thread`, `Builder`, `spawn`, `join`, `is_finished`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, `is_join_error`. |
+| `std::sync` | Small explicit synchronization primitives. | `Ordering`, `AtomicI64`, `AtomicBool`, `AtomicUsize`, `AtomicPtr`, `Mutex`, `RwLock`, `Once`, `OnceLock`, `Condvar`, `Barrier`, `Channel`, `Sender`, `Receiver`, atomic helpers, lock helpers, `call_once`, `channel`, `mpsc_channel`. |
 | `std::cell` | Interior mutability and one-time initialization. | `Cell`, `RefCell`, `Ref`, `RefMut`, `OnceCell`, `Lazy`. |
 | `std::rc` | Reference-counted shared ownership. | `Rc`, `Arc`, `Weak`, strong/weak counts, downgrade, upgrade, pointer equality. |
 | `std::time` | Monotonic time, wall-clock time, sleep, deadlines, and UTC calendar values. | `Duration`, `Instant`, `SystemTime`, `Deadline`, `UtcDateTime`, strict and fallible duration constructors, strict and fallible Unix timestamp constructors, strict and fallible calendar helpers, `now`, `system_now`, `elapsed`, `sleep`, `timeout`, `timeout_after`, `deadline_at`. |
@@ -275,28 +275,32 @@ constructors, and `kill`/`kill_signal`. Large-stream readiness, stdin
 redirection, richer platform status fields, and Windows process mapping remain
 roadmap work.
 
-`std::thread` is the first thread slice. `spawn`, `join`, `yield_now`, and
-`available_parallelism` are runtime-backed because they call the host threading
-or process APIs and install Ari's per-thread runtime id before source code
-runs. `sleep` delegates to `std::time`, while `id`, `is_main`,
-`is_join_error`, and the `Thread` methods are source helpers. Capturing
-closures, user-facing thread-local storage, custom stack sizes, shared
-ownership, locks, and richer status values remain future `std::sync` and
-richer thread-policy work.
+`std::thread` is the first thread slice. `spawn`, `join`, `is_finished`,
+`yield_now`, and `available_parallelism` are runtime-backed because they call
+the host threading or process APIs and install Ari's per-thread runtime id
+before source code runs. `sleep` delegates to `std::time`, while `id`,
+`is_main`, `is_join_error`, the `Builder` accessors, and most `Thread` methods
+are source helpers. `Builder` records a requested name and stack size, but
+runtime application of those options remains platform work. Capturing closures,
+user-facing thread-local storage, richer result/status values, and send/share
+typing remain richer thread-policy work.
 
-`std::sync` now starts with `AtomicI64`, plus source `Mutex`, `RwLock`, and
-`Once` helpers built on it. `std::cell` adds local interior mutability through
-`Cell`, runtime-checked `RefCell`, and zone-backed `OnceCell`/`Lazy` one-time
-initialization. `std::rc` adds explicit `Rc`, `Arc`, and `Weak` shared
-ownership handles. Atomic method names are the names developers expect:
+`std::sync` now starts with `AtomicI64`, `AtomicBool`, `AtomicUsize`,
+`AtomicPtr[T]`, source `Mutex`, `RwLock`, `Once`, `OnceLock`, `Condvar`,
+`Barrier`, and a single-slot MPSC channel shape. `std::cell` adds local
+interior mutability through `Cell`, runtime-checked `RefCell`, and zone-backed
+`OnceCell`/`Lazy` one-time initialization. `std::rc` adds explicit `Rc`,
+`Arc`, and `Weak` shared ownership handles. Atomic method names are the names
+developers expect:
 `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`. The runtime
 hooks lower directly to LLVM atomic operations with sequentially consistent
-ordering. `Mutex` is a primitive spin/yield lock without a protected payload
-or guard type, `RwLock` is a primitive explicit reader/writer lock without
-guards, and `Once` runs plain `fn() -> void` entries at most once. `Arc` uses
-an atomic control block, but send/share trait policy, `Condvar`, value
-protecting locks, channels, barriers, semaphores, futex-backed blocking locks,
-and explicit memory-order arguments remain future work.
+ordering; `Ordering` names the intended memory contract early. `Mutex` and
+`RwLock` are primitive spin/yield locks without protected payloads or guards,
+`Condvar` and `Barrier` are source coordination primitives, and channels carry
+only a shared state pointer rather than redundant zone handles. `Arc` uses an
+atomic control block, but send/share trait policy, value-protecting locks,
+semaphores, futex-backed blocking locks, timeout waits, and target-native
+relaxed memory ordering remain future work.
 
 `std::time` follows the same OS-facing pattern. `monotonic_nanos`,
 `unix_nanos`, and `sleep_nanos` are runtime-backed because they call the host

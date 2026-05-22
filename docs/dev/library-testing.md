@@ -179,6 +179,9 @@ identifies the exact case:
 - `std-thread-runtime-helpers.ari`: runtime-backed `std::thread`
   `available_parallelism`, source `sleep` wrapper over `std::time`, child
   thread use of both helpers, and `sysconf`/sleep hook lowering checks.
+- `std-thread-builder.ari`: source `std::thread::Builder` option accessors,
+  builder-based spawn, root alias coverage, advisory `is_finished`, and
+  `pthread_kill` hook lowering checks.
 - `std-sync-atomic-i64.ari`: runtime-backed `std::sync::AtomicI64`
   load/store/swap/fetch-add/compare-exchange behavior, method wrappers, root
   alias, and LLVM atomic lowering.
@@ -188,6 +191,10 @@ identifies the exact case:
 - `std-sync-rwlock.ari`: source `std::sync::RwLock` read/write lock
   transitions, reader-count diagnostics, method wrappers, root alias, and
   compare-exchange/fetch-add-backed lowering.
+- `std-sync-concurrency-api.ari`: explicit `Ordering` validation,
+  `AtomicBool`, `AtomicUsize`, `AtomicPtr`, `OnceLock`, generation-based
+  `Condvar`, reusable `Barrier`, single-slot channel send/receive/close
+  behavior, and sync zone-pointer provenance for channel handles.
 - `std-time-basic.ari`: runtime-backed monotonic and wall-clock nanosecond
   reads, source duration/instant wrappers, elapsed-time helpers, and sleep.
 - `std-time-timeout.ari`: source monotonic `Deadline`/timeout helpers,
