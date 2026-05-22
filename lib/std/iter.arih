@@ -95,6 +95,102 @@ pub fn zip[T, U, I: std::Iterator[T], J: std::Iterator[U]](
   return Zip<I, J, T, U> { left: left, right: right };
 }
 
+pub fn count[T, I: std::Iterator[T]](iter: I) -> i64 {
+  var cursor = iter;
+  var total = 0;
+  var item = cursor.next();
+  while item.is_some() {
+    total = total + 1;
+    item = cursor.next();
+  }
+  return total;
+}
+
+pub fn count_if[T, I: std::Iterator[T]](iter: I, predicate: fn(ref T) -> bool) -> i64 {
+  var cursor = iter;
+  var total = 0;
+  var item = cursor.next();
+  while item.is_some() {
+    let value = item.unwrap();
+    if predicate(ref value) {
+      total = total + 1;
+    }
+    item = cursor.next();
+  }
+  return total;
+}
+
+pub fn nth[T, I: std::Iterator[T]](iter: I, index: i64) -> std::Option[T] {
+  std::assert(index >= 0);
+  var cursor = iter;
+  var current = 0;
+  var item = cursor.next();
+  while item.is_some() {
+    if current == index {
+      return item;
+    }
+    current = current + 1;
+    item = cursor.next();
+  }
+  return std::None<T>();
+}
+
+pub fn last[T, I: std::Iterator[T]](iter: I) -> std::Option[T] {
+  var cursor = iter;
+  var result = std::None<T>();
+  var item = cursor.next();
+  while item.is_some() {
+    result = item;
+    item = cursor.next();
+  }
+  return result;
+}
+
+pub fn find_if[T, I: std::Iterator[T]](iter: I, predicate: fn(ref T) -> bool) -> std::Option[T] {
+  var cursor = iter;
+  var item = cursor.next();
+  while item.is_some() {
+    let value = item.unwrap();
+    if predicate(ref value) {
+      return std::Some<T>(value);
+    }
+    item = cursor.next();
+  }
+  return std::None<T>();
+}
+
+pub fn position[T, I: std::Iterator[T]](iter: I, predicate: fn(ref T) -> bool) -> i64 {
+  var cursor = iter;
+  var index = 0;
+  var item = cursor.next();
+  while item.is_some() {
+    let value = item.unwrap();
+    if predicate(ref value) {
+      return index;
+    }
+    index = index + 1;
+    item = cursor.next();
+  }
+  return -1;
+}
+
+pub fn any[T, I: std::Iterator[T]](iter: I, predicate: fn(ref T) -> bool) -> bool {
+  return position<T, I>(iter, predicate) >= 0;
+}
+
+pub fn all[T, I: std::Iterator[T]](iter: I, predicate: fn(ref T) -> bool) -> bool {
+  var cursor = iter;
+  var item = cursor.next();
+  while item.is_some() {
+    let value = item.unwrap();
+    if !predicate(ref value) {
+      return false;
+    }
+    item = cursor.next();
+  }
+  return true;
+}
+
 pub fn fold[T, U, I: std::Iterator[T]](iter: I, initial: U, op: fn(U, T) -> U) -> U {
   var cursor = iter;
   var current = initial;

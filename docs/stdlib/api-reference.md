@@ -2554,6 +2554,14 @@ iter::take<T, I: std::Iterator[T]>(iter, count)
 iter::skip<T, I: std::Iterator[T]>(iter, count)
 iter::enumerate<T, I: std::Iterator[T]>(iter)
 iter::zip<T, U, I: std::Iterator[T], J: std::Iterator[U]>(left, right)
+iter::count<T, I: std::Iterator[T]>(iter)
+iter::count_if<T, I: std::Iterator[T]>(iter, predicate)
+iter::nth<T, I: std::Iterator[T]>(iter, index)
+iter::last<T, I: std::Iterator[T]>(iter)
+iter::find_if<T, I: std::Iterator[T]>(iter, predicate)
+iter::position<T, I: std::Iterator[T]>(iter, predicate)
+iter::any<T, I: std::Iterator[T]>(iter, predicate)
+iter::all<T, I: std::Iterator[T]>(iter, predicate)
 iter::fold<T, U, I: std::Iterator[T]>(iter, initial, op)
 iter::reduce<T, I: std::Iterator[T]>(iter, op)
 iter::collect<T, I: std::Iterator[T]>(ref mut zone, iter)
@@ -2577,13 +2585,16 @@ right)` tuples. Map-like collections still use explicit `keys()` and
 `values()` cursors while entry borrowing and collection-view policy stay
 explicit.
 
-The adapter constructors are lazy except for `fold`, `reduce`, and `collect`.
+The adapter constructors are lazy except for the consumer helpers.
 `empty<T>()` yields no values, while `once(value)` yields one value and then
 stops. `repeat_with(make_value)` is an infinite source adapter that calls the
 zero-argument maker on each `next()`, so bound it with `take`, `zip`, or
 another terminating consumer before collecting or extending a vector. Use
 `skip` for the usual drop-count adapter because `drop` is a language operation.
-`collect` builds a `std::vec::Vec[T]` in the caller-provided zone.
+`count`, `count_if`, `nth`, `last`, `find_if`, `position`, `any`, `all`,
+`fold`, `reduce`, and `collect` advance the source iterator to compute a
+single value or owned collection. `collect` builds a `std::vec::Vec[T]` in the
+caller-provided zone.
 
 `std::fmt` contains the formatting trait surface:
 

@@ -57,6 +57,9 @@ identifies the exact case:
 - `std-iter-adapters.ari`: source `std::iter` lazy `map`, `filter`, `take`,
   `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed
   `collect` behavior over `std::vec::Iter[T]`.
+- `std-iter-consumers.ari`: eager `std::iter` consumers `count`, `count_if`,
+  `nth`, `last`, `find_if`, `position`, `any`, and `all` over Vec, `empty`,
+  and `once` sources.
 - `std-iter-repeat-with.ari`: generator-backed `repeat_with` source iterator,
   bounded through `take` and consumed through `collect` / `Vec.extend_iter`.
 - `std-iter-once-empty.ari`: finite `once` and `empty` source iterators,

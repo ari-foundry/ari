@@ -1868,6 +1868,17 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4iter35fold__G_i64_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
 	grep -q '_ARNv3std4iter33reduce__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
 	grep -q '_ARNv3std3vec34collect__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-adapters.ll
+	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-consumers.ari --emit-llvm $(BUILD_DIR)/prelude/std-iter-consumers.ll
+	grep -q '_ARNv3std4iter32count__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-consumers.ll
+	grep -q '_ARNv3std4iter35count_if__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-consumers.ll
+	grep -q '_ARNv3std4iter30nth__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-consumers.ll
+	grep -q '_ARNv3std4iter31last__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-consumers.ll
+	grep -q '_ARNv3std4iter34find_if__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-consumers.ll
+	grep -q '_ARNv3std4iter35position__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-consumers.ll
+	grep -q '_ARNv3std4iter30any__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-consumers.ll
+	grep -q '_ARNv3std4iter30all__G_i64_std__vec__Iter_i64_' $(BUILD_DIR)/prelude/std-iter-consumers.ll
+	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-consumers.ari -o $(BUILD_DIR)/prelude/std-iter-consumers.elf
+	$(BUILD_DIR)/prelude/std-iter-consumers.elf
 	$(TARGET) tests/cases/standard-library/ok/iter/std-iter-repeat-with.ari --emit-llvm $(BUILD_DIR)/prelude/std-iter-repeat-with.ll
 	grep -q '_ARNv3std4iter18repeat_with__G_i64' $(BUILD_DIR)/prelude/std-iter-repeat-with.ll
 	grep -q '_ARNv4impl26std__iter__RepeatWith_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-iter-repeat-with.ll

@@ -1,0 +1,60 @@
+// Covers eager iterator consumers that collapse any Iterator[T] into a value
+// without requiring collection-specific helper methods.
+
+fn is_even(value: ref i64) -> bool {
+  let raw: ptr i64 = value as ptr i64;
+  return (*raw % 2) == 0;
+}
+
+fn is_positive(value: ref i64) -> bool {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw > 0;
+}
+
+fn above_three(value: ref i64) -> bool {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw > 3;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var values = Vec::with_capacity<i64>(ref mut zone, 5);
+  values.push(1);
+  values.push(2);
+  values.push(3);
+  values.push(4);
+  values.push(5);
+
+  assert(iter::count<i64, std::vec::Iter[i64]>(values.iter()) == 5);
+  assert(iter::count<i64, std::iter::EmptyIter[i64]>(iter::empty<i64>()) == 0);
+  assert(iter::count<i64, std::iter::OnceIter[i64]>(iter::once<i64>(9)) == 1);
+
+  assert(iter::nth<i64, std::vec::Iter[i64]>(values.iter(), 0).unwrap() == 1);
+  assert(iter::nth<i64, std::vec::Iter[i64]>(values.iter(), 3).unwrap() == 4);
+  assert(iter::nth<i64, std::vec::Iter[i64]>(values.iter(), 10).is_none());
+
+  assert(iter::last<i64, std::vec::Iter[i64]>(values.iter()).unwrap() == 5);
+  assert(iter::last<i64, std::iter::EmptyIter[i64]>(iter::empty<i64>()).is_none());
+
+  assert(iter::find_if<i64, std::vec::Iter[i64]>(values.iter(), is_even).unwrap() == 2);
+  assert(iter::find_if<i64, std::iter::EmptyIter[i64]>(
+    iter::empty<i64>(),
+    is_even
+  ).is_none());
+
+  assert(iter::position<i64, std::vec::Iter[i64]>(values.iter(), above_three) == 3);
+  assert(iter::position<i64, std::iter::EmptyIter[i64]>(
+    iter::empty<i64>(),
+    above_three
+  ) == -1);
+
+  assert(iter::any<i64, std::vec::Iter[i64]>(values.iter(), is_even));
+  assert(!iter::any<i64, std::iter::EmptyIter[i64]>(iter::empty<i64>(), is_even));
+  assert(iter::all<i64, std::vec::Iter[i64]>(values.iter(), is_positive));
+  assert(!iter::all<i64, std::vec::Iter[i64]>(values.iter(), is_even));
+  assert(iter::all<i64, std::iter::EmptyIter[i64]>(iter::empty<i64>(), is_even));
+  assert(iter::count_if<i64, std::vec::Iter[i64]>(values.iter(), is_even) == 2);
+
+  zone::destroy(zone);
+  return 0;
+}

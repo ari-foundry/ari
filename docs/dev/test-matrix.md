@@ -631,9 +631,10 @@ Checklist:
       `value_mut()` handles until reference-valued iterator items land
 - [x] source `std::iter` adapters cover finite `empty`/`once` sources,
       generator-backed `repeat_with`, lazy `map`, `filter`, `take`, `skip`,
-      `enumerate`, and `zip` plus eager `fold`, `reduce`, and explicit-zone
-      `collect` over `std::vec::Iter<T>`, `OnceIter<T>`, `EmptyIter<T>`,
-      `RepeatWith<T>`, and root `SliceIter<T>`
+      `enumerate`, and `zip` plus eager `count`, `count_if`, `nth`, `last`,
+      `find_if`, `position`, `any`, `all`, `fold`, `reduce`, and
+      explicit-zone `collect` over `std::vec::Iter<T>`, `OnceIter<T>`,
+      `EmptyIter<T>`, `RepeatWith<T>`, and root `SliceIter<T>`
 - [x] source `std::vec::Vec<T>` and root `Slice<T>` expose half-open range
       mutation helpers for overlap-safe `copy_within`, `fill_range`,
       `reverse_range`, and left-rotation `rotate_range`; source Vec also

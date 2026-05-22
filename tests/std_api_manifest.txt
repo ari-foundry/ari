@@ -454,12 +454,20 @@ fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude ro
 fn std::io::write_bytes|std io byte slice tests; docs/stdlib/modules/io.md
 fn std::io::write_i64|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_u64|prelude IO and u64 format tests; docs/dev/test-matrix.md Prelude row
+fn std::iter::all[T, I: std::Iterator[T]|check-prelude std-iter-consumers predicate all consumer; docs/stdlib/modules/iter.md
+fn std::iter::any[T, I: std::Iterator[T]|check-prelude std-iter-consumers predicate any consumer; docs/stdlib/modules/iter.md
+fn std::iter::count[T, I: std::Iterator[T]|check-prelude std-iter-consumers total item count consumer; docs/stdlib/modules/iter.md
+fn std::iter::count_if[T, I: std::Iterator[T]|check-prelude std-iter-consumers predicate count consumer; docs/stdlib/modules/iter.md
 fn std::iter::empty[T]|check-prelude std-iter-once-empty finite empty source iterator; docs/stdlib/modules/iter.md
 fn std::iter::enumerate[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy tuple index/value adapter; docs/stdlib/modules/iter.md
 fn std::iter::filter[T, I: std::Iterator[T]|check-prelude std-iter-adapters lazy predicate adapter; docs/stdlib/modules/iter.md
+fn std::iter::find_if[T, I: std::Iterator[T]|check-prelude std-iter-consumers predicate find consumer; docs/stdlib/modules/iter.md
 fn std::iter::fold[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters eager fold consumer; docs/stdlib/modules/iter.md
+fn std::iter::last[T, I: std::Iterator[T]|check-prelude std-iter-consumers last item consumer; docs/stdlib/modules/iter.md
 fn std::iter::map[T, U, I: std::Iterator[T]|check-prelude std-iter-adapters lazy mapping adapter; docs/stdlib/modules/iter.md
+fn std::iter::nth[T, I: std::Iterator[T]|check-prelude std-iter-consumers indexed item consumer; docs/stdlib/modules/iter.md
 fn std::iter::once[T]|check-prelude std-iter-once-empty finite single-value source iterator; docs/stdlib/modules/iter.md
+fn std::iter::position[T, I: std::Iterator[T]|check-prelude std-iter-consumers predicate position consumer; docs/stdlib/modules/iter.md
 fn std::iter::range[T]|range for-loop tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::range_inclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::reduce[T, I: std::Iterator[T]|check-prelude std-iter-adapters eager optional reduction; docs/stdlib/modules/iter.md

@@ -19,6 +19,14 @@ iter::take<T, I: std::Iterator[T]>(iter, count)
 iter::skip<T, I: std::Iterator[T]>(iter, count)
 iter::enumerate<T, I: std::Iterator[T]>(iter)
 iter::zip<T, U, I: std::Iterator[T], J: std::Iterator[U]>(left, right)
+iter::count<T, I: std::Iterator[T]>(iter)
+iter::count_if<T, I: std::Iterator[T]>(iter, predicate)
+iter::nth<T, I: std::Iterator[T]>(iter, index)
+iter::last<T, I: std::Iterator[T]>(iter)
+iter::find_if<T, I: std::Iterator[T]>(iter, predicate)
+iter::position<T, I: std::Iterator[T]>(iter, predicate)
+iter::any<T, I: std::Iterator[T]>(iter, predicate)
+iter::all<T, I: std::Iterator[T]>(iter, predicate)
 iter::fold<T, U, I: std::Iterator[T]>(iter, initial, op)
 iter::reduce<T, I: std::Iterator[T]>(iter, op)
 iter::collect<T, I: std::Iterator[T]>(ref mut zone, iter)
@@ -85,8 +93,12 @@ and `zip` are lazy. Constructing one of these adapters stores the source
 iterator and any callback, but does not pull values. Work happens only when
 `next` is called, normally through a `for` loop.
 
+`count`, `count_if`, `nth`, `last`, `find_if`, `position`, `any`, `all`,
 `fold`, `reduce`, and `collect` are eager consumers. They advance the iterator
-until it is exhausted. `reduce` returns `None<T>()` for an empty iterator, while
+until they either find their answer or exhaust the source. `nth`, `last`,
+`find_if`, and `reduce` return `None<T>()` when there is no matching yielded
+value. `position` returns the first matching zero-based index or `-1`. `all`
+returns `true` for an empty iterator, matching the usual vacuous-truth rule.
 `collect` returns a `std::vec::Vec[T]` allocated in the zone passed by the
 caller.
 
@@ -147,6 +159,21 @@ var none = iter::empty<i64>();
 assert(none.next().is_none());
 ```
 
+Use consumer helpers when an iterator should answer a question without first
+allocating a temporary vector:
+
+```ari
+fn even(value: ref i64) -> bool {
+  let raw: ptr i64 = value as ptr i64;
+  return (*raw % 2) == 0;
+}
+
+assert(iter::count<i64, std::vec::Iter[i64]>(values.iter()) == values.len());
+assert(iter::nth<i64, std::vec::Iter[i64]>(values.iter(), 2).is_some());
+assert(iter::position<i64, std::vec::Iter[i64]>(values.iter(), even) >= 0);
+assert(iter::any<i64, std::vec::Iter[i64]>(values.iter(), even));
+```
+
 `filter` predicates take a borrowed value so the predicate can inspect an item
 without consuming it before the adapter decides whether to yield it.
 
@@ -193,6 +220,7 @@ Representative coverage lives in:
 
 ```text
 tests/cases/standard-library/ok/iter/std-iter-adapters.ari
+tests/cases/standard-library/ok/iter/std-iter-consumers.ari
 tests/cases/standard-library/ok/iter/std-iter-repeat-with.ari
 tests/cases/standard-library/ok/iter/std-iter-once-empty.ari
 tests/cases/standard-library/ok/iter/std-iter-slice-vec.ari
