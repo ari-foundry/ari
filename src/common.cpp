@@ -385,6 +385,12 @@ std::string render_compile_error(const SourceLocation* loc, const std::string& m
     return out.str();
 }
 
+void add_primary_label_from_location(std::vector<DiagnosticLabel>& labels, const SourceLocation& loc) {
+    Span span = span_from_location(loc);
+    if (!default_source_map().valid(span.source_id) || !span_has_valid_order(span)) return;
+    labels.push_back(DiagnosticLabel{span, "", true});
+}
+
 } // namespace
 
 SourceMap& default_source_map() {
@@ -665,6 +671,8 @@ CompileError::CompileError(std::string message) {
         loc_ = std::move(parsed_loc);
         message_ = std::move(parsed_message);
         has_location_ = true;
+        (void)source_file_for_location(loc_);
+        add_primary_label_from_location(labels_, loc_);
         rendered_ = render_compile_error(&loc_, message_);
         return;
     }
@@ -676,6 +684,7 @@ CompileError::CompileError(std::string message) {
 CompileError::CompileError(SourceLocation loc, std::string message)
     : message_(std::move(message)), loc_(std::move(loc)), has_location_(true) {
     (void)source_file_for_location(loc_);
+    add_primary_label_from_location(labels_, loc_);
     rendered_ = render_compile_error(&loc_, message_);
 }
 
@@ -693,6 +702,22 @@ bool CompileError::has_location() const {
 
 const SourceLocation& CompileError::location() const {
     return loc_;
+}
+
+const std::vector<DiagnosticLabel>& CompileError::labels() const {
+    return labels_;
+}
+
+const std::vector<DiagnosticNote>& CompileError::notes() const {
+    return notes_;
+}
+
+void CompileError::add_label(DiagnosticLabel label) {
+    labels_.push_back(std::move(label));
+}
+
+void CompileError::add_note(DiagnosticNote note) {
+    notes_.push_back(std::move(note));
 }
 
 std::string where(const SourceLocation& loc) {

@@ -90,6 +90,8 @@ check-compiler-artifacts: $(TARGET)
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-missing-module.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-diagnostic-catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog

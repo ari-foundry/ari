@@ -195,9 +195,16 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
         }
     }
 
-    throw CompileError(import.loc,
+    CompileError error(import.loc,
                        "cannot find module file for '" + import.name +
                            "'; searched " + searched_paths_text(result.searched));
+    error.add_note(DiagnosticNote{std::nullopt,
+                                  "module search paths are tried in deterministic order",
+                                  DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{std::nullopt,
+                                  "pass -I path or --module-path path for file-backed modules",
+                                  DiagnosticNoteKind::Help});
+    throw error;
 }
 
 std::optional<std::string> find_standard_header_file() {

@@ -291,9 +291,12 @@ Current transitional bridge:
   families: `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, and `B0001`.
 - `diagnostic_code_family` renders the owning layer name, such as
   `family=parser`, next to the stable code in diagnostic artifacts.
-- Diagnostic artifacts render locations as `source_id=`, `source=`, `line=`,
-  `column=`, `byte_start=`, `byte_end=`, and `snippet=` fields instead of
-  requiring tools to parse prose.
+- Diagnostic artifacts render `Source`, `Label`, `Snippet`, `Note`, and `Help`
+  rows instead of requiring tools to parse prose. Located rows carry
+  `source_id=`, `source=`, `line=`, `column=`, `end_line=`, `end_column=`,
+  `byte_start=`, and `byte_end=` fields.
+- Message-only notes and help render as `location=none`; located notes and help
+  render as `location=source` plus the same span fields as labels.
 - Diagnostic artifacts suppress structured source fields when an error has no
   valid source id, so a byte range without source ownership does not flow into
   golden diagnostics.

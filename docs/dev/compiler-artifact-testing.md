@@ -135,15 +135,20 @@ DeclarationIndex source=src/main.ari modules=1 declarations=2
 Diagnostic dump example:
 
 ```text
-error[P0001]: expected expression
-  --> source.ari:4:12
-   |
- 4 |   let x =
-   |           ^ expected expression here
+diagnostic error code=P0001 family=parser message="expected expression" sources=1 labels=1 notes=1 helps=1
+  Source source_id=0 kind=file path="source.ari" display="source.ari" bytes=42
+  Label index=0 role=primary source_id=0 source="source.ari" line=4 column=12 end_line=4 end_column=12 byte_start=31 byte_end=31 message=""
+  Snippet label=0 text="  --> source.ari:4:12\n   |\n 4 |   let x =\n   |           ^"
+  Note index=0 location=none message="Ari requires a value after '='"
+  Help index=0 location=none message="add an expression after '='"
 ```
 
-The exact shape can change before the first artifact runner lands, but each
-format must keep stable names, source locations, and indentation rules.
+Diagnostic artifacts are field-oriented. The header owns severity, code,
+family, message, and counts. `Source` rows describe every source used by labels
+or located notes/help. `Label` rows carry `byte_start`, `byte_end`, one-based
+start `line`/`column`, and one-based exclusive `end_line`/`end_column`.
+`Note` and `Help` rows use `location=none` when they are message-only, or
+`location=source` plus the same span fields when they point at source text.
 
 ## Normalization Rules
 
@@ -230,7 +235,7 @@ Land artifact testing in slices:
 | Path normalizer | Replace repo, build, and temporary paths. | `normalize-repo-path`, `normalize-build-path`, `normalize-temp-path`. |
 | Source map dump format | Stable byte offsets, line lengths, newline policy, and source snippets. | `source-map-file`, `source-map-crlf`, `source-map-empty`. |
 | Token dump format | Stable lexer output for identifiers, literals, comments, and invalid tokens. | `token-basic`, `token-string-escapes`, `token-invalid-char`. |
-| Diagnostic dump format | Stable field-oriented output for code, family, source, line, column, and message. | `diagnostic-single-label`, `diagnostic-note-order`. |
+| Diagnostic dump format | Stable field-oriented output for code, family, sources, labels, spans, snippets, notes, help, and message. | `diagnostic-single-label`, `diagnostic-note-order`. |
 | Syntax dump format | Stable parser tree output. | `syntax-function`, `syntax-match`, `syntax-recovery`. |
 | Module graph dump format | Stable file-backed sources, imports, and item surfaces. | `module-graph-file`, `module-graph-search-path`, `module-graph-cfg`. |
 | Declaration index dump format | Stable declaration names, signatures, visibility, and locations. | `declaration-index-basic`, `declaration-index-module`. |
@@ -266,6 +271,7 @@ tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic
@@ -330,11 +336,12 @@ It currently proves twenty-four low-level contracts:
   compiler failure
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,
   and ownership failures with stable diagnostic codes and `family=...` layer names
-- `--emit-diagnostics` also writes parseable `source_id=`, `source=`, `line=`,
-  `column=`, `byte_start=`, `byte_end=`, and `snippet=` fields for
-  location-aware tooling
-- The legacy `source=`, `line=`, and `column=` fields remain present beside
-  `source_id=` for tools that already parse diagnostic artifacts.
+- `--emit-diagnostics` also writes parseable `Source`, `Label`, `Snippet`,
+  `Note`, and `Help` rows. Located rows include `source_id=`, `source=`,
+  `line=`, `column=`, `end_line=`, `end_column=`, `byte_start=`, and
+  `byte_end=` fields for location-aware tooling.
+- Message-only notes and help use `location=none`; located notes and help use
+  `location=source` plus the normal span fields.
 - `--emit-diagnostic-catalog` writes the current diagnostic code table, owning
   compiler source file, family, and fallback policy
 - `--emit-module-graph` writes deterministic file-backed source, import, and
@@ -372,8 +379,8 @@ The current compiler already has useful artifact checks:
 - `--emit-tokens` for stable lexer token text, source ids, ownership, and byte
   spans
 - `--emit-syntax` for stable parser tree text before semantic analysis
-- `--emit-diagnostics` for stable expected-failure text before a full
-  multi-label diagnostic model exists
+- `--emit-diagnostics` for stable expected-failure text with structured
+  sources, labels, snippets, notes, and help
 - `--emit-module-graph` for stable file-backed source, import, and item-surface
   text before sema or backend behavior are involved
 - `--emit-declaration-index` for stable declaration signatures, visibility,

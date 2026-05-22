@@ -88,6 +88,17 @@ struct DiagnosticLabel {
     bool primary = false;
 };
 
+enum class DiagnosticNoteKind {
+    Note,
+    Help
+};
+
+struct DiagnosticNote {
+    std::optional<Span> span;
+    std::string message;
+    DiagnosticNoteKind kind = DiagnosticNoteKind::Note;
+};
+
 class SourceMap {
 public:
     SourceId add_file(const std::string& path, const std::string& text);
@@ -133,11 +144,17 @@ struct CompileError : std::exception {
     const std::string& message() const;
     bool has_location() const;
     const SourceLocation& location() const;
+    const std::vector<DiagnosticLabel>& labels() const;
+    const std::vector<DiagnosticNote>& notes() const;
+    void add_label(DiagnosticLabel label);
+    void add_note(DiagnosticNote note);
 
 private:
     std::string rendered_;
     std::string message_;
     SourceLocation loc_;
+    std::vector<DiagnosticLabel> labels_;
+    std::vector<DiagnosticNote> notes_;
     bool has_location_ = false;
 };
 

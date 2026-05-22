@@ -98,8 +98,9 @@ diagnostic, module, declaration surface, or typed lowering behavior changes,
 reviewers can inspect a tiny golden diff before LLVM or executable behavior
 changes are involved.
 Diagnostic artifacts now include stable codes, explicit layer families,
-source ids, parseable byte spans, and snippets such as
-`code=T0001 family=type source_id=0 source="file.ari" line=1 column=19 byte_start=18 byte_end=30`,
+source ids, parseable label byte spans, note/help location policy, and
+snippets such as
+`Label index=0 role=primary source_id=0 source="file.ari" line=1 column=19 end_line=1 end_column=31 byte_start=18 byte_end=30`,
 so triage can route failures without reading the classifier implementation
 first.
 The hosted compiler also exposes `ari --list-capabilities` and
@@ -262,6 +263,8 @@ Current compiler-development tests:
   module diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic`:
   type and trait diagnostic-code golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic`:
+  assignment type diagnostic span golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic`:
   ownership diagnostic-code golden checked through `--emit-diagnostics`.
 

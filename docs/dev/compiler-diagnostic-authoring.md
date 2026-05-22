@@ -117,11 +117,13 @@ Start with families, then add individual codes when behavior is stable:
 | `I0001` | typed IR lowering and resolved compiler facts |
 | `B0001` | LLVM, object, executable, shared library, and artifact emission |
 
-The diagnostic artifact prints layer and location fields explicitly, for
-example `code=P0001 family=parser source="source.ari" line=3 column=1`. The
-code is the stable search key; the family tells contributors which compiler
-layer should usually own the first fix and which compiler layer to inspect
-first.
+The diagnostic artifact prints layer and source facts explicitly. The header
+contains `code=P0001 family=parser`, each `Source` row records the source
+id/path/display name, and each located `Label`, `Note`, or `Help` row records
+`source_id=`, `line=`, `column=`, `end_line=`, `end_column=`, `byte_start=`,
+and `byte_end=`. The code is the stable search key; the family tells
+contributors which compiler layer should usually own the first fix and which
+compiler layer to inspect first.
 
 Use `--emit-diagnostic-catalog` when changing the code table itself. The
 catalog is the compiler-owned list of current codes, owning source files, and

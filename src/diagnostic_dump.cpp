@@ -1,8 +1,11 @@
 #include "diagnostic_dump.hpp"
 
 #include <cctype>
+#include <optional>
 #include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace ari {
 
@@ -89,6 +92,122 @@ static bool parse_location_prefix(const std::string& message,
 
 static bool contains(const std::string& text, const std::string& needle) {
     return text.find(needle) != std::string::npos;
+}
+
+static bool same_source(SourceId left, SourceId right) {
+    return left.value == right.value;
+}
+
+static void push_unique_source(std::vector<SourceId>& sources, SourceId id) {
+    if (!valid_source_id(id)) return;
+    for (SourceId existing : sources) {
+        if (same_source(existing, id)) return;
+    }
+    sources.push_back(id);
+}
+
+static SourceLocation normalized_error_location(const CompileError& error,
+                                                const std::string& source_name) {
+    SourceLocation loc = error.location();
+    if (!valid_source_id(loc.source_id) && has_source_name(loc)) {
+        loc.source_id = source_id_for_name(loc.source_name);
+    }
+    if (!valid_source_id(loc.source_id) && !source_name.empty()) {
+        loc.source_id = source_id_for_name(source_name);
+    }
+    const SourceFile* file = find_source_file(loc.source_id);
+    if (file != nullptr && loc.source_name.empty()) {
+        loc.source_name = file->display_name;
+    } else if (loc.source_name.empty()) {
+        loc.source_name = source_name;
+    }
+
+    if (valid_source_id(loc.source_id) && has_byte_span(loc)) {
+        set_location_span(loc, default_source_map().span(loc.source_id, loc.byte_start, loc.byte_end));
+        LineColumn start = default_source_map().location(loc.source_id, loc.span.start);
+        loc.line = start.line;
+        loc.column = start.column;
+    } else if (valid_source_id(loc.source_id)) {
+        if (std::optional<std::size_t> offset = source_byte_offset(loc.source_id, loc.line, loc.column)) {
+            set_location_span(loc, default_source_map().span(loc.source_id, *offset, *offset));
+        }
+    }
+    return loc;
+}
+
+static std::optional<Span> normalize_artifact_span(Span span) {
+    if (!valid_source_id(span.source_id) || !span_has_valid_order(span)) return std::nullopt;
+    Span normalized = default_source_map().span(span.source_id, span.start, span.end);
+    if (!default_source_map().valid_span(normalized)) return std::nullopt;
+    return normalized;
+}
+
+static std::vector<DiagnosticLabel> artifact_labels_for_error(const CompileError& error,
+                                                              const std::string& source_name) {
+    std::vector<DiagnosticLabel> labels;
+    for (DiagnosticLabel label : error.labels()) {
+        std::optional<Span> normalized = normalize_artifact_span(label.span);
+        if (!normalized) continue;
+        label.span = *normalized;
+        labels.push_back(std::move(label));
+    }
+    if (!labels.empty()) return labels;
+
+    if (!error.has_location()) return labels;
+    SourceLocation loc = normalized_error_location(error, source_name);
+    std::optional<Span> span = normalize_artifact_span(span_from_location(loc));
+    if (span) labels.push_back(DiagnosticLabel{*span, "", true});
+    return labels;
+}
+
+static void append_span_fields(std::ostringstream& out, Span span) {
+    LineColumn start = default_source_map().location(span.source_id, span.start);
+    LineColumn end = default_source_map().location(span.source_id, span.end);
+    const SourceFile* file = find_source_file(span.source_id);
+    out << " source_id=" << source_id_text(span.source_id)
+        << " source=" << quote(file == nullptr ? source_id_text(span.source_id) : file->display_name)
+        << " line=" << start.line
+        << " column=" << start.column
+        << " end_line=" << end.line
+        << " end_column=" << end.column
+        << " byte_start=" << span.start
+        << " byte_end=" << span.end;
+}
+
+static void append_source_line(std::ostringstream& out, SourceId id) {
+    const SourceFile* file = find_source_file(id);
+    if (file == nullptr) return;
+    out << "  Source source_id=" << source_id_text(id)
+        << " kind=" << source_kind_text(file->kind)
+        << " path=" << quote(file->path)
+        << " display=" << quote(file->display_name)
+        << " bytes=" << file->text.size() << "\n";
+}
+
+static const char* label_role_text(const DiagnosticLabel& label) {
+    return label.primary ? "primary" : "secondary";
+}
+
+static const char* note_line_name(DiagnosticNoteKind kind) {
+    return kind == DiagnosticNoteKind::Help ? "Help" : "Note";
+}
+
+static void append_note_line(std::ostringstream& out,
+                             std::size_t index,
+                             const DiagnosticNote& note) {
+    out << "  " << note_line_name(note.kind) << " index=" << index;
+    if (note.span) {
+        std::optional<Span> normalized = normalize_artifact_span(*note.span);
+        if (normalized) {
+            out << " location=source";
+            append_span_fields(out, *normalized);
+        } else {
+            out << " location=none";
+        }
+    } else {
+        out << " location=none";
+    }
+    out << " message=" << quote(note.message) << "\n";
 }
 
 } // namespace
@@ -193,40 +312,50 @@ std::string dump_diagnostic_message(const std::string& severity,
     out << "diagnostic " << severity
         << " code=" << code
         << " family=" << diagnostic_code_family(code);
-    if (error.has_location()) {
-        SourceLocation loc = error.location();
-        if (!valid_source_id(loc.source_id) && has_source_name(loc)) {
-            loc.source_id = source_id_for_name(loc.source_name);
+    std::vector<DiagnosticLabel> labels = artifact_labels_for_error(error, source_name);
+    std::vector<SourceId> sources;
+    for (const DiagnosticLabel& label : labels) {
+        push_unique_source(sources, label.span.source_id);
+    }
+    std::size_t note_count = 0;
+    std::size_t help_count = 0;
+    for (const DiagnosticNote& note : error.notes()) {
+        if (note.kind == DiagnosticNoteKind::Help) {
+            ++help_count;
+        } else {
+            ++note_count;
         }
-        if (!valid_source_id(loc.source_id) && !source_name.empty()) {
-            loc.source_id = source_id_for_name(source_name);
+        if (note.span) {
+            std::optional<Span> normalized = normalize_artifact_span(*note.span);
+            if (normalized) push_unique_source(sources, normalized->source_id);
         }
-        if (loc.source_name.empty()) {
-            if (const SourceFile* file = find_source_file(loc.source_id)) {
-                loc.source_name = file->display_name;
-            } else {
-                loc.source_name = source_name;
-            }
+    }
+    out << " message=" << quote(error.message())
+        << " sources=" << sources.size()
+        << " labels=" << labels.size()
+        << " notes=" << note_count
+        << " helps=" << help_count << "\n";
+    for (SourceId id : sources) append_source_line(out, id);
+    for (std::size_t i = 0; i < labels.size(); ++i) {
+        const DiagnosticLabel& label = labels[i];
+        out << "  Label index=" << i
+            << " role=" << label_role_text(label);
+        append_span_fields(out, label.span);
+        out << " message=" << quote(label.message) << "\n";
+        std::string snippet = render_source_snippet(label.span);
+        if (!snippet.empty()) {
+            out << "  Snippet label=" << i
+                << " text=" << quote(snippet) << "\n";
         }
-        if (!valid_source_id(loc.source_id)) {
-            out << " message=" << quote(error.message()) << "\n";
-            return out.str();
+    }
+    std::size_t note_index = 0;
+    std::size_t help_index = 0;
+    for (const DiagnosticNote& note : error.notes()) {
+        if (note.kind == DiagnosticNoteKind::Help) {
+            append_note_line(out, help_index++, note);
+        } else {
+            append_note_line(out, note_index++, note);
         }
-        out << " source_id=" << source_id_text(loc.source_id)
-            << " source=" << quote(loc.source_name)
-            << " line=" << loc.line
-            << " column=" << loc.column;
-        if (has_byte_span(loc)) {
-            Span span = span_from_location(loc);
-            out << " byte_start=" << span.start
-                << " byte_end=" << span.end;
-        }
-        out << " message=" << quote(error.message());
-        std::string snippet = render_source_snippet(loc);
-        if (!snippet.empty()) out << " snippet=" << quote(snippet);
-        out << "\n";
-    } else {
-        out << " message=" << quote(error.message()) << "\n";
     }
     return out.str();
 }
