@@ -127,6 +127,17 @@ pub mod zone;
 pub mod boxed;
 pub use boxed::Box;
 
+pub mod cell;
+pub use cell::Cell;
+pub use cell::Lazy;
+pub use cell::OnceCell;
+pub use cell::RefCell;
+
+pub mod rc;
+pub use rc::Arc;
+pub use rc::Rc;
+pub use rc::Weak;
+
 pub mod string;
 
 pub use string::String;

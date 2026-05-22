@@ -847,9 +847,10 @@ value-protecting `RwLock[T]` and has no read/write guards yet. `Once` runs a
 plain `fn() -> void` at most once and reports whether the current caller ran
 it.
 
-`Shared`, `Weak`, `Condvar`, `OnceLock`, `LazyLock`, barriers, semaphores,
-MPSC channels, futex-backed blocking locks, and weaker memory-order options
-remain future concurrency work.
+Shared-ownership handles live in `std::rc` as `Rc`, `Arc`, and `Weak`.
+`Condvar`, sync-facing `OnceLock`/`LazyLock`, barriers, semaphores, MPSC
+channels, futex-backed blocking locks, send/share trait checks, and weaker
+memory-order options remain future concurrency work.
 
 Runtime-backed time helpers live in `std::time`:
 
@@ -2578,6 +2579,83 @@ box.as_mut_ptr()
 box.swap(ref mut other)
 box.is_empty()
 ```
+
+`std::cell` provides local interior mutability and one-time initialization:
+
+```ari
+Cell::new<T>(value)
+cell.get()
+cell.set(value)
+cell.replace(value)
+cell.take()
+cell.into_inner()
+
+RefCell::new<T>(value)
+cell.borrow()
+cell.try_borrow()
+cell.borrow_mut()
+cell.try_borrow_mut()
+cell.get_mut()
+cell.replace(value)
+cell.take()
+cell.borrow_count()
+cell.is_borrowed()
+
+once = OnceCell::new<T>(ref mut zone)
+once.set(value)
+once.get()
+once.get_mut()
+once.get_or_init(op)
+once.take()
+once.replace(value)
+once.is_initialized()
+once.is_empty()
+
+lazy = Lazy::new<T>(ref mut zone, op)
+lazy.force()
+lazy.get()
+lazy.is_initialized()
+```
+
+`std::rc` provides zone-backed shared ownership handles:
+
+```ari
+std::rc::rc<T>(ref mut zone, value)
+std::rc::arc<T>(ref mut zone, value)
+
+Rc::new<T>(ref mut zone, value)
+rc.clone()
+rc.downgrade()
+rc.strong_count()
+rc.weak_count()
+rc.is_unique()
+rc.get()
+rc.as_ref()
+rc.ptr_eq(ref other)
+
+Arc::new<T>(ref mut zone, value)
+arc.clone()
+arc.downgrade()
+arc.strong_count()
+arc.weak_count()
+arc.is_unique()
+arc.get()
+arc.as_ref()
+arc.ptr_eq(ref other)
+
+Weak::new<T>()
+weak.clone()
+weak.upgrade()
+weak.upgrade_arc()
+weak.is_empty()
+weak.is_alive()
+weak.strong_count()
+weak.weak_count()
+```
+
+`Rc`, `Arc`, and `Weak` store only a shared control pointer. The zone is
+recovered from that allocation header when the handle reports zone metadata;
+there is no per-handle allocator field.
 
 ## Iteration And Formatting
 

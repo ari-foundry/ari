@@ -661,6 +661,8 @@ fn std::random::seed_from_os_result|check-prelude std-random-result Error-return
 fn std::random::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle; docs/stdlib/modules/random.md
 fn std::random::try_below|check-prelude std-random-try-bounds Option-returning unbiased bounded PRNG integer helper; docs/stdlib/modules/random.md
 fn std::random::try_range|check-prelude std-random-try-bounds Option-returning unbiased PRNG range helper; docs/stdlib/modules/random.md
+fn std::rc::arc[T]|check-prelude std-rc-arc-weak Arc constructor over zone-backed control block; docs/stdlib/modules/rc.md
+fn std::rc::rc[T]|check-prelude std-rc-arc-weak Rc constructor over zone-backed control block; docs/stdlib/modules/rc.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::bytes|check-prelude std-string-byte-literals natural borrowed byte view over string literals; docs/stdlib/modules/string.md
@@ -987,6 +989,43 @@ method std::c::Symbol::as_ptr|check-prelude std-c-interop dynamic symbol raw poi
 method std::c::Symbol::function[T]|check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md
 method std::c::Symbol::invalid|check-prelude std-c-interop invalid dynamic symbol sentinel; docs/stdlib/modules/c.md
 method std::c::Symbol::is_valid|check-prelude std-c-interop dynamic symbol validity predicate; docs/stdlib/modules/c.md
+method std::cell::Cell[T]::get|check-prelude std-cell-basic Cell copied value read; docs/stdlib/modules/cell.md
+method std::cell::Cell[T]::into_inner|check-prelude std-cell-basic Cell value extraction; docs/stdlib/modules/cell.md
+method std::cell::Cell[T]::new|check-prelude std-cell-basic Cell constructor; docs/stdlib/modules/cell.md
+method std::cell::Cell[T]::replace|check-prelude std-cell-basic Cell replace helper; docs/stdlib/modules/cell.md
+method std::cell::Cell[T]::set|check-prelude std-cell-basic Cell setter; docs/stdlib/modules/cell.md
+method std::cell::Cell[T]::take|check-prelude std-cell-basic Default-backed Cell take helper; docs/stdlib/modules/cell.md
+method std::cell::Lazy[T]::force|check-prelude std-cell-basic Lazy forced initialization; docs/stdlib/modules/cell.md
+method std::cell::Lazy[T]::get|check-prelude std-cell-basic Lazy optional value read; docs/stdlib/modules/cell.md
+method std::cell::Lazy[T]::is_initialized|check-prelude std-cell-basic Lazy initialization predicate; docs/stdlib/modules/cell.md
+method std::cell::Lazy[T]::new|check-prelude std-cell-basic Lazy constructor with explicit zone; docs/stdlib/modules/cell.md
+method std::cell::OnceCell[T]::get|check-prelude std-cell-basic OnceCell optional shared value pointer; docs/stdlib/modules/cell.md
+method std::cell::OnceCell[T]::get_mut|check-prelude std-cell-basic OnceCell optional mutable value pointer; docs/stdlib/modules/cell.md
+method std::cell::OnceCell[T]::get_or_init|check-prelude std-cell-basic OnceCell lazy initialization; docs/stdlib/modules/cell.md
+method std::cell::OnceCell[T]::is_empty|check-prelude std-cell-basic OnceCell empty predicate; docs/stdlib/modules/cell.md
+method std::cell::OnceCell[T]::is_initialized|check-prelude std-cell-basic OnceCell initialized predicate; docs/stdlib/modules/cell.md
+method std::cell::OnceCell[T]::new|check-prelude std-cell-basic OnceCell constructor with explicit zone; docs/stdlib/modules/cell.md
+method std::cell::OnceCell[T]::replace|check-prelude std-cell-basic OnceCell replace helper; docs/stdlib/modules/cell.md
+method std::cell::OnceCell[T]::set|check-prelude std-cell-basic OnceCell one-time setter; docs/stdlib/modules/cell.md
+method std::cell::OnceCell[T]::take|check-prelude std-cell-basic OnceCell value extraction; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::borrow|check-prelude std-cell-basic RefCell checked shared borrow guard; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::borrow_count|check-prelude std-cell-basic RefCell runtime borrow count; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::borrow_mut|check-prelude std-cell-basic RefCell checked mutable borrow guard; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::get_mut|check-prelude std-cell-basic RefCell exclusive direct mutable access; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::into_inner|check-prelude std-cell-basic RefCell value extraction; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::is_borrowed|check-prelude std-cell-basic RefCell runtime borrow predicate; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::new|check-prelude std-cell-basic RefCell constructor; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::replace|check-prelude std-cell-basic RefCell replace helper; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::take|check-prelude std-cell-basic Default-backed RefCell take helper; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::try_borrow|check-prelude std-cell-basic RefCell optional shared borrow guard; docs/stdlib/modules/cell.md
+method std::cell::RefCell[T]::try_borrow_mut|check-prelude std-cell-basic RefCell optional mutable borrow guard; docs/stdlib/modules/cell.md
+method std::cell::RefMut[T]::as_mut|check-prelude std-cell-basic RefMut mutable pointer accessor; docs/stdlib/modules/cell.md
+method std::cell::RefMut[T]::as_ref|check-prelude std-cell-basic RefMut shared pointer accessor; docs/stdlib/modules/cell.md
+method std::cell::RefMut[T]::get|check-prelude std-cell-basic RefMut copied value read; docs/stdlib/modules/cell.md
+method std::cell::RefMut[T]::replace|check-prelude std-cell-basic RefMut replacement helper; docs/stdlib/modules/cell.md
+method std::cell::RefMut[T]::set|check-prelude std-cell-basic RefMut setter; docs/stdlib/modules/cell.md
+method std::cell::Ref[T]::as_ref|check-prelude std-cell-basic Ref shared pointer accessor; docs/stdlib/modules/cell.md
+method std::cell::Ref[T]::get|check-prelude std-cell-basic Ref copied value read; docs/stdlib/modules/cell.md
 method std::collections::BinaryHeapPeekMut[T]::value|check-prelude std-collections-heap mutable top guard shared read; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeapPeekMut[T]::value_mut|check-prelude std-collections-heap mutable top guard payload access; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::capacity|check-prelude std-collections-heap binary heap capacity metadata; docs/stdlib/modules/collections.md
@@ -1595,6 +1634,32 @@ method std::random::Prng::seed_from_os_result|check-prelude std-random-result Er
 method std::random::Prng::shuffle[T]|check-prelude std-random-basic Fisher-Yates slice shuffle method; docs/stdlib/modules/random.md
 method std::random::Prng::try_below|check-prelude std-random-try-bounds Option-returning unbiased bounded PRNG integer method; docs/stdlib/modules/random.md
 method std::random::Prng::try_range|check-prelude std-random-try-bounds Option-returning unbiased PRNG range method; docs/stdlib/modules/random.md
+method std::rc::Arc[T]::as_ref|check-prelude std-rc-arc-weak Arc shared pointer accessor; docs/stdlib/modules/rc.md
+method std::rc::Arc[T]::clone|check-prelude std-rc-arc-weak Arc strong-count clone; docs/stdlib/modules/rc.md
+method std::rc::Arc[T]::downgrade|check-prelude std-rc-arc-weak Arc weak downgrade; docs/stdlib/modules/rc.md
+method std::rc::Arc[T]::get|check-prelude std-rc-arc-weak Arc copied value read; docs/stdlib/modules/rc.md
+method std::rc::Arc[T]::is_unique|check-prelude std-rc-arc-weak Arc uniqueness predicate; docs/stdlib/modules/rc.md
+method std::rc::Arc[T]::new|check-prelude std-rc-arc-weak Arc associated constructor; docs/stdlib/modules/rc.md
+method std::rc::Arc[T]::ptr_eq|check-prelude std-rc-arc-weak Arc control-pointer equality; docs/stdlib/modules/rc.md
+method std::rc::Arc[T]::strong_count|check-prelude std-rc-arc-weak Arc strong count; docs/stdlib/modules/rc.md
+method std::rc::Arc[T]::weak_count|check-prelude std-rc-arc-weak Arc weak count; docs/stdlib/modules/rc.md
+method std::rc::Rc[T]::as_ref|check-prelude std-rc-arc-weak Rc shared pointer accessor; docs/stdlib/modules/rc.md
+method std::rc::Rc[T]::clone|check-prelude std-rc-arc-weak Rc strong-count clone; docs/stdlib/modules/rc.md
+method std::rc::Rc[T]::downgrade|check-prelude std-rc-arc-weak Rc weak downgrade; docs/stdlib/modules/rc.md
+method std::rc::Rc[T]::get|check-prelude std-rc-arc-weak Rc copied value read; docs/stdlib/modules/rc.md
+method std::rc::Rc[T]::is_unique|check-prelude std-rc-arc-weak Rc uniqueness predicate; docs/stdlib/modules/rc.md
+method std::rc::Rc[T]::new|check-prelude std-rc-arc-weak Rc associated constructor; docs/stdlib/modules/rc.md
+method std::rc::Rc[T]::ptr_eq|check-prelude std-rc-arc-weak Rc control-pointer equality; docs/stdlib/modules/rc.md
+method std::rc::Rc[T]::strong_count|check-prelude std-rc-arc-weak Rc strong count; docs/stdlib/modules/rc.md
+method std::rc::Rc[T]::weak_count|check-prelude std-rc-arc-weak Rc weak count; docs/stdlib/modules/rc.md
+method std::rc::Weak[T]::clone|check-prelude std-rc-arc-weak Weak clone; docs/stdlib/modules/rc.md
+method std::rc::Weak[T]::is_alive|check-prelude std-rc-arc-weak Weak liveness predicate; docs/stdlib/modules/rc.md
+method std::rc::Weak[T]::is_empty|check-prelude std-rc-arc-weak empty Weak sentinel predicate; docs/stdlib/modules/rc.md
+method std::rc::Weak[T]::new|check-prelude std-rc-arc-weak empty Weak sentinel constructor; docs/stdlib/modules/rc.md
+method std::rc::Weak[T]::strong_count|check-prelude std-rc-arc-weak Weak strong-count view; docs/stdlib/modules/rc.md
+method std::rc::Weak[T]::upgrade|check-prelude std-rc-arc-weak Weak upgrade to Rc; docs/stdlib/modules/rc.md
+method std::rc::Weak[T]::upgrade_arc|check-prelude std-rc-arc-weak Weak upgrade to Arc; docs/stdlib/modules/rc.md
+method std::rc::Weak[T]::weak_count|check-prelude std-rc-arc-weak Weak weak-count view; docs/stdlib/modules/rc.md
 method std::result::ResultMut[T,E]::as_ref|check-prelude prelude-option-result-ref-access downgrade mutable result payload view to shared view; docs/stdlib/modules/option-result.md
 method std::result::ResultMut[T,E]::is_err|check-prelude prelude-option-result-ref-access mutable result error predicate; docs/stdlib/modules/option-result.md
 method std::result::ResultMut[T,E]::is_ok|check-prelude prelude-option-result-ref-access mutable result success predicate; docs/stdlib/modules/option-result.md
@@ -1899,6 +1964,7 @@ module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overv
 module std::bits|module load and std bits mask helper tests; docs/stdlib/overview.md module map
 module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows
 module std::c|check-prelude std-c-interop C ABI string, errno, and dynamic loading helpers; docs/stdlib/modules/c.md
+module std::cell|check-prelude std-cell-basic interior mutability and one-time initialization helpers; docs/stdlib/modules/cell.md
 module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::collections|std collections linear set tests; docs/stdlib/modules/collections.md
 module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row
@@ -1922,6 +1988,7 @@ module std::parse|check-prelude std-parse-basic whole-input parser helpers; docs
 module std::path|check-prelude std-path-basic source lexical path helpers; docs/stdlib/modules/path.md
 module std::process|std process current-process and POSIX fork/wait tests; docs/stdlib/modules/process.md
 module std::random|check-prelude std-random-basic OS entropy and deterministic non-crypto PRNG helpers; docs/stdlib/modules/random.md
+module std::rc|check-prelude std-rc-arc-weak reference-counted shared ownership handles; docs/stdlib/modules/rc.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::sync|check-prelude std-sync-atomic-i64 atomic primitive module; docs/stdlib/modules/sync.md
@@ -1947,6 +2014,12 @@ struct std::c::CStr|check-prelude std-c-interop borrowed C string view; docs/std
 struct std::c::CString|check-prelude std-c-interop zone-backed NUL-terminated owned C string; docs/stdlib/modules/c.md
 struct std::c::Library|check-prelude std-c-interop dynamic library handle wrapper; docs/stdlib/modules/c.md
 struct std::c::Symbol|check-prelude std-c-interop dynamic symbol handle wrapper; docs/stdlib/modules/c.md
+struct std::cell::Cell[T]|check-prelude std-cell-basic simple interior-mutable value slot; docs/stdlib/modules/cell.md
+struct std::cell::Lazy[T]|check-prelude std-cell-basic zone-backed lazy initializer handle; docs/stdlib/modules/cell.md
+struct std::cell::OnceCell[T]|check-prelude std-cell-basic zone-backed one-time initialized slot; docs/stdlib/modules/cell.md
+struct std::cell::RefCell[T]|check-prelude std-cell-basic runtime borrow-checked value slot; docs/stdlib/modules/cell.md
+struct std::cell::RefMut[T]|check-prelude std-cell-basic mutable RefCell guard; docs/stdlib/modules/cell.md
+struct std::cell::Ref[T]|check-prelude std-cell-basic shared RefCell guard; docs/stdlib/modules/cell.md
 struct std::collections::BinaryHeapPeekMut[T]|std collections binary heap mutable top guard tests; docs/stdlib/modules/collections.md
 struct std::collections::BinaryHeap[T]|std collections binary heap tests; docs/stdlib/modules/collections.md
 struct std::collections::DequeIter[T]|std collections deque iterator tests; docs/stdlib/modules/collections.md
@@ -2038,6 +2111,9 @@ struct std::process::EnvVar|check-prelude std-process-command child environment 
 struct std::process::ExitStatus|check-prelude std-process-exit-status typed child exit status value; docs/stdlib/modules/process.md
 struct std::process::Output|check-prelude std-process-output captured child output handle; docs/stdlib/modules/process.md
 struct std::random::Prng|check-prelude std-random-basic deterministic non-cryptographic PRNG state; docs/stdlib/modules/random.md
+struct std::rc::Arc[T]|check-prelude std-rc-arc-weak atomic-count shared owner handle; docs/stdlib/modules/rc.md
+struct std::rc::Rc[T]|check-prelude std-rc-arc-weak shared owner handle; docs/stdlib/modules/rc.md
+struct std::rc::Weak[T]|check-prelude std-rc-arc-weak non-owning shared handle; docs/stdlib/modules/rc.md
 struct std::string::OsStr|check-prelude std-string-text-kinds typed borrowed OS string byte view; docs/stdlib/modules/string.md
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -2142,11 +2218,13 @@ type std::os::Error|check-prelude std-error-integration shared OS error alias; d
 type std::os::ErrorKind|check-prelude std-error-integration shared OS error-kind alias; docs/stdlib/modules/os.md
 type std::process::Error|check-prelude std-error-integration shared process error alias; docs/stdlib/modules/process.md
 type std::process::ErrorKind|check-prelude std-error-integration shared process error-kind alias; docs/stdlib/modules/process.md
+use std::Arc|check-prelude std-rc-arc-weak root alias for std::rc::Arc[T]; docs/stdlib/modules/rc.md
 use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md
 use std::BinaryHeap|check-prelude std-collections-heap root alias for std::collections::BinaryHeap[T]; docs/stdlib/modules/collections.md
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row
 use std::CStr|check-prelude std-c-interop root alias for std::c::CStr; docs/stdlib/modules/c.md
 use std::CString|check-prelude std-c-interop root alias for std::c::CString; docs/stdlib/modules/c.md
+use std::Cell|check-prelude std-cell-basic root alias for std::cell::Cell[T]; docs/stdlib/modules/cell.md
 use std::Debug|check-prelude std-string-append-value root alias for std::fmt::Debug; docs/stdlib/modules/fmt.md
 use std::Deque|check-prelude std-collections-deque root alias for std::collections::Deque[T]; docs/stdlib/modules/collections.md
 use std::Display|check-prelude std-string-append-value root alias for std::fmt::Display; docs/stdlib/modules/fmt.md
@@ -2154,12 +2232,16 @@ use std::Error|check-prelude std-error-basic root alias for std::error::Error; d
 use std::ErrorKind|check-prelude std-error-basic root alias for std::error::Kind; docs/stdlib/modules/error.md
 use std::HashMap|check-prelude std-collections-hash root alias for std::collections::HashMap[K, V]; docs/stdlib/modules/collections.md
 use std::HashSet|check-prelude std-collections-hash root alias for std::collections::HashSet[T]; docs/stdlib/modules/collections.md
+use std::Lazy|check-prelude std-cell-basic root alias for std::cell::Lazy[T]; docs/stdlib/modules/cell.md
 use std::Library|check-prelude std-c-interop root alias for std::c::Library; docs/stdlib/modules/c.md
 use std::LinkedList|check-prelude std-collections-linked-list root alias for std::collections::LinkedList[T]; docs/stdlib/modules/collections.md
 use std::Mutex|check-prelude std-sync-mutex-once root alias for std::sync::Mutex; docs/stdlib/modules/sync.md
 use std::Once|check-prelude std-sync-mutex-once root alias for std::sync::Once; docs/stdlib/modules/sync.md
+use std::OnceCell|check-prelude std-cell-basic root alias for std::cell::OnceCell[T]; docs/stdlib/modules/cell.md
 use std::PriorityQueue|check-prelude std-collections-heap root alias for std::collections::PriorityQueue[T]; docs/stdlib/modules/collections.md
 use std::Prng|check-prelude std-random-basic root alias for std::random::Prng; docs/stdlib/modules/random.md
+use std::Rc|check-prelude std-rc-arc-weak root alias for std::rc::Rc[T]; docs/stdlib/modules/rc.md
+use std::RefCell|check-prelude std-cell-basic root alias for std::cell::RefCell[T]; docs/stdlib/modules/cell.md
 use std::RingBuffer|check-prelude std-collections-ring-buffer root alias for std::collections::RingBuffer[T]; docs/stdlib/modules/collections.md
 use std::RwLock|check-prelude std-sync-rwlock root alias for std::sync::RwLock; docs/stdlib/modules/sync.md
 use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md
@@ -2169,6 +2251,7 @@ use std::Thread|check-prelude std-thread-basic root alias for std::thread::Threa
 use std::TreeMap|check-prelude std-collections-tree root alias for std::collections::TreeMap[K, V]; docs/stdlib/modules/collections.md
 use std::TreeSet|check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md
 use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row
+use std::Weak|check-prelude std-rc-arc-weak root alias for std::rc::Weak[T]; docs/stdlib/modules/rc.md
 use std::ZoneBacked|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::ZoneMetadata|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows

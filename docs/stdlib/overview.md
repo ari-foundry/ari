@@ -46,6 +46,8 @@ API evolution.
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `is_success`, `is_failure`, `is_root`, direct `Error` helpers `fork_result`, `wait_status_result`, `wait_result`, raw compatibility `fork`, `wait`, `is_child`, `is_parent`, `is_fork_error`, `is_wait_error`, `Arg`, `EnvVar`, `Command`, `Child`, `ExitStatus`, `Output`, `arg`, `env_var`, `command`, `command_with_args`, `kill`, `terminate`, command `spawn`/`status`/`exit_status`/`output_in`/`exec`, `ExitStatus` code/signal helpers, output `status`/`exit_status`/`stdout`/`stderr`, child `pid`/`wait`/`wait_status`/`kill`/`terminate`. |
 | `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `Thread`, `spawn`, `join`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `AtomicI64`, `Mutex`, `RwLock`, `Once`, atomic `load`/`store`/`swap`/`fetch_add`/`compare_exchange`, mutex helpers, rwlock helpers, `call_once`. |
+| `std::cell` | Interior mutability and one-time initialization. | `Cell`, `RefCell`, `Ref`, `RefMut`, `OnceCell`, `Lazy`. |
+| `std::rc` | Reference-counted shared ownership. | `Rc`, `Arc`, `Weak`, strong/weak counts, downgrade, upgrade, pointer equality. |
 | `std::time` | Monotonic time, wall-clock time, sleep, deadlines, and UTC calendar values. | `Duration`, `Instant`, `SystemTime`, `Deadline`, `UtcDateTime`, strict and fallible duration constructors, strict and fallible Unix timestamp constructors, strict and fallible calendar helpers, `now`, `system_now`, `elapsed`, `sleep`, `timeout`, `timeout_after`, `deadline_at`. |
 | `std::fs` | Byte-oriented filesystem handles. | `File`, `Dir`, `DirEntry`, `FileKind`, `Metadata`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `metadata`, `try_metadata`, `symlink_metadata`, `try_symlink_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`, `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`, `canonicalize`, `try_canonicalize`, `remove`, `rename`, `hard_link`, `symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `create_dir_all`, `ensure_dir_all`, `remove_dir`, `remove_dir_all`, `try_read_dir`, `read_dir`, `try_read_dir_entries`, `read_dir_entries`, `try_open_dir`, `Dir::next`, `Dir::close`, `DirEntry::metadata`, `DirEntry::try_metadata`, `DirEntry::symlink_metadata`, `DirEntry::try_symlink_metadata`, `DirEntry::try_file_type`, `DirEntry::is_file`, `DirEntry::is_dir`, `DirEntry::is_symlink`, `DirEntry::is_other`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `try_read_byte`, `write_byte`, `write_bytes`, `position`, `seek`, whole-file `read`, `try_read`, `write`, `try_write`, `append`, `try_append`, `truncate`, `copy`, `try_copy`, `read_to_string`, `try_read_to_string`, `close`. |
 | `std::path` | Source lexical path manipulation. | `PathBytes`, `bytes`, `from_os`, method-style path-byte helpers, `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `components`, `file_name`, `parent`, `extension`, `stem`, `file_stem`, `has_file_name`, `has_extension`, `has_stem`, `has_file_stem`, `starts_with`, `strip_prefix`, `ends_with`, `strip_suffix`, `with_file_name_in`, `with_extension_in`, `join_in`, `normalize_in`. |
@@ -278,15 +280,18 @@ ownership, locks, and richer status values remain future `std::sync` and
 richer thread-policy work.
 
 `std::sync` now starts with `AtomicI64`, plus source `Mutex`, `RwLock`, and
-`Once` helpers built on it. Atomic method names are the names developers expect:
+`Once` helpers built on it. `std::cell` adds local interior mutability through
+`Cell`, runtime-checked `RefCell`, and zone-backed `OnceCell`/`Lazy` one-time
+initialization. `std::rc` adds explicit `Rc`, `Arc`, and `Weak` shared
+ownership handles. Atomic method names are the names developers expect:
 `load`, `store`, `swap`, `fetch_add`, and `compare_exchange`. The runtime
 hooks lower directly to LLVM atomic operations with sequentially consistent
 ordering. `Mutex` is a primitive spin/yield lock without a protected payload
 or guard type, `RwLock` is a primitive explicit reader/writer lock without
-guards, and `Once` runs plain `fn() -> void` entries at most once. `Shared`,
-`Weak`, `Condvar`, `OnceLock`, `LazyLock`, channels, barriers, semaphores,
-futex-backed blocking locks, and explicit memory-order arguments remain future
-work.
+guards, and `Once` runs plain `fn() -> void` entries at most once. `Arc` uses
+an atomic control block, but send/share trait policy, `Condvar`, value
+protecting locks, channels, barriers, semaphores, futex-backed blocking locks,
+and explicit memory-order arguments remain future work.
 
 `std::time` follows the same OS-facing pattern. `monotonic_nanos`,
 `unix_nanos`, and `sleep_nanos` are runtime-backed because they call the host

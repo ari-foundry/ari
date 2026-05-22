@@ -274,7 +274,7 @@ bool is_source_declared_prelude_special_name(const std::string& name) {
 
 bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
     std::string base = unqualified_name(name);
-    if (base == "Unique" || base == "Shared" || base == "Weak") {
+    if (base == "Unique" || base == "Shared") {
         arity = 1;
         return true;
     }
@@ -288,9 +288,6 @@ std::string planned_prelude_type_message(const std::string& name) {
     }
     if (base == "Shared") {
         return "prelude type 'Shared' is reserved for future reference-counted ownership";
-    }
-    if (base == "Weak") {
-        return "prelude type 'Weak' is reserved for future non-owning shared-pointer handles";
     }
     return "prelude type '" + name + "' is planned but not implemented yet";
 }

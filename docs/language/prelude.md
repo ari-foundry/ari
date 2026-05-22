@@ -55,7 +55,9 @@ early allocator-backed byte-buffer seed for owned strings. The root
 it is a zone-backed source handle, so the explicit `Zone` still owns the bytes.
 The root `char` spelling is a public type alias for an ASCII `u8`, intended for
 byte character literals and scalar `std::ascii` helpers.
-`Unique[T]`, `Shared[T]`, and `Weak[T]` remain reserved smart-pointer spellings.
+`Rc[T]`, `Arc[T]`, and `Weak[T]` are public aliases for `std::rc` shared
+ownership handles. `Unique[T]` and `Shared[T]` remain reserved policy
+spellings.
 Local declarations and explicit `use` aliases win over these implicit prelude
 names.
 If you want a separate namespace handle, alias the module explicitly:
@@ -1086,13 +1088,14 @@ bytes. Its
 `take()`/`put_in(ref mut Zone, value)` pair is the current explicit-zone
 move-out and same-zone refill contract; the allocator-backed unique owner will
 keep the root `Box[T]` spelling once heap release is part of the handle.
-`Unique[T]` remains reserved as
-policy/design space, but the eventual unique owner should use the `Box[T]`
-spelling once it grows allocator-backed ownership. `Shared[T]` is reserved for
-future reference-counted shared ownership, and `Weak[T]` is reserved for
-non-owning handles that can be upgraded back to `Option[Shared[T]]`. These
-future handles must be constructed through explicit allocator or capability
-arguments; Ari does not add a magical global heap for them.
+`Unique[T]` remains reserved as policy/design space, but the eventual unique
+owner should use the `Box[T]` spelling once it grows allocator-backed
+ownership. `Rc[T]`, `Arc[T]`, and `Weak[T]` are available today as root aliases
+for `std::rc` handles. They are constructed with explicit zone arguments, store
+only a control pointer, and recover zone provenance from the allocation header.
+`Shared[T]` remains reserved as a possible future policy alias once the final
+send/share story is stable. Ari does not add a magical global heap for these
+handles.
 
 `Slice[T]` is a source `std` view struct:
 
@@ -1201,7 +1204,6 @@ Additional Rust-like root standard surfaces are reserved with clear diagnostics:
 ```ari
 Unique[T]
 Shared[T]
-Weak[T]
 ```
 
 `Hash` and hash-map containers are intentionally not part of the prelude. Use

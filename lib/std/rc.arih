@@ -1,0 +1,294 @@
+struct SharedBox[T] {
+  mut strong: std::sync::AtomicI64,
+  mut weak: std::sync::AtomicI64,
+  mut live: bool,
+  value: T,
+}
+
+pub struct Rc[T] {
+  control: ptr std::rc::SharedBox[T],
+}
+
+pub struct Arc[T] {
+  control: ptr std::rc::SharedBox[T],
+}
+
+pub struct Weak[T] {
+  control: ptr std::rc::SharedBox[T],
+}
+
+fn null_control[T]() -> ptr std::rc::SharedBox[T] {
+  return 0u64 as ptr std::rc::SharedBox[T];
+}
+
+fn has_control[T](control: ptr std::rc::SharedBox[T]) -> bool {
+  return (control as u64) != 0u64;
+}
+
+fn value_ptr[T](control: ptr std::rc::SharedBox[T]) -> ptr T {
+  return (ref mut (*control).value) as ptr T;
+}
+
+fn live_ptr[T](control: ptr std::rc::SharedBox[T]) -> ptr bool {
+  return (ref mut (*control).live) as ptr bool;
+}
+
+fn strong_count_raw[T](control: ptr std::rc::SharedBox[T]) -> i64 {
+  if !std::rc::has_control<T>(control) {
+    return 0;
+  }
+  return std::sync::load(ref (*control).strong);
+}
+
+fn weak_count_raw[T](control: ptr std::rc::SharedBox[T]) -> i64 {
+  if !std::rc::has_control<T>(control) {
+    return 0;
+  }
+  let total = std::sync::load(ref (*control).weak);
+  if std::rc::strong_count_raw<T>(control) > 0 {
+    return total - 1;
+  }
+  return total;
+}
+
+fn add_strong[T](control: ptr std::rc::SharedBox[T]) -> void {
+  std::assert(std::rc::has_control<T>(control));
+  let previous = std::sync::fetch_add(ref mut (*control).strong, 1);
+  std::assert(previous > 0);
+}
+
+fn try_add_strong[T](control: ptr std::rc::SharedBox[T]) -> bool {
+  if !std::rc::has_control<T>(control) {
+    return false;
+  }
+  while true {
+    let current = std::sync::load(ref (*control).strong);
+    if current <= 0 {
+      return false;
+    }
+    if std::sync::compare_exchange(ref mut (*control).strong, current, current + 1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+fn add_weak[T](control: ptr std::rc::SharedBox[T]) -> void {
+  std::assert(std::rc::has_control<T>(control));
+  let previous = std::sync::fetch_add(ref mut (*control).weak, 1);
+  std::assert(previous > 0);
+}
+
+fn release_weak[T](control: ptr std::rc::SharedBox[T]) -> void {
+  if !std::rc::has_control<T>(control) {
+    return;
+  }
+  let previous = std::sync::fetch_add(ref mut (*control).weak, -1);
+  std::assert(previous > 0);
+}
+
+fn release_strong[T](control: ptr std::rc::SharedBox[T]) -> void {
+  if !std::rc::has_control<T>(control) {
+    return;
+  }
+  let previous = std::sync::fetch_add(ref mut (*control).strong, -1);
+  std::assert(previous > 0);
+  if previous != 1 {
+    return;
+  }
+  ptr_store(std::rc::live_ptr<T>(control), false);
+  let value = ptr_load(std::rc::value_ptr<T>(control));
+  drop value;
+  std::rc::release_weak<T>(control);
+}
+
+fn new_control[T](zone: ref mut Zone, value: T) -> ptr std::rc::SharedBox[T] {
+  return std::zone::new<std::rc::SharedBox[T]>(
+    zone,
+    std::rc::SharedBox<T> {
+      strong: std::sync::AtomicI64::new(1),
+      weak: std::sync::AtomicI64::new(1),
+      live: true,
+      value: value,
+    }
+  );
+}
+
+pub fn rc[T](zone: ref mut Zone, value: T) -> std::rc::Rc[T] {
+  let control = std::rc::new_control<T>(zone, value);
+  return std::rc::Rc<T> { control: control };
+}
+
+pub fn arc[T](zone: ref mut Zone, value: T) -> std::rc::Arc[T] {
+  let control = std::rc::new_control<T>(zone, value);
+  return std::rc::Arc<T> { control: control };
+}
+
+pub impl[T] std::rc::Rc[T] {
+  fn new(zone: ref mut Zone, value: T) -> std::rc::Rc[T] {
+    return std::rc::rc<T>(zone, value);
+  }
+
+  fn clone(self: ref Self) -> std::rc::Rc[T] {
+    std::rc::add_strong<T>(self.control);
+    return std::rc::Rc<T> { control: self.control };
+  }
+
+  fn downgrade(self: ref Self) -> std::rc::Weak[T] {
+    std::rc::add_weak<T>(self.control);
+    return std::rc::Weak<T> { control: self.control };
+  }
+
+  fn strong_count(self: ref Self) -> i64 {
+    return std::rc::strong_count_raw<T>(self.control);
+  }
+
+  fn weak_count(self: ref Self) -> i64 {
+    return std::rc::weak_count_raw<T>(self.control);
+  }
+
+  fn is_unique(self: ref Self) -> bool {
+    return self.strong_count() == 1;
+  }
+
+  fn get(self: ref Self) -> T {
+    std::assert(std::rc::strong_count_raw<T>(self.control) > 0);
+    return ptr_load(std::rc::value_ptr<T>(self.control));
+  }
+
+  fn as_ref(self: ref Self) -> ref T {
+    std::assert(std::rc::strong_count_raw<T>(self.control) > 0);
+    return ref *std::rc::value_ptr<T>(self.control);
+  }
+
+  fn ptr_eq(self: ref Self, other: ref std::rc::Rc[T]) -> bool {
+    return (self.control as u64) == (other.control as u64);
+  }
+}
+
+impl[T] std::zone::ZoneBacked for std::rc::Rc[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(std::rc::has_control<T>(self.control));
+    return std::zone::metadata(self.control as ptr u8);
+  }
+}
+
+impl[T] std::Drop for std::rc::Rc[T] {
+  fn drop(self) -> void {
+    std::rc::release_strong<T>(self.control);
+    return;
+  }
+}
+
+pub impl[T] std::rc::Arc[T] {
+  fn new(zone: ref mut Zone, value: T) -> std::rc::Arc[T] {
+    return std::rc::arc<T>(zone, value);
+  }
+
+  fn clone(self: ref Self) -> std::rc::Arc[T] {
+    std::rc::add_strong<T>(self.control);
+    return std::rc::Arc<T> { control: self.control };
+  }
+
+  fn downgrade(self: ref Self) -> std::rc::Weak[T] {
+    std::rc::add_weak<T>(self.control);
+    return std::rc::Weak<T> { control: self.control };
+  }
+
+  fn strong_count(self: ref Self) -> i64 {
+    return std::rc::strong_count_raw<T>(self.control);
+  }
+
+  fn weak_count(self: ref Self) -> i64 {
+    return std::rc::weak_count_raw<T>(self.control);
+  }
+
+  fn is_unique(self: ref Self) -> bool {
+    return self.strong_count() == 1;
+  }
+
+  fn get(self: ref Self) -> T {
+    std::assert(std::rc::strong_count_raw<T>(self.control) > 0);
+    return ptr_load(std::rc::value_ptr<T>(self.control));
+  }
+
+  fn as_ref(self: ref Self) -> ref T {
+    std::assert(std::rc::strong_count_raw<T>(self.control) > 0);
+    return ref *std::rc::value_ptr<T>(self.control);
+  }
+
+  fn ptr_eq(self: ref Self, other: ref std::rc::Arc[T]) -> bool {
+    return (self.control as u64) == (other.control as u64);
+  }
+}
+
+impl[T] std::zone::ZoneBacked for std::rc::Arc[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(std::rc::has_control<T>(self.control));
+    return std::zone::metadata(self.control as ptr u8);
+  }
+}
+
+impl[T] std::Drop for std::rc::Arc[T] {
+  fn drop(self) -> void {
+    std::rc::release_strong<T>(self.control);
+    return;
+  }
+}
+
+pub impl[T] std::rc::Weak[T] {
+  fn new() -> std::rc::Weak[T] {
+    return std::rc::Weak<T> { control: std::rc::null_control<T>() };
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return !std::rc::has_control<T>(self.control);
+  }
+
+  fn is_alive(self: ref Self) -> bool {
+    return std::rc::strong_count_raw<T>(self.control) > 0;
+  }
+
+  fn strong_count(self: ref Self) -> i64 {
+    return std::rc::strong_count_raw<T>(self.control);
+  }
+
+  fn weak_count(self: ref Self) -> i64 {
+    return std::rc::weak_count_raw<T>(self.control);
+  }
+
+  fn clone(self: ref Self) -> std::rc::Weak[T] {
+    if std::rc::has_control<T>(self.control) {
+      std::rc::add_weak<T>(self.control);
+    }
+    return std::rc::Weak<T> { control: self.control };
+  }
+
+  fn upgrade(self: ref Self) -> std::Option[std::rc::Rc[T]] {
+    if !std::rc::try_add_strong<T>(self.control) {
+      return std::None<std::rc::Rc[T]>();
+    }
+    return std::Some<std::rc::Rc<T>>(std::rc::Rc<T> { control: self.control });
+  }
+
+  fn upgrade_arc(self: ref Self) -> std::Option[std::rc::Arc[T]] {
+    if !std::rc::try_add_strong<T>(self.control) {
+      return std::None<std::rc::Arc[T]>();
+    }
+    return std::Some<std::rc::Arc<T>>(std::rc::Arc<T> { control: self.control });
+  }
+}
+
+impl[T] std::zone::ZoneBacked for std::rc::Weak[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    std::assert(std::rc::has_control<T>(self.control));
+    return std::zone::metadata(self.control as ptr u8);
+  }
+}
+
+impl[T] std::Drop for std::rc::Weak[T] {
+  fn drop(self) -> void {
+    std::rc::release_weak<T>(self.control);
+    return;
+  }
+}

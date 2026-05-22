@@ -90,7 +90,8 @@ An empty handle can still be dropped safely.
 
 ## Current Limits
 
-- `Box[T]` is not shared ownership. There is no reference count or weak handle.
+- `Box[T]` is not shared ownership. Use `std::rc::Rc`, `std::rc::Arc`, or
+  `std::rc::Weak` when reference-counted ownership is the right model.
 - Empty boxes exist only through operations such as `take` or `clear`; users
   should not construct invalid raw `data` fields directly.
 - Raw pointer methods are sharp edges for low-level code. Prefer `as_ref`,

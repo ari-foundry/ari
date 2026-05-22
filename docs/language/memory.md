@@ -369,15 +369,18 @@ argument must match the handle's tracked source zone. Dropping a non-empty
 handle runs the stored value's `Drop` impl when one exists, but the explicit
 zone still owns and releases the backing bytes.
 
-The remaining root smart-pointer names stay reserved for the later ownership
-policy:
+The remaining root smart-pointer policy is split between implemented explicit
+handles and reserved policy aliases:
 
 - `Unique[T]` is reserved for policy compatibility, but the preferred unique
   owner spelling is `Box[T]` once that spelling grows allocator-backed heap
   ownership.
-- `Shared[T]` is reserved for future reference-counted shared ownership.
-- `Weak[T]` is reserved for non-owning shared handles that upgrade through
-  `Option[Shared[T]]`.
+- `Rc[T]` and `Arc[T]` are current root aliases for `std::rc::Rc[T]` and
+  `std::rc::Arc[T]`.
+- `Weak[T]` is the current root alias for `std::rc::Weak[T]`; it upgrades
+  through `Option[Rc[T]]` or `Option[Arc[T]]`.
+- `Shared[T]` remains reserved as a possible future policy alias once Ari has
+  a final send/share story.
 
 Future owning or shared handles must be created through explicit allocator or
 capability arguments. Ari does not provide an ambient global heap. `drop` of a

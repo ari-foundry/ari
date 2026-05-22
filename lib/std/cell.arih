@@ -1,0 +1,319 @@
+pub struct Cell[T] {
+  mut value: T,
+}
+
+pub struct RefCell[T] {
+  mut value: T,
+  mut borrow_state: i64,
+}
+
+pub struct Ref[T] {
+  cell: ptr std::cell::RefCell[T],
+  value: ptr T,
+}
+
+pub struct RefMut[T] {
+  cell: ptr std::cell::RefCell[T],
+  value: ptr T,
+}
+
+pub struct OnceCell[T] {
+  data: ptr T,
+  mut initialized: bool,
+}
+
+pub struct Lazy[T] {
+  cell: std::cell::OnceCell[T],
+  initializer: fn() -> T,
+}
+
+fn cell_value_ptr[T](cell: ptr std::cell::Cell[T]) -> ptr T {
+  return (ref mut (*cell).value) as ptr T;
+}
+
+fn ref_cell_value_ptr[T](cell: ptr std::cell::RefCell[T]) -> ptr T {
+  return (ref mut (*cell).value) as ptr T;
+}
+
+fn ref_cell_state_ptr[T](cell: ptr std::cell::RefCell[T]) -> ptr i64 {
+  return (ref mut (*cell).borrow_state) as ptr i64;
+}
+
+fn once_cell_initialized_ptr[T](cell: ptr std::cell::OnceCell[T]) -> ptr bool {
+  return (ref mut (*cell).initialized) as ptr bool;
+}
+
+pub impl[T] std::cell::Cell[T] {
+  fn new(value: T) -> std::cell::Cell[T] {
+    return std::cell::Cell<T> { value: value };
+  }
+
+  fn get(self: ref Self) -> T {
+    let raw: ptr std::cell::Cell[T] = self as ptr std::cell::Cell[T];
+    return ptr_load(std::cell::cell_value_ptr<T>(raw));
+  }
+
+  fn set(self: ref Self, value: T) -> void {
+    let raw: ptr std::cell::Cell[T] = self as ptr std::cell::Cell[T];
+    let slot = std::cell::cell_value_ptr<T>(raw);
+    let previous = ptr_load(slot);
+    ptr_store(slot, value);
+    drop previous;
+  }
+
+  fn replace(self: ref Self, value: T) -> T {
+    let raw: ptr std::cell::Cell[T] = self as ptr std::cell::Cell[T];
+    let slot = std::cell::cell_value_ptr<T>(raw);
+    let previous = ptr_load(slot);
+    ptr_store(slot, value);
+    return previous;
+  }
+
+  fn into_inner(self) -> T {
+    return self.value;
+  }
+}
+
+pub impl[T: std::Default] std::cell::Cell[T] {
+  fn take(self: ref Self) -> T {
+    return self.replace(std::Default::default<T>());
+  }
+}
+
+pub impl[T] std::cell::RefCell[T] {
+  fn new(value: T) -> std::cell::RefCell[T] {
+    return std::cell::RefCell<T> { value: value, borrow_state: 0 };
+  }
+
+  fn borrow_count(self: ref Self) -> i64 {
+    return self.borrow_state;
+  }
+
+  fn is_borrowed(self: ref Self) -> bool {
+    return self.borrow_state != 0;
+  }
+
+  fn borrow(self: ref Self) -> std::cell::Ref[T] {
+    let raw: ptr std::cell::RefCell[T] = self as ptr std::cell::RefCell[T];
+    let state = std::cell::ref_cell_state_ptr<T>(raw);
+    let current = ptr_load(state);
+    std::assert(current >= 0);
+    ptr_store(state, current + 1);
+    return std::cell::Ref<T> {
+      cell: raw,
+      value: std::cell::ref_cell_value_ptr<T>(raw),
+    };
+  }
+
+  fn try_borrow(self: ref Self) -> std::Option[std::cell::Ref[T]] {
+    if self.borrow_state < 0 {
+      return std::None<std::cell::Ref[T]>();
+    }
+    return std::Some<std::cell::Ref<T>>(self.borrow());
+  }
+
+  fn borrow_mut(self: ref Self) -> std::cell::RefMut[T] {
+    let raw: ptr std::cell::RefCell[T] = self as ptr std::cell::RefCell[T];
+    let state = std::cell::ref_cell_state_ptr<T>(raw);
+    std::assert(ptr_load(state) == 0);
+    ptr_store(state, -1);
+    return std::cell::RefMut<T> {
+      cell: raw,
+      value: std::cell::ref_cell_value_ptr<T>(raw),
+    };
+  }
+
+  fn try_borrow_mut(self: ref Self) -> std::Option[std::cell::RefMut[T]] {
+    if self.borrow_state != 0 {
+      return std::None<std::cell::RefMut[T]>();
+    }
+    return std::Some<std::cell::RefMut<T>>(self.borrow_mut());
+  }
+
+  fn get_mut(self: ref mut Self) -> ref mut T {
+    std::assert(self.borrow_state == 0);
+    return ref mut self.value;
+  }
+
+  fn replace(self: ref Self, value: T) -> T {
+    std::assert(self.borrow_state == 0);
+    let raw: ptr std::cell::RefCell[T] = self as ptr std::cell::RefCell[T];
+    let slot = std::cell::ref_cell_value_ptr<T>(raw);
+    let previous = ptr_load(slot);
+    ptr_store(slot, value);
+    return previous;
+  }
+
+  fn into_inner(self) -> T {
+    return self.value;
+  }
+}
+
+pub impl[T: std::Default] std::cell::RefCell[T] {
+  fn take(self: ref Self) -> T {
+    return self.replace(std::Default::default<T>());
+  }
+}
+
+pub impl[T] std::cell::Ref[T] {
+  fn get(self: ref Self) -> T {
+    return ptr_load(self.value);
+  }
+
+  fn as_ref(self: ref Self) -> ref T {
+    return ref *self.value;
+  }
+}
+
+impl[T] std::Drop for std::cell::Ref[T] {
+  fn drop(self) -> void {
+    let state = std::cell::ref_cell_state_ptr<T>(self.cell);
+    let current = ptr_load(state);
+    std::assert(current > 0);
+    ptr_store(state, current - 1);
+    return;
+  }
+}
+
+pub impl[T] std::cell::RefMut[T] {
+  fn get(self: ref Self) -> T {
+    return ptr_load(self.value);
+  }
+
+  fn as_ref(self: ref Self) -> ref T {
+    return ref *self.value;
+  }
+
+  fn as_mut(self: ref mut Self) -> ref mut T {
+    return ref mut *self.value;
+  }
+
+  fn set(self: ref mut Self, value: T) -> void {
+    let previous = ptr_load(self.value);
+    ptr_store(self.value, value);
+    drop previous;
+  }
+
+  fn replace(self: ref mut Self, value: T) -> T {
+    let previous = ptr_load(self.value);
+    ptr_store(self.value, value);
+    return previous;
+  }
+}
+
+impl[T] std::Drop for std::cell::RefMut[T] {
+  fn drop(self) -> void {
+    let state = std::cell::ref_cell_state_ptr<T>(self.cell);
+    std::assert(ptr_load(state) == -1);
+    ptr_store(state, 0);
+    return;
+  }
+}
+
+pub impl[T] std::cell::OnceCell[T] {
+  fn new(zone: ref mut Zone) -> std::cell::OnceCell[T] {
+    return std::cell::OnceCell<T> {
+      data: std::zone::alloc<T>(zone),
+      initialized: false,
+    };
+  }
+
+  fn is_initialized(self: ref Self) -> bool {
+    return self.initialized;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return !self.initialized;
+  }
+
+  fn set(self: ref Self, value: T) -> bool {
+    if self.initialized {
+      drop value;
+      return false;
+    }
+    let raw: ptr std::cell::OnceCell[T] = self as ptr std::cell::OnceCell[T];
+    ptr_store((*raw).data, value);
+    ptr_store(std::cell::once_cell_initialized_ptr<T>(raw), true);
+    return true;
+  }
+
+  fn get(self: ref Self) -> std::option::OptionRef[T] {
+    if !self.initialized {
+      return std::option::NoneRef<T>();
+    }
+    return std::option::SomeRef<T>(self.data);
+  }
+
+  fn get_mut(self: ref mut Self) -> std::option::OptionMut[T] {
+    if !self.initialized {
+      return std::option::NoneMut<T>();
+    }
+    return std::option::SomeMut<T>(self.data);
+  }
+
+  fn get_or_init(self: ref Self, op: fn() -> T) -> ref T {
+    if !self.initialized {
+      self.set(op());
+    }
+    return ref *self.data;
+  }
+
+  fn take(self: ref mut Self) -> std::Option[T] {
+    if !self.initialized {
+      return std::None<T>();
+    }
+    self.initialized = false;
+    return std::Some<T>(ptr_load(self.data));
+  }
+
+  fn replace(self: ref mut Self, value: T) -> std::Option[T] {
+    let previous = self.take();
+    ptr_store(self.data, value);
+    self.initialized = true;
+    return previous;
+  }
+}
+
+impl[T] std::zone::ZoneBacked for std::cell::OnceCell[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return std::zone::metadata(self.data as ptr u8);
+  }
+}
+
+impl[T] std::Drop for std::cell::OnceCell[T] {
+  fn drop(self) -> void {
+    if !self.initialized {
+      return;
+    }
+    let value = ptr_load(self.data);
+    drop value;
+    return;
+  }
+}
+
+pub impl[T] std::cell::Lazy[T] {
+  fn new(zone: ref mut Zone, op: fn() -> T) -> std::cell::Lazy[T] {
+    return std::cell::Lazy<T> {
+      cell: std::cell::OnceCell<T>::new(zone),
+      initializer: op,
+    };
+  }
+
+  fn force(self: ref Self) -> ref T {
+    return self.cell.get_or_init(self.initializer);
+  }
+
+  fn get(self: ref Self) -> std::option::OptionRef[T] {
+    return self.cell.get();
+  }
+
+  fn is_initialized(self: ref Self) -> bool {
+    return self.cell.is_initialized();
+  }
+}
+
+impl[T] std::zone::ZoneBacked for std::cell::Lazy[T] {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return self.cell.zone();
+  }
+}

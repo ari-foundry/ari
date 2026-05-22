@@ -1113,8 +1113,9 @@ Checklist:
       through the LLVM
       backend to cover local Slice pointer/length lowering and
       aggregate-argument register spills
-- [x] reject reserved root smart-pointer surfaces `Unique`, `Shared`, and
-      `Weak` with roadmap-backed diagnostics
+- [x] reject reserved root smart-pointer surfaces `Unique` and `Shared` with
+      roadmap-backed diagnostics; expose `Rc`, `Arc`, and `Weak` as current
+      root aliases for `std::rc` shared ownership
 - [x] reject non-`i64` prelude range bounds until generic range lowering exists
 - [x] add `lib/std.arih` source declarations for the stable
       declaration-shaped prelude surface, auto-load it as `std`, and verify

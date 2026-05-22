@@ -1,0 +1,74 @@
+// Covers interior mutability helpers: Cell, RefCell, OnceCell, and Lazy.
+impl Default for i64 {
+  fn default() -> Self {
+    return 0;
+  }
+}
+
+fn make_i64() -> i64 {
+  return 77;
+}
+
+fn read_i64(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn read_i64_mut(value: ref mut i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(4096);
+
+  let cell = Cell::new<i64>(10);
+  assert(cell.get() == 10);
+  cell.set(11);
+  assert(cell.replace(12) == 11);
+  assert(cell.take() == 12);
+  assert(cell.get() == 0);
+
+  var ref_cell = RefCell::new<i64>(20);
+  {
+    let borrowed = ref_cell.borrow();
+    assert(borrowed.get() == 20);
+    assert(ref_cell.borrow_count() == 1);
+    assert(ref_cell.try_borrow_mut().is_none());
+    drop borrowed;
+  }
+  assert(ref_cell.borrow_count() == 0);
+  {
+    var borrowed_mut = ref_cell.borrow_mut();
+    assert(borrowed_mut.get() == 20);
+    borrowed_mut.set(30);
+    assert(ref_cell.try_borrow().is_none());
+    drop borrowed_mut;
+  }
+  assert(ref_cell.replace(31) == 30);
+  assert(ref_cell.take() == 31);
+  assert(read_i64_mut(ref_cell.get_mut()) == 0);
+
+  var once = OnceCell::new<i64>(ref mut zone);
+  assert(!once.is_initialized());
+  assert(once.get().is_none());
+  assert(once.set(40));
+  assert(!once.set(41));
+  let once_value = once.get();
+  assert(read_i64(once_value.unwrap()) == 40);
+  assert(read_i64(once.get_or_init(make_i64)) == 40);
+  let taken_once = once.take();
+  assert(taken_once.unwrap_or(0) == 40);
+  assert(once.is_empty());
+  assert(read_i64(once.get_or_init(make_i64)) == 77);
+
+  let lazy = Lazy::new<i64>(ref mut zone, make_i64);
+  assert(!lazy.is_initialized());
+  assert(read_i64(lazy.force()) == 77);
+  assert(lazy.is_initialized());
+  let lazy_value = lazy.get();
+  assert(read_i64(lazy_value.unwrap()) == 77);
+
+  zone::destroy(zone);
+  return 0;
+}

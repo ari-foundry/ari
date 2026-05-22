@@ -2777,8 +2777,6 @@ check-prelude: $(TARGET)
 	grep -q "prelude type 'Unique' is reserved for smart-pointer policy; use Box\\[T\\] for today's explicit-zone handle" $(BUILD_DIR)/prelude/prelude-unique-reserved.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-shared-reserved.ari -o $(BUILD_DIR)/prelude/prelude-shared-reserved.elf >$(BUILD_DIR)/prelude/prelude-shared-reserved.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'Shared' is reserved for future reference-counted ownership" $(BUILD_DIR)/prelude/prelude-shared-reserved.err
-	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-weak-reserved.ari -o $(BUILD_DIR)/prelude/prelude-weak-reserved.elf >$(BUILD_DIR)/prelude/prelude-weak-reserved.err 2>&1; then exit 1; fi
-	grep -q "prelude type 'Weak' is reserved for future non-owning shared-pointer handles" $(BUILD_DIR)/prelude/prelude-weak-reserved.err
 	if $(TARGET) tests/cases/standard-library/errors/cmp/std-cmp-equality-operator-missing-eq.ari -o $(BUILD_DIR)/prelude/std-cmp-equality-operator-missing-eq.elf >$(BUILD_DIR)/prelude/std-cmp-equality-operator-missing-eq.err 2>&1; then exit 1; fi
 	grep -q "unknown method 'eq' for type Score" $(BUILD_DIR)/prelude/std-cmp-equality-operator-missing-eq.err
 	if $(TARGET) tests/cases/standard-library/errors/cmp/std-cmp-order-operator-missing-ord.ari -o $(BUILD_DIR)/prelude/std-cmp-order-operator-missing-ord.elf >$(BUILD_DIR)/prelude/std-cmp-order-operator-missing-ord.err 2>&1; then exit 1; fi

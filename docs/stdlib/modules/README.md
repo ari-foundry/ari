@@ -32,6 +32,10 @@ limits, examples, and test files for one module.
   iterator entry points.
 - [std::boxed](boxed.md): zone-backed single-value owner with explicit
   allocation, move-out, refill, copy-to-zone, borrow, and raw pointer helpers.
+- [std::rc](rc.md): zone-backed reference-counted `Rc`, `Arc`, and `Weak`
+  handles with strong/weak counts, downgrade/upgrade, and value-drop behavior.
+- [std::cell](cell.md): `Cell`, `RefCell`, `OnceCell`, and `Lazy` helpers for
+  interior mutability and one-time initialization.
 - [std::hash](hash.md): deterministic non-cryptographic `Hasher`,
   `Hash[T]`, fixed-width integer and bool hashing, byte-slice hashing, and
   collection hash compatibility notes.

@@ -1,0 +1,55 @@
+// Covers zone-backed shared ownership handles and weak upgrade behavior.
+fn main() -> i64 {
+  var zone = zone::create(4096);
+
+  var rc = Rc::new<i64>(ref mut zone, 12);
+  assert(rc.strong_count() == 1);
+  assert(rc.weak_count() == 0);
+  assert(rc.get() == 12);
+  {
+    let clone = rc.clone();
+    assert(rc.strong_count() == 2);
+    assert(rc.ptr_eq(ref clone));
+    drop clone;
+  }
+  assert(rc.strong_count() == 1);
+
+  var weak = rc.downgrade();
+  assert(!weak.is_empty());
+  assert(weak.is_alive());
+  assert(rc.weak_count() == 1);
+  {
+    let upgraded = weak.upgrade().unwrap();
+    assert(upgraded.get() == 12);
+    assert(weak.strong_count() == 2);
+    drop upgraded;
+  }
+  drop rc;
+  assert(!weak.is_alive());
+  assert(weak.upgrade().is_none());
+  drop weak;
+
+  var arc = Arc::new<i64>(ref mut zone, 30);
+  {
+    let arc_clone = arc.clone();
+    assert(arc.strong_count() == 2);
+    assert(arc.ptr_eq(ref arc_clone));
+    drop arc_clone;
+  }
+  var arc_weak = arc.downgrade();
+  {
+    let upgraded_arc = arc_weak.upgrade_arc().unwrap();
+    assert(upgraded_arc.get() == 30);
+    drop upgraded_arc;
+  }
+  drop arc;
+  assert(arc_weak.upgrade_arc().is_none());
+  drop arc_weak;
+
+  let empty = Weak::new<i64>();
+  assert(empty.is_empty());
+  assert(empty.upgrade().is_none());
+
+  zone::destroy(zone);
+  return 0;
+}

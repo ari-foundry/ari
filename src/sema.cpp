@@ -36,10 +36,12 @@
 #include "range_semantics.hpp"
 #include "slice_semantics.hpp"
 #include "std_box_semantics.hpp"
+#include "std_cell_semantics.hpp"
 #include "std_collections_semantics.hpp"
 #include "std_enum_probe_semantics.hpp"
 #include "std_fs_semantics.hpp"
 #include "std_process_semantics.hpp"
+#include "std_rc_semantics.hpp"
 #include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 #include "symbol_mangle.hpp"
@@ -18586,6 +18588,12 @@ private:
         }
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_string_zone_handle_source_field_index(struct_type);
+        }
+        if (!std_zone_handle_source_field) {
+            std_zone_handle_source_field = std_rc_zone_handle_source_field_index(struct_type);
+        }
+        if (!std_zone_handle_source_field) {
+            std_zone_handle_source_field = std_cell_zone_handle_source_field_index(struct_type);
         }
         const bool std_zone_metadata_literal =
             struct_type.qualifier == TypeQualifier::Value &&

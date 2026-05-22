@@ -169,10 +169,13 @@ fn main() -> i64 {
 - All operations are sequentially consistent.
 - `Mutex` and `RwLock` are primitive locks only. There is no `Mutex[T]`,
   `RwLock[T]`, guard type, or poisoning/no-poisoning policy yet.
-- `Once` runs plain `fn() -> void` entries only. `OnceLock[T]` and `LazyLock`
-  need value storage, initialization result policy, and shared access rules.
-- There is no `Shared`, `Weak`, `Condvar`, `Barrier`, channel, or send/share
-  trait policy yet.
+- `Once` runs plain `fn() -> void` entries only. Value one-time
+  initialization lives in `std::cell::OnceCell` and `std::cell::Lazy` today;
+  thread-safe `OnceLock[T]`/`LazyLock[T]` naming can be added later if the
+  send/share policy wants distinct sync-facing types.
+- Shared ownership lives in `std::rc::Rc`, `std::rc::Arc`, and
+  `std::rc::Weak` today. There is still no `Condvar`, `Barrier`, channel, or
+  send/share trait policy.
 - Current `std::thread` entries cannot capture references to an atomic value.
   This module is still useful for backend/runtime lowering and for future
   thread-sharing work, but it is not a full shared-state story by itself.
@@ -187,8 +190,8 @@ fn main() -> i64 {
 | RwLock | Current source primitive with explicit read/write lock and unlock helpers; future value-protecting `RwLock[T]`, read/write guards, fairness policy, and futex-backed implementation. |
 | Condvar | Roadmap after `Mutex` guards and OS wait/wake runtime hooks exist. |
 | Once | Current source `Once`; future panic/poison policy. |
-| OnceLock | Roadmap after value storage and shared access policy are stable. |
-| LazyLock | Roadmap after `OnceLock` and function/closure initialization policy. |
+| OnceLock | Roadmap if thread-safe naming is split from `std::cell::OnceCell`. |
+| LazyLock | Roadmap if thread-safe naming is split from `std::cell::Lazy`. |
 | Barrier | Roadmap after thread group coordination and wake primitives. |
 | Semaphore | Optional roadmap after permit ownership and async/blocking policy. |
 | MPSC channel | Roadmap after allocation ownership, send/share traits, and blocking wake policy. |
