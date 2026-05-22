@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <exception>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -94,6 +95,8 @@ public:
     Span span(SourceId id, std::size_t byte_start, std::size_t byte_end) const;
     bool valid_span(Span span) const;
     LineColumn location(SourceId id, std::size_t byte_offset) const;
+    std::optional<std::size_t> byte_offset(SourceId id, int line, int column) const;
+    std::optional<std::size_t> byte_offset(SourceId id, LineColumn location) const;
     SourceLocation location_for_offset(SourceId id, std::size_t byte_offset) const;
     SourceLocation location_for_span(Span span) const;
     SourceLocation location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end) const;
@@ -161,6 +164,8 @@ const std::string* find_source_text(SourceId id);
 const std::string* find_source_text(const std::string& source_name);
 std::size_t source_eof_offset(SourceId id);
 SourceLocation source_location_for_offset(SourceId id, std::size_t byte_offset);
+std::optional<std::size_t> source_byte_offset(SourceId id, int line, int column);
+std::optional<std::size_t> source_byte_offset(SourceId id, LineColumn location);
 SourceLocation source_location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end);
 SourceLocation source_end_location(const std::string& source_name);
 std::string render_source_snippet(const SourceSnippet& snippet);

@@ -109,6 +109,7 @@ struct SourceMap {
   // span(id, start, end) -> Span
   // valid_span(span) -> bool
   // location(id, byte_offset) -> LineColumn
+  // byte_offset(id, line, column) -> Option[BytePos]
   // snippet(span) -> SourceSnippet
 }
 ```
@@ -120,6 +121,12 @@ Policy:
 - spans are byte ranges, not Unicode scalar ranges
 - empty spans are valid insertion points and EOF locations
 - line and column lookup is derived from source text
+- diagnostic line and column values are one-based byte columns
+- internal source coordinates are zero-based byte offsets
+- `\r\n` is one line break; snippets hide the `\r` byte and both newline bytes
+  map to the previous line's final visible column
+- UTF-8 does not change core column math yet: multi-byte scalars count by bytes,
+  not display cells or UTF-16 code units
 - `SourceFile` owns the line start table and EOF offset so diagnostics do not
   rescan source text for every lookup
 - file-backed sources may use different canonical `path` and diagnostic
@@ -293,7 +300,7 @@ Land this layer in small slices:
 | SourceFile | Canonical path, display name, owned text, line table, EOF offset, and in-memory source registration. | `source-map-file-module.map`, in-memory source API smoke tests. |
 | SourceMap | `add_file`, `get`, `span`, `location`, and `snippet` APIs over one source owner. | multi-file SourceMap smoke tests. |
 | Span | Byte range construction, validation, merge, contains, and intersects helpers. | empty span, single-byte span, end-before-start normalization/rejection, source mismatch merge. |
-| Line lookup | Byte offset to line/column mapping. | start, middle, newline, EOF, CRLF policy. |
+| Line lookup | Byte offset to line/column mapping and one-based line/column back to byte offset. | start, middle, newline, EOF, CRLF, UTF-8 byte-column policy. |
 | Source map artifact | Deterministic source ids, kind, canonical/display paths, EOF offsets, line tables, byte, line, and snippet text. | `source-map-file-module.map`, CRLF policy. |
 | Snippets | Extract source line and underline span. | single-line, empty span, tab policy, EOF span. |
 | Diagnostic values | Severity, code, label, note data structures. | label ordering, note ordering, optional code. |

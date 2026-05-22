@@ -59,6 +59,25 @@ std::size_t line_end_for_start(const SourceFile& file, std::size_t line_start) {
     return line_end;
 }
 
+int display_column_for_offset(const SourceFile& file, std::size_t line_index, std::size_t offset) {
+    offset = std::min(offset, file.eof_offset);
+    std::size_t line_start = file.line_starts[line_index];
+    std::size_t line_end = line_end_for_start(file, line_start);
+    std::size_t display_offset = std::min(offset, line_end);
+    return static_cast<int>(display_offset - line_start + 1);
+}
+
+std::optional<std::size_t> byte_offset_for_line_column(const SourceFile& file, int line, int column) {
+    if (line < 1 || column < 1) return std::nullopt;
+    std::size_t line_index = static_cast<std::size_t>(line - 1);
+    if (line_index >= file.line_starts.size()) return std::nullopt;
+    std::size_t line_start = file.line_starts[line_index];
+    std::size_t line_end = line_end_for_start(file, line_start);
+    std::size_t column_index = static_cast<std::size_t>(column - 1);
+    if (column_index > line_end - line_start) return std::nullopt;
+    return line_start + column_index;
+}
+
 void fill_source_location_from_file(SourceLocation& loc, const SourceFile& file, std::size_t byte_offset) {
     byte_offset = std::min(byte_offset, file.eof_offset);
     std::size_t line_index = line_index_for_offset(file, byte_offset);
@@ -66,7 +85,7 @@ void fill_source_location_from_file(SourceLocation& loc, const SourceFile& file,
     loc.source_id = file.id;
     loc.source_name = file.display_name;
     loc.line = static_cast<int>(line_index + 1);
-    loc.column = static_cast<int>(byte_offset - file.line_starts[line_index] + 1);
+    loc.column = display_column_for_offset(file, line_index, byte_offset);
     loc.byte_start = byte_offset;
     loc.byte_end = byte_offset;
     loc.has_byte_range = true;
@@ -417,9 +436,19 @@ LineColumn SourceMap::location(SourceId id, std::size_t byte_offset) const {
     byte_offset = std::min(byte_offset, file->eof_offset);
     std::size_t line_index = line_index_for_offset(*file, byte_offset);
     result.line = static_cast<int>(line_index + 1);
-    result.column = static_cast<int>(byte_offset - file->line_starts[line_index] + 1);
+    result.column = display_column_for_offset(*file, line_index, byte_offset);
     result.byte_offset = byte_offset;
     return result;
+}
+
+std::optional<std::size_t> SourceMap::byte_offset(SourceId id, int line, int column) const {
+    const SourceFile* file = get(id);
+    if (file == nullptr) return std::nullopt;
+    return byte_offset_for_line_column(*file, line, column);
+}
+
+std::optional<std::size_t> SourceMap::byte_offset(SourceId id, LineColumn location) const {
+    return byte_offset(id, location.line, location.column);
 }
 
 SourceLocation SourceMap::location_for_offset(SourceId id, std::size_t byte_offset) const {
@@ -594,6 +623,14 @@ std::size_t source_eof_offset(SourceId id) {
 
 SourceLocation source_location_for_offset(SourceId id, std::size_t byte_offset) {
     return default_source_map().location_for_offset(id, byte_offset);
+}
+
+std::optional<std::size_t> source_byte_offset(SourceId id, int line, int column) {
+    return default_source_map().byte_offset(id, line, column);
+}
+
+std::optional<std::size_t> source_byte_offset(SourceId id, LineColumn location) {
+    return default_source_map().byte_offset(id, location);
 }
 
 SourceLocation source_location_for_span(SourceId id, std::size_t byte_start, std::size_t byte_end) {

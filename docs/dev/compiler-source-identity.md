@@ -88,6 +88,7 @@ SourceId main = sources.add_file("src/main.ari", main_text);
 const SourceFile* file = sources.get(main);
 Span name = sources.span(main, 3, 7);
 LineColumn point = sources.location(main, 3);
+std::optional<std::size_t> offset = sources.byte_offset(main, 1, 4);
 SourceSnippet rendered = sources.snippet(name);
 ```
 
@@ -107,7 +108,10 @@ Rules:
 - `valid_span(span)` verifies that a span's source id is registered, that
   `start <= end`, and that `end` is within the owning source.
 - `location(source_id, byte_offset)` uses the file's line table to return a
-  one-based `LineColumn`.
+  one-based `LineColumn` for diagnostic display.
+- `byte_offset(source_id, line, column)` maps a one-based diagnostic coordinate
+  back to a byte offset. It returns no value when the source id, line, or column
+  is outside the registered source.
 - `snippet(span)` returns source name, line text, and caret marker data without
   requiring a diagnostic renderer.
 - The hosted compiler's legacy free functions call `default_source_map()` so
@@ -241,17 +245,35 @@ user-facing span to render.
 ## Line And Column Lookup
 
 Rendered diagnostics should use one-based line and column values. Internal
-offsets remain zero-based.
+positions remain zero-based byte offsets.
 
 Lookup policy:
 
 - line starts at `1`
 - column starts at `1`
-- newline bytes advance the line and reset the column
+- `LineColumn.byte_offset`, `Span.start`, `Span.end`, `SourceFile.line_starts`,
+  and `SourceFile.eof_offset` are zero-based byte offsets
+- `SourceFile.line_starts` stores zero-based byte offsets for the first byte of
+  each line; the vector can contain `eof_offset` as the start of the final empty
+  line after a trailing newline
+- `location(source_id, byte_offset)` clamps offsets after EOF to EOF before
+  deriving line and column
+- `byte_offset(source_id, line, column)` accepts one-based diagnostic
+  coordinates and returns `std::nullopt` for line or column zero, unknown
+  sources, lines past the source, or columns past the visible line end
+- newline bytes advance the line and reset the column for the next line
 - line/column lookup should use `SourceFile.line_starts`, not a fresh scan of
   source text at each diagnostic render
-- CRLF should be normalized or explicitly represented in source-map artifacts
-- EOF spans should render at the final valid insertion point
+- CRLF (`\r\n`) counts as one line break. The `\r` byte is not part of snippet
+  line text, and offsets on either newline byte render at the final visible
+  column of the previous line.
+- EOF spans render at the final valid insertion point. For a file ending in a
+  newline, EOF is line `N + 1`, column `1`; otherwise it is the last line,
+  column `visible_byte_length + 1`.
+- columns are byte columns, not Unicode scalar columns or terminal display
+  columns. A two-byte UTF-8 scalar advances the diagnostic byte column by two.
+  Future UI/LSP adapters may add display-column or UTF-16-column conversion at
+  the edge without changing core span math.
 - invalid spans should fail before rendering or fall back to a message-only
   diagnostic
 
