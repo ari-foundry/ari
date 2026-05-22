@@ -254,6 +254,7 @@ public:
         out << "@ari_realpath_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_readlink_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_line_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
+        out << "@stderr = external global ptr\n\n";
         for (const auto& item : strings_) {
             out << item.name << " = private unnamed_addr constant [" << item.size << " x i8] c\"" << item.bytes << "\", align 1\n";
         }
@@ -452,6 +453,7 @@ private:
 
     static bool has_runtime_c_declaration(const std::string& symbol) {
         return symbol == "printf" ||
+               symbol == "fprintf" ||
                symbol == "putchar" ||
                symbol == "getchar" ||
                symbol == "fgets" ||
@@ -617,6 +619,7 @@ private:
 
     void emit_extern_decls() {
         declarations_ << "declare i32 @printf(ptr, ...)\n";
+        declarations_ << "declare i32 @fprintf(ptr, ptr, ...)\n";
         declarations_ << "declare i32 @putchar(i32)\n";
         declarations_ << "declare i32 @getchar()\n";
         declarations_ << "declare ptr @fgets(ptr, i32, ptr)\n";
@@ -6041,24 +6044,67 @@ private:
         }
         const std::vector<std::string>& format_parts = ir_expr_format_parts(expr);
         const std::vector<IrFormatSpec>& format_specs = ir_expr_format_specs(expr);
+        const bool use_stderr = ir_expr_format_print_stderr(expr);
         std::string fmt_string = string_ptr("%s");
+        std::string fmt_char = string_ptr("%c");
+        std::string fmt_i64 = string_ptr("%lld");
+        std::string fmt_u64 = string_ptr("%llu");
+        std::string stderr_stream;
+        auto ensure_stderr_stream = [&]() -> const std::string& {
+            if (stderr_stream.empty()) {
+                stderr_stream = temp();
+                line("  " + stderr_stream + " = load ptr, ptr @stderr");
+            }
+            return stderr_stream;
+        };
+        auto emit_c_string = [&](const std::string& value) {
+            if (use_stderr) {
+                line("  call i32 (ptr, ptr, ...) @fprintf(ptr " + ensure_stderr_stream() +
+                     ", ptr " + fmt_string + ", ptr " + value + ")");
+            } else {
+                line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + value + ")");
+            }
+        };
+        auto emit_i64 = [&](const std::string& value) {
+            if (use_stderr) {
+                line("  call i32 (ptr, ptr, ...) @fprintf(ptr " + ensure_stderr_stream() +
+                     ", ptr " + fmt_i64 + ", i64 " + value + ")");
+            } else {
+                line("  call i64 @ari_builtin_write_i64(i64 " + value + ")");
+            }
+        };
+        auto emit_u64 = [&](const std::string& value) {
+            if (use_stderr) {
+                line("  call i32 (ptr, ptr, ...) @fprintf(ptr " + ensure_stderr_stream() +
+                     ", ptr " + fmt_u64 + ", i64 " + value + ")");
+            } else {
+                line("  call i64 @ari_builtin_write_u64(i64 " + value + ")");
+            }
+        };
         for (std::size_t i = 0; i < format_parts.size(); ++i) {
             if (!format_parts[i].empty()) {
-                line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + string_ptr(format_parts[i]) + ")");
+                emit_c_string(string_ptr(format_parts[i]));
             }
             if (i < expr.args.size()) {
                 Value arg = emit_expr(*expr.args[i]);
                 const IrFormatSpec& spec = i < format_specs.size() ? format_specs[i] : IrFormatSpec{};
                 if (arg.ir_type.primitive == IrPrimitiveKind::String) {
                     if (spec.debug) {
-                        line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + string_ptr("\"") + ")");
+                        emit_c_string(string_ptr("\""));
                     }
-                    line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + arg.name + ")");
+                    emit_c_string(arg.name);
                     if (spec.debug) {
-                        line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + string_ptr("\"") + ")");
+                        emit_c_string(string_ptr("\""));
                     }
                 } else if (arg.ir_type.primitive == IrPrimitiveKind::Bool) {
-                    line("  call i64 @ari_builtin_write_bool(i1 " + arg.name + ")");
+                    if (use_stderr) {
+                        std::string text = temp();
+                        line("  " + text + " = select i1 " + arg.name + ", ptr " + string_ptr("true") +
+                             ", ptr " + string_ptr("false"));
+                        emit_c_string(text);
+                    } else {
+                        line("  call i64 @ari_builtin_write_bool(i1 " + arg.name + ")");
+                    }
                 } else if (arg.ir_type.primitive == IrPrimitiveKind::F32 ||
                            arg.ir_type.primitive == IrPrimitiveKind::F64) {
                     Value wide = arg;
@@ -6070,19 +6116,37 @@ private:
                     }
                     int precision = spec.precision;
                     std::string printf_format = precision >= 0 ? "%." + std::to_string(precision) + "f" : "%f";
-                    line("  call i32 (ptr, ...) @printf(ptr " + string_ptr(printf_format) + ", double " + wide.name + ")");
+                    if (use_stderr) {
+                        line("  call i32 (ptr, ptr, ...) @fprintf(ptr " + ensure_stderr_stream() +
+                             ", ptr " + string_ptr(printf_format) + ", double " + wide.name + ")");
+                    } else {
+                        line("  call i32 (ptr, ...) @printf(ptr " + string_ptr(printf_format) + ", double " + wide.name + ")");
+                    }
                 } else if (arg.ir_type.primitive == IrPrimitiveKind::U8 || arg.ir_type.primitive == IrPrimitiveKind::I8) {
                     Value byte = cast_value(arg, IrType{TypeQualifier::Value, IrPrimitiveKind::U8, "u8", {}, {}, {}, {}, expr.loc});
-                    line("  call i64 @ari_builtin_write_byte(i8 " + byte.name + ")");
+                    if (use_stderr) {
+                        std::string wide = temp();
+                        line("  " + wide + " = zext i8 " + byte.name + " to i32");
+                        line("  call i32 (ptr, ptr, ...) @fprintf(ptr " + ensure_stderr_stream() +
+                             ", ptr " + fmt_char + ", i32 " + wide + ")");
+                    } else {
+                        line("  call i64 @ari_builtin_write_byte(i8 " + byte.name + ")");
+                    }
                 } else if (arg.ir_type.primitive == IrPrimitiveKind::U64) {
-                    line("  call i64 @ari_builtin_write_u64(i64 " + arg.name + ")");
+                    emit_u64(arg.name);
                 } else {
                     Value wide = cast_value(arg, IrType{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc});
-                    line("  call i64 @ari_builtin_write_i64(i64 " + wide.name + ")");
+                    emit_i64(wide.name);
                 }
             }
         }
-        if (ir_expr_format_print_newline(expr)) line("  call i64 @ari_builtin_newline()");
+        if (ir_expr_format_print_newline(expr)) {
+            if (use_stderr) {
+                emit_c_string(string_ptr("\n"));
+            } else {
+                line("  call i64 @ari_builtin_newline()");
+            }
+        }
         return Value{"i64", "0", expr.type};
     }
 

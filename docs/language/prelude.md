@@ -233,6 +233,7 @@ fn main() -> i64 {
   let name = "ari"
   println("value={} ok={}", 42, true)
   println!("hello {name}")
+  eprintln!("warning for {name}")
   println("pi={:.2}", 3.14159f64)
   println("debug={:?}", "ari")
   print("escaped braces: {{}}")
@@ -256,8 +257,9 @@ Formatting rules:
 - the positional placeholder count is checked at compile time
 - formatted print values currently support lowercase `string`, `char`/byte
   characters, integers, bool, `f32`, and `f64`
-- `println` appends one newline
+- `println` and `eprintln` append one newline
 - `print` does not append a newline
+- `eprintln` writes to stderr
 
 `bool` prints as lowercase `true` or `false`. `{}` prints lowercase `string`
 values as raw text, while `{:?}` quotes them for diagnostics. `char` is the
@@ -416,6 +418,7 @@ assert_eq!(count, 3)
 assert_ne!(enabled, false)
 print!("count={}", count)
 println!(" ok={}", enabled)
+eprintln!(" warning={}", enabled)
 panic!()
 todo!()
 unreachable!()
@@ -456,10 +459,10 @@ Ari does not provide an implicit allocation zone in the 0.x language surface,
 so `format!` is a reserved spelling with a targeted diagnostic that points to
 `format_in!`.
 Other prelude expression macros are recognized as unqualified names or paths
-that resolve to the root `std` macro name, such as `std::print!`, `std::format!`,
-or an alias of `std::format_in!`; arbitrary module paths whose basename is
-`format`, `format_in`, `print`, or another prelude macro name remain user macro
-paths.
+that resolve to the root `std` macro name, such as `std::print!`,
+`std::eprintln!`, `std::format!`, or an alias of `std::format_in!`; arbitrary
+module paths whose basename is `format`, `format_in`, `print`, or another
+prelude macro name remain user macro paths.
 
 ## Current Source Signatures
 
@@ -472,12 +475,16 @@ wrong arity, parameter types, or return types are rejected before lowering.
 ```ari
 print(format: string, ...) -> i64
 println(format: string, ...) -> i64
+eprintln(format: string, ...) -> i64
 io::print(format: string, ...) -> i64
 io::println(format: string, ...) -> i64
+io::eprintln(format: string, ...) -> i64
 std::print(format: string, ...) -> i64
 std::println(format: string, ...) -> i64
+std::eprintln(format: string, ...) -> i64
 std::io::print(format: string, ...) -> i64
 std::io::println(format: string, ...) -> i64
+std::io::eprintln(format: string, ...) -> i64
 io::write_i64(value: i64) -> i64
 io::write_u64(value: u64) -> i64
 io::write_bool(value: bool) -> i64

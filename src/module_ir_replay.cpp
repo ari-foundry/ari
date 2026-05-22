@@ -1047,7 +1047,8 @@ IrExprPtr replay_expr(const ModuleCacheIrExprSummaryPtr& summary, const ReplayTy
             *expr,
             summary->format_parts,
             std::move(specs),
-            summary->format_print_newline);
+            summary->format_print_newline,
+            summary->format_print_stderr);
     }
 
     if (expr->kind == IrExprKind::Try || summary->try_converts_residual ||

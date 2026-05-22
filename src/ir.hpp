@@ -263,6 +263,7 @@ struct IrExprFormatPrintPayload {
     std::vector<std::string> parts;
     std::vector<IrFormatSpec> specs;
     bool print_newline = false;
+    bool print_stderr = false;
 };
 
 struct IrExprTryPayload {
@@ -442,14 +443,20 @@ inline bool ir_expr_format_print_newline(const IrExpr& expr) {
     return ir_expr_format_print_payload(expr).print_newline;
 }
 
+inline bool ir_expr_format_print_stderr(const IrExpr& expr) {
+    return ir_expr_format_print_payload(expr).print_stderr;
+}
+
 inline void set_ir_expr_format_print_payload(IrExpr& expr,
                                              std::vector<std::string> parts,
                                              std::vector<IrFormatSpec> specs,
-                                             bool print_newline) {
+                                             bool print_newline,
+                                             bool print_stderr) {
     expr.format_print_payload = std::make_unique<IrExprFormatPrintPayload>();
     expr.format_print_payload->parts = std::move(parts);
     expr.format_print_payload->specs = std::move(specs);
     expr.format_print_payload->print_newline = print_newline;
+    expr.format_print_payload->print_stderr = print_stderr;
 }
 
 inline const IrExprTryPayload& ir_expr_try_payload(const IrExpr& expr) {

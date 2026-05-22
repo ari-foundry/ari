@@ -2,7 +2,7 @@
 
 namespace ari {
 
-inline constexpr int kModuleCacheFormatVersion = 1;
+inline constexpr int kModuleCacheFormatVersion = 2;
 inline constexpr const char* kModuleMetadataHeader = "ari-module-metadata-v0";
 inline constexpr const char* kModuleCacheHeader = "ari-module-cache-v0";
 inline constexpr const char* kModuleAstDeclsPayloadHeader = "ari-ast-decls-v0;";

@@ -160,7 +160,7 @@ input diagnostics.
 header, and builtin macro tests. It covers function and macro assertion forms,
 auto-loaded explicit `std::...` header calls, implicit Rust-like standard
 aliases such as `Vec`/`Range`/`range`, explicit `mod std;` loading under
-`--no-implicit-std`, `print!`/`println!`, host `read_line`/`input`,
+`--no-implicit-std`, `print!`/`println!`/`eprintln!`, host `read_line`/`input`,
 explicit-zone `format_in!` string construction, formatted float output, and
 `format!` no-implicit-zone diagnostics.
 

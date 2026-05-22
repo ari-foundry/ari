@@ -316,7 +316,8 @@ private:
                 break;
             case IrExprKind::FormatPrint:
                 line(indent, "FormatPrint type=" + type_name(expr.type) +
-                                 (ir_expr_format_print_newline(expr) ? " newline" : "") + loc(expr.loc));
+                                 (ir_expr_format_print_newline(expr) ? " newline" : "") +
+                                 (ir_expr_format_print_stderr(expr) ? " stderr" : "") + loc(expr.loc));
                 dump_exprs(expr.args, indent + 1);
                 break;
             case IrExprKind::Match:

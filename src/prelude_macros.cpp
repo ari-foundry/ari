@@ -12,6 +12,7 @@ PreludeMacroKind prelude_macro_kind(const std::string& name) {
     if (name == "unreachable") return PreludeMacroKind::Unreachable;
     if (name == "print") return PreludeMacroKind::Print;
     if (name == "println") return PreludeMacroKind::Println;
+    if (name == "eprintln") return PreludeMacroKind::Eprintln;
     if (name == "format") return PreludeMacroKind::Format;
     if (name == "format_in") return PreludeMacroKind::FormatIn;
     if (name == "matches") return PreludeMacroKind::Matches;
@@ -35,6 +36,7 @@ bool is_supported_prelude_macro(PreludeMacroKind kind) {
         case PreludeMacroKind::Unreachable:
         case PreludeMacroKind::Print:
         case PreludeMacroKind::Println:
+        case PreludeMacroKind::Eprintln:
         case PreludeMacroKind::Box:
         case PreludeMacroKind::Vec:
             return true;
@@ -52,6 +54,7 @@ std::string prelude_macro_function_name(PreludeMacroKind kind) {
         case PreludeMacroKind::Unreachable: return "unreachable";
         case PreludeMacroKind::Print: return "print";
         case PreludeMacroKind::Println: return "println";
+        case PreludeMacroKind::Eprintln: return "eprintln";
         default: return "";
     }
 }

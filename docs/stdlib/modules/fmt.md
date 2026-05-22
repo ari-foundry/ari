@@ -3,8 +3,8 @@
 `std::fmt` defines the formatting trait names that Ari code can depend on and
 the first source formatting helpers for explicit-zone strings,
 `std::io::Writer` values, and direct stdout output. Compiler-assisted
-formatting macros still exist for the familiar `print!`, `println!`, and
-`format_in!` path.
+formatting macros still exist for the familiar `print!`, `println!`,
+`eprintln!`, and `format_in!` path.
 The root prelude names `Display` and `Debug` are public re-exports of
 `std::fmt::Display` and `std::fmt::Debug`, so `impl Display for T` and
 `impl fmt::Display for T` describe the same trait.
@@ -151,6 +151,7 @@ The executable formatting surface today is still macro-based:
 ```ari
 print!("value={}", value)
 println!("value={}", value)
+eprintln!("value={}", value)
 println!("value={value}")
 println!("point={point.x} pair={pair.0}")
 println!("debug={:?}", value)
@@ -167,11 +168,13 @@ to capture a local binding, named field, or tuple field without passing it
 again as a separate argument; `{name:?}` and `{name:.N}` are the named forms of
 `{:?}` and `{:.N}`. Named captures still start from a local binding, so use
 ordinary `{}` arguments for module paths, indexing, method calls, and computed
-expressions. `{:?}` is the debug placeholder: `format_in!`
-dispatches it through `Debug::debug_in`, while direct stdout `print!` and
-`println!` support it for built-in printable values and lowercase `string`
-without requiring a temporary zone at the call site. For custom debug output to
-stdout, use `fmt::print_debug` or `fmt::println_debug` with an explicit zone.
+expressions. `eprintln!` follows the same placeholder rules as `println!` but
+writes to stderr. `{:?}` is the debug placeholder: `format_in!` dispatches it
+through `Debug::debug_in`, while direct stdout/stderr `print!`, `println!`,
+and `eprintln!` support it for built-in printable values and lowercase
+`string` without requiring a temporary zone at the call site. For custom debug
+output to stdout, use `fmt::print_debug` or `fmt::println_debug` with an
+explicit zone.
 `format!` without an explicit zone is intentionally not executable yet; use
 `format_in!` so the allocation zone is clear.
 
@@ -229,6 +232,7 @@ tests/cases/standard-library/ok/format/std-fmt-format-validation.ari
 tests/cases/standard-library/ok/format/std-fmt-debug-values.ari
 tests/cases/standard-library/ok/format/std-fmt-char-values.ari
 tests/cases/standard-library/ok/format/std-fmt-print-value.ari
+tests/cases/standard-library/ok/format/format-eprintln.ari
 tests/cases/standard-library/ok/format/format-print.ari
 tests/cases/standard-library/ok/format/format-print-u64.ari
 tests/cases/standard-library/ok/prelude/prelude-format-in.ari

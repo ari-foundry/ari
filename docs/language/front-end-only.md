@@ -602,7 +602,7 @@ let raw: pointer_to!(i64) = (ref mut value) as pointer_to!(i64);
 
 Expression, item, type, and pattern-position macro invocation use Rust-style
 `ident!(...)` syntax. The built-in prelude assertion, stop, `print!`,
-`println!`, and unqualified `matches!` macros lower today. Prelude expression
+`println!`, `eprintln!`, and unqualified `matches!` macros lower today. Prelude expression
 macros other than the parser-special `matches!` spelling are matched only
 through unqualified names or paths that resolve to the root `std` macro
 spelling; other qualified paths are left for user meta functions even when

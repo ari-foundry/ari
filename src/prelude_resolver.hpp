@@ -7,6 +7,7 @@ namespace ari {
 
 bool is_format_print_name(const std::string& name);
 bool is_println_name(const std::string& name);
+bool is_eprintln_name(const std::string& name);
 
 bool is_planned_prelude_function_name(const std::string& name);
 std::string planned_prelude_function_message(const std::string& name);

@@ -22,6 +22,10 @@ check: check-language-docs check-std-api check-stdlib-docs check-compiler-dev-do
 	grep -q "@ari_builtin_write_i64" $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_newline" $(BUILD_DIR)/ir/format-print.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-print.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print.elf; $(BUILD_DIR)/format-print.elf >$(BUILD_DIR)/format-print.out; grep -qx "value=-3 ok=true byte=A" $(BUILD_DIR)/format-print.out; grep -qx "{literal} 12" $(BUILD_DIR)/format-print.out; grep -qx "qualified=2" $(BUILD_DIR)/format-print.out; grep -qx 'text=ari quoted="ari"' $(BUILD_DIR)/format-print.out; grep -qx "debug=false" $(BUILD_DIR)/format-print.out; fi
+	$(TARGET) tests/cases/standard-library/ok/format/format-eprintln.ari --emit-llvm $(BUILD_DIR)/ir/format-eprintln.ll
+	grep -q "@fprintf" $(BUILD_DIR)/ir/format-eprintln.ll
+	grep -q "@stderr" $(BUILD_DIR)/ir/format-eprintln.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-eprintln.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-eprintln.elf; $(BUILD_DIR)/format-eprintln.elf >$(BUILD_DIR)/format-eprintln.out 2>$(BUILD_DIR)/format-eprintln.err; test ! -s $(BUILD_DIR)/format-eprintln.out; grep -qx 'macro=err n=-9 ok=true byte=! pi=2.5 dbg="ari"' $(BUILD_DIR)/format-eprintln.err; grep -qx "std=7" $(BUILD_DIR)/format-eprintln.err; grep -qx "call=3" $(BUILD_DIR)/format-eprintln.err; fi
 	$(TARGET) tests/cases/standard-library/ok/format/format-print-u64.ari --emit-llvm $(BUILD_DIR)/ir/format-print-u64.ll
 	grep -q "@ari_builtin_write_u64" $(BUILD_DIR)/ir/format-print-u64.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/format-print-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print-u64.elf; $(BUILD_DIR)/format-print-u64.elf >$(BUILD_DIR)/format-print-u64.out; grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/format-print-u64.out; grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/format-print-u64.out; fi
@@ -309,6 +313,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/prelude/prelude-macros.ari -o $(BUILD_DIR)/prelude/prelude-macros.elf
 	$(BUILD_DIR)/prelude/prelude-macros.elf >$(BUILD_DIR)/prelude/prelude-macros.out; code=$$?; test $$code -eq 7
 	grep -q "macro=5 ok=true" $(BUILD_DIR)/prelude/prelude-macros.out
+	$(TARGET) tests/cases/standard-library/ok/format/format-eprintln.ari --emit-llvm $(BUILD_DIR)/prelude/format-eprintln.ll
+	grep -q "@fprintf" $(BUILD_DIR)/prelude/format-eprintln.ll
+	grep -q "@stderr" $(BUILD_DIR)/prelude/format-eprintln.ll
+	$(TARGET) tests/cases/standard-library/ok/format/format-eprintln.ari -o $(BUILD_DIR)/prelude/format-eprintln.elf
+	$(BUILD_DIR)/prelude/format-eprintln.elf >$(BUILD_DIR)/prelude/format-eprintln.out 2>$(BUILD_DIR)/prelude/format-eprintln.err
+	test ! -s $(BUILD_DIR)/prelude/format-eprintln.out
+	grep -qx 'macro=err n=-9 ok=true byte=! pi=2.5 dbg="ari"' $(BUILD_DIR)/prelude/format-eprintln.err
+	grep -qx "std=7" $(BUILD_DIR)/prelude/format-eprintln.err
+	grep -qx "call=3" $(BUILD_DIR)/prelude/format-eprintln.err
 	$(TARGET) tests/cases/standard-library/ok/format/format-float-llvm.ari -o $(BUILD_DIR)/prelude/format-float-llvm.elf
 	$(BUILD_DIR)/prelude/format-float-llvm.elf >$(BUILD_DIR)/prelude/format-float-llvm.out
 	grep -qx "value=1.3 default=1.500000 whole=6" $(BUILD_DIR)/prelude/format-float-llvm.out

@@ -265,7 +265,8 @@ fn main() -> i64 {
 }
 ```
 
-For formatted output, prefer `print`, `println`, `print!`, and `println!`.
+For formatted output, prefer `print`, `println`, `eprintln`, `print!`,
+`println!`, and `eprintln!`.
 `write_bool` and formatted bool placeholders write lowercase `true` or
 `false`.
 For raw byte output to stdout, create `var out = io::stdout()` and call

@@ -2930,8 +2930,9 @@ Built-in `Debug` impls cover the same initial scalar/text set. `string` and
 output should use that policy.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
-and `format_in!(ref mut zone, "...", values...)`. `{}` uses display
-formatting, `{:.N}` gives float precision, and `{:?}` uses debug formatting.
+`eprintln!`, and `format_in!(ref mut zone, "...", values...)`. `{}` uses
+display formatting, `{:.N}` gives float precision, and `{:?}` uses debug
+formatting. `eprintln!` uses the same placeholder rules and writes to stderr.
 `{name}`, `{name.field}`, and `{name.0}` capture a local binding, named field,
 or tuple field without passing it again as a separate argument; `:?` and `:.N`
 can be attached to those named captures too. Use ordinary `{}` placeholders

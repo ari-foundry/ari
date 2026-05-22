@@ -26,12 +26,16 @@ bool is_format_print_name(const std::string& name) {
     return is_name_in(name, {
         "print",
         "println",
+        "eprintln",
         "io::print",
         "io::println",
+        "io::eprintln",
         "std::print",
         "std::println",
+        "std::eprintln",
         "std::io::print",
         "std::io::println",
+        "std::io::eprintln",
     });
 }
 
@@ -41,6 +45,15 @@ bool is_println_name(const std::string& name) {
         "io::println",
         "std::println",
         "std::io::println",
+    });
+}
+
+bool is_eprintln_name(const std::string& name) {
+    return is_name_in(name, {
+        "eprintln",
+        "io::eprintln",
+        "std::eprintln",
+        "std::io::eprintln",
     });
 }
 

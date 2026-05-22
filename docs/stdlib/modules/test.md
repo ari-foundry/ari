@@ -117,8 +117,8 @@ locations, and integrates with the existing repository fixtures.
 
 Current debug output uses the existing IO, formatting, and logging surface:
 
-- `print`, `println`, `print!`, and `println!` for simple text and formatted
-  values.
+- `print`, `println`, `eprintln`, `print!`, `println!`, and `eprintln!` for
+  simple text and formatted values.
 - `std::io::stderr()` with `std::io::write_all` for explicit error output.
 - `std::log` for level-prefixed `stderr` diagnostic lines.
 - `std::panic()`, `todo()`, and `unreachable()` for stop-the-program

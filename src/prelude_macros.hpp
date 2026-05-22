@@ -15,6 +15,7 @@ enum class PreludeMacroKind {
     Unreachable,
     Print,
     Println,
+    Eprintln,
     Format,
     FormatIn,
     Matches,

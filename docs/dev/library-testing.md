@@ -111,6 +111,8 @@ identifies the exact case:
   helpers.
 - `std-fmt-char-values.ari`: source `char` Display/Debug formatting,
   `format_in!` byte-character append lowering, and debug escape behavior.
+- `format-eprintln.ari`: compiler-assisted stderr formatting through
+  `eprintln!`, `std::eprintln!`, and the prelude `eprintln` special.
 - `format-named-capture.ari`: compiler formatting named local capture for
   direct stdout formatting and explicit-zone `format_in!`, including
   field/tuple-index capture and mixed named/positional placeholders.

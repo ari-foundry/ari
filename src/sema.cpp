@@ -20973,7 +20973,8 @@ private:
             std::move(format_string.parts),
             std::move(format_string.specs),
             std::move(args),
-            is_println_name(print_name)
+            is_println_name(print_name) || is_eprintln_name(print_name),
+            is_eprintln_name(print_name)
         );
     }
 

@@ -386,6 +386,7 @@ void append_format_print_payload(std::string& out, const IrExpr& expr) {
     append_count(out, specs.size());
     for (const auto& spec : specs) append_field(out, spec.debug ? "?" : std::to_string(spec.precision));
     append_field(out, bool_key(ir_expr_format_print_newline(expr)));
+    append_field(out, bool_key(ir_expr_format_print_stderr(expr)));
 }
 
 void append_expr_tree(std::string& out, const IrExprPtr& expr) {
@@ -822,6 +823,7 @@ private:
         std::uint64_t spec_count = read_count();
         for (std::uint64_t i = 0; i < spec_count; ++i) expr.format_specs.push_back(read_field());
         expr.format_print_newline = read_bool_field("format print newline");
+        expr.format_print_stderr = read_bool_field("format print stderr");
     }
 
     ModuleCacheIrExprSummaryPtr read_expr_tree() {

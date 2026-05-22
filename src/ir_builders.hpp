@@ -82,7 +82,8 @@ IrExprPtr make_format_print_expr(SourceLocation loc,
                                  std::vector<std::string> format_parts,
                                  std::vector<IrFormatSpec> format_specs,
                                  std::vector<IrExprPtr> args,
-                                 bool print_newline);
+                                 bool print_newline,
+                                 bool print_stderr);
 IrExprPtr make_trait_object_call_expr(SourceLocation loc,
                                       std::string method_name,
                                       IrExprPtr receiver,

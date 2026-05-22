@@ -148,6 +148,7 @@ struct ModuleCacheIrExprSummary {
     std::vector<std::string> format_parts;
     std::vector<std::string> format_specs;
     bool format_print_newline = false;
+    bool format_print_stderr = false;
     bool try_converts_residual = false;
     bool try_residual_has_payload = false;
     std::string try_return_residual_payload_type;
