@@ -312,6 +312,11 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
   `backend-generic-aggregate.llvm-frag`, and `backend-trait-dispatch.llvm-frag`:
   extracted LLVM backend fragments checked after full `--emit-llvm` generation.
+- `tests/cases/compiler-development/artifact/ok/c-header-repr-struct.h`,
+  `c-header-repr-payload-enum.h`, and `c-header-generated-aggregates.h`:
+  C header golden artifacts for public `@repr(C)` structs, fieldless enums,
+  payload-bearing enums, generated tuple/array/vector wrappers, and ABI-facing
+  function prototypes.
 - `tests/cases/compiler-development/artifact/ok/object-library-export.symbols`
   and `shared-visibility.symbols`: normalized object and linked shared-library
   symbol inventories checked through `tests/extract_symbol_names.py`.

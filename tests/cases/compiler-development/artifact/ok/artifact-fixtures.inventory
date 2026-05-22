@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=126
+CompilerArtifactFixtures version=1 group=all entries=129
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -81,6 +81,9 @@ CompilerArtifactFixtures version=1 group=all entries=126
   Fixture group=ok kind=llvm-fragment path=ok/backend-ownership-drop-aggregate.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-ownership-drop-runtime-enum.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-trait-dispatch.llvm-frag
+  Fixture group=ok kind=c-header path=ok/c-header-generated-aggregates.h
+  Fixture group=ok kind=c-header path=ok/c-header-repr-payload-enum.h
+  Fixture group=ok kind=c-header path=ok/c-header-repr-struct.h
   Fixture group=ok kind=inventory path=ok/capability-inventory.inventory
   Fixture group=ok kind=source path=ok/core-language-scalar-flow.ari
   Fixture group=ok kind=typed-ir path=ok/core-language-scalar-flow.ir

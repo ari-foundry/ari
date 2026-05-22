@@ -131,6 +131,9 @@ Keep fixture names behavior-based:
 - `backend-ownership-drop-runtime-enum.llvm-frag`
 - `backend-ownership-compiler-shaped.llvm-frag`
 - `backend-trait-dispatch.llvm-frag`
+- `c-header-repr-struct.h`
+- `c-header-repr-payload-enum.h`
+- `c-header-generated-aggregates.h`
 - `object-library-export.symbols`
 - `shared-visibility.symbols`
 - `runtime-output-basic.stdout`

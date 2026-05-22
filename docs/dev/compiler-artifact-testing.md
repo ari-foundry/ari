@@ -54,8 +54,9 @@ Compare artifacts in this order:
 | 11 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
 | 12 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
 | 13 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
-| 14 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
-| 15 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
+| 14 | C header text | Prove public ABI wrapper spelling, C-compatible aggregates, and enum payload slots are stable. | C header emitter |
+| 15 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
+| 16 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
 
 Do not skip directly to executable comparison for compiler frontend work. A
 binary exit code can say "something changed"; it cannot say which compiler
@@ -270,6 +271,9 @@ tests/cases/compiler-development/artifact/ok/backend-ownership-drop-aggregate.ll
 tests/cases/compiler-development/artifact/ok/backend-ownership-drop-runtime-enum.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-ownership-compiler-shaped.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-trait-dispatch.llvm-frag
+tests/cases/compiler-development/artifact/ok/c-header-repr-struct.h
+tests/cases/compiler-development/artifact/ok/c-header-repr-payload-enum.h
+tests/cases/compiler-development/artifact/ok/c-header-generated-aggregates.h
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
 tests/cases/compiler-development/artifact/ok/declaration-index-generic-aggregate.decls

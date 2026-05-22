@@ -49,6 +49,12 @@ pointer-shaped, or generated-wrapper `payloadN` storage slots. These wrappers
 are header surfaces for Ari's current LLVM ABI; they are not a promise that the
 same spelling is accepted as a direct C import type.
 
+`make check-compiler-artifacts` compares C header goldens for `@repr(C)` struct
+fields, fieldless enum tags, payload-bearing enum structs, and generated
+tuple/array/fixed-vector/aggregate-enum wrapper types. This keeps layout-facing
+header spellings deterministic instead of relying only on individual grep
+checks in `make check-ffi`.
+
 Future backend work should keep using this classifier when growing imported C
 aggregate support, rather than re-encoding target, size, and alignment checks in
 each backend surface.

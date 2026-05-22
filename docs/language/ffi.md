@@ -447,6 +447,11 @@ exported by-value instantiations get concrete C names such as
 ari api.ari --shared --emit-c-header api.h --emit-llvm api.ll
 ```
 
+The compiler-development artifact suite keeps representative generated headers
+as goldens so C-facing primitive spellings, public `@repr(C)` structs,
+payload-bearing enum wrappers, generated tuple/array/vector wrappers, and
+function prototypes remain deterministic.
+
 Explicit `@export("symbol")` and `@no_mangle` functions use that C symbol.
 Public functions without an explicit export use Ari's mangled symbol, matching
 the shared-library output. Immutable `ref` slots are written as `const T*` in

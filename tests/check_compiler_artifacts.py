@@ -146,6 +146,8 @@ def artifact_kind(path: Path) -> str:
         return "diagnostic"
     if suffix == ".graph":
         return "module-graph"
+    if suffix == ".h":
+        return "c-header"
     if suffix == ".inventory":
         return "inventory"
     if suffix == ".ir":
