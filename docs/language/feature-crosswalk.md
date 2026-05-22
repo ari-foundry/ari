@@ -50,7 +50,7 @@ in executable code. Parsed syntax is not always lowered all the way to LLVM.
 | Trait declarations and concrete impls | [Traits](traits.md) | `trait Score` in [Language Tour](language-tour.md) | `tests/cases/traits/` | `make check-traits` |
 | Minimum static trait subset | [Traits](traits.md), [Minimum Trait Readiness](../dev/trait-minimum-readiness.md) | compiler-shaped Eq/Hash/Debug/Ord fixtures | `tests/cases/traits/ok/trait-minimum-*.ari` | `make check-traits` |
 | Static trait dispatch | [Traits](traits.md), [Feature Status](feature-status.md) | trait fixtures | `tests/cases/traits/`, `tests/cases/generics/` | `make check-traits` |
-| Ownership, move, borrow, and `drop` | [Memory And Ownership](memory.md) | [Cookbook](cookbook.md) | `tests/cases/ownership/`, `tests/cases/borrowing/` | `build/ari path/to/file.ari --check` |
+| Ownership, move, borrow, and `drop` | [Memory And Ownership](memory.md) | [Cookbook](cookbook.md) | `tests/cases/ownership/`, `tests/cases/borrowing/` | `make check-ownership` |
 | Explicit zones and local vectors | [Memory And Ownership](memory.md), [Cookbook](cookbook.md) | `std::vec::new<i64>` in [Language Tour](language-tour.md) | `tests/cases/memory/`, `tests/cases/vectors/` | `build/ari path/to/file.ari --check` |
 | C FFI and shared libraries | [C FFI And Libraries](ffi.md) | FFI tests | `tests/cases/ffi/` | `make check-ffi` |
 | Prelude formatting | [Prelude And Formatting](prelude.md) | `println("value={}", value)` | `tests/cases/standard-library/ok/format/` | `make check-prelude` |

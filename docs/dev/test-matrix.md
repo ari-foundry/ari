@@ -196,6 +196,9 @@ Checklist:
 - [x] inspect generated LLVM IR for Ari `main` and host wrapper
 - [x] compare review-sized LLVM function fragments for core control flow and
       generic aggregate lowering in `make check-compiler-artifacts`
+- [x] compare review-sized LLVM function fragments for aggregate field-drop
+      calls and runtime-tagged active enum payload cleanup in
+      `make check-compiler-artifacts`
 - [x] compare review-sized LLVM function fragments for static trait dispatch
       selection and impl targets in `make check-compiler-artifacts`
 - [x] run parser/module/sema diagnostics without backend output using `--check`
@@ -211,6 +214,8 @@ Checklist:
       public/exported-only ABI surfaces in `make check-compiler-artifacts`
 - [x] compare a deterministic artifact fixture inventory and check focused ok
       fixture listing in `make check-compiler-artifacts`
+- [x] run a small ownership/borrow/drop smoke target with
+      `make check-ownership`
 - [x] LLVM output is executable without a test-side `chmod +x`
 - [x] emit LLVM-driver relocatable objects with
       `--emit-obj`

@@ -49,7 +49,7 @@ get more reliable, not when a private shortcut is added.
 | Minimum static traits | Trait declarations, impl conformance, deterministic static dispatch, generic bounds, Eq/Ord/Hash/Debug-like fixtures, iterator-shaped helpers, and missing/ambiguous diagnostics are locked by `make check-traits`. | Compiler-shaped data can compare, hash, format, and traverse values through normal trait behavior instead of name-specific shortcuts. |
 | SourceMap and diagnostics | `SourceMap`, `SourceId`, `SourceFile`, `Span`, `SourceLocation`, line/column lookup, snippets, diagnostic codes, labels, notes, and source-aware golden artifacts are locked by `make check-source-map-unit` and `make check-compiler-artifacts`. | User-facing compiler errors keep source identity and deterministic artifact rows across lexer, parser, module, semantic, trait, and ownership paths. |
 | File-backed projects | Entry-file roots, explicit `-I`/`--module-path` roots, `.ari`/`.arih` candidate policy, aliases, package-style child directories, visibility, cycles, duplicate source identities, imported-file diagnostics, metadata, cache invalidation, and module graph artifacts are locked by `make check-modules` and `make check-compiler-artifacts`. | Multi-file Ari tools can be structured as ordinary source/diagnostic/symbol/parser modules without package-manager or bootstrap scaffolding. |
-| Ownership checks | Move, borrow, drop, and explicit-zone checks catch many unsafe flows. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
+| Ownership checks | Move, borrow, drop, aggregate field moves, active enum payload cleanup, and explicit-zone checks are locked by `make check-ownership`, `make check-errors`, `make check-variables`, and ownership artifact goldens. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
 | Focused test culture | Many feature folders already separate `ok` and `errors` tests. | New compiler behavior can be guarded with one small fixture at a time. |
 
 ## Blocking Gaps
@@ -285,6 +285,10 @@ Current compiler-development tests:
   `--emit-typed-ir`.
 - `tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir`:
   ownership/drop typed-IR artifact golden checked through `--emit-typed-ir`.
+- `tests/cases/compiler-development/artifact/ok/backend-ownership-drop-aggregate.llvm-frag`
+  and `backend-ownership-drop-runtime-enum.llvm-frag`: review-sized LLVM
+  fragments for aggregate field drop calls and runtime-tagged active enum
+  payload cleanup.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
@@ -311,6 +315,12 @@ Current compiler-development tests:
   assignment type diagnostic span golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic`:
   ownership diagnostic-code golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic`,
+  and `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic`:
+  source-aware ownership diagnostics for representative move, borrow, partial
+  move, and unsupported container-element ownership failures.
 
 The first command to run after changing this area is:
 

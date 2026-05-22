@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-source-map-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-source-map-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -12,7 +12,7 @@ check-sanitize: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_o
 check-sanitize: TOOL_ARI := $(SANITIZE_TARGET)
 check-sanitize: $(SANITIZE_TARGET) check
 
-check: check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-bootstrap-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
+check: check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-bootstrap-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-errors
 	mkdir -p $(BUILD_DIR)/ir
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/ir/count.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/ir/count.ll
@@ -135,6 +135,14 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-private-access.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-use-after-move.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-use-after-move.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-move-borrowed-owner.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-move-borrowed-owner.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-partial-move.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-partial-move.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-vector-dynamic-move.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ownership-vector-dynamic-move.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-diagnostic-catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog $(BUILD_DIR)/compiler-development/artifact/diagnostic-catalog.catalog
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-capability-inventory $(BUILD_DIR)/compiler-development/artifact/capability-inventory.inventory
@@ -184,10 +192,36 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-llvm $(BUILD_DIR)/compiler-development/artifact/trait-minimum-static-dispatch.ll
 	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/trait-minimum-static-dispatch.ll _ARNv17same__G_TokenKind _ARNv4impl9TokenKind9Equatable4same _ARNv25bucket_hash__G_SymbolName _ARNv4impl10SymbolName8Hashable9hash_code >$(BUILD_DIR)/compiler-development/artifact/backend-trait-dispatch.llvm-frag
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-trait-dispatch.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-trait-dispatch.llvm-frag
+	$(TARGET) tests/cases/ownership/ok/drop-aggregate-fields.ari --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-ownership-drop-aggregate.ll
+	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-ownership-drop-aggregate.ll _ARNv4main >$(BUILD_DIR)/compiler-development/artifact/backend-ownership-drop-aggregate.llvm-frag
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-ownership-drop-aggregate.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-ownership-drop-aggregate.llvm-frag
+	$(TARGET) tests/cases/ownership/ok/drop-runtime-owned-enum-payload.ari --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-ownership-drop-runtime-enum.ll
+	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-ownership-drop-runtime-enum.ll _ARNv4main >$(BUILD_DIR)/compiler-development/artifact/backend-ownership-drop-runtime-enum.llvm-frag
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-ownership-drop-runtime-enum.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-ownership-drop-runtime-enum.llvm-frag
 	if command -v nm >/dev/null 2>&1; then $(TARGET) tests/cases/ffi/ok/library-export.ari --emit-obj $(BUILD_DIR)/compiler-development/artifact/library-export.o; python3 tests/extract_symbol_names.py $(BUILD_DIR)/compiler-development/artifact/library-export.o _ARNv3add _ARNv4main >$(BUILD_DIR)/compiler-development/artifact/object-library-export.symbols; python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/object-library-export.symbols $(BUILD_DIR)/compiler-development/artifact/object-library-export.symbols; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v nm >/dev/null 2>&1; then $(TARGET) tests/cases/ffi/ok/shared-visibility.ari --shared --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/artifact/shared-visibility.so; python3 tests/extract_symbol_names.py --dynamic $(BUILD_DIR)/compiler-development/artifact/shared-visibility.so _ARNv10public_api ari_named_private _ARNv6helper _ARNv4main ari_builtin_write_i64 >$(BUILD_DIR)/compiler-development/artifact/shared-visibility.symbols; python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/shared-visibility.symbols $(BUILD_DIR)/compiler-development/artifact/shared-visibility.symbols; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/artifact/ok/runtime-output-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/artifact/runtime-output-basic.elf; $(BUILD_DIR)/compiler-development/artifact/runtime-output-basic.elf >$(BUILD_DIR)/compiler-development/artifact/runtime-output-basic.stdout; python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout $(BUILD_DIR)/compiler-development/artifact/runtime-output-basic.stdout; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/artifact/ok/runtime-output-trait.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/artifact/runtime-output-trait.elf; $(BUILD_DIR)/compiler-development/artifact/runtime-output-trait.elf >$(BUILD_DIR)/compiler-development/artifact/runtime-output-trait.stdout; python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/runtime-output-trait.stdout $(BUILD_DIR)/compiler-development/artifact/runtime-output-trait.stdout; fi
+
+check-ownership: $(TARGET)
+	mkdir -p $(BUILD_DIR)/ownership
+	$(TARGET) tests/cases/ownership/ok/ownership-aggregate-field-move.ari -o $(BUILD_DIR)/ownership/ownership-aggregate-field-move.elf
+	$(BUILD_DIR)/ownership/ownership-aggregate-field-move.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/cases/borrowing/ok/borrow-reborrow-paths.ari -o $(BUILD_DIR)/ownership/borrow-reborrow-paths.elf
+	$(BUILD_DIR)/ownership/borrow-reborrow-paths.elf; code=$$?; test $$code -eq 61
+	$(TARGET) tests/cases/ownership/ok/drop-aggregate-fields.ari --emit-llvm $(BUILD_DIR)/ownership/drop-aggregate-fields.ll
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/ownership/drop-aggregate-fields.ll) -eq 2
+	$(TARGET) tests/cases/ownership/ok/drop-runtime-owned-enum-payload.ari --emit-llvm $(BUILD_DIR)/ownership/drop-runtime-owned-enum-payload.ll
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/ownership/drop-runtime-owned-enum-payload.ll) -eq 2
+	grep -q "icmp eq i64" $(BUILD_DIR)/ownership/drop-runtime-owned-enum-payload.ll
+	if $(TARGET) tests/cases/ownership/errors/use-after-move.ari --check >$(BUILD_DIR)/ownership/use-after-move.err 2>&1; then exit 1; fi
+	grep -q "cannot use moved binding 'token'" $(BUILD_DIR)/ownership/use-after-move.err
+	if $(TARGET) tests/cases/ownership/errors/move-borrowed-owner.ari --check >$(BUILD_DIR)/ownership/move-borrowed-owner.err 2>&1; then exit 1; fi
+	grep -q "cannot move borrowed binding 'token'" $(BUILD_DIR)/ownership/move-borrowed-owner.err
+	if $(TARGET) tests/cases/ownership/errors/ownership-aggregate-partial-move.ari --check >$(BUILD_DIR)/ownership/ownership-aggregate-partial-move.err 2>&1; then exit 1; fi
+	grep -q "cannot move partially moved owning binding 'holder'" $(BUILD_DIR)/ownership/ownership-aggregate-partial-move.err
+	if $(TARGET) tests/cases/ownership/errors/ownership-vector-dynamic-element-move.ari --check >$(BUILD_DIR)/ownership/ownership-vector-dynamic-element-move.err 2>&1; then exit 1; fi
+	grep -q "moving owning aggregate elements through dynamic indexes is not supported; use a constant index or move the whole aggregate" $(BUILD_DIR)/ownership/ownership-vector-dynamic-element-move.err
 
 check-compiler-development: $(TARGET)
 	mkdir -p $(BUILD_DIR)/compiler-development

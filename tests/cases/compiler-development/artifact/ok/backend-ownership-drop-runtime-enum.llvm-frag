@@ -1,0 +1,25 @@
+LLVMFunctionExtract source=build/compiler-development/artifact/backend-ownership-drop-runtime-enum.ll functions=1
+  Function symbol=_ARNv4main
+    define i64 @"_ARNv4main"() {
+    entry:
+      %none_item.addr.0 = alloca { i32, i64 }
+      %t0 = call { i32, i64 } @"_ARNv6choose"(i1 0)
+      store { i32, i64 } %t0, ptr %none_item.addr.0
+      %t1 = load { i32, i64 }, ptr %none_item.addr.0
+      %t2 = extractvalue { i32, i64 } %t1, 0
+      %t3 = zext i32 %t2 to i64
+      %t4 = icmp eq i64 %t3, 1
+      br i1 %t4, label %if.then.0, label %if.else.1
+    if.then.0:
+      %t5 = load { i32, i64 }, ptr %none_item.addr.0
+      %t6 = extractvalue { i32, i64 } %t5, 1
+      call void @"_ARNv4impl3i649std__Drop4drop"(i64 %t6)
+      br label %if.end.2
+    if.else.1:
+      br label %if.end.2
+    if.end.2:
+      %t7 = call { i32, i64 } @"_ARNv6choose"(i1 1)
+      %t8 = call i64 @"_ARNv7consume"({ i32, i64 } %t7)
+      %t9 = add i64 %t8, 7
+      ret i64 %t9
+    }

@@ -121,8 +121,8 @@ the same language surface that normal Ari users get.
 - `artifact/ok/ownership-aggregate-field-move.ir`: typed IR golden for `own`
   field moves, field replacement, explicit `drop`, and aggregate storage.
 - `artifact/ok/backend-*.llvm-frag`: extracted LLVM function fragments for core
-  control flow, generic aggregate backend lowering, and static trait dispatch,
-  kept smaller than full runtime-heavy LLVM files.
+  control flow, generic aggregate backend lowering, ownership/drop lowering,
+  and static trait dispatch, kept smaller than full runtime-heavy LLVM files.
 - `artifact/ok/object-library-export.symbols` and
   `shared-visibility.symbols`: normalized `nm` symbol inventories for object
   and linked shared-library export surfaces.
@@ -132,6 +132,8 @@ the same language surface that normal Ari users get.
 - `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module
   missing/ambiguous/cyclic validation, unknown-name, duplicate-name,
   wrong-arity, wrong-argument, invalid-return, invalid-assignment, trait, and
-  ownership diagnostic code/family/span golden seeds.
+  ownership diagnostic code/family/span golden seeds, including use-after-move,
+  moving borrowed owners, invalid partial moves, and dynamic owner element
+  moves.
 - `artifact/errors/text-line-mismatch.*.txt`: seed mismatch-report fixture for
   text artifact comparisons.

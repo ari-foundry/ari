@@ -167,6 +167,11 @@ Rules currently checked:
 - borrow bindings cannot be reassigned
 - bare borrow expression statements are rejected
 
+The focused ownership smoke is `make check-ownership`; it proves path
+reborrowing together with move/drop fixtures. `make check-errors` keeps the
+larger negative matrix for borrow conflicts, invalid returns, local escapes,
+and control-flow mismatch cases.
+
 Named borrow lifetimes are shortened for local straight-line code. After the
 last visible use of a named borrow in the current statement scope, Ari releases
 that binding's source so later assignments or borrows can proceed in the same
@@ -191,6 +196,13 @@ codegen but still participates in ownership checking. Aggregates with owned
 fields are tracked and dropped as whole bindings, and `drop aggregate;` lowers
 destructor calls for owned tuple, fixed-array, vector, and struct fields that
 provide a matching `Drop` impl.
+
+Runtime-dependent aggregate enum drops check the active tag before dropping
+owned payload slots, so inactive variants are not cleaned as though they were
+active. The backend artifact goldens
+`backend-ownership-drop-aggregate.llvm-frag` and
+`backend-ownership-drop-runtime-enum.llvm-frag` lock that lowering without
+committing the full prelude-heavy LLVM output.
 
 ## Forget
 

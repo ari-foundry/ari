@@ -266,6 +266,8 @@ tests/cases/compiler-development/artifact/ok/artifact-fixtures.inventory
 tests/cases/compiler-development/artifact/ok/capability-inventory.inventory
 tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag
+tests/cases/compiler-development/artifact/ok/backend-ownership-drop-aggregate.llvm-frag
+tests/cases/compiler-development/artifact/ok/backend-ownership-drop-runtime-enum.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-trait-dispatch.llvm-frag
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
@@ -296,12 +298,16 @@ tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir
 tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-cyclic-module.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari
 tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.diagnostic
 ari --emit-tokens path
 ari --emit-capability-inventory path
 ari --list-passes
@@ -376,6 +382,8 @@ It currently proves more than two dozen low-level contracts:
   compiler failure
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,
   and ownership failures with stable diagnostic codes and `family=...` layer names
+  for borrow conflicts, use-after-move, moving borrowed owners, partial moves,
+  and unsupported dynamic owner-element moves
 - `--emit-diagnostics` also writes parseable `Source`, `Label`, `Snippet`,
   `Note`, and `Help` rows. Located rows include `source_id=`, `source=`,
   `line=`, `column=`, `end_line=`, `end_column=`, `byte_start=`, and
@@ -396,8 +404,8 @@ It currently proves more than two dozen low-level contracts:
 - `--emit-pass-summary` writes deterministic stage counts for lexing, syntax,
   module loading, and sema
 - `--emit-llvm` is checked through review-sized function fragments for core
-  control flow, generic aggregate lowering, and static trait dispatch instead
-  of committing the whole runtime-heavy LLVM file
+  control flow, generic aggregate lowering, ownership/drop lowering, and
+  static trait dispatch instead of committing the whole runtime-heavy LLVM file
 - `tests/extract_symbol_names.py` turns object and linked shared-library symbol
   tables into a deterministic allow-list artifact, so exported Ari symbols,
   hidden helpers, absent `main`, and hidden builtins are reviewed as text

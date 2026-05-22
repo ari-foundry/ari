@@ -127,11 +127,17 @@ Keep fixture names behavior-based:
 - `ownership-aggregate-field-move.ir`
 - `backend-core.llvm-frag`
 - `backend-generic-aggregate.llvm-frag`
+- `backend-ownership-drop-aggregate.llvm-frag`
+- `backend-ownership-drop-runtime-enum.llvm-frag`
 - `backend-trait-dispatch.llvm-frag`
 - `object-library-export.symbols`
 - `shared-visibility.symbols`
 - `runtime-output-basic.stdout`
 - `runtime-output-trait.stdout`
+- `diagnostic-use-after-move.diagnostic`
+- `diagnostic-move-borrowed-owner.diagnostic`
+- `diagnostic-ownership-partial-move.diagnostic`
+- `diagnostic-ownership-vector-dynamic-move.diagnostic`
 - `diagnostic-parser-expected.diagnostic`
 
 ## Focused Checks
