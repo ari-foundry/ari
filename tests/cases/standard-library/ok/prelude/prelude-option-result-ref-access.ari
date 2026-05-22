@@ -2,7 +2,22 @@
 // reference-valued generic payloads as Option[ref T], so the public API uses
 // tagged-union OptionRef/OptionMut and ResultRef/ResultMut view handles.
 
+impl Default for i64 {
+  fn default() -> Self {
+    return 64;
+  }
+}
+
+fn make_i64() -> i64 {
+  return 77;
+}
+
 fn read_i64(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn read_i64_mut(value: ref mut i64) -> i64 {
   let raw: ptr i64 = value as ptr i64;
   return *raw;
 }
@@ -41,6 +56,25 @@ fn main() -> i64 {
   let replaced_some = option.replace(22);
   if replaced_some.unwrap_or(0) != 21 { return 41; }
   if option.unwrap_or(0) != 22 { return 42; }
+  if None<i64>().unwrap_or_default() != 64 { return 43; }
+  if Some<i64>(88).unwrap_or_default() != 88 { return 44; }
+
+  var inserted = None<i64>();
+  {
+    let first_slot: ref mut i64 = inserted.get_or_insert(33);
+    if read_i64_mut(first_slot) != 33 { return 45; }
+    write_i64(first_slot, 34);
+  }
+  {
+    let existing_slot: ref mut i64 = inserted.get_or_insert(99);
+    if read_i64_mut(existing_slot) != 34 { return 46; }
+  }
+
+  var lazy_inserted = None<i64>();
+  {
+    let lazy_slot: ref mut i64 = lazy_inserted.get_or_insert_with(make_i64);
+    if read_i64_mut(lazy_slot) != 77 { return 47; }
+  }
 
   var ok_result: Result[i64, i64] = Ok<i64, i64>(30);
   var err_result: Result[i64, i64] = Err<i64, i64>(4);
@@ -70,6 +104,8 @@ fn main() -> i64 {
     if !err_mut.as_ref().is_err() { return 80; }
   }
   if err_result.unwrap_err() != 9 { return 81; }
+  if Ok<i64, i64>(91).unwrap_or_default() != 91 { return 90; }
+  if Err<i64, i64>(10).unwrap_or_default() != 64 { return 91; }
 
   return 0;
 }

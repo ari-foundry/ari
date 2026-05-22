@@ -303,6 +303,15 @@ pub impl[T, E] std::Result[T, E] {
   }
 }
 
+pub impl[T: std::Default, E] std::Result[T, E] {
+  fn unwrap_or_default(self) -> T {
+    return match self {
+      std::Ok(value) => value,
+      std::Err(_) => std::Default::default<T>();
+    };
+  }
+}
+
 pub impl[T, E] std::Result[std::Option[T], E] {
   fn transpose(self) -> std::Option[std::Result[T, E]] {
     return match self {

@@ -1,5 +1,10 @@
 // Covers ordered red-black tree iteration for set values and map keys/values.
 // Tree iterators yield ascending key order through parent/successor traversal.
+fn write_i64(value: ref mut i64, replacement: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = replacement;
+}
+
 fn main() -> i64 {
   var zone = zone::create(4096);
   var map = TreeMap::new<i64, i64>(ref mut zone, 1, collections::less_i64);
@@ -35,6 +40,25 @@ fn main() -> i64 {
     score = score + 7;
   }
 
+  var range = map.range(2, 8);
+  let range1 = range.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  let range2 = range.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  let range3 = range.next().unwrap_or(MapEntry { key: 0, value: 0 });
+  if range1.key == 2 && range2.key == 3 && range3.key == 4 && range.next().is_none() {
+    score = score + 17;
+  }
+
+  var range_mut = map.range_mut(2, 5);
+  var range_mut_item = range_mut.next();
+  while range_mut_item.is_some() {
+    var entry = range_mut_item.unwrap();
+    write_i64(entry.value_mut(), entry.key * 100);
+    range_mut_item = range_mut.next();
+  }
+  if map.get(2) == 200 && map.get(3) == 300 && map.get(4) == 400 && map.get(8) == 80 {
+    score = score + 19;
+  }
+
   var set = TreeSet::new<i64>(ref mut zone, 1, collections::less_i64);
   set.insert(ref mut zone, 6);
   set.insert(ref mut zone, 2);
@@ -59,6 +83,13 @@ fn main() -> i64 {
   }
   if direct == 9642 {
     score = score + 13;
+  }
+
+  var set_range = set.range(3, 9);
+  let set_range1 = set_range.next().unwrap_or(0);
+  let set_range2 = set_range.next().unwrap_or(0);
+  if set_range1 == 4 && set_range2 == 6 && set_range.next().is_none() {
+    score = score + 23;
   }
 
   zone::destroy(zone);

@@ -270,6 +270,10 @@ map.get_or(key, fallback)
 map.try_get(key)
 map.get_mut(key)
 map.try_get_mut(key)
+map.lower_bound(key)
+map.upper_bound(key)
+map.range(start, end)
+map.range_mut(start, end)
 map.insert(ref mut zone, key, value)
 map.replace(ref mut zone, key, value)
 map.entry(ref mut zone, key)
@@ -481,12 +485,16 @@ use the `try_*` forms for empty-safe boundary access. `first_entry` and
 value without doing two boundary lookups. `lower_bound(key)` returns the first
 entry whose key is not less than `key`, and `upper_bound(key)` returns the
 first entry whose key is greater than `key`; both return `None` when no such
-entry exists. `entries` yields `MapEntry[K, V]` values with `.key` and
-`.value` fields in the same sorted key order. `iter()` is an alias for
-`entries()`, and direct `for entry in map` uses the same copied-entry order.
-`values_mut()` walks values in sorted key order with a mutable cursor; call
-`has_next()` before `next() -> ref mut V`. `iter_mut()` walks sorted
-`MapEntryMut[K,V]` handles for copied-key plus mutable-value updates.
+entry exists. `range(start, end)` yields copied `MapEntry[K, V]` values in
+the half-open key interval `[start, end)`. `range_mut(start, end)` yields
+`MapEntryMut[K, V]` handles over the same key interval for in-place value
+updates without copying the whole map. `entries` yields `MapEntry[K, V]`
+values with `.key` and `.value` fields in the same sorted key order. `iter()`
+is an alias for `entries()`, and direct `for entry in map` uses the same
+copied-entry order. `values_mut()` walks values in sorted key order with a
+mutable cursor; call `has_next()` before `next() -> ref mut V`. `iter_mut()`
+walks sorted `MapEntryMut[K,V]` handles for copied-key plus mutable-value
+updates.
 `drain()` returns entries in sorted key order and immediately leaves the source
 tree map empty. `remove`
 returns the removed value as `Option[V]`; deletion now uses red-black delete
@@ -521,6 +529,7 @@ set.last()
 set.try_last()
 set.lower_bound(value)
 set.upper_bound(value)
+set.range(start, end)
 set.equals(ref other)
 set.is_subset(ref other)
 set.is_superset(ref other)
@@ -545,8 +554,9 @@ in comparator order and assert when the tree is empty; use `try_first` and
 `try_last` when emptiness is ordinary control flow. `lower_bound(value)`
 returns the first stored value that is not less than `value`, and
 `upper_bound(value)` returns the first stored value greater than `value`; both
-return `None` past the right edge. `try_get(value)` returns the stored equal
-representative as `Option[T]`, and `get(value)` asserts that it exists. `take`
+return `None` past the right edge. `range(start, end)` yields values in the
+half-open comparator interval `[start, end)`. `try_get(value)` returns the
+stored equal representative as `Option[T]`, and `get(value)` asserts that it exists. `take`
 moves a removed value out as
 `Option[T]`; `remove` drops the removed value and returns whether anything was
 removed. Tree-set removal uses direct red-black delete fixup and compacting
@@ -589,8 +599,16 @@ heap.copy_to(ref mut target)
 queue.copy_to(ref mut target)
 ```
 
-The priority queue has the same method surface. `peek` reads the current
-highest-priority value, while `pop` removes it and restores the heap invariant.
+`PriorityQueue` keeps the same basic push, peek, pop, reserve, clear, and
+copy surface. `peek` reads the current highest-priority value, while `pop`
+removes it and restores the heap invariant. `BinaryHeap` also exposes
+`peek_mut()` and `into_sorted_vec()`. `BinaryHeap.peek_mut()` returns a
+`BinaryHeapPeekMut[T]` guard; `value()` reads the current top, `value_mut()`
+edits it, and dropping the guard sifts the root down so the heap invariant is
+restored. The guard keeps only heap/value pointers and does not store a zone
+handle. `into_sorted_vec()` drains the heap into a `Vec[T]` ordered from low
+priority to high priority for the comparator; with `less_i64`, the resulting
+vector is ascending.
 For tracked local heap and priority-queue handles, `push(value)`,
 `reserve(capacity)`, and `reserve_extra(additional)` infer the constructor
 zone. `copy_to(ref mut target)` copies the heap storage and comparator into the
@@ -738,7 +756,8 @@ missing-removal paths, and verifies sorted entries/boundaries after direct
 red-black deletion with compacting slot movement.
 `std-collections-tree-set-relations.ari` inserts the same values in different
 orders to verify relationship predicates are membership-based, while
-`std-collections-tree-iter.ari` checks sorted successor traversal.
+`std-collections-tree-iter.ari` checks sorted successor traversal plus tree
+map/set range cursors and mutable range value updates.
 `std-collections-deque.ari` checks circular growth and both-end operations.
 `std-collections-ring-buffer.ari` checks bounded push failure, overwrite, and
 FIFO iteration. `std-collections-linked-list.ari` checks front/back operations,

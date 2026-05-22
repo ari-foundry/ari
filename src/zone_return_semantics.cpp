@@ -26,6 +26,17 @@ bool is_zone_source_type(const IrType& type) {
     return is_zone_value_type(type) || is_zone_borrow_type(type);
 }
 
+bool is_zone_metadata_type(const IrType& type) {
+    IrType value_type = type;
+    if (value_type.qualifier == TypeQualifier::Ref ||
+        value_type.qualifier == TypeQualifier::MutRef) {
+        value_type.qualifier = TypeQualifier::Value;
+    }
+    return value_type.qualifier == TypeQualifier::Value &&
+           value_type.primitive == IrPrimitiveKind::Struct &&
+           value_type.name == "std::zone::ZoneMetadata";
+}
+
 std::optional<std::size_t> zone_pointer_return_param_index(const std::vector<IrType>& params,
                                                            const IrType& result) {
     if (!is_zone_pointer_return_type(result)) {
@@ -34,7 +45,7 @@ std::optional<std::size_t> zone_pointer_return_param_index(const std::vector<IrT
 
     std::optional<std::size_t> index;
     for (std::size_t i = 0; i < params.size(); ++i) {
-        if (!is_zone_borrow_type(params[i])) continue;
+        if (!is_zone_borrow_type(params[i]) && !is_zone_metadata_type(params[i])) continue;
         if (index) return std::nullopt;
         index = i;
     }

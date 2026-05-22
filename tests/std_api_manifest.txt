@@ -864,6 +864,8 @@ method std::Option[T]::as_ref|check-prelude prelude-option-result-ref-access sha
 method std::Option[T]::contains|check-prelude prelude-option-result-predicates exact value-membership predicate; docs/stdlib/modules/option-result.md
 method std::Option[T]::expect|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::filter|check-prelude prelude-option-filter borrowed predicate helper; docs/stdlib/api-reference.md Option and Result section
+method std::Option[T]::get_or_insert|check-prelude prelude-option-result-ref-access mutable payload initialization helper; docs/stdlib/modules/option-result.md
+method std::Option[T]::get_or_insert_with|check-prelude prelude-option-result-ref-access lazy mutable payload initialization helper; docs/stdlib/modules/option-result.md
 method std::Option[T]::inspect|check-prelude prelude-option-result-combinators borrowed present-branch inspection helper; docs/stdlib/modules/option-result.md
 method std::Option[T]::is_none|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::is_none_or|check-prelude prelude-option-result-predicates consuming predicate helper; docs/stdlib/api-reference.md Option and Result section
@@ -880,6 +882,7 @@ method std::Option[T]::replace|check-prelude prelude-option-result-ref-access re
 method std::Option[T]::take|check-prelude prelude-option-result-ref-access move payload out and leave None; docs/stdlib/modules/option-result.md
 method std::Option[T]::unwrap|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::unwrap_or_default|check-prelude prelude-option-result-ref-access default-backed absence fallback helper; docs/stdlib/modules/option-result.md
 method std::Option[T]::unwrap_or_else|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Option[T]::xor|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Option[std::Option[T]]::flatten|check-prelude prelude-option-flatten; docs/stdlib/api-reference.md Option and Result section
@@ -909,6 +912,7 @@ method std::Result[T,E]::or_else[F]|check-prelude prelude-option-result-combinat
 method std::Result[T,E]::unwrap|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::unwrap_err|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::unwrap_or_default|check-prelude prelude-option-result-ref-access default-backed error fallback helper; docs/stdlib/modules/option-result.md
 method std::Result[T,E]::unwrap_or_else|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Result[std::Option[T],E]::transpose|check-prelude prelude-result-transpose; docs/stdlib/api-reference.md Option and Result section
 method std::Slice[T]::binary_search|check-prelude prelude-slice-sequence ordered borrowed slice binary search wrapper; docs/stdlib/modules/slice.md
@@ -983,13 +987,17 @@ method std::c::Symbol::as_ptr|check-prelude std-c-interop dynamic symbol raw poi
 method std::c::Symbol::function[T]|check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md
 method std::c::Symbol::invalid|check-prelude std-c-interop invalid dynamic symbol sentinel; docs/stdlib/modules/c.md
 method std::c::Symbol::is_valid|check-prelude std-c-interop dynamic symbol validity predicate; docs/stdlib/modules/c.md
+method std::collections::BinaryHeapPeekMut[T]::value|check-prelude std-collections-heap mutable top guard shared read; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeapPeekMut[T]::value_mut|check-prelude std-collections-heap mutable top guard payload access; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::capacity|check-prelude std-collections-heap binary heap capacity metadata; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::clear|check-prelude std-collections-heap drops live heap values; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::copy_to|check-prelude std-collections-structure-copy-to target-zone binary heap copy preserving priority order; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::into_sorted_vec|check-prelude std-collections-heap draining sorted Vec conversion; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::is_empty|check-prelude std-collections-heap binary heap emptiness predicate; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::len|check-prelude std-collections-heap binary heap length metadata; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::new|check-prelude std-collections-heap associated explicit-comparator constructor; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::peek|check-prelude std-collections-heap asserting highest-priority access; docs/stdlib/modules/collections.md
+method std::collections::BinaryHeap[T]::peek_mut|check-prelude std-collections-heap mutable top guard with drop-time sift-down; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::pop|check-prelude std-collections-heap highest-priority removal; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::push|check-prelude std-collections-heap same-zone heap insertion and sift-up; docs/stdlib/modules/collections.md
 method std::collections::BinaryHeap[T]::reserve|check-prelude std-collections-heap same-zone heap storage growth; docs/stdlib/modules/collections.md
@@ -1207,6 +1215,8 @@ method std::collections::TreeMap[K,V]::last_value|check-prelude std-collections-
 method std::collections::TreeMap[K,V]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::lower_bound|check-prelude std-collections-tree-bounds optional first entry not less than key; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::range|check-prelude std-collections-tree-iter half-open sorted map range cursor; docs/stdlib/modules/collections.md
+method std::collections::TreeMap[K,V]::range_mut|check-prelude std-collections-tree-iter half-open mutable sorted map range cursor; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::remove|check-prelude std-collections-tree-remove direct red-black deletion returning removed value; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::remove_entry|check-prelude std-collections-map-entry-api tree map key-value removal after direct red-black deletion; docs/stdlib/modules/collections.md
 method std::collections::TreeMap[K,V]::replace|check-prelude std-collections-map-mut-access named ordered map insert-or-replace helper; docs/stdlib/modules/collections.md
@@ -1241,6 +1251,7 @@ method std::collections::TreeSet[T]::last|check-prelude std-collections-tree-bou
 method std::collections::TreeSet[T]::len|check-prelude std-collections-tree metadata helper; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::lower_bound|check-prelude std-collections-tree-bounds optional first value not less than target; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::new|check-prelude std-collections-tree associated explicit-comparator constructor; docs/stdlib/modules/collections.md
+method std::collections::TreeSet[T]::range|check-prelude std-collections-tree-iter half-open sorted set range cursor; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::remove|check-prelude std-collections-tree-remove direct red-black deletion predicate; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::replace|check-prelude std-collections-tree replace-or-insert behavior; docs/stdlib/modules/collections.md
 method std::collections::TreeSet[T]::reserve|check-prelude std-collections-tree same-zone tree storage growth; docs/stdlib/modules/collections.md
@@ -1903,6 +1914,7 @@ struct std::c::CStr|check-prelude std-c-interop borrowed C string view; docs/std
 struct std::c::CString|check-prelude std-c-interop zone-backed NUL-terminated owned C string; docs/stdlib/modules/c.md
 struct std::c::Library|check-prelude std-c-interop dynamic library handle wrapper; docs/stdlib/modules/c.md
 struct std::c::Symbol|check-prelude std-c-interop dynamic symbol handle wrapper; docs/stdlib/modules/c.md
+struct std::collections::BinaryHeapPeekMut[T]|std collections binary heap mutable top guard tests; docs/stdlib/modules/collections.md
 struct std::collections::BinaryHeap[T]|std collections binary heap tests; docs/stdlib/modules/collections.md
 struct std::collections::DequeIter[T]|std collections deque iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::Deque[T]|std collections deque tests; docs/stdlib/modules/collections.md
@@ -1933,11 +1945,14 @@ struct std::collections::TreeMapEntriesMut[K, V]|std collections mutable tree ma
 struct std::collections::TreeMapEntries[K, V]|std collections map entry iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapEntry[K, V]|std collections map entry update tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapKeys[K]|std collections tree iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeMapRangeMut[K, V]|std collections mutable tree map range tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeMapRange[K, V]|std collections tree map range tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapValuesMut[V]|std collections mutable tree value cursor tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMapValues[V]|std collections tree iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeMap[K, V]|std collections tree map tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSetDrain[T]|std collections tree set drain tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSetIter[T]|std collections tree iterator tests; docs/stdlib/modules/collections.md
+struct std::collections::TreeSetRange[T]|std collections tree set range tests; docs/stdlib/modules/collections.md
 struct std::collections::TreeSet[T]|std collections tree set tests; docs/stdlib/modules/collections.md
 struct std::encoding::Utf8Char|check-prelude std-encoding-utf8-codepoints decoded UTF-8 scalar value; docs/stdlib/modules/encoding.md
 struct std::error::Error|check-prelude std-error-basic compact shared error value; docs/stdlib/modules/error.md

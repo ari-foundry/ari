@@ -1,5 +1,10 @@
 // Covers binary heaps and priority queues: comparator-driven max-priority
 // ordering, growth, peek/pop helpers, and root aliases.
+fn write_i64(value: ref mut i64, replacement: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = replacement;
+}
+
 fn main() -> i64 {
   var zone = zone::create(4096);
   var heap = BinaryHeap::new<i64>(ref mut zone, 1, collections::less_i64);
@@ -20,13 +25,24 @@ fn main() -> i64 {
   if heap.peek() != 9 {
     failure = 3;
   }
-  if heap.pop() != 9 {
-    failure = 4;
+  {
+    var top = heap.peek_mut();
+    if top.value() != 9 {
+      failure = 15;
+    }
+    write_i64(top.value_mut(), 2);
+    drop top;
+  }
+  if heap.peek() != 4 {
+    failure = 16;
   }
   if heap.pop() != 4 {
-    failure = 5;
+    failure = 4;
   }
   if heap.pop() != 3 {
+    failure = 5;
+  }
+  if heap.pop() != 2 {
     failure = 6;
   }
   if heap.pop() != 1 {
@@ -35,6 +51,24 @@ fn main() -> i64 {
   let empty_heap_peek = heap.try_peek();
   if !empty_heap_peek.is_none() {
     failure = 8;
+  }
+
+  var sorted_heap = BinaryHeap::new<i64>(ref mut zone, 1, collections::less_i64);
+  sorted_heap.push(ref mut zone, 2);
+  sorted_heap.push(ref mut zone, 7);
+  sorted_heap.push(ref mut zone, 5);
+  let sorted = sorted_heap.into_sorted_vec();
+  if sorted.len() != 3 {
+    failure = 17;
+  }
+  if sorted.get(0) != 2 {
+    failure = 18;
+  }
+  if sorted.get(1) != 5 {
+    failure = 19;
+  }
+  if sorted.get(2) != 7 {
+    failure = 20;
   }
 
   var queue = PriorityQueue::new<i64>(ref mut zone, 1, collections::less_i64);

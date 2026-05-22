@@ -61,6 +61,7 @@ bool is_zone_pointer_trackable_type(const IrType& type) {
            is_std_process_output_zone_handle_type(value_type) ||
            is_std_string_zone_handle_type(value_type) ||
            is_std_vec_zone_handle_type(value_type) ||
+           is_zone_metadata_type(value_type) ||
            is_prelude_slice_type(value_type) ||
            std::any_of(value_type.args.begin(), value_type.args.end(), is_zone_pointer_trackable_type) ||
            std::any_of(value_type.field_types.begin(), value_type.field_types.end(), is_zone_pointer_trackable_type);
@@ -115,6 +116,10 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
         std::optional<std::size_t> source_index = std_vec_zone_handle_source_field_index(source.type);
         if (!source_index || *source_index >= source.args.size()) return false;
         return zone_pointer_source_name_from_expr(*source.args[*source_index], resolver, out);
+    }
+    if (source.kind == IrExprKind::Tuple && is_zone_metadata_type(source.type)) {
+        if (source.args.empty()) return false;
+        return zone_pointer_source_name_from_expr(*source.args[0], resolver, out);
     }
     if (source.kind == IrExprKind::Tuple && is_std_collections_zone_handle_type(source.type)) {
         std::optional<std::size_t> source_index =
@@ -200,6 +205,27 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
         return !source.args.empty() && resolver.zone_source_from_arg(*source.args[0], out);
     }
     if (source.kind == IrExprKind::Call) {
+        IrType first_arg_value_type;
+        bool first_arg_is_zone_metadata = false;
+        if (!source.args.empty()) {
+            first_arg_value_type = source.args[0]->type;
+            if (first_arg_value_type.qualifier == TypeQualifier::Ref ||
+                first_arg_value_type.qualifier == TypeQualifier::MutRef) {
+                first_arg_value_type.qualifier = TypeQualifier::Value;
+            }
+            first_arg_is_zone_metadata = is_zone_metadata_type(first_arg_value_type);
+        }
+        if (is_raw_pointer_type(source.type) &&
+            !source.args.empty() &&
+            first_arg_is_zone_metadata &&
+            zone_pointer_source_name_from_expr(*source.args[0], resolver, out)) {
+            return true;
+        }
+        if (is_zone_metadata_type(source.type) &&
+            !source.args.empty() &&
+            zone_pointer_source_name_from_expr(*source.args[0], resolver, out)) {
+            return true;
+        }
         if (std_box_pointer_result_preserves_receiver_zone(source) &&
             zone_pointer_source_name_from_expr(*source.args[0], resolver, out)) {
             return true;

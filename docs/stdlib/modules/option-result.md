@@ -32,6 +32,9 @@ value.is_none_or(op)
 value.contains(value)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
+value.unwrap_or_default()
+value.get_or_insert(value)
+value.get_or_insert_with(op)
 value.unwrap()
 value.expect("message")
 value.map<U>(op)
@@ -60,6 +63,13 @@ are still a compiler roadmap item. The view unions expose `is_some`, `is_none`,
 `unwrap`, and `expect`; `OptionMut.as_ref()` downgrades a mutable view to a
 shared view. `take` moves the current payload out and leaves `None<T>()`.
 `replace(next)` stores `Some(next)` and returns the previous option.
+
+`get_or_insert(value)` ensures the option is `Some` and returns `ref mut T`
+to the payload. The eager `value` is only stored when the receiver is `None`;
+if the receiver is already `Some`, Ari drops the unused value before returning
+the existing payload reference. `get_or_insert_with(op)` is the lazy form and
+calls `op()` only for `None`. `unwrap_or_default()` is available when `T:
+std::Default` and calls `Default::default<T>()` only for `None`.
 
 `is_some_and` and `is_none_or` consume the `Option[T]` and pass the payload to
 `op` only for `Some`. `contains(value)` consumes the option and compares a
@@ -101,6 +111,7 @@ value.contains(value)
 value.contains_err(error)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
+value.unwrap_or_default()
 value.unwrap()
 value.expect("message")
 value.unwrap_err()
@@ -130,7 +141,9 @@ reference payloads are supported directly.
 
 `ok` keeps the success payload as `Option[T]`. `err` keeps the error payload as
 `Option[E]`. `unwrap_or_else` receives the error and returns a fallback success
-value. `map_or(fallback, op)` maps the success payload or returns the eager
+value. `unwrap_or_default()` is available when the success type implements
+`std::Default` and calls `Default::default<T>()` only for `Err`.
+`map_or(fallback, op)` maps the success payload or returns the eager
 fallback, while `map_or_else(fallback, op)` maps `Ok` and calls
 `fallback(error)` only for `Err`. `inspect(op)` passes `ref T` to `op` only
 for `Ok`, and `inspect_err(op)` passes `ref E` only for `Err`; both return the

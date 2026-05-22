@@ -614,6 +614,9 @@ std::optional<StdCollectionsImplicitZoneMethod> std_collections_implicit_zone_me
 
     if (is_std_collections_binary_heap_handle_type(receiver_value_type) ||
         is_std_collections_priority_queue_handle_type(receiver_value_type)) {
+        if (method_name == "into_sorted_vec" && user_arg_count == 0) {
+            return StdCollectionsImplicitZoneMethod{"into_sorted_vec", false};
+        }
         if (method_name == "push" && user_arg_count == 1) {
             return StdCollectionsImplicitZoneMethod{"push", false};
         }

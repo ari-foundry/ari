@@ -145,6 +145,28 @@ pub struct TreeMapEntriesMut[K, V] {
   mut current: i64,
 }
 
+pub struct TreeMapRange[K, V] {
+  keys: ptr K,
+  values: ptr V,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  end: K,
+  less: fn(K, K) -> bool,
+  mut current: i64,
+}
+
+pub struct TreeMapRangeMut[K, V] {
+  keys: ptr K,
+  values: ptr V,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  end: K,
+  less: fn(K, K) -> bool,
+  mut current: i64,
+}
+
 pub struct TreeMapDrain[K, V] {
   keys: ptr K,
   values: ptr V,
@@ -161,6 +183,16 @@ pub struct TreeSetIter[T] {
   left: ptr i64,
   right: ptr i64,
   parent: ptr i64,
+  mut current: i64,
+}
+
+pub struct TreeSetRange[T] {
+  data: ptr T,
+  left: ptr i64,
+  right: ptr i64,
+  parent: ptr i64,
+  end: T,
+  less: fn(T, T) -> bool,
   mut current: i64,
 }
 
@@ -266,6 +298,11 @@ pub struct BinaryHeap[T] {
   mut data: ptr T,
   mut len: i64,
   mut capacity: i64,
+}
+
+pub struct BinaryHeapPeekMut[T] {
+  heap: ptr std::collections::BinaryHeap[T],
+  value: ptr T,
 }
 
 pub struct PriorityQueue[T] {
@@ -2574,6 +2611,34 @@ pub impl[K, V] std::collections::TreeMap[K, V] {
     );
   }
 
+  fn range(self: ref Self, start: K, end: K) -> std::collections::TreeMapRange[K, V] {
+    return std::collections::TreeMapRange<K, V> {
+      keys: self.keys,
+      values: self.values,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      end: end,
+      less: self.less,
+      current: tree_map_lower_bound_node<K, V>(self, start),
+    };
+  }
+
+  fn range_mut(self: ref mut Self, start: K, end: K) -> std::collections::TreeMapRangeMut[K, V] {
+    let map_ref: ref std::collections::TreeMap[K, V] =
+      ref *(self as ptr std::collections::TreeMap[K, V]);
+    return std::collections::TreeMapRangeMut<K, V> {
+      keys: self.keys,
+      values: self.values,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      end: end,
+      less: self.less,
+      current: tree_map_lower_bound_node<K, V>(map_ref, start),
+    };
+  }
+
   fn insert(self: ref mut Self, zone: ref mut Zone, key: K, value: V) -> std::Option[V] {
     let existing = tree_map_find_slot_mut<K, V>(self, key);
     if existing >= 0 {
@@ -2908,6 +2973,50 @@ impl[K, V] std::Iterator[std::collections::MapEntryMut[K, V]] for std::collectio
     return std::Some<std::collections::MapEntryMut[K, V]>(
       std::collections::MapEntryMut<K, V> {
         key: ptr_load(ptr_add(self.keys, node)),
+        value: ptr_add(self.values, node),
+      }
+    );
+  }
+}
+
+impl[K, V] std::Iterator[std::collections::MapEntry[K, V]] for std::collections::TreeMapRange[K, V] {
+  pub fn next(self: ref mut Self) -> std::Option[std::collections::MapEntry[K, V]] {
+    if self.current < 0 {
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    let node = self.current;
+    let key = ptr_load(ptr_add(self.keys, node));
+    let less = self.less;
+    if !less(key, self.end) {
+      self.current = -1;
+      return std::None<std::collections::MapEntry[K, V]>();
+    }
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    return std::Some<std::collections::MapEntry[K, V]>(
+      std::collections::MapEntry<K, V> {
+        key: key,
+        value: ptr_load(ptr_add(self.values, node)),
+      }
+    );
+  }
+}
+
+impl[K, V] std::Iterator[std::collections::MapEntryMut[K, V]] for std::collections::TreeMapRangeMut[K, V] {
+  pub fn next(self: ref mut Self) -> std::Option[std::collections::MapEntryMut[K, V]] {
+    if self.current < 0 {
+      return std::None<std::collections::MapEntryMut[K, V]>();
+    }
+    let node = self.current;
+    let key = ptr_load(ptr_add(self.keys, node));
+    let less = self.less;
+    if !less(key, self.end) {
+      self.current = -1;
+      return std::None<std::collections::MapEntryMut[K, V]>();
+    }
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    return std::Some<std::collections::MapEntryMut[K, V]>(
+      std::collections::MapEntryMut<K, V> {
+        key: key,
         value: ptr_add(self.values, node),
       }
     );
@@ -3495,6 +3604,18 @@ pub impl[T] std::collections::TreeSet[T] {
     return std::Some<T>(ptr_load(ptr_add(self.data, node)));
   }
 
+  fn range(self: ref Self, start: T, end: T) -> std::collections::TreeSetRange[T] {
+    return std::collections::TreeSetRange<T> {
+      data: self.data,
+      left: self.left,
+      right: self.right,
+      parent: self.parent,
+      end: end,
+      less: self.less,
+      current: tree_set_lower_bound_node<T>(self, start),
+    };
+  }
+
   fn is_subset(self: ref Self, other: ref Self) -> bool {
     var index = 0;
     while index < self.len {
@@ -3662,6 +3783,23 @@ impl[T] std::Iterator[T] for std::collections::TreeSetIter[T] {
     let node = self.current;
     self.current = tree_next_node(node, self.left, self.right, self.parent);
     return std::Some<T>(ptr_load(ptr_add(self.data, node)));
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::TreeSetRange[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.current < 0 {
+      return std::None<T>();
+    }
+    let node = self.current;
+    let value = ptr_load(ptr_add(self.data, node));
+    let less = self.less;
+    if !less(value, self.end) {
+      self.current = -1;
+      return std::None<T>();
+    }
+    self.current = tree_next_node(node, self.left, self.right, self.parent);
+    return std::Some<T>(value);
   }
 }
 
@@ -4604,6 +4742,14 @@ pub impl[T] std::collections::BinaryHeap[T] {
     return std::Some<T>(self.peek());
   }
 
+  fn peek_mut(self: ref mut Self) -> std::collections::BinaryHeapPeekMut[T] {
+    std::assert(self.len > 0);
+    return std::collections::BinaryHeapPeekMut<T> {
+      heap: self as ptr std::collections::BinaryHeap[T],
+      value: self.data,
+    };
+  }
+
   fn push(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
     if self.len >= self.capacity {
       binary_heap_grow_to_capacity<T>(self, next_growth_capacity(self.capacity, self.len + 1));
@@ -4654,6 +4800,39 @@ pub impl[T] std::collections::BinaryHeap[T] {
     }
     copied.len = self.len;
     return copied;
+  }
+
+  fn into_sorted_vec(self: ref mut Self, zone: ref mut Zone) -> std::vec::Vec[T] {
+    let length = self.len;
+    var output = std::vec::new<T>(zone, length);
+    output.raw.len = length;
+    var index = length - 1;
+    while self.len > 0 {
+      ptr_store(ptr_add(output.raw.data, index), self.pop());
+      index = index - 1;
+    }
+    return output;
+  }
+}
+
+pub impl[T] std::collections::BinaryHeapPeekMut[T] {
+  fn value(self: ref Self) -> T {
+    return ptr_load(self.value);
+  }
+
+  fn value_mut(self: ref mut Self) -> ref mut T {
+    return ref mut *self.value;
+  }
+}
+
+impl[T] std::Drop for std::collections::BinaryHeapPeekMut[T] {
+  fn drop(self) -> void {
+    var handle = self;
+    let heap: ref mut std::collections::BinaryHeap[T] = ref mut *handle.heap;
+    if heap.len > 0 {
+      binary_heap_sift_down<T>(heap, 0);
+    }
+    return;
   }
 }
 

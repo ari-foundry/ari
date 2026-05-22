@@ -171,6 +171,25 @@ pub impl[T] std::Option[T] {
     };
   }
 
+  fn get_or_insert(self: ref mut Self, value: T) -> ref mut T {
+    let raw: ptr std::Option[T] = self as ptr std::Option[T];
+    if __is_none<T>(ref *raw) {
+      *raw = std::Some<T>(value);
+      return ref mut *((ref mut (*(self as ptr std::Option[T])).0) as ptr T);
+    } else {
+      drop value;
+    }
+    return ref mut *((ref mut (*(self as ptr std::Option[T])).0) as ptr T);
+  }
+
+  fn get_or_insert_with(self: ref mut Self, op: fn() -> T) -> ref mut T {
+    let raw: ptr std::Option[T] = self as ptr std::Option[T];
+    if __is_none<T>(ref *raw) {
+      *raw = std::Some<T>(op());
+    }
+    return ref mut *((ref mut (*(self as ptr std::Option[T])).0) as ptr T);
+  }
+
   fn unwrap(self) -> T {
     match self {
       std::Some(value) => {
@@ -284,6 +303,15 @@ pub impl[T] std::Option[T] {
     return match self {
       std::Some(value) => std::Ok<T, E>(value),
       std::None => std::Err<T, E>(op());
+    };
+  }
+}
+
+pub impl[T: std::Default] std::Option[T] {
+  fn unwrap_or_default(self) -> T {
+    return match self {
+      std::Some(value) => value,
+      std::None => std::Default::default<T>();
     };
   }
 }

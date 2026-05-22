@@ -3335,6 +3335,21 @@ private:
             };
         }
 
+        if (expr.kind == ExprKind::Cast && expr_operand(expr)) {
+            std::optional<BorrowReturnOperandPathHint> base =
+                borrow_return_operand_path_hint(*expr_operand(expr), param_name, type);
+            if (!base) return std::nullopt;
+            IrType cast_type;
+            if (expr.cast_type.qualifier == TypeQualifier::Ptr) {
+                cast_type = base->type;
+                cast_type.qualifier = TypeQualifier::Ptr;
+                cast_type.loc = expr.cast_type.loc;
+            } else {
+                cast_type = resolve_executable_type(expr.cast_type);
+            }
+            return BorrowReturnOperandPathHint{base->path, cast_type};
+        }
+
         if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
             const Expr& pointer_expr = *expr_operand(expr);
             const Expr* pointer_source = &pointer_expr;
@@ -5706,7 +5721,8 @@ private:
     }
 
     bool zone_source_name_from_arg(const IrExpr& zone_arg, std::string& out) {
-        return ari::zone_source_name_from_arg(zone_arg, zone_pointer_locals(), out);
+        if (ari::zone_source_name_from_arg(zone_arg, zone_pointer_locals(), out)) return true;
+        return zone_pointer_source_name_from_expr(zone_arg, out);
     }
 
     ZonePointerSourceResolver zone_pointer_source_resolver() {
@@ -10538,9 +10554,25 @@ private:
         if (expr.kind != ExprKind::Cast || !expr_operand(expr)) return false;
 
         TrackedAggregateAccess base;
-        if (!try_build_tracked_aggregate_access(*expr_operand(expr), base)) return false;
+        const Expr& operand = *expr_operand(expr);
+        if (operand.kind == ExprKind::Borrow && expr_operand(operand)) {
+            const Expr& borrow_target = *expr_operand(operand);
+            if (!try_build_tracked_aggregate_access(borrow_target, base)) {
+                if (!has_raw_pointer_deref_base(borrow_target)) return false;
+                const Expr* pointer_operand = raw_pointer_deref_pointer_operand(borrow_target);
+                if (!pointer_operand) return false;
+                if (!try_build_tracked_pointer_borrow_operand(*pointer_operand, base)) return false;
+            }
+        } else if (!try_build_tracked_aggregate_access(operand, base)) {
+            return false;
+        }
 
+        const bool operand_is_borrow = operand.kind == ExprKind::Borrow;
+        std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr pointer = check_expr(expr);
+        if (operand_is_borrow) {
+            release_temporary_borrows(borrow_mark);
+        }
         if (!is_raw_pointer_type(pointer->type)) return false;
 
         out.base_name = std::move(base.base_name);
