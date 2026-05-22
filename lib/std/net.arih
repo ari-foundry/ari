@@ -3,6 +3,9 @@
 // Address values stay plain Ari data. Sockets are explicit owned descriptor
 // wrappers over the hosted runtime. Public Result helpers return std::error::Error;
 // raw-result variants stay compatibility-only for low-level runtime adapters.
+pub type Error = std::error::Error;
+pub type ErrorKind = std::error::Kind;
+
 pub struct Ipv4Addr {
   a: u8,
   b: u8,

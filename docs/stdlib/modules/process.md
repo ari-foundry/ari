@@ -11,6 +11,8 @@ small stdout/stderr capture.
 ## Current API
 
 ```ari
+process::Error
+process::ErrorKind
 process::id()
 process::uid()
 process::gid()

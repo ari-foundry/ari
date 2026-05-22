@@ -42,6 +42,8 @@ type-suffixed names.
 ## API
 
 ```ari
+fs::Error
+fs::ErrorKind
 fs::exists(path)
 fs::can_read(path)
 fs::can_write(path)

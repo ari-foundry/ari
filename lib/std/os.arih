@@ -4,6 +4,9 @@
 // separates borrowed descriptor identity (`Fd`) from descriptor ownership
 // (`OwnedFd`) so pipe endpoints and future poll, epoll, socket, and mmap
 // wrappers keep lifetime rules visible.
+pub type Error = std::error::Error;
+pub type ErrorKind = std::error::Kind;
+
 pub struct Fd {
   raw_value: i64,
 }

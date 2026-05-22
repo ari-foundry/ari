@@ -37,6 +37,9 @@ Roadmap, not implemented yet:
 ## API
 
 ```ari
+io::Error
+io::ErrorKind
+
 pub trait Reader {
   fn read_byte(self: ref mut Self) -> i64;
 }

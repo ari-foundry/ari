@@ -65,7 +65,9 @@ Use natural names for the common path and make the failure shape visible:
 - Use `Result[T, E]` for recoverable failures once the payload shape is
   supported for the relevant value.
 - Use `std::error::Error` for shared OS, IO, filesystem, network, process, and
-  runtime categories.
+  runtime categories; module aliases such as `fs::Error` and `net::Error`
+  should remain aliases of the shared payload unless structured fields are
+  deliberately added.
 - Use tuples only for product values that are always produced, such as
   `overflowing_add` returning `(value, overflowed)`.
 - Use `assert`, `panic`, `todo`, and `unreachable` only for programmer errors,

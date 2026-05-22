@@ -30,6 +30,8 @@ pub enum Kind {
   Other,
 }
 
+pub type ErrorKind = std::error::Kind;
+
 pub struct Error {
   // Keep Error one word so it can travel through today's compact
   // `Result[T, E]` payload storage when `T` is also a scalar.
@@ -201,11 +203,34 @@ pub fn from_errno(code: i64) -> std::error::Error {
   return std::error::with_code(Other, code);
 }
 
+pub fn from_os_code(code: i64) -> std::error::Error {
+  return std::error::from_errno(code);
+}
+
+pub fn from_errno_result[T](value: std::Result[T, i64]) -> std::Result[T, std::error::Error] {
+  match value {
+    std::Ok(payload) => {
+      return std::Ok<T, std::error::Error>(payload);
+    }
+    std::Err(code) => {
+      return std::Err<T, std::error::Error>(std::error::from_errno(code));
+    }
+  }
+}
+
+pub fn from_os_code_result[T](value: std::Result[T, i64]) -> std::Result[T, std::error::Error] {
+  return std::error::from_errno_result<T>(value);
+}
+
 pub fn try_from_errno(code: i64) -> std::Option[std::error::Error] {
   if !valid_code(code) {
     return std::None<std::error::Error>();
   }
   return std::Some<std::error::Error>(std::error::from_errno(code));
+}
+
+pub fn try_from_os_code(code: i64) -> std::Option[std::error::Error] {
+  return std::error::try_from_errno(code);
 }
 
 pub fn kind(value: ref std::error::Error) -> std::error::Kind {
@@ -309,5 +334,57 @@ pub impl std::error::Error {
 
   fn message(self: ref Self) -> string {
     return std::error::message(self);
+  }
+}
+
+impl std::convert::From[i64] for std::error::Error {
+  pub fn from(value: i64) -> std::error::Error {
+    return std::error::from_os_code(value);
+  }
+}
+
+impl std::convert::TryFrom[i64] for std::error::Error {
+  pub fn try_from(value: i64) -> std::Option[std::error::Error] {
+    return std::error::try_from_os_code(value);
+  }
+}
+
+impl std::convert::Into[i64] for std::error::Error {
+  pub fn into(self) -> i64 {
+    return self.raw();
+  }
+}
+
+impl std::fmt::Display for std::error::Kind {
+  pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let raw: ptr Self = self as ptr Self;
+    return std::string::from(zone, std::error::name(*raw));
+  }
+}
+
+impl std::fmt::Debug for std::error::Kind {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let raw: ptr Self = self as ptr Self;
+    var output = std::string::from(zone, "ErrorKind(");
+    output.append_string_in(zone, std::error::name(*raw));
+    output.append_string_in(zone, ")");
+    return output;
+  }
+}
+
+impl std::fmt::Display for std::error::Error {
+  pub fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    return std::string::from(zone, self.message());
+  }
+}
+
+impl std::fmt::Debug for std::error::Error {
+  pub fn debug_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    var output = std::string::from(zone, "Error(");
+    output.append_string_in(zone, self.name());
+    output.append_string_in(zone, ", code=");
+    output.append_i64_in(zone, self.code());
+    output.append_string_in(zone, ")");
+    return output;
   }
 }

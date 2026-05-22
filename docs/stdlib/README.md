@@ -39,9 +39,10 @@ top of the raw process IO, descriptor, and file seek hooks.
 `std::test` adds source executable unit-test reports, generic equality checks,
 and scratch-zone helpers, `std::log` adds level-prefixed `stderr` diagnostic
 lines, and `std::error` adds shared recoverable error categories,
-compact error values, and POSIX errno mapping while richer runner,
-compiler-tooling source maps, structured logging, direct
-wider `Result[T, Error]` rollout, and backtrace support remain roadmap work.
+compact error values, POSIX errno mapping, module-local `Error` aliases, and
+stable `Display`/`Debug` output while richer runner, compiler-tooling source
+maps, structured logging, remaining `Result[T, Error]` rollout, and backtrace
+support remain roadmap work.
 `std::c` adds the narrow C ABI boundary layer with borrowed
 `CStr`, zone-backed `CString`, POSIX `errno`, and hosted dynamic loading
 handles over `dlopen`/`dlsym`.

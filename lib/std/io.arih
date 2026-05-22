@@ -1,5 +1,8 @@
 // Low-level process IO hooks plus small source helpers. Bulk byte output stays
 // in Ari source and delegates to the single-byte backend hook.
+pub type Error = std::error::Error;
+pub type ErrorKind = std::error::Kind;
+
 pub extern "ari" fn write_i64(value: i64) -> i64 = "ari_builtin_write_i64";
 pub extern "ari" fn write_u64(value: u64) -> i64 = "ari_builtin_write_u64";
 pub extern "ari" fn write_bool(value: bool) -> i64 = "ari_builtin_write_bool";

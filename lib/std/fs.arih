@@ -2,6 +2,9 @@
 //
 // The first std::fs slice keeps the OS boundary explicit: Ari source owns the
 // handle shape and Option helpers, while the runtime owns platform syscalls.
+pub type Error = std::error::Error;
+pub type ErrorKind = std::error::Kind;
+
 pub struct File {
   fd: i64,
 }

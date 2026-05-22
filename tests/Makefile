@@ -397,6 +397,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/error/std-error-validation.ari -o $(BUILD_DIR)/prelude/std-error-validation.elf
 	$(BUILD_DIR)/prelude/std-error-validation.elf; code=$$?; test $$code -eq 45
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/error/std-error-validation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-error-validation.elf; $(BUILD_DIR)/prelude/std-error-validation.elf; code=$$?; test $$code -eq 45; fi
+	$(TARGET) tests/cases/standard-library/ok/error/std-error-integration.ari --emit-llvm $(BUILD_DIR)/prelude/std-error-integration.ll
+	grep -q '_ARNv3std5error12from_os_code' $(BUILD_DIR)/prelude/std-error-integration.ll
+	grep -q '_ARNv3std5error24from_errno_result__G_i64' $(BUILD_DIR)/prelude/std-error-integration.ll
+	grep -q '_ARNv3std5error26from_os_code_result__G_i64' $(BUILD_DIR)/prelude/std-error-integration.ll
+	$(TARGET) tests/cases/standard-library/ok/error/std-error-integration.ari -o $(BUILD_DIR)/prelude/std-error-integration.elf
+	$(BUILD_DIR)/prelude/std-error-integration.elf; code=$$?; test $$code -eq 45
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-buffered.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_reader__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-buffered.ll
 	grep -q '_ARNv3std2io29buf_writer__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-buffered.ll

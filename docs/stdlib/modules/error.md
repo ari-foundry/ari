@@ -32,15 +32,20 @@ enum Kind {
 }
 
 struct Error
+type ErrorKind = Kind
 
 new(kind: Kind) -> Error
 with_code(kind: Kind, code: i64) -> Error
 try_with_code(kind: Kind, code: i64) -> Option[Error]
 from_errno(code: i64) -> Error
+from_os_code(code: i64) -> Error
 try_from_errno(code: i64) -> Option[Error]
+try_from_os_code(code: i64) -> Option[Error]
 from_raw(raw: i64) -> Error
 try_from_raw(raw: i64) -> Option[Error]
 from_raw_result[T](value: Result[T, i64]) -> Result[T, Error]
+from_errno_result[T](value: Result[T, i64]) -> Result[T, Error]
+from_os_code_result[T](value: Result[T, i64]) -> Result[T, Error]
 to_raw_result[T](value: Result[T, Error]) -> Result[T, i64]
 
 kind(ref Error) -> Kind
@@ -61,12 +66,17 @@ let reason: Error = error::from_errno(2);
 let kind: ErrorKind = reason.kind();
 ```
 
+`error::ErrorKind` is also an alias of `error::Kind`, so module-local code can
+use either name without changing the payload shape.
+
 `Error` currently stores a compact one-word representation. That is deliberate:
 it lets filesystem and other OS-facing helpers return direct
 `Result[T, Error]` values while still allowing raw compatibility boundaries.
 Use `from_raw_result` when adapting an older `Result[T, i64]` helper into the
 preferred `Result[T, Error]` shape. Use `to_raw_result` only when a runtime,
 FFI, or compatibility test still needs the compact integer bridge.
+Use `from_errno_result` or `from_os_code_result` only when the `i64` payload is
+the platform error code itself rather than a packed Ari `Error.raw()` value.
 Use strict constructors such as `with_code`, `from_errno`, and `from_raw`
 when values are trusted or produced by Ari itself. Use `try_with_code`,
 `try_from_errno`, and `try_from_raw` at FFI, OS, serialized-data, and test
@@ -128,14 +138,41 @@ returns true for `Interrupted`, `WouldBlock`, `TimedOut`, and `InProgress`.
 
 `name(kind)` and `message(ref error)` return stable lowercase messages for
 failure reports. They are intentionally plain borrowed `string` values today;
-localized text, structured error fields, and formatter integration are future
-work.
+localized text, structured error fields, and richer formatting policy are
+future work.
+`Error` and `Kind` implement the source `Display` and `Debug` traits. Display
+uses the stable lowercase message (`"not found"`). Debug uses stable
+diagnostic wrappers such as `Error(not found, code=2)` and
+`ErrorKind(not found)`, which keeps logs readable without exposing raw packing.
+
+Domain modules re-export the shared error vocabulary so signatures can stay
+local without creating incompatible error types:
+
+```ari
+fs::Error
+fs::ErrorKind
+io::Error
+io::ErrorKind
+net::Error
+net::ErrorKind
+os::Error
+os::ErrorKind
+process::Error
+process::ErrorKind
+```
+
+Those aliases all refer to `std::error::Error` and `std::error::Kind`.
+Prefer them in public module signatures when it improves readability, but keep
+the payload semantically shared so callers can move errors across modules.
 
 ## Error Handling Policy
 
 - Use `Option[T]` when absence is expected and has no extra information.
 - Use `Result[T, E]` when callers must inspect or propagate failure.
 - Use `std::error::Error` for OS/runtime/library errors.
+- Use module aliases such as `fs::Error` or `net::Error` when the module path
+  makes a signature clearer; do not define incompatible per-module error
+  payloads unless the error needs additional structured fields.
 - Keep `raw()` and `Result[T, i64]` forms at runtime, FFI, and compatibility
   boundaries only.
 - Use `try_*` constructors at untrusted boundaries instead of asserting on
@@ -147,10 +184,11 @@ work.
 
 ## Current Limits
 
-- `std::fs`, `std::io`, `std::net`, and `std::process` now expose first direct
-  `Result[T, Error]` helper surfaces, while compatibility bool/Option/raw
-  helpers remain at older boundaries. Remaining low-level runtime hooks should
-  be migrated in small tested slices.
+- `std::fs`, `std::io`, `std::net`, `std::os`, and `std::process` now expose
+  shared `Error`/`ErrorKind` aliases and first direct `Result[T, Error]`
+  helper surfaces, while compatibility bool/Option/raw helpers remain at older
+  boundaries. Remaining low-level runtime hooks should be migrated in small
+  tested slices.
 - `from_errno` is a POSIX/Linux-oriented seed. Windows `GetLastError` mapping
   should live behind target-aware runtime wrappers.
 - There are no owned dynamic error messages, structured path/operation fields,
@@ -163,6 +201,7 @@ Focused positive coverage:
 
 ```text
 tests/cases/standard-library/ok/error/std-error-basic.ari
+tests/cases/standard-library/ok/error/std-error-integration.ari
 tests/cases/standard-library/ok/error/std-error-validation.ari
 ```
 
@@ -170,3 +209,5 @@ The test covers `Kind`, compact `Error` values, `from_errno`, root aliases,
 predicate helpers, message names, method wrappers, direct `Result[T, Error]`,
 and raw-result conversion helpers. `std-error-validation.ari` covers
 `try_with_code`, `try_from_raw`, and `try_from_errno` invalid-input handling.
+`std-error-integration.ari` covers module aliases, errno-result conversion,
+conversion traits, and Display/Debug formatting.

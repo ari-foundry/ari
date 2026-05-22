@@ -18,6 +18,8 @@ stable.
 ## API
 
 ```ari
+os::Error
+os::ErrorKind
 os::fd(raw)
 os::invalid()
 os::stdin()

@@ -155,16 +155,21 @@ Recoverable error values live in `std::error`:
 
 ```ari
 error::Kind
+error::ErrorKind
 error::Error
 
 error::new(kind)
 error::with_code(kind, code)
 error::try_with_code(kind, code)
 error::from_errno(code)
+error::from_os_code(code)
 error::try_from_errno(code)
+error::try_from_os_code(code)
 error::from_raw(raw)
 error::try_from_raw(raw)
 error::from_raw_result[T](value)
+error::from_errno_result[T](value)
+error::from_os_code_result[T](value)
 error::to_raw_result[T](value)
 error::kind(ref error)
 error::code(ref error)
@@ -194,6 +199,10 @@ kept for runtime, FFI, and compatibility bridges through
 `from_raw_result`/`to_raw_result`. The strict constructors are for trusted
 values; use `try_with_code`, `try_from_errno`, and `try_from_raw` when
 validating untrusted boundary data.
+The fs/io/net/os/process modules re-export this shared payload as
+`fs::Error`, `io::Error`, `net::Error`, `os::Error`, and `process::Error`
+with matching `ErrorKind` aliases. `Error` and `error::Kind` implement
+`Display`/`Debug` for stable logs and diagnostics.
 
 Level-prefixed diagnostic logging lives in `std::log`:
 

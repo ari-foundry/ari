@@ -29,6 +29,8 @@ net::UdpSocket
 net::UnixListener
 net::UnixStream
 net::Shutdown
+net::Error
+net::ErrorKind
 
 net::ipv4(a, b, c, d)
 net::ipv6(s0, s1, s2, s3, s4, s5, s6, s7)

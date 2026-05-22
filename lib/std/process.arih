@@ -1,5 +1,8 @@
 // Process helpers. Keep raw OS boundaries small and explicit until richer
 // child-process handles and cross-platform spawn policy are designed.
+pub type Error = std::error::Error;
+pub type ErrorKind = std::error::Kind;
+
 pub extern "ari" fn id() -> i64 = "ari_builtin_process_id";
 pub extern "ari" fn uid() -> i64 = "ari_builtin_process_uid";
 pub extern "ari" fn gid() -> i64 = "ari_builtin_process_gid";

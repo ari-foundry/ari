@@ -1,0 +1,94 @@
+// Covers the shared Error surface that fs/io/net/os/process re-export, errno
+// conversion helpers, conversion traits, and Display/Debug formatting.
+fn errno_result_matches(value: Result[i64, i64], kind: error::Kind, code: i64) -> bool {
+  match error::from_errno_result<i64>(value) {
+    Ok(_) => {
+      return false;
+    }
+    Err(reason) => {
+      return reason.is_kind(kind) && reason.code() == code;
+    }
+  }
+}
+
+fn main() -> i64 {
+  let fs_reason: fs::Error = error::from_os_code(2);
+  if fs_reason.code() != 2 {
+    return fs_reason.code();
+  }
+  if !fs_reason.is_not_found() {
+    return 12;
+  }
+
+  let io_kind: io::ErrorKind = error::BrokenPipe;
+  match io_kind {
+    error::BrokenPipe => {
+    }
+    _ => {
+      return 2;
+    }
+  }
+
+  let net_reason: net::Error = convert::from<i64, error::Error>(110);
+  if !net_reason.is_kind(error::TimedOut) {
+    return 3;
+  }
+
+  let shared_kind: error::ErrorKind = error::TimedOut;
+  if !net_reason.is_kind(shared_kind) {
+    return 14;
+  }
+
+  let raw: i64 = convert::into<i64, error::Error>(net_reason);
+  if !error::from_raw(raw).is_kind(error::TimedOut) {
+    return 4;
+  }
+
+  if !convert::try_from<i64, error::Error>(-1).is_none() {
+    return 5;
+  }
+
+  if !errno_result_matches(Err<i64, i64>(13), error::PermissionDenied, 13) {
+    return 6;
+  }
+
+  match error::from_os_code_result<i64>(Err<i64, i64>(22)) {
+    Ok(_) => {
+      return 13;
+    }
+    Err(reason) => {
+      if !reason.is_kind(error::InvalidInput) {
+        return 13;
+      }
+    }
+  }
+
+  let os_reason: os::Error = error::from_os_code(16);
+  if !os_reason.is_kind(error::ResourceBusy) {
+    return 7;
+  }
+
+  let process_kind: process::ErrorKind = error::Other;
+  let process_reason: process::Error = error::new(process_kind);
+  if !process_reason.is_kind(error::Other) {
+    return 8;
+  }
+
+  var zone = zone::create(512);
+  var display = format_in!(ref mut zone, "{}|{:?}|{:?}", fs_reason, error::InvalidInput, fs_reason);
+  if !display.contains_text("not found") {
+    zone::destroy(zone);
+    return 9;
+  }
+  if !display.contains_text("ErrorKind(invalid input)") {
+    zone::destroy(zone);
+    return 10;
+  }
+  if !display.contains_text("Error(not found, code=2)") {
+    zone::destroy(zone);
+    return 11;
+  }
+
+  zone::destroy(zone);
+  return 45;
+}

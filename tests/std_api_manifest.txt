@@ -256,6 +256,9 @@ fn std::env::try_get|check-prelude std-env-vars optional environment variable he
 fn std::env::try_get_os|check-prelude std-env-os-path-views optional OS-string environment variable helper; docs/stdlib/modules/env.md
 fn std::error::code|check-prelude std-error-basic error platform code extractor; docs/stdlib/modules/error.md
 fn std::error::from_errno|check-prelude std-error-basic POSIX errno mapping helper; docs/stdlib/modules/error.md
+fn std::error::from_errno_result[T]|check-prelude std-error-integration Result[T, errno] to Result[T, Error] bridge; docs/stdlib/modules/error.md
+fn std::error::from_os_code|check-prelude std-error-integration target OS error-code mapping alias; docs/stdlib/modules/error.md
+fn std::error::from_os_code_result[T]|check-prelude std-error-integration Result[T, OS code] to Result[T, Error] bridge; docs/stdlib/modules/error.md
 fn std::error::from_raw|check-prelude std-error-basic compact Result-compatible error reconstruction; docs/stdlib/modules/error.md
 fn std::error::from_raw_result[T]|check-prelude std-error-basic Result[T, i64] to Result[T, Error] compatibility bridge; docs/stdlib/modules/error.md
 fn std::error::is_interrupted|check-prelude std-error-basic interrupted predicate helper; docs/stdlib/modules/error.md
@@ -269,6 +272,7 @@ fn std::error::new|check-prelude std-error-basic error constructor without platf
 fn std::error::raw|check-prelude std-error-basic compact raw error representation helper; docs/stdlib/modules/error.md
 fn std::error::to_raw_result[T]|check-prelude std-error-basic Result[T, Error] to Result[T, i64] compatibility bridge; docs/stdlib/modules/error.md
 fn std::error::try_from_errno|check-prelude std-error-validation Option-returning POSIX errno mapping helper; docs/stdlib/modules/error.md
+fn std::error::try_from_os_code|check-prelude std-error-integration Option-returning target OS error-code mapping alias; docs/stdlib/modules/error.md
 fn std::error::try_from_raw|check-prelude std-error-validation Option-returning raw error reconstruction; docs/stdlib/modules/error.md
 fn std::error::try_with_code|check-prelude std-error-validation Option-returning error constructor with platform code; docs/stdlib/modules/error.md
 fn std::error::with_code|check-prelude std-error-basic error constructor with platform code; docs/stdlib/modules/error.md
@@ -2077,6 +2081,17 @@ trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/d
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::zone::ZoneBacked::zone|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 type std::char|check-generics type-alias-char/no-implicit-std tests; docs/language/types.md Type Aliases section
+type std::error::ErrorKind|check-prelude std-error-integration module-local alias for std::error::Kind; docs/stdlib/modules/error.md
+type std::fs::Error|check-prelude std-error-integration shared filesystem error alias; docs/stdlib/modules/fs.md
+type std::fs::ErrorKind|check-prelude std-error-integration shared filesystem error-kind alias; docs/stdlib/modules/fs.md
+type std::io::Error|check-prelude std-error-integration shared IO error alias; docs/stdlib/modules/io.md
+type std::io::ErrorKind|check-prelude std-error-integration shared IO error-kind alias; docs/stdlib/modules/io.md
+type std::net::Error|check-prelude std-error-integration shared networking error alias; docs/stdlib/modules/net.md
+type std::net::ErrorKind|check-prelude std-error-integration shared networking error-kind alias; docs/stdlib/modules/net.md
+type std::os::Error|check-prelude std-error-integration shared OS error alias; docs/stdlib/modules/os.md
+type std::os::ErrorKind|check-prelude std-error-integration shared OS error-kind alias; docs/stdlib/modules/os.md
+type std::process::Error|check-prelude std-error-integration shared process error alias; docs/stdlib/modules/process.md
+type std::process::ErrorKind|check-prelude std-error-integration shared process error-kind alias; docs/stdlib/modules/process.md
 use std::AtomicI64|check-prelude std-sync-atomic-i64 root alias for std::sync::AtomicI64; docs/stdlib/modules/sync.md
 use std::BinaryHeap|check-prelude std-collections-heap root alias for std::collections::BinaryHeap[T]; docs/stdlib/modules/collections.md
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row

@@ -126,6 +126,9 @@ identifies the exact case:
 - `std-error-basic.ari`: source `std::error::Kind` and compact `Error`
   behavior, POSIX errno mapping, root aliases, predicate helpers, string names,
   direct `Result[T, Error]` conversion, and raw scalar compatibility bridges.
+- `std-error-integration.ari`: shared `Error`/`ErrorKind` aliases in
+  fs/io/net/os/process, errno-result conversion, conversion trait adapters, and
+  `Display`/`Debug` output stability.
 - `std-c-interop.ari`: source `std::c` C ABI string views, zone-backed
   NUL-terminated `CString`, libc alias calls, POSIX errno mapping, dynamic
   loader handles, and root aliases.
