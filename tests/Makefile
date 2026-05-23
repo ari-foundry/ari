@@ -146,6 +146,10 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-uninferred.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-function-pointer-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-mismatch.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-mismatch.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-function-unknown-type-arg.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-unknown-type-arg.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-unknown-type-arg.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-unknown-type-arg.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-return-substitution-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-return-substitution-mismatch.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-return-substitution-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-return-substitution-mismatch.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-duplicate-param.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-duplicate-param.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-duplicate-param.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-duplicate-param.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-nongeneric-type-args.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-nongeneric-type-args.diagnostic
@@ -4477,6 +4481,10 @@ check-generics: $(TARGET)
 	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-function-pointer-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-function-value-unexpected.ari -o $(BUILD_DIR)/generics/generic-function-value-unexpected.elf >$(BUILD_DIR)/generics/generic-function-value-unexpected.err 2>&1; then exit 1; fi
 	grep -q "generic function 'identity' requires an expected function pointer type or a call" $(BUILD_DIR)/generics/generic-function-value-unexpected.err
+	if $(TARGET) tests/cases/generics/errors/generic-function-unknown-type-arg.ari -o $(BUILD_DIR)/generics/generic-function-unknown-type-arg.elf >$(BUILD_DIR)/generics/generic-function-unknown-type-arg.err 2>&1; then exit 1; fi
+	grep -q "unsupported executable type 'Missing'" $(BUILD_DIR)/generics/generic-function-unknown-type-arg.err
+	if $(TARGET) tests/cases/generics/errors/generic-return-substitution-mismatch.ari -o $(BUILD_DIR)/generics/generic-return-substitution-mismatch.elf >$(BUILD_DIR)/generics/generic-return-substitution-mismatch.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected bool, got i64" $(BUILD_DIR)/generics/generic-return-substitution-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-duplicate-param.ari -o $(BUILD_DIR)/generics/generic-duplicate-param.elf >$(BUILD_DIR)/generics/generic-duplicate-param.err 2>&1; then exit 1; fi
 	grep -q "duplicate generic parameter 'T' in function 'same'" $(BUILD_DIR)/generics/generic-duplicate-param.err
 	if $(TARGET) tests/cases/generics/errors/generic-explicit-arity.ari -o $(BUILD_DIR)/generics/generic-explicit-arity.elf >$(BUILD_DIR)/generics/generic-explicit-arity.err 2>&1; then exit 1; fi

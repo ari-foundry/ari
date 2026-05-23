@@ -387,6 +387,8 @@ Checklist:
       declaration collection time
 - [x] keep generic type parameter names scoped ahead of outer type names in
       generic function signatures and bodies
+- [x] reject unknown explicit generic function type arguments and
+      post-substitution return mismatches with source-aware diagnostics
 - [x] reject generated generic specialization name collisions with concrete
       function paths
 - [x] lower explicit generic struct literals and tuple-struct constructors

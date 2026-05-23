@@ -293,6 +293,8 @@ tests/cases/compiler-development/artifact/errors/diagnostic-generic-signature-un
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-specialization-name-conflict.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-uninferred.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-mismatch.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-unknown-type-arg.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-return-substitution-mismatch.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-nongeneric-type-args.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-private-function.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic

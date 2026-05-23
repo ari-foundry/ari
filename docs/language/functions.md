@@ -338,13 +338,13 @@ uppercase names are preferred. Parameter and return type annotations are
 resolved when the generic function is declared; an unbound type name is rejected
 even if the function is never specialized.
 Conflicting inference, missing inference, wrong explicit type-argument counts,
-post-substitution argument or return mismatches, function-pointer
-specialization mismatches, type arguments on non-generic functions, duplicate
-generic parameter names, unbound type names in generic signatures, generated
-specialization name collisions, missing return-only type arguments, generic
-function names used as values without an expected function-pointer type, and
-private generic function access are compile-time errors with source-aware
-diagnostics.
+unknown explicit type arguments, post-substitution argument or return
+mismatches, function-pointer specialization mismatches, type arguments on
+non-generic functions, duplicate generic parameter names, unbound type names in
+generic signatures, generated specialization name collisions, missing
+return-only type arguments, generic function names used as values without an
+expected function-pointer type, and private generic function access are
+compile-time errors with source-aware diagnostics.
 
 Generic functions may use trait bounds with the same static dispatch rules
 described in [Traits](traits.md). Bounds are checked when a concrete

@@ -1,0 +1,10 @@
+fn bad_return[T](value: T) -> T {
+  return 1;
+}
+
+fn main() -> i64 {
+  if bad_return<bool>(false) {
+    return 1;
+  }
+  return 0;
+}

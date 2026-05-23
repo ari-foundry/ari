@@ -165,6 +165,8 @@ Keep fixture names behavior-based:
 - `diagnostic-generic-specialization-name-conflict.diagnostic`
 - `diagnostic-generic-function-pointer-uninferred.diagnostic`
 - `diagnostic-generic-function-pointer-mismatch.diagnostic`
+- `diagnostic-generic-function-unknown-type-arg.diagnostic`
+- `diagnostic-generic-return-substitution-mismatch.diagnostic`
 - `diagnostic-generic-nongeneric-type-args.diagnostic`
 - `diagnostic-generic-private-function.diagnostic`
 - `diagnostic-match-nonexhaustive.diagnostic`
