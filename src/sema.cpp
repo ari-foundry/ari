@@ -18042,19 +18042,31 @@ private:
             return make_string_literal_boundary_expr(expr.loc, expr.string_value, expected);
         }
         if (expr.kind == ExprKind::Name) {
-            std::string generic_name;
-            if (const FunctionDecl* generic = find_generic_function(expr, generic_name)) {
-                if (IrExprPtr ref = check_generic_function_ref_with_expected(expr, *generic, generic_name, expected)) {
-                    return ref;
+            LocalInfo* local_slot = find_local_slot(expr.name);
+            bool concrete_function_matches_expected = false;
+            if (!local_slot) {
+                std::string function_name = resolve_function_name(expr.name);
+                auto function_found = functions_.find(function_name);
+                if (function_found != functions_.end()) {
+                    IrType concrete_type = function_pointer_type(function_found->second, expr.loc);
+                    concrete_function_matches_expected = same_type(concrete_type, expected);
+                }
+            }
+            if (!local_slot && !concrete_function_matches_expected) {
+                std::string generic_name;
+                if (const FunctionDecl* generic = find_generic_function(expr, generic_name)) {
+                    if (IrExprPtr ref = check_generic_function_ref_with_expected(expr, *generic, generic_name, expected)) {
+                        return ref;
+                    }
                 }
             }
             if (is_borrow_type(expected)) {
-                if (LocalInfo* local = find_local_slot(expr.name)) {
-                    if (is_borrow_type(local->type)) {
+                if (local_slot) {
+                    if (is_borrow_type(local_slot->type)) {
                         require_can_borrow_path(
                             expr.loc,
                             expr.name,
-                            *local,
+                            *local_slot,
                             "",
                             expected.qualifier == TypeQualifier::MutRef);
                     }

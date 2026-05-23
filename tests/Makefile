@@ -4357,7 +4357,7 @@ check-generics: $(TARGET)
 	grep -q "_ARNv46identity__G_PassResult_Box_Token___Diagnostic_" $(BUILD_DIR)/generics/generic-function-compiler-shaped.ll
 	grep -q "_ARNv17maybe_or__G_Token" $(BUILD_DIR)/generics/generic-function-compiler-shaped.ll
 	$(TARGET) tests/cases/generics/ok/generic-function-pointer.ari -o $(BUILD_DIR)/generics/generic-function-pointer.elf
-	$(BUILD_DIR)/generics/generic-function-pointer.elf; code=$$?; test $$code -eq 42
+	$(BUILD_DIR)/generics/generic-function-pointer.elf; code=$$?; test $$code -eq 54
 	$(TARGET) tests/cases/generics/ok/generic-function-pointer.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-pointer.ll
 	grep -q "identity__G_i64" $(BUILD_DIR)/generics/generic-function-pointer.ll
 	grep -q "identity__G_bool" $(BUILD_DIR)/generics/generic-function-pointer.ll

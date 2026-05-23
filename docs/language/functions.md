@@ -178,7 +178,10 @@ fn main() -> i64 {
 
 Function names can be used as function pointer values. Local function pointer
 bindings can be called with normal call syntax, and calls are checked against
-the function pointer's parameter and result types.
+the function pointer's parameter and result types. In expected function-pointer
+positions, Ari keeps the same value priority as ordinary names: a local binding
+is used first, then a concrete function with an exactly matching signature, and
+only then a generic function specialization.
 
 Generic function names can also become function pointer values when an expected
 function pointer type selects a concrete specialization:

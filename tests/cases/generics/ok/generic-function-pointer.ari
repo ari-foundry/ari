@@ -1,3 +1,11 @@
+fn plus_two(value: i64) -> i64 {
+  value + 2
+}
+
+fn identity(value: i64) -> i64 {
+  value + 1
+}
+
 fn identity[T](value: T) -> T {
   value
 }
@@ -14,12 +22,19 @@ fn pick_i64_identity() -> fn(i64) -> i64 {
   return identity;
 }
 
+fn pick_bool_identity() -> fn(bool) -> bool {
+  return identity;
+}
+
 fn main() -> i64 {
+  let explicit = identity<i64>(1);
   let local: fn(i64) -> i64 = identity;
   let returned = pick_i64_identity();
-  let ok: fn(bool) -> bool = identity;
+  let ok = pick_bool_identity();
+  let identity: fn(i64) -> i64 = plus_two;
+  let shadowed = apply_i64(identity, 5);
   if apply_bool(ok, true) {
-    apply_i64(identity, 40) + returned(2) + local(0)
+    explicit + local(0) + returned(2) + apply_i64(identity, 40) + shadowed
   } else {
     0
   }

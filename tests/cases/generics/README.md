@@ -13,6 +13,10 @@ Generic aggregate coverage is split on purpose:
   generic specialization keys, generic locals, generic aggregate parameters and
   returns, repeated specialization reuse, typed IR, LLVM symbols, and runtime
   behavior.
+- `ok/generic-function-pointer.ari` locks expected function-pointer
+  specialization, including local shadowing, concrete same-name function
+  priority, and generic fallback when only the generic can match the expected
+  function pointer type.
 - `ok/generic-function-declaration-policy.ari` locks declaration edges that are
   easy to forget: unused type parameters are allowed but require explicit type
   arguments when they cannot be inferred, return-only type parameters require

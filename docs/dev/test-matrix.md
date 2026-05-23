@@ -78,6 +78,9 @@ conflicting inference, insufficient inference, function-pointer inference and
 signature failures, return-context inference limits, unbound type names in
 generic function signatures, generated specialization name collisions, type
 arguments on non-generic functions, and private generic function access.
+`generic-function-pointer.ari` also locks expected-function-pointer name
+priority so local bindings and matching concrete functions are selected before
+generic specialization fallback.
 Generic extern C declarations, uninferred return-only generics without explicit
 type arguments,
 generic function pointer values whose type arguments cannot be selected by an
@@ -361,6 +364,8 @@ Checklist:
 - [x] monomorphize simple generic function calls
 - [x] monomorphize explicit generic function calls such as `identity<i64>(value)`
 - [x] specialize generic function names into function pointer values from expected `fn(...) -> ...` types
+- [x] keep local bindings and exact concrete functions ahead of generic
+      specialization in expected function-pointer name positions
 - [x] lock compiler-shaped generic function specializations with typed IR,
       LLVM fragments, runtime output, and source-aware inference diagnostics
 - [x] validate generic function parameter and return type annotations at
