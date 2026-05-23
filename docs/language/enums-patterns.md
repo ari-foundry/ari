@@ -647,7 +647,9 @@ let nested = match ([1, 2], false) {
 
 Struct values can be matched with named-field patterns, and tuple structs can
 be matched with positional constructor patterns. Named struct patterns must
-mention every field unless they use `..`.
+mention every field unless they use `..`, and each named field must exist and
+appear at most once. Tuple structs reject named-field patterns; use their
+constructor name with positional fields instead.
 
 ```ari
 struct Point {

@@ -12197,17 +12197,17 @@ private:
             }
             case PatternKind::Struct: {
                 if (type.primitive != IrPrimitiveKind::Struct) return;
-                require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
-                if (!pattern.has_rest && pattern.field_names.size() != type.field_names.size()) {
-                    fail(pattern.loc, "struct match pattern must mention all fields or use '..'");
+                const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
+                if (info.tuple_struct) {
+                    fail(pattern.loc, "tuple structs must use positional match patterns");
                 }
-                std::set<std::string> seen_fields;
+                std::vector<std::size_t> field_indexes = validate_struct_pattern_fields(
+                    pattern,
+                    type,
+                    "struct match pattern",
+                    "struct match pattern must mention all fields or use '..'");
                 for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
-                    if (!seen_fields.insert(pattern.field_names[i]).second) {
-                        fail(pattern.elements[i].loc, "duplicate field '" + pattern.field_names[i] + "' in struct match pattern");
-                    }
-                    std::size_t field_index = struct_field_index(pattern.elements[i].loc, type, pattern.field_names[i]);
-                    collect_pattern_bindings(pattern.elements[i], type.field_types[field_index], bindings);
+                    collect_pattern_bindings(pattern.elements[i], type.field_types[field_indexes[i]], bindings);
                 }
                 return;
             }
@@ -13156,17 +13156,17 @@ private:
                          "struct enum payload pattern requires a struct payload, got " +
                              type_name(payload_type));
                 }
-                require_struct_match_pattern_type(payload.loc, payload.case_name, payload_type);
-                if (!payload.has_rest && payload.field_names.size() != payload_type.field_names.size()) {
-                    fail(payload.loc, "struct enum payload pattern must mention all fields or use '..'");
+                const StructInfo& info = require_struct_match_pattern_type(payload.loc, payload.case_name, payload_type);
+                if (info.tuple_struct) {
+                    fail(payload.loc, "tuple structs must use positional enum payload patterns");
                 }
-                std::set<std::string> seen_fields;
+                std::vector<std::size_t> field_indexes = validate_struct_pattern_fields(
+                    payload,
+                    payload_type,
+                    "enum payload pattern",
+                    "struct enum payload pattern must mention all fields or use '..'");
                 for (std::size_t i = 0; i < payload.field_names.size(); ++i) {
-                    const std::string& field_name = payload.field_names[i];
-                    if (!seen_fields.insert(field_name).second) {
-                        fail(payload.elements[i].loc, "duplicate field '" + field_name + "' in enum payload pattern");
-                    }
-                    std::size_t field_index = struct_field_index(payload.elements[i].loc, payload_type, field_name);
+                    std::size_t field_index = field_indexes[i];
                     std::vector<std::uint32_t> nested_path = field_path;
                     nested_path.push_back(static_cast<std::uint32_t>(field_index));
                     lower_enum_payload_product_pattern(
@@ -13880,22 +13880,18 @@ private:
                 fail(pattern.loc, "struct match patterns must be struct patterns, tuple-struct patterns, or _");
         }
 
-        require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
-        if (pattern.field_names.size() != pattern.elements.size()) {
-            throw CompileError("internal error: struct match pattern field/value arity mismatch");
+        const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
+        if (info.tuple_struct) {
+            fail(pattern.loc, "tuple structs must use positional match patterns");
         }
-        if (!pattern.has_rest && pattern.field_names.size() != source_type.field_names.size()) {
-            fail(pattern.loc, "struct match pattern must mention all fields or use '..'");
-        }
-
-        std::set<std::string> seen_fields;
+        std::vector<std::size_t> field_indexes = validate_struct_pattern_fields(
+            pattern,
+            source_type,
+            "struct match pattern",
+            "struct match pattern must mention all fields or use '..'");
         IrExprPtr condition;
         for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
-            const std::string& field_name = pattern.field_names[i];
-            if (!seen_fields.insert(field_name).second) {
-                fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
-            }
-            std::size_t field_index = struct_field_index(pattern.elements[i].loc, source_type, field_name);
+            std::size_t field_index = field_indexes[i];
             IrExprPtr field_condition = lower_tuple_element_match_condition(
                 pattern.elements[i],
                 source_name,
@@ -14501,21 +14497,18 @@ private:
                 break;
         }
 
-        require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
-        if (pattern.field_names.size() != pattern.elements.size()) {
-            throw CompileError("internal error: struct match pattern field/value arity mismatch");
+        const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
+        if (info.tuple_struct) {
+            fail(pattern.loc, "tuple structs must use positional match patterns");
         }
-        if (!pattern.has_rest && pattern.field_names.size() != source_type.field_names.size()) {
-            fail(pattern.loc, "struct match pattern must mention all fields or use '..'");
-        }
-
-        std::set<std::string> seen_fields;
+        std::vector<std::size_t> field_indexes = validate_struct_pattern_fields(
+            pattern,
+            source_type,
+            "struct match pattern",
+            "struct match pattern must mention all fields or use '..'");
         for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
             const std::string& field_name = pattern.field_names[i];
-            if (!seen_fields.insert(field_name).second) {
-                fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
-            }
-            std::size_t field_index = struct_field_index(pattern.elements[i].loc, source_type, field_name);
+            std::size_t field_index = field_indexes[i];
             if (pattern.elements[i].binding_mode != BindingMode::Value) {
                 if (skip_reference_bindings) continue;
                 lower_reference_binding_pattern_from_path(
@@ -18224,6 +18217,37 @@ private:
 
     const std::vector<IrType>& aggregate_field_types(const IrType& type) const {
         return ari_aggregate_field_types(type);
+    }
+
+    std::vector<std::size_t> validate_struct_pattern_fields(
+        const Pattern& pattern,
+        const IrType& type,
+        const std::string& duplicate_context,
+        const std::string& completeness_message = ""
+    ) const {
+        if (pattern.field_names.size() != pattern.elements.size()) {
+            throw CompileError("internal error: struct pattern field/value arity mismatch");
+        }
+
+        std::vector<std::size_t> indexes;
+        indexes.reserve(pattern.field_names.size());
+        std::set<std::string> seen_fields;
+        for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+            const std::string& field_name = pattern.field_names[i];
+            if (!seen_fields.insert(field_name).second) {
+                fail(pattern.elements[i].loc,
+                     "duplicate field '" + field_name + "' in " + duplicate_context);
+            }
+            indexes.push_back(struct_field_index(pattern.elements[i].loc, type, field_name));
+        }
+
+        if (!completeness_message.empty() &&
+            !pattern.has_rest &&
+            pattern.field_names.size() != type.field_names.size()) {
+            fail(pattern.loc, completeness_message);
+        }
+
+        return indexes;
     }
 
     std::size_t struct_field_index(SourceLocation loc, const IrType& type, const std::string& field_name) const {

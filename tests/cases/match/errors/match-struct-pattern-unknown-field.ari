@@ -1,0 +1,11 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+fn main() -> i64 {
+  let point = Point { x: 1, y: 2 };
+  return match point {
+    Point { x, z, y } => x + z + y,
+  };
+}

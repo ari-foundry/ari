@@ -3748,6 +3748,11 @@ check-match: $(TARGET)
 	grep -F -q "insertvalue { i32, { i32, i64 } }" $(BUILD_DIR)/match/match-aggregate-enum-nested-aggregate-payload.ll
 	grep -F -q "extractvalue { i32, { i32, i64 } }" $(BUILD_DIR)/match/match-aggregate-enum-nested-aggregate-payload.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/match/ok/match-aggregate-enum-nested-aggregate-payload.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-nested-aggregate-payload.elf; $(BUILD_DIR)/match/match-aggregate-enum-nested-aggregate-payload.elf; code=$$?; test $$code -eq 31; fi
+	$(TARGET) tests/cases/match/ok/compiler-shaped-aggregates.ari -o $(BUILD_DIR)/match/compiler-shaped-aggregates.elf
+	$(BUILD_DIR)/match/compiler-shaped-aggregates.elf; code=$$?; test $$code -eq 9
+	$(TARGET) tests/cases/match/ok/compiler-shaped-aggregates.ari --emit-llvm $(BUILD_DIR)/match/compiler-shaped-aggregates.ll
+	grep -q "match.expr.arm" $(BUILD_DIR)/match/compiler-shaped-aggregates.ll
+	grep -q "extractvalue" $(BUILD_DIR)/match/compiler-shaped-aggregates.ll
 	if $(TARGET) tests/cases/match/errors/match-expression-type-mismatch.ari -o $(BUILD_DIR)/match/match-expression-type-mismatch.elf >$(BUILD_DIR)/match/match-expression-type-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/match/match-expression-type-mismatch.err
 	if $(TARGET) tests/cases/match/errors/match-literal-nonexhaustive.ari -o $(BUILD_DIR)/match/match-literal-nonexhaustive.elf >$(BUILD_DIR)/match/match-literal-nonexhaustive.err 2>&1; then exit 1; fi
@@ -3780,6 +3785,14 @@ check-match: $(TARGET)
 	grep -q "missing case such as Bits(true, true)" $(BUILD_DIR)/match/match-tuple-struct-missing-hint.err
 	if $(TARGET) tests/cases/match/errors/match-struct-pattern-missing-field.ari -o $(BUILD_DIR)/match/match-struct-pattern-missing-field.elf >$(BUILD_DIR)/match/match-struct-pattern-missing-field.err 2>&1; then exit 1; fi
 	grep -q "struct match pattern must mention all fields or use '..'" $(BUILD_DIR)/match/match-struct-pattern-missing-field.err
+	if $(TARGET) tests/cases/match/errors/match-struct-pattern-duplicate-field.ari -o $(BUILD_DIR)/match/match-struct-pattern-duplicate-field.elf >$(BUILD_DIR)/match/match-struct-pattern-duplicate-field.err 2>&1; then exit 1; fi
+	grep -q "duplicate field 'x' in struct match pattern" $(BUILD_DIR)/match/match-struct-pattern-duplicate-field.err
+	if $(TARGET) tests/cases/match/errors/match-struct-pattern-unknown-field.ari -o $(BUILD_DIR)/match/match-struct-pattern-unknown-field.elf >$(BUILD_DIR)/match/match-struct-pattern-unknown-field.err 2>&1; then exit 1; fi
+	grep -q "struct 'Point' has no field 'z'" $(BUILD_DIR)/match/match-struct-pattern-unknown-field.err
+	if $(TARGET) tests/cases/match/errors/match-struct-pattern-tuple-struct.ari -o $(BUILD_DIR)/match/match-struct-pattern-tuple-struct.elf >$(BUILD_DIR)/match/match-struct-pattern-tuple-struct.err 2>&1; then exit 1; fi
+	grep -q "tuple structs must use positional match patterns" $(BUILD_DIR)/match/match-struct-pattern-tuple-struct.err
+	if $(TARGET) tests/cases/match/errors/match-tuple-struct-pattern-arity.ari -o $(BUILD_DIR)/match/match-tuple-struct-pattern-arity.elf >$(BUILD_DIR)/match/match-tuple-struct-pattern-arity.err 2>&1; then exit 1; fi
+	grep -q "tuple-struct pattern for 'Rgb' has 1 field but value has 2" $(BUILD_DIR)/match/match-tuple-struct-pattern-arity.err
 	if $(TARGET) tests/cases/match/errors/enum-duplicate-case.ari -o $(BUILD_DIR)/match/enum-duplicate-case.elf >$(BUILD_DIR)/match/enum-duplicate-case.err 2>&1; then exit 1; fi
 	grep -q "duplicate enum case constructor 'A'" $(BUILD_DIR)/match/enum-duplicate-case.err
 	if $(TARGET) tests/cases/match/errors/enum-constructor-payload-type.ari -o $(BUILD_DIR)/match/enum-constructor-payload-type.elf >$(BUILD_DIR)/match/enum-constructor-payload-type.err 2>&1; then exit 1; fi

@@ -1,0 +1,134 @@
+enum TokenKind {
+  Ident(i64),
+  Number(i64),
+  Eof,
+}
+
+enum DiagnosticSeverity {
+  Info,
+  Error,
+}
+
+enum SymbolKind {
+  Value,
+  Type,
+}
+
+struct Span {
+  start: i64,
+  end: i64,
+}
+
+struct Token {
+  kind: TokenKind,
+  span: Span,
+}
+
+struct Diagnostic {
+  severity: DiagnosticSeverity,
+  span: Span,
+  code: i64,
+}
+
+struct Symbol {
+  kind: SymbolKind,
+  id: i64,
+}
+
+enum AstNode {
+  Missing,
+  Literal(Token),
+  Binary(Token, Token),
+}
+
+struct WorkItem {
+  pass: i64,
+  node: AstNode,
+}
+
+struct ParserState {
+  current: Token,
+  previous: Token,
+  diagnostic: Diagnostic,
+  symbol: Symbol,
+  work: WorkItem,
+}
+
+fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}
+
+fn kind_score(kind: TokenKind) -> i64 {
+  return match kind {
+    Ident(symbol) => symbol + 1,
+    Number(value) => value + 2,
+    Eof => 3,
+  };
+}
+
+fn severity_score(severity: DiagnosticSeverity) -> i64 {
+  return match severity {
+    Info => 10,
+    Error => 20,
+  };
+}
+
+fn token(kind: TokenKind, start: i64, end: i64) -> Token {
+  return Token { kind: kind, span: Span { start: start, end: end } };
+}
+
+fn token_score(value: Token) -> i64 {
+  return kind_score(value.kind) + span_len(value.span);
+}
+
+fn diagnostic_score(value: Diagnostic) -> i64 {
+  return severity_score(value.severity) + span_len(value.span) + value.code;
+}
+
+fn symbol_score(symbol: Symbol) -> i64 {
+  return match symbol {
+    Symbol { id: 17, .. } => 22,
+    Symbol { id, .. } => id + 7,
+  };
+}
+
+fn ast_score(node: AstNode) -> i64 {
+  return match node {
+    Missing => 0,
+    Literal(value) => token_score(value),
+    Binary(left, right) => token_score(left) + token_score(right),
+  };
+}
+
+fn work_score(item: WorkItem) -> i64 {
+  return item.pass + ast_score(item.node);
+}
+
+fn build_state() -> ParserState {
+  return ParserState {
+    current: token(Ident(4), 10, 14),
+    previous: token(Number(6), 20, 23),
+    diagnostic: Diagnostic {
+      severity: Error,
+      span: Span { start: 30, end: 32 },
+      code: 13,
+    },
+    symbol: Symbol { kind: Type, id: 17 },
+    work: WorkItem {
+      pass: 19,
+      node: Binary(token(Ident(1), 40, 44), token(Number(2), 50, 53)),
+    },
+  };
+}
+
+fn parser_score(state: ParserState) -> i64 {
+  return token_score(state.current) +
+         token_score(state.previous) +
+         diagnostic_score(state.diagnostic) +
+         symbol_score(state.symbol) +
+         work_score(state.work);
+}
+
+fn main() -> i64 {
+  return parser_score(build_state()) - 100;
+}

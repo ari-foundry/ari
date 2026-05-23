@@ -1,0 +1,9 @@
+struct Rgb(i64, bool)
+
+fn main() -> i64 {
+  let color = Rgb(1, true);
+  return match color {
+    Rgb(red) => red,
+    _ => 0,
+  };
+}
