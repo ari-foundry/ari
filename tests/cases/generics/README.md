@@ -13,6 +13,11 @@ Generic aggregate coverage is split on purpose:
   generic specialization keys, generic locals, generic aggregate parameters and
   returns, repeated specialization reuse, typed IR, LLVM symbols, and runtime
   behavior.
+- `ok/generic-function-declaration-policy.ari` locks declaration edges that are
+  easy to forget: unused type parameters are allowed but require explicit type
+  arguments when they cannot be inferred, return-only type parameters require
+  explicit type arguments at call sites, and every explicit type argument still
+  participates in the backend specialization key.
 - `ok/generic-function-modules.ari` keeps generic function names identical
   across two inline modules and checks public module-qualified inferred and
   explicit specializations produce distinct stable backend symbols.
@@ -31,4 +36,5 @@ Generic aggregate coverage is split on purpose:
 - `errors/generic-*.ari` also covers duplicate function type parameters,
   explicit argument count and mismatch errors, insufficient and conflicting
   inference, generic function pointer inference/signature failures, non-generic
-  calls with type arguments, and private generic function access.
+  calls with type arguments, return-context inference limits, and private
+  generic function access.

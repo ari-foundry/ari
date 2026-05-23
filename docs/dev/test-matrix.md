@@ -65,19 +65,22 @@ subset: declaration-side `[T]` parameters, explicit `<T>` call arguments,
 argument inference, expected-function-pointer specialization, generic local
 annotations, generic parameters and returns, nested generic aggregate type
 keys, trait-bound static dispatch, module-cache specialization summaries, and
-deduped backend emission. `generic-function-modules.ari` locks public
-module-qualified inferred and explicit calls plus same helper names in separate
-modules with distinct backend symbols. `generic-function-compiler-shaped.ari`
-covers compiler-shaped `Span`, `Token`, `Diagnostic`, `Box`, `Maybe`, and
+deduped backend emission. `generic-function-declaration-policy.ari` locks
+unused and return-only type parameter policy plus the resulting stable backend
+keys. `generic-function-modules.ari` locks public module-qualified inferred and
+explicit calls plus same helper names in separate modules with distinct backend
+symbols. `generic-function-compiler-shaped.ari` covers compiler-shaped `Span`,
+`Token`, `Diagnostic`, `Box`, `Maybe`, and
 `PassResult` helper flows through runtime output, typed IR, and LLVM fragments.
 The `diagnostic-generic-*` artifacts lock source-aware failures for wrong
 explicit type-argument count, explicit mismatch, duplicate type parameters,
 conflicting inference, insufficient inference, function-pointer inference and
-signature failures, type arguments on non-generic functions, and private
-generic function access. Generic extern C declarations, uninferred return-only
-generics without an expected type, generic function pointer values whose type
-arguments cannot be selected by an expected `fn(...) -> ...` type, and broad
-higher-rank or defaulted generic features remain unsupported by design.
+signature failures, return-context inference limits, type arguments on
+non-generic functions, and private generic function access. Generic extern C
+declarations, uninferred return-only generics without explicit type arguments,
+generic function pointer values whose type arguments cannot be selected by an
+expected `fn(...) -> ...` type, and broad higher-rank or defaulted generic
+features remain unsupported by design.
 
 ## Standard Library Coverage Note
 

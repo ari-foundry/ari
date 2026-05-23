@@ -130,6 +130,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-inference-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-inference-conflict.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-uninferred.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-uninferred.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-uninferred.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-return-context-uninferred.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-return-context-uninferred.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-return-context-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-return-context-uninferred.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-function-pointer-uninferred.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-uninferred.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-uninferred.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-function-pointer-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-mismatch.diagnostic
@@ -4329,6 +4331,14 @@ check-generics: $(TARGET)
 	$(BUILD_DIR)/generics/vector-generic-root-param.elf; code=$$?; test $$code -eq 5
 	$(TARGET) tests/cases/generics/ok/generic-function-specializations.ari -o $(BUILD_DIR)/generics/generic-function-specializations.elf
 	$(BUILD_DIR)/generics/generic-function-specializations.elf; code=$$?; test $$code -eq 21
+	$(TARGET) tests/cases/generics/ok/generic-function-declaration-policy.ari -o $(BUILD_DIR)/generics/generic-function-declaration-policy.elf
+	$(BUILD_DIR)/generics/generic-function-declaration-policy.elf; code=$$?; test $$code -eq 31
+	$(TARGET) tests/cases/generics/ok/generic-function-declaration-policy.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-declaration-policy.ll
+	test $$(grep -c 'define i64 @"_ARNv19marker_value__G_i64"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
+	test $$(grep -c 'define i64 @"_ARNv20marker_value__G_bool"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
+	test $$(grep -c 'define i64 @"_ARNv17make_value__G_i64"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
+	test $$(grep -c 'define i64 @"_ARNv28keep_with_marker__G_i64_bool"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
+	test $$(grep -c 'define i64 @"_ARNv24choose_first__G_i64_bool"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
 	$(TARGET) tests/cases/generics/ok/generic-function-modules.ari -o $(BUILD_DIR)/generics/generic-function-modules.elf
 	$(BUILD_DIR)/generics/generic-function-modules.elf; code=$$?; test $$code -eq 15
 	$(TARGET) tests/cases/generics/ok/generic-function-modules.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-modules.ll
@@ -4402,6 +4412,8 @@ check-generics: $(TARGET)
 	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-inference-conflict.err
 	if $(TARGET) tests/cases/generics/errors/generic-uninferred.ari -o $(BUILD_DIR)/generics/generic-uninferred.elf >$(BUILD_DIR)/generics/generic-uninferred.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' could not be inferred for 'make'" $(BUILD_DIR)/generics/generic-uninferred.err
+	if $(TARGET) tests/cases/generics/errors/generic-return-context-uninferred.ari -o $(BUILD_DIR)/generics/generic-return-context-uninferred.elf >$(BUILD_DIR)/generics/generic-return-context-uninferred.err 2>&1; then exit 1; fi
+	grep -q "generic type 'T' could not be inferred for 'make_value'" $(BUILD_DIR)/generics/generic-return-context-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-constructor-uninferred.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-uninferred.elf >$(BUILD_DIR)/generics/generic-enum-constructor-uninferred.err 2>&1; then exit 1; fi
 	grep -q "cannot infer type argument 'T' for enum case 'std::None'" $(BUILD_DIR)/generics/generic-enum-constructor-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-constructor-arity.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-arity.elf >$(BUILD_DIR)/generics/generic-enum-constructor-arity.err 2>&1; then exit 1; fi

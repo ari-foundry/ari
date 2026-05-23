@@ -288,6 +288,7 @@ tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-mis
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-duplicate-param.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-inference-conflict.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-uninferred.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-return-context-uninferred.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-uninferred.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-mismatch.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-nongeneric-type-args.diagnostic

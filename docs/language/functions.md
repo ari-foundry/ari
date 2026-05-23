@@ -321,13 +321,16 @@ when those aggregate shapes are otherwise supported by the backend.
 Generic parameters may appear in parameter types, return types, local type
 annotations, aggregate fields, enum payloads, and helper-call chains. Ari infers
 type arguments from ordinary call arguments and expected function-pointer
-types. Return-only type parameters need an explicit call type argument or an
-expected type from a checked construct that the compiler already supports.
+types. Return-only type parameters need an explicit call type argument today;
+local annotations and assignment targets are checked after generic call
+selection and do not infer a generic call's missing type arguments. Expected
+function-pointer types can still specialize a generic function name used as a
+value, such as `let op: fn(i64) -> i64 = identity;`.
 Conflicting inference, missing inference, wrong explicit type-argument counts,
 post-substitution argument or return mismatches, function-pointer
 specialization mismatches, type arguments on non-generic functions, duplicate
-generic parameter names, and private generic function access are compile-time
-errors with source-aware diagnostics.
+generic parameter names, missing return-only type arguments, and private
+generic function access are compile-time errors with source-aware diagnostics.
 
 Generic functions may use trait bounds with the same static dispatch rules
 described in [Traits](traits.md). Bounds are checked when a concrete

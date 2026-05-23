@@ -160,6 +160,7 @@ Keep fixture names behavior-based:
 - `diagnostic-generic-duplicate-param.diagnostic`
 - `diagnostic-generic-inference-conflict.diagnostic`
 - `diagnostic-generic-uninferred.diagnostic`
+- `diagnostic-generic-return-context-uninferred.diagnostic`
 - `diagnostic-generic-function-pointer-uninferred.diagnostic`
 - `diagnostic-generic-function-pointer-mismatch.diagnostic`
 - `diagnostic-generic-nongeneric-type-args.diagnostic`
