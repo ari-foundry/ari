@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="recursive aggregate value type 'Node[T]' requires indirection" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/generics/errors/generic-aggregate-recursive-struct.ari" display="tests/cases/generics/errors/generic-aggregate-recursive-struct.ari" bytes=85
+  Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-aggregate-recursive-struct.ari" line=3 column=10 end_line=3 end_column=14 byte_start=40 byte_end=44 message=""
+  Snippet label=0 text="  --> tests/cases/generics/errors/generic-aggregate-recursive-struct.ari:3:10\n   |\n 3 |   child: Node[T],\n   |          ^^^^"

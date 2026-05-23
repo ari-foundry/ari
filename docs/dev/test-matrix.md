@@ -397,6 +397,8 @@ Checklist:
       stdlib name-specific correctness hooks
 - [x] reject directly recursive aggregate value layouts with a stable
       indirection diagnostic
+- [x] pin source-aware generic aggregate diagnostics for nested concrete type
+      identity mismatches and direct recursive value layout rejection
 - [x] specialize generic inherent impl methods with `self` receivers
 - [x] specialize generic trait impl methods with `self` receivers
 - [x] enforce generic impl bounds at specialization sites

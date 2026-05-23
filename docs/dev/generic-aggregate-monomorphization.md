@@ -107,10 +107,14 @@ Negative fixtures:
 Artifact coverage:
 
 - `tests/cases/compiler-development/artifact/ok/generic-aggregate-monomorphization.ir`
+- `tests/cases/compiler-development/artifact/errors/diagnostic-generic-aggregate-nested-mismatch.diagnostic`
+- `tests/cases/compiler-development/artifact/errors/diagnostic-generic-aggregate-recursive-struct.diagnostic`
 
-The artifact is generated with `--no-implicit-std` to keep it focused on user
-generic aggregates and to make concrete type names, nested match payloads, and
-owned generic fields visible.
+The typed IR artifact is generated with `--no-implicit-std` to keep it focused
+on user generic aggregates and to make concrete type names, nested match
+payloads, and owned generic fields visible. The diagnostic artifacts pin
+source-aware spans for a nested concrete identity mismatch and the intentionally
+unsupported direct recursive value layout case.
 
 ## Adding A New Case
 

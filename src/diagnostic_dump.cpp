@@ -263,6 +263,7 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "type mismatch") ||
         contains(diagnostic, "type arguments") ||
         contains(diagnostic, "type argument") ||
+        contains(diagnostic, "recursive aggregate value type") ||
         contains(diagnostic, "generic type") ||
         contains(diagnostic, "generic function") ||
         contains(diagnostic, "generic parameter") ||
