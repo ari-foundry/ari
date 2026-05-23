@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=205
+CompilerArtifactFixtures version=1 group=all entries=211
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -67,6 +67,8 @@ CompilerArtifactFixtures version=1 group=all entries=205
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-return.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-return.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-lexer-unicode-escape-eof.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unicode-escape-eof.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-unterminated-block-comment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unterminated-block-comment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-unterminated-string.ari
@@ -107,6 +109,10 @@ CompilerArtifactFixtures version=1 group=all entries=205
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ownership-vector-dynamic-move.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-expected.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-expected.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-malformed-expression.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-malformed-expression.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-malformed-struct-field.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-malformed-struct-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-top-level.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-top-level.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-private-access.ari

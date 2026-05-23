@@ -129,9 +129,9 @@ the same language surface that normal Ari users get.
 - `artifact/ok/runtime-output-basic.*` and `runtime-output-trait.*`:
   executable stdout goldens that run only after earlier frontend, typed IR, and
   backend artifacts are stable.
-- `artifact/errors/diagnostic-*.diagnostic`: lexer, parser, module
-  missing/ambiguous/cyclic validation, imported-file source identity,
-  unknown-name, duplicate-name,
+- `artifact/errors/diagnostic-*.diagnostic`: lexer EOF edges, parser malformed
+  declaration/expression spans, module missing/ambiguous/cyclic validation,
+  imported-file source identity, unknown-name, duplicate-name,
   wrong-arity, wrong-argument, invalid-return, invalid-assignment, trait, and
   ownership diagnostic code/family/span golden seeds, including use-after-move,
   moving borrowed owners, invalid partial moves, and dynamic owner element

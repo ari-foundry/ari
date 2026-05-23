@@ -361,8 +361,14 @@ Current compiler-development tests:
   driver is available.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic`:
   lexer diagnostic golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unicode-escape-eof.diagnostic`:
+  lexer EOF-edge diagnostic golden for an unterminated Unicode escape checked
+  through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic`:
   parser diagnostic-code golden checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-expression.diagnostic`
+  and `diagnostic-parser-malformed-struct-field.diagnostic`: malformed
+  expression and declaration span goldens checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic`:
   module diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.diagnostic`
