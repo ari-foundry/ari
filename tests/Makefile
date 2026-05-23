@@ -3780,6 +3780,12 @@ check-match: $(TARGET)
 	grep -q "missing case such as Bits(true, true)" $(BUILD_DIR)/match/match-tuple-struct-missing-hint.err
 	if $(TARGET) tests/cases/match/errors/match-struct-pattern-missing-field.ari -o $(BUILD_DIR)/match/match-struct-pattern-missing-field.elf >$(BUILD_DIR)/match/match-struct-pattern-missing-field.err 2>&1; then exit 1; fi
 	grep -q "struct match pattern must mention all fields or use '..'" $(BUILD_DIR)/match/match-struct-pattern-missing-field.err
+	if $(TARGET) tests/cases/match/errors/enum-duplicate-case.ari -o $(BUILD_DIR)/match/enum-duplicate-case.elf >$(BUILD_DIR)/match/enum-duplicate-case.err 2>&1; then exit 1; fi
+	grep -q "duplicate enum case constructor 'A'" $(BUILD_DIR)/match/enum-duplicate-case.err
+	if $(TARGET) tests/cases/match/errors/enum-constructor-payload-type.ari -o $(BUILD_DIR)/match/enum-constructor-payload-type.elf >$(BUILD_DIR)/match/enum-constructor-payload-type.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected i32, got bool" $(BUILD_DIR)/match/enum-constructor-payload-type.err
+	if $(TARGET) tests/cases/match/errors/match-unknown-enum-case.ari -o $(BUILD_DIR)/match/match-unknown-enum-case.elf >$(BUILD_DIR)/match/match-unknown-enum-case.err 2>&1; then exit 1; fi
+	grep -q "unknown enum case 'Missing'" $(BUILD_DIR)/match/match-unknown-enum-case.err
 	if $(TARGET) tests/cases/match/errors/match-enum-payload-literal-nonexhaustive.ari -o $(BUILD_DIR)/match/match-enum-payload-literal-nonexhaustive.elf >$(BUILD_DIR)/match/match-enum-payload-literal-nonexhaustive.err 2>&1; then exit 1; fi
 	grep -q "match must cover all cases of enum 'OptionI32'" $(BUILD_DIR)/match/match-enum-payload-literal-nonexhaustive.err
 	if $(TARGET) tests/cases/match/errors/match-enum-bool-payload-literal-nonexhaustive.ari -o $(BUILD_DIR)/match/match-enum-bool-payload-literal-nonexhaustive.elf >$(BUILD_DIR)/match/match-enum-bool-payload-literal-nonexhaustive.err 2>&1; then exit 1; fi
@@ -5162,6 +5168,20 @@ check-structs: $(TARGET)
 	grep -q "cannot assign to field of immutable binding 'meter'" $(BUILD_DIR)/structs/struct-field-immutable-binding.err
 	if $(TARGET) tests/cases/structs/errors/struct-field-unknown.ari -o $(BUILD_DIR)/structs/struct-field-unknown.elf >$(BUILD_DIR)/structs/struct-field-unknown.err 2>&1; then exit 1; fi
 	grep -q "struct 'Point' has no field 'y'" $(BUILD_DIR)/structs/struct-field-unknown.err
+	if $(TARGET) tests/cases/structs/errors/struct-literal-missing-field.ari -o $(BUILD_DIR)/structs/struct-literal-missing-field.elf >$(BUILD_DIR)/structs/struct-literal-missing-field.err 2>&1; then exit 1; fi
+	grep -q "missing field 'y' in struct literal for 'Point'" $(BUILD_DIR)/structs/struct-literal-missing-field.err
+	if $(TARGET) tests/cases/structs/errors/struct-literal-extra-field.ari -o $(BUILD_DIR)/structs/struct-literal-extra-field.elf >$(BUILD_DIR)/structs/struct-literal-extra-field.err 2>&1; then exit 1; fi
+	grep -q "extra field 'y' in struct literal for 'Point'" $(BUILD_DIR)/structs/struct-literal-extra-field.err
+	if $(TARGET) tests/cases/structs/errors/struct-constant-literal-missing-field.ari -o $(BUILD_DIR)/structs/struct-constant-literal-missing-field.elf >$(BUILD_DIR)/structs/struct-constant-literal-missing-field.err 2>&1; then exit 1; fi
+	grep -q "missing field 'y' in struct literal for 'Point'" $(BUILD_DIR)/structs/struct-constant-literal-missing-field.err
+	if $(TARGET) tests/cases/structs/errors/struct-constant-literal-extra-field.ari -o $(BUILD_DIR)/structs/struct-constant-literal-extra-field.elf >$(BUILD_DIR)/structs/struct-constant-literal-extra-field.err 2>&1; then exit 1; fi
+	grep -q "extra field 'y' in struct literal for 'Point'" $(BUILD_DIR)/structs/struct-constant-literal-extra-field.err
+	if $(TARGET) tests/cases/structs/errors/struct-literal-duplicate-field.ari -o $(BUILD_DIR)/structs/struct-literal-duplicate-field.elf >$(BUILD_DIR)/structs/struct-literal-duplicate-field.err 2>&1; then exit 1; fi
+	grep -q "duplicate field 'x' in struct literal" $(BUILD_DIR)/structs/struct-literal-duplicate-field.err
+	if $(TARGET) tests/cases/structs/errors/struct-literal-field-type.ari -o $(BUILD_DIR)/structs/struct-literal-field-type.elf >$(BUILD_DIR)/structs/struct-literal-field-type.err 2>&1; then exit 1; fi
+	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/structs/struct-literal-field-type.err
+	if $(TARGET) tests/cases/structs/errors/struct-field-access-non-struct.ari -o $(BUILD_DIR)/structs/struct-field-access-non-struct.elf >$(BUILD_DIR)/structs/struct-field-access-non-struct.err 2>&1; then exit 1; fi
+	grep -q "field access requires a struct value, got i64" $(BUILD_DIR)/structs/struct-field-access-non-struct.err
 	if $(TARGET) tests/cases/traits/errors/impl-associated-private.ari -o $(BUILD_DIR)/structs/impl-associated-private.elf >$(BUILD_DIR)/structs/impl-associated-private.err 2>&1; then exit 1; fi
 	grep -q "method 'new' for type Factory::Point is not public" $(BUILD_DIR)/structs/impl-associated-private.err
 	if $(TARGET) tests/cases/traits/errors/impl-associated-unknown.ari -o $(BUILD_DIR)/structs/impl-associated-unknown.elf >$(BUILD_DIR)/structs/impl-associated-unknown.err 2>&1; then exit 1; fi

@@ -277,6 +277,10 @@ Named structs use `Type { field: value }` literals and `value.field` access.
 Tuple structs use function-style construction and positional access such as
 `pair.0`. Assigning through a field requires both a `var` binding and a field
 declared with `mut`; immutable fields remain readable but cannot be assigned.
+Named struct literals must mention each field exactly once. Missing, extra, or
+duplicate field names are rejected before lowering, and every field value must
+match the declared field type. Field access on non-struct values is also
+rejected instead of being treated as a dynamic lookup.
 
 Inherent impl blocks can provide constructor-style associated functions. The
 preferred spelling is `T::new(...)`, implemented as an ordinary static call:

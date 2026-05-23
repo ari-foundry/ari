@@ -1,0 +1,10 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+const BAD: Point = Point { x: 1 };
+
+fn main() -> i64 {
+  return BAD.x;
+}

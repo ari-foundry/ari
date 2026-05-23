@@ -11715,18 +11715,17 @@ private:
         IrType literal_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
         require_assignable(expr.loc, expected, literal_type);
         const ExprFieldNames& field_names = expr_field_names(expr);
-        if (literal_type.field_names.size() != field_names.size()) {
-            fail(expr.loc,
-                 "struct literal for '" + literal_type.name + "' expects " +
-                     std::to_string(literal_type.field_names.size()) + " field" +
-                     (literal_type.field_names.size() == 1 ? "" : "s"));
-        }
 
         std::map<std::string, const Expr*> values;
         for (std::size_t i = 0; i < field_names.size(); ++i) {
             const std::string& field_name = field_names[i];
             if (!values.emplace(field_name, expr.args[i].get()).second) {
                 fail(expr.loc, "duplicate field '" + field_name + "' in struct literal");
+            }
+            if (std::find(literal_type.field_names.begin(), literal_type.field_names.end(), field_name) ==
+                literal_type.field_names.end()) {
+                fail(expr.loc,
+                     "extra field '" + field_name + "' in struct literal for '" + literal_type.name + "'");
             }
         }
 
@@ -18667,18 +18666,22 @@ private:
             warn_deprecated_use(expr.loc, "struct", info.name, info.deprecated_message);
         }
         const ExprFieldNames& field_names = expr_field_names(expr);
-        if (info.fields.size() != field_names.size()) {
-            fail(expr.loc,
-                 "struct literal for '" + info.name + "' expects " +
-                     std::to_string(info.fields.size()) + " field" +
-                     (info.fields.size() == 1 ? "" : "s"));
-        }
 
         std::map<std::string, const Expr*> values;
         for (std::size_t i = 0; i < field_names.size(); ++i) {
             const std::string& field_name = field_names[i];
             if (!values.emplace(field_name, expr.args[i].get()).second) {
                 fail(expr.loc, "duplicate field '" + field_name + "' in struct literal");
+            }
+            bool known_field = false;
+            for (const auto& field : info.fields) {
+                if (field.name == field_name) {
+                    known_field = true;
+                    break;
+                }
+            }
+            if (!known_field) {
+                fail(expr.loc, "extra field '" + field_name + "' in struct literal for '" + info.name + "'");
             }
         }
 

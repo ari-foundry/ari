@@ -13,6 +13,9 @@ Enum cases can have no payload, one payload written with `Case(T)`, or a
 positional payload list such as `Case(T, U, V)`.
 Cases are comma-separated. A trailing comma is accepted; semicolons are
 reserved for statements and are rejected inside enum case lists.
+Case constructor names must be unique in their module. Payload constructors
+check both arity and payload type, and pattern positions reject unknown enum
+case names instead of treating them as open-ended variants.
 Generic enum declarations use square brackets:
 
 ```ari
