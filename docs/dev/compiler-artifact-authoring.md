@@ -152,6 +152,10 @@ Keep fixture names behavior-based:
 - `diagnostic-borrow-after-move.diagnostic`
 - `diagnostic-double-move.diagnostic`
 - `diagnostic-enum-payload-invalid-move.diagnostic`
+- `diagnostic-match-branch-state-mismatch.diagnostic`
+- `diagnostic-stored-owned-enum-payload-undropped.diagnostic`
+- `diagnostic-match-runtime-owned-enum-payload-undropped.diagnostic`
+- `diagnostic-runtime-owned-enum-conditional-payload-slot-move.diagnostic`
 - `diagnostic-compact-enum-payload-ref.diagnostic`
 - `diagnostic-c-header-large-aggregate-by-value.diagnostic`
 - `diagnostic-c-header-large-aggregate-enum-by-value.diagnostic`

@@ -311,6 +311,10 @@ tests/cases/compiler-development/artifact/errors/diagnostic-enum-constructor-pay
 tests/cases/compiler-development/artifact/errors/diagnostic-enum-duplicate-case.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-count.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid-move.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-match-branch-state-mismatch.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-stored-owned-enum-payload-undropped.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-match-runtime-owned-enum-payload-undropped.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-runtime-owned-enum-conditional-payload-slot-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-aggregate-enum-payload.diagnostic

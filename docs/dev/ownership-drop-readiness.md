@@ -84,7 +84,11 @@ The artifact suite currently locks these ownership/drop surfaces:
 - `diagnostic-return-live-owner.diagnostic`
 - `diagnostic-loop-break-live-owner.diagnostic`
 - `diagnostic-loop-continue-live-owner.diagnostic`
+- `diagnostic-match-branch-state-mismatch.diagnostic`
 - `diagnostic-enum-payload-invalid-move.diagnostic`
+- `diagnostic-stored-owned-enum-payload-undropped.diagnostic`
+- `diagnostic-match-runtime-owned-enum-payload-undropped.diagnostic`
+- `diagnostic-runtime-owned-enum-conditional-payload-slot-move.diagnostic`
 - `diagnostic-compact-enum-payload-ref.diagnostic`
 - `diagnostic-ownership-aggregate-enum-payload.diagnostic`
 - `diagnostic-borrow-aggregate-enum-payload.diagnostic`
@@ -101,10 +105,11 @@ borrows, generic `Box`/`Slot` field ownership, `Vec[WorkItem]` owner moves and
 reinitialization, result-like enum matching, and deterministic `Drop` calls.
 The diagnostic goldens above lock assignment-while-borrowed, field assignment
 while a subpath is borrowed, borrow-after-move, double-move, live-owner
-return/break/continue exits, invalid enum payload-slot moves, partial aggregate
-moves, and dynamic indexed container owner moves as source-aware ownership
-errors. The temporary aggregate element owner moves use the same O0001 artifact
-family.
+return/break/continue exits, match arm ownership-state mismatches, invalid enum payload-slot moves,
+undropped stored or matched enum owners, conditional runtime-owned enum
+payload-slot moves, partial aggregate moves, and dynamic indexed container
+owner moves as source-aware ownership errors. The temporary aggregate element owner moves
+use the same O0001 artifact family.
 
 ## Adding Tests
 
