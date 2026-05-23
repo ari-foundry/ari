@@ -22649,7 +22649,7 @@ private:
             }
         }
         for (std::size_t i = 0; i < fn.params.size(); ++i) {
-            infer_generic_type(expr.loc, fn.params[i].type, args[i]->type, fn.generics, substitutions);
+            infer_generic_type(expr.args[i]->loc, fn.params[i].type, args[i]->type, fn.generics, substitutions);
         }
         for (const auto& generic : fn.generics) {
             if (!substitutions.count(generic.name)) {

@@ -5,6 +5,10 @@ enum Step {
 
 fn choose(limit: i64) -> i64 {
   var total = 0;
+  {
+    total = total + 0;
+  }
+
   init index = 0 while index < limit {
     if index == 2 {
       continue;

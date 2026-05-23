@@ -73,8 +73,7 @@ Status meanings:
 | Feature | Status | Read | Tests |
 | --- | --- | --- | --- |
 | token, syntax, diagnostic, source-map artifact dumps | implemented seed | [Compiler Artifact Testing](../dev/compiler-artifact-testing.md) | `make check-compiler-artifacts` |
-| compiler-shaped model fixtures | implemented seed | [Compiler Readiness Inventory](../dev/compiler-readiness-inventory.md) | `tests/cases/compiler-development/ok/model/`, `make check-compiler-development` |
-| implementation playbook and next slices | implemented docs | [Compiler Implementation Playbook](../dev/compiler-implementation-playbook.md), [Compiler Next Slices](../dev/compiler-next-slices.md) | `make check-compiler-dev-docs` |
+| implementation playbook and next slices | implemented docs | [Compiler Implementation Playbook](../dev/compiler-implementation-playbook.md), [Compiler Next Slices](../dev/compiler-next-slices.md) | docs-only |
 | bootstrap implementation | not started | [Bootstrap Readiness](../dev/bootstrap-readiness.md) | readiness fixtures only |
 
 ## How To Use This Page
@@ -95,6 +94,6 @@ When developing the compiler:
 1. Find the feature family in this page.
 2. Read the linked language doc, [Feature Crosswalk](feature-crosswalk.md), and
    matching dev doc.
-3. Add one `ok`, `errors`, `artifact`, or `compiler-development/ok/model`
-   fixture that proves the changed behavior.
+3. Add one focused `ok`, `errors`, or `artifact` fixture that proves the
+   changed behavior.
 4. Run the narrow target named by the docs before broad checks.

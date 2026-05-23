@@ -3,5 +3,5 @@ Program source=tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
     Body
       VarDecl name=value let @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:7 source_id=0 bytes=25..30
         Integer value=42 suffix=i64 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:15 source_id=0 bytes=33..38
-      Return @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10 source_id=0 bytes=49..54
+      Return @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:3 source_id=0 bytes=42..48
         Name value=value @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10 source_id=0 bytes=49..54

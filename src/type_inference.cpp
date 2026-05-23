@@ -10,7 +10,38 @@ namespace ari {
 namespace {
 
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    throw CompileError(std::move(loc), message);
+}
+
+bool valid_label_span(SourceLocation loc) {
+    Span span = span_from_location(loc);
+    return span_has_source(span) && span_has_valid_order(span);
+}
+
+[[noreturn]] void fail_generic_inference_conflict(SourceLocation loc,
+                                                  const std::string& name,
+                                                  const IrType& first,
+                                                  const IrType& second) {
+    std::string first_type = type_name(first);
+    std::string second_type = type_name(second);
+    CompileError error(
+        std::move(loc),
+        "generic type '" + name + "' inferred as both " + first_type + " and " + second_type);
+    if (valid_label_span(first.loc)) {
+        error.add_label(DiagnosticLabel{
+            span_from_location(first.loc),
+            "first inferred '" + name + "' as " + first_type,
+            false});
+    }
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "generic type inference must choose one concrete type for '" + name + "'",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "make every use of '" + name + "' agree, or pass explicit type arguments",
+        DiagnosticNoteKind::Help});
+    throw error;
 }
 
 bool is_generic_type_name(const std::vector<GenericParam>& generics, const std::string& name) {
@@ -36,9 +67,7 @@ void bind_generic_type(SourceLocation loc,
         return;
     }
     if (!same_type_or_char_u8_boundary(found->second, binding)) {
-        fail(loc,
-             "generic type '" + name + "' inferred as both " +
-                 type_name(found->second) + " and " + type_name(binding));
+        fail_generic_inference_conflict(loc, name, found->second, binding);
     }
 }
 

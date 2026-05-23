@@ -1,4 +1,4 @@
 diagnostic error code=O0001 family=ownership message="owning binding 'item' must be moved or dropped before return" sources=1 labels=1 notes=0 helps=0
   Source source_id=0 kind=file path="tests/cases/match/errors/stored-owned-enum-payload-undropped.ari" display="tests/cases/match/errors/stored-owned-enum-payload-undropped.ari" bytes=248
-  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/stored-owned-enum-payload-undropped.ari" line=18 column=10 end_line=18 end_column=11 byte_start=243 byte_end=244 message=""
-  Snippet label=0 text="  --> tests/cases/match/errors/stored-owned-enum-payload-undropped.ari:18:10\n    |\n 18 |   return 0;\n    |          ^"
+  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/stored-owned-enum-payload-undropped.ari" line=18 column=3 end_line=18 end_column=9 byte_start=236 byte_end=242 message=""
+  Snippet label=0 text="  --> tests/cases/match/errors/stored-owned-enum-payload-undropped.ari:18:3\n    |\n 18 |   return 0;\n    |   ^^^^^^"

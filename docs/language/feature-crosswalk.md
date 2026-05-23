@@ -38,7 +38,7 @@ in executable code. Parsed syntax is not always lowered all the way to LLVM.
 | --- | --- | --- | --- | --- |
 | Structs and field access | [Types](types.md) | `struct Point` in [Language Tour](language-tour.md) | `tests/cases/structs/` | `make check-structs` |
 | Enums and statement `match` | [Enums And Pattern Matching](enums-patterns.md) | `enum ScoreResult` in [Language Tour](language-tour.md) | `tests/cases/match/` | `make check-match` |
-| Generic structs and enums | [Types](types.md), [Feature Status](feature-status.md) | compiler model fixtures | `tests/cases/generics/`, `tests/cases/compiler-development/ok/model/` | `make check-generics` or `make check-compiler-development` |
+| Generic structs and enums | [Types](types.md), [Feature Status](feature-status.md) | generic aggregate fixtures | `tests/cases/generics/` | `make check-generics` |
 | Inline modules | [Modules](modules.md) | `mod Math { ... }` in [Language Tour](language-tour.md) | `tests/cases/modules/` | `make check-modules` |
 | File-backed modules | [Modules](modules.md), [Getting Started](getting-started.md) | `mod math;` in [Getting Started](getting-started.md) | `tests/cases/modules/`, `tests/packages/` | `make check-modules` |
 | Visibility and qualified names | [Modules](modules.md) | `Math::double(base)` in [Language Tour](language-tour.md) | `tests/cases/modules/` | `make check-modules` |
@@ -59,18 +59,18 @@ in executable code. Parsed syntax is not always lowered all the way to LLVM.
 
 | Feature | Read | Example | Tests | Small check |
 | --- | --- | --- | --- | --- |
-| Source identity and spans | [Compiler Source Identity](../dev/compiler-source-identity.md) | `compiler-source-identity.ari` | `tests/cases/compiler-development/ok/model/` | `make check-compiler-development` |
+| Source identity and spans | [Compiler Source Identity](../dev/compiler-source-identity.md) | `source-map-utf8.map` | `tests/cases/compiler-development/artifact/ok/` | `make check-compiler-artifacts` |
 | Diagnostic codes and labels | [Compiler Diagnostic Authoring](../dev/compiler-diagnostic-authoring.md) | `diagnostic-parser-expected.diagnostic` | `tests/cases/compiler-development/artifact/errors/` | `make check-compiler-artifacts` |
 | Artifact producers and goldens | [Compiler Artifact Authoring](../dev/compiler-artifact-authoring.md) | `token-dump-basic.tokens` | `tests/cases/compiler-development/artifact/ok/` | `make check-compiler-artifacts` |
 | Module/project artifacts | [Compiler Module Project Authoring](../dev/compiler-module-project-authoring.md) | `module-graph-file-module.graph` | `tests/cases/compiler-development/artifact/ok/` | `make check-compiler-artifacts` |
-| Readiness score and start gate | [Compiler Readiness Inventory](../dev/compiler-readiness-inventory.md) | `compiler-readiness-scorecard.ari` | `tests/cases/compiler-development/ok/model/` | `make check-compiler-development` |
+| Bootstrap readiness docs | [Bootstrap Readiness](../dev/bootstrap-readiness.md) | readiness fixtures | `tests/cases/bootstrap-readiness/` | `make check-bootstrap-readiness` |
 
 ## When Docs And Behavior Differ
 
 Treat a mismatch as a compiler-development bug report, not as permission to add
 a private shortcut:
 
-1. Update the closest `ok`, `errors`, `artifact`, or model fixture.
+1. Update the closest `ok`, `errors`, or `artifact` fixture.
 2. Update [Feature Status](feature-status.md) if the implemented state changed.
 3. Update the focused language page if the rule is user-visible.
 4. Update the dev roadmap or readiness inventory if the change moves a

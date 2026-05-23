@@ -99,6 +99,12 @@ def main():
         "CompilerArtifact version=1 option=--emit-pass-summary owner=driver/sema",
     )
 
+    token_output = OUT_DIR / "absolute-output.tokens"
+    ok &= require_success(
+        run_ari("--emit-tokens", token_output),
+        "wrote build/compiler-development/artifact-cli/absolute-output.tokens (token dump)",
+    )
+
     ok &= require_failure(
         run_raw("--explain-artifact", "--emit-bytecode"),
         "unknown compiler artifact option '--emit-bytecode'; use --list-artifacts",

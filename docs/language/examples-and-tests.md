@@ -48,7 +48,7 @@ make check-examples
 | Memory, zones, raw pointers | `tests/cases/memory/` | focused `build/ari ... --check` |
 | C FFI and shared-library surfaces | `tests/cases/ffi/`, `tests/ffi/` | `make check-ffi` |
 | Source standard library behavior | `tests/cases/standard-library/` | `make check-prelude`, `make check-std-api` |
-| Compiler-development models and artifacts | `tests/cases/compiler-development/` | `make check-compiler-development`, `make check-compiler-artifacts` |
+| Compiler artifacts | `tests/cases/compiler-development/artifact/` | `make check-compiler-artifacts` |
 
 ## Reading A Test File
 

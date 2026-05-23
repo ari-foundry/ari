@@ -156,10 +156,8 @@ drop rule it protects.
 ## Tests As Examples
 
 Read `ok/` tests as executable examples and `errors/` tests as expected
-diagnostics. Compiler-development fixtures add two more buckets:
+diagnostics. Compiler artifact fixtures add committed text-output buckets:
 
-- `tests/cases/compiler-development/ok/model/`: Ari programs that model
-  compiler-shaped data.
 - `tests/cases/compiler-development/artifact/ok/`: golden compiler artifacts.
 - `tests/cases/compiler-development/artifact/errors/`: expected diagnostic or
   artifact mismatch outputs.

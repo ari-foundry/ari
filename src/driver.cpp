@@ -34,7 +34,9 @@
 #include <utility>
 #include <vector>
 
+#include <limits.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 namespace ari {
 
@@ -73,6 +75,25 @@ static std::string join_option_names(const std::vector<std::string>& options) {
         joined += options[i];
     }
     return joined;
+}
+
+static std::string display_output_path(const std::string& path) {
+    if (path.empty() || path.front() != '/') return path;
+
+    char cwd_buffer[PATH_MAX];
+    if (!getcwd(cwd_buffer, sizeof(cwd_buffer))) return path;
+    std::string cwd = cwd_buffer;
+    if (path == cwd) return ".";
+    if (path.size() > cwd.size() &&
+        path.compare(0, cwd.size(), cwd) == 0 &&
+        path[cwd.size()] == '/') {
+        return path.substr(cwd.size() + 1);
+    }
+    return path;
+}
+
+static void report_wrote(const std::string& path, const std::string& description) {
+    std::cout << "wrote " << display_output_path(path) << " (" << description << ")\n";
 }
 
 struct ArtifactHelpRow {
@@ -504,20 +525,20 @@ int run(int argc, char** argv) {
     }
     if (!diagnostic_catalog_output.empty()) {
         write_text_file(diagnostic_catalog_output, dump_diagnostic_catalog());
-        std::cout << "wrote " << diagnostic_catalog_output << " (diagnostic catalog)\n";
+        report_wrote(diagnostic_catalog_output, "diagnostic catalog");
         return 0;
     }
     if (!capability_inventory_output.empty()) {
         write_text_file(capability_inventory_output,
                         dump_compiler_capability_inventory(target.triple, implicit_std));
-        std::cout << "wrote " << capability_inventory_output << " (compiler capability inventory)\n";
+        report_wrote(capability_inventory_output, "compiler capability inventory");
         return 0;
     }
     if (!stage_plan_output.empty()) {
         write_text_file(stage_plan_output,
                         dump_compiler_stage_plan(input, target.triple, implicit_std,
                                                  module_search_paths.size(), cfg_features.size()));
-        std::cout << "wrote " << stage_plan_output << " (compiler stage plan)\n";
+        report_wrote(stage_plan_output, "compiler stage plan");
         return 0;
     }
     if (!token_output.empty()) {
@@ -530,7 +551,7 @@ int run(int argc, char** argv) {
         }
         std::vector<Token> tokens = lex_source(read_text_file(input), input);
         write_text_file(token_output, dump_tokens(tokens, input));
-        std::cout << "wrote " << token_output << " (token dump)\n";
+        report_wrote(token_output, "token dump");
         return 0;
     }
     if (!syntax_output.empty()) {
@@ -544,7 +565,7 @@ int run(int argc, char** argv) {
         std::vector<Token> tokens = lex_source(read_text_file(input), input);
         Program syntax = parse_tokens(std::move(tokens), cfg_features, target.triple);
         write_text_file(syntax_output, dump_syntax(syntax, input));
-        std::cout << "wrote " << syntax_output << " (syntax dump)\n";
+        report_wrote(syntax_output, "syntax dump");
         return 0;
     }
     if (!diagnostic_output.empty()) {
@@ -579,7 +600,7 @@ int run(int argc, char** argv) {
                 dump_diagnostic_message("error", classify_diagnostic_code(error.message()), error, input);
         }
         write_text_file(diagnostic_output, diagnostic_artifact);
-        std::cout << "wrote " << diagnostic_output << " (diagnostic dump)\n";
+        report_wrote(diagnostic_output, "diagnostic dump");
         return 0;
     }
 
@@ -609,7 +630,7 @@ int run(int argc, char** argv) {
     }
     if (!metadata_output.empty()) {
         write_text_file(metadata_output, serialize_module_metadata(loaded.metadata));
-        std::cout << "wrote " << metadata_output << " (module metadata)\n";
+        report_wrote(metadata_output, "module metadata");
     }
     if (!source_map_output.empty()) {
         std::vector<SourceMapDumpFile> files;
@@ -621,18 +642,18 @@ int run(int argc, char** argv) {
             });
         }
         write_text_file(source_map_output, dump_source_map(input, std::move(files)));
-        std::cout << "wrote " << source_map_output << " (source map dump)\n";
+        report_wrote(source_map_output, "source map dump");
         return 0;
     }
     if (!module_graph_output.empty()) {
         write_text_file(module_graph_output, dump_module_graph(loaded.metadata, input));
-        std::cout << "wrote " << module_graph_output << " (module graph dump)\n";
+        report_wrote(module_graph_output, "module graph dump");
         return 0;
     }
     Program program = std::move(loaded.program);
     if (!declaration_index_output.empty()) {
         write_text_file(declaration_index_output, dump_declaration_index(program, loaded.metadata, input));
-        std::cout << "wrote " << declaration_index_output << " (declaration index dump)\n";
+        report_wrote(declaration_index_output, "declaration index dump");
         return 0;
     }
     SemaOptions sema_options;
@@ -654,19 +675,19 @@ int run(int argc, char** argv) {
     }
     if (!typed_ir_output.empty()) {
         write_text_file(typed_ir_output, dump_ir_program(ir, input));
-        std::cout << "wrote " << typed_ir_output << " (typed IR dump)\n";
+        report_wrote(typed_ir_output, "typed IR dump");
         return 0;
     }
     if (!pass_summary_output.empty()) {
         write_text_file(pass_summary_output,
                         dump_compiler_pass_summary(input, pass_summary_token_count, program, loaded.metadata, ir));
-        std::cout << "wrote " << pass_summary_output << " (compiler pass summary)\n";
+        report_wrote(pass_summary_output, "compiler pass summary");
         return 0;
     }
     if (!module_cache_output.empty()) {
         attach_module_cache_ir_summaries(loaded.cache, ir);
         write_text_file(module_cache_output, serialize_module_cache(loaded.cache));
-        std::cout << "wrote " << module_cache_output << " (module cache)\n";
+        report_wrote(module_cache_output, "module cache");
     }
     if (check_only) {
         return 0;
@@ -674,7 +695,7 @@ int run(int argc, char** argv) {
     if (!c_header_output.empty()) {
         std::string header = emit_c_header(ir);
         write_text_file(c_header_output, header);
-        std::cout << "wrote " << c_header_output << " (C header)\n";
+        report_wrote(c_header_output, "C header");
     }
     const bool object_library_output = !object_output.empty();
     LlvmEmitOptions llvm_options;
@@ -684,7 +705,7 @@ int run(int argc, char** argv) {
     std::string llvm_path = llvm_output.empty() ? output + ".ll" : llvm_output;
     write_text_file(llvm_path, llvm);
     if (emit_llvm_only) {
-        std::cout << "wrote " << llvm_path << " (" << llvm.size() << " bytes)\n";
+        report_wrote(llvm_path, std::to_string(llvm.size()) + " bytes");
         return 0;
     }
 
@@ -706,11 +727,11 @@ int run(int argc, char** argv) {
     }
     if (status != 0) throw CompileError("LLVM backend failed while producing output; install clang or pass --llvm-cc");
     if (!object_output.empty()) {
-        std::cout << "wrote " << object_output << " (LLVM object)\n";
+        report_wrote(object_output, "LLVM object");
         return 0;
     }
     make_executable(output);
-    std::cout << "wrote " << output << " (LLVM backend)\n";
+    report_wrote(output, "LLVM backend");
     return 0;
 }
 

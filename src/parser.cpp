@@ -1022,9 +1022,11 @@ private:
 
     StmtPtr parse_statement() {
         if (match(TokenKind::LBrace)) {
+            Token block_token = tokens_[pos_ - 1];
             --pos_;
             auto stmt = std::make_unique<Stmt>();
             stmt->kind = StmtKind::Block;
+            stmt->loc = block_token.loc;
             set_stmt_statements(*stmt, parse_block());
             return stmt;
         }
@@ -1400,9 +1402,10 @@ private:
     }
 
     StmtPtr parse_return() {
+        Token return_token = tokens_[pos_ - 1];
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::Return;
-        stmt->loc = peek().loc;
+        stmt->loc = return_token.loc;
         if (!check(TokenKind::RBrace) && !check(TokenKind::Semicolon)) {
             stmt->expr = parse_expression();
         }
@@ -1411,9 +1414,10 @@ private:
     }
 
     StmtPtr parse_if() {
+        Token if_token = tokens_[pos_ - 1];
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::If;
-        stmt->loc = peek().loc;
+        stmt->loc = if_token.loc;
         if (match(TokenKind::KwLet)) {
             stmt->has_condition_pattern = true;
             stmt->condition_pattern = std::make_unique<Pattern>(parse_pattern());
@@ -1435,9 +1439,10 @@ private:
     }
 
     StmtPtr parse_while() {
+        Token while_token = tokens_[pos_ - 1];
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::While;
-        stmt->loc = peek().loc;
+        stmt->loc = while_token.loc;
         if (match(TokenKind::KwLet)) {
             stmt->kind = StmtKind::WhileLet;
             stmt->has_condition_pattern = true;
@@ -1452,9 +1457,10 @@ private:
     }
 
     StmtPtr parse_for() {
+        Token for_token = tokens_[pos_ - 1];
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::For;
-        stmt->loc = peek().loc;
+        stmt->loc = for_token.loc;
         stmt->for_pattern_filter = match(TokenKind::KwLet);
         stmt->for_pattern = std::make_unique<Pattern>(parse_for_pattern());
         expect(TokenKind::KwIn, "expected in after for pattern");
@@ -1464,9 +1470,10 @@ private:
     }
 
     StmtPtr parse_init_while() {
+        Token init_token = tokens_[pos_ - 1];
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::InitWhile;
-        stmt->loc = peek().loc;
+        stmt->loc = init_token.loc;
         do {
             Token name = expect(TokenKind::Identifier, "expected init binding name");
             Binding binding;

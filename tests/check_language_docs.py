@@ -125,7 +125,6 @@ def main() -> int:
         "mod Math",
         "Math::double(base)",
         "std::vec::new<i64>",
-        "tests/cases/compiler-development/ok/model/",
         "tests/cases/compiler-development/artifact/ok/",
         "Result[T, E]",
         "bootstrap-only syntax",
@@ -180,8 +179,7 @@ def main() -> int:
         "planned",
         "tests/cases/functions/",
         "tests/cases/modules/",
-        "tests/cases/compiler-development/ok/model/",
-        "make check-compiler-development",
+        "make check-compiler-artifacts",
         "Bootstrap Readiness",
     ]:
         require(feature_status, needle, feature_status_path)
@@ -210,12 +208,9 @@ def main() -> int:
         "make check-modules",
         "make check-traits",
         "make check-ffi",
-        "make check-compiler-development",
         "make check-compiler-artifacts",
-        "tests/cases/compiler-development/ok/model/",
         "tests/cases/compiler-development/artifact/ok/",
         "tests/cases/compiler-development/artifact/errors/",
-        "compiler-readiness-scorecard.ari",
         "Feature Status",
         "Do not add bootstrap-only syntax",
     ]:
@@ -249,13 +244,7 @@ def main() -> int:
         "## Focused Targets",
         "make check-language-docs",
         "make check-source-map-unit",
-        "make check-compiler-development",
-        "tests/cases/compiler-development/ok/model/",
         "tests/cases/compiler-development/artifact/ok/",
-        "compiler-readiness-scorecard",
-        "compiler-development-dashboard",
-        "compiler-test-classification",
-        "compiler-onboarding-workflow",
         "tests/check_compiler_capability_cli.py",
         "tests/check_compiler_pass_cli.py",
         "tests/check_compiler_test_bucket_cli.py",
@@ -285,8 +274,7 @@ def main() -> int:
         "`ok/`",
         "`errors/`",
         "`artifact/ok`",
-        "compiler-test-classification.ari",
-        "compiler-onboarding-workflow.ari",
+        "diagnostic-parser-expected.ari",
     ]:
         require(cases_index, needle, cases_index_path)
 

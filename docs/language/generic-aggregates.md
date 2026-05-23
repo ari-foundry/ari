@@ -169,13 +169,11 @@ drop only the active payload.
 - `tests/cases/generics/ok/generic-aggregate-monomorphization.ari`
 - `tests/cases/generics/ok/generic-aggregate-stdlib-stress.ari`
 - `tests/cases/generics/ok/generic-aggregate-recursive-pointer.ari`
-- `tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari`
 - `tests/cases/generics/errors/generic-aggregate-*.ari`
 
 Run focused checks with:
 
 ```sh
 make check-generics
-make check-compiler-development
 make check-compiler-artifacts
 ```

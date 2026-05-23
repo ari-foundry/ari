@@ -23,5 +23,5 @@ CompilerCapabilityInventory version=1 target=x86_64-pc-linux-gnu implicit_std=fa
   capability=runtime-strings-and-floats status=planned owner=runtime/backend first_check="future std and backend fixtures" proves="owned runtime strings and complete float value semantics"
   capability=raw-pointers-and-allocation-zones status=planned owner=type/ownership first_check="future ownership diagnostics" proves="explicit pointer operations, allocation-zone rules, and diagnostics"
   capability=general-iterator-protocol status=planned owner=traits/sema/backend first_check="future iterator fixtures" proves="iterator dispatch beyond compiler-known range loops"
-  capability=class-keyword status=rejected owner=parser/policy first_check="make check-compiler-development" proves="Ari uses structs, enums, functions, and traits instead of class syntax"
-  capability=interface-keyword status=rejected owner=parser/policy first_check="make check-compiler-development" proves="Ari uses trait for abstraction boundaries instead of interface syntax"
+  capability=class-keyword status=rejected owner=parser/policy first_check="make check-errors" proves="Ari uses structs, enums, functions, and traits instead of class syntax"
+  capability=interface-keyword status=rejected owner=parser/policy first_check="make check-errors" proves="Ari uses trait for abstraction boundaries instead of interface syntax"

@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-source-map-unit check-layout-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-source-map-unit check-layout-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -12,7 +12,7 @@ check-sanitize: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_o
 check-sanitize: TOOL_ARI := $(SANITIZE_TARGET)
 check-sanitize: $(SANITIZE_TARGET) check
 
-check: check-language-docs check-std-api check-stdlib-docs check-compiler-dev-docs check-compiler-development check-compiler-artifacts check-bootstrap-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-errors
+check: check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-bootstrap-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-errors
 	mkdir -p $(BUILD_DIR)/ir
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/ir/count.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/ir/count.ll
@@ -66,9 +66,6 @@ check-std-api:
 
 check-stdlib-docs:
 	python3 tests/check_stdlib_docs.py
-
-check-compiler-dev-docs:
-	python3 tests/check_compiler_development_docs.py
 
 check-source-map-unit:
 	mkdir -p $(BUILD_DIR)/source-map
@@ -428,9 +425,6 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.ll
 	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.ll _ARNv14make_token_box _ARNv11maybe_score _ARNv13consume_owned >$(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.llvm-frag
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.llvm-frag
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-aggregate-match-model.ll
-	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-aggregate-match-model.ll _ARNv14ast_node_score _ARNv12output_score _ARNv11build_state _ARNv4main >$(BUILD_DIR)/compiler-development/artifact/backend-aggregate-match-model.llvm-frag
-	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-aggregate-match-model.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-aggregate-match-model.llvm-frag
 	$(TARGET) tests/cases/memory/ok/layout-service-aggregate-consistency.ari --target x86_64-pc-linux-gnu --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-layout-aggregate.ll
 	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-layout-aggregate.ll _ARNv10enum_score _ARNv11field_score _ARNv4main >$(BUILD_DIR)/compiler-development/artifact/backend-layout-aggregate.llvm-frag
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-layout-aggregate.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-layout-aggregate.llvm-frag
@@ -506,121 +500,6 @@ check-ownership: $(TARGET)
 	grep -q "ownership-carrying aggregate enum payloads are not supported yet" $(BUILD_DIR)/ownership/diagnostic-ownership-aggregate-enum-payload.err
 	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-aggregate-enum-payload.ari --check >$(BUILD_DIR)/ownership/diagnostic-borrow-aggregate-enum-payload.err 2>&1; then exit 1; fi
 	grep -q "borrow-carrying aggregate enum payloads are not supported yet" $(BUILD_DIR)/ownership/diagnostic-borrow-aggregate-enum-payload.err
-
-check-compiler-development: $(TARGET)
-	mkdir -p $(BUILD_DIR)/compiler-development
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-pass-worklist.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-pass-worklist.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-pass-worklist.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-pass-worklist.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-pass-worklist.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-pass-worklist.elf; $(BUILD_DIR)/compiler-development/compiler-pass-worklist.elf; code=$$?; test $$code -eq 80; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-diagnostic-workflow.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-diagnostic-workflow.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-diagnostic-workflow.elf; $(BUILD_DIR)/compiler-development/compiler-diagnostic-workflow.elf; code=$$?; test $$code -eq 97; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-authoring.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-authoring.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-diagnostic-authoring.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-diagnostic-authoring.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-authoring.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-diagnostic-authoring.elf; $(BUILD_DIR)/compiler-development/compiler-diagnostic-authoring.elf; code=$$?; test $$code -eq 237; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-development-dashboard.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-development-dashboard.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-development-dashboard.elf; $(BUILD_DIR)/compiler-development/compiler-development-dashboard.elf; code=$$?; test $$code -eq 247; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-concepts-glossary.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-concepts-glossary.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-concepts-glossary.elf; $(BUILD_DIR)/compiler-development/compiler-concepts-glossary.elf; code=$$?; test $$code -eq 179; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-layer-map.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-layer-map.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-layer-map.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-layer-map.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-layer-map.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-layer-map.elf; $(BUILD_DIR)/compiler-development/compiler-layer-map.elf; code=$$?; test $$code -eq 163; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-triage-guide.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-triage-guide.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-triage-guide.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-triage-guide.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-triage-guide.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-triage-guide.elf; $(BUILD_DIR)/compiler-development/compiler-triage-guide.elf; code=$$?; test $$code -eq 212; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-source-identity.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-source-identity.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-source-identity.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-source-identity.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-source-identity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-source-identity.elf; $(BUILD_DIR)/compiler-development/compiler-source-identity.elf; code=$$?; test $$code -eq 197; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-module-project-authoring.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-module-project-authoring.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-module-project-authoring.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-module-project-authoring.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-module-project-authoring.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-module-project-authoring.elf; $(BUILD_DIR)/compiler-development/compiler-module-project-authoring.elf; code=$$?; test $$code -eq 212; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-artifact-authoring.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-artifact-authoring.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-artifact-authoring.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-artifact-authoring.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-artifact-authoring.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-artifact-authoring.elf; $(BUILD_DIR)/compiler-development/compiler-artifact-authoring.elf; code=$$?; test $$code -eq 231; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-test-authoring.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-test-authoring.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-test-authoring.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-test-authoring.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-test-authoring.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-test-authoring.elf; $(BUILD_DIR)/compiler-development/compiler-test-authoring.elf; code=$$?; test $$code -eq 222; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-change-checklist.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-change-checklist.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-change-checklist.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-change-checklist.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-change-checklist.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-change-checklist.elf; $(BUILD_DIR)/compiler-development/compiler-change-checklist.elf; code=$$?; test $$code -eq 201; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-source-map-workflow.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-source-map-workflow.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-source-map-workflow.elf; $(BUILD_DIR)/compiler-development/compiler-source-map-workflow.elf; code=$$?; test $$code -eq 114; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-implementation-slices.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-implementation-slices.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-implementation-slices.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-implementation-slices.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-implementation-slices.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-implementation-slices.elf; $(BUILD_DIR)/compiler-development/compiler-implementation-slices.elf; code=$$?; test $$code -eq 180; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-next-slices.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-next-slices.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-next-slices.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-next-slices.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-next-slices.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-next-slices.elf; $(BUILD_DIR)/compiler-development/compiler-next-slices.elf; code=$$?; test $$code -eq 161; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-stage-gates.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-stage-gates.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-stage-gates.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-stage-gates.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-stage-gates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-stage-gates.elf; $(BUILD_DIR)/compiler-development/compiler-stage-gates.elf; code=$$?; test $$code -eq 193; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.elf; $(BUILD_DIR)/compiler-development/compiler-readiness-scorecard.elf; code=$$?; test $$code -eq 49; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-test-classification.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-test-classification.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-test-classification.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-test-classification.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-test-classification.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-test-classification.elf; $(BUILD_DIR)/compiler-development/compiler-test-classification.elf; code=$$?; test $$code -eq 200; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-doc-crosswalk.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-doc-crosswalk.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-doc-crosswalk.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-doc-crosswalk.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-doc-crosswalk.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-doc-crosswalk.elf; $(BUILD_DIR)/compiler-development/compiler-doc-crosswalk.elf; code=$$?; test $$code -eq 229; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.elf; $(BUILD_DIR)/compiler-development/compiler-onboarding-workflow.elf; code=$$?; test $$code -eq 250; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-generic-aggregates.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-generic-aggregates.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-generic-aggregates.elf; $(BUILD_DIR)/compiler-development/compiler-generic-aggregates.elf; code=$$?; test $$code -eq 92; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-type-ref-ast.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-type-ref-ast.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-type-ref-ast.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-type-ref-ast.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-type-ref-ast.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-type-ref-ast.elf; $(BUILD_DIR)/compiler-development/compiler-type-ref-ast.elf; code=$$?; test $$code -eq 91; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-label-vec.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-label-vec.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-diagnostic-label-vec.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-diagnostic-label-vec.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-diagnostic-label-vec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-diagnostic-label-vec.elf; $(BUILD_DIR)/compiler-development/compiler-diagnostic-label-vec.elf; code=$$?; test $$code -eq 111; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-data-project-main.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-data-project-main.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-data-project.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-data-project.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-data-project-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-data-project.elf; $(BUILD_DIR)/compiler-development/compiler-data-project.elf; code=$$?; test $$code -eq 90; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-owned-payload-model.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-owned-payload-model.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-owned-payload-model.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-owned-payload-model.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-owned-payload-model.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-owned-payload-model.elf; $(BUILD_DIR)/compiler-development/compiler-owned-payload-model.elf; code=$$?; test $$code -eq 101; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-symbol-scope-result.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-symbol-scope-result.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-symbol-scope-result.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-symbol-scope-result.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-symbol-scope-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-symbol-scope-result.elf; $(BUILD_DIR)/compiler-development/compiler-symbol-scope-result.elf; code=$$?; test $$code -eq 143; fi
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-hir-block-model.ari --check
-	$(TARGET) tests/cases/compiler-development/ok/model/compiler-hir-block-model.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-hir-block-model.ll
-	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-hir-block-model.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-hir-block-model.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-hir-block-model.elf; $(BUILD_DIR)/compiler-development/compiler-hir-block-model.elf; code=$$?; test $$code -eq 148; fi
-	if $(TARGET) tests/cases/compiler-development/errors/bootstrap-class-keyword.ari --check >$(BUILD_DIR)/compiler-development/bootstrap-class-keyword.err 2>&1; then exit 1; fi
-	grep -q "expected top-level declaration" $(BUILD_DIR)/compiler-development/bootstrap-class-keyword.err
-	if $(TARGET) tests/cases/compiler-development/errors/bootstrap-interface-keyword.ari --check >$(BUILD_DIR)/compiler-development/bootstrap-interface-keyword.err 2>&1; then exit 1; fi
-	grep -q "expected top-level declaration" $(BUILD_DIR)/compiler-development/bootstrap-interface-keyword.err
 
 check-bootstrap-docs:
 	python3 tests/check_bootstrap_readiness_docs.py

@@ -2,13 +2,13 @@ IrProgram source=tests/cases/ownership/ok/ownership-aggregate-field-move.ari tar
   Function name=make_owned return=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:7:4
     Param name=value type=i64
     Body
-      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:8:10
+      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:8:3
         Local name=value type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:8:10
   Function name=consume return=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:11:4
     Param name=value type=own i64
     Body
       Drop name=value @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:12:8
-      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:13:10
+      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:13:3
         Integer type=i64 value=5 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:13:10
   Function name=main return=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:16:4
     Body
@@ -41,5 +41,5 @@ IrProgram source=tests/cases/ownership/ok/ownership-aggregate-field-move.ari tar
         Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:18
           Integer type=i64 value=9 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:29
       Drop name=holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:22:8
-      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:23:10
+      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:23:3
         Local name=score type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:23:10

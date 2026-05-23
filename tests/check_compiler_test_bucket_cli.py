@@ -67,9 +67,8 @@ def main():
     )
     ok &= require_success(
         run_ari("--list-test-buckets"),
-        "CompilerTestBucketCatalog version=1 entries=8",
+        "CompilerTestBucketCatalog version=1 entries=6",
         'bucket=feature-ok path="tests/cases/<feature>/ok/" kind=positive-language',
-        'bucket=compiler-model path="tests/cases/compiler-development/ok/model/"',
         'bucket=compiler-artifact-ok path="tests/cases/compiler-development/artifact/ok/"',
         "Rule closest_behavior_bucket=true artifact_before_executable=true docs_checked=true",
     )

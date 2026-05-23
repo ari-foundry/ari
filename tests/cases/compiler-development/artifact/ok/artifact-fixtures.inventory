@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=234
+CompilerArtifactFixtures version=1 group=all entries=233
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -172,7 +172,6 @@ CompilerArtifactFixtures version=1 group=all entries=234
   Fixture group=errors kind=text path=errors/text-line-mismatch.expected.txt
   Fixture group=errors kind=text path=errors/text-line-mismatch.report.txt
   Fixture group=ok kind=inventory path=ok/artifact-fixtures.inventory
-  Fixture group=ok kind=llvm-fragment path=ok/backend-aggregate-match-model.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-core.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-generic-aggregate.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-generic-function.llvm-frag

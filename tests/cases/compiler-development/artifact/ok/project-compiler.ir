@@ -1,24 +1,24 @@
 IrProgram source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-pc-linux-gnu require_main=true
   Function name=main return=i64 @tests/cases/modules/ok/project-compiler-main.ari:3:4
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:4:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:4:3
         Call name=project_compiler::run type=i64 @tests/cases/modules/ok/project-compiler-main.ari:4:10
   Function name=project_compiler::span_score return=i64 @tests/cases/modules/ok/project-compiler-main.ari:12:4
     Param name=span type=project_compiler::source::Span
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:13:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:13:3
         Call name=project_compiler::source::span_len type=i64 @tests/cases/modules/ok/project-compiler-main.ari:13:10
           Local name=span type=project_compiler::source::Span @tests/cases/modules/ok/project-compiler-main.ari:13:33
   Function name=project_compiler::symbol_score return=i64 @tests/cases/modules/ok/project-compiler-main.ari:16:4
     Param name=symbol type=project_compiler::symbols::Symbol
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:17:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:17:3
         Call name=project_compiler::symbols::symbol_score type=i64 @tests/cases/modules/ok/project-compiler-main.ari:17:10
           Local name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project-compiler-main.ari:17:38
   Function name=project_compiler::parse_score return=i64 @tests/cases/modules/ok/project-compiler-main.ari:20:4
     Param name=result type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol]
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:21:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:21:3
         Call name=project_compiler::parser::parse_score type=i64 @tests/cases/modules/ok/project-compiler-main.ari:21:10
           Local name=result type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project-compiler-main.ari:21:36
   Function name=project_compiler::run return=i64 shared_export @tests/cases/modules/ok/project-compiler-main.ari:24:8
@@ -40,7 +40,7 @@ IrProgram source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-
         Call name=project_compiler::diag::diagnostic type=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project-compiler-main.ari:29:20
           Local name=span type=project_compiler::source::Span @tests/cases/modules/ok/project-compiler-main.ari:29:43
           Integer type=i64 value=5 @tests/cases/modules/ok/project-compiler-main.ari:29:49
-      Return @tests/cases/modules/ok/project-compiler-main.ari:31:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:31:3
         Binary op="-" type=i64 @tests/cases/modules/ok/project-compiler-main.ari:34:46
           Binary op="+" type=i64 @tests/cases/modules/ok/project-compiler-main.ari:33:25
             Binary op="+" type=i64 @tests/cases/modules/ok/project-compiler-main.ari:32:26
@@ -58,7 +58,7 @@ IrProgram source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-
     Param name=start type=i64
     Param name=end type=i64
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:12:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:12:3
         Tuple type=project_compiler::source::Span @tests/cases/modules/ok/project-compiler-main.ari:12:10
           Local name=start type=i64 @tests/cases/modules/ok/project-compiler-main.ari:12:24
           Local name=end type=i64 @tests/cases/modules/ok/project-compiler-main.ari:12:36
@@ -66,14 +66,14 @@ IrProgram source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-
     Param name=id type=i64
     Param name=span type=project_compiler::source::Span
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:16:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:16:3
         Tuple type=project_compiler::source::SourceFile @tests/cases/modules/ok/project-compiler-main.ari:16:10
           Local name=id type=i64 @tests/cases/modules/ok/project-compiler-main.ari:16:27
           Local name=span type=project_compiler::source::Span @tests/cases/modules/ok/project-compiler-main.ari:16:37
   Function name=project_compiler::source::span_len return=i64 shared_export @tests/cases/modules/ok/project-compiler-main.ari:19:8
     Param name=span type=project_compiler::source::Span
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:20:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:20:3
         Binary op="-" type=i64 @tests/cases/modules/ok/project-compiler-main.ari:20:19
           TupleIndex index=1 type=i64 @tests/cases/modules/ok/project-compiler-main.ari:20:15
             Local name=span type=project_compiler::source::Span @tests/cases/modules/ok/project-compiler-main.ari:20:10
@@ -82,31 +82,31 @@ IrProgram source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-
   Function name=project_compiler::symbols::symbol return=project_compiler::symbols::Symbol shared_export @tests/cases/modules/ok/project-compiler-main.ari:5:8
     Param name=id type=i64
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:6:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:6:3
         Tuple type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project-compiler-main.ari:6:10
           Local name=id type=i64 @tests/cases/modules/ok/project-compiler-main.ari:6:23
   Function name=project_compiler::symbols::symbol_score return=i64 shared_export @tests/cases/modules/ok/project-compiler-main.ari:9:8
     Param name=symbol type=project_compiler::symbols::Symbol
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:10:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:10:3
         TupleIndex index=0 type=i64 @tests/cases/modules/ok/project-compiler-main.ari:10:17
           Local name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project-compiler-main.ari:10:10
   Function name=project_compiler::symbols::private_bias return=i64 @tests/cases/modules/ok/project-compiler-main.ari:13:4
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:14:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:14:3
         Integer type=i64 value=7 @tests/cases/modules/ok/project-compiler-main.ari:14:10
   Function name=project_compiler::diag::diagnostic return=project_compiler::diag::Diagnostic shared_export @tests/cases/modules/ok/project-compiler-main.ari:11:8
     Param name=span type=project_compiler::source::Span
     Param name=code type=i64
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:12:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:12:3
         Tuple type=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project-compiler-main.ari:12:10
           Local name=span type=project_compiler::source::Span @tests/cases/modules/ok/project-compiler-main.ari:13:11
           EnumConstruct enum=project_compiler::diag::Severity case=project_compiler::diag::Error type=project_compiler::diag::Severity @tests/cases/modules/ok/project-compiler-main.ari:14:15
   Function name=project_compiler::diag::diagnostic_score return=i64 shared_export @tests/cases/modules/ok/project-compiler-main.ari:18:8
     Param name=diagnostic type=project_compiler::diag::Diagnostic
     Body
-      Return @tests/cases/modules/ok/project-compiler-main.ari:19:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:19:3
         Binary op="+" type=i64 @tests/cases/modules/ok/project-compiler-main.ari:19:51
           Call name=project_compiler::source::span_len type=i64 @tests/cases/modules/ok/project-compiler-main.ari:19:10
             TupleIndex index=0 type=project_compiler::source::Span @tests/cases/modules/ok/project-compiler-main.ari:19:45
@@ -125,7 +125,7 @@ IrProgram source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-
         Call name=project_compiler::source::span type=project_compiler::source::Span @tests/cases/modules/ok/project-compiler-main.ari:13:14
           Integer type=i64 value=10 @tests/cases/modules/ok/project-compiler-main.ari:13:34
           Integer type=i64 value=16 @tests/cases/modules/ok/project-compiler-main.ari:13:38
-      Return @tests/cases/modules/ok/project-compiler-main.ari:14:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:14:3
         Tuple type=project_compiler::parser::ParserState[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project-compiler-main.ari:14:10
           Call name=project_compiler::source::source_file type=project_compiler::source::SourceFile @tests/cases/modules/ok/project-compiler-main.ari:15:11
             Integer type=i64 value=2 @tests/cases/modules/ok/project-compiler-main.ari:15:38
@@ -137,7 +137,7 @@ IrProgram source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-
   Function name=project_compiler::parser::run_state return=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] shared_export @tests/cases/modules/ok/project-compiler-main.ari:21:8
     Param name=state type=project_compiler::parser::ParserState[project_compiler::symbols::Symbol]
     Body
-      If @tests/cases/modules/ok/project-compiler-main.ari:22:6
+      If @tests/cases/modules/ok/project-compiler-main.ari:22:3
         Binary op=">" type=bool @tests/cases/modules/ok/project-compiler-main.ari:22:47
           Call name=project_compiler::source::span_len type=i64 @tests/cases/modules/ok/project-compiler-main.ari:22:6
             TupleIndex index=1 type=project_compiler::source::Span @tests/cases/modules/ok/project-compiler-main.ari:22:41
@@ -145,9 +145,9 @@ IrProgram source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-
                 Local name=state type=project_compiler::parser::ParserState[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project-compiler-main.ari:22:30
           Integer type=i64 value=0 @tests/cases/modules/ok/project-compiler-main.ari:22:49
         Then
-          Return @tests/cases/modules/ok/project-compiler-main.ari:23:12
+          Return @tests/cases/modules/ok/project-compiler-main.ari:23:5
             EnumConstruct enum=project_compiler::parser::ParseResult case=project_compiler::parser::Parsed type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project-compiler-main.ari:23:12
-      Return @tests/cases/modules/ok/project-compiler-main.ari:25:10
+      Return @tests/cases/modules/ok/project-compiler-main.ari:25:3
         EnumConstruct enum=project_compiler::parser::ParseResult case=project_compiler::parser::Failed type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project-compiler-main.ari:25:10
   Function name=project_compiler::parser::parse_score return=i64 shared_export @tests/cases/modules/ok/project-compiler-main.ari:28:8
     Param name=result type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol]
@@ -155,10 +155,10 @@ IrProgram source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-
       Match @tests/cases/modules/ok/project-compiler-main.ari:29:3
         Local name=result type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project-compiler-main.ari:29:9
         Arm case=project_compiler::parser::Parsed @tests/cases/modules/ok/project-compiler-main.ari:30:5
-          Return @tests/cases/modules/ok/project-compiler-main.ari:31:14
+          Return @tests/cases/modules/ok/project-compiler-main.ari:31:7
             Call name=project_compiler::symbols::symbol_score type=i64 @tests/cases/modules/ok/project-compiler-main.ari:31:14
               Local name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project-compiler-main.ari:31:43
         Arm case=project_compiler::parser::Failed @tests/cases/modules/ok/project-compiler-main.ari:33:5
-          Return @tests/cases/modules/ok/project-compiler-main.ari:34:14
+          Return @tests/cases/modules/ok/project-compiler-main.ari:34:7
             Call name=project_compiler::diag::diagnostic_score type=i64 @tests/cases/modules/ok/project-compiler-main.ari:34:14
               Local name=diagnostic type=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project-compiler-main.ari:34:44

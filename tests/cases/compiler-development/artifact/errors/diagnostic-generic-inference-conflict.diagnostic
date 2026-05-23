@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="generic type 'T' inferred as both i64 and bool" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="generic type 'T' inferred as both i64 and bool" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/generics/errors/generic-inference-conflict.ari" display="tests/cases/generics/errors/generic-inference-conflict.ari" bytes=104
-  Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-inference-conflict.ari" line=6 column=10 end_line=6 end_column=16 byte_start=85 byte_end=91 message=""
-  Snippet label=0 text="  --> tests/cases/generics/errors/generic-inference-conflict.ari:6:10\n   |\n 6 |   return choose(1, true);\n   |          ^^^^^^"
+  Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-inference-conflict.ari" line=6 column=20 end_line=6 end_column=24 byte_start=95 byte_end=99 message=""
+  Snippet label=0 text="  --> tests/cases/generics/errors/generic-inference-conflict.ari:6:20\n   |\n 6 |   return choose(1, true);\n   |                    ^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/generics/errors/generic-inference-conflict.ari" line=6 column=17 end_line=6 end_column=18 byte_start=92 byte_end=93 message="first inferred 'T' as i64"
+  Snippet label=1 text="  --> tests/cases/generics/errors/generic-inference-conflict.ari:6:17\n   |\n 6 |   return choose(1, true);\n   |                 ^"
+  Note index=0 location=none message="generic type inference must choose one concrete type for 'T'"
+  Help index=0 location=none message="make every use of 'T' agree, or pass explicit type arguments"

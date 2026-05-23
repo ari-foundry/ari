@@ -3,7 +3,7 @@ IrProgram source=tests/cases/compiler-development/artifact/ok/core-language-scal
     Param name=left type=i64
     Param name=right type=i64
     Body
-      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:10
+      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:3
         Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:15
           Local name=left type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:10
           Local name=right type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:17
@@ -25,7 +25,7 @@ IrProgram source=tests/cases/compiler-development/artifact/ok/core-language-scal
         Integer type=i64 value=0 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:11:15
       VarDecl name=total type=i64 mut @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:12:7
         Integer type=i64 value=0 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:12:15
-      While @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:9
+      While @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:3
         Binary op="<" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:15
           Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:9
           Local name=adjusted type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:17
@@ -33,13 +33,13 @@ IrProgram source=tests/cases/compiler-development/artifact/ok/core-language-scal
           Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:19
             Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:13
             Integer type=i64 value=1 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:21
-        If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:8
+        If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:5
           Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:14
             Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:8
             Integer type=i64 value=2 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:17
           Then
             Continue @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:16:7
-        If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:8
+        If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:5
           Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:14
             Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:8
             Integer type=i64 value=5 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:17
@@ -49,7 +49,7 @@ IrProgram source=tests/cases/compiler-development/artifact/ok/core-language-scal
           Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:19
             Local name=total type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:13
             Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:21
-      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:23:10
+      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:23:3
         Local name=total type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:23:10
   Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:26:4
     Body
@@ -63,7 +63,7 @@ IrProgram source=tests/cases/compiler-development/artifact/ok/core-language-scal
               Integer type=i64 value=10 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:22
             Integer type=i64 value=1 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:28
           Integer type=i64 value=3 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:33
-      If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:6
+      If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:3
         Binary op="&&" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:18
           Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:12
             Local name=flags type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:6
@@ -73,11 +73,11 @@ IrProgram source=tests/cases/compiler-development/artifact/ok/core-language-scal
               Bool type=bool value=false @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:23
               Bool type=bool value=false @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:32
         Then
-          Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:12
+          Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:5
             Call name=add type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:12
               Call name=compute type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:16
                 Integer type=i64 value=3 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:24
               Cast type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:33
                 Local name=byte type=u8 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:28
-      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:32:10
+      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:32:3
         Integer type=i64 value=0 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:32:10

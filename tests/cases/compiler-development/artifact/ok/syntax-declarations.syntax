@@ -15,7 +15,7 @@ Program source=tests/cases/compiler-development/artifact/ok/syntax-declarations.
       Param name=self type=Self
       Param name=other type=Box[i64]
       Body
-        Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:12 source_id=0 bytes=312..316
+        Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:5 source_id=0 bytes=305..311
           Binary op="+" @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:23 source_id=0 bytes=323..324
             Field name=value @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:17 source_id=0 bytes=317..322
               Name value=self @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:12 source_id=0 bytes=312..316
@@ -23,14 +23,14 @@ Program source=tests/cases/compiler-development/artifact/ok/syntax-declarations.
               Name value=other @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:25 source_id=0 bytes=325..330
   Function name=Inner::value pub return=i64 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:2:10 source_id=0 bytes=21..26
     Body
-      Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:3:12 source_id=0 bytes=49..50
+      Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:3:5 source_id=0 bytes=42..48
         Integer value=1 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:3:12 source_id=0 bytes=49..50
   Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:28:4 source_id=0 bytes=348..352
     Body
       VarDecl name=item let @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:29:7 source_id=0 bytes=370..374
         Call name=Just @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:29:14 source_id=0 bytes=377..381
           Integer value=3 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:29:19 source_id=0 bytes=382..383
-      Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:30:10 source_id=0 bytes=395..400
+      Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:30:3 source_id=0 bytes=388..394
         MatchExpr @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:30:10 source_id=0 bytes=395..400
           Name value=item @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:30:16 source_id=0 bytes=401..405
           Arm @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:31:5 source_id=0 bytes=412..416

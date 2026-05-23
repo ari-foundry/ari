@@ -14,9 +14,8 @@ Test names should tell reviewers what the file protects before they open it:
 - `module-private-import.ari`: module resolution or visibility behavior.
 - `generic-enum-payload.ari`: generic aggregate behavior.
 - `ownership-drop-insertion.ari`: ownership or drop-lowering behavior.
-- `compiler-test-classification.ari`: compiler-development model behavior.
-- `compiler-onboarding-workflow.ari`: first-day compiler-development workflow.
-- `bootstrap-class-keyword.ari`: compiler-development policy rejection.
+- `diagnostic-parser-expected.ari`: source input for a committed diagnostic
+  artifact.
 
 Use `ok/` for programs that should compile, emit an artifact, or run. Use
 `errors/` for programs that should fail with a stable diagnostic. Use
