@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=217
+CompilerArtifactFixtures version=1 group=all entries=220
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -47,6 +47,8 @@ CompilerArtifactFixtures version=1 group=all entries=217
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-target-aggregate-import.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-field-assignment-while-borrowed.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-field-assignment-while-borrowed.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-field-borrow-conflict.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-enum-payload-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-nested-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-recursive-struct.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-use-after-move.diagnostic
@@ -134,6 +136,7 @@ CompilerArtifactFixtures version=1 group=all entries=217
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-missing-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-bound-missing-impl.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-bound-missing-impl.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-impl-extra-method.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-impl-missing-method.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-method-ambiguous.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-method-ambiguous.diagnostic

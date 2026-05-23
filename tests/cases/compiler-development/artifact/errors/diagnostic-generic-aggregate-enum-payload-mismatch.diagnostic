@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="type mismatch: expected Token, got LexError" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/generics/errors/generic-aggregate-enum-payload-mismatch.ari" display="tests/cases/generics/errors/generic-aggregate-enum-payload-mismatch.ari" bytes=319
+  Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-aggregate-enum-payload-mismatch.ari" line=16 column=29 end_line=16 end_column=37 byte_start=208 byte_end=216 message=""
+  Snippet label=0 text="  --> tests/cases/generics/errors/generic-aggregate-enum-payload-mismatch.ari:16:29\n    |\n 16 |     Passed<Token, LexError>(LexError { code: 1 });\n    |                             ^^^^^^^^"

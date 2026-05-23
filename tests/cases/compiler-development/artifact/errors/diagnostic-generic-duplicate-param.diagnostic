@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="duplicate generic parameter 'T' in function 'same'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="duplicate generic parameter 'T' in function 'same'" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/generics/errors/generic-duplicate-param.ari" display="tests/cases/generics/errors/generic-duplicate-param.ari" bytes=89
   Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-duplicate-param.ari" line=1 column=12 end_line=1 end_column=13 byte_start=11 byte_end=12 message=""
   Snippet label=0 text="  --> tests/cases/generics/errors/generic-duplicate-param.ari:1:12\n   |\n 1 | fn same[T, T](value: T) -> T {\n   |            ^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/generics/errors/generic-duplicate-param.ari" line=1 column=9 end_line=1 end_column=10 byte_start=8 byte_end=9 message="previous generic parameter 'T'"
+  Snippet label=1 text="  --> tests/cases/generics/errors/generic-duplicate-param.ari:1:9\n   |\n 1 | fn same[T, T](value: T) -> T {\n   |         ^"
+  Note index=0 location=none message="previous declaration is shown as a secondary label"
+  Help index=0 location=none message="rename or remove one of the generic parameters"

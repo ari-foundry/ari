@@ -142,6 +142,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-method-ambiguous.diagnostic
 	$(TARGET) tests/cases/traits/errors/trait-impl-missing-method.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-impl-missing-method.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-impl-missing-method.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-impl-missing-method.diagnostic
+	$(TARGET) tests/cases/traits/errors/trait-impl-extra-method.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-impl-extra-method.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-impl-extra-method.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-impl-extra-method.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-explicit-arity.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-arity.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-arity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-arity.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-explicit-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-mismatch.diagnostic
@@ -174,6 +176,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-private-function.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-private-function.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-aggregate-nested-mismatch.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-aggregate-nested-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-aggregate-nested-mismatch.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-aggregate-enum-payload-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-aggregate-enum-payload-mismatch.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-aggregate-enum-payload-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-aggregate-enum-payload-mismatch.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-aggregate-recursive-struct.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-aggregate-recursive-struct.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-aggregate-recursive-struct.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-aggregate-recursive-struct.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-aggregate-use-after-move.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-aggregate-use-after-move.diagnostic
@@ -290,6 +294,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-c-header-large-aggregate-enum-by-value.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-c-header-large-aggregate-enum-by-value.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
+	$(TARGET) tests/cases/borrowing/errors/field-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-field-borrow-conflict.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-field-borrow-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-field-borrow-conflict.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-assignment-while-borrowed.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-assignment-while-borrowed.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-field-assignment-while-borrowed.diagnostic

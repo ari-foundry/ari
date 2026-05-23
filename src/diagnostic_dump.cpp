@@ -260,6 +260,7 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "unknown trait") ||
         contains(diagnostic, "trait bound") ||
         contains(diagnostic, "does not implement trait") ||
+        contains(diagnostic, "is not declared by trait") ||
         contains(diagnostic, "cannot infer") ||
         contains(diagnostic, "cannot assign") ||
         contains(diagnostic, "type mismatch") ||

@@ -1402,10 +1402,16 @@ private:
         const std::string& owner_kind,
         const std::string& owner_name
     ) {
-        std::set<std::string> names;
+        std::map<std::string, SourceLocation> names;
         for (const auto& generic : generics) {
-            if (!names.insert(generic.name).second) {
-                fail(generic.loc, "duplicate generic parameter '" + generic.name + "' in " + owner_kind + " '" + owner_name + "'");
+            auto inserted = names.emplace(generic.name, generic.loc);
+            if (!inserted.second) {
+                fail_duplicate_declaration(
+                    generic.loc,
+                    inserted.first->second,
+                    "duplicate generic parameter '" + generic.name + "' in " + owner_kind + " '" + owner_name + "'",
+                    "previous generic parameter '" + generic.name + "'",
+                    "rename or remove one of the generic parameters");
             }
         }
     }
@@ -2024,10 +2030,16 @@ private:
             info.repr_c = find_attribute(decl.attributes, "repr") != nullptr;
             info.loc = decl.loc;
 
-            std::set<std::string> generic_names;
+            std::map<std::string, SourceLocation> generic_names;
             for (const auto& generic : decl.generics) {
-                if (!generic_names.insert(generic.name).second) {
-                    fail(decl.loc, "duplicate generic parameter '" + generic.name + "' in struct '" + decl.name + "'");
+                auto inserted = generic_names.emplace(generic.name, generic.loc);
+                if (!inserted.second) {
+                    fail_duplicate_declaration(
+                        generic.loc,
+                        inserted.first->second,
+                        "duplicate generic parameter '" + generic.name + "' in struct '" + decl.name + "'",
+                        "previous generic parameter '" + generic.name + "'",
+                        "rename or remove one of the generic parameters");
                 }
                 info.generic_names.push_back(generic.name);
             }
@@ -4007,7 +4019,12 @@ private:
                 std::string case_key = info.name;
                 auto inserted = enum_cases_.emplace(case_key, std::move(info));
                 if (!inserted.second) {
-                    fail(item.loc, "duplicate enum case constructor '" + case_key + "'");
+                    fail_duplicate_declaration(
+                        item.loc,
+                        inserted.first->second.loc,
+                        "duplicate enum case constructor '" + case_key + "'",
+                        "previous enum case constructor '" + case_key + "'",
+                        "rename or remove one of the enum case constructors");
                 }
             }
         }
