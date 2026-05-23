@@ -3545,7 +3545,8 @@ private:
                 }
                 std::size_t index = struct_field_index(component.loc, current, component.text);
                 path = local_owned_field_path(path, index);
-                current = current.field_types[index];
+                IrType next = current.field_types[index];
+                current = std::move(next);
                 continue;
             }
 
@@ -3560,13 +3561,15 @@ private:
                              " is out of range for source path");
                 }
                 path = local_owned_field_path(path, static_cast<std::size_t>(component.index));
-                current = fields[static_cast<std::size_t>(component.index)];
+                IrType next = fields[static_cast<std::size_t>(component.index)];
+                current = std::move(next);
                 continue;
             }
 
             if (current.primitive == IrPrimitiveKind::Vector && current.args.size() == 1) {
                 path = local_owned_field_path(path, static_cast<std::size_t>(component.index));
-                current = current.args[0];
+                IrType next = current.args[0];
+                current = std::move(next);
                 continue;
             }
 
