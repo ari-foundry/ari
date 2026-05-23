@@ -36,5 +36,6 @@ Generic aggregate coverage is split on purpose:
 - `errors/generic-*.ari` also covers duplicate function type parameters,
   explicit argument count and mismatch errors, insufficient and conflicting
   inference, generic function pointer inference/signature failures, non-generic
-  calls with type arguments, return-context inference limits, and private
-  generic function access.
+  calls with type arguments, return-context inference limits, declaration-time
+  rejection of unbound generic signature types, generated specialization name
+  collisions, and private generic function access.

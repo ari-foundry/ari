@@ -132,6 +132,10 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-uninferred.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-return-context-uninferred.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-return-context-uninferred.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-return-context-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-return-context-uninferred.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-signature-unknown-param.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-signature-unknown-param.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-signature-unknown-param.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-signature-unknown-param.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-specialization-name-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-specialization-name-conflict.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-specialization-name-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-specialization-name-conflict.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-function-pointer-uninferred.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-uninferred.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-uninferred.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-function-pointer-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-mismatch.diagnostic
@@ -4414,6 +4418,10 @@ check-generics: $(TARGET)
 	grep -q "generic type 'T' could not be inferred for 'make'" $(BUILD_DIR)/generics/generic-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-return-context-uninferred.ari -o $(BUILD_DIR)/generics/generic-return-context-uninferred.elf >$(BUILD_DIR)/generics/generic-return-context-uninferred.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' could not be inferred for 'make_value'" $(BUILD_DIR)/generics/generic-return-context-uninferred.err
+	if $(TARGET) tests/cases/generics/errors/generic-signature-unknown-param.ari -o $(BUILD_DIR)/generics/generic-signature-unknown-param.elf >$(BUILD_DIR)/generics/generic-signature-unknown-param.err 2>&1; then exit 1; fi
+	grep -q "unsupported executable type 'U'" $(BUILD_DIR)/generics/generic-signature-unknown-param.err
+	if $(TARGET) tests/cases/generics/errors/generic-signature-unknown-return.ari -o $(BUILD_DIR)/generics/generic-signature-unknown-return.elf >$(BUILD_DIR)/generics/generic-signature-unknown-return.err 2>&1; then exit 1; fi
+	grep -q "unsupported executable type 'U'" $(BUILD_DIR)/generics/generic-signature-unknown-return.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-constructor-uninferred.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-uninferred.elf >$(BUILD_DIR)/generics/generic-enum-constructor-uninferred.err 2>&1; then exit 1; fi
 	grep -q "cannot infer type argument 'T' for enum case 'std::None'" $(BUILD_DIR)/generics/generic-enum-constructor-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-constructor-arity.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-arity.elf >$(BUILD_DIR)/generics/generic-enum-constructor-arity.err 2>&1; then exit 1; fi
@@ -4456,6 +4464,8 @@ check-generics: $(TARGET)
 	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-explicit-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-nongeneric-type-args.ari -o $(BUILD_DIR)/generics/generic-nongeneric-type-args.elf >$(BUILD_DIR)/generics/generic-nongeneric-type-args.err 2>&1; then exit 1; fi
 	grep -q "function 'add' does not take type arguments" $(BUILD_DIR)/generics/generic-nongeneric-type-args.err
+	if $(TARGET) tests/cases/generics/errors/generic-specialization-name-conflict.ari -o $(BUILD_DIR)/generics/generic-specialization-name-conflict.elf >$(BUILD_DIR)/generics/generic-specialization-name-conflict.err 2>&1; then exit 1; fi
+	grep -q "generic specialization 'identity__G_i64' conflicts with an existing function" $(BUILD_DIR)/generics/generic-specialization-name-conflict.err
 	if $(TARGET) tests/cases/generics/errors/generic-private-function.ari -o $(BUILD_DIR)/generics/generic-private-function.elf >$(BUILD_DIR)/generics/generic-private-function.err 2>&1; then exit 1; fi
 	grep -q "function 'Hidden::identity' is not public" $(BUILD_DIR)/generics/generic-private-function.err
 	if $(TARGET) tests/cases/variables/errors/array-literal-index-out-of-range.ari -o $(BUILD_DIR)/generics/array-literal-index-out-of-range.elf >$(BUILD_DIR)/generics/array-literal-index-out-of-range.err 2>&1; then exit 1; fi

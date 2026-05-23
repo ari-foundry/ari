@@ -1,0 +1,4 @@
+diagnostic error code=ari/compiler family=general message="generic specialization 'identity__G_i64' conflicts with an existing function; rename the concrete function or the generic function" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/generics/errors/generic-specialization-name-conflict.ari" display="tests/cases/generics/errors/generic-specialization-name-conflict.ari" bytes=162
+  Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-specialization-name-conflict.ari" line=10 column=10 end_line=10 end_column=18 byte_start=142 byte_end=150 message=""
+  Snippet label=0 text="  --> tests/cases/generics/errors/generic-specialization-name-conflict.ari:10:10\n    |\n 10 |   return identity<i64>(1);\n    |          ^^^^^^^^"

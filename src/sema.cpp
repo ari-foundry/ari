@@ -4018,6 +4018,7 @@ private:
             }
             (void)exported_link_name(fn);
             if (!fn.generics.empty()) {
+                validate_generic_function_signature(fn);
                 auto inserted = generic_functions_.emplace(fn.name, &fn);
                 if (!inserted.second) fail(fn.loc, "duplicate generic function '" + fn.name + "'");
                 return;
@@ -4071,6 +4072,30 @@ private:
                 lazy_std_functions_.emplace(fn.name, &fn);
             }
         });
+    }
+
+    void validate_generic_function_signature(const FunctionDecl& fn) {
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = fn.module_name;
+        current_type_substitutions_ = generic_placeholder_substitutions(fn.generics);
+
+        std::vector<IrType> param_types;
+        param_types.reserve(fn.params.size());
+        for (const auto& param : fn.params) {
+            IrType param_type = resolve_executable_type(param.type);
+            bool vec_view = false;
+            param_types.push_back(vector_parameter_abi_type(
+                param.type.loc,
+                param_type,
+                "a generic function parameter",
+                vec_view));
+        }
+        IrType result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
+        require_function_signature_root_vector_runtime_abi(fn, param_types, result);
+
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
     }
 
     void require_function_signature_root_vector_runtime_abi(const FunctionDecl& fn,
@@ -4890,7 +4915,7 @@ private:
                 fail(type.loc, "range ownership qualifiers are not supported in the executable subset yet");
             }
             IrType bound = resolve_executable_type(ast_type.args[0]);
-            if (!is_value_integer_type(bound)) {
+            if (bound.primitive != IrPrimitiveKind::Unknown && !is_value_integer_type(bound)) {
                 fail(type.loc, "prelude range types require integer bounds");
             }
             type = make_prelude_range_type(type.loc, unqualified_name(type.name) == "RangeInclusive", bound);
@@ -22625,7 +22650,7 @@ private:
                 borrow_mark);
         }
 
-        queue_generic_function_specialization_with_sig(fn, specialized_name, call_sig, substitutions);
+        queue_generic_function_specialization_with_sig(fn, specialized_name, call_sig, substitutions, expr.loc);
         return finish_tracked_call(
             expr.loc,
             expr.name,
@@ -22639,9 +22664,15 @@ private:
         const FunctionDecl& fn,
         const std::string& specialized_name,
         const FunctionSig& sig,
-        const std::map<std::string, IrType>& substitutions
+        const std::map<std::string, IrType>& substitutions,
+        SourceLocation loc
     ) {
-        functions_.emplace(specialized_name, sig);
+        auto inserted = functions_.emplace(specialized_name, sig);
+        if (!inserted.second && !queued_specializations_.count(specialized_name)) {
+            fail(loc,
+                 "generic specialization '" + specialized_name +
+                     "' conflicts with an existing function; rename the concrete function or the generic function");
+        }
         if (queued_specializations_.count(specialized_name)) return;
         queued_specializations_.insert(specialized_name);
         if (cached_ir_function_available(specialized_name)) return;
@@ -22653,7 +22684,8 @@ private:
         const std::string& specialized_name,
         std::vector<IrType> param_types,
         const IrType& result,
-        const std::map<std::string, IrType>& substitutions
+        const std::map<std::string, IrType>& substitutions,
+        SourceLocation loc
     ) {
         FunctionSig sig;
         sig.params = std::move(param_types);
@@ -22665,7 +22697,7 @@ private:
         set_function_return_contracts(sig);
         apply_explicit_borrow_return_contract(sig, fn);
         set_function_borrow_return_path_hint(sig, fn);
-        queue_generic_function_specialization_with_sig(fn, specialized_name, sig, substitutions);
+        queue_generic_function_specialization_with_sig(fn, specialized_name, sig, substitutions, loc);
     }
 
     IrExprPtr check_generic_function_ref_with_expected(
@@ -22738,7 +22770,7 @@ private:
         }
 
         std::string specialized_name = generic_specialization_name(fn, substitutions);
-        queue_generic_function_specialization(fn, specialized_name, std::move(param_types), result, substitutions);
+        queue_generic_function_specialization(fn, specialized_name, std::move(param_types), result, substitutions, expr.loc);
 
         return make_function_ref_expr(expr.loc, specialized_name, selected_type);
     }

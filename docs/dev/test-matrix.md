@@ -75,9 +75,11 @@ symbols. `generic-function-compiler-shaped.ari` covers compiler-shaped `Span`,
 The `diagnostic-generic-*` artifacts lock source-aware failures for wrong
 explicit type-argument count, explicit mismatch, duplicate type parameters,
 conflicting inference, insufficient inference, function-pointer inference and
-signature failures, return-context inference limits, type arguments on
-non-generic functions, and private generic function access. Generic extern C
-declarations, uninferred return-only generics without explicit type arguments,
+signature failures, return-context inference limits, unbound type names in
+generic function signatures, generated specialization name collisions, type
+arguments on non-generic functions, and private generic function access.
+Generic extern C declarations, uninferred return-only generics without explicit
+type arguments,
 generic function pointer values whose type arguments cannot be selected by an
 expected `fn(...) -> ...` type, and broad higher-rank or defaulted generic
 features remain unsupported by design.
@@ -361,6 +363,10 @@ Checklist:
 - [x] specialize generic function names into function pointer values from expected `fn(...) -> ...` types
 - [x] lock compiler-shaped generic function specializations with typed IR,
       LLVM fragments, runtime output, and source-aware inference diagnostics
+- [x] validate generic function parameter and return type annotations at
+      declaration collection time
+- [x] reject generated generic specialization name collisions with concrete
+      function paths
 - [x] lower explicit generic struct literals and tuple-struct constructors
 - [x] infer generic struct literal and tuple-struct constructor type arguments from field/argument values
 - [x] monomorphize generic structs, tuple structs, enums, and aliases with

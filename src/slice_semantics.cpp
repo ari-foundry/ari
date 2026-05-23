@@ -72,6 +72,7 @@ bool slice_pointer_result_preserves_receiver_zone(const IrExpr& call) {
 void require_slice_element_materializable(SourceLocation loc,
                                           const IrType& element_type,
                                           const std::string& operation) {
+    if (element_type.primitive == IrPrimitiveKind::Unknown) return;
     if (!is_raw_pointer_deref_value_type(element_type)) {
         fail(loc, operation + " currently supports scalar or aggregate element types, got " + type_name(element_type));
     }

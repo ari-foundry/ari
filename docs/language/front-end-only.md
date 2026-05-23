@@ -92,6 +92,11 @@ while private generic helpers are rejected at external call sites. Trait bounds
 on generic functions are checked at call sites and can select constrained static
 method dispatch, including generic trait impls such as `impl[T] Trait for
 Box[T]`.
+Generic function parameter and return annotations are resolved at declaration
+collection time with the declared type parameters in scope, so unbound type
+names fail even when no call site requests a specialization. Ari also rejects
+generated specialization name collisions with concrete functions instead of
+letting backend symbols become ambiguous.
 Generic inherent impl methods and associated functions specialize at concrete
 call sites, including explicit or inferred method-level generic calls such as
 `value.replace<i64>(next)`, `value.replace(next)`, and `Factory::make<T>(next)`.

@@ -289,6 +289,8 @@ tests/cases/compiler-development/artifact/errors/diagnostic-generic-duplicate-pa
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-inference-conflict.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-uninferred.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-return-context-uninferred.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-signature-unknown-param.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-specialization-name-conflict.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-uninferred.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-mismatch.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-nongeneric-type-args.diagnostic

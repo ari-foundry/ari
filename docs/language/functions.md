@@ -317,6 +317,9 @@ specialization identity. Private generic functions remain private to their
 module. Type arguments can be primitive types, structs, enums, aliases, or
 nested generic aggregate types such as `PassResult<Box<Token>, Diagnostic>`
 when those aggregate shapes are otherwise supported by the backend.
+If a concrete function path would collide with a generated specialization key
+such as `identity__G_i64`, Ari rejects the specialization request instead of
+emitting ambiguous IR or object symbols.
 
 Generic parameters may appear in parameter types, return types, local type
 annotations, aggregate fields, enum payloads, and helper-call chains. Ari infers
@@ -326,10 +329,16 @@ local annotations and assignment targets are checked after generic call
 selection and do not infer a generic call's missing type arguments. Expected
 function-pointer types can still specialize a generic function name used as a
 value, such as `let op: fn(i64) -> i64 = identity;`.
+Generic parameter names are scoped to the generic declaration and take
+precedence over outer type names in that signature and body, so conventional
+uppercase names are preferred. Parameter and return type annotations are
+resolved when the generic function is declared; an unbound type name is rejected
+even if the function is never specialized.
 Conflicting inference, missing inference, wrong explicit type-argument counts,
 post-substitution argument or return mismatches, function-pointer
 specialization mismatches, type arguments on non-generic functions, duplicate
-generic parameter names, missing return-only type arguments, and private
+generic parameter names, unbound type names in generic signatures, generated
+specialization name collisions, missing return-only type arguments, and private
 generic function access are compile-time errors with source-aware diagnostics.
 
 Generic functions may use trait bounds with the same static dispatch rules

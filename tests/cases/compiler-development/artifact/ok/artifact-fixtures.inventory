@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=150
+CompilerArtifactFixtures version=1 group=all entries=152
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -34,6 +34,8 @@ CompilerArtifactFixtures version=1 group=all entries=150
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-nongeneric-type-args.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-private-function.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-return-context-uninferred.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-signature-unknown-param.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-specialization-name-conflict.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-uninferred.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-assignment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic
