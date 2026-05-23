@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=198
+CompilerArtifactFixtures version=1 group=all entries=200
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -80,11 +80,13 @@ CompilerArtifactFixtures version=1 group=all entries=198
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-no-payload.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-non-enum.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-nonexhaustive.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-or-pattern-binding-type.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-payload-required.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-missing-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-unknown-field.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-tuple-struct-pattern-arity.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-unknown-enum-case.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-unreachable-after-wildcard.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-wrong-enum-case.diagnostic

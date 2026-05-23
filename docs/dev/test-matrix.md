@@ -60,9 +60,10 @@ goldens lock source-aware aggregate and match failure artifacts for non-struct
 field access, missing fields, match-arm type mismatches, empty matches,
 non-matchable scrutinees, duplicate/unreachable arms, missing/extra payload
 patterns, wrong-enum cases, missing enum-case coverage,
-duplicate/missing/unknown struct-pattern fields, and unsupported named-field
-tuple-struct patterns; these common aggregate and match failures classify as
-`T0001` rather than the general compiler fallback.
+duplicate/missing/unknown struct-pattern fields, unsupported named-field
+tuple-struct patterns, tuple-struct positional arity mismatches, and
+or-pattern binding type mismatches; these common aggregate and match failures
+classify as `T0001` rather than the general compiler fallback.
 `tests/layout_unit.cpp` locks the underlying primitive sizes/alignments, field
 offsets, aggregate enum storage records, root-`Vec` layout-unavailable
 classification, and the direct/indirect/unsupported aggregate ABI classifier

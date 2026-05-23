@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="tuple-struct pattern for 'Rgb' has 1 field but value has 2" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/match/errors/match-tuple-struct-pattern-arity.ari" display="tests/cases/match/errors/match-tuple-struct-pattern-arity.ari" bytes=133
+  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/match-tuple-struct-pattern-arity.ari" line=6 column=9 end_line=6 end_column=12 byte_start=101 byte_end=104 message=""
+  Snippet label=0 text="  --> tests/cases/match/errors/match-tuple-struct-pattern-arity.ari:6:9\n   |\n 6 |     Rgb(red) => red,\n   |         ^^^"

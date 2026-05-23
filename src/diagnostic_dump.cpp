@@ -280,6 +280,9 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "duplicate field") ||
         contains(diagnostic, "duplicate match arm") ||
         contains(diagnostic, "unreachable match arm") ||
+        contains(diagnostic, "or-pattern") ||
+        contains(diagnostic, "tuple-struct pattern") ||
+        contains(diagnostic, "tuple match must cover") ||
         contains(diagnostic, "match value must be") ||
         contains(diagnostic, "match must have at least one arm") ||
         contains(diagnostic, "match must cover all cases") ||

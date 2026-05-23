@@ -210,6 +210,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-non-enum.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-non-enum.diagnostic
 	$(TARGET) tests/cases/match/errors/match-nonexhaustive.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-nonexhaustive.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-nonexhaustive.diagnostic
+	$(TARGET) tests/cases/match/errors/match-or-pattern-binding-type.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-or-pattern-binding-type.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-or-pattern-binding-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-or-pattern-binding-type.diagnostic
 	$(TARGET) tests/cases/match/errors/match-payload-required.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-payload-required.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-payload-required.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-payload-required.diagnostic
 	$(TARGET) tests/cases/match/errors/match-struct-pattern-duplicate-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-duplicate-field.diagnostic
@@ -220,6 +222,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-unknown-field.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-unknown-field.diagnostic
 	$(TARGET) tests/cases/match/errors/match-struct-pattern-tuple-struct.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-tuple-struct.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-tuple-struct.diagnostic
+	$(TARGET) tests/cases/match/errors/match-tuple-struct-pattern-arity.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-tuple-struct-pattern-arity.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-tuple-struct-pattern-arity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-tuple-struct-pattern-arity.diagnostic
 	$(TARGET) tests/cases/match/errors/match-unreachable-after-wildcard.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-unreachable-after-wildcard.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-unreachable-after-wildcard.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-unreachable-after-wildcard.diagnostic
 	$(TARGET) tests/cases/match/errors/match-unknown-enum-case.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-unknown-enum-case.diagnostic
