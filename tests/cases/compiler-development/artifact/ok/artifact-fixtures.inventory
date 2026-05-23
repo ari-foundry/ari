@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=220
+CompilerArtifactFixtures version=1 group=all entries=224
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -25,6 +25,7 @@ CompilerArtifactFixtures version=1 group=all entries=220
   Fixture group=errors kind=source path=errors/diagnostic-double-move.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-double-move.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-function.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-module-file-identity.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-duplicate-name.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-name.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-constructor-payload-type.diagnostic
@@ -67,6 +68,7 @@ CompilerArtifactFixtures version=1 group=all entries=220
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-signature-unknown-param.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-specialization-name-conflict.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-uninferred.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-imported-parse-source-id.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-imported-semantic-source-id.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-assignment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic
@@ -156,6 +158,7 @@ CompilerArtifactFixtures version=1 group=all entries=220
   Fixture group=errors kind=source path=errors/diagnostic_ambiguous_module/mod.ari
   Fixture group=errors kind=source path=errors/diagnostic_cycle_a.ari
   Fixture group=errors kind=source path=errors/diagnostic_cycle_b.ari
+  Fixture group=errors kind=text path=errors/module-cache-stale-source.err.txt
   Fixture group=errors kind=text path=errors/text-line-mismatch.actual.txt
   Fixture group=errors kind=text path=errors/text-line-mismatch.expected.txt
   Fixture group=errors kind=text path=errors/text-line-mismatch.report.txt
@@ -185,6 +188,7 @@ CompilerArtifactFixtures version=1 group=all entries=220
   Fixture group=ok kind=typed-ir path=ok/generic-function-compiler-shaped.ir
   Fixture group=ok kind=module-graph path=ok/module-graph-file-module.graph
   Fixture group=ok kind=module-graph path=ok/module-graph-project-compiler.graph
+  Fixture group=ok kind=module-graph path=ok/module-graph-same-filename.graph
   Fixture group=ok kind=text path=ok/normalize-paths.actual.txt
   Fixture group=ok kind=text path=ok/normalize-paths.expected.txt
   Fixture group=ok kind=symbols path=ok/object-aggregate-extern-link.symbols

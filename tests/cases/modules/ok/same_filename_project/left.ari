@@ -1,0 +1,5 @@
+pub mod util;
+
+pub fn value() -> i64 {
+  return self::util::score() + 1;
+}

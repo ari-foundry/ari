@@ -1,0 +1,5 @@
+mod same_filename_project;
+
+fn main() -> i64 {
+  return same_filename_project::run();
+}

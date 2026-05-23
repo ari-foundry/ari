@@ -132,6 +132,10 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ambiguous-module.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-cyclic-module.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-cyclic-module.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-cyclic-module.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-cyclic-module.diagnostic
+	$(TARGET) tests/cases/modules/errors/duplicate-module-file-identity.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-module-file-identity.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-module-file-identity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-module-file-identity.diagnostic
+	$(TARGET) tests/cases/modules/errors/imported-parse-error-main.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-imported-parse-source-id.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-imported-parse-source-id.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-imported-parse-source-id.diagnostic
 	$(TARGET) tests/cases/modules/errors/imported-semantic-error-main.ari --no-implicit-std --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-imported-semantic-source-id.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-imported-semantic-source-id.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-imported-semantic-source-id.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-unknown-trait.diagnostic
@@ -354,6 +358,17 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph $(BUILD_DIR)/compiler-development/artifact/module-graph-file-module.graph
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-project-compiler.graph
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/module-graph-project-compiler.graph $(BUILD_DIR)/compiler-development/artifact/module-graph-project-compiler.graph
+	$(TARGET) tests/cases/modules/ok/same-filename-project-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-module-graph $(BUILD_DIR)/compiler-development/artifact/module-graph-same-filename.graph
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/module-graph-same-filename.graph $(BUILD_DIR)/compiler-development/artifact/module-graph-same-filename.graph
+	mkdir -p $(BUILD_DIR)/compiler-development/artifact/module-cache-stale-root $(BUILD_DIR)/compiler-development/artifact/module-cache-stale-packages/nested
+	cp tests/cases/modules/ok/package-module-main.ari $(BUILD_DIR)/compiler-development/artifact/module-cache-stale-root/app.ari
+	cp tests/packages/package_math.ari $(BUILD_DIR)/compiler-development/artifact/module-cache-stale-packages/package_math.ari
+	cp tests/packages/package_header.arih $(BUILD_DIR)/compiler-development/artifact/module-cache-stale-packages/package_header.arih
+	cp tests/packages/nested/mod.ari $(BUILD_DIR)/compiler-development/artifact/module-cache-stale-packages/nested/mod.ari
+	$(TARGET) -I$(abspath $(BUILD_DIR))/compiler-development/artifact/module-cache-stale-packages $(abspath $(BUILD_DIR))/compiler-development/artifact/module-cache-stale-root/app.ari --emit-module-cache $(abspath $(BUILD_DIR))/compiler-development/artifact/module-cache-stale-source.aricache --emit-llvm $(BUILD_DIR)/compiler-development/artifact/module-cache-stale-source.ll
+	printf '\n// stale\n' >>$(BUILD_DIR)/compiler-development/artifact/module-cache-stale-packages/package_math.ari
+	if $(TARGET) -I$(abspath $(BUILD_DIR))/compiler-development/artifact/module-cache-stale-packages $(abspath $(BUILD_DIR))/compiler-development/artifact/module-cache-stale-root/app.ari --use-module-cache $(abspath $(BUILD_DIR))/compiler-development/artifact/module-cache-stale-source.aricache --emit-llvm $(BUILD_DIR)/compiler-development/artifact/module-cache-stale-source-use.ll >$(BUILD_DIR)/compiler-development/artifact/module-cache-stale-source.err.txt 2>&1; then exit 1; fi
+	python3 tests/check_compiler_artifacts.py --normalize tests/cases/compiler-development/artifact/errors/module-cache-stale-source.err.txt $(BUILD_DIR)/compiler-development/artifact/module-cache-stale-source.err.txt
 	$(TARGET) tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-declaration-index $(BUILD_DIR)/compiler-development/artifact/declaration-index-basic.decls
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls $(BUILD_DIR)/compiler-development/artifact/declaration-index-basic.decls
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-declaration-index $(BUILD_DIR)/compiler-development/artifact/declaration-index-project-compiler.decls
@@ -4017,10 +4032,17 @@ check-modules: $(TARGET)
 	$(BUILD_DIR)/modules/trait-project-main.elf; code=$$?; test $$code -eq 22
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari -o $(BUILD_DIR)/modules/project-compiler-main.elf
 	$(BUILD_DIR)/modules/project-compiler-main.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/cases/modules/ok/same-filename-project-main.ari -o $(BUILD_DIR)/modules/same-filename-project-main.elf
+	$(BUILD_DIR)/modules/same-filename-project-main.elf; code=$$?; test $$code -eq 33
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --emit-module-graph $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -q "Source id=3 module=project_compiler::parser" $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -q "Import owner=project_compiler module=project_compiler::parser local=parse visibility=pub" $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -q "Item module=project_compiler::symbols kind=fn name=project_compiler::symbols::private_bias visibility=private" $(BUILD_DIR)/modules/project-compiler-main.graph
+	$(TARGET) tests/cases/modules/ok/same-filename-project-main.ari --emit-module-graph $(BUILD_DIR)/modules/same-filename-project-main.graph
+	$(TARGET) tests/cases/modules/ok/same-filename-project-main.ari --emit-module-graph $(BUILD_DIR)/modules/same-filename-project-main.repeat.graph
+	cmp -s $(BUILD_DIR)/modules/same-filename-project-main.graph $(BUILD_DIR)/modules/same-filename-project-main.repeat.graph
+	grep -q "Source id=3 module=same_filename_project::left::util" $(BUILD_DIR)/modules/same-filename-project-main.graph
+	grep -q "Source id=5 module=same_filename_project::right::util" $(BUILD_DIR)/modules/same-filename-project-main.graph
 	$(TARGET) --module-path tests/packages tests/cases/modules/ok/package-module-main.ari -o $(BUILD_DIR)/modules/package-module-main.elf
 	$(BUILD_DIR)/modules/package-module-main.elf; code=$$?; test $$code -eq 31
 	$(TARGET) -Itests/packages tests/cases/modules/ok/package-module-main.ari --emit-llvm $(BUILD_DIR)/modules/package-module-main.ll
