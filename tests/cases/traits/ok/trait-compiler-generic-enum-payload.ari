@@ -1,0 +1,89 @@
+trait CompilerScore {
+  fn score(self) -> i64
+}
+
+struct Span {
+  start: i64,
+  end: i64,
+}
+
+struct NodeRef {
+  id: i64,
+}
+
+struct Token {
+  kind: i64,
+  node: NodeRef,
+}
+
+struct Diagnostic {
+  code: i64,
+  span: Span,
+}
+
+struct Envelope[T] {
+  payload: T,
+  stamp: i64,
+}
+
+enum PassValue[T, E] {
+  Done(T),
+  Failed(E),
+}
+
+impl CompilerScore for Span {
+  fn score(self) -> i64 {
+    return self.end - self.start;
+  }
+}
+
+impl CompilerScore for NodeRef {
+  fn score(self) -> i64 {
+    return self.id;
+  }
+}
+
+impl CompilerScore for Token {
+  fn score(self) -> i64 {
+    return self.kind + self.node.score();
+  }
+}
+
+impl CompilerScore for Diagnostic {
+  fn score(self) -> i64 {
+    return self.code + self.span.score();
+  }
+}
+
+impl[T: CompilerScore] CompilerScore for Envelope[T] {
+  fn score(self) -> i64 {
+    return self.payload.score() + self.stamp;
+  }
+}
+
+impl[T: CompilerScore, E: CompilerScore] CompilerScore for PassValue[T, E] {
+  fn score(self) -> i64 {
+    return match self {
+      Done(value) => value.score() + 1,
+      Failed(error) => error.score() + 2,
+    };
+  }
+}
+
+fn pass_score[T: CompilerScore, E: CompilerScore](value: PassValue[T, E]) -> i64 {
+  return value.score();
+}
+
+fn main() -> i64 {
+  let token = Token { kind: 7, node: NodeRef { id: 5 } };
+  let done: PassValue[Envelope[Token], Diagnostic] =
+    Done<Envelope[Token], Diagnostic>(Envelope<Token> { payload: token, stamp: 3 });
+  let failed: PassValue[Envelope[Token], Diagnostic] =
+    Failed<Envelope[Token], Diagnostic>(Diagnostic {
+      code: 11,
+      span: Span { start: 1, end: 4 },
+    });
+
+  return pass_score<Envelope[Token], Diagnostic>(done) +
+    pass_score<Envelope[Token], Diagnostic>(failed);
+}

@@ -1,0 +1,51 @@
+trait SymbolScore {
+  fn score(self) -> i64
+}
+
+trait DiagnosticScore {
+  fn score(self) -> i64
+}
+
+trait BuildSymbol {
+  fn make(id: i64, kind: i64) -> Self
+}
+
+struct Symbol {
+  id: i64,
+  kind: i64,
+}
+
+struct Diagnostic {
+  code: i64,
+}
+
+impl SymbolScore for Symbol {
+  fn score(self) -> i64 {
+    return self.id * 2 + self.kind;
+  }
+}
+
+impl DiagnosticScore for Diagnostic {
+  fn score(self) -> i64 {
+    return self.code + 30;
+  }
+}
+
+impl BuildSymbol for Symbol {
+  fn make(id: i64, kind: i64) -> Symbol {
+    return Symbol { id: id, kind: kind };
+  }
+}
+
+fn generic_symbol_score[T: SymbolScore](value: T) -> i64 {
+  return value.score();
+}
+
+fn main() -> i64 {
+  let first = BuildSymbol::make<Symbol>(8, 3);
+  let second = BuildSymbol::make<Symbol>(8, 3);
+  let diagnostic = Diagnostic { code: 4 };
+  return SymbolScore::score(first) +
+    generic_symbol_score<Symbol>(second) +
+    DiagnosticScore::score(diagnostic);
+}

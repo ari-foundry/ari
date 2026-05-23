@@ -5205,6 +5205,22 @@ check-traits: $(TARGET)
 	grep -q "_ARNv17same__G_TokenKind" $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
 	grep -q "_ARNv4impl10SymbolName8Hashable9hash_code" $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
 	grep -q "_ARNv4impl15DebugBox_Token_10Debuggable11debug_score" $(BUILD_DIR)/traits/trait-minimum-compiler-shaped.ll
+	$(TARGET) tests/cases/traits/ok/trait-compiler-symbol-diagnostic-dispatch.ari -o $(BUILD_DIR)/traits/trait-compiler-symbol-diagnostic-dispatch.elf
+	$(BUILD_DIR)/traits/trait-compiler-symbol-diagnostic-dispatch.elf; code=$$?; test $$code -eq 101
+	$(TARGET) tests/cases/traits/ok/trait-compiler-symbol-diagnostic-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-compiler-symbol-diagnostic-dispatch.ll
+	grep -q "_ARNv4impl6Symbol10CompilerEq4same" $(BUILD_DIR)/traits/trait-compiler-symbol-diagnostic-dispatch.ll
+	grep -q "_ARNv4impl10Diagnostic13CompilerDebug11debug_score" $(BUILD_DIR)/traits/trait-compiler-symbol-diagnostic-dispatch.ll
+	grep -q "_ARNv4impl7TypeRef12CompilerHash10hash_score" $(BUILD_DIR)/traits/trait-compiler-symbol-diagnostic-dispatch.ll
+	$(TARGET) tests/cases/traits/ok/trait-compiler-generic-enum-payload.ari -o $(BUILD_DIR)/traits/trait-compiler-generic-enum-payload.elf
+	$(BUILD_DIR)/traits/trait-compiler-generic-enum-payload.elf; code=$$?; test $$code -eq 32
+	$(TARGET) tests/cases/traits/ok/trait-compiler-generic-enum-payload.ari --emit-llvm $(BUILD_DIR)/traits/trait-compiler-generic-enum-payload.ll
+	grep -q "_ARNv40pass_score__G_Envelope_Token__Diagnostic" $(BUILD_DIR)/traits/trait-compiler-generic-enum-payload.ll
+	grep -q "_ARNv4impl38PassValue_Envelope_Token___Diagnostic_13CompilerScore5score" $(BUILD_DIR)/traits/trait-compiler-generic-enum-payload.ll
+	$(TARGET) tests/cases/traits/ok/trait-compiler-qualified-methods.ari -o $(BUILD_DIR)/traits/trait-compiler-qualified-methods.elf
+	$(BUILD_DIR)/traits/trait-compiler-qualified-methods.elf; code=$$?; test $$code -eq 72
+	$(TARGET) tests/cases/traits/ok/trait-compiler-qualified-methods.ari --emit-llvm $(BUILD_DIR)/traits/trait-compiler-qualified-methods.ll
+	grep -q "_ARNv4impl6Symbol11BuildSymbol4make" $(BUILD_DIR)/traits/trait-compiler-qualified-methods.ll
+	grep -q "_ARNv30generic_symbol_score__G_Symbol" $(BUILD_DIR)/traits/trait-compiler-qualified-methods.ll
 	$(TARGET) tests/cases/traits/ok/trait-minimum-stdlib-like.ari -o $(BUILD_DIR)/traits/trait-minimum-stdlib-like.elf
 	$(BUILD_DIR)/traits/trait-minimum-stdlib-like.elf; code=$$?; test $$code -eq 31
 	$(TARGET) tests/cases/traits/ok/trait-supertrait-static.ari -o $(BUILD_DIR)/traits/trait-supertrait-static.elf
@@ -5341,6 +5357,8 @@ check-traits: $(TARGET)
 	grep -q "unknown method 'missing' for type i64" $(BUILD_DIR)/traits/trait-method-unknown.err
 	if $(TARGET) tests/cases/traits/errors/trait-method-ambiguous.ari -o $(BUILD_DIR)/traits/trait-method-ambiguous.elf >$(BUILD_DIR)/traits/trait-method-ambiguous.err 2>&1; then exit 1; fi
 	grep -q "method call 'score' for type i64 is ambiguous" $(BUILD_DIR)/traits/trait-method-ambiguous.err
+	if $(TARGET) tests/cases/traits/errors/trait-compiler-method-ambiguous.ari -o $(BUILD_DIR)/traits/trait-compiler-method-ambiguous.elf >$(BUILD_DIR)/traits/trait-compiler-method-ambiguous.err 2>&1; then exit 1; fi
+	grep -q "method call 'score' for type Symbol is ambiguous" $(BUILD_DIR)/traits/trait-compiler-method-ambiguous.err
 	if $(TARGET) tests/cases/traits/errors/trait-qualified-supertrait-ambiguous.ari -o $(BUILD_DIR)/traits/trait-qualified-supertrait-ambiguous.elf >$(BUILD_DIR)/traits/trait-qualified-supertrait-ambiguous.err 2>&1; then exit 1; fi
 	grep -q "trait-qualified method call 'BothScores::score' for type i64 is ambiguous" $(BUILD_DIR)/traits/trait-qualified-supertrait-ambiguous.err
 	if $(TARGET) tests/cases/traits/errors/trait-associated-ambiguous.ari -o $(BUILD_DIR)/traits/trait-associated-ambiguous.elf >$(BUILD_DIR)/traits/trait-associated-ambiguous.err 2>&1; then exit 1; fi
@@ -5359,6 +5377,8 @@ check-traits: $(TARGET)
 	grep -q "type Other does not implement trait 'Build' for trait-qualified associated function call" $(BUILD_DIR)/traits/trait-qualified-associated-expected-missing-impl.err
 	if $(TARGET) tests/cases/traits/errors/trait-bound-missing-impl.ari -o $(BUILD_DIR)/traits/trait-bound-missing-impl.elf >$(BUILD_DIR)/traits/trait-bound-missing-impl.err 2>&1; then exit 1; fi
 	grep -q "type i64 does not implement trait 'NeedsScore' required by generic parameter 'T'" $(BUILD_DIR)/traits/trait-bound-missing-impl.err
+	if $(TARGET) tests/cases/traits/errors/trait-compiler-bound-missing-impl.ari -o $(BUILD_DIR)/traits/trait-compiler-bound-missing-impl.elf >$(BUILD_DIR)/traits/trait-compiler-bound-missing-impl.err 2>&1; then exit 1; fi
+	grep -q "type Diagnostic does not implement trait 'Renderable' required by generic parameter 'T'" $(BUILD_DIR)/traits/trait-compiler-bound-missing-impl.err
 	if $(TARGET) tests/cases/traits/errors/trait-supertrait-missing-impl.ari -o $(BUILD_DIR)/traits/trait-supertrait-missing-impl.elf >$(BUILD_DIR)/traits/trait-supertrait-missing-impl.err 2>&1; then exit 1; fi
 	grep -q "impl of trait 'Child' for i64 requires supertrait 'Base'" $(BUILD_DIR)/traits/trait-supertrait-missing-impl.err
 	if $(TARGET) tests/cases/generics/errors/generic-impl-bound-missing.ari -o $(BUILD_DIR)/traits/generic-impl-bound-missing.elf >$(BUILD_DIR)/traits/generic-impl-bound-missing.err 2>&1; then exit 1; fi

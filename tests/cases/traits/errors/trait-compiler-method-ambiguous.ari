@@ -1,0 +1,28 @@
+trait SymbolScore {
+  fn score(self) -> i64
+}
+
+trait DiagnosticScore {
+  fn score(self) -> i64
+}
+
+struct Symbol {
+  id: i64,
+}
+
+impl SymbolScore for Symbol {
+  fn score(self) -> i64 {
+    return self.id;
+  }
+}
+
+impl DiagnosticScore for Symbol {
+  fn score(self) -> i64 {
+    return self.id + 1;
+  }
+}
+
+fn main() -> i64 {
+  let symbol = Symbol { id: 1 };
+  return symbol.score();
+}

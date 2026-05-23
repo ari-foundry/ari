@@ -1,0 +1,106 @@
+trait CompilerEq[T] {
+  fn same(self, other: T) -> bool
+}
+
+trait CompilerOrd[T] {
+  fn before(self, other: T) -> bool
+}
+
+trait CompilerDebug {
+  fn debug_score(self) -> i64
+}
+
+trait CompilerHash {
+  fn hash_score(self) -> i64
+}
+
+struct Span {
+  source: i64,
+  start: i64,
+  end: i64,
+}
+
+struct Symbol {
+  id: i64,
+  kind: i64,
+  span: Span,
+}
+
+struct Label {
+  span: Span,
+  code: i64,
+}
+
+struct Diagnostic {
+  severity: i64,
+  primary: Label,
+}
+
+struct TypeRef {
+  base: i64,
+  first_arg: i64,
+  second_arg: i64,
+}
+
+impl CompilerEq[Symbol] for Symbol {
+  fn same(self, other: Symbol) -> bool {
+    return self.id == other.id &&
+      self.kind == other.kind &&
+      self.span.source == other.span.source;
+  }
+}
+
+impl CompilerOrd[Symbol] for Symbol {
+  fn before(self, other: Symbol) -> bool {
+    if self.kind == other.kind {
+      return self.id < other.id;
+    }
+    return self.kind < other.kind;
+  }
+}
+
+impl CompilerDebug for Diagnostic {
+  fn debug_score(self) -> i64 {
+    return self.severity * 10 + self.primary.code +
+      self.primary.span.source + self.primary.span.end - self.primary.span.start;
+  }
+}
+
+impl CompilerHash for TypeRef {
+  fn hash_score(self) -> i64 {
+    return self.base * 16 + self.first_arg * 4 + self.second_arg;
+  }
+}
+
+fn is_same[T: CompilerEq[T]](left: T, right: T) -> bool {
+  return left.same(right);
+}
+
+fn is_before[T: CompilerOrd[T]](left: T, right: T) -> bool {
+  return left.before(right);
+}
+
+fn debug_value[T: CompilerDebug](value: T) -> i64 {
+  return value.debug_score();
+}
+
+fn hash_value[T: CompilerHash](value: T) -> i64 {
+  return value.hash_score();
+}
+
+fn main() -> i64 {
+  let span = Span { source: 1, start: 10, end: 14 };
+  let left = Symbol { id: 2, kind: 3, span: span };
+  let right = Symbol { id: 2, kind: 3, span: Span { source: 1, start: 20, end: 25 } };
+  let later = Symbol { id: 3, kind: 4, span: Span { source: 1, start: 30, end: 32 } };
+  let diagnostic = Diagnostic {
+    severity: 2,
+    primary: Label { span: span, code: 7 },
+  };
+  let ty = TypeRef { base: 3, first_arg: 2, second_arg: 1 };
+
+  let same_score = if is_same<Symbol>(left, right) { 5 } else { 0 };
+  let order_score = if is_before<Symbol>(left, later) { 7 } else { 0 };
+  return same_score + order_score + debug_value<Diagnostic>(diagnostic) +
+    hash_value<TypeRef>(ty);
+}

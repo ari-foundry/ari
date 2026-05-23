@@ -1,0 +1,26 @@
+trait Renderable {
+  fn render_score(self) -> i64
+}
+
+struct Symbol {
+  id: i64,
+}
+
+struct Diagnostic {
+  code: i64,
+}
+
+impl Renderable for Symbol {
+  fn render_score(self) -> i64 {
+    return self.id;
+  }
+}
+
+fn render_value[T: Renderable](value: T) -> i64 {
+  return value.render_score();
+}
+
+fn main() -> i64 {
+  let diagnostic = Diagnostic { code: 4 };
+  return render_value<Diagnostic>(diagnostic);
+}
