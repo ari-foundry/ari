@@ -303,11 +303,13 @@ Current transitional bridge:
 - `--emit-diagnostics` still catches string-based `CompileError` values.
 - `classify_diagnostic_code` maps common messages into the first stable
   families: `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, and `B0001`.
-  The covered user-facing semantic patterns include unknown names, duplicate
-  declarations, wrong argument counts, assignment errors, return errors, type
-  mismatches, private visibility access, trait failures, generic inference and
-  explicit type-argument failures, aggregate field failures, match pattern
-  validation failures, non-exhaustive enum matches, and ownership failures.
+  Lexer literal/comment/escape failures stay in `L0001`, parser grammar
+  failures stay in `P0001`, and the covered user-facing semantic patterns
+  include unknown names, duplicate declarations, wrong argument counts,
+  assignment errors, return errors, type mismatches, private visibility access,
+  trait failures, generic inference and explicit type-argument failures,
+  aggregate field failures, match pattern validation failures, non-exhaustive
+  enum matches, and ownership failures.
 - `diagnostic_code_family` renders the owning layer name, such as
   `family=parser`, next to the stable code in diagnostic artifacts.
 - Diagnostic artifacts render `Source`, `Label`, `Snippet`, `Note`, and `Help`
@@ -339,8 +341,8 @@ The current compiler paths are classified as follows.
 | Path | Status | Contract |
 | --- | --- | --- |
 | `SourceId`, `SourceFile`, `Span`, `SourceMap`, `SourceLocation` | already SourceId/Span-backed | `src/common.*` owns source registration, line tables, EOF offsets, byte-span helpers, line/column lookup, CRLF handling, UTF-8 byte-column policy, snippet extraction, and missing-source fallback. |
-| Lexer diagnostics | already SourceId/Span-backed | Tokens and lexer errors carry spans. `diagnostic-unexpected-character.diagnostic` verifies code, source id/path, byte span, line/column, label, and snippet. |
-| Parser diagnostics | already SourceId/Span-backed | Expected/unexpected token failures use token spans. `diagnostic-parser-expected.diagnostic` is the representative golden. |
+| Lexer diagnostics | already SourceId/Span-backed | Tokens and lexer errors carry spans. `diagnostic-unexpected-character.diagnostic` and `diagnostic-lexer-unterminated-string.diagnostic` verify code, source id/path, byte span, line/column, label, and snippet. |
+| Parser diagnostics | already SourceId/Span-backed | Expected/unexpected token failures use token spans. `diagnostic-parser-expected.diagnostic` and `diagnostic-parser-top-level.diagnostic` are the representative goldens. |
 | Module/import/visibility diagnostics | already SourceId/Span-backed for common paths | Missing modules, ambiguous module candidates, cyclic imports, and private access preserve the source of the import or qualified access. `diagnostic-missing-module.diagnostic`, `diagnostic-ambiguous-module.diagnostic`, `diagnostic-cyclic-module.diagnostic`, and `diagnostic-private-access.diagnostic` verify the artifact rows. |
 | Semantic/type/name diagnostics | already SourceId/Span-backed for common paths | Unknown names, duplicate declarations, type mismatch, wrong arity, wrong argument type, invalid return, invalid assignment, unknown struct fields, and non-exhaustive enum matches are covered by focused diagnostic artifacts, including `diagnostic-struct-field-unknown.diagnostic` and `diagnostic-match-nonexhaustive.diagnostic`. |
 | Trait diagnostics | already SourceId/Span-backed for the minimum subset | Unknown trait, missing impl, ambiguous method, duplicate/wrong impl checks flow through semantic locations and golden diagnostics. |
@@ -451,7 +453,8 @@ compiler surface. The protected contract covers:
 - lexer, parser, module, semantic, trait, and ownership representative
   diagnostics
 - deterministic diagnostic artifacts with source rows, labels, byte ranges,
-  line/column data, snippets, notes, and help rows where available
+  line/column data, snippets, notes, and help rows where available, including
+  a repeated lexer diagnostic artifact comparison for deterministic rendering
 
 Remaining work is intentionally scoped to future polish rather than correctness:
 individual rule-specific code expansion beyond the first stable families,

@@ -222,7 +222,14 @@ std::string classify_diagnostic_code(const std::string& message) {
     // This classifier is intentionally conservative while Ari still reports
     // CompileError as text. New structured diagnostics should replace these
     // patterns with explicit codes at the throw site.
-    if (contains(diagnostic, "unexpected character")) return "L0001";
+    if (contains(diagnostic, "unexpected character") ||
+        contains(diagnostic, "unterminated string literal") ||
+        contains(diagnostic, "unterminated block comment") ||
+        contains(diagnostic, "byte character literal") ||
+        contains(diagnostic, "Unicode escape") ||
+        contains(diagnostic, "integer literal")) {
+        return "L0001";
+    }
     if (contains(diagnostic, "cannot find module file") ||
         contains(diagnostic, "ambiguous module file") ||
         contains(diagnostic, "cyclic module import") ||

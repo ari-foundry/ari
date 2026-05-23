@@ -1,0 +1,4 @@
+diagnostic error code=L0001 family=lexer message="unterminated string literal" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-string.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-string.ari" bytes=52
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-string.ari" line=2 column=14 end_line=3 end_column=1 byte_start=32 byte_end=38 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-string.ari:2:14\n   |\n 2 |   let text = \"open\n   |              ^^^^^"

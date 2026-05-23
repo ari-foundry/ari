@@ -1,0 +1,4 @@
+diagnostic error code=P0001 family=parser message="expected top-level declaration" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-parser-top-level.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-parser-top-level.ari" bytes=2
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-parser-top-level.ari" line=1 column=1 end_line=1 end_column=2 byte_start=0 byte_end=1 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-parser-top-level.ari:1:1\n   |\n 1 | }\n   | ^"

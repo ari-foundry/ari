@@ -59,6 +59,18 @@ for a compiler-emitted `@repr(C)` aggregate API: exported C symbols are defined,
 the imported C helper remains unresolved for the linker, and no `main` symbol is
 emitted.
 
+## Source Diagnostics Coverage Note
+
+Source-aware diagnostics are covered by SourceMap unit tests and artifact
+goldens. `diagnostic-unexpected-character.diagnostic` and
+`diagnostic-lexer-unterminated-string.diagnostic` lock lexer source spans,
+including literal diagnostics classified as `L0001`.
+`diagnostic-parser-expected.diagnostic` and
+`diagnostic-parser-top-level.diagnostic` lock parser EOF and unexpected
+top-level token spans classified as `P0001`. The compiler artifact target also
+re-emits the unterminated-string diagnostic and byte-compares it with the first
+output to prove deterministic diagnostic artifact rendering.
+
 ## Generic Function Coverage Note
 
 Generic function support is complete for the current concrete-monomorphization
