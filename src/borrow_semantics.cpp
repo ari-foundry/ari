@@ -11,7 +11,7 @@ namespace ari {
 namespace {
 
 [[noreturn]] void fail_borrow(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    throw CompileError(loc, message);
 }
 
 } // namespace

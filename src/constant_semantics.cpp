@@ -13,7 +13,7 @@ namespace ari {
 namespace {
 
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    throw CompileError(loc, message);
 }
 
 bool is_integer_type(const IrType& type) {

@@ -15,7 +15,7 @@ namespace ari {
 namespace {
 
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    throw CompileError(loc, message);
 }
 
 [[noreturn]] void fail_refutable_for_pattern(SourceLocation loc) {

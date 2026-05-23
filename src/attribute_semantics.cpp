@@ -8,7 +8,7 @@ namespace ari {
 namespace {
 
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    throw CompileError(loc, message);
 }
 
 void require_attribute_args(const Attribute& attr) {

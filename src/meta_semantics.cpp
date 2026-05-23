@@ -14,7 +14,7 @@ namespace ari {
 namespace {
 
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    throw CompileError(loc, message);
 }
 
 void require_unique_generic_params(const std::vector<GenericParam>& generics,

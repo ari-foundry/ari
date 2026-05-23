@@ -78,7 +78,7 @@ IrExprPtr make_bool_literal(SourceLocation loc, bool value) {
 }
 
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    throw CompileError(loc, message);
 }
 
 struct LocalVecMethodInfo {

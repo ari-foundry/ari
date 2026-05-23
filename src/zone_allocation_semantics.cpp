@@ -15,7 +15,7 @@ namespace ari {
 namespace {
 
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    throw CompileError(loc, message);
 }
 
 IrType primitive_type(IrPrimitiveKind primitive, std::string name, SourceLocation loc) {

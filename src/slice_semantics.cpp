@@ -26,7 +26,7 @@ IrType value_qualified_slice_type(IrType type) {
 }
 
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    throw CompileError(loc, message);
 }
 
 } // namespace
