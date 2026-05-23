@@ -144,6 +144,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-arity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-arity.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-explicit-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-mismatch.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-mismatch.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-enum-constructor-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-enum-constructor-mismatch.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-enum-constructor-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-enum-constructor-mismatch.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-inference-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-inference-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-inference-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-inference-conflict.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-uninferred.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-uninferred.diagnostic
@@ -188,6 +190,10 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-invalid-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-invalid-assignment.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-private-access.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-private-access.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
+	$(TARGET) tests/cases/modules/errors/private-module-enum-case.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-enum-case.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-private-enum-case.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-enum-case.diagnostic
+	$(TARGET) tests/cases/modules/errors/private-module-struct-type.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-struct-type.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-private-struct-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-struct-type.diagnostic
 	$(TARGET) tests/cases/structs/errors/struct-literal-missing-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-missing-field.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-missing-field.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-missing-field.diagnostic
 	$(TARGET) tests/cases/structs/errors/struct-literal-extra-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-extra-field.diagnostic

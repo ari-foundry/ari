@@ -2041,7 +2041,14 @@ private:
             }
 
             auto inserted = structs_.emplace(decl.name, std::move(info));
-            if (!inserted.second) fail(decl.loc, "duplicate struct '" + decl.name + "'");
+            if (!inserted.second) {
+                fail_duplicate_declaration(
+                    decl.loc,
+                    inserted.first->second.loc,
+                    "duplicate struct '" + decl.name + "'",
+                    "previous declaration of struct '" + decl.name + "'",
+                    "rename or remove one of the struct declarations");
+            }
         });
     }
 
@@ -25605,6 +25612,24 @@ private:
 
     [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
         throw CompileError(std::move(loc), message);
+    }
+
+    [[noreturn]] static void fail_duplicate_declaration(SourceLocation duplicate_loc,
+                                                        SourceLocation previous_loc,
+                                                        const std::string& message,
+                                                        const std::string& previous_label,
+                                                        const std::string& help) {
+        CompileError error(std::move(duplicate_loc), message);
+        Span previous_span = span_from_location(previous_loc);
+        if (span_has_source(previous_span) && span_has_valid_order(previous_span)) {
+            error.add_label(DiagnosticLabel{previous_span, previous_label, false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "previous declaration is shown as a secondary label",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{std::nullopt, help, DiagnosticNoteKind::Help});
+        throw error;
     }
 };
 

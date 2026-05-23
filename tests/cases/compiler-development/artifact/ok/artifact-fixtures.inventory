@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=211
+CompilerArtifactFixtures version=1 group=all entries=214
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -49,6 +49,7 @@ CompilerArtifactFixtures version=1 group=all entries=211
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-nested-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-recursive-struct.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-duplicate-param.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-enum-constructor-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-explicit-arity.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-explicit-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-function-pointer-mismatch.diagnostic
@@ -117,6 +118,8 @@ CompilerArtifactFixtures version=1 group=all entries=211
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-top-level.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-private-access.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-private-access.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-private-enum-case.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-private-struct-type.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-return-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-return-live-owner.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-runtime-owned-enum-conditional-payload-slot-move.diagnostic
