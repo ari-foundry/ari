@@ -606,11 +606,10 @@ SourceLocation SourceMap::location_for_offset(SourceId id, std::size_t byte_offs
 }
 
 SourceLocation SourceMap::location_for_span(Span source_span) const {
-    SourceLocation loc = location_for_offset(source_span.source_id, source_span.start);
     const SourceFile* file = get(source_span.source_id);
-    if (file == nullptr) return loc;
-    Span normalized = span(source_span.source_id, source_span.start, source_span.end);
-    set_location_span(loc, normalized);
+    if (file == nullptr || !valid_span(source_span)) return SourceLocation{};
+    SourceLocation loc = location_for_offset(source_span.source_id, source_span.start);
+    set_location_span(loc, source_span);
     loc.has_byte_range = true;
     return loc;
 }
@@ -632,8 +631,9 @@ SourceSnippet SourceMap::snippet(Span source_span, std::size_t context_lines) co
     SourceSnippet result;
     const SourceFile* file = get(source_span.source_id);
     if (file == nullptr) return result;
+    if (!valid_span(source_span)) return result;
 
-    Span normalized = span(source_span.source_id, source_span.start, source_span.end);
+    Span normalized = source_span;
     std::size_t start_line = line_index_for_offset(*file, normalized.start);
     std::size_t end_offset = normalized.end > normalized.start ? normalized.end - 1 : normalized.start;
     std::size_t end_line = line_index_for_offset(*file, end_offset);

@@ -216,9 +216,17 @@ void test_utf8_byte_columns_and_multibyte_text() {
 void test_invalid_span() {
     ari::SourceMap map;
     ari::SourceId id = add_file(map, "invalid.ari", "abcd");
-    expect_false(map.valid_span(ari::Span{id, 3, 1}), "reversed span is invalid");
-    expect_false(map.valid_span(ari::Span{id, 0, 99}), "out-of-range span is invalid");
+    ari::Span reversed{id, 3, 1};
+    ari::Span out_of_range{id, 0, 99};
+    expect_false(map.valid_span(reversed), "reversed span is invalid");
+    expect_false(map.valid_span(out_of_range), "out-of-range span is invalid");
     expect_false(ari::span_has_source(ari::invalid_span()), "invalid span has no source");
+    expect_false(map.snippet(reversed).valid, "reversed raw span snippet is invalid");
+    expect_false(map.snippet(out_of_range).valid, "out-of-range raw span snippet is invalid");
+    expect_false(ari::span_has_source(map.location_for_span(reversed).span),
+                 "reversed raw span location is invalid");
+    expect_false(ari::span_has_source(map.location_for_span(out_of_range).span),
+                 "out-of-range raw span location is invalid");
 
     ari::Span clamped = map.span(id, 2, 99);
     expect_true(map.valid_span(clamped), "SourceMap span helper clamps to EOF");
@@ -286,6 +294,23 @@ void test_source_registration_identity() {
         expect_eq(ari::source_kind_text(generated_file->kind), std::string("generated"), "generated source kind");
         expect_eq(generated_file->display_name, std::string("generated.ari"), "generated display name");
     }
+}
+
+void test_same_display_name_different_paths() {
+    ari::SourceMap map;
+    ari::SourceId first = map.add_source("pkg/one/main.ari", "main.ari", "a\n", ari::SourceKind::File);
+    ari::SourceId second = map.add_source("pkg/two/main.ari", "main.ari", "bb\n", ari::SourceKind::File);
+
+    expect_eq(first.value, 0, "same display first source id");
+    expect_eq(second.value, 1, "same display second source id");
+    expect_eq(map.id_for_name("pkg/one/main.ari").value, first.value,
+              "same display first canonical path lookup");
+    expect_eq(map.id_for_name("pkg/two/main.ari").value, second.value,
+              "same display second canonical path lookup");
+    expect_eq(map.location(first, 1).column, 2, "same display first source column");
+    expect_eq(map.location(second, 1).column, 2, "same display second source column");
+    expect_eq(map.span(first, 0, 1).source_id.value, first.value, "same display first span id");
+    expect_eq(map.span(second, 0, 1).source_id.value, second.value, "same display second span id");
 }
 
 void test_missing_source_snippet_fallback() {
@@ -440,6 +465,7 @@ int main() {
     test_span_helper_invariants();
     test_multi_file_source_map();
     test_source_registration_identity();
+    test_same_display_name_different_paths();
     test_missing_source_snippet_fallback();
     test_snippet_single_line();
     test_snippet_multi_line();
