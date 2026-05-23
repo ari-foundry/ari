@@ -25,7 +25,8 @@ extern C import fixtures, and source-aware `A0001` diagnostic artifacts for
 invalid extern ABI strings, extern bodies, generic extern declarations,
 invalid external link names, unsupported varargs surfaces, `c_void`
 parameters, and non-`@repr(C)`, oversized, or target-unsupported by-value
-aggregate imports.
+aggregate imports plus oversized or target-unsupported by-value C-header
+exports.
 C-header artifact goldens lock public
 `@repr(C)` structs, fieldless and payload-bearing enums, generated tuple,
 fixed-array, fixed-capacity-vector, and aggregate-enum wrappers, and ABI-facing
@@ -38,9 +39,12 @@ structs without `own` payload slots, and generated fixed-array, tuple,
 fixed-capacity-vector, and aggregate-enum wrapper typedefs are exposed for
 direct aggregate ABI values. Oversized, indirect, non-`@repr(C)`, or
 target-unsupported aggregate header/import surfaces remain rejected. The
-`backend-layout-aggregate.llvm-frag` golden checks the LLVM lowering for the
-supported aggregate layout surface: mixed primitive struct fields, tuple and
-fixed-array `size_of`/`align_of` constants, and payload enum tag/value access.
+`diagnostic-c-header-*` goldens lock the source-aware export-side rejection
+path by running `--emit-diagnostics` through C-header validation without LLVM or
+linking. The `backend-layout-aggregate.llvm-frag` golden checks the LLVM
+lowering for the supported aggregate layout surface: mixed primitive struct
+fields, tuple and fixed-array `size_of`/`align_of` constants, and payload enum
+tag/value access.
 `backend-aggregate-match-model.llvm-frag` golden checks compiler-shaped struct,
 enum, and match lowering from the generic aggregate model: nested parser-state
 struct construction, AST enum payload matches, pass-output result matching, and

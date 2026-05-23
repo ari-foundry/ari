@@ -436,7 +436,8 @@ Unsupported aggregate C import surfaces are reported as `A0001` ABI
 diagnostics with source spans; the golden artifact suite includes the
 invalid extern ABI, extern body, generic extern, invalid link-name, varargs,
 `c_void` parameter, non-`@repr(C)`, oversized, and target-unsupported
-by-value struct import rejections.
+by-value struct import rejections, plus oversized and target-unsupported
+C-header export rejections.
 
 ## C Header Emission
 
@@ -496,7 +497,8 @@ expose an explicit pointer ABI. Header generation still rejects Ari-only values
 such as `string`, ownership-qualified values, and non-`repr(C)` structs that do
 not have an explicit generated wrapper surface; expose `ptr c_char`,
 `ptr c_void`, or another scalar/raw pointer C ABI type until those layouts are
-defined.
+defined. These C-header ABI rejections are also available through
+`--emit-diagnostics` with source labels, without running LLVM or linking.
 
 ## Runtime Entry
 

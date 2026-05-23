@@ -13,9 +13,11 @@ include
 `diagnostic-ffi-extern-invalid-link-name.diagnostic`,
 the `diagnostic-ffi-extern-varargs-*` fixtures,
 `diagnostic-ffi-extern-void-param.diagnostic`,
-`diagnostic-ffi-nonrepr-aggregate-import.ari`,
+the `diagnostic-c-header-*` by-value export fixtures,
+`diagnostic-ffi-nonrepr-aggregate-import.diagnostic`,
 `diagnostic-ffi-large-aggregate-import.diagnostic`, and
 `diagnostic-ffi-target-aggregate-import.diagnostic`, which lock `A0001`
 diagnostics for rejecting invalid extern declarations, invalid external link
 symbols, unsupported varargs surfaces, `c_void` parameters, and non-`@repr(C)`,
-oversized, or target-unsupported by-value aggregates in `extern "C"` imports.
+oversized, or target-unsupported by-value aggregates in `extern "C"` imports
+and C-header exports.

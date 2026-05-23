@@ -1,0 +1,4 @@
+diagnostic error code=A0001 family=abi message="C header emission for by-value parameter Wide is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr Wide" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/ffi/errors/c-header-large-aggregate-by-value.ari" display="tests/cases/ffi/errors/c-header-large-aggregate-by-value.ari" bytes=164
+  Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/c-header-large-aggregate-by-value.ari" line=9 column=8 end_line=9 end_column=17 byte_start=92 byte_end=101 message=""
+  Snippet label=0 text="  --> tests/cases/ffi/errors/c-header-large-aggregate-by-value.ari:9:8\n   |\n 9 | pub fn take_wide(value: Wide) -> i64 {\n   |        ^^^^^^^^^"

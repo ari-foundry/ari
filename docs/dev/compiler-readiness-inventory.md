@@ -338,6 +338,10 @@ Current compiler-development tests:
   C header golden artifacts for public `@repr(C)` structs, fieldless enums,
   payload-bearing enums, generated tuple/array/vector wrappers, and ABI-facing
   function prototypes.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-c-header-*.diagnostic`:
+  source-aware `A0001` C-header export diagnostics for oversized or
+  target-unsupported by-value struct, tuple, fixed-array, and aggregate-enum
+  boundaries.
 - `tests/cases/compiler-development/artifact/ok/object-library-export.symbols`,
   `object-aggregate-extern-link.symbols`, and `shared-visibility.symbols`:
   normalized object and linked shared-library symbol inventories checked

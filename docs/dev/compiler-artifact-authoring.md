@@ -153,6 +153,13 @@ Keep fixture names behavior-based:
 - `diagnostic-double-move.diagnostic`
 - `diagnostic-enum-payload-invalid-move.diagnostic`
 - `diagnostic-compact-enum-payload-ref.diagnostic`
+- `diagnostic-c-header-large-aggregate-by-value.diagnostic`
+- `diagnostic-c-header-large-aggregate-enum-by-value.diagnostic`
+- `diagnostic-c-header-large-array-by-value.diagnostic`
+- `diagnostic-c-header-large-tuple-by-value.diagnostic`
+- `diagnostic-c-header-target-aggregate-by-value.diagnostic`
+- `diagnostic-c-header-target-array-by-value.diagnostic`
+- `diagnostic-c-header-target-tuple-by-value.diagnostic`
 - `diagnostic-ownership-aggregate-enum-payload.diagnostic`
 - `diagnostic-borrow-aggregate-enum-payload.diagnostic`
 - `diagnostic-generic-explicit-arity.diagnostic`

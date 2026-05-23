@@ -548,8 +548,9 @@ int run(int argc, char** argv) {
         return 0;
     }
     if (!diagnostic_output.empty()) {
+        const bool diagnostic_c_header_mode = !c_header_output.empty();
         if (check_only || output_explicit || emit_llvm_only || !object_output.empty() ||
-            !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
+            llvm_compiler_explicit || (!diagnostic_c_header_mode && shared_library) || test_mode ||
             !metadata_output.empty() || !metadata_check.empty() ||
             !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty()) {
             throw CompileError("--emit-diagnostics cannot be combined with checking, backend, module-cache, or linking options");
@@ -564,12 +565,15 @@ int run(int argc, char** argv) {
             ModuleLoadResult loaded = parse_file_with_module_metadata(input, std::move(diagnostic_load_options));
             Program program = std::move(loaded.program);
             SemaOptions sema_options;
-            sema_options.require_main = true;
+            sema_options.require_main = !diagnostic_c_header_mode;
             sema_options.implicit_std = implicit_std;
             sema_options.cfg_features = cfg_features;
             sema_options.target_triple = target.triple;
             sema_options.source_name = input;
-            (void)check_program(program, std::move(sema_options));
+            IrProgram ir = check_program(program, std::move(sema_options));
+            if (diagnostic_c_header_mode) {
+                (void)emit_c_header(ir);
+            }
         } catch (const CompileError& error) {
             diagnostic_artifact =
                 dump_diagnostic_message("error", classify_diagnostic_code(error.message()), error, input);

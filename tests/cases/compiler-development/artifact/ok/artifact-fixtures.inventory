@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=189
+CompilerArtifactFixtures version=1 group=all entries=196
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -9,6 +9,13 @@ CompilerArtifactFixtures version=1 group=all entries=189
   Fixture group=errors kind=diagnostic path=errors/diagnostic-borrow-aggregate-enum-payload.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-borrow-conflict.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-borrow-conflict.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-c-header-large-aggregate-by-value.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-c-header-large-aggregate-enum-by-value.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-c-header-large-array-by-value.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-c-header-large-tuple-by-value.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-c-header-target-aggregate-by-value.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-c-header-target-array-by-value.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-c-header-target-tuple-by-value.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-compact-enum-payload-ref.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-compact-enum-payload-ref.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-core-use-before-declaration.ari

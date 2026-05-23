@@ -274,6 +274,13 @@ tests/cases/compiler-development/artifact/ok/backend-ownership-drop-aggregate.ll
 tests/cases/compiler-development/artifact/ok/backend-ownership-drop-runtime-enum.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-ownership-compiler-shaped.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-trait-dispatch.llvm-frag
+tests/cases/compiler-development/artifact/errors/diagnostic-c-header-large-aggregate-by-value.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-c-header-large-aggregate-enum-by-value.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-c-header-large-array-by-value.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-c-header-large-tuple-by-value.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-c-header-target-aggregate-by-value.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-c-header-target-array-by-value.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-c-header-target-tuple-by-value.diagnostic
 tests/cases/compiler-development/artifact/ok/c-header-repr-struct.h
 tests/cases/compiler-development/artifact/ok/c-header-repr-payload-enum.h
 tests/cases/compiler-development/artifact/ok/c-header-generated-aggregates.h
@@ -452,6 +459,9 @@ It currently proves more than two dozen low-level contracts:
   match expression shape
 - `--emit-diagnostics` writes a normalized diagnostic artifact for an expected
   compiler failure
+- `--emit-diagnostics` may be combined with `--emit-c-header` when the failure
+  belongs to C-header validation; that mode still writes only the diagnostic
+  artifact and does not run LLVM or the linker
 - `--emit-diagnostics` classifies representative lexer, parser, module, type,
   and ownership failures with stable diagnostic codes and `family=...` layer names
   for borrow conflicts, use-after-move, moving borrowed owners, partial moves,

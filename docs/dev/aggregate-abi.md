@@ -38,8 +38,11 @@ diagnostic catalog uses `A0001` for ABI layout, C FFI declarations, C-header
 emission, and link-boundary checks; `make check-compiler-artifacts` locks
 invalid extern ABI strings, extern bodies, generic extern declarations,
 invalid external link names, unsupported varargs surfaces, `c_void`
-parameters, and non-`@repr(C)`, oversized, or target-unsupported by-value import
-rejections as golden diagnostic artifacts.
+parameters, non-`@repr(C)`, oversized, or target-unsupported by-value imports,
+and oversized or target-unsupported by-value C-header exports as golden
+diagnostic artifacts. `--emit-diagnostics` may be paired with
+`--emit-c-header` for these C-header diagnostics; the diagnostic artifact path
+does not run LLVM or the linker.
 
 C-header emission exposes direct by-value aggregate exports through generated C
 wrapper structs when Ari's source spelling is not already C-spellable. Fixed
