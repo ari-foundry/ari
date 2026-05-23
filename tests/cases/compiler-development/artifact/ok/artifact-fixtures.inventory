@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=196
+CompilerArtifactFixtures version=1 group=all entries=198
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -66,6 +66,8 @@ CompilerArtifactFixtures version=1 group=all entries=196
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-return.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-return.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-lexer-unterminated-block-comment.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unterminated-block-comment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-unterminated-string.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unterminated-string.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-loop-break-live-owner.ari

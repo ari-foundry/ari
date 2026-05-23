@@ -1,0 +1,4 @@
+diagnostic error code=L0001 family=lexer message="unterminated block comment" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-block-comment.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-block-comment.ari" bytes=58
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-block-comment.ari" line=2 column=3 end_line=5 end_column=1 byte_start=21 byte_end=58 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-block-comment.ari:2:3\n   |\n 2 |   /* comment starts here\n   |   ^^^^^^^^^^^^^^^^^^^^^^\n 3 |   return 0;\n   | ^^^^^^^^^^^\n 4 | }\n   | ^"
