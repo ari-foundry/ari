@@ -385,6 +385,8 @@ Checklist:
       LLVM fragments, runtime output, and source-aware inference diagnostics
 - [x] validate generic function parameter and return type annotations at
       declaration collection time
+- [x] keep generic type parameter names scoped ahead of outer type names in
+      generic function signatures and bodies
 - [x] reject generated generic specialization name collisions with concrete
       function paths
 - [x] lower explicit generic struct literals and tuple-struct constructors

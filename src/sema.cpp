@@ -18179,7 +18179,9 @@ private:
                     }
                     std::string generic_function_name = resolve_generic_function_name(expr.name);
                     if (generic_functions_.count(generic_function_name)) {
-                        fail(expr.loc, "generic function '" + expr.name + "' cannot be used as a function pointer yet");
+                        fail(expr.loc,
+                             "generic function '" + expr.name +
+                                 "' requires an expected function pointer type or a call");
                     }
                     fail(expr.loc, "unknown name '" + expr.name + "'");
                 }

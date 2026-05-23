@@ -20,7 +20,8 @@ Generic aggregate coverage is split on purpose:
 - `ok/generic-function-declaration-policy.ari` locks declaration edges that are
   easy to forget: unused type parameters are allowed but require explicit type
   arguments when they cannot be inferred, return-only type parameters require
-  explicit type arguments at call sites, and every explicit type argument still
+  explicit type arguments at call sites, type parameters may shadow outer type
+  names inside the generic declaration, and every explicit type argument still
   participates in the backend specialization key.
 - `ok/generic-function-modules.ari` keeps generic function names identical
   across two inline modules and checks public module-qualified inferred and
@@ -42,4 +43,5 @@ Generic aggregate coverage is split on purpose:
   inference, generic function pointer inference/signature failures, non-generic
   calls with type arguments, return-context inference limits, declaration-time
   rejection of unbound generic signature types, generated specialization name
-  collisions, and private generic function access.
+  collisions, missing expected function-pointer context for generic function
+  values, and private generic function access.

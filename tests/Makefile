@@ -4346,13 +4346,14 @@ check-generics: $(TARGET)
 	$(TARGET) tests/cases/generics/ok/generic-function-specializations.ari -o $(BUILD_DIR)/generics/generic-function-specializations.elf
 	$(BUILD_DIR)/generics/generic-function-specializations.elf; code=$$?; test $$code -eq 21
 	$(TARGET) tests/cases/generics/ok/generic-function-declaration-policy.ari -o $(BUILD_DIR)/generics/generic-function-declaration-policy.elf
-	$(BUILD_DIR)/generics/generic-function-declaration-policy.elf; code=$$?; test $$code -eq 31
+	$(BUILD_DIR)/generics/generic-function-declaration-policy.elf; code=$$?; test $$code -eq 37
 	$(TARGET) tests/cases/generics/ok/generic-function-declaration-policy.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-declaration-policy.ll
 	test $$(grep -c 'define i64 @"_ARNv19marker_value__G_i64"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
 	test $$(grep -c 'define i64 @"_ARNv20marker_value__G_bool"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
 	test $$(grep -c 'define i64 @"_ARNv17make_value__G_i64"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
 	test $$(grep -c 'define i64 @"_ARNv28keep_with_marker__G_i64_bool"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
 	test $$(grep -c 'define i64 @"_ARNv24choose_first__G_i64_bool"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
+	test $$(grep -c 'define i64 @"_ARNv22shadow_concrete__G_i64"' $(BUILD_DIR)/generics/generic-function-declaration-policy.ll) -eq 1
 	$(TARGET) tests/cases/generics/ok/generic-function-modules.ari -o $(BUILD_DIR)/generics/generic-function-modules.elf
 	$(BUILD_DIR)/generics/generic-function-modules.elf; code=$$?; test $$code -eq 15
 	$(TARGET) tests/cases/generics/ok/generic-function-modules.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-modules.ll
@@ -4474,6 +4475,8 @@ check-generics: $(TARGET)
 	grep -q "generic type 'T' could not be inferred for function pointer 'keep'" $(BUILD_DIR)/generics/generic-function-pointer-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-function-pointer-mismatch.ari -o $(BUILD_DIR)/generics/generic-function-pointer-mismatch.elf >$(BUILD_DIR)/generics/generic-function-pointer-mismatch.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-function-pointer-mismatch.err
+	if $(TARGET) tests/cases/generics/errors/generic-function-value-unexpected.ari -o $(BUILD_DIR)/generics/generic-function-value-unexpected.elf >$(BUILD_DIR)/generics/generic-function-value-unexpected.err 2>&1; then exit 1; fi
+	grep -q "generic function 'identity' requires an expected function pointer type or a call" $(BUILD_DIR)/generics/generic-function-value-unexpected.err
 	if $(TARGET) tests/cases/generics/errors/generic-duplicate-param.ari -o $(BUILD_DIR)/generics/generic-duplicate-param.elf >$(BUILD_DIR)/generics/generic-duplicate-param.err 2>&1; then exit 1; fi
 	grep -q "duplicate generic parameter 'T' in function 'same'" $(BUILD_DIR)/generics/generic-duplicate-param.err
 	if $(TARGET) tests/cases/generics/errors/generic-explicit-arity.ari -o $(BUILD_DIR)/generics/generic-explicit-arity.elf >$(BUILD_DIR)/generics/generic-explicit-arity.err 2>&1; then exit 1; fi

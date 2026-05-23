@@ -1,0 +1,8 @@
+fn identity[T](value: T) -> T {
+  value
+}
+
+fn main() -> i64 {
+  let op = identity;
+  return 0;
+}

@@ -1,3 +1,7 @@
+struct Marker {
+  value: i64,
+}
+
 fn marker_value[T](value: i64) -> i64 {
   value + 1
 }
@@ -14,11 +18,16 @@ fn choose_first[A, B](left: A, right: B) -> A {
   return left;
 }
 
+fn shadow_concrete[Marker](value: Marker) -> Marker {
+  return value;
+}
+
 fn main() -> i64 {
   let first = marker_value<i64>(4);
   let second = marker_value<bool>(5);
   let made = make_value<i64>();
   let kept = keep_with_marker<i64, bool>(8);
   let chosen = choose_first<i64, bool>(3, false);
-  return first + second + made + kept + chosen;
+  let shadowed = shadow_concrete<i64>(6);
+  return first + second + made + kept + chosen + shadowed;
 }
