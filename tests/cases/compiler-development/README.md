@@ -67,6 +67,15 @@ the same language surface that normal Ari users get.
   AstNode, AstArena, DiagnosticBuilder, SymbolTable, PassWorklist, WorkItem,
   PassError, and Result-like pass outputs built from normal generic
   aggregates.
+- `ok/model/compiler-type-ref-ast.ari`: TokenKind, Token, TypeRef generic
+  argument lists, Expr/Stmt enum payload nesting, and AST item scoring as
+  normal Ari data.
+- `ok/model/compiler-diagnostic-label-vec.ari`: Diagnostic values with
+  fixed-capacity `Vec[Label; 3]`, primary/secondary/help labels, source spans,
+  and stable label access as normal Ari data.
+- `ok/model/compiler-data-project-main.ari`: file-backed compiler-shaped
+  data project covering AST, diagnostics, symbols, TypeRef, and
+  `Result[NodeId, Diagnostic]` across modules.
 - `errors/bootstrap-class-keyword.ari`: rejects `class` as a compiler-development
   shortcut; compiler code should use normal Ari structs, enums, functions, and
   traits.

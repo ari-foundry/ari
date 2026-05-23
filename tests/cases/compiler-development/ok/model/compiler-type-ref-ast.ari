@@ -1,0 +1,150 @@
+// Models AST/HIR-ish compiler data with token, type-reference, expression, and
+// statement payloads. This is a fixture, not a compiler implementation.
+type NodeId = i64;
+type SourceId = i64;
+type SymbolId = i64;
+type TypeId = i64;
+
+struct Span {
+  source: SourceId,
+  start: i64,
+  end: i64,
+}
+
+enum TokenKind {
+  Ident(SymbolId),
+  Number(i64),
+  Plus,
+  Eof,
+}
+
+struct Token {
+  kind: TokenKind,
+  span: Span,
+}
+
+struct TypeArg {
+  ty: TypeId,
+  span: Span,
+}
+
+struct TypeArgList {
+  first: TypeArg,
+  second: TypeArg,
+  len: i64,
+}
+
+struct TypeRef {
+  id: TypeId,
+  args: TypeArgList,
+  span: Span,
+}
+
+enum Expr {
+  Missing,
+  TokenExpr(Token),
+  Binary(NodeId, NodeId, Token),
+  Typed(NodeId, TypeRef),
+}
+
+enum Stmt {
+  Let(SymbolId, TypeRef, NodeId),
+  ExprStmt(NodeId),
+  Block(NodeId, NodeId),
+}
+
+struct AstItem {
+  node: NodeId,
+  expr: Expr,
+  stmt: Stmt,
+}
+
+fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}
+
+fn token_kind_score(kind: TokenKind) -> i64 {
+  match kind {
+    Ident(symbol) => {
+      return symbol + 3;
+    }
+    Number(value) => {
+      return value;
+    }
+    Plus => {
+      return 5;
+    }
+    Eof => {
+      return 7;
+    }
+  }
+}
+
+fn token_score(token: Token) -> i64 {
+  return token_kind_score(token.kind) + span_len(token.span);
+}
+
+fn type_arg_score(arg: TypeArg) -> i64 {
+  return arg.ty + span_len(arg.span);
+}
+
+fn type_ref_score(ty: TypeRef) -> i64 {
+  return ty.id + ty.args.len + type_arg_score(ty.args.first) +
+    type_arg_score(ty.args.second) + span_len(ty.span);
+}
+
+fn expr_score(expr: Expr) -> i64 {
+  match expr {
+    Missing => {
+      return 0;
+    }
+    TokenExpr(token) => {
+      return token_score(token);
+    }
+    Binary(left, right, op) => {
+      return 20 + left + right + token_score(op);
+    }
+    Typed(node, ty) => {
+      return 40 + node + type_ref_score(ty);
+    }
+  }
+}
+
+fn stmt_score(stmt: Stmt) -> i64 {
+  match stmt {
+    Let(symbol, ty, initializer) => {
+      return 60 + symbol + type_ref_score(ty) + initializer;
+    }
+    ExprStmt(node) => {
+      return 70 + node;
+    }
+    Block(first, second) => {
+      return 80 + first + second;
+    }
+  }
+}
+
+fn item_score(item: AstItem) -> i64 {
+  return item.node + expr_score(item.expr) + stmt_score(item.stmt);
+}
+
+fn main() -> i64 {
+  let span = Span { source: 1, start: 2, end: 8 };
+  let generic_ty = TypeRef {
+    id: 3,
+    args: TypeArgList {
+      first: TypeArg { ty: 5, span: Span { source: 1, start: 10, end: 12 } },
+      second: TypeArg { ty: 8, span: Span { source: 1, start: 13, end: 16 } },
+      len: 2,
+    },
+    span: Span { source: 1, start: 10, end: 16 },
+  };
+  let item = AstItem {
+    node: 5,
+    expr: Typed(11, generic_ty),
+    stmt: Let(23, generic_ty, 31),
+  };
+  let token_total = token_score(Token { kind: Ident(17), span: span });
+
+  return item_score(item) + token_total - 163;
+}

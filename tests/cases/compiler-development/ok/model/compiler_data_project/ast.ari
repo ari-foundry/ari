@@ -1,0 +1,95 @@
+pub type NodeId = i64;
+pub type TypeId = i64;
+
+pub struct TypeArg {
+  ty: TypeId,
+  span: super::diag::Span,
+}
+
+pub struct TypeArgList {
+  first: TypeArg,
+  second: TypeArg,
+  len: i64,
+}
+
+pub struct TypeRef {
+  name: TypeId,
+  args: TypeArgList,
+  span: super::diag::Span,
+}
+
+pub enum Expr {
+  Missing,
+  Name(super::symbols::Symbol),
+  Call(NodeId, NodeId, TypeRef),
+}
+
+pub enum Stmt {
+  Let(super::symbols::Symbol, TypeRef, NodeId),
+  ExprStmt(NodeId),
+}
+
+pub fn type_arg(ty: TypeId, span: super::diag::Span) -> TypeArg {
+  return TypeArg { ty: ty, span: span };
+}
+
+pub fn type_ref(name: TypeId, first: TypeArg, second: TypeArg, span: super::diag::Span) -> TypeRef {
+  return TypeRef {
+    name: name,
+    args: TypeArgList { first: first, second: second, len: 2 },
+    span: span,
+  };
+}
+
+pub fn type_arg_score(arg: TypeArg) -> i64 {
+  return arg.ty + super::diag::span_len(arg.span);
+}
+
+pub fn type_ref_score(ty: TypeRef) -> i64 {
+  return ty.name + ty.args.len + type_arg_score(ty.args.first) +
+    type_arg_score(ty.args.second) + super::diag::span_len(ty.span);
+}
+
+pub fn expr_score(expr: Expr) -> i64 {
+  match expr {
+    Missing => {
+      return 0;
+    }
+    Name(symbol) => {
+      return 20 + super::symbols::symbol_score(symbol);
+    }
+    Call(callee, arg, ty) => {
+      return 30 + callee + arg + type_ref_score(ty);
+    }
+  }
+}
+
+pub fn stmt_score(stmt: Stmt) -> i64 {
+  match stmt {
+    Let(symbol, ty, initializer) => {
+      return 40 + super::symbols::symbol_score(symbol) +
+        type_ref_score(ty) + initializer;
+    }
+    ExprStmt(node) => {
+      return 50 + node;
+    }
+  }
+}
+
+pub fn resolve_node(node: NodeId, diagnostic: super::diag::Diagnostic) -> Result[NodeId, super::diag::Diagnostic] {
+  if node > 0 {
+    return Ok(node);
+  }
+  return Err(diagnostic);
+}
+
+pub fn result_score(result: Result[NodeId, super::diag::Diagnostic]) -> i64 {
+  match result {
+    Ok(node) => {
+      return node;
+    }
+    Err(diagnostic) => {
+      return 100 + super::diag::diagnostic_score(diagnostic);
+    }
+  }
+}

@@ -1,0 +1,5 @@
+mod compiler_data_project;
+
+fn main() -> i64 {
+  return compiler_data_project::run();
+}

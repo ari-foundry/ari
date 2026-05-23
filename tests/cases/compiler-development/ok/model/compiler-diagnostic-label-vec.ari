@@ -1,0 +1,90 @@
+// Models source-aware diagnostics where a Diagnostic owns fixed Vec[Label]
+// storage. This keeps compiler diagnostic data ergonomic as Ari values.
+type SourceId = i64;
+type ByteOffset = i64;
+type ErrorCode = i64;
+
+struct Span {
+  source: SourceId,
+  start: ByteOffset,
+  end: ByteOffset,
+}
+
+enum LabelKind {
+  Primary,
+  Secondary,
+  Help,
+}
+
+struct Label {
+  kind: LabelKind,
+  span: Span,
+  note: i64,
+}
+
+struct Diagnostic {
+  code: ErrorCode,
+  primary: Span,
+  labels: Vec[Label; 3],
+}
+
+fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}
+
+fn label_kind_score(kind: LabelKind) -> i64 {
+  match kind {
+    Primary => {
+      return 10;
+    }
+    Secondary => {
+      return 20;
+    }
+    Help => {
+      return 30;
+    }
+  }
+}
+
+fn label_score(label: Label) -> i64 {
+  return label_kind_score(label.kind) + span_len(label.span) + label.note;
+}
+
+fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
+  let Diagnostic {
+    code: code,
+    primary: primary,
+    labels: [primary_label, secondary_label, help_label],
+  } = diagnostic;
+  return code + span_len(primary) + 3 +
+    label_score(primary_label) +
+    label_score(secondary_label) +
+    label_score(help_label);
+}
+
+fn main() -> i64 {
+  let diagnostic = Diagnostic {
+    code: 17,
+    primary: Span { source: 2, start: 4, end: 12 },
+    labels: [
+      Label {
+        kind: Primary,
+        span: Span { source: 2, start: 4, end: 7 },
+        note: 3,
+      },
+      Label {
+        kind: Secondary,
+        span: Span { source: 2, start: 8, end: 12 },
+        note: 5,
+      },
+      Label {
+        kind: Help,
+        span: Span { source: 2, start: 13, end: 14 },
+        note: 7,
+      }
+    ],
+  };
+  let total = diagnostic_score(diagnostic);
+
+  return total;
+}

@@ -1,0 +1,26 @@
+pub mod ast;
+pub mod diag;
+pub mod symbols;
+
+pub fn run() -> i64 {
+  let span = self::diag::span(4, 10, 15);
+  let symbol = self::symbols::symbol(7, 31, span);
+  let table = self::symbols::table(3, symbol);
+  let ty = self::ast::type_ref(
+    11,
+    self::ast::type_arg(2, span),
+    self::ast::type_arg(5, span),
+    span
+  );
+  let expr = self::ast::Call(13, 17, ty);
+  let stmt = self::ast::Let(symbol, ty, 19);
+  let ok = self::ast::result_score(
+    self::ast::resolve_node(23, self::diag::diagnostic(span, 5))
+  );
+  let err = self::ast::result_score(
+    self::ast::resolve_node(0, self::diag::diagnostic(span, 6))
+  );
+
+  return self::ast::expr_score(expr) + self::ast::stmt_score(stmt) +
+    self::symbols::table_score(table) + ok + err - 333;
+}
