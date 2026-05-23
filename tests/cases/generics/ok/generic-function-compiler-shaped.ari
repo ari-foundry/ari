@@ -1,0 +1,143 @@
+// Compiler-shaped generic function fixture. Keep this focused on function
+// specialization rather than generic aggregate layout itself.
+struct Span {
+  start: i64,
+  end: i64,
+}
+
+struct Token {
+  kind: i64,
+  span: Span,
+}
+
+struct Diagnostic {
+  span: Span,
+  code: i64,
+}
+
+struct Box[T] {
+  value: T,
+}
+
+struct Pair[A, B] {
+  left: A,
+  right: B,
+}
+
+enum Maybe[T] {
+  Nothing,
+  Just(T),
+}
+
+enum PassResult[T, E] {
+  Failed(E),
+  Passed(T),
+}
+
+fn identity[T](value: T) -> T {
+  let local: T = value;
+  return local;
+}
+
+fn choose[T](left: T, right: T, pick_left: bool) -> T {
+  if pick_left {
+    return left;
+  }
+  return right;
+}
+
+fn make_box[T](value: T) -> Box[T] {
+  return Box<T> { value: value };
+}
+
+fn unwrap_box[T](boxed: Box[T]) -> T {
+  return boxed.value;
+}
+
+fn maybe_or[T](value: Maybe[T], fallback: T) -> T {
+  return match value {
+    Just(inner) => inner,
+    Nothing => fallback,
+  };
+}
+
+fn pass_or[T, E](value: PassResult[T, E], fallback: T) -> T {
+  match value {
+    Passed(inner) => {
+      return inner;
+    }
+    Failed(_) => {
+      return fallback;
+    }
+  }
+}
+
+fn pair_of[A, B](left: A, right: B) -> Pair[A, B] {
+  let pair: Pair[A, B] = Pair<A, B> { left: left, right: right };
+  return pair;
+}
+
+fn first[A, B](pair: Pair[A, B]) -> A {
+  return pair.left;
+}
+
+fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}
+
+fn token(kind: i64, start: i64, end: i64) -> Token {
+  return Token { kind: kind, span: Span { start: start, end: end } };
+}
+
+fn token_score(value: Token) -> i64 {
+  return value.kind + span_len(value.span);
+}
+
+fn diagnostic_score(value: Diagnostic) -> i64 {
+  return value.code + span_len(value.span);
+}
+
+fn token_from_result(value: PassResult[Box[Token], Diagnostic], fallback: Token) -> Token {
+  let boxed = pass_or(value, make_box<Token>(fallback));
+  return unwrap_box(boxed);
+}
+
+fn result_score(value: PassResult[Box[Token], Diagnostic], fallback: Token) -> i64 {
+  return token_score(token_from_result(value, fallback));
+}
+
+fn diagnostic_from_result(value: PassResult[Diagnostic, Diagnostic]) -> Diagnostic {
+  let fallback = Diagnostic { span: Span { start: 90, end: 93 }, code: 4 };
+  return pass_or<Diagnostic, Diagnostic>(value, fallback);
+}
+
+fn main() -> i64 {
+  let span = identity<Span>(Span { start: 10, end: 15 });
+  let chosen = choose<Token>(token(3, 1, 5), token(7, 2, 4), true);
+  let from_maybe = maybe_or(Just<Token>(chosen), token(9, 10, 12));
+  let pair = pair_of<i64, Token>(5, from_maybe);
+  let boxed = make_box<Token>(token(4, 20, 25));
+  let unboxed = unwrap_box(boxed);
+  let ok: PassResult[Box[Token], Diagnostic] =
+    Passed<Box[Token], Diagnostic>(make_box<Token>(token(6, 30, 34)));
+  let failed: PassResult[Box[Token], Diagnostic] =
+    Failed<Box[Token], Diagnostic>(Diagnostic { span: Span { start: 50, end: 53 }, code: 9 });
+  let nested: PassResult[Box[Token], Diagnostic] =
+    identity<PassResult[Box[Token], Diagnostic]>(
+      Passed<Box[Token], Diagnostic>(make_box<Token>(token(8, 70, 73)))
+    );
+  let diagnostic_ok = diagnostic_from_result(
+    Passed<Diagnostic, Diagnostic>(Diagnostic { span: Span { start: 80, end: 84 }, code: 2 })
+  );
+
+  return span_len(span) +
+    token_score(from_maybe) +
+    first(pair) +
+    token_score(unboxed) +
+    result_score(ok, token(1, 40, 42)) +
+    result_score(failed, token(2, 60, 61)) +
+    result_score(nested, token(0, 0, 0)) +
+    diagnostic_score(diagnostic_ok) +
+    if identity<bool>(true) { 1 } else { 0 } -
+    7;
+}

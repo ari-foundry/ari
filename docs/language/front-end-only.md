@@ -79,18 +79,19 @@ fn identity[T](value: T) -> T {
 }
 ```
 
-Simple generic function calls are monomorphized when all type parameters can be
-inferred from call arguments. Trait bounds on generic functions are checked at
-call sites and can select constrained static method dispatch, including generic
-trait impls such as `impl[T] Trait for Box[T]`. Generic inherent impl methods
-and associated functions specialize at concrete call sites, including explicit
-or inferred method-level generic calls such as `value.replace<i64>(next)`,
-`value.replace(next)`, and `Factory::make<T>(next)`. Generic function names can
-also specialize into function pointer values when an expected `fn(...) -> ...`
-type selects the concrete parameter and result types. Generic aggregate
-monomorphization now covers structs, enums, and integer range values; the
-remaining aggregate work is broader ABI exposure and allocation-backed stdlib
-handle ergonomics.
+Generic function calls are monomorphized when all type parameters can be
+inferred from call arguments, supplied explicitly, or selected by an expected
+function pointer type. Specialization keys are deterministic, repeated concrete
+calls reuse the same emitted function, and nested generic aggregate type keys
+are supported when the aggregate itself is supported. Trait bounds on generic
+functions are checked at call sites and can select constrained static method
+dispatch, including generic trait impls such as `impl[T] Trait for Box[T]`.
+Generic inherent impl methods and associated functions specialize at concrete
+call sites, including explicit or inferred method-level generic calls such as
+`value.replace<i64>(next)`, `value.replace(next)`, and `Factory::make<T>(next)`.
+Generic aggregate monomorphization now covers structs, enums, and integer range
+values; the remaining aggregate work is broader ABI exposure and
+allocation-backed stdlib handle ergonomics.
 
 ## Attributes
 

@@ -122,6 +122,12 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-bound-missing-impl.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-bound-missing-impl.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-method-ambiguous.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-method-ambiguous.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-explicit-arity.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-arity.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-arity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-arity.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-inference-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-inference-conflict.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-inference-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-inference-conflict.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-uninferred.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-uninferred.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-uninferred.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-core-use-before-declaration.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-core-use-before-declaration.diagnostic
@@ -216,6 +222,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ir $(BUILD_DIR)/compiler-development/artifact/core-language-scalar-flow.ir
 	$(TARGET) tests/cases/traits/ok/trait-minimum-compiler-shaped.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/trait-minimum-static-dispatch.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/trait-minimum-static-dispatch.ir $(BUILD_DIR)/compiler-development/artifact/trait-minimum-static-dispatch.ir
+	$(TARGET) tests/cases/generics/ok/generic-function-compiler-shaped.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/generic-function-compiler-shaped.ir
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/generic-function-compiler-shaped.ir $(BUILD_DIR)/compiler-development/artifact/generic-function-compiler-shaped.ir
 	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/generic-aggregate-monomorphization.ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
 	$(TARGET) tests/cases/match/ok/compiler-shaped-aggregates.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/compiler-shaped-aggregates.ir
@@ -229,6 +237,9 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	$(TARGET) tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-core.ll
 	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-core.ll _ARNv3add _ARNv7compute _ARNv4main >$(BUILD_DIR)/compiler-development/artifact/backend-core.llvm-frag
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-core.llvm-frag
+	$(TARGET) tests/cases/generics/ok/generic-function-compiler-shaped.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-generic-function.ll
+	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-generic-function.ll _ARNv16identity__G_Span _ARNv46identity__G_PassResult_Box_Token___Diagnostic_ _ARNv15choose__G_Token _ARNv17make_box__G_Token _ARNv17maybe_or__G_Token _ARNv32pass_or__G_Box_Token__Diagnostic >$(BUILD_DIR)/compiler-development/artifact/backend-generic-function.llvm-frag
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-generic-function.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-generic-function.llvm-frag
 	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.ll
 	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.ll _ARNv14make_token_box _ARNv11maybe_score _ARNv13consume_owned >$(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.llvm-frag
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-generic-aggregate.llvm-frag
@@ -4306,6 +4317,13 @@ check-generics: $(TARGET)
 	$(BUILD_DIR)/generics/vector-generic-root-param.elf; code=$$?; test $$code -eq 5
 	$(TARGET) tests/cases/generics/ok/generic-function-specializations.ari -o $(BUILD_DIR)/generics/generic-function-specializations.elf
 	$(BUILD_DIR)/generics/generic-function-specializations.elf; code=$$?; test $$code -eq 21
+	$(TARGET) tests/cases/generics/ok/generic-function-compiler-shaped.ari -o $(BUILD_DIR)/generics/generic-function-compiler-shaped.elf
+	$(BUILD_DIR)/generics/generic-function-compiler-shaped.elf; code=$$?; test $$code -eq 50
+	$(TARGET) tests/cases/generics/ok/generic-function-compiler-shaped.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-compiler-shaped.ll
+	test $$(grep -c 'define .*"_ARNv17make_box__G_Token"' $(BUILD_DIR)/generics/generic-function-compiler-shaped.ll) -eq 1
+	test $$(grep -c 'define .*"_ARNv32pass_or__G_Box_Token__Diagnostic"' $(BUILD_DIR)/generics/generic-function-compiler-shaped.ll) -eq 1
+	grep -q "_ARNv46identity__G_PassResult_Box_Token___Diagnostic_" $(BUILD_DIR)/generics/generic-function-compiler-shaped.ll
+	grep -q "_ARNv17maybe_or__G_Token" $(BUILD_DIR)/generics/generic-function-compiler-shaped.ll
 	$(TARGET) tests/cases/generics/ok/generic-function-pointer.ari -o $(BUILD_DIR)/generics/generic-function-pointer.elf
 	$(BUILD_DIR)/generics/generic-function-pointer.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/cases/generics/ok/generic-function-pointer.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-pointer.ll

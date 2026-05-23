@@ -7,6 +7,12 @@ centered on one behavior.
 
 Generic aggregate coverage is split on purpose:
 
+- `ok/generic-function-compiler-shaped.ari` uses compiler-shaped `Span`,
+  `Token`, `Diagnostic`, `Box`, `Maybe`, and `PassResult` values to exercise
+  generic function declarations, explicit and inferred type arguments, nested
+  generic specialization keys, generic locals, generic aggregate parameters and
+  returns, repeated specialization reuse, typed IR, LLVM symbols, and runtime
+  behavior.
 - `ok/generic-aggregate-monomorphization.ari` uses only user-defined generic
   structs, enums, aliases, methods, nested payloads, and ownership-qualified
   arguments. This is the primary compiler fixture.

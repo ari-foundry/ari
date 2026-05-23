@@ -307,6 +307,27 @@ that cannot be inferred and are not written explicitly are rejected during
 lowering, and a single type parameter must resolve to one concrete type for the
 whole call.
 
+Each concrete generic function call creates one deterministic specialization
+key from the fully qualified function path and concrete type argument list.
+Repeated calls with the same key reuse the same specialization and backend
+symbol; different concrete type arguments produce distinct symbols. Type
+arguments can be primitive types, structs, enums, aliases, or nested generic
+aggregate types such as `PassResult<Box<Token>, Diagnostic>` when those
+aggregate shapes are otherwise supported by the backend.
+
+Generic parameters may appear in parameter types, return types, local type
+annotations, aggregate fields, enum payloads, and helper-call chains. Ari infers
+type arguments from ordinary call arguments and expected function-pointer
+types. Return-only type parameters need an explicit call type argument or an
+expected type from a checked construct that the compiler already supports.
+Conflicting inference, missing inference, wrong explicit type-argument counts,
+and post-substitution argument or return mismatches are compile-time errors.
+
+Generic functions may use trait bounds with the same static dispatch rules
+described in [Traits](traits.md). Bounds are checked when a concrete
+specialization is requested, so the selected impl is deterministic for that
+type argument list.
+
 Older `Type[T]` type applications remain accepted for existing standard-library
 docs and fixtures, but new user-facing examples should prefer `Type<T>`.
 

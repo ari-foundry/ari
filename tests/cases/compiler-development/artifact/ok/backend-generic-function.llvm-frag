@@ -1,0 +1,111 @@
+LLVMFunctionExtract source=build/compiler-development/artifact/backend-generic-function.ll functions=6
+  Function symbol=_ARNv16identity__G_Span
+    define { i64, i64 } @"_ARNv16identity__G_Span"({ i64, i64 } %arg0) {
+    entry:
+      %value.addr.0 = alloca { i64, i64 }
+      %local.addr.1 = alloca { i64, i64 }
+      store { i64, i64 } %arg0, ptr %value.addr.0
+      %t0 = load { i64, i64 }, ptr %value.addr.0
+      store { i64, i64 } %t0, ptr %local.addr.1
+      %t1 = load { i64, i64 }, ptr %local.addr.1
+      ret { i64, i64 } %t1
+    }
+  Function symbol=_ARNv46identity__G_PassResult_Box_Token___Diagnostic_
+    define { i32, [24 x i8] } @"_ARNv46identity__G_PassResult_Box_Token___Diagnostic_"({ i32, [24 x i8] } %arg0) {
+    entry:
+      %value.addr.0 = alloca { i32, [24 x i8] }
+      %local.addr.1 = alloca { i32, [24 x i8] }
+      store { i32, [24 x i8] } %arg0, ptr %value.addr.0
+      %t0 = load { i32, [24 x i8] }, ptr %value.addr.0
+      store { i32, [24 x i8] } %t0, ptr %local.addr.1
+      %t1 = load { i32, [24 x i8] }, ptr %local.addr.1
+      ret { i32, [24 x i8] } %t1
+    }
+  Function symbol=_ARNv15choose__G_Token
+    define { i64, { i64, i64 } } @"_ARNv15choose__G_Token"({ i64, { i64, i64 } } %arg0, { i64, { i64, i64 } } %arg1, i1 %arg2) {
+    entry:
+      %left.addr.0 = alloca { i64, { i64, i64 } }
+      %right.addr.1 = alloca { i64, { i64, i64 } }
+      %pick_left.addr.2 = alloca i1
+      store { i64, { i64, i64 } } %arg0, ptr %left.addr.0
+      store { i64, { i64, i64 } } %arg1, ptr %right.addr.1
+      store i1 %arg2, ptr %pick_left.addr.2
+      %t0 = load i1, ptr %pick_left.addr.2
+      br i1 %t0, label %if.then.0, label %if.else.1
+    if.then.0:
+      %t1 = load { i64, { i64, i64 } }, ptr %left.addr.0
+      ret { i64, { i64, i64 } } %t1
+    if.else.1:
+      br label %if.end.2
+    if.end.2:
+      %t2 = load { i64, { i64, i64 } }, ptr %right.addr.1
+      ret { i64, { i64, i64 } } %t2
+    }
+  Function symbol=_ARNv17make_box__G_Token
+    define { { i64, { i64, i64 } } } @"_ARNv17make_box__G_Token"({ i64, { i64, i64 } } %arg0) {
+    entry:
+      %value.addr.0 = alloca { i64, { i64, i64 } }
+      store { i64, { i64, i64 } } %arg0, ptr %value.addr.0
+      %t0 = load { i64, { i64, i64 } }, ptr %value.addr.0
+      %t1 = insertvalue { { i64, { i64, i64 } } } undef, { i64, { i64, i64 } } %t0, 0
+      ret { { i64, { i64, i64 } } } %t1
+    }
+  Function symbol=_ARNv17maybe_or__G_Token
+    define { i64, { i64, i64 } } @"_ARNv17maybe_or__G_Token"({ i32, { i64, { i64, i64 } } } %arg0, { i64, { i64, i64 } } %arg1) {
+    entry:
+      %value.addr.0 = alloca { i32, { i64, { i64, i64 } } }
+      %fallback.addr.1 = alloca { i64, { i64, i64 } }
+      %inner.addr.2 = alloca { i64, { i64, i64 } }
+      store { i32, { i64, { i64, i64 } } } %arg0, ptr %value.addr.0
+      store { i64, { i64, i64 } } %arg1, ptr %fallback.addr.1
+      %t0 = load { i32, { i64, { i64, i64 } } }, ptr %value.addr.0
+      %t1 = extractvalue { i32, { i64, { i64, i64 } } } %t0, 0
+      br label %match.expr.test.3
+    match.expr.test.3:
+      %t2 = icmp eq i32 %t1, 1
+      br i1 %t2, label %match.expr.arm.1, label %match.expr.test.4
+    match.expr.test.4:
+      br label %match.expr.arm.2
+    match.expr.arm.1:
+      %t3 = extractvalue { i32, { i64, { i64, i64 } } } %t0, 1
+      store { i64, { i64, i64 } } %t3, ptr %inner.addr.2
+      %t4 = load { i64, { i64, i64 } }, ptr %inner.addr.2
+      br label %match.expr.end.0
+    match.expr.arm.2:
+      %t5 = load { i64, { i64, i64 } }, ptr %fallback.addr.1
+      br label %match.expr.end.0
+    match.expr.end.0:
+      %t6 = phi { i64, { i64, i64 } } [%t4, %match.expr.arm.1], [%t5, %match.expr.arm.2]
+      ret { i64, { i64, i64 } } %t6
+    }
+  Function symbol=_ARNv32pass_or__G_Box_Token__Diagnostic
+    define { { i64, { i64, i64 } } } @"_ARNv32pass_or__G_Box_Token__Diagnostic"({ i32, [24 x i8] } %arg0, { { i64, { i64, i64 } } } %arg1) {
+    entry:
+      %value.addr.0 = alloca { i32, [24 x i8] }
+      %fallback.addr.1 = alloca { { i64, { i64, i64 } } }
+      %inner.addr.2 = alloca { { i64, { i64, i64 } } }
+      store { i32, [24 x i8] } %arg0, ptr %value.addr.0
+      store { { i64, { i64, i64 } } } %arg1, ptr %fallback.addr.1
+      %t0 = load { i32, [24 x i8] }, ptr %value.addr.0
+      %t1 = extractvalue { i32, [24 x i8] } %t0, 0
+      br label %match.test.3
+    match.test.3:
+      %t2 = icmp eq i32 %t1, 1
+      br i1 %t2, label %match.arm.1, label %match.test.4
+    match.test.4:
+      %t3 = icmp eq i32 %t1, 0
+      br i1 %t3, label %match.arm.2, label %match.arm.2
+    match.arm.1:
+      %t4 = extractvalue { i32, [24 x i8] } %t0, 1
+      %t5 = alloca [24 x i8], align 8
+      store [24 x i8] %t4, ptr %t5, align 1
+      %t6 = load { { i64, { i64, i64 } } }, ptr %t5, align 8
+      store { { i64, { i64, i64 } } } %t6, ptr %inner.addr.2
+      %t7 = load { { i64, { i64, i64 } } }, ptr %inner.addr.2
+      ret { { i64, { i64, i64 } } } %t7
+    match.arm.2:
+      %t8 = load { { i64, { i64, i64 } } }, ptr %fallback.addr.1
+      ret { { i64, { i64, i64 } } } %t8
+    match.end.0:
+      ret { { i64, { i64, i64 } } } zeroinitializer
+    }

@@ -126,7 +126,9 @@ Keep fixture names behavior-based:
 - `project-compiler.ir`
 - `ownership-aggregate-field-move.ir`
 - `compiler-shaped-aggregates.ir`
+- `generic-function-compiler-shaped.ir`
 - `backend-core.llvm-frag`
+- `backend-generic-function.llvm-frag`
 - `backend-generic-aggregate.llvm-frag`
 - `backend-aggregate-match-model.llvm-frag`
 - `backend-layout-aggregate.llvm-frag`
@@ -153,6 +155,9 @@ Keep fixture names behavior-based:
 - `diagnostic-compact-enum-payload-ref.diagnostic`
 - `diagnostic-ownership-aggregate-enum-payload.diagnostic`
 - `diagnostic-borrow-aggregate-enum-payload.diagnostic`
+- `diagnostic-generic-explicit-arity.diagnostic`
+- `diagnostic-generic-inference-conflict.diagnostic`
+- `diagnostic-generic-uninferred.diagnostic`
 - `diagnostic-match-nonexhaustive.diagnostic`
 - `diagnostic-match-struct-pattern-duplicate-field.diagnostic`
 - `diagnostic-match-struct-pattern-tuple-struct.diagnostic`

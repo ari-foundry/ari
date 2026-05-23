@@ -58,6 +58,23 @@ for a compiler-emitted `@repr(C)` aggregate API: exported C symbols are defined,
 the imported C helper remains unresolved for the linker, and no `main` symbol is
 emitted.
 
+## Generic Function Coverage Note
+
+Generic function support is complete for the current concrete-monomorphization
+subset: declaration-side `[T]` parameters, explicit `<T>` call arguments,
+argument inference, expected-function-pointer specialization, generic local
+annotations, generic parameters and returns, nested generic aggregate type
+keys, trait-bound static dispatch, module-cache specialization summaries, and
+deduped backend emission. `generic-function-compiler-shaped.ari` covers
+compiler-shaped `Span`, `Token`, `Diagnostic`, `Box`, `Maybe`, and
+`PassResult` helper flows through runtime output, typed IR, and LLVM fragments.
+The `diagnostic-generic-*` artifacts lock source-aware failures for wrong
+explicit type-argument count, conflicting inference, and insufficient
+inference. Generic extern C declarations, uninferred return-only generics
+without an expected type, generic function pointer values whose type arguments
+cannot be selected by an expected `fn(...) -> ...` type, and broad higher-rank
+or defaulted generic features remain unsupported by design.
+
 ## Standard Library Coverage Note
 
 Public source `std` declarations are tracked in `tests/std_api_manifest.txt`
@@ -335,6 +352,8 @@ Checklist:
 - [x] monomorphize simple generic function calls
 - [x] monomorphize explicit generic function calls such as `identity<i64>(value)`
 - [x] specialize generic function names into function pointer values from expected `fn(...) -> ...` types
+- [x] lock compiler-shaped generic function specializations with typed IR,
+      LLVM fragments, runtime output, and source-aware inference diagnostics
 - [x] lower explicit generic struct literals and tuple-struct constructors
 - [x] infer generic struct literal and tuple-struct constructor type arguments from field/argument values
 - [x] monomorphize generic structs, tuple structs, enums, and aliases with

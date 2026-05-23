@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=138
+CompilerArtifactFixtures version=1 group=all entries=143
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -25,6 +25,9 @@ CompilerArtifactFixtures version=1 group=all entries=138
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-field-assignment-while-borrowed.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-field-assignment-while-borrowed.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-explicit-arity.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-inference-conflict.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-uninferred.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-assignment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-return.ari
@@ -83,6 +86,7 @@ CompilerArtifactFixtures version=1 group=all entries=138
   Fixture group=ok kind=llvm-fragment path=ok/backend-aggregate-match-model.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-core.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-generic-aggregate.llvm-frag
+  Fixture group=ok kind=llvm-fragment path=ok/backend-generic-function.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-layout-aggregate.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-ownership-compiler-shaped.llvm-frag
   Fixture group=ok kind=llvm-fragment path=ok/backend-ownership-drop-aggregate.llvm-frag
@@ -101,6 +105,7 @@ CompilerArtifactFixtures version=1 group=all entries=138
   Fixture group=ok kind=declaration-index path=ok/declaration-index-project-compiler.decls
   Fixture group=ok kind=diagnostic-catalog path=ok/diagnostic-catalog.catalog
   Fixture group=ok kind=typed-ir path=ok/generic-aggregate-monomorphization.ir
+  Fixture group=ok kind=typed-ir path=ok/generic-function-compiler-shaped.ir
   Fixture group=ok kind=module-graph path=ok/module-graph-file-module.graph
   Fixture group=ok kind=module-graph path=ok/module-graph-project-compiler.graph
   Fixture group=ok kind=text path=ok/normalize-paths.actual.txt

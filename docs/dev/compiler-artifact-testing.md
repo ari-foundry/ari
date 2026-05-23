@@ -267,6 +267,7 @@ tests/cases/compiler-development/artifact/ok/artifact-fixtures.inventory
 tests/cases/compiler-development/artifact/ok/capability-inventory.inventory
 tests/cases/compiler-development/artifact/ok/backend-aggregate-match-model.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag
+tests/cases/compiler-development/artifact/ok/backend-generic-function.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-generic-aggregate.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-layout-aggregate.llvm-frag
 tests/cases/compiler-development/artifact/ok/backend-ownership-drop-aggregate.llvm-frag
@@ -282,6 +283,9 @@ tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
 tests/cases/compiler-development/artifact/ok/declaration-index-generic-aggregate.decls
 tests/cases/compiler-development/artifact/ok/declaration-index-project-compiler.decls
 tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-arity.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-inference-conflict.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-uninferred.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-double-move.diagnostic
@@ -302,6 +306,7 @@ tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-o
 tests/cases/compiler-development/artifact/ok/object-aggregate-extern-link.symbols
 tests/cases/compiler-development/artifact/ok/object-library-export.symbols
 tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir
+tests/cases/compiler-development/artifact/ok/generic-function-compiler-shaped.ir
 tests/cases/compiler-development/artifact/ok/project-compiler.ir
 tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout
 tests/cases/compiler-development/artifact/ok/runtime-output-trait.stdout
@@ -426,14 +431,15 @@ It currently proves more than two dozen low-level contracts:
   including a compiler-shaped file-backed project and a generic aggregate
   surface with aliases, generic impls, and nested payload declarations
 - `--emit-typed-ir` writes deterministic sema-lowered IR for small Ari, core
-  scalar flow, trait dispatch, generic aggregate, compiler-shaped
-  struct/enum/match, file-backed module, and ownership/drop fixtures without
-  involving LLVM codegen
+  scalar flow, trait dispatch, generic function specialization, generic
+  aggregate, compiler-shaped struct/enum/match, file-backed module, and
+  ownership/drop fixtures without involving LLVM codegen
 - `--emit-pass-summary` writes deterministic stage counts for lexing, syntax,
   module loading, and sema
 - `--emit-llvm` is checked through review-sized function fragments for core
-  control flow, generic aggregate lowering, ownership/drop lowering, and
-  static trait dispatch instead of committing the whole runtime-heavy LLVM file
+  control flow, generic function specialization, generic aggregate lowering,
+  ownership/drop lowering, and static trait dispatch instead of committing the
+  whole runtime-heavy LLVM file
 - `tests/extract_symbol_names.py` turns object and linked shared-library symbol
   tables into a deterministic allow-list artifact, so exported Ari symbols,
   hidden helpers, absent `main`, and hidden builtins are reviewed as text
@@ -507,7 +513,8 @@ end test.
 Stage comparison remains a compiler maturity blocker, but the artifact bucket
 now covers frontend, source identity, diagnostics, module graphs, declarations
 for single-file, file-backed, and generic surfaces, typed IR for
-modules, ownership, generics, traits, and compiler-shaped aggregate programs,
-LLVM fragments, object/shared symbol goldens, and stdout goldens. The remaining
-larger gaps are HIR, richer object/header/relocation inventories, and broader
-backend/runtime fixture breadth.
+modules, ownership, generic functions, generic aggregates, traits, and
+compiler-shaped aggregate programs, LLVM fragments, object/shared symbol
+goldens, and stdout goldens. The remaining larger gaps are HIR, richer
+object/header/relocation inventories, and broader backend/runtime fixture
+breadth.
