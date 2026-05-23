@@ -368,6 +368,11 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.diagnostic`
   and `diagnostic-cyclic-module.diagnostic`: module graph validation
   diagnostic goldens checked through `--emit-diagnostics`.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-imported-semantic-source-id.diagnostic`:
+  imported-file semantic diagnostic golden checked through
+  `--emit-diagnostics`, proving the primary label keeps the child file's
+  `SourceId`, display path, byte span, line, column, and snippet instead of the
+  importing root file's source identity.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic`:
   type and trait diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic`:

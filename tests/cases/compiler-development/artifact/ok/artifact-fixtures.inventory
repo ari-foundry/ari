@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=204
+CompilerArtifactFixtures version=1 group=all entries=205
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -62,6 +62,7 @@ CompilerArtifactFixtures version=1 group=all entries=204
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-signature-unknown-param.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-specialization-name-conflict.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-uninferred.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-imported-semantic-source-id.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-assignment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-return.ari

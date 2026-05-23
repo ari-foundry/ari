@@ -123,6 +123,29 @@ void test_eof_span() {
     }
 }
 
+void test_no_final_newline_eof_span() {
+    ari::SourceMap map;
+    ari::SourceId id = add_file(map, "no-final-newline.ari", "abc");
+    ari::SourceLocation loc = map.location_for_span(map.span(id, 3, 3));
+    expect_eq(loc.line, 1, "no-final-newline eof span line");
+    expect_eq(loc.column, 4, "no-final-newline eof span column");
+    expect_offset(map.byte_offset(id, 1, 4), 3, "no-final-newline eof reverse lookup");
+    expect_no_offset(map.byte_offset(id, 2, 1), "no-final-newline rejects phantom line");
+
+    ari::SourceSnippet snippet = map.snippet(map.span(id, 3, 3));
+    expect_true(snippet.valid, "no-final-newline eof snippet valid");
+    expect_eq(snippet.lines.size(), static_cast<std::size_t>(1), "no-final-newline eof snippet line count");
+    if (!snippet.lines.empty()) {
+        expect_eq(snippet.lines[0].line_number, static_cast<std::size_t>(1),
+                  "no-final-newline eof snippet line number");
+        expect_eq(snippet.lines[0].text, std::string("abc"), "no-final-newline eof snippet text");
+        expect_eq(snippet.lines[0].marker_start, static_cast<std::size_t>(3),
+                  "no-final-newline eof marker start");
+        expect_eq(snippet.lines[0].marker_len, static_cast<std::size_t>(1),
+                  "no-final-newline eof marker len");
+    }
+}
+
 void test_crlf_file() {
     ari::SourceMap map;
     ari::SourceId id = add_file(map, "crlf.ari", "a\r\nbb\r\nc");
@@ -138,6 +161,38 @@ void test_crlf_file() {
     expect_eq(map.location(id, 3).column, 1, "crlf second line column");
     expect_offset(map.byte_offset(id, 1, 2), 1, "crlf line end byte");
     expect_no_offset(map.byte_offset(id, 1, 3), "crlf hidden carriage return column");
+}
+
+void test_crlf_trailing_newline_eof_span() {
+    ari::SourceMap map;
+    ari::SourceId id = add_file(map, "crlf-eof.ari", "a\r\n");
+    const ari::SourceFile* file = map.get(id);
+    expect_true(file != nullptr, "crlf trailing newline file registered");
+    if (file == nullptr) return;
+    expect_eq(file->line_starts.size(), static_cast<std::size_t>(2),
+              "crlf trailing newline line count");
+    expect_eq(file->line_starts[1], static_cast<std::size_t>(3),
+              "crlf trailing newline second line start");
+
+    ari::SourceLocation loc = map.location_for_span(map.span(id, 3, 3));
+    expect_eq(loc.line, 2, "crlf trailing newline eof line");
+    expect_eq(loc.column, 1, "crlf trailing newline eof column");
+    expect_offset(map.byte_offset(id, 2, 1), 3, "crlf trailing newline eof reverse lookup");
+    expect_no_offset(map.byte_offset(id, 1, 3), "crlf trailing newline hides carriage return column");
+
+    ari::SourceSnippet snippet = map.snippet(map.span(id, 3, 3));
+    expect_true(snippet.valid, "crlf trailing newline eof snippet valid");
+    expect_eq(snippet.lines.size(), static_cast<std::size_t>(1),
+              "crlf trailing newline eof snippet line count");
+    if (!snippet.lines.empty()) {
+        expect_eq(snippet.lines[0].line_number, static_cast<std::size_t>(2),
+                  "crlf trailing newline eof snippet line number");
+        expect_eq(snippet.lines[0].text, std::string(""), "crlf trailing newline eof snippet text");
+        expect_eq(snippet.lines[0].marker_start, static_cast<std::size_t>(0),
+                  "crlf trailing newline eof marker start");
+        expect_eq(snippet.lines[0].marker_len, static_cast<std::size_t>(1),
+                  "crlf trailing newline eof marker len");
+    }
 }
 
 void test_utf8_byte_columns_and_multibyte_text() {
@@ -377,7 +432,9 @@ int main() {
     test_one_line_file();
     test_multi_line_file();
     test_eof_span();
+    test_no_final_newline_eof_span();
     test_crlf_file();
+    test_crlf_trailing_newline_eof_span();
     test_utf8_byte_columns_and_multibyte_text();
     test_invalid_span();
     test_span_helper_invariants();
