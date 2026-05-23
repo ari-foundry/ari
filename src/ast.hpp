@@ -156,6 +156,7 @@ struct Param {
     bool has_pattern = false;
     Pattern pattern;
     BindingMode binding_mode = BindingMode::Value;
+    SourceLocation loc;
 };
 
 struct Stmt;

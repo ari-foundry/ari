@@ -8,12 +8,12 @@ Program source=tests/cases/compiler-development/artifact/ok/syntax-declarations.
     Case name=Just payloads=T @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:15:3 source_id=0 bytes=156..160
   Trait name=Score[T] @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:18:7 source_id=0 bytes=174..179
     Function name=score return=i64 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:19:6 source_id=0 bytes=190..195
-      Param name=self type=Self
-      Param name=other type=T
+      Param name=self type=Self @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:19:12 source_id=0 bytes=196..200
+      Param name=other type=T @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:19:18 source_id=0 bytes=202..207
   Impl trait=Score[Box[i64]] for=Box[i64] @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:22:6 source_id=0 bytes=227..232
     Function name=score return=i64 @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:23:6 source_id=0 bytes=263..268
-      Param name=self type=Self
-      Param name=other type=Box[i64]
+      Param name=self type=Self @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:23:12 source_id=0 bytes=269..273
+      Param name=other type=Box[i64] @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:23:18 source_id=0 bytes=275..280
       Body
         Return @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:5 source_id=0 bytes=305..311
           Binary op="+" @tests/cases/compiler-development/artifact/ok/syntax-declarations.ari:24:23 source_id=0 bytes=323..324

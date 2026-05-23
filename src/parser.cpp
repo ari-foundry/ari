@@ -720,6 +720,7 @@ private:
 
         if (binding_mode != BindingMode::Value) {
             Pattern pattern = parse_pattern(true);
+            SourceLocation loc = pattern.loc;
             expect(TokenKind::Colon, "expected : after parameter pattern");
             Param param;
             param.name = "$pattern";
@@ -727,6 +728,7 @@ private:
             param.has_pattern = true;
             param.pattern = std::move(pattern);
             param.binding_mode = binding_mode;
+            param.loc = loc;
             if (param.pattern.kind == PatternKind::Binding) param.name = param.pattern.payload_name;
             return param;
         }
@@ -741,6 +743,7 @@ private:
                 Param param;
                 param.name = param_name.text;
                 param.type = std::move(self_type);
+                param.loc = param_name.loc;
                 return param;
             }
             if (param_name.text != "_" && peek(1).kind == TokenKind::Colon) {
@@ -749,6 +752,7 @@ private:
                 Param param;
                 param.name = param_name.text;
                 param.type = parse_type();
+                param.loc = param_name.loc;
                 return param;
             }
         }
@@ -761,6 +765,7 @@ private:
         param.type = parse_type();
         param.has_pattern = true;
         param.pattern = std::move(pattern);
+        param.loc = loc;
         if (param.pattern.kind == PatternKind::Binding) {
             param.name = param.pattern.payload_name;
             param.has_pattern = false;
@@ -2445,6 +2450,7 @@ private:
         }
         Param param;
         param.name = name.text;
+        param.loc = name.loc;
         param.type.loc = name.loc;
         if (match(TokenKind::Colon)) {
             param.type = parse_type();

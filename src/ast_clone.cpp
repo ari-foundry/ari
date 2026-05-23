@@ -173,6 +173,7 @@ Param clone_param_impl(const Param& param, CloneContext& context) {
     copy.type = param.type;
     copy.has_pattern = param.has_pattern;
     copy.binding_mode = param.binding_mode;
+    copy.loc = param.loc;
     if (param.has_pattern) {
         copy.pattern = clone_pattern_with_local_renames(param.pattern, context);
     } else {

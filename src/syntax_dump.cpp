@@ -240,7 +240,7 @@ private:
             if (param.binding_mode != BindingMode::Value) {
                 param_text += " binding=" + binding_mode_name(param.binding_mode);
             }
-            line(indent + 1, param_text);
+            line(indent + 1, param_text + loc(param.loc));
         }
         if (function.has_body) {
             line(indent + 1, "Body");
@@ -446,7 +446,9 @@ private:
             case ExprKind::Lambda:
                 line(indent, "LambdaExpr" + loc(expr.loc));
                 for (const Param& param : expr_lambda_params(expr)) {
-                    line(indent + 1, "Param name=" + quote(param.name));
+                    std::string param_text = "Param name=" + quote(param.name);
+                    if (!param.type.name.empty()) param_text += " type=" + type_ref(param.type);
+                    line(indent + 1, param_text + loc(param.loc));
                 }
                 if (expr_lambda_has_result_type(expr)) {
                     line(indent + 1, "ResultType");

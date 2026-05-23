@@ -3,7 +3,7 @@ Program source=tests/cases/compiler-development/artifact/ok/syntax-control-flow.
     Case name=Stop @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:2:3 source_id=0 bytes=14..18
     Case name=More payloads=i64 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:3:3 source_id=0 bytes=22..26
   Function name=choose return=i64 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:6:4 source_id=0 bytes=39..45
-    Param name=limit type=i64
+    Param name=limit type=i64 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:6:11 source_id=0 bytes=46..51
     Body
       VarDecl name=total mut @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:7:7 source_id=0 bytes=73..78
         Integer value=0 @tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari:7:15 source_id=0 bytes=81..82
