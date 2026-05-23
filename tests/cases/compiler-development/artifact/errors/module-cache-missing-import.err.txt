@@ -1,0 +1,7 @@
+ari: error: tests/cases/modules/ok/package-module-main.ari:1:5: module cache is missing validated import 'package_math' in module '<root>'
+  source id: 0
+  byte span: [4, 16)
+  --> tests/cases/modules/ok/package-module-main.ari:1:5
+   |
+ 1 | mod package_math;
+   |     ^^^^^^^^^^^^

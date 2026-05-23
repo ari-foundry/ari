@@ -1,0 +1,24 @@
+ModuleGraph source=tests/cases/modules/ok/diamond-project-main.ari target=x86_64-pc-linux-gnu implicit_std=false
+  SearchPaths count=0
+  CfgFeatures count=0
+  Sources count=5
+    Source id=0 module=<root> root=true path=tests/cases/modules/ok/diamond-project-main.ari
+    Source id=1 module=diamond_project root=false path=tests/cases/modules/ok/diamond_project.ari
+    Source id=2 module=diamond_project::left root=false path=tests/cases/modules/ok/diamond_project/left.ari
+    Source id=3 module=diamond_project::right root=false path=tests/cases/modules/ok/diamond_project/right.ari
+    Source id=4 module=diamond_project::shared root=false path=tests/cases/modules/ok/diamond_project/shared.ari
+  Imports count=4
+    Import owner=<root> module=diamond_project local=diamond_project visibility=private source=tests/cases/modules/ok/diamond_project.ari
+    Import owner=diamond_project module=diamond_project::left local=left visibility=pub source=tests/cases/modules/ok/diamond_project/left.ari
+    Import owner=diamond_project module=diamond_project::right local=right visibility=pub source=tests/cases/modules/ok/diamond_project/right.ari
+    Import owner=diamond_project module=diamond_project::shared local=shared visibility=pub source=tests/cases/modules/ok/diamond_project/shared.ari
+  Items count=9
+    Item module=<root> kind=fn name=main visibility=private
+    Item module=<root> kind=module name=diamond_project visibility=private
+    Item module=diamond_project kind=fn name=diamond_project::run visibility=pub
+    Item module=diamond_project kind=module name=diamond_project::left visibility=pub
+    Item module=diamond_project kind=module name=diamond_project::right visibility=pub
+    Item module=diamond_project kind=module name=diamond_project::shared visibility=pub
+    Item module=diamond_project::left kind=fn name=diamond_project::left::value visibility=pub
+    Item module=diamond_project::right kind=fn name=diamond_project::right::value visibility=pub
+    Item module=diamond_project::shared kind=fn name=diamond_project::shared::base visibility=pub

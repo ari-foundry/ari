@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=228
+CompilerArtifactFixtures version=1 group=all entries=232
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -131,6 +131,7 @@ CompilerArtifactFixtures version=1 group=all entries=228
   Fixture group=errors kind=source path=errors/diagnostic-return-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-return-live-owner.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-runtime-owned-enum-conditional-payload-slot-move.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-self-import-source-id.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-stored-owned-enum-payload-undropped.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-field-access-non-struct.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-field-unknown.diagnostic
@@ -160,8 +161,10 @@ CompilerArtifactFixtures version=1 group=all entries=228
   Fixture group=errors kind=source path=errors/diagnostic_ambiguous_module/mod.ari
   Fixture group=errors kind=source path=errors/diagnostic_cycle_a.ari
   Fixture group=errors kind=source path=errors/diagnostic_cycle_b.ari
+  Fixture group=errors kind=text path=errors/module-cache-missing-import.err.txt
   Fixture group=errors kind=text path=errors/module-cache-stale-source.err.txt
   Fixture group=errors kind=text path=errors/module-cache-target-stale.err.txt
+  Fixture group=errors kind=text path=errors/module-metadata-missing-source.err.txt
   Fixture group=errors kind=text path=errors/module-metadata-stale-cfg.err.txt
   Fixture group=errors kind=text path=errors/text-line-mismatch.actual.txt
   Fixture group=errors kind=text path=errors/text-line-mismatch.expected.txt
@@ -190,6 +193,7 @@ CompilerArtifactFixtures version=1 group=all entries=228
   Fixture group=ok kind=diagnostic-catalog path=ok/diagnostic-catalog.catalog
   Fixture group=ok kind=typed-ir path=ok/generic-aggregate-monomorphization.ir
   Fixture group=ok kind=typed-ir path=ok/generic-function-compiler-shaped.ir
+  Fixture group=ok kind=module-graph path=ok/module-graph-diamond-project.graph
   Fixture group=ok kind=module-graph path=ok/module-graph-file-module.graph
   Fixture group=ok kind=module-graph path=ok/module-graph-project-compiler.graph
   Fixture group=ok kind=module-graph path=ok/module-graph-same-filename.graph

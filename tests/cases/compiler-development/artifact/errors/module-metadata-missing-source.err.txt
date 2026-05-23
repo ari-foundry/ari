@@ -1,0 +1,1 @@
+ari: error: module metadata '<build>/compiler-development/artifact/module-metadata-missing-source-tampered.arimeta' does not match the current source graph: current source graph has new source 'package_math' at 'tests/packages/package_math.ari'; regenerate it with --emit-module-metadata
