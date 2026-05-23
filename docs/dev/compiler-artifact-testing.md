@@ -317,7 +317,9 @@ tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-dupli
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-extra-field.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-field-type.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-missing-field.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-large-aggregate-import.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-target-aggregate-import.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.diagnostic

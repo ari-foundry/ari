@@ -428,7 +428,8 @@ layout promises. Aggregate raw-pointer field/element access follows Ari's
 current executable aggregate layout; it is not yet a `repr(C)` guarantee.
 Unsupported aggregate C import surfaces are reported as `A0001` ABI
 diagnostics with source spans; the golden artifact suite includes the
-non-`@repr(C)` by-value struct import rejection.
+non-`@repr(C)`, oversized, and target-unsupported by-value struct import
+rejections.
 
 ## C Header Emission
 

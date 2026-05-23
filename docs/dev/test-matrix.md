@@ -21,8 +21,9 @@ For each feature:
 ## ABI Coverage Note
 
 Non-local aggregate ABI diagnostics are covered by C-header fixtures, direct
-extern C import fixtures, and a source-aware `A0001` diagnostic artifact for a
-non-`@repr(C)` by-value aggregate import. C-header artifact goldens lock public
+extern C import fixtures, and source-aware `A0001` diagnostic artifacts for
+non-`@repr(C)`, oversized, and target-unsupported by-value aggregate imports.
+C-header artifact goldens lock public
 `@repr(C)` structs, fieldless and payload-bearing enums, generated tuple,
 fixed-array, fixed-capacity-vector, and aggregate-enum wrappers, and ABI-facing
 function prototypes. The shared classifier recognizes value tuples, fixed

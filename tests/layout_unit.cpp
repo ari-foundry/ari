@@ -198,6 +198,47 @@ void test_aggregate_abi_classifier() {
     expect_abi_reason(wide_abi.reason, ari::NonLocalAggregateAbiReason::IndirectByLayout,
                       "Wide indirect reason");
 
+    ari::IrType pair_array = array_of(i64, 2);
+    ari::NonLocalAggregateAbi pair_array_abi =
+        ari::classify_nonlocal_aggregate_abi(pair_array, linux64);
+    expect_abi_kind(pair_array_abi.kind, ari::NonLocalAggregateAbiKind::Direct,
+                    "array pair direct aggregate ABI");
+    expect_eq(pair_array_abi.size_bytes, static_cast<std::uint64_t>(16), "array pair ABI size");
+    expect_eq(pair_array_abi.align_bytes, static_cast<std::uint64_t>(8), "array pair ABI align");
+
+    ari::IrType wide_array = array_of(i64, 3);
+    ari::NonLocalAggregateAbi wide_array_abi =
+        ari::classify_nonlocal_aggregate_abi(wide_array, linux64);
+    expect_abi_kind(wide_array_abi.kind, ari::NonLocalAggregateAbiKind::Indirect,
+                    "wide array indirect aggregate ABI");
+    expect_abi_reason(wide_array_abi.reason, ari::NonLocalAggregateAbiReason::IndirectByLayout,
+                      "wide array indirect reason");
+
+    ari::IrType small_enum = aggregate_enum("SmallEnum", {
+        ty(ari::IrPrimitiveKind::I32, "i32"),
+        i64,
+    });
+    ari::NonLocalAggregateAbi small_enum_abi =
+        ari::classify_nonlocal_aggregate_abi(small_enum, linux64);
+    expect_abi_kind(small_enum_abi.kind, ari::NonLocalAggregateAbiKind::Direct,
+                    "small aggregate enum direct ABI");
+    expect_eq(small_enum_abi.size_bytes, static_cast<std::uint64_t>(16),
+              "small aggregate enum ABI size");
+    expect_eq(small_enum_abi.align_bytes, static_cast<std::uint64_t>(8),
+              "small aggregate enum ABI align");
+
+    ari::IrType wide_enum = aggregate_enum("WideEnum", {
+        ty(ari::IrPrimitiveKind::I32, "i32"),
+        i64,
+        i64,
+    });
+    ari::NonLocalAggregateAbi wide_enum_abi =
+        ari::classify_nonlocal_aggregate_abi(wide_enum, linux64);
+    expect_abi_kind(wide_enum_abi.kind, ari::NonLocalAggregateAbiKind::Indirect,
+                    "wide aggregate enum indirect ABI");
+    expect_abi_reason(wide_enum_abi.reason, ari::NonLocalAggregateAbiReason::IndirectByLayout,
+                      "wide aggregate enum indirect reason");
+
     ari::IrType empty = record("Empty", {});
     ari::NonLocalAggregateAbi empty_abi =
         ari::classify_nonlocal_aggregate_abi(empty, linux64);

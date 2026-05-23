@@ -361,9 +361,12 @@ Current compiler-development tests:
   aggregate and match diagnostic goldens checked through `--emit-diagnostics`,
   covering missing struct-field lookup and missing enum-case coverage with
   source spans.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic`:
-  ABI diagnostic-code golden for rejecting non-`@repr(C)` by-value extern C
-  aggregate imports with source spans.
+- `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-large-aggregate-import.diagnostic`,
+  and
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-target-aggregate-import.diagnostic`:
+  ABI diagnostic-code goldens for rejecting non-`@repr(C)`, oversized, and
+  target-unsupported by-value extern C aggregate imports with source spans.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic`:
   ownership diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.diagnostic`,

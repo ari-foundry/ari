@@ -5,7 +5,10 @@ This folder contains focused fixtures for Ari ffi behavior. Put valid programs u
 Wire new cases into the matching target in `tests/Makefile` and keep each file centered on one behavior.
 
 ABI/layout boundary failures should also get a source-aware diagnostic artifact
-when the message is part of the public compiler contract. The seeded example is
+when the message is part of the public compiler contract. Current examples
+include
 `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.ari`,
-which locks the `A0001` diagnostic for rejecting a non-`@repr(C)` by-value
-aggregate in an `extern "C"` import.
+`diagnostic-ffi-large-aggregate-import.diagnostic`, and
+`diagnostic-ffi-target-aggregate-import.diagnostic`, which lock `A0001`
+diagnostics for rejecting non-`@repr(C)`, oversized, and target-unsupported
+by-value aggregates in `extern "C"` imports.

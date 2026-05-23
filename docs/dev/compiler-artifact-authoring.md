@@ -182,7 +182,9 @@ Keep fixture names behavior-based:
 - `diagnostic-struct-literal-extra-field.diagnostic`
 - `diagnostic-struct-literal-field-type.diagnostic`
 - `diagnostic-struct-literal-missing-field.diagnostic`
+- `diagnostic-ffi-large-aggregate-import.diagnostic`
 - `diagnostic-ffi-nonrepr-aggregate-import.diagnostic`
+- `diagnostic-ffi-target-aggregate-import.diagnostic`
 - `diagnostic-use-after-move.diagnostic`
 - `diagnostic-move-borrowed-owner.diagnostic`
 - `diagnostic-ownership-partial-move.diagnostic`
