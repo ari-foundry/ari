@@ -36,7 +36,11 @@ diagnostics and review-sized LLVM drop fragments:
 - `diagnostic-return-live-owner.diagnostic`
 - `diagnostic-loop-break-live-owner.diagnostic`
 - `diagnostic-loop-continue-live-owner.diagnostic`
+- `diagnostic-match-branch-state-mismatch.diagnostic`
 - `diagnostic-enum-payload-invalid-move.diagnostic`
+- `diagnostic-stored-owned-enum-payload-undropped.diagnostic`
+- `diagnostic-match-runtime-owned-enum-payload-undropped.diagnostic`
+- `diagnostic-runtime-owned-enum-conditional-payload-slot-move.diagnostic`
 - `diagnostic-compact-enum-payload-ref.diagnostic`
 - `diagnostic-ownership-aggregate-enum-payload.diagnostic`
 - `diagnostic-borrow-aggregate-enum-payload.diagnostic`

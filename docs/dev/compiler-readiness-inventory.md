@@ -299,14 +299,19 @@ Current compiler-development tests:
   `diagnostic-loop-break-live-owner.diagnostic`,
   `diagnostic-loop-continue-live-owner.diagnostic`,
   `diagnostic-borrow-after-move.diagnostic`, `diagnostic-double-move.diagnostic`,
+  `diagnostic-match-branch-state-mismatch.diagnostic`,
   `diagnostic-enum-payload-invalid-move.diagnostic`,
+  `diagnostic-stored-owned-enum-payload-undropped.diagnostic`,
+  `diagnostic-match-runtime-owned-enum-payload-undropped.diagnostic`,
+  `diagnostic-runtime-owned-enum-conditional-payload-slot-move.diagnostic`,
   `diagnostic-compact-enum-payload-ref.diagnostic`, and
   `diagnostic-ownership-aggregate-enum-payload.diagnostic`, and
   `diagnostic-borrow-aggregate-enum-payload.diagnostic`: source-aware
   ownership diagnostic goldens for borrow conflicts, live-owner control-flow
-  exits, repeated moves, invalid enum payload moves, and rejected compact enum
-  payload reference patterns or ownership-/borrow-carrying aggregate enum
-  payloads.
+  exits, repeated moves, match arm ownership-state mismatches, invalid enum
+  payload moves, undropped stored or matched enum owners, conditional
+  runtime-owned enum payload-slot moves, and rejected compact enum payload
+  reference patterns or ownership-/borrow-carrying aggregate enum payloads.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-access-non-struct.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic`,

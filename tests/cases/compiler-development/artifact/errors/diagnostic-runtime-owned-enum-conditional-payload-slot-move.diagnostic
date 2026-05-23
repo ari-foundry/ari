@@ -1,0 +1,4 @@
+diagnostic error code=O0001 family=ownership message="cannot move runtime-dependent owning enum payload slot 'item.0' outside match because enum cases do not share the same owner payload layout; use match" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/match/errors/runtime-owned-enum-conditional-payload-slot-move.ari" display="tests/cases/match/errors/runtime-owned-enum-conditional-payload-slot-move.ari" bytes=415
+  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/runtime-owned-enum-conditional-payload-slot-move.ari" line=24 column=20 end_line=24 end_column=21 byte_start=330 byte_end=331 message=""
+  Snippet label=0 text="  --> tests/cases/match/errors/runtime-owned-enum-conditional-payload-slot-move.ari:24:20\n    |\n 24 |   let token = item.0;\n    |                    ^"

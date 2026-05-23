@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=200
+CompilerArtifactFixtures version=1 group=all entries=204
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -74,6 +74,7 @@ CompilerArtifactFixtures version=1 group=all entries=200
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-break-live-owner.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-loop-continue-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-continue-live-owner.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-branch-state-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-duplicate-arm.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-empty.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-expression-type-mismatch.diagnostic
@@ -82,6 +83,7 @@ CompilerArtifactFixtures version=1 group=all entries=200
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-nonexhaustive.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-or-pattern-binding-type.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-payload-required.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-runtime-owned-enum-payload-undropped.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-missing-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic
@@ -110,6 +112,8 @@ CompilerArtifactFixtures version=1 group=all entries=200
   Fixture group=errors kind=diagnostic path=errors/diagnostic-private-access.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-return-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-return-live-owner.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-runtime-owned-enum-conditional-payload-slot-move.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-stored-owned-enum-payload-undropped.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-field-access-non-struct.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-field-unknown.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-duplicate-field.diagnostic

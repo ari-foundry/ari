@@ -907,8 +907,9 @@ Checklist:
 - [x] reject payload pattern on no-payload case
 - [x] reject case from a different enum
 - [x] reject match over non-enum values
-- [x] reject incompatible ownership states after match arms
+- [x] reject incompatible ownership states after match arms with source-aware `O0001` artifacts
 - [x] reject incompatible ownership states after match expression arms
+- [x] reject undropped stored/matched enum owners and conditional runtime payload-slot moves with source-aware `O0001` artifacts
 
 ## Completed Sprint: Modules
 
