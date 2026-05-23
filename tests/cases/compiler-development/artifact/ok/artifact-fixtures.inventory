@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=224
+CompilerArtifactFixtures version=1 group=all entries=228
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -104,6 +104,7 @@ CompilerArtifactFixtures version=1 group=all entries=224
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-wrong-enum-case.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-missing-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-missing-module.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-module-glob-duplicate.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-move-borrowed-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-move-borrowed-owner.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-ownership-aggregate-enum-payload.ari
@@ -125,6 +126,7 @@ CompilerArtifactFixtures version=1 group=all entries=224
   Fixture group=errors kind=source path=errors/diagnostic-private-access.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-private-access.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-private-enum-case.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-private-nested-module.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-private-struct-type.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-return-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-return-live-owner.diagnostic
@@ -159,6 +161,8 @@ CompilerArtifactFixtures version=1 group=all entries=224
   Fixture group=errors kind=source path=errors/diagnostic_cycle_a.ari
   Fixture group=errors kind=source path=errors/diagnostic_cycle_b.ari
   Fixture group=errors kind=text path=errors/module-cache-stale-source.err.txt
+  Fixture group=errors kind=text path=errors/module-cache-target-stale.err.txt
+  Fixture group=errors kind=text path=errors/module-metadata-stale-cfg.err.txt
   Fixture group=errors kind=text path=errors/text-line-mismatch.actual.txt
   Fixture group=errors kind=text path=errors/text-line-mismatch.expected.txt
   Fixture group=errors kind=text path=errors/text-line-mismatch.report.txt

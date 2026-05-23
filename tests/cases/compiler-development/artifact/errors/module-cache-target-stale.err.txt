@@ -1,0 +1,1 @@
+ari: error: module cache '<build>/compiler-development/artifact/module-cache-target.aricache' is stale: target option changed from 'i686-unknown-linux-gnu' to 'x86_64-pc-linux-gnu'; regenerate it with --emit-module-cache

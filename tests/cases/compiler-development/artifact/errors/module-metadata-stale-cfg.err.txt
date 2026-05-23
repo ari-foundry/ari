@@ -1,0 +1,1 @@
+ari: error: module metadata '<build>/compiler-development/artifact/module-metadata-stale.arimeta' does not match the current source graph: current source graph has new cfg feature 'stale'; regenerate it with --emit-module-metadata
