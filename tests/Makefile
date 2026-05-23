@@ -603,6 +603,18 @@ check-compiler-development: $(TARGET)
 	$(TARGET) tests/cases/compiler-development/ok/model/compiler-data-project-main.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-data-project.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-data-project.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-data-project-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-data-project.elf; $(BUILD_DIR)/compiler-development/compiler-data-project.elf; code=$$?; test $$code -eq 90; fi
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-owned-payload-model.ari --check
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-owned-payload-model.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-owned-payload-model.ll
+	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-owned-payload-model.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-owned-payload-model.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-owned-payload-model.elf; $(BUILD_DIR)/compiler-development/compiler-owned-payload-model.elf; code=$$?; test $$code -eq 101; fi
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-symbol-scope-result.ari --check
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-symbol-scope-result.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-symbol-scope-result.ll
+	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-symbol-scope-result.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-symbol-scope-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-symbol-scope-result.elf; $(BUILD_DIR)/compiler-development/compiler-symbol-scope-result.elf; code=$$?; test $$code -eq 143; fi
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-hir-block-model.ari --check
+	$(TARGET) tests/cases/compiler-development/ok/model/compiler-hir-block-model.ari --emit-llvm $(BUILD_DIR)/compiler-development/compiler-hir-block-model.ll
+	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/compiler-development/compiler-hir-block-model.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/compiler-development/ok/model/compiler-hir-block-model.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/compiler-development/compiler-hir-block-model.elf; $(BUILD_DIR)/compiler-development/compiler-hir-block-model.elf; code=$$?; test $$code -eq 148; fi
 	if $(TARGET) tests/cases/compiler-development/errors/bootstrap-class-keyword.ari --check >$(BUILD_DIR)/compiler-development/bootstrap-class-keyword.err 2>&1; then exit 1; fi
 	grep -q "expected top-level declaration" $(BUILD_DIR)/compiler-development/bootstrap-class-keyword.err
 	if $(TARGET) tests/cases/compiler-development/errors/bootstrap-interface-keyword.ari --check >$(BUILD_DIR)/compiler-development/bootstrap-interface-keyword.err 2>&1; then exit 1; fi

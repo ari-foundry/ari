@@ -1,0 +1,127 @@
+// Models compiler symbol scope lookup with Token, Symbol, Diagnostic, and
+// Result[NodeId, Diagnostic] values.
+type NodeId = i64;
+type SymbolName = i64;
+
+struct Span {
+  source: i64,
+  start: i64,
+  end: i64,
+}
+
+enum TokenKind {
+  Ident(SymbolName),
+  KeywordLet,
+  Eof,
+}
+
+struct Token {
+  kind: TokenKind,
+  span: Span,
+}
+
+enum SymbolKind {
+  Value,
+  Type,
+  Module,
+}
+
+struct Symbol {
+  name: SymbolName,
+  node: NodeId,
+  kind: SymbolKind,
+  declared_at: Span,
+}
+
+struct Scope {
+  first: Symbol,
+  second: Symbol,
+  len: i64,
+}
+
+struct Diagnostic {
+  code: i64,
+  span: Span,
+}
+
+fn span_len(span: Span) -> i64 {
+  return span.end - span.start;
+}
+
+fn kind_score(kind: SymbolKind) -> i64 {
+  match kind {
+    Value => {
+      return 3;
+    }
+    Type => {
+      return 5;
+    }
+    Module => {
+      return 7;
+    }
+  }
+}
+
+fn token_score(token: Token) -> i64 {
+  return span_len(token.span) + match token.kind {
+    Ident(name) => name,
+    KeywordLet => 11,
+    Eof => 13,
+  };
+}
+
+fn symbol_score(symbol: Symbol) -> i64 {
+  return symbol.name + symbol.node + kind_score(symbol.kind) +
+    span_len(symbol.declared_at);
+}
+
+fn diagnostic_score(diagnostic: Diagnostic) -> i64 {
+  return diagnostic.code + span_len(diagnostic.span);
+}
+
+fn lookup(scope: Scope, token: Token) -> Result[NodeId, Diagnostic] {
+  match token.kind {
+    Ident(name) => {
+      if scope.first.name == name {
+        return Ok(scope.first.node);
+      }
+      if scope.second.name == name {
+        return Ok(scope.second.node);
+      }
+      return Err(Diagnostic { code: 17, span: token.span });
+    }
+    KeywordLet => {
+      return Err(Diagnostic { code: 19, span: token.span });
+    }
+    Eof => {
+      return Err(Diagnostic { code: 23, span: token.span });
+    }
+  }
+}
+
+fn result_score(result: Result[NodeId, Diagnostic]) -> i64 {
+  match result {
+    Ok(node) => {
+      return node;
+    }
+    Err(diagnostic) => {
+      return 100 + diagnostic_score(diagnostic);
+    }
+  }
+}
+
+fn main() -> i64 {
+  let span = Span { source: 1, start: 4, end: 9 };
+  let scope = Scope {
+    first: Symbol { name: 3, node: 31, kind: Value, declared_at: span },
+    second: Symbol { name: 5, node: 37, kind: Type, declared_at: span },
+    len: 2,
+  };
+  let found = result_score(lookup(scope, Token { kind: Ident(5), span: span }));
+  let missing = result_score(lookup(scope, Token { kind: Ident(8), span: span }));
+  let keyword = result_score(lookup(scope, Token { kind: KeywordLet, span: span }));
+  let eof_score = token_score(Token { kind: Eof, span: Span { source: 1, start: 9, end: 9 } });
+
+  return found + missing + keyword + eof_score +
+    symbol_score(scope.first) + scope.len - 197;
+}

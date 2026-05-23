@@ -1,0 +1,61 @@
+// Covers compiler-shaped ownership data flowing through generic payloads. This
+// checks drop stability for nested generic values, not compiler self-hosting.
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+type NodeId = i64;
+
+struct Box[T] {
+  value: T,
+}
+
+enum OwnedPayload[T] {
+  Empty,
+  Item(T),
+}
+
+struct WorkEnvelope[T] {
+  node: NodeId,
+  payload: OwnedPayload[T],
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn make_envelope(node: NodeId) -> WorkEnvelope[own i64] {
+  return WorkEnvelope<own i64> {
+    node: node,
+    payload: Item<own i64>(make_owned(9)),
+  };
+}
+
+fn consume_box(boxed: Box[own i64]) -> i64 {
+  let value = boxed.value;
+  drop value;
+  return 13;
+}
+
+fn consume_payload(payload: OwnedPayload[own i64], score: i64) -> i64 {
+  drop payload;
+  return score;
+}
+
+fn consume_envelope(envelope: WorkEnvelope[own i64]) -> i64 {
+  let node = envelope.node;
+  drop envelope;
+  return node + 29;
+}
+
+fn main() -> i64 {
+  let boxed = Box<own i64> { value: make_owned(4) };
+  let boxed_score = consume_box(boxed);
+  let item_score = consume_payload(Item<own i64>(make_owned(5)), 17);
+  let empty_score = consume_payload(Empty<own i64>(), 19);
+  let envelope_score = consume_envelope(make_envelope(23));
+
+  return boxed_score + item_score + empty_score + envelope_score;
+}

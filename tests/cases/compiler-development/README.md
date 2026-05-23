@@ -76,6 +76,14 @@ the same language surface that normal Ari users get.
 - `ok/model/compiler-data-project-main.ari`: file-backed compiler-shaped
   data project covering AST, diagnostics, symbols, TypeRef, and
   `Result[NodeId, Diagnostic]` across modules.
+- `ok/model/compiler-owned-payload-model.ari`: owned compiler payloads inside
+  generic boxes, generic enum payloads, and work envelopes with deterministic
+  drop behavior.
+- `ok/model/compiler-symbol-scope-result.ari`: TokenKind, Token, SymbolKind,
+  scope lookup, duplicate-ready symbol data, and `Result[NodeId, Diagnostic]`
+  flow as normal Ari data.
+- `ok/model/compiler-hir-block-model.ari`: HIR block data with fixed node
+  storage, TypeRef arguments, and nested Expr/Stmt payload scoring.
 - `errors/bootstrap-class-keyword.ari`: rejects `class` as a compiler-development
   shortcut; compiler code should use normal Ari structs, enums, functions, and
   traits.
