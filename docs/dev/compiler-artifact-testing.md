@@ -284,8 +284,14 @@ tests/cases/compiler-development/artifact/ok/declaration-index-generic-aggregate
 tests/cases/compiler-development/artifact/ok/declaration-index-project-compiler.decls
 tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-arity.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-mismatch.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-duplicate-param.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-inference-conflict.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-generic-uninferred.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-uninferred.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-mismatch.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-nongeneric-type-args.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-generic-private-function.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-double-move.diagnostic

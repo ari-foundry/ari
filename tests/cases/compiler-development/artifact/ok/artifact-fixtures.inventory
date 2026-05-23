@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=143
+CompilerArtifactFixtures version=1 group=all entries=149
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -25,8 +25,14 @@ CompilerArtifactFixtures version=1 group=all entries=143
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-field-assignment-while-borrowed.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-field-assignment-while-borrowed.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-duplicate-param.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-explicit-arity.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-explicit-mismatch.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-function-pointer-mismatch.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-function-pointer-uninferred.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-inference-conflict.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-nongeneric-type-args.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-private-function.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-uninferred.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-assignment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic

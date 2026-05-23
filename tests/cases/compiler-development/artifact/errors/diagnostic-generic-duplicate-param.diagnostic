@@ -1,0 +1,4 @@
+diagnostic error code=ari/compiler family=general message="duplicate generic parameter 'T' in function 'same'" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/generics/errors/generic-duplicate-param.ari" display="tests/cases/generics/errors/generic-duplicate-param.ari" bytes=89
+  Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-duplicate-param.ari" line=1 column=12 end_line=1 end_column=13 byte_start=11 byte_end=12 message=""
+  Snippet label=0 text="  --> tests/cases/generics/errors/generic-duplicate-param.ari:1:12\n   |\n 1 | fn same[T, T](value: T) -> T {\n   |            ^"

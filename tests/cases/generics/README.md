@@ -13,6 +13,9 @@ Generic aggregate coverage is split on purpose:
   generic specialization keys, generic locals, generic aggregate parameters and
   returns, repeated specialization reuse, typed IR, LLVM symbols, and runtime
   behavior.
+- `ok/generic-function-modules.ari` keeps generic function names identical
+  across two inline modules and checks public module-qualified inferred and
+  explicit specializations produce distinct stable backend symbols.
 - `ok/generic-aggregate-monomorphization.ari` uses only user-defined generic
   structs, enums, aliases, methods, nested payloads, and ownership-qualified
   arguments. This is the primary compiler fixture.
@@ -25,3 +28,7 @@ Generic aggregate coverage is split on purpose:
   identity mismatch, payload mismatch, invalid field access, receiver mismatch,
   use-after-move through a generic payload, and unsupported recursive value
   aggregate layouts.
+- `errors/generic-*.ari` also covers duplicate function type parameters,
+  explicit argument count and mismatch errors, insufficient and conflicting
+  inference, generic function pointer inference/signature failures, non-generic
+  calls with type arguments, and private generic function access.

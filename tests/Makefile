@@ -124,10 +124,22 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-method-ambiguous.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-explicit-arity.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-arity.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-arity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-arity.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-explicit-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-mismatch.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-explicit-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-explicit-mismatch.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-inference-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-inference-conflict.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-inference-conflict.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-inference-conflict.diagnostic
 	$(TARGET) tests/cases/generics/errors/generic-uninferred.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-uninferred.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-uninferred.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-function-pointer-uninferred.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-uninferred.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-uninferred.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-uninferred.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-function-pointer-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-mismatch.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-function-pointer-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-function-pointer-mismatch.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-duplicate-param.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-duplicate-param.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-duplicate-param.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-duplicate-param.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-nongeneric-type-args.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-nongeneric-type-args.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-nongeneric-type-args.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-nongeneric-type-args.diagnostic
+	$(TARGET) tests/cases/generics/errors/generic-private-function.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-private-function.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-generic-private-function.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-generic-private-function.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-core-use-before-declaration.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-core-use-before-declaration.diagnostic
@@ -4317,6 +4329,12 @@ check-generics: $(TARGET)
 	$(BUILD_DIR)/generics/vector-generic-root-param.elf; code=$$?; test $$code -eq 5
 	$(TARGET) tests/cases/generics/ok/generic-function-specializations.ari -o $(BUILD_DIR)/generics/generic-function-specializations.elf
 	$(BUILD_DIR)/generics/generic-function-specializations.elf; code=$$?; test $$code -eq 21
+	$(TARGET) tests/cases/generics/ok/generic-function-modules.ari -o $(BUILD_DIR)/generics/generic-function-modules.elf
+	$(BUILD_DIR)/generics/generic-function-modules.elf; code=$$?; test $$code -eq 15
+	$(TARGET) tests/cases/generics/ok/generic-function-modules.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-modules.ll
+	test $$(grep -c 'define i64 @"_ARNv13ParserHelpers15identity__G_i64"' $(BUILD_DIR)/generics/generic-function-modules.ll) -eq 1
+	test $$(grep -c 'define i1 @"_ARNv13ParserHelpers16identity__G_bool"' $(BUILD_DIR)/generics/generic-function-modules.ll) -eq 1
+	test $$(grep -c 'define i64 @"_ARNv12OtherHelpers15identity__G_i64"' $(BUILD_DIR)/generics/generic-function-modules.ll) -eq 1
 	$(TARGET) tests/cases/generics/ok/generic-function-compiler-shaped.ari -o $(BUILD_DIR)/generics/generic-function-compiler-shaped.elf
 	$(BUILD_DIR)/generics/generic-function-compiler-shaped.elf; code=$$?; test $$code -eq 50
 	$(TARGET) tests/cases/generics/ok/generic-function-compiler-shaped.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-compiler-shaped.ll
@@ -4416,6 +4434,8 @@ check-generics: $(TARGET)
 	grep -q "type mismatch: expected std::Option\\[i32\\], got std::Option\\[bool\\]" $(BUILD_DIR)/generics/generic-enum-constant-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-function-pointer-uninferred.ari -o $(BUILD_DIR)/generics/generic-function-pointer-uninferred.elf >$(BUILD_DIR)/generics/generic-function-pointer-uninferred.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' could not be inferred for function pointer 'keep'" $(BUILD_DIR)/generics/generic-function-pointer-uninferred.err
+	if $(TARGET) tests/cases/generics/errors/generic-function-pointer-mismatch.ari -o $(BUILD_DIR)/generics/generic-function-pointer-mismatch.elf >$(BUILD_DIR)/generics/generic-function-pointer-mismatch.err 2>&1; then exit 1; fi
+	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-function-pointer-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-duplicate-param.ari -o $(BUILD_DIR)/generics/generic-duplicate-param.elf >$(BUILD_DIR)/generics/generic-duplicate-param.err 2>&1; then exit 1; fi
 	grep -q "duplicate generic parameter 'T' in function 'same'" $(BUILD_DIR)/generics/generic-duplicate-param.err
 	if $(TARGET) tests/cases/generics/errors/generic-explicit-arity.ari -o $(BUILD_DIR)/generics/generic-explicit-arity.elf >$(BUILD_DIR)/generics/generic-explicit-arity.err 2>&1; then exit 1; fi
@@ -4424,6 +4444,8 @@ check-generics: $(TARGET)
 	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-explicit-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-nongeneric-type-args.ari -o $(BUILD_DIR)/generics/generic-nongeneric-type-args.elf >$(BUILD_DIR)/generics/generic-nongeneric-type-args.err 2>&1; then exit 1; fi
 	grep -q "function 'add' does not take type arguments" $(BUILD_DIR)/generics/generic-nongeneric-type-args.err
+	if $(TARGET) tests/cases/generics/errors/generic-private-function.ari -o $(BUILD_DIR)/generics/generic-private-function.elf >$(BUILD_DIR)/generics/generic-private-function.err 2>&1; then exit 1; fi
+	grep -q "function 'Hidden::identity' is not public" $(BUILD_DIR)/generics/generic-private-function.err
 	if $(TARGET) tests/cases/variables/errors/array-literal-index-out-of-range.ari -o $(BUILD_DIR)/generics/array-literal-index-out-of-range.elf >$(BUILD_DIR)/generics/array-literal-index-out-of-range.err 2>&1; then exit 1; fi
 	grep -q "array literal index 2 is out of range for 2 elements" $(BUILD_DIR)/generics/array-literal-index-out-of-range.err
 

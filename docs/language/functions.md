@@ -310,10 +310,13 @@ whole call.
 Each concrete generic function call creates one deterministic specialization
 key from the fully qualified function path and concrete type argument list.
 Repeated calls with the same key reuse the same specialization and backend
-symbol; different concrete type arguments produce distinct symbols. Type
-arguments can be primitive types, structs, enums, aliases, or nested generic
-aggregate types such as `PassResult<Box<Token>, Diagnostic>` when those
-aggregate shapes are otherwise supported by the backend.
+symbol; different concrete type arguments produce distinct symbols. Public
+generic functions can be called through module-qualified paths, and two modules
+may define same-named generic helpers because the module path is part of the
+specialization identity. Private generic functions remain private to their
+module. Type arguments can be primitive types, structs, enums, aliases, or
+nested generic aggregate types such as `PassResult<Box<Token>, Diagnostic>`
+when those aggregate shapes are otherwise supported by the backend.
 
 Generic parameters may appear in parameter types, return types, local type
 annotations, aggregate fields, enum payloads, and helper-call chains. Ari infers
@@ -321,7 +324,10 @@ type arguments from ordinary call arguments and expected function-pointer
 types. Return-only type parameters need an explicit call type argument or an
 expected type from a checked construct that the compiler already supports.
 Conflicting inference, missing inference, wrong explicit type-argument counts,
-and post-substitution argument or return mismatches are compile-time errors.
+post-substitution argument or return mismatches, function-pointer
+specialization mismatches, type arguments on non-generic functions, duplicate
+generic parameter names, and private generic function access are compile-time
+errors with source-aware diagnostics.
 
 Generic functions may use trait bounds with the same static dispatch rules
 described in [Traits](traits.md). Bounds are checked when a concrete

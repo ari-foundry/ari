@@ -1,0 +1,4 @@
+diagnostic error code=ari/compiler family=general message="function 'add' does not take type arguments" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/generics/errors/generic-nongeneric-type-args.ari" display="tests/cases/generics/errors/generic-nongeneric-type-args.ari" bytes=111
+  Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-nongeneric-type-args.ari" line=6 column=10 end_line=6 end_column=13 byte_start=93 byte_end=96 message=""
+  Snippet label=0 text="  --> tests/cases/generics/errors/generic-nongeneric-type-args.ari:6:10\n   |\n 6 |   return add<i64>(1, 2);\n   |          ^^^"

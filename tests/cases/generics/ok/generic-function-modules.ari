@@ -1,0 +1,23 @@
+mod ParserHelpers {
+  pub fn identity[T](value: T) -> T {
+    value
+  }
+}
+
+mod OtherHelpers {
+  pub fn identity[T](value: T) -> T {
+    value
+  }
+}
+
+fn main() -> i64 {
+  let direct = ParserHelpers::identity(7);
+  let explicit = ParserHelpers::identity<i64>(5);
+  let flag = ParserHelpers::identity<bool>(true);
+  let other = OtherHelpers::identity<i64>(3);
+
+  if flag {
+    return direct + explicit + other;
+  }
+  return 0;
+}

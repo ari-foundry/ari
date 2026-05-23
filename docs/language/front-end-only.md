@@ -83,9 +83,12 @@ Generic function calls are monomorphized when all type parameters can be
 inferred from call arguments, supplied explicitly, or selected by an expected
 function pointer type. Specialization keys are deterministic, repeated concrete
 calls reuse the same emitted function, and nested generic aggregate type keys
-are supported when the aggregate itself is supported. Trait bounds on generic
-functions are checked at call sites and can select constrained static method
-dispatch, including generic trait impls such as `impl[T] Trait for Box[T]`.
+are supported when the aggregate itself is supported. Module-qualified public
+generic helpers specialize with the module path in the key, so duplicate helper
+names in different modules remain distinct while private generic helpers are
+rejected at external call sites. Trait bounds on generic functions are checked
+at call sites and can select constrained static method dispatch, including
+generic trait impls such as `impl[T] Trait for Box[T]`.
 Generic inherent impl methods and associated functions specialize at concrete
 call sites, including explicit or inferred method-level generic calls such as
 `value.replace<i64>(next)`, `value.replace(next)`, and `Factory::make<T>(next)`.

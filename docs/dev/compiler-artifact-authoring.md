@@ -156,8 +156,14 @@ Keep fixture names behavior-based:
 - `diagnostic-ownership-aggregate-enum-payload.diagnostic`
 - `diagnostic-borrow-aggregate-enum-payload.diagnostic`
 - `diagnostic-generic-explicit-arity.diagnostic`
+- `diagnostic-generic-explicit-mismatch.diagnostic`
+- `diagnostic-generic-duplicate-param.diagnostic`
 - `diagnostic-generic-inference-conflict.diagnostic`
 - `diagnostic-generic-uninferred.diagnostic`
+- `diagnostic-generic-function-pointer-uninferred.diagnostic`
+- `diagnostic-generic-function-pointer-mismatch.diagnostic`
+- `diagnostic-generic-nongeneric-type-args.diagnostic`
+- `diagnostic-generic-private-function.diagnostic`
 - `diagnostic-match-nonexhaustive.diagnostic`
 - `diagnostic-match-struct-pattern-duplicate-field.diagnostic`
 - `diagnostic-match-struct-pattern-tuple-struct.diagnostic`

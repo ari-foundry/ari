@@ -1,0 +1,4 @@
+diagnostic error code=M0001 family=module message="function 'Hidden::identity' is not public" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/generics/errors/generic-private-function.ari" display="tests/cases/generics/errors/generic-private-function.ari" bytes=112
+  Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-private-function.ari" line=8 column=3 end_line=8 end_column=9 byte_start=85 byte_end=91 message=""
+  Snippet label=0 text="  --> tests/cases/generics/errors/generic-private-function.ari:8:3\n   |\n 8 |   Hidden::identity<i64>(1)\n   |   ^^^^^^"
