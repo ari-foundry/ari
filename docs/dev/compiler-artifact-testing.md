@@ -327,6 +327,15 @@ tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-dupli
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-extra-field.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-field-type.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-missing-field.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-abi.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-body.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-generic.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-invalid-link-name.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-aggregate.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-empty.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-function-pointer.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-nonextern.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-void-param.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ffi-large-aggregate-import.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ffi-target-aggregate-import.diagnostic

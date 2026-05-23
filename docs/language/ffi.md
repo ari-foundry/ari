@@ -23,6 +23,10 @@ symbol:
 extern "C" fn c_puts(text: string) -> i32 = "puts";
 ```
 
+Explicit link names must be ordinary external symbol identifiers. Ari rejects
+empty, hyphenated, or otherwise non-symbol link names instead of passing them
+through to the linker.
+
 `extern fn` without an ABI string is also treated as C:
 
 ```ari
@@ -31,6 +35,8 @@ extern fn puts(text: string) -> i32;
 
 Other foreign ABI strings, including `extern "C++"`, are rejected. C++ interop
 should go through an explicit `extern "C"` wrapper function.
+Extern declarations are declarations only; they cannot have Ari function
+bodies.
 
 ## Borrow-Returning Externs
 
@@ -428,8 +434,9 @@ layout promises. Aggregate raw-pointer field/element access follows Ari's
 current executable aggregate layout; it is not yet a `repr(C)` guarantee.
 Unsupported aggregate C import surfaces are reported as `A0001` ABI
 diagnostics with source spans; the golden artifact suite includes the
-non-`@repr(C)`, oversized, and target-unsupported by-value struct import
-rejections.
+invalid extern ABI, extern body, generic extern, invalid link-name, varargs,
+`c_void` parameter, non-`@repr(C)`, oversized, and target-unsupported
+by-value struct import rejections.
 
 ## C Header Emission
 

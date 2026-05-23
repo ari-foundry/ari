@@ -371,11 +371,22 @@ Current compiler-development tests:
   covering non-struct field access, missing struct-field lookup, match arm type
   mismatches, duplicate/unreachable arms, and missing enum-case coverage with
   source spans.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic`,
+- `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-abi.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-body.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-generic.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-invalid-link-name.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-aggregate.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-empty.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-function-pointer.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-nonextern.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-void-param.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-large-aggregate-import.diagnostic`,
   and
   `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-target-aggregate-import.diagnostic`:
-  ABI diagnostic-code goldens for rejecting non-`@repr(C)`, oversized, and
+  ABI diagnostic-code goldens for rejecting invalid extern ABI strings,
+  extern bodies, generic extern declarations, invalid link names, unsupported
+  varargs surfaces, `c_void` parameters, and non-`@repr(C)`, oversized, or
   target-unsupported by-value extern C aggregate imports with source spans.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic`:
   ownership diagnostic-code golden checked through `--emit-diagnostics`.

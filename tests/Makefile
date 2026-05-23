@@ -222,6 +222,24 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-unknown-enum-case.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-unknown-enum-case.diagnostic
 	$(TARGET) tests/cases/match/errors/match-wrong-enum-case.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-wrong-enum-case.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-wrong-enum-case.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-wrong-enum-case.diagnostic
+	$(TARGET) tests/cases/ffi/errors/extern-cpp-removed.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-abi.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-abi.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-abi.diagnostic
+	$(TARGET) tests/cases/ffi/errors/extern-body.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-body.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-body.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-body.diagnostic
+	$(TARGET) tests/cases/ffi/errors/extern-generic.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-generic.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-generic.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-generic.diagnostic
+	$(TARGET) tests/cases/ffi/errors/extern-invalid-link-name.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-invalid-link-name.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-invalid-link-name.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-invalid-link-name.diagnostic
+	$(TARGET) tests/cases/ffi/errors/extern-varargs-aggregate.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-varargs-aggregate.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-aggregate.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-varargs-aggregate.diagnostic
+	$(TARGET) tests/cases/ffi/errors/extern-varargs-empty.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-varargs-empty.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-empty.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-varargs-empty.diagnostic
+	$(TARGET) tests/cases/ffi/errors/extern-varargs-function-pointer.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-varargs-function-pointer.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-function-pointer.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-varargs-function-pointer.diagnostic
+	$(TARGET) tests/cases/ffi/errors/extern-varargs-nonextern.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-varargs-nonextern.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-nonextern.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-varargs-nonextern.diagnostic
+	$(TARGET) tests/cases/ffi/errors/extern-void-param.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-void-param.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-void-param.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-extern-void-param.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 	$(TARGET) tests/cases/ffi/errors/extern-c-large-aggregate-import.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-large-aggregate-import.diagnostic

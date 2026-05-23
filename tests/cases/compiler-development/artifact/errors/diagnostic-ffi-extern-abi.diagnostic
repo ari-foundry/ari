@@ -1,0 +1,4 @@
+diagnostic error code=A0001 family=abi message="extern ABI must be \"C\" or \"ari\"" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-cpp-removed.ari" display="tests/cases/ffi/errors/extern-cpp-removed.ari" bytes=90
+  Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-cpp-removed.ari" line=1 column=8 end_line=1 end_column=13 byte_start=7 byte_end=12 message=""
+  Snippet label=0 text="  --> tests/cases/ffi/errors/extern-cpp-removed.ari:1:8\n   |\n 1 | extern \"C++\" fn cpp_add(left: i64, right: i64) -> i64;\n   |        ^^^^^"

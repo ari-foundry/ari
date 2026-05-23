@@ -36,8 +36,10 @@ spellings.
 Unsupported FFI aggregate boundaries are source-aware ABI diagnostics. The
 diagnostic catalog uses `A0001` for ABI layout, C FFI declarations, C-header
 emission, and link-boundary checks; `make check-compiler-artifacts` locks
-non-`@repr(C)`, oversized, and target-unsupported by-value import rejections as
-golden diagnostic artifacts.
+invalid extern ABI strings, extern bodies, generic extern declarations,
+invalid external link names, unsupported varargs surfaces, `c_void`
+parameters, and non-`@repr(C)`, oversized, or target-unsupported by-value import
+rejections as golden diagnostic artifacts.
 
 C-header emission exposes direct by-value aggregate exports through generated C
 wrapper structs when Ari's source spelling is not already C-spellable. Fixed

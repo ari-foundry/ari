@@ -192,6 +192,15 @@ Keep fixture names behavior-based:
 - `diagnostic-struct-literal-extra-field.diagnostic`
 - `diagnostic-struct-literal-field-type.diagnostic`
 - `diagnostic-struct-literal-missing-field.diagnostic`
+- `diagnostic-ffi-extern-abi.diagnostic`
+- `diagnostic-ffi-extern-body.diagnostic`
+- `diagnostic-ffi-extern-generic.diagnostic`
+- `diagnostic-ffi-extern-invalid-link-name.diagnostic`
+- `diagnostic-ffi-extern-varargs-aggregate.diagnostic`
+- `diagnostic-ffi-extern-varargs-empty.diagnostic`
+- `diagnostic-ffi-extern-varargs-function-pointer.diagnostic`
+- `diagnostic-ffi-extern-varargs-nonextern.diagnostic`
+- `diagnostic-ffi-extern-void-param.diagnostic`
 - `diagnostic-ffi-large-aggregate-import.diagnostic`
 - `diagnostic-ffi-nonrepr-aggregate-import.diagnostic`
 - `diagnostic-ffi-target-aggregate-import.diagnostic`

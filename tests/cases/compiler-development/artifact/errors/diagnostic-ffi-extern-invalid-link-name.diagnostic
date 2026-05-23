@@ -1,0 +1,4 @@
+diagnostic error code=A0001 family=abi message="invalid external link symbol 'bad-symbol'" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-invalid-link-name.ari" display="tests/cases/ffi/errors/extern-invalid-link-name.ari" bytes=82
+  Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-invalid-link-name.ari" line=1 column=15 end_line=1 end_column=18 byte_start=14 byte_end=17 message=""
+  Snippet label=0 text="  --> tests/cases/ffi/errors/extern-invalid-link-name.ari:1:15\n   |\n 1 | extern \"C\" fn bad() -> i64 = \"bad-symbol\";\n   |               ^^^"

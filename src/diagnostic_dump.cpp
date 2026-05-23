@@ -306,7 +306,10 @@ std::string classify_diagnostic_code(const std::string& message) {
     if (contains(diagnostic, "IR") || contains(diagnostic, "lowering")) return "I0001";
     if (contains(diagnostic, "extern C") ||
         contains(diagnostic, "extern \"C\"") ||
+        contains(diagnostic, "extern ABI must be") ||
+        contains(diagnostic, "extern functions cannot") ||
         contains(diagnostic, "extern parameter") ||
+        contains(diagnostic, "invalid external link symbol") ||
         contains(diagnostic, "C header") ||
         contains(diagnostic, "C-compatible") ||
         contains(diagnostic, "C variadic") ||

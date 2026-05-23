@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=180
+CompilerArtifactFixtures version=1 group=all entries=189
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -24,6 +24,15 @@ CompilerArtifactFixtures version=1 group=all entries=180
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-payload-count.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-enum-payload-invalid-move.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-payload-invalid-move.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-extern-abi.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-extern-body.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-extern-generic.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-extern-invalid-link-name.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-extern-varargs-aggregate.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-extern-varargs-empty.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-extern-varargs-function-pointer.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-extern-varargs-nonextern.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-extern-void-param.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-large-aggregate-import.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-ffi-nonrepr-aggregate-import.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic

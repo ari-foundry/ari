@@ -1,0 +1,4 @@
+diagnostic error code=A0001 family=abi message="C variadic extern functions require at least one fixed parameter" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-varargs-empty.ari" display="tests/cases/ffi/errors/extern-varargs-empty.ari" bytes=33
+  Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-varargs-empty.ari" line=1 column=19 end_line=1 end_column=22 byte_start=18 byte_end=21 message=""
+  Snippet label=0 text="  --> tests/cases/ffi/errors/extern-varargs-empty.ari:1:19\n   |\n 1 | extern \"C\" fn any(...) -> c_int;\n   |                   ^^^"

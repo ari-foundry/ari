@@ -22,7 +22,10 @@ For each feature:
 
 Non-local aggregate ABI diagnostics are covered by C-header fixtures, direct
 extern C import fixtures, and source-aware `A0001` diagnostic artifacts for
-non-`@repr(C)`, oversized, and target-unsupported by-value aggregate imports.
+invalid extern ABI strings, extern bodies, generic extern declarations,
+invalid external link names, unsupported varargs surfaces, `c_void`
+parameters, and non-`@repr(C)`, oversized, or target-unsupported by-value
+aggregate imports.
 C-header artifact goldens lock public
 `@repr(C)` structs, fieldless and payload-bearing enums, generated tuple,
 fixed-array, fixed-capacity-vector, and aggregate-enum wrappers, and ABI-facing
