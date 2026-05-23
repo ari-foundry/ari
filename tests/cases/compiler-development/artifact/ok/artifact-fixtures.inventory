@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=235
+CompilerArtifactFixtures version=1 group=all entries=237
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -117,6 +117,8 @@ CompilerArtifactFixtures version=1 group=all entries=235
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ownership-temporary-element-move.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-ownership-vector-dynamic-move.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ownership-vector-dynamic-move.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-block-expression-missing-value.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-block-expression-missing-value.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-expected.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-expected.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-malformed-expression.ari

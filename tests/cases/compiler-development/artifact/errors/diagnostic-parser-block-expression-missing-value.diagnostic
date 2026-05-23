@@ -1,0 +1,6 @@
+diagnostic error code=P0001 family=parser message="expected value before } in block expression" sources=1 labels=1 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-parser-block-expression-missing-value.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-parser-block-expression-missing-value.ari" bytes=97
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-parser-block-expression-missing-value.ari" line=4 column=3 end_line=4 end_column=4 byte_start=50 byte_end=51 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-parser-block-expression-missing-value.ari:4:3\n   |\n 4 |   };\n   |   ^"
+  Note index=0 location=none message="braced expression forms must end with a value"
+  Help index=0 location=none message="add a final expression before } or use statement syntax where a value is not required"

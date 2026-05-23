@@ -112,6 +112,48 @@ private:
         throw CompileError(std::move(loc), message);
     }
 
+    static std::string token_description(const Token& token) {
+        if (token.kind == TokenKind::End) return "end of file";
+        if (!token.text.empty()) return "'" + token.text + "'";
+        return "token";
+    }
+
+    [[noreturn]] static void fail_expected_expression(const Token& token) {
+        std::string message = "expected expression";
+        if (token.kind == TokenKind::End ||
+            token.kind == TokenKind::Semicolon ||
+            token.kind == TokenKind::Comma ||
+            token.kind == TokenKind::RParen ||
+            token.kind == TokenKind::RBracket ||
+            token.kind == TokenKind::RBrace) {
+            message += " before " + token_description(token);
+        }
+        CompileError error(token.loc, std::move(message));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "the parser was reading an expression at this point",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add an expression here or remove the incomplete expression",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_missing_braced_value(SourceLocation loc,
+                                                       const std::string& context) {
+        CompileError error(std::move(loc), "expected value before } in " + context);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "braced expression forms must end with a value",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add a final expression before } or use statement syntax where a value is not required",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void optional_separator() {
         match(TokenKind::Comma);
         match(TokenKind::Semicolon);
@@ -2388,7 +2430,7 @@ private:
             case TokenKind::KwFn:
                 return parse_lambda_expression(token.loc);
             default:
-                fail(token.loc, "expected expression");
+                fail_expected_expression(token);
         }
     }
 
@@ -2498,7 +2540,8 @@ private:
             }
             body.push_back(parse_statement());
         }
-        fail(peek().loc, missing_value_message);
+        (void)missing_value_message;
+        fail_missing_braced_value(peek().loc, context);
     }
 
     ExprPtr parse_braced_value_block(

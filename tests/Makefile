@@ -123,6 +123,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-function-body.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-missing-function-body.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-expression.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-malformed-expression.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-expression.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-malformed-expression.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-parser-block-expression-missing-value.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-block-expression-missing-value.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-parser-block-expression-missing-value.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-block-expression-missing-value.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-struct-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-malformed-struct-field.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-struct-field.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-malformed-struct-field.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-parser-top-level.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-top-level.diagnostic
@@ -3660,7 +3662,7 @@ check-control-flow: $(TARGET)
 	if $(TARGET) tests/cases/control-flow/errors/labeled-block-ownership-state.ari -o $(BUILD_DIR)/control-flow/labeled-block-ownership-state.elf >$(BUILD_DIR)/control-flow/labeled-block-ownership-state.err 2>&1; then exit 1; fi
 	grep -q "binding 'token' has incompatible ownership states after labeled block exits" $(BUILD_DIR)/control-flow/labeled-block-ownership-state.err
 	if $(TARGET) tests/cases/control-flow/errors/block-expression-final-semicolon.ari -o $(BUILD_DIR)/control-flow/block-expression-final-semicolon.elf >$(BUILD_DIR)/control-flow/block-expression-final-semicolon.err 2>&1; then exit 1; fi
-	grep -q "block expression must end with a value" $(BUILD_DIR)/control-flow/block-expression-final-semicolon.err
+	grep -q "expected value before } in block expression" $(BUILD_DIR)/control-flow/block-expression-final-semicolon.err
 	if $(TARGET) tests/cases/control-flow/errors/block-expression-nonfinal-missing-semicolon.ari -o $(BUILD_DIR)/control-flow/block-expression-nonfinal-missing-semicolon.elf >$(BUILD_DIR)/control-flow/block-expression-nonfinal-missing-semicolon.err 2>&1; then exit 1; fi
 	grep -q "expected ; after non-final expression statement" $(BUILD_DIR)/control-flow/block-expression-nonfinal-missing-semicolon.err
 	if $(TARGET) tests/cases/control-flow/errors/nonblock-statement-missing-semicolon.ari -o $(BUILD_DIR)/control-flow/nonblock-statement-missing-semicolon.elf >$(BUILD_DIR)/control-flow/nonblock-statement-missing-semicolon.err 2>&1; then exit 1; fi
