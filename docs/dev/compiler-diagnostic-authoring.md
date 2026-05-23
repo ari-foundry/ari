@@ -138,6 +138,14 @@ owner, first check, and artifact path during triage.
 Once a code is documented in a golden artifact, do not reuse it for a different
 rule.
 
+Common source-level diagnostics should not land in the `ari/compiler`
+fallback. Keep lexer errors in `L0001`, parser errors in `P0001`, module and
+visibility errors in `M0001`, type/trait/generic/aggregate/match errors in
+`T0001`, ownership and borrow errors in `O0001`, ABI/FFI errors in `A0001`,
+and backend/toolchain errors in `B0001`. Reserve `ari/compiler` for genuinely
+source-less driver, option, generated, or internal fallback failures while the
+compiler still uses transitional `CompileError` text.
+
 ## Golden Tests
 
 For expected failures, prefer the smallest observable artifact:

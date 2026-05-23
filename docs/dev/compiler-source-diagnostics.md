@@ -305,7 +305,9 @@ Current transitional bridge:
   families: `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, and `B0001`.
   The covered user-facing semantic patterns include unknown names, duplicate
   declarations, wrong argument counts, assignment errors, return errors, type
-  mismatches, private visibility access, trait failures, and ownership failures.
+  mismatches, private visibility access, trait failures, generic inference and
+  explicit type-argument failures, aggregate field failures, match pattern
+  validation failures, non-exhaustive enum matches, and ownership failures.
 - `diagnostic_code_family` renders the owning layer name, such as
   `family=parser`, next to the stable code in diagnostic artifacts.
 - Diagnostic artifacts render `Source`, `Label`, `Snippet`, `Note`, and `Help`
@@ -345,7 +347,7 @@ The current compiler paths are classified as follows.
 | Ownership/borrow/drop diagnostics | already SourceId/Span-backed for supported ownership checks | Borrow conflict, use-after-move, live-owner return/break/continue exits, moving borrowed owners, invalid enum payload moves, compact enum payload ref-pattern rejection, ownership- or borrow-carrying aggregate enum payload rejection, partial moves, and unsupported dynamic or temporary owner-element moves point at the expression, binding, payload pattern, type payload, or control-flow keyword span; `diagnostic-borrow-conflict.diagnostic`, `diagnostic-use-after-move.diagnostic`, `diagnostic-return-live-owner.diagnostic`, `diagnostic-loop-break-live-owner.diagnostic`, `diagnostic-loop-continue-live-owner.diagnostic`, `diagnostic-move-borrowed-owner.diagnostic`, `diagnostic-enum-payload-invalid-move.diagnostic`, `diagnostic-compact-enum-payload-ref.diagnostic`, `diagnostic-ownership-aggregate-enum-payload.diagnostic`, `diagnostic-borrow-aggregate-enum-payload.diagnostic`, `diagnostic-ownership-partial-move.diagnostic`, `diagnostic-ownership-vector-dynamic-move.diagnostic`, and `diagnostic-ownership-temporary-element-move.diagnostic` are the golden fixtures. |
 | `CompileError(SourceLocation, message)` | structured bridge | Keeps `SourceId`, byte range, cached line/column, primary label, and snippet. This is the preferred C++ bridge while the compiler still throws `CompileError`. |
 | `CompileError(where(loc) + text)` | SourceLocation-backed transitional path | Older helpers that accept strings still parse structured `:bytes=start..end` prefixes back into source-aware labels. Keep this path only while migrating call sites. |
-| String-only diagnostics | justified fallback | CLI misuse, missing input files, artifact option conflicts, backend/toolchain failures, and internal generated errors may be source-less because no user source span exists. They use `ari/compiler`, `B0001`, or another layer code as appropriate and must not be used for common source-level errors. |
+| String-only diagnostics | justified fallback | CLI misuse, missing input files, artifact option conflicts, backend/toolchain failures, and internal generated errors may be source-less because no user source span exists. They use `ari/compiler`, `B0001`, or another layer code as appropriate. Common source-level lexer, parser, module, type, trait, generic, aggregate, match, and ownership errors must not use the `ari/compiler` fallback. |
 | Deferred features | intentionally unsupported | Fix-its, terminal color, LSP display-width columns, multi-primary diagnostics, and a fully data-first non-exception pipeline remain future tooling work. |
 
 ## Ownership And Allocation
@@ -441,7 +443,11 @@ compiler surface. The protected contract covers:
 - SourceId assignment, lookup, replacement, generated sources, and invalid
   source fallback
 - byte spans, EOF spans, empty files, multi-line files, CRLF files, UTF-8 byte
-  columns, and snippet extraction
+  columns, context snippets, long-line snippet truncation, and snippet
+  extraction
+- structured `CompileError(SourceLocation, message)` diagnostics and the
+  transitional `where(loc)` string bridge preserve `SourceId`, byte spans,
+  labels, and snippets
 - lexer, parser, module, semantic, trait, and ownership representative
   diagnostics
 - deterministic diagnostic artifacts with source rows, labels, byte ranges,

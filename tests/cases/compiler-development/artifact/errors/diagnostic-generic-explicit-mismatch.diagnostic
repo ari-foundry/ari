@@ -1,4 +1,4 @@
-diagnostic error code=ari/compiler family=general message="generic type 'T' inferred as both i64 and bool" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="generic type 'T' inferred as both i64 and bool" sources=1 labels=1 notes=0 helps=0
   Source source_id=0 kind=file path="tests/cases/generics/errors/generic-explicit-mismatch.ari" display="tests/cases/generics/errors/generic-explicit-mismatch.ari" bytes=123
   Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-explicit-mismatch.ari" line=6 column=15 end_line=6 end_column=23 byte_start=84 byte_end=92 message=""
   Snippet label=0 text="  --> tests/cases/generics/errors/generic-explicit-mismatch.ari:6:15\n   |\n 6 |   let value = identity<i64>(true);\n   |               ^^^^^^^^"

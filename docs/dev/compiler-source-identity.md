@@ -402,7 +402,7 @@ integration.
 
 | Coverage | Test |
 | --- | --- |
-| Empty file, one-line file, multi-line line starts, EOF span, CRLF, UTF-8 byte-column policy, invalid spans, multi-file source ids, single-line snippets, and multi-line snippets. | `tests/source_map_unit.cpp`, run by `make check-source-map-unit`. |
+| Empty file, one-line file, multi-line line starts, EOF span, CRLF, UTF-8 byte-column policy, invalid spans, invalid line/column lookup, multi-file source ids, single-line snippets, multi-line snippets, context snippets, long-line truncation, structured `CompileError(SourceLocation, message)`, and the legacy `where(loc)` bridge. | `tests/source_map_unit.cpp`, run by `make check-source-map-unit`. |
 | Token spans with `SourceId` and byte ranges. | `tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens`. |
 | Parser AST node spans with `SourceId` and byte ranges. | `tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax`. |
 | Diagnostic label span, snippet, source row, and source id. | `tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic`, `diagnostic-struct-field-unknown.diagnostic`, and `diagnostic-match-nonexhaustive.diagnostic`. |

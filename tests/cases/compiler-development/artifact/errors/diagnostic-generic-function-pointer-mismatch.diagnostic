@@ -1,4 +1,4 @@
-diagnostic error code=ari/compiler family=general message="generic type 'T' inferred as both i64 and bool" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="generic type 'T' inferred as both i64 and bool" sources=1 labels=1 notes=0 helps=0
   Source source_id=0 kind=file path="tests/cases/generics/errors/generic-function-pointer-mismatch.ari" display="tests/cases/generics/errors/generic-function-pointer-mismatch.ari" bytes=145
   Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-function-pointer-mismatch.ari" line=6 column=29 end_line=6 end_column=37 byte_start=90 byte_end=98 message=""
   Snippet label=0 text="  --> tests/cases/generics/errors/generic-function-pointer-mismatch.ari:6:29\n   |\n 6 |   let op: fn(i64) -> bool = identity;\n   |                             ^^^^^^^^"

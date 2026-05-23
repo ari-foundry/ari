@@ -1,4 +1,4 @@
-diagnostic error code=ari/compiler family=general message="tuple structs must use positional match patterns" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="tuple structs must use positional match patterns" sources=1 labels=1 notes=0 helps=0
   Source source_id=0 kind=file path="tests/cases/match/errors/match-struct-pattern-tuple-struct.ari" display="tests/cases/match/errors/match-struct-pattern-tuple-struct.ari" bytes=121
   Label index=0 role=primary source_id=0 source="tests/cases/match/errors/match-struct-pattern-tuple-struct.ari" line=6 column=5 end_line=6 end_column=8 byte_start=97 byte_end=100 message=""
   Snippet label=0 text="  --> tests/cases/match/errors/match-struct-pattern-tuple-struct.ari:6:5\n   |\n 6 |     Rgb { .. } => 1,\n   |     ^^^"

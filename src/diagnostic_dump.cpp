@@ -250,12 +250,25 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "unknown name") ||
         contains(diagnostic, "unknown trait") ||
         contains(diagnostic, "trait bound") ||
+        contains(diagnostic, "does not implement trait") ||
         contains(diagnostic, "cannot infer") ||
         contains(diagnostic, "cannot assign") ||
         contains(diagnostic, "type mismatch") ||
+        contains(diagnostic, "type arguments") ||
+        contains(diagnostic, "type argument") ||
+        contains(diagnostic, "generic type") ||
+        contains(diagnostic, "generic function") ||
+        contains(diagnostic, "generic parameter") ||
+        contains(diagnostic, "generic specialization") ||
+        contains(diagnostic, "inferred as both") ||
+        contains(diagnostic, "unsupported executable type") ||
         contains(diagnostic, "wrong argument count") ||
         contains(diagnostic, "missing return") ||
         contains(diagnostic, "return type") ||
+        contains(diagnostic, "has no field") ||
+        contains(diagnostic, "duplicate field") ||
+        contains(diagnostic, "match must cover all cases") ||
+        contains(diagnostic, "match pattern") ||
         contains(diagnostic, "duplicate type") ||
         contains(diagnostic, "duplicate function") ||
         contains(diagnostic, "duplicate struct") ||

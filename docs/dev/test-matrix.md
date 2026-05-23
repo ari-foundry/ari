@@ -48,7 +48,8 @@ enum, and match fixtures with named struct patterns and payload destructuring.
 `diagnostic-match-struct-pattern-*` goldens lock source-aware aggregate and
 match failure artifacts for missing fields, missing enum-case coverage,
 duplicate struct-pattern fields, unknown struct-pattern fields, and unsupported
-named-field tuple-struct patterns.
+named-field tuple-struct patterns; these common aggregate and match failures
+classify as `T0001` rather than the general compiler fallback.
 `tests/layout_unit.cpp` locks the underlying primitive sizes/alignments, field
 offsets, aggregate enum storage records, root-`Vec` layout-unavailable
 classification, and the direct/indirect/unsupported aggregate ABI classifier
@@ -77,7 +78,9 @@ explicit type-argument count, explicit mismatch, duplicate type parameters,
 conflicting inference, insufficient inference, function-pointer inference and
 signature failures, return-context inference limits, unbound type names in
 generic function signatures, generated specialization name collisions, type
-arguments on non-generic functions, and private generic function access.
+arguments on non-generic functions, and private generic function access. Public
+generic function declaration, inference, explicit argument, and specialization
+failures classify as `T0001`; private access stays `M0001`.
 `generic-function-pointer.ari` also locks expected-function-pointer name
 priority so local bindings and matching concrete functions are selected before
 generic specialization fallback.

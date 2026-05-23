@@ -249,6 +249,103 @@ void test_snippet_multi_line() {
     }
 }
 
+void test_snippet_context_lines() {
+    ari::SourceMap map;
+    ari::SourceId id = add_file(map, "snippet-context.ari", "one\ntwo\nthree\n");
+    ari::SourceSnippet snippet = map.snippet(map.span(id, 4, 7), 1);
+    expect_true(snippet.valid, "context snippet valid");
+    expect_eq(snippet.context_lines, static_cast<std::size_t>(1), "context snippet records context");
+    expect_eq(snippet.lines.size(), static_cast<std::size_t>(3), "context snippet line count");
+    if (snippet.lines.size() == 3) {
+        expect_eq(snippet.lines[0].line_number, static_cast<std::size_t>(1), "context first line number");
+        expect_false(snippet.lines[0].has_marker, "context first line unmarked");
+        expect_eq(snippet.lines[1].line_number, static_cast<std::size_t>(2), "context marked line number");
+        expect_true(snippet.lines[1].has_marker, "context middle line marked");
+        expect_eq(snippet.lines[1].marker_start, static_cast<std::size_t>(0), "context marker start");
+        expect_eq(snippet.lines[1].marker_len, static_cast<std::size_t>(3), "context marker len");
+        expect_eq(snippet.lines[2].line_number, static_cast<std::size_t>(3), "context trailing line number");
+        expect_false(snippet.lines[2].has_marker, "context trailing line unmarked");
+    }
+}
+
+void test_snippet_long_line_truncation() {
+    ari::SourceMap map;
+    std::string text(150, 'a');
+    text[130] = 'b';
+    ari::SourceId id = add_file(map, "snippet-long.ari", text);
+    ari::SourceSnippet snippet = map.snippet(map.span(id, 130, 131));
+    expect_true(snippet.valid, "long snippet valid");
+    expect_true(snippet.truncated, "long snippet truncated");
+    expect_eq(snippet.lines.size(), static_cast<std::size_t>(1), "long snippet line count");
+    if (!snippet.lines.empty()) {
+        expect_true(snippet.lines[0].text.size() <= static_cast<std::size_t>(120), "long snippet capped");
+        expect_true(snippet.lines[0].truncated_start, "long snippet truncates start");
+        expect_true(snippet.lines[0].has_marker, "long snippet marker present");
+        expect_eq(snippet.lines[0].marker_len, static_cast<std::size_t>(1), "long snippet marker len");
+    }
+    std::string rendered = ari::render_source_snippet(snippet);
+    expect_true(rendered.find("...") != std::string::npos, "long snippet rendered ellipsis");
+}
+
+void test_invalid_line_column_lookup() {
+    ari::SourceMap map;
+    ari::SourceId id = add_file(map, "invalid-line-column.ari", "abc\n");
+    expect_no_offset(map.byte_offset(id, 0, 1), "zero line rejected");
+    expect_no_offset(map.byte_offset(id, 1, 0), "zero column rejected");
+    expect_no_offset(map.byte_offset(id, 3, 1), "past-end line rejected");
+    expect_no_offset(map.byte_offset(ari::SourceId{99}, 1, 1), "unknown source rejected");
+}
+
+void test_compile_error_source_location_bridge() {
+    ari::SourceId id = ari::register_in_memory_source(
+        "compile-error-source.ari",
+        "let x = false;\n",
+        ari::SourceKind::Generated);
+    ari::SourceLocation loc = ari::source_location_for_span(id, 8, 13);
+    ari::CompileError error(loc, "type mismatch: expected i64, got bool");
+    expect_true(error.has_location(), "compile error has source location");
+    expect_eq(error.message(), std::string("type mismatch: expected i64, got bool"), "compile error message");
+    expect_eq(error.location().source_id.value, id.value, "compile error source id");
+    expect_eq(error.location().line, 1, "compile error line");
+    expect_eq(error.location().column, 9, "compile error column");
+    expect_eq(error.labels().size(), static_cast<std::size_t>(1), "compile error primary label count");
+    if (!error.labels().empty()) {
+        expect_true(error.labels()[0].primary, "compile error primary label");
+        expect_eq(error.labels()[0].span.start, static_cast<std::size_t>(8), "compile error label start");
+        expect_eq(error.labels()[0].span.end, static_cast<std::size_t>(13), "compile error label end");
+    }
+    std::string rendered(error.what());
+    expect_true(rendered.find("compile-error-source.ari:1:9") != std::string::npos,
+                "compile error rendered location");
+    expect_true(rendered.find("byte span: [8, 13)") != std::string::npos,
+                "compile error rendered byte span");
+    expect_true(rendered.find("^^^^^") != std::string::npos, "compile error rendered snippet");
+}
+
+void test_compile_error_legacy_location_bridge() {
+    ari::SourceId id = ari::register_in_memory_source(
+        "compile-error-legacy.ari",
+        "abc\n",
+        ari::SourceKind::Generated);
+    ari::SourceLocation loc = ari::source_location_for_span(id, 1, 3);
+    ari::CompileError error(ari::where(loc) + ": legacy diagnostic");
+    expect_true(error.has_location(), "legacy compile error has source location");
+    expect_eq(error.message(), std::string("legacy diagnostic"), "legacy compile error message");
+    expect_eq(error.location().source_id.value, id.value, "legacy compile error source id");
+    expect_eq(error.location().line, 1, "legacy compile error line");
+    expect_eq(error.location().column, 2, "legacy compile error column");
+    expect_eq(error.labels().size(), static_cast<std::size_t>(1), "legacy compile error label count");
+    if (!error.labels().empty()) {
+        expect_eq(error.labels()[0].span.start, static_cast<std::size_t>(1), "legacy label start");
+        expect_eq(error.labels()[0].span.end, static_cast<std::size_t>(3), "legacy label end");
+    }
+    std::string rendered(error.what());
+    expect_true(rendered.find("compile-error-legacy.ari:1:2") != std::string::npos,
+                "legacy compile error rendered location");
+    expect_true(rendered.find("byte span: [1, 3)") != std::string::npos,
+                "legacy compile error rendered byte span");
+}
+
 } // namespace
 
 int main() {
@@ -264,6 +361,11 @@ int main() {
     test_missing_source_snippet_fallback();
     test_snippet_single_line();
     test_snippet_multi_line();
+    test_snippet_context_lines();
+    test_snippet_long_line_truncation();
+    test_invalid_line_column_lookup();
+    test_compile_error_source_location_bridge();
+    test_compile_error_legacy_location_bridge();
 
     if (failures != 0) return EXIT_FAILURE;
     std::cout << "source-map unit ok\n";
