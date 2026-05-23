@@ -8,7 +8,7 @@ CompilerStagePlan source=tests/cases/compiler-development/artifact/ok/token-dump
   7 Syntax owner=parser artifact=--emit-syntax first_check="make check-compiler-artifacts" proves="AST shape and parser recovery"
   8 ModuleGraph owner=module-loader artifact=--emit-module-graph first_check="make check-compiler-artifacts" proves="file-backed modules, imports, visibility, and item surfaces"
   9 DeclarationIndex owner=declaration-collector artifact=--emit-declaration-index first_check="make check-compiler-artifacts" proves="declaration signatures, visibility, and source locations"
-  10 FutureHIR owner=lowering/resolver artifact=planned --emit-hir first_check="future check-compiler-artifacts" proves="lowered syntax and resolver-facing node shapes"
+  10 ResolverIndex owner=declaration-collector artifact=--emit-declaration-index first_check="make check-compiler-artifacts" proves="resolver-facing imports, declarations, signatures, visibility, and source locations"
   11 TypedIR owner=sema artifact=--emit-typed-ir first_check="make check-compiler-artifacts" proves="type, trait, ownership, and lowering facts"
   12 PassSummary owner=driver/sema artifact=--emit-pass-summary first_check="make check-compiler-artifacts" proves="stage counts and pass boundaries"
   13 LLVM owner=llvm-backend artifact=--emit-llvm first_check="focused --emit-llvm" proves="backend lowering after earlier artifacts match"

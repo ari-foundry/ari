@@ -272,13 +272,16 @@ std::string dump_declaration_index(const Program& program,
     }
 
     std::sort(lines.begin(), lines.end(), [](const auto& left, const auto& right) {
-        return left.key < right.key;
+        if (left.key != right.key) return left.key < right.key;
+        return left.text < right.text;
     });
 
     std::ostringstream out;
     out << "DeclarationIndex source=" << source_name
         << " modules=" << metadata.sources.size()
-        << " declarations=" << lines.size() << "\n";
+        << " declarations=" << lines.size()
+        << " resolver_surface=imports,uses,declarations"
+        << " order=module-kind-name-location-text\n";
     for (const auto& line : lines) {
         out << line.text << "\n";
     }

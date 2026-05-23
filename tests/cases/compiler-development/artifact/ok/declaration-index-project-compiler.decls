@@ -1,4 +1,4 @@
-DeclarationIndex source=tests/cases/modules/ok/project-compiler-main.ari modules=6 declarations=26
+DeclarationIndex source=tests/cases/modules/ok/project-compiler-main.ari modules=6 declarations=26 resolver_surface=imports,uses,declarations order=module-kind-name-location-text
   Decl module=<root> kind=fn name=main visibility=private loc=tests/cases/modules/ok/project-compiler-main.ari:3:4 generics=[] params=[] return=i64 body=true
   Decl module=project_compiler kind=fn name=project_compiler::parse_score visibility=private loc=tests/cases/modules/ok/project_compiler.ari:20:4 generics=[] params=[result:ParseResult[Symbol]] return=i64 body=true
   Decl module=project_compiler kind=fn name=project_compiler::run visibility=pub loc=tests/cases/modules/ok/project_compiler.ari:24:8 generics=[] params=[] return=i64 body=true

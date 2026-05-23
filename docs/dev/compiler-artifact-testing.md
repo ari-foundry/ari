@@ -79,7 +79,7 @@ Capability inventory example:
 ```text
 CompilerCapabilityInventory version=1 target=x86_64-pc-linux-gnu implicit_std=false entries=2
   capability=functions status=implemented owner=parser/sema/backend first_check="make check-functions" proves="function declarations, calls, returns, and main entry points"
-  capability=hir-artifact status=planned owner=lowering/resolver first_check="future check-compiler-artifacts" proves="lowered syntax and resolver-facing node shapes before typed IR"
+  capability=resolver-facing-artifact status=implemented owner=declaration-collector first_check="make check-compiler-artifacts" proves="module imports, uses, declarations, signatures, visibility, and stable source locations before typed IR"
 ```
 
 Pass catalog example:

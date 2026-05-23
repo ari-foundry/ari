@@ -72,6 +72,7 @@ def main():
         "capability=structs-and-field-layout status=implemented",
         "capability=generic-function-calls status=implemented",
         "capability=generic-aggregate-monomorphization status=implemented",
+        "capability=resolver-facing-artifact status=implemented",
         "capability=class-keyword status=rejected",
     )
     ok &= require_success(

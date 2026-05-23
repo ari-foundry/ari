@@ -17,7 +17,7 @@ CompilerCapabilityInventory version=1 target=x86_64-pc-linux-gnu implicit_std=fa
   capability=diagnostic-artifacts status=partial owner=diagnostics/driver first_check="make check-compiler-artifacts" proves="stable diagnostic codes, catalog, source fields, and transitional message classification"
   capability=source-identity-artifacts status=partial owner=driver/source-loader first_check="make check-compiler-artifacts" proves="source maps, byte offsets, line tables, snippets, and normalized artifact paths"
   capability=compiler-capability-inventory status=implemented owner=driver first_check="make check-compiler-artifacts" proves="machine-readable public compiler surface for contributor triage"
-  capability=hir-artifact status=planned owner=lowering/resolver first_check="future check-compiler-artifacts" proves="lowered syntax and resolver-facing node shapes before typed IR"
+  capability=resolver-facing-artifact status=implemented owner=declaration-collector first_check="make check-compiler-artifacts" proves="module imports, uses, declarations, signatures, visibility, and stable source locations before typed IR"
   capability=generic-aggregate-monomorphization status=implemented owner=type/sema/backend first_check="make check-generics" proves="generic structs, enums, aliases, nested payload layout, ownership, and compiler-shaped fixtures"
   capability=function-parameter-patterns status=planned owner=parser/sema first_check="future parser and sema fixtures" proves="patterns in function parameter positions"
   capability=runtime-strings-and-floats status=planned owner=runtime/backend first_check="future std and backend fixtures" proves="owned runtime strings and complete float value semantics"

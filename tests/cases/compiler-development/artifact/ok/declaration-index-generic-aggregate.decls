@@ -1,4 +1,4 @@
-DeclarationIndex source=tests/cases/generics/ok/generic-aggregate-monomorphization.ari modules=1 declarations=33
+DeclarationIndex source=tests/cases/generics/ok/generic-aggregate-monomorphization.ari modules=1 declarations=33 resolver_surface=imports,uses,declarations order=module-kind-name-location-text
   Decl module=<root> kind=enum name=AggregateEnvelope visibility=private loc=tests/cases/generics/ok/generic-aggregate-monomorphization.ari:64:6 generics=[T, E] cases=[Empty, Item(Pair[T, Maybe[E]]), State(ParseFrame[T, E])]
   Decl module=<root> kind=enum name=Either visibility=private loc=tests/cases/generics/ok/generic-aggregate-monomorphization.ari:18:6 generics=[L, R] cases=[Left(L), Right(R)]
   Decl module=<root> kind=enum name=Maybe visibility=private loc=tests/cases/generics/ok/generic-aggregate-monomorphization.ari:13:6 generics=[T] cases=[Nothing, Just(T)]

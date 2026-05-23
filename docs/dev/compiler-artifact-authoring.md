@@ -32,8 +32,8 @@ Use this order when choosing a new artifact or golden:
 | 6 | `--emit-diagnostic-catalog` | Diagnostic codes, families, owners, and current fallback policy. |
 | 7 | `--emit-syntax` | Parser tree and recovery shape. |
 | 8 | `--emit-module-graph` | File-backed modules, imports, and item surfaces. |
-| 9 | `--emit-declaration-index` | Declaration names, visibility, signatures, and source locations. |
-| 10 | Future HIR dump | Lowered syntax and resolver-facing node shapes. |
+| 9 | `--emit-declaration-index` | Declaration names, visibility, signatures, source locations, imports, and uses. |
+| 10 | Resolver index | Resolver-facing imports, declarations, signatures, visibility, and source locations through `--emit-declaration-index`. |
 | 11 | `--emit-typed-ir` | Type, ownership, trait, and lowering facts. |
 | 12 | `--emit-pass-summary` | Stage counts and pass boundaries. |
 | 13 | `--emit-llvm` | Backend lowering once earlier layers are stable. |
