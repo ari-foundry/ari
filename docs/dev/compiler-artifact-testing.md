@@ -276,6 +276,7 @@ tests/cases/compiler-development/artifact/ok/backend-trait-dispatch.llvm-frag
 tests/cases/compiler-development/artifact/ok/c-header-repr-struct.h
 tests/cases/compiler-development/artifact/ok/c-header-repr-payload-enum.h
 tests/cases/compiler-development/artifact/ok/c-header-generated-aggregates.h
+tests/cases/compiler-development/artifact/ok/compiler-shaped-aggregates.ir
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.ari
 tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls
 tests/cases/compiler-development/artifact/ok/declaration-index-generic-aggregate.decls
@@ -289,6 +290,9 @@ tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload
 tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-aggregate-enum-payload.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-unknown-field.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.diagnostic
@@ -422,8 +426,9 @@ It currently proves more than two dozen low-level contracts:
   including a compiler-shaped file-backed project and a generic aggregate
   surface with aliases, generic impls, and nested payload declarations
 - `--emit-typed-ir` writes deterministic sema-lowered IR for small Ari, core
-  scalar flow, trait dispatch, generic aggregate, file-backed module, and
-  ownership/drop fixtures without involving LLVM codegen
+  scalar flow, trait dispatch, generic aggregate, compiler-shaped
+  struct/enum/match, file-backed module, and ownership/drop fixtures without
+  involving LLVM codegen
 - `--emit-pass-summary` writes deterministic stage counts for lexing, syntax,
   module loading, and sema
 - `--emit-llvm` is checked through review-sized function fragments for core
@@ -502,7 +507,7 @@ end test.
 Stage comparison remains a compiler maturity blocker, but the artifact bucket
 now covers frontend, source identity, diagnostics, module graphs, declarations
 for single-file, file-backed, and generic surfaces, typed IR for
-modules/ownership/generics/traits, LLVM fragments, object/shared symbol
-goldens, and stdout goldens. The remaining larger gaps are HIR, richer
-object/header/relocation inventories, and broader backend/runtime fixture
-breadth.
+modules, ownership, generics, traits, and compiler-shaped aggregate programs,
+LLVM fragments, object/shared symbol goldens, and stdout goldens. The remaining
+larger gaps are HIR, richer object/header/relocation inventories, and broader
+backend/runtime fixture breadth.

@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=134
+CompilerArtifactFixtures version=1 group=all entries=138
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -34,6 +34,9 @@ CompilerArtifactFixtures version=1 group=all entries=134
   Fixture group=errors kind=source path=errors/diagnostic-loop-continue-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-continue-live-owner.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-nonexhaustive.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-unknown-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-missing-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-missing-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-move-borrowed-owner.ari
@@ -89,6 +92,7 @@ CompilerArtifactFixtures version=1 group=all entries=134
   Fixture group=ok kind=c-header path=ok/c-header-repr-payload-enum.h
   Fixture group=ok kind=c-header path=ok/c-header-repr-struct.h
   Fixture group=ok kind=inventory path=ok/capability-inventory.inventory
+  Fixture group=ok kind=typed-ir path=ok/compiler-shaped-aggregates.ir
   Fixture group=ok kind=source path=ok/core-language-scalar-flow.ari
   Fixture group=ok kind=typed-ir path=ok/core-language-scalar-flow.ir
   Fixture group=ok kind=source path=ok/declaration-index-basic.ari

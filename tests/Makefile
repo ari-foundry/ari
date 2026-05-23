@@ -142,6 +142,12 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-field-unknown.diagnostic
 	$(TARGET) tests/cases/match/errors/match-nonexhaustive.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-nonexhaustive.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-nonexhaustive.diagnostic
+	$(TARGET) tests/cases/match/errors/match-struct-pattern-duplicate-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-duplicate-field.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-duplicate-field.diagnostic
+	$(TARGET) tests/cases/match/errors/match-struct-pattern-unknown-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-unknown-field.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-unknown-field.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-unknown-field.diagnostic
+	$(TARGET) tests/cases/match/errors/match-struct-pattern-tuple-struct.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-tuple-struct.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-tuple-struct.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic
@@ -212,6 +218,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/trait-minimum-static-dispatch.ir $(BUILD_DIR)/compiler-development/artifact/trait-minimum-static-dispatch.ir
 	$(TARGET) tests/cases/generics/ok/generic-aggregate-monomorphization.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/generic-aggregate-monomorphization.ir $(BUILD_DIR)/compiler-development/artifact/generic-aggregate-monomorphization.ir
+	$(TARGET) tests/cases/match/ok/compiler-shaped-aggregates.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/compiler-shaped-aggregates.ir
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/compiler-shaped-aggregates.ir $(BUILD_DIR)/compiler-development/artifact/compiler-shaped-aggregates.ir
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/project-compiler.ir
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/project-compiler.ir $(BUILD_DIR)/compiler-development/artifact/project-compiler.ir
 	$(TARGET) tests/cases/ownership/ok/ownership-aggregate-field-move.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/ownership-aggregate-field-move.ir

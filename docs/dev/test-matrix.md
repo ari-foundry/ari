@@ -41,9 +41,14 @@ fixed-array `size_of`/`align_of` constants, and payload enum tag/value access.
 enum, and match lowering from the generic aggregate model: nested parser-state
 struct construction, AST enum payload matches, pass-output result matching, and
 byte-backed aggregate enum payload extraction.
-`diagnostic-struct-field-unknown.diagnostic` and
-`diagnostic-match-nonexhaustive.diagnostic` lock source-aware aggregate and
-match failure artifacts for missing fields and missing enum-case coverage.
+`compiler-shaped-aggregates.ir` locks typed IR for compiler-shaped struct,
+enum, and match fixtures with named struct patterns and payload destructuring.
+`diagnostic-struct-field-unknown.diagnostic`,
+`diagnostic-match-nonexhaustive.diagnostic`, and the
+`diagnostic-match-struct-pattern-*` goldens lock source-aware aggregate and
+match failure artifacts for missing fields, missing enum-case coverage,
+duplicate struct-pattern fields, unknown struct-pattern fields, and unsupported
+named-field tuple-struct patterns.
 `tests/layout_unit.cpp` locks the underlying primitive sizes/alignments, field
 offsets, aggregate enum storage records, root-`Vec` layout-unavailable
 classification, and the direct/indirect/unsupported aggregate ABI classifier
