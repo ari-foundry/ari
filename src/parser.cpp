@@ -659,7 +659,10 @@ private:
             fn.body = parse_function_block();
             fn.has_body = true;
         } else {
-            match(TokenKind::Semicolon);
+            if (body_allowed && !match(TokenKind::Semicolon)) {
+                fail(peek().loc, "expected function body or ; after function declaration");
+            }
+            if (!body_allowed) match(TokenKind::Semicolon);
             fn.has_body = false;
         }
         return fn;

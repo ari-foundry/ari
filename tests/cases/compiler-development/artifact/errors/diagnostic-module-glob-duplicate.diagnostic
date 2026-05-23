@@ -1,4 +1,4 @@
-diagnostic error code=ari/compiler family=general message="duplicate use alias 'value'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=M0001 family=module message="duplicate use alias 'value'" sources=1 labels=1 notes=0 helps=0
   Source source_id=0 kind=file path="tests/cases/modules/errors/module-glob-duplicate.ari" display="tests/cases/modules/errors/module-glob-duplicate.ari" bytes=168
   Label index=0 role=primary source_id=0 source="tests/cases/modules/errors/module-glob-duplicate.ari" line=14 column=5 end_line=14 end_column=6 byte_start=123 byte_end=124 message=""
   Snippet label=0 text="  --> tests/cases/modules/errors/module-glob-duplicate.ari:14:5\n    |\n 14 | use B::*\n    |     ^"

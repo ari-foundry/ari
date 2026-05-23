@@ -236,6 +236,7 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "duplicate module") ||
         contains(diagnostic, "module file") ||
         contains(diagnostic, "super:: path cannot escape") ||
+        contains(diagnostic, "duplicate use alias") ||
         contains(diagnostic, "is not public") ||
         contains(diagnostic, "module cache") ||
         contains(diagnostic, "module metadata")) {

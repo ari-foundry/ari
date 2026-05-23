@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=232
+CompilerArtifactFixtures version=1 group=all entries=234
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -121,6 +121,8 @@ CompilerArtifactFixtures version=1 group=all entries=232
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-malformed-expression.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-malformed-struct-field.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-malformed-struct-field.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-missing-function-body.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-function-body.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-top-level.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-top-level.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-private-access.ari
