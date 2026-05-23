@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/structs/errors/struct-literal-field-type.ari" display="tests/cases/structs/errors/struct-literal-field-type.ari" bytes=100
+  Label index=0 role=primary source_id=0 source="tests/cases/structs/errors/struct-literal-field-type.ari" line=6 column=15 end_line=6 end_column=20 byte_start=61 byte_end=66 message=""
+  Snippet label=0 text="  --> tests/cases/structs/errors/struct-literal-field-type.ari:6:15\n   |\n 6 |   let point = Point { x: true };\n   |               ^^^^^"

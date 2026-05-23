@@ -1035,6 +1035,9 @@ Checklist:
       reads, fixed-array static/dynamic indexing, and destructor call lowering
 - [x] IR aggregate builders preserve tuple, struct, tuple-struct, expected
       aggregate, and range constructor lowering paths
+- [x] aggregate diagnostic artifacts lock struct literal missing/extra/
+      duplicate/type errors plus enum constructor arity/type, duplicate case,
+      and unknown-case pattern errors
 - [x] IR call builders preserve direct, generic, inherent associated, trait
       associated, trait-qualified method, method, and zone helper call lowering
       paths

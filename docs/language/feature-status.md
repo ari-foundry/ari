@@ -32,7 +32,7 @@ Status meanings:
 
 | Feature | Status | Read | Tests |
 | --- | --- | --- | --- |
-| structs, tuple structs, field access | implemented for local/runtime-supported shapes | [Types](types.md), [Front-End Only Syntax](front-end-only.md) | `tests/cases/structs/` |
+| structs, tuple structs, field access | implemented for local/runtime-supported shapes | [Types](types.md), [Front-End Only Syntax](front-end-only.md) | `tests/cases/structs/`, `make check-structs` |
 | field `mut` assignment checks | implemented | [Types](types.md), [Variables](variables.md) | `tests/cases/structs/`, `tests/cases/variables/` |
 | non-generic enums and `match` | implemented | [Enums And Pattern Matching](enums-patterns.md) | `tests/cases/match/` |
 | generic structs, enums, and aliases | implemented for local/codegen-supported aggregate monomorphization | [Generic Aggregates](generic-aggregates.md), [Types](types.md), [Generics sections in Quick Reference](quick-reference.md) | `tests/cases/generics/`, `make check-generics` |

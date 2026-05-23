@@ -311,12 +311,12 @@ let point = Point::new(ref mut zone, 4, 5)
 zone::destroy(zone)
 ```
 
-The current layout is intentionally local. Generic struct declarations,
-generic struct field type checking, explicit type-argument construction, and
-field/argument-based type-argument inference work. In type positions, Ari now
-accepts the natural `Type<T>` spelling as the preferred form; the older
-`Type[T]` spelling remains accepted for existing code and for fixed-capacity
-`Vec[T; N]` examples.
+The supported layout is deterministic for local, parameter, and return values
+handled by the LLVM backend. Generic struct declarations, generic struct field
+type checking, explicit type-argument construction, and field/argument-based
+type-argument inference work. In type positions, Ari now accepts the natural
+`Type<T>` spelling as the preferred form; the older `Type[T]` spelling remains
+accepted for existing code and for fixed-capacity `Vec[T; N]` examples.
 
 ```ari
 struct Box[T] {

@@ -69,6 +69,7 @@ def main():
         "CompilerCapabilityInventory version=1",
         "entries=26",
         "capability=functions status=implemented owner=parser/sema/backend",
+        "capability=structs-and-field-layout status=implemented",
         "capability=generic-function-calls status=implemented",
         "capability=generic-aggregate-monomorphization status=implemented",
         "capability=class-keyword status=rejected",

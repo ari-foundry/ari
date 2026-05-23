@@ -300,6 +300,9 @@ tests/cases/compiler-development/artifact/errors/diagnostic-generic-private-func
 tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-after-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-double-move.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-enum-constructor-payload-type.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-enum-duplicate-case.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-count.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid-move.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.diagnostic
@@ -308,7 +311,12 @@ tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.
 tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-unknown-field.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-match-unknown-enum-case.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-duplicate-field.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-extra-field.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-field-type.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-missing-field.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.diagnostic

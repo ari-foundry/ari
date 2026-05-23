@@ -15,7 +15,8 @@ Cases are comma-separated. A trailing comma is accepted; semicolons are
 reserved for statements and are rejected inside enum case lists.
 Case constructor names must be unique in their module. Payload constructors
 check both arity and payload type, and pattern positions reject unknown enum
-case names instead of treating them as open-ended variants.
+case names instead of treating them as open-ended variants. These common
+mistakes have source-aware diagnostic artifacts.
 Generic enum declarations use square brackets:
 
 ```ari

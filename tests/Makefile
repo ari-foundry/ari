@@ -176,10 +176,26 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-invalid-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-invalid-assignment.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-private-access.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-private-access.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
+	$(TARGET) tests/cases/structs/errors/struct-literal-missing-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-missing-field.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-missing-field.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-missing-field.diagnostic
+	$(TARGET) tests/cases/structs/errors/struct-literal-extra-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-extra-field.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-extra-field.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-extra-field.diagnostic
+	$(TARGET) tests/cases/structs/errors/struct-literal-duplicate-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-duplicate-field.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-duplicate-field.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-duplicate-field.diagnostic
+	$(TARGET) tests/cases/structs/errors/struct-literal-field-type.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-field-type.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-field-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-literal-field-type.diagnostic
 	$(TARGET) tests/cases/structs/errors/struct-field-unknown.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-field-unknown.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-field-unknown.diagnostic
+	$(TARGET) tests/cases/match/errors/enum-duplicate-case.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-enum-duplicate-case.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-enum-duplicate-case.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-enum-duplicate-case.diagnostic
+	$(TARGET) tests/cases/match/errors/enum-payload-count.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-enum-payload-count.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-count.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-enum-payload-count.diagnostic
+	$(TARGET) tests/cases/match/errors/enum-constructor-payload-type.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-enum-constructor-payload-type.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-enum-constructor-payload-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-enum-constructor-payload-type.diagnostic
 	$(TARGET) tests/cases/match/errors/match-nonexhaustive.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-nonexhaustive.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-nonexhaustive.diagnostic
+	$(TARGET) tests/cases/match/errors/match-unknown-enum-case.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-unknown-enum-case.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-unknown-enum-case.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-unknown-enum-case.diagnostic
 	$(TARGET) tests/cases/match/errors/match-struct-pattern-duplicate-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-duplicate-field.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-duplicate-field.diagnostic
 	$(TARGET) tests/cases/match/errors/match-struct-pattern-unknown-field.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-struct-pattern-unknown-field.diagnostic

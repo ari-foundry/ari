@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=160
+CompilerArtifactFixtures version=1 group=all entries=168
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -19,6 +19,9 @@ CompilerArtifactFixtures version=1 group=all entries=160
   Fixture group=errors kind=diagnostic path=errors/diagnostic-double-move.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-duplicate-name.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-name.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-constructor-payload-type.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-duplicate-case.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-payload-count.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-enum-payload-invalid-move.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-payload-invalid-move.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-ffi-nonrepr-aggregate-import.ari
@@ -55,6 +58,7 @@ CompilerArtifactFixtures version=1 group=all entries=160
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-unknown-field.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-unknown-enum-case.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-missing-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-missing-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-move-borrowed-owner.ari
@@ -76,6 +80,10 @@ CompilerArtifactFixtures version=1 group=all entries=160
   Fixture group=errors kind=source path=errors/diagnostic-return-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-return-live-owner.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-field-unknown.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-duplicate-field.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-extra-field.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-field-type.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-missing-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-bound-missing-impl.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-bound-missing-impl.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-method-ambiguous.ari
