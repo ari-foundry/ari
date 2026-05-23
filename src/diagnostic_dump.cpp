@@ -273,6 +273,7 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "wrong argument count") ||
         contains(diagnostic, "missing return") ||
         contains(diagnostic, "return type") ||
+        contains(diagnostic, "field access requires") ||
         contains(diagnostic, "has no field") ||
         contains(diagnostic, "missing field") ||
         contains(diagnostic, "extra field") ||

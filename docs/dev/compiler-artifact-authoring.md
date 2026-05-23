@@ -172,11 +172,14 @@ Keep fixture names behavior-based:
 - `diagnostic-enum-constructor-payload-type.diagnostic`
 - `diagnostic-enum-duplicate-case.diagnostic`
 - `diagnostic-enum-payload-count.diagnostic`
+- `diagnostic-match-expression-type-mismatch.diagnostic`
 - `diagnostic-match-nonexhaustive.diagnostic`
 - `diagnostic-match-struct-pattern-duplicate-field.diagnostic`
+- `diagnostic-match-struct-pattern-missing-field.diagnostic`
 - `diagnostic-match-struct-pattern-tuple-struct.diagnostic`
 - `diagnostic-match-struct-pattern-unknown-field.diagnostic`
 - `diagnostic-match-unknown-enum-case.diagnostic`
+- `diagnostic-struct-field-access-non-struct.diagnostic`
 - `diagnostic-struct-field-unknown.diagnostic`
 - `diagnostic-struct-literal-duplicate-field.diagnostic`
 - `diagnostic-struct-literal-extra-field.diagnostic`

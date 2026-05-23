@@ -307,11 +307,14 @@ Current compiler-development tests:
   exits, repeated moves, invalid enum payload moves, and rejected compact enum
   payload reference patterns or ownership-/borrow-carrying aggregate enum
   payloads.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic`
+- `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-access-non-struct.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic`,
   and
   `tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic`:
-  source-aware aggregate and match diagnostic goldens for missing struct-field
-  lookup and missing enum-case coverage.
+  source-aware aggregate and match diagnostic goldens for non-struct field
+  access, missing struct-field lookup, match arm type mismatches, and missing
+  enum-case coverage.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
@@ -355,12 +358,14 @@ Current compiler-development tests:
   type and trait diagnostic-code golden checked through `--emit-diagnostics`.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic`:
   assignment type diagnostic span golden checked through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic`
+- `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-access-non-struct.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic`,
   and
   `tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic`:
   aggregate and match diagnostic goldens checked through `--emit-diagnostics`,
-  covering missing struct-field lookup and missing enum-case coverage with
-  source spans.
+  covering non-struct field access, missing struct-field lookup, match arm type
+  mismatches, and missing enum-case coverage with source spans.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-large-aggregate-import.diagnostic`,
   and

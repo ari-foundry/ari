@@ -307,11 +307,14 @@ tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid
 tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-aggregate-enum-payload.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-missing-field.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-match-struct-pattern-unknown-field.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-match-unknown-enum-case.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-access-non-struct.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-duplicate-field.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-struct-literal-extra-field.diagnostic

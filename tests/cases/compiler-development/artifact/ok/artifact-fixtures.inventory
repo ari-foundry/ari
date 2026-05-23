@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=170
+CompilerArtifactFixtures version=1 group=all entries=173
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -56,8 +56,10 @@ CompilerArtifactFixtures version=1 group=all entries=170
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-break-live-owner.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-loop-continue-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-continue-live-owner.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-expression-type-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-nonexhaustive.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-missing-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-unknown-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-unknown-enum-case.diagnostic
@@ -81,6 +83,7 @@ CompilerArtifactFixtures version=1 group=all entries=170
   Fixture group=errors kind=diagnostic path=errors/diagnostic-private-access.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-return-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-return-live-owner.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-field-access-non-struct.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-field-unknown.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-duplicate-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-extra-field.diagnostic
