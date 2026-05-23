@@ -308,8 +308,10 @@ Current transitional bridge:
   include unknown names, duplicate declarations, wrong argument counts,
   assignment errors, return errors, type mismatches, private visibility access,
   trait failures, generic inference and explicit type-argument failures,
-  aggregate field failures, match pattern validation failures, non-exhaustive
-  enum matches, and ownership failures.
+  aggregate literal/field failures, enum constructor/payload failures, match
+  pattern validation failures, non-exhaustive enum matches, and ownership
+  failures. The checked diagnostic artifact set should not contain
+  `ari/compiler` fallback rows for common source-level errors.
 - `diagnostic_code_family` renders the owning layer name, such as
   `family=parser`, next to the stable code in diagnostic artifacts.
 - Diagnostic artifacts render `Source`, `Label`, `Snippet`, `Note`, and `Help`

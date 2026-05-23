@@ -1,4 +1,4 @@
-diagnostic error code=ari/compiler family=general message="wrong payload count for enum case 'Some'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="wrong payload count for enum case 'Some'" sources=1 labels=1 notes=0 helps=0
   Source source_id=0 kind=file path="tests/cases/match/errors/enum-payload-count.ari" display="tests/cases/match/errors/enum-payload-count.ari" bytes=96
   Label index=0 role=primary source_id=0 source="tests/cases/match/errors/enum-payload-count.ari" line=7 column=15 end_line=7 end_column=19 byte_start=74 byte_end=78 message=""
   Snippet label=0 text="  --> tests/cases/match/errors/enum-payload-count.ari:7:15\n   |\n 7 |   let value = Some();\n   |               ^^^^"

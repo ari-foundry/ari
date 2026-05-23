@@ -69,7 +69,10 @@ including literal diagnostics classified as `L0001`.
 `diagnostic-parser-top-level.diagnostic` lock parser EOF and unexpected
 top-level token spans classified as `P0001`. The compiler artifact target also
 re-emits the unterminated-string diagnostic and byte-compares it with the first
-output to prove deterministic diagnostic artifact rendering.
+output to prove deterministic diagnostic artifact rendering. Representative
+module, type, trait, aggregate, match, borrow, ownership, ABI, and backend
+diagnostic goldens carry non-fallback code families, source id/path rows, byte
+spans, one-based line/column fields, labels, and snippets.
 
 ## Generic Function Coverage Note
 

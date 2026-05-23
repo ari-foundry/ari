@@ -171,6 +171,30 @@ void test_invalid_span() {
     expect_eq(clamped.end, static_cast<std::size_t>(4), "clamped span end");
 }
 
+void test_span_helper_invariants() {
+    ari::SourceMap map;
+    ari::SourceId first = add_file(map, "span-a.ari", "abcd");
+    ari::SourceId second = add_file(map, "span-b.ari", "wxyz");
+    ari::Span left = map.span(first, 1, 3);
+    ari::Span right = map.span(first, 2, 4);
+    ari::Span disjoint = map.span(first, 3, 4);
+    ari::Span other_source = map.span(second, 1, 2);
+
+    expect_true(ari::span_contains(left, static_cast<std::size_t>(1)), "span contains start");
+    expect_false(ari::span_contains(left, static_cast<std::size_t>(3)), "span excludes end");
+    expect_true(ari::span_contains(map.span(first, 0, 4), left), "outer span contains inner span");
+    expect_false(ari::span_contains(left, other_source), "span containment rejects different source");
+    expect_true(ari::span_intersects(left, right), "overlapping spans intersect");
+    expect_false(ari::span_intersects(left, disjoint), "half-open adjacent spans do not intersect");
+
+    ari::Span merged = ari::merge_spans(left, right);
+    expect_eq(merged.source_id.value, first.value, "merged span source id");
+    expect_eq(merged.start, static_cast<std::size_t>(1), "merged span start");
+    expect_eq(merged.end, static_cast<std::size_t>(4), "merged span end");
+    expect_false(ari::span_has_source(ari::merge_spans(left, other_source)),
+                 "merge rejects spans from different sources");
+}
+
 void test_multi_file_source_map() {
     ari::SourceMap map;
     ari::SourceId first = add_file(map, "first.ari", "a\n");
@@ -356,6 +380,7 @@ int main() {
     test_crlf_file();
     test_utf8_byte_columns_and_multibyte_text();
     test_invalid_span();
+    test_span_helper_invariants();
     test_multi_file_source_map();
     test_source_registration_identity();
     test_missing_source_snippet_fallback();

@@ -274,9 +274,13 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "missing return") ||
         contains(diagnostic, "return type") ||
         contains(diagnostic, "has no field") ||
+        contains(diagnostic, "missing field") ||
+        contains(diagnostic, "extra field") ||
         contains(diagnostic, "duplicate field") ||
         contains(diagnostic, "match must cover all cases") ||
         contains(diagnostic, "match pattern") ||
+        contains(diagnostic, "unknown enum case") ||
+        contains(diagnostic, "wrong payload count") ||
         contains(diagnostic, "duplicate type") ||
         contains(diagnostic, "duplicate function") ||
         contains(diagnostic, "duplicate struct") ||
