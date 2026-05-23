@@ -244,6 +244,7 @@ std::string classify_diagnostic_code(const std::string& message) {
     if (contains(diagnostic, "borrow") ||
         contains(diagnostic, "compact enum payload reference binding") ||
         contains(diagnostic, "moved binding") ||
+        contains(diagnostic, "moved owned") ||
         contains(diagnostic, "cannot move ") ||
         contains(diagnostic, "owning aggregate") ||
         contains(diagnostic, "ownership states") ||
@@ -295,9 +296,11 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "wrong payload count") ||
         contains(diagnostic, "duplicate type") ||
         contains(diagnostic, "duplicate function") ||
+        contains(diagnostic, "duplicate executable function") ||
         contains(diagnostic, "duplicate struct") ||
         contains(diagnostic, "duplicate enum") ||
         contains(diagnostic, "duplicate trait") ||
+        contains(diagnostic, "impl of trait") ||
         contains(diagnostic, "no matching") ||
         contains(diagnostic, "ambiguous")) {
         return "T0001";

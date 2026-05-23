@@ -4036,7 +4036,15 @@ private:
             if (!is_executable_function(fn)) return;
             if (enum_cases_.count(fn.name)) fail(fn.loc, "function '" + fn.name + "' conflicts with enum case constructor");
             if (is_format_print_name(fn.name)) fail(fn.loc, "function '" + fn.name + "' conflicts with prelude print builtin");
-            if (functions_.count(fn.name)) fail(fn.loc, "duplicate executable function '" + fn.name + "'");
+            auto previous_function = functions_.find(fn.name);
+            if (previous_function != functions_.end()) {
+                fail_duplicate_declaration(
+                    fn.loc,
+                    previous_function->second.loc,
+                    "duplicate executable function '" + fn.name + "'",
+                    "previous declaration of function '" + fn.name + "'",
+                    "rename or remove one of the function declarations");
+            }
 
             FunctionSig sig;
             sig.loc = fn.loc;
@@ -4077,7 +4085,14 @@ private:
             current_module_name_ = previous_module;
 
             auto inserted = functions_.emplace(fn.name, std::move(sig));
-            if (!inserted.second) fail(fn.loc, "duplicate executable function '" + fn.name + "'");
+            if (!inserted.second) {
+                fail_duplicate_declaration(
+                    fn.loc,
+                    inserted.first->second.loc,
+                    "duplicate executable function '" + fn.name + "'",
+                    "previous declaration of function '" + fn.name + "'",
+                    "rename or remove one of the function declarations");
+            }
             if (is_lazy_std_function(fn)) {
                 lazy_std_functions_.emplace(fn.name, &fn);
             }

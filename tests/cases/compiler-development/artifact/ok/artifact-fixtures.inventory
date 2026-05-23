@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=214
+CompilerArtifactFixtures version=1 group=all entries=217
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -24,6 +24,7 @@ CompilerArtifactFixtures version=1 group=all entries=214
   Fixture group=errors kind=diagnostic path=errors/diagnostic-cyclic-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-double-move.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-double-move.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-function.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-duplicate-name.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-name.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-constructor-payload-type.diagnostic
@@ -48,6 +49,7 @@ CompilerArtifactFixtures version=1 group=all entries=214
   Fixture group=errors kind=diagnostic path=errors/diagnostic-field-assignment-while-borrowed.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-nested-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-recursive-struct.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-use-after-move.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-duplicate-param.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-enum-constructor-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-explicit-arity.diagnostic
@@ -132,6 +134,7 @@ CompilerArtifactFixtures version=1 group=all entries=214
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-missing-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-bound-missing-impl.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-bound-missing-impl.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-impl-missing-method.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-method-ambiguous.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-method-ambiguous.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-type-assignment.ari

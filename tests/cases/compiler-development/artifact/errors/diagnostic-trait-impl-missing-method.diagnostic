@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="impl of trait 'Show' for i64 is missing method 'show'" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/traits/errors/trait-impl-missing-method.ari" display="tests/cases/traits/errors/trait-impl-missing-method.ari" bytes=103
+  Label index=0 role=primary source_id=0 source="tests/cases/traits/errors/trait-impl-missing-method.ari" line=5 column=6 end_line=5 end_column=10 byte_start=47 byte_end=51 message=""
+  Snippet label=0 text="  --> tests/cases/traits/errors/trait-impl-missing-method.ari:5:6\n   |\n 5 | impl Show[i64] for i64 {\n   |      ^^^^"
