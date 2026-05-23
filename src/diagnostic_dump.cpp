@@ -223,6 +223,7 @@ std::string classify_diagnostic_code(const std::string& message) {
     // CompileError as text. New structured diagnostics should replace these
     // patterns with explicit codes at the throw site.
     if (contains(diagnostic, "unexpected character") ||
+        contains(diagnostic, "unexpected byte") ||
         contains(diagnostic, "unterminated string literal") ||
         contains(diagnostic, "unterminated block comment") ||
         contains(diagnostic, "byte character literal") ||

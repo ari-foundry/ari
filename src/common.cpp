@@ -385,6 +385,65 @@ std::string render_compile_error(const SourceLocation* loc, const std::string& m
     return out.str();
 }
 
+bool same_span(Span lhs, Span rhs) {
+    return lhs.source_id.value == rhs.source_id.value && lhs.start == rhs.start && lhs.end == rhs.end;
+}
+
+void append_label_detail(std::ostringstream& out, const DiagnosticLabel& label, Span primary_span) {
+    if (!span_has_source(label.span) || !span_has_valid_order(label.span)) return;
+    if (label.primary && same_span(label.span, primary_span) && label.message.empty()) return;
+
+    SourceLocation loc = default_source_map().location_for_span(label.span);
+    if (!has_source_name(loc) || !has_byte_span(loc)) return;
+
+    out << "\n  " << (label.primary ? "primary label" : "secondary label") << ": "
+        << loc.source_name << ":" << loc.line << ":" << loc.column;
+    Span span = span_from_location(loc);
+    out << " [bytes " << span.start << ".." << span.end << ")";
+    if (!label.message.empty()) out << ": " << label.message;
+
+    std::string snippet = render_source_snippet(label.span);
+    if (!snippet.empty()) out << "\n" << snippet;
+}
+
+void append_note_detail(std::ostringstream& out, const DiagnosticNote& note) {
+    out << "\n  " << (note.kind == DiagnosticNoteKind::Help ? "help" : "note") << ": ";
+    if (note.span.has_value() &&
+        span_has_source(*note.span) &&
+        span_has_valid_order(*note.span) &&
+        default_source_map().valid_span(*note.span)) {
+        SourceLocation loc = default_source_map().location_for_span(*note.span);
+        if (has_source_name(loc) && has_byte_span(loc)) {
+            Span span = span_from_location(loc);
+            out << loc.source_name << ":" << loc.line << ":" << loc.column
+                << " [bytes " << span.start << ".." << span.end << "): ";
+        }
+    }
+    out << note.message;
+    if (note.span.has_value()) {
+        std::string snippet = render_source_snippet(*note.span);
+        if (!snippet.empty()) out << "\n" << snippet;
+    }
+}
+
+std::string render_compile_error_detail(const SourceLocation* loc,
+                                        const std::string& message,
+                                        const std::vector<DiagnosticLabel>& labels,
+                                        const std::vector<DiagnosticNote>& notes) {
+    std::ostringstream out;
+    out << render_compile_error(loc, message);
+
+    Span primary_span = invalid_span();
+    if (loc != nullptr && has_byte_span(*loc)) primary_span = span_from_location(*loc);
+    for (const DiagnosticLabel& label : labels) {
+        append_label_detail(out, label, primary_span);
+    }
+    for (const DiagnosticNote& note : notes) {
+        append_note_detail(out, note);
+    }
+    return out.str();
+}
+
 void add_primary_label_from_location(std::vector<DiagnosticLabel>& labels, const SourceLocation& loc) {
     Span span = span_from_location(loc);
     if (!default_source_map().valid(span.source_id) || !span_has_valid_order(span)) return;
@@ -673,19 +732,19 @@ CompileError::CompileError(std::string message) {
         has_location_ = true;
         (void)source_file_for_location(loc_);
         add_primary_label_from_location(labels_, loc_);
-        rendered_ = render_compile_error(&loc_, message_);
+        refresh_rendered();
         return;
     }
 
     message_ = std::move(message);
-    rendered_ = message_;
+    refresh_rendered();
 }
 
 CompileError::CompileError(SourceLocation loc, std::string message)
     : message_(std::move(message)), loc_(std::move(loc)), has_location_(true) {
     (void)source_file_for_location(loc_);
     add_primary_label_from_location(labels_, loc_);
-    rendered_ = render_compile_error(&loc_, message_);
+    refresh_rendered();
 }
 
 const char* CompileError::what() const noexcept {
@@ -714,10 +773,19 @@ const std::vector<DiagnosticNote>& CompileError::notes() const {
 
 void CompileError::add_label(DiagnosticLabel label) {
     labels_.push_back(std::move(label));
+    refresh_rendered();
 }
 
 void CompileError::add_note(DiagnosticNote note) {
     notes_.push_back(std::move(note));
+    refresh_rendered();
+}
+
+void CompileError::refresh_rendered() {
+    rendered_ = render_compile_error_detail(has_location_ ? &loc_ : nullptr,
+                                            message_,
+                                            labels_,
+                                            notes_);
 }
 
 std::string where(const SourceLocation& loc) {

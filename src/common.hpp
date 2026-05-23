@@ -150,6 +150,8 @@ struct CompileError : std::exception {
     void add_note(DiagnosticNote note);
 
 private:
+    void refresh_rendered();
+
     std::string rendered_;
     std::string message_;
     SourceLocation loc_;

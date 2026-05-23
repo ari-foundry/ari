@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=233
+CompilerArtifactFixtures version=1 group=all entries=235
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -74,6 +74,8 @@ CompilerArtifactFixtures version=1 group=all entries=233
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-return.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-return.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-lexer-nonascii-byte.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-nonascii-byte.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-unicode-escape-eof.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unicode-escape-eof.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-unterminated-block-comment.ari

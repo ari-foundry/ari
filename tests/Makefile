@@ -115,6 +115,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	cmp -s $(BUILD_DIR)/compiler-development/artifact/diagnostic-lexer-unterminated-block-comment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-lexer-unterminated-block-comment.repeat.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unicode-escape-eof.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-lexer-unicode-escape-eof.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unicode-escape-eof.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-lexer-unicode-escape-eof.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-lexer-nonascii-byte.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-lexer-nonascii-byte.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-lexer-nonascii-byte.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-lexer-nonascii-byte.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-expected.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-expected.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-function-body.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-parser-missing-function-body.diagnostic
@@ -4492,6 +4494,8 @@ check-generics: $(TARGET)
 	$(BUILD_DIR)/generics/generic-enum-constants.elf; code=$$?; test $$code -eq 7
 	if $(TARGET) tests/cases/generics/errors/generic-inference-conflict.ari -o $(BUILD_DIR)/generics/generic-inference-conflict.elf >$(BUILD_DIR)/generics/generic-inference-conflict.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-inference-conflict.err
+	grep -q "secondary label: .*first inferred 'T' as i64" $(BUILD_DIR)/generics/generic-inference-conflict.err
+	grep -q "help: make every use of 'T' agree, or pass explicit type arguments" $(BUILD_DIR)/generics/generic-inference-conflict.err
 	if $(TARGET) tests/cases/generics/errors/generic-uninferred.ari -o $(BUILD_DIR)/generics/generic-uninferred.elf >$(BUILD_DIR)/generics/generic-uninferred.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' could not be inferred for 'make'" $(BUILD_DIR)/generics/generic-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-return-context-uninferred.ari -o $(BUILD_DIR)/generics/generic-return-context-uninferred.elf >$(BUILD_DIR)/generics/generic-return-context-uninferred.err 2>&1; then exit 1; fi

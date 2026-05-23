@@ -2,7 +2,9 @@
 
 #include "literal.hpp"
 
+#include <iomanip>
 #include <map>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 
@@ -129,7 +131,7 @@ public:
                     else tokens.push_back(simple(TokenKind::Greater, ">", loc));
                     break;
                 default:
-                    fail(loc, std::string("unexpected character '") + c + "'");
+                    fail(loc, unexpected_character_message(c));
             }
         }
     }
@@ -148,6 +150,21 @@ private:
 
     static bool is_digit(char c) {
         return c >= '0' && c <= '9';
+    }
+
+    static std::string byte_hex(unsigned char byte) {
+        std::ostringstream out;
+        out << "0x" << std::uppercase << std::hex << std::setw(2) << std::setfill('0')
+            << static_cast<int>(byte);
+        return out.str();
+    }
+
+    static std::string unexpected_character_message(char c) {
+        unsigned char byte = static_cast<unsigned char>(c);
+        if (byte >= 0x20 && byte <= 0x7e) {
+            return std::string("unexpected character '") + c + "'";
+        }
+        return "unexpected byte " + byte_hex(byte);
     }
 
     static bool is_suffix_char(char c) {
