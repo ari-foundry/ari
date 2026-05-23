@@ -1,0 +1,13 @@
+struct Token {
+  kind: i64,
+}
+
+type TokenAlias = Token;
+
+struct Holder {
+  value: TokenAlias[i64],
+}
+
+fn main() -> i64 {
+  return 0;
+}

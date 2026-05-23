@@ -94,6 +94,10 @@ Positive fixtures:
 
 Negative fixtures:
 
+- `tests/cases/generics/errors/generic-aggregate-unknown-type-argument.ari`
+- `tests/cases/generics/errors/generic-aggregate-nongeneric-type-args.ari`
+- `tests/cases/generics/errors/generic-aggregate-enum-arity.ari`
+- `tests/cases/generics/errors/generic-aggregate-alias-nongeneric-type-args.ari`
 - `tests/cases/generics/errors/generic-aggregate-field-mismatch.ari`
 - `tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari`
 - `tests/cases/generics/errors/generic-aggregate-enum-payload-mismatch.ari`

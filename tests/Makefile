@@ -4438,6 +4438,14 @@ check-generics: $(TARGET)
 	grep -q "enum 'std::Option' expects 1 type argument" $(BUILD_DIR)/generics/generic-enum-constructor-arity.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-constructor-mismatch.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-mismatch.elf >$(BUILD_DIR)/generics/generic-enum-constructor-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected std::Option\\[i64\\], got std::Option\\[bool\\]" $(BUILD_DIR)/generics/generic-enum-constructor-mismatch.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-unknown-type-argument.ari --check >$(BUILD_DIR)/generics/generic-aggregate-unknown-type-argument.err 2>&1; then exit 1; fi
+	grep -q "unsupported executable type 'Missing'" $(BUILD_DIR)/generics/generic-aggregate-unknown-type-argument.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-nongeneric-type-args.ari --check >$(BUILD_DIR)/generics/generic-aggregate-nongeneric-type-args.err 2>&1; then exit 1; fi
+	grep -q "struct 'Span' expects 0 type arguments" $(BUILD_DIR)/generics/generic-aggregate-nongeneric-type-args.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-enum-arity.ari --check >$(BUILD_DIR)/generics/generic-aggregate-enum-arity.err 2>&1; then exit 1; fi
+	grep -q "enum 'Either' expects 2 type arguments" $(BUILD_DIR)/generics/generic-aggregate-enum-arity.err
+	if $(TARGET) tests/cases/generics/errors/generic-aggregate-alias-nongeneric-type-args.ari --check >$(BUILD_DIR)/generics/generic-aggregate-alias-nongeneric-type-args.err 2>&1; then exit 1; fi
+	grep -q "type alias 'TokenAlias' expects 0 type arguments" $(BUILD_DIR)/generics/generic-aggregate-alias-nongeneric-type-args.err
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-field-mismatch.ari --check >$(BUILD_DIR)/generics/generic-aggregate-field-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected Token, got i64" $(BUILD_DIR)/generics/generic-aggregate-field-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari --check >$(BUILD_DIR)/generics/generic-aggregate-nested-mismatch.err 2>&1; then exit 1; fi

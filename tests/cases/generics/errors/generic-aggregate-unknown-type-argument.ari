@@ -1,0 +1,11 @@
+struct Box[T] {
+  value: T,
+}
+
+struct Holder {
+  value: Box[Missing],
+}
+
+fn main() -> i64 {
+  return 0;
+}

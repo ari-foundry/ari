@@ -392,6 +392,8 @@ Checklist:
 - [x] monomorphize generic structs, tuple structs, enums, and aliases with
       nested aggregate payloads through field access, enum construction,
       match bindings, pass/return, typed IR, and LLVM lowering
+- [x] reject invalid generic aggregate type applications for unknown type
+      arguments, non-generic structs, enum arity, and alias arity
 - [x] stress generic aggregate support with user-defined compiler-shaped
       models and stdlib `Vec`/`Option`/`Result`/`HashMap` fixtures without
       stdlib name-specific correctness hooks
