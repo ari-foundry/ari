@@ -405,7 +405,7 @@ integration.
 | Empty file, one-line file, multi-line line starts, EOF span, CRLF, UTF-8 byte-column policy, invalid spans, multi-file source ids, single-line snippets, and multi-line snippets. | `tests/source_map_unit.cpp`, run by `make check-source-map-unit`. |
 | Token spans with `SourceId` and byte ranges. | `tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens`. |
 | Parser AST node spans with `SourceId` and byte ranges. | `tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax`. |
-| Diagnostic label span, snippet, source row, and source id. | `tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic`. |
+| Diagnostic label span, snippet, source row, and source id. | `tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic`, `diagnostic-struct-field-unknown.diagnostic`, and `diagnostic-match-nonexhaustive.diagnostic`. |
 | Multi-file source id separation for file-backed modules. | `tests/cases/compiler-development/artifact/ok/source-map-file-module.map`. |
 
 `make check-compiler-artifacts` runs the SourceMap unit test before comparing

@@ -138,6 +138,10 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-invalid-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-invalid-assignment.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-private-access.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-private-access.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-private-access.diagnostic
+	$(TARGET) tests/cases/structs/errors/struct-field-unknown.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-field-unknown.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-struct-field-unknown.diagnostic
+	$(TARGET) tests/cases/match/errors/match-nonexhaustive.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-nonexhaustive.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-nonexhaustive.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-borrow-conflict.diagnostic

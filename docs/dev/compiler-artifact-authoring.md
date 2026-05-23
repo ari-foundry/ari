@@ -152,6 +152,8 @@ Keep fixture names behavior-based:
 - `diagnostic-compact-enum-payload-ref.diagnostic`
 - `diagnostic-ownership-aggregate-enum-payload.diagnostic`
 - `diagnostic-borrow-aggregate-enum-payload.diagnostic`
+- `diagnostic-match-nonexhaustive.diagnostic`
+- `diagnostic-struct-field-unknown.diagnostic`
 - `diagnostic-ffi-nonrepr-aggregate-import.diagnostic`
 - `diagnostic-use-after-move.diagnostic`
 - `diagnostic-move-borrowed-owner.diagnostic`

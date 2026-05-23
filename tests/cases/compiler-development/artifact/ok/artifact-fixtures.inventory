@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=132
+CompilerArtifactFixtures version=1 group=all entries=134
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -33,6 +33,7 @@ CompilerArtifactFixtures version=1 group=all entries=132
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-break-live-owner.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-loop-continue-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-continue-live-owner.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-nonexhaustive.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-missing-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-missing-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-move-borrowed-owner.ari
@@ -51,6 +52,7 @@ CompilerArtifactFixtures version=1 group=all entries=132
   Fixture group=errors kind=diagnostic path=errors/diagnostic-private-access.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-return-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-return-live-owner.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-field-unknown.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-bound-missing-impl.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-bound-missing-impl.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-method-ambiguous.ari

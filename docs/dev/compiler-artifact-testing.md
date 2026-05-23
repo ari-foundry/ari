@@ -288,6 +288,8 @@ tests/cases/compiler-development/artifact/errors/diagnostic-enum-payload-invalid
 tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-borrow-aggregate-enum-payload.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic
+tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-field-assignment-while-borrowed.diagnostic
 tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.diagnostic
