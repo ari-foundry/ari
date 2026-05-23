@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="match must have at least one arm" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/match/errors/match-empty.ari" display="tests/cases/match/errors/match-empty.ari" bytes=97
+  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/match-empty.ari" line=8 column=3 end_line=8 end_column=8 byte_start=65 byte_end=70 message=""
+  Snippet label=0 text="  --> tests/cases/match/errors/match-empty.ari:8:3\n   |\n 8 |   match value {\n   |   ^^^^^"

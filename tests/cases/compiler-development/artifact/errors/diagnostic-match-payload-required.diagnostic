@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="enum case 'Some' requires a payload pattern" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/match/errors/match-payload-required.ari" display="tests/cases/match/errors/match-payload-required.ari" bytes=177
+  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/match-payload-required.ari" line=9 column=5 end_line=9 end_column=9 byte_start=103 byte_end=107 message=""
+  Snippet label=0 text="  --> tests/cases/match/errors/match-payload-required.ari:9:5\n   |\n 9 |     Some => {\n   |     ^^^^"

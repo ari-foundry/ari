@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="match value must be an enum, integer, bool, tuple, array, or struct, got string" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/match/errors/match-non-enum.ari" display="tests/cases/match/errors/match-non-enum.ari" bytes=76
+  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/match-non-enum.ari" line=2 column=3 end_line=2 end_column=8 byte_start=21 byte_end=26 message=""
+  Snippet label=0 text="  --> tests/cases/match/errors/match-non-enum.ari:2:3\n   |\n 2 |   match \"value\" {\n   |   ^^^^^"

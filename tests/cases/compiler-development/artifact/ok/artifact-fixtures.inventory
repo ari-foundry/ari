@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=173
+CompilerArtifactFixtures version=1 group=all entries=180
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -56,13 +56,20 @@ CompilerArtifactFixtures version=1 group=all entries=173
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-break-live-owner.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-loop-continue-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-continue-live-owner.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-duplicate-arm.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-empty.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-expression-type-mismatch.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-no-payload.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-non-enum.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-nonexhaustive.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-payload-required.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-missing-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-tuple-struct.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-unknown-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-unknown-enum-case.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-unreachable-after-wildcard.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-wrong-enum-case.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-missing-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-missing-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-move-borrowed-owner.ari

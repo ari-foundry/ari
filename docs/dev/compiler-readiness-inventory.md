@@ -310,11 +310,13 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-access-non-struct.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-match-duplicate-arm.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-match-unreachable-after-wildcard.diagnostic`,
   and
   `tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic`:
   source-aware aggregate and match diagnostic goldens for non-struct field
-  access, missing struct-field lookup, match arm type mismatches, and missing
-  enum-case coverage.
+  access, missing struct-field lookup, match arm type mismatches, duplicate or
+  unreachable arms, and missing enum-case coverage.
 - `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
   pass-boundary count golden checked through `--emit-pass-summary`.
 - `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
@@ -361,11 +363,14 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-access-non-struct.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-match-duplicate-arm.diagnostic`,
+  `tests/cases/compiler-development/artifact/errors/diagnostic-match-unreachable-after-wildcard.diagnostic`,
   and
   `tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic`:
   aggregate and match diagnostic goldens checked through `--emit-diagnostics`,
   covering non-struct field access, missing struct-field lookup, match arm type
-  mismatches, and missing enum-case coverage with source spans.
+  mismatches, duplicate/unreachable arms, and missing enum-case coverage with
+  source spans.
 - `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic`,
   `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-large-aggregate-import.diagnostic`,
   and

@@ -47,13 +47,15 @@ enum, and match fixtures with named struct patterns and payload destructuring.
 `diagnostic-struct-field-access-non-struct.diagnostic`,
 `diagnostic-struct-field-unknown.diagnostic`,
 `diagnostic-match-expression-type-mismatch.diagnostic`,
-`diagnostic-match-nonexhaustive.diagnostic`, and the
-`diagnostic-match-struct-pattern-*` goldens lock source-aware aggregate and
-match failure artifacts for non-struct field access, missing fields, match-arm
-type mismatches, missing enum-case coverage, duplicate/missing/unknown
-struct-pattern fields, and unsupported named-field tuple-struct patterns; these
-common aggregate and match failures classify as `T0001` rather than the general
-compiler fallback.
+`diagnostic-match-nonexhaustive.diagnostic`, the
+`diagnostic-match-struct-pattern-*` goldens, and the match arm-validation
+goldens lock source-aware aggregate and match failure artifacts for non-struct
+field access, missing fields, match-arm type mismatches, empty matches,
+non-matchable scrutinees, duplicate/unreachable arms, missing/extra payload
+patterns, wrong-enum cases, missing enum-case coverage,
+duplicate/missing/unknown struct-pattern fields, and unsupported named-field
+tuple-struct patterns; these common aggregate and match failures classify as
+`T0001` rather than the general compiler fallback.
 `tests/layout_unit.cpp` locks the underlying primitive sizes/alignments, field
 offsets, aggregate enum storage records, root-`Vec` layout-unavailable
 classification, and the direct/indirect/unsupported aggregate ABI classifier

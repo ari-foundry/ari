@@ -278,9 +278,16 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "missing field") ||
         contains(diagnostic, "extra field") ||
         contains(diagnostic, "duplicate field") ||
+        contains(diagnostic, "duplicate match arm") ||
+        contains(diagnostic, "unreachable match arm") ||
+        contains(diagnostic, "match value must be") ||
+        contains(diagnostic, "match must have at least one arm") ||
         contains(diagnostic, "match must cover all cases") ||
         contains(diagnostic, "match pattern") ||
         contains(diagnostic, "unknown enum case") ||
+        contains(diagnostic, "requires a payload pattern") ||
+        contains(diagnostic, "has no payload") ||
+        contains(diagnostic, "does not belong to") ||
         contains(diagnostic, "wrong payload count") ||
         contains(diagnostic, "duplicate type") ||
         contains(diagnostic, "duplicate function") ||

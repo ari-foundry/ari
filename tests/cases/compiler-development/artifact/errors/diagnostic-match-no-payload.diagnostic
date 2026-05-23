@@ -1,0 +1,4 @@
+diagnostic error code=T0001 family=type message="enum case 'A' has no payload" sources=1 labels=1 notes=0 helps=0
+  Source source_id=0 kind=file path="tests/cases/match/errors/match-no-payload.ari" display="tests/cases/match/errors/match-no-payload.ari" bytes=162
+  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/match-no-payload.ari" line=9 column=5 end_line=9 end_column=6 byte_start=88 byte_end=89 message=""
+  Snippet label=0 text="  --> tests/cases/match/errors/match-no-payload.ari:9:5\n   |\n 9 |     A(_) => {\n   |     ^"
