@@ -1,0 +1,8 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated block" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:4:1 source_id=0 bytes=47..49
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:4:1 source_id=0 bytes=47..49
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:4:4 source_id=0 bytes=50..55
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:5:3 source_id=0 bytes=69..75
+        Integer value=2 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:5:10 source_id=0 bytes=76..77

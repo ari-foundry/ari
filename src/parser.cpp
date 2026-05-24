@@ -236,6 +236,12 @@ private:
         return peek().loc.line > tokens_[error_pos].loc.line;
     }
 
+    bool should_recover_at_nested_declaration(SourceLocation open_loc) const {
+        return recovery_diagnostics_ != nullptr &&
+               peek().loc.line > open_loc.line &&
+               is_recovery_nested_declaration_start();
+    }
+
     void synchronize_inline_module_body() {
         int depth = 0;
         while (!check(TokenKind::End)) {
@@ -1113,10 +1119,13 @@ private:
     }
 
     std::vector<StmtPtr> parse_block() {
-        expect(TokenKind::LBrace, "expected {");
+        Token open = expect(TokenKind::LBrace, "expected {");
         std::vector<StmtPtr> body;
         while (!match(TokenKind::RBrace)) {
             if (check(TokenKind::End)) fail(peek().loc, "unterminated block");
+            if (should_recover_at_nested_declaration(open.loc)) {
+                fail(peek().loc, "unterminated block");
+            }
             body.push_back(parse_statement());
         }
         return body;
@@ -1127,9 +1136,7 @@ private:
         std::vector<StmtPtr> body;
         while (!match(TokenKind::RBrace)) {
             if (check(TokenKind::End)) fail(peek().loc, "unterminated function body");
-            if (recovery_diagnostics_ != nullptr &&
-                peek().loc.line > open.loc.line &&
-                is_recovery_nested_declaration_start()) {
+            if (should_recover_at_nested_declaration(open.loc)) {
                 fail(peek().loc, "unterminated function body");
             }
             body.push_back(parse_function_body_item());
@@ -2721,12 +2728,16 @@ private:
     }
 
     ExprPtr parse_braced_value_after_open(
+        SourceLocation open_loc,
         const std::string& context,
         const std::string& missing_value_message,
         std::vector<StmtPtr>& body
     ) {
         while (!check(TokenKind::RBrace)) {
             if (check(TokenKind::End)) fail(peek().loc, "unterminated " + context);
+            if (should_recover_at_nested_declaration(open_loc)) {
+                fail(peek().loc, "unterminated " + context);
+            }
             bool assignment = is_assignment_statement_start();
             if (starts_expression(peek().kind) && !assignment) {
                 SourceLocation value_loc = peek().loc;
@@ -2758,8 +2769,8 @@ private:
         const std::string& missing_value_message,
         std::vector<StmtPtr>& body
     ) {
-        expect(TokenKind::LBrace, open_message);
-        return parse_braced_value_after_open(context, missing_value_message, body);
+        Token open = expect(TokenKind::LBrace, open_message);
+        return parse_braced_value_after_open(open.loc, context, missing_value_message, body);
     }
 
     ExprPtr parse_if_expression(SourceLocation loc) {
@@ -2803,6 +2814,7 @@ private:
     ExprPtr parse_block_expression(SourceLocation loc) {
         std::vector<StmtPtr> body;
         ExprPtr value = parse_braced_value_after_open(
+            loc,
             "block expression",
             "block expression must end with a value",
             body);
