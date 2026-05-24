@@ -15,6 +15,7 @@
 #include "module_loader.hpp"
 #include "module_metadata.hpp"
 #include "parser.hpp"
+#include "resolved_index_dump.hpp"
 #include "sema.hpp"
 #include "source_map_dump.hpp"
 #include "syntax_dump.hpp"
@@ -123,6 +124,8 @@ static const ArtifactHelpRow kArtifactHelp[] = {
      "file-backed modules, imports, visibility, and item surfaces", "exclusive-artifact"},
     {"--emit-declaration-index", "declaration-collector", "make check-compiler-artifacts",
      "declaration signatures, visibility, resolver-facing imports, and source locations", "exclusive-artifact"},
+    {"--emit-resolved-index", "sema", "make check-compiler-artifacts",
+     "resolved functions, locals, calls, enum cases, and pattern bindings", "exclusive-artifact"},
     {"--emit-typed-ir", "sema", "make check-compiler-artifacts",
      "type, trait, ownership, and lowering facts", "exclusive-artifact"},
     {"--emit-pass-summary", "driver/sema", "make check-compiler-artifacts",
@@ -142,6 +145,7 @@ static void usage(std::ostream& out) {
            "           [--emit-diagnostic-catalog path]\n"
            "           [--emit-capability-inventory path]\n"
            "           [--emit-module-graph path] [--emit-declaration-index path]\n"
+           "           [--emit-resolved-index path]\n"
            "           [--emit-typed-ir path] [--emit-pass-summary path]\n"
            "           [--emit-stage-plan path]\n"
            "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
@@ -259,6 +263,7 @@ int run(int argc, char** argv) {
     std::string source_map_output;
     std::string module_graph_output;
     std::string declaration_index_output;
+    std::string resolved_index_output;
     std::string typed_ir_output;
     std::string pass_summary_output;
     std::string stage_plan_output;
@@ -353,6 +358,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-declaration-index") {
             if (i + 1 >= argc) throw CompileError("--emit-declaration-index expects a path");
             declaration_index_output = argv[++i];
+        } else if (arg == "--emit-resolved-index") {
+            if (i + 1 >= argc) throw CompileError("--emit-resolved-index expects a path");
+            resolved_index_output = argv[++i];
         } else if (arg == "--emit-typed-ir") {
             if (i + 1 >= argc) throw CompileError("--emit-typed-ir expects a path");
             typed_ir_output = argv[++i];
@@ -494,6 +502,7 @@ int run(int argc, char** argv) {
         {"--emit-source-map", &source_map_output},
         {"--emit-module-graph", &module_graph_output},
         {"--emit-declaration-index", &declaration_index_output},
+        {"--emit-resolved-index", &resolved_index_output},
         {"--emit-typed-ir", &typed_ir_output},
         {"--emit-pass-summary", &pass_summary_output},
         {"--emit-stage-plan", &stage_plan_output},
@@ -508,6 +517,7 @@ int run(int argc, char** argv) {
                        !diagnostic_catalog_output.empty() ||
                        !capability_inventory_output.empty() ||
                        !module_graph_output.empty() || !declaration_index_output.empty() ||
+                       !resolved_index_output.empty() ||
                        !typed_ir_output.empty() ||
                        !pass_summary_output.empty() || !stage_plan_output.empty() ||
                        llvm_compiler_explicit || !link_args.empty())) {
@@ -524,6 +534,7 @@ int run(int argc, char** argv) {
          !capability_inventory_output.empty() ||
          !module_graph_output.empty() ||
          !declaration_index_output.empty() ||
+         !resolved_index_output.empty() ||
          !typed_ir_output.empty() || !pass_summary_output.empty() ||
          !stage_plan_output.empty()) &&
         (output_explicit || emit_llvm_only || !object_output.empty() ||
@@ -686,6 +697,11 @@ int run(int argc, char** argv) {
     for (auto& fn : cached_ir_functions) ir.functions.push_back(std::move(fn));
     for (const auto& warning : ir.warnings) {
         std::cerr << warning << "\n";
+    }
+    if (!resolved_index_output.empty()) {
+        write_text_file(resolved_index_output, dump_resolved_index(ir, input));
+        report_wrote(resolved_index_output, "resolved index dump");
+        return 0;
     }
     if (!typed_ir_output.empty()) {
         write_text_file(typed_ir_output, dump_ir_program(ir, input));

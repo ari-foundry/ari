@@ -1,0 +1,94 @@
+ResolvedIndex source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-pc-linux-gnu externs=0 functions=16 refs=61
+  Function name=main return=i64 @tests/cases/modules/ok/project-compiler-main.ari:3:4
+    Symbol kind=call name=project_compiler::run result=i64 params=[] @tests/cases/modules/ok/project-compiler-main.ari:4:10
+  Function name=project_compiler::span_score return=i64 @tests/cases/modules/ok/project_compiler.ari:12:4
+    Param name=span type=project_compiler::source::Span
+    Symbol kind=call name=project_compiler::source::span_len result=i64 params=[] @tests/cases/modules/ok/project_compiler.ari:13:10
+      Symbol kind=local-use name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler.ari:13:33
+  Function name=project_compiler::symbol_score return=i64 @tests/cases/modules/ok/project_compiler.ari:16:4
+    Param name=symbol type=project_compiler::symbols::Symbol
+    Symbol kind=call name=project_compiler::symbols::symbol_score result=i64 params=[] @tests/cases/modules/ok/project_compiler.ari:17:10
+      Symbol kind=local-use name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project_compiler.ari:17:38
+  Function name=project_compiler::parse_score return=i64 @tests/cases/modules/ok/project_compiler.ari:20:4
+    Param name=result type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol]
+    Symbol kind=call name=project_compiler::parser::parse_score result=i64 params=[] @tests/cases/modules/ok/project_compiler.ari:21:10
+      Symbol kind=local-use name=result type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler.ari:21:36
+  Function name=project_compiler::run return=i64 @tests/cases/modules/ok/project_compiler.ari:24:8
+    Symbol kind=local-def name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler.ari:25:7
+      Symbol kind=call name=project_compiler::source::span result=project_compiler::source::Span params=[] @tests/cases/modules/ok/project_compiler.ari:25:14
+    Symbol kind=local-def name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project_compiler.ari:26:7
+      Symbol kind=call name=project_compiler::symbols::symbol result=project_compiler::symbols::Symbol params=[] @tests/cases/modules/ok/project_compiler.ari:26:16
+    Symbol kind=local-def name=state type=project_compiler::parser::ParserState[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler.ari:27:7
+      Symbol kind=call name=project_compiler::parser::make_state result=project_compiler::parser::ParserState[project_compiler::symbols::Symbol] params=[] @tests/cases/modules/ok/project_compiler.ari:27:15
+        Symbol kind=local-use name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project_compiler.ari:27:40
+    Symbol kind=local-def name=parsed type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler.ari:28:7
+      Symbol kind=call name=project_compiler::parser::run_state result=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] params=[] @tests/cases/modules/ok/project_compiler.ari:28:16
+        Symbol kind=local-use name=state type=project_compiler::parser::ParserState[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler.ari:28:40
+    Symbol kind=local-def name=diagnostic type=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project_compiler.ari:29:7
+      Symbol kind=call name=project_compiler::diag::diagnostic result=project_compiler::diag::Diagnostic params=[] @tests/cases/modules/ok/project_compiler.ari:29:20
+        Symbol kind=local-use name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler.ari:29:43
+    Symbol kind=call name=project_compiler::span_score result=i64 params=[] @tests/cases/modules/ok/project_compiler.ari:31:10
+      Symbol kind=local-use name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler.ari:31:21
+    Symbol kind=call name=project_compiler::symbol_score result=i64 params=[] @tests/cases/modules/ok/project_compiler.ari:32:5
+      Symbol kind=local-use name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project_compiler.ari:32:18
+    Symbol kind=call name=project_compiler::parse_score result=i64 params=[] @tests/cases/modules/ok/project_compiler.ari:33:5
+      Symbol kind=local-use name=parsed type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler.ari:33:17
+    Symbol kind=call name=project_compiler::diag::diagnostic_score result=i64 params=[] @tests/cases/modules/ok/project_compiler.ari:34:5
+      Symbol kind=local-use name=diagnostic type=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project_compiler.ari:34:34
+  Function name=project_compiler::source::span return=project_compiler::source::Span @tests/cases/modules/ok/project_compiler/source.ari:11:8
+    Param name=start type=i64
+    Param name=end type=i64
+    Symbol kind=local-use name=start type=i64 @tests/cases/modules/ok/project_compiler/source.ari:12:24
+    Symbol kind=local-use name=end type=i64 @tests/cases/modules/ok/project_compiler/source.ari:12:36
+  Function name=project_compiler::source::source_file return=project_compiler::source::SourceFile @tests/cases/modules/ok/project_compiler/source.ari:15:8
+    Param name=id type=i64
+    Param name=span type=project_compiler::source::Span
+    Symbol kind=local-use name=id type=i64 @tests/cases/modules/ok/project_compiler/source.ari:16:27
+    Symbol kind=local-use name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler/source.ari:16:37
+  Function name=project_compiler::source::span_len return=i64 @tests/cases/modules/ok/project_compiler/source.ari:19:8
+    Param name=span type=project_compiler::source::Span
+    Symbol kind=local-use name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler/source.ari:20:10
+    Symbol kind=local-use name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler/source.ari:20:21
+  Function name=project_compiler::symbols::symbol return=project_compiler::symbols::Symbol @tests/cases/modules/ok/project_compiler/symbols.ari:5:8
+    Param name=id type=i64
+    Symbol kind=local-use name=id type=i64 @tests/cases/modules/ok/project_compiler/symbols.ari:6:23
+  Function name=project_compiler::symbols::symbol_score return=i64 @tests/cases/modules/ok/project_compiler/symbols.ari:9:8
+    Param name=symbol type=project_compiler::symbols::Symbol
+    Symbol kind=local-use name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project_compiler/symbols.ari:10:10
+  Function name=project_compiler::symbols::private_bias return=i64 @tests/cases/modules/ok/project_compiler/symbols.ari:13:4
+  Function name=project_compiler::diag::diagnostic return=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project_compiler/diag.ari:11:8
+    Param name=span type=project_compiler::source::Span
+    Param name=code type=i64
+    Symbol kind=local-use name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler/diag.ari:13:11
+    Symbol kind=enum-case enum=project_compiler::diag::Severity case=project_compiler::diag::Error type=project_compiler::diag::Severity @tests/cases/modules/ok/project_compiler/diag.ari:14:15
+  Function name=project_compiler::diag::diagnostic_score return=i64 @tests/cases/modules/ok/project_compiler/diag.ari:18:8
+    Param name=diagnostic type=project_compiler::diag::Diagnostic
+    Symbol kind=call name=project_compiler::source::span_len result=i64 params=[] @tests/cases/modules/ok/project_compiler/diag.ari:19:10
+      Symbol kind=local-use name=diagnostic type=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project_compiler/diag.ari:19:34
+    Symbol kind=local-use name=diagnostic type=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project_compiler/diag.ari:19:59
+    Symbol kind=pattern-bind name=code type=i64 @tests/cases/modules/ok/project_compiler/diag.ari:21:5
+      Symbol kind=local-use name=code type=i64 @tests/cases/modules/ok/project_compiler/diag.ari:21:20
+  Function name=project_compiler::parser::make_state return=project_compiler::parser::ParserState[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler/parse.ari:12:8
+    Param name=symbol type=project_compiler::symbols::Symbol
+    Symbol kind=local-def name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler/parse.ari:13:7
+      Symbol kind=call name=project_compiler::source::span result=project_compiler::source::Span params=[] @tests/cases/modules/ok/project_compiler/parse.ari:13:14
+    Symbol kind=call name=project_compiler::source::source_file result=project_compiler::source::SourceFile params=[] @tests/cases/modules/ok/project_compiler/parse.ari:15:11
+      Symbol kind=local-use name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler/parse.ari:15:41
+    Symbol kind=local-use name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project_compiler/parse.ari:16:14
+    Symbol kind=call name=project_compiler::diag::diagnostic result=project_compiler::diag::Diagnostic params=[] @tests/cases/modules/ok/project_compiler/parse.ari:17:17
+      Symbol kind=local-use name=span type=project_compiler::source::Span @tests/cases/modules/ok/project_compiler/parse.ari:17:41
+  Function name=project_compiler::parser::run_state return=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler/parse.ari:21:8
+    Param name=state type=project_compiler::parser::ParserState[project_compiler::symbols::Symbol]
+    Symbol kind=call name=project_compiler::source::span_len result=i64 params=[] @tests/cases/modules/ok/project_compiler/parse.ari:22:6
+      Symbol kind=local-use name=state type=project_compiler::parser::ParserState[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler/parse.ari:22:30
+    Symbol kind=enum-case enum=project_compiler::parser::ParseResult case=project_compiler::parser::Parsed type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler/parse.ari:23:12
+    Symbol kind=enum-case enum=project_compiler::parser::ParseResult case=project_compiler::parser::Failed type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler/parse.ari:25:10
+  Function name=project_compiler::parser::parse_score return=i64 @tests/cases/modules/ok/project_compiler/parse.ari:28:8
+    Param name=result type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol]
+    Symbol kind=local-use name=result type=project_compiler::parser::ParseResult[project_compiler::symbols::Symbol] @tests/cases/modules/ok/project_compiler/parse.ari:29:9
+    Symbol kind=pattern-bind name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project_compiler/parse.ari:30:5
+      Symbol kind=call name=project_compiler::symbols::symbol_score result=i64 params=[] @tests/cases/modules/ok/project_compiler/parse.ari:31:14
+        Symbol kind=local-use name=symbol type=project_compiler::symbols::Symbol @tests/cases/modules/ok/project_compiler/parse.ari:31:43
+    Symbol kind=pattern-bind name=diagnostic type=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project_compiler/parse.ari:33:5
+      Symbol kind=call name=project_compiler::diag::diagnostic_score result=i64 params=[] @tests/cases/modules/ok/project_compiler/parse.ari:34:14
+        Symbol kind=local-use name=diagnostic type=project_compiler::diag::Diagnostic @tests/cases/modules/ok/project_compiler/parse.ari:34:44

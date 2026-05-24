@@ -156,6 +156,8 @@ def artifact_kind(path: Path) -> str:
         return "source-map"
     if suffix == ".plan":
         return "stage-plan"
+    if suffix == ".resolved":
+        return "resolved-index"
     if suffix == ".stdout":
         return "runtime-output"
     if suffix == ".summary":

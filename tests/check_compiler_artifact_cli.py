@@ -86,6 +86,7 @@ def main():
         "option=--emit-c-header",
         "option=--emit-llvm",
         "option=--emit-obj",
+        "option=--emit-resolved-index",
         "Rule one_artifact_output=true backend_outputs_separate=true",
     )
 
@@ -100,6 +101,12 @@ def main():
     ok &= require_success(
         run_raw("--explain-artifact", "emit-pass-summary"),
         "CompilerArtifact version=1 option=--emit-pass-summary owner=driver/sema",
+    )
+
+    ok &= require_success(
+        run_raw("--explain-artifact", "emit-resolved-index"),
+        "CompilerArtifact version=1 option=--emit-resolved-index owner=sema",
+        'purpose="resolved functions, locals, calls, enum cases, and pattern bindings"',
     )
 
     ok &= require_success(
