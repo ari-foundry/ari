@@ -2681,7 +2681,7 @@ private:
     ) {
         while (!check(TokenKind::RBrace)) {
             if (check(TokenKind::End)) fail(peek().loc, "unterminated " + context);
-            bool assignment = check(TokenKind::Identifier) && is_assignment_operator(peek(1).kind);
+            bool assignment = is_assignment_statement_start();
             if (starts_expression(peek().kind) && !assignment) {
                 SourceLocation value_loc = peek().loc;
                 ExprPtr value = parse_expression();

@@ -1,0 +1,12 @@
+struct Cell {
+  mut value: i64,
+}
+
+fn main() -> i64 {
+  var cell = Cell { value: 1 };
+  let result = {
+    cell.value = 4;
+    cell.value
+  };
+  return result;
+}

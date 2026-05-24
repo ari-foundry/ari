@@ -5287,6 +5287,8 @@ check-structs: $(TARGET)
 	$(BUILD_DIR)/structs/struct-surface.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/structs/ok/struct-module-surface.ari -o $(BUILD_DIR)/structs/struct-module-surface.elf
 	$(BUILD_DIR)/structs/struct-module-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/cases/structs/ok/block-expression-field-assignment.ari -o $(BUILD_DIR)/structs/block-expression-field-assignment.elf
+	$(BUILD_DIR)/structs/block-expression-field-assignment.elf; code=$$?; test $$code -eq 4
 	$(TARGET) tests/cases/match/ok/adt-enum-patterns.ari -o $(BUILD_DIR)/structs/adt-enum-patterns.elf
 	$(BUILD_DIR)/structs/adt-enum-patterns.elf; code=$$?; test $$code -eq 7
 	$(TARGET) tests/cases/generics/ok/generic-adt-surface.ari -o $(BUILD_DIR)/structs/generic-adt-surface.elf
