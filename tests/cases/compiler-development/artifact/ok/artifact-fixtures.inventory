@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=258
+CompilerArtifactFixtures version=1 group=all entries=260
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -104,6 +104,8 @@ CompilerArtifactFixtures version=1 group=all entries=258
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-unknown-enum-case.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-unreachable-after-wildcard.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-wrong-enum-case.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-method-arity.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-method-arity.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-missing-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-missing-module.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-module-glob-duplicate.diagnostic

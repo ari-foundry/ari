@@ -22206,12 +22206,18 @@ private:
         std::string first_bound_failure;
         std::string first_inference_failure;
         bool saw_wrong_arg_count = false;
+        SourceLocation wrong_arg_declaration_loc;
+        std::size_t wrong_arg_expected_count = 0;
         for (const auto& candidate : generic_method_impls_) {
             const std::string method_name = expr.name;
             if (basename_of_qualified_name(candidate.fn->name) != method_name) continue;
             std::map<std::string, IrType> substitutions;
             if (!infer_generic_impl_method_substitutions(candidate, receiver_type, substitutions)) continue;
             if (candidate.sig.params.size() != arg_types.size() + 1) {
+                if (!saw_wrong_arg_count) {
+                    wrong_arg_declaration_loc = candidate.loc;
+                    wrong_arg_expected_count = non_receiver_parameter_count(candidate.sig.params.size());
+                }
                 saw_wrong_arg_count = true;
                 continue;
             }
@@ -22277,7 +22283,14 @@ private:
         if (matches.empty()) {
             if (!first_bound_failure.empty()) fail(expr.loc, first_bound_failure);
             if (!first_inference_failure.empty()) fail(expr.loc, first_inference_failure);
-            if (saw_wrong_arg_count) fail(expr.loc, "wrong argument count for method '" + expr.name + "'");
+            if (saw_wrong_arg_count) {
+                fail_method_argument_count(
+                    expr.loc,
+                    expr.name,
+                    wrong_arg_declaration_loc,
+                    wrong_arg_expected_count,
+                    arg_types.size());
+            }
             return false;
         }
         if (matches.size() > 1) {
@@ -22457,10 +22470,16 @@ private:
         std::string first_bound_failure;
         std::string first_inference_failure;
         bool saw_wrong_arg_count = false;
+        SourceLocation wrong_arg_declaration_loc;
+        std::size_t wrong_arg_expected_count = 0;
         for (const auto& candidate : generic_associated_impls_) {
             if (basename_of_qualified_name(candidate.fn->name) != method_name) continue;
             if (!associated_receiver_name_matches_type(expr.loc, receiver_name, candidate.receiver_type)) continue;
             if (candidate.sig.params.size() != arg_types.size()) {
+                if (!saw_wrong_arg_count) {
+                    wrong_arg_declaration_loc = candidate.loc;
+                    wrong_arg_expected_count = candidate.sig.params.size();
+                }
                 saw_wrong_arg_count = true;
                 continue;
             }
@@ -22493,7 +22512,14 @@ private:
         if (matches.empty()) {
             if (!first_bound_failure.empty()) fail(expr.loc, first_bound_failure);
             if (!first_inference_failure.empty()) fail(expr.loc, first_inference_failure);
-            if (saw_wrong_arg_count) fail(expr.loc, "wrong argument count for associated function '" + method_name + "'");
+            if (saw_wrong_arg_count) {
+                fail_associated_function_argument_count(
+                    expr.loc,
+                    method_name,
+                    wrong_arg_declaration_loc,
+                    wrong_arg_expected_count,
+                    arg_types.size());
+            }
             return false;
         }
         if (matches.size() > 1) {
@@ -24034,6 +24060,8 @@ private:
         std::string first_bound_failure;
         std::string first_inference_failure;
         bool saw_wrong_arg_count = false;
+        SourceLocation wrong_arg_declaration_loc;
+        std::size_t wrong_arg_expected_count = 0;
 
         Expr method_expr;
         method_expr.kind = ExprKind::Call;
@@ -24061,6 +24089,10 @@ private:
             }
 
             if (candidate.sig.params.size() != arg_types.size() + 1) {
+                if (!saw_wrong_arg_count) {
+                    wrong_arg_declaration_loc = candidate.loc;
+                    wrong_arg_expected_count = non_receiver_parameter_count(candidate.sig.params.size());
+                }
                 saw_wrong_arg_count = true;
                 continue;
             }
@@ -24094,7 +24126,14 @@ private:
         if (matches.empty()) {
             if (!first_bound_failure.empty()) fail(expr.loc, first_bound_failure);
             if (!first_inference_failure.empty()) fail(expr.loc, first_inference_failure);
-            if (saw_wrong_arg_count) fail(expr.loc, "wrong argument count for method '" + method_name + "'");
+            if (saw_wrong_arg_count) {
+                fail_method_argument_count(
+                    expr.loc,
+                    method_name,
+                    wrong_arg_declaration_loc,
+                    wrong_arg_expected_count,
+                    arg_types.size());
+            }
             return false;
         }
         if (matches.size() > 1) {
@@ -24205,6 +24244,8 @@ private:
         std::string first_bound_failure;
         std::string first_inference_failure;
         bool saw_wrong_arg_count = false;
+        SourceLocation wrong_arg_declaration_loc;
+        std::size_t wrong_arg_expected_count = 0;
 
         for (const auto& candidate : generic_associated_impls_) {
             if (basename_of_qualified_name(candidate.fn->name) != method_name) continue;
@@ -24255,6 +24296,10 @@ private:
             }
 
             if (candidate.sig.params.size() != arg_types.size()) {
+                if (!saw_wrong_arg_count) {
+                    wrong_arg_declaration_loc = candidate.loc;
+                    wrong_arg_expected_count = candidate.sig.params.size();
+                }
                 saw_wrong_arg_count = true;
                 continue;
             }
@@ -24288,7 +24333,14 @@ private:
         if (matches.empty()) {
             if (!first_bound_failure.empty()) fail(expr.loc, first_bound_failure);
             if (!first_inference_failure.empty()) fail(expr.loc, first_inference_failure);
-            if (saw_wrong_arg_count) fail(expr.loc, "wrong argument count for associated function '" + method_name + "'");
+            if (saw_wrong_arg_count) {
+                fail_associated_function_argument_count(
+                    expr.loc,
+                    method_name,
+                    wrong_arg_declaration_loc,
+                    wrong_arg_expected_count,
+                    arg_types.size());
+            }
             return false;
         }
         if (matches.size() > 1) {
@@ -24389,7 +24441,7 @@ private:
         }
         std::size_t param_count = static_cast<std::size_t>(callee->type.array_size);
         if (param_count != arg_exprs.size()) {
-            fail(loc, "wrong argument count for callable value call");
+            fail_callable_value_argument_count(loc, param_count, arg_exprs.size());
         }
 
         lowered->kind = IrExprKind::IndirectCall;
@@ -24811,7 +24863,12 @@ private:
                      " has no receiver parameter");
         }
         if (sig.params.size() != expr.args.size()) {
-            fail(expr.loc, "wrong argument count for trait-qualified method call '" + display + "'");
+            fail_trait_qualified_method_argument_count(
+                expr.loc,
+                display,
+                method.loc,
+                sig.params.size(),
+                expr.args.size());
         }
 
         std::vector<IrStmtPtr> receiver_prelude;
@@ -24960,7 +25017,12 @@ private:
         require_impl_method_access(expr.loc, method, method_name);
         const FunctionSig& sig = method.sig;
         if (sig.params.size() != expr.args.size()) {
-            fail(expr.loc, "wrong argument count for trait-qualified associated function call '" + display + "'");
+            fail_associated_function_argument_count(
+                expr.loc,
+                display,
+                method.loc,
+                sig.params.size(),
+                expr.args.size());
         }
 
         queue_impl_method_for_lowering(method);
@@ -25073,7 +25135,12 @@ private:
         require_impl_method_access(expr.loc, method, method_name);
         const FunctionSig& sig = method.sig;
         if (sig.params.size() != expr.args.size()) {
-            fail(expr.loc, "wrong argument count for associated function '" + method_name + "'");
+            fail_associated_function_argument_count(
+                expr.loc,
+                method_name,
+                method.loc,
+                sig.params.size(),
+                expr.args.size());
         }
 
         queue_impl_method_for_lowering(method);
@@ -25118,7 +25185,12 @@ private:
         }
         require_trait_object_method_object_safe(expr.loc, method);
         if (method.params.size() != expr.args.size() + 1) {
-            fail(expr.loc, "wrong argument count for method '" + expr.name + "'");
+            fail_method_argument_count(
+                expr.loc,
+                expr.name,
+                method.loc,
+                non_receiver_parameter_count(method.params.size()),
+                expr.args.size());
         }
 
         std::uint64_t slot = 0;
@@ -25356,7 +25428,12 @@ private:
             fail(expr.loc, "method '" + expr.name + "' for type " + type_name(receiver->type) + " has no receiver parameter");
         }
         if (sig.params.size() != expr.args.size() + 1) {
-            fail(expr.loc, "wrong argument count for method '" + expr.name + "'");
+            fail_method_argument_count(
+                expr.loc,
+                expr.name,
+                method.loc,
+                non_receiver_parameter_count(sig.params.size()),
+                expr.args.size());
         }
 
         std::vector<IrStmtPtr> receiver_prelude;
@@ -25942,6 +26019,10 @@ private:
 
     static std::string value_argument_count_text(std::size_t count) {
         return std::to_string(count) + " argument" + (count == 1 ? "" : "s");
+    }
+
+    static std::size_t non_receiver_parameter_count(std::size_t total_count) {
+        return total_count == 0 ? 0 : total_count - 1;
     }
 
     static void add_location_label_if_valid(CompileError& error,
@@ -26543,6 +26624,109 @@ private:
             std::nullopt,
             std::string("pass ") + (variadic ? "at least " : "") + expected_text + " to '" + callee +
                 "' instead of " + actual_text,
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_method_argument_count(SourceLocation loc,
+                                                        const std::string& method_name,
+                                                        SourceLocation declaration_loc,
+                                                        std::size_t expected_count,
+                                                        std::size_t actual_count) {
+        const std::string expected_text = value_argument_count_text(expected_count);
+        const std::string actual_text = value_argument_count_text(actual_count);
+        CompileError error(
+            std::move(loc),
+            "wrong argument count for method '" + method_name + "': expected " +
+                expected_text + ", got " + actual_text);
+        add_location_label_if_valid(
+            error,
+            declaration_loc,
+            "method '" + method_name + "' declares " + std::to_string(expected_count) +
+                " non-receiver " + parameter_count_name(expected_count));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "method calls provide the receiver separately from explicit value arguments",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass " + expected_text + " to method '" + method_name + "' instead of " + actual_text,
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_trait_qualified_method_argument_count(SourceLocation loc,
+                                                                       const std::string& display,
+                                                                       SourceLocation declaration_loc,
+                                                                       std::size_t expected_count,
+                                                                       std::size_t actual_count) {
+        const std::string expected_text = value_argument_count_text(expected_count);
+        const std::string actual_text = value_argument_count_text(actual_count);
+        CompileError error(
+            std::move(loc),
+            "wrong argument count for trait-qualified method call '" + display +
+                "': expected " + expected_text + ", got " + actual_text);
+        add_location_label_if_valid(
+            error,
+            declaration_loc,
+            "method '" + display + "' declares " + std::to_string(expected_count) +
+                " " + parameter_count_name(expected_count) + " including the receiver");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "trait-qualified method calls pass the receiver as the first argument",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass " + expected_text + " to trait-qualified method '" + display +
+                "' instead of " + actual_text,
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_associated_function_argument_count(SourceLocation loc,
+                                                                     const std::string& method_name,
+                                                                     SourceLocation declaration_loc,
+                                                                     std::size_t expected_count,
+                                                                     std::size_t actual_count) {
+        const std::string expected_text = value_argument_count_text(expected_count);
+        const std::string actual_text = value_argument_count_text(actual_count);
+        CompileError error(
+            std::move(loc),
+            "wrong argument count for associated function '" + method_name + "': expected " +
+                expected_text + ", got " + actual_text);
+        add_location_label_if_valid(
+            error,
+            declaration_loc,
+            "associated function '" + method_name + "' declares " + std::to_string(expected_count) +
+                " " + parameter_count_name(expected_count));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "associated function calls must provide one value for each declared parameter",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass " + expected_text + " to associated function '" + method_name +
+                "' instead of " + actual_text,
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_callable_value_argument_count(SourceLocation loc,
+                                                               std::size_t expected_count,
+                                                               std::size_t actual_count) {
+        const std::string expected_text = value_argument_count_text(expected_count);
+        const std::string actual_text = value_argument_count_text(actual_count);
+        CompileError error(
+            std::move(loc),
+            "wrong argument count for callable value call: expected " +
+                expected_text + ", got " + actual_text);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "callable value calls are checked against the function pointer or closure signature",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass " + expected_text + " to the callable value instead of " + actual_text,
             DiagnosticNoteKind::Help});
         throw error;
     }

@@ -1,0 +1,8 @@
+diagnostic error code=T0001 family=type message="wrong argument count for method 'replace': expected 1 argument, got 0 arguments" sources=1 labels=2 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-method-arity.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-method-arity.ari" bytes=202
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-method-arity.ari" line=12 column=35 end_line=12 end_column=42 byte_start=177 byte_end=184 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-method-arity.ari:12:35\n    |\n 12 |   let value = Box { value: true }.replace();\n    |                                   ^^^^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-method-arity.ari" line=6 column=6 end_line=6 end_column=13 byte_start=53 byte_end=60 message="method 'replace' declares 1 non-receiver parameter"
+  Snippet label=1 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-method-arity.ari:6:6\n   |\n 6 |   fn replace[U](self, value: U) -> Box[U] {\n   |      ^^^^^^^"
+  Note index=0 location=none message="method calls provide the receiver separately from explicit value arguments"
+  Help index=0 location=none message="pass 1 argument to method 'replace' instead of 0 arguments"
