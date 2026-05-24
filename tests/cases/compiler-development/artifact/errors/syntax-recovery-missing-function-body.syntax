@@ -1,0 +1,11 @@
+Program source=tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-function-body.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="expected function body or ; after function declaration" @tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-function-body.ari:2:1 source_id=0 bytes=19..21
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-function-body.ari:2:1 source_id=0 bytes=19..21
+      SecondaryLabel message="function declaration starts here" @tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-function-body.ari:1:4 source_id=0 bytes=3..9
+      Note message="the parser reached another declaration before this function had a body"
+      Help message="add a braced function body or terminate the declaration with ;"
+  Function name=main return=i64 @tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-function-body.ari:2:4 source_id=0 bytes=22..26
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-function-body.ari:3:3 source_id=0 bytes=40..46
+        Integer value=0 @tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-function-body.ari:3:10 source_id=0 bytes=47..48

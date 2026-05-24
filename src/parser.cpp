@@ -316,6 +316,28 @@ private:
         throw error;
     }
 
+    [[noreturn]] static void fail_missing_function_body(SourceLocation boundary_loc,
+                                                        SourceLocation function_loc) {
+        CompileError error(std::move(boundary_loc),
+                           "expected function body or ; after function declaration");
+        Span function_span = span_from_location(function_loc);
+        if (span_has_source(function_span) && span_has_valid_order(function_span)) {
+            error.add_label(DiagnosticLabel{
+                function_span,
+                "function declaration starts here",
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "the parser reached another declaration before this function had a body",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add a braced function body or terminate the declaration with ;",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void optional_separator() {
         match(TokenKind::Comma);
         match(TokenKind::Semicolon);
@@ -880,7 +902,7 @@ private:
             fn.has_body = true;
         } else {
             if (body_allowed && !match(TokenKind::Semicolon)) {
-                fail(peek().loc, "expected function body or ; after function declaration");
+                fail_missing_function_body(peek().loc, fn.loc);
             }
             if (!body_allowed) match(TokenKind::Semicolon);
             fn.has_body = false;
