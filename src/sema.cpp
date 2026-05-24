@@ -12340,6 +12340,28 @@ private:
         return arms;
     }
 
+    [[noreturn]] static void fail_duplicate_enum_match_arm(
+        SourceLocation loc,
+        SourceLocation previous_loc,
+        const std::string& message,
+        const std::string& previous_label
+    ) {
+        CompileError error(std::move(loc), message);
+        Span previous_span = span_from_location(previous_loc);
+        if (span_has_source(previous_span) && span_has_valid_order(previous_span)) {
+            error.add_label(DiagnosticLabel{previous_span, previous_label, false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "match arms are checked in source order, and the earlier arm already covers this pattern",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove the duplicate arm or merge its body with the earlier arm",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void note_enum_match_coverage(const Pattern& pattern,
                                   const EnumCaseInfo& case_info,
                                   const IrMatchArm& lowered_arm,
@@ -12359,10 +12381,18 @@ private:
             bool_payload_value
         );
         if (result == EnumCoverageResult::DuplicateCase) {
-            fail(pattern.loc, "duplicate match arm for enum case '" + pattern.case_name + "'");
+            fail_duplicate_enum_match_arm(
+                pattern.loc,
+                coverage.has_duplicate_previous_loc ? coverage.duplicate_previous_loc : pattern.loc,
+                "duplicate match arm for enum case '" + pattern.case_name + "'",
+                "previous arm for enum case '" + pattern.case_name + "' is here");
         }
         if (result == EnumCoverageResult::DuplicatePayloadPattern) {
-            fail(pattern.loc, "duplicate match arm for enum payload pattern '" + pattern.case_name + "'");
+            fail_duplicate_enum_match_arm(
+                pattern.loc,
+                coverage.has_duplicate_previous_loc ? coverage.duplicate_previous_loc : pattern.loc,
+                "duplicate match arm for enum payload pattern '" + pattern.case_name + "'",
+                "previous arm for enum payload pattern '" + pattern.case_name + "' is here");
         }
     }
 

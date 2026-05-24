@@ -804,27 +804,45 @@ EnumCoverageResult note_enum_match_coverage(EnumMatchCoverage& coverage,
                                             bool covers_case,
                                             bool bool_payload_literal,
                                             bool bool_payload_value) {
+    coverage.has_duplicate_previous_loc = false;
+    coverage.duplicate_previous_loc = SourceLocation{};
     if (!arm.payload_literal_conditions.empty() ||
         !arm.payload_range_conditions.empty() ||
         !arm.payload_vector_length_conditions.empty() ||
         !arm.payload_enum_conditions.empty()) {
         covers_case = false;
     }
-    if (coverage.covered_tags.count(arm.enum_tag)) return EnumCoverageResult::DuplicateCase;
+    if (coverage.covered_tags.count(arm.enum_tag)) {
+        auto found = coverage.covered_tag_locs.find(arm.enum_tag);
+        if (found != coverage.covered_tag_locs.end()) {
+            coverage.duplicate_previous_loc = found->second;
+            coverage.has_duplicate_previous_loc = true;
+        }
+        return EnumCoverageResult::DuplicateCase;
+    }
     if (covers_case) {
         coverage.covered_tags.insert(arm.enum_tag);
+        coverage.covered_tag_locs.emplace(arm.enum_tag, arm.loc);
         return EnumCoverageResult::Added;
     }
 
-    if (!coverage.covered_payload_literals.insert(enum_payload_pattern_coverage_key(arm)).second) {
+    std::string payload_key = enum_payload_pattern_coverage_key(arm);
+    if (!coverage.covered_payload_literals.insert(payload_key).second) {
+        auto found = coverage.covered_payload_literal_locs.find(payload_key);
+        if (found != coverage.covered_payload_literal_locs.end()) {
+            coverage.duplicate_previous_loc = found->second;
+            coverage.has_duplicate_previous_loc = true;
+        }
         return EnumCoverageResult::DuplicatePayloadPattern;
     }
+    coverage.covered_payload_literal_locs.emplace(payload_key, arm.loc);
     if (bool_payload_literal) {
         unsigned bit = bool_payload_value ? 0b10 : 0b01;
         unsigned& mask = coverage.covered_bool_payloads[arm.enum_tag];
         mask |= bit;
         if ((mask & 0b11) == 0b11) {
             coverage.covered_tags.insert(arm.enum_tag);
+            coverage.covered_tag_locs.emplace(arm.enum_tag, arm.loc);
         }
     }
     return EnumCoverageResult::Added;

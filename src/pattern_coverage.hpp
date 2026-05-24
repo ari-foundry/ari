@@ -29,8 +29,12 @@ struct ScalarMatchCoverage {
 struct EnumMatchCoverage {
     bool has_wildcard = false;
     std::set<std::uint32_t> covered_tags;
+    std::map<std::uint32_t, SourceLocation> covered_tag_locs;
     std::set<std::string> covered_payload_literals;
+    std::map<std::string, SourceLocation> covered_payload_literal_locs;
     std::map<std::uint32_t, unsigned> covered_bool_payloads;
+    bool has_duplicate_previous_loc = false;
+    SourceLocation duplicate_previous_loc;
 };
 
 enum class EnumCoverageResult {
