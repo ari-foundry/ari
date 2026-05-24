@@ -422,6 +422,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/declaration-index-generic-aggregate.decls $(BUILD_DIR)/compiler-development/artifact/declaration-index-generic-aggregate.decls
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-resolved-index $(BUILD_DIR)/compiler-development/artifact/resolved-index-project-compiler.resolved
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/resolved-index-project-compiler.resolved $(BUILD_DIR)/compiler-development/artifact/resolved-index-project-compiler.resolved
+	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-resolved-index $(BUILD_DIR)/compiler-development/artifact/resolved-index-project-compiler.repeat.resolved
+	cmp -s $(BUILD_DIR)/compiler-development/artifact/resolved-index-project-compiler.resolved $(BUILD_DIR)/compiler-development/artifact/resolved-index-project-compiler.repeat.resolved
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-stage-plan $(BUILD_DIR)/compiler-development/artifact/stage-plan-basic.plan
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan $(BUILD_DIR)/compiler-development/artifact/stage-plan-basic.plan
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-typed-ir $(BUILD_DIR)/compiler-development/artifact/typed-ir-basic.ir
