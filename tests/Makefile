@@ -107,6 +107,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-top-level.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-inline-module.syntax
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-inline-module.syntax
+	$(TARGET) tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-missing-function-close.syntax
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-missing-function-close.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/errors/syntax-recovery-enum-payload.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-enum-payload.syntax
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/syntax-recovery-enum-payload.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-enum-payload.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/errors/syntax-recovery-attribute-token-tree.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-attribute-token-tree.syntax

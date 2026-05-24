@@ -135,6 +135,14 @@ private:
         }
     }
 
+    bool is_recovery_nested_declaration_start() const {
+        if (!is_top_level_start()) return false;
+        if (check(TokenKind::KwFn) && peek(1).kind == TokenKind::LParen) {
+            return false;
+        }
+        return true;
+    }
+
     int delimiter_depth_between(std::size_t begin, std::size_t end) const {
         int depth = 0;
         end = std::min(end, tokens_.size());
@@ -164,6 +172,7 @@ private:
         int depth = delimiter_depth_between(error_pos, pos_);
         while (!check(TokenKind::End)) {
             if (pos_ != error_pos && depth == 0 && is_top_level_start()) return;
+            if (is_recovery_declaration_boundary(error_pos, depth)) return;
             TokenKind kind = tokens_[pos_++].kind;
             switch (kind) {
                 case TokenKind::LParen:
@@ -196,6 +205,7 @@ private:
                 if (check(TokenKind::RBrace)) return;
                 if (pos_ != error_pos && is_top_level_start()) return;
             }
+            if (is_recovery_declaration_boundary(error_pos, depth)) return;
 
             TokenKind kind = tokens_[pos_++].kind;
             switch (kind) {
@@ -218,6 +228,12 @@ private:
                 return;
             }
         }
+    }
+
+    bool is_recovery_declaration_boundary(std::size_t error_pos, int depth) const {
+        if (depth != 1 || pos_ == error_pos || !is_recovery_nested_declaration_start()) return false;
+        if (error_pos >= tokens_.size()) return false;
+        return peek().loc.line > tokens_[error_pos].loc.line;
     }
 
     void synchronize_inline_module_body() {
@@ -1107,10 +1123,15 @@ private:
     }
 
     std::vector<StmtPtr> parse_function_block() {
-        expect(TokenKind::LBrace, "expected {");
+        Token open = expect(TokenKind::LBrace, "expected {");
         std::vector<StmtPtr> body;
         while (!match(TokenKind::RBrace)) {
             if (check(TokenKind::End)) fail(peek().loc, "unterminated function body");
+            if (recovery_diagnostics_ != nullptr &&
+                peek().loc.line > open.loc.line &&
+                is_recovery_nested_declaration_start()) {
+                fail(peek().loc, "unterminated function body");
+            }
             body.push_back(parse_function_body_item());
         }
         return body;

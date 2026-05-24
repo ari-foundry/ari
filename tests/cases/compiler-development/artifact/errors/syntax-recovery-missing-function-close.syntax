@@ -1,0 +1,12 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated function body" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:7:1 source_id=0 bytes=70..72
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:7:1 source_id=0 bytes=70..72
+  Function name=before return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:1:4 source_id=0 bytes=3..9
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:2:3 source_id=0 bytes=23..29
+        Integer value=1 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:2:10 source_id=0 bytes=30..31
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:7:4 source_id=0 bytes=73..78
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:8:3 source_id=0 bytes=92..98
+        Integer value=2 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:8:10 source_id=0 bytes=99..100

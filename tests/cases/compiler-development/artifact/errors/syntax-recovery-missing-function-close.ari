@@ -1,0 +1,9 @@
+fn before() -> i64 {
+  return 1;
+}
+
+fn broken() -> i64 {
+  return 10;
+fn after() -> i64 {
+  return 2;
+}

@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=247
+CompilerArtifactFixtures version=1 group=all entries=249
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -180,6 +180,8 @@ CompilerArtifactFixtures version=1 group=all entries=247
   Fixture group=errors kind=syntax path=errors/syntax-recovery-inline-module.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-item-macro-token-tree.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-item-macro-token-tree.syntax
+  Fixture group=errors kind=source path=errors/syntax-recovery-missing-function-close.ari
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-function-close.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-top-level.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-top-level.syntax
   Fixture group=errors kind=text path=errors/text-line-mismatch.actual.txt
