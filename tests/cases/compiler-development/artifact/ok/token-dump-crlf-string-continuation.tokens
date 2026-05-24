@@ -1,0 +1,17 @@
+token KwFn "fn" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:1:1 source_id=0 bytes=0..2
+token Identifier "main" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:1:4 source_id=0 bytes=3..7
+token LParen "(" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:1:8 source_id=0 bytes=7..8
+token RParen ")" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:1:9 source_id=0 bytes=8..9
+token Arrow "->" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:1:11 source_id=0 bytes=10..12
+token Identifier "i64" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:1:14 source_id=0 bytes=13..16
+token LBrace "{" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:1:18 source_id=0 bytes=17..18
+token KwLet "let" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:2:3 source_id=0 bytes=22..25
+token Identifier "text" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:2:7 source_id=0 bytes=26..30
+token Equal "=" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:2:12 source_id=0 bytes=31..32
+token String "leftright" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:2:14 source_id=0 bytes=33..47
+token Semicolon ";" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:3:7 source_id=0 bytes=47..48
+token KwReturn "return" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:4:3 source_id=0 bytes=52..58
+token Integer "0" value=0 @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:4:10 source_id=0 bytes=59..60
+token Semicolon ";" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:4:11 source_id=0 bytes=60..61
+token RBrace "}" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:5:1 source_id=0 bytes=63..64
+token End "" @ build/compiler-development/artifact/token-dump-crlf-string-continuation.ari:6:1 source_id=0 bytes=66..66

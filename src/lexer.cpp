@@ -507,6 +507,9 @@ private:
             case 'x': append_hex_byte_escape(text, escape_loc); break;
             case 'u': append_unicode_escape(text, escape_loc, 4); break;
             case 'U': append_unicode_escape(text, escape_loc, 8); break;
+            case '\r':
+                if (match('\n')) break;
+                fail(escape_loc, "unsupported string escape");
             case '\n':
                 break;
             case '\0':

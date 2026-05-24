@@ -91,12 +91,15 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	grep -q 'CompilerArtifactFixtures version=1 group=ok' $(BUILD_DIR)/compiler-development/artifact/artifact-fixtures-ok.inventory
 	if grep -q ' group=errors ' $(BUILD_DIR)/compiler-development/artifact/artifact-fixtures-ok.inventory; then exit 1; fi
 	python3 tests/materialize_crlf_fixture.py tests/cases/compiler-development/artifact/ok/source-map-crlf-template.ari $(BUILD_DIR)/compiler-development/artifact/source-map-crlf.ari
+	python3 tests/materialize_crlf_fixture.py tests/cases/compiler-development/artifact/ok/token-dump-crlf-string-continuation-template.ari $(BUILD_DIR)/compiler-development/artifact/token-dump-crlf-string-continuation.ari
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-basic.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-basic.tokens
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-lexical-surface.tokens
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-lexical-surface.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-lexical-surface.tokens
 	$(TARGET) $(BUILD_DIR)/compiler-development/artifact/source-map-crlf.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-crlf.tokens
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-crlf.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-crlf.tokens
+	$(TARGET) $(BUILD_DIR)/compiler-development/artifact/token-dump-crlf-string-continuation.ari --emit-tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-crlf-string-continuation.tokens
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/token-dump-crlf-string-continuation.tokens $(BUILD_DIR)/compiler-development/artifact/token-dump-crlf-string-continuation.tokens
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-dump-basic.syntax
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-dump-basic.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/ok/syntax-declarations.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-declarations.syntax
