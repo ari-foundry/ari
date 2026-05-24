@@ -33,7 +33,16 @@ private:
     }
 
     std::string loc(SourceLocation loc) const {
-        return " @" + source_name_ + ":" + std::to_string(loc.line) + ":" + std::to_string(loc.column);
+        if (span_has_source(loc.span) && span_has_valid_order(loc.span)) {
+            SourceLocation span_loc = source_location_for_span(loc.span);
+            if (has_source_name(span_loc)) loc = std::move(span_loc);
+        } else if (loc.source_name.empty() && valid_source_id(loc.source_id)) {
+            if (const SourceFile* source = find_source_file(loc.source_id)) {
+                loc.source_name = source->display_name;
+            }
+        }
+        const std::string& display_source = loc.source_name.empty() ? source_name_ : loc.source_name;
+        return " @" + display_source + ":" + std::to_string(loc.line) + ":" + std::to_string(loc.column);
     }
 
     static std::string quote(const std::string& text) {
