@@ -5664,9 +5664,55 @@ private:
         return local_scopes_.require_for_restore(name);
     }
 
+    static std::string unavailable_binding_help(const std::string& name, LocalState state) {
+        switch (state) {
+            case LocalState::Moved:
+                return "move this use before the move of '" + name + "' or bind a fresh value";
+            case LocalState::Dropped:
+                return "move this use before the drop of '" + name + "' or assign a new value before using it";
+            case LocalState::MaybeUnavailable:
+                return "ensure every control-flow path leaves '" + name + "' available before this use";
+            case LocalState::Alive:
+                break;
+        }
+        return "use '" + name + "' only while the binding is available";
+    }
+
+    [[noreturn]] static void fail_unavailable_binding(SourceLocation loc,
+                                                      const std::string& name,
+                                                      const LocalInfo& local) {
+        std::optional<std::string> message = local_unavailable_binding_error(name, local);
+        if (!message) {
+            throw CompileError(std::move(loc), "internal error: available binding '" + name + "' reported as unavailable");
+        }
+
+        Span use_span = span_from_location(loc);
+        CompileError error(std::move(loc), *message);
+        Span declaration_span = span_from_location(local.loc);
+        if (span_has_source(declaration_span) &&
+            span_has_valid_order(declaration_span) &&
+            !(declaration_span.source_id.value == use_span.source_id.value &&
+              declaration_span.start == use_span.start &&
+              declaration_span.end == use_span.end)) {
+            error.add_label(DiagnosticLabel{
+                declaration_span,
+                "binding '" + name + "' was declared here",
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "ownership state is tracked after moves, drops, and control-flow joins",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            unavailable_binding_help(name, local.state),
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     LocalInfo& require_live_local(SourceLocation loc, const std::string& name) {
         LocalInfo& local = require_local_slot(loc, name);
-        if (auto error = local_unavailable_binding_error(name, local)) fail(loc, *error);
+        if (local_unavailable_binding_error(name, local)) fail_unavailable_binding(loc, name, local);
         return local;
     }
 
@@ -10184,7 +10230,9 @@ private:
             if (LocalInfo* local_slot = find_local_slot(expr.name)) {
                 LocalInfo& local = *local_slot;
                 if (is_owner_type(local.type) && has_aggregate_enum_layout(local.type)) {
-                    if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
+                    if (local_unavailable_binding_error(expr.name, local)) {
+                        fail_unavailable_binding(expr.loc, expr.name, local);
+                    }
                     require_can_read_borrow_path(expr.loc, expr.name, local, "");
                     require_zone_pointer_valid(expr.loc, expr.name, local);
                     copy_aggregate_borrow_sources_to_temporaries(expr.loc, expr.name, local);
@@ -10677,8 +10725,8 @@ private:
             LocalInfo* local_slot = find_local_slot(borrowed_source->name);
             if (!local_slot) return false;
             LocalInfo& local = *local_slot;
-            if (auto error = local_unavailable_binding_error(borrowed_source->name, local)) {
-                fail(expr.loc, *error);
+            if (local_unavailable_binding_error(borrowed_source->name, local)) {
+                fail_unavailable_binding(expr.loc, borrowed_source->name, local);
             }
             if (!is_borrow_type(local.type)) return false;
 
@@ -10702,7 +10750,9 @@ private:
             LocalInfo* local_slot = find_local_slot(expr.name);
             if (!local_slot) return false;
             LocalInfo& local = *local_slot;
-            if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
+            if (local_unavailable_binding_error(expr.name, local)) {
+                fail_unavailable_binding(expr.loc, expr.name, local);
+            }
             require_zone_pointer_valid(expr.loc, expr.name, local);
             out.base_name = expr.name;
             out.base_type = local.type;
@@ -11319,7 +11369,9 @@ private:
         if (local.state == LocalState::MaybeUnavailable || local_has_maybe_unavailable_owner(local)) {
             fail(stmt.loc, "owning binding '" + drop_name + "' may be unavailable before drop");
         }
-        if (auto error = local_unavailable_binding_error(drop_name, local)) fail(stmt.loc, *error);
+        if (local_unavailable_binding_error(drop_name, local)) {
+            fail_unavailable_binding(stmt.loc, drop_name, local);
+        }
         require_not_borrowed(stmt.loc, drop_name, local, "drop");
         require_zone_pointer_valid(stmt.loc, drop_name, local);
         if (local.type.qualifier == TypeQualifier::Own && local.type.primitive == IrPrimitiveKind::Zone) {
@@ -11343,7 +11395,9 @@ private:
         const std::string& forget_name = stmt_drop_name(stmt);
         LocalInfo& local = require_local_slot(stmt.loc, forget_name);
         if (local.state != LocalState::Alive && local.state != LocalState::MaybeUnavailable) {
-            if (auto error = local_unavailable_binding_error(forget_name, local)) fail(stmt.loc, *error);
+            if (local_unavailable_binding_error(forget_name, local)) {
+                fail_unavailable_binding(stmt.loc, forget_name, local);
+            }
         }
         const bool has_owner_to_forget =
             local_has_live_owner(local) || local_has_maybe_unavailable_owner(local);
@@ -17990,7 +18044,9 @@ private:
     IrExprPtr make_lambda_capture_value_expr(const LambdaCaptureUse& capture) {
         LocalInfo* local = find_local_slot(capture.name);
         if (!local) fail(capture.loc, "unknown lambda capture '" + capture.name + "'");
-        if (auto error = local_unavailable_binding_error(capture.name, *local)) fail(capture.loc, *error);
+        if (local_unavailable_binding_error(capture.name, *local)) {
+            fail_unavailable_binding(capture.loc, capture.name, *local);
+        }
         if (local->zone_pointer) {
             fail(capture.loc,
                  "lambda capture of zone pointer binding '" + capture.name +
@@ -18320,7 +18376,9 @@ private:
                     fail(expr.loc, "unknown name '" + expr.name + "'");
                 }
                 LocalInfo& local = *local_slot;
-                if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
+                if (local_unavailable_binding_error(expr.name, local)) {
+                    fail_unavailable_binding(expr.loc, expr.name, local);
+                }
                 if (is_borrow_type(local.type) && local.borrow_sources_released) {
                     fail(expr.loc, "cannot use expired borrow binding '" + expr.name + "'");
                 }
@@ -18618,7 +18676,9 @@ private:
             LocalInfo* local_slot = find_local_slot(expr.name);
             if (local_slot && is_owner_type(local_slot->type)) {
                 LocalInfo& local = *local_slot;
-                if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
+                if (local_unavailable_binding_error(expr.name, local)) {
+                    fail_unavailable_binding(expr.loc, expr.name, local);
+                }
                 require_can_read_borrow_path(expr.loc, expr.name, local, "");
                 return make_local_lvalue_expr(expr.loc, expr.name, local.type);
             }
@@ -21182,8 +21242,8 @@ private:
             if (operand->kind == ExprKind::Name) {
                 if (LocalInfo* source = find_local_slot(operand->name)) {
                     if (is_borrow_type(source->type)) {
-                        if (auto error = local_unavailable_binding_error(operand->name, *source)) {
-                            fail(expr.loc, *error);
+                        if (local_unavailable_binding_error(operand->name, *source)) {
+                            fail_unavailable_binding(expr.loc, operand->name, *source);
                         }
                         require_can_reborrow(expr.loc, operand->name, *source, expr.mutable_borrow);
                         add_borrow_source(*source, "", expr.mutable_borrow);
@@ -23080,7 +23140,7 @@ private:
     void require_slice_view_receiver(SourceLocation loc,
                                      const std::string& name,
                                      const LocalInfo& local) const {
-        if (auto error = local_unavailable_binding_error(name, local)) fail(loc, *error);
+        if (local_unavailable_binding_error(name, local)) fail_unavailable_binding(loc, name, local);
         if (auto error = local_method_mutability_error(name, local, "as_slice")) fail(loc, *error);
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
             fail(loc, "as_slice currently supports copyable element arrays and vectors only");
@@ -23200,8 +23260,8 @@ private:
             if (LocalInfo* local = find_local_slot(arg_expr.name)) {
                 if (local->type.primitive == IrPrimitiveKind::Array ||
                     local->type.primitive == IrPrimitiveKind::Vector) {
-                    if (auto error = local_unavailable_binding_error(arg_expr.name, *local)) {
-                        fail(arg_expr.loc, *error);
+                    if (local_unavailable_binding_error(arg_expr.name, *local)) {
+                        fail_unavailable_binding(arg_expr.loc, arg_expr.name, *local);
                     }
                     require_can_read_borrow_path(arg_expr.loc, arg_expr.name, *local, "");
                     require_zone_pointer_valid(arg_expr.loc, arg_expr.name, *local);
@@ -23410,7 +23470,7 @@ private:
                                              const std::string& name,
                                              LocalInfo& local,
                                              const std::string& method_name) {
-        if (auto error = local_unavailable_binding_error(name, local)) fail(loc, *error);
+        if (local_unavailable_binding_error(name, local)) fail_unavailable_binding(loc, name, local);
         if (auto error = local_method_mutability_error(name, local, "Vec." + method_name)) fail(loc, *error);
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
             fail(loc, "Vec." + method_name + " currently supports copyable element vectors only");
@@ -23422,7 +23482,7 @@ private:
                                               const std::string& name,
                                               const LocalInfo& local,
                                               const std::string& method_name) const {
-        if (auto error = local_unavailable_binding_error(name, local)) fail(loc, *error);
+        if (local_unavailable_binding_error(name, local)) fail_unavailable_binding(loc, name, local);
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
             fail(loc, "Vec." + method_name + " currently supports copyable element vectors only");
         }
@@ -25178,8 +25238,8 @@ private:
                 LocalInfo& local = *local_slot;
                 if (local.type.qualifier == TypeQualifier::Own &&
                     local.type.primitive == IrPrimitiveKind::TraitObject) {
-                    if (auto error = local_unavailable_binding_error(receiver_source.name, local)) {
-                        fail(receiver_source.loc, *error);
+                    if (local_unavailable_binding_error(receiver_source.name, local)) {
+                        fail_unavailable_binding(receiver_source.loc, receiver_source.name, local);
                     }
                     require_can_read_borrow_path(receiver_source.loc, receiver_source.name, local, "");
                     require_zone_pointer_valid(receiver_source.loc, receiver_source.name, local);

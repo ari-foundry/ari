@@ -14,6 +14,34 @@ namespace {
     throw CompileError(loc, message);
 }
 
+static bool same_span_for_diagnostic(Span lhs, Span rhs) {
+    return lhs.source_id.value == rhs.source_id.value && lhs.start == rhs.start && lhs.end == rhs.end;
+}
+
+[[noreturn]] void fail_borrow_state(SourceLocation loc,
+                                    const std::string& name,
+                                    const LocalInfo& local,
+                                    const std::string& message,
+                                    const std::string& help) {
+    Span use_span = span_from_location(loc);
+    CompileError error(std::move(loc), message);
+    Span declaration_span = span_from_location(local.loc);
+    if (span_has_source(declaration_span) &&
+        span_has_valid_order(declaration_span) &&
+        !same_span_for_diagnostic(declaration_span, use_span)) {
+        error.add_label(DiagnosticLabel{
+            declaration_span,
+            "borrowed binding '" + name + "' was declared here",
+            false});
+    }
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "borrow state is tracked for each binding and overlapping aggregate field",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{std::nullopt, help, DiagnosticNoteKind::Help});
+    throw error;
+}
+
 } // namespace
 
 BorrowContext::BorrowContext(LocalScopeStack& local_scopes) : local_scopes_(local_scopes) {}
@@ -109,7 +137,12 @@ void require_not_borrowed(SourceLocation loc,
                           const LocalInfo& local,
                           const std::string& action) {
     if (local_has_active_borrows(local) || local_has_active_field_borrows(local)) {
-        fail_borrow(loc, "cannot " + action + " borrowed binding '" + name + "'");
+        fail_borrow_state(
+            std::move(loc),
+            name,
+            local,
+            "cannot " + action + " borrowed binding '" + name + "'",
+            "end the active borrow of '" + name + "' before trying to " + action);
     }
 }
 
@@ -119,12 +152,22 @@ void require_can_read_borrow_path(SourceLocation loc,
                                   const std::string& path) {
     if (path.empty()) {
         if (local_has_mutable_borrows(local) || local_has_mutable_field_borrows(local)) {
-            fail_borrow(loc, "cannot read mutably borrowed binding '" + name + "'");
+            fail_borrow_state(
+                std::move(loc),
+                name,
+                local,
+                "cannot read mutably borrowed binding '" + name + "'",
+                "end the mutable borrow of '" + name + "' before reading it");
         }
         return;
     }
     if (local_has_mutable_borrows(local) || local_has_overlapping_mutable_field_borrows(local, path)) {
-        fail_borrow(loc, "cannot read mutably borrowed field '" + local_borrow_path_display(name, path) + "'");
+        fail_borrow_state(
+            std::move(loc),
+            name,
+            local,
+            "cannot read mutably borrowed field '" + local_borrow_path_display(name, path) + "'",
+            "end the overlapping mutable borrow before reading this field");
     }
 }
 
@@ -137,7 +180,12 @@ void require_can_assign_borrow_path(SourceLocation loc,
         return;
     }
     if (local_has_active_borrows(local) || local_has_overlapping_field_borrows(local, path)) {
-        fail_borrow(loc, "cannot assign to borrowed field '" + local_borrow_path_display(name, path) + "'");
+        fail_borrow_state(
+            std::move(loc),
+            name,
+            local,
+            "cannot assign to borrowed field '" + local_borrow_path_display(name, path) + "'",
+            "end the overlapping borrow before assigning to this field");
     }
 }
 
@@ -149,23 +197,43 @@ void require_can_borrow_path(SourceLocation loc,
     if (path.empty()) {
         if (mutable_borrow) {
             if (local_has_active_borrows(local) || local_has_active_field_borrows(local)) {
-                fail_borrow(loc, "cannot mutably borrow already borrowed binding '" + name + "'");
+                fail_borrow_state(
+                    std::move(loc),
+                    name,
+                    local,
+                    "cannot mutably borrow already borrowed binding '" + name + "'",
+                    "end existing borrows of '" + name + "' before taking a mutable borrow");
             }
             return;
         }
         if (local_has_mutable_borrows(local) || local_has_mutable_field_borrows(local)) {
-            fail_borrow(loc, "cannot immutably borrow mutably borrowed binding '" + name + "'");
+            fail_borrow_state(
+                std::move(loc),
+                name,
+                local,
+                "cannot immutably borrow mutably borrowed binding '" + name + "'",
+                "end the mutable borrow of '" + name + "' before taking a shared borrow");
         }
         return;
     }
     if (mutable_borrow) {
         if (local_has_active_borrows(local) || local_has_overlapping_field_borrows(local, path)) {
-            fail_borrow(loc, "cannot mutably borrow already borrowed field '" + local_borrow_path_display(name, path) + "'");
+            fail_borrow_state(
+                std::move(loc),
+                name,
+                local,
+                "cannot mutably borrow already borrowed field '" + local_borrow_path_display(name, path) + "'",
+                "end existing overlapping field borrows before taking a mutable borrow");
         }
         return;
     }
     if (local_has_mutable_borrows(local) || local_has_overlapping_mutable_field_borrows(local, path)) {
-        fail_borrow(loc, "cannot immutably borrow mutably borrowed field '" + local_borrow_path_display(name, path) + "'");
+        fail_borrow_state(
+            std::move(loc),
+            name,
+            local,
+            "cannot immutably borrow mutably borrowed field '" + local_borrow_path_display(name, path) + "'",
+            "end the overlapping mutable field borrow before taking a shared borrow");
     }
 }
 

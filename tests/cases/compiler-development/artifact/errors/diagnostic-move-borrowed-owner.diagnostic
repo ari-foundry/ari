@@ -1,4 +1,8 @@
-diagnostic error code=O0001 family=ownership message="cannot move borrowed binding 'token'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=O0001 family=ownership message="cannot move borrowed binding 'token'" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.ari" bytes=171
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.ari" line=8 column=32 end_line=8 end_column=37 byte_start=161 byte_end=166 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.ari:8:32\n   |\n 8 |   return needs_both(ref token, token);\n   |                                ^^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.ari" line=7 column=7 end_line=7 end_column=12 byte_start=110 byte_end=115 message="borrowed binding 'token' was declared here"
+  Snippet label=1 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.ari:7:7\n   |\n 7 |   let token: own i64 = 5;\n   |       ^^^^^"
+  Note index=0 location=none message="borrow state is tracked for each binding and overlapping aggregate field"
+  Help index=0 location=none message="end the active borrow of 'token' before trying to move"
