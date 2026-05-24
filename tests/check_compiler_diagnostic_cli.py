@@ -46,6 +46,7 @@ def main():
         "DiagnosticCatalog version=1",
         "code=P0001 family=parser owner=src/parser.cpp",
         "code=A0001 family=abi owner=src/aggregate_abi.cpp",
+        "code=C0001 family=cli owner=src/driver.cpp",
         "code=ari/compiler family=general owner=src/driver.cpp",
     )
     ok &= require_success(
@@ -54,6 +55,13 @@ def main():
         "family=parser",
         "owner=src/parser.cpp",
         "artifact=\"--emit-diagnostics\"",
+    )
+    ok &= require_success(
+        run_ari("--explain-diagnostic", "C0001"),
+        "DiagnosticExplanation version=1 code=C0001 status=known",
+        "family=cli",
+        "owner=src/driver.cpp",
+        "command-line usage, option conflicts, removed flags, and artifact mode validation",
     )
     ok &= require_success(
         run_ari("--explain-diagnostic", "Z9999"),

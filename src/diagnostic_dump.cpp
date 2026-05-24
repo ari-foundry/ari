@@ -27,7 +27,8 @@ static const DiagnosticCatalogEntry kDiagnosticCatalogEntries[] = {
     {"I0001", "ir", "src/ir.hpp", "typed IR lowering and resolved compiler facts"},
     {"A0001", "abi", "src/aggregate_abi.cpp", "ABI layout, C FFI declarations, C headers, and link-boundary checks"},
     {"B0001", "backend", "src/llvm_codegen.cpp", "LLVM, object, executable, shared library, and artifact emission"},
-    {"ari/compiler", "general", "src/driver.cpp", "unclassified transitional CompileError text"},
+    {"C0001", "cli", "src/driver.cpp", "command-line usage, option conflicts, removed flags, and artifact mode validation"},
+    {"ari/compiler", "general", "src/driver.cpp", "reserved fallback for unclassified CompileError text"},
 };
 
 static const DiagnosticCatalogEntry* find_diagnostic_entry(const std::string& code) {
@@ -222,6 +223,39 @@ std::string classify_diagnostic_code(const std::string& message) {
     // This classifier is intentionally conservative while Ari still reports
     // CompileError as text. New structured diagnostics should replace these
     // patterns with explicit codes at the throw site.
+    if (contains(diagnostic, "missing input file") ||
+        contains(diagnostic, "unexpected argument") ||
+        contains(diagnostic, "expects a path") ||
+        contains(diagnostic, "expects an artifact option") ||
+        contains(diagnostic, "expects a diagnostic code") ||
+        contains(diagnostic, "expects a test name substring") ||
+        contains(diagnostic, "expects a feature name") ||
+        contains(diagnostic, "expects an LLVM function symbol") ||
+        contains(diagnostic, "expects a symbol name") ||
+        contains(diagnostic, "expects a compiler path") ||
+        contains(diagnostic, "expects a target triple") ||
+        contains(diagnostic, "expects a pass name") ||
+        contains(diagnostic, "expects a test bucket name") ||
+        contains(diagnostic, "expects a work item name") ||
+        contains(diagnostic, "expects a capability name") ||
+        contains(diagnostic, "expects a library name") ||
+        contains(diagnostic, "was removed;") ||
+        contains(diagnostic, "cannot be combined") ||
+        contains(diagnostic, "requires --emit-") ||
+        contains(diagnostic, "requires at least one --") ||
+        contains(diagnostic, "does not take an input file") ||
+        contains(diagnostic, "compiler information commands cannot be combined") ||
+        contains(diagnostic, "unknown compiler artifact option") ||
+        contains(diagnostic, "unknown compiler pass") ||
+        contains(diagnostic, "unknown compiler test bucket") ||
+        contains(diagnostic, "unknown compiler work item") ||
+        contains(diagnostic, "unknown compiler capability") ||
+        contains(diagnostic, "unsupported target triple") ||
+        contains(diagnostic, "cannot open input file") ||
+        contains(diagnostic, "cannot open output file") ||
+        contains(diagnostic, "cannot set executable permissions")) {
+        return "C0001";
+    }
     if (contains(diagnostic, "unexpected character") ||
         contains(diagnostic, "unexpected byte") ||
         contains(diagnostic, "unterminated string literal") ||
@@ -361,6 +395,7 @@ std::string diagnostic_code_family(const std::string& code) {
     if (code == "I0001") return "ir";
     if (code == "A0001") return "abi";
     if (code == "B0001") return "backend";
+    if (code == "C0001") return "cli";
     return "general";
 }
 

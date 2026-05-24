@@ -1,4 +1,4 @@
-DiagnosticCatalog version=1 entries=9
+DiagnosticCatalog version=1 entries=10
   code=L0001 family=lexer owner=src/lexer.cpp proves="characters, escapes, and invalid tokens"
   code=P0001 family=parser owner=src/parser.cpp proves="grammar, delimiters, and recovery"
   code=M0001 family=module owner=src/module_loader.cpp proves="imports, visibility, metadata, and caches"
@@ -7,4 +7,5 @@ DiagnosticCatalog version=1 entries=9
   code=I0001 family=ir owner=src/ir.hpp proves="typed IR lowering and resolved compiler facts"
   code=A0001 family=abi owner=src/aggregate_abi.cpp proves="ABI layout, C FFI declarations, C headers, and link-boundary checks"
   code=B0001 family=backend owner=src/llvm_codegen.cpp proves="LLVM, object, executable, shared library, and artifact emission"
-  code=ari/compiler family=general owner=src/driver.cpp proves="unclassified transitional CompileError text"
+  code=C0001 family=cli owner=src/driver.cpp proves="command-line usage, option conflicts, removed flags, and artifact mode validation"
+  code=ari/compiler family=general owner=src/driver.cpp proves="reserved fallback for unclassified CompileError text"
