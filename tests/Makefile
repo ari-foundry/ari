@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-source-map-unit check-layout-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-sanitize-run check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-source-map-unit check-layout-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -10,7 +10,13 @@ TOOL_ARI ?= $(TARGET)
 check-sanitize: TARGET := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 $(SANITIZE_TARGET)
 check-sanitize: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1
 check-sanitize: TOOL_ARI := $(SANITIZE_TARGET)
-check-sanitize: $(SANITIZE_TARGET) check
+check-sanitize: $(SANITIZE_TARGET)
+	+$(MAKE) check-sanitize-run
+
+check-sanitize-run: TARGET := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 $(SANITIZE_TARGET)
+check-sanitize-run: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1
+check-sanitize-run: TOOL_ARI := $(SANITIZE_TARGET)
+check-sanitize-run: check
 
 check: check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-bootstrap-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-errors
 	mkdir -p $(BUILD_DIR)/ir
@@ -3995,14 +4001,14 @@ check-modules: $(TARGET)
 	$(TARGET) tests/cases/modules/ok/same-filename-project-main.ari -o $(BUILD_DIR)/modules/same-filename-project-main.elf
 	$(BUILD_DIR)/modules/same-filename-project-main.elf; code=$$?; test $$code -eq 33
 	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --emit-module-graph $(BUILD_DIR)/modules/project-compiler-main.graph
-	grep -q "Source id=3 module=project_compiler::parser" $(BUILD_DIR)/modules/project-compiler-main.graph
+	grep -E -q "Source ordinal=3 source_id=[0-9]+ module=project_compiler::parser .*path=tests/cases/modules/ok/project_compiler/parse.ari" $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -q "Import owner=project_compiler module=project_compiler::parser local=parse visibility=pub" $(BUILD_DIR)/modules/project-compiler-main.graph
 	grep -q "Item module=project_compiler::symbols kind=fn name=project_compiler::symbols::private_bias visibility=private" $(BUILD_DIR)/modules/project-compiler-main.graph
 	$(TARGET) tests/cases/modules/ok/same-filename-project-main.ari --emit-module-graph $(BUILD_DIR)/modules/same-filename-project-main.graph
 	$(TARGET) tests/cases/modules/ok/same-filename-project-main.ari --emit-module-graph $(BUILD_DIR)/modules/same-filename-project-main.repeat.graph
 	cmp -s $(BUILD_DIR)/modules/same-filename-project-main.graph $(BUILD_DIR)/modules/same-filename-project-main.repeat.graph
-	grep -q "Source id=3 module=same_filename_project::left::util" $(BUILD_DIR)/modules/same-filename-project-main.graph
-	grep -q "Source id=5 module=same_filename_project::right::util" $(BUILD_DIR)/modules/same-filename-project-main.graph
+	grep -E -q "Source ordinal=3 source_id=[0-9]+ module=same_filename_project::left::util .*path=tests/cases/modules/ok/same_filename_project/left/util.ari" $(BUILD_DIR)/modules/same-filename-project-main.graph
+	grep -E -q "Source ordinal=5 source_id=[0-9]+ module=same_filename_project::right::util .*path=tests/cases/modules/ok/same_filename_project/right/util.ari" $(BUILD_DIR)/modules/same-filename-project-main.graph
 	$(TARGET) --module-path tests/packages tests/cases/modules/ok/package-module-main.ari -o $(BUILD_DIR)/modules/package-module-main.elf
 	$(BUILD_DIR)/modules/package-module-main.elf; code=$$?; test $$code -eq 31
 	$(TARGET) -Itests/packages tests/cases/modules/ok/package-module-main.ari --emit-llvm $(BUILD_DIR)/modules/package-module-main.ll
