@@ -20,9 +20,78 @@ namespace ari {
 
 namespace {
 
-std::string read_file(const std::string& path) {
+[[noreturn]] void fail_module_cache_open(const std::string& path) {
+    CompileError error("cannot open module cache file '" + path + "'");
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "module cache reuse starts by reading the exact cache file passed with --use-module-cache",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "check the cache path or regenerate it with --emit-module-cache",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
+[[noreturn]] void fail_invalid_module_cache(const std::string& display_path,
+                                            const std::string& detail) {
+    CompileError error("invalid module cache '" + display_path + "': " + detail);
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "module cache files are compiler-owned artifacts with versioned source, AST summary, IR summary, and metadata records",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "regenerate the cache with --emit-module-cache instead of editing the artifact by hand",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
+[[noreturn]] void fail_invalid_module_cache_line(const std::string& display_path,
+                                                 std::size_t line,
+                                                 const std::string& detail) {
+    fail_invalid_module_cache(display_path, "line " + std::to_string(line) + ": " + detail);
+}
+
+[[noreturn]] void fail_module_cache_stale(const std::string& display_path,
+                                          const std::string& detail) {
+    CompileError error("module cache '" + display_path + "' is stale: " + detail +
+                       "; regenerate it with --emit-module-cache");
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "Ari validates module cache format, options, source hashes, imports, and summaries against the current source graph before reuse",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "regenerate the module cache after changing source files, module paths, cfg features, target options, or compiler cache format",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
+[[noreturn]] void fail_module_cache_ast_mismatch(const std::string& source,
+                                                 const std::string& detail) {
+    CompileError error("module cache AST summary for " + source +
+                       " does not match parsed source: " + detail +
+                       "; regenerate it with --emit-module-cache");
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "cached AST summaries are checked against the freshly parsed declaration surface before the cache can be replayed",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "regenerate the module cache after changing declarations in this source file",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
+std::string read_file_for_cache_validation(const std::string& path,
+                                           const std::string& display_path) {
     std::ifstream in(path, std::ios::binary);
-    if (!in) throw CompileError("cannot open input file '" + path + "'");
+    if (!in) {
+        fail_module_cache_stale(
+            display_path,
+            "source file '" + path + "' cannot be read while validating the cache");
+    }
     std::ostringstream ss;
     ss << in.rdbuf();
     return ss.str();
@@ -99,8 +168,7 @@ std::string unescape_field(const std::string& text, const std::string& display_p
             continue;
         }
         if (i + 1 >= text.size()) {
-            throw CompileError("invalid module cache '" + display_path + "' at line " +
-                               std::to_string(line) + ": dangling escape");
+            fail_invalid_module_cache_line(display_path, line, "dangling escape");
         }
         char next = text[++i];
         switch (next) {
@@ -109,8 +177,7 @@ std::string unescape_field(const std::string& text, const std::string& display_p
             case 'n': unescaped.push_back('\n'); break;
             case 'r': unescaped.push_back('\r'); break;
             default:
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line) + ": unknown escape");
+                fail_invalid_module_cache_line(display_path, line, "unknown escape");
         }
     }
     return unescaped;
@@ -136,8 +203,7 @@ std::vector<std::string> split_cache_line(const std::string& line,
 bool parse_bool_field(const std::string& value, const std::string& display_path, std::size_t line) {
     if (value == "0") return false;
     if (value == "1") return true;
-    throw CompileError("invalid module cache '" + display_path + "' at line " +
-                       std::to_string(line) + ": expected boolean 0 or 1");
+    fail_invalid_module_cache_line(display_path, line, "expected boolean 0 or 1");
 }
 
 void write_line(std::ostringstream& out, const std::vector<std::string>& fields) {
@@ -157,8 +223,7 @@ std::string display_module_name(const std::string& module_name) {
 }
 
 void fail_stale(const std::string& display_path, const std::string& detail) {
-    throw CompileError("module cache '" + display_path + "' is stale: " + detail +
-                       "; regenerate it with --emit-module-cache");
+    fail_module_cache_stale(display_path, detail);
 }
 
 void require_same_search_paths(const ModuleCache& cache,
@@ -242,19 +307,16 @@ std::uint64_t parse_count_field(const std::string& value,
                                 const std::string& display_path,
                                 std::size_t line) {
     if (value.empty()) {
-        throw CompileError("invalid module cache '" + display_path + "' at line " +
-                           std::to_string(line) + ": expected non-negative count");
+        fail_invalid_module_cache_line(display_path, line, "expected non-negative count");
     }
     std::uint64_t result = 0;
     for (char c : value) {
         if (c < '0' || c > '9') {
-            throw CompileError("invalid module cache '" + display_path + "' at line " +
-                               std::to_string(line) + ": expected non-negative count");
+            fail_invalid_module_cache_line(display_path, line, "expected non-negative count");
         }
         std::uint64_t digit = static_cast<std::uint64_t>(c - '0');
         if (result > (std::numeric_limits<std::uint64_t>::max() - digit) / 10) {
-            throw CompileError("invalid module cache '" + display_path + "' at line " +
-                               std::to_string(line) + ": count is too large");
+            fail_invalid_module_cache_line(display_path, line, "count is too large");
         }
         result = result * 10 + digit;
     }
@@ -328,8 +390,9 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
         ++line_number;
         if (!saw_header) {
             if (line != kModuleCacheHeader) {
-                throw CompileError("invalid module cache '" + display_path +
-                                   "': expected " + std::string(kModuleCacheHeader) + " header");
+                fail_invalid_module_cache(
+                    display_path,
+                    "expected " + std::string(kModuleCacheHeader) + " header");
             }
             cache.format_version = kModuleCacheFormatVersion;
             saw_header = true;
@@ -340,27 +403,25 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
         const std::string& tag = fields[0];
         if (tag == "metadata") {
             if (fields.size() != 2) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed metadata record");
+                fail_invalid_module_cache_line(display_path, line_number, "malformed metadata record");
             }
             if (saw_metadata) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": duplicate metadata record");
+                fail_invalid_module_cache_line(display_path, line_number, "duplicate metadata record");
             }
             cache.metadata = parse_module_metadata_text(fields[1], display_path + ":metadata");
             saw_metadata = true;
         } else if (tag == "source") {
             if (fields.size() != 6) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed source record");
+                fail_invalid_module_cache_line(display_path, line_number, "malformed source record");
             }
             bool is_root = parse_bool_field(fields[3], display_path, line_number);
             std::string key = source_key(fields[1], fields[2], is_root);
             if (!seen_sources.insert(key).second) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) +
-                                   ": duplicate source record for module '" +
-                                   display_module_name(fields[1]) + "' at '" + fields[2] + "'");
+                fail_invalid_module_cache_line(
+                    display_path,
+                    line_number,
+                    "duplicate source record for module '" +
+                        display_module_name(fields[1]) + "' at '" + fields[2] + "'");
             }
             cache.sources.push_back(ModuleCacheSource{
                 fields[1],
@@ -371,17 +432,17 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
             });
         } else if (tag == "ast-summary") {
             if (fields.size() != 17) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed ast-summary record");
+                fail_invalid_module_cache_line(display_path, line_number, "malformed ast-summary record");
             }
             const std::size_t count_offset = 7;
             bool is_root = parse_bool_field(fields[3], display_path, line_number);
             std::string key = source_key(fields[1], fields[2], is_root);
             if (!seen_ast_summaries.insert(key).second) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) +
-                                   ": duplicate ast-summary record for module '" +
-                                   display_module_name(fields[1]) + "' at '" + fields[2] + "'");
+                fail_invalid_module_cache_line(
+                    display_path,
+                    line_number,
+                    "duplicate ast-summary record for module '" +
+                        display_module_name(fields[1]) + "' at '" + fields[2] + "'");
             }
             ModuleCacheAstSummary summary{
                 fields[1],
@@ -405,16 +466,16 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
             cache.ast_summaries.push_back(std::move(summary));
         } else if (tag == "ir-summary") {
             if (fields.size() != 8) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed ir-summary record");
+                fail_invalid_module_cache_line(display_path, line_number, "malformed ir-summary record");
             }
             bool is_root = parse_bool_field(fields[3], display_path, line_number);
             std::string key = source_key(fields[1], fields[2], is_root);
             if (!seen_ir_summaries.insert(key).second) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) +
-                                   ": duplicate ir-summary record for module '" +
-                                   display_module_name(fields[1]) + "' at '" + fields[2] + "'");
+                fail_invalid_module_cache_line(
+                    display_path,
+                    line_number,
+                    "duplicate ir-summary record for module '" +
+                        display_module_name(fields[1]) + "' at '" + fields[2] + "'");
             }
             ModuleCacheIrSummary summary{
                 fields[1],
@@ -428,24 +489,24 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
             require_valid_module_cache_ir_summary_payload(summary, display_path);
             cache.ir_summaries.push_back(std::move(summary));
         } else {
-            throw CompileError("invalid module cache '" + display_path + "' at line " +
-                               std::to_string(line_number) + ": unknown record");
+            fail_invalid_module_cache_line(display_path, line_number, "unknown record");
         }
     }
 
     if (!saw_header) {
-        throw CompileError("invalid module cache '" + display_path +
-                           "': expected " + std::string(kModuleCacheHeader) + " header");
+        fail_invalid_module_cache(
+            display_path,
+            "expected " + std::string(kModuleCacheHeader) + " header");
     }
     if (!saw_metadata) {
-        throw CompileError("invalid module cache '" + display_path + "': missing metadata record");
+        fail_invalid_module_cache(display_path, "missing metadata record");
     }
     return cache;
 }
 
 ModuleCache read_module_cache_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
-    if (!in) throw CompileError("cannot open module cache file '" + path + "'");
+    if (!in) fail_module_cache_open(path);
     std::ostringstream ss;
     ss << in.rdbuf();
     return parse_module_cache_text(ss.str(), path);
@@ -477,10 +538,7 @@ const ModuleCacheIrSummary* find_module_cache_ir_summary(const ModuleCache& cach
 void require_matching_module_cache_ast_summary(const ModuleCacheAstSummary& expected,
                                                const ModuleCacheAstSummary& actual) {
     auto fail = [&](const std::string& detail) {
-        throw CompileError("module cache AST summary for " +
-                           source_display(actual.module_name, actual.path) +
-                           " does not match parsed source: " + detail +
-                           "; regenerate it with --emit-module-cache");
+        fail_module_cache_ast_mismatch(source_display(actual.module_name, actual.path), detail);
     };
     if (expected.module_name != actual.module_name) fail("module name changed");
     if (expected.path != actual.path) fail("source path changed");
@@ -596,7 +654,7 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
             }
         }
 
-        std::string current = read_file(source.path);
+        std::string current = read_file_for_cache_validation(source.path, display_path);
         std::string current_hash = module_metadata_source_hash(current);
         if (current_hash != source.content_hash) {
             fail_stale(display_path, "source '" + display_module_name(source.module_name) +

@@ -1,1 +1,3 @@
 ari: error: module cache '<build>/compiler-development/artifact/module-cache-target.aricache' is stale: target option changed from 'i686-unknown-linux-gnu' to 'x86_64-pc-linux-gnu'; regenerate it with --emit-module-cache
+  note: Ari validates module cache format, options, source hashes, imports, and summaries against the current source graph before reuse
+  help: regenerate the module cache after changing source files, module paths, cfg features, target options, or compiler cache format
