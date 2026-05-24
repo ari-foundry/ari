@@ -13205,6 +13205,52 @@ private:
         }
     }
 
+    static std::string enum_case_pattern_hint(const EnumInfo::Case& case_info) {
+        if (case_info.payloads.empty()) return case_info.name;
+        std::string hint = case_info.name + "(";
+        for (std::size_t i = 0; i < case_info.payloads.size(); ++i) {
+            if (i != 0) hint += ", ";
+            hint += "_";
+        }
+        hint += ")";
+        return hint;
+    }
+
+    [[noreturn]] static void fail_enum_match_nonexhaustive(
+        SourceLocation loc,
+        const EnumInfo& enum_info,
+        const EnumMatchCoverage& coverage,
+        const std::string& message
+    ) {
+        CompileError error(std::move(loc), message);
+
+        std::string missing_hint;
+        for (const auto& case_info : enum_info.cases) {
+            if (coverage.covered_tags.count(case_info.tag)) continue;
+            Span case_span = span_from_location(case_info.loc);
+            if (span_has_source(case_span) && span_has_valid_order(case_span)) {
+                error.add_label(DiagnosticLabel{
+                    case_span,
+                    "missing enum case '" + case_info.name + "' declared here",
+                    false});
+            }
+            missing_hint = enum_case_pattern_hint(case_info);
+            break;
+        }
+
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "enum matches must cover every case unless a wildcard arm handles the remaining cases",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            missing_hint.empty()
+                ? "add the missing enum case arms or a final _ arm"
+                : "add an arm such as " + missing_hint + " => ... or a final _ arm",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     static void require_match_exhaustive(SourceLocation loc,
                                          const EnumInfo& enum_info,
                                          const EnumMatchCoverage& coverage) {
@@ -13213,7 +13259,7 @@ private:
             enum_info.case_names.size(),
             coverage
         );
-        if (!message.empty()) fail(loc, message);
+        if (!message.empty()) fail_enum_match_nonexhaustive(std::move(loc), enum_info, coverage, message);
     }
 
     static IrType enum_match_value_type(SourceLocation loc, const IrType& enum_value_type) {
