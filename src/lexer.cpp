@@ -180,6 +180,10 @@ private:
         return message == "unterminated block comment";
     }
 
+    static bool is_unterminated_unicode_escape_message(const std::string& message) {
+        return message == "unterminated Unicode escape";
+    }
+
     static bool is_suffix_char(char c) {
         return is_alpha(c) || is_digit(c) || c == '_';
     }
@@ -651,6 +655,15 @@ private:
             error.add_note(DiagnosticNote{
                 std::nullopt,
                 "add */ to close the block comment",
+                DiagnosticNoteKind::Help});
+        } else if (is_unterminated_unicode_escape_message(message)) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "Unicode escapes must close with } before the string literal continues",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "add } after the hexadecimal code point digits",
                 DiagnosticNoteKind::Help});
         }
         throw error;
