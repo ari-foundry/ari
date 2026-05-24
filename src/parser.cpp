@@ -274,6 +274,32 @@ private:
         throw CompileError(std::move(loc), message);
     }
 
+    static void add_location_label_if_valid(CompileError& error,
+                                            SourceLocation loc,
+                                            const std::string& message) {
+        Span span = span_from_location(loc);
+        if (!span_has_source(span) || !span_has_valid_order(span)) return;
+        error.add_label(DiagnosticLabel{span, message, false});
+    }
+
+    [[noreturn]] static void fail_unterminated_delimited(SourceLocation boundary_loc,
+                                                         SourceLocation open_loc,
+                                                         const std::string& message,
+                                                         const std::string& open_label,
+                                                         const std::string& closing_delimiter) {
+        CompileError error(std::move(boundary_loc), message);
+        add_location_label_if_valid(error, open_loc, open_label);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "the parser reached the next declaration or end of file before this construct was closed",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add a matching " + closing_delimiter + " before continuing",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     static std::string token_description(const Token& token) {
         if (token.kind == TokenKind::End) return "end of file";
         if (!token.text.empty()) return "'" + token.text + "'";
@@ -618,11 +644,18 @@ private:
             return;
         }
         if (module_name != local_name) fail(name.loc, "inline modules cannot be aliased; use file-backed `mod name as alias;`");
-        expect(TokenKind::LBrace, "expected { after module name");
+        Token open = expect(TokenKind::LBrace, "expected { after module name");
         current_module_.push_back(name.text);
         try {
             while (!match(TokenKind::RBrace)) {
-                if (check(TokenKind::End)) fail(name.loc, "unterminated module");
+                if (check(TokenKind::End)) {
+                    fail_unterminated_delimited(
+                        peek().loc,
+                        open.loc,
+                        "unterminated module",
+                        "module body starts here",
+                        "}");
+                }
                 if (recovery_diagnostics_ != nullptr) {
                     std::size_t error_pos = pos_;
                     try {
@@ -1007,9 +1040,16 @@ private:
             return decl;
         }
 
-        expect(TokenKind::LBrace, "expected { after struct name");
+        Token open = expect(TokenKind::LBrace, "expected { after struct name");
         while (!match(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(peek().loc, "unterminated struct");
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated struct",
+                    "struct body starts here",
+                    "}");
+            }
             bool mutable_field = match(TokenKind::KwMut);
             Token field = expect(TokenKind::Identifier, "expected struct field name");
             expect(TokenKind::Colon, "expected : after field name");
@@ -1030,9 +1070,16 @@ private:
         decl.loc = name.loc;
         decl.attributes = std::move(attributes);
         decl.generics = parse_generics();
-        expect(TokenKind::LBrace, "expected { after enum name");
+        Token open = expect(TokenKind::LBrace, "expected { after enum name");
         while (!match(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(peek().loc, "unterminated enum");
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated enum",
+                    "enum body starts here",
+                    "}");
+            }
             Token case_name = expect(TokenKind::Identifier, "expected enum case name");
             EnumCase item;
             item.name = case_name.text;
@@ -1066,9 +1113,16 @@ private:
                 decl.supertraits.push_back(parse_type());
             } while (match(TokenKind::Plus));
         }
-        expect(TokenKind::LBrace, "expected { after trait name");
+        Token open = expect(TokenKind::LBrace, "expected { after trait name");
         while (!match(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(name.loc, "unterminated trait");
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated trait",
+                    "trait body starts here",
+                    "}");
+            }
             if (check(TokenKind::Identifier) && peek().text == "type") {
                 decl.associated_types.push_back(parse_trait_associated_type());
                 optional_separator();
@@ -1109,9 +1163,16 @@ private:
         } else {
             decl.for_type = std::move(first);
         }
-        expect(TokenKind::LBrace, "expected { after impl header");
+        Token open = expect(TokenKind::LBrace, "expected { after impl header");
         while (!match(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(peek().loc, "unterminated impl");
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated impl",
+                    "impl body starts here",
+                    "}");
+            }
             bool method_public = match(TokenKind::KwPub);
             if (check(TokenKind::Identifier) && peek().text == "type") {
                 if (method_public) fail(peek().loc, "associated type witnesses cannot use pub");
@@ -1144,9 +1205,21 @@ private:
         Token open = expect(TokenKind::LBrace, "expected {");
         std::vector<StmtPtr> body;
         while (!match(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(peek().loc, "unterminated block");
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated block",
+                    "block starts here",
+                    "}");
+            }
             if (should_recover_at_nested_declaration(open.loc)) {
-                fail(peek().loc, "unterminated block");
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated block",
+                    "block starts here",
+                    "}");
             }
             body.push_back(parse_statement());
         }
@@ -1157,9 +1230,21 @@ private:
         Token open = expect(TokenKind::LBrace, "expected {");
         std::vector<StmtPtr> body;
         while (!match(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(peek().loc, "unterminated function body");
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated function body",
+                    "function body starts here",
+                    "}");
+            }
             if (should_recover_at_nested_declaration(open.loc)) {
-                fail(peek().loc, "unterminated function body");
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated function body",
+                    "function body starts here",
+                    "}");
             }
             body.push_back(parse_function_body_item());
         }
@@ -1787,9 +1872,16 @@ private:
         stmt->kind = StmtKind::Match;
         stmt->loc = match_token.loc;
         stmt->match_value = parse_expression_without_struct_literals();
-        expect(TokenKind::LBrace, "expected { after match value");
+        Token open = expect(TokenKind::LBrace, "expected { after match value");
         while (!match(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(peek().loc, "unterminated match");
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated match",
+                    "match body starts here",
+                    "}");
+            }
             MatchArm arm;
             arm.pattern = parse_pattern();
             arm.loc = arm.pattern.loc;
@@ -2271,18 +2363,30 @@ private:
     std::vector<Token> parse_balanced_token_tree(SourceLocation loc,
                                                  const std::string& expected_open_message,
                                                  const std::string& context) {
-        expect(TokenKind::LParen, expected_open_message);
+        Token open = expect(TokenKind::LParen, expected_open_message);
         std::vector<Token> tokens;
         std::vector<TokenKind> closing_stack{TokenKind::RParen};
         while (!closing_stack.empty()) {
-            if (check(TokenKind::End)) fail(loc, "unterminated " + context);
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated " + context,
+                    context + " starts here",
+                    ")");
+            }
             Token token = peek();
             if (recovery_diagnostics_ != nullptr &&
                 closing_stack.size() == 1 &&
                 token.loc.line > loc.line &&
                 is_top_level_start() &&
                 !has_matching_token_tree_close_ahead(closing_stack.back())) {
-                fail(loc, "unterminated " + context);
+                fail_unterminated_delimited(
+                    token.loc,
+                    open.loc,
+                    "unterminated " + context,
+                    context + " starts here",
+                    ")");
             }
             if (token.kind == closing_stack.back()) {
                 ++pos_;
@@ -2756,9 +2860,21 @@ private:
         std::vector<StmtPtr>& body
     ) {
         while (!check(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(peek().loc, "unterminated " + context);
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open_loc,
+                    "unterminated " + context,
+                    context + " starts here",
+                    "}");
+            }
             if (should_recover_at_nested_declaration(open_loc)) {
-                fail(peek().loc, "unterminated " + context);
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open_loc,
+                    "unterminated " + context,
+                    context + " starts here",
+                    "}");
             }
             bool assignment = is_assignment_statement_start();
             if (starts_expression(peek().kind) && !assignment) {
@@ -2845,10 +2961,17 @@ private:
 
     ExprPtr parse_match_expression(SourceLocation loc) {
         ExprPtr match_value = parse_expression_without_struct_literals();
-        expect(TokenKind::LBrace, "expected { after match value");
+        Token open = expect(TokenKind::LBrace, "expected { after match value");
         std::vector<ExprMatchArm> arms;
         while (!match(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(peek().loc, "unterminated match expression");
+            if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated match expression",
+                    "match expression body starts here",
+                    "}");
+            }
             ExprMatchArm arm;
             arm.pattern = parse_pattern();
             arm.loc = arm.pattern.loc;

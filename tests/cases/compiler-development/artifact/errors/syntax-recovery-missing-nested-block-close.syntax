@@ -2,6 +2,9 @@ Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-
   ParseDiagnostics count=1
     ParseDiagnostic message="unterminated block" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:4:1 source_id=0 bytes=47..49
       PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:4:1 source_id=0 bytes=47..49
+      SecondaryLabel message="block starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:2:11 source_id=0 bytes=31..32
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching } before continuing"
   Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:4:4 source_id=0 bytes=50..55
     Body
       Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-nested-block-close.ari:5:3 source_id=0 bytes=69..75

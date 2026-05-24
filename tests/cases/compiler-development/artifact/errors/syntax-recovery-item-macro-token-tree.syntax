@@ -1,7 +1,10 @@
 Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.ari
   ParseDiagnostics count=1
-    ParseDiagnostic message="unterminated macro invocation" @tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.ari:1:7 source_id=0 bytes=6..7
-      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.ari:1:7 source_id=0 bytes=6..7
+    ParseDiagnostic message="unterminated macro invocation" @tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.ari:2:1 source_id=0 bytes=14..16
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.ari:2:1 source_id=0 bytes=14..16
+      SecondaryLabel message="macro invocation starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.ari:1:8 source_id=0 bytes=7..8
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching ) before continuing"
   Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.ari:2:4 source_id=0 bytes=17..22
     Body
       Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.ari:3:3 source_id=0 bytes=36..42

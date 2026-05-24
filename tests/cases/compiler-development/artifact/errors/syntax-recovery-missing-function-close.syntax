@@ -2,6 +2,9 @@ Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-
   ParseDiagnostics count=1
     ParseDiagnostic message="unterminated function body" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:7:1 source_id=0 bytes=70..72
       PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:7:1 source_id=0 bytes=70..72
+      SecondaryLabel message="function body starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:5:20 source_id=0 bytes=55..56
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching } before continuing"
   Function name=before return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:1:4 source_id=0 bytes=3..9
     Body
       Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-function-close.ari:2:3 source_id=0 bytes=23..29
