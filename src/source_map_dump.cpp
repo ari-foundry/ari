@@ -85,7 +85,8 @@ std::vector<SourceLine> source_lines(const SourceFile& source) {
 std::string source_key(const SourceMapDumpFile& file) {
     const SourceFile* source = find_source_file(file.source_id);
     std::string path = source == nullptr ? source_id_text(file.source_id) : source->path;
-    return file.module_name + "\t" + path + "\t" + (file.is_root ? "1" : "0");
+    return file.module_name + "\t" + path + "\t" + (file.is_root ? "1" : "0") +
+           "\t" + source_id_text(file.source_id);
 }
 
 } // namespace
