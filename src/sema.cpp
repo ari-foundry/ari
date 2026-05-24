@@ -11860,7 +11860,7 @@ private:
         require_enum_case_access(loc, info);
         require_assignable(loc, expected, info.enum_type);
         if (payloads.size() != info.payloads.size()) {
-            fail(loc, "wrong payload count for enum case '" + info.name + "'");
+            fail_enum_payload_count(loc, info, payloads.size());
         }
         if (contains_borrow_type(expected) || is_owner_type(expected)) {
             fail(loc, "constant enum values cannot contain ownership or borrow-qualified payloads yet");
@@ -20453,7 +20453,7 @@ private:
 
     IrExprPtr make_enum_construct(SourceLocation loc, const EnumCaseInfo& info, std::vector<IrExprPtr> args) {
         if (args.size() != info.payloads.size()) {
-            fail(loc, "wrong payload count for enum case '" + info.name + "'");
+            fail_enum_payload_count(loc, info, args.size());
         }
 
         std::vector<IrExprPtr> payloads;
@@ -20461,7 +20461,7 @@ private:
         for (std::size_t i = 0; i < args.size(); ++i) {
             IrExprPtr payload = std::move(args[i]);
             coerce_expr_to_expected(*payload, info.payloads[i]);
-            require_assignable(loc, info.payloads[i], payload->type);
+            require_enum_payload_assignable(loc, info, i, payload->type);
             payloads.push_back(std::move(payload));
         }
 
@@ -24190,7 +24190,7 @@ private:
         }
 
         if (arg_types.size() != info.payload_refs.size()) {
-            fail(expr.loc, "wrong payload count for enum case '" + info.name + "'");
+            fail_enum_payload_count(expr.loc, info, arg_types.size());
         }
 
         std::vector<IrType> type_args;
@@ -24272,7 +24272,7 @@ private:
             warn_deprecated_use(expr.loc, "enum", enum_found->second.name, enum_found->second.deprecated_message);
         }
         if (expr.args.size() != base_info.payload_refs.size()) {
-            fail(expr.loc, "wrong payload count for enum case '" + base_info.name + "'");
+            fail_enum_payload_count(expr.loc, base_info, expr.args.size());
         }
 
         EnumCaseInfo info = base_info;
@@ -24303,10 +24303,10 @@ private:
             if (args[i]->type.primitive == IrPrimitiveKind::Struct &&
                 info.payloads[i].primitive == IrPrimitiveKind::Struct &&
                 !same_type(args[i]->type, info.payloads[i])) {
-                require_assignable(expr.args[i]->loc, info.payloads[i], args[i]->type);
+                fail_enum_payload_type(expr.args[i]->loc, info, i, args[i]->type);
             }
             coerce_expr_to_expected(*args[i], info.payloads[i]);
-            require_assignable(expr.args[i]->loc, info.payloads[i], args[i]->type);
+            require_enum_payload_assignable(expr.args[i]->loc, info, i, args[i]->type);
         }
         return make_enum_construct(expr.loc, info, std::move(args));
     }
@@ -25680,6 +25680,106 @@ private:
 
     [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
         throw CompileError(std::move(loc), message);
+    }
+
+    static bool is_assignable_for_diagnostic(const IrType& expected, const IrType& actual) {
+        if (same_type(expected, actual)) return true;
+        if (same_type_or_char_u8_boundary(expected, actual)) return true;
+        if (expected.qualifier == TypeQualifier::Ptr &&
+            actual.qualifier == TypeQualifier::Value &&
+            actual.primitive == IrPrimitiveKind::String &&
+            (expected.primitive == IrPrimitiveKind::I8 ||
+             expected.primitive == IrPrimitiveKind::U8 ||
+             expected.primitive == IrPrimitiveKind::Void)) {
+            return true;
+        }
+        if (expected.qualifier == TypeQualifier::Own &&
+            actual.qualifier == TypeQualifier::Value &&
+            expected.primitive == actual.primitive &&
+            expected.name == actual.name &&
+            expected.args.empty() &&
+            actual.args.empty()) {
+            return true;
+        }
+        return false;
+    }
+
+    static Span enum_payload_declaration_span(const EnumCaseInfo& info, std::size_t payload_index) {
+        if (payload_index < info.payload_refs.size()) {
+            Span payload_span = span_from_location(info.payload_refs[payload_index].loc);
+            if (span_has_source(payload_span) && span_has_valid_order(payload_span)) return payload_span;
+        }
+        return span_from_location(info.loc);
+    }
+
+    static std::string payload_count_text(std::size_t count) {
+        return std::to_string(count) + " payload" + (count == 1 ? "" : "s");
+    }
+
+    [[noreturn]] static void fail_enum_payload_count(
+        SourceLocation loc,
+        const EnumCaseInfo& info,
+        std::size_t actual_count
+    ) {
+        CompileError error(std::move(loc), "wrong payload count for enum case '" + info.name + "'");
+        Span case_span = span_from_location(info.loc);
+        if (span_has_source(case_span) && span_has_valid_order(case_span)) {
+            error.add_label(DiagnosticLabel{
+                case_span,
+                "enum case '" + info.name + "' declares " + payload_count_text(info.payloads.size()),
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "constructor payload count must match the enum case declaration",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass " + payload_count_text(info.payloads.size()) + " to '" + info.name +
+                "' instead of " + payload_count_text(actual_count),
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_enum_payload_type(
+        SourceLocation loc,
+        const EnumCaseInfo& info,
+        std::size_t payload_index,
+        const IrType& actual
+    ) {
+        const IrType& expected = info.payloads[payload_index];
+        CompileError error(
+            std::move(loc),
+            "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
+        Span payload_span = enum_payload_declaration_span(info, payload_index);
+        if (span_has_source(payload_span) && span_has_valid_order(payload_span)) {
+            error.add_label(DiagnosticLabel{
+                payload_span,
+                "payload " + std::to_string(payload_index + 1) + " for enum case '" +
+                    info.name + "' expects " + type_name(expected),
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "enum constructor payload types are checked against the case declaration after generic substitution",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass a value of type " + type_name(expected) + " for payload " +
+                std::to_string(payload_index + 1),
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void require_enum_payload_assignable(
+        SourceLocation loc,
+        const EnumCaseInfo& info,
+        std::size_t payload_index,
+        const IrType& actual
+    ) {
+        const IrType& expected = info.payloads[payload_index];
+        if (is_assignable_for_diagnostic(expected, actual)) return;
+        fail_enum_payload_type(std::move(loc), info, payload_index, actual);
     }
 
     static std::string impl_method_candidate_label(const ImplMethodInfo& info) {

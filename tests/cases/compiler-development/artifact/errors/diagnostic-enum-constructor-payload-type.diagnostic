@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="type mismatch: expected i32, got bool" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="type mismatch: expected i32, got bool" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/match/errors/enum-constructor-payload-type.ari" display="tests/cases/match/errors/enum-constructor-payload-type.ari" bytes=100
   Label index=0 role=primary source_id=0 source="tests/cases/match/errors/enum-constructor-payload-type.ari" line=7 column=20 end_line=7 end_column=24 byte_start=79 byte_end=83 message=""
   Snippet label=0 text="  --> tests/cases/match/errors/enum-constructor-payload-type.ari:7:20\n   |\n 7 |   let value = Some(true);\n   |                    ^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/match/errors/enum-constructor-payload-type.ari" line=3 column=8 end_line=3 end_column=11 byte_start=32 byte_end=35 message="payload 1 for enum case 'Some' expects i32"
+  Snippet label=1 text="  --> tests/cases/match/errors/enum-constructor-payload-type.ari:3:8\n   |\n 3 |   Some(i32),\n   |        ^^^"
+  Note index=0 location=none message="enum constructor payload types are checked against the case declaration after generic substitution"
+  Help index=0 location=none message="pass a value of type i32 for payload 1"
