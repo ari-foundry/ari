@@ -3057,7 +3057,12 @@ private:
             auto inserted = impl_methods.emplace(name, &method);
             if (!inserted.second) fail(method.loc, "duplicate method '" + name + "' in impl");
             if (!trait.methods.count(name)) {
-                fail(method.loc, "method '" + name + "' is not declared by trait '" + trait.name + "'");
+                fail_trait_impl_extra_method(
+                    method.loc,
+                    trait.loc,
+                    "method '" + name + "' is not declared by trait '" + trait.name + "'",
+                    name,
+                    trait.name);
             }
         }
 
@@ -3065,9 +3070,13 @@ private:
             const TraitInfo::Method& expected_method = item.second;
             auto found = impl_methods.find(item.first);
             if (found == impl_methods.end()) {
-                fail(impl.trait_type.loc,
-                     "impl of trait '" + trait.name + "' for " + type_ref_key(impl.for_type) +
-                         " is missing method '" + item.first + "'");
+                fail_trait_impl_missing_method(
+                    impl.trait_type.loc,
+                    expected_method.loc,
+                    "impl of trait '" + trait.name + "' for " + type_ref_key(impl.for_type) +
+                        " is missing method '" + item.first + "'",
+                    item.first,
+                    trait.name);
             }
             const FunctionDecl& actual_method = *found->second;
             bool actual_has_self_receiver = function_params_have_self_receiver(actual_method.params);
@@ -25704,6 +25713,58 @@ private:
         error.add_note(DiagnosticNote{
             std::nullopt,
             "use a trait-qualified call or remove one of the overlapping impl methods",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_trait_impl_extra_method(
+        SourceLocation loc,
+        SourceLocation trait_loc,
+        const std::string& message,
+        const std::string& method_name,
+        const std::string& trait_name
+    ) {
+        CompileError error(std::move(loc), message);
+        Span trait_span = span_from_location(trait_loc);
+        if (span_has_source(trait_span) && span_has_valid_order(trait_span)) {
+            error.add_label(DiagnosticLabel{
+                trait_span,
+                "trait '" + trait_name + "' does not declare method '" + method_name + "'",
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "trait impl methods must match the trait declaration exactly",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove method '" + method_name + "' from this impl or declare it in trait '" + trait_name + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_trait_impl_missing_method(
+        SourceLocation loc,
+        SourceLocation method_loc,
+        const std::string& message,
+        const std::string& method_name,
+        const std::string& trait_name
+    ) {
+        CompileError error(std::move(loc), message);
+        Span method_span = span_from_location(method_loc);
+        if (span_has_source(method_span) && span_has_valid_order(method_span)) {
+            error.add_label(DiagnosticLabel{
+                method_span,
+                "required method '" + method_name + "' declared here",
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "trait impl methods must match the trait declaration exactly",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add method '" + method_name + "' to this impl of trait '" + trait_name + "'",
             DiagnosticNoteKind::Help});
         throw error;
     }
