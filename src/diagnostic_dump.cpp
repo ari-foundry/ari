@@ -226,8 +226,18 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "unexpected byte") ||
         contains(diagnostic, "unterminated string literal") ||
         contains(diagnostic, "unterminated block comment") ||
+        contains(diagnostic, "unsupported string escape") ||
+        contains(diagnostic, "unsupported byte character escape") ||
         contains(diagnostic, "byte character literal") ||
         contains(diagnostic, "Unicode escape") ||
+        contains(diagnostic, "Unicode scalar") ||
+        contains(diagnostic, "string escape") ||
+        contains(diagnostic, "invalid digit") ||
+        contains(diagnostic, "numeric literal suffix") ||
+        contains(diagnostic, "float literal") ||
+        contains(diagnostic, "literal requires") ||
+        contains(diagnostic, "escape requires") ||
+        contains(diagnostic, "escape value must fit") ||
         contains(diagnostic, "integer literal")) {
         return "L0001";
     }

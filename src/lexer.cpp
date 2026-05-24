@@ -184,6 +184,11 @@ private:
         return message == "unterminated Unicode escape";
     }
 
+    static bool is_unsupported_escape_message(const std::string& message) {
+        return message == "unsupported string escape" ||
+               message == "unsupported byte character escape";
+    }
+
     static bool is_suffix_char(char c) {
         return is_alpha(c) || is_digit(c) || c == '_';
     }
@@ -615,7 +620,11 @@ private:
         }
 
         std::uint64_t value = parse_integer_digits(loc, digits, 16, "Unicode escape");
-        append_utf8(text, loc, static_cast<std::uint32_t>(value));
+        SourceLocation escape_span = loc;
+        set_location_span(
+            escape_span,
+            default_source_map().span(loc.source_id, loc.byte_start, index_));
+        append_utf8(text, escape_span, static_cast<std::uint32_t>(value));
     }
 
     [[noreturn]] void fail(SourceLocation loc, const std::string& message) const {
@@ -664,6 +673,15 @@ private:
             error.add_note(DiagnosticNote{
                 std::nullopt,
                 "add } after the hexadecimal code point digits",
+                DiagnosticNoteKind::Help});
+        } else if (is_unsupported_escape_message(message)) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "Ari escapes support common control escapes, quotes, backslash, byte escapes, octal, and Unicode escapes",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "use a supported escape such as \\n, \\t, \\\\, \\xNN, \\u{...}, or remove the backslash",
                 DiagnosticNoteKind::Help});
         }
         throw error;

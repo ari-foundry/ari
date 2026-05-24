@@ -1,6 +1,7 @@
 #include "literal.hpp"
 
 #include <limits>
+#include <utility>
 
 namespace ari {
 
@@ -16,16 +17,34 @@ bool is_digit_for_base(char c, int base) {
     return value >= 0 && value < base;
 }
 
+[[noreturn]] static void fail_literal(SourceLocation loc,
+                                      const std::string& message,
+                                      const std::string& note,
+                                      const std::string& help) {
+    CompileError error(std::move(loc), message);
+    error.add_note(DiagnosticNote{std::nullopt, note, DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{std::nullopt, help, DiagnosticNoteKind::Help});
+    throw error;
+}
+
 std::uint64_t parse_integer_digits(SourceLocation loc, const std::string& digits, int base, const std::string& literal_kind) {
     std::uint64_t value = 0;
     std::uint64_t limit = std::numeric_limits<std::uint64_t>::max();
     for (char c : digits) {
         int digit = digit_value(c);
         if (digit < 0 || digit >= base) {
-            throw CompileError(where(loc) + ": invalid digit '" + std::string(1, c) + "' in " + literal_kind + " literal");
+            fail_literal(
+                loc,
+                "invalid digit '" + std::string(1, c) + "' in " + literal_kind + " literal",
+                "literal digits must match the base or escape format being parsed",
+                "remove the digit or use a literal form that supports it");
         }
         if (value > (limit - static_cast<std::uint64_t>(digit)) / static_cast<std::uint64_t>(base)) {
-            throw CompileError(where(loc) + ": integer literal is too large");
+            fail_literal(
+                loc,
+                "integer literal is too large",
+                "integer literals must fit in u64 before later type checking narrows them",
+                "use a smaller literal or split the value into smaller operations");
         }
         value = value * static_cast<std::uint64_t>(base) + static_cast<std::uint64_t>(digit);
     }
@@ -34,7 +53,11 @@ std::uint64_t parse_integer_digits(SourceLocation loc, const std::string& digits
 
 void append_utf8(std::string& out, SourceLocation loc, std::uint32_t codepoint) {
     if (codepoint > 0x10ffff || (codepoint >= 0xd800 && codepoint <= 0xdfff)) {
-        throw CompileError(where(loc) + ": invalid Unicode scalar value in string escape");
+        fail_literal(
+            loc,
+            "invalid Unicode scalar value in string escape",
+            "Unicode string escapes must name valid Unicode scalar values",
+            "choose a code point in U+0000..U+10FFFF outside the surrogate range");
     }
 
     if (codepoint <= 0x7f) {
