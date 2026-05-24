@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=262
+CompilerArtifactFixtures version=1 group=all entries=267
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -127,6 +127,8 @@ CompilerArtifactFixtures version=1 group=all entries=262
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-expected.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-malformed-expression.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-malformed-expression.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-malformed-function-param.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-malformed-function-param.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-malformed-struct-field.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-malformed-struct-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-mismatched-token-tree.ari
@@ -188,6 +190,7 @@ CompilerArtifactFixtures version=1 group=all entries=262
   Fixture group=errors kind=syntax path=errors/syntax-recovery-inline-module.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-item-macro-token-tree.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-item-macro-token-tree.syntax
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-malformed-function-param.syntax
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-function-body.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-missing-function-close.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-function-close.syntax
@@ -256,6 +259,8 @@ CompilerArtifactFixtures version=1 group=all entries=262
   Fixture group=ok kind=text path=ok/text-equal.expected.txt
   Fixture group=ok kind=source path=ok/token-dump-basic.ari
   Fixture group=ok kind=tokens path=ok/token-dump-basic.tokens
+  Fixture group=ok kind=source path=ok/token-dump-crlf-string-continuation-template.ari
+  Fixture group=ok kind=tokens path=ok/token-dump-crlf-string-continuation.tokens
   Fixture group=ok kind=tokens path=ok/token-dump-crlf.tokens
   Fixture group=ok kind=source path=ok/token-dump-lexical-surface.ari
   Fixture group=ok kind=tokens path=ok/token-dump-lexical-surface.tokens

@@ -158,15 +158,40 @@ std::string methods_text(const std::vector<FunctionDecl>& methods) {
 
 std::string location_text(SourceLocation loc, const std::map<std::string, std::string>& path_by_module,
                           const std::string& module_name) {
+    if (span_has_source(loc.span) && span_has_valid_order(loc.span)) {
+        SourceLocation span_loc = source_location_for_span(loc.span);
+        if (has_source_name(span_loc)) loc = std::move(span_loc);
+    } else if (loc.source_name.empty() && valid_source_id(loc.source_id)) {
+        if (const SourceFile* source = find_source_file(loc.source_id)) {
+            loc.source_name = source->display_name;
+        }
+    }
     auto it = path_by_module.find(module_name);
-    std::string path = it == path_by_module.end() ? "<unknown>" : it->second;
-    return path + ":" + std::to_string(loc.line) + ":" + std::to_string(loc.column);
+    std::string path = !loc.source_name.empty()
+                           ? loc.source_name
+                           : (it == path_by_module.end() ? "<unknown>" : it->second);
+    std::string text = path + ":" + std::to_string(loc.line) + ":" + std::to_string(loc.column);
+    if (valid_source_id(loc.source_id)) text += " source_id=" + source_id_text(loc.source_id);
+    if (has_byte_span(loc)) {
+        Span span = span_from_location(loc);
+        text += " bytes=" + std::to_string(span.start) + ".." + std::to_string(span.end);
+    }
+    return text;
+}
+
+std::string location_key(SourceLocation loc) {
+    std::string key = std::to_string(loc.line) + "\t" + std::to_string(loc.column);
+    if (valid_source_id(loc.source_id)) key += "\t" + source_id_text(loc.source_id);
+    if (has_byte_span(loc)) {
+        Span span = span_from_location(loc);
+        key += "\t" + std::to_string(span.start) + "\t" + std::to_string(span.end);
+    }
+    return key;
 }
 
 std::string decl_key(const std::string& module_name, const std::string& kind,
                      const std::string& name, SourceLocation loc) {
-    return module_name + "\t" + kind + "\t" + name + "\t" +
-           std::to_string(loc.line) + "\t" + std::to_string(loc.column);
+    return module_name + "\t" + kind + "\t" + name + "\t" + location_key(loc);
 }
 
 void add_line(std::vector<DeclarationLine>& lines,
