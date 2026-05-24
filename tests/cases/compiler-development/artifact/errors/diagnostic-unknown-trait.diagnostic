@@ -1,4 +1,6 @@
-diagnostic error code=T0001 family=type message="unknown trait bound 'MissingTrait'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="unknown trait bound 'MissingTrait'" sources=1 labels=1 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari" bytes=117
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari" line=1 column=19 end_line=1 end_column=31 byte_start=18 byte_end=30 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.ari:1:19\n   |\n 1 | fn use_missing[T: MissingTrait](value: T) -> i64 {\n   |                   ^^^^^^^^^^^^"
+  Note index=0 location=none message="generic trait bounds must name an in-scope trait"
+  Help index=0 location=none message="define trait 'MissingTrait' before using it as a bound, or import the trait into scope"

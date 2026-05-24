@@ -2555,7 +2555,7 @@ private:
         std::string trait_name = resolve_trait_name(constraint.name);
         auto found = traits_.find(trait_name);
         if (found == traits_.end()) {
-            fail(constraint.loc, "unknown trait bound '" + constraint.name + "'");
+            fail_unknown_trait_bound(constraint.loc, constraint.name);
         }
         const TraitInfo& trait = found->second;
         require_trait_access(constraint.loc, trait);
@@ -22818,9 +22818,7 @@ private:
         const ExprTypeArgs& type_args = expr_type_args(expr);
         if (!type_args.empty()) {
             if (type_args.size() != fn.generics.size()) {
-                fail(expr.loc,
-                     "generic function '" + expr.name + "' expects " + std::to_string(fn.generics.size()) +
-                         " type argument" + (fn.generics.size() == 1 ? "" : "s"));
+                fail_generic_type_argument_count(expr.loc, expr.name, fn, type_args.size());
             }
             for (std::size_t i = 0; i < type_args.size(); ++i) {
                 bind_generic_type(
@@ -22836,7 +22834,7 @@ private:
         }
         for (const auto& generic : fn.generics) {
             if (!substitutions.count(generic.name)) {
-                fail(expr.loc, "generic type '" + generic.name + "' could not be inferred for '" + expr.name + "'");
+                fail_generic_type_uninferred(expr.loc, expr.name, generic);
             }
         }
         require_generic_bounds(expr.loc, fn, substitutions);
@@ -24667,7 +24665,7 @@ private:
             warn_deprecated_use(expr.loc, "function", function_name, sig.deprecated_message);
         }
         if (!expr_type_args(expr).empty()) {
-            fail(expr.loc, "function '" + expr.name + "' does not take type arguments");
+            fail_nongeneric_function_type_arguments(expr.loc, expr.name, sig.loc);
         }
         if (sig.is_variadic) {
             if (expr.args.size() < sig.params.size()) {
@@ -25918,6 +25916,106 @@ private:
 
     [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
         throw CompileError(std::move(loc), message);
+    }
+
+    static std::string type_argument_count_text(std::size_t count) {
+        return std::to_string(count) + " type argument" + (count == 1 ? "" : "s");
+    }
+
+    static std::string type_parameter_count_text(std::size_t count) {
+        return std::to_string(count) + " type parameter" + (count == 1 ? "" : "s");
+    }
+
+    static void add_location_label_if_valid(CompileError& error,
+                                            SourceLocation loc,
+                                            const std::string& message) {
+        Span span = span_from_location(loc);
+        if (!span_has_source(span) || !span_has_valid_order(span)) return;
+        error.add_label(DiagnosticLabel{span, message, false});
+    }
+
+    [[noreturn]] static void fail_unknown_trait_bound(SourceLocation loc,
+                                                      const std::string& trait_name) {
+        CompileError error(std::move(loc), "unknown trait bound '" + trait_name + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "generic trait bounds must name an in-scope trait",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "define trait '" + trait_name + "' before using it as a bound, or import the trait into scope",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_generic_type_argument_count(SourceLocation loc,
+                                                             const std::string& call_name,
+                                                             const FunctionDecl& fn,
+                                                             std::size_t actual_count) {
+        CompileError error(
+            std::move(loc),
+            "generic function '" + call_name + "' expects " + type_argument_count_text(fn.generics.size()));
+        if (!fn.generics.empty()) {
+            add_location_label_if_valid(
+                error,
+                fn.generics.front().loc,
+                "function '" + call_name + "' declares " + type_parameter_count_text(fn.generics.size()));
+        } else {
+            add_location_label_if_valid(
+                error,
+                fn.loc,
+                "function '" + call_name + "' is declared without generic parameters");
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "explicit type argument count must match the function generic parameter list",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass " + type_argument_count_text(fn.generics.size()) + " to '" + call_name +
+                "' instead of " + type_argument_count_text(actual_count),
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_generic_type_uninferred(SourceLocation loc,
+                                                         const std::string& call_name,
+                                                         const GenericParam& generic) {
+        CompileError error(
+            std::move(loc),
+            "generic type '" + generic.name + "' could not be inferred for '" + call_name + "'");
+        add_location_label_if_valid(
+            error,
+            generic.loc,
+            "generic parameter '" + generic.name + "' must be resolved before specialization");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "generic function specialization requires every type parameter to have one concrete type",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass an explicit type argument for '" + generic.name + "' or add a value argument that fixes it",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_nongeneric_function_type_arguments(SourceLocation loc,
+                                                                    const std::string& call_name,
+                                                                    SourceLocation declaration_loc) {
+        CompileError error(std::move(loc), "function '" + call_name + "' does not take type arguments");
+        add_location_label_if_valid(
+            error,
+            declaration_loc,
+            "function '" + call_name + "' is declared without generic parameters");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "only generic functions may be called with explicit type arguments",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove the explicit type argument list from this call",
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     static bool is_assignable_for_diagnostic(const IrType& expected, const IrType& actual) {
