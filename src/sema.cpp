@@ -23023,9 +23023,7 @@ private:
         }
         for (const auto& generic : fn.generics) {
             if (!substitutions.count(generic.name)) {
-                fail(expr.loc,
-                     "generic type '" + generic.name +
-                         "' could not be inferred for function pointer '" + expr.name + "'");
+                fail_generic_function_pointer_type_uninferred(expr.loc, expr.name, expected, generic);
             }
         }
         require_generic_bounds(expr.loc, fn, substitutions);
@@ -26096,6 +26094,30 @@ private:
         error.add_note(DiagnosticNote{
             std::nullopt,
             "pass an explicit type argument for '" + generic.name + "' or add a value argument that fixes it",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_generic_function_pointer_type_uninferred(SourceLocation loc,
+                                                                          const std::string& call_name,
+                                                                          const IrType& expected,
+                                                                          const GenericParam& generic) {
+        CompileError error(
+            std::move(loc),
+            "generic type '" + generic.name + "' could not be inferred for function pointer '" +
+                call_name + "'");
+        add_location_label_if_valid(
+            error,
+            generic.loc,
+            "generic parameter '" + generic.name + "' is not fixed by expected type " + type_name(expected));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "generic function values must be specialized before they can be stored as function pointers",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add a parameter or return position that mentions '" + generic.name +
+                "', or use a non-generic helper for this function pointer type",
             DiagnosticNoteKind::Help});
         throw error;
     }
