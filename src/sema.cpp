@@ -5907,6 +5907,53 @@ private:
         throw error;
     }
 
+    [[noreturn]] static void fail_assignment_target_state(SourceLocation loc,
+                                                          const std::string& name,
+                                                          const LocalInfo& local) {
+        std::optional<std::string> message = local_assignment_target_error(name, local);
+        if (!message) {
+            throw CompileError(std::move(loc),
+                               "internal error: assignable binding '" + name +
+                                   "' reported as an invalid assignment target");
+        }
+
+        Span assignment_span = span_from_location(loc);
+        CompileError error(std::move(loc), *message);
+        Span declaration_span = span_from_location(local.loc);
+        if (span_has_source(declaration_span) &&
+            span_has_valid_order(declaration_span) &&
+            !(declaration_span.source_id.value == assignment_span.source_id.value &&
+              declaration_span.start == assignment_span.start &&
+              declaration_span.end == assignment_span.end)) {
+            error.add_label(DiagnosticLabel{
+                declaration_span,
+                is_borrow_type(local.type)
+                    ? "borrow binding '" + name + "' was declared here"
+                    : "immutable binding '" + name + "' was declared here",
+                false});
+        }
+        if (is_borrow_type(local.type)) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "borrow bindings are views of another storage location and cannot be rebound",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "assign through the original mutable binding or create a new local binding",
+                DiagnosticNoteKind::Help});
+        } else {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "let bindings are immutable after initialization",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "declare '" + name + "' with var if it needs to be reassigned",
+                DiagnosticNoteKind::Help});
+        }
+        throw error;
+    }
+
     LocalInfo& require_live_local(SourceLocation loc, const std::string& name) {
         LocalInfo& local = require_local_slot(loc, name);
         if (local_unavailable_binding_error(name, local)) fail_unavailable_binding(loc, name, local);
@@ -10797,7 +10844,9 @@ private:
 
         const std::string& assign_name = stmt_assign_name(stmt);
         LocalInfo& target = require_local_slot(stmt.loc, assign_name);
-        if (auto error = local_assignment_target_error(assign_name, target)) fail(stmt.loc, *error);
+        if (local_assignment_target_error(assign_name, target)) {
+            fail_assignment_target_state(stmt.loc, assign_name, target);
+        }
         require_not_borrowed(stmt.loc, assign_name, target, "assign to");
         if (auto error = local_assignment_storage_error(assign_name, target)) fail(stmt.loc, *error);
 
