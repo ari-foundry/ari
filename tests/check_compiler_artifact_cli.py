@@ -83,6 +83,9 @@ def main():
         run_raw("--list-artifacts"),
         "CompilerArtifacts version=1",
         "option=--emit-capability-inventory",
+        "option=--emit-c-header",
+        "option=--emit-llvm",
+        "option=--emit-obj",
         "Rule one_artifact_output=true backend_outputs_separate=true",
     )
 
@@ -97,6 +100,19 @@ def main():
     ok &= require_success(
         run_raw("--explain-artifact", "emit-pass-summary"),
         "CompilerArtifact version=1 option=--emit-pass-summary owner=driver/sema",
+    )
+
+    ok &= require_success(
+        run_raw("--explain-artifact", "--emit-llvm"),
+        "CompilerArtifact version=1 option=--emit-llvm owner=llvm-backend",
+        'first_check="focused --emit-llvm"',
+        "Rule earliest_layer=false one_artifact_output=false backend_output=true",
+    )
+
+    ok &= require_success(
+        run_raw("--explain-artifact", "--emit-c-header"),
+        "CompilerArtifact version=1 option=--emit-c-header owner=abi-header",
+        "Rule earliest_layer=false one_artifact_output=false header_output=true",
     )
 
     token_output = OUT_DIR / "absolute-output.tokens"

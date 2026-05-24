@@ -101,31 +101,38 @@ struct ArtifactHelpRow {
     const char* owner;
     const char* first_check;
     const char* purpose;
+    const char* output_policy;
 };
 
 static const ArtifactHelpRow kArtifactHelp[] = {
     {"--emit-stage-plan", "driver", "make check-compiler-artifacts",
-     "artifact ladder, layer owners, and first checks"},
+     "artifact ladder, layer owners, and first checks", "exclusive-artifact"},
     {"--emit-capability-inventory", "driver", "make check-compiler-artifacts",
-     "implemented, partial, planned, and rejected compiler capabilities"},
+     "implemented, partial, planned, and rejected compiler capabilities", "exclusive-artifact"},
     {"--emit-source-map", "driver", "make check-compiler-artifacts",
-     "source files, byte offsets, line starts, and snippets"},
+     "source files, byte offsets, line starts, and snippets", "exclusive-artifact"},
     {"--emit-tokens", "lexer", "make check-compiler-artifacts",
-     "token kinds, spellings, and byte spans"},
+     "token kinds, spellings, and byte spans", "exclusive-artifact"},
     {"--emit-diagnostics", "diagnostics", "make check-compiler-artifacts",
-     "stable error code families and normalized messages"},
+     "stable error code families and normalized messages", "exclusive-artifact"},
     {"--emit-diagnostic-catalog", "diagnostics", "make check-compiler-artifacts",
-     "diagnostic codes, layer families, and owning source files"},
+     "diagnostic codes, layer families, and owning source files", "exclusive-artifact"},
     {"--emit-syntax", "parser", "make check-compiler-artifacts",
-     "AST shape and parser recovery"},
+     "AST shape and parser recovery", "exclusive-artifact"},
     {"--emit-module-graph", "module-loader", "make check-compiler-artifacts",
-     "file-backed modules, imports, visibility, and item surfaces"},
+     "file-backed modules, imports, visibility, and item surfaces", "exclusive-artifact"},
     {"--emit-declaration-index", "declaration-collector", "make check-compiler-artifacts",
-     "declaration signatures, visibility, and source locations"},
+     "declaration signatures, visibility, resolver-facing imports, and source locations", "exclusive-artifact"},
     {"--emit-typed-ir", "sema", "make check-compiler-artifacts",
-     "type, trait, ownership, and lowering facts"},
+     "type, trait, ownership, and lowering facts", "exclusive-artifact"},
     {"--emit-pass-summary", "driver/sema", "make check-compiler-artifacts",
-     "stage counts and pass boundaries"},
+     "stage counts and pass boundaries", "exclusive-artifact"},
+    {"--emit-c-header", "abi-header", "make check-compiler-artifacts",
+     "C-compatible aggregate and extern surface", "header-output"},
+    {"--emit-llvm", "llvm-backend", "focused --emit-llvm",
+     "LLVM IR text for backend lowering review", "backend-output"},
+    {"--emit-obj", "toolchain", "focused --emit-obj",
+     "LLVM object output for symbol inventory review", "backend-output"},
 };
 
 static void usage(std::ostream& out) {
@@ -169,7 +176,8 @@ static void list_artifacts(std::ostream& out) {
         out << "  option=" << row.option
             << " owner=" << row.owner
             << " first_check=\"" << row.first_check << "\""
-            << " purpose=\"" << row.purpose << "\"\n";
+            << " purpose=\"" << row.purpose << "\""
+            << " output_policy=" << row.output_policy << "\n";
     }
     out << "  Rule one_artifact_output=true backend_outputs_separate=true\n";
 }
@@ -199,7 +207,13 @@ static void explain_artifact(std::ostream& out, const std::string& option) {
         << " owner=" << row->owner
         << " first_check=\"" << row->first_check << "\""
         << " purpose=\"" << row->purpose << "\"\n";
-    out << "  Rule earliest_layer=true one_artifact_output=true\n";
+    if (std::string(row->output_policy) == "backend-output") {
+        out << "  Rule earliest_layer=false one_artifact_output=false backend_output=true\n";
+    } else if (std::string(row->output_policy) == "header-output") {
+        out << "  Rule earliest_layer=false one_artifact_output=false header_output=true\n";
+    } else {
+        out << "  Rule earliest_layer=true one_artifact_output=true\n";
+    }
 }
 
 int run(int argc, char** argv) {
