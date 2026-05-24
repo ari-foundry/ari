@@ -217,6 +217,9 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
                                "ambiguous module file for '" + import.name +
                                    "'; candidates " + searched_paths_text(matches));
             error.add_note(DiagnosticNote{std::nullopt,
+                                          "Ari treats each file-backed module name as a single source identity within one search root",
+                                          DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{std::nullopt,
                                           "keep only one of name.ari, name.arih, name/mod.ari, or name/mod.arih in a search root",
                                           DiagnosticNoteKind::Help});
             throw error;

@@ -357,6 +357,11 @@ private:
             std::nullopt,
             "close delimiters must match the most recent still-open delimiter",
             DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "replace '" + actual_text + "' with '" + expected_text +
+                "' or remove the unmatched opening delimiter",
+            DiagnosticNoteKind::Help});
         throw error;
     }
 

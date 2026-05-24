@@ -285,6 +285,9 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "generic specialization") ||
         contains(diagnostic, "inferred as both") ||
         contains(diagnostic, "unsupported executable type") ||
+        contains(diagnostic, "condition must be bool") ||
+        contains(diagnostic, "logical operand must be bool") ||
+        contains(diagnostic, "bitwise-not operand must be integer") ||
         contains(diagnostic, "wrong argument count") ||
         contains(diagnostic, "missing return") ||
         contains(diagnostic, "return type") ||
