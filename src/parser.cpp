@@ -5,6 +5,7 @@
 #include "cfg_eval.hpp"
 #include "module_path.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <string>
@@ -37,6 +38,7 @@ public:
 
     ParseRecoveryResult parse_program_recovering() {
         ParseRecoveryResult result;
+        recovery_diagnostics_ = &result.diagnostics;
         while (!check(TokenKind::End)) {
             std::size_t error_pos = pos_;
             try {
@@ -46,6 +48,7 @@ public:
                 synchronize_top_level(error_pos);
             }
         }
+        recovery_diagnostics_ = nullptr;
         return result;
     }
 
@@ -89,6 +92,7 @@ private:
     std::set<std::string> cfg_features_;
     std::string target_triple_;
     bool allow_struct_literals_ = true;
+    std::vector<CompileError>* recovery_diagnostics_ = nullptr;
 
     const Token& peek(int offset = 0) const {
         long long at = static_cast<long long>(pos_) + static_cast<long long>(offset);
@@ -131,11 +135,33 @@ private:
         }
     }
 
+    int delimiter_depth_between(std::size_t begin, std::size_t end) const {
+        int depth = 0;
+        end = std::min(end, tokens_.size());
+        for (std::size_t i = begin; i < end; ++i) {
+            switch (tokens_[i].kind) {
+                case TokenKind::LParen:
+                case TokenKind::LBrace:
+                case TokenKind::LBracket:
+                    ++depth;
+                    break;
+                case TokenKind::RParen:
+                case TokenKind::RBrace:
+                case TokenKind::RBracket:
+                    if (depth > 0) --depth;
+                    break;
+                default:
+                    break;
+            }
+        }
+        return depth;
+    }
+
     void synchronize_top_level(std::size_t error_pos) {
         if (check(TokenKind::End)) return;
         if (pos_ != error_pos && is_top_level_start()) return;
 
-        int depth = 0;
+        int depth = delimiter_depth_between(error_pos, pos_);
         while (!check(TokenKind::End)) {
             if (pos_ != error_pos && depth == 0 && is_top_level_start()) return;
             TokenKind kind = tokens_[pos_++].kind;
@@ -156,6 +182,39 @@ private:
             if ((kind == TokenKind::Semicolon || kind == TokenKind::RBrace) &&
                 depth == 0 &&
                 is_top_level_start()) {
+                return;
+            }
+        }
+    }
+
+    void synchronize_inline_module_item(std::size_t error_pos) {
+        if (check(TokenKind::End)) return;
+
+        int depth = delimiter_depth_between(error_pos, pos_);
+        while (!check(TokenKind::End)) {
+            if (depth == 0) {
+                if (check(TokenKind::RBrace)) return;
+                if (pos_ != error_pos && is_top_level_start()) return;
+            }
+
+            TokenKind kind = tokens_[pos_++].kind;
+            switch (kind) {
+                case TokenKind::LParen:
+                case TokenKind::LBrace:
+                case TokenKind::LBracket:
+                    ++depth;
+                    break;
+                case TokenKind::RParen:
+                case TokenKind::RBrace:
+                case TokenKind::RBracket:
+                    if (depth > 0) --depth;
+                    break;
+                default:
+                    break;
+            }
+            if ((kind == TokenKind::Semicolon || kind == TokenKind::RBrace) &&
+                depth == 0 &&
+                (check(TokenKind::RBrace) || is_top_level_start())) {
                 return;
             }
         }
@@ -520,7 +579,17 @@ private:
         try {
             while (!match(TokenKind::RBrace)) {
                 if (check(TokenKind::End)) fail(name.loc, "unterminated module");
-                parse_top_level_decl(program);
+                if (recovery_diagnostics_ != nullptr) {
+                    std::size_t error_pos = pos_;
+                    try {
+                        parse_top_level_decl(program);
+                    } catch (const CompileError& error) {
+                        recovery_diagnostics_->push_back(error);
+                        synchronize_inline_module_item(error_pos);
+                    }
+                } else {
+                    parse_top_level_decl(program);
+                }
             }
         } catch (...) {
             current_module_.pop_back();

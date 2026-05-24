@@ -1,0 +1,17 @@
+mod inner {
+  fn before() -> i64 {
+    return 1;
+  }
+
+  fn broken() -> i64 {
+    let value: i64 = ;
+  }
+
+  fn after() -> i64 {
+    return 2;
+  }
+}
+
+fn outside() -> i64 {
+  return 3;
+}

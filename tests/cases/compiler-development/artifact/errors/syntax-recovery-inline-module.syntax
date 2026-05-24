@@ -1,0 +1,19 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="expected expression before ';'" @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:7:22 source_id=0 bytes=98..99
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:7:22 source_id=0 bytes=98..99
+      Note message="the parser was reading an expression at this point"
+      Help message="add an expression here or remove the incomplete expression"
+  Module name=inner @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:1:5 source_id=0 bytes=4..9
+  Function name=inner::before return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:2:6 source_id=0 bytes=17..23
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:3:5 source_id=0 bytes=39..45
+        Integer value=1 @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:3:12 source_id=0 bytes=46..47
+  Function name=inner::after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:10:6 source_id=0 bytes=110..115
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:11:5 source_id=0 bytes=131..137
+        Integer value=2 @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:11:12 source_id=0 bytes=138..139
+  Function name=outside return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:15:4 source_id=0 bytes=151..158
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:16:3 source_id=0 bytes=172..178
+        Integer value=3 @tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.ari:16:10 source_id=0 bytes=179..180
