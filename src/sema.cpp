@@ -23570,9 +23570,11 @@ private:
     ) {
         auto inserted = functions_.emplace(specialized_name, sig);
         if (!inserted.second && !queued_specializations_.count(specialized_name)) {
-            fail(loc,
-                 "generic specialization '" + specialized_name +
-                     "' conflicts with an existing function; rename the concrete function or the generic function");
+            fail_generic_specialization_name_conflict(
+                loc,
+                specialized_name,
+                fn,
+                inserted.first->second.loc);
         }
         if (queued_specializations_.count(specialized_name)) return;
         queued_specializations_.insert(specialized_name);
@@ -26930,6 +26932,35 @@ private:
         error.add_note(DiagnosticNote{
             std::nullopt,
             "remove the explicit type argument list from this call",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_generic_specialization_name_conflict(
+        SourceLocation loc,
+        const std::string& specialized_name,
+        const FunctionDecl& fn,
+        SourceLocation existing_loc
+    ) {
+        CompileError error(
+            std::move(loc),
+            "generic specialization '" + specialized_name +
+                "' conflicts with an existing function; rename the concrete function or the generic function");
+        add_location_label_if_valid(
+            error,
+            std::move(existing_loc),
+            "existing function '" + specialized_name + "' occupies this specialization name");
+        add_location_label_if_valid(
+            error,
+            fn.loc,
+            "generic function '" + fn.name + "' specializes into deterministic concrete function names");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "generic specializations share the executable function namespace with concrete functions",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "rename '" + specialized_name + "' or choose a generic function name that cannot produce this specialization name",
             DiagnosticNoteKind::Help});
         throw error;
     }
