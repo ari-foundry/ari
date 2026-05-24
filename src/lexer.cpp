@@ -167,6 +167,11 @@ private:
         return "unexpected byte " + byte_hex(byte);
     }
 
+    static bool is_unexpected_input_message(const std::string& message) {
+        return message.rfind("unexpected character", 0) == 0 ||
+               message.rfind("unexpected byte", 0) == 0;
+    }
+
     static bool is_suffix_char(char c) {
         return is_alpha(c) || is_digit(c) || c == '_';
     }
@@ -611,7 +616,18 @@ private:
             }
         }
         set_location_span(loc, default_source_map().span(loc.source_id, loc.byte_start, loc.byte_end));
-        throw CompileError(std::move(loc), message);
+        CompileError error(std::move(loc), message);
+        if (is_unexpected_input_message(message)) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "the lexer can only tokenize characters that are part of Ari syntax",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "remove this input or put text data inside a string literal",
+                DiagnosticNoteKind::Help});
+        }
+        throw error;
     }
 };
 
