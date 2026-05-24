@@ -8229,12 +8229,12 @@ private:
         std::string case_name = resolve_enum_case_name(pattern.case_name);
         auto case_found = enum_cases_.find(case_name);
         if (case_found == enum_cases_.end()) {
-            fail(pattern.loc, "unknown enum case '" + pattern.case_name + "'");
+            fail_unknown_enum_match_case(pattern.loc, pattern.case_name, enum_found->second);
         }
         EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
         require_enum_case_access(pattern.loc, case_info);
         if (case_info.enum_name != enum_found->second.name) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' does not belong to " + enum_found->second.name);
+            fail_wrong_enum_match_case(pattern.loc, pattern.case_name, case_info, enum_found->second);
         }
         if (case_info.payloads.empty() && pattern.has_payload_pattern) {
             fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
@@ -12373,12 +12373,12 @@ private:
         std::string case_name = resolve_enum_case_name(pattern.case_name);
         auto case_found = enum_cases_.find(case_name);
         if (case_found == enum_cases_.end()) {
-            fail(pattern.loc, "unknown enum case '" + pattern.case_name + "'");
+            fail_unknown_enum_match_case(pattern.loc, pattern.case_name, enum_info);
         }
         EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
         require_enum_case_access(pattern.loc, case_info);
         if (case_info.enum_name != enum_info.name) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' does not belong to " + enum_info.name);
+            fail_wrong_enum_match_case(pattern.loc, pattern.case_name, case_info, enum_info);
         }
         if (case_info.payloads.empty() && pattern.has_payload_pattern) {
             fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
@@ -12444,13 +12444,12 @@ private:
         std::string case_name = resolve_enum_case_name(pattern.case_name);
         auto case_found = enum_cases_.find(case_name);
         if (case_found == enum_cases_.end()) {
-            fail(pattern.loc, "unknown enum case '" + pattern.case_name + "'");
+            fail_unknown_enum_match_case(pattern.loc, pattern.case_name, enum_info);
         }
         EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
         require_enum_case_access(pattern.loc, case_info);
         if (case_info.enum_name != enum_info.name) {
-            fail(pattern.loc,
-                 "enum case '" + pattern.case_name + "' does not belong to " + enum_info.name);
+            fail_wrong_enum_match_case(pattern.loc, pattern.case_name, case_info, enum_info);
         }
         if (case_info.payloads.empty() && pattern.has_payload_pattern) {
             fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
@@ -13391,6 +13390,71 @@ private:
         }
         hint += ")";
         return hint;
+    }
+
+    static std::string enum_case_pattern_hints(const EnumInfo& enum_info) {
+        if (enum_info.cases.empty()) return "<no cases>";
+        std::string hints;
+        for (std::size_t i = 0; i < enum_info.cases.size(); ++i) {
+            if (i != 0) hints += ", ";
+            hints += enum_case_pattern_hint(enum_info.cases[i]);
+        }
+        return hints;
+    }
+
+    [[noreturn]] static void fail_unknown_enum_match_case(SourceLocation loc,
+                                                          const std::string& case_name,
+                                                          const EnumInfo& enum_info) {
+        CompileError error(std::move(loc), "unknown enum case '" + case_name + "'");
+        Span enum_span = span_from_location(enum_info.loc);
+        if (span_has_source(enum_span) && span_has_valid_order(enum_span)) {
+            error.add_label(DiagnosticLabel{
+                enum_span,
+                "matched value has enum type '" + enum_info.name + "'",
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "enum match arms must name cases declared by the matched enum",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use one of " + enum_case_pattern_hints(enum_info),
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_wrong_enum_match_case(SourceLocation loc,
+                                                        const std::string& case_name,
+                                                        const EnumCaseInfo& case_info,
+                                                        const EnumInfo& expected_enum) {
+        CompileError error(
+            std::move(loc),
+            "enum case '" + case_name + "' does not belong to " + expected_enum.name);
+        Span case_span = span_from_location(case_info.loc);
+        if (span_has_source(case_span) && span_has_valid_order(case_span)) {
+            error.add_label(DiagnosticLabel{
+                case_span,
+                "enum case '" + case_info.name + "' belongs to enum '" + case_info.enum_name + "'",
+                false});
+        }
+        Span enum_span = span_from_location(expected_enum.loc);
+        if (span_has_source(enum_span) && span_has_valid_order(enum_span)) {
+            error.add_label(DiagnosticLabel{
+                enum_span,
+                "match value expects cases from enum '" + expected_enum.name + "'",
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "a match arm cannot mix cases from different enum types",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use one of " + enum_case_pattern_hints(expected_enum) +
+                " or change the matched value type",
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     [[noreturn]] static void fail_enum_match_nonexhaustive(

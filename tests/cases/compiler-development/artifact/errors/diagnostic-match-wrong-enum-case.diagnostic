@@ -1,4 +1,10 @@
-diagnostic error code=T0001 family=type message="enum case 'B' does not belong to Left" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="enum case 'B' does not belong to Left" sources=1 labels=3 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/match/errors/match-wrong-enum-case.ari" display="tests/cases/match/errors/match-wrong-enum-case.ari" bytes=165
   Label index=0 role=primary source_id=0 source="tests/cases/match/errors/match-wrong-enum-case.ari" line=12 column=5 end_line=12 end_column=6 byte_start=97 byte_end=98 message=""
   Snippet label=0 text="  --> tests/cases/match/errors/match-wrong-enum-case.ari:12:5\n    |\n 12 |     B => {\n    |     ^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/match/errors/match-wrong-enum-case.ari" line=6 column=3 end_line=6 end_column=4 byte_start=35 byte_end=36 message="enum case 'B' belongs to enum 'Right'"
+  Snippet label=1 text="  --> tests/cases/match/errors/match-wrong-enum-case.ari:6:3\n   |\n 6 |   B,\n   |   ^"
+  Label index=2 role=secondary source_id=0 source="tests/cases/match/errors/match-wrong-enum-case.ari" line=1 column=6 end_line=1 end_column=10 byte_start=5 byte_end=9 message="match value expects cases from enum 'Left'"
+  Snippet label=2 text="  --> tests/cases/match/errors/match-wrong-enum-case.ari:1:6\n   |\n 1 | enum Left {\n   |      ^^^^"
+  Note index=0 location=none message="a match arm cannot mix cases from different enum types"
+  Help index=0 location=none message="use one of A or change the matched value type"
