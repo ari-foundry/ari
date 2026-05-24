@@ -227,6 +227,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-wrong-function-arity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-wrong-function-arity.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-method-arity.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-method-arity.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-method-arity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-method-arity.diagnostic
+	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-macro-arity.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-macro-arity.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-macro-arity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-macro-arity.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-wrong-argument-type.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-wrong-argument-type.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-invalid-return.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-invalid-return.diagnostic

@@ -1,0 +1,6 @@
+diagnostic error code=T0001 family=type message="wrong argument count for macro 'assert_eq!': expected 2 arguments, got 1 argument" sources=1 labels=1 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-macro-arity.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-macro-arity.ari" bytes=50
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-macro-arity.ari" line=2 column=3 end_line=2 end_column=12 byte_start=21 byte_end=30 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-macro-arity.ari:2:3\n   |\n 2 |   assert_eq!(1);\n   |   ^^^^^^^^^"
+  Note index=0 location=none message="prelude assertion macros require both left and right values"
+  Help index=0 location=none message="pass 2 arguments to macro 'assert_eq!' instead of 1 argument"

@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=260
+CompilerArtifactFixtures version=1 group=all entries=262
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -86,6 +86,8 @@ CompilerArtifactFixtures version=1 group=all entries=260
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-break-live-owner.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-loop-continue-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-continue-live-owner.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-macro-arity.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-macro-arity.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-branch-state-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-duplicate-arm.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-empty.diagnostic

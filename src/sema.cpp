@@ -22630,7 +22630,9 @@ private:
     }
 
     IrExprPtr check_assert_compare_macro(const Expr& expr, PreludeMacroKind kind, std::vector<ExprPtr> args) {
-        if (args.size() != 2) fail(expr.loc, "wrong argument count for '" + expr.name + "!'");
+        if (args.size() != 2) {
+            fail_macro_argument_count(expr.loc, expr.name, 2, args.size());
+        }
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr left = check_expr(*args[0]);
@@ -26727,6 +26729,27 @@ private:
         error.add_note(DiagnosticNote{
             std::nullopt,
             "pass " + expected_text + " to the callable value instead of " + actual_text,
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_macro_argument_count(SourceLocation loc,
+                                                       const std::string& macro_name,
+                                                       std::size_t expected_count,
+                                                       std::size_t actual_count) {
+        const std::string expected_text = value_argument_count_text(expected_count);
+        const std::string actual_text = value_argument_count_text(actual_count);
+        CompileError error(
+            std::move(loc),
+            "wrong argument count for macro '" + macro_name + "!': expected " +
+                expected_text + ", got " + actual_text);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "prelude assertion macros require both left and right values",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass " + expected_text + " to macro '" + macro_name + "!' instead of " + actual_text,
             DiagnosticNoteKind::Help});
         throw error;
     }
