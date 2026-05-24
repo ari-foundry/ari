@@ -1,0 +1,14 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="expected expression before ';'" @tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari:6:22 source_id=0 bytes=78..79
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari:6:22 source_id=0 bytes=78..79
+      Note message="the parser was reading an expression at this point"
+      Help message="add an expression here or remove the incomplete expression"
+  Function name=good return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari:1:4 source_id=0 bytes=3..7
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari:2:5 source_id=0 bytes=23..29
+        Integer value=1 @tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari:2:12 source_id=0 bytes=30..31
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari:9:4 source_id=0 bytes=86..91
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari:10:5 source_id=0 bytes=107..113
+        Integer value=2 @tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari:10:12 source_id=0 bytes=114..115

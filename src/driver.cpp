@@ -563,8 +563,8 @@ int run(int argc, char** argv) {
             throw CompileError("--emit-syntax cannot be combined with checking, backend, module, or linking options");
         }
         std::vector<Token> tokens = lex_source(read_text_file(input), input);
-        Program syntax = parse_tokens(std::move(tokens), cfg_features, target.triple);
-        write_text_file(syntax_output, dump_syntax(syntax, input));
+        ParseRecoveryResult syntax = parse_tokens_recovering(std::move(tokens), cfg_features, target.triple);
+        write_text_file(syntax_output, dump_syntax(syntax.program, input, syntax.diagnostics));
         report_wrote(syntax_output, "syntax dump");
         return 0;
     }

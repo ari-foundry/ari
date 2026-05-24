@@ -11,9 +11,16 @@ class SyntaxDumper {
 public:
     SyntaxDumper(const Program& program, std::string source_name)
         : program_(program), source_name_(std::move(source_name)) {}
+    SyntaxDumper(const Program& program,
+                 std::string source_name,
+                 const std::vector<CompileError>& parse_diagnostics)
+        : program_(program),
+          source_name_(std::move(source_name)),
+          parse_diagnostics_(&parse_diagnostics) {}
 
     std::string dump() {
         line(0, "Program source=" + source_name_);
+        dump_parse_diagnostics();
         for (const UseDecl& use : program_.uses) dump_use(use);
         for (const ModuleImport& import : program_.module_imports) dump_module_import(import);
         for (const ModuleDecl& module : program_.modules) dump_module(module);
@@ -31,6 +38,7 @@ public:
 private:
     const Program& program_;
     std::string source_name_;
+    const std::vector<CompileError>* parse_diagnostics_ = nullptr;
     std::ostringstream out_;
 
     void line(int indent, const std::string& text) {
@@ -142,6 +150,31 @@ private:
         }
         text += "]";
         return text;
+    }
+
+    void dump_parse_diagnostics() {
+        if (!parse_diagnostics_ || parse_diagnostics_->empty()) return;
+        line(1, "ParseDiagnostics count=" + std::to_string(parse_diagnostics_->size()));
+        for (const CompileError& error : *parse_diagnostics_) {
+            std::string text = "ParseDiagnostic message=" + quote(error.message());
+            if (error.has_location()) text += loc(error.location());
+            line(2, text);
+            for (const DiagnosticLabel& label : error.labels()) {
+                std::string label_text = std::string(label.primary ? "PrimaryLabel" : "SecondaryLabel") +
+                                         " message=" + quote(label.message);
+                if (span_has_source(label.span)) label_text += loc(source_location_for_span(label.span));
+                line(3, label_text);
+            }
+            for (const DiagnosticNote& note : error.notes()) {
+                std::string note_text =
+                    std::string(note.kind == DiagnosticNoteKind::Help ? "Help" : "Note") +
+                    " message=" + quote(note.message);
+                if (note.span && span_has_source(*note.span)) {
+                    note_text += loc(source_location_for_span(*note.span));
+                }
+                line(3, note_text);
+            }
+        }
     }
 
     void dump_use(const UseDecl& use) {
@@ -504,6 +537,12 @@ private:
 
 std::string dump_syntax(const Program& program, const std::string& source_name) {
     return SyntaxDumper(program, source_name).dump();
+}
+
+std::string dump_syntax(const Program& program,
+                        const std::string& source_name,
+                        const std::vector<CompileError>& parse_diagnostics) {
+    return SyntaxDumper(program, source_name, parse_diagnostics).dump();
 }
 
 } // namespace ari

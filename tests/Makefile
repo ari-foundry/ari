@@ -103,6 +103,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-declarations.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-declarations.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/ok/syntax-control-flow.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-control-flow.syntax
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/syntax-control-flow.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-control-flow.syntax
+	$(TARGET) tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-top-level.syntax
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/syntax-recovery-top-level.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-top-level.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-unexpected-character.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unexpected-character.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-string.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-lexer-unterminated-string.diagnostic

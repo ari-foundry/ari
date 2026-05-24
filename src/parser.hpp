@@ -9,10 +9,18 @@
 
 namespace ari {
 
+struct ParseRecoveryResult {
+    Program program;
+    std::vector<CompileError> diagnostics;
+};
+
 Program parse_tokens(std::vector<Token> tokens);
 Program parse_tokens(std::vector<Token> tokens,
                      std::set<std::string> cfg_features,
                      std::string target_triple = {});
+ParseRecoveryResult parse_tokens_recovering(std::vector<Token> tokens,
+                                            std::set<std::string> cfg_features,
+                                            std::string target_triple = {});
 Program parse_tokens_in_module(std::vector<Token> tokens, std::vector<std::string> module_path);
 Program parse_tokens_in_module(std::vector<Token> tokens,
                                std::vector<std::string> module_path,

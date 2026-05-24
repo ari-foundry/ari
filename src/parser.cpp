@@ -35,6 +35,20 @@ public:
         return program;
     }
 
+    ParseRecoveryResult parse_program_recovering() {
+        ParseRecoveryResult result;
+        while (!check(TokenKind::End)) {
+            std::size_t error_pos = pos_;
+            try {
+                parse_top_level_decl(result.program);
+            } catch (const CompileError& error) {
+                result.diagnostics.push_back(error);
+                synchronize_top_level(error_pos);
+            }
+        }
+        return result;
+    }
+
     std::vector<ExprPtr> parse_expression_arguments_until_end(SourceLocation loc) {
         std::vector<ExprPtr> args;
         if (check(TokenKind::End)) return args;
@@ -91,6 +105,73 @@ private:
         if (!check(kind)) return false;
         ++pos_;
         return true;
+    }
+
+    bool is_top_level_start(std::size_t offset = 0) const {
+        const Token& token = peek(static_cast<int>(offset));
+        switch (token.kind) {
+            case TokenKind::At:
+            case TokenKind::KwPub:
+            case TokenKind::KwMeta:
+            case TokenKind::KwExtern:
+            case TokenKind::KwUse:
+            case TokenKind::KwMod:
+            case TokenKind::KwConst:
+            case TokenKind::KwFn:
+            case TokenKind::KwStruct:
+            case TokenKind::KwEnum:
+            case TokenKind::KwTrait:
+            case TokenKind::KwImpl:
+                return true;
+            case TokenKind::Identifier:
+                return token.text == "type" ||
+                       peek(static_cast<int>(offset + 1)).kind == TokenKind::Bang;
+            default:
+                return false;
+        }
+    }
+
+    void synchronize_top_level(std::size_t error_pos) {
+        if (check(TokenKind::End)) return;
+        if (pos_ != error_pos && is_top_level_start()) return;
+
+        int depth = 0;
+        while (!check(TokenKind::End)) {
+            if (pos_ != error_pos && depth == 0 && is_top_level_start()) return;
+            TokenKind kind = tokens_[pos_++].kind;
+            switch (kind) {
+                case TokenKind::LParen:
+                case TokenKind::LBrace:
+                case TokenKind::LBracket:
+                    ++depth;
+                    break;
+                case TokenKind::RParen:
+                case TokenKind::RBrace:
+                case TokenKind::RBracket:
+                    if (depth > 0) --depth;
+                    break;
+                default:
+                    break;
+            }
+            if ((kind == TokenKind::Semicolon || kind == TokenKind::RBrace) &&
+                depth == 0 &&
+                is_top_level_start()) {
+                return;
+            }
+        }
+    }
+
+    void synchronize_inline_module_body() {
+        int depth = 0;
+        while (!check(TokenKind::End)) {
+            TokenKind kind = tokens_[pos_++].kind;
+            if (kind == TokenKind::LBrace) {
+                ++depth;
+            } else if (kind == TokenKind::RBrace) {
+                if (depth == 0) return;
+                --depth;
+            }
+        }
     }
 
     Token expect(TokenKind kind, const std::string& message) {
@@ -436,9 +517,15 @@ private:
         if (module_name != local_name) fail(name.loc, "inline modules cannot be aliased; use file-backed `mod name as alias;`");
         expect(TokenKind::LBrace, "expected { after module name");
         current_module_.push_back(name.text);
-        while (!match(TokenKind::RBrace)) {
-            if (check(TokenKind::End)) fail(name.loc, "unterminated module");
-            parse_top_level_decl(program);
+        try {
+            while (!match(TokenKind::RBrace)) {
+                if (check(TokenKind::End)) fail(name.loc, "unterminated module");
+                parse_top_level_decl(program);
+            }
+        } catch (...) {
+            current_module_.pop_back();
+            synchronize_inline_module_body();
+            throw;
         }
         current_module_.pop_back();
     }
@@ -2682,6 +2769,13 @@ Program parse_tokens(std::vector<Token> tokens,
                      std::string target_triple) {
     Parser parser(std::move(tokens), {}, std::move(cfg_features), std::move(target_triple));
     return parser.parse_program();
+}
+
+ParseRecoveryResult parse_tokens_recovering(std::vector<Token> tokens,
+                                            std::set<std::string> cfg_features,
+                                            std::string target_triple) {
+    Parser parser(std::move(tokens), {}, std::move(cfg_features), std::move(target_triple));
+    return parser.parse_program_recovering();
 }
 
 Program parse_tokens_in_module(std::vector<Token> tokens, std::vector<std::string> module_path) {
