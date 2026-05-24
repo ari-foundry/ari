@@ -10720,6 +10720,39 @@ private:
         return true;
     }
 
+    [[noreturn]] static void fail_runtime_dependent_enum_payload_move(SourceLocation loc,
+                                                                      const TrackedAggregateAccess& access,
+                                                                      const LocalInfo& local,
+                                                                      const std::string& display) {
+        CompileError error(
+            std::move(loc),
+            "cannot move runtime-dependent owning enum payload slot '" + display +
+                "' outside match because enum cases do not share the same owner payload layout; use match");
+
+        Span primary_span = span_from_location(error.location());
+        Span declaration_span = span_from_location(local.loc);
+        if (span_has_source(declaration_span) &&
+            span_has_valid_order(declaration_span) &&
+            (!span_has_source(primary_span) ||
+             primary_span.source_id.value != declaration_span.source_id.value ||
+             primary_span.start != declaration_span.start ||
+             primary_span.end != declaration_span.end)) {
+            error.add_label(DiagnosticLabel{
+                declaration_span,
+                "owning enum binding '" + access.base_name + "' declared here",
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "owning enum payload storage can be case-dependent, so a payload projection outside match cannot prove which owner slot is active",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "move '" + display + "' inside the matching enum arm, or use an enum layout where every case has the same owning payload slot",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void seed_uniform_runtime_enum_payload_states_for_move(SourceLocation loc,
                                                            const TrackedAggregateAccess& access,
                                                            LocalInfo& local) {
@@ -10750,9 +10783,7 @@ private:
             all_payload_states);
         if (all_payload_states.empty()) return;
         if (!enum_owner_payload_paths_match_every_case(loc, subject, all_payload_states)) {
-            fail(loc,
-                 "cannot move runtime-dependent owning enum payload slot '" + display +
-                     "' outside match because enum cases do not share the same owner payload layout; use match");
+            fail_runtime_dependent_enum_payload_move(loc, access, local, display);
         }
 
         local.owned_field_states = std::move(all_payload_states);
