@@ -8187,7 +8187,7 @@ private:
             fail_compact_enum_payload_reference(pattern.loc, case_info.payloads);
         }
         if (!pattern.payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+            fail_enum_pattern_payload_required(pattern.loc, pattern.case_name, case_info);
         }
 
         const Pattern& payload = *pattern.payload_pattern;
@@ -8256,10 +8256,10 @@ private:
             fail_wrong_enum_match_case(pattern.loc, pattern.case_name, case_info, enum_found->second);
         }
         if (case_info.payloads.empty() && pattern.has_payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
+            fail_enum_pattern_payload_unexpected(pattern.loc, pattern.case_name, case_info);
         }
         if (!case_info.payloads.empty() && !pattern.has_payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+            fail_enum_pattern_payload_required(pattern.loc, pattern.case_name, case_info);
         }
 
         std::vector<IrStmtPtr> body;
@@ -12405,10 +12405,10 @@ private:
             fail_wrong_enum_match_case(pattern.loc, pattern.case_name, case_info, enum_info);
         }
         if (case_info.payloads.empty() && pattern.has_payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
+            fail_enum_pattern_payload_unexpected(pattern.loc, pattern.case_name, case_info);
         }
         if (!case_info.payloads.empty() && !pattern.has_payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+            fail_enum_pattern_payload_required(pattern.loc, pattern.case_name, case_info);
         }
 
         IrMatchArm lowered_arm;
@@ -12476,10 +12476,10 @@ private:
             fail_wrong_enum_match_case(pattern.loc, pattern.case_name, case_info, enum_info);
         }
         if (case_info.payloads.empty() && pattern.has_payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
+            fail_enum_pattern_payload_unexpected(pattern.loc, pattern.case_name, case_info);
         }
         if (!case_info.payloads.empty() && !pattern.has_payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+            fail_enum_pattern_payload_required(pattern.loc, pattern.case_name, case_info);
         }
 
         lowered_arm.case_name = case_info.name;
@@ -12690,7 +12690,7 @@ private:
             }
             if (case_info.payloads.empty()) return;
             if (!pattern.has_payload_pattern || !pattern.payload_pattern) {
-                fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+                fail_enum_pattern_payload_required(pattern.loc, pattern.case_name, case_info);
             }
             if (case_info.payloads.size() == 1) {
                 const Pattern& payload = *pattern.payload_pattern;
@@ -12765,7 +12765,7 @@ private:
         }
         if (case_info.payloads.empty()) return true;
         if (!pattern.payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+            fail_enum_pattern_payload_required(pattern.loc, pattern.case_name, case_info);
         }
 
         const Pattern& payload = *pattern.payload_pattern;
@@ -13116,10 +13116,10 @@ private:
                  "enum case '" + pattern.case_name + "' does not belong to payload enum " + payload_type.name);
         }
         if (case_info.payloads.empty() && pattern.has_payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
+            fail_enum_pattern_payload_unexpected(pattern.loc, pattern.case_name, case_info);
         }
         if (!case_info.payloads.empty() && !pattern.has_payload_pattern) {
-            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+            fail_enum_pattern_payload_required(pattern.loc, pattern.case_name, case_info);
         }
         IrPayloadEnumCondition tag_condition;
         tag_condition.index = payload_index;
@@ -26985,6 +26985,63 @@ private:
 
     static std::string payload_count_text(std::size_t count) {
         return std::to_string(count) + " payload" + (count == 1 ? "" : "s");
+    }
+
+    static std::string enum_payload_pattern_example(const std::string& case_name, std::size_t payload_count) {
+        std::string example = case_name + "(";
+        for (std::size_t i = 0; i < payload_count; ++i) {
+            if (i != 0) example += ", ";
+            example += "_";
+        }
+        example += ")";
+        return example;
+    }
+
+    [[noreturn]] static void fail_enum_pattern_payload_required(SourceLocation loc,
+                                                                const std::string& case_name,
+                                                                const EnumCaseInfo& info) {
+        CompileError error(std::move(loc), "enum case '" + case_name + "' requires a payload pattern");
+        Span declaration_span = info.payloads.size() == 1
+            ? enum_payload_declaration_span(info, 0)
+            : span_from_location(info.loc);
+        if (span_has_source(declaration_span) && span_has_valid_order(declaration_span)) {
+            std::string label = info.payloads.size() == 1
+                ? "enum case '" + info.name + "' declares payload type " + type_name(info.payloads[0])
+                : "enum case '" + info.name + "' declares " + payload_count_text(info.payloads.size());
+            error.add_label(DiagnosticLabel{declaration_span, std::move(label), false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "match payload patterns must mirror enum case payload declarations",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add a payload pattern such as '" +
+                enum_payload_pattern_example(case_name, info.payloads.size()) + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_enum_pattern_payload_unexpected(SourceLocation loc,
+                                                                  const std::string& case_name,
+                                                                  const EnumCaseInfo& info) {
+        CompileError error(std::move(loc), "enum case '" + case_name + "' has no payload");
+        Span case_span = span_from_location(info.loc);
+        if (span_has_source(case_span) && span_has_valid_order(case_span)) {
+            error.add_label(DiagnosticLabel{
+                case_span,
+                "enum case '" + info.name + "' is declared without payload",
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "unit enum cases are matched without payload parentheses",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove the payload pattern from '" + case_name + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     [[noreturn]] static void fail_enum_payload_count(
