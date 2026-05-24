@@ -22,12 +22,14 @@ struct ConstantValue;
 
 struct ScalarMatchCoverage {
     bool has_wildcard = false;
+    SourceLocation wildcard_loc;
     std::set<std::string> covered_patterns;
     std::vector<std::pair<std::uint64_t, std::uint64_t>> integer_intervals;
 };
 
 struct EnumMatchCoverage {
     bool has_wildcard = false;
+    SourceLocation wildcard_loc;
     std::set<std::uint32_t> covered_tags;
     std::map<std::uint32_t, SourceLocation> covered_tag_locs;
     std::set<std::string> covered_payload_literals;

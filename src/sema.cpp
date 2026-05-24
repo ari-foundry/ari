@@ -5477,6 +5477,27 @@ private:
         throw error;
     }
 
+    [[noreturn]] static void fail_unreachable_match_arm_after_wildcard(SourceLocation loc,
+                                                                       SourceLocation wildcard_loc) {
+        CompileError error(std::move(loc), "unreachable match arm after wildcard");
+        Span wildcard_span = span_from_location(wildcard_loc);
+        if (span_has_source(wildcard_span) && span_has_valid_order(wildcard_span)) {
+            error.add_label(DiagnosticLabel{
+                wildcard_span,
+                "wildcard arm makes later arms unreachable",
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "match arms are tested from top to bottom and '_' covers every remaining value",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "move this arm before the wildcard or remove it",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void end_scope(bool check_owners) {
         local_scopes_.end_scope(
             check_owners,
@@ -12396,7 +12417,9 @@ private:
         if (&effective_pattern != &pattern) {
             return lower_match_arm_pattern(effective_pattern, enum_info, enum_value_type, coverage);
         }
-        if (coverage.has_wildcard) fail(pattern.loc, "unreachable match arm after wildcard");
+        if (coverage.has_wildcard) {
+            fail_unreachable_match_arm_after_wildcard(pattern.loc, coverage.wildcard_loc);
+        }
 
         if (pattern.kind == PatternKind::Alias) {
             if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
@@ -12411,6 +12434,7 @@ private:
         if (pattern.kind == PatternKind::Wildcard) {
             lowered_arm.wildcard = true;
             coverage.has_wildcard = true;
+            coverage.wildcard_loc = pattern.loc;
             return lowered_arm;
         }
         if (pattern.kind != PatternKind::EnumCase) {
@@ -13697,7 +13721,9 @@ private:
         if (&effective_pattern != &pattern) {
             return lower_scalar_match_arm_pattern(effective_pattern, match_type, coverage);
         }
-        if (coverage.has_wildcard) fail(pattern.loc, "unreachable match arm after wildcard");
+        if (coverage.has_wildcard) {
+            fail_unreachable_match_arm_after_wildcard(pattern.loc, coverage.wildcard_loc);
+        }
 
         if (pattern.kind == PatternKind::Alias) {
             if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
@@ -13711,11 +13737,13 @@ private:
         if (pattern.kind == PatternKind::Wildcard) {
             lowered_arm.wildcard = true;
             coverage.has_wildcard = true;
+            coverage.wildcard_loc = pattern.loc;
             return lowered_arm;
         }
         if (pattern.kind == PatternKind::Binding) {
             lowered_arm.wildcard = true;
             coverage.has_wildcard = true;
+            coverage.wildcard_loc = pattern.loc;
             if (pattern.binding_mode == BindingMode::Value) {
                 apply_value_binding(lowered_arm, pattern.loc, pattern.payload_name, match_type);
             }
