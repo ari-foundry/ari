@@ -43,6 +43,20 @@ std::string summary_display(const ModuleCacheIrSummary& summary) {
     return "'" + display_module_name(summary.module_name) + "' at '" + summary.path + "'";
 }
 
+[[noreturn]] void fail_invalid_module_cache_ir_summary(const std::string& display_path,
+                                                       const std::string& detail) {
+    CompileError error("invalid module cache '" + display_path + "': " + detail);
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "cached IR summaries are compiler-owned lowered-function payloads used to replay module IR safely",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "regenerate the module cache with --emit-module-cache after changing declarations, generics, layout, or compiler cache format",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
 void append_count(std::string& out, std::uint64_t value) {
     out += std::to_string(value);
     out.push_back(';');
@@ -272,25 +286,28 @@ void require_function_modules_match_summary(const std::vector<ModuleCacheIrFunct
 IrSummaryParseResult parse_validated_ir_summary_payload(const ModuleCacheIrSummary& summary,
                                                         const std::string& display_path) {
     if (summary.ir_summary.empty()) {
-        throw CompileError("invalid module cache '" + display_path +
-                           "': IR summary for " + summary_display(summary) +
-                           " is missing an IR summary");
+        fail_invalid_module_cache_ir_summary(
+            display_path,
+            "IR summary for " + summary_display(summary) +
+                " is missing an IR summary");
     }
     if (summary.ir_summary.compare(
             0,
             std::strlen(kModuleIrSummaryPayloadHeader),
             kModuleIrSummaryPayloadHeader
         ) != 0) {
-        throw CompileError("invalid module cache '" + display_path +
-                           "': IR summary for " + summary_display(summary) +
-                           " expected '" + std::string(kModuleIrSummaryPayloadHeader) + "' header");
+        fail_invalid_module_cache_ir_summary(
+            display_path,
+            "IR summary for " + summary_display(summary) +
+                " expected '" + std::string(kModuleIrSummaryPayloadHeader) + "' header");
     }
     std::string hash = module_metadata_source_hash(summary.ir_summary);
     if (hash != summary.ir_hash) {
-        throw CompileError("invalid module cache '" + display_path +
-                           "': IR summary for " + summary_display(summary) +
-                           " hashes to '" + hash + "' instead of recorded '" +
-                           summary.ir_hash + "'");
+        fail_invalid_module_cache_ir_summary(
+            display_path,
+            "IR summary for " + summary_display(summary) +
+                " hashes to '" + hash + "' instead of recorded '" +
+                summary.ir_hash + "'");
     }
     try {
         IrSummaryParseResult result = parse_ir_summary_payload(summary);
@@ -298,7 +315,7 @@ IrSummaryParseResult parse_validated_ir_summary_payload(const ModuleCacheIrSumma
         require_function_modules_match_summary(result.functions, summary);
         return result;
     } catch (const CompileError& error) {
-        throw CompileError("invalid module cache '" + display_path + "': " + error.what());
+        fail_invalid_module_cache_ir_summary(display_path, error.what());
     }
 }
 

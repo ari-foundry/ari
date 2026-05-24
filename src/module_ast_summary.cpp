@@ -16,6 +16,20 @@
 namespace ari {
 namespace {
 
+[[noreturn]] void fail_invalid_module_cache_ast_summary(const std::string& display_path,
+                                                        const std::string& detail) {
+    CompileError error("invalid module cache '" + display_path + "': " + detail);
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "cached AST summaries are compiler-owned declaration payloads used to replay module surfaces safely",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "regenerate the module cache with --emit-module-cache after changing declarations or compiler cache format",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
 void append_field(std::ostringstream& out, const std::string& value) {
     out << value.size() << ':' << value << ';';
 }
@@ -2116,26 +2130,29 @@ ModuleCacheAstSummary make_module_cache_ast_summary(const std::string& path,
 void require_valid_module_cache_ast_summary_payload(const ModuleCacheAstSummary& summary,
                                                     const std::string& display_path) {
     if (summary.declaration_summary.empty()) {
-        throw CompileError("invalid module cache '" + display_path +
-                           "': AST summary for " + summary_display(summary) +
-                           " is missing a declaration summary");
+        fail_invalid_module_cache_ast_summary(
+            display_path,
+            "AST summary for " + summary_display(summary) +
+                " is missing a declaration summary");
     }
     if (summary.declaration_summary.compare(
             0,
             std::strlen(kModuleAstDeclsPayloadHeader),
             kModuleAstDeclsPayloadHeader
         ) != 0) {
-        throw CompileError("invalid module cache '" + display_path +
-                           "': AST summary for " + summary_display(summary) +
-                           " declaration summary expected '" +
-                           std::string(kModuleAstDeclsPayloadHeader) + "' header");
+        fail_invalid_module_cache_ast_summary(
+            display_path,
+            "AST summary for " + summary_display(summary) +
+                " declaration summary expected '" +
+                std::string(kModuleAstDeclsPayloadHeader) + "' header");
     }
     std::string hash = module_metadata_source_hash(summary.declaration_summary);
     if (hash != summary.declaration_hash) {
-        throw CompileError("invalid module cache '" + display_path +
-                           "': AST summary for " + summary_display(summary) +
-                           " declaration summary hashes to '" + hash +
-                           "' instead of recorded '" + summary.declaration_hash + "'");
+        fail_invalid_module_cache_ast_summary(
+            display_path,
+            "AST summary for " + summary_display(summary) +
+                " declaration summary hashes to '" + hash +
+                "' instead of recorded '" + summary.declaration_hash + "'");
     }
     try {
         DeclarationSummaryCounts counts = parse_declaration_summary_payload(summary);
@@ -2162,7 +2179,7 @@ void require_valid_module_cache_ast_summary_payload(const ModuleCacheAstSummary&
             throw CompileError("declaration summary does not round-trip through materialized declarations");
         }
     } catch (const CompileError& error) {
-        throw CompileError("invalid module cache '" + display_path + "': " + error.what());
+        fail_invalid_module_cache_ast_summary(display_path, error.what());
     }
 }
 
@@ -2171,7 +2188,7 @@ Program materialize_module_cache_ast_summary_declarations(const ModuleCacheAstSu
     try {
         return materialize_declaration_summary_payload(summary);
     } catch (const CompileError& error) {
-        throw CompileError("invalid module cache '" + display_path + "': " + error.what());
+        fail_invalid_module_cache_ast_summary(display_path, error.what());
     }
 }
 
