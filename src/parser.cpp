@@ -412,6 +412,25 @@ private:
         throw error;
     }
 
+    [[noreturn]] static void fail_expected_struct_field_colon(SourceLocation boundary_loc,
+                                                              SourceLocation field_loc,
+                                                              const std::string& field_name) {
+        CompileError error(std::move(boundary_loc), "expected : after field name");
+        add_location_label_if_valid(
+            error,
+            field_loc,
+            "struct field '" + field_name + "' starts here");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "struct fields use `name: Type` syntax",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "insert : between field '" + field_name + "' and its type",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void optional_separator() {
         match(TokenKind::Comma);
         match(TokenKind::Semicolon);
@@ -1100,7 +1119,9 @@ private:
             }
             bool mutable_field = match(TokenKind::KwMut);
             Token field = expect(TokenKind::Identifier, "expected struct field name");
-            expect(TokenKind::Colon, "expected : after field name");
+            if (!match(TokenKind::Colon)) {
+                fail_expected_struct_field_colon(peek().loc, field.loc, field.text);
+            }
             decl.fields.push_back(StructField{field.text, parse_type(), mutable_field, field.loc});
             aggregate_member_separator(
                 "expected , or } after struct field",
