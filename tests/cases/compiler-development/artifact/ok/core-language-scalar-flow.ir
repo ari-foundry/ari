@@ -1,83 +1,83 @@
 IrProgram source=tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari target=x86_64-pc-linux-gnu require_main=true
-  Function name=add return=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:1:4
+  Function name=add return=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:1:4 source_id=0 bytes=3..6
     Param name=left type=i64
     Param name=right type=i64
     Body
-      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:3
-        Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:15
-          Local name=left type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:10
-          Local name=right type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:17
-  Function name=compute return=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:5:4
+      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:3 source_id=0 bytes=41..47
+        Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:15 source_id=0 bytes=53..54
+          Local name=left type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:10 source_id=0 bytes=48..52
+          Local name=right type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:2:17 source_id=0 bytes=55..60
+  Function name=compute return=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:5:4 source_id=0 bytes=68..75
     Param name=value type=i64
     Body
-      VarDecl name=adjusted type=i64 let @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:7
-        IfExpr type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:18
-          Binary op=">" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:27
-            Local name=value type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:21
-            Integer type=i64 value=3 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:29
-          Binary op="*" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:7:11
-            Local name=value type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:7:5
-            Integer type=i64 value=2 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:7:13
-          Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:9:11
-            Local name=value type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:9:5
-            Integer type=i64 value=1 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:9:13
-      VarDecl name=index type=i64 mut @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:11:7
-        Integer type=i64 value=0 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:11:15
-      VarDecl name=total type=i64 mut @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:12:7
-        Integer type=i64 value=0 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:12:15
-      While @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:3
-        Binary op="<" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:15
-          Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:9
-          Local name=adjusted type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:17
-        Assign name=index @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:5
-          Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:19
-            Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:13
-            Integer type=i64 value=1 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:21
-        If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:5
-          Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:14
-            Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:8
-            Integer type=i64 value=2 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:17
+      VarDecl name=adjusted type=i64 let @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:7 source_id=0 bytes=103..111
+        IfExpr type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:18 source_id=0 bytes=114..116
+          Binary op=">" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:27 source_id=0 bytes=123..124
+            Local name=value type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:21 source_id=0 bytes=117..122
+            Integer type=i64 value=3 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:6:29 source_id=0 bytes=125..126
+          Binary op="*" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:7:11 source_id=0 bytes=139..140
+            Local name=value type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:7:5 source_id=0 bytes=133..138
+            Integer type=i64 value=2 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:7:13 source_id=0 bytes=141..142
+          Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:9:11 source_id=0 bytes=164..165
+            Local name=value type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:9:5 source_id=0 bytes=158..163
+            Integer type=i64 value=1 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:9:13 source_id=0 bytes=166..167
+      VarDecl name=index type=i64 mut @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:11:7 source_id=0 bytes=179..184
+        Integer type=i64 value=0 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:11:15 source_id=0 bytes=187..188
+      VarDecl name=total type=i64 mut @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:12:7 source_id=0 bytes=196..201
+        Integer type=i64 value=0 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:12:15 source_id=0 bytes=204..205
+      While @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:3 source_id=0 bytes=209..214
+        Binary op="<" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:15 source_id=0 bytes=221..222
+          Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:9 source_id=0 bytes=215..220
+          Local name=adjusted type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:13:17 source_id=0 bytes=223..231
+        Assign name=index @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:5 source_id=0 bytes=238..243
+          Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:19 source_id=0 bytes=252..253
+            Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:13 source_id=0 bytes=246..251
+            Integer type=i64 value=1 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:14:21 source_id=0 bytes=254..255
+        If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:5 source_id=0 bytes=261..263
+          Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:14 source_id=0 bytes=270..272
+            Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:8 source_id=0 bytes=264..269
+            Integer type=i64 value=2 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:15:17 source_id=0 bytes=273..274
           Then
-            Continue @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:16:7
-        If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:5
-          Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:14
-            Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:8
-            Integer type=i64 value=5 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:17
+            Continue @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:16:7 source_id=0 bytes=283..291
+        If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:5 source_id=0 bytes=303..305
+          Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:14 source_id=0 bytes=312..314
+            Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:8 source_id=0 bytes=306..311
+            Integer type=i64 value=5 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:18:17 source_id=0 bytes=315..316
           Then
-            Break @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:19:7
-        Assign name=total @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:5
-          Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:19
-            Local name=total type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:13
-            Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:21
-      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:23:3
-        Local name=total type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:23:10
-  Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:26:4
+            Break @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:19:7 source_id=0 bytes=325..330
+        Assign name=total @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:5 source_id=0 bytes=342..347
+          Binary op="+" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:19 source_id=0 bytes=356..357
+            Local name=total type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:13 source_id=0 bytes=350..355
+            Local name=index type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:21:21 source_id=0 bytes=358..363
+      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:23:3 source_id=0 bytes=371..377
+        Local name=total type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:23:10 source_id=0 bytes=378..383
+  Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:26:4 source_id=0 bytes=391..395
     Body
-      VarDecl name=byte type=u8 let @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:27:7
-        Integer type=u8 value=7 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:27:18
-      VarDecl name=flags type=i64 let @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:7
-        Binary op="^" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:31
-          Binary op="|" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:26
-            Binary op="&" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:20
-              Integer type=i64 value=12 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:17
-              Integer type=i64 value=10 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:22
-            Integer type=i64 value=1 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:28
-          Integer type=i64 value=3 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:33
-      If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:3
-        Binary op="&&" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:18
-          Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:12
-            Local name=flags type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:6
-            Integer type=i64 value=10 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:15
-          Unary op="!" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:21
-            Binary op="||" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:29
-              Bool type=bool value=false @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:23
-              Bool type=bool value=false @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:32
+      VarDecl name=byte type=u8 let @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:27:7 source_id=0 bytes=413..417
+        Integer type=u8 value=7 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:27:18 source_id=0 bytes=424..427
+      VarDecl name=flags type=i64 let @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:7 source_id=0 bytes=435..440
+        Binary op="^" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:31 source_id=0 bytes=459..460
+          Binary op="|" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:26 source_id=0 bytes=454..455
+            Binary op="&" type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:20 source_id=0 bytes=448..449
+              Integer type=i64 value=12 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:17 source_id=0 bytes=445..447
+              Integer type=i64 value=10 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:22 source_id=0 bytes=450..452
+            Integer type=i64 value=1 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:28 source_id=0 bytes=456..457
+          Integer type=i64 value=3 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:28:33 source_id=0 bytes=461..462
+      If @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:3 source_id=0 bytes=466..468
+        Binary op="&&" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:18 source_id=0 bytes=481..483
+          Binary op="==" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:12 source_id=0 bytes=475..477
+            Local name=flags type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:6 source_id=0 bytes=469..474
+            Integer type=i64 value=10 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:15 source_id=0 bytes=478..480
+          Unary op="!" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:21 source_id=0 bytes=484..485
+            Binary op="||" type=bool @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:29 source_id=0 bytes=492..494
+              Bool type=bool value=false @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:23 source_id=0 bytes=486..491
+              Bool type=bool value=false @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:29:32 source_id=0 bytes=495..500
         Then
-          Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:5
-            Call name=add type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:12
-              Call name=compute type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:16
-                Integer type=i64 value=3 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:24
-              Cast type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:33
-                Local name=byte type=u8 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:28
-      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:32:3
-        Integer type=i64 value=0 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:32:10
+          Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:5 source_id=0 bytes=508..514
+            Call name=add type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:12 source_id=0 bytes=515..518
+              Call name=compute type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:16 source_id=0 bytes=519..526
+                Integer type=i64 value=3 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:24 source_id=0 bytes=527..528
+              Cast type=i64 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:33 source_id=0 bytes=536..538
+                Local name=byte type=u8 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:30:28 source_id=0 bytes=531..535
+      Return @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:32:3 source_id=0 bytes=551..557
+        Integer type=i64 value=0 @tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari:32:10 source_id=0 bytes=558..559

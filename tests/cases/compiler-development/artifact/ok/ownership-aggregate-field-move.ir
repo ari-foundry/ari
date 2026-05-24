@@ -1,45 +1,45 @@
 IrProgram source=tests/cases/ownership/ok/ownership-aggregate-field-move.ari target=x86_64-pc-linux-gnu require_main=true
-  Function name=make_owned return=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:7:4
+  Function name=make_owned return=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:7:4 source_id=0 bytes=81..91
     Param name=value type=i64
     Body
-      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:8:3
-        Local name=value type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:8:10
-  Function name=consume return=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:11:4
+      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:8:3 source_id=0 bytes=119..125
+        Local name=value type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:8:10 source_id=0 bytes=126..131
+  Function name=consume return=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:11:4 source_id=0 bytes=139..146
     Param name=value type=own i64
     Body
-      Drop name=value @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:12:8
-      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:13:3
-        Integer type=i64 value=5 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:13:10
-  Function name=main return=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:16:4
+      Drop name=value @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:12:8 source_id=0 bytes=179..184
+      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:13:3 source_id=0 bytes=188..194
+        Integer type=i64 value=5 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:13:10 source_id=0 bytes=195..196
+  Function name=main return=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:16:4 source_id=0 bytes=204..208
     Body
-      VarDecl name=holder type=Holder mut @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:7
-        Tuple type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:16
-          Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:32
-            Integer type=i64 value=1 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:43
-          Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:55
-            Integer type=i64 value=2 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:66
-          Integer type=i64 value=3 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:77
-      VarDecl name=token type=own i64 let @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:18:7
-        TupleIndex index=0 type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:18:22
-          Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:18:15
-      Assign name= @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:3
-        TupleIndex index=2 type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:10
-          Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:3
-        Binary op="+" type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:31
-          TupleIndex index=2 type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:25
-            Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:18
-          Integer type=i64 value=4 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:33
-      VarDecl name=score type=i64 let @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:7
-        Binary op="+" type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:30
-          Call name=consume type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:15
-            Local name=token type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:23
-          TupleIndex index=2 type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:39
-            Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:32
-      Assign name= @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:3
-        TupleIndex index=0 type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:10
-          Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:3
-        Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:18
-          Integer type=i64 value=9 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:29
-      Drop name=holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:22:8
-      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:23:3
-        Local name=score type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:23:10
+      VarDecl name=holder type=Holder mut @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:7 source_id=0 bytes=226..232
+        Tuple type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:16 source_id=0 bytes=235..241
+          Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:32 source_id=0 bytes=251..261
+            Integer type=i64 value=1 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:43 source_id=0 bytes=262..263
+          Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:55 source_id=0 bytes=274..284
+            Integer type=i64 value=2 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:66 source_id=0 bytes=285..286
+          Integer type=i64 value=3 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:17:77 source_id=0 bytes=296..297
+      VarDecl name=token type=own i64 let @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:18:7 source_id=0 bytes=307..312
+        TupleIndex index=0 type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:18:22 source_id=0 bytes=322..327
+          Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:18:15 source_id=0 bytes=315..321
+      Assign name= @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:3 source_id=0 bytes=331..337
+        TupleIndex index=2 type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:10 source_id=0 bytes=338..343
+          Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:3 source_id=0 bytes=331..337
+        Binary op="+" type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:31 source_id=0 bytes=359..360
+          TupleIndex index=2 type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:25 source_id=0 bytes=353..358
+            Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:18 source_id=0 bytes=346..352
+          Integer type=i64 value=4 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:19:33 source_id=0 bytes=361..362
+      VarDecl name=score type=i64 let @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:7 source_id=0 bytes=370..375
+        Binary op="+" type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:30 source_id=0 bytes=393..394
+          Call name=consume type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:15 source_id=0 bytes=378..385
+            Local name=token type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:23 source_id=0 bytes=386..391
+          TupleIndex index=2 type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:39 source_id=0 bytes=402..407
+            Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:20:32 source_id=0 bytes=395..401
+      Assign name= @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:3 source_id=0 bytes=411..417
+        TupleIndex index=0 type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:10 source_id=0 bytes=418..423
+          Local name=holder type=Holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:3 source_id=0 bytes=411..417
+        Call name=make_owned type=own i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:18 source_id=0 bytes=426..436
+          Integer type=i64 value=9 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:21:29 source_id=0 bytes=437..438
+      Drop name=holder @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:22:8 source_id=0 bytes=448..454
+      Return @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:23:3 source_id=0 bytes=458..464
+        Local name=score type=i64 @tests/cases/ownership/ok/ownership-aggregate-field-move.ari:23:10 source_id=0 bytes=465..470

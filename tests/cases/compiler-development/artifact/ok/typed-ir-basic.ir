@@ -1,7 +1,7 @@
 IrProgram source=tests/cases/compiler-development/artifact/ok/token-dump-basic.ari target=x86_64-pc-linux-gnu require_main=true
-  Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:4
+  Function name=main return=i64 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:1:4 source_id=0 bytes=3..7
     Body
-      VarDecl name=value type=i64 let @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:7
-        Integer type=i64 value=42 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:15
-      Return @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:3
-        Local name=value type=i64 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10
+      VarDecl name=value type=i64 let @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:7 source_id=0 bytes=25..30
+        Integer type=i64 value=42 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:2:15 source_id=0 bytes=33..38
+      Return @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:3 source_id=0 bytes=42..48
+        Local name=value type=i64 @tests/cases/compiler-development/artifact/ok/token-dump-basic.ari:3:10 source_id=0 bytes=49..54

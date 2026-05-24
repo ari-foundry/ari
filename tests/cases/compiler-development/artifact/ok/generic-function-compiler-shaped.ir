@@ -1,263 +1,263 @@
 IrProgram source=tests/cases/generics/ok/generic-function-compiler-shaped.ari target=x86_64-pc-linux-gnu require_main=true
-  Function name=span_len return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:84:4
+  Function name=span_len return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:84:4 source_id=0 bytes=1291..1299
     Param name=span type=Span
     Body
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:3
-        Binary op="-" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:19
-          TupleIndex index=1 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:15
-            Local name=span type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:10
-          TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:26
-            Local name=span type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:21
-  Function name=token return=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:88:4
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:3 source_id=0 bytes=1323..1329
+        Binary op="-" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:19 source_id=0 bytes=1339..1340
+          TupleIndex index=1 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:15 source_id=0 bytes=1335..1338
+            Local name=span type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:10 source_id=0 bytes=1330..1334
+          TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:26 source_id=0 bytes=1346..1351
+            Local name=span type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:85:21 source_id=0 bytes=1341..1345
+  Function name=token return=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:88:4 source_id=0 bytes=1359..1364
     Param name=kind type=i64
     Param name=start type=i64
     Param name=end type=i64
     Body
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:3
-        Tuple type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:10
-          Local name=kind type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:24
-          Tuple type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:36
-            Local name=start type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:50
-            Local name=end type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:62
-  Function name=token_score return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:92:4
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:3 source_id=0 bytes=1411..1417
+        Tuple type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:10 source_id=0 bytes=1418..1423
+          Local name=kind type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:24 source_id=0 bytes=1432..1436
+          Tuple type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:36 source_id=0 bytes=1444..1448
+            Local name=start type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:50 source_id=0 bytes=1458..1463
+            Local name=end type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:89:62 source_id=0 bytes=1470..1473
+  Function name=token_score return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:92:4 source_id=0 bytes=1485..1496
     Param name=value type=Token
     Body
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:3
-        Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:21
-          TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:16
-            Local name=value type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:10
-          Call name=span_len type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:23
-            TupleIndex index=1 type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:38
-              Local name=value type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:32
-  Function name=diagnostic_score return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:96:4
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:3 source_id=0 bytes=1522..1528
+        Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:21 source_id=0 bytes=1540..1541
+          TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:16 source_id=0 bytes=1535..1539
+            Local name=value type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:10 source_id=0 bytes=1529..1534
+          Call name=span_len type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:23 source_id=0 bytes=1542..1550
+            TupleIndex index=1 type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:38 source_id=0 bytes=1557..1561
+              Local name=value type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:93:32 source_id=0 bytes=1551..1556
+  Function name=diagnostic_score return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:96:4 source_id=0 bytes=1570..1586
     Param name=value type=Diagnostic
     Body
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:3
-        Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:21
-          TupleIndex index=1 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:16
-            Local name=value type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:10
-          Call name=span_len type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:23
-            TupleIndex index=0 type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:38
-              Local name=value type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:32
-  Function name=token_from_result return=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:100:4
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:3 source_id=0 bytes=1617..1623
+        Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:21 source_id=0 bytes=1635..1636
+          TupleIndex index=1 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:16 source_id=0 bytes=1630..1634
+            Local name=value type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:10 source_id=0 bytes=1624..1629
+          Call name=span_len type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:23 source_id=0 bytes=1637..1645
+            TupleIndex index=0 type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:38 source_id=0 bytes=1652..1656
+              Local name=value type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:97:32 source_id=0 bytes=1646..1651
+  Function name=token_from_result return=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:100:4 source_id=0 bytes=1665..1682
     Param name=value type=PassResult[Box[Token], Diagnostic]
     Param name=fallback type=Token
     Body
-      VarDecl name=boxed type=Box[Token] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:7
-        Call name=pass_or__G_Box_Token__Diagnostic type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:15
-          Local name=value type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:23
-          Call name=make_box__G_Token type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:30
-            Local name=fallback type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:46
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:102:3
-        Call name=unwrap_box__G_Token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:102:10
-          Local name=boxed type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:102:21
-  Function name=result_score return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:105:4
+      VarDecl name=boxed type=Box[Token] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:7 source_id=0 bytes=1760..1765
+        Call name=pass_or__G_Box_Token__Diagnostic type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:15 source_id=0 bytes=1768..1775
+          Local name=value type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:23 source_id=0 bytes=1776..1781
+          Call name=make_box__G_Token type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:30 source_id=0 bytes=1783..1791
+            Local name=fallback type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:101:46 source_id=0 bytes=1799..1807
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:102:3 source_id=0 bytes=1813..1819
+        Call name=unwrap_box__G_Token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:102:10 source_id=0 bytes=1820..1830
+          Local name=boxed type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:102:21 source_id=0 bytes=1831..1836
+  Function name=result_score return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:105:4 source_id=0 bytes=1845..1857
     Param name=value type=PassResult[Box[Token], Diagnostic]
     Param name=fallback type=Token
     Body
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:3
-        Call name=token_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:10
-          Call name=token_from_result type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:22
-            Local name=value type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:40
-            Local name=fallback type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:47
-  Function name=diagnostic_from_result return=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:109:4
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:3 source_id=0 bytes=1929..1935
+        Call name=token_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:10 source_id=0 bytes=1936..1947
+          Call name=token_from_result type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:22 source_id=0 bytes=1948..1965
+            Local name=value type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:40 source_id=0 bytes=1966..1971
+            Local name=fallback type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:106:47 source_id=0 bytes=1973..1981
+  Function name=diagnostic_from_result return=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:109:4 source_id=0 bytes=1991..2013
     Param name=value type=PassResult[Diagnostic, Diagnostic]
     Body
-      VarDecl name=fallback type=Diagnostic let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:7
-        Tuple type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:18
-          Tuple type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:37
-            Integer type=i64 value=90 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:51
-            Integer type=i64 value=93 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:60
-          Integer type=i64 value=4 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:72
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:111:3
-        Call name=pass_or__G_Diagnostic_Diagnostic type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:111:10
-          Local name=value type=PassResult[Diagnostic, Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:111:42
-          Local name=fallback type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:111:49
-  Function name=main return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:114:4
+      VarDecl name=fallback type=Diagnostic let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:7 source_id=0 bytes=2079..2087
+        Tuple type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:18 source_id=0 bytes=2090..2100
+          Tuple type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:37 source_id=0 bytes=2109..2113
+            Integer type=i64 value=90 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:51 source_id=0 bytes=2123..2125
+            Integer type=i64 value=93 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:60 source_id=0 bytes=2132..2134
+          Integer type=i64 value=4 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:110:72 source_id=0 bytes=2144..2145
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:111:3 source_id=0 bytes=2151..2157
+        Call name=pass_or__G_Diagnostic_Diagnostic type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:111:10 source_id=0 bytes=2158..2165
+          Local name=value type=PassResult[Diagnostic, Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:111:42 source_id=0 bytes=2190..2195
+          Local name=fallback type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:111:49 source_id=0 bytes=2197..2205
+  Function name=main return=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:114:4 source_id=0 bytes=2214..2218
     Body
-      VarDecl name=span type=Span let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:7
-        Call name=identity__G_Span type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:14
-          Tuple type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:29
-            Integer type=i64 value=10 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:43
-            Integer type=i64 value=15 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:52
-      VarDecl name=chosen type=Token let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:7
-        Call name=choose__G_Token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:16
-          Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:30
-            Integer type=i64 value=3 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:36
-            Integer type=i64 value=1 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:39
-            Integer type=i64 value=5 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:42
-          Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:46
-            Integer type=i64 value=7 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:52
-            Integer type=i64 value=2 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:55
-            Integer type=i64 value=4 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:58
-          Bool type=bool value=true @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:62
-      VarDecl name=from_maybe type=Token let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:7
-        Call name=maybe_or__G_Token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:20
-          EnumConstruct enum=Maybe case=Just type=Maybe[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:29
-          Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:50
-            Integer type=i64 value=9 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:56
-            Integer type=i64 value=10 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:59
-            Integer type=i64 value=12 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:63
-      VarDecl name=pair type=Pair[i64, Token] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:118:7
-        Call name=pair_of__G_i64_Token type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:118:14
-          Integer type=i64 value=5 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:118:34
-          Local name=from_maybe type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:118:37
-      VarDecl name=boxed type=Box[Token] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:7
-        Call name=make_box__G_Token type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:15
-          Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:31
-            Integer type=i64 value=4 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:37
-            Integer type=i64 value=20 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:40
-            Integer type=i64 value=25 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:44
-      VarDecl name=unboxed type=Token let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:120:7
-        Call name=unwrap_box__G_Token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:120:17
-          Local name=boxed type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:120:28
-      VarDecl name=ok type=PassResult[Box[Token], Diagnostic] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:121:7
-        EnumConstruct enum=PassResult case=Passed type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:122:5
-      VarDecl name=failed type=PassResult[Box[Token], Diagnostic] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:123:7
-        EnumConstruct enum=PassResult case=Failed type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:124:5
-      VarDecl name=nested type=PassResult[Box[Token], Diagnostic] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:125:7
-        Call name=identity__G_PassResult_Box_Token___Diagnostic_ type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:126:5
-          EnumConstruct enum=PassResult case=Passed type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:127:7
-      VarDecl name=diagnostic_ok type=Diagnostic let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:129:7
-        Call name=diagnostic_from_result type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:129:23
-          EnumConstruct enum=PassResult case=Passed type=PassResult[Diagnostic, Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:130:5
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:133:3
-        Binary op="-" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:46
-          Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:140:37
-            Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:42
-              Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:44
-                Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:40
-                  Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:136:26
-                    Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:135:17
-                      Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:134:29
-                        Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:133:25
-                          Call name=span_len type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:133:10
-                            Local name=span type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:133:19
-                          Call name=token_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:134:5
-                            Local name=from_maybe type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:134:17
-                        Call name=first__G_i64_Token type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:135:5
-                          Local name=pair type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:135:11
-                      Call name=token_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:136:5
-                        Local name=unboxed type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:136:17
-                    Call name=result_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:5
-                      Local name=ok type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:18
-                      Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:22
-                        Integer type=i64 value=1 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:28
-                        Integer type=i64 value=40 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:31
-                        Integer type=i64 value=42 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:35
-                  Call name=result_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:5
-                    Local name=failed type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:18
-                    Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:26
-                      Integer type=i64 value=2 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:32
-                      Integer type=i64 value=60 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:35
-                      Integer type=i64 value=61 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:39
-                Call name=result_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:5
-                  Local name=nested type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:18
-                  Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:26
-                    Integer type=i64 value=0 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:32
-                    Integer type=i64 value=0 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:35
-                    Integer type=i64 value=0 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:38
-              Call name=diagnostic_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:140:5
-                Local name=diagnostic_ok type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:140:22
-            IfExpr type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:5
-              Call name=identity__G_bool type=bool @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:8
-                Bool type=bool value=true @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:23
-              Integer type=i64 value=1 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:31
-              Integer type=i64 value=0 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:42
-          Integer type=i64 value=7 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:142:5
-  Function name=make_box__G_Token return=Box[Token] specialization=generic-function origin=make_box @tests/cases/generics/ok/generic-function-compiler-shaped.ari:49:4
+      VarDecl name=span type=Span let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:7 source_id=0 bytes=2236..2240
+        Call name=identity__G_Span type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:14 source_id=0 bytes=2243..2251
+          Tuple type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:29 source_id=0 bytes=2258..2262
+            Integer type=i64 value=10 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:43 source_id=0 bytes=2272..2274
+            Integer type=i64 value=15 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:115:52 source_id=0 bytes=2281..2283
+      VarDecl name=chosen type=Token let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:7 source_id=0 bytes=2294..2300
+        Call name=choose__G_Token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:16 source_id=0 bytes=2303..2309
+          Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:30 source_id=0 bytes=2317..2322
+            Integer type=i64 value=3 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:36 source_id=0 bytes=2323..2324
+            Integer type=i64 value=1 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:39 source_id=0 bytes=2326..2327
+            Integer type=i64 value=5 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:42 source_id=0 bytes=2329..2330
+          Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:46 source_id=0 bytes=2333..2338
+            Integer type=i64 value=7 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:52 source_id=0 bytes=2339..2340
+            Integer type=i64 value=2 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:55 source_id=0 bytes=2342..2343
+            Integer type=i64 value=4 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:58 source_id=0 bytes=2345..2346
+          Bool type=bool value=true @tests/cases/generics/ok/generic-function-compiler-shaped.ari:116:62 source_id=0 bytes=2349..2353
+      VarDecl name=from_maybe type=Token let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:7 source_id=0 bytes=2362..2372
+        Call name=maybe_or__G_Token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:20 source_id=0 bytes=2375..2383
+          EnumConstruct enum=Maybe case=Just type=Maybe[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:29 source_id=0 bytes=2384..2388
+          Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:50 source_id=0 bytes=2405..2410
+            Integer type=i64 value=9 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:56 source_id=0 bytes=2411..2412
+            Integer type=i64 value=10 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:59 source_id=0 bytes=2414..2416
+            Integer type=i64 value=12 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:117:63 source_id=0 bytes=2418..2420
+      VarDecl name=pair type=Pair[i64, Token] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:118:7 source_id=0 bytes=2430..2434
+        Call name=pair_of__G_i64_Token type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:118:14 source_id=0 bytes=2437..2444
+          Integer type=i64 value=5 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:118:34 source_id=0 bytes=2457..2458
+          Local name=from_maybe type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:118:37 source_id=0 bytes=2460..2470
+      VarDecl name=boxed type=Box[Token] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:7 source_id=0 bytes=2479..2484
+        Call name=make_box__G_Token type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:15 source_id=0 bytes=2487..2495
+          Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:31 source_id=0 bytes=2503..2508
+            Integer type=i64 value=4 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:37 source_id=0 bytes=2509..2510
+            Integer type=i64 value=20 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:40 source_id=0 bytes=2512..2514
+            Integer type=i64 value=25 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:119:44 source_id=0 bytes=2516..2518
+      VarDecl name=unboxed type=Token let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:120:7 source_id=0 bytes=2528..2535
+        Call name=unwrap_box__G_Token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:120:17 source_id=0 bytes=2538..2548
+          Local name=boxed type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:120:28 source_id=0 bytes=2549..2554
+      VarDecl name=ok type=PassResult[Box[Token], Diagnostic] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:121:7 source_id=0 bytes=2563..2565
+        EnumConstruct enum=PassResult case=Passed type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:122:5 source_id=0 bytes=2608..2614
+      VarDecl name=failed type=PassResult[Box[Token], Diagnostic] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:123:7 source_id=0 bytes=2681..2687
+        EnumConstruct enum=PassResult case=Failed type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:124:5 source_id=0 bytes=2730..2736
+      VarDecl name=nested type=PassResult[Box[Token], Diagnostic] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:125:7 source_id=0 bytes=2827..2833
+        Call name=identity__G_PassResult_Box_Token___Diagnostic_ type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:126:5 source_id=0 bytes=2876..2884
+          EnumConstruct enum=PassResult case=Passed type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:127:7 source_id=0 bytes=2928..2934
+      VarDecl name=diagnostic_ok type=Diagnostic let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:129:7 source_id=0 bytes=3007..3020
+        Call name=diagnostic_from_result type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:129:23 source_id=0 bytes=3023..3045
+          EnumConstruct enum=PassResult case=Passed type=PassResult[Diagnostic, Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:130:5 source_id=0 bytes=3051..3057
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:133:3 source_id=0 bytes=3149..3155
+        Binary op="-" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:46 source_id=0 bytes=3460..3461
+          Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:140:37 source_id=0 bytes=3413..3414
+            Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:42 source_id=0 bytes=3375..3376
+              Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:44 source_id=0 bytes=3332..3333
+                Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:40 source_id=0 bytes=3287..3288
+                  Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:136:26 source_id=0 bytes=3246..3247
+                    Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:135:17 source_id=0 bytes=3219..3220
+                      Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:134:29 source_id=0 bytes=3201..3202
+                        Binary op="+" type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:133:25 source_id=0 bytes=3171..3172
+                          Call name=span_len type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:133:10 source_id=0 bytes=3156..3164
+                            Local name=span type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:133:19 source_id=0 bytes=3165..3169
+                          Call name=token_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:134:5 source_id=0 bytes=3177..3188
+                            Local name=from_maybe type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:134:17 source_id=0 bytes=3189..3199
+                        Call name=first__G_i64_Token type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:135:5 source_id=0 bytes=3207..3212
+                          Local name=pair type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:135:11 source_id=0 bytes=3213..3217
+                      Call name=token_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:136:5 source_id=0 bytes=3225..3236
+                        Local name=unboxed type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:136:17 source_id=0 bytes=3237..3244
+                    Call name=result_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:5 source_id=0 bytes=3252..3264
+                      Local name=ok type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:18 source_id=0 bytes=3265..3267
+                      Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:22 source_id=0 bytes=3269..3274
+                        Integer type=i64 value=1 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:28 source_id=0 bytes=3275..3276
+                        Integer type=i64 value=40 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:31 source_id=0 bytes=3278..3280
+                        Integer type=i64 value=42 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:137:35 source_id=0 bytes=3282..3284
+                  Call name=result_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:5 source_id=0 bytes=3293..3305
+                    Local name=failed type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:18 source_id=0 bytes=3306..3312
+                    Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:26 source_id=0 bytes=3314..3319
+                      Integer type=i64 value=2 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:32 source_id=0 bytes=3320..3321
+                      Integer type=i64 value=60 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:35 source_id=0 bytes=3323..3325
+                      Integer type=i64 value=61 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:138:39 source_id=0 bytes=3327..3329
+                Call name=result_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:5 source_id=0 bytes=3338..3350
+                  Local name=nested type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:18 source_id=0 bytes=3351..3357
+                  Call name=token type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:26 source_id=0 bytes=3359..3364
+                    Integer type=i64 value=0 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:32 source_id=0 bytes=3365..3366
+                    Integer type=i64 value=0 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:35 source_id=0 bytes=3368..3369
+                    Integer type=i64 value=0 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:139:38 source_id=0 bytes=3371..3372
+              Call name=diagnostic_score type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:140:5 source_id=0 bytes=3381..3397
+                Local name=diagnostic_ok type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:140:22 source_id=0 bytes=3398..3411
+            IfExpr type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:5 source_id=0 bytes=3419..3421
+              Call name=identity__G_bool type=bool @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:8 source_id=0 bytes=3422..3430
+                Bool type=bool value=true @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:23 source_id=0 bytes=3437..3441
+              Integer type=i64 value=1 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:31 source_id=0 bytes=3445..3446
+              Integer type=i64 value=0 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:141:42 source_id=0 bytes=3456..3457
+          Integer type=i64 value=7 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:142:5 source_id=0 bytes=3466..3467
+  Function name=make_box__G_Token return=Box[Token] specialization=generic-function origin=make_box @tests/cases/generics/ok/generic-function-compiler-shaped.ari:49:4 source_id=0 bytes=638..646
     Param name=value type=Token
     Body
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:50:3
-        Tuple type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:50:10
-          Local name=value type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:50:26
-  Function name=pass_or__G_Box_Token__Diagnostic return=Box[Token] specialization=generic-function origin=pass_or @tests/cases/generics/ok/generic-function-compiler-shaped.ari:64:4
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:50:3 source_id=0 bytes=674..680
+        Tuple type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:50:10 source_id=0 bytes=681..684
+          Local name=value type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:50:26 source_id=0 bytes=697..702
+  Function name=pass_or__G_Box_Token__Diagnostic return=Box[Token] specialization=generic-function origin=pass_or @tests/cases/generics/ok/generic-function-compiler-shaped.ari:64:4 source_id=0 bytes=910..917
     Param name=value type=PassResult[Box[Token], Diagnostic]
     Param name=fallback type=Box[Token]
     Body
-      Match @tests/cases/generics/ok/generic-function-compiler-shaped.ari:65:3
-        Local name=value type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:65:9
-        Arm case=Passed @tests/cases/generics/ok/generic-function-compiler-shaped.ari:66:5
-          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:67:7
-            Local name=inner type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:67:14
-        Arm case=Failed @tests/cases/generics/ok/generic-function-compiler-shaped.ari:69:5
-          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:70:7
-            Local name=fallback type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:70:14
-  Function name=unwrap_box__G_Token return=Token specialization=generic-function origin=unwrap_box @tests/cases/generics/ok/generic-function-compiler-shaped.ari:53:4
+      Match @tests/cases/generics/ok/generic-function-compiler-shaped.ari:65:3 source_id=0 bytes=971..976
+        Local name=value type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:65:9 source_id=0 bytes=977..982
+        Arm case=Passed @tests/cases/generics/ok/generic-function-compiler-shaped.ari:66:5 source_id=0 bytes=989..995
+          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:67:7 source_id=0 bytes=1014..1020
+            Local name=inner type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:67:14 source_id=0 bytes=1021..1026
+        Arm case=Failed @tests/cases/generics/ok/generic-function-compiler-shaped.ari:69:5 source_id=0 bytes=1038..1044
+          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:70:7 source_id=0 bytes=1059..1065
+            Local name=fallback type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:70:14 source_id=0 bytes=1066..1074
+  Function name=unwrap_box__G_Token return=Token specialization=generic-function origin=unwrap_box @tests/cases/generics/ok/generic-function-compiler-shaped.ari:53:4 source_id=0 bytes=712..722
     Param name=boxed type=Box[Token]
     Body
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:54:3
-        TupleIndex index=0 type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:54:16
-          Local name=boxed type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:54:10
-  Function name=pass_or__G_Diagnostic_Diagnostic return=Diagnostic specialization=generic-function origin=pass_or @tests/cases/generics/ok/generic-function-compiler-shaped.ari:64:4
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:54:3 source_id=0 bytes=750..756
+        TupleIndex index=0 type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:54:16 source_id=0 bytes=763..768
+          Local name=boxed type=Box[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:54:10 source_id=0 bytes=757..762
+  Function name=pass_or__G_Diagnostic_Diagnostic return=Diagnostic specialization=generic-function origin=pass_or @tests/cases/generics/ok/generic-function-compiler-shaped.ari:64:4 source_id=0 bytes=910..917
     Param name=value type=PassResult[Diagnostic, Diagnostic]
     Param name=fallback type=Diagnostic
     Body
-      Match @tests/cases/generics/ok/generic-function-compiler-shaped.ari:65:3
-        Local name=value type=PassResult[Diagnostic, Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:65:9
-        Arm case=Passed @tests/cases/generics/ok/generic-function-compiler-shaped.ari:66:5
-          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:67:7
-            Local name=inner type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:67:14
-        Arm case=Failed @tests/cases/generics/ok/generic-function-compiler-shaped.ari:69:5
-          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:70:7
-            Local name=fallback type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:70:14
-  Function name=identity__G_Span return=Span specialization=generic-function origin=identity @tests/cases/generics/ok/generic-function-compiler-shaped.ari:37:4
+      Match @tests/cases/generics/ok/generic-function-compiler-shaped.ari:65:3 source_id=0 bytes=971..976
+        Local name=value type=PassResult[Diagnostic, Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:65:9 source_id=0 bytes=977..982
+        Arm case=Passed @tests/cases/generics/ok/generic-function-compiler-shaped.ari:66:5 source_id=0 bytes=989..995
+          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:67:7 source_id=0 bytes=1014..1020
+            Local name=inner type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:67:14 source_id=0 bytes=1021..1026
+        Arm case=Failed @tests/cases/generics/ok/generic-function-compiler-shaped.ari:69:5 source_id=0 bytes=1038..1044
+          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:70:7 source_id=0 bytes=1059..1065
+            Local name=fallback type=Diagnostic @tests/cases/generics/ok/generic-function-compiler-shaped.ari:70:14 source_id=0 bytes=1066..1074
+  Function name=identity__G_Span return=Span specialization=generic-function origin=identity @tests/cases/generics/ok/generic-function-compiler-shaped.ari:37:4 source_id=0 bytes=450..458
     Param name=value type=Span
     Body
-      VarDecl name=local type=Span let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:7
-        Local name=value type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:18
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:3
-        Local name=local type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:10
-  Function name=choose__G_Token return=Token specialization=generic-function origin=choose @tests/cases/generics/ok/generic-function-compiler-shaped.ari:42:4
+      VarDecl name=local type=Span let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:7 source_id=0 bytes=485..490
+        Local name=value type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:18 source_id=0 bytes=496..501
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:3 source_id=0 bytes=505..511
+        Local name=local type=Span @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:10 source_id=0 bytes=512..517
+  Function name=choose__G_Token return=Token specialization=generic-function origin=choose @tests/cases/generics/ok/generic-function-compiler-shaped.ari:42:4 source_id=0 bytes=525..531
     Param name=left type=Token
     Param name=right type=Token
     Param name=pick_left type=bool
     Body
-      If @tests/cases/generics/ok/generic-function-compiler-shaped.ari:43:3
-        Local name=pick_left type=bool @tests/cases/generics/ok/generic-function-compiler-shaped.ari:43:6
+      If @tests/cases/generics/ok/generic-function-compiler-shaped.ari:43:3 source_id=0 bytes=580..582
+        Local name=pick_left type=bool @tests/cases/generics/ok/generic-function-compiler-shaped.ari:43:6 source_id=0 bytes=583..592
         Then
-          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:44:5
-            Local name=left type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:44:12
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:46:3
-        Local name=right type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:46:10
-  Function name=maybe_or__G_Token return=Token specialization=generic-function origin=maybe_or @tests/cases/generics/ok/generic-function-compiler-shaped.ari:57:4
+          Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:44:5 source_id=0 bytes=599..605
+            Local name=left type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:44:12 source_id=0 bytes=606..610
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:46:3 source_id=0 bytes=618..624
+        Local name=right type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:46:10 source_id=0 bytes=625..630
+  Function name=maybe_or__G_Token return=Token specialization=generic-function origin=maybe_or @tests/cases/generics/ok/generic-function-compiler-shaped.ari:57:4 source_id=0 bytes=776..784
     Param name=value type=Maybe[Token]
     Param name=fallback type=Token
     Body
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:58:3
-        MatchExpr type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:58:10
-          Local name=value type=Maybe[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:58:16
-          Arm case=Just @tests/cases/generics/ok/generic-function-compiler-shaped.ari:59:5
-            Local name=inner type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:59:20
-          Arm case=Nothing @tests/cases/generics/ok/generic-function-compiler-shaped.ari:60:5
-            Local name=fallback type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:60:16
-  Function name=pair_of__G_i64_Token return=Pair[i64, Token] specialization=generic-function origin=pair_of @tests/cases/generics/ok/generic-function-compiler-shaped.ari:75:4
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:58:3 source_id=0 bytes=827..833
+        MatchExpr type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:58:10 source_id=0 bytes=834..839
+          Local name=value type=Maybe[Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:58:16 source_id=0 bytes=840..845
+          Arm case=Just @tests/cases/generics/ok/generic-function-compiler-shaped.ari:59:5 source_id=0 bytes=852..856
+            Local name=inner type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:59:20 source_id=0 bytes=867..872
+          Arm case=Nothing @tests/cases/generics/ok/generic-function-compiler-shaped.ari:60:5 source_id=0 bytes=878..885
+            Local name=fallback type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:60:16 source_id=0 bytes=889..897
+  Function name=pair_of__G_i64_Token return=Pair[i64, Token] specialization=generic-function origin=pair_of @tests/cases/generics/ok/generic-function-compiler-shaped.ari:75:4 source_id=0 bytes=1092..1099
     Param name=left type=i64
     Param name=right type=Token
     Body
-      VarDecl name=pair type=Pair[i64, Token] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:76:7
-        Tuple type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:76:26
-          Local name=left type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:76:45
-          Local name=right type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:76:58
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:77:3
-        Local name=pair type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:77:10
-  Function name=identity__G_PassResult_Box_Token___Diagnostic_ return=PassResult[Box[Token], Diagnostic] specialization=generic-function origin=identity @tests/cases/generics/ok/generic-function-compiler-shaped.ari:37:4
+      VarDecl name=pair type=Pair[i64, Token] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:76:7 source_id=0 bytes=1147..1151
+        Tuple type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:76:26 source_id=0 bytes=1166..1170
+          Local name=left type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:76:45 source_id=0 bytes=1185..1189
+          Local name=right type=Token @tests/cases/generics/ok/generic-function-compiler-shaped.ari:76:58 source_id=0 bytes=1198..1203
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:77:3 source_id=0 bytes=1209..1215
+        Local name=pair type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:77:10 source_id=0 bytes=1216..1220
+  Function name=identity__G_PassResult_Box_Token___Diagnostic_ return=PassResult[Box[Token], Diagnostic] specialization=generic-function origin=identity @tests/cases/generics/ok/generic-function-compiler-shaped.ari:37:4 source_id=0 bytes=450..458
     Param name=value type=PassResult[Box[Token], Diagnostic]
     Body
-      VarDecl name=local type=PassResult[Box[Token], Diagnostic] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:7
-        Local name=value type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:18
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:3
-        Local name=local type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:10
-  Function name=first__G_i64_Token return=i64 specialization=generic-function origin=first @tests/cases/generics/ok/generic-function-compiler-shaped.ari:80:4
+      VarDecl name=local type=PassResult[Box[Token], Diagnostic] let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:7 source_id=0 bytes=485..490
+        Local name=value type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:18 source_id=0 bytes=496..501
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:3 source_id=0 bytes=505..511
+        Local name=local type=PassResult[Box[Token], Diagnostic] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:10 source_id=0 bytes=512..517
+  Function name=first__G_i64_Token return=i64 specialization=generic-function origin=first @tests/cases/generics/ok/generic-function-compiler-shaped.ari:80:4 source_id=0 bytes=1228..1233
     Param name=pair type=Pair[i64, Token]
     Body
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:81:3
-        TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:81:15
-          Local name=pair type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:81:10
-  Function name=identity__G_bool return=bool specialization=generic-function origin=identity @tests/cases/generics/ok/generic-function-compiler-shaped.ari:37:4
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:81:3 source_id=0 bytes=1267..1273
+        TupleIndex index=0 type=i64 @tests/cases/generics/ok/generic-function-compiler-shaped.ari:81:15 source_id=0 bytes=1279..1283
+          Local name=pair type=Pair[i64, Token] @tests/cases/generics/ok/generic-function-compiler-shaped.ari:81:10 source_id=0 bytes=1274..1278
+  Function name=identity__G_bool return=bool specialization=generic-function origin=identity @tests/cases/generics/ok/generic-function-compiler-shaped.ari:37:4 source_id=0 bytes=450..458
     Param name=value type=bool
     Body
-      VarDecl name=local type=bool let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:7
-        Local name=value type=bool @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:18
-      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:3
-        Local name=local type=bool @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:10
+      VarDecl name=local type=bool let @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:7 source_id=0 bytes=485..490
+        Local name=value type=bool @tests/cases/generics/ok/generic-function-compiler-shaped.ari:38:18 source_id=0 bytes=496..501
+      Return @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:3 source_id=0 bytes=505..511
+        Local name=local type=bool @tests/cases/generics/ok/generic-function-compiler-shaped.ari:39:10 source_id=0 bytes=512..517

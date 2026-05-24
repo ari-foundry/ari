@@ -42,7 +42,14 @@ private:
             }
         }
         const std::string& display_source = loc.source_name.empty() ? source_name_ : loc.source_name;
-        return " @" + display_source + ":" + std::to_string(loc.line) + ":" + std::to_string(loc.column);
+        std::string text = " @" + display_source + ":" + std::to_string(loc.line) + ":" +
+                           std::to_string(loc.column);
+        if (valid_source_id(loc.source_id)) text += " source_id=" + source_id_text(loc.source_id);
+        if (has_byte_span(loc)) {
+            Span span = span_from_location(loc);
+            text += " bytes=" + std::to_string(span.start) + ".." + std::to_string(span.end);
+        }
+        return text;
     }
 
     static std::string quote(const std::string& text) {

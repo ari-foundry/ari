@@ -1,173 +1,173 @@
 IrProgram source=tests/cases/match/ok/compiler-shaped-aggregates.ari target=x86_64-pc-linux-gnu require_main=true
-  Function name=span_len return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:57:4
+  Function name=span_len return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:57:4 source_id=0 bytes=614..622
     Param name=span type=Span
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:3
-        Binary op="-" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:19
-          TupleIndex index=1 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:15
-            Local name=span type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:10
-          TupleIndex index=0 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:26
-            Local name=span type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:21
-  Function name=kind_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:61:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:3 source_id=0 bytes=646..652
+        Binary op="-" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:19 source_id=0 bytes=662..663
+          TupleIndex index=1 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:15 source_id=0 bytes=658..661
+            Local name=span type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:10 source_id=0 bytes=653..657
+          TupleIndex index=0 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:26 source_id=0 bytes=669..674
+            Local name=span type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:58:21 source_id=0 bytes=664..668
+  Function name=kind_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:61:4 source_id=0 bytes=682..692
     Param name=kind type=TokenKind
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:62:3
-        MatchExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:62:10
-          Local name=kind type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:62:16
-          Arm case=Ident @tests/cases/match/ok/compiler-shaped-aggregates.ari:63:5
-            Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:63:29
-              Local name=symbol type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:63:22
-              Integer type=i64 value=1 @tests/cases/match/ok/compiler-shaped-aggregates.ari:63:31
-          Arm case=Number @tests/cases/match/ok/compiler-shaped-aggregates.ari:64:5
-            Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:64:28
-              Local name=value type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:64:22
-              Integer type=i64 value=2 @tests/cases/match/ok/compiler-shaped-aggregates.ari:64:30
-          Arm case=Eof @tests/cases/match/ok/compiler-shaped-aggregates.ari:65:5
-            Integer type=i64 value=3 @tests/cases/match/ok/compiler-shaped-aggregates.ari:65:12
-  Function name=severity_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:69:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:62:3 source_id=0 bytes=721..727
+        MatchExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:62:10 source_id=0 bytes=728..733
+          Local name=kind type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:62:16 source_id=0 bytes=734..738
+          Arm case=Ident @tests/cases/match/ok/compiler-shaped-aggregates.ari:63:5 source_id=0 bytes=745..750
+            Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:63:29 source_id=0 bytes=769..770
+              Local name=symbol type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:63:22 source_id=0 bytes=762..768
+              Integer type=i64 value=1 @tests/cases/match/ok/compiler-shaped-aggregates.ari:63:31 source_id=0 bytes=771..772
+          Arm case=Number @tests/cases/match/ok/compiler-shaped-aggregates.ari:64:5 source_id=0 bytes=778..784
+            Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:64:28 source_id=0 bytes=801..802
+              Local name=value type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:64:22 source_id=0 bytes=795..800
+              Integer type=i64 value=2 @tests/cases/match/ok/compiler-shaped-aggregates.ari:64:30 source_id=0 bytes=803..804
+          Arm case=Eof @tests/cases/match/ok/compiler-shaped-aggregates.ari:65:5 source_id=0 bytes=810..813
+            Integer type=i64 value=3 @tests/cases/match/ok/compiler-shaped-aggregates.ari:65:12 source_id=0 bytes=817..818
+  Function name=severity_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:69:4 source_id=0 bytes=831..845
     Param name=severity type=DiagnosticSeverity
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:70:3
-        MatchExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:70:10
-          Local name=severity type=DiagnosticSeverity @tests/cases/match/ok/compiler-shaped-aggregates.ari:70:16
-          Arm case=Info @tests/cases/match/ok/compiler-shaped-aggregates.ari:71:5
-            Integer type=i64 value=10 @tests/cases/match/ok/compiler-shaped-aggregates.ari:71:13
-          Arm case=Error @tests/cases/match/ok/compiler-shaped-aggregates.ari:72:5
-            Integer type=i64 value=20 @tests/cases/match/ok/compiler-shaped-aggregates.ari:72:14
-  Function name=token return=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:76:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:70:3 source_id=0 bytes=887..893
+        MatchExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:70:10 source_id=0 bytes=894..899
+          Local name=severity type=DiagnosticSeverity @tests/cases/match/ok/compiler-shaped-aggregates.ari:70:16 source_id=0 bytes=900..908
+          Arm case=Info @tests/cases/match/ok/compiler-shaped-aggregates.ari:71:5 source_id=0 bytes=915..919
+            Integer type=i64 value=10 @tests/cases/match/ok/compiler-shaped-aggregates.ari:71:13 source_id=0 bytes=923..925
+          Arm case=Error @tests/cases/match/ok/compiler-shaped-aggregates.ari:72:5 source_id=0 bytes=931..936
+            Integer type=i64 value=20 @tests/cases/match/ok/compiler-shaped-aggregates.ari:72:14 source_id=0 bytes=940..942
+  Function name=token return=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:76:4 source_id=0 bytes=955..960
     Param name=kind type=TokenKind
     Param name=start type=i64
     Param name=end type=i64
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:3
-        Tuple type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:10
-          Local name=kind type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:24
-          Tuple type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:36
-            Local name=start type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:50
-            Local name=end type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:62
-  Function name=token_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:80:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:3 source_id=0 bytes=1013..1019
+        Tuple type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:10 source_id=0 bytes=1020..1025
+          Local name=kind type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:24 source_id=0 bytes=1034..1038
+          Tuple type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:36 source_id=0 bytes=1046..1050
+            Local name=start type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:50 source_id=0 bytes=1060..1065
+            Local name=end type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:77:62 source_id=0 bytes=1072..1075
+  Function name=token_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:80:4 source_id=0 bytes=1087..1098
     Param name=value type=Token
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:3
-        Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:33
-          Call name=kind_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:10
-            TupleIndex index=0 type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:27
-              Local name=value type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:21
-          Call name=span_len type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:35
-            TupleIndex index=1 type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:50
-              Local name=value type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:44
-  Function name=diagnostic_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:84:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:3 source_id=0 bytes=1124..1130
+        Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:33 source_id=0 bytes=1154..1155
+          Call name=kind_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:10 source_id=0 bytes=1131..1141
+            TupleIndex index=0 type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:27 source_id=0 bytes=1148..1152
+              Local name=value type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:21 source_id=0 bytes=1142..1147
+          Call name=span_len type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:35 source_id=0 bytes=1156..1164
+            TupleIndex index=1 type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:50 source_id=0 bytes=1171..1175
+              Local name=value type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:81:44 source_id=0 bytes=1165..1170
+  Function name=diagnostic_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:84:4 source_id=0 bytes=1184..1200
     Param name=value type=Diagnostic
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:3
-        Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:64
-          Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:41
-            Call name=severity_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:10
-              TupleIndex index=0 type=DiagnosticSeverity @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:31
-                Local name=value type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:25
-            Call name=span_len type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:43
-              TupleIndex index=1 type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:58
-                Local name=value type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:52
-          TupleIndex index=2 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:72
-            Local name=value type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:66
-  Function name=symbol_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:88:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:3 source_id=0 bytes=1231..1237
+        Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:64 source_id=0 bytes=1292..1293
+          Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:41 source_id=0 bytes=1269..1270
+            Call name=severity_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:10 source_id=0 bytes=1238..1252
+              TupleIndex index=0 type=DiagnosticSeverity @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:31 source_id=0 bytes=1259..1267
+                Local name=value type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:25 source_id=0 bytes=1253..1258
+            Call name=span_len type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:43 source_id=0 bytes=1271..1279
+              TupleIndex index=1 type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:58 source_id=0 bytes=1286..1290
+                Local name=value type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:52 source_id=0 bytes=1280..1285
+          TupleIndex index=2 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:72 source_id=0 bytes=1300..1304
+            Local name=value type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:85:66 source_id=0 bytes=1294..1299
+  Function name=symbol_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:88:4 source_id=0 bytes=1312..1324
     Param name=symbol type=Symbol
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:89:3
-        BlockExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:89:10
-          VarDecl name=$match_struct0 type=Symbol let @tests/cases/match/ok/compiler-shaped-aggregates.ari:89:10
-            Local name=symbol type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:89:16
-          IfExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:5
-            Binary op="==" type=bool @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:18
-              TupleIndex index=1 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:18
-                Local name=$match_struct0 type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:18
-              Integer type=i64 value=17 @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:18
-            Integer type=i64 value=22 @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:30
-            BlockExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:5
-              VarDecl name=id type=i64 let @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:14
-                TupleIndex index=1 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:14
-                  Local name=$match_struct0 type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:14
-              Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:29
-                Local name=id type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:26
-                Integer type=i64 value=7 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:31
-  Function name=ast_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:95:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:89:3 source_id=0 bytes=1352..1358
+        BlockExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:89:10 source_id=0 bytes=1359..1364
+          VarDecl name=$match_struct0 type=Symbol let @tests/cases/match/ok/compiler-shaped-aggregates.ari:89:10 source_id=0 bytes=1359..1364
+            Local name=symbol type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:89:16 source_id=0 bytes=1365..1371
+          IfExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:5 source_id=0 bytes=1378..1384
+            Binary op="==" type=bool @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:18 source_id=0 bytes=1391..1393
+              TupleIndex index=1 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:18 source_id=0 bytes=1391..1393
+                Local name=$match_struct0 type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:18 source_id=0 bytes=1391..1393
+              Integer type=i64 value=17 @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:18 source_id=0 bytes=1391..1393
+            Integer type=i64 value=22 @tests/cases/match/ok/compiler-shaped-aggregates.ari:90:30 source_id=0 bytes=1403..1405
+            BlockExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:5 source_id=0 bytes=1411..1417
+              VarDecl name=id type=i64 let @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:14 source_id=0 bytes=1420..1422
+                TupleIndex index=1 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:14 source_id=0 bytes=1420..1422
+                  Local name=$match_struct0 type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:14 source_id=0 bytes=1420..1422
+              Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:29 source_id=0 bytes=1435..1436
+                Local name=id type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:26 source_id=0 bytes=1432..1434
+                Integer type=i64 value=7 @tests/cases/match/ok/compiler-shaped-aggregates.ari:91:31 source_id=0 bytes=1437..1438
+  Function name=ast_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:95:4 source_id=0 bytes=1451..1460
     Param name=node type=AstNode
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:96:3
-        MatchExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:96:10
-          Local name=node type=AstNode @tests/cases/match/ok/compiler-shaped-aggregates.ari:96:16
-          Arm case=Missing @tests/cases/match/ok/compiler-shaped-aggregates.ari:97:5
-            Integer type=i64 value=0 @tests/cases/match/ok/compiler-shaped-aggregates.ari:97:16
-          Arm case=Literal @tests/cases/match/ok/compiler-shaped-aggregates.ari:98:5
-            Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:98:23
-              Local name=value type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:98:35
-          Arm case=Binary @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:5
-            Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:46
-              Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:28
-                Local name=left type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:40
-              Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:48
-                Local name=right type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:60
-  Function name=work_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:103:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:96:3 source_id=0 bytes=1487..1493
+        MatchExpr type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:96:10 source_id=0 bytes=1494..1499
+          Local name=node type=AstNode @tests/cases/match/ok/compiler-shaped-aggregates.ari:96:16 source_id=0 bytes=1500..1504
+          Arm case=Missing @tests/cases/match/ok/compiler-shaped-aggregates.ari:97:5 source_id=0 bytes=1511..1518
+            Integer type=i64 value=0 @tests/cases/match/ok/compiler-shaped-aggregates.ari:97:16 source_id=0 bytes=1522..1523
+          Arm case=Literal @tests/cases/match/ok/compiler-shaped-aggregates.ari:98:5 source_id=0 bytes=1529..1536
+            Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:98:23 source_id=0 bytes=1547..1558
+              Local name=value type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:98:35 source_id=0 bytes=1559..1564
+          Arm case=Binary @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:5 source_id=0 bytes=1571..1577
+            Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:46 source_id=0 bytes=1612..1613
+              Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:28 source_id=0 bytes=1594..1605
+                Local name=left type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:40 source_id=0 bytes=1606..1610
+              Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:48 source_id=0 bytes=1614..1625
+                Local name=right type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:99:60 source_id=0 bytes=1626..1631
+  Function name=work_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:103:4 source_id=0 bytes=1645..1655
     Param name=item type=WorkItem
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:3
-        Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:20
-          TupleIndex index=0 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:15
-            Local name=item type=WorkItem @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:10
-          Call name=ast_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:22
-            TupleIndex index=1 type=AstNode @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:37
-              Local name=item type=WorkItem @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:32
-  Function name=build_state return=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:107:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:3 source_id=0 bytes=1683..1689
+        Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:20 source_id=0 bytes=1700..1701
+          TupleIndex index=0 type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:15 source_id=0 bytes=1695..1699
+            Local name=item type=WorkItem @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:10 source_id=0 bytes=1690..1694
+          Call name=ast_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:22 source_id=0 bytes=1702..1711
+            TupleIndex index=1 type=AstNode @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:37 source_id=0 bytes=1717..1721
+              Local name=item type=WorkItem @tests/cases/match/ok/compiler-shaped-aggregates.ari:104:32 source_id=0 bytes=1712..1716
+  Function name=build_state return=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:107:4 source_id=0 bytes=1730..1741
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:108:3
-        Tuple type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:108:10
-          Call name=token type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:109:14
-            EnumConstruct enum=TokenKind case=Ident type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:109:20
-            Integer type=i64 value=10 @tests/cases/match/ok/compiler-shaped-aggregates.ari:109:30
-            Integer type=i64 value=14 @tests/cases/match/ok/compiler-shaped-aggregates.ari:109:34
-          Call name=token type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:110:15
-            EnumConstruct enum=TokenKind case=Number type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:110:21
-            Integer type=i64 value=20 @tests/cases/match/ok/compiler-shaped-aggregates.ari:110:32
-            Integer type=i64 value=23 @tests/cases/match/ok/compiler-shaped-aggregates.ari:110:36
-          Tuple type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:111:17
-            EnumConstruct enum=DiagnosticSeverity case=Error type=DiagnosticSeverity @tests/cases/match/ok/compiler-shaped-aggregates.ari:112:17
-            Tuple type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:113:13
-              Integer type=i64 value=30 @tests/cases/match/ok/compiler-shaped-aggregates.ari:113:27
-              Integer type=i64 value=32 @tests/cases/match/ok/compiler-shaped-aggregates.ari:113:36
-            Integer type=i64 value=13 @tests/cases/match/ok/compiler-shaped-aggregates.ari:114:13
-          Tuple type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:116:13
-            EnumConstruct enum=SymbolKind case=Type type=SymbolKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:116:28
-            Integer type=i64 value=17 @tests/cases/match/ok/compiler-shaped-aggregates.ari:116:38
-          Tuple type=WorkItem @tests/cases/match/ok/compiler-shaped-aggregates.ari:117:11
-            Integer type=i64 value=19 @tests/cases/match/ok/compiler-shaped-aggregates.ari:118:13
-            EnumConstruct enum=AstNode case=Binary type=AstNode @tests/cases/match/ok/compiler-shaped-aggregates.ari:119:13
-  Function name=parser_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:124:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:108:3 source_id=0 bytes=1763..1769
+        Tuple type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:108:10 source_id=0 bytes=1770..1781
+          Call name=token type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:109:14 source_id=0 bytes=1797..1802
+            EnumConstruct enum=TokenKind case=Ident type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:109:20 source_id=0 bytes=1803..1808
+            Integer type=i64 value=10 @tests/cases/match/ok/compiler-shaped-aggregates.ari:109:30 source_id=0 bytes=1813..1815
+            Integer type=i64 value=14 @tests/cases/match/ok/compiler-shaped-aggregates.ari:109:34 source_id=0 bytes=1817..1819
+          Call name=token type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:110:15 source_id=0 bytes=1836..1841
+            EnumConstruct enum=TokenKind case=Number type=TokenKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:110:21 source_id=0 bytes=1842..1848
+            Integer type=i64 value=20 @tests/cases/match/ok/compiler-shaped-aggregates.ari:110:32 source_id=0 bytes=1853..1855
+            Integer type=i64 value=23 @tests/cases/match/ok/compiler-shaped-aggregates.ari:110:36 source_id=0 bytes=1857..1859
+          Tuple type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:111:17 source_id=0 bytes=1878..1888
+            EnumConstruct enum=DiagnosticSeverity case=Error type=DiagnosticSeverity @tests/cases/match/ok/compiler-shaped-aggregates.ari:112:17 source_id=0 bytes=1907..1912
+            Tuple type=Span @tests/cases/match/ok/compiler-shaped-aggregates.ari:113:13 source_id=0 bytes=1926..1930
+              Integer type=i64 value=30 @tests/cases/match/ok/compiler-shaped-aggregates.ari:113:27 source_id=0 bytes=1940..1942
+              Integer type=i64 value=32 @tests/cases/match/ok/compiler-shaped-aggregates.ari:113:36 source_id=0 bytes=1949..1951
+            Integer type=i64 value=13 @tests/cases/match/ok/compiler-shaped-aggregates.ari:114:13 source_id=0 bytes=1967..1969
+          Tuple type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:116:13 source_id=0 bytes=1990..1996
+            EnumConstruct enum=SymbolKind case=Type type=SymbolKind @tests/cases/match/ok/compiler-shaped-aggregates.ari:116:28 source_id=0 bytes=2005..2009
+            Integer type=i64 value=17 @tests/cases/match/ok/compiler-shaped-aggregates.ari:116:38 source_id=0 bytes=2015..2017
+          Tuple type=WorkItem @tests/cases/match/ok/compiler-shaped-aggregates.ari:117:11 source_id=0 bytes=2031..2039
+            Integer type=i64 value=19 @tests/cases/match/ok/compiler-shaped-aggregates.ari:118:13 source_id=0 bytes=2054..2056
+            EnumConstruct enum=AstNode case=Binary type=AstNode @tests/cases/match/ok/compiler-shaped-aggregates.ari:119:13 source_id=0 bytes=2070..2076
+  Function name=parser_score return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:124:4 source_id=0 bytes=2147..2159
     Param name=state type=ParserState
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:3
-        Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:128:37
-          Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:127:45
-            Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:126:38
-              Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:37
-                Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:10
-                  TupleIndex index=0 type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:28
-                    Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:22
-                Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:126:10
-                  TupleIndex index=1 type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:126:28
-                    Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:126:22
-              Call name=diagnostic_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:127:10
-                TupleIndex index=2 type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:127:33
-                  Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:127:27
-            Call name=symbol_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:128:10
-              TupleIndex index=3 type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:128:29
-                Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:128:23
-          Call name=work_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:129:10
-            TupleIndex index=4 type=WorkItem @tests/cases/match/ok/compiler-shaped-aggregates.ari:129:27
-              Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:129:21
-  Function name=main return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:132:4
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:3 source_id=0 bytes=2191..2197
+        Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:128:37 source_id=0 bytes=2348..2349
+          Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:127:45 source_id=0 bytes=2310..2311
+            Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:126:38 source_id=0 bytes=2264..2265
+              Binary op="+" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:37 source_id=0 bytes=2225..2226
+                Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:10 source_id=0 bytes=2198..2209
+                  TupleIndex index=0 type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:28 source_id=0 bytes=2216..2223
+                    Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:125:22 source_id=0 bytes=2210..2215
+                Call name=token_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:126:10 source_id=0 bytes=2236..2247
+                  TupleIndex index=1 type=Token @tests/cases/match/ok/compiler-shaped-aggregates.ari:126:28 source_id=0 bytes=2254..2262
+                    Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:126:22 source_id=0 bytes=2248..2253
+              Call name=diagnostic_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:127:10 source_id=0 bytes=2275..2291
+                TupleIndex index=2 type=Diagnostic @tests/cases/match/ok/compiler-shaped-aggregates.ari:127:33 source_id=0 bytes=2298..2308
+                  Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:127:27 source_id=0 bytes=2292..2297
+            Call name=symbol_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:128:10 source_id=0 bytes=2321..2333
+              TupleIndex index=3 type=Symbol @tests/cases/match/ok/compiler-shaped-aggregates.ari:128:29 source_id=0 bytes=2340..2346
+                Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:128:23 source_id=0 bytes=2334..2339
+          Call name=work_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:129:10 source_id=0 bytes=2359..2369
+            TupleIndex index=4 type=WorkItem @tests/cases/match/ok/compiler-shaped-aggregates.ari:129:27 source_id=0 bytes=2376..2380
+              Local name=state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:129:21 source_id=0 bytes=2370..2375
+  Function name=main return=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:132:4 source_id=0 bytes=2389..2393
     Body
-      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:3
-        Binary op="-" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:38
-          Call name=parser_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:10
-            Call name=build_state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:23
-          Integer type=i64 value=100 @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:40
+      Return @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:3 source_id=0 bytes=2407..2413
+        Binary op="-" type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:38 source_id=0 bytes=2442..2443
+          Call name=parser_score type=i64 @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:10 source_id=0 bytes=2414..2426
+            Call name=build_state type=ParserState @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:23 source_id=0 bytes=2427..2438
+          Integer type=i64 value=100 @tests/cases/match/ok/compiler-shaped-aggregates.ari:133:40 source_id=0 bytes=2444..2447
