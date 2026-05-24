@@ -343,6 +343,10 @@ private:
         add_location_label_if_valid(error, open_loc, open_label);
         error.add_note(DiagnosticNote{
             std::nullopt,
+            "delimited constructs must close before the surrounding statement or declaration continues",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
             "add a matching " + closing_delimiter + " before continuing",
             DiagnosticNoteKind::Help});
         throw error;
