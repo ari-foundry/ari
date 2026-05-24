@@ -5992,13 +5992,43 @@ private:
         local_scopes_.restore_merged_zone_generations(std::move(target), source);
     }
 
+    static std::optional<std::string> binding_name_from_state_mismatch_message(const std::string& message) {
+        std::size_t first_quote = message.find('\'');
+        if (first_quote == std::string::npos) return std::nullopt;
+        std::size_t second_quote = message.find('\'', first_quote + 1);
+        if (second_quote == std::string::npos || second_quote == first_quote + 1) return std::nullopt;
+        return message.substr(first_quote + 1, second_quote - first_quote - 1);
+    }
+
+    [[noreturn]] static void fail_state_snapshot_mismatch(SourceLocation loc, const std::string& message) {
+        CompileError error(std::move(loc), message);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "ownership state must agree across every continuing control-flow path before execution continues",
+            DiagnosticNoteKind::Note});
+        if (auto name = binding_name_from_state_mismatch_message(message)) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "make every branch move, drop, or keep '" + *name + "' consistently",
+                DiagnosticNoteKind::Help});
+        } else {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "make every branch leave tracked ownership bindings in the same state",
+                DiagnosticNoteKind::Help});
+        }
+        throw error;
+    }
+
     static void require_same_states(
         SourceLocation loc,
         const StateSnapshot& left,
         const StateSnapshot& right,
         const std::string& message
     ) {
-        if (auto error = state_snapshot_mismatch_error(left, right, message)) fail(loc, *error);
+        if (auto error = state_snapshot_mismatch_error(left, right, message)) {
+            fail_state_snapshot_mismatch(loc, *error);
+        }
     }
 
     static std::set<std::string> loop_binding_name_set(const LoopInfo& loop) {
@@ -6017,7 +6047,7 @@ private:
                 right,
                 loop_binding_name_set(loop),
                 message)) {
-            fail(loc, *error);
+            fail_state_snapshot_mismatch(loc, *error);
         }
     }
 
