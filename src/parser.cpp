@@ -448,6 +448,24 @@ private:
         throw error;
     }
 
+    [[noreturn]] static void fail_expected_parameter_colon(SourceLocation boundary_loc,
+                                                           SourceLocation parameter_loc,
+                                                           const std::string& message,
+                                                           const std::string& parameter_label,
+                                                           const std::string& help_message) {
+        CompileError error(std::move(boundary_loc), message);
+        add_location_label_if_valid(error, parameter_loc, parameter_label);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "function parameters use `name: Type` or `PATTERN: Type` syntax",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            help_message,
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void optional_separator() {
         match(TokenKind::Comma);
         match(TokenKind::Semicolon);
@@ -1049,7 +1067,14 @@ private:
         if (binding_mode != BindingMode::Value) {
             Pattern pattern = parse_pattern(true);
             SourceLocation loc = pattern.loc;
-            expect(TokenKind::Colon, "expected : after parameter pattern");
+            if (!match(TokenKind::Colon)) {
+                fail_expected_parameter_colon(
+                    peek().loc,
+                    loc,
+                    "expected : after parameter pattern",
+                    "parameter pattern starts here",
+                    "insert : between the parameter pattern and its type");
+            }
             Param param;
             param.name = "$pattern";
             param.type = parse_type();
@@ -1076,18 +1101,37 @@ private:
             }
             if (param_name.text != "_" && peek(1).kind == TokenKind::Colon) {
                 ++pos_;
-                expect(TokenKind::Colon, "expected : after parameter name");
+                match(TokenKind::Colon);
                 Param param;
                 param.name = param_name.text;
                 param.type = parse_type();
                 param.loc = param_name.loc;
                 return param;
             }
+            if (param_name.text != "_" &&
+                peek(1).kind != TokenKind::LParen &&
+                peek(1).kind != TokenKind::LBrace &&
+                peek(1).kind != TokenKind::At &&
+                peek(1).kind != TokenKind::ColonColon) {
+                fail_expected_parameter_colon(
+                    peek(1).loc,
+                    param_name.loc,
+                    "expected : after parameter name",
+                    "parameter '" + param_name.text + "' starts here",
+                    "insert : between parameter '" + param_name.text + "' and its type");
+            }
         }
 
         Pattern pattern = parse_pattern(true);
         SourceLocation loc = pattern.loc;
-        expect(TokenKind::Colon, "expected : after parameter pattern");
+        if (!match(TokenKind::Colon)) {
+            fail_expected_parameter_colon(
+                peek().loc,
+                loc,
+                "expected : after parameter pattern",
+                "parameter pattern starts here",
+                "insert : between the parameter pattern and its type");
+        }
         Param param;
         param.name = "$pattern";
         param.type = parse_type();

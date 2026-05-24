@@ -1,0 +1,7 @@
+fn broken(value i64) -> i64 {
+  return value;
+}
+
+fn after() -> i64 {
+  return 7;
+}

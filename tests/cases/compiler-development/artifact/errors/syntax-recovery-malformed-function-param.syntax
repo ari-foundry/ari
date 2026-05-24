@@ -1,0 +1,11 @@
+Program source=tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-function-param.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="expected : after parameter name" @tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-function-param.ari:1:17 source_id=0 bytes=16..19
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-function-param.ari:1:17 source_id=0 bytes=16..19
+      SecondaryLabel message="parameter 'value' starts here" @tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-function-param.ari:1:11 source_id=0 bytes=10..15
+      Note message="function parameters use `name: Type` or `PATTERN: Type` syntax"
+      Help message="insert : between parameter 'value' and its type"
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-function-param.ari:5:4 source_id=0 bytes=52..57
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-function-param.ari:6:3 source_id=0 bytes=71..77
+        Integer value=7 @tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-function-param.ari:6:10 source_id=0 bytes=78..79
