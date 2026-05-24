@@ -19163,6 +19163,37 @@ private:
         return ari_aggregate_field_types(type);
     }
 
+    [[noreturn]] static void fail_struct_pattern_duplicate_field(SourceLocation loc,
+                                                                 const std::string& field_name,
+                                                                 const std::string& context) {
+        CompileError error(
+            std::move(loc),
+            "duplicate field '" + field_name + "' in " + context);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "named product patterns check each field name once before lowering bindings",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove the duplicate '" + field_name + "' entry or merge its nested pattern with the first one",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_struct_pattern_incomplete(SourceLocation loc,
+                                                            const std::string& message) {
+        CompileError error(std::move(loc), message);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "named product patterns must either mention every field or explicitly ignore the rest",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add the missing fields or include '..' in the pattern",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     std::vector<std::size_t> validate_struct_pattern_fields(
         const Pattern& pattern,
         const IrType& type,
@@ -19179,8 +19210,7 @@ private:
         for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
             const std::string& field_name = pattern.field_names[i];
             if (!seen_fields.insert(field_name).second) {
-                fail(pattern.elements[i].loc,
-                     "duplicate field '" + field_name + "' in " + duplicate_context);
+                fail_struct_pattern_duplicate_field(pattern.elements[i].loc, field_name, duplicate_context);
             }
             indexes.push_back(struct_field_index(pattern.elements[i].loc, type, field_name));
         }
@@ -19188,7 +19218,7 @@ private:
         if (!completeness_message.empty() &&
             !pattern.has_rest &&
             pattern.field_names.size() != type.field_names.size()) {
-            fail(pattern.loc, completeness_message);
+            fail_struct_pattern_incomplete(pattern.loc, completeness_message);
         }
 
         return indexes;
