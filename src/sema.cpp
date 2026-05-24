@@ -391,6 +391,7 @@ private:
         std::size_t scope_depth = 0;
         bool has_break_result_type = false;
         IrType break_result_type;
+        SourceLocation break_result_loc;
         std::vector<StateSnapshot> break_state_snapshots;
         std::vector<StateSnapshot> continue_state_snapshots;
         std::optional<BorrowResultSource> break_borrow_source;
@@ -17655,9 +17656,16 @@ private:
         if (target.has_break_result_type) {
             widen_vector_result_storage(target.break_result_type, *value);
             coerce_expr_to_expected(*value, target.break_result_type);
-            require_assignable(stmt.loc, target.break_result_type, value->type);
+            require_control_flow_result_assignable(
+                break_value->loc,
+                target.break_result_loc,
+                "previous labeled block result expects " + type_name(target.break_result_type),
+                "labeled block expression",
+                target.break_result_type,
+                value->type);
         } else {
             target.break_result_type = value->type;
+            target.break_result_loc = break_value->loc;
             target.has_break_result_type = true;
         }
         if (borrow_source) {
@@ -20258,7 +20266,13 @@ private:
             widen_vector_result_storage(result_type, *then_arm.value);
         } else if (expected) {
             coerce_expr_to_expected(*then_arm.value, result_type);
-            require_assignable(expr.loc, result_type, then_arm.value->type);
+            require_control_flow_result_assignable(
+                then_arm.value->loc,
+                expr.loc,
+                "if expression expects " + type_name(result_type),
+                "if expression",
+                result_type,
+                then_arm.value->type);
         }
 
         restore_states(branch_input);
@@ -20280,11 +20294,27 @@ private:
         }
         if (!then_arm.diverges) {
             coerce_expr_to_expected(*then_arm.value, result_type);
-            require_assignable(expr.loc, result_type, then_arm.value->type);
+            require_control_flow_result_assignable(
+                then_arm.value->loc,
+                expected ? expr.loc : then_arm.value->loc,
+                expected
+                    ? "if expression expects " + type_name(result_type)
+                    : "then arm establishes result type " + type_name(result_type),
+                "if expression",
+                result_type,
+                then_arm.value->type);
         }
         if (!else_arm.diverges) {
             coerce_expr_to_expected(*else_arm.value, result_type);
-            require_assignable(expr.loc, result_type, else_arm.value->type);
+            require_control_flow_result_assignable(
+                else_arm.value->loc,
+                (!expected && !then_arm.diverges) ? then_arm.value->loc : expr.loc,
+                (!expected && !then_arm.diverges)
+                    ? "then arm establishes result type " + type_name(result_type)
+                    : "if expression expects " + type_name(result_type),
+                "if expression",
+                result_type,
+                else_arm.value->type);
         }
 
         if (then_arm.diverges) {
@@ -20433,9 +20463,16 @@ private:
             fail(expr.loc, "if-let expression arm must produce a value");
         }
         IrType result_type = result_expected ? *result_expected : then_value->type;
+        SourceLocation then_result_loc = then_value->loc;
         if (result_expected) {
             coerce_expr_to_expected(*then_value, result_type);
-            require_assignable(expr.loc, result_type, then_value->type);
+            require_control_flow_result_assignable(
+                then_result_loc,
+                expr.loc,
+                "if-let expression expects " + type_name(result_type),
+                "if-let expression",
+                result_type,
+                then_value->type);
         }
         if (!then_borrow_source) {
             then_value = materialize_value_before_auto_destroy_cleanup(
@@ -20458,7 +20495,15 @@ private:
             *expr_if_else_value(expr),
             &result_type);
         coerce_expr_to_expected(*else_checked.value, result_type);
-        require_assignable(expr.loc, result_type, else_checked.value->type);
+        require_control_flow_result_assignable(
+            else_checked.value->loc,
+            result_expected ? expr.loc : then_result_loc,
+            result_expected
+                ? "if-let expression expects " + type_name(result_type)
+                : "then arm establishes result type " + type_name(result_type),
+            "if-let expression",
+            result_type,
+            else_checked.value->type);
 
         require_same_states(expr.loc, then_state, else_checked.state,
                             "has incompatible ownership states after if-let expression branches");
@@ -20544,6 +20589,8 @@ private:
         bool has_result = false;
         bool has_irrefutable_alternative = false;
         IrType result_type;
+        SourceLocation result_source_loc = expr.loc;
+        std::string result_source_label;
         std::optional<BorrowResultSource> result_borrow_source;
         std::vector<TupleCheckedExprArm> checked_arms;
         std::vector<const Expr*> result_values{
@@ -20631,17 +20678,34 @@ private:
                 pop_scope();
                 fail(expr.loc, "if-let expression arm must produce a value");
             }
+            SourceLocation then_result_loc = then_value->loc;
             if (result_expected) {
                 coerce_expr_to_expected(*then_value, *result_expected);
-                require_assignable(expr.loc, *result_expected, then_value->type);
+                require_control_flow_result_assignable(
+                    then_result_loc,
+                    expr.loc,
+                    "if-let expression expects " + type_name(*result_expected),
+                    "if-let expression",
+                    *result_expected,
+                    then_value->type);
                 result_type = *result_expected;
+                result_source_loc = expr.loc;
+                result_source_label = "if-let expression expects " + type_name(result_type);
                 has_result = true;
             } else if (!has_result) {
                 result_type = then_value->type;
+                result_source_loc = then_result_loc;
+                result_source_label = "then arm establishes result type " + type_name(result_type);
                 has_result = true;
             } else {
                 coerce_expr_to_expected(*then_value, result_type);
-                require_assignable(expr.loc, result_type, then_value->type);
+                require_control_flow_result_assignable(
+                    then_result_loc,
+                    result_source_loc,
+                    result_source_label,
+                    "if-let expression",
+                    result_type,
+                    then_value->type);
             }
             if (then_borrow_source) {
                 require_same_borrow_result_source(
@@ -20691,7 +20755,15 @@ private:
             *expr_if_else_value(expr),
             &result_type);
         coerce_expr_to_expected(*else_checked.value, result_type);
-        require_assignable(expr.loc, result_type, else_checked.value->type);
+        require_control_flow_result_assignable(
+            else_checked.value->loc,
+            result_source_loc,
+            result_source_label.empty()
+                ? "if-let expression expects " + type_name(result_type)
+                : result_source_label,
+            "if-let expression",
+            result_type,
+            else_checked.value->type);
         if (result_borrow_source || else_checked.borrow_source) {
             if (!result_borrow_source || !else_checked.borrow_source) {
                 fail(expr.loc, "if-let expression arms must borrow the same source path and mode in every result arm");
@@ -20783,6 +20855,7 @@ private:
         if (expected) {
             block.has_break_result_type = true;
             block.break_result_type = *expected;
+            block.break_result_loc = expr.loc;
         }
         loops_.push_back(block);
 
@@ -20819,7 +20892,16 @@ private:
         if (block_state.has_break_result_type) {
             widen_vector_result_storage(block_state.break_result_type, *value);
             coerce_expr_to_expected(*value, block_state.break_result_type);
-            require_assignable(expr.loc, block_state.break_result_type, value->type);
+            require_control_flow_result_assignable(
+                value->loc,
+                block_state.break_result_loc,
+                expected
+                    ? "labeled block expression expects " + type_name(block_state.break_result_type)
+                    : "labeled block break establishes result type " +
+                          type_name(block_state.break_result_type),
+                "labeled block expression",
+                block_state.break_result_type,
+                value->type);
             coerce_labeled_break_values(checked.statements, label, block_state.break_result_type);
         }
         if (borrow_source) {
@@ -26619,6 +26701,44 @@ private:
             std::move(loc),
             std::move(expected_loc),
             expected_label,
+            expected,
+            actual);
+    }
+
+    [[noreturn]] static void fail_control_flow_result_type(SourceLocation loc,
+                                                           SourceLocation expected_loc,
+                                                           const std::string& expected_label,
+                                                           const std::string& context,
+                                                           const IrType& expected,
+                                                           const IrType& actual) {
+        CompileError error(
+            std::move(loc),
+            "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
+        add_location_label_if_valid(error, expected_loc, expected_label);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            context + " results must produce one common type after expression coercions",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "make this result produce " + type_name(expected) +
+                " or change the expected " + context + " result type",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void require_control_flow_result_assignable(SourceLocation loc,
+                                                       SourceLocation expected_loc,
+                                                       const std::string& expected_label,
+                                                       const std::string& context,
+                                                       const IrType& expected,
+                                                       const IrType& actual) {
+        if (is_assignable_for_diagnostic(expected, actual)) return;
+        fail_control_flow_result_type(
+            std::move(loc),
+            std::move(expected_loc),
+            expected_label,
+            context,
             expected,
             actual);
     }

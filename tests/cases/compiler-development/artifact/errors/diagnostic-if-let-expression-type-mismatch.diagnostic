@@ -1,0 +1,8 @@
+diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=2 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/control-flow/errors/if-let-expression-type-mismatch.ari" display="tests/cases/control-flow/errors/if-let-expression-type-mismatch.ari" bytes=213
+  Label index=0 role=primary source_id=0 source="tests/cases/control-flow/errors/if-let-expression-type-mismatch.ari" line=14 column=5 end_line=14 end_column=10 byte_start=184 byte_end=189 message=""
+  Snippet label=0 text="  --> tests/cases/control-flow/errors/if-let-expression-type-mismatch.ari:14:5\n    |\n 14 |     false\n    |     ^^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/control-flow/errors/if-let-expression-type-mismatch.ari" line=12 column=10 end_line=12 end_column=12 byte_start=162 byte_end=164 message="then arm establishes result type i64"
+  Snippet label=1 text="  --> tests/cases/control-flow/errors/if-let-expression-type-mismatch.ari:12:10\n    |\n 12 |     item as i64\n    |          ^^"
+  Note index=0 location=none message="if-let expression results must produce one common type after expression coercions"
+  Help index=0 location=none message="make this result produce i64 or change the expected if-let expression result type"

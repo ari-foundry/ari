@@ -282,6 +282,12 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-empty.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-empty.diagnostic
 	$(TARGET) tests/cases/match/errors/match-expression-type-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-expression-type-mismatch.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-expression-type-mismatch.diagnostic
+	$(TARGET) tests/cases/control-flow/errors/if-expression-type-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-if-expression-type-mismatch.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-if-expression-type-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-if-expression-type-mismatch.diagnostic
+	$(TARGET) tests/cases/control-flow/errors/if-let-expression-type-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-if-let-expression-type-mismatch.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-if-let-expression-type-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-if-let-expression-type-mismatch.diagnostic
+	$(TARGET) tests/cases/control-flow/errors/labeled-block-break-type.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-labeled-block-break-type.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-labeled-block-break-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-labeled-block-break-type.diagnostic
 	$(TARGET) tests/cases/match/errors/match-no-payload.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-no-payload.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-no-payload.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-no-payload.diagnostic
 	$(TARGET) tests/cases/match/errors/match-non-enum.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-non-enum.diagnostic

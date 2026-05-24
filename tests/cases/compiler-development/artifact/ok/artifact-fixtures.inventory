@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=267
+CompilerArtifactFixtures version=1 group=all entries=274
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -68,16 +68,23 @@ CompilerArtifactFixtures version=1 group=all entries=267
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-signature-unknown-param.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-specialization-name-conflict.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-uninferred.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-if-expression-type-mismatch.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-if-let-expression-type-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-imported-parse-source-id.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-imported-semantic-source-id.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-assignment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-assignment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-invalid-return.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-invalid-return.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-labeled-block-break-type.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-lexer-invalid-unicode-scalar.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-invalid-unicode-scalar.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-nonascii-byte.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-nonascii-byte.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-unicode-escape-eof.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unicode-escape-eof.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-lexer-unsupported-string-escape.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unsupported-string-escape.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-unterminated-block-comment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unterminated-block-comment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-unterminated-string.ari
