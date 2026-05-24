@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=243
+CompilerArtifactFixtures version=1 group=all entries=247
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -172,10 +172,14 @@ CompilerArtifactFixtures version=1 group=all entries=243
   Fixture group=errors kind=text path=errors/module-cache-target-stale.err.txt
   Fixture group=errors kind=text path=errors/module-metadata-missing-source.err.txt
   Fixture group=errors kind=text path=errors/module-metadata-stale-cfg.err.txt
+  Fixture group=errors kind=source path=errors/syntax-recovery-attribute-token-tree.ari
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-attribute-token-tree.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-enum-payload.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-enum-payload.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-inline-module.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-inline-module.syntax
+  Fixture group=errors kind=source path=errors/syntax-recovery-item-macro-token-tree.ari
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-item-macro-token-tree.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-top-level.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-top-level.syntax
   Fixture group=errors kind=text path=errors/text-line-mismatch.actual.txt

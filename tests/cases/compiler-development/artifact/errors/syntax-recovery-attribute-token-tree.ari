@@ -1,0 +1,4 @@
+@cfg(feature
+fn after() -> i64 {
+  return 6;
+}

@@ -1,0 +1,8 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-attribute-token-tree.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated attribute arguments" @tests/cases/compiler-development/artifact/errors/syntax-recovery-attribute-token-tree.ari:1:2 source_id=0 bytes=1..4
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-attribute-token-tree.ari:1:2 source_id=0 bytes=1..4
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-attribute-token-tree.ari:2:4 source_id=0 bytes=16..21
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-attribute-token-tree.ari:3:3 source_id=0 bytes=35..41
+        Integer value=6 @tests/cases/compiler-development/artifact/errors/syntax-recovery-attribute-token-tree.ari:3:10 source_id=0 bytes=42..43

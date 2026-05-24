@@ -109,6 +109,10 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/syntax-recovery-inline-module.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-inline-module.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/errors/syntax-recovery-enum-payload.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-enum-payload.syntax
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/syntax-recovery-enum-payload.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-enum-payload.syntax
+	$(TARGET) tests/cases/compiler-development/artifact/errors/syntax-recovery-attribute-token-tree.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-attribute-token-tree.syntax
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/syntax-recovery-attribute-token-tree.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-attribute-token-tree.syntax
+	$(TARGET) tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.ari --emit-syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-item-macro-token-tree.syntax
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/syntax-recovery-item-macro-token-tree.syntax $(BUILD_DIR)/compiler-development/artifact/syntax-recovery-item-macro-token-tree.syntax
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-unexpected-character.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-unexpected-character.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unterminated-string.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-lexer-unterminated-string.diagnostic

@@ -2200,6 +2200,24 @@ private:
         return kind == TokenKind::RParen || kind == TokenKind::RBrace || kind == TokenKind::RBracket;
     }
 
+    bool has_matching_token_tree_close_ahead(TokenKind close) const {
+        int depth = 1;
+        for (std::size_t i = pos_; i < tokens_.size(); ++i) {
+            TokenKind kind = tokens_[i].kind;
+            if (kind == TokenKind::End) return false;
+            if (matching_delimiter(kind) != TokenKind::End) {
+                ++depth;
+                continue;
+            }
+            if (is_closing_delimiter(kind)) {
+                --depth;
+                if (depth == 0) return kind == close;
+                if (depth < 0) return false;
+            }
+        }
+        return false;
+    }
+
     std::vector<Token> parse_balanced_token_tree(SourceLocation loc,
                                                  const std::string& expected_open_message,
                                                  const std::string& context) {
@@ -2209,6 +2227,13 @@ private:
         while (!closing_stack.empty()) {
             if (check(TokenKind::End)) fail(loc, "unterminated " + context);
             Token token = peek();
+            if (recovery_diagnostics_ != nullptr &&
+                closing_stack.size() == 1 &&
+                token.loc.line > loc.line &&
+                is_top_level_start() &&
+                !has_matching_token_tree_close_ahead(closing_stack.back())) {
+                fail(loc, "unterminated " + context);
+            }
             if (token.kind == closing_stack.back()) {
                 ++pos_;
                 closing_stack.pop_back();
