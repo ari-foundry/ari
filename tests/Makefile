@@ -4596,7 +4596,7 @@ check-generics: $(TARGET)
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-method-receiver.ari --check >$(BUILD_DIR)/generics/generic-aggregate-method-receiver.err 2>&1; then exit 1; fi
 	grep -q "unknown method 'id' for type Box\\[bool\\]" $(BUILD_DIR)/generics/generic-aggregate-method-receiver.err
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-use-after-move.ari --check >$(BUILD_DIR)/generics/generic-aggregate-use-after-move.err 2>&1; then exit 1; fi
-	grep -q "cannot use moved owned field 'value.0'" $(BUILD_DIR)/generics/generic-aggregate-use-after-move.err
+	grep -q "cannot use moved owned field 'value.value'" $(BUILD_DIR)/generics/generic-aggregate-use-after-move.err
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-recursive-struct.ari --check >$(BUILD_DIR)/generics/generic-aggregate-recursive-struct.err 2>&1; then exit 1; fi
 	grep -q "recursive aggregate value type 'Node\\[T\\]' requires indirection" $(BUILD_DIR)/generics/generic-aggregate-recursive-struct.err
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-recursive-enum.ari --check >$(BUILD_DIR)/generics/generic-aggregate-recursive-enum.err 2>&1; then exit 1; fi

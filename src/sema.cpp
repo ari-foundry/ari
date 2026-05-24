@@ -10475,9 +10475,59 @@ private:
         for (const auto& item : local.owned_field_states) {
             if (!local_owned_field_path_matches(item.first, path)) continue;
             if (item.second != LocalState::Alive) {
-                fail(loc, "cannot use " + local_state_name(item.second) + " owned field '" + base_name + "." + path + "'");
+                fail_owned_field_unavailable(loc, base_name, local, path, item.second);
             }
         }
+    }
+
+    [[noreturn]] static void fail_owned_field_unavailable(SourceLocation loc,
+                                                          const std::string& base_name,
+                                                          const LocalInfo& local,
+                                                          const std::string& path,
+                                                          LocalState state) {
+        const std::string display = owned_field_path_display(base_name, local.type, path);
+        CompileError error(
+            std::move(loc),
+            "cannot use " + local_state_name(state) + " owned field '" + display + "'");
+
+        Span primary_span = span_from_location(error.location());
+        Span declaration_span = span_from_location(local.loc);
+        if (span_has_source(declaration_span) &&
+            span_has_valid_order(declaration_span) &&
+            (!span_has_source(primary_span) ||
+             primary_span.source_id.value != declaration_span.source_id.value ||
+             primary_span.start != declaration_span.start ||
+             primary_span.end != declaration_span.end)) {
+            error.add_label(DiagnosticLabel{
+                declaration_span,
+                "owning aggregate binding '" + base_name + "' declared here",
+                false});
+        }
+
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "owned aggregate fields are tracked independently after field moves, drops, and pattern destructuring",
+            DiagnosticNoteKind::Note});
+        std::string help;
+        switch (state) {
+            case LocalState::Moved:
+                help = "use the value produced by the earlier move, or avoid moving '" + display + "' before this use";
+                break;
+            case LocalState::Dropped:
+                help = "remove the later use or assign a fresh value to '" + display + "' before using it again";
+                break;
+            case LocalState::MaybeUnavailable:
+                help = "make every control-flow path leave '" + display + "' available before this use";
+                break;
+            case LocalState::Alive:
+                help = "use owned aggregate fields only while they are still live";
+                break;
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            help,
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     void mark_owned_field_moved(SourceLocation loc, const std::string& base_name, const std::string& path) {
