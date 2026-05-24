@@ -2,6 +2,8 @@ Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-
   ParseDiagnostics count=1
     ParseDiagnostic message="expected ) after enum payload list" @tests/cases/compiler-development/artifact/errors/syntax-recovery-enum-payload.ari:3:1 source_id=0 bytes=25..26
       PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-enum-payload.ari:3:1 source_id=0 bytes=25..26
+      SecondaryLabel message="enum payload list starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-enum-payload.ari:2:7 source_id=0 bytes=20..21
+      Help message="add a matching ) before continuing"
   Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-enum-payload.ari:5:4 source_id=0 bytes=31..36
     Body
       Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-enum-payload.ari:6:3 source_id=0 bytes=50..56

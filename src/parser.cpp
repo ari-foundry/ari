@@ -334,6 +334,20 @@ private:
         throw error;
     }
 
+    [[noreturn]] static void fail_expected_closing_delimiter(SourceLocation boundary_loc,
+                                                            SourceLocation open_loc,
+                                                            const std::string& message,
+                                                            const std::string& open_label,
+                                                            const std::string& closing_delimiter) {
+        CompileError error(std::move(boundary_loc), message);
+        add_location_label_if_valid(error, open_loc, open_label);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add a matching " + closing_delimiter + " before continuing",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     static std::string token_description(const Token& token) {
         if (token.kind == TokenKind::End) return "end of file";
         if (!token.text.empty()) return "'" + token.text + "'";
@@ -1119,11 +1133,19 @@ private:
             item.name = case_name.text;
             item.loc = case_name.loc;
             if (match(TokenKind::LParen)) {
+                Token payload_open = tokens_[pos_ - 1];
                 while (!check(TokenKind::RParen)) {
                     item.payloads.push_back(parse_type());
                     if (!match(TokenKind::Comma)) break;
                 }
-                expect(TokenKind::RParen, "expected ) after enum payload list");
+                if (!match(TokenKind::RParen)) {
+                    fail_expected_closing_delimiter(
+                        peek().loc,
+                        payload_open.loc,
+                        "expected ) after enum payload list",
+                        "enum payload list starts here",
+                        ")");
+                }
             }
             decl.cases.push_back(std::move(item));
             aggregate_member_separator(
