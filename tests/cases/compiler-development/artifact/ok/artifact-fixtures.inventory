@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=278
+CompilerArtifactFixtures version=1 group=all entries=281
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -172,6 +172,9 @@ CompilerArtifactFixtures version=1 group=all entries=278
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-impl-missing-method.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-method-ambiguous.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-method-ambiguous.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-qualified-associated-expected-missing-impl.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-qualified-associated-missing-impl.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-qualified-associated-missing-self.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-type-assignment.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-type-assignment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-unexpected-character.ari

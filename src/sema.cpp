@@ -25413,6 +25413,16 @@ private:
     ) {
         (void)lowered;
         const std::string display = trait_method_display(trait_name, trait_args, method_name);
+        const TraitInfo* trait_info = nullptr;
+        const TraitInfo::Method* trait_method = nullptr;
+        auto trait_found = traits_.find(trait_name);
+        if (trait_found != traits_.end()) {
+            trait_info = &trait_found->second;
+            auto method_found = trait_info->methods.find(method_name);
+            if (method_found != trait_info->methods.end()) {
+                trait_method = &method_found->second;
+            }
+        }
         const ExprTypeArgs& type_args = expr_type_args(expr);
         IrType receiver_type;
         if (!type_args.empty()) {
@@ -25420,9 +25430,11 @@ private:
         } else if (expected && trait_expected_type_can_select_associated_self(*expected)) {
             receiver_type = *expected;
         } else {
-            fail(expr.loc,
-                 "trait-qualified associated function call '" + display +
-                     "' requires an explicit implementing type argument");
+            fail_trait_qualified_associated_missing_self(
+                expr.loc,
+                display,
+                trait_info,
+                trait_method);
         }
         if (receiver_type.qualifier != TypeQualifier::Value) {
             fail(type_args.empty() ? expr.loc : type_args.front().loc,
@@ -25432,10 +25444,13 @@ private:
 
         std::set<std::string> visiting;
         if (!type_implements_trait(trait_name, trait_args, receiver_type, visiting)) {
-            fail(expr.loc,
-                 "type " + type_name(receiver_type) + " does not implement trait '" +
-                     trait_application_display(trait_name, trait_args) +
-                     "' for trait-qualified associated function call");
+            fail_trait_qualified_associated_missing_impl(
+                type_args.empty() ? expr.loc : type_args.front().loc,
+                trait_application_display(trait_name, trait_args),
+                display,
+                receiver_type,
+                trait_info,
+                trait_method);
         }
 
         Expr method_expr;
@@ -26612,6 +26627,74 @@ private:
         error.add_note(DiagnosticNote{
             std::nullopt,
             "define trait '" + trait_name + "' before using it as a bound, or import the trait into scope",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_trait_qualified_associated_missing_self(
+        SourceLocation loc,
+        const std::string& display,
+        const TraitInfo* trait,
+        const TraitInfo::Method* method
+    ) {
+        CompileError error(
+            std::move(loc),
+            "trait-qualified associated function call '" + display +
+                "' requires an explicit implementing type argument");
+        if (method != nullptr) {
+            add_location_label_if_valid(
+                error,
+                method->loc,
+                "associated function '" + display + "' is declared here");
+        } else if (trait != nullptr) {
+            add_location_label_if_valid(
+                error,
+                trait->loc,
+                "trait '" + trait->name + "' declaration is here");
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "associated trait functions without a receiver need an implementing Self type",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "provide an explicit implementing type argument such as '" + display + "<T>(...)'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_trait_qualified_associated_missing_impl(
+        SourceLocation loc,
+        const std::string& trait_display,
+        const std::string& display,
+        const IrType& receiver_type,
+        const TraitInfo* trait,
+        const TraitInfo::Method* method
+    ) {
+        CompileError error(
+            std::move(loc),
+            "type " + type_name(receiver_type) + " does not implement trait '" +
+                trait_display + "' for trait-qualified associated function call");
+        if (method != nullptr) {
+            add_location_label_if_valid(
+                error,
+                method->loc,
+                "associated function '" + display + "' requires an impl of trait '" +
+                    trait_display + "'");
+        } else if (trait != nullptr) {
+            add_location_label_if_valid(
+                error,
+                trait->loc,
+                "trait '" + trait_display + "' is required here");
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "trait-qualified associated calls are resolved through an impl for the selected Self type",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "implement trait '" + trait_display + "' for " + type_name(receiver_type) +
+                " or choose a type that already implements it",
             DiagnosticNoteKind::Help});
         throw error;
     }
