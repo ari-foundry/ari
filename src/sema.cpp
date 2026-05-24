@@ -11183,6 +11183,36 @@ private:
         throw error;
     }
 
+    [[noreturn]] static void fail_dynamic_owner_element_move(SourceLocation loc) {
+        CompileError error(
+            std::move(loc),
+            "moving owning aggregate elements through dynamic indexes is not supported; use a constant index or move the whole aggregate");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "dynamic indexes cannot statically mark which owning element was moved out of the aggregate",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use a constant index, match or branch over known indexes, or move the whole aggregate value",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_temporary_owner_element_move(SourceLocation loc) {
+        CompileError error(
+            std::move(loc),
+            "moving owning aggregate elements out of temporary values is not supported; bind the aggregate first");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "temporary aggregate values do not have a tracked owner path for recording a partial element move",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "bind the aggregate to a local first, then move an element with a constant index or move the whole aggregate",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     bool try_build_tracked_aggregate_access(const Expr& expr, TrackedAggregateAccess& out) {
         if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
             const Expr* pointer_source = expr_operand(expr).get();
@@ -11327,9 +11357,7 @@ private:
             }
             if (index->kind != IrExprKind::Integer || index->int_negative) {
                 if (is_owner_type(base.type.args[0])) {
-                    fail(expr.loc,
-                         "moving owning aggregate elements through dynamic indexes is not supported; "
-                         "use a constant index or move the whole aggregate");
+                    fail_dynamic_owner_element_move(expr.loc);
                 }
                 return false;
             }
@@ -19412,7 +19440,7 @@ private:
             fail(expr.loc, "index access requires an array, vector, or Slice value, got " + type_name(operand->type));
         }
         if (is_owner_type(operand->type)) {
-            fail(expr.loc, "moving owning aggregate elements out of temporary values is not supported; bind the aggregate first");
+            fail_temporary_owner_element_move(expr.loc);
         }
 
         if (slice_index) {
