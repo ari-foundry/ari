@@ -12951,7 +12951,7 @@ private:
                 if (type.primitive != IrPrimitiveKind::Struct) return;
                 const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
                 if (info.tuple_struct) {
-                    fail(pattern.loc, "tuple structs must use positional match patterns");
+                    fail_tuple_struct_match_pattern_shape(pattern.loc);
                 }
                 std::vector<std::size_t> field_indexes = validate_struct_pattern_fields(
                     pattern,
@@ -14713,9 +14713,7 @@ private:
             return lower_positional_product_match_pattern_condition(payload, source_name, source_type, prelude);
         }
         if (fields.size() != 1) {
-            fail(payload.loc,
-                 "tuple-struct pattern for '" + info.name + "' has 1 field but value has " +
-                     std::to_string(fields.size()));
+            fail_tuple_struct_match_pattern_arity(payload.loc, info.name, fields.size());
         }
         return lower_tuple_element_match_condition(payload, source_name, source_type, 0, prelude);
     }
@@ -14767,7 +14765,7 @@ private:
 
         const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
         if (info.tuple_struct) {
-            fail(pattern.loc, "tuple structs must use positional match patterns");
+            fail_tuple_struct_match_pattern_shape(pattern.loc);
         }
         std::vector<std::size_t> field_indexes = validate_struct_pattern_fields(
             pattern,
@@ -15293,9 +15291,7 @@ private:
             return;
         }
         if (fields.size() != 1) {
-            fail(payload.loc,
-                 "tuple-struct pattern for '" + info.name + "' has 1 field but value has " +
-                     std::to_string(fields.size()));
+            fail_tuple_struct_match_pattern_arity(payload.loc, info.name, fields.size());
         }
         if (payload.binding_mode != BindingMode::Value) {
             if (skip_reference_bindings) return;
@@ -15384,7 +15380,7 @@ private:
 
         const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
         if (info.tuple_struct) {
-            fail(pattern.loc, "tuple structs must use positional match patterns");
+            fail_tuple_struct_match_pattern_shape(pattern.loc);
         }
         std::vector<std::size_t> field_indexes = validate_struct_pattern_fields(
             pattern,
@@ -16031,6 +16027,37 @@ private:
             std::nullopt,
             "convert the value to a supported match subject or use if/else logic for type " +
                 type_name(actual),
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_tuple_struct_match_pattern_shape(SourceLocation loc) {
+        CompileError error(std::move(loc), "tuple structs must use positional match patterns");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "tuple structs have unnamed fields, so named-field patterns cannot identify their payload slots",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use positional syntax such as `Name(a, b)` instead of `Name { ... }`",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_tuple_struct_match_pattern_arity(SourceLocation loc,
+                                                                   const std::string& name,
+                                                                   std::size_t actual_fields) {
+        CompileError error(
+            std::move(loc),
+            "tuple-struct pattern for '" + name + "' has 1 field but value has " +
+                std::to_string(actual_fields));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "a bare payload pattern can destructure only single-field tuple structs",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "write one positional pattern per tuple-struct field, for example `" + name + "(a, b)`",
             DiagnosticNoteKind::Help});
         throw error;
     }
