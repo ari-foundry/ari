@@ -1,4 +1,10 @@
-diagnostic error code=T0001 family=type message="method call 'score' for type i64 is ambiguous" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="method call 'score' for type i64 is ambiguous" sources=1 labels=3 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari" bytes=298
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari" line=23 column=16 end_line=23 end_column=21 byte_start=287 byte_end=292 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari:23:16\n    |\n 23 |   return value.score();\n    |                ^^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari" line=10 column=6 end_line=10 end_column=11 byte_start=121 byte_end=126 message="candidate method from trait 'LeftScore' for i64"
+  Snippet label=1 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari:10:6\n    |\n 10 |   fn score(self) -> i64 {\n    |      ^^^^^"
+  Label index=2 role=secondary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari" line=16 column=6 end_line=16 end_column=11 byte_start=194 byte_end=199 message="candidate method from trait 'RightScore' for i64"
+  Snippet label=2 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-trait-method-ambiguous.ari:16:6\n    |\n 16 |   fn score(self) -> i64 {\n    |      ^^^^^"
+  Note index=0 location=none message="ambiguous method calls list each viable impl method as a secondary label"
+  Help index=0 location=none message="use a trait-qualified call or remove one of the overlapping impl methods"

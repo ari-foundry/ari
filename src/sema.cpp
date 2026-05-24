@@ -22114,7 +22114,10 @@ private:
             return false;
         }
         if (matches.size() > 1) {
-            fail(expr.loc, "method call '" + expr.name + "' for type " + type_name(receiver_type) + " is ambiguous");
+            fail_ambiguous_impl_method_call(
+                expr.loc,
+                "method call '" + expr.name + "' for type " + type_name(receiver_type) + " is ambiguous",
+                matches);
         }
         std::map<std::string, IrType> substitutions;
         if (!infer_generic_impl_method_substitutions(*matches.front(), receiver_type, substitutions)) {
@@ -25082,7 +25085,10 @@ private:
                      type_name(receiver->type));
         }
         if (found != method_impls_.end() && !selected && receiver_compatible_methods.size() > 1) {
-            fail(expr.loc, "method call '" + expr.name + "' for type " + type_name(method_receiver_type) + " is ambiguous");
+            fail_ambiguous_impl_method_call(
+                expr.loc,
+                "method call '" + expr.name + "' for type " + type_name(method_receiver_type) + " is ambiguous",
+                receiver_compatible_methods);
         }
 
         const ImplMethodInfo& method = has_generic_selected
@@ -25665,6 +25671,41 @@ private:
 
     [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
         throw CompileError(std::move(loc), message);
+    }
+
+    static std::string impl_method_candidate_label(const ImplMethodInfo& info) {
+        std::string label = "candidate method";
+        if (!info.trait_name.empty()) {
+            label += " from trait '" + trait_application_display(info.trait_name, info.trait_args) + "'";
+        }
+        label += " for " + type_name(info.receiver_type);
+        return label;
+    }
+
+    [[noreturn]] static void fail_ambiguous_impl_method_call(
+        SourceLocation loc,
+        const std::string& message,
+        const std::vector<const ImplMethodInfo*>& candidates
+    ) {
+        CompileError error(std::move(loc), message);
+        for (const ImplMethodInfo* candidate : candidates) {
+            if (candidate == nullptr) continue;
+            Span candidate_span = span_from_location(candidate->loc);
+            if (!span_has_source(candidate_span) || !span_has_valid_order(candidate_span)) continue;
+            error.add_label(DiagnosticLabel{
+                candidate_span,
+                impl_method_candidate_label(*candidate),
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "ambiguous method calls list each viable impl method as a secondary label",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use a trait-qualified call or remove one of the overlapping impl methods",
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     [[noreturn]] static void fail_duplicate_declaration(SourceLocation duplicate_loc,
