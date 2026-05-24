@@ -354,6 +354,19 @@ private:
         return "token";
     }
 
+    [[noreturn]] static void fail_expected_top_level_declaration(const Token& token) {
+        CompileError error(token.loc, "expected top-level declaration");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "top-level Ari source can contain declarations such as fn, struct, enum, trait, impl, mod, use, const, extern, or type aliases",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove " + token_description(token) + " or put statements inside a function body",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     [[noreturn]] static void fail_expected_expression(const Token& token) {
         std::string message = "expected expression";
         if (token.kind == TokenKind::End ||
@@ -564,7 +577,7 @@ private:
                 target.item_macros.push_back(std::move(invocation));
             }
         } else {
-            fail(peek().loc, "expected top-level declaration");
+            fail_expected_top_level_declaration(peek());
         }
     }
 
