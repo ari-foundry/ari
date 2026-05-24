@@ -1,0 +1,9 @@
+diagnostic error code=T0001 family=type message="method 'eq' parameter 2 type mismatch: expected i64, got bool" sources=2 labels=2 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/traits/errors/trait-impl-param-mismatch.ari" display="tests/cases/traits/errors/trait-impl-param-mismatch.ari" bytes=118
+  Source source_id=1 kind=file path="lib/std.arih" display="lib/std.arih" bytes=19065
+  Label index=0 role=primary source_id=0 source="tests/cases/traits/errors/trait-impl-param-mismatch.ari" line=2 column=22 end_line=2 end_column=26 byte_start=44 byte_end=48 message=""
+  Snippet label=0 text="  --> tests/cases/traits/errors/trait-impl-param-mismatch.ari:2:22\n   |\n 2 |   fn eq(self, other: bool) -> bool {\n   |                      ^^^^"
+  Label index=1 role=secondary source_id=1 source="lib/std.arih" line=781 column=22 end_line=781 end_column=23 byte_start=17569 byte_end=17570 message="trait method 'eq' parameter 2 expects i64"
+  Snippet label=1 text="  --> lib/std.arih:781:22\n     |\n 781 |   fn eq(self, other: T) -> bool;\n     |                      ^"
+  Note index=0 location=none message="trait impl methods must match the trait declaration exactly"
+  Help index=0 location=none message="change this impl parameter to i64 or update the trait declaration"

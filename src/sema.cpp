@@ -3227,10 +3227,16 @@ private:
                         iterator_receiver_compatible(expected, actual)) {
                         continue;
                     }
-                    fail(actual_method.params[i].type.loc,
-                         "method '" + item.first + "' parameter " + std::to_string(i + 1) +
-                             " type mismatch: expected " + type_name(expected) +
-                             ", got " + type_name(actual));
+                    const std::string expected_type = type_name(expected);
+                    fail_trait_impl_param_type_mismatch(
+                        actual_method.params[i].type.loc,
+                        expected_method.params[i].loc,
+                        "method '" + item.first + "' parameter " + std::to_string(i + 1) +
+                            " type mismatch: expected " + expected_type +
+                            ", got " + type_name(actual),
+                        item.first,
+                        i + 1,
+                        expected_type);
                 }
             }
 
@@ -3247,9 +3253,14 @@ private:
                     }
                     continue;
                 }
-                fail(actual_method.loc,
-                     "method '" + item.first + "' return type mismatch: expected " +
-                         type_name(expected_result) + ", got " + type_name(actual_result));
+                const std::string expected_type = type_name(expected_result);
+                fail_trait_impl_return_type_mismatch(
+                    actual_method.has_return_type ? actual_method.return_type.loc : actual_method.loc,
+                    expected_method.has_result ? expected_method.result.loc : expected_method.loc,
+                    "method '" + item.first + "' return type mismatch: expected " +
+                        expected_type + ", got " + type_name(actual_result),
+                    item.first,
+                    expected_type);
             }
         }
     }
@@ -27448,6 +27459,61 @@ private:
         error.add_note(DiagnosticNote{
             std::nullopt,
             "add method '" + method_name + "' to this impl of trait '" + trait_name + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_trait_impl_param_type_mismatch(
+        SourceLocation loc,
+        SourceLocation expected_loc,
+        const std::string& message,
+        const std::string& method_name,
+        std::size_t parameter_index,
+        const std::string& expected_type
+    ) {
+        CompileError error(std::move(loc), message);
+        Span expected_span = span_from_location(expected_loc);
+        if (span_has_source(expected_span) && span_has_valid_order(expected_span)) {
+            error.add_label(DiagnosticLabel{
+                expected_span,
+                "trait method '" + method_name + "' parameter " +
+                    std::to_string(parameter_index) + " expects " + expected_type,
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "trait impl methods must match the trait declaration exactly",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "change this impl parameter to " + expected_type +
+                " or update the trait declaration",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_trait_impl_return_type_mismatch(
+        SourceLocation loc,
+        SourceLocation expected_loc,
+        const std::string& message,
+        const std::string& method_name,
+        const std::string& expected_type
+    ) {
+        CompileError error(std::move(loc), message);
+        Span expected_span = span_from_location(expected_loc);
+        if (span_has_source(expected_span) && span_has_valid_order(expected_span)) {
+            error.add_label(DiagnosticLabel{
+                expected_span,
+                "trait method '" + method_name + "' returns " + expected_type,
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "trait impl methods must match the trait declaration exactly",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "return " + expected_type + " from this impl method or update the trait declaration",
             DiagnosticNoteKind::Help});
         throw error;
     }
