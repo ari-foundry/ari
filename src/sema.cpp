@@ -8230,15 +8230,42 @@ private:
     }
 
     [[noreturn]] void fail_compact_enum_payload_reference(SourceLocation loc,
-                                                          const std::vector<IrType>& payloads) const {
-        if (payloads.size() == 1) {
-            fail(loc,
-                 "compact enum payload reference binding for " +
-                     type_name(payloads.front()) +
-                     " is value-only; use a value pattern or an addressable aggregate enum payload");
+                                                          const EnumCaseInfo& case_info) const {
+        const std::vector<IrType>& payloads = case_info.payloads;
+        CompileError error(
+            std::move(loc),
+            payloads.size() == 1
+                ? "compact enum payload reference binding for " + type_name(payloads.front()) +
+                      " is value-only; use a value pattern or an addressable aggregate enum payload"
+                : "compact enum payload reference bindings are value-only; use value patterns or an addressable aggregate enum payload layout");
+        if (payloads.size() == 1 && !case_info.payload_refs.empty()) {
+            Span payload_span = span_from_location(case_info.payload_refs.front().loc);
+            if (span_has_source(payload_span) && span_has_valid_order(payload_span)) {
+                error.add_label(DiagnosticLabel{
+                    payload_span,
+                    "enum case '" + case_info.name + "' stores payload " +
+                        type_name(payloads.front()) + " in a compact value-only slot",
+                    false});
+            }
+        } else if (payloads.size() > 1) {
+            Span case_span = span_from_location(case_info.loc);
+            if (span_has_source(case_span) && span_has_valid_order(case_span)) {
+                error.add_label(DiagnosticLabel{
+                    case_span,
+                    "enum case '" + case_info.name + "' declares " +
+                        std::to_string(payloads.size()) + " compact payloads",
+                    false});
+            }
         }
-        fail(loc,
-             "compact enum payload reference bindings are value-only; use value patterns or an addressable aggregate enum payload layout");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "compact enum payloads are stored as value slots, so ref patterns cannot borrow a stable payload address",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove ref from this pattern, or use an addressable aggregate payload layout for data that must be borrowed",
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     std::string enum_payload_reference_storage_path(SourceLocation loc,
@@ -8305,7 +8332,7 @@ private:
                                                std::vector<IrStmtPtr>& statements) {
         if (case_info.payloads.empty()) return;
         if (!has_aggregate_enum_layout(case_info.enum_type)) {
-            fail_compact_enum_payload_reference(pattern.loc, case_info.payloads);
+            fail_compact_enum_payload_reference(pattern.loc, case_info);
         }
         if (!pattern.payload_pattern) {
             fail_enum_pattern_payload_required(pattern.loc, pattern.case_name, case_info);
@@ -8560,7 +8587,7 @@ private:
                 EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
                 if (case_info.payloads.empty() || !pattern.payload_pattern) return;
                 if (!has_aggregate_enum_layout(case_info.enum_type)) {
-                    fail_compact_enum_payload_reference(pattern.loc, case_info.payloads);
+                    fail_compact_enum_payload_reference(pattern.loc, case_info);
                 }
                 const Pattern& payload = *pattern.payload_pattern;
                 if (case_info.payloads.size() > 1) {
