@@ -1,4 +1,6 @@
-diagnostic error code=T0001 family=type message="field access requires a struct value, got i64" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="field access requires a struct value, got i64" sources=1 labels=1 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/structs/errors/struct-field-access-non-struct.ari" display="tests/cases/structs/errors/struct-field-access-non-struct.ari" bytes=56
   Label index=0 role=primary source_id=0 source="tests/cases/structs/errors/struct-field-access-non-struct.ari" line=3 column=16 end_line=3 end_column=17 byte_start=51 byte_end=52 message=""
   Snippet label=0 text="  --> tests/cases/structs/errors/struct-field-access-non-struct.ari:3:16\n   |\n 3 |   return value.x;\n   |                ^"
+  Note index=0 location=none message="named field access is available only after the receiver type is known to be a struct"
+  Help index=0 location=none message="remove '.x' or wrap the value in a struct that declares field 'x'"

@@ -11165,6 +11165,24 @@ private:
         return local;
     }
 
+    [[noreturn]] static void fail_field_access_non_struct(SourceLocation loc,
+                                                          const IrType& actual,
+                                                          const std::string& field_name) {
+        CompileError error(
+            std::move(loc),
+            "field access requires a struct value, got " + type_name(actual));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "named field access is available only after the receiver type is known to be a struct",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove '." + field_name + "' or wrap the value in a struct that declares field '" +
+                field_name + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     bool try_build_tracked_aggregate_access(const Expr& expr, TrackedAggregateAccess& out) {
         if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
             const Expr* pointer_source = expr_operand(expr).get();
@@ -11224,7 +11242,7 @@ private:
             TrackedAggregateAccess base;
             if (!try_build_tracked_aggregate_access(*expr_operand(expr), base)) return false;
             if (base.type.primitive != IrPrimitiveKind::Struct) {
-                fail(expr.loc, "field access requires a struct value, got " + type_name(base.type));
+                fail_field_access_non_struct(expr.loc, base.type, expr.name);
             }
             std::size_t index = struct_field_index(expr.loc, base.type, expr.name);
             const IrType field_type = base.type.field_types[index];
@@ -19504,7 +19522,7 @@ private:
 
         IrExprPtr operand = check_aggregate_access_operand(*expr_operand(expr));
         if (operand->type.primitive != IrPrimitiveKind::Struct) {
-            fail(expr.loc, "field access requires a struct value, got " + type_name(operand->type));
+            fail_field_access_non_struct(expr.loc, operand->type, expr.name);
         }
         std::size_t index = struct_field_index(expr.loc, operand->type, expr.name);
         if (is_owner_type(operand->type) && is_owner_type(operand->type.field_types[index])) {
