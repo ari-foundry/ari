@@ -632,8 +632,20 @@ private:
     }
 
     void fail_recursive_aggregate_value(SourceLocation loc, const IrType& type) const {
-        fail(loc, "recursive aggregate value type '" + type_name(aggregate_identity_type(type)) +
-                      "' requires indirection");
+        const std::string aggregate_name = type_name(aggregate_identity_type(type));
+        CompileError error(
+            std::move(loc),
+            "recursive aggregate value type '" + aggregate_name + "' requires indirection");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "aggregate fields stored by value must have a finite layout, but this type would contain itself recursively",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "store the recursive field behind an indirection such as ptr, ref, or own instead of embedding " +
+                aggregate_name + " by value",
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     static std::string qualify_in_module(const std::string& module_name, const std::string& name) {
