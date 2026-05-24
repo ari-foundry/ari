@@ -7078,7 +7078,12 @@ private:
         specialize_vector_storage_from_init(declared, *init);
         coerce_expr_to_expected(*init, declared);
         require_nullable_pointer_initializer(stmt.binding.init->loc, stmt.binding, declared, *init);
-        require_assignable(stmt.binding.init->loc, declared, init->type);
+        require_assignment_assignable(
+            stmt.binding.init->loc,
+            stmt.binding.loc,
+            "binding '" + stmt.binding.name + "'",
+            declared,
+            init->type);
         VectorKnownLength init_vector_length =
             vector_known_length_from_source_expr(declared, *stmt.binding.init, *init);
         bool borrow_binding = is_borrow_type(declared);
@@ -7132,7 +7137,12 @@ private:
         specialize_vector_storage_from_init(declared, *init);
         coerce_expr_to_expected(*init, declared);
         require_nullable_pointer_initializer(stmt.binding.init->loc, stmt.binding, declared, *init);
-        require_assignable(stmt.binding.init->loc, declared, init->type);
+        require_assignment_assignable(
+            stmt.binding.init->loc,
+            stmt.binding.loc,
+            "binding '" + stmt.binding.name + "'",
+            declared,
+            init->type);
         VectorKnownLength init_vector_length =
             vector_known_length_from_source_expr(declared, *stmt.binding.init, *init);
         if (is_borrow_type(declared)) {
