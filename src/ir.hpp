@@ -115,6 +115,7 @@ struct IrPayloadBinding {
     std::uint32_t index = 0;
     std::string name;
     IrType type;
+    SourceLocation loc;
     std::vector<std::uint32_t> field_path;
     bool compact_enum_payload = false;
     IrType compact_enum_type;

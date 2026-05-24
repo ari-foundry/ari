@@ -1,4 +1,8 @@
-diagnostic error code=O0001 family=ownership message="owning binding 'item' must be moved or dropped before return" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=O0001 family=ownership message="owning binding 'item' must be moved or dropped before return" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/match/errors/stored-owned-enum-payload-undropped.ari" display="tests/cases/match/errors/stored-owned-enum-payload-undropped.ari" bytes=248
   Label index=0 role=primary source_id=0 source="tests/cases/match/errors/stored-owned-enum-payload-undropped.ari" line=18 column=3 end_line=18 end_column=9 byte_start=236 byte_end=242 message=""
   Snippet label=0 text="  --> tests/cases/match/errors/stored-owned-enum-payload-undropped.ari:18:3\n    |\n 18 |   return 0;\n    |   ^^^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/match/errors/stored-owned-enum-payload-undropped.ari" line=17 column=7 end_line=17 end_column=11 byte_start=194 byte_end=198 message="owning binding 'item' declared here"
+  Snippet label=1 text="  --> tests/cases/match/errors/stored-owned-enum-payload-undropped.ari:17:7\n    |\n 17 |   let item: MaybeOwned = Some(make_owned(1));\n    |       ^^^^"
+  Note index=0 location=none message="live owning bindings must be consumed explicitly before control leaves their scope"
+  Help index=0 location=none message="drop 'item' before return or move it into the value that leaves this scope"

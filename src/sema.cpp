@@ -9932,7 +9932,7 @@ private:
                 if (is_owner_type(binding.type)) {
                     fail(arm.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
                 }
-                declare_local(arm.loc, binding.name, binding.type, mutable_binding);
+                declare_local(binding.loc, binding.name, binding.type, mutable_binding);
             }
         } else if (arm.has_payload_binding) {
             if (is_owner_type(arm.payload_type)) {
@@ -12893,7 +12893,7 @@ private:
                     try_lower_nested_zero_payload_case(payload.loc, payload.payload_name, payload_type, lowered_arm, payload_index)) {
                     return false;
                 }
-                add_payload_binding(lowered_arm, payload_index, payload.payload_name, payload_type);
+                add_payload_binding(lowered_arm, payload_index, payload.payload_name, payload_type, payload.loc);
                 return true;
             case PatternKind::Wildcard:
                 return true;
@@ -12989,7 +12989,7 @@ private:
         if (pattern_has_binding(*payload.alias_pattern)) {
             fail(payload.loc, "alias payload patterns cannot contain another binding yet");
         }
-        add_payload_binding(lowered_arm, payload_index, payload.alias_name, payload_type);
+        add_payload_binding(lowered_arm, payload_index, payload.alias_name, payload_type, payload.loc);
 
         const Pattern& aliased = *payload.alias_pattern;
         switch (aliased.kind) {
@@ -13297,7 +13297,13 @@ private:
                     return;
                 }
                 add_compact_enum_payload_binding(
-                    lowered_arm, payload_index, pattern.payload_name, nested_payload_type, nested_enum_type, nested_payload_index);
+                    lowered_arm,
+                    payload_index,
+                    pattern.payload_name,
+                    nested_payload_type,
+                    nested_enum_type,
+                    pattern.loc,
+                    nested_payload_index);
                 return;
             case PatternKind::Wildcard:
                 return;
@@ -13307,7 +13313,13 @@ private:
                     fail(pattern.loc, "alias payload patterns cannot contain another binding yet");
                 }
                 add_compact_enum_payload_binding(
-                    lowered_arm, payload_index, pattern.alias_name, nested_payload_type, nested_enum_type, nested_payload_index);
+                    lowered_arm,
+                    payload_index,
+                    pattern.alias_name,
+                    nested_payload_type,
+                    nested_enum_type,
+                    pattern.loc,
+                    nested_payload_index);
                 lower_nested_enum_payload_slot_pattern(
                     *pattern.alias_pattern,
                     nested_payload_type,
@@ -13620,11 +13632,13 @@ private:
                                     std::uint32_t index,
                                     const std::string& name,
                                     const IrType& type,
+                                    SourceLocation loc,
                                     std::vector<std::uint32_t> field_path = {}) {
         IrPayloadBinding binding;
         binding.index = index;
         binding.name = name;
         binding.type = type;
+        binding.loc = std::move(loc);
         binding.field_path = std::move(field_path);
         arm.payload_bindings.push_back(binding);
         if (!arm.has_payload_binding) {
@@ -13719,6 +13733,7 @@ private:
                         payload_index,
                         payload.payload_name,
                         payload_type,
+                        payload.loc,
                         std::move(field_path));
                 }
                 return;
@@ -13731,6 +13746,7 @@ private:
                     payload_index,
                     payload.alias_name,
                     payload_type,
+                    payload.loc,
                     field_path);
                 lower_enum_payload_product_pattern(
                     *payload.alias_pattern,
@@ -13823,11 +13839,13 @@ private:
                                                  const std::string& name,
                                                  const IrType& type,
                                                  const IrType& enum_type,
+                                                 SourceLocation loc,
                                                  std::uint32_t nested_payload_index = 0) {
         IrPayloadBinding binding;
         binding.index = index;
         binding.name = name;
         binding.type = type;
+        binding.loc = std::move(loc);
         binding.compact_enum_payload = true;
         binding.compact_enum_type = enum_type;
         binding.compact_enum_payload_index = nested_payload_index;
@@ -13847,7 +13865,7 @@ private:
         }
         if (!arm.payload_bindings.empty()) {
             for (const auto& binding : arm.payload_bindings) {
-                declare_local(arm.loc, binding.name, binding.type, false);
+                declare_local(binding.loc, binding.name, binding.type, false);
             }
         } else if (arm.has_payload_binding) {
             declare_local(arm.loc, arm.payload_name, arm.payload_type, false);
