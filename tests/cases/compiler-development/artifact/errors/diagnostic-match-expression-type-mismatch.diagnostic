@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/match/errors/match-expression-type-mismatch.ari" display="tests/cases/match/errors/match-expression-type-mismatch.ari" bytes=165
-  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/match-expression-type-mismatch.ari" line=10 column=5 end_line=10 end_column=9 byte_start=143 byte_end=147 message=""
-  Snippet label=0 text="  --> tests/cases/match/errors/match-expression-type-mismatch.ari:10:5\n    |\n 10 |     None => false;\n    |     ^^^^"
+  Label index=0 role=primary source_id=0 source="tests/cases/match/errors/match-expression-type-mismatch.ari" line=10 column=13 end_line=10 end_column=18 byte_start=151 byte_end=156 message=""
+  Snippet label=0 text="  --> tests/cases/match/errors/match-expression-type-mismatch.ari:10:13\n    |\n 10 |     None => false;\n    |             ^^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/match/errors/match-expression-type-mismatch.ari" line=8 column=10 end_line=8 end_column=15 byte_start=92 byte_end=97 message="match expression is expected to produce i64"
+  Snippet label=1 text="  --> tests/cases/match/errors/match-expression-type-mismatch.ari:8:10\n   |\n 8 |   return match value {\n   |          ^^^^^"
+  Note index=0 location=none message="match expression arms must produce one common result type after expression coercions"
+  Help index=0 location=none message="make this arm produce i64 or change the expected match expression result type"

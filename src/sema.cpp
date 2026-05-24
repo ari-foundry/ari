@@ -19604,6 +19604,8 @@ private:
         bool has_continuing_state = false;
         bool has_result = false;
         IrType result_type;
+        SourceLocation result_type_source_loc = expr.loc;
+        std::string result_type_source_label;
         std::optional<BorrowResultSource> result_borrow_source;
         ProductMatchCoverage coverage;
         std::vector<TupleCheckedExprArm> checked_arms;
@@ -19691,15 +19693,28 @@ private:
                     release_temporary_borrows(borrow_mark);
                 } else if (result_expected) {
                     coerce_expr_to_expected(*value, *result_expected);
-                    require_assignable(arm.loc, *result_expected, value->type);
+                    require_match_expression_result_assignable(
+                        match_arm_result_location(arm),
+                        expr.loc,
+                        "match expression is expected to produce " + type_name(*result_expected),
+                        *result_expected,
+                        value->type);
                     result_type = *result_expected;
                     has_result = true;
                 } else if (!has_result) {
                     result_type = value->type;
+                    result_type_source_loc = match_arm_result_location(arm);
+                    result_type_source_label =
+                        "previous match arm establishes result type " + type_name(result_type);
                     has_result = true;
                 } else {
                     coerce_expr_to_expected(*value, result_type);
-                    require_assignable(arm.loc, result_type, value->type);
+                    require_match_expression_result_assignable(
+                        match_arm_result_location(arm),
+                        result_type_source_loc,
+                        result_type_source_label,
+                        result_type,
+                        value->type);
                 }
                 if (diverges) {
                     lowered_arm.value = std::move(value);
@@ -19849,6 +19864,8 @@ private:
         EnumMatchCoverage coverage;
         bool has_result = false;
         IrType result_type;
+        SourceLocation result_type_source_loc = expr.loc;
+        std::string result_type_source_label;
         std::optional<BorrowResultSource> result_borrow_source;
         IrType explicit_result_expected;
         const IrType* result_expected = expected;
@@ -19915,15 +19932,28 @@ private:
                     release_temporary_borrows(borrow_mark);
                 } else if (result_expected) {
                     coerce_expr_to_expected(*value, *result_expected);
-                    require_assignable(arm.loc, *result_expected, value->type);
+                    require_match_expression_result_assignable(
+                        match_arm_result_location(arm),
+                        expr.loc,
+                        "match expression is expected to produce " + type_name(*result_expected),
+                        *result_expected,
+                        value->type);
                     result_type = *result_expected;
                     has_result = true;
                 } else if (!has_result) {
                     result_type = value->type;
+                    result_type_source_loc = match_arm_result_location(arm);
+                    result_type_source_label =
+                        "previous match arm establishes result type " + type_name(result_type);
                     has_result = true;
                 } else {
                     coerce_expr_to_expected(*value, result_type);
-                    require_assignable(arm.loc, result_type, value->type);
+                    require_match_expression_result_assignable(
+                        match_arm_result_location(arm),
+                        result_type_source_loc,
+                        result_type_source_label,
+                        result_type,
+                        value->type);
                 }
                 if (diverges) {
                     lowered_arm.value = std::move(value);
@@ -20031,6 +20061,8 @@ private:
         ScalarMatchCoverage coverage;
         bool has_result = false;
         IrType result_type;
+        SourceLocation result_type_source_loc = expr.loc;
+        std::string result_type_source_label;
         std::optional<BorrowResultSource> result_borrow_source;
         IrType explicit_result_expected;
         const IrType* result_expected = expected;
@@ -20091,15 +20123,28 @@ private:
                     release_temporary_borrows(borrow_mark);
                 } else if (result_expected) {
                     coerce_expr_to_expected(*value, *result_expected);
-                    require_assignable(arm.loc, *result_expected, value->type);
+                    require_match_expression_result_assignable(
+                        match_arm_result_location(arm),
+                        expr.loc,
+                        "match expression is expected to produce " + type_name(*result_expected),
+                        *result_expected,
+                        value->type);
                     result_type = *result_expected;
                     has_result = true;
                 } else if (!has_result) {
                     result_type = value->type;
+                    result_type_source_loc = match_arm_result_location(arm);
+                    result_type_source_label =
+                        "previous match arm establishes result type " + type_name(result_type);
                     has_result = true;
                 } else {
                     coerce_expr_to_expected(*value, result_type);
-                    require_assignable(arm.loc, result_type, value->type);
+                    require_match_expression_result_assignable(
+                        match_arm_result_location(arm),
+                        result_type_source_loc,
+                        result_type_source_label,
+                        result_type,
+                        value->type);
                 }
                 if (diverges) {
                     lowered_arm.value = std::move(value);
@@ -26527,6 +26572,45 @@ private:
                                           const IrType& actual) {
         if (is_assignable_for_diagnostic(expected, actual)) return;
         fail_return_type(std::move(loc), std::move(return_type_loc), function_name, expected, actual);
+    }
+
+    static SourceLocation match_arm_result_location(const ExprMatchArm& arm) {
+        return arm.value ? arm.value->loc : arm.loc;
+    }
+
+    [[noreturn]] static void fail_match_expression_result_type(SourceLocation loc,
+                                                               SourceLocation expected_loc,
+                                                               const std::string& expected_label,
+                                                               const IrType& expected,
+                                                               const IrType& actual) {
+        CompileError error(
+            std::move(loc),
+            "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
+        add_location_label_if_valid(error, expected_loc, expected_label);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "match expression arms must produce one common result type after expression coercions",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "make this arm produce " + type_name(expected) +
+                " or change the expected match expression result type",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void require_match_expression_result_assignable(SourceLocation loc,
+                                                           SourceLocation expected_loc,
+                                                           const std::string& expected_label,
+                                                           const IrType& expected,
+                                                           const IrType& actual) {
+        if (is_assignable_for_diagnostic(expected, actual)) return;
+        fail_match_expression_result_type(
+            std::move(loc),
+            std::move(expected_loc),
+            expected_label,
+            expected,
+            actual);
     }
 
     static Span call_parameter_declaration_span(
