@@ -172,6 +172,14 @@ private:
                message.rfind("unexpected byte", 0) == 0;
     }
 
+    static bool is_unterminated_string_message(const std::string& message) {
+        return message == "unterminated string literal";
+    }
+
+    static bool is_unterminated_block_comment_message(const std::string& message) {
+        return message == "unterminated block comment";
+    }
+
     static bool is_suffix_char(char c) {
         return is_alpha(c) || is_digit(c) || c == '_';
     }
@@ -625,6 +633,24 @@ private:
             error.add_note(DiagnosticNote{
                 std::nullopt,
                 "remove this input or put text data inside a string literal",
+                DiagnosticNoteKind::Help});
+        } else if (is_unterminated_string_message(message)) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "string literals must close before a newline or end of file",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "add a closing \" before the line ends",
+                DiagnosticNoteKind::Help});
+        } else if (is_unterminated_block_comment_message(message)) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "block comments must close before end of file",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "add */ to close the block comment",
                 DiagnosticNoteKind::Help});
         }
         throw error;
