@@ -16005,9 +16005,39 @@ private:
         return Flow::Continues;
     }
 
+    [[noreturn]] static void fail_empty_match(SourceLocation loc) {
+        CompileError error(std::move(loc), "match must have at least one arm");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "match expressions and statements need at least one arm so type checking and exhaustiveness can be evaluated",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add an arm such as `_ => { ... }` or remove the empty match",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_match_subject_type(SourceLocation loc, const IrType& actual) {
+        CompileError error(
+            std::move(loc),
+            "match value must be an enum, integer, bool, tuple, array, or struct, got " +
+                type_name(actual));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "match currently supports enum cases, scalar values, product values, and sequence-pattern subjects",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "convert the value to a supported match subject or use if/else logic for type " +
+                type_name(actual),
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     Flow check_match(const Stmt& stmt, IrStmt& lowered) {
         const StmtMatchArms& source_arms = stmt_match_arms(stmt);
-        if (source_arms.empty()) fail(stmt.loc, "match must have at least one arm");
+        if (source_arms.empty()) fail_empty_match(stmt.loc);
 
         lowered.match_value = check_statement_match_value(*stmt.match_value);
         if (is_borrow_type(lowered.match_value->type)) {
@@ -16023,7 +16053,7 @@ private:
                 is_runtime_sequence_pattern_subject(lowered.match_value->type)) {
                 return check_tuple_match(stmt, lowered);
             }
-            fail(stmt.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(lowered.match_value->type));
+            fail_match_subject_type(stmt.loc, lowered.match_value->type);
         }
 
         auto enum_found = enums_.find(lowered.match_value->type.name);
@@ -20130,7 +20160,7 @@ private:
     }
 
     IrExprPtr check_match_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
-        if (expr_match_arms(expr).empty()) fail(expr.loc, "match must have at least one arm");
+        if (expr_match_arms(expr).empty()) fail_empty_match(expr.loc);
 
         IrExprPtr match_value = check_statement_match_value(*expr_match_value(expr));
         if (is_borrow_type(match_value->type)) {
@@ -20148,7 +20178,7 @@ private:
                 lowered = make_ir_match_expr(expr.loc, std::move(match_value));
                 return check_tuple_match_expr(expr, std::move(lowered), expected);
             }
-            fail(expr.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(match_value->type));
+            fail_match_subject_type(expr.loc, match_value->type);
         }
 
         auto enum_found = enums_.find(match_value->type.name);
