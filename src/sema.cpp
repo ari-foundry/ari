@@ -1157,7 +1157,27 @@ private:
         auto& scope = uses_[module_name];
         std::string resolved_path = resolve_relative_name(loc, module_name, path);
         auto inserted = scope.emplace(alias, UseInfo{resolved_path, module_name, is_public, loc});
-        if (!inserted.second) fail(loc, "duplicate use alias '" + alias + "'");
+        if (!inserted.second) {
+            CompileError error(std::move(loc), "duplicate use alias '" + alias + "'");
+            const UseInfo& previous = inserted.first->second;
+            Span previous_span = span_from_location(previous.loc);
+            if (span_has_source(previous_span) && span_has_valid_order(previous_span)) {
+                error.add_label(DiagnosticLabel{
+                    previous_span,
+                    "previous use alias '" + alias + "' resolves to " + previous.path,
+                    false});
+            }
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "use aliases share one unqualified name in each module scope",
+                DiagnosticNoteKind::Note});
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "import one item explicitly with an alias or refer to " + resolved_path +
+                    " by its qualified path",
+                DiagnosticNoteKind::Help});
+            throw error;
+        }
     }
 
     static bool is_std_module_name(const std::string& module_name) {
