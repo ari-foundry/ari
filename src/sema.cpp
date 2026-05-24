@@ -553,6 +553,8 @@ private:
     std::vector<std::string> constant_eval_stack_;
     std::vector<std::string> warnings_;
     IrType current_return_;
+    SourceLocation current_return_type_loc_;
+    std::string current_function_name_;
     std::string current_module_name_;
     std::optional<std::size_t> current_borrow_return_param_index_;
     std::string current_borrow_return_param_name_;
@@ -5209,7 +5211,10 @@ private:
         std::optional<std::size_t> previous_borrow_return_param_index = current_borrow_return_param_index_;
         std::string previous_borrow_return_param_name = std::move(current_borrow_return_param_name_);
         std::optional<std::string> previous_borrow_return_path = std::move(current_borrow_return_path_);
+        SourceLocation previous_return_type_loc = current_return_type_loc_;
+        std::string previous_function_name = std::move(current_function_name_);
         current_module_name_ = fn.module_name;
+        current_function_name_ = fn.name;
         current_type_substitutions_ = std::move(substitutions);
         current_generic_bounds_.clear();
         for (const auto& generic : fn.generics) {
@@ -5235,6 +5240,7 @@ private:
         current_return_ = active_sig
             ? active_sig->result
             : (fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc));
+        current_return_type_loc_ = fn.has_return_type ? fn.return_type.loc : fn.loc;
         if (fn.has_return_type) {
             require_nonlocal_root_vector_storage(fn.return_type.loc, current_return_, "a function return type");
         }
@@ -5347,6 +5353,8 @@ private:
         current_borrow_return_param_index_ = previous_borrow_return_param_index;
         current_borrow_return_param_name_ = std::move(previous_borrow_return_param_name);
         current_borrow_return_path_ = std::move(previous_borrow_return_path);
+        current_return_type_loc_ = previous_return_type_loc;
+        current_function_name_ = std::move(previous_function_name);
         return ir_fn;
     }
 
@@ -11599,7 +11607,12 @@ private:
             coerce_expr_to_expected(*value, current_return_);
             actual = value->type;
         }
-        require_assignable(stmt.expr ? stmt.expr->loc : stmt.loc, current_return_, actual);
+        require_return_assignable(
+            stmt.expr ? stmt.expr->loc : stmt.loc,
+            current_return_type_loc_,
+            current_function_name_,
+            current_return_,
+            actual);
         if (is_borrow_type(actual)) {
             require_borrow_return_source(stmt.loc, *value);
             release_temporary_borrows(borrow_mark);
@@ -26482,6 +26495,38 @@ private:
             return true;
         }
         return false;
+    }
+
+    [[noreturn]] static void fail_return_type(SourceLocation loc,
+                                              SourceLocation return_type_loc,
+                                              const std::string& function_name,
+                                              const IrType& expected,
+                                              const IrType& actual) {
+        CompileError error(
+            std::move(loc),
+            "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
+        std::string label = "function";
+        if (!function_name.empty()) label += " '" + function_name + "'";
+        label += " returns " + type_name(expected);
+        add_location_label_if_valid(error, return_type_loc, label);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "return expressions are checked against the function return type after generic substitution",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "return a value of type " + type_name(expected) + " or change the function return type",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void require_return_assignable(SourceLocation loc,
+                                          SourceLocation return_type_loc,
+                                          const std::string& function_name,
+                                          const IrType& expected,
+                                          const IrType& actual) {
+        if (is_assignable_for_diagnostic(expected, actual)) return;
+        fail_return_type(std::move(loc), std::move(return_type_loc), function_name, expected, actual);
     }
 
     static Span call_parameter_declaration_span(

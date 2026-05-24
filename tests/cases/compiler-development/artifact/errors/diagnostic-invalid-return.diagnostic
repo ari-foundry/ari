@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-invalid-return.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-invalid-return.ari" bytes=36
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-invalid-return.ari" line=2 column=10 end_line=2 end_column=14 byte_start=28 byte_end=32 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-invalid-return.ari:2:10\n   |\n 2 |   return true;\n   |          ^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-invalid-return.ari" line=1 column=14 end_line=1 end_column=17 byte_start=13 byte_end=16 message="function 'main' returns i64"
+  Snippet label=1 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-invalid-return.ari:1:14\n   |\n 1 | fn main() -> i64 {\n   |              ^^^"
+  Note index=0 location=none message="return expressions are checked against the function return type after generic substitution"
+  Help index=0 location=none message="return a value of type i64 or change the function return type"

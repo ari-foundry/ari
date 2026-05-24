@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="type mismatch: expected bool, got i64" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="type mismatch: expected bool, got i64" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/generics/errors/generic-return-substitution-mismatch.ari" display="tests/cases/generics/errors/generic-return-substitution-mismatch.ari" bytes=131
   Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-return-substitution-mismatch.ari" line=2 column=10 end_line=2 end_column=11 byte_start=43 byte_end=44 message=""
   Snippet label=0 text="  --> tests/cases/generics/errors/generic-return-substitution-mismatch.ari:2:10\n   |\n 2 |   return 1;\n   |          ^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/generics/errors/generic-return-substitution-mismatch.ari" line=1 column=31 end_line=1 end_column=32 byte_start=30 byte_end=31 message="function 'bad_return' returns bool"
+  Snippet label=1 text="  --> tests/cases/generics/errors/generic-return-substitution-mismatch.ari:1:31\n   |\n 1 | fn bad_return[T](value: T) -> T {\n   |                               ^"
+  Note index=0 location=none message="return expressions are checked against the function return type after generic substitution"
+  Help index=0 location=none message="return a value of type bool or change the function return type"
