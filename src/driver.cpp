@@ -24,12 +24,15 @@
 #include "toolchain.hpp"
 
 #include <cerrno>
+#include <array>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
+#include <sstream>
 #include <set>
 #include <string>
 #include <utility>
@@ -69,6 +72,19 @@ static std::string shell_quote(const std::string& text) {
     return quoted;
 }
 
+static std::string run_command_capture(const std::string& command, const std::string& description) {
+    std::array<char, 4096> buffer{};
+    std::string output;
+    FILE* pipe = popen(command.c_str(), "r");
+    if (pipe == nullptr) throw CompileError("cannot run " + description);
+    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+        output += buffer.data();
+    }
+    int status = pclose(pipe);
+    if (status != 0) throw CompileError(description + " failed");
+    return output;
+}
+
 static std::string join_option_names(const std::vector<std::string>& options) {
     std::string joined;
     for (std::size_t i = 0; i < options.size(); ++i) {
@@ -91,6 +107,44 @@ static std::string display_output_path(const std::string& path) {
         return path.substr(cwd.size() + 1);
     }
     return path;
+}
+
+static std::map<std::string, std::string> collect_symbol_states(const std::string& path, bool dynamic) {
+    std::string command = "nm ";
+    if (dynamic) command += "-D ";
+    command += "-g " + shell_quote(path);
+    std::string nm_output = run_command_capture(command, "symbol inventory extraction with nm");
+    std::map<std::string, std::string> symbols;
+    std::istringstream lines(nm_output);
+    std::string line;
+    while (std::getline(lines, line)) {
+        std::istringstream fields(line);
+        std::vector<std::string> parts;
+        std::string part;
+        while (fields >> part) parts.push_back(std::move(part));
+        if (parts.size() < 2) continue;
+        const std::string& kind = parts.size() == 2 ? parts[0] : parts[parts.size() - 2];
+        const std::string& name = parts.back();
+        symbols[name] = kind == "U" ? "undefined" : "defined";
+    }
+    return symbols;
+}
+
+static std::string dump_symbol_inventory(const std::string& path,
+                                         const std::vector<std::string>& requested_symbols,
+                                         bool dynamic) {
+    std::map<std::string, std::string> symbols = collect_symbol_states(path, dynamic);
+    std::ostringstream out;
+    out << "SymbolExtract kind=" << (dynamic ? "dynamic-symbols" : "object-symbols")
+        << " source=" << display_output_path(path)
+        << " symbols=" << requested_symbols.size() << "\n";
+    for (const std::string& name : requested_symbols) {
+        auto found = symbols.find(name);
+        out << "  Symbol name=" << name
+            << " state=" << (found == symbols.end() ? "missing" : found->second)
+            << "\n";
+    }
+    return out.str();
 }
 
 static void report_wrote(const std::string& path, const std::string& description) {
@@ -136,6 +190,8 @@ static const ArtifactHelpRow kArtifactHelp[] = {
      "LLVM IR text for backend lowering review", "backend-output"},
     {"--emit-obj", "toolchain", "focused --emit-obj",
      "LLVM object output for symbol inventory review", "backend-output"},
+    {"--emit-symbols", "toolchain", "focused --emit-obj/--shared",
+     "requested object or shared-library symbol inventory", "symbol-output"},
     {"--shared", "toolchain", "focused shared symbol inventory",
      "shared library output for dynamic symbol inventory review", "shared-output"},
     {"-o", "toolchain/runtime", "focused linked run",
@@ -152,6 +208,7 @@ static void usage(std::ostream& out) {
            "           [--emit-resolved-index path]\n"
            "           [--emit-typed-ir path] [--emit-pass-summary path]\n"
            "           [--emit-stage-plan path]\n"
+           "           [--emit-symbols path] [--symbol name]\n"
            "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
            "           [--target triple]\n"
            "           [--emit-c-header path]\n"
@@ -223,6 +280,8 @@ static void explain_artifact(std::ostream& out, const std::string& option) {
         out << "  Rule earliest_layer=false one_artifact_output=false runtime_output=true stdout_stderr_capture=true\n";
     } else if (std::string(row->output_policy) == "header-output") {
         out << "  Rule earliest_layer=false one_artifact_output=false header_output=true\n";
+    } else if (std::string(row->output_policy) == "symbol-output") {
+        out << "  Rule earliest_layer=false one_artifact_output=false backend_output=true symbol_inventory=true requested_symbols=true\n";
     } else {
         out << "  Rule earliest_layer=true one_artifact_output=true\n";
     }
@@ -275,6 +334,7 @@ int run(int argc, char** argv) {
     std::string typed_ir_output;
     std::string pass_summary_output;
     std::string stage_plan_output;
+    std::string symbol_inventory_output;
     std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
@@ -284,6 +344,7 @@ int run(int argc, char** argv) {
     std::string target_triple;
     std::vector<std::string> module_search_paths;
     std::vector<std::string> link_args;
+    std::vector<std::string> symbol_inventory_names;
     std::set<std::string> cfg_features;
     bool check_only = false;
     bool output_explicit = false;
@@ -378,6 +439,12 @@ int run(int argc, char** argv) {
         } else if (arg == "--emit-stage-plan") {
             if (i + 1 >= argc) throw CompileError("--emit-stage-plan expects a path");
             stage_plan_output = argv[++i];
+        } else if (arg == "--emit-symbols" || arg == "--emit-symbol-inventory") {
+            if (i + 1 >= argc) throw CompileError(arg + " expects a path");
+            symbol_inventory_output = argv[++i];
+        } else if (arg == "--symbol") {
+            if (i + 1 >= argc) throw CompileError("--symbol expects a symbol name");
+            symbol_inventory_names.push_back(argv[++i]);
         } else if (arg == "--emit-c-header") {
             if (i + 1 >= argc) throw CompileError("--emit-c-header expects a path");
             c_header_output = argv[++i];
@@ -522,6 +589,7 @@ int run(int argc, char** argv) {
     if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
                        !c_header_output.empty() || !source_map_output.empty() ||
+                       !symbol_inventory_output.empty() ||
                        !diagnostic_catalog_output.empty() ||
                        !capability_inventory_output.empty() ||
                        !module_graph_output.empty() || !declaration_index_output.empty() ||
@@ -538,6 +606,20 @@ int run(int argc, char** argv) {
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
     }
+    if (!symbol_inventory_names.empty() && symbol_inventory_output.empty()) {
+        throw CompileError("--symbol requires --emit-symbols");
+    }
+    if (!symbol_inventory_output.empty()) {
+        if (object_output.empty() && !shared_library) {
+            throw CompileError("--emit-symbols requires --emit-obj or --shared");
+        }
+        if (emit_llvm_only) {
+            throw CompileError("--emit-symbols cannot be combined with --emit-llvm");
+        }
+        if (symbol_inventory_names.empty()) {
+            throw CompileError("--emit-symbols requires at least one --symbol name");
+        }
+    }
     if ((!source_map_output.empty() || !diagnostic_catalog_output.empty() ||
          !capability_inventory_output.empty() ||
          !module_graph_output.empty() ||
@@ -546,7 +628,8 @@ int run(int argc, char** argv) {
          !typed_ir_output.empty() || !pass_summary_output.empty() ||
          !stage_plan_output.empty()) &&
         (output_explicit || emit_llvm_only || !object_output.empty() ||
-         !c_header_output.empty() || llvm_compiler_explicit || shared_library || test_mode ||
+         !c_header_output.empty() || !symbol_inventory_output.empty() ||
+         llvm_compiler_explicit || shared_library || test_mode ||
          !metadata_output.empty() || !metadata_check.empty() ||
          !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty())) {
         throw CompileError("compiler artifact outputs cannot be combined with backend, module-cache, or linking options: " +
@@ -740,7 +823,8 @@ int run(int argc, char** argv) {
     llvm_options.shared_library = shared_library || object_library_output;
     llvm_options.target_triple = target.triple;
     std::string llvm = emit_llvm_ir(ir, llvm_options);
-    std::string llvm_path = llvm_output.empty() ? output + ".ll" : llvm_output;
+    const std::string backend_output_path = object_output.empty() ? output : object_output;
+    std::string llvm_path = llvm_output.empty() ? backend_output_path + ".ll" : llvm_output;
     write_text_file(llvm_path, llvm);
     if (emit_llvm_only) {
         report_wrote(llvm_path, std::to_string(llvm.size()) + " bytes");
@@ -754,7 +838,7 @@ int run(int argc, char** argv) {
         command += "-shared -fPIC ";
     }
     if (!target_triple.empty()) command += shell_quote("--target=" + target.triple) + " ";
-    command += shell_quote(llvm_path) + " -o " + shell_quote(object_output.empty() ? output : object_output);
+    command += shell_quote(llvm_path) + " -o " + shell_quote(backend_output_path);
     if (object_output.empty()) {
         if (target.unix) command += " -pthread";
         for (const auto& arg : link_args) command += " " + shell_quote(arg);
@@ -766,10 +850,20 @@ int run(int argc, char** argv) {
     if (status != 0) throw CompileError("LLVM backend failed while producing output; install clang or pass --llvm-cc");
     if (!object_output.empty()) {
         report_wrote(object_output, "LLVM object");
+        if (!symbol_inventory_output.empty()) {
+            write_text_file(symbol_inventory_output,
+                            dump_symbol_inventory(object_output, symbol_inventory_names, false));
+            report_wrote(symbol_inventory_output, "symbol inventory");
+        }
         return 0;
     }
     make_executable(output);
     report_wrote(output, "LLVM backend");
+    if (!symbol_inventory_output.empty()) {
+        write_text_file(symbol_inventory_output,
+                        dump_symbol_inventory(output, symbol_inventory_names, shared_library));
+        report_wrote(symbol_inventory_output, "symbol inventory");
+    }
     return 0;
 }
 

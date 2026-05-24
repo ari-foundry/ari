@@ -87,6 +87,7 @@ def main():
         "option=--emit-llvm",
         "option=--emit-obj",
         "option=--emit-resolved-index",
+        "option=--emit-symbols",
         "option=--shared",
         "option=-o",
         "Rule one_artifact_output=true backend_outputs_separate=true",
@@ -131,6 +132,12 @@ def main():
     )
 
     ok &= require_success(
+        run_raw("--explain-artifact", "--emit-symbols"),
+        "CompilerArtifact version=1 option=--emit-symbols owner=toolchain",
+        "Rule earliest_layer=false one_artifact_output=false backend_output=true symbol_inventory=true requested_symbols=true",
+    )
+
+    ok &= require_success(
         run_raw("--explain-artifact", "-o"),
         "CompilerArtifact version=1 option=-o owner=toolchain/runtime",
         "Rule earliest_layer=false one_artifact_output=false runtime_output=true stdout_stderr_capture=true",
@@ -154,6 +161,26 @@ def main():
     ok &= require_failure(
         combined,
         "artifact outputs cannot be combined: --emit-tokens, --emit-syntax",
+    )
+
+    ok &= require_failure(
+        run_ari("--symbol", "_ARNv3add"),
+        "--symbol requires --emit-symbols",
+    )
+
+    ok &= require_failure(
+        run_ari("--emit-symbols", OUT_DIR / "symbols.symbols"),
+        "--emit-symbols requires --emit-obj or --shared",
+    )
+
+    ok &= require_failure(
+        run_ari(
+            "--shared",
+            "--emit-llvm", OUT_DIR / "symbols.ll",
+            "--emit-symbols", OUT_DIR / "symbols.symbols",
+            "--symbol", "_ARNv4main",
+        ),
+        "--emit-symbols cannot be combined with --emit-llvm",
     )
 
     backend_mix = run_ari(

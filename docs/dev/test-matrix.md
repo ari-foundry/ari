@@ -296,10 +296,11 @@ Checklist:
       driver is available
 - [x] compare a stable stdout golden for trait-bound dispatch when the LLVM
       driver is available
-- [x] compare normalized object symbol inventory artifacts for exported Ari
-      symbols and absent executable-only symbols in `make check-compiler-artifacts`
-- [x] compare normalized linked shared-library dynamic symbol artifacts for
-      public/exported-only ABI surfaces in `make check-compiler-artifacts`
+- [x] compare compiler-emitted object symbol inventory artifacts for exported
+      Ari symbols and absent executable-only symbols in
+      `make check-compiler-artifacts`
+- [x] compare compiler-emitted linked shared-library dynamic symbol artifacts
+      for public/exported-only ABI surfaces in `make check-compiler-artifacts`
 - [x] compare a deterministic artifact fixture inventory and check focused ok
       fixture listing in `make check-compiler-artifacts`
 - [x] run a small ownership/borrow/drop smoke target with

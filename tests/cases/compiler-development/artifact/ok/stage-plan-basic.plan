@@ -14,6 +14,7 @@ CompilerStagePlan source=tests/cases/compiler-development/artifact/ok/token-dump
   13 CHeader owner=abi-header artifact=--emit-c-header first_check="make check-compiler-artifacts" proves="C-compatible aggregate and extern surface"
   14 LLVM owner=llvm-backend artifact=--emit-llvm first_check="focused --emit-llvm" proves="backend lowering after earlier artifacts match"
   15 Object owner=toolchain artifact=--emit-obj first_check="focused --emit-obj" proves="object emission and exported symbol surface"
-  16 SharedLibrary owner=toolchain artifact=--shared first_check="focused shared symbol inventory" proves="shared-library export and dynamic symbol surface"
-  17 RuntimeOutput owner=toolchain/runtime artifact=-o first_check="focused linked run" proves="captured stdout/stderr runtime behavior"
+  16 SymbolInventory owner=toolchain artifact=--emit-symbols first_check="focused --emit-obj/--shared" proves="requested object or shared-library symbol inventory"
+  17 SharedLibrary owner=toolchain artifact=--shared first_check="focused shared symbol inventory" proves="shared-library export and dynamic symbol surface"
+  18 RuntimeOutput owner=toolchain/runtime artifact=-o first_check="focused linked run" proves="captured stdout/stderr runtime behavior"
   DevelopmentGate source_identity=required diagnostics=required modules=required artifacts=ordered runtime_output=last

@@ -225,7 +225,7 @@ build/ari --list-capabilities
 build/ari --explain-capability trait-resolution
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/ffi/ok/library-export.ari --shared --emit-llvm build/focused/library-export.ll
-python3 tests/extract_symbol_names.py build/focused/library-export.o _ARNv3add _ARNv4main
+build/ari tests/cases/ffi/ok/library-export.ari --emit-obj build/focused/library-export.o --emit-symbols build/focused/library-export.symbols --symbol _ARNv3add --symbol _ARNv4main
 ```
 
 Run broad `make check` only before handing off larger compiler changes.
@@ -259,7 +259,6 @@ middle-end, backend-fragment, and runtime-output producers:
 ```text
 tests/check_compiler_artifact_cli.py
 tests/check_compiler_artifacts.py
-tests/extract_symbol_names.py
 tests/materialize_crlf_fixture.py
 tests/source_map_unit.cpp
 tests/cases/compiler-development/artifact/ok/
@@ -409,6 +408,7 @@ ari --emit-declaration-index path
 ari --emit-stage-plan path
 ari --emit-pass-summary path
 ari --emit-typed-ir path
+ari --emit-symbols path --symbol name
 python3 tests/check_compiler_artifacts.py --list-fixtures [all|ok|errors]
 make check-compiler-artifacts
 ```
@@ -445,8 +445,9 @@ It currently proves more than two dozen low-level contracts:
   comparison surfaces without needing a source file
 - `--explain-artifact --emit-tokens` prints the owner, first focused check,
   and proof purpose for one producer
-- `--explain-artifact --shared` and `--explain-artifact -o` document the
-  shared-library symbol and captured stdout/stderr comparison surfaces
+- `--explain-artifact --emit-symbols`, `--explain-artifact --shared`, and
+  `--explain-artifact -o` document requested symbol inventory, shared-library,
+  and captured stdout/stderr comparison surfaces
 - artifact CLI misuse names the exact conflicting artifact options, such as
   `--emit-tokens, --emit-syntax`
 - `--emit-source-map` writes deterministic source file identity, kind,
@@ -497,9 +498,10 @@ It currently proves more than two dozen low-level contracts:
   control flow, generic function specialization, generic aggregate lowering,
   ownership/drop lowering, and static trait dispatch instead of committing the
   whole runtime-heavy LLVM file
-- `tests/extract_symbol_names.py` turns object and linked shared-library symbol
-  tables into a deterministic allow-list artifact, so exported Ari symbols,
-  hidden helpers, absent `main`, and hidden builtins are reviewed as text
+- `--emit-symbols` turns object and linked shared-library symbol tables into a
+  deterministic requested-symbol artifact, so exported Ari symbols, hidden
+  helpers, absent `main`, and hidden builtins are reviewed as text from the
+  compiler CLI
 - executable stdout is checked through small runtime-output goldens, including
   one trait-bound dispatch program, after the earlier source, syntax, typed IR,
   and LLVM checks pass
@@ -509,7 +511,7 @@ source file's lowered facts instead of recording every implicit prelude
 declaration. Add separate std/prelude IR fixtures only when that behavior is
 the thing being tested.
 
-This is deliberately small. Future HIR, object-symbol, shared-library, richer
+This is deliberately small. Future HIR, richer shared-library, richer
 typed-IR, and broader backend artifact producers should plug into the same
 shape instead of inventing unrelated golden comparison rules.
 
@@ -540,9 +542,8 @@ The current compiler already has useful artifact checks:
 - `--emit-pass-summary` for quick stage-boundary counts plus stable source and
   import summaries in compiler-development tests
 - `--emit-llvm` for LLVM text and extracted review-sized function fragments
-- `--emit-obj` plus `tests/extract_symbol_names.py` for object symbol goldens
-- `--shared` plus `tests/extract_symbol_names.py --dynamic` for linked
-  shared-library symbol goldens
+- `--emit-obj --emit-symbols` for object symbol goldens
+- `--shared --emit-symbols` for linked shared-library symbol goldens
 - executable exit-code and stdout golden checks where LLVM driver support is
   available
 

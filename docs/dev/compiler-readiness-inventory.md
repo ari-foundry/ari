@@ -94,16 +94,18 @@ The hosted compiler now also has the first artifact producers:
 `--emit-diagnostics path`, `--emit-diagnostic-catalog path`,
 `--emit-module-graph path`, `--emit-declaration-index path`,
 `--emit-resolved-index path`, `--emit-typed-ir path`,
-`--emit-pass-summary path`, and `--emit-c-header path`. They write deterministic stage order and first-check
+`--emit-pass-summary path`, `--emit-c-header path`, and
+`--emit-symbols path --symbol name`. They write deterministic stage order and first-check
 routing, compiler capability status tables, source byte/line tables, lexer token text,
 parser tree text, expected-failure diagnostic text,
 diagnostic code ownership tables,
 file-backed source/import/item graph text, declaration signature text,
 resolver-facing normalized facts, sema-lowered typed IR, stage-boundary counts
-with stable source/import summaries, and C-compatible header text. `make check-compiler-artifacts` also extracts
-review-sized LLVM fragments, compares seeded object/shared symbol inventories,
-and compares stdout goldens, while `--list-artifacts`/`--explain-artifact`
-declare the shared-library and stdout/stderr runtime comparison surfaces. This is the current
+with stable source/import summaries, C-compatible header text, and requested
+object/shared symbol inventories. `make check-compiler-artifacts` also
+extracts review-sized LLVM fragments and compares stdout goldens, while
+`--list-artifacts`/`--explain-artifact` declare the shared-library and
+stdout/stderr runtime comparison surfaces. This is the current
 stage-comparison path for normal compiler development: when source loading,
 lexer, parser, diagnostic, module, declaration surface, typed lowering,
 backend lowering, ABI visibility, or runtime output changes, reviewers can
@@ -142,8 +144,8 @@ Use this order for general compiler development:
 7. IR contract: lower resolved facts into typed IR so LLVM codegen is mostly a
    mechanical emitter.
 8. Artifact testing: normalize and compare capability inventory, token,
-   diagnostic, syntax, HIR, typed IR, LLVM, object symbol, and executable
-   outputs.
+   diagnostic, syntax, HIR, typed IR, LLVM, compiler-emitted symbol inventory,
+   and executable outputs.
 
 ## Compiler Development Gates
 
@@ -356,9 +358,9 @@ Current compiler-development tests:
 - `tests/cases/compiler-development/artifact/ok/object-library-export.symbols`,
   `object-aggregate-extern-link.symbols`, and `shared-visibility.symbols`:
   normalized object and linked shared-library symbol inventories checked
-  through `tests/extract_symbol_names.py`. The aggregate object artifact locks
-  exported `@repr(C)` aggregate symbols, unresolved C helper imports, and the
-  no-`main` library-object surface.
+  through `--emit-symbols`. The aggregate object artifact locks exported
+  `@repr(C)` aggregate symbols, unresolved C helper imports, and the no-`main`
+  library-object surface.
 - `tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout` and
   `runtime-output-trait.stdout`: executable stdout goldens checked when the LLVM
   driver is available.

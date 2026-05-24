@@ -39,8 +39,9 @@ Use this order when choosing a new artifact or golden:
 | 13 | `--emit-c-header` | C-compatible public ABI wrapper spelling. |
 | 14 | `--emit-llvm` | Backend lowering once earlier layers are stable. |
 | 15 | `--emit-obj` | Object ABI, exported names, and relocation surfaces. |
-| 16 | `--shared` | Shared-library export and dynamic symbol surfaces. |
-| 17 | `-o` | Final stdout/stderr runtime behavior after earlier artifacts match. |
+| 16 | `--emit-symbols` | Requested object or shared-library symbol inventory after backend output. |
+| 17 | `--shared` | Shared-library export and dynamic symbol surfaces. |
+| 18 | `-o` | Final stdout/stderr runtime behavior after earlier artifacts match. |
 
 The order is not bureaucracy. It keeps failures near the layer that changed.
 
@@ -243,7 +244,7 @@ build/ari --explain-capability trait-resolution
 build/ari tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --emit-tokens build/focused/token.tokens
 python3 tests/check_compiler_artifacts.py --list-fixtures ok
 python3 tests/materialize_crlf_fixture.py tests/cases/compiler-development/artifact/ok/source-map-crlf-template.ari build/focused/source-map-crlf.ari
-python3 tests/extract_symbol_names.py build/focused/library-export.o _ARNv3add _ARNv4main
+build/ari tests/cases/ffi/ok/library-export.ari --emit-obj build/focused/library-export.o --emit-symbols build/focused/library-export.symbols --symbol _ARNv3add --symbol _ARNv4main
 python3 tests/check_compiler_artifacts.py expected actual
 python3 tests/check_compiler_artifacts.py --update expected actual
 make check-compiler-artifacts
