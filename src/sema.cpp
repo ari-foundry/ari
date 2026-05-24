@@ -5839,9 +5839,22 @@ private:
         return local_scopes_.find(name);
     }
 
+    [[noreturn]] static void fail_unknown_name(SourceLocation loc, const std::string& name) {
+        CompileError error(std::move(loc), "unknown name '" + name + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "Ari resolves local bindings, parameters, functions, enum cases, constants, and imported items before expression lowering",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "declare '" + name + "' before this use, import it with use, or qualify it with its module path",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     LocalInfo& require_local_slot(SourceLocation loc, const std::string& name) {
         if (LocalInfo* local = find_local_slot(name)) return *local;
-        fail(loc, "unknown name '" + name + "'");
+        fail_unknown_name(loc, name);
     }
 
     LocalInfo& local_slot_by_name(const std::string& name) {
@@ -18739,7 +18752,7 @@ private:
                              "generic function '" + expr.name +
                                  "' requires an expected function pointer type or a call");
                     }
-                    fail(expr.loc, "unknown name '" + expr.name + "'");
+                    fail_unknown_name(expr.loc, expr.name);
                 }
                 LocalInfo& local = *local_slot;
                 if (local_unavailable_binding_error(expr.name, local)) {
