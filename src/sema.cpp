@@ -13023,6 +13023,38 @@ private:
         if (try_constant_pattern_value(pattern, constant_pattern)) return;
     }
 
+    [[noreturn]] static void fail_or_pattern_binding_names(SourceLocation loc) {
+        CompileError error(std::move(loc), "or-pattern alternatives must bind the same names");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "a value bound by an or-pattern is available after any alternative matches",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "bind the same names in every alternative or move the binding outside the or-pattern",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_or_pattern_binding_type(SourceLocation loc,
+                                                          const std::string& name,
+                                                          const IrType& expected,
+                                                          const IrType& actual) {
+        CompileError error(
+            std::move(loc),
+            "or-pattern binding '" + name + "' has inconsistent types: " +
+                type_name(expected) + " and " + type_name(actual));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "all alternatives in an or-pattern must give a shared binding one concrete type",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use different binding names, convert the payloads to a common type, or split the alternatives into separate arms",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     std::set<std::string> require_same_or_pattern_bindings(SourceLocation loc,
                                                            const std::vector<Pattern>& alternatives,
                                                            const IrType& type) {
@@ -13040,17 +13072,15 @@ private:
         for (std::size_t i = 1; i < signatures.size(); ++i) {
             const PatternBindingSignature& actual = signatures[i];
             if (actual.size() != expected.size()) {
-                fail(loc, "or-pattern alternatives must bind the same names");
+                fail_or_pattern_binding_names(loc);
             }
             for (const auto& [name, expected_type] : expected) {
                 auto found = actual.find(name);
                 if (found == actual.end()) {
-                    fail(loc, "or-pattern alternatives must bind the same names");
+                    fail_or_pattern_binding_names(loc);
                 }
                 if (!same_type(expected_type, found->second)) {
-                    fail(loc,
-                         "or-pattern binding '" + name + "' has inconsistent types: " +
-                             type_name(expected_type) + " and " + type_name(found->second));
+                    fail_or_pattern_binding_type(loc, name, expected_type, found->second);
                 }
             }
         }
