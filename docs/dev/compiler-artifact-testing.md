@@ -53,11 +53,12 @@ Compare artifacts in this order:
 | 10 | HIR dump | Prove syntax lowering and name surfaces are stable. | lowering/resolver |
 | 11 | Typed IR dump | Prove type, ownership, trait, and module facts are stable. | sema |
 | 12 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
-| 13 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
-| 14 | C header text | Prove public ABI wrapper spelling, C-compatible aggregates, and enum payload slots are stable. | C header emitter |
-| 15 | Object symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
-| 16 | Shared-library symbols | Prove exported dynamic symbols and visibility. | LLVM driver |
-| 17 | Runtime stdout/stderr | Prove final behavior only after earlier artifacts match. | linked executable |
+| 13 | C header text | Prove public ABI wrapper spelling, C-compatible aggregates, and enum payload slots are stable. | C header emitter |
+| 14 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
+| 15 | LLVM fragments | Prove selected backend lowering points are review-sized and stable. | LLVM backend |
+| 16 | Object symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
+| 17 | Shared-library symbols | Prove exported dynamic symbols and visibility. | LLVM driver |
+| 18 | Runtime stdout/stderr | Prove final behavior only after earlier artifacts match. | linked executable |
 
 Do not skip directly to executable comparison for compiler frontend work. A
 binary exit code can say "something changed"; it cannot say which compiler
@@ -408,6 +409,7 @@ ari --emit-declaration-index path
 ari --emit-stage-plan path
 ari --emit-pass-summary path
 ari --emit-typed-ir path
+ari --emit-llvm path --emit-llvm-fragment path --llvm-symbol name
 ari --emit-symbols path --symbol name
 python3 tests/check_compiler_artifacts.py --list-fixtures [all|ok|errors]
 make check-compiler-artifacts
@@ -494,7 +496,7 @@ It currently proves more than two dozen low-level contracts:
   ownership/drop fixtures without involving LLVM codegen
 - `--emit-pass-summary` writes deterministic stage counts and stable source and
   import summaries for lexing, syntax, module loading, and sema
-- `--emit-llvm` is checked through review-sized function fragments for core
+- `--emit-llvm-fragment` emits review-sized function fragments for core
   control flow, generic function specialization, generic aggregate lowering,
   ownership/drop lowering, and static trait dispatch instead of committing the
   whole runtime-heavy LLVM file
@@ -541,7 +543,8 @@ The current compiler already has useful artifact checks:
 - `--emit-typed-ir` for stable sema output before LLVM lowering
 - `--emit-pass-summary` for quick stage-boundary counts plus stable source and
   import summaries in compiler-development tests
-- `--emit-llvm` for LLVM text and extracted review-sized function fragments
+- `--emit-llvm` for LLVM text
+- `--emit-llvm-fragment` for requested review-sized function fragments
 - `--emit-obj --emit-symbols` for object symbol goldens
 - `--shared --emit-symbols` for linked shared-library symbol goldens
 - executable exit-code and stdout golden checks where LLVM driver support is

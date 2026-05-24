@@ -85,6 +85,7 @@ def main():
         "option=--emit-capability-inventory",
         "option=--emit-c-header",
         "option=--emit-llvm",
+        "option=--emit-llvm-fragment",
         "option=--emit-obj",
         "option=--emit-resolved-index",
         "option=--emit-symbols",
@@ -117,6 +118,12 @@ def main():
         "CompilerArtifact version=1 option=--emit-llvm owner=llvm-backend",
         'first_check="focused --emit-llvm"',
         "Rule earliest_layer=false one_artifact_output=false backend_output=true",
+    )
+
+    ok &= require_success(
+        run_raw("--explain-artifact", "--emit-llvm-fragment"),
+        "CompilerArtifact version=1 option=--emit-llvm-fragment owner=llvm-backend",
+        "Rule earliest_layer=false one_artifact_output=false backend_output=true llvm_fragment=true requested_symbols=true requires_emit_llvm=true",
     )
 
     ok &= require_success(
@@ -171,6 +178,16 @@ def main():
     ok &= require_failure(
         run_ari("--emit-symbols", OUT_DIR / "symbols.symbols"),
         "--emit-symbols requires --emit-obj or --shared",
+    )
+
+    ok &= require_failure(
+        run_ari("--llvm-symbol", "_ARNv4main"),
+        "--llvm-symbol requires --emit-llvm-fragment",
+    )
+
+    ok &= require_failure(
+        run_ari("--emit-llvm-fragment", OUT_DIR / "backend.llvm-frag"),
+        "--emit-llvm-fragment requires --emit-llvm",
     )
 
     ok &= require_failure(

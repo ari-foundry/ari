@@ -282,13 +282,13 @@ Checklist:
 - [x] execute the normal output and check its exit code
 - [x] emit generated LLVM IR with `--emit-llvm`
 - [x] inspect generated LLVM IR for Ari `main` and host wrapper
-- [x] compare review-sized LLVM function fragments for core control flow and
-      generic aggregate lowering in `make check-compiler-artifacts`
-- [x] compare review-sized LLVM function fragments for aggregate field-drop
-      calls and runtime-tagged active enum payload cleanup in
+- [x] compare compiler-emitted review-sized LLVM function fragments for core
+      control flow and generic aggregate lowering in `make check-compiler-artifacts`
+- [x] compare compiler-emitted review-sized LLVM function fragments for
+      aggregate field-drop calls and runtime-tagged active enum payload cleanup in
       `make check-compiler-artifacts`
-- [x] compare review-sized LLVM function fragments for static trait dispatch
-      selection and impl targets in `make check-compiler-artifacts`
+- [x] compare compiler-emitted review-sized LLVM function fragments for static
+      trait dispatch selection and impl targets in `make check-compiler-artifacts`
 - [x] run parser/module/sema diagnostics without backend output using `--check`
 - [x] reject removed generated-C++ options
 - [x] compile and run a Linux executable with the LLVM backend

@@ -38,10 +38,11 @@ Use this order when choosing a new artifact or golden:
 | 12 | `--emit-pass-summary` | Stage counts and pass boundaries. |
 | 13 | `--emit-c-header` | C-compatible public ABI wrapper spelling. |
 | 14 | `--emit-llvm` | Backend lowering once earlier layers are stable. |
-| 15 | `--emit-obj` | Object ABI, exported names, and relocation surfaces. |
-| 16 | `--emit-symbols` | Requested object or shared-library symbol inventory after backend output. |
-| 17 | `--shared` | Shared-library export and dynamic symbol surfaces. |
-| 18 | `-o` | Final stdout/stderr runtime behavior after earlier artifacts match. |
+| 15 | `--emit-llvm-fragment` | Requested LLVM function fragments after full LLVM text is emitted. |
+| 16 | `--emit-obj` | Object ABI, exported names, and relocation surfaces. |
+| 17 | `--emit-symbols` | Requested object or shared-library symbol inventory after backend output. |
+| 18 | `--shared` | Shared-library export and dynamic symbol surfaces. |
+| 19 | `-o` | Final stdout/stderr runtime behavior after earlier artifacts match. |
 
 The order is not bureaucracy. It keeps failures near the layer that changed.
 

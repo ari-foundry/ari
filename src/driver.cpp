@@ -147,6 +147,50 @@ static std::string dump_symbol_inventory(const std::string& path,
     return out.str();
 }
 
+static std::vector<std::string> split_lines(const std::string& text) {
+    std::vector<std::string> lines;
+    std::istringstream input(text);
+    std::string line;
+    while (std::getline(input, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        lines.push_back(std::move(line));
+    }
+    return lines;
+}
+
+static std::vector<std::string> extract_llvm_function(const std::vector<std::string>& lines,
+                                                      const std::string& symbol) {
+    const std::string needle = "@\"" + symbol + "\"";
+    for (std::size_t index = 0; index < lines.size(); ++index) {
+        const std::string& line = lines[index];
+        if (line.rfind("define ", 0) == 0 && line.find(needle) != std::string::npos) {
+            std::vector<std::string> body;
+            for (std::size_t current = index; current < lines.size(); ++current) {
+                body.push_back(lines[current]);
+                if (lines[current] == "}") return body;
+            }
+            throw CompileError("unterminated LLVM function for " + symbol);
+        }
+    }
+    throw CompileError("LLVM function not found: " + symbol);
+}
+
+static std::string dump_llvm_function_fragments(const std::string& llvm,
+                                                const std::string& source_path,
+                                                const std::vector<std::string>& requested_symbols) {
+    std::vector<std::string> lines = split_lines(llvm);
+    std::ostringstream out;
+    out << "LLVMFunctionExtract source=" << display_output_path(source_path)
+        << " functions=" << requested_symbols.size() << "\n";
+    for (const std::string& symbol : requested_symbols) {
+        out << "  Function symbol=" << symbol << "\n";
+        for (const std::string& line : extract_llvm_function(lines, symbol)) {
+            out << "    " << line << "\n";
+        }
+    }
+    return out.str();
+}
+
 static void report_wrote(const std::string& path, const std::string& description) {
     std::cout << "wrote " << display_output_path(path) << " (" << description << ")\n";
 }
@@ -188,6 +232,8 @@ static const ArtifactHelpRow kArtifactHelp[] = {
      "C-compatible aggregate and extern surface", "header-output"},
     {"--emit-llvm", "llvm-backend", "focused --emit-llvm",
      "LLVM IR text for backend lowering review", "backend-output"},
+    {"--emit-llvm-fragment", "llvm-backend", "focused --emit-llvm",
+     "requested LLVM function fragments for backend review", "llvm-fragment-output"},
     {"--emit-obj", "toolchain", "focused --emit-obj",
      "LLVM object output for symbol inventory review", "backend-output"},
     {"--emit-symbols", "toolchain", "focused --emit-obj/--shared",
@@ -208,6 +254,7 @@ static void usage(std::ostream& out) {
            "           [--emit-resolved-index path]\n"
            "           [--emit-typed-ir path] [--emit-pass-summary path]\n"
            "           [--emit-stage-plan path]\n"
+           "           [--emit-llvm-fragment path] [--llvm-symbol name]\n"
            "           [--emit-symbols path] [--symbol name]\n"
            "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
            "           [--target triple]\n"
@@ -280,6 +327,8 @@ static void explain_artifact(std::ostream& out, const std::string& option) {
         out << "  Rule earliest_layer=false one_artifact_output=false runtime_output=true stdout_stderr_capture=true\n";
     } else if (std::string(row->output_policy) == "header-output") {
         out << "  Rule earliest_layer=false one_artifact_output=false header_output=true\n";
+    } else if (std::string(row->output_policy) == "llvm-fragment-output") {
+        out << "  Rule earliest_layer=false one_artifact_output=false backend_output=true llvm_fragment=true requested_symbols=true requires_emit_llvm=true\n";
     } else if (std::string(row->output_policy) == "symbol-output") {
         out << "  Rule earliest_layer=false one_artifact_output=false backend_output=true symbol_inventory=true requested_symbols=true\n";
     } else {
@@ -334,6 +383,7 @@ int run(int argc, char** argv) {
     std::string typed_ir_output;
     std::string pass_summary_output;
     std::string stage_plan_output;
+    std::string llvm_fragment_output;
     std::string symbol_inventory_output;
     std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
@@ -344,6 +394,7 @@ int run(int argc, char** argv) {
     std::string target_triple;
     std::vector<std::string> module_search_paths;
     std::vector<std::string> link_args;
+    std::vector<std::string> llvm_fragment_names;
     std::vector<std::string> symbol_inventory_names;
     std::set<std::string> cfg_features;
     bool check_only = false;
@@ -400,6 +451,12 @@ int run(int argc, char** argv) {
             if (i + 1 >= argc) throw CompileError("--emit-llvm expects a path");
             llvm_output = argv[++i];
             emit_llvm_only = true;
+        } else if (arg == "--emit-llvm-fragment" || arg == "--emit-llvm-frag") {
+            if (i + 1 >= argc) throw CompileError(arg + " expects a path");
+            llvm_fragment_output = argv[++i];
+        } else if (arg == "--llvm-symbol" || arg == "--llvm-function") {
+            if (i + 1 >= argc) throw CompileError(arg + " expects an LLVM function symbol");
+            llvm_fragment_names.push_back(argv[++i]);
         } else if (arg == "--emit-obj" || arg == "--emit-object") {
             if (i + 1 >= argc) throw CompileError(arg + " expects a path");
             object_output = argv[++i];
@@ -589,6 +646,7 @@ int run(int argc, char** argv) {
     if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
                        !c_header_output.empty() || !source_map_output.empty() ||
+                       !llvm_fragment_output.empty() ||
                        !symbol_inventory_output.empty() ||
                        !diagnostic_catalog_output.empty() ||
                        !capability_inventory_output.empty() ||
@@ -605,6 +663,17 @@ int run(int argc, char** argv) {
     }
     if (!object_output.empty() && !link_args.empty()) {
         throw CompileError("--emit-obj cannot be combined with linker options");
+    }
+    if (!llvm_fragment_names.empty() && llvm_fragment_output.empty()) {
+        throw CompileError("--llvm-symbol requires --emit-llvm-fragment");
+    }
+    if (!llvm_fragment_output.empty()) {
+        if (!emit_llvm_only) {
+            throw CompileError("--emit-llvm-fragment requires --emit-llvm");
+        }
+        if (llvm_fragment_names.empty()) {
+            throw CompileError("--emit-llvm-fragment requires at least one --llvm-symbol name");
+        }
     }
     if (!symbol_inventory_names.empty() && symbol_inventory_output.empty()) {
         throw CompileError("--symbol requires --emit-symbols");
@@ -628,7 +697,8 @@ int run(int argc, char** argv) {
          !typed_ir_output.empty() || !pass_summary_output.empty() ||
          !stage_plan_output.empty()) &&
         (output_explicit || emit_llvm_only || !object_output.empty() ||
-         !c_header_output.empty() || !symbol_inventory_output.empty() ||
+         !c_header_output.empty() || !llvm_fragment_output.empty() ||
+         !symbol_inventory_output.empty() ||
          llvm_compiler_explicit || shared_library || test_mode ||
          !metadata_output.empty() || !metadata_check.empty() ||
          !module_cache_output.empty() || !module_cache_input.empty() || !link_args.empty())) {
@@ -828,6 +898,11 @@ int run(int argc, char** argv) {
     write_text_file(llvm_path, llvm);
     if (emit_llvm_only) {
         report_wrote(llvm_path, std::to_string(llvm.size()) + " bytes");
+        if (!llvm_fragment_output.empty()) {
+            write_text_file(llvm_fragment_output,
+                            dump_llvm_function_fragments(llvm, llvm_path, llvm_fragment_names));
+            report_wrote(llvm_fragment_output, "LLVM function fragment");
+        }
         return 0;
     }
 

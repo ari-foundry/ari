@@ -94,16 +94,17 @@ The hosted compiler now also has the first artifact producers:
 `--emit-diagnostics path`, `--emit-diagnostic-catalog path`,
 `--emit-module-graph path`, `--emit-declaration-index path`,
 `--emit-resolved-index path`, `--emit-typed-ir path`,
-`--emit-pass-summary path`, `--emit-c-header path`, and
+`--emit-pass-summary path`, `--emit-c-header path`,
+`--emit-llvm path --emit-llvm-fragment path --llvm-symbol name`, and
 `--emit-symbols path --symbol name`. They write deterministic stage order and first-check
 routing, compiler capability status tables, source byte/line tables, lexer token text,
 parser tree text, expected-failure diagnostic text,
 diagnostic code ownership tables,
 file-backed source/import/item graph text, declaration signature text,
 resolver-facing normalized facts, sema-lowered typed IR, stage-boundary counts
-with stable source/import summaries, C-compatible header text, and requested
-object/shared symbol inventories. `make check-compiler-artifacts` also
-extracts review-sized LLVM fragments and compares stdout goldens, while
+with stable source/import summaries, C-compatible header text, requested LLVM
+function fragments, and requested object/shared symbol inventories.
+`make check-compiler-artifacts` also compares stdout goldens, while
 `--list-artifacts`/`--explain-artifact` declare the shared-library and
 stdout/stderr runtime comparison surfaces. This is the current
 stage-comparison path for normal compiler development: when source loading,
@@ -336,7 +337,8 @@ Current compiler-development tests:
   `backend-generic-aggregate.llvm-frag`,
   `backend-aggregate-match-model.llvm-frag`,
   `backend-layout-aggregate.llvm-frag`, and `backend-trait-dispatch.llvm-frag`:
-  extracted LLVM backend fragments checked after full `--emit-llvm` generation.
+  LLVM backend fragments checked through `--emit-llvm-fragment` after full
+  `--emit-llvm` generation.
   The aggregate match model fragment locks compiler-shaped struct construction,
   nested enum payload matches, branch lowering, and byte-backed aggregate enum
   payload extraction. The layout fragment locks mixed struct field GEPs, tuple
