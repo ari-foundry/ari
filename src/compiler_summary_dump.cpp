@@ -296,12 +296,16 @@ std::string dump_compiler_stage_plan(const std::string& source_name,
          "type, trait, ownership, and lowering facts"},
         {"PassSummary", "driver/sema", "--emit-pass-summary", "make check-compiler-artifacts",
          "stage counts and pass boundaries"},
+        {"CHeader", "abi-header", "--emit-c-header", "make check-compiler-artifacts",
+         "C-compatible aggregate and extern surface"},
         {"LLVM", "llvm-backend", "--emit-llvm", "focused --emit-llvm",
          "backend lowering after earlier artifacts match"},
         {"Object", "toolchain", "--emit-obj", "focused --emit-obj",
          "object emission and exported symbol surface"},
-        {"Executable", "toolchain", "-o", "focused linked run",
-         "final runtime behavior"},
+        {"SharedLibrary", "toolchain", "--shared", "focused shared symbol inventory",
+         "shared-library export and dynamic symbol surface"},
+        {"RuntimeOutput", "toolchain/runtime", "-o", "focused linked run",
+         "captured stdout/stderr runtime behavior"},
     };
 
     std::ostringstream out;
@@ -319,7 +323,7 @@ std::string dump_compiler_stage_plan(const std::string& source_name,
             << " proves=\"" << row.proves << "\"\n";
     }
     out << "  DevelopmentGate source_identity=required diagnostics=required "
-        << "modules=required artifacts=ordered executable=last\n";
+        << "modules=required artifacts=ordered runtime_output=last\n";
     return out.str();
 }
 

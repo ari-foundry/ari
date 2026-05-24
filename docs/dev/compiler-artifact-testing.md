@@ -55,8 +55,9 @@ Compare artifacts in this order:
 | 12 | Pass summary | Prove stage counts and module/sema boundaries are stable. | driver |
 | 13 | LLVM text | Prove backend lowering is stable enough to inspect. | LLVM backend |
 | 14 | C header text | Prove public ABI wrapper spelling, C-compatible aggregates, and enum payload slots are stable. | C header emitter |
-| 15 | Object/shared symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
-| 16 | Executable behavior | Prove final behavior only after earlier artifacts match. | linked executable |
+| 15 | Object symbols | Prove exported symbols, visibility, and relocations. | LLVM driver |
+| 16 | Shared-library symbols | Prove exported dynamic symbols and visibility. | LLVM driver |
+| 17 | Runtime stdout/stderr | Prove final behavior only after earlier artifacts match. | linked executable |
 
 Do not skip directly to executable comparison for compiler frontend work. A
 binary exit code can say "something changed"; it cannot say which compiler
@@ -440,10 +441,12 @@ It currently proves more than two dozen low-level contracts:
   needing an input file
 - `--explain-capability trait-resolution` prints the owner, status, first
   focused check, and proof purpose for one compiler area
-- `--list-artifacts` prints the available artifact producers without needing a
-  source file
+- `--list-artifacts` prints the available artifact producers and backend/runtime
+  comparison surfaces without needing a source file
 - `--explain-artifact --emit-tokens` prints the owner, first focused check,
   and proof purpose for one producer
+- `--explain-artifact --shared` and `--explain-artifact -o` document the
+  shared-library symbol and captured stdout/stderr comparison surfaces
 - artifact CLI misuse names the exact conflicting artifact options, such as
   `--emit-tokens, --emit-syntax`
 - `--emit-source-map` writes deterministic source file identity, kind,
@@ -569,6 +572,6 @@ now covers frontend, source identity, diagnostics, module graphs, declarations
 for single-file, file-backed, and generic surfaces, typed IR for
 modules, ownership, generic functions, generic aggregates, traits, and
 compiler-shaped aggregate programs, LLVM fragments, object/shared symbol
-goldens, and stdout goldens. The remaining larger gaps are HIR, richer
-object/header/relocation inventories, and broader backend/runtime fixture
-breadth.
+goldens, and stdout/stderr catalog surfaces. The remaining larger gaps are HIR,
+richer object/header/relocation inventories, and broader backend/runtime
+fixture breadth.

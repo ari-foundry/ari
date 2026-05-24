@@ -11,7 +11,9 @@ CompilerStagePlan source=tests/cases/compiler-development/artifact/ok/token-dump
   10 ResolvedIndex owner=sema artifact=--emit-resolved-index first_check="make check-compiler-artifacts" proves="resolved functions, locals, calls, enum cases, and pattern bindings"
   11 TypedIR owner=sema artifact=--emit-typed-ir first_check="make check-compiler-artifacts" proves="type, trait, ownership, and lowering facts"
   12 PassSummary owner=driver/sema artifact=--emit-pass-summary first_check="make check-compiler-artifacts" proves="stage counts and pass boundaries"
-  13 LLVM owner=llvm-backend artifact=--emit-llvm first_check="focused --emit-llvm" proves="backend lowering after earlier artifacts match"
-  14 Object owner=toolchain artifact=--emit-obj first_check="focused --emit-obj" proves="object emission and exported symbol surface"
-  15 Executable owner=toolchain artifact=-o first_check="focused linked run" proves="final runtime behavior"
-  DevelopmentGate source_identity=required diagnostics=required modules=required artifacts=ordered executable=last
+  13 CHeader owner=abi-header artifact=--emit-c-header first_check="make check-compiler-artifacts" proves="C-compatible aggregate and extern surface"
+  14 LLVM owner=llvm-backend artifact=--emit-llvm first_check="focused --emit-llvm" proves="backend lowering after earlier artifacts match"
+  15 Object owner=toolchain artifact=--emit-obj first_check="focused --emit-obj" proves="object emission and exported symbol surface"
+  16 SharedLibrary owner=toolchain artifact=--shared first_check="focused shared symbol inventory" proves="shared-library export and dynamic symbol surface"
+  17 RuntimeOutput owner=toolchain/runtime artifact=-o first_check="focused linked run" proves="captured stdout/stderr runtime behavior"
+  DevelopmentGate source_identity=required diagnostics=required modules=required artifacts=ordered runtime_output=last

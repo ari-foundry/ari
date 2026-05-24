@@ -87,6 +87,8 @@ def main():
         "option=--emit-llvm",
         "option=--emit-obj",
         "option=--emit-resolved-index",
+        "option=--shared",
+        "option=-o",
         "Rule one_artifact_output=true backend_outputs_separate=true",
     )
 
@@ -120,6 +122,18 @@ def main():
         run_raw("--explain-artifact", "--emit-c-header"),
         "CompilerArtifact version=1 option=--emit-c-header owner=abi-header",
         "Rule earliest_layer=false one_artifact_output=false header_output=true",
+    )
+
+    ok &= require_success(
+        run_raw("--explain-artifact", "--shared"),
+        "CompilerArtifact version=1 option=--shared owner=toolchain",
+        "Rule earliest_layer=false one_artifact_output=false backend_output=true shared_library=true symbol_inventory=true",
+    )
+
+    ok &= require_success(
+        run_raw("--explain-artifact", "-o"),
+        "CompilerArtifact version=1 option=-o owner=toolchain/runtime",
+        "Rule earliest_layer=false one_artifact_output=false runtime_output=true stdout_stderr_capture=true",
     )
 
     token_output = OUT_DIR / "absolute-output.tokens"

@@ -136,6 +136,10 @@ static const ArtifactHelpRow kArtifactHelp[] = {
      "LLVM IR text for backend lowering review", "backend-output"},
     {"--emit-obj", "toolchain", "focused --emit-obj",
      "LLVM object output for symbol inventory review", "backend-output"},
+    {"--shared", "toolchain", "focused shared symbol inventory",
+     "shared library output for dynamic symbol inventory review", "shared-output"},
+    {"-o", "toolchain/runtime", "focused linked run",
+     "linked executable output for captured stdout/stderr review", "runtime-output"},
 };
 
 static void usage(std::ostream& out) {
@@ -187,7 +191,7 @@ static void list_artifacts(std::ostream& out) {
 }
 
 static std::string normalize_artifact_option(std::string option) {
-    if (option.rfind("--", 0) != 0) option = "--" + option;
+    if (option.empty() || option.front() != '-') option = "--" + option;
     return option;
 }
 
@@ -213,6 +217,10 @@ static void explain_artifact(std::ostream& out, const std::string& option) {
         << " purpose=\"" << row->purpose << "\"\n";
     if (std::string(row->output_policy) == "backend-output") {
         out << "  Rule earliest_layer=false one_artifact_output=false backend_output=true\n";
+    } else if (std::string(row->output_policy) == "shared-output") {
+        out << "  Rule earliest_layer=false one_artifact_output=false backend_output=true shared_library=true symbol_inventory=true\n";
+    } else if (std::string(row->output_policy) == "runtime-output") {
+        out << "  Rule earliest_layer=false one_artifact_output=false runtime_output=true stdout_stderr_capture=true\n";
     } else if (std::string(row->output_policy) == "header-output") {
         out << "  Rule earliest_layer=false one_artifact_output=false header_output=true\n";
     } else {

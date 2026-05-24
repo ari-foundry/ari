@@ -31,7 +31,7 @@ ordinary Ari data.
 | Module projects | 12 | 55 | Predictable roots/search paths, `.ari`/`.arih` policy, visibility errors, cycles, source identity, metadata, and cache invalidation. |
 | Compiler data models | 15 | 60 | Nested generic aggregates, `Result` payloads, vectors/maps/sets, compiler-shaped ownership patterns, and stable rejection of infinite value layouts. |
 | Trait selection | 12 | 45 | The minimum static subset is locked; broader trait objects, associated-type solving, and collection defaults can still deepen it. |
-| Artifact comparison | 24 | 65 | Token, syntax, diagnostic, source-map, module graph, declaration, typed IR, LLVM-fragment, runtime stdout, HIR, object, and executable comparison order. |
+| Artifact comparison | 24 | 68 | Token, syntax, diagnostic, source-map, module graph, declaration, typed IR, LLVM-fragment, runtime stdout/stderr catalog, HIR, object/shared, and executable comparison order. |
 | Tool build flow | 10 | 35 | Focused Make targets for one Ari tool, fixture roots, and golden comparison without hidden flags. |
 
 Weighted together, this lands in the high-40s. Treat each row as normal compiler
@@ -92,15 +92,18 @@ The hosted compiler now also has the first artifact producers:
 `--emit-stage-plan path`, `--emit-capability-inventory path`,
 `--emit-source-map path`, `--emit-tokens path`, `--emit-syntax path`,
 `--emit-diagnostics path`, `--emit-diagnostic-catalog path`,
-`--emit-module-graph path`, `--emit-declaration-index path`, `--emit-typed-ir path`, and
-`--emit-pass-summary path`. They write deterministic stage order and first-check
+`--emit-module-graph path`, `--emit-declaration-index path`,
+`--emit-resolved-index path`, `--emit-typed-ir path`,
+`--emit-pass-summary path`, and `--emit-c-header path`. They write deterministic stage order and first-check
 routing, compiler capability status tables, source byte/line tables, lexer token text,
 parser tree text, expected-failure diagnostic text,
 diagnostic code ownership tables,
 file-backed source/import/item graph text, declaration signature text,
-sema-lowered typed IR, and stage-boundary counts. `make check-compiler-artifacts`
-also extracts review-sized LLVM fragments, compares seeded object/shared symbol
-inventories, and compares stdout goldens. This is the current
+resolver-facing normalized facts, sema-lowered typed IR, stage-boundary counts,
+and C-compatible header text. `make check-compiler-artifacts` also extracts
+review-sized LLVM fragments, compares seeded object/shared symbol inventories,
+and compares stdout goldens, while `--list-artifacts`/`--explain-artifact`
+declare the shared-library and stdout/stderr runtime comparison surfaces. This is the current
 stage-comparison path for normal compiler development: when source loading,
 lexer, parser, diagnostic, module, declaration surface, typed lowering,
 backend lowering, ABI visibility, or runtime output changes, reviewers can

@@ -33,12 +33,14 @@ Use this order when choosing a new artifact or golden:
 | 7 | `--emit-syntax` | Parser tree and recovery shape. |
 | 8 | `--emit-module-graph` | File-backed modules, imports, and item surfaces. |
 | 9 | `--emit-declaration-index` | Declaration names, visibility, signatures, source locations, imports, and uses. |
-| 10 | Resolver index | Resolver-facing imports, declarations, signatures, visibility, and source locations through `--emit-declaration-index`. |
+| 10 | `--emit-resolved-index` | Resolver-facing functions, locals, calls, enum cases, pattern bindings, imports, declarations, signatures, visibility, and source locations. |
 | 11 | `--emit-typed-ir` | Type, ownership, trait, and lowering facts. |
 | 12 | `--emit-pass-summary` | Stage counts and pass boundaries. |
-| 13 | `--emit-llvm` | Backend lowering once earlier layers are stable. |
-| 14 | Object/shared symbol checks | ABI, exported names, relocation, and shared-library surfaces. |
-| 15 | Executable behavior | Final runtime behavior after earlier artifacts match. |
+| 13 | `--emit-c-header` | C-compatible public ABI wrapper spelling. |
+| 14 | `--emit-llvm` | Backend lowering once earlier layers are stable. |
+| 15 | `--emit-obj` | Object ABI, exported names, and relocation surfaces. |
+| 16 | `--shared` | Shared-library export and dynamic symbol surfaces. |
+| 17 | `-o` | Final stdout/stderr runtime behavior after earlier artifacts match. |
 
 The order is not bureaucracy. It keeps failures near the layer that changed.
 
