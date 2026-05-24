@@ -239,6 +239,63 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
     throw error;
 }
 
+[[noreturn]] void fail_cyclic_module_import(SourceLocation loc,
+                                            const std::string& import_name,
+                                            const std::optional<std::string>& source_path) {
+    std::string message = "cyclic module import '" + import_name + "'";
+    if (source_path) message += " through source '" + *source_path + "'";
+    CompileError error(std::move(loc), message);
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        source_path
+            ? "the imported source file is already on the active module loading stack"
+            : "the imported module name is already on the active module loading stack",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "move shared declarations to a third module or remove one of the imports in the cycle",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
+[[noreturn]] void fail_duplicate_module_source_identity(SourceLocation loc,
+                                                        const std::string& source_path,
+                                                        const std::string& loaded_name,
+                                                        const std::string& requested_name) {
+    CompileError error(std::move(loc),
+                       "module file '" + source_path +
+                           "' was already loaded as '" + loaded_name +
+                           "', not '" + requested_name + "'");
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "a single source file has one module identity during a compile",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "import this file with the same module name or split the modules into separate files",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
+[[noreturn]] void fail_duplicate_module_name(SourceLocation loc,
+                                             const std::string& module_name,
+                                             const std::string& loaded_path,
+                                             const std::string& requested_path) {
+    CompileError error(std::move(loc),
+                       "module '" + module_name +
+                           "' was already loaded from '" + loaded_path +
+                           "', not '" + requested_path + "'");
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "module names resolve to one source file during a compile",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "remove one import or rename one of the modules to make the graph unambiguous",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
 std::optional<std::string> find_standard_header_file() {
     const std::string path = "lib/std.arih";
     if (file_exists(path)) return path;
@@ -799,7 +856,7 @@ private:
 
         for (const auto& import : imports) {
             if (loading_modules_.count(import.name)) {
-                throw CompileError(import.loc, "cyclic module import '" + import.name + "'");
+                fail_cyclic_module_import(import.loc, import.name, std::nullopt);
             }
 
             std::string source_path;
@@ -817,26 +874,21 @@ private:
             }
             add_module_metadata_import(metadata_, import, source_path);
             if (loading_source_paths_.count(source_path)) {
-                throw CompileError(import.loc,
-                                   "cyclic module import '" + import.name +
-                                       "' through source '" + source_path + "'");
+                fail_cyclic_module_import(import.loc, import.name, source_path);
             }
             auto loaded_source = loaded_source_modules_.find(source_path);
             if (loaded_source != loaded_source_modules_.end() &&
                 loaded_source->second != import.name) {
-                throw CompileError(import.loc,
-                                   "module file '" + source_path +
-                                       "' was already loaded as '" +
-                                       loaded_source->second + "', not '" +
-                                       import.name + "'");
+                fail_duplicate_module_source_identity(
+                    import.loc,
+                    source_path,
+                    loaded_source->second,
+                    import.name);
             }
             auto loaded = loaded_modules_.find(import.name);
             if (loaded != loaded_modules_.end()) {
                 if (loaded->second != source_path) {
-                    throw CompileError(import.loc,
-                                       "module '" + import.name +
-                                           "' was already loaded from '" + loaded->second +
-                                           "', not '" + source_path + "'");
+                    fail_duplicate_module_name(import.loc, import.name, loaded->second, source_path);
                 }
                 continue;
             }

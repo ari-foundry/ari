@@ -1,4 +1,6 @@
-diagnostic error code=M0001 family=module message="cyclic module import 'diagnostic_cycle_a::diagnostic_cycle_b::diagnostic_cycle_a' through source 'tests/cases/compiler-development/artifact/errors/diagnostic_cycle_a.ari'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=M0001 family=module message="cyclic module import 'diagnostic_cycle_a::diagnostic_cycle_b::diagnostic_cycle_a' through source 'tests/cases/compiler-development/artifact/errors/diagnostic_cycle_a.ari'" sources=1 labels=1 notes=1 helps=1
   Source source_id=2 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic_cycle_b.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic_cycle_b.ari" bytes=63
   Label index=0 role=primary source_id=2 source="tests/cases/compiler-development/artifact/errors/diagnostic_cycle_b.ari" line=1 column=5 end_line=1 end_column=23 byte_start=4 byte_end=22 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic_cycle_b.ari:1:5\n   |\n 1 | mod diagnostic_cycle_a;\n   |     ^^^^^^^^^^^^^^^^^^"
+  Note index=0 location=none message="the imported source file is already on the active module loading stack"
+  Help index=0 location=none message="move shared declarations to a third module or remove one of the imports in the cycle"
