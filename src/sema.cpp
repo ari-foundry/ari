@@ -22812,7 +22812,9 @@ private:
             warn_deprecated_use(expr.loc, "function", resolved_name, deprecated_message(fn.attributes));
             (void)deprecated;
         }
-        if (fn.params.size() != expr.args.size()) fail(expr.loc, "wrong argument count for '" + expr.name + "'");
+        if (fn.params.size() != expr.args.size()) {
+            fail_call_argument_count(expr.loc, expr.name, fn.loc, fn.params.size(), expr.args.size());
+        }
         if (expr.args.size() > std::numeric_limits<std::uint16_t>::max()) {
             fail(expr.loc, "function calls support up to 65535 arguments");
         }
@@ -24677,12 +24679,16 @@ private:
         }
         if (sig.is_variadic) {
             if (expr.args.size() < sig.params.size()) {
-                fail(expr.loc,
-                     "wrong argument count for variadic function '" + expr.name +
-                         "': expected at least " + std::to_string(sig.params.size()));
+                fail_call_argument_count(
+                    expr.loc,
+                    expr.name,
+                    sig.loc,
+                    sig.params.size(),
+                    expr.args.size(),
+                    true);
             }
         } else if (sig.params.size() != expr.args.size()) {
-            fail(expr.loc, "wrong argument count for '" + expr.name + "'");
+            fail_call_argument_count(expr.loc, expr.name, sig.loc, sig.params.size(), expr.args.size());
         }
         if (expr.args.size() > std::numeric_limits<std::uint16_t>::max()) {
             fail(expr.loc, "function calls support up to 65535 arguments");
@@ -25934,6 +25940,10 @@ private:
         return std::to_string(count) + " type parameter" + (count == 1 ? "" : "s");
     }
 
+    static std::string value_argument_count_text(std::size_t count) {
+        return std::to_string(count) + " argument" + (count == 1 ? "" : "s");
+    }
+
     static void add_location_label_if_valid(CompileError& error,
                                             SourceLocation loc,
                                             const std::string& message) {
@@ -26502,6 +26512,38 @@ private:
             "previous declaration is shown as a secondary label",
             DiagnosticNoteKind::Note});
         error.add_note(DiagnosticNote{std::nullopt, help, DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_call_argument_count(SourceLocation loc,
+                                                      const std::string& callee,
+                                                      SourceLocation declaration_loc,
+                                                      std::size_t expected_count,
+                                                      std::size_t actual_count,
+                                                      bool variadic = false) {
+        const std::string expected_text = value_argument_count_text(expected_count);
+        const std::string actual_text = value_argument_count_text(actual_count);
+        CompileError error(
+            std::move(loc),
+            "wrong argument count for '" + callee + "': expected " +
+                (variadic ? "at least " : "") + expected_text + ", got " + actual_text);
+        add_location_label_if_valid(
+            error,
+            declaration_loc,
+            "function '" + callee + "' declares " +
+                (variadic ? "at least " : "") + std::to_string(expected_count) + " " +
+                parameter_count_name(expected_count));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            variadic
+                ? "variadic function calls must provide every fixed parameter before variadic arguments"
+                : "function calls must provide one value for each declared parameter",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            std::string("pass ") + (variadic ? "at least " : "") + expected_text + " to '" + callee +
+                "' instead of " + actual_text,
+            DiagnosticNoteKind::Help});
         throw error;
     }
 };

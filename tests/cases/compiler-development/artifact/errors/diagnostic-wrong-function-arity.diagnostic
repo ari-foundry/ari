@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="wrong argument count for 'add'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="wrong argument count for 'add': expected 2 arguments, got 1 argument" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-function-arity.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-function-arity.ari" bytes=103
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-function-arity.ari" line=6 column=10 end_line=6 end_column=13 byte_start=93 byte_end=96 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-wrong-function-arity.ari:6:10\n   |\n 6 |   return add(1);\n   |          ^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-function-arity.ari" line=1 column=4 end_line=1 end_column=7 byte_start=3 byte_end=6 message="function 'add' declares 2 parameters"
+  Snippet label=1 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-wrong-function-arity.ari:1:4\n   |\n 1 | fn add(left: i64, right: i64) -> i64 {\n   |    ^^^"
+  Note index=0 location=none message="function calls must provide one value for each declared parameter"
+  Help index=0 location=none message="pass 2 arguments to 'add' instead of 1 argument"
