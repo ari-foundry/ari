@@ -1,0 +1,8 @@
+diagnostic error code=ari/compiler family=general message="bitwise-not operand must be integer, got bool" sources=1 labels=2 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/operators/errors/operators-bitwise-not-bool.ari" display="tests/cases/operators/errors/operators-bitwise-not-bool.ari" bytes=54
+  Label index=0 role=primary source_id=0 source="tests/cases/operators/errors/operators-bitwise-not-bool.ari" line=2 column=16 end_line=2 end_column=20 byte_start=34 byte_end=38 message=""
+  Snippet label=0 text="  --> tests/cases/operators/errors/operators-bitwise-not-bool.ari:2:16\n   |\n 2 |   let value = ~true;\n   |                ^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/operators/errors/operators-bitwise-not-bool.ari" line=2 column=15 end_line=2 end_column=16 byte_start=33 byte_end=34 message="operator '~' requires an integer operand"
+  Snippet label=1 text="  --> tests/cases/operators/errors/operators-bitwise-not-bool.ari:2:15\n   |\n 2 |   let value = ~true;\n   |               ^"
+  Note index=0 location=none message="bitwise-not flips integer bits; bool values use logical ! instead"
+  Help index=0 location=none message="use an integer value here or replace '~' with '!' for bool values"

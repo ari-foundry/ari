@@ -284,6 +284,12 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-expression-type-mismatch.diagnostic
 	$(TARGET) tests/cases/control-flow/errors/while-non-bool.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-condition-non-bool.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-condition-non-bool.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-condition-non-bool.diagnostic
+	$(TARGET) tests/cases/operators/errors/logical-non-bool.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-logical-operand-type.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-logical-operand-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-logical-operand-type.diagnostic
+	$(TARGET) tests/cases/operators/errors/not-non-bool.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-logical-not-operand-type.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-logical-not-operand-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-logical-not-operand-type.diagnostic
+	$(TARGET) tests/cases/operators/errors/operators-bitwise-not-bool.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-bitwise-not-operand-type.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-bitwise-not-operand-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-bitwise-not-operand-type.diagnostic
 	$(TARGET) tests/cases/control-flow/errors/if-expression-type-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-if-expression-type-mismatch.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-if-expression-type-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-if-expression-type-mismatch.diagnostic
 	$(TARGET) tests/cases/control-flow/errors/if-let-expression-type-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-if-let-expression-type-mismatch.diagnostic

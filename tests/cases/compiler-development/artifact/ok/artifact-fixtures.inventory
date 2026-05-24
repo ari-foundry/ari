@@ -1,8 +1,9 @@
-CompilerArtifactFixtures version=1 group=all entries=275
+CompilerArtifactFixtures version=1 group=all entries=278
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-assignment-while-borrowed.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-bitwise-not-operand-type.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-borrow-after-move.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-borrow-after-move.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-borrow-aggregate-enum-payload.ari
@@ -90,6 +91,8 @@ CompilerArtifactFixtures version=1 group=all entries=275
   Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unterminated-block-comment.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-lexer-unterminated-string.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-lexer-unterminated-string.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-logical-not-operand-type.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-logical-operand-type.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-loop-break-live-owner.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-loop-break-live-owner.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-loop-continue-live-owner.ari

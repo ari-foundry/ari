@@ -21115,14 +21115,21 @@ private:
         }
         switch (expr.op) {
             case TokenKind::Bang:
-                require_logical_operand(expr.loc, operand->type);
+                require_logical_operator_operand(
+                    expr_operand(expr)->loc,
+                    expr.loc,
+                    "!",
+                    operand->type);
                 lowered->kind = IrExprKind::Unary;
                 lowered->unary_op = IrUnaryOp::Not;
                 lowered->type = bool_type(expr.loc);
                 set_ir_expr_operand(*lowered, std::move(operand));
                 return lowered;
             case TokenKind::Tilde:
-                require_bitwise_not_operand(expr.loc, operand->type);
+                require_bitwise_not_operator_operand(
+                    expr_operand(expr)->loc,
+                    expr.loc,
+                    operand->type);
                 lowered->kind = IrExprKind::Unary;
                 lowered->unary_op = IrUnaryOp::BitNot;
                 lowered->type = operand->type;
@@ -26112,8 +26119,16 @@ private:
         switch (lowered->op) {
             case IrBinaryOp::LogicalOr:
             case IrBinaryOp::LogicalAnd:
-                require_logical_operand(expr.loc, lhs->type);
-                require_logical_operand(expr.loc, rhs->type);
+                require_logical_operator_operand(
+                    expr_left(expr)->loc,
+                    expr.loc,
+                    expr.op == TokenKind::AmpAmp ? "&&" : "||",
+                    lhs->type);
+                require_logical_operator_operand(
+                    expr_right(expr)->loc,
+                    expr.loc,
+                    expr.op == TokenKind::AmpAmp ? "&&" : "||",
+                    rhs->type);
                 lowered->type = bool_type(expr.loc);
                 break;
             case IrBinaryOp::Add:
@@ -26458,6 +26473,64 @@ private:
         } else if (!is_float_literal(lhs) && is_float_literal(rhs)) {
             coerce_float_expr_to_expected(rhs, lhs.type);
         }
+    }
+
+    [[noreturn]] static void fail_logical_operator_operand(SourceLocation loc,
+                                                           SourceLocation operator_loc,
+                                                           const std::string& op,
+                                                           const IrType& actual) {
+        CompileError error(
+            std::move(loc),
+            "logical operand must be bool, got " + type_name(actual));
+        add_location_label_if_valid(
+            error,
+            std::move(operator_loc),
+            "operator '" + op + "' requires bool operands");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "logical operators do not implicitly convert integers or other values to bool",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "compare this value explicitly or produce a bool before applying operator '" + op + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void require_logical_operator_operand(SourceLocation loc,
+                                                 SourceLocation operator_loc,
+                                                 const std::string& op,
+                                                 const IrType& type) {
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) return;
+        fail_logical_operator_operand(std::move(loc), std::move(operator_loc), op, type);
+    }
+
+    [[noreturn]] static void fail_bitwise_not_operator_operand(SourceLocation loc,
+                                                               SourceLocation operator_loc,
+                                                               const IrType& actual) {
+        CompileError error(
+            std::move(loc),
+            "bitwise-not operand must be integer, got " + type_name(actual));
+        add_location_label_if_valid(
+            error,
+            std::move(operator_loc),
+            "operator '~' requires an integer operand");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "bitwise-not flips integer bits; bool values use logical ! instead",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use an integer value here or replace '~' with '!' for bool values",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void require_bitwise_not_operator_operand(SourceLocation loc,
+                                                     SourceLocation operator_loc,
+                                                     const IrType& type) {
+        if (is_value_integer_type(type)) return;
+        fail_bitwise_not_operator_operand(std::move(loc), std::move(operator_loc), type);
     }
 
     [[noreturn]] static void fail_condition_type(SourceLocation loc,
