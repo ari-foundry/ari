@@ -1,4 +1,6 @@
-diagnostic error code=A0001 family=abi message="extern parameter cannot have void type; use ptr c_void for void*" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=A0001 family=abi message="extern parameter cannot have void type; use ptr c_void for void*" sources=1 labels=1 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-void-param.ari" display="tests/cases/ffi/errors/extern-void-param.ari" bytes=68
   Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-void-param.ari" line=1 column=26 end_line=1 end_column=32 byte_start=25 byte_end=31 message=""
   Snippet label=0 text="  --> tests/cases/ffi/errors/extern-void-param.ari:1:26\n   |\n 1 | extern \"C\" fn bad(value: c_void);\n   |                          ^^^^^^"
+  Note index=0 location=none message="plain void is only a return type marker; C void* is represented as an explicit pointer type"
+  Help index=0 location=none message="change the parameter to ptr c_void for void* or remove it for a true void parameter list"

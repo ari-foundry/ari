@@ -2246,7 +2246,13 @@ private:
                                  "' conflicts with a trait generic parameter");
                     }
                 }
-                if (method.is_variadic) fail(method.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+                if (method.is_variadic) {
+                    fail_abi_diagnostic(
+                        method.variadic_loc,
+                        "variadic parameters are only supported on extern \"C\" functions",
+                        "Ari only models variadic calls through the platform C ABI, not through trait method dispatch",
+                        "replace the varargs with fixed method parameters or declare a separate extern \"C\" function");
+                }
                 TraitInfo::Method trait_method;
                 trait_method.name = method_name;
                 trait_method.generics = method.generics;
@@ -3155,7 +3161,13 @@ private:
         std::set<std::string> impl_generic_names;
         for (const auto& item : actual_substitutions) impl_generic_names.insert(item.first);
         for (const auto& method : impl.methods) {
-            if (method.is_variadic) fail(method.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+            if (method.is_variadic) {
+                fail_abi_diagnostic(
+                    method.variadic_loc,
+                    "variadic parameters are only supported on extern \"C\" functions",
+                    "Ari only models variadic calls through the platform C ABI, not through trait impl method dispatch",
+                    "replace the varargs with fixed method parameters or declare a separate extern \"C\" function");
+            }
             std::string name = basename_of_qualified_name(method.name);
             require_unique_generic_params(method.generics, "impl method", name);
             for (const auto& generic : method.generics) {
@@ -3285,7 +3297,13 @@ private:
             fail(witness.loc, "associated type witnesses are only allowed in trait impls");
         }
         for (const auto& method : impl.methods) {
-            if (method.is_variadic) fail(method.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+            if (method.is_variadic) {
+                fail_abi_diagnostic(
+                    method.variadic_loc,
+                    "variadic parameters are only supported on extern \"C\" functions",
+                    "Ari only models variadic calls through the platform C ABI, not through inherent method dispatch",
+                    "replace the varargs with fixed method parameters or declare a separate extern \"C\" function");
+            }
             std::string name = basename_of_qualified_name(method.name);
             if (!names.insert(name).second) fail(method.loc, "duplicate method '" + name + "' in impl");
             require_unique_generic_params(method.generics, "impl method", name);
@@ -4200,7 +4218,11 @@ private:
                 fail(fn.loc, "functions support up to 65535 parameters");
             }
             if (fn.is_variadic && !fn.is_extern) {
-                fail(fn.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+                fail_abi_diagnostic(
+                    fn.variadic_loc,
+                    "variadic parameters are only supported on extern \"C\" functions",
+                    "Ari only models variadic calls through the platform C ABI",
+                    "use extern \"C\" for C varargs, or replace the varargs with fixed Ari parameters");
             }
             if (fn.is_extern) {
                 collect_extern_function_signature(fn);
@@ -4330,39 +4352,75 @@ private:
         return type_name(type);
     }
 
+    [[noreturn]] static void fail_abi_diagnostic(SourceLocation loc,
+                                                 std::string message,
+                                                 std::string note,
+                                                 std::string help) {
+        CompileError error(std::move(loc), std::move(message));
+        error.add_note(DiagnosticNote{std::nullopt, std::move(note), DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{std::nullopt, std::move(help), DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static std::string aggregate_abi_layout_note(const NonLocalAggregateAbi& abi) {
+        if (abi.size_bytes == 0 && abi.align_bytes == 0) return "";
+        return " Ari computed this aggregate as " + std::to_string(abi.size_bytes) +
+               " bytes with " + std::to_string(abi.align_bytes) + "-byte alignment.";
+    }
+
     void require_extern_c_direct_aggregate_abi(SourceLocation loc,
                                                const IrType& type,
                                                const std::string& context) const {
         NonLocalAggregateAbi abi = classify_nonlocal_aggregate_abi(type, target_);
         if (abi.kind == NonLocalAggregateAbiKind::NotAggregate) return;
         if (abi.reason == NonLocalAggregateAbiReason::TargetUnsupported) {
-            fail(loc,
-                 "extern C import for by-value " + context + " " + type_name(type) +
-                     " is currently supported only on 64-bit Unix targets; use ptr " +
-                     aggregate_pointer_abi_hint(type) + " for a stable ABI on target '" +
-                     target_.triple + "'");
+            fail_abi_diagnostic(
+                loc,
+                "extern C import for by-value " + context + " " + type_name(type) +
+                    " is currently supported only on 64-bit Unix targets; use ptr " +
+                    aggregate_pointer_abi_hint(type) + " for a stable ABI on target '" +
+                    target_.triple + "'",
+                "by-value aggregate C imports are checked against Ari's supported target ABI contract before lowering",
+                "pass ptr " + aggregate_pointer_abi_hint(type) +
+                    " or build this import for a supported 64-bit Unix target");
         }
         if (abi.reason == NonLocalAggregateAbiReason::LayoutUnavailable) {
-            fail(loc,
-                 "extern C import cannot compute layout for by-value " + context + " " +
-                     type_name(type) + "; use an explicit raw pointer ABI");
+            fail_abi_diagnostic(
+                loc,
+                "extern C import cannot compute layout for by-value " + context + " " +
+                    type_name(type) + "; use an explicit raw pointer ABI",
+                "by-value aggregate imports need a concrete Ari layout before Ari can match them to the C ABI",
+                "expose a fixed-layout C wrapper or pass an explicit raw pointer ABI");
         }
         if (abi.reason == NonLocalAggregateAbiReason::ZeroSized) {
-            fail(loc,
-                 "extern C import does not support zero-sized by-value " + context + " " +
-                     type_name(type) + "; use ptr " + aggregate_pointer_abi_hint(type));
+            fail_abi_diagnostic(
+                loc,
+                "extern C import does not support zero-sized by-value " + context + " " +
+                    type_name(type) + "; use ptr " + aggregate_pointer_abi_hint(type),
+                "zero-sized aggregate values do not have a stable C by-value representation",
+                "pass ptr " + aggregate_pointer_abi_hint(type) +
+                    " or remove the zero-sized value from the extern C boundary");
         }
         if (abi.kind == NonLocalAggregateAbiKind::Indirect) {
-            fail(loc,
-                 "extern C import for by-value " + context + " " + type_name(type) +
-                     " is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr " +
-                     aggregate_pointer_abi_hint(type));
+            fail_abi_diagnostic(
+                loc,
+                "extern C import for by-value " + context + " " + type_name(type) +
+                    " is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr " +
+                    aggregate_pointer_abi_hint(type),
+                "this aggregate exceeds Ari's direct extern C aggregate ABI subset." +
+                    aggregate_abi_layout_note(abi),
+                "pass ptr " + aggregate_pointer_abi_hint(type) +
+                    " or expose a smaller C wrapper type at the ABI boundary");
         }
         if (abi.kind == NonLocalAggregateAbiKind::Direct &&
             !is_repr_c_struct_import_type(type)) {
-            fail(loc,
-                 "extern C import for by-value aggregate " + context + " " + type_name(type) +
-                     " requires a @repr(C) struct; use an explicit C wrapper struct or raw pointer ABI");
+            fail_abi_diagnostic(
+                loc,
+                "extern C import for by-value aggregate " + context + " " + type_name(type) +
+                    " requires a @repr(C) struct; use an explicit C wrapper struct or raw pointer ABI",
+                "direct by-value C imports require Ari and C to agree on record layout",
+                "mark the struct @repr(C), pass ptr " + aggregate_pointer_abi_hint(type) +
+                    ", or use an explicit C wrapper type");
         }
     }
 
@@ -4423,16 +4481,38 @@ private:
         if (fn.meta) fail(fn.loc, "extern functions cannot be meta functions");
         if (!fn.generics.empty()) {
             if (is_ari_abi) {
-                fail(fn.loc, "extern \"ari\" builtin declarations cannot be generic");
+                fail_abi_diagnostic(
+                    fn.loc,
+                    "extern \"ari\" builtin declarations cannot be generic",
+                    "extern \"ari\" declarations bind directly to compiler-known builtin symbols with fixed concrete signatures",
+                    "declare a concrete extern \"ari\" signature or wrap generic behavior in a normal Ari function");
             }
-            fail(fn.loc, "extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C");
+            fail_abi_diagnostic(
+                fn.loc,
+                "extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C",
+                "C symbols have one concrete ABI signature and cannot be monomorphized by Ari at the foreign boundary",
+                "declare one concrete extern C symbol per ABI signature, or call a non-extern generic Ari wrapper");
         }
-        if (fn.has_body) fail(fn.loc, "extern functions cannot have a body");
+        if (fn.has_body) {
+            fail_abi_diagnostic(
+                fn.loc,
+                "extern functions cannot have a body",
+                "extern declarations describe symbols implemented outside this Ari module",
+                "remove the body and end the declaration with ';', or make this a normal Ari function");
+        }
         if (fn.is_variadic && !is_c_abi) {
-            fail(fn.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+            fail_abi_diagnostic(
+                fn.variadic_loc,
+                "variadic parameters are only supported on extern \"C\" functions",
+                "Ari only models variadic calls through the platform C ABI",
+                "use extern \"C\" for C varargs, or replace the varargs with fixed Ari parameters");
         }
         if (fn.is_variadic && fn.params.empty()) {
-            fail(fn.variadic_loc, "C variadic extern functions require at least one fixed parameter");
+            fail_abi_diagnostic(
+                fn.variadic_loc,
+                "C variadic extern functions require at least one fixed parameter",
+                "C varargs need a fixed part of the signature before the variadic arguments begin",
+                "add at least one named fixed parameter before '...'");
         }
         for (const auto& param : fn.params) {
             if (param.has_pattern) {
@@ -4451,7 +4531,11 @@ private:
                 fail(fn.loc, "unknown Ari builtin symbol '" + fn.extern_link_name + "'");
             }
         } else if (!fn.extern_link_name.empty() && !is_c_symbol_name(fn.extern_link_name)) {
-            fail(fn.loc, "invalid external link symbol '" + fn.extern_link_name + "'");
+            fail_abi_diagnostic(
+                fn.loc,
+                "invalid external link symbol '" + fn.extern_link_name + "'",
+                "extern C link names must be valid C symbol identifiers so the LLVM backend can reference them directly",
+                "use letters, digits, and underscores, and do not start the symbol name with a digit");
         }
 
         FunctionSig sig;
@@ -4470,7 +4554,11 @@ private:
             IrType param_type = resolve_executable_type(param.type);
             require_nonlocal_root_vector_storage(param.type.loc, param_type, "an extern function parameter");
             if (param_type.qualifier == TypeQualifier::Value && param_type.primitive == IrPrimitiveKind::Void) {
-                fail(param.type.loc, "extern parameter cannot have void type; use ptr c_void for void*");
+                fail_abi_diagnostic(
+                    param.type.loc,
+                    "extern parameter cannot have void type; use ptr c_void for void*",
+                    "plain void is only a return type marker; C void* is represented as an explicit pointer type",
+                    "change the parameter to ptr c_void for void* or remove it for a true void parameter list");
             }
             if (is_c_abi) {
                 require_extern_c_direct_aggregate_abi(param.type.loc, param_type, "parameter");
@@ -19135,7 +19223,11 @@ private:
                     if (function_found != functions_.end()) {
                         const FunctionSig& sig = function_found->second;
                         if (sig.is_variadic) {
-                            fail(expr.loc, "variadic extern function '" + expr.name + "' cannot be used as a function pointer value");
+                            fail_abi_diagnostic(
+                                expr.loc,
+                                "variadic extern function '" + expr.name + "' cannot be used as a function pointer value",
+                                "Ari can lower calls to C variadic functions, but the callable value has no fixed function-pointer signature",
+                                "wrap the variadic call in a fixed-signature Ari function and take a pointer to that wrapper");
                         }
                         require_function_access(expr.loc, sig, function_name);
                         if (sig.deprecated) {
@@ -25688,7 +25780,11 @@ private:
                 ? check_call_argument_for_parameter(*expr.args[i], sig.params[i], expr.name, sig, i)
                 : check_expr(*expr.args[i]);
             if (i >= sig.params.size() && !is_c_vararg_value_type(arg->type)) {
-                fail(expr.args[i]->loc, "C variadic argument type is not supported: " + type_name(arg->type));
+                fail_abi_diagnostic(
+                    expr.args[i]->loc,
+                    "C variadic argument type is not supported: " + type_name(arg->type),
+                    "Ari currently promotes only C-compatible scalar and pointer values through variadic extern calls",
+                    "pass a supported scalar or pointer value, or wrap aggregate data behind a pointer before the varargs boundary");
             } else if (i >= sig.params.size()) {
                 arg = promote_c_vararg(std::move(arg), expr.args[i]->loc);
             }

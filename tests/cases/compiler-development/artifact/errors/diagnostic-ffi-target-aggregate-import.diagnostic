@@ -1,4 +1,6 @@
-diagnostic error code=A0001 family=abi message="extern C import for by-value parameter Pair is currently supported only on 64-bit Unix targets; use ptr Pair for a stable ABI on target 'x86_64-pc-windows-msvc'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=A0001 family=abi message="extern C import for by-value parameter Pair is currently supported only on 64-bit Unix targets; use ptr Pair for a stable ABI on target 'x86_64-pc-windows-msvc'" sources=1 labels=1 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-c-target-aggregate-import.ari" display="tests/cases/ffi/errors/extern-c-target-aggregate-import.ari" bytes=203
   Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-c-target-aggregate-import.ari" line=7 column=39 end_line=7 end_column=43 byte_start=91 byte_end=95 message=""
   Snippet label=0 text="  --> tests/cases/ffi/errors/extern-c-target-aggregate-import.ari:7:39\n   |\n 7 | extern \"C\" fn ari_test_sum_pair(pair: Pair) -> i64;\n   |                                       ^^^^"
+  Note index=0 location=none message="by-value aggregate C imports are checked against Ari's supported target ABI contract before lowering"
+  Help index=0 location=none message="pass ptr Pair or build this import for a supported 64-bit Unix target"

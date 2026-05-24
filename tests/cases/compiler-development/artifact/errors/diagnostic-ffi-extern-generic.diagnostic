@@ -1,4 +1,6 @@
-diagnostic error code=A0001 family=abi message="extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=A0001 family=abi message="extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C" sources=1 labels=1 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-generic.ari" display="tests/cases/ffi/errors/extern-generic.ari" bytes=71
   Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-generic.ari" line=1 column=15 end_line=1 end_column=17 byte_start=14 byte_end=16 message=""
   Snippet label=0 text="  --> tests/cases/ffi/errors/extern-generic.ari:1:15\n   |\n 1 | extern \"C\" fn id[T](value: T) -> T;\n   |               ^^"
+  Note index=0 location=none message="C symbols have one concrete ABI signature and cannot be monomorphized by Ari at the foreign boundary"
+  Help index=0 location=none message="declare one concrete extern C symbol per ABI signature, or call a non-extern generic Ari wrapper"

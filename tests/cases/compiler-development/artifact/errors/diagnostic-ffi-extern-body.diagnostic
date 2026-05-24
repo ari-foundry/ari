@@ -1,4 +1,6 @@
-diagnostic error code=A0001 family=abi message="extern functions cannot have a body" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=A0001 family=abi message="extern functions cannot have a body" sources=1 labels=1 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-body.ari" display="tests/cases/ffi/errors/extern-body.ari" bytes=79
   Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-body.ari" line=1 column=29 end_line=1 end_column=30 byte_start=28 byte_end=29 message=""
   Snippet label=0 text="  --> tests/cases/ffi/errors/extern-body.ari:1:29\n   |\n 1 | extern \"C\" fn nope() -> i64 {\n   |                             ^"
+  Note index=0 location=none message="extern declarations describe symbols implemented outside this Ari module"
+  Help index=0 location=none message="remove the body and end the declaration with ';', or make this a normal Ari function"

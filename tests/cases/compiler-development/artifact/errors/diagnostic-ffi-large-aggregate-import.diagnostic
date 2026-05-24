@@ -1,4 +1,6 @@
-diagnostic error code=A0001 family=abi message="extern C import for by-value parameter Wide is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr Wide" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=A0001 family=abi message="extern C import for by-value parameter Wide is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr Wide" sources=1 labels=1 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/ffi/errors/extern-c-large-aggregate-import.ari" display="tests/cases/ffi/errors/extern-c-large-aggregate-import.ari" bytes=209
   Label index=0 role=primary source_id=0 source="tests/cases/ffi/errors/extern-c-large-aggregate-import.ari" line=8 column=41 end_line=8 end_column=45 byte_start=96 byte_end=100 message=""
   Snippet label=0 text="  --> tests/cases/ffi/errors/extern-c-large-aggregate-import.ari:8:41\n   |\n 8 | extern \"C\" fn ari_test_take_wide(value: Wide) -> i64;\n   |                                         ^^^^"
+  Note index=0 location=none message="this aggregate exceeds Ari's direct extern C aggregate ABI subset. Ari computed this aggregate as 24 bytes with 8-byte alignment."
+  Help index=0 location=none message="pass ptr Wide or expose a smaller C wrapper type at the ABI boundary"

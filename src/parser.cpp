@@ -274,6 +274,32 @@ private:
         throw CompileError(std::move(loc), message);
     }
 
+    [[noreturn]] static void fail_extern_abi(SourceLocation loc, const std::string& abi_name) {
+        CompileError error(std::move(loc), "extern ABI must be \"C\" or \"ari\"");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "Ari currently accepts only the C ABI for foreign imports and the ari ABI for compiler-known builtins",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "change extern \"" + abi_name + "\" to extern \"C\" or extern \"ari\"",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_extern_body(SourceLocation loc) {
+        CompileError error(std::move(loc), "extern functions cannot have a body");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "extern declarations describe symbols implemented outside this Ari module",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove the body and end the declaration with ';', or make this a normal Ari function",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     static void add_location_label_if_valid(CompileError& error,
                                             SourceLocation loc,
                                             const std::string& message) {
@@ -650,14 +676,14 @@ private:
         if (check(TokenKind::String)) {
             Token abi = tokens_[pos_++];
             if (abi.text != "C" && abi.text != "ari") {
-                fail(abi.loc, "extern ABI must be \"C\" or \"ari\"");
+                fail_extern_abi(abi.loc, abi.text);
             }
             abi_name = abi.text;
         }
         expect(TokenKind::KwFn, "expected fn after extern ABI");
         FunctionDecl fn = parse_function(false, false, public_decl, std::move(attributes));
         if (check(TokenKind::LBrace)) {
-            fail(peek().loc, "extern functions cannot have a body");
+            fail_extern_body(peek().loc);
         }
         fn.is_extern = true;
         fn.extern_abi = std::move(abi_name);

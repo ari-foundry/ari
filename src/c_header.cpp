@@ -12,6 +12,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ari {
@@ -408,6 +409,22 @@ std::string pointer_abi_hint(const IrType& type) {
     return type_name(type);
 }
 
+[[noreturn]] void fail_c_header_abi(SourceLocation loc,
+                                    std::string message,
+                                    std::string note,
+                                    std::string help) {
+    CompileError error(std::move(loc), std::move(message));
+    error.add_note(DiagnosticNote{std::nullopt, std::move(note), DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{std::nullopt, std::move(help), DiagnosticNoteKind::Help});
+    throw error;
+}
+
+std::string c_header_aggregate_abi_layout_note(const NonLocalAggregateAbi& abi) {
+    if (abi.size_bytes == 0 && abi.align_bytes == 0) return "";
+    return " Ari computed this aggregate as " + std::to_string(abi.size_bytes) +
+           " bytes with " + std::to_string(abi.align_bytes) + "-byte alignment.";
+}
+
 std::string c_function_value_type_name(const IrType& type,
                                        const CRecordNames& c_record_names,
                                        const CConcreteRecordNames& c_concrete_record_names,
@@ -667,25 +684,43 @@ void require_direct_aggregate_abi(SourceLocation loc,
     NonLocalAggregateAbi abi = classify_nonlocal_aggregate_abi(type, target);
     if (abi.kind == NonLocalAggregateAbiKind::NotAggregate) return;
     if (abi.reason == NonLocalAggregateAbiReason::TargetUnsupported) {
-        throw CompileError(where(loc) + ": C header emission for by-value " + context + " " +
-                           type_name(type) +
-                           " is currently supported only on 64-bit Unix targets; use ptr " +
-                           pointer_abi_hint(type) + " for a stable ABI on target '" + target.triple + "'");
+        fail_c_header_abi(
+            loc,
+            "C header emission for by-value " + context + " " + type_name(type) +
+                " is currently supported only on 64-bit Unix targets; use ptr " +
+                pointer_abi_hint(type) + " for a stable ABI on target '" + target.triple + "'",
+            "C header generation emits Ari's supported C ABI contract and cannot promise target-specific aggregate calling rules for this target",
+            "pass ptr " + pointer_abi_hint(type) +
+                " or emit the header for a supported 64-bit Unix target");
     }
     if (abi.reason == NonLocalAggregateAbiReason::LayoutUnavailable) {
-        throw CompileError(where(loc) + ": C header emission cannot compute layout for by-value " +
-                           context + " " + type_name(type) + "; use an explicit raw pointer ABI");
+        fail_c_header_abi(
+            loc,
+            "C header emission cannot compute layout for by-value " + context + " " +
+                type_name(type) + "; use an explicit raw pointer ABI",
+            "header emission needs a concrete Ari layout before it can spell a by-value C prototype",
+            "expose a fixed-layout C wrapper or pass an explicit raw pointer ABI");
     }
     if (abi.reason == NonLocalAggregateAbiReason::ZeroSized) {
-        throw CompileError(where(loc) + ": C header emission does not support zero-sized by-value " +
-                           context + " " + type_name(type) + "; use ptr " + pointer_abi_hint(type));
+        fail_c_header_abi(
+            loc,
+            "C header emission does not support zero-sized by-value " + context + " " +
+                type_name(type) + "; use ptr " + pointer_abi_hint(type),
+            "zero-sized aggregate values do not have a stable C by-value representation",
+            "pass ptr " + pointer_abi_hint(type) +
+                " or keep the zero-sized value out of exported C prototypes");
     }
     if (abi.kind == NonLocalAggregateAbiKind::Direct) return;
     if (abi.kind == NonLocalAggregateAbiKind::Indirect) {
-        throw CompileError(where(loc) + ": C header emission for by-value " + context + " " +
-                           type_name(type) +
-                           " is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr " +
-                           pointer_abi_hint(type));
+        fail_c_header_abi(
+            loc,
+            "C header emission for by-value " + context + " " + type_name(type) +
+                " is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr " +
+                pointer_abi_hint(type),
+            "this aggregate exceeds Ari's direct C header aggregate ABI subset." +
+                c_header_aggregate_abi_layout_note(abi),
+            "pass ptr " + pointer_abi_hint(type) +
+                " or expose a smaller C wrapper type at the exported ABI boundary");
     }
 }
 
