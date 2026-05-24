@@ -180,7 +180,7 @@ private:
                     break;
             }
             if ((kind == TokenKind::Semicolon || kind == TokenKind::RBrace) &&
-                depth == 0 &&
+                (depth == 0 || kind == TokenKind::RBrace) &&
                 is_top_level_start()) {
                 return;
             }
@@ -213,7 +213,7 @@ private:
                     break;
             }
             if ((kind == TokenKind::Semicolon || kind == TokenKind::RBrace) &&
-                depth == 0 &&
+                (depth == 0 || kind == TokenKind::RBrace) &&
                 (check(TokenKind::RBrace) || is_top_level_start())) {
                 return;
             }

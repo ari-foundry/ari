@@ -1,0 +1,7 @@
+enum Broken {
+  Some(i64
+}
+
+fn after() -> i64 {
+  return 7;
+}
