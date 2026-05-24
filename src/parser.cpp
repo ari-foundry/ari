@@ -2667,6 +2667,7 @@ private:
             }
 
             if (match(TokenKind::LParen)) {
+                Token open = tokens_[pos_ - 1];
                 SourceLocation call_loc = expr->loc;
                 std::string call_name;
                 ExprReceiverTypeArgs receiver_type_args;
@@ -2685,7 +2686,14 @@ private:
                         args.push_back(parse_expression());
                     } while (match(TokenKind::Comma));
                 }
-                expect(TokenKind::RParen, "expected ) after call arguments");
+                if (!match(TokenKind::RParen)) {
+                    fail_expected_closing_delimiter(
+                        peek().loc,
+                        open.loc,
+                        "expected ) after call arguments",
+                        "call argument list starts here",
+                        ")");
+                }
                 auto call = make_ast_call_expr(call_loc, std::move(call_name), std::move(operand), std::move(args));
                 set_expr_receiver_type_args(*call, std::move(receiver_type_args));
                 set_expr_type_args(*call, std::move(type_args));
@@ -2696,7 +2704,14 @@ private:
             if (match(TokenKind::LBracket)) {
                 Token open = tokens_[pos_ - 1];
                 ExprPtr index = parse_expression();
-                expect(TokenKind::RBracket, "expected ] after index expression");
+                if (!match(TokenKind::RBracket)) {
+                    fail_expected_closing_delimiter(
+                        peek().loc,
+                        open.loc,
+                        "expected ] after index expression",
+                        "index expression starts here",
+                        "]");
+                }
                 expr = make_ast_index_expr(open.loc, std::move(expr), std::move(index));
                 continue;
             }
@@ -2732,13 +2747,21 @@ private:
                     method_type_args = take_expr_type_args(type_arg_holder);
                 }
                 if (match(TokenKind::LParen)) {
+                    Token open = tokens_[pos_ - 1];
                     std::vector<ExprPtr> args;
                     if (!check(TokenKind::RParen)) {
                         do {
                             args.push_back(parse_expression());
                         } while (match(TokenKind::Comma));
                     }
-                    expect(TokenKind::RParen, "expected ) after method call arguments");
+                    if (!match(TokenKind::RParen)) {
+                        fail_expected_closing_delimiter(
+                            peek().loc,
+                            open.loc,
+                            "expected ) after method call arguments",
+                            "method call argument list starts here",
+                            ")");
+                    }
                     expr = make_ast_method_call_expr(
                         field.loc,
                         std::move(expr),
@@ -2807,11 +2830,25 @@ private:
                                 elements.push_back(parse_expression());
                             } while (match(TokenKind::Comma));
                         }
-                        expect(TokenKind::RParen, "expected ) after tuple literal");
+                        if (!match(TokenKind::RParen)) {
+                            fail_expected_closing_delimiter(
+                                peek().loc,
+                                token.loc,
+                                "expected ) after tuple literal",
+                                "tuple literal starts here",
+                                ")");
+                        }
                         if (elements.size() == 1) fail(token.loc, "single-element tuple literals are not supported");
                         return make_ast_tuple_expr(token.loc, std::move(elements));
                     }
-                    expect(TokenKind::RParen, "expected ) after expression");
+                    if (!match(TokenKind::RParen)) {
+                        fail_expected_closing_delimiter(
+                            peek().loc,
+                            token.loc,
+                            "expected ) after expression",
+                            "grouped expression starts here",
+                            ")");
+                    }
                     return expr;
                 }
             case TokenKind::LBracket:
@@ -2822,7 +2859,14 @@ private:
                             elements.push_back(parse_expression());
                         } while (match(TokenKind::Comma));
                     }
-                    expect(TokenKind::RBracket, "expected ] after array/vector literal");
+                    if (!match(TokenKind::RBracket)) {
+                        fail_expected_closing_delimiter(
+                            peek().loc,
+                            token.loc,
+                            "expected ] after array/vector literal",
+                            "array/vector literal starts here",
+                            "]");
+                    }
                     return make_ast_vector_expr(token.loc, std::move(elements));
                 }
             case TokenKind::LBrace:

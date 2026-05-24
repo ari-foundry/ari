@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=256
+CompilerArtifactFixtures version=1 group=all entries=258
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -127,6 +127,8 @@ CompilerArtifactFixtures version=1 group=all entries=256
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-malformed-struct-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-mismatched-token-tree.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-mismatched-token-tree.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-missing-call-close.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-call-close.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-missing-function-body.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-function-body.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-top-level.ari
