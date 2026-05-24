@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/structs/errors/struct-literal-field-type.ari" display="tests/cases/structs/errors/struct-literal-field-type.ari" bytes=100
-  Label index=0 role=primary source_id=0 source="tests/cases/structs/errors/struct-literal-field-type.ari" line=6 column=15 end_line=6 end_column=20 byte_start=61 byte_end=66 message=""
-  Snippet label=0 text="  --> tests/cases/structs/errors/struct-literal-field-type.ari:6:15\n   |\n 6 |   let point = Point { x: true };\n   |               ^^^^^"
+  Label index=0 role=primary source_id=0 source="tests/cases/structs/errors/struct-literal-field-type.ari" line=6 column=26 end_line=6 end_column=30 byte_start=72 byte_end=76 message=""
+  Snippet label=0 text="  --> tests/cases/structs/errors/struct-literal-field-type.ari:6:26\n   |\n 6 |   let point = Point { x: true };\n   |                          ^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/structs/errors/struct-literal-field-type.ari" line=2 column=3 end_line=2 end_column=4 byte_start=17 byte_end=18 message="field 'x' expects i64"
+  Snippet label=1 text="  --> tests/cases/structs/errors/struct-literal-field-type.ari:2:3\n   |\n 2 |   x: i64,\n   |   ^"
+  Note index=0 location=none message="struct literal field values are checked against declared field types after generic substitution"
+  Help index=0 location=none message="pass a value of type i64 for field 'x'"

@@ -11932,12 +11932,15 @@ private:
         for (std::size_t i = 0; i < field_names.size(); ++i) {
             const std::string& field_name = field_names[i];
             if (!values.emplace(field_name, expr.args[i].get()).second) {
-                fail(expr.loc, "duplicate field '" + field_name + "' in struct literal");
+                fail_struct_literal_duplicate_field(
+                    expr.args[i]->loc,
+                    literal_type.name,
+                    field_name,
+                    values[field_name]->loc);
             }
             if (std::find(literal_type.field_names.begin(), literal_type.field_names.end(), field_name) ==
                 literal_type.field_names.end()) {
-                fail(expr.loc,
-                     "extra field '" + field_name + "' in struct literal for '" + literal_type.name + "'");
+                fail_struct_literal_extra_field(expr.args[i]->loc, literal_type, field_name);
             }
         }
 
@@ -11947,7 +11950,7 @@ private:
             const std::string& field_name = expected.field_names[i];
             auto found = values.find(field_name);
             if (found == values.end()) {
-                fail(expr.loc, "missing field '" + field_name + "' in struct literal for '" + expected.name + "'");
+                fail_struct_literal_missing_field(expr.loc, expected, field_name);
             }
             elements.push_back(evaluate_constant_expr(*found->second, expected.field_types[i]));
         }
@@ -18488,7 +18491,7 @@ private:
         for (std::size_t i = 0; i < type.field_names.size(); ++i) {
             if (type.field_names[i] == field_name) return i;
         }
-        fail(loc, "struct '" + type.name + "' has no field '" + field_name + "'");
+        fail_unknown_struct_field(loc, type, field_name);
     }
 
     bool is_struct_generic_name(const StructInfo& info, const std::string& name) const {
@@ -18931,7 +18934,7 @@ private:
         for (std::size_t i = 0; i < field_names.size(); ++i) {
             const std::string& field_name = field_names[i];
             if (!values.emplace(field_name, expr.args[i].get()).second) {
-                fail(expr.loc, "duplicate field '" + field_name + "' in struct literal");
+                fail_struct_literal_duplicate_field(expr.args[i]->loc, info.name, field_name, values[field_name]->loc);
             }
             bool known_field = false;
             for (const auto& field : info.fields) {
@@ -18941,7 +18944,7 @@ private:
                 }
             }
             if (!known_field) {
-                fail(expr.loc, "extra field '" + field_name + "' in struct literal for '" + info.name + "'");
+                fail_struct_literal_extra_field(expr.args[i]->loc, info, field_name);
             }
         }
 
@@ -18971,7 +18974,7 @@ private:
             const auto& field = info.fields[i];
             auto found = values.find(field.name);
             if (found == values.end()) {
-                fail(expr.loc, "missing field '" + field.name + "' in struct literal for '" + info.name + "'");
+                fail_struct_literal_missing_field(expr.loc, info, field);
             }
             const IrType* field_expected = has_struct_type ? &struct_type.field_types[i] : nullptr;
             std::size_t field_borrow_mark = temporary_borrow_mark();
@@ -19076,7 +19079,12 @@ private:
         for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
             IrExprPtr value = std::move(lowered_values[i]);
             coerce_expr_to_expected(*value, struct_type.field_types[i]);
-            require_assignable(expr.loc, struct_type.field_types[i], value->type);
+            require_struct_literal_field_assignable(
+                value->loc,
+                info,
+                i,
+                struct_type.field_types[i],
+                value->type);
             require_plain_prelude_aggregate_element(expr.loc, value->type, "struct");
             if (!std_zone_handle_field_allows_zone_pointer(i)) {
                 require_no_zone_pointer_escape(value->loc, *value, "struct literal");
@@ -26218,6 +26226,178 @@ private:
         const IrType& expected = info.payloads[payload_index];
         if (is_assignable_for_diagnostic(expected, actual)) return;
         fail_enum_payload_type(std::move(loc), info, payload_index, actual);
+    }
+
+    static std::string struct_field_names_text(const std::vector<std::string>& field_names) {
+        if (field_names.empty()) return "<no fields>";
+        std::string text;
+        for (std::size_t i = 0; i < field_names.size(); ++i) {
+            if (i != 0) text += ", ";
+            text += "'";
+            text += field_names[i];
+            text += "'";
+        }
+        return text;
+    }
+
+    static std::string struct_field_names_text(const StructInfo& info) {
+        std::vector<std::string> field_names;
+        field_names.reserve(info.fields.size());
+        for (const auto& field : info.fields) field_names.push_back(field.name);
+        return struct_field_names_text(field_names);
+    }
+
+    [[noreturn]] static void fail_struct_literal_duplicate_field(SourceLocation loc,
+                                                                 const std::string& struct_name,
+                                                                 const std::string& field_name,
+                                                                 SourceLocation previous_loc) {
+        CompileError error(std::move(loc), "duplicate field '" + field_name + "' in struct literal");
+        add_location_label_if_valid(
+            error,
+            previous_loc,
+            "field '" + field_name + "' was already provided here");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "struct literal fields must be provided at most once",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove the duplicate '" + field_name + "' entry from the '" + struct_name + "' literal",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_struct_literal_extra_field(SourceLocation loc,
+                                                             const StructInfo& info,
+                                                             const std::string& field_name) {
+        CompileError error(
+            std::move(loc),
+            "extra field '" + field_name + "' in struct literal for '" + info.name + "'");
+        add_location_label_if_valid(
+            error,
+            info.loc,
+            "struct '" + info.name + "' declares fields " + struct_field_names_text(info));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "struct literal fields must match the struct declaration",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "remove field '" + field_name + "' or add it to struct '" + info.name + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_struct_literal_extra_field(SourceLocation loc,
+                                                             const IrType& type,
+                                                             const std::string& field_name) {
+        CompileError error(
+            std::move(loc),
+            "extra field '" + field_name + "' in struct literal for '" + type.name + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "struct literal fields must match the struct declaration",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "expected fields are " + struct_field_names_text(type.field_names),
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_struct_literal_missing_field(SourceLocation loc,
+                                                               const StructInfo& info,
+                                                               const StructInfo::Field& field) {
+        CompileError error(
+            std::move(loc),
+            "missing field '" + field.name + "' in struct literal for '" + info.name + "'");
+        add_location_label_if_valid(
+            error,
+            field.loc,
+            "field '" + field.name + "' is declared here");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "struct literals must initialize every declared field",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "provide a value for field '" + field.name + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_struct_literal_missing_field(SourceLocation loc,
+                                                               const IrType& type,
+                                                               const std::string& field_name) {
+        CompileError error(
+            std::move(loc),
+            "missing field '" + field_name + "' in struct literal for '" + type.name + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "struct literals must initialize every declared field",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "provide a value for field '" + field_name + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_struct_literal_field_type(SourceLocation loc,
+                                                            const StructInfo& info,
+                                                            std::size_t field_index,
+                                                            const IrType& expected,
+                                                            const IrType& actual) {
+        std::string field_name = field_index < info.fields.size() ? info.fields[field_index].name : "<unknown>";
+        CompileError error(
+            std::move(loc),
+            "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
+        if (field_index < info.fields.size()) {
+            add_location_label_if_valid(
+                error,
+                info.fields[field_index].loc,
+                "field '" + field_name + "' expects " + type_name(expected));
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "struct literal field values are checked against declared field types after generic substitution",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass a value of type " + type_name(expected) + " for field '" + field_name + "'",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void require_struct_literal_field_assignable(SourceLocation loc,
+                                                        const StructInfo& info,
+                                                        std::size_t field_index,
+                                                        const IrType& expected,
+                                                        const IrType& actual) {
+        if (is_assignable_for_diagnostic(expected, actual)) return;
+        fail_struct_literal_field_type(std::move(loc), info, field_index, expected, actual);
+    }
+
+    [[noreturn]] void fail_unknown_struct_field(SourceLocation loc,
+                                                const IrType& type,
+                                                const std::string& field_name) const {
+        CompileError error(std::move(loc), "struct '" + type.name + "' has no field '" + field_name + "'");
+        auto found = structs_.find(type.name);
+        if (found != structs_.end()) {
+            add_location_label_if_valid(
+                error,
+                found->second.loc,
+                "struct '" + found->second.name + "' declares fields " + struct_field_names_text(found->second));
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "field access and struct patterns must name a declared field",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "use one of " + struct_field_names_text(type.field_names),
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     static std::string impl_method_candidate_label(const ImplMethodInfo& info) {

@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="duplicate field 'x' in struct literal" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="duplicate field 'x' in struct literal" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/structs/errors/struct-literal-duplicate-field.ari" display="tests/cases/structs/errors/struct-literal-duplicate-field.ari" bytes=119
-  Label index=0 role=primary source_id=0 source="tests/cases/structs/errors/struct-literal-duplicate-field.ari" line=7 column=15 end_line=7 end_column=20 byte_start=71 byte_end=76 message=""
-  Snippet label=0 text="  --> tests/cases/structs/errors/struct-literal-duplicate-field.ari:7:15\n   |\n 7 |   let point = Point { x: 1, x: 2, y: 3 };\n   |               ^^^^^"
+  Label index=0 role=primary source_id=0 source="tests/cases/structs/errors/struct-literal-duplicate-field.ari" line=7 column=32 end_line=7 end_column=33 byte_start=88 byte_end=89 message=""
+  Snippet label=0 text="  --> tests/cases/structs/errors/struct-literal-duplicate-field.ari:7:32\n   |\n 7 |   let point = Point { x: 1, x: 2, y: 3 };\n   |                                ^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/structs/errors/struct-literal-duplicate-field.ari" line=7 column=26 end_line=7 end_column=27 byte_start=82 byte_end=83 message="field 'x' was already provided here"
+  Snippet label=1 text="  --> tests/cases/structs/errors/struct-literal-duplicate-field.ari:7:26\n   |\n 7 |   let point = Point { x: 1, x: 2, y: 3 };\n   |                          ^"
+  Note index=0 location=none message="struct literal fields must be provided at most once"
+  Help index=0 location=none message="remove the duplicate 'x' entry from the 'Point' literal"
