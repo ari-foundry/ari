@@ -461,7 +461,18 @@ private:
     }
 
     void require_semicolon(const std::string& message) {
-        expect(TokenKind::Semicolon, message);
+        if (match(TokenKind::Semicolon)) return;
+        const Token& token = peek();
+        CompileError error(token.loc, message);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "this statement or declaration must be terminated before the next token is parsed",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "insert ; before " + token_description(token),
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     std::string current_module_name() const {
