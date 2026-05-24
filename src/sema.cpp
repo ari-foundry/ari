@@ -10572,7 +10572,12 @@ private:
             std::size_t borrow_mark = temporary_borrow_mark();
             IrExprPtr value = check_expr_with_expected(*rhs, target_type);
             coerce_expr_to_expected(*value, target_type);
-            require_assignable(rhs->loc, target_type, value->type);
+            require_assignment_assignable(
+                rhs->loc,
+                assign_target->loc,
+                "assignment target",
+                target_type,
+                value->type);
             if (!assignment_target_allows_zone_pointer_storage(*target)) {
                 require_no_zone_pointer_escape(rhs->loc, *value, "aggregate or raw-pointer storage");
             }
@@ -10593,7 +10598,12 @@ private:
         IrExprPtr value = check_expr_with_expected(*rhs, target.type);
         widen_vector_storage_for_assignment(target, *value);
         coerce_expr_to_expected(*value, target.type);
-        require_assignable(rhs->loc, target.type, value->type);
+        require_assignment_assignable(
+            rhs->loc,
+            target.loc,
+            "binding '" + assign_name + "'",
+            target.type,
+            value->type);
         VectorKnownLength assigned_vector_length =
             vector_known_length_from_source_expr(target.type, *rhs, *value);
         if (contains_borrow_type(target.type)) {
@@ -26263,6 +26273,38 @@ private:
             param_index,
             expected,
             actual);
+    }
+
+    [[noreturn]] static void fail_assignment_type(SourceLocation loc,
+                                                  SourceLocation target_loc,
+                                                  const std::string& target_label,
+                                                  const IrType& expected,
+                                                  const IrType& actual) {
+        CompileError error(
+            std::move(loc),
+            "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
+        add_location_label_if_valid(
+            error,
+            target_loc,
+            target_label + " expects " + type_name(expected));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "assignment values are checked against the target type after expression coercions",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "assign a value of type " + type_name(expected) + " or change the target type",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void require_assignment_assignable(SourceLocation loc,
+                                              SourceLocation target_loc,
+                                              const std::string& target_label,
+                                              const IrType& expected,
+                                              const IrType& actual) {
+        if (is_assignable_for_diagnostic(expected, actual)) return;
+        fail_assignment_type(std::move(loc), std::move(target_loc), target_label, expected, actual);
     }
 
     static Span enum_payload_declaration_span(const EnumCaseInfo& info, std::size_t payload_index) {
