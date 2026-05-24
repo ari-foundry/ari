@@ -34,7 +34,12 @@ ordinary production language/compiler work, not bootstrap-only shortcuts:
 4. Tooling source and diagnostics: source maps, spans, labels, notes, and
    golden diagnostic renderers in a compiler/tooling package outside runtime
    `std`.
-5. Bootstrap artifact discipline: focused lexer/parser/report tests first,
+5. Structural capability parameters: explore a lightweight parameter form such
+   as `fn save(x: has serialize() -> String)` for one-off method requirements
+   that do not deserve a named trait yet. This is roadmap-only and must not add
+   an `interface` keyword, implicit dynamic dispatch, or a bypass around normal
+   trait-bound diagnostics.
+6. Bootstrap artifact discipline: focused lexer/parser/report tests first,
    then ordered stage comparisons for syntax, HIR, typed IR, LLVM text, and
    executable behavior.
 
