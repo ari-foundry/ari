@@ -22357,10 +22357,31 @@ private:
             if (self_found == substitutions.end()) continue;
             GenericTraitBound bound = resolve_generic_trait_bound(generic);
             if (!type_implements_trait(bound.trait_name, bound.trait_args, self_found->second)) {
-                fail(loc,
-                     "type " + type_name(self_found->second) + " does not implement trait '" +
-                         trait_application_display(bound.trait_name, bound.trait_args) +
-                         "' required by generic parameter '" + generic.name + "'");
+                const std::string trait_display =
+                    trait_application_display(bound.trait_name, bound.trait_args);
+                CompileError error(
+                    loc,
+                    "type " + type_name(self_found->second) + " does not implement trait '" +
+                        trait_display + "' required by generic parameter '" + generic.name + "'");
+                Span bound_span = span_from_location(generic.constraint.loc);
+                if (span_has_source(bound_span) && span_has_valid_order(bound_span)) {
+                    error.add_label(DiagnosticLabel{
+                        bound_span,
+                        "generic parameter '" + generic.name + "' requires trait '" + trait_display + "'",
+                        false});
+                }
+                error.add_note(DiagnosticNote{
+                    std::nullopt,
+                    "generic function specialization checks trait bounds after type arguments are known",
+                    DiagnosticNoteKind::Note});
+                error.add_note(DiagnosticNote{
+                    std::nullopt,
+                    "implement trait '" + trait_display + "' for " + type_name(self_found->second) +
+                        " or call this function with a type that already satisfies the bound",
+                    DiagnosticNoteKind::Help});
+                current_type_substitutions_ = std::move(previous_substitutions);
+                current_module_name_ = previous_module;
+                throw error;
             }
         }
         current_type_substitutions_ = std::move(previous_substitutions);
