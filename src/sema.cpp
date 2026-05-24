@@ -11669,7 +11669,7 @@ private:
     Flow check_if(const Stmt& stmt, IrStmt& lowered) {
         if (stmt.has_condition_pattern) return check_if_let(stmt, lowered);
         lowered.condition = check_expr(*stmt.condition);
-        coerce_condition_to_bool(stmt.loc, lowered.condition);
+        coerce_condition_to_bool(stmt.loc, "if statement", lowered.condition);
         std::optional<bool> literal_condition = literal_bool_condition_value(*lowered.condition);
         StateSnapshot branch_input = snapshot_states();
         std::vector<LoopInfo> loop_input = loops_;
@@ -15971,7 +15971,7 @@ private:
 
     Flow check_while(const Stmt& stmt, IrStmt& lowered) {
         lowered.condition = check_expr(*stmt.condition);
-        coerce_condition_to_bool(stmt.loc, lowered.condition);
+        coerce_condition_to_bool(stmt.loc, "while loop", lowered.condition);
         const std::optional<bool> known_condition = known_bool_condition_value(*lowered.condition);
         if (known_condition) {
             lowered.condition = make_bool_literal_expr(stmt.loc, *known_condition);
@@ -17462,7 +17462,7 @@ private:
         }
 
         lowered.condition = check_expr(*stmt.condition);
-        coerce_condition_to_bool(stmt.loc, lowered.condition);
+        coerce_condition_to_bool(stmt.loc, "init-while loop", lowered.condition);
         const std::optional<bool> known_condition = known_bool_condition_value(*lowered.condition);
         if (known_condition) {
             lowered.condition = make_bool_literal_expr(stmt.loc, *known_condition);
@@ -20226,7 +20226,7 @@ private:
         (void)lowered;
 
         IrExprPtr condition = check_expr(*expr_if_condition(expr));
-        coerce_condition_to_bool(expr.loc, condition);
+        coerce_condition_to_bool(expr.loc, "if expression", condition);
 
         StateSnapshot branch_input = snapshot_states();
         CheckedExprBlock then_arm = check_value_block(
@@ -26460,18 +26460,43 @@ private:
         }
     }
 
-    static void coerce_condition_to_bool(SourceLocation loc, IrExprPtr& expr) {
+    [[noreturn]] static void fail_condition_type(SourceLocation loc,
+                                                 SourceLocation context_loc,
+                                                 const std::string& context,
+                                                 const IrType& actual) {
+        CompileError error(
+            std::move(loc),
+            "condition must be bool or integer-convertible, got " + type_name(actual));
+        add_location_label_if_valid(
+            error,
+            std::move(context_loc),
+            context + " expects a condition value");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "conditions accept bool values directly or integer values by comparing them with zero",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "compare this value explicitly or convert it to bool before using it as a condition",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void coerce_condition_to_bool(SourceLocation context_loc,
+                                         const std::string& context,
+                                         IrExprPtr& expr) {
+        SourceLocation condition_loc = expr->loc;
         if (expr->type.qualifier == TypeQualifier::Value && expr->type.primitive == IrPrimitiveKind::Bool) return;
         if (!is_value_integer_type(expr->type)) {
-            require_boolish(loc, expr->type);
+            fail_condition_type(condition_loc, std::move(context_loc), context, expr->type);
         }
 
         auto condition = std::make_unique<IrExpr>();
         condition->kind = IrExprKind::Binary;
-        condition->loc = loc;
+        condition->loc = condition_loc;
         condition->op = IrBinaryOp::Ne;
-        condition->type = bool_type(loc);
-        set_ir_expr_right(*condition, make_integer_zero(loc, expr->type));
+        condition->type = bool_type(condition_loc);
+        set_ir_expr_right(*condition, make_integer_zero(condition_loc, expr->type));
         set_ir_expr_left(*condition, std::move(expr));
         expr = std::move(condition);
     }
