@@ -3931,6 +3931,40 @@ private:
         return payloads;
     }
 
+    [[noreturn]] static void fail_ownership_enum_payload_layout(SourceLocation loc,
+                                                                const IrType& payload_type) {
+        CompileError error(
+            std::move(loc),
+            "ownership-carrying aggregate enum payloads are not supported yet; use a direct own i64/u64 payload or store the owner outside the enum payload, got " +
+                type_name(payload_type));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "aggregate enum payload layout can drop only direct owner words today; nested owner-bearing aggregates would need per-field active-payload drop state",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "move the owning value into a direct enum payload, keep the owner in a surrounding struct, or drop it before constructing the enum",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_borrow_enum_payload_layout(SourceLocation loc,
+                                                             const IrType& payload_type) {
+        CompileError error(
+            std::move(loc),
+            "borrow-carrying aggregate enum payloads are not supported yet; store the borrow outside the enum payload, got " +
+                type_name(payload_type));
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "aggregate enum payload layout does not currently preserve borrow lifetime state through nested payload aggregates",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "store the borrowed view beside the enum or pass it directly to the code that consumes the active case",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void note_enum_payload_layout_requirement(
         SourceLocation loc,
         const IrType& payload_type,
@@ -3948,14 +3982,10 @@ private:
             !unresolved_generic_payload &&
             !is_aggregate_enum_payload_type(payload_type)) {
             if (is_owner_type(payload_type)) {
-                fail(loc,
-                     "ownership-carrying aggregate enum payloads are not supported yet; use a direct own i64/u64 payload or store the owner outside the enum payload, got " +
-                         type_name(payload_type));
+                fail_ownership_enum_payload_layout(loc, payload_type);
             }
             if (contains_borrow_type(payload_type)) {
-                fail(loc,
-                     "borrow-carrying aggregate enum payloads are not supported yet; store the borrow outside the enum payload, got " +
-                         type_name(payload_type));
+                fail_borrow_enum_payload_layout(loc, payload_type);
             }
             fail(loc,
                  "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, owned i64/u64, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum values, got " +
