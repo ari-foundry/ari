@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="type mismatch: expected Box[Box[Token]], got Box[Box[Span]]" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="type mismatch: expected Box[Box[Token]], got Box[Box[Span]]" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari" display="tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari" bytes=320
   Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari" line=21 column=17 end_line=21 end_column=22 byte_start=310 byte_end=315 message=""
   Snippet label=0 text="  --> tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari:21:17\n    |\n 21 |   return accept(value);\n    |                 ^^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari" line=13 column=18 end_line=13 end_column=21 byte_start=110 byte_end=113 message="parameter 1 'value' of 'accept' expects Box[Box[Token]]"
+  Snippet label=1 text="  --> tests/cases/generics/errors/generic-aggregate-nested-mismatch.ari:13:18\n    |\n 13 | fn accept(value: Box[Box[Token]]) -> i64 {\n    |                  ^^^"
+  Note index=0 location=none message="function call arguments are checked against declared parameter types after generic substitution"
+  Help index=0 location=none message="pass a value of type Box[Box[Token]] for argument 1"

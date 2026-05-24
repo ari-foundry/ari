@@ -76,6 +76,8 @@ namespace ari {
 
 struct FunctionSig {
     std::vector<IrType> params;
+    std::vector<SourceLocation> param_locs;
+    std::vector<std::string> param_names;
     IrType result;
     std::optional<std::size_t> borrow_return_param_index;
     std::string borrow_return_path;
@@ -3720,6 +3722,8 @@ private:
                         param_type,
                         "an impl method parameter",
                         vec_view));
+                    sig.param_locs.push_back(param.type.loc);
+                    sig.param_names.push_back(param.name);
                 }
                 sig.result = method.has_return_type ? resolve_executable_type(method.return_type) : void_type(method.loc);
                 if (method.has_return_type) {
@@ -4100,6 +4104,8 @@ private:
                     param_type,
                     "a function parameter",
                     vec_view));
+                sig.param_locs.push_back(param.type.loc);
+                sig.param_names.push_back(param.name);
             }
             sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
             if (fn.has_return_type) {
@@ -4320,6 +4326,8 @@ private:
                 require_extern_c_direct_aggregate_abi(param.type.loc, param_type, "parameter");
             }
             sig.params.push_back(param_type);
+            sig.param_locs.push_back(param.type.loc);
+            sig.param_names.push_back(param.name);
         }
         sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
         if (fn.has_return_type) {
@@ -18036,6 +18044,8 @@ private:
             param.binding_mode = BindingMode::Value;
             lambda.params.push_back(std::move(param));
             sig.params.push_back(capture.type);
+            sig.param_locs.push_back(capture.loc);
+            sig.param_names.push_back(capture.name);
         }
         for (std::size_t i = 0; i < param_count; ++i) {
             const Param& source = source_params[i];
@@ -18045,6 +18055,8 @@ private:
             param.binding_mode = BindingMode::Value;
             lambda.params.push_back(std::move(param));
             sig.params.push_back(user_param_types[i]);
+            sig.param_locs.push_back(source.type.loc);
+            sig.param_names.push_back(source.name);
         }
         sig.result = result_type;
         set_function_return_contracts(sig);
@@ -21956,6 +21968,8 @@ private:
                 param_type,
                 "an impl method parameter",
                 vec_view));
+            sig.param_locs.push_back(param.type.loc);
+            sig.param_names.push_back(param.name);
         }
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
@@ -22008,6 +22022,8 @@ private:
                 param_type,
                 "an impl method parameter",
                 vec_view));
+            sig.param_locs.push_back(param.type.loc);
+            sig.param_names.push_back(param.name);
         }
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
@@ -22709,12 +22725,15 @@ private:
                 }
                 args[i] = std::move(slice_arg);
             } else {
-                args[i] = coerce_checked_call_argument_or_implicit_slice(
+                args[i] = coerce_checked_declared_call_argument_or_implicit_slice(
                     *expr.args[i],
                     std::move(args[i]),
+                    expr.name,
+                    fn.params[i].type.loc,
+                    fn.params[i].name,
+                    i,
                     param_type);
             }
-            require_assignable(expr.loc, param_type, args[i]->type);
             param_types.push_back(param_type);
         }
         IrType result = fn.has_return_type ? resolve_type_with_substitutions(fn.return_type, substitutions) : void_type(fn.loc);
@@ -22727,6 +22746,10 @@ private:
         call_sig.module_name = fn.module_name;
         call_sig.is_public = fn.is_public;
         call_sig.loc = fn.loc;
+        for (const auto& param : fn.params) {
+            call_sig.param_locs.push_back(param.type.loc);
+            call_sig.param_names.push_back(param.name);
+        }
         set_function_return_contracts(call_sig);
         apply_explicit_borrow_return_contract(call_sig, fn);
         set_function_borrow_return_path_hint(call_sig, fn);
@@ -22779,6 +22802,10 @@ private:
         FunctionSig sig;
         sig.params = std::move(param_types);
         sig.result = result;
+        for (const auto& param : fn.params) {
+            sig.param_locs.push_back(param.type.loc);
+            sig.param_names.push_back(param.name);
+        }
         require_function_signature_root_vector_runtime_abi(fn, sig.params, sig.result);
         sig.module_name = fn.module_name;
         sig.is_public = fn.is_public;
@@ -23177,6 +23204,74 @@ private:
         }
         coerce_expr_to_expected(*checked, expected);
         require_assignable(arg_expr.loc, expected, checked->type);
+        return checked;
+    }
+
+    IrExprPtr check_call_argument_for_parameter(
+        const Expr& arg_expr,
+        const IrType& expected,
+        const std::string& callee,
+        const FunctionSig& sig,
+        std::size_t param_index
+    ) {
+        if (IrExprPtr slice_view = try_make_implicit_slice_argument(arg_expr, expected)) {
+            return slice_view;
+        }
+        IrExprPtr arg = check_expr_with_expected(arg_expr, expected);
+        coerce_expr_to_expected(*arg, expected);
+        require_call_argument_assignable(
+            arg_expr.loc,
+            callee,
+            sig,
+            param_index,
+            expected,
+            arg->type);
+        return arg;
+    }
+
+    IrExprPtr coerce_checked_call_argument_for_parameter(
+        const Expr& arg_expr,
+        IrExprPtr checked,
+        const std::string& callee,
+        const FunctionSig& sig,
+        std::size_t param_index,
+        const IrType& expected
+    ) {
+        if (IrExprPtr slice_view = try_make_implicit_slice_argument(arg_expr, expected)) {
+            return slice_view;
+        }
+        coerce_expr_to_expected(*checked, expected);
+        require_call_argument_assignable(
+            arg_expr.loc,
+            callee,
+            sig,
+            param_index,
+            expected,
+            checked->type);
+        return checked;
+    }
+
+    IrExprPtr coerce_checked_declared_call_argument_or_implicit_slice(
+        const Expr& arg_expr,
+        IrExprPtr checked,
+        const std::string& callee,
+        SourceLocation param_loc,
+        const std::string& param_name,
+        std::size_t param_index,
+        const IrType& expected
+    ) {
+        if (IrExprPtr slice_view = try_make_implicit_slice_argument(arg_expr, expected)) {
+            return slice_view;
+        }
+        coerce_expr_to_expected(*checked, expected);
+        require_declared_call_argument_assignable(
+            arg_expr.loc,
+            callee,
+            param_loc,
+            param_name,
+            param_index,
+            expected,
+            checked->type);
         return checked;
     }
 
@@ -24458,13 +24553,11 @@ private:
         std::size_t borrow_mark = temporary_borrow_mark();
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = i < sig.params.size()
-                ? check_call_argument_for_expected(*expr.args[i], sig.params[i])
+                ? check_call_argument_for_parameter(*expr.args[i], sig.params[i], expr.name, sig, i)
                 : check_expr(*expr.args[i]);
-            if (i < sig.params.size()) {
-                require_assignable(expr.loc, sig.params[i], arg->type);
-            } else if (!is_c_vararg_value_type(arg->type)) {
+            if (i >= sig.params.size() && !is_c_vararg_value_type(arg->type)) {
                 fail(expr.args[i]->loc, "C variadic argument type is not supported: " + type_name(arg->type));
-            } else {
+            } else if (i >= sig.params.size()) {
                 arg = promote_c_vararg(std::move(arg), expr.args[i]->loc);
             }
             if (sig.is_extern) {
@@ -24610,9 +24703,12 @@ private:
         args.reserve(expr.args.size());
         args.push_back(std::move(receiver_arg));
         for (std::size_t i = 1; i < expr.args.size(); ++i) {
-            IrExprPtr arg = coerce_checked_call_argument_or_implicit_slice(
+            IrExprPtr arg = coerce_checked_call_argument_for_parameter(
                 *expr.args[i],
                 std::move(checked_args[i - 1]),
+                display,
+                sig,
+                i,
                 sig.params[i]);
             args.push_back(std::move(arg));
         }
@@ -24725,9 +24821,12 @@ private:
         std::vector<IrExprPtr> args;
         args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = coerce_checked_call_argument_or_implicit_slice(
+            IrExprPtr arg = coerce_checked_call_argument_for_parameter(
                 *expr.args[i],
                 std::move(checked_args[i]),
+                display,
+                sig,
+                i,
                 sig.params[i]);
             args.push_back(std::move(arg));
         }
@@ -24835,9 +24934,12 @@ private:
         std::vector<IrExprPtr> args;
         args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = coerce_checked_call_argument_or_implicit_slice(
+            IrExprPtr arg = coerce_checked_call_argument_for_parameter(
                 *expr.args[i],
                 std::move(checked_args[i]),
+                method_name,
+                sig,
+                i,
                 sig.params[i]);
             args.push_back(std::move(arg));
         }
@@ -25147,12 +25249,14 @@ private:
         args.push_back(std::move(receiver_arg));
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = has_generic_selected
-                ? coerce_checked_call_argument_or_implicit_slice(
+                ? coerce_checked_call_argument_for_parameter(
                       *expr.args[i],
                       std::move(generic_args[i]),
+                      expr.name,
+                      sig,
+                      i + 1,
                       sig.params[i + 1])
-                : check_call_argument_for_expected(*expr.args[i], sig.params[i + 1]);
-            require_assignable(expr.loc, sig.params[i + 1], arg->type);
+                : check_call_argument_for_parameter(*expr.args[i], sig.params[i + 1], expr.name, sig, i + 1);
             args.push_back(std::move(arg));
         }
         require_std_vec_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
@@ -25702,6 +25806,108 @@ private:
             return true;
         }
         return false;
+    }
+
+    static Span call_parameter_declaration_span(
+        SourceLocation fallback,
+        SourceLocation param_loc
+    ) {
+        Span param_span = span_from_location(param_loc);
+        if (span_has_source(param_span) && span_has_valid_order(param_span)) return param_span;
+        Span fallback_span = span_from_location(fallback);
+        if (span_has_source(fallback_span) && span_has_valid_order(fallback_span)) return fallback_span;
+        return invalid_span();
+    }
+
+    static Span call_parameter_declaration_span(const FunctionSig& sig, std::size_t param_index) {
+        SourceLocation param_loc = param_index < sig.param_locs.size()
+            ? sig.param_locs[param_index]
+            : sig.loc;
+        return call_parameter_declaration_span(sig.loc, param_loc);
+    }
+
+    static std::string call_parameter_label(
+        const std::string& callee,
+        std::size_t param_index,
+        const std::string& param_name,
+        const IrType& expected
+    ) {
+        std::string label = "parameter " + std::to_string(param_index + 1);
+        if (!param_name.empty()) label += " '" + param_name + "'";
+        label += " of '" + callee + "' expects " + type_name(expected);
+        return label;
+    }
+
+    [[noreturn]] static void fail_call_argument_type(
+        SourceLocation loc,
+        const std::string& callee,
+        Span param_span,
+        const std::string& param_name,
+        std::size_t param_index,
+        const IrType& expected,
+        const IrType& actual
+    ) {
+        CompileError error(
+            std::move(loc),
+            "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
+        if (span_has_source(param_span) && span_has_valid_order(param_span)) {
+            error.add_label(DiagnosticLabel{
+                param_span,
+                call_parameter_label(callee, param_index, param_name, expected),
+                false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "function call arguments are checked against declared parameter types after generic substitution",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "pass a value of type " + type_name(expected) + " for argument " +
+                std::to_string(param_index + 1),
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static void require_declared_call_argument_assignable(
+        SourceLocation loc,
+        const std::string& callee,
+        SourceLocation param_loc,
+        const std::string& param_name,
+        std::size_t param_index,
+        const IrType& expected,
+        const IrType& actual
+    ) {
+        if (is_assignable_for_diagnostic(expected, actual)) return;
+        fail_call_argument_type(
+            std::move(loc),
+            callee,
+            call_parameter_declaration_span(param_loc, param_loc),
+            param_name,
+            param_index,
+            expected,
+            actual);
+    }
+
+    static void require_call_argument_assignable(
+        SourceLocation loc,
+        const std::string& callee,
+        const FunctionSig& sig,
+        std::size_t param_index,
+        const IrType& expected,
+        const IrType& actual
+    ) {
+        if (is_assignable_for_diagnostic(expected, actual)) return;
+        std::string param_name = param_index < sig.param_names.size()
+            ? sig.param_names[param_index]
+            : "";
+        fail_call_argument_type(
+            std::move(loc),
+            callee,
+            call_parameter_declaration_span(sig, param_index),
+            param_name,
+            param_index,
+            expected,
+            actual);
     }
 
     static Span enum_payload_declaration_span(const EnumCaseInfo& info, std::size_t payload_index) {

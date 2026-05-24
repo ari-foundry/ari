@@ -1,4 +1,8 @@
-diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="type mismatch: expected i64, got bool" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari" bytes=98
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari" line=6 column=19 end_line=6 end_column=23 byte_start=89 byte_end=93 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari:6:19\n   |\n 6 |   return take_i64(true);\n   |                   ^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari" line=1 column=20 end_line=1 end_column=23 byte_start=19 byte_end=22 message="parameter 1 'value' of 'take_i64' expects i64"
+  Snippet label=1 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-wrong-argument-type.ari:1:20\n   |\n 1 | fn take_i64(value: i64) -> i64 {\n   |                    ^^^"
+  Note index=0 location=none message="function call arguments are checked against declared parameter types after generic substitution"
+  Help index=0 location=none message="pass a value of type i64 for argument 1"
