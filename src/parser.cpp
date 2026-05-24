@@ -300,6 +300,40 @@ private:
         throw error;
     }
 
+    static std::string delimiter_spelling(TokenKind kind) {
+        switch (kind) {
+            case TokenKind::LParen: return "(";
+            case TokenKind::RParen: return ")";
+            case TokenKind::LBrace: return "{";
+            case TokenKind::RBrace: return "}";
+            case TokenKind::LBracket: return "[";
+            case TokenKind::RBracket: return "]";
+            default: return "token";
+        }
+    }
+
+    [[noreturn]] static void fail_mismatched_delimiter(SourceLocation close_loc,
+                                                       SourceLocation open_loc,
+                                                       TokenKind expected,
+                                                       TokenKind actual,
+                                                       const std::string& context) {
+        const std::string expected_text = delimiter_spelling(expected);
+        const std::string actual_text = delimiter_spelling(actual);
+        CompileError error(
+            std::move(close_loc),
+            "mismatched delimiter in " + context + ": expected '" + expected_text +
+                "', got '" + actual_text + "'");
+        add_location_label_if_valid(
+            error,
+            open_loc,
+            "opening delimiter expects '" + expected_text + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "close delimiters must match the most recent still-open delimiter",
+            DiagnosticNoteKind::Note});
+        throw error;
+    }
+
     static std::string token_description(const Token& token) {
         if (token.kind == TokenKind::End) return "end of file";
         if (!token.text.empty()) return "'" + token.text + "'";
@@ -2363,32 +2397,37 @@ private:
     std::vector<Token> parse_balanced_token_tree(SourceLocation loc,
                                                  const std::string& expected_open_message,
                                                  const std::string& context) {
+        struct TokenTreeFrame {
+            TokenKind close;
+            SourceLocation open_loc;
+        };
+
         Token open = expect(TokenKind::LParen, expected_open_message);
         std::vector<Token> tokens;
-        std::vector<TokenKind> closing_stack{TokenKind::RParen};
+        std::vector<TokenTreeFrame> closing_stack{{TokenKind::RParen, open.loc}};
         while (!closing_stack.empty()) {
             if (check(TokenKind::End)) {
                 fail_unterminated_delimited(
                     peek().loc,
-                    open.loc,
+                    closing_stack.back().open_loc,
                     "unterminated " + context,
                     context + " starts here",
-                    ")");
+                    delimiter_spelling(closing_stack.back().close));
             }
             Token token = peek();
             if (recovery_diagnostics_ != nullptr &&
                 closing_stack.size() == 1 &&
                 token.loc.line > loc.line &&
                 is_top_level_start() &&
-                !has_matching_token_tree_close_ahead(closing_stack.back())) {
+                !has_matching_token_tree_close_ahead(closing_stack.back().close)) {
                 fail_unterminated_delimited(
                     token.loc,
-                    open.loc,
+                    closing_stack.back().open_loc,
                     "unterminated " + context,
                     context + " starts here",
-                    ")");
+                    delimiter_spelling(closing_stack.back().close));
             }
-            if (token.kind == closing_stack.back()) {
+            if (token.kind == closing_stack.back().close) {
                 ++pos_;
                 closing_stack.pop_back();
                 if (!closing_stack.empty()) tokens.push_back(token);
@@ -2397,11 +2436,16 @@ private:
             TokenKind matching = matching_delimiter(token.kind);
             if (matching != TokenKind::End) {
                 tokens.push_back(tokens_[pos_++]);
-                closing_stack.push_back(matching);
+                closing_stack.push_back(TokenTreeFrame{matching, token.loc});
                 continue;
             }
             if (is_closing_delimiter(token.kind)) {
-                fail(token.loc, "mismatched delimiter in " + context);
+                fail_mismatched_delimiter(
+                    token.loc,
+                    closing_stack.back().open_loc,
+                    closing_stack.back().close,
+                    token.kind,
+                    context);
             }
             tokens.push_back(tokens_[pos_++]);
         }
