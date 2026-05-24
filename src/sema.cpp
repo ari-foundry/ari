@@ -5354,6 +5354,46 @@ private:
         local_scopes_.push_scope();
     }
 
+    [[noreturn]] static void fail_live_owner_before_action(SourceLocation loc,
+                                                           const std::string& name,
+                                                           const LocalInfo& local,
+                                                           const std::string& action,
+                                                           bool maybe_unavailable) {
+        CompileError error(
+            std::move(loc),
+            "owning binding '" + name + "' " +
+                (maybe_unavailable ? "may be unavailable before " : "must be moved or dropped before ") +
+                action);
+
+        Span primary_span = span_from_location(error.location());
+        Span declaration_span = span_from_location(local.loc);
+        if (span_has_source(declaration_span) &&
+            span_has_valid_order(declaration_span) &&
+            (!span_has_source(primary_span) ||
+             primary_span.source_id.value != declaration_span.source_id.value ||
+             primary_span.start != declaration_span.start ||
+             primary_span.end != declaration_span.end)) {
+            error.add_label(DiagnosticLabel{
+                declaration_span,
+                "owning binding '" + name + "' declared here",
+                false});
+        }
+
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            maybe_unavailable
+                ? "ownership availability must be consistent on every path before control leaves this scope"
+                : "live owning bindings must be consumed explicitly before control leaves their scope",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            maybe_unavailable
+                ? "make every path move, drop, or keep '" + name + "' consistently before " + action
+                : "drop '" + name + "' before " + action + " or move it into the value that leaves this scope",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void end_scope(bool check_owners) {
         local_scopes_.end_scope(
             check_owners,
@@ -5365,9 +5405,9 @@ private:
             },
             [](const std::string& name, const LocalInfo& local) {
                 if (local_has_maybe_unavailable_owner(local)) {
-                    fail(local.loc, "owning binding '" + name + "' may be unavailable before scope exit");
+                    fail_live_owner_before_action(local.loc, name, local, "scope exit", true);
                 }
-                fail(local.loc, "owning binding '" + name + "' must be moved or dropped before scope exit");
+                fail_live_owner_before_action(local.loc, name, local, "scope exit", false);
             }
         );
     }
@@ -6414,10 +6454,10 @@ private:
             0,
             [&](const std::string& name, const LocalInfo& local) {
                 if (local_has_maybe_unavailable_owner(local)) {
-                    fail(loc, "owning binding '" + name + "' may be unavailable before return");
+                    fail_live_owner_before_action(loc, name, local, "return", true);
                 }
                 if (local_has_live_owner(local)) {
-                    fail(loc, "owning binding '" + name + "' must be moved or dropped before return");
+                    fail_live_owner_before_action(loc, name, local, "return", false);
                 }
             }
         );
@@ -6432,10 +6472,10 @@ private:
             first_scope_index,
             [&](const std::string& name, const LocalInfo& local) {
                 if (local_has_maybe_unavailable_owner(local)) {
-                    fail(loc, "owning binding '" + name + "' may be unavailable before " + jump_name);
+                    fail_live_owner_before_action(loc, name, local, jump_name, true);
                 }
                 if (local_has_live_owner(local)) {
-                    fail(loc, "owning binding '" + name + "' must be moved or dropped before " + jump_name);
+                    fail_live_owner_before_action(loc, name, local, jump_name, false);
                 }
             }
         );
