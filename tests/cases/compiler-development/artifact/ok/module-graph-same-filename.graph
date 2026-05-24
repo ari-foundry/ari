@@ -2,12 +2,12 @@ ModuleGraph source=tests/cases/modules/ok/same-filename-project-main.ari target=
   SearchPaths count=0
   CfgFeatures count=0
   Sources count=6
-    Source id=0 module=<root> root=true path=tests/cases/modules/ok/same-filename-project-main.ari
-    Source id=1 module=same_filename_project root=false path=tests/cases/modules/ok/same_filename_project.ari
-    Source id=2 module=same_filename_project::left root=false path=tests/cases/modules/ok/same_filename_project/left.ari
-    Source id=3 module=same_filename_project::left::util root=false path=tests/cases/modules/ok/same_filename_project/left/util.ari
-    Source id=4 module=same_filename_project::right root=false path=tests/cases/modules/ok/same_filename_project/right.ari
-    Source id=5 module=same_filename_project::right::util root=false path=tests/cases/modules/ok/same_filename_project/right/util.ari
+    Source ordinal=0 source_id=0 module=<root> root=true path=tests/cases/modules/ok/same-filename-project-main.ari
+    Source ordinal=1 source_id=1 module=same_filename_project root=false path=tests/cases/modules/ok/same_filename_project.ari
+    Source ordinal=2 source_id=2 module=same_filename_project::left root=false path=tests/cases/modules/ok/same_filename_project/left.ari
+    Source ordinal=3 source_id=3 module=same_filename_project::left::util root=false path=tests/cases/modules/ok/same_filename_project/left/util.ari
+    Source ordinal=4 source_id=4 module=same_filename_project::right root=false path=tests/cases/modules/ok/same_filename_project/right.ari
+    Source ordinal=5 source_id=5 module=same_filename_project::right::util root=false path=tests/cases/modules/ok/same_filename_project/right/util.ari
   Imports count=5
     Import owner=<root> module=same_filename_project local=same_filename_project visibility=private source=tests/cases/modules/ok/same_filename_project.ari
     Import owner=same_filename_project module=same_filename_project::left local=left visibility=pub source=tests/cases/modules/ok/same_filename_project/left.ari

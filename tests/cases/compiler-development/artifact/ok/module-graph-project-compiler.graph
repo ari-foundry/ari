@@ -2,12 +2,12 @@ ModuleGraph source=tests/cases/modules/ok/project-compiler-main.ari target=x86_6
   SearchPaths count=0
   CfgFeatures count=0
   Sources count=6
-    Source id=0 module=<root> root=true path=tests/cases/modules/ok/project-compiler-main.ari
-    Source id=1 module=project_compiler root=false path=tests/cases/modules/ok/project_compiler.ari
-    Source id=2 module=project_compiler::diag root=false path=tests/cases/modules/ok/project_compiler/diag.ari
-    Source id=3 module=project_compiler::parser root=false path=tests/cases/modules/ok/project_compiler/parse.ari
-    Source id=4 module=project_compiler::source root=false path=tests/cases/modules/ok/project_compiler/source.ari
-    Source id=5 module=project_compiler::symbols root=false path=tests/cases/modules/ok/project_compiler/symbols.ari
+    Source ordinal=0 source_id=0 module=<root> root=true path=tests/cases/modules/ok/project-compiler-main.ari
+    Source ordinal=1 source_id=1 module=project_compiler root=false path=tests/cases/modules/ok/project_compiler.ari
+    Source ordinal=2 source_id=4 module=project_compiler::diag root=false path=tests/cases/modules/ok/project_compiler/diag.ari
+    Source ordinal=3 source_id=5 module=project_compiler::parser root=false path=tests/cases/modules/ok/project_compiler/parse.ari
+    Source ordinal=4 source_id=2 module=project_compiler::source root=false path=tests/cases/modules/ok/project_compiler/source.ari
+    Source ordinal=5 source_id=3 module=project_compiler::symbols root=false path=tests/cases/modules/ok/project_compiler/symbols.ari
   Imports count=5
     Import owner=<root> module=project_compiler local=project_compiler visibility=private source=tests/cases/modules/ok/project_compiler.ari
     Import owner=project_compiler module=project_compiler::diag local=diag visibility=pub source=tests/cases/modules/ok/project_compiler/diag.ari

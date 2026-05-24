@@ -2,8 +2,8 @@ ModuleGraph source=tests/cases/modules/ok/file-module-main.ari target=x86_64-pc-
   SearchPaths count=0
   CfgFeatures count=0
   Sources count=2
-    Source id=0 module=<root> root=true path=tests/cases/modules/ok/file-module-main.ari
-    Source id=1 module=mathlib root=false path=tests/cases/modules/ok/mathlib.ari
+    Source ordinal=0 source_id=0 module=<root> root=true path=tests/cases/modules/ok/file-module-main.ari
+    Source ordinal=1 source_id=1 module=mathlib root=false path=tests/cases/modules/ok/mathlib.ari
   Imports count=1
     Import owner=<root> module=mathlib local=mathlib visibility=private source=tests/cases/modules/ok/mathlib.ari
   Items count=3

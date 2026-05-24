@@ -51,6 +51,8 @@ def normalize_artifact_text(text: str) -> str:
 
 
 def compare_text(expected: str, actual: str, label: str) -> str | None:
+    if expected == actual:
+        return None
     expected_lines = expected.splitlines()
     actual_lines = actual.splitlines()
     count = max(len(expected_lines), len(actual_lines))
@@ -65,7 +67,34 @@ def compare_text(expected: str, actual: str, label: str) -> str | None:
                 f"  expected: {expected_line}\n"
                 f"    actual: {actual_line}\n"
             )
-    return None
+    return (
+        f"artifact mismatch: {label}\n"
+        f"summary: expected_lines={len(expected_lines)} actual_lines={len(actual_lines)} "
+        f"expected_bytes={len(expected.encode('utf-8'))} actual_bytes={len(actual.encode('utf-8'))}\n"
+        f"{byte_mismatch_report(expected, actual)}"
+    )
+
+
+def byte_mismatch_report(expected: str, actual: str) -> str:
+    expected_bytes = expected.encode("utf-8")
+    actual_bytes = actual.encode("utf-8")
+    count = min(len(expected_bytes), len(actual_bytes))
+    offset = count
+    for index in range(count):
+        if expected_bytes[index] != actual_bytes[index]:
+            offset = index
+            break
+
+    def byte_text(data: bytes, index: int) -> str:
+        if index >= len(data):
+            return "<eof>"
+        return f"0x{data[index]:02x}"
+
+    return (
+        f"byte offset {offset}:\n"
+        f"  expected_byte: {byte_text(expected_bytes, offset)}\n"
+        f"    actual_byte: {byte_text(actual_bytes, offset)}\n"
+    )
 
 
 def require_equal(expected: str, actual: str, label: str) -> None:
@@ -96,6 +125,26 @@ def require_update_mode() -> None:
             expected.read_text(encoding="utf-8"),
             "tests/check_compiler_artifacts.py --update",
         )
+
+
+def require_byte_exact_mode() -> None:
+    final_newline_report = compare_text("artifact\n", "artifact", "final-newline")
+    if (
+        final_newline_report is None or
+        "expected_byte: 0x0a" not in final_newline_report or
+        "actual_byte: <eof>" not in final_newline_report
+    ):
+        print("tests/check_compiler_artifacts.py: final newline mismatch was not detected", file=sys.stderr)
+        raise SystemExit(1)
+
+    crlf_report = compare_text("artifact\r\n", "artifact\n", "line-ending")
+    if (
+        crlf_report is None or
+        "expected_byte: 0x0d" not in crlf_report or
+        "actual_byte: 0x0a" not in crlf_report
+    ):
+        print("tests/check_compiler_artifacts.py: line ending mismatch was not detected", file=sys.stderr)
+        raise SystemExit(1)
 
 
 def resolve_user_path(value: str) -> Path:
@@ -217,6 +266,7 @@ def run_seed_checks() -> int:
         "tests/cases/compiler-development/artifact/errors/text-line-mismatch",
     )
     require_update_mode()
+    require_byte_exact_mode()
     return 0
 
 
