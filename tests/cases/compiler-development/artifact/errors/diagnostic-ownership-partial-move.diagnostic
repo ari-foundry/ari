@@ -1,4 +1,8 @@
-diagnostic error code=O0001 family=ownership message="cannot move partially moved owning binding 'holder'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=O0001 family=ownership message="cannot move partially moved owning binding 'holder'" sources=1 labels=2 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari" bytes=343
   Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari" line=18 column=24 end_line=18 end_column=30 byte_start=301 byte_end=307 message=""
   Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari:18:24\n    |\n 18 |   let result = consume(holder);\n    |                        ^^^^^^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari" line=16 column=7 end_line=16 end_column=13 byte_start=198 byte_end=204 message="owning binding 'holder' declared here"
+  Snippet label=1 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.ari:16:7\n    |\n 16 |   let holder = Holder { token: make_owned(1), count: 2 };\n    |       ^^^^^^"
+  Note index=0 location=none message="owned aggregate field state: holder.token=moved; whole-binding moves require every owned field to still be live"
+  Help index=0 location=none message="drop or move the remaining live fields individually, or avoid moving fields out of 'holder' before moving it as a whole"

@@ -5394,6 +5394,89 @@ private:
         throw error;
     }
 
+    static std::string owned_field_path_display(const std::string& base_name,
+                                                const IrType& root_type,
+                                                const std::string& storage_path) {
+        std::optional<std::vector<std::size_t>> indices = local_owned_field_path_indices(storage_path);
+        if (!indices || indices->empty()) {
+            return storage_path.empty() ? base_name : base_name + "." + storage_path;
+        }
+
+        std::string display = base_name;
+        const IrType* current = &root_type;
+        for (std::size_t index : *indices) {
+            std::string segment = std::to_string(index);
+            if (current &&
+                !is_vector_storage_type(*current) &&
+                index < current->field_names.size() &&
+                !current->field_names[index].empty()) {
+                segment = current->field_names[index];
+            }
+            display += "." + segment;
+            if (current && index < current->field_types.size()) {
+                current = &current->field_types[index];
+            } else {
+                current = nullptr;
+            }
+        }
+        return display;
+    }
+
+    static std::string partial_owned_field_state_summary(const std::string& name,
+                                                         const LocalInfo& local) {
+        std::string summary;
+        for (const auto& item : local.owned_field_states) {
+            if (item.second == LocalState::Alive) continue;
+            if (!summary.empty()) summary += ", ";
+            summary += owned_field_path_display(name, local.type, item.first);
+            summary += "=";
+            summary += local_state_name(item.second);
+        }
+        if (summary.empty()) return "owned aggregate field state is partially unavailable";
+        return "owned aggregate field state: " + summary;
+    }
+
+    [[noreturn]] static void fail_partially_moved_owner(SourceLocation loc,
+                                                        const std::string& name,
+                                                        const LocalInfo& local,
+                                                        const std::string& action) {
+        CompileError error(
+            std::move(loc),
+            "cannot " + action + " partially moved owning binding '" + name + "'");
+
+        Span primary_span = span_from_location(error.location());
+        Span declaration_span = span_from_location(local.loc);
+        if (span_has_source(declaration_span) &&
+            span_has_valid_order(declaration_span) &&
+            (!span_has_source(primary_span) ||
+             primary_span.source_id.value != declaration_span.source_id.value ||
+             primary_span.start != declaration_span.start ||
+             primary_span.end != declaration_span.end)) {
+            error.add_label(DiagnosticLabel{
+                declaration_span,
+                "owning binding '" + name + "' declared here",
+                false});
+        }
+
+        bool is_borrow = action == "borrow";
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            partial_owned_field_state_summary(name, local) +
+                (is_borrow
+                     ? "; whole-binding borrows require every owned field to still be live"
+                     : "; whole-binding moves require every owned field to still be live"),
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            is_borrow
+                ? "borrow the still-live field directly, or avoid moving fields out of '" + name +
+                      "' before borrowing it as a whole"
+                : "drop or move the remaining live fields individually, or avoid moving fields out of '" +
+                      name + "' before moving it as a whole",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     void end_scope(bool check_owners) {
         local_scopes_.end_scope(
             check_owners,
@@ -7163,7 +7246,7 @@ private:
         if (is_owner_type(borrowed_type)) {
             if (path.empty()) {
                 if (local_has_moved_or_dropped_owned_fields(source)) {
-                    fail(loc, "cannot borrow partially moved owning binding '" + base_name + "'");
+                    fail_partially_moved_owner(loc, base_name, source, "borrow");
                 }
             } else if (!is_owner_element_slice_type(source.type)) {
                 require_owned_field_alive(loc, base_name, source, path);
@@ -7429,7 +7512,7 @@ private:
             if (auto error = local_mutable_borrow_error(base_name, source)) fail(loc, *error);
         }
         if (local_has_moved_or_dropped_owned_fields(source)) {
-            fail(loc, "cannot borrow partially moved owning binding '" + base_name + "'");
+            fail_partially_moved_owner(loc, base_name, source, "borrow");
         }
         require_can_borrow_path(loc, base_name, source, borrow_path, mutable_borrow);
     }
@@ -9291,7 +9374,7 @@ private:
         LocalInfo& local = require_live_local(loc, source_name);
         require_not_borrowed(loc, source_name, local, "move from");
         if (local_has_moved_or_dropped_owned_fields(local)) {
-            fail(loc, "cannot move partially moved owning binding '" + source_name + "'");
+            fail_partially_moved_owner(loc, source_name, local, "move");
         }
     }
 
@@ -9557,7 +9640,7 @@ private:
         if (source.path.empty()) {
             if (local_has_tracked_owned_fields(local)) {
                 if (local_has_moved_or_dropped_owned_fields(local)) {
-                    fail(loc, "cannot move partially moved owning binding '" + source.name + "'");
+                    fail_partially_moved_owner(loc, source.name, local, "move");
                 }
                 mark_all_local_owned_fields(local, LocalState::Moved);
                 mark_local_moved(local);
@@ -18545,7 +18628,7 @@ private:
                     }
                     require_not_borrowed(expr.loc, expr.name, local, "move");
                     if (local_has_moved_or_dropped_owned_fields(local)) {
-                        fail(expr.loc, "cannot move partially moved owning binding '" + expr.name + "'");
+                        fail_partially_moved_owner(expr.loc, expr.name, local, "move");
                     }
                     mark_local_moved(local);
                 }
@@ -21473,7 +21556,7 @@ private:
         if (is_owner_type(access.type)) {
             if (access.path.empty()) {
                 if (local_has_moved_or_dropped_owned_fields(source)) {
-                    fail(expr.loc, "cannot borrow partially moved owning binding '" + access.base_name + "'");
+                    fail_partially_moved_owner(expr.loc, access.base_name, source, "borrow");
                 }
             } else {
                 require_owned_field_alive(expr.loc, access.base_name, source, access.path);
