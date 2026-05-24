@@ -690,6 +690,34 @@ private:
         return is_same_or_descendant_module(current_module_name_, module.module_name);
     }
 
+    [[noreturn]] static void fail_private_access(SourceLocation loc,
+                                                 SourceLocation declaration_loc,
+                                                 const std::string& message,
+                                                 const std::string& declaration_label,
+                                                 const std::string& help) {
+        CompileError error(std::move(loc), message);
+        Span declaration_span = span_from_location(declaration_loc);
+        if (span_has_source(declaration_span) && span_has_valid_order(declaration_span)) {
+            error.add_label(DiagnosticLabel{declaration_span, declaration_label, false});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "module visibility is enforced at the use site and the private declaration is shown as a secondary label",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{std::nullopt, help, DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    static std::string privacy_help(const std::string& kind,
+                                    const std::string& name,
+                                    const std::string& module_name) {
+        std::string help = "mark " + kind + " '" + name + "' as pub";
+        if (!module_name.empty()) {
+            help += " or access it from inside module '" + module_name + "'";
+        }
+        return help;
+    }
+
     void require_module_path_access(SourceLocation loc, const std::string& module_name) const {
         if (module_name.empty()) return;
         std::vector<std::string> parts = split_qualified_name(module_name);
@@ -698,7 +726,12 @@ private:
             auto found = modules_.find(prefix);
             if (found == modules_.end()) continue;
             if (!can_access_module(found->second)) {
-                fail(loc, "module '" + prefix + "' is not public");
+                fail_private_access(
+                    std::move(loc),
+                    found->second.loc,
+                    "module '" + prefix + "' is not public",
+                    "private module '" + prefix + "' declared here",
+                    privacy_help("module", prefix, found->second.module_name));
             }
         }
     }
@@ -927,56 +960,97 @@ private:
         if (enum_found == enums_.end()) fail(loc, "unknown enum '" + info.enum_name + "'");
         require_module_path_access(loc, enum_found->second.module_name);
         if (!can_access(enum_found->second.module_name, enum_found->second.is_public)) {
-            fail(loc, "enum case '" + info.name + "' is not public");
+            fail_private_access(
+                std::move(loc),
+                info.loc,
+                "enum case '" + info.name + "' is not public",
+                "private enum case '" + info.name + "' declared here",
+                privacy_help("enum case", info.name, enum_found->second.module_name));
         }
     }
 
     void require_struct_access(SourceLocation loc, const StructInfo& info) const {
         require_module_path_access(loc, info.module_name);
         if (!can_access(info.module_name, info.is_public)) {
-            fail(loc, "struct '" + info.name + "' is not public");
+            fail_private_access(
+                std::move(loc),
+                info.loc,
+                "struct '" + info.name + "' is not public",
+                "private struct '" + info.name + "' declared here",
+                privacy_help("struct", info.name, info.module_name));
         }
     }
 
     void require_function_access(SourceLocation loc, const FunctionSig& sig, const std::string& name) const {
         require_module_path_access(loc, sig.module_name);
         if (!can_access(sig.module_name, sig.is_public)) {
-            fail(loc, "function '" + name + "' is not public");
+            fail_private_access(
+                std::move(loc),
+                sig.loc,
+                "function '" + name + "' is not public",
+                "private function '" + name + "' declared here",
+                privacy_help("function", name, sig.module_name));
         }
     }
 
     void require_constant_access(SourceLocation loc, const ConstantInfo& info, const std::string& name) const {
         require_module_path_access(loc, info.module_name);
         if (!can_access(info.module_name, info.is_public)) {
-            fail(loc, "constant '" + name + "' is not public");
+            fail_private_access(
+                std::move(loc),
+                info.loc,
+                "constant '" + name + "' is not public",
+                "private constant '" + name + "' declared here",
+                privacy_help("constant", name, info.module_name));
         }
     }
 
     void require_type_alias_access(SourceLocation loc, const TypeAliasInfo& info) const {
         require_module_path_access(loc, info.module_name);
         if (!can_access(info.module_name, info.is_public)) {
-            fail(loc, "type alias '" + info.name + "' is not public");
+            fail_private_access(
+                std::move(loc),
+                info.loc,
+                "type alias '" + info.name + "' is not public",
+                "private type alias '" + info.name + "' declared here",
+                privacy_help("type alias", info.name, info.module_name));
         }
     }
 
     void require_trait_access(SourceLocation loc, const TraitInfo& info) const {
         require_module_path_access(loc, info.module_name);
         if (!can_access(info.module_name, info.is_public)) {
-            fail(loc, "trait '" + info.name + "' is not public");
+            fail_private_access(
+                std::move(loc),
+                info.loc,
+                "trait '" + info.name + "' is not public",
+                "private trait '" + info.name + "' declared here",
+                privacy_help("trait", info.name, info.module_name));
         }
     }
 
     void require_impl_method_access(SourceLocation loc, const ImplMethodInfo& info, const std::string& method_name) const {
         require_module_path_access(loc, info.module_name);
         if (!can_access(info.module_name, info.is_public)) {
-            fail(loc, "method '" + method_name + "' for type " + type_name(info.receiver_type) + " is not public");
+            std::string display = "method '" + method_name + "' for type " + type_name(info.receiver_type);
+            fail_private_access(
+                std::move(loc),
+                info.loc,
+                display + " is not public",
+                "private " + display + " declared here",
+                privacy_help("method", method_name, info.module_name));
         }
     }
 
     void require_function_decl_access(SourceLocation loc, const FunctionDecl& fn, const std::string& name) const {
         require_module_path_access(loc, fn.module_name);
         if (!can_access(fn.module_name, fn.is_public)) {
-            fail(loc, "function '" + name + "' is not public");
+            fail_private_access(
+                std::move(loc),
+                fn.loc,
+                "function '" + name + "' is not public",
+                "private function '" + name + "' declared here",
+                privacy_help("function", name, fn.module_name));
         }
     }
 
