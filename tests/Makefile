@@ -3085,7 +3085,7 @@ check-prelude: $(TARGET)
 	if $(TARGET) --no-implicit-std tests/cases/standard-library/errors/prelude/prelude-path-without-std.ari -o $(BUILD_DIR)/prelude/prelude-path-without-std.elf >$(BUILD_DIR)/prelude/prelude-path-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'io::write_i64'" $(BUILD_DIR)/prelude/prelude-path-without-std.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude/prelude-maybe-removed.ari -o $(BUILD_DIR)/prelude/prelude-maybe-removed.elf >$(BUILD_DIR)/prelude/prelude-maybe-removed.err 2>&1; then exit 1; fi
-	grep -q "unsupported executable type 'Maybe'" $(BUILD_DIR)/prelude/prelude-maybe-removed.err
+	grep -q "unknown type 'Maybe'" $(BUILD_DIR)/prelude/prelude-maybe-removed.err
 	if $(TARGET) tests/cases/standard-library/errors/fs/std-fs-dir-entry-different-zone.ari -o $(BUILD_DIR)/prelude/std-fs-dir-entry-different-zone.elf >$(BUILD_DIR)/prelude/std-fs-dir-entry-different-zone.err 2>&1; then exit 1; fi
 	grep -q "zone-backed struct literal fields must come from the same zone" $(BUILD_DIR)/prelude/std-fs-dir-entry-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/vec/std-vec-alloc-buffer-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-alloc-buffer-after-reset.err 2>&1; then exit 1; fi
@@ -4310,7 +4310,7 @@ check-modules: $(TARGET)
 	if $(TARGET) tests/cases/modules/errors/unknown-imported-symbol.ari --check >$(BUILD_DIR)/modules/unknown-imported-symbol.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'missing'" $(BUILD_DIR)/modules/unknown-imported-symbol.err
 	if $(TARGET) tests/cases/modules/errors/type-value-namespace-confusion.ari --check >$(BUILD_DIR)/modules/type-value-namespace-confusion.err 2>&1; then exit 1; fi
-	grep -q "unsupported executable type 'Token'" $(BUILD_DIR)/modules/type-value-namespace-confusion.err
+	grep -q "unknown type 'Token'" $(BUILD_DIR)/modules/type-value-namespace-confusion.err
 	if $(TARGET) tests/cases/modules/errors/invalid-module-path-syntax.ari --check >$(BUILD_DIR)/modules/invalid-module-path-syntax.err 2>&1; then exit 1; fi
 	grep -q "expected { after module name" $(BUILD_DIR)/modules/invalid-module-path-syntax.err
 	if $(TARGET) tests/cases/modules/errors/imported-parse-error-main.ari --check >$(BUILD_DIR)/modules/imported-parse-error.err 2>&1; then exit 1; fi
@@ -4568,9 +4568,9 @@ check-generics: $(TARGET)
 	if $(TARGET) tests/cases/generics/errors/generic-return-context-uninferred.ari -o $(BUILD_DIR)/generics/generic-return-context-uninferred.elf >$(BUILD_DIR)/generics/generic-return-context-uninferred.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' could not be inferred for 'make_value'" $(BUILD_DIR)/generics/generic-return-context-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-signature-unknown-param.ari -o $(BUILD_DIR)/generics/generic-signature-unknown-param.elf >$(BUILD_DIR)/generics/generic-signature-unknown-param.err 2>&1; then exit 1; fi
-	grep -q "unsupported executable type 'U'" $(BUILD_DIR)/generics/generic-signature-unknown-param.err
+	grep -q "unknown type 'U'" $(BUILD_DIR)/generics/generic-signature-unknown-param.err
 	if $(TARGET) tests/cases/generics/errors/generic-signature-unknown-return.ari -o $(BUILD_DIR)/generics/generic-signature-unknown-return.elf >$(BUILD_DIR)/generics/generic-signature-unknown-return.err 2>&1; then exit 1; fi
-	grep -q "unsupported executable type 'U'" $(BUILD_DIR)/generics/generic-signature-unknown-return.err
+	grep -q "unknown type 'U'" $(BUILD_DIR)/generics/generic-signature-unknown-return.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-constructor-uninferred.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-uninferred.elf >$(BUILD_DIR)/generics/generic-enum-constructor-uninferred.err 2>&1; then exit 1; fi
 	grep -q "cannot infer type argument 'T' for enum case 'std::None'" $(BUILD_DIR)/generics/generic-enum-constructor-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-enum-constructor-arity.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-arity.elf >$(BUILD_DIR)/generics/generic-enum-constructor-arity.err 2>&1; then exit 1; fi
@@ -4578,7 +4578,7 @@ check-generics: $(TARGET)
 	if $(TARGET) tests/cases/generics/errors/generic-enum-constructor-mismatch.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-mismatch.elf >$(BUILD_DIR)/generics/generic-enum-constructor-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected std::Option\\[i64\\], got std::Option\\[bool\\]" $(BUILD_DIR)/generics/generic-enum-constructor-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-unknown-type-argument.ari --check >$(BUILD_DIR)/generics/generic-aggregate-unknown-type-argument.err 2>&1; then exit 1; fi
-	grep -q "unsupported executable type 'Missing'" $(BUILD_DIR)/generics/generic-aggregate-unknown-type-argument.err
+	grep -q "unknown type 'Missing'" $(BUILD_DIR)/generics/generic-aggregate-unknown-type-argument.err
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-nongeneric-type-args.ari --check >$(BUILD_DIR)/generics/generic-aggregate-nongeneric-type-args.err 2>&1; then exit 1; fi
 	grep -q "struct 'Span' expects 0 type arguments" $(BUILD_DIR)/generics/generic-aggregate-nongeneric-type-args.err
 	if $(TARGET) tests/cases/generics/errors/generic-aggregate-enum-arity.ari --check >$(BUILD_DIR)/generics/generic-aggregate-enum-arity.err 2>&1; then exit 1; fi
@@ -4616,7 +4616,7 @@ check-generics: $(TARGET)
 	if $(TARGET) tests/cases/generics/errors/generic-function-value-unexpected.ari -o $(BUILD_DIR)/generics/generic-function-value-unexpected.elf >$(BUILD_DIR)/generics/generic-function-value-unexpected.err 2>&1; then exit 1; fi
 	grep -q "generic function 'identity' requires an expected function pointer type or a call" $(BUILD_DIR)/generics/generic-function-value-unexpected.err
 	if $(TARGET) tests/cases/generics/errors/generic-function-unknown-type-arg.ari -o $(BUILD_DIR)/generics/generic-function-unknown-type-arg.elf >$(BUILD_DIR)/generics/generic-function-unknown-type-arg.err 2>&1; then exit 1; fi
-	grep -q "unsupported executable type 'Missing'" $(BUILD_DIR)/generics/generic-function-unknown-type-arg.err
+	grep -q "unknown type 'Missing'" $(BUILD_DIR)/generics/generic-function-unknown-type-arg.err
 	if $(TARGET) tests/cases/generics/errors/generic-return-substitution-mismatch.ari -o $(BUILD_DIR)/generics/generic-return-substitution-mismatch.elf >$(BUILD_DIR)/generics/generic-return-substitution-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected bool, got i64" $(BUILD_DIR)/generics/generic-return-substitution-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-duplicate-param.ari -o $(BUILD_DIR)/generics/generic-duplicate-param.elf >$(BUILD_DIR)/generics/generic-duplicate-param.err 2>&1; then exit 1; fi
@@ -5409,7 +5409,7 @@ check-structs: $(TARGET)
 	if $(TARGET) tests/cases/structs/errors/struct-duplicate-field.ari -o $(BUILD_DIR)/structs/struct-duplicate-field.elf >$(BUILD_DIR)/structs/struct-duplicate-field.err 2>&1; then exit 1; fi
 	grep -q "duplicate field 'x' in struct 'Point'" $(BUILD_DIR)/structs/struct-duplicate-field.err
 	if $(TARGET) tests/cases/structs/errors/struct-unknown-field-type.ari -o $(BUILD_DIR)/structs/struct-unknown-field-type.elf >$(BUILD_DIR)/structs/struct-unknown-field-type.err 2>&1; then exit 1; fi
-	grep -q "unsupported executable type 'Missing'" $(BUILD_DIR)/structs/struct-unknown-field-type.err
+	grep -q "unknown type 'Missing'" $(BUILD_DIR)/structs/struct-unknown-field-type.err
 	if $(TARGET) tests/cases/vectors/errors/vector-struct-field-runtime-abi.ari -o $(BUILD_DIR)/structs/vector-struct-field-runtime-abi.elf >$(BUILD_DIR)/structs/vector-struct-field-runtime-abi.err 2>&1; then exit 1; fi
 	grep -Fq "bare root Vec[T] cannot be used as a struct field; it is limited to local storage and Slice-shaped parameter views" $(BUILD_DIR)/structs/vector-struct-field-runtime-abi.err
 	if $(TARGET) tests/cases/vectors/errors/vector-generic-struct-field-runtime-abi.ari -o $(BUILD_DIR)/structs/vector-generic-struct-field-runtime-abi.elf >$(BUILD_DIR)/structs/vector-generic-struct-field-runtime-abi.err 2>&1; then exit 1; fi

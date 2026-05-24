@@ -1,4 +1,6 @@
-diagnostic error code=T0001 family=type message="unsupported executable type 'U'" sources=1 labels=1 notes=0 helps=0
+diagnostic error code=T0001 family=type message="unknown type 'U'" sources=1 labels=1 notes=1 helps=1
   Source source_id=0 kind=file path="tests/cases/generics/errors/generic-signature-unknown-param.ari" display="tests/cases/generics/errors/generic-signature-unknown-param.ari" bytes=83
   Label index=0 role=primary source_id=0 source="tests/cases/generics/errors/generic-signature-unknown-param.ari" line=1 column=22 end_line=1 end_column=23 byte_start=21 byte_end=22 message=""
   Snippet label=0 text="  --> tests/cases/generics/errors/generic-signature-unknown-param.ari:1:22\n   |\n 1 | fn consume[T](value: U) -> T {\n   |                      ^"
+  Note index=0 location=none message="Ari resolves primitive types, structs, enums, type aliases, imported module paths, and in-scope generic type parameters before type checking"
+  Help index=0 location=none message="declare type 'U', import or qualify it, or add it to the generic parameter list"

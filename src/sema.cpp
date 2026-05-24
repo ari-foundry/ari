@@ -4685,6 +4685,27 @@ private:
         }
     }
 
+    [[noreturn]] static void fail_unknown_type(SourceLocation loc,
+                                               const std::string& name,
+                                               bool has_type_arguments) {
+        CompileError error(std::move(loc), "unknown type '" + name + "'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "Ari resolves primitive types, structs, enums, type aliases, imported module paths, and in-scope generic type parameters before type checking",
+            DiagnosticNoteKind::Note});
+        if (has_type_arguments) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "type arguments are checked only after the type constructor name resolves",
+                DiagnosticNoteKind::Note});
+        }
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "declare type '" + name + "', import or qualify it, or add it to the generic parameter list",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
     IrType resolve_nullable_type(const TypeRef& ast_type) {
         if (ast_type.qualifier != TypeQualifier::Value) {
             fail(ast_type.loc, "nullable type suffix ? cannot be combined with own, ref, or ptr qualifiers");
@@ -5179,8 +5200,7 @@ private:
                         }
                         fail(type.loc, planned_prelude_type_message(type.name));
                     }
-                    reject_type_args(ast_type);
-                    fail(type.loc, "unsupported executable type '" + type.name + "'");
+                    fail_unknown_type(type.loc, type.name, !ast_type.args.empty());
                 }
             }
         }
