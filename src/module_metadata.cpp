@@ -18,6 +18,55 @@ namespace ari {
 
 namespace {
 
+[[noreturn]] void fail_module_metadata_open(const std::string& path) {
+    CompileError error("cannot open module metadata file '" + path + "'");
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "module metadata checks read the exact artifact passed with --check-module-metadata",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "check the metadata path or regenerate it with --emit-module-metadata",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
+[[noreturn]] void fail_invalid_module_metadata(const std::string& display_path,
+                                               const std::string& detail) {
+    CompileError error("invalid module metadata '" + display_path + "': " + detail);
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "module metadata files are compiler-owned artifacts with versioned source, import, option, and item records",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "regenerate the metadata with --emit-module-metadata instead of editing the artifact by hand",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
+[[noreturn]] void fail_invalid_module_metadata_line(const std::string& display_path,
+                                                    std::size_t line,
+                                                    const std::string& detail) {
+    fail_invalid_module_metadata(display_path, "line " + std::to_string(line) + ": " + detail);
+}
+
+[[noreturn]] void fail_module_metadata_stale(const std::string& path,
+                                             const std::string& detail) {
+    CompileError error("module metadata '" + path +
+                       "' does not match the current source graph: " + detail +
+                       "; regenerate it with --emit-module-metadata");
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "Ari compares metadata format, options, source hashes, imports, and declarations against the current source graph",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "regenerate module metadata after changing source files, imports, cfg features, target options, or public declarations",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
 std::string escape_field(const std::string& text) {
     std::string escaped;
     for (char c : text) {
@@ -41,8 +90,7 @@ std::string unescape_field(const std::string& text, const std::string& display_p
             continue;
         }
         if (i + 1 >= text.size()) {
-            throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                               std::to_string(line) + ": dangling escape");
+            fail_invalid_module_metadata_line(display_path, line, "dangling escape");
         }
         char next = text[++i];
         switch (next) {
@@ -51,8 +99,7 @@ std::string unescape_field(const std::string& text, const std::string& display_p
             case 'n': unescaped.push_back('\n'); break;
             case 'r': unescaped.push_back('\r'); break;
             default:
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line) + ": unknown escape");
+                fail_invalid_module_metadata_line(display_path, line, "unknown escape");
         }
     }
     return unescaped;
@@ -78,8 +125,7 @@ std::vector<std::string> split_metadata_line(const std::string& line,
 bool parse_bool_field(const std::string& value, const std::string& display_path, std::size_t line) {
     if (value == "0") return false;
     if (value == "1") return true;
-    throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                       std::to_string(line) + ": expected boolean 0 or 1");
+    fail_invalid_module_metadata_line(display_path, line, "expected boolean 0 or 1");
 }
 
 std::string bool_key(bool value) {
@@ -476,8 +522,9 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
         ++line_number;
         if (!saw_header) {
             if (line != kModuleMetadataHeader) {
-                throw CompileError("invalid module metadata '" + display_path +
-                                   "': expected " + std::string(kModuleMetadataHeader) + " header");
+                fail_invalid_module_metadata(
+                    display_path,
+                    "expected " + std::string(kModuleMetadataHeader) + " header");
             }
             metadata.format_version = kModuleCacheFormatVersion;
             saw_header = true;
@@ -488,33 +535,28 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
         const std::string& tag = fields[0];
         if (tag == "search") {
             if (fields.size() != 2) {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed search record");
+                fail_invalid_module_metadata_line(display_path, line_number, "malformed search record");
             }
             metadata.module_search_paths.push_back(fields[1]);
         } else if (tag == "cfg") {
             if (fields.size() != 2) {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed cfg record");
+                fail_invalid_module_metadata_line(display_path, line_number, "malformed cfg record");
             }
             metadata.cfg_features.insert(fields[1]);
         } else if (tag == "option") {
             if (fields.size() != 3) {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed option record");
+                fail_invalid_module_metadata_line(display_path, line_number, "malformed option record");
             }
             if (fields[1] == "implicit_std") {
                 metadata.implicit_std = parse_bool_field(fields[2], display_path, line_number);
             } else if (fields[1] == "target") {
                 metadata.target_triple = fields[2];
             } else {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": unknown option");
+                fail_invalid_module_metadata_line(display_path, line_number, "unknown option");
             }
         } else if (tag == "source") {
             if (fields.size() != 5) {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed source record");
+                fail_invalid_module_metadata_line(display_path, line_number, "malformed source record");
             }
             ModuleMetadataSource source{
                 fields[1],
@@ -523,15 +565,15 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
                 parse_bool_field(fields[3], display_path, line_number),
             };
             if (!seen_sources.insert(source_key(source)).second) {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) +
-                                   ": duplicate source record for " + source_display(source));
+                fail_invalid_module_metadata_line(
+                    display_path,
+                    line_number,
+                    "duplicate source record for " + source_display(source));
             }
             metadata.sources.push_back(std::move(source));
         } else if (tag == "import") {
             if (fields.size() != 6) {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed import record");
+                fail_invalid_module_metadata_line(display_path, line_number, "malformed import record");
             }
             ModuleMetadataImport import{
                 fields[1],
@@ -541,15 +583,15 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
                 parse_bool_field(fields[5], display_path, line_number),
             };
             if (!seen_imports.insert(import_key(import)).second) {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) +
-                                   ": duplicate import record for " + import_display(import));
+                fail_invalid_module_metadata_line(
+                    display_path,
+                    line_number,
+                    "duplicate import record for " + import_display(import));
             }
             metadata.imports.push_back(std::move(import));
         } else if (tag == "item") {
             if (fields.size() != 5 && fields.size() != 6) {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) + ": malformed item record");
+                fail_invalid_module_metadata_line(display_path, line_number, "malformed item record");
             }
             ModuleMetadataItem item{
                 fields[1],
@@ -559,27 +601,28 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
                 parse_bool_field(fields.size() == 6 ? fields[5] : fields[4], display_path, line_number),
             };
             if (!seen_items.insert(item_key(item)).second) {
-                throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                                   std::to_string(line_number) +
-                                   ": duplicate item record for " + item_display(item));
+                fail_invalid_module_metadata_line(
+                    display_path,
+                    line_number,
+                    "duplicate item record for " + item_display(item));
             }
             metadata.items.push_back(std::move(item));
         } else {
-            throw CompileError("invalid module metadata '" + display_path + "' at line " +
-                               std::to_string(line_number) + ": unknown record");
+            fail_invalid_module_metadata_line(display_path, line_number, "unknown record");
         }
     }
 
     if (!saw_header) {
-        throw CompileError("invalid module metadata '" + display_path +
-                           "': expected " + std::string(kModuleMetadataHeader) + " header");
+        fail_invalid_module_metadata(
+            display_path,
+            "expected " + std::string(kModuleMetadataHeader) + " header");
     }
     return metadata;
 }
 
 ModuleMetadata read_module_metadata_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
-    if (!in) throw CompileError("cannot open module metadata file '" + path + "'");
+    if (!in) fail_module_metadata_open(path);
     std::ostringstream ss;
     ss << in.rdbuf();
     return parse_module_metadata_text(ss.str(), path);
@@ -589,16 +632,14 @@ void require_matching_module_metadata(const ModuleMetadata& expected,
                                       const ModuleMetadata& actual,
                                       const std::string& path) {
     if (expected.format_version != kModuleCacheFormatVersion) {
-        throw CompileError("module metadata '" + path +
-                           "' uses ari-module-metadata-v" + std::to_string(expected.format_version) +
-                           ", but this compiler only accepts " + std::string(kModuleMetadataHeader) +
-                           "; regenerate it with --emit-module-metadata");
+        fail_module_metadata_stale(
+            path,
+            "uses ari-module-metadata-v" + std::to_string(expected.format_version) +
+                ", but this compiler only accepts " + std::string(kModuleMetadataHeader));
     }
     if (serialize_module_metadata(expected) == serialize_module_metadata(actual)) return;
     std::string detail = find_module_metadata_mismatch(expected, actual);
-    throw CompileError("module metadata '" + path +
-                       "' does not match the current source graph: " + detail +
-                       "; regenerate it with --emit-module-metadata");
+    fail_module_metadata_stale(path, detail);
 }
 
 } // namespace ari
