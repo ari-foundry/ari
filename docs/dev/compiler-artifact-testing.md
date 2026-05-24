@@ -491,8 +491,8 @@ It currently proves more than two dozen low-level contracts:
   scalar flow, trait dispatch, generic function specialization, generic
   aggregate, compiler-shaped struct/enum/match, file-backed module, and
   ownership/drop fixtures without involving LLVM codegen
-- `--emit-pass-summary` writes deterministic stage counts for lexing, syntax,
-  module loading, and sema
+- `--emit-pass-summary` writes deterministic stage counts and stable source and
+  import summaries for lexing, syntax, module loading, and sema
 - `--emit-llvm` is checked through review-sized function fragments for core
   control flow, generic function specialization, generic aggregate lowering,
   ownership/drop lowering, and static trait dispatch instead of committing the
@@ -537,8 +537,8 @@ The current compiler already has useful artifact checks:
 - `--emit-declaration-index` for stable declaration signatures, visibility,
   module names, and source locations before semantic lowering
 - `--emit-typed-ir` for stable sema output before LLVM lowering
-- `--emit-pass-summary` for quick stage-boundary counts in compiler-development
-  tests
+- `--emit-pass-summary` for quick stage-boundary counts plus stable source and
+  import summaries in compiler-development tests
 - `--emit-llvm` for LLVM text and extracted review-sized function fragments
 - `--emit-obj` plus `tests/extract_symbol_names.py` for object symbol goldens
 - `--shared` plus `tests/extract_symbol_names.py --dynamic` for linked

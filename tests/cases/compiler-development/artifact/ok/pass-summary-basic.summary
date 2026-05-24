@@ -2,4 +2,5 @@ CompilerPassSummary source=tests/cases/compiler-development/artifact/ok/token-du
   Lex root_tokens=17 includes_end=true
   Syntax functions=1 structs=0 enums=0 traits=0 impls=0 type_aliases=0 consts=0 modules=0 imports=0 uses=0 item_macros=0
   Modules sources=1 imports=0 items=1 search_paths=0 cfg_features=0 implicit_std=false
+    Source module=<root> root=true path=tests/cases/compiler-development/artifact/ok/token-dump-basic.ari
   Sema functions=1 externs=0 warnings=0 require_main=true

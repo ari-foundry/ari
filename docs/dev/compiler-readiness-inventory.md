@@ -99,8 +99,8 @@ routing, compiler capability status tables, source byte/line tables, lexer token
 parser tree text, expected-failure diagnostic text,
 diagnostic code ownership tables,
 file-backed source/import/item graph text, declaration signature text,
-resolver-facing normalized facts, sema-lowered typed IR, stage-boundary counts,
-and C-compatible header text. `make check-compiler-artifacts` also extracts
+resolver-facing normalized facts, sema-lowered typed IR, stage-boundary counts
+with stable source/import summaries, and C-compatible header text. `make check-compiler-artifacts` also extracts
 review-sized LLVM fragments, compares seeded object/shared symbol inventories,
 and compares stdout goldens, while `--list-artifacts`/`--explain-artifact`
 declare the shared-library and stdout/stderr runtime comparison surfaces. This is the current

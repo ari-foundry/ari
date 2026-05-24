@@ -1,0 +1,16 @@
+CompilerPassSummary source=tests/cases/modules/ok/project-compiler-main.ari target=x86_64-pc-linux-gnu
+  Lex root_tokens=19 includes_end=true
+  Syntax functions=16 structs=5 enums=2 traits=0 impls=0 type_aliases=0 consts=0 modules=5 imports=0 uses=3 item_macros=0
+  Modules sources=6 imports=5 items=31 search_paths=0 cfg_features=0 implicit_std=false
+    Source module=<root> root=true path=tests/cases/modules/ok/project-compiler-main.ari
+    Source module=project_compiler root=false path=tests/cases/modules/ok/project_compiler.ari
+    Source module=project_compiler::diag root=false path=tests/cases/modules/ok/project_compiler/diag.ari
+    Source module=project_compiler::parser root=false path=tests/cases/modules/ok/project_compiler/parse.ari
+    Source module=project_compiler::source root=false path=tests/cases/modules/ok/project_compiler/source.ari
+    Source module=project_compiler::symbols root=false path=tests/cases/modules/ok/project_compiler/symbols.ari
+    Import owner=<root> module=project_compiler local=project_compiler public=false source=tests/cases/modules/ok/project_compiler.ari
+    Import owner=project_compiler module=project_compiler::diag local=diag public=true source=tests/cases/modules/ok/project_compiler/diag.ari
+    Import owner=project_compiler module=project_compiler::parser local=parse public=true source=tests/cases/modules/ok/project_compiler/parse.ari
+    Import owner=project_compiler module=project_compiler::source local=source public=true source=tests/cases/modules/ok/project_compiler/source.ari
+    Import owner=project_compiler module=project_compiler::symbols local=symbols public=true source=tests/cases/modules/ok/project_compiler/symbols.ari
+  Sema functions=16 externs=0 warnings=0 require_main=true

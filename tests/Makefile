@@ -438,6 +438,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir $(BUILD_DIR)/compiler-development/artifact/ownership-aggregate-field-move.ir
 	$(TARGET) tests/cases/compiler-development/artifact/ok/token-dump-basic.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-pass-summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-basic.summary
+	$(TARGET) tests/cases/modules/ok/project-compiler-main.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-pass-summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-project-compiler.summary
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/pass-summary-project-compiler.summary $(BUILD_DIR)/compiler-development/artifact/pass-summary-project-compiler.summary
 	$(TARGET) tests/cases/compiler-development/artifact/ok/core-language-scalar-flow.ari --target x86_64-pc-linux-gnu --no-implicit-std --emit-llvm $(BUILD_DIR)/compiler-development/artifact/backend-core.ll
 	python3 tests/extract_llvm_functions.py $(BUILD_DIR)/compiler-development/artifact/backend-core.ll _ARNv3add _ARNv7compute _ARNv4main >$(BUILD_DIR)/compiler-development/artifact/backend-core.llvm-frag
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag $(BUILD_DIR)/compiler-development/artifact/backend-core.llvm-frag

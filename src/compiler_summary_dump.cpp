@@ -2,7 +2,9 @@
 
 #include "common.hpp"
 
+#include <algorithm>
 #include <sstream>
+#include <vector>
 
 namespace ari {
 
@@ -234,6 +236,24 @@ static std::string quote_field(const char* text) {
     }
     escaped.push_back('"');
     return escaped;
+}
+
+static std::string bool_text(bool value) {
+    return value ? "true" : "false";
+}
+
+static std::string module_name_text(const std::string& module_name) {
+    return module_name.empty() ? "<root>" : module_name;
+}
+
+static std::string source_summary_key(const ModuleMetadataSource& source) {
+    return source.module_name + "\t" + source.path + "\t" + (source.is_root ? "1" : "0");
+}
+
+static std::string import_summary_key(const ModuleMetadataImport& import) {
+    return import.owner_module + "\t" + import.module_name + "\t" +
+           import.local_name + "\t" + import.source_path + "\t" +
+           (import.is_public ? "1" : "0");
 }
 
 static const CapabilityRow* find_capability_row(const std::string& name) {
@@ -495,11 +515,31 @@ std::string dump_compiler_pass_summary(const std::string& source_name,
         << " items=" << metadata.items.size()
         << " search_paths=" << metadata.module_search_paths.size()
         << " cfg_features=" << metadata.cfg_features.size()
-        << " implicit_std=" << (metadata.implicit_std ? "true" : "false") << "\n";
+        << " implicit_std=" << bool_text(metadata.implicit_std) << "\n";
+    std::vector<ModuleMetadataSource> sources = metadata.sources;
+    std::sort(sources.begin(), sources.end(), [](const auto& left, const auto& right) {
+        return source_summary_key(left) < source_summary_key(right);
+    });
+    for (const auto& source : sources) {
+        out << "    Source module=" << module_name_text(source.module_name)
+            << " root=" << bool_text(source.is_root)
+            << " path=" << source.path << "\n";
+    }
+    std::vector<ModuleMetadataImport> imports = metadata.imports;
+    std::sort(imports.begin(), imports.end(), [](const auto& left, const auto& right) {
+        return import_summary_key(left) < import_summary_key(right);
+    });
+    for (const auto& import : imports) {
+        out << "    Import owner=" << module_name_text(import.owner_module)
+            << " module=" << import.module_name
+            << " local=" << import.local_name
+            << " public=" << bool_text(import.is_public)
+            << " source=" << import.source_path << "\n";
+    }
     out << "  Sema functions=" << ir.functions.size()
         << " externs=" << ir.extern_functions.size()
         << " warnings=" << ir.warnings.size()
-        << " require_main=" << (ir.require_main ? "true" : "false") << "\n";
+        << " require_main=" << bool_text(ir.require_main) << "\n";
     return out.str();
 }
 
