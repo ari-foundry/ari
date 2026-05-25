@@ -1,0 +1,6 @@
+diagnostic error code=T0001 family=type message="main must return i64 in the executable subset" sources=1 labels=1 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/functions/errors/function-main-return-type.ari" display="tests/cases/functions/errors/function-main-return-type.ari" bytes=37
+  Label index=0 role=primary source_id=0 source="tests/cases/functions/errors/function-main-return-type.ari" line=1 column=4 end_line=1 end_column=8 byte_start=3 byte_end=7 message=""
+  Snippet label=0 text="  --> tests/cases/functions/errors/function-main-return-type.ari:1:4\n   |\n 1 | fn main() -> bool {\n   |    ^^^^"
+  Note index=0 location=none message="the executable subset uses main's i64 return value as the process exit status"
+  Help index=0 location=none message="change the signature to 'fn main() -> i64' and return an integer status"

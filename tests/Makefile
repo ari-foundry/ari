@@ -248,6 +248,12 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-type-assignment.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-core-use-before-declaration.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-core-use-before-declaration.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-core-use-before-declaration.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-core-use-before-declaration.diagnostic
+	$(TARGET) tests/cases/functions/errors/function-missing-main.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-function-missing-main.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-function-missing-main.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-function-missing-main.diagnostic
+	$(TARGET) tests/cases/functions/errors/function-main-params.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-function-main-params.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-function-main-params.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-function-main-params.diagnostic
+	$(TARGET) tests/cases/functions/errors/function-main-return-type.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-function-main-return-type.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-function-main-return-type.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-function-main-return-type.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-name.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-name.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-name.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-name.diagnostic
 	$(TARGET) tests/cases/functions/errors/function-overload-params.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-function.diagnostic

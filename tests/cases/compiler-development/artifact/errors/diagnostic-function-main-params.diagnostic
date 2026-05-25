@@ -1,0 +1,6 @@
+diagnostic error code=T0001 family=type message="main cannot take parameters" sources=1 labels=1 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/functions/errors/function-main-params.ari" display="tests/cases/functions/errors/function-main-params.ari" bytes=47
+  Label index=0 role=primary source_id=0 source="tests/cases/functions/errors/function-main-params.ari" line=1 column=4 end_line=1 end_column=8 byte_start=3 byte_end=7 message=""
+  Snippet label=0 text="  --> tests/cases/functions/errors/function-main-params.ari:1:4\n   |\n 1 | fn main(value: i64) -> i64 {\n   |    ^^^^"
+  Note index=0 location=none message="the executable entry point signature is fixed so the generated C entry point can call it directly"
+  Help index=0 location=none message="declare main as 'fn main() -> i64' and read process context through supported runtime APIs"

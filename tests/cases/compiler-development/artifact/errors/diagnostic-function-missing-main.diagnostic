@@ -1,0 +1,6 @@
+diagnostic error code=T0001 family=type message="missing executable function 'main'" sources=1 labels=1 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/functions/errors/function-missing-main.ari" display="tests/cases/functions/errors/function-missing-main.ari" bytes=35
+  Label index=0 role=primary source_id=0 source="tests/cases/functions/errors/function-missing-main.ari" line=4 column=1 end_line=4 end_column=1 byte_start=35 byte_end=35 message=""
+  Snippet label=0 text="  --> tests/cases/functions/errors/function-missing-main.ari:4:1\n   |\n 4 | \n   | ^"
+  Note index=0 location=none message="executable Ari programs need a top-level entry point named 'main'"
+  Help index=0 location=none message="add 'fn main() -> i64 { return 0; }' or compile in a mode that does not require an executable entry point"

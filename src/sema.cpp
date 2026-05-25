@@ -356,6 +356,52 @@ public:
         throw CompileError(message);
     }
 
+    CompileError program_end_error(const std::string& message) const {
+        if (!options_.source_name.empty()) {
+            return CompileError(source_end_location(options_.source_name), message);
+        }
+        return CompileError(message);
+    }
+
+    [[noreturn]] void fail_missing_main() const {
+        CompileError error = program_end_error("missing executable function 'main'");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "executable Ari programs need a top-level entry point named 'main'",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "add 'fn main() -> i64 { return 0; }' or compile in a mode that does not require an executable entry point",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_main_parameters(SourceLocation loc) {
+        CompileError error(std::move(loc), "main cannot take parameters");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "the executable entry point signature is fixed so the generated C entry point can call it directly",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "declare main as 'fn main() -> i64' and read process context through supported runtime APIs",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
+    [[noreturn]] static void fail_main_return_type(SourceLocation loc) {
+        CompileError error(std::move(loc), "main must return i64 in the executable subset");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "the executable subset uses main's i64 return value as the process exit status",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "change the signature to 'fn main() -> i64' and return an integer status",
+            DiagnosticNoteKind::Help});
+        throw error;
+    }
+
 private:
     enum class Flow {
         Continues,
@@ -4737,11 +4783,11 @@ private:
 
     void require_main() const {
         auto found = functions_.find("main");
-        if (found == functions_.end()) fail_program("missing executable function 'main'");
-        if (!found->second.params.empty()) fail(found->second.loc, "main cannot take parameters");
+        if (found == functions_.end()) fail_missing_main();
+        if (!found->second.params.empty()) fail_main_parameters(found->second.loc);
         if (found->second.result.qualifier != TypeQualifier::Value ||
             found->second.result.primitive != IrPrimitiveKind::I64) {
-            fail(found->second.loc, "main must return i64 in the executable subset");
+            fail_main_return_type(found->second.loc);
         }
     }
 

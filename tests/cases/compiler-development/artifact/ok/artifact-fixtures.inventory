@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=284
+CompilerArtifactFixtures version=1 group=all entries=287
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -51,6 +51,9 @@ CompilerArtifactFixtures version=1 group=all entries=284
   Fixture group=errors kind=source path=errors/diagnostic-field-assignment-while-borrowed.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-field-assignment-while-borrowed.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-field-borrow-conflict.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-function-main-params.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-function-main-return-type.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-function-missing-main.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-enum-payload-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-nested-mismatch.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-generic-aggregate-recursive-struct.diagnostic
