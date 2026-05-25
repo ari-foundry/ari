@@ -168,22 +168,38 @@ std::string inherent_impl_origin_method_key(const std::string& method_name) {
     return impl_origin_method_key("inherent", method_name);
 }
 
+[[noreturn]] void fail_module_cache_ir_summary_consistency(const std::string& path,
+                                                           const std::string& detail) {
+    CompileError error("module cache IR summary for '" + path + "' " + detail);
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "cached IR summaries are checked against declaration summaries before lowered functions can be replayed",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "regenerate the module cache with --emit-module-cache after changing function signatures, generic specializations, impl methods, or cached body shape",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
 void require_known_specialization_args(const ModuleCacheIrFunctionSummary& fn,
                                        const std::set<std::string>& allowed_names,
                                        const std::string& path) {
     std::set<std::string> seen;
     for (const auto& arg : fn.specialization_args) {
         if (!seen.insert(arg.name).second) {
-            throw CompileError("module cache IR summary for '" + path +
-                               "' has specialization '" + fn.name +
-                               "' with duplicate generic argument '" +
-                               arg.name + "'");
+            fail_module_cache_ir_summary_consistency(
+                path,
+                "has specialization '" + fn.name +
+                    "' with duplicate generic argument '" +
+                    arg.name + "'");
         }
         if (!allowed_names.count(arg.name)) {
-            throw CompileError("module cache IR summary for '" + path +
-                               "' has specialization '" + fn.name +
-                               "' with unknown generic argument '" +
-                               arg.name + "'");
+            fail_module_cache_ir_summary_consistency(
+                path,
+                "has specialization '" + fn.name +
+                    "' with unknown generic argument '" +
+                    arg.name + "'");
         }
     }
 }
@@ -392,34 +408,38 @@ void require_ir_summary_covers_ast_summary_functions(const Program& declarations
         auto lowered = lowered_functions.find(fn.name);
         if (lowered == lowered_functions.end()) {
             if (!require_all_functions) continue;
-            throw CompileError("module cache IR summary for '" + path +
-                               "' is missing lowered function '" + fn.name + "'");
+            fail_module_cache_ir_summary_consistency(
+                path,
+                "is missing lowered function '" + fn.name + "'");
         }
         const std::string expected_return = fn.has_return_type ? type_ref_key(fn.return_type) : "void";
         if (!same_module_cache_type_key(lowered->second->return_type, expected_return)) {
-            throw CompileError("module cache IR summary for '" + path +
-                               "' has lowered function '" + fn.name +
-                               "' return type '" + lowered->second->return_type +
-                               "' but declaration summary expects '" +
-                               expected_return + "'");
+            fail_module_cache_ir_summary_consistency(
+                path,
+                "has lowered function '" + fn.name +
+                    "' return type '" + lowered->second->return_type +
+                    "' but declaration summary expects '" +
+                    expected_return + "'");
         }
         if (lowered->second->params.size() != fn.params.size()) {
-            throw CompileError("module cache IR summary for '" + path +
-                               "' has lowered function '" + fn.name +
-                               "' parameter count " +
-                               std::to_string(lowered->second->params.size()) +
-                               " but declaration summary expects " +
-                               std::to_string(fn.params.size()));
+            fail_module_cache_ir_summary_consistency(
+                path,
+                "has lowered function '" + fn.name +
+                    "' parameter count " +
+                    std::to_string(lowered->second->params.size()) +
+                    " but declaration summary expects " +
+                    std::to_string(fn.params.size()));
         }
         for (std::size_t i = 0; i < fn.params.size(); ++i) {
             const std::string expected_param = type_ref_key(fn.params[i].type);
             if (same_module_cache_type_key(lowered->second->params[i].type, expected_param)) continue;
-            throw CompileError("module cache IR summary for '" + path +
-                               "' has lowered function '" + fn.name +
-                               "' parameter " + std::to_string(i) +
-                               " type '" + lowered->second->params[i].type +
-                               "' but declaration summary expects '" +
-                               expected_param + "'");
+            fail_module_cache_ir_summary_consistency(
+                path,
+                "has lowered function '" + fn.name +
+                    "' parameter " + std::to_string(i) +
+                    " type '" + lowered->second->params[i].type +
+                    "' but declaration summary expects '" +
+                    expected_param + "'");
         }
     }
 }
@@ -488,10 +508,11 @@ void require_ir_summary_specializations_match_ast_summary(
         if (fn.specialization_kind == "generic-function") {
             auto origin = generic_function_params.find(fn.specialization_origin);
             if (origin == generic_function_params.end()) {
-                throw CompileError("module cache IR summary for '" + path +
-                                   "' has generic specialization '" + fn.name +
-                                   "' for unknown generic function '" +
-                                   fn.specialization_origin + "'");
+                fail_module_cache_ir_summary_consistency(
+                    path,
+                    "has generic specialization '" + fn.name +
+                        "' for unknown generic function '" +
+                        fn.specialization_origin + "'");
             }
             require_known_specialization_args(fn, origin->second, path);
             continue;
@@ -503,20 +524,22 @@ void require_ir_summary_specializations_match_ast_summary(
                 ? impl_specialization_method_params.find(origin.method_name)
                 : impl_specialization_method_params.end();
             if (!has_method_origin || method == impl_specialization_method_params.end()) {
-                throw CompileError("module cache IR summary for '" + path +
-                                   "' has impl-method specialization '" + fn.name +
-                                   "' for unknown impl method origin '" +
-                                   fn.specialization_origin + "'");
+                fail_module_cache_ir_summary_consistency(
+                    path,
+                    "has impl-method specialization '" + fn.name +
+                        "' for unknown impl method origin '" +
+                        fn.specialization_origin + "'");
             }
             auto origin_method = impl_specialization_origin_params.find(
                 impl_origin_method_key(origin.trait_key, origin.method_name));
             if (origin_method == impl_specialization_origin_params.end() &&
                 locally_declared_trait_method_names.count(origin.method_name) != 0 &&
                 locally_declared_trait_method_keys.count(impl_origin_method_key(origin.trait_key, origin.method_name)) == 0) {
-                throw CompileError("module cache IR summary for '" + path +
-                                   "' has impl-method specialization '" + fn.name +
-                                   "' for unknown impl method origin '" +
-                                   fn.specialization_origin + "'");
+                fail_module_cache_ir_summary_consistency(
+                    path,
+                    "has impl-method specialization '" + fn.name +
+                        "' for unknown impl method origin '" +
+                        fn.specialization_origin + "'");
             }
             require_known_specialization_args(
                 fn,
@@ -526,10 +549,11 @@ void require_ir_summary_specializations_match_ast_summary(
                 path);
             continue;
         }
-        throw CompileError("module cache IR summary for '" + path +
-                           "' has unknown specialization kind '" +
-                           fn.specialization_kind + "' for lowered function '" +
-                           fn.name + "'");
+        fail_module_cache_ir_summary_consistency(
+            path,
+            "has unknown specialization kind '" +
+                fn.specialization_kind + "' for lowered function '" +
+                fn.name + "'");
     }
 }
 
@@ -564,10 +588,11 @@ void require_cached_impl_call_targets_resolve_expr(
     if ((expr->kind == "call" || expr->kind == "function-ref") &&
         starts_with(expr->name, "impl::") &&
         !lowered_function_names.count(expr->name)) {
-        throw CompileError("module cache IR summary for '" + path +
-                           "' has lowered body '" + function_name +
-                           "' calling unknown cached impl function '" +
-                           expr->name + "'");
+        fail_module_cache_ir_summary_consistency(
+            path,
+            "has lowered body '" + function_name +
+                "' calling unknown cached impl function '" +
+                expr->name + "'");
     }
 
     require_cached_impl_call_targets_resolve_expr(expr->operand, lowered_function_names, function_name, path);
