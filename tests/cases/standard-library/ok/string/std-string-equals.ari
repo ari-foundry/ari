@@ -10,15 +10,19 @@ fn main() -> i64 {
   let shorter_view = shorter.as_slice();
   let different_view = different.as_slice();
   let empty_view = empty.as_slice();
+  let equal_owned = std::string::from_string(ref mut zone, "compiler");
+  let different_owned = std::string::from_string(ref mut zone, "compilers");
 
   let a = if text.equals(same_view) { 11 } else { 0 };
   let b = if text.equals(shorter_view) { 0 } else { 13 };
   let c = if text.equals(different_view) { 0 } else { 17 };
   let d = if empty.equals(empty_view) { 19 } else { 0 };
+  let f = if text == equal_owned { 29 } else { 0 };
+  let g = if text != different_owned { 31 } else { 0 };
 
   text.push_in(ref mut zone, 33u8);
   let e = if text.equals(same_view) { 0 } else { 23 };
 
   zone::destroy(zone);
-  return a + b + c + d + e;
+  return a + b + c + d + e + f + g;
 }

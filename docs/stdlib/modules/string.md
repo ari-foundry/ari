@@ -304,13 +304,17 @@ text.ends_with(bytes)
 text.ends_with_text("text")
 text.equals(bytes)
 text.equals_text("text")
+text.eq(other_owned_string)
+text == other_owned_string
 ```
 
 `slice` and `split_at` return borrowed byte views. `chunks`, `windows`, and
 delimiter `split` are lazy iterators over borrowed byte views and do not
 allocate. They compare exact byte values and do not perform case folding or
 decoding. The `_text` variants are exact byte comparisons against Ari `string`
-values without the trailing NUL.
+values without the trailing NUL. `eq` and the `==` / `!=` operators compare
+owned `String` values by byte contents, which makes `String` usable as a
+`HashMap` key alongside `std::hash::Hash[String]`.
 
 ## ASCII Helpers
 

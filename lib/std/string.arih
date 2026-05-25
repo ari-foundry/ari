@@ -821,6 +821,10 @@ pub impl std::string::String {
     return self.equals(std::string::bytes(value));
   }
 
+  pub fn eq(self: ref Self, other: std::string::String) -> bool {
+    return self.equals(other.as_slice());
+  }
+
   fn equals_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::equals_ignore_case(view, values);

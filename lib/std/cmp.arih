@@ -122,6 +122,12 @@ impl PartialEq[u64] for u64 {
   }
 }
 
+impl Eq[std::string::String] for std::string::String {
+  pub fn eq(self, other: std::string::String) -> bool {
+    return self.equals(other.as_slice());
+  }
+}
+
 impl Ord[i8] for i8 {
   fn lt(self, other: i8) -> bool {
     return self < other;

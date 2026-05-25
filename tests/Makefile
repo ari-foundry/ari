@@ -1807,11 +1807,12 @@ check-prelude: $(TARGET)
 	grep -F -q 'std4hash3new' $(BUILD_DIR)/prelude/std-hash-basic.ll
 	grep -F -q 'std4hash12value__G_i64' $(BUILD_DIR)/prelude/std-hash-basic.ll
 	grep -F -q 'std4hash5bytes' $(BUILD_DIR)/prelude/std-hash-basic.ll
+	grep -F -q 'std4hash6string' $(BUILD_DIR)/prelude/std-hash-basic.ll
 	grep -F -q 'std4hash12write__G_i64' $(BUILD_DIR)/prelude/std-hash-basic.ll
 	grep -F -q 'std4hash10write_byte' $(BUILD_DIR)/prelude/std-hash-basic.ll
 	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari -o $(BUILD_DIR)/prelude/std-hash-basic.elf
-	$(BUILD_DIR)/prelude/std-hash-basic.elf; code=$$?; test $$code -eq 31
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-hash-basic.elf; $(BUILD_DIR)/prelude/std-hash-basic.elf; code=$$?; test $$code -eq 31; fi
+	$(BUILD_DIR)/prelude/std-hash-basic.elf; code=$$?; test $$code -eq 63
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/hash/std-hash-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-hash-basic.elf; $(BUILD_DIR)/prelude/std-hash-basic.elf; code=$$?; test $$code -eq 63; fi
 	$(TARGET) tests/cases/standard-library/ok/hash/std-hash-integer-widths.ari --emit-llvm $(BUILD_DIR)/prelude/std-hash-integer-widths.ll
 	grep -F -q 'std4hash8write_i8' $(BUILD_DIR)/prelude/std-hash-integer-widths.ll
 	grep -F -q 'std4hash9write_i16' $(BUILD_DIR)/prelude/std-hash-integer-widths.ll
@@ -2313,6 +2314,7 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-string-prefix-suffix.ll
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-equals.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-equals.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-string-equals.ll
+	grep -F -q 'std__cmp__Eq2eq' $(BUILD_DIR)/prelude/std-string-equals.ll
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-ascii-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { ptr, i64 } @"_ARNv4impl19std__string__String8inherent10trim_start"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { ptr, i64 } @"_ARNv4impl19std__string__String8inherent8trim_end"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
@@ -2790,6 +2792,14 @@ check-prelude: $(TARGET)
 	grep -q 'std__collections__HashSet_i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-hash-iter.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf
 	$(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-string-map.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q '_ARNv3std11collections11hash_string' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q '_ARNv3std11collections38string_hash_map__G_std__string__String' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q '_ARNv3std11collections15string_hash_set' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent12contains_key' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	grep -q 'HashMap_std__string__String__std__string__String_8inherent6get_or' $(BUILD_DIR)/prelude/std-collections-string-map.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-string-map.ari -o $(BUILD_DIR)/prelude/std-collections-string-map.elf
+	$(BUILD_DIR)/prelude/std-collections-string-map.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-representatives.ll
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent7try_get' $(BUILD_DIR)/prelude/std-collections-set-representatives.ll
 	grep -q '_ARNv4impl30std__collections__TreeSet_i64_8inherent3get' $(BUILD_DIR)/prelude/std-collections-set-representatives.ll
@@ -3198,7 +3208,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-search.elf; $(BUILD_DIR)/prelude/std-string-search.elf; code=$$?; test $$code -eq 77; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-split-join.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-split-join.elf; $(BUILD_DIR)/prelude/std-string-split-join.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-prefix-suffix.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; code=$$?; test $$code -eq 143; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-equals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-equals.elf; $(BUILD_DIR)/prelude/std-string-equals.elf; code=$$?; test $$code -eq 83; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-equals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-equals.elf; $(BUILD_DIR)/prelude/std-string-equals.elf; code=$$?; test $$code -eq 143; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-from-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-copy.elf; $(BUILD_DIR)/prelude/std-string-from-copy.elf; code=$$?; test $$code -eq 163; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-copy-to-method.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; code=$$?; test $$code -eq 104; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; code=$$?; test $$code -eq 103; fi
@@ -3243,6 +3253,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash.elf; $(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; $(BUILD_DIR)/prelude/std-collections-hash-set-relations.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; $(BUILD_DIR)/prelude/std-collections-hash-iter.elf; code=$$?; test $$code -eq 164; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-string-map.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-string-map.elf; $(BUILD_DIR)/prelude/std-collections-string-map.elf; code=$$?; test $$code -eq 255; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-set-representatives.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; $(BUILD_DIR)/prelude/std-collections-set-representatives.elf; code=$$?; test $$code -eq 236; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-entries.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-entries.elf; $(BUILD_DIR)/prelude/std-collections-map-entries.elf; code=$$?; test $$code -eq 71; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/collections/std-collections-map-natural-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; $(BUILD_DIR)/prelude/std-collections-map-natural-api.elf; code=$$?; test $$code -eq 145; fi

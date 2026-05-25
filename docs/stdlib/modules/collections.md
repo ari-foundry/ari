@@ -272,10 +272,13 @@ For tracked local hash handles, `map.insert(key, value)`, `map.entry(key)`,
 
 ```ari
 collections::hash_i64(value)
+collections::hash_string(value)
 collections::hash_map<K, V>(ref mut zone, capacity, hash)
+collections::string_hash_map<V>(ref mut zone, capacity)
 HashMap::new<K, V>(ref mut zone, capacity, hash)
 HashMap::from_iter<K, V, I>(ref mut zone, capacity, hash, iter)
 collections::hash_set<T>(ref mut zone, capacity, hash)
+collections::string_hash_set(ref mut zone, capacity)
 HashSet::new<T>(ref mut zone, capacity, hash)
 HashSet::from_iter<T, I>(ref mut zone, capacity, hash, iter)
 ```
@@ -283,6 +286,11 @@ HashSet::from_iter<T, I>(ref mut zone, capacity, hash, iter)
 The hash function shape is `fn(K) -> u64` for `HashMap[K, V]` and
 `fn(T) -> u64` for `HashSet[T]`. `collections::hash_i64` is kept as a
 compatibility helper for i64 keys and delegates to `std::hash::value<i64>`.
+`collections::hash_string` delegates to `std::hash::string`, and
+`string_hash_map` / `string_hash_set` wire that policy in for the common
+`String` key case. Owned `String` equality is content-based through
+`std::cmp::Eq[String]`, so independently allocated strings with the same bytes
+find the same hash map entry.
 The planned trait-driven shape is for `HashMap::new<K: Hash[K] + Eq[K], V>`
 and `HashSet::new<T: Hash[T] + Eq[T]>` to select the default hash/equality
 policy automatically. Explicit custom hash policy should remain available
@@ -705,6 +713,21 @@ fn main() -> i64 {
 
   zone::destroy(zone);
   return value;
+}
+```
+
+String-key hash table:
+
+```ari
+fn main() -> i64 {
+  var zone = zone::create(2048);
+  var names = collections::string_hash_map<String>(ref mut zone, 8);
+
+  names.insert(string::from(ref mut zone, "name"), string::from(ref mut zone, "hello"));
+  let value = names.get(string::from(ref mut zone, "name"));
+
+  zone::destroy(zone);
+  return value.len();
 }
 ```
 

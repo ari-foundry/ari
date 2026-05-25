@@ -386,6 +386,10 @@ pub fn hash_i64(value: i64) -> u64 {
   return std::hash::value<i64>(value);
 }
 
+pub fn hash_string(value: std::string::String) -> u64 {
+  return std::hash::string(value);
+}
+
 pub fn less_i64(left: i64, right: i64) -> bool {
   return left < right;
 }
@@ -824,6 +828,17 @@ pub fn hash_map[K, V](
   };
 }
 
+pub fn string_hash_map[V](
+  zone: ref mut Zone,
+  capacity: i64
+) -> std::collections::HashMap[std::string::String, V] {
+  return std::collections::hash_map<std::string::String, V>(
+    zone,
+    capacity,
+    std::collections::hash_string
+  );
+}
+
 pub fn hash_set[T](
   zone: ref mut Zone,
   capacity: i64,
@@ -840,6 +855,17 @@ pub fn hash_set[T](
     len: 0,
     capacity: actual,
   };
+}
+
+pub fn string_hash_set(
+  zone: ref mut Zone,
+  capacity: i64
+) -> std::collections::HashSet[std::string::String] {
+  return std::collections::hash_set<std::string::String>(
+    zone,
+    capacity,
+    std::collections::hash_string
+  );
 }
 
 fn hash_map_find_slot[K, V](map: ref std::collections::HashMap[K, V], key: K) -> i64 {

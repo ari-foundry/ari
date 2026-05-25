@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `2827`
+- API entries: `2832`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 837 | usable |
+| `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 739 | stable candidate |
 | `hosted` | 1064 | platform-backed |
@@ -38,8 +38,8 @@ platform notes.
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
-| `fn` | 1030 |
-| `method` | 1393 |
+| `fn` | 1034 |
+| `method` | 1394 |
 | `module` | 39 |
 | `struct` | 154 |
 | `trait` | 39 |
@@ -59,7 +59,7 @@ platform notes.
 | `std::c` | `platform` | 49 |
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
-| `std::collections` | `alloc` | 361 |
+| `std::collections` | `alloc` | 364 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 60 |
@@ -67,7 +67,7 @@ platform notes.
 | `std::error` | `core` | 37 |
 | `std::fmt` | `core` | 38 |
 | `std::fs` | `hosted` | 259 |
-| `std::hash` | `alloc` | 23 |
+| `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
 | `std::io` | `hosted` | 89 |
 | `std::iter` | `alloc` | 41 |
@@ -83,7 +83,7 @@ platform notes.
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
-| `std::string` | `alloc` | 140 |
+| `std::string` | `alloc` | 141 |
 | `std::sync` | `hosted` | 130 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
@@ -837,11 +837,14 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::collections::hash_i64` | check-prelude std-collections-hash public i64 hash helper for explicit hasher containers; docs/stdlib/modules/collections.md |
 | `fn std::collections::hash_map[K, V]` | check-prelude std-collections-hash explicit-hasher hash map constructor; docs/stdlib/modules/collections.md |
 | `fn std::collections::hash_set[T]` | check-prelude std-collections-hash explicit-hasher hash set constructor; docs/stdlib/modules/collections.md |
+| `fn std::collections::hash_string` | check-prelude std-collections-string-map public String hash helper for explicit hasher containers; docs/stdlib/modules/collections.md |
 | `fn std::collections::less_i64` | check-prelude std-collections-tree public i64 ordering helper for explicit comparator containers; docs/stdlib/modules/collections.md |
 | `fn std::collections::linked_list[T]` | check-prelude std-collections-linked-list zone-backed linked list constructor; docs/stdlib/modules/collections.md |
 | `fn std::collections::new[T]` | check-prelude std-collections-set source linear set constructor; docs/stdlib/modules/collections.md |
 | `fn std::collections::priority_queue[T]` | check-prelude std-collections-heap priority queue constructor over binary-heap ordering; docs/stdlib/modules/collections.md |
 | `fn std::collections::ring_buffer[T]` | check-prelude std-collections-ring-buffer fixed-capacity ring buffer constructor; docs/stdlib/modules/collections.md |
+| `fn std::collections::string_hash_map[V]` | check-prelude std-collections-string-map String-key HashMap constructor using content hashing; docs/stdlib/modules/collections.md |
+| `fn std::collections::string_hash_set` | check-prelude std-collections-string-map String HashSet constructor using content hashing; docs/stdlib/modules/collections.md |
 | `fn std::collections::tree_map[K, V]` | check-prelude std-collections-tree explicit-comparator tree map constructor; docs/stdlib/modules/collections.md |
 | `fn std::collections::tree_set[T]` | check-prelude std-collections-tree explicit-comparator tree set constructor; docs/stdlib/modules/collections.md |
 
@@ -1905,6 +1908,7 @@ Tier: `alloc`. Stability reading: usable.
 | `fn std::hash::new` | check-prelude std-hash-basic hasher constructor; docs/stdlib/modules/hash.md |
 | `fn std::hash::pair[T: Hash[T]` | check-prelude std-hash-combine-helpers ordered two-value hash helper; docs/stdlib/modules/hash.md |
 | `fn std::hash::reset` | check-prelude std-hash-basic hasher reset; docs/stdlib/modules/hash.md |
+| `fn std::hash::string` | check-prelude std-hash-basic owned String hasher convenience; docs/stdlib/modules/hash.md |
 | `fn std::hash::value[T: Hash[T]` | check-prelude std-hash-basic generic hash value helper; docs/stdlib/modules/hash.md |
 | `fn std::hash::write[T: Hash[T]` | check-prelude std-hash-basic generic hash feed helper; docs/stdlib/modules/hash.md |
 | `fn std::hash::write_bool` | check-prelude std-hash-basic primitive bool feed helper; docs/stdlib/modules/hash.md |
@@ -3197,6 +3201,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::string::String::ends_with_ignore_case` | check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only comparison; docs/stdlib/api-reference.md String section |
 | `method std::string::String::ends_with_text` | check-prelude std-string-natural-api natural exact suffix text helper; docs/stdlib/modules/string.md |
 | `method std::string::String::ends_with_text_ignore_case` | check-prelude std-string-natural-api natural ASCII-insensitive suffix text helper; docs/stdlib/modules/string.md |
+| `method std::string::String::eq` | check-prelude std-string-equals content equality operator backing for owned String values; docs/stdlib/modules/string.md |
 | `method std::string::String::equals` | check-prelude std-string-equals borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row |
 | `method std::string::String::equals_ignore_case` | check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only comparison; docs/stdlib/api-reference.md String section |
 | `method std::string::String::equals_text` | check-prelude std-string-natural-api natural exact text equality helper; docs/stdlib/modules/string.md |

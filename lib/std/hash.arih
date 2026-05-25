@@ -134,6 +134,10 @@ pub fn bytes(values: std::Slice[u8]) -> u64 {
   return finish(ref state);
 }
 
+pub fn string(value: std::string::String) -> u64 {
+  return bytes(value.as_slice());
+}
+
 impl std::hash::Hash[i64] for i64 {
   fn hash(self, state: ref mut Hasher) -> void {
     write_i64(state, self);
@@ -191,5 +195,11 @@ impl std::hash::Hash[bool] for bool {
 impl std::hash::Hash[std::Slice[u8]] for std::Slice[u8] {
   fn hash(self, state: ref mut Hasher) -> void {
     write_bytes(state, self);
+  }
+}
+
+impl std::hash::Hash[std::string::String] for std::string::String {
+  fn hash(self, state: ref mut Hasher) -> void {
+    write_bytes(state, self.as_slice());
   }
 }

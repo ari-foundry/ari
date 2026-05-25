@@ -2545,7 +2545,9 @@ Hash-table collections use explicit hash functions:
 
 ```ari
 collections::hash_i64(value)
+collections::hash_string(value)
 collections::hash_map<K, V>(ref mut zone, capacity, hash)
+collections::string_hash_map<V>(ref mut zone, capacity)
 HashMap::new<K, V>(ref mut zone, capacity, hash)
 map.len()
 map.capacity()
@@ -2578,6 +2580,7 @@ map.iter_mut()
 map.drain()
 
 collections::hash_set<T>(ref mut zone, capacity, hash)
+collections::string_hash_set(ref mut zone, capacity)
 HashSet::new<T>(ref mut zone, capacity, hash)
 set.len()
 set.capacity()
@@ -2603,6 +2606,10 @@ set.drain()
 ```
 
 `collections::hash_i64` is a compatibility helper over `std::hash::value<i64>`.
+`collections::hash_string` is the matching content hash for owned `String`
+keys. `collections::string_hash_map` and `collections::string_hash_set` wire
+that hash policy in for the common `HashMap[String,V]` and `HashSet[String]`
+cases while explicit custom hash constructors remain available.
 
 `HashMap.contains_key(key)` is the preferred key-membership spelling;
 `HashMap.contains(key)` remains available for compatibility.
@@ -2852,6 +2859,8 @@ text.ends_with(bytes)
 text.ends_with_text("text")
 text.equals(bytes)
 text.equals_text("text")
+text.eq(other_owned_string)
+text == other_owned_string
 text.equals_ignore_case(bytes)
 text.equals_text_ignore_case("text")
 text.starts_with_ignore_case(bytes)
@@ -2956,8 +2965,10 @@ Owned `String` helpers such as `find`, `contains_slice`, `slice`, `split_at`,
 `chunks`, `windows`, and delimiter `split` use the same byte offsets and
 borrowed views. `find_text`, `contains_text`, `starts_with_text`,
 `ends_with_text`, and `equals_text` accept Ari `string` values directly by
-using `std::string::bytes` internally. `join_in` joins `Slice[Slice[u8]]` parts
-with a byte separator into the caller's zone.
+using `std::string::bytes` internally. `eq` and the `==` / `!=` operators
+compare owned `String` values by byte contents, so independently allocated
+strings can act as hash-map keys. `join_in` joins `Slice[Slice[u8]]` parts with
+a byte separator into the caller's zone.
 `equals_ignore_case`, `starts_with_ignore_case`,
 `ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`,
 `trim_start`, `trim_end`, `trim`, `parse_decimal`, `parse_decimal_prefix`,
@@ -3388,6 +3399,7 @@ hash::value<T>(value)
 hash::pair<T, U>(left, right)
 hash::combine(left_hash, right_hash)
 hash::bytes(values)
+hash::string(value)
 hash::write_byte(ref mut state, value)
 hash::write_bytes(ref mut state, values)
 hash::write_u8(ref mut state, value)
@@ -3403,9 +3415,10 @@ hash::write_bool(ref mut state, value)
 
 Use `hash::value<T>` for a single value with a `Hash[T]` impl, `hash::pair`
 for two hashable values in order, `hash::combine` for two precomputed `u64`
-hashes, `hash::bytes` for a borrowed `Slice[u8]`, and `Hasher` plus `write`
-calls for incremental hashing. Current built-in impls cover fixed-width signed
-and unsigned integer types, `bool`, and `Slice[u8]`.
+hashes, `hash::bytes` for a borrowed `Slice[u8]`, `hash::string` for owned
+`String`, and `Hasher` plus `write` calls for incremental hashing. Current
+built-in impls cover fixed-width signed and unsigned integer types, `bool`,
+`Slice[u8]`, and `String`.
 
 ## Random
 

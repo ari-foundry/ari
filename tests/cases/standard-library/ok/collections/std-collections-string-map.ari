@@ -1,0 +1,93 @@
+// Covers HashMap[String, String] with content-based hashing and equality.
+// This is the arix-style manifest shape: string keys, string values, duplicate
+// key replacement, lookup with independently allocated keys, removal, and
+// iteration over map entries.
+
+fn text(zone: ref mut Zone, value: string) -> String {
+  return string::from(zone, value);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(8192);
+  var map = collections::string_hash_map<String>(ref mut zone, 2);
+  var explicit = HashMap::new<String, String>(ref mut zone, 2, collections::hash_string);
+  var set = collections::string_hash_set(ref mut zone, 2);
+  var score = 0;
+
+  let name_key = text(ref mut zone, "name");
+  let hello_value = text(ref mut zone, "hello");
+  if map.insert(name_key, hello_value).is_none() {
+    score = score + 1;
+  }
+
+  let lookup_name = text(ref mut zone, "name");
+  if map.contains_key(lookup_name) {
+    score = score + 2;
+  }
+
+  let get_name = text(ref mut zone, "name");
+  if map.get(get_name).equals_text("hello") {
+    score = score + 4;
+  }
+
+  let replacement_key = text(ref mut zone, "name");
+  let replacement_value = text(ref mut zone, "ari");
+  match map.insert(replacement_key, replacement_value) {
+    Some(previous) => {
+      if previous.equals_text("hello") {
+        score = score + 8;
+      }
+    }
+    None => {}
+  }
+
+  let fallback_key = text(ref mut zone, "missing");
+  let fallback_value = text(ref mut zone, "fallback");
+  if map.get_or(fallback_key, fallback_value).equals_text("fallback") {
+    score = score + 16;
+  }
+
+  let remove_key = text(ref mut zone, "name");
+  match map.remove(remove_key) {
+    Some(removed) => {
+      if removed.equals_text("ari") && map.is_empty() {
+        score = score + 32;
+      }
+    }
+    None => {}
+  }
+
+  let section_key = text(ref mut zone, "package");
+  let section_value = text(ref mut zone, "main");
+  explicit.insert(ref mut zone, section_key, section_value);
+  if explicit.len() == 1 {
+    score = score + 64;
+  }
+
+  var entries = explicit.iter();
+  match entries.next() {
+    Some(entry) => {
+      if entry.key().equals_text("package") && entry.value().equals_text("main") {
+        score = score + 128;
+      }
+    }
+    None => {}
+  }
+
+  let set_value = text(ref mut zone, "feature");
+  if set.insert(set_value) {
+    let set_lookup = text(ref mut zone, "feature");
+    if set.contains(set_lookup) {
+      score = score + 256;
+    }
+  }
+
+  let hash_left = hash::value<String>(text(ref mut zone, "name"));
+  let hash_right = collections::hash_string(text(ref mut zone, "name"));
+  if hash_left == hash_right {
+    score = score + 512;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

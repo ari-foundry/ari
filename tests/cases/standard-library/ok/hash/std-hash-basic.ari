@@ -10,6 +10,7 @@ fn same_manual_bytes(values: Slice[u8]) -> bool {
 }
 
 fn main() -> i64 {
+  var zone = zone::create(128);
   var score = 0;
 
   let a = hash::value<i64>(42);
@@ -48,5 +49,12 @@ fn main() -> i64 {
     score = score + 16;
   }
 
+  let owned_left = string::from(ref mut zone, "package");
+  let owned_right = string::from(ref mut zone, "package");
+  if hash::string(owned_left) == hash::value<String>(owned_right) {
+    score = score + 32;
+  }
+
+  zone::destroy(zone);
   return score;
 }

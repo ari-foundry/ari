@@ -22,6 +22,7 @@ hash::value<T>(value)
 hash::pair<T, U>(left, right)
 hash::combine(left_hash, right_hash)
 hash::bytes(values)
+hash::string(value)
 hash::write_byte(ref mut state, value)
 hash::write_bytes(ref mut state, values)
 hash::write_u8(ref mut state, value)
@@ -48,10 +49,11 @@ pub trait Hash[T] {
 ```
 
 The current stdlib includes `Hash` impls for `i8`, `i16`, `i32`, `i64`,
-`u8`, `u16`, `u32`, `u64`, and `bool`. Integer helpers feed the natural
-little-endian byte width of the type, so `u8(1)`, `u16(1)`, and `u32(1)` stay
-distinct hash inputs. User types can implement the trait by writing their
-fields into the supplied hasher.
+`u8`, `u16`, `u32`, `u64`, `bool`, `Slice[u8]`, and owned
+`std::string::String`. Integer helpers feed the natural little-endian byte
+width of the type, so `u8(1)`, `u16(1)`, and `u32(1)` stay distinct hash
+inputs. User types can implement the trait by writing their fields into the
+supplied hasher.
 
 `pair<T, U>(left, right)` hashes two `Hash` values in order. It is a concise
 helper for small compound keys and examples where a full custom `Hasher` block
@@ -62,9 +64,11 @@ in order. Use it when a caller already has stable component hashes and wants a
 single composed hash.
 
 `bytes(values)` hashes a `Slice[u8]` directly. It is the preferred helper for
-byte buffers and byte strings when you already have a slice view. `Slice[u8]`
-also implements `Hash`, so generic code can call `hash::value<Slice[u8]>` when
-it should treat a byte view like any other hashable value.
+byte buffers and byte strings when you already have a slice view.
+`string(value)` hashes an owned `String` by its byte contents. `Slice[u8]` and
+`String` also implement `Hash`, so generic code can call
+`hash::value<Slice[u8]>` or `hash::value<String>` when it should treat a byte
+view or owned byte string like any other hashable value.
 
 `collections::hash_i64` remains as a compatibility helper for current
 `HashMap`/`HashSet` constructors, and now delegates to `hash::value<i64>`.
@@ -84,6 +88,12 @@ Hash bytes:
 ```ari
 var data = ['A', 'B', 'C'];
 let digest = hash::bytes(data.as_slice());
+```
+
+Hash an owned string:
+
+```ari
+let digest = hash::value<String>(string::from(ref mut zone, "package"));
 ```
 
 Hash several values incrementally:
@@ -161,4 +171,4 @@ composition, and the `Slice[u8]` `Hash` impl.
 - Add `HashMap::new`/`HashSet::new` constructor paths that use `Hash[T]` and
   `Eq[T]` instead of explicit hash functions, and keep explicit custom policy
   in a `with_hash`-style constructor.
-- Add more non-integer `Hash` impls after aggregate/derive policy is settled.
+- Add more aggregate `Hash` impl guidance after derive policy is settled.
