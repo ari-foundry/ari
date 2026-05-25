@@ -3738,8 +3738,10 @@ parse::boolean_optional(bytes)
 parse::is_boolean(bytes)
 parse::boolean_or(bytes, fallback)
 parse::is_float(bytes)
-parse::float_or(bytes, fallback)
 parse::float(bytes)
+parse::float_optional(bytes)
+parse::float_or(bytes, fallback)
+parse::float_unchecked(bytes)
 ```
 
 `integer` returns `Result[i64, Error]` and accepts optional `+` or `-` signs.
@@ -3760,8 +3762,10 @@ These radix parsers trim whitespace but do not recognize prefixes such as
 `boolean_optional`, `is_boolean`, and `boolean_or` provide the same
 compatibility validator/fallback pattern.
 `is_float` validates a decimal float shape with optional sign, fraction, and
-exponent. `float_or` returns a fallback for invalid input, while `float` panics
-on invalid input.
+exponent. `float` returns `Result[f64, Error]` and reports `InvalidData` for
+empty, invalid, or trailing-garbage input. `float_optional` discards that error
+detail, `float_or` returns a fallback for invalid input, and `float_unchecked`
+preserves the old asserting behavior by panicking on invalid input.
 
 Use `parse::parse[T]` when the target type should choose the parser. It is the
 asserting typed entry point, `parse::parse_or[T]` is the fallback form, and
@@ -3774,10 +3778,8 @@ let size = parse::parse[u64]("18446744073709551615");
 let enabled = parse::parse[bool]("true");
 let ratio = parse::parse[f64]("1.25e2");
 ```
-
-`Option[f64]` remains future work because the compiler does not lower float
-enum payloads yet; the typed `f64` parser therefore follows the existing
-asserting/fallback `float` and `float_or` policy.
+Typed `parse[f64]` remains the asserting trait entry point; call
+`parse::float` when ordinary float parse failures should return `Result`.
 
 ## Encoding
 

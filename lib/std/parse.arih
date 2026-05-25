@@ -589,11 +589,33 @@ pub fn float_or(values: std::Slice[u8], fallback: f64) -> f64 {
   return value * sign;
 }
 
-pub fn float(values: std::Slice[u8]) -> f64 {
+pub fn float_optional(values: std::Slice[u8]) -> std::Option[f64] {
   if !is_float(values) {
-    std::panic();
+    return std::None<f64>();
   }
-  return float_or(values, 0.0f64);
+  return std::Some<f64>(float_or(values, 0.0f64));
+}
+
+pub fn float(values: std::Slice[u8]) -> std::Result[f64, std::error::Error] {
+  match float_optional(values) {
+    std::Some(value) => {
+      return std::Ok<f64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<f64, std::error::Error>(invalid_data_error());
+    }
+  }
+}
+
+pub fn float_unchecked(values: std::Slice[u8]) -> f64 {
+  match float(values) {
+    std::Ok(value) => {
+      return value;
+    }
+    std::Err(_) => {
+      std::panic();
+    }
+  }
 }
 
 impl std::parse::Parse for i64 {
@@ -661,7 +683,7 @@ impl std::parse::Parse for bool {
 
 impl std::parse::Parse for f64 {
   fn parse(values: std::Slice[u8]) -> f64 {
-    return std::parse::float(values);
+    return std::parse::float_unchecked(values);
   }
 
   fn parse_or(values: std::Slice[u8], fallback: f64) -> f64 {

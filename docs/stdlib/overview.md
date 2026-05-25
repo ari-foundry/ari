@@ -128,16 +128,17 @@ integer parsing, and prefix integer parsing need no compiler knowledge.
 `std::parse` and `std::encoding` continue that source-first pattern.
 `std::parse` keeps whole-input signed/unsigned integer, bool, typed
 `Parse` dispatch, and decimal float parsing out of individual call sites.
-Natural integer and boolean parser names return `Result[..., Error]`, while
-`_optional` and `_or` helpers keep information-discarding compatibility
-spelled explicitly.
+Natural integer, boolean, and float parser names return `Result[..., Error]`,
+while `_optional`, `_or`, and `_unchecked` helpers keep information-discarding
+or asserting compatibility spelled explicitly.
 `std::encoding` validates ASCII/UTF-8/UTF-16 and encodes or decodes hex/base64
 into caller-provided zones. Natural fallible validation, counting, scalar
 encoding, decoded-length, and decoder names now return `Result[..., Error]`;
 `_optional` and `_unchecked` names spell information-discarding and asserting
-compatibility explicitly. Richer codec error payloads and `Option[f64]` still
-wait on the broader error/float payload roadmap, while `parse[f64]` and
-`parse_or[f64]` provide strict and fallback typed float parsing today.
+compatibility explicitly. Richer codec and parser error payloads still wait on
+the broader error roadmap, while `parse[f64]`, `parse_or[f64]`, and
+Result-returning `parse::float` cover strict, fallback, and recoverable typed
+float parsing today.
 
 `std::random` has OS-backed hooks for `entropy()` and `fill(values)`, because
 seed material must come from the host and byte slices should be filled without

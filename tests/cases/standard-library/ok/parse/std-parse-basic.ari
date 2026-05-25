@@ -103,8 +103,17 @@ fn main() -> i64 {
   var float_text = [32u8, 45u8, 49u8, 50u8, 46u8, 53u8, 101u8, 50u8, 32u8];
   var invalid_float = [49u8, 46u8, 50u8, 120u8];
   assert(parse::is_float(float_text.as_slice()));
-  assert((parse::float(float_text.as_slice()) as i64) == -1250);
+  assert((parse::float(float_text.as_slice()).unwrap_or(0.0f64) as i64) == -1250);
+  assert((parse::float_optional(float_text.as_slice()).unwrap_or(0.0f64) as i64) == -1250);
+  assert((parse::float_unchecked(float_text.as_slice()) as i64) == -1250);
   assert(!parse::is_float(invalid_float.as_slice()));
+  match parse::float(invalid_float.as_slice()) {
+    Ok(_) => { panic(); }
+    Err(float_reason) => {
+      assert(float_reason.is_kind(error::InvalidData));
+    }
+  }
+  assert(parse::float_optional(invalid_float.as_slice()).is_none());
   assert((parse::float_or(invalid_float.as_slice(), 7.0f64) as i64) == 7);
   assert(parse::parse[i64](" -44 ") == -44);
   assert(parse::parse[u64]("44") == 44u64);

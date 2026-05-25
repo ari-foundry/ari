@@ -11,7 +11,7 @@ For call sites that should read like typed parsing, use the `Parse` trait entry
 points: `parse::parse[T](bytes)`, `parse::parse_or[T](bytes, fallback)`, and
 `parse::is_parse[T](bytes)`.
 
-The integer and boolean families use the natural fallible names for
+The integer, boolean, and float families use the natural fallible names for
 `Result[..., std::error::Error]` APIs. The `_optional` helpers keep the compact
 compatibility surface for validation-style call sites that do not need an error
 reason, and `_or` helpers keep the explicit fallback pattern. Invalid radices
@@ -58,8 +58,10 @@ parse::boolean_optional(bytes) -> Option[bool]
 parse::is_boolean(bytes) -> bool
 parse::boolean_or(bytes, fallback) -> bool
 parse::is_float(bytes) -> bool
+parse::float(bytes) -> Result[f64, std::error::Error]
+parse::float_optional(bytes) -> Option[f64]
 parse::float_or(bytes, fallback) -> f64
-parse::float(bytes) -> f64
+parse::float_unchecked(bytes) -> f64
 ```
 
 `integer` trims ASCII whitespace, accepts an optional `+` or `-`, then requires
@@ -109,9 +111,11 @@ At least one digit is required before or after the decimal point. Exponents
 accept `e` or `E`. Hex floats, `NaN`, `inf`, locale decimal separators, and
 underscores are future policy work.
 
-`float_or` returns the parsed `f64` or the caller's fallback for invalid input.
-`float` is the asserting form: it panics if `is_float(bytes)` is false, then
-returns the parsed `f64`.
+`float` returns `Result[f64, Error]` and reports `InvalidData` for empty input,
+unsupported spelling, or trailing garbage. `float_optional` is the compact
+compatibility form for validation-style callers, `float_or` returns the parsed
+`f64` or the caller's fallback, and `float_unchecked` preserves the old
+asserting behavior by panicking when `is_float(bytes)` is false.
 
 The `Parse` trait gives generic code one spelling for common built-in types:
 
@@ -127,20 +131,6 @@ The trait-backed `parse` function is the asserting form for every implemented
 type. Use `parse_or` or `is_parse` when invalid input is ordinary. `Parse` is
 currently implemented for `i64`, `u64`, `bool`, and `f64`; user types can add
 their own impls when they have a stable parsing policy.
-
-## Why `float` Does Not Return `Option[f64]` Yet
-
-The natural future API is `parse::float(bytes) -> Option[f64]` or
-`parse::float(bytes) -> Result[f64, ParseError]`. Today's compiler cannot lower
-`f64` enum payloads yet, so `Option[f64]` is not a safe public API. The current
-split keeps user code readable now:
-
-- use `is_float` when validation matters
-- use `float_or` when invalid input should choose a fallback
-- use `float` when invalid input is a programmer error
-
-When enum payload lowering supports floats, this page should be updated before
-changing the public API.
 
 ## Example
 
@@ -169,8 +159,8 @@ fn require_count(bytes: Slice[u8]) -> Result[i64, Error] {
   return parse::integer(bytes);
 }
 
-fn read_ratio(bytes: Slice[u8]) -> f64 {
-  return parse::float_or(bytes, 1.0f64);
+fn require_ratio(bytes: Slice[u8]) -> Result[f64, Error] {
+  return parse::float(bytes);
 }
 ```
 
@@ -183,11 +173,12 @@ tests/cases/standard-library/ok/parse/std-parse-basic.ari
 The focused test covers ASCII-trimmed signed integer parsing, radix wrappers
 for binary, octal, and hexadecimal input, unsigned integer parsing, boolean
 parsing, natural `Result` error categories for invalid data and invalid radix
-input, `_optional` compatibility helpers, float validation, float conversion,
-trait-backed typed parsing, and invalid whole-input cases. It is wired into
+input, `_optional` compatibility helpers, `Result` float parsing, float
+validation, float conversion, trait-backed typed parsing, and invalid
+whole-input cases. It is wired into
 `make check-prelude` with LLVM symbol checks for the public helpers.
 
 ## Future Work
 
 - `ParseError` once richer error values are worth the API weight
-- `Option[f64]` or `Result[f64, E]` after float enum payloads are supported
+- clearer overflow/range diagnostics for extreme decimal float exponents

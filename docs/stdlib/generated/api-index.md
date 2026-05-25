@@ -24,21 +24,21 @@ platform notes.
 
 ## Summary
 
-- API entries: `2818`
+- API entries: `2820`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 837 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 730 | stable candidate |
+| `core` | 732 | stable candidate |
 | `hosted` | 1064 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
-| `fn` | 1021 |
+| `fn` | 1023 |
 | `method` | 1393 |
 | `module` | 39 |
 | `struct` | 154 |
@@ -77,7 +77,7 @@ platform notes.
 | `std::net` | `hosted` | 194 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 50 |
-| `std::parse` | `core` | 43 |
+| `std::parse` | `core` | 45 |
 | `std::path` | `core` | 83 |
 | `std::process` | `hosted` | 129 |
 | `std::random` | `alloc/hosted` | 36 |
@@ -2637,8 +2637,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::parse::boolean` | check-prelude std-parse-basic Result-returning ASCII-trimmed lowercase bool parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::boolean_optional` | check-prelude std-parse-basic Option-returning lowercase bool compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::boolean_or` | check-prelude std-parse-basic lowercase bool parser with fallback; docs/stdlib/modules/parse.md |
-| `fn std::parse::float` | check-prelude std-parse-basic asserting decimal float parser until float enum payloads allow Result[f64, Error]; docs/stdlib/modules/parse.md |
+| `fn std::parse::float` | check-prelude std-parse-basic Result-returning decimal float parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::float_optional` | check-prelude std-parse-basic Option-returning decimal float compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_or` | check-prelude std-parse-basic fallback decimal float parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::float_unchecked` | check-prelude std-parse-basic asserting decimal float compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::hex_integer` | check-prelude std-parse-basic Result-returning signed hexadecimal integer parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::hex_integer_optional` | check-prelude std-parse-basic Option-returning signed hexadecimal integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::hex_integer_or` | check-prelude std-parse-basic signed hexadecimal integer parser with fallback; docs/stdlib/modules/parse.md |

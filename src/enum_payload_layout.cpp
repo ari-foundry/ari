@@ -28,7 +28,8 @@ bool is_payload_word_lane_storage(const IrType& type) {
 bool is_inline_payload_storage_type(const IrType& type) {
     if (has_aggregate_enum_layout(type)) return true;
     return type.qualifier == TypeQualifier::Value &&
-           (type.primitive == IrPrimitiveKind::Tuple ||
+           (is_float_primitive(type.primitive) ||
+            type.primitive == IrPrimitiveKind::Tuple ||
             type.primitive == IrPrimitiveKind::Array ||
             (type.primitive == IrPrimitiveKind::Vector && type.array_size != 0 && !type.field_types.empty()) ||
             type.primitive == IrPrimitiveKind::Struct);

@@ -4177,7 +4177,7 @@ private:
                 fail_borrow_enum_payload_layout(loc, payload_type);
             }
             fail(loc,
-                 "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, owned i64/u64, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum values, got " +
+                 "enum aggregate payloads currently support integer, float, bool, pointer-shaped, one-word enum, owned i64/u64, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum values, got " +
                      type_name(payload_type));
         }
         if (!payload_needs_aggregate && !is_legacy_enum_payload_type(payload_type)) {
