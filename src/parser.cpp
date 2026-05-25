@@ -242,6 +242,19 @@ private:
                is_recovery_nested_declaration_start();
     }
 
+    void fail_if_unterminated_delimited_at_recovery_boundary(SourceLocation open_loc,
+                                                             const std::string& message,
+                                                             const std::string& open_label,
+                                                             const std::string& closing_delimiter) const {
+        if (!check(TokenKind::End) && !should_recover_at_nested_declaration(open_loc)) return;
+        fail_unterminated_delimited(
+            peek().loc,
+            open_loc,
+            message,
+            open_label,
+            closing_delimiter);
+    }
+
     void synchronize_inline_module_body() {
         int depth = 0;
         while (!check(TokenKind::End)) {
@@ -2867,10 +2880,20 @@ private:
                 std::vector<ExprPtr> args;
                 if (!check(TokenKind::RParen)) {
                     do {
+                        fail_if_unterminated_delimited_at_recovery_boundary(
+                            open.loc,
+                            "unterminated call arguments",
+                            "call argument list starts here",
+                            ")");
                         args.push_back(parse_expression());
                     } while (match(TokenKind::Comma));
                 }
                 if (!match(TokenKind::RParen)) {
+                    fail_if_unterminated_delimited_at_recovery_boundary(
+                        open.loc,
+                        "unterminated call arguments",
+                        "call argument list starts here",
+                        ")");
                     fail_expected_closing_delimiter(
                         peek().loc,
                         open.loc,
@@ -2935,10 +2958,20 @@ private:
                     std::vector<ExprPtr> args;
                     if (!check(TokenKind::RParen)) {
                         do {
+                            fail_if_unterminated_delimited_at_recovery_boundary(
+                                open.loc,
+                                "unterminated method call arguments",
+                                "method call argument list starts here",
+                                ")");
                             args.push_back(parse_expression());
                         } while (match(TokenKind::Comma));
                     }
                     if (!match(TokenKind::RParen)) {
+                        fail_if_unterminated_delimited_at_recovery_boundary(
+                            open.loc,
+                            "unterminated method call arguments",
+                            "method call argument list starts here",
+                            ")");
                         fail_expected_closing_delimiter(
                             peek().loc,
                             open.loc,
@@ -3011,10 +3044,20 @@ private:
                         elements.push_back(std::move(expr));
                         if (!check(TokenKind::RParen)) {
                             do {
+                                fail_if_unterminated_delimited_at_recovery_boundary(
+                                    token.loc,
+                                    "unterminated tuple literal",
+                                    "tuple literal starts here",
+                                    ")");
                                 elements.push_back(parse_expression());
                             } while (match(TokenKind::Comma));
                         }
                         if (!match(TokenKind::RParen)) {
+                            fail_if_unterminated_delimited_at_recovery_boundary(
+                                token.loc,
+                                "unterminated tuple literal",
+                                "tuple literal starts here",
+                                ")");
                             fail_expected_closing_delimiter(
                                 peek().loc,
                                 token.loc,
@@ -3026,6 +3069,11 @@ private:
                         return make_ast_tuple_expr(token.loc, std::move(elements));
                     }
                     if (!match(TokenKind::RParen)) {
+                        fail_if_unterminated_delimited_at_recovery_boundary(
+                            token.loc,
+                            "unterminated grouped expression",
+                            "grouped expression starts here",
+                            ")");
                         fail_expected_closing_delimiter(
                             peek().loc,
                             token.loc,
@@ -3040,10 +3088,20 @@ private:
                     std::vector<ExprPtr> elements;
                     if (!check(TokenKind::RBracket)) {
                         do {
+                            fail_if_unterminated_delimited_at_recovery_boundary(
+                                token.loc,
+                                "unterminated array/vector literal",
+                                "array/vector literal starts here",
+                                "]");
                             elements.push_back(parse_expression());
                         } while (match(TokenKind::Comma));
                     }
                     if (!match(TokenKind::RBracket)) {
+                        fail_if_unterminated_delimited_at_recovery_boundary(
+                            token.loc,
+                            "unterminated array/vector literal",
+                            "array/vector literal starts here",
+                            "]");
                         fail_expected_closing_delimiter(
                             peek().loc,
                             token.loc,

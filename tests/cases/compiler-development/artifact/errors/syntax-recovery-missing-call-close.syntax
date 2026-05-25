@@ -1,0 +1,16 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated call arguments" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:7:1 source_id=0 bytes=79..81
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:7:1 source_id=0 bytes=79..81
+      SecondaryLabel message="call argument list starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:6:17 source_id=0 bytes=75..76
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching ) before continuing"
+  Function name=id return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:1:4 source_id=0 bytes=3..5
+    Param name=x type=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:1:7 source_id=0 bytes=6..7
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:2:3 source_id=0 bytes=25..31
+        Name value=x @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:2:10 source_id=0 bytes=32..33
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:7:4 source_id=0 bytes=82..87
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:8:3 source_id=0 bytes=101..107
+        Integer value=2 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-call-close.ari:8:10 source_id=0 bytes=108..109

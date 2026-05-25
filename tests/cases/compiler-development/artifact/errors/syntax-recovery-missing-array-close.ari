@@ -1,0 +1,5 @@
+fn broken() -> i64 {
+  let values = [1,
+fn after() -> i64 {
+  return 2;
+}

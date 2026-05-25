@@ -1,0 +1,11 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-array-close.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated array/vector literal" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-array-close.ari:3:1 source_id=0 bytes=40..42
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-array-close.ari:3:1 source_id=0 bytes=40..42
+      SecondaryLabel message="array/vector literal starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-array-close.ari:2:16 source_id=0 bytes=36..37
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching ] before continuing"
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-array-close.ari:3:4 source_id=0 bytes=43..48
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-array-close.ari:4:3 source_id=0 bytes=62..68
+        Integer value=2 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-array-close.ari:4:10 source_id=0 bytes=69..70

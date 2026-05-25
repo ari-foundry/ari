@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=301
+CompilerArtifactFixtures version=1 group=all entries=305
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -215,6 +215,10 @@ CompilerArtifactFixtures version=1 group=all entries=301
   Fixture group=errors kind=source path=errors/syntax-recovery-item-macro-token-tree.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-item-macro-token-tree.syntax
   Fixture group=errors kind=syntax path=errors/syntax-recovery-malformed-function-param.syntax
+  Fixture group=errors kind=source path=errors/syntax-recovery-missing-array-close.ari
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-array-close.syntax
+  Fixture group=errors kind=source path=errors/syntax-recovery-missing-call-close.ari
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-call-close.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-missing-enum-close.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-enum-close.syntax
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-function-body.syntax
