@@ -19,6 +19,10 @@ a success flag, `_unchecked` preserves older asserting or invalid-handle
 behavior, and `_raw`/`_raw_result` expose low-level host or ABI shapes. Existing
 `*_result` aliases are migration spellings for older Ari code; new code should
 prefer the natural Result-returning names shown in each module guide.
+Some lookups model normal absence as `Option` instead of failure; for example,
+`std::env::var(name)` returns `Option[string]` because a missing environment
+variable is common CLI configuration state, while `std::env::get(name)` keeps
+the Result-returning form for callers that need `Error(NotFound)`.
 
 ## Available Guides
 

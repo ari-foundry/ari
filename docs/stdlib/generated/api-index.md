@@ -1446,10 +1446,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::env::try_executable_path_path` | check-prelude std-env-paths optional path-byte executable path helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_get` | check-prelude std-env-vars optional environment variable helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_get_os` | check-prelude std-env-os-path-views optional OS-string environment variable helper; docs/stdlib/modules/env.md |
-| `fn std::env::var` | check-prelude std-env-vars Result-returning environment variable lookup; docs/stdlib/modules/env.md |
+| `fn std::env::var` | check-prelude std-env-vars Option-returning environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::var_optional` | check-prelude std-env-vars Option-returning environment variable compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::var_or_default` | check-prelude std-env-vars empty-string environment variable compatibility helper; docs/stdlib/modules/env.md |
-| `fn std::env::var_os` | check-prelude std-env-vars Result-returning OS-string environment variable lookup; docs/stdlib/modules/env.md |
+| `fn std::env::var_os` | check-prelude std-env-vars Option-returning OS-string environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::var_os_optional` | check-prelude std-env-vars Option-returning OS-string environment variable compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::var_os_or_default` | check-prelude std-env-vars OS-string environment variable compatibility helper; docs/stdlib/modules/env.md |
 

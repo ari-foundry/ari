@@ -7,13 +7,16 @@ CLIs need: current directory and executable path. Argument helpers are built on
 top of `std::context`, which owns the low-level runtime hooks initialized by
 the generated host entry wrapper.
 
-Environment variable helpers use natural fallible names: `var`, `var_os`,
-`set_var`, and `remove_var` return `Result[..., env::Error]`. The older
-`get`, `get_os`, `set`, and `remove` names remain compatibility aliases with
-the same Result behavior. Compact compatibility helpers that discard error
-detail are named explicitly: `try_get`, `try_get_os`, `var_optional`,
-`var_os_optional`, `get_or_default`, `var_or_default`, `get_os_or_default`,
-`var_os_or_default`, `set_unchecked`, and `remove_unchecked`.
+Environment variable lookup treats absence as ordinary optional state:
+`var(name)` and `var_os(name)` return `Option`, which is the most convenient
+shape for CLI configuration such as `ARI_COMPILER`. Use `get(name)` and
+`get_os(name)` when the caller needs a `Result` and wants missing variables
+reported as `Error(NotFound)`. Mutating helpers still use the fallible shape:
+`set_var` and `remove_var` return `Result[(), env::Error]`. Compact
+compatibility helpers that discard error detail are named explicitly:
+`try_get`, `try_get_os`, `var_optional`, `var_os_optional`,
+`get_or_default`, `var_or_default`, `get_os_or_default`, `var_os_or_default`,
+`set_unchecked`, and `remove_unchecked`.
 
 Argument and process-path helpers follow the default stdlib error model:
 natural fallible names return `Result`, while `_optional`, `_or_default`,
@@ -50,10 +53,10 @@ env::program_name_os() -> Result[std::string::OsStr, env::Error]
 env::program_name_os_optional() -> Option[std::string::OsStr]
 env::program_name_result() -> Result[string, env::Error]
 env::program_name_os_result() -> Result[std::string::OsStr, env::Error]
-env::var(name: string) -> Result[string, env::Error]
+env::var(name: string) -> Option[string]
 env::var_optional(name: string) -> Option[string]
 env::var_or_default(name: string) -> string
-env::var_os(name: string) -> Result[std::string::OsStr, env::Error]
+env::var_os(name: string) -> Option[std::string::OsStr]
 env::var_os_optional(name: string) -> Option[std::string::OsStr]
 env::var_os_or_default(name: string) -> std::string::OsStr
 env::get(name: string) -> Result[string, env::Error]
@@ -135,25 +138,29 @@ when one exists and `NotFound` when the host context has no argument 0.
 kept for source compatibility.
 
 `has(name)` returns whether an environment variable is visible to the current
-process. `var(name)` returns `Ok(value)` when the variable exists and
-`Err(Error(NotFound))` when it is absent. Missing environment variables are
-ordinary absence, not a runtime failure, but the `Result` shape lets APIs
-compose with other fallible hosted helpers without erasing the reason.
-`var_optional(name)` and the older `try_get(name)` keep only the success
-payload as `Option[string]`, and `var_or_default(name)` / `get_or_default(name)`
-are compatibility helpers for older code that wants an empty string when the
-variable is missing. `get(name)` is kept as an alias for `var(name)`. Because
+process. `var(name)` returns `Some(value)` when the variable exists and `None`
+when it is absent. Missing environment variables are ordinary optional state:
+an arix-style CLI can write `env::var("ARI_COMPILER").unwrap_or(default)`
+without constructing an error. `var_optional(name)` and the older
+`try_get(name)` are aliases for the same optional lookup, while
+`var_or_default(name)` / `get_or_default(name)` are compatibility helpers for
+older code that wants an empty string when the variable is missing. Because
 `var` is also Ari's mutable-binding keyword, call this helper as
 `env::var(...)` or `std::env::var(...)`; do not import it for bare `var(...)`
 calls.
 
-`var_os(name)` applies the same `Result` policy to an `std::string::OsStr`
-view. `var_os_optional(name)` and `try_get_os(name)` keep only the optional
-success value, and `var_os_or_default(name)` / `get_os_or_default(name)` are the
-compatibility helpers. On the current POSIX target, OS-string environment
+`get(name)` is the Result-returning environment lookup. It returns `Ok(value)`
+when the variable exists and `Err(Error(NotFound))` when it is absent. Use it
+when the missing-variable reason should compose with other fallible hosted
+helpers.
+
+`var_os(name)` applies the optional lookup policy to an `std::string::OsStr`
+view. `var_os_optional(name)` and `try_get_os(name)` keep the same optional
+shape, and `var_os_or_default(name)` / `get_os_or_default(name)` are the
+compatibility fallbacks. On the current POSIX target, OS-string environment
 values preserve the raw bytes from the runtime C string and let callers choose
-`try_utf8()` or a byte-level policy at the boundary. `get_os(name)` is kept as
-an alias for `var_os(name)`.
+`try_utf8()` or a byte-level policy at the boundary. `get_os(name)` is the
+Result-returning OS-string lookup.
 
 `set_var(name, value)` overwrites the current process environment variable and
 returns `Ok(())` when the host accepts the mutation. `remove_var(name)` unsets
@@ -258,12 +265,54 @@ Environment variables:
 fn main() -> i64 {
   if env::set_var("ARI_MODE", "dev").is_ok() {
     match env::var("ARI_MODE") {
-      Ok(value) => println("mode={}", value),
-      Err(_) => {}
+      std::Some(value) => println("mode={}", value),
+      std::None => {}
     }
   }
 
   env::remove_var("ARI_MODE").unwrap();
+  return 0;
+}
+```
+
+Small CLI shape:
+
+```ari
+fn main() -> i64 {
+  var zone = zone::create(1024);
+  let args = env::args(ref mut zone);
+
+  if args.len() > 1 && args.get(1).equals_text("build") {
+    let release = args.len() > 2 && args.get(2).equals_text("--release");
+
+    var compiler = std::string::from_string(ref mut zone, "ari");
+    match env::var("ARI_COMPILER") {
+      std::Some(value) => {
+        compiler = std::string::from_string(ref mut zone, value);
+      }
+      std::None => {}
+    }
+
+    let cwd = env::current_dir_path().unwrap();
+    let manifest = cwd.join_in(ref mut zone, "Ari.toml");
+    if !fs::exists("Ari.toml") {
+      io::eprintln_text("error: Ari.toml not found").unwrap();
+      zone::destroy(zone);
+      return 1;
+    }
+
+    match env::home_dir() {
+      std::Some(home) => {
+        let prefix = home.join_in(ref mut zone, ".ari");
+        if release && !manifest.is_empty() && !prefix.is_empty() && !compiler.is_empty() {
+          io::println_text("building release package").unwrap();
+        }
+      }
+      std::None => {}
+    }
+  }
+
+  zone::destroy(zone);
   return 0;
 }
 ```

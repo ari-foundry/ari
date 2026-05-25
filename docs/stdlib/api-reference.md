@@ -469,11 +469,12 @@ OS-string views for CLI code that wants byte-preserving argument handling.
 values as `std::string::OsStr` when an argument should stay in OS-string form
 until the caller chooses bytes or UTF-8.
 
-`env::var(name)` returns `Result[string, Error]` for environment variables,
-using `NotFound` for missing names. `env::var_optional(name)` and
-`env::try_get(name)` keep only optional success, while `env::var_or_default(name)`
-and `env::get_or_default(name)` keep the older empty-string fallback.
-`env::get(name)` is a compatibility alias for `env::var(name)`.
+`env::var(name)` returns `Option[string]` for environment variables because a
+missing variable is ordinary configuration absence. `env::var_optional(name)`
+and the older `env::try_get(name)` keep the same optional shape, while
+`env::var_or_default(name)` and `env::get_or_default(name)` keep the older
+empty-string fallback. `env::get(name)` is the Result-returning lookup and uses
+`NotFound` for missing names.
 `env::set_var(name, value)` overwrites a current-process variable and
 `env::remove_var(name)` unsets it; both return `Result[(), Error]`.
 `env::set(name, value)` and `env::remove(name)` are compatibility aliases with
@@ -485,10 +486,11 @@ older empty-string fallback, and `_unchecked`/`_raw` names are compatibility
 or boundary hooks. Portable child-process spawn handles remain roadmap work;
 thread helpers live in `std::thread`.
 
-`env::var_os(name)` returns a `Result[OsStr, Error]` environment view.
-`env::var_os_optional(name)` and `env::try_get_os(name)` keep only optional
-success, and `env::var_os_or_default(name)` / `env::get_os_or_default(name)` are
-the compatibility fallbacks. `env::get_os(name)` aliases `env::var_os(name)`.
+`env::var_os(name)` returns an `Option[OsStr]` environment view.
+`env::var_os_optional(name)` and `env::try_get_os(name)` keep the same optional
+shape, and `env::var_os_or_default(name)` / `env::get_os_or_default(name)` are
+the compatibility fallbacks. `env::get_os(name)` is the Result-returning
+OS-string lookup.
 `env::current_dir_os()` / `current_dir_os_optional()` and
 `env::executable_path_os()` / `executable_path_os_optional()` expose path-like
 host data as OS strings. `env::current_dir_path()` and

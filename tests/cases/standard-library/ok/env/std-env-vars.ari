@@ -14,20 +14,14 @@ fn main() -> i64 {
   if missing.is_none() {
     score = score + 5;
   }
+  assert(env::var(name).is_none());
+  assert(env::var_os(name).is_none());
   match env::get(name) {
     Ok(_) => {
       panic();
     }
     Err(reason) => {
       assert(reason.is_not_found());
-    }
-  }
-  match env::var(name) {
-    Ok(_) => {
-      panic();
-    }
-    Err(var_reason) => {
-      assert(var_reason.is_not_found());
     }
   }
 
@@ -39,10 +33,21 @@ fn main() -> i64 {
   if env::has(name) {
     score = score + 11;
   }
-  assert(env::var(name).is_ok());
+  assert(env::var(name).is_some());
   assert(env::var_optional(name).is_some());
-  assert(env::var_os(name).is_ok());
+  assert(env::var_os(name).is_some());
   assert(env::var_os_optional(name).is_some());
+
+  match env::var(name) {
+    std::Some(var_value) => {
+      var var_text = std::string::from_string(ref mut zone, var_value);
+      var first_text = std::string::from_string(ref mut zone, "first");
+      assert(var_text.equals(first_text.as_slice()));
+    }
+    std::None => {
+      panic();
+    }
+  }
 
   match env::try_get(name) {
     std::Some(value) => {
