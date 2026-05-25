@@ -47,7 +47,7 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  let direct = fs::metadata(file_path);
+  let direct = fs::metadata_unchecked(file_path);
   if has_timestamp(direct.accessed()) && has_timestamp(direct.modified()) && has_timestamp(direct.changed()) {
     score = score + 16;
   }
@@ -67,10 +67,10 @@ fn main() -> i64 {
       var index = 0;
       while index < entries.len() {
         let entry = entries.get(index);
-        if entry.name_equals("file.txt") && has_all_timestamps(entry.metadata()) {
+        if entry.name_equals("file.txt") && has_all_timestamps(entry.metadata_unchecked()) {
           score = score + 64;
         }
-        if entry.name_equals("file-link") && has_all_timestamps(entry.symlink_metadata()) {
+        if entry.name_equals("file-link") && has_all_timestamps(entry.symlink_metadata_unchecked()) {
           score = score + 128;
         }
         index = index + 1;

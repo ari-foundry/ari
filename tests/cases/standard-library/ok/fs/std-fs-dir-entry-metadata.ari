@@ -42,40 +42,48 @@ fn main() -> i64 {
       while index < entries.len() {
         let entry = entries.get(index);
         if entry.name_equals("file.txt") {
-          let info = entry.metadata();
-          if entry.path_equals(file_path) && entry.is_file() && !entry.is_dir() &&
-             !entry.is_symlink() && info.len() == 4 && info.is_file() &&
-             entry.try_file_type().is_some() {
-            score = score + 6;
+          let info = entry.metadata_unchecked();
+          match entry.file_type_unchecked() {
+            fs::Regular => {
+              if entry.path_equals(file_path) && entry.is_file() && !entry.is_dir() &&
+                 !entry.is_symlink() && info.len() == 4 && info.is_file() &&
+                 entry.file_type().is_ok() && entry.file_type_optional().is_some() &&
+                 entry.try_file_type().is_some() {
+                score = score + 6;
+              }
+            }
+            _ => {}
           }
         }
 
         if entry.name_equals("nested") {
-          match entry.try_metadata() {
-            std::Some(dir_info) => {
+          match entry.metadata() {
+            std::Ok(dir_info) => {
               if entry.path_equals(dir_path) && entry.is_dir() && !entry.is_file() &&
-                 !entry.is_symlink() && dir_info.is_dir() {
+                 !entry.is_symlink() && dir_info.is_dir() &&
+                 entry.try_metadata().is_some() && entry.metadata_optional().is_some() {
                 score = score + 7;
               }
             }
-            std::None => {}
+            std::Err(_) => {}
           }
         }
 
         if entry.name_equals("file-link") {
-          match entry.try_symlink_metadata() {
-            std::Some(link_info) => {
-              let followed = entry.metadata();
-              let direct = entry.symlink_metadata();
+          match entry.symlink_metadata() {
+            std::Ok(link_info) => {
+              let followed = entry.metadata_unchecked();
+              let direct = entry.symlink_metadata_unchecked();
               if entry.path_equals(link_path) && entry.is_symlink() &&
                  entry.is_file() && !entry.is_dir() &&
                  followed.is_file() && followed.len() == 4 &&
                  direct.is_symlink() && link_info.is_symlink() &&
-                 link_info.len() == std::string::c_len(link_target) {
+                 link_info.len() == std::string::c_len(link_target) &&
+                 entry.try_symlink_metadata().is_some() && entry.symlink_metadata_optional().is_some() {
                 score = score + 8;
               }
             }
-            std::None => {}
+            std::Err(_) => {}
           }
         }
         index = index + 1;

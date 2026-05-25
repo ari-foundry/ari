@@ -309,22 +309,6 @@ fn metadata_from_bytes(
   );
 }
 
-pub fn try_metadata(path: string) -> std::Option[Metadata] {
-  let kind = metadata_kind_raw(path);
-  if kind < 0 {
-    return std::None<Metadata>();
-  }
-  let size = metadata_size_raw(path);
-  return metadata_from_raw(
-    path,
-    kind,
-    size,
-    metadata_accessed_nanos_raw(path),
-    metadata_modified_nanos_raw(path),
-    metadata_changed_nanos_raw(path)
-  );
-}
-
 pub fn metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
   let kind = metadata_kind_raw(path);
   if kind < 0 {
@@ -355,24 +339,44 @@ pub fn metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
   return std::Err<Metadata, i64>(last_errno_error_raw());
 }
 
-pub fn metadata_result(path: string) -> std::Result[Metadata, std::error::Error] {
+pub fn metadata(path: string) -> std::Result[Metadata, std::error::Error] {
   return std::error::from_raw_result<Metadata>(metadata_raw_result(path));
 }
 
-pub fn try_symlink_metadata(path: string) -> std::Option[Metadata] {
-  let kind = symlink_metadata_kind_raw(path);
-  if kind < 0 {
-    return std::None<Metadata>();
+pub fn metadata_result(path: string) -> std::Result[Metadata, std::error::Error] {
+  return metadata(path);
+}
+
+pub fn metadata_optional(path: string) -> std::Option[Metadata] {
+  match metadata(path) {
+    std::Ok(value) => {
+      return std::Some<Metadata>(value);
+    }
+    std::Err(_) => {}
   }
-  let size = symlink_metadata_size_raw(path);
-  return metadata_from_raw(
-    path,
-    kind,
-    size,
-    symlink_metadata_accessed_nanos_raw(path),
-    symlink_metadata_modified_nanos_raw(path),
-    symlink_metadata_changed_nanos_raw(path)
-  );
+  return std::None<Metadata>();
+}
+
+pub fn try_metadata(path: string) -> std::Option[Metadata] {
+  return metadata_optional(path);
+}
+
+pub fn metadata_unchecked(path: string) -> Metadata {
+  match metadata(path) {
+    std::Ok(value) => {
+      return value;
+    }
+    std::Err(_) => {}
+  }
+  std::panic();
+  return Metadata {
+    byte_len: 0,
+    kind: Other,
+    permissions: Permissions::none(),
+    accessed_at: std::time::system_from_unix(0, 0),
+    modified_at: std::time::system_from_unix(0, 0),
+    changed_at: std::time::system_from_unix(0, 0),
+  };
 }
 
 pub fn symlink_metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
@@ -405,8 +409,44 @@ pub fn symlink_metadata_raw_result(path: string) -> std::Result[Metadata, i64] {
   return std::Err<Metadata, i64>(last_errno_error_raw());
 }
 
-pub fn symlink_metadata_result(path: string) -> std::Result[Metadata, std::error::Error] {
+pub fn symlink_metadata(path: string) -> std::Result[Metadata, std::error::Error] {
   return std::error::from_raw_result<Metadata>(symlink_metadata_raw_result(path));
+}
+
+pub fn symlink_metadata_result(path: string) -> std::Result[Metadata, std::error::Error] {
+  return symlink_metadata(path);
+}
+
+pub fn symlink_metadata_optional(path: string) -> std::Option[Metadata] {
+  match symlink_metadata(path) {
+    std::Ok(value) => {
+      return std::Some<Metadata>(value);
+    }
+    std::Err(_) => {}
+  }
+  return std::None<Metadata>();
+}
+
+pub fn try_symlink_metadata(path: string) -> std::Option[Metadata] {
+  return symlink_metadata_optional(path);
+}
+
+pub fn symlink_metadata_unchecked(path: string) -> Metadata {
+  match symlink_metadata(path) {
+    std::Ok(value) => {
+      return value;
+    }
+    std::Err(_) => {}
+  }
+  std::panic();
+  return Metadata {
+    byte_len: 0,
+    kind: Other,
+    permissions: Permissions::none(),
+    accessed_at: std::time::system_from_unix(0, 0),
+    modified_at: std::time::system_from_unix(0, 0),
+    changed_at: std::time::system_from_unix(0, 0),
+  };
 }
 
 fn try_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
@@ -425,6 +465,36 @@ fn try_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
   );
 }
 
+fn metadata_bytes_raw_result(path: std::Slice[u8]) -> std::Result[Metadata, i64] {
+  let kind = metadata_kind_bytes_raw(path.data, path.len);
+  if kind < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let size = metadata_size_bytes_raw(path.data, path.len);
+  if size < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let accessed = metadata_accessed_nanos_bytes_raw(path.data, path.len);
+  if accessed < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let modified = metadata_modified_nanos_bytes_raw(path.data, path.len);
+  if modified < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let changed = metadata_changed_nanos_bytes_raw(path.data, path.len);
+  if changed < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  match metadata_from_bytes(path, kind, size, accessed, modified, changed) {
+    std::Some(value) => {
+      return std::Ok<Metadata, i64>(value);
+    }
+    std::None => {}
+  }
+  return std::Err<Metadata, i64>(last_errno_error_raw());
+}
+
 fn try_symlink_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
   let kind = symlink_metadata_kind_bytes_raw(path.data, path.len);
   if kind < 0 {
@@ -441,12 +511,38 @@ fn try_symlink_metadata_bytes(path: std::Slice[u8]) -> std::Option[Metadata] {
   );
 }
 
-pub fn try_file_type(path: string) -> std::Option[FileKind] {
-  let kind = metadata_kind_raw(path);
+fn symlink_metadata_bytes_raw_result(path: std::Slice[u8]) -> std::Result[Metadata, i64] {
+  let kind = symlink_metadata_kind_bytes_raw(path.data, path.len);
   if kind < 0 {
-    return std::None<FileKind>();
+    return std::Err<Metadata, i64>(last_errno_error_raw());
   }
-  return std::Some<FileKind>(file_kind_from_raw(kind));
+  let size = symlink_metadata_size_bytes_raw(path.data, path.len);
+  if size < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let accessed = symlink_metadata_accessed_nanos_bytes_raw(path.data, path.len);
+  if accessed < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let modified = symlink_metadata_modified_nanos_bytes_raw(path.data, path.len);
+  if modified < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  let changed = symlink_metadata_changed_nanos_bytes_raw(path.data, path.len);
+  if changed < 0 {
+    return std::Err<Metadata, i64>(last_errno_error_raw());
+  }
+  match metadata_from_bytes(path, kind, size, accessed, modified, changed) {
+    std::Some(value) => {
+      return std::Ok<Metadata, i64>(value);
+    }
+    std::None => {}
+  }
+  return std::Err<Metadata, i64>(last_errno_error_raw());
+}
+
+pub fn try_file_type(path: string) -> std::Option[FileKind] {
+  return file_type_optional(path);
 }
 
 pub fn file_type_raw_result(path: string) -> std::Result[FileKind, i64] {
@@ -457,12 +553,45 @@ pub fn file_type_raw_result(path: string) -> std::Result[FileKind, i64] {
   return std::Ok<FileKind, i64>(file_kind_from_raw(kind));
 }
 
-pub fn file_type_result(path: string) -> std::Result[FileKind, std::error::Error] {
+pub fn file_type(path: string) -> std::Result[FileKind, std::error::Error] {
   return std::error::from_raw_result<FileKind>(file_type_raw_result(path));
 }
 
+pub fn file_type_result(path: string) -> std::Result[FileKind, std::error::Error] {
+  return file_type(path);
+}
+
+pub fn file_type_optional(path: string) -> std::Option[FileKind] {
+  match file_type(path) {
+    std::Ok(value) => {
+      return std::Some<FileKind>(value);
+    }
+    std::Err(_) => {}
+  }
+  return std::None<FileKind>();
+}
+
+pub fn file_type_unchecked(path: string) -> FileKind {
+  match file_type(path) {
+    std::Ok(value) => {
+      return value;
+    }
+    std::Err(_) => {}
+  }
+  std::panic();
+  return Other;
+}
+
+fn file_type_bytes_raw_result(path: std::Slice[u8]) -> std::Result[FileKind, i64] {
+  let kind = metadata_kind_bytes_raw(path.data, path.len);
+  if kind < 0 {
+    return std::Err<FileKind, i64>(last_errno_error_raw());
+  }
+  return std::Ok<FileKind, i64>(file_kind_from_raw(kind));
+}
+
 pub fn is_file(path: string) -> bool {
-  match try_file_type(path) {
+  match file_type_optional(path) {
     std::Some(kind) => {
       match kind {
         Regular => {
@@ -477,7 +606,7 @@ pub fn is_file(path: string) -> bool {
 }
 
 pub fn is_dir(path: string) -> bool {
-  match try_file_type(path) {
+  match file_type_optional(path) {
     std::Some(kind) => {
       match kind {
         Directory => {
@@ -492,7 +621,7 @@ pub fn is_dir(path: string) -> bool {
 }
 
 pub fn is_symlink(path: string) -> bool {
-  match try_symlink_metadata(path) {
+  match symlink_metadata_optional(path) {
     std::Some(info) => {
       return info.is_symlink();
     }
@@ -502,7 +631,7 @@ pub fn is_symlink(path: string) -> bool {
 }
 
 pub fn is_other(path: string) -> bool {
-  match try_file_type(path) {
+  match file_type_optional(path) {
     std::Some(kind) => {
       match kind {
         Other => {
@@ -516,48 +645,8 @@ pub fn is_other(path: string) -> bool {
   return false;
 }
 
-pub fn metadata(path: string) -> Metadata {
-  match try_metadata(path) {
-    std::Some(value) => {
-      return value;
-    }
-    std::None => {}
-  }
-  std::panic();
-  return Metadata {
-    byte_len: 0,
-    kind: Other,
-    permissions: Permissions::none(),
-    accessed_at: std::time::system_from_unix(0, 0),
-    modified_at: std::time::system_from_unix(0, 0),
-    changed_at: std::time::system_from_unix(0, 0),
-  };
-}
-
-pub fn symlink_metadata(path: string) -> Metadata {
-  match try_symlink_metadata(path) {
-    std::Some(value) => {
-      return value;
-    }
-    std::None => {}
-  }
-  std::panic();
-  return Metadata {
-    byte_len: 0,
-    kind: Other,
-    permissions: Permissions::none(),
-    accessed_at: std::time::system_from_unix(0, 0),
-    modified_at: std::time::system_from_unix(0, 0),
-    changed_at: std::time::system_from_unix(0, 0),
-  };
-}
-
 pub fn try_mode(path: string) -> std::Option[i64] {
-  let mode = metadata_mode_raw(path);
-  if mode < 0 {
-    return std::None<i64>();
-  }
-  return std::Some<i64>(mode & 511);
+  return mode_optional(path);
 }
 
 pub fn mode_raw_result(path: string) -> std::Result[i64, i64] {
@@ -568,16 +657,30 @@ pub fn mode_raw_result(path: string) -> std::Result[i64, i64] {
   return std::Ok<i64, i64>(mode & 511);
 }
 
-pub fn mode_result(path: string) -> std::Result[i64, std::error::Error] {
+pub fn mode(path: string) -> std::Result[i64, std::error::Error] {
   return std::error::from_raw_result<i64>(mode_raw_result(path));
 }
 
-pub fn mode(path: string) -> i64 {
-  match try_mode(path) {
-    std::Some(value) => {
+pub fn mode_result(path: string) -> std::Result[i64, std::error::Error] {
+  return mode(path);
+}
+
+pub fn mode_optional(path: string) -> std::Option[i64] {
+  match mode(path) {
+    std::Ok(value) => {
+      return std::Some<i64>(value);
+    }
+    std::Err(_) => {}
+  }
+  return std::None<i64>();
+}
+
+pub fn mode_unchecked(path: string) -> i64 {
+  match mode(path) {
+    std::Ok(value) => {
       return value;
     }
-    std::None => {}
+    std::Err(_) => {}
   }
   std::panic();
   return -1;
@@ -1731,15 +1834,29 @@ pub impl std::fs::DirEntry {
   }
 
   fn try_metadata(self: ref Self) -> std::Option[Metadata] {
-    return try_metadata_bytes(self.path_value.as_slice());
+    return self.metadata_optional();
   }
 
-  fn metadata(self: ref Self) -> Metadata {
-    match self.try_metadata() {
-      std::Some(value) => {
+  fn metadata(self: ref Self) -> std::Result[Metadata, std::error::Error] {
+    return std::error::from_raw_result<Metadata>(metadata_bytes_raw_result(self.path_value.as_slice()));
+  }
+
+  fn metadata_optional(self: ref Self) -> std::Option[Metadata] {
+    match self.metadata() {
+      std::Ok(value) => {
+        return std::Some<Metadata>(value);
+      }
+      std::Err(_) => {}
+    }
+    return std::None<Metadata>();
+  }
+
+  fn metadata_unchecked(self: ref Self) -> Metadata {
+    match self.metadata() {
+      std::Ok(value) => {
         return value;
       }
-      std::None => {}
+      std::Err(_) => {}
     }
     std::panic();
     return Metadata {
@@ -1753,15 +1870,29 @@ pub impl std::fs::DirEntry {
   }
 
   fn try_symlink_metadata(self: ref Self) -> std::Option[Metadata] {
-    return try_symlink_metadata_bytes(self.path_value.as_slice());
+    return self.symlink_metadata_optional();
   }
 
-  fn symlink_metadata(self: ref Self) -> Metadata {
-    match self.try_symlink_metadata() {
-      std::Some(value) => {
+  fn symlink_metadata(self: ref Self) -> std::Result[Metadata, std::error::Error] {
+    return std::error::from_raw_result<Metadata>(symlink_metadata_bytes_raw_result(self.path_value.as_slice()));
+  }
+
+  fn symlink_metadata_optional(self: ref Self) -> std::Option[Metadata] {
+    match self.symlink_metadata() {
+      std::Ok(value) => {
+        return std::Some<Metadata>(value);
+      }
+      std::Err(_) => {}
+    }
+    return std::None<Metadata>();
+  }
+
+  fn symlink_metadata_unchecked(self: ref Self) -> Metadata {
+    match self.symlink_metadata() {
+      std::Ok(value) => {
         return value;
       }
-      std::None => {}
+      std::Err(_) => {}
     }
     std::panic();
     return Metadata {
@@ -1775,17 +1906,36 @@ pub impl std::fs::DirEntry {
   }
 
   fn try_file_type(self: ref Self) -> std::Option[FileKind] {
-    match self.try_metadata() {
-      std::Some(value) => {
-        return std::Some<FileKind>(value.file_type());
+    return self.file_type_optional();
+  }
+
+  fn file_type(self: ref Self) -> std::Result[FileKind, std::error::Error] {
+    return std::error::from_raw_result<FileKind>(file_type_bytes_raw_result(self.path_value.as_slice()));
+  }
+
+  fn file_type_optional(self: ref Self) -> std::Option[FileKind] {
+    match self.file_type() {
+      std::Ok(value) => {
+        return std::Some<FileKind>(value);
       }
-      std::None => {}
+      std::Err(_) => {}
     }
     return std::None<FileKind>();
   }
 
+  fn file_type_unchecked(self: ref Self) -> FileKind {
+    match self.file_type() {
+      std::Ok(value) => {
+        return value;
+      }
+      std::Err(_) => {}
+    }
+    std::panic();
+    return Other;
+  }
+
   fn is_file(self: ref Self) -> bool {
-    match self.try_metadata() {
+    match self.metadata_optional() {
       std::Some(value) => {
         return value.is_file();
       }
@@ -1795,7 +1945,7 @@ pub impl std::fs::DirEntry {
   }
 
   fn is_dir(self: ref Self) -> bool {
-    match self.try_metadata() {
+    match self.metadata_optional() {
       std::Some(value) => {
         return value.is_dir();
       }
@@ -1805,7 +1955,7 @@ pub impl std::fs::DirEntry {
   }
 
   fn is_symlink(self: ref Self) -> bool {
-    match self.try_symlink_metadata() {
+    match self.symlink_metadata_optional() {
       std::Some(value) => {
         return value.is_symlink();
       }
@@ -1815,7 +1965,7 @@ pub impl std::fs::DirEntry {
   }
 
   fn is_other(self: ref Self) -> bool {
-    match self.try_metadata() {
+    match self.metadata_optional() {
       std::Some(value) => {
         return value.is_other();
       }

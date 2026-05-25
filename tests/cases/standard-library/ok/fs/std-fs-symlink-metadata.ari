@@ -21,7 +21,7 @@ fn main() -> i64 {
     score = score + 2;
   }
 
-  if fs::try_symlink_metadata(missing).is_none() {
+  if fs::symlink_metadata_optional(missing).is_none() {
     score = score + 4;
   }
 
@@ -52,7 +52,7 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  let direct = fs::symlink_metadata(link);
+  let direct = fs::symlink_metadata_unchecked(link);
   if direct.is_symlink() && fs::is_symlink(link) && !fs::is_symlink(source) {
     score = score + 64;
   }

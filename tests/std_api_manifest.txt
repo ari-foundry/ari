@@ -383,19 +383,26 @@ fn std::fs::ensure_dir|check-prelude std-fs-ensure-dir idempotent single-directo
 fn std::fs::ensure_dir_all|check-prelude std-fs-create-dir-all idempotent recursive directory creation alias; docs/stdlib/modules/fs.md
 fn std::fs::ensure_file|check-prelude std-fs-ensure-file idempotent single-file creation helper; docs/stdlib/modules/fs.md
 fn std::fs::exists|check-prelude std-fs-basic file existence hook; docs/stdlib/modules/fs.md
+fn std::fs::file_type|check-prelude std-fs-query-result Result-returning path kind helper; docs/stdlib/modules/fs.md
+fn std::fs::file_type_optional|check-prelude std-fs-query-result Option-returning path kind compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::file_type_raw_result|check-prelude std-fs-query-result raw Result-returning path kind compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::file_type_result|check-prelude std-fs-query-result Error-returning path kind helper; docs/stdlib/modules/fs.md
+fn std::fs::file_type_result|check-prelude std-fs-query-result compatibility alias for Result-returning path kind helper; docs/stdlib/modules/fs.md
+fn std::fs::file_type_unchecked|check-prelude std-fs-query-result unchecked path kind compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::hard_link|check-prelude std-fs-links runtime-backed hard-link hook; docs/stdlib/modules/fs.md
 fn std::fs::is_dir|check-prelude std-fs-metadata direct directory-kind predicate; docs/stdlib/modules/fs.md
 fn std::fs::is_file|check-prelude std-fs-metadata direct regular-file predicate; docs/stdlib/modules/fs.md
 fn std::fs::is_other|check-prelude std-fs-metadata direct other-kind predicate; docs/stdlib/modules/fs.md
 fn std::fs::is_symlink|check-prelude std-fs-symlink-metadata no-follow direct symlink-kind predicate; docs/stdlib/modules/fs.md
-fn std::fs::metadata|check-prelude std-fs-metadata asserting target-following metadata convenience wrapper; docs/stdlib/modules/fs.md
+fn std::fs::metadata|check-prelude std-fs-query-result Result-returning target-following metadata helper; docs/stdlib/modules/fs.md
+fn std::fs::metadata_optional|check-prelude std-fs-query-result Option-returning target-following metadata compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::metadata_raw_result|check-prelude std-fs-query-result raw Result-returning target-following metadata compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::metadata_result|check-prelude std-fs-query-result Error-returning target-following metadata helper; docs/stdlib/modules/fs.md
-fn std::fs::mode|check-prelude std-fs-mode asserting POSIX permission-mode helper; docs/stdlib/modules/fs.md
+fn std::fs::metadata_result|check-prelude std-fs-query-result compatibility alias for Result-returning target-following metadata helper; docs/stdlib/modules/fs.md
+fn std::fs::metadata_unchecked|check-prelude std-fs-query-result unchecked target-following metadata compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::mode|check-prelude std-fs-query-result Result-returning POSIX permission-mode helper; docs/stdlib/modules/fs.md
+fn std::fs::mode_optional|check-prelude std-fs-query-result Option-returning POSIX permission-mode compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::mode_raw_result|check-prelude std-fs-query-result raw Result-returning permission-mode compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::mode_result|check-prelude std-fs-query-result Error-returning permission-mode helper; docs/stdlib/modules/fs.md
+fn std::fs::mode_result|check-prelude std-fs-query-result compatibility alias for Result-returning permission-mode helper; docs/stdlib/modules/fs.md
+fn std::fs::mode_unchecked|check-prelude std-fs-query-result unchecked POSIX permission-mode compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::open|check-prelude std-fs-open-result Result-returning mode-string open helper with Error payload; docs/stdlib/modules/fs.md
 fn std::fs::open_append|check-prelude std-fs-open-result Result-returning append-mode open helper; docs/stdlib/modules/fs.md
 fn std::fs::open_append_optional|check-prelude std-fs-open-result Option-returning append-mode open compatibility helper; docs/stdlib/modules/fs.md
@@ -446,9 +453,11 @@ fn std::fs::seek_unchecked|check-prelude std-fs-seek unchecked file seek compati
 fn std::fs::set_mode|check-prelude std-fs-mode chmod-backed permission-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::set_permissions|check-prelude std-fs-mode Permissions-to-mode mutation helper; docs/stdlib/modules/fs.md
 fn std::fs::symbolic_link|check-prelude std-fs-links runtime-backed symbolic-link hook; docs/stdlib/modules/fs.md
-fn std::fs::symlink_metadata|check-prelude std-fs-symlink-metadata asserting no-follow metadata helper; docs/stdlib/modules/fs.md
+fn std::fs::symlink_metadata|check-prelude std-fs-query-result Result-returning no-follow metadata helper; docs/stdlib/modules/fs.md
+fn std::fs::symlink_metadata_optional|check-prelude std-fs-query-result Option-returning no-follow metadata compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::symlink_metadata_raw_result|check-prelude std-fs-query-result raw Result-returning no-follow metadata compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::symlink_metadata_result|check-prelude std-fs-query-result Error-returning no-follow metadata helper; docs/stdlib/modules/fs.md
+fn std::fs::symlink_metadata_result|check-prelude std-fs-query-result compatibility alias for Result-returning no-follow metadata helper; docs/stdlib/modules/fs.md
+fn std::fs::symlink_metadata_unchecked|check-prelude std-fs-query-result unchecked no-follow metadata compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::truncate|check-prelude std-fs-create-truncate-copy source create/truncate helper; docs/stdlib/modules/fs.md
 fn std::fs::try_append|check-prelude std-fs-read-write Option-returning append byte-count helper; docs/stdlib/modules/fs.md
 fn std::fs::try_canonicalize|check-prelude std-fs-canonicalize Option-returning realpath-backed canonicalization helper; docs/stdlib/modules/fs.md
@@ -1500,16 +1509,23 @@ method std::fs::Dir::close_unchecked|check-prelude std-fs-read-dir unchecked dir
 method std::fs::Dir::invalid|check-prelude std-fs-read-dir invalid directory fallback constructor; docs/stdlib/modules/fs.md
 method std::fs::Dir::is_open|check-prelude std-fs-read-dir open directory handle predicate; docs/stdlib/modules/fs.md
 method std::fs::Dir::next|check-prelude std-fs-read-dir value directory handle next-name method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::file_type|check-prelude std-fs-dir-entry-metadata Result-returning directory entry file-kind method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::file_type_optional|check-prelude std-fs-dir-entry-metadata Option-returning directory entry file-kind compatibility method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::file_type_unchecked|check-prelude std-fs-dir-entry-metadata unchecked directory entry file-kind compatibility method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::is_dir|check-prelude std-fs-dir-entry-metadata directory entry target-following directory predicate; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::is_file|check-prelude std-fs-dir-entry-metadata directory entry target-following file predicate; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::is_other|check-prelude std-fs-dir-entry-metadata directory entry target-following other-kind predicate; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::is_symlink|check-prelude std-fs-dir-entry-metadata directory entry no-follow symlink predicate; docs/stdlib/modules/fs.md
-method std::fs::DirEntry::metadata|check-prelude std-fs-dir-entry-metadata asserting target-following directory entry metadata method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::metadata|check-prelude std-fs-dir-entry-metadata Result-returning target-following directory entry metadata method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::metadata_optional|check-prelude std-fs-dir-entry-metadata Option-returning target-following directory entry metadata compatibility method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::metadata_unchecked|check-prelude std-fs-dir-entry-metadata unchecked target-following directory entry metadata compatibility method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::name|check-prelude std-fs-read-dir borrowed directory entry name method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::name_equals|check-prelude std-fs-read-dir directory entry name comparison helper; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::path|check-prelude std-fs-read-dir borrowed joined directory entry path method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::path_equals|check-prelude std-fs-read-dir directory entry path comparison helper; docs/stdlib/modules/fs.md
-method std::fs::DirEntry::symlink_metadata|check-prelude std-fs-dir-entry-metadata asserting no-follow directory entry metadata method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::symlink_metadata|check-prelude std-fs-dir-entry-metadata Result-returning no-follow directory entry metadata method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::symlink_metadata_optional|check-prelude std-fs-dir-entry-metadata Option-returning no-follow directory entry metadata compatibility method; docs/stdlib/modules/fs.md
+method std::fs::DirEntry::symlink_metadata_unchecked|check-prelude std-fs-dir-entry-metadata unchecked no-follow directory entry metadata compatibility method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::try_file_type|check-prelude std-fs-dir-entry-metadata Option-returning directory entry file-kind method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::try_metadata|check-prelude std-fs-dir-entry-metadata Option-returning target-following directory entry metadata method; docs/stdlib/modules/fs.md
 method std::fs::DirEntry::try_symlink_metadata|check-prelude std-fs-dir-entry-metadata Option-returning no-follow directory entry metadata method; docs/stdlib/modules/fs.md

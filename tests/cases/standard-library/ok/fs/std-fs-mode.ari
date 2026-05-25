@@ -9,7 +9,7 @@ fn main() -> i64 {
   }
 
   var score = 0;
-  if fs::try_mode(path).is_none() {
+  if fs::mode_optional(path).is_none() && fs::try_mode(path).is_none() {
     score = score + 1;
   }
   if !fs::set_mode(path, 420) {
@@ -20,7 +20,7 @@ fn main() -> i64 {
   if fs::write(path, data.as_slice()) {
     score = score + 3;
   }
-  let initial = fs::mode(path);
+  let initial = fs::mode_unchecked(path);
   if initial >= 0 && initial <= 511 {
     score = score + 4;
   }

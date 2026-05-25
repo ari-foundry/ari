@@ -13,13 +13,13 @@ fn main() -> i64 {
   }
 
   var score = 0;
-  match fs::try_metadata(missing_path) {
+  match fs::metadata_optional(missing_path) {
     std::Some(_missing) => {}
     std::None => {
       score = score + 1;
     }
   }
-  if fs::try_file_type(missing_path).is_none() {
+  if fs::file_type_optional(missing_path).is_none() && fs::try_file_type(missing_path).is_none() {
     score = score + 1;
   }
   if !fs::is_file(missing_path) && !fs::is_dir(missing_path) {
@@ -67,12 +67,12 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  let direct = fs::metadata(file_path);
+  let direct = fs::metadata_unchecked(file_path);
   if direct.len() == 4 {
     score = score + 9;
   }
-  match fs::try_file_type(file_path) {
-    std::Some(kind) => {
+  match fs::file_type(file_path) {
+    std::Ok(kind) => {
       match kind {
         fs::Regular => {
           score = score + 1;
@@ -80,7 +80,7 @@ fn main() -> i64 {
         _ => {}
       }
     }
-    std::None => {}
+    std::Err(_) => {}
   }
 
   if fs::create_dir(dir_path) {

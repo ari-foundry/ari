@@ -55,23 +55,32 @@ fs::can_write(path)
 fs::can_execute(path)
 fs::permissions(path)
 fs::metadata(path)
+fs::metadata_optional(path)
+fs::metadata_unchecked(path)
 fs::metadata_raw_result(path)
 fs::metadata_result(path)
 fs::try_metadata(path)
 fs::symlink_metadata(path)
+fs::symlink_metadata_optional(path)
+fs::symlink_metadata_unchecked(path)
 fs::symlink_metadata_raw_result(path)
 fs::symlink_metadata_result(path)
 fs::try_symlink_metadata(path)
+fs::file_type(path)
+fs::file_type_optional(path)
 fs::file_type_raw_result(path)
 fs::file_type_result(path)
+fs::file_type_unchecked(path)
 fs::try_file_type(path)
 fs::is_file(path)
 fs::is_dir(path)
 fs::is_symlink(path)
 fs::is_other(path)
 fs::mode(path)
+fs::mode_optional(path)
 fs::mode_raw_result(path)
 fs::mode_result(path)
+fs::mode_unchecked(path)
 fs::try_mode(path)
 fs::set_mode(path, mode)
 fs::set_permissions(path, permissions)
@@ -220,10 +229,17 @@ entry.name()
 entry.path()
 entry.name_equals(value)
 entry.path_equals(value)
-entry.try_metadata()
 entry.metadata()
-entry.try_symlink_metadata()
+entry.metadata_optional()
+entry.metadata_unchecked()
+entry.try_metadata()
 entry.symlink_metadata()
+entry.symlink_metadata_optional()
+entry.symlink_metadata_unchecked()
+entry.try_symlink_metadata()
+entry.file_type()
+entry.file_type_optional()
+entry.file_type_unchecked()
 entry.try_file_type()
 entry.is_file()
 entry.is_dir()
@@ -478,44 +494,44 @@ converts the three booleans into POSIX permission bits. The conversion applies
 the same read/write/execute choice to user, group, and other bits, so
 read-only becomes `0444` and all-permissions becomes `0777`.
 
-`try_metadata(path)` returns `Option[Metadata]`. Missing paths and failed host
-metadata lookups return `None`; successful calls snapshot the byte length,
-`FileKind`, and the same access-style `Permissions` used by
-`permissions(path)`. `metadata(path)` is the asserting convenience wrapper for
-programs that treat a missing path as a programmer error. This helper follows
-symbolic links, matching the common "tell me about the thing this path names"
-policy.
-`metadata_result(path)` is the production-friendly form. It returns
-`Result[Metadata, Error]`, preserving errno-derived kinds such as `NotFound`,
-`PermissionDenied`, or `NotDirectory`. `metadata_raw_result(path)` keeps the
-same operation with a compact raw `i64` payload for compatibility-only
-bridges.
+`metadata(path)` returns `Result[Metadata, Error]`, preserving errno-derived
+kinds such as `NotFound`, `PermissionDenied`, or `NotDirectory`. Successful
+calls snapshot the byte length, `FileKind`, and the same access-style
+`Permissions` used by `permissions(path)`. This helper follows symbolic links,
+matching the common "tell me about the thing this path names" policy.
+`metadata_optional(path)` and the older `try_metadata(path)` discard the
+failure reason and return `Option[Metadata]`. `metadata_unchecked(path)` is the
+compatibility wrapper for programs that treat a missing path as a programmer
+error. `metadata_result(path)` remains a migration alias for the natural
+`metadata(path)` spelling. `metadata_raw_result(path)` keeps the same operation
+with a compact raw `i64` payload for compatibility-only bridges.
 
-`try_symlink_metadata(path)` returns `Option[Metadata]` using a no-follow path
-lookup. For ordinary files and directories it looks like `try_metadata`; for a
-symbolic link it reports the link object itself, so `file_type()` is
+`symlink_metadata(path)` returns `Result[Metadata, Error]` using a no-follow
+path lookup. For ordinary files and directories it looks like `metadata`; for
+a symbolic link it reports the link object itself, so `file_type()` is
 `Symlink` and `len()` is the stored target byte length on the current
-Linux/glibc backend. `symlink_metadata(path)` is the asserting wrapper. Use
-this helper before rewriting or removing links when the distinction between
-the link and its target matters. The embedded `Permissions` value still uses
-the same access-style `permissions(path)` snapshot as ordinary metadata;
-portable symlink permission-bit policy is intentionally not promised yet.
-`symlink_metadata_result(path)` and `symlink_metadata_raw_result(path)` are the
-direct `Error` and raw compatibility variants of the same no-follow metadata
-lookup.
+Linux/glibc backend. Use this helper before rewriting or removing links when
+the distinction between the link and its target matters. The embedded
+`Permissions` value still uses the same access-style `permissions(path)`
+snapshot as ordinary metadata; portable symlink permission-bit policy is
+intentionally not promised yet. `symlink_metadata_optional(path)` and the older
+`try_symlink_metadata(path)` discard the reason. `symlink_metadata_unchecked`
+asserts on failure, `symlink_metadata_result` is the migration alias, and
+`symlink_metadata_raw_result` is the raw compatibility variant.
 
-`try_file_type(path)` is the lightweight `Option[FileKind]` helper for code
-that only needs the path kind without building the full metadata/permission
-snapshot. `is_file(path)`, `is_dir(path)`,
+`file_type(path)` returns `Result[FileKind, Error]` for callers that need to
+distinguish a missing path from a permission or path-shape failure without
+building the full metadata/permission snapshot. `file_type_optional(path)` and
+the older `try_file_type(path)` are the lightweight `Option[FileKind]`
+helpers for code that only needs the path kind. `file_type_unchecked(path)`
+asserts on failure. `is_file(path)`, `is_dir(path)`,
 `is_symlink(path)`, and `is_other(path)` are direct path predicates. `is_file`,
-`is_dir`, `is_other`, and `try_file_type` follow symbolic links through the
+`is_dir`, `is_other`, and `file_type` follow symbolic links through the
 ordinary metadata policy; `is_symlink` uses no-follow metadata so it can detect
 the link object itself. Missing or unstatable paths return `false`. Prefer
 these predicates at call sites that only branch on the kind, and keep
 `metadata(path)` or `symlink_metadata(path)` for code that also needs size or
-permissions.
-`file_type_result(path)` returns `Result[FileKind, Error]` for callers that
-need to distinguish a missing path from a permission or path-shape failure.
+permissions. `file_type_result(path)` remains a migration alias and
 `file_type_raw_result(path)` is the raw compatibility variant.
 
 `Metadata::len()` returns the byte length reported by the host. Directories and
@@ -531,17 +547,16 @@ The current Linux/glibc runtime uses `stat` for target-following metadata and
 timestamp (`ctime`), not a portable creation time. A separate creation/birth-time
 API should wait until the platform policy is explicit.
 
-`try_mode(path)` returns the current POSIX permission bits as
-`Option[i64]`. The value is already masked to the low `0777` permission bits,
-so code can compare it directly with familiar octal-style values written as
-decimal literals today: `420` for `0644`, `292` for `0444`, and `511` for
-`0777`. `mode(path)` is the asserting convenience wrapper. `set_mode(path,
-mode)` uses the host `chmod` path and rejects values outside `0..511`.
-`set_permissions(path, permissions)` is the structured version for code that
-already has a `Permissions` value.
-`mode_result(path)` returns `Result[i64, Error]` and should be used when a
-missing path or permission failure is normal input. `mode_raw_result(path)` is
-kept for compatibility adapters.
+`mode(path)` returns the current POSIX permission bits as
+`Result[i64, Error]`. The successful value is already masked to the low `0777`
+permission bits, so code can compare it directly with familiar octal-style
+values written as decimal literals today: `420` for `0644`, `292` for `0444`,
+and `511` for `0777`. `mode_optional(path)` and the older `try_mode(path)`
+discard the failure reason. `mode_unchecked(path)` asserts on failure.
+`set_mode(path, mode)` uses the host `chmod` path and rejects values outside
+`0..511`. `set_permissions(path, permissions)` is the structured version for
+code that already has a `Permissions` value. `mode_result(path)` remains a
+migration alias and `mode_raw_result(path)` is kept for compatibility adapters.
 
 `try_canonicalize(ref mut zone, path)` resolves an existing path through the
 host filesystem and returns an owned absolute `String` in the caller-provided
@@ -637,12 +652,16 @@ wrapper for code that treats a failed directory read as a programmer error. Use
 `read_dir_entries(ref mut zone, path)` when the call site needs the entry name,
 the joined child path, and lazy metadata. `DirEntry::name()` and
 `DirEntry::path()` return borrowed `String` references; the `*_equals` helpers
-keep common tests short. `entry.try_metadata()`, `entry.metadata()`,
-`entry.try_file_type()`, `entry.is_file()`, `entry.is_dir()`, and
-`entry.is_other()` follow symbolic links, matching the path-level
-`fs::metadata` policy. `entry.try_symlink_metadata()`,
-`entry.symlink_metadata()`, and `entry.is_symlink()` query the entry path with
-the no-follow `lstat` policy. The low-level `open_dir`, `read_dir_next`, and
+keep common tests short. `entry.metadata()`, `entry.file_type()`,
+`entry.is_file()`, `entry.is_dir()`, and `entry.is_other()` follow symbolic
+links, matching the path-level `fs::metadata` policy. Use
+`entry.metadata_optional()`/`entry.try_metadata()` or
+`entry.file_type_optional()`/`entry.try_file_type()` when absence-only
+branching is enough, and `entry.metadata_unchecked()` or
+`entry.file_type_unchecked()` only for compatibility code that should panic on
+failure. `entry.symlink_metadata()` and `entry.is_symlink()` query the entry
+path with the no-follow `lstat` policy, with matching `_optional`, `try_*`, and
+`_unchecked` compatibility methods. The low-level `open_dir`, `read_dir_next`, and
 `close_dir` names exist for direct runtime-hook coverage, but ordinary code
 should prefer `try_read_dir`/`try_read_dir_entries` for collection-style reads
 or `try_open_dir` plus the `Dir` methods for manual streaming.
@@ -657,8 +676,8 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | write | Current: byte `write_byte`, `write_bytes`, `write_byte_unchecked`, `write_bytes_unchecked`, whole-file `write`, byte-counting `try_write`, `Error`-returning `write_result`, and raw compatibility `write_raw_result`/`write_byte_raw`/`write_bytes_raw`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, byte-counting `try_append`, `Error`-returning `append_result`, and raw compatibility `append_raw_result`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
-| metadata | Current: `try_metadata(path)`/`metadata(path)`, `metadata_result(path)` with `Error`, and raw compatibility `metadata_raw_result(path)` over the Linux/glibc `stat` runtime path; `try_symlink_metadata(path)`/`symlink_metadata(path)`, `symlink_metadata_result(path)` with `Error`, raw compatibility `symlink_metadata_raw_result(path)`, and `is_symlink(path)` over the Linux/glibc `lstat` runtime path; plus `try_file_type(path)`, `file_type_result(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
-| permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, stat-backed `try_mode`/`mode`, `mode_result` with `Error`, raw compatibility `mode_raw_result`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
+| metadata | Current: Result-first `metadata(path)`, `symlink_metadata(path)`, and `file_type(path)` with `Error`; `_optional`/`try_*` compatibility helpers that discard reasons; `_unchecked` compatibility helpers that assert; `_result` migration aliases; raw compatibility `metadata_raw_result(path)`, `symlink_metadata_raw_result(path)`, and `file_type_raw_result(path)` over Linux/glibc `stat`/`lstat`; direct predicates `is_file(path)`, `is_dir(path)`, `is_symlink(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
+| permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, Result-first stat-backed `mode(path)` with `Error`, `mode_optional(path)`/`try_mode(path)`, `mode_unchecked(path)`, `mode_result(path)` migration alias, raw compatibility `mode_raw_result`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
 | rename | Current: `rename(source, target)`, `rename_result(source, target)` with `Error`, and raw compatibility `rename_raw_result`; portable overwrite policy is roadmap. |
 | remove | Current: file removal with `remove(path)`/`remove_result(path)` plus raw compatibility `remove_raw_result`, empty directory removal with `remove_dir(path)`/`remove_dir_result(path)` plus raw compatibility `remove_dir_raw_result`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
 | copy | Current: source streaming `copy(source, target)`, byte-counting `try_copy(source, target)`, `Error`-returning `copy_result(source, target)`, and raw compatibility `copy_raw_result(source, target)` for byte files. |
@@ -852,9 +871,13 @@ var index = 0;
 while index < entries.len() {
   let entry = entries.get(index);
   if entry.is_file() {
-    let info = entry.metadata();
-    if info.len() > 0 {
-      index = entries.len();
+    match entry.metadata() {
+      std::Ok(info) => {
+        if info.len() > 0 {
+          index = entries.len();
+        }
+      }
+      std::Err(_) => {}
     }
   }
   index = index + 1;
@@ -893,9 +916,13 @@ Change POSIX permission bits:
 ```ari
 let read_only = fs::Permissions::read_only();
 if fs::set_permissions(path, read_only) {
-  let bits = fs::mode(path);
-  if bits == 292 {
-    return 0;
+  match fs::mode(path) {
+    std::Ok(bits) => {
+      if bits == 292 {
+        return 0;
+      }
+    }
+    std::Err(_) => {}
   }
 }
 ```

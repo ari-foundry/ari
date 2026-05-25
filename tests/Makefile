@@ -1126,8 +1126,17 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_fs_metadata_size_bytes" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
 	grep -q "@ari_builtin_fs_symlink_metadata_kind_bytes" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
 	grep -q "@ari_builtin_fs_can_read_bytes" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent8metadata" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent17metadata_optional" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent18metadata_unchecked" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
 	grep -F -q "DirEntry8inherent12try_metadata" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent16symlink_metadata" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent25symlink_metadata_optional" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent26symlink_metadata_unchecked" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
 	grep -F -q "DirEntry8inherent20try_symlink_metadata" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent9file_type" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent18file_type_optional" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
+	grep -F -q "DirEntry8inherent19file_type_unchecked" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
 	grep -F -q "DirEntry8inherent13try_file_type" $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-dir-entry-metadata.ari -o $(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.elf
 	$(BUILD_DIR)/prelude/std-fs-dir-entry-metadata.elf; code=$$?; test $$code -eq 36
@@ -1152,6 +1161,8 @@ check-prelude: $(TARGET)
 	grep -q "declare i32 @lstat" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
 	grep -F -q "std2fs20try_symlink_metadata" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
 	grep -F -q "std2fs16symlink_metadata" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
+	grep -F -q "std2fs25symlink_metadata_optional" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
+	grep -F -q "std2fs26symlink_metadata_unchecked" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
 	grep -F -q "std2fs10is_symlink" $(BUILD_DIR)/prelude/std-fs-symlink-metadata.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-symlink-metadata.ari -o $(BUILD_DIR)/prelude/std-fs-symlink-metadata.elf
 	$(BUILD_DIR)/prelude/std-fs-symlink-metadata.elf; code=$$?; test $$code -eq 127
@@ -1169,6 +1180,8 @@ check-prelude: $(TARGET)
 	grep -q "declare i32 @chmod" $(BUILD_DIR)/prelude/std-fs-mode.ll
 	grep -F -q "std2fs8try_mode" $(BUILD_DIR)/prelude/std-fs-mode.ll
 	grep -F -q "std2fs4mode" $(BUILD_DIR)/prelude/std-fs-mode.ll
+	grep -F -q "std2fs13mode_optional" $(BUILD_DIR)/prelude/std-fs-mode.ll
+	grep -F -q "std2fs14mode_unchecked" $(BUILD_DIR)/prelude/std-fs-mode.ll
 	grep -F -q "std2fs8set_mode" $(BUILD_DIR)/prelude/std-fs-mode.ll
 	grep -F -q "std2fs15set_permissions" $(BUILD_DIR)/prelude/std-fs-mode.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mode.ari -o $(BUILD_DIR)/prelude/std-fs-mode.elf
@@ -1182,14 +1195,30 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs13try_file_type" $(BUILD_DIR)/prelude/std-fs-metadata.ll
 	grep -F -q "std2fs7is_file" $(BUILD_DIR)/prelude/std-fs-metadata.ll
 	grep -F -q "std2fs8metadata" $(BUILD_DIR)/prelude/std-fs-metadata.ll
+	grep -F -q "std2fs17metadata_optional" $(BUILD_DIR)/prelude/std-fs-metadata.ll
+	grep -F -q "std2fs18metadata_unchecked" $(BUILD_DIR)/prelude/std-fs-metadata.ll
+	grep -F -q "std2fs9file_type" $(BUILD_DIR)/prelude/std-fs-metadata.ll
+	grep -F -q "std2fs18file_type_optional" $(BUILD_DIR)/prelude/std-fs-metadata.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari -o $(BUILD_DIR)/prelude/std-fs-metadata.elf
 	$(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 129
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-metadata.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-metadata.elf; $(BUILD_DIR)/prelude/std-fs-metadata.elf; code=$$?; test $$code -eq 129; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-query-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs8metadata" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs17metadata_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs15metadata_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs18metadata_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs16symlink_metadata" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs25symlink_metadata_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs23symlink_metadata_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs26symlink_metadata_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs9file_type" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs18file_type_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs16file_type_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs19file_type_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs4mode" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs13mode_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs11mode_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs14mode_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs15open_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs15read_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs23read_dir_entries_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll

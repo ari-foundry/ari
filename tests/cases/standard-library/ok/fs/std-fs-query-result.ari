@@ -1,6 +1,6 @@
-// Covers direct Error-returning filesystem query helpers. The older try_*
-// forms remain useful for compact probes, but production code should prefer
-// these Result shapes when it needs the failure reason.
+// Covers direct Error-returning filesystem query helpers. The natural names
+// return Result values; *_optional, try_*, *_unchecked, and *_result spellings
+// remain compatibility forms for non-default behavior and migration.
 fn has_name(values: ref std::vec::Vec[std::string::String], expected: string) -> bool {
   var index = 0;
   while index < values.len() {
@@ -44,20 +44,33 @@ fn main() -> i64 {
   fs::write(file_path, bytes.as_slice());
   fs::symbolic_link(file_path, link_path);
 
-  match fs::metadata_result(file_path) {
+  match fs::metadata(file_path) {
     std::Ok(file_info) => {
-      if file_info.len() == 3 && file_info.is_file() {
+      if file_info.len() == 3 && file_info.is_file() &&
+         fs::metadata_result(file_path).is_ok() &&
+         fs::metadata_optional(file_path).is_some() &&
+         fs::try_metadata(file_path).is_some() &&
+         fs::metadata_unchecked(file_path).len() == 3 {
         score = score + 1;
       }
     }
     std::Err(_) => {}
   }
 
-  match fs::file_type_result(file_path) {
+  match fs::file_type(file_path) {
     std::Ok(kind) => {
       match kind {
         fs::Regular => {
-          score = score + 2;
+          if fs::file_type_result(file_path).is_ok() &&
+             fs::file_type_optional(file_path).is_some() &&
+             fs::try_file_type(file_path).is_some() {
+            match fs::file_type_unchecked(file_path) {
+              fs::Regular => {
+                score = score + 2;
+              }
+              _ => {}
+            }
+          }
         }
         _ => {}
       }
@@ -65,27 +78,35 @@ fn main() -> i64 {
     std::Err(_) => {}
   }
 
-  match fs::mode_result(file_path) {
+  match fs::mode(file_path) {
     std::Ok(mode) => {
-      if mode >= 0 {
+      if mode >= 0 &&
+         fs::mode_result(file_path).is_ok() &&
+         fs::mode_optional(file_path).is_some() &&
+         fs::try_mode(file_path).is_some() &&
+         fs::mode_unchecked(file_path) >= 0 {
         score = score + 4;
       }
     }
     std::Err(_) => {}
   }
 
-  match fs::metadata_result(missing) {
+  match fs::metadata(missing) {
     std::Ok(_) => {}
     std::Err(reason) => {
-      if reason.is_kind(error::NotFound) {
+      if reason.is_kind(error::NotFound) && fs::metadata_result(missing).is_err() {
         score = score + 8;
       }
     }
   }
 
-  match fs::symlink_metadata_result(link_path) {
+  match fs::symlink_metadata(link_path) {
     std::Ok(link_info) => {
-      if link_info.is_symlink() {
+      if link_info.is_symlink() &&
+         fs::symlink_metadata_result(link_path).is_ok() &&
+         fs::symlink_metadata_optional(link_path).is_some() &&
+         fs::try_symlink_metadata(link_path).is_some() &&
+         fs::symlink_metadata_unchecked(link_path).is_symlink() {
         score = score + 16;
       }
     }
