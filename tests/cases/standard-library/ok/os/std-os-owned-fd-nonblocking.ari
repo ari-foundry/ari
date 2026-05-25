@@ -2,7 +2,7 @@
 // O_NONBLOCK/fcntl details inside std::os while exposing natural Ari methods.
 fn main() -> i64 {
   let path = "build/std-os-owned-fd-nonblocking.tmp";
-  let wrote = std::fs::write(path, "nonblocking");
+  let wrote = std::fs::write_bool(path, "nonblocking");
   let file = std::fs::open(path, "r").unwrap();
   var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
   let invalid = std::os::OwnedFd::invalid();

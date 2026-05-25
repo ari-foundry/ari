@@ -38,7 +38,7 @@ fn raw_result_error_matches(value: Result[fs::File, i64], kind: error::Kind, cod
 }
 
 fn read_text(zone: ref mut Zone, path: string, expected: string) -> bool {
-  let text = fs::read_to_string(zone, path);
+  let text = fs::read_to_string_unchecked(zone, path);
   return text.equals_text(expected);
 }
 

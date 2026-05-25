@@ -17,7 +17,7 @@ fn main() -> i64 {
 
   var score = 0;
   var seed = [65u8, 66u8, 67u8];
-  if fs::write(source_path, seed.as_slice()) {
+  if fs::write_bool(source_path, seed.as_slice()) {
     score = score + 1;
   }
 
@@ -47,7 +47,7 @@ fn main() -> i64 {
   }
   copy_reader.close_unchecked();
   copy_writer.close_unchecked();
-  let copied = fs::read(ref mut zone, copy_path);
+  let copied = fs::read_unchecked(ref mut zone, copy_path);
   if copied.equals_text("ABC") {
     score = score + 16;
   }
@@ -61,7 +61,7 @@ fn main() -> i64 {
     score = score + 64;
   }
   writer.close_unchecked();
-  let written = fs::read(ref mut zone, write_path);
+  let written = fs::read_unchecked(ref mut zone, write_path);
   if written.equals_text("xy") {
     score = score + 128;
   }

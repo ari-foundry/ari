@@ -1,6 +1,6 @@
-// Covers direct Error-returning whole-file read helpers. The compatibility
-// read/try_read forms intentionally stay available, but callers that need a
-// specific failure reason should use read_result or read_to_string_result.
+// Covers natural Error-returning whole-file read helpers. Compatibility
+// aliases intentionally stay available, but callers that need failure details
+// should use read or read_to_string directly.
 fn string_ok(value: Result[std::string::String, error::Error], expected: string) -> bool {
   match value {
     Ok(text) => {
@@ -33,21 +33,27 @@ fn main() -> i64 {
   var bytes = [65u8, 114u8, 105u8];
   var score = 0;
 
-  if fs::write(path, bytes.as_slice()) {
+  if fs::write_bool(path, bytes.as_slice()) {
     score = score + 1;
   }
-  if string_ok(fs::read_to_string_result(ref mut zone, path), "Ari") {
+  if string_ok(fs::read_to_string(ref mut zone, path), "Ari") &&
+    fs::read_to_string_result(ref mut zone, path).is_ok() {
     score = score + 2;
   }
-  if string_ok(fs::read_result(ref mut zone, path), "Ari") {
+  if string_ok(fs::read(ref mut zone, path), "Ari") &&
+    fs::read_result(ref mut zone, path).is_ok() {
     score = score + 4;
   }
-  if string_err(fs::read_result(ref mut zone, missing), error::NotFound, 2) {
+  if string_err(fs::read(ref mut zone, missing), error::NotFound, 2) &&
+    fs::read_result(ref mut zone, missing).is_err() {
     score = score + 8;
   }
-  if fs::try_read(ref mut zone, missing).is_none() {
+  if fs::try_read(ref mut zone, missing).is_none() &&
+    fs::read_optional(ref mut zone, missing).is_none() {
     score = score + 16;
   }
+  assert(fs::read_unchecked(ref mut zone, path).equals_text("Ari"));
+  assert(fs::read_to_string_unchecked(ref mut zone, path).equals_text("Ari"));
 
   fs::remove(path);
   zone::destroy(zone);

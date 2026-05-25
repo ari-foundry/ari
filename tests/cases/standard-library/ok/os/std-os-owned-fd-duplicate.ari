@@ -2,7 +2,7 @@
 // owner, so both descriptors can be closed independently.
 fn main() -> i64 {
   let path = "build/std-os-owned-fd-duplicate.tmp";
-  let wrote = std::fs::write(path, "duplicate");
+  let wrote = std::fs::write_bool(path, "duplicate");
   let file = std::fs::open(path, "r").unwrap();
   var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
   var invalid = std::os::OwnedFd::invalid();

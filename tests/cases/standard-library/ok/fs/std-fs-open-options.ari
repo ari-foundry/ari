@@ -7,7 +7,7 @@ fn cleanup(path: string, missing: string) -> void {
 }
 
 fn read_text(zone: ref mut Zone, path: string, expected: string) -> bool {
-  let text = fs::read_to_string(zone, path);
+  let text = fs::read_to_string_unchecked(zone, path);
   return text.equals_text(expected);
 }
 

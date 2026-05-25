@@ -28,7 +28,7 @@ fn main() -> i64 {
   }
 
   var data = [65 as u8, 66 as u8, 67 as u8];
-  if fs::write(file_path, data.as_slice()) {
+  if fs::write_bool(file_path, data.as_slice()) {
     score = score + 5;
   }
   if fs::exists(file_path) {

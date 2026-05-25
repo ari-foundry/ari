@@ -18,7 +18,7 @@ fn main() -> i64 {
   var score = 0;
 
   var bytes = ['A', 'r', 'i'];
-  if fs::write(path, bytes.as_slice()) {
+  if fs::write_bool(path, bytes.as_slice()) {
     score = score + 1;
   }
 
@@ -50,7 +50,7 @@ fn main() -> i64 {
   }
 
   var empty_bytes: Vec[u8] = [];
-  if fs::write(empty_path, empty_bytes.as_slice()) {
+  if fs::write_bool(empty_path, empty_bytes.as_slice()) {
     score = score + 7;
   }
 

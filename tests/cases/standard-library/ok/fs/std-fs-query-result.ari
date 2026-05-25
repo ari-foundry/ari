@@ -41,7 +41,7 @@ fn main() -> i64 {
   var score = 0;
 
   fs::create_dir(dir_path);
-  fs::write(file_path, bytes.as_slice());
+  fs::write_bool(file_path, bytes.as_slice());
   fs::symbolic_link(file_path, link_path);
 
   match fs::metadata(file_path) {
@@ -113,18 +113,27 @@ fn main() -> i64 {
     std::Err(_) => {}
   }
 
-  match fs::read_link_result(ref mut zone, link_path) {
+  match fs::read_link(ref mut zone, link_path) {
     std::Ok(target) => {
-      if target.equals_text(file_path) {
+      let unchecked_target = fs::read_link_unchecked(ref mut zone, link_path);
+      if target.equals_text(file_path) &&
+         fs::read_link_result(ref mut zone, link_path).is_ok() &&
+         fs::read_link_optional(ref mut zone, link_path).is_some() &&
+         unchecked_target.equals_text(file_path) {
         score = score + 32;
       }
     }
     std::Err(_) => {}
   }
 
-  match fs::canonicalize_result(ref mut zone, file_path) {
+  match fs::canonicalize(ref mut zone, file_path) {
     std::Ok(resolved) => {
-      if path::is_absolute(resolved.as_slice()) && resolved.ends_with("item.txt") {
+      let unchecked_resolved = fs::canonicalize_unchecked(ref mut zone, file_path);
+      if path::is_absolute(resolved.as_slice()) &&
+         resolved.ends_with("item.txt") &&
+         fs::canonicalize_result(ref mut zone, file_path).is_ok() &&
+         fs::canonicalize_optional(ref mut zone, file_path).is_some() &&
+         path::is_absolute(unchecked_resolved.as_slice()) {
         score = score + 64;
       }
     }
@@ -138,17 +147,27 @@ fn main() -> i64 {
     }
     std::Err(_) => {}
   }
-  match fs::read_dir_result(ref mut zone, dir_path) {
+  match fs::read_dir(ref mut zone, dir_path) {
     std::Ok(names) => {
-      directory_results_ok = directory_results_ok && has_name(ref names, "item.txt");
+      let unchecked_names = fs::read_dir_unchecked(ref mut zone, dir_path);
+      directory_results_ok = directory_results_ok &&
+        has_name(ref names, "item.txt") &&
+        fs::read_dir_result(ref mut zone, dir_path).is_ok() &&
+        fs::read_dir_optional(ref mut zone, dir_path).is_some() &&
+        has_name(ref unchecked_names, "item.txt");
     }
     std::Err(_) => {
       directory_results_ok = false;
     }
   }
-  match fs::read_dir_entries_result(ref mut zone, dir_path) {
+  match fs::read_dir_entries(ref mut zone, dir_path) {
     std::Ok(entries) => {
-      directory_results_ok = directory_results_ok && has_entry(ref entries, "item.link");
+      let unchecked_entries = fs::read_dir_entries_unchecked(ref mut zone, dir_path);
+      directory_results_ok = directory_results_ok &&
+        has_entry(ref entries, "item.link") &&
+        fs::read_dir_entries_result(ref mut zone, dir_path).is_ok() &&
+        fs::read_dir_entries_optional(ref mut zone, dir_path).is_some() &&
+        has_entry(ref unchecked_entries, "item.link");
     }
     std::Err(_) => {
       directory_results_ok = false;

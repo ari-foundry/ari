@@ -41,7 +41,7 @@ fn main() -> i64 {
     score = score + 5;
   }
 
-  let copied = fs::read(ref mut zone, copy_path);
+  let copied = fs::read(ref mut zone, copy_path).unwrap();
   if copied.len() == 2 {
     score = score + 6;
   }
@@ -60,7 +60,7 @@ fn main() -> i64 {
     }
     std::None => {}
   }
-  let counted = fs::read(ref mut zone, counted_path);
+  let counted = fs::read_unchecked(ref mut zone, counted_path);
   if counted.len() == 2 {
     score = score + 15;
   }
@@ -68,7 +68,7 @@ fn main() -> i64 {
   if fs::truncate(source_path) {
     score = score + 9;
   }
-  let truncated = fs::read(ref mut zone, source_path);
+  let truncated = fs::read_unchecked(ref mut zone, source_path);
   if truncated.is_empty() {
     score = score + 10;
   }

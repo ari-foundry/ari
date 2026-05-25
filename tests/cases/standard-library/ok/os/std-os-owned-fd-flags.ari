@@ -3,7 +3,7 @@
 // close-on-exec without exposing loose integer flags.
 fn main() -> i64 {
   let path = "build/std-os-owned-fd-flags.tmp";
-  let wrote = std::fs::write(path, "flags");
+  let wrote = std::fs::write_bool(path, "flags");
   let file = std::fs::open(path, "r").unwrap();
   var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
   let invalid = std::os::OwnedFd::invalid();

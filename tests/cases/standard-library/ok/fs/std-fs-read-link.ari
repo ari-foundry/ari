@@ -14,7 +14,7 @@ fn main() -> i64 {
   cleanup(source);
 
   var data = [82u8, 76u8, 78u8];
-  if !fs::write(source, data.as_slice()) {
+  if !fs::write_bool(source, data.as_slice()) {
     return 1;
   }
 
@@ -33,7 +33,7 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  let direct = fs::read_link(ref mut zone, link);
+  let direct = fs::read_link_unchecked(ref mut zone, link);
   if direct.equals_text(target) {
     score = score + 4;
   }

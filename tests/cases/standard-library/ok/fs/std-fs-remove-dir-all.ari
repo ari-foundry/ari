@@ -59,17 +59,17 @@ fn main() -> i64 {
   if fs::create_dir_all(beta) {
     score = score + 1;
   }
-  if fs::write(file_path, "root") && fs::write(nested_file, "nested") {
+  if fs::write_bool(file_path, "root") && fs::write_bool(nested_file, "nested") {
     score = score + 2;
   }
-  if fs::create_dir(outside) && fs::write(outside_file, "keep") {
+  if fs::create_dir(outside) && fs::write_bool(outside_file, "keep") {
     score = score + 4;
   }
   if fs::symbolic_link("file.txt", link_file) &&
      fs::symbolic_link("../std-fs-remove-dir-all-target.tmp", link_dir) {
     score = score + 8;
   }
-  if fs::write(standalone, "no") {
+  if fs::write_bool(standalone, "no") {
     score = score + 16;
   }
   if fs::create_dir(empty) {

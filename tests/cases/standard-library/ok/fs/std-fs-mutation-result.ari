@@ -65,7 +65,7 @@ fn main() -> i64 {
     score = score + 16;
   }
 
-  assert(fs::write(source_path, "RN"));
+  assert(fs::write_bool(source_path, "RN"));
   if result_ok(fs::rename_result(source_path, target_path)) &&
     !fs::exists(source_path) && fs::exists(target_path) {
     score = score + 32;

@@ -17,7 +17,7 @@ fn main() -> i64 {
   }
 
   var data = ['M'];
-  if fs::write(path, data.as_slice()) {
+  if fs::write_bool(path, data.as_slice()) {
     score = score + 3;
   }
   let initial = fs::mode_unchecked(path);

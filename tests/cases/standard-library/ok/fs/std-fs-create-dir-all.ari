@@ -42,10 +42,10 @@ fn main() -> i64 {
   if fs::ensure_dir_all(nested) {
     score = score + 8;
   }
-  if fs::write(data_path, "ok") && fs::is_file(data_path) {
+  if fs::write_bool(data_path, "ok") && fs::is_file(data_path) {
     score = score + 16;
   }
-  if fs::write(file_path, "file") {
+  if fs::write_bool(file_path, "file") {
     score = score + 32;
   }
   if !fs::create_dir_all(file_path) {

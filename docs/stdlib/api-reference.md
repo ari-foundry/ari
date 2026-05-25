@@ -394,12 +394,18 @@ Application code should usually use the user-facing `std::env` wrappers:
 ```ari
 env::arg_count()
 env::arg(index)
+env::arg_optional(index)
+env::arg_unchecked(index)
 env::arg_os(index)
+env::arg_os_optional(index)
+env::arg_os_unchecked(index)
 env::has_arg(index)
 env::try_arg(index)
 env::try_arg_os(index)
 env::program_name()
+env::program_name_optional()
 env::program_name_os()
+env::program_name_os_optional()
 env::get(name)
 env::get_os(name)
 env::get_or_default(name)
@@ -432,12 +438,18 @@ env::executable_path_os_optional()
 env::try_executable_path_os()
 ```
 
-`env::try_arg(index)` returns `Option[string]`, and `env::program_name()` is
-the optional `argv[0]` value.
+`env::arg(index)` returns `Result[string, Error]`, using `NotFound` for an
+out-of-range argument index. `env::arg_optional(index)` and the older
+`env::try_arg(index)` keep only the optional success payload, while
+`env::arg_unchecked(index)` exposes the raw startup-context string hook.
+`env::program_name()` follows the same Result policy for `argv[0]`, and
+`env::program_name_optional()` is the optional compatibility form.
 
-`env::arg_os(index)`, `env::try_arg_os(index)`, and
-`env::program_name_os()` return `std::string::OsStr` views when the argument
-should stay in OS-string form until the caller chooses bytes or UTF-8.
+`env::arg_os(index)`, `env::arg_os_optional(index)`,
+`env::arg_os_unchecked(index)`, `env::try_arg_os(index)`,
+`env::program_name_os()`, and `env::program_name_os_optional()` expose the same
+values as `std::string::OsStr` when an argument should stay in OS-string form
+until the caller chooses bytes or UTF-8.
 
 `env::get(name)` returns `Result[string, Error]` for environment variables,
 using `NotFound` for missing names. `env::try_get(name)` keeps only optional
@@ -1167,14 +1179,18 @@ fs::try_mode(path)
 fs::set_mode(path, mode)
 fs::set_permissions(path, permissions)
 fs::canonicalize(ref mut zone, path)
+fs::canonicalize_optional(ref mut zone, path)
 fs::canonicalize_result(ref mut zone, path)
+fs::canonicalize_unchecked(ref mut zone, path)
 fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::read_link(ref mut zone, path)
+fs::read_link_optional(ref mut zone, path)
 fs::read_link_result(ref mut zone, path)
+fs::read_link_unchecked(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
@@ -1192,10 +1208,14 @@ fs::open_dir_raw_result(path)
 fs::open_dir_result(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
+fs::read_dir_optional(ref mut zone, path)
 fs::read_dir_result(ref mut zone, path)
+fs::read_dir_unchecked(ref mut zone, path)
 fs::try_read_dir(ref mut zone, path)
 fs::read_dir_entries(ref mut zone, path)
+fs::read_dir_entries_optional(ref mut zone, path)
 fs::read_dir_entries_result(ref mut zone, path)
+fs::read_dir_entries_unchecked(ref mut zone, path)
 fs::try_read_dir_entries(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
@@ -1231,13 +1251,18 @@ fs::write_bytes(file, values)
 fs::position(file)
 fs::seek(file, position)
 fs::read(ref mut zone, path)
+fs::read_optional(ref mut zone, path)
+fs::read_or_default(ref mut zone, path)
 fs::read_result(ref mut zone, path)
+fs::read_unchecked(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
+fs::write_bool(path, values)
 fs::write_raw_result(path, values)
 fs::write_result(path, values)
 fs::try_write(path, values)
 fs::append(path, values)
+fs::append_bool(path, values)
 fs::append_raw_result(path, values)
 fs::append_result(path, values)
 fs::try_append(path, values)
@@ -1247,7 +1272,10 @@ fs::copy_raw_result(source, target)
 fs::copy_result(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
+fs::read_to_string_optional(ref mut zone, path)
+fs::read_to_string_or_default(ref mut zone, path)
 fs::read_to_string_result(ref mut zone, path)
+fs::read_to_string_unchecked(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
 fs::open_raw_result(path, mode)
@@ -1336,9 +1364,12 @@ partners preserve the invalid-handle shape. `open_result(path, mode)` and
 `create_result(path)` remain compatibility aliases for existing Result-suffix
 callers. Use `open_raw_result(path, mode)` or `create_raw_result(path)` only
 for compatibility callers that still need `Result[File, i64]`.
-Use `read_result(ref mut zone, path)` or
-`read_to_string_result(ref mut zone, path)` when a missing file should return
-`Error(NotFound)` instead of the compatibility empty string/`None` behavior.
+Use `read(ref mut zone, path)` or `read_to_string(ref mut zone, path)` when a
+missing file should return `Error(NotFound)`. `read_result` and
+`read_to_string_result` are migration aliases for older Result-suffix callers;
+`read_optional`/`read_to_string_optional` and the older `try_*` helpers discard
+failure reasons, `_or_default` keeps the old empty-string fallback, and
+`_unchecked` asserts on failure.
 Use `OpenOptions::new()` or `fs::open_options()` when named policy is clearer:
 `read`, `write`, `append`, `truncate`, `create`, and `create_new` each return a
 new options value, `options.try_open(path)` returns `Option[File]`, and
@@ -1372,11 +1403,10 @@ preflight checks for the current process. `permissions(path)` snapshots those
 three checks into a `Permissions` value; still handle later open/read/write
 failures because filesystem access can change after the check.
 `try_metadata(path)` returns `Option[Metadata]`, using `None` for missing or
-unstatable paths. `metadata(path)` asserts that metadata is available. These
-helpers follow symbolic links.
-`metadata_result(path)` returns `Result[Metadata, Error]`, preserving
-errno-derived failure kinds, and `metadata_raw_result(path)` keeps the raw
-compatibility bridge.
+unstatable paths. `metadata(path)` returns `Result[Metadata, Error]` and
+preserves errno-derived failure kinds. These helpers follow symbolic links.
+`metadata_result(path)` is a migration alias, and `metadata_raw_result(path)`
+keeps the raw compatibility bridge.
 `try_symlink_metadata(path)` and `symlink_metadata(path)` use no-follow
 metadata lookup, so a symbolic link reports `FileKind::Symlink` and its stored
 target byte length instead of the target file's metadata. The `Permissions`
@@ -1404,45 +1434,43 @@ matching `metadata.is_*()` methods are the right choice when code already has a
 for ordinary metadata and `lstat` for no-follow metadata; portable creation or
 birth time is future platform-policy work.
 `try_mode(path)` returns `Option[i64]` containing the low POSIX `0777`
-permission bits, and `mode(path)` is the asserting wrapper. Use `set_mode(path,
-mode)` for direct chmod-style updates, or `set_permissions(path, permissions)`
-when a `Permissions` value is clearer at the call site. `Permissions::to_mode`
+permission bits, and `mode(path)` returns `Result[i64, Error]`. Use
+`set_mode(path, mode)` for direct chmod-style updates, or
+`set_permissions(path, permissions)` when a `Permissions` value is clearer at
+the call site. `Permissions::to_mode`
 maps the three booleans to user/group/other bits, so `read_only()` maps to
 `0444` and `all()` maps to `0777`.
-`mode_result(path)` returns `Result[i64, Error]`; `mode_raw_result(path)` is
-the raw compatibility form.
-`try_canonicalize(ref mut zone, path)` returns `Option[String]`, using `None`
-when the host cannot resolve the path. The returned string is absolute, owned
-by the provided zone, and follows the host `realpath` policy. `canonicalize(ref
-mut zone, path)` is the asserting wrapper for code that treats failed
-resolution as a programmer error.
-`canonicalize_result(ref mut zone, path)` returns `Result[String, Error]` for
-tools and libraries that should surface why path resolution failed.
-`try_read_link(ref mut zone, path)` returns `Option[String]` containing the
-stored target bytes of a symbolic link. It returns `None` for missing paths,
-regular files, unreadable links, or runtime-buffer overflow. `read_link(ref
-mut zone, path)` is the asserting wrapper. Use `read_link` when code needs the
-link text itself; use `canonicalize` when code wants the host-resolved
-absolute path.
-`read_link_result(ref mut zone, path)` is the direct `Error` form.
+`mode_result(path)` is a migration alias; `mode_raw_result(path)` is the raw
+compatibility form.
+`canonicalize(ref mut zone, path)` returns `Result[String, Error]` for host
+`realpath` resolution. The returned string is absolute, owned by the provided
+zone, and follows the host symlink policy. `canonicalize_optional` and
+`try_canonicalize` discard the reason, `canonicalize_unchecked` asserts on
+failure, and `canonicalize_result` is a migration alias.
+`read_link(ref mut zone, path)` returns `Result[String, Error]` containing the
+stored target bytes of a symbolic link. Use `read_link` when code needs the
+link text itself; use `canonicalize` when code wants the host-resolved absolute
+path. `read_link_optional` and `try_read_link` discard the reason,
+`read_link_unchecked` asserts on failure, and `read_link_result` is a migration
+alias.
 `read_byte` returns an `i64` byte value or `-1` at EOF/failure, and
-`write_byte` returns whether one byte was written. `write_bytes` writes a
-`Slice[u8]` and returns the count written before the first failed byte write.
-`write_result(path, values)` truncates or creates a small byte file, writes the
-whole `Slice[u8]`, and returns `Ok(byte_count)` when the write and close
-succeed. `append_result(path, values)` creates if needed and appends the whole
-slice with the same `Result[i64, Error]` policy. `write_raw_result` and
-`append_raw_result` preserve the raw `Result[i64, i64]` compatibility shape.
-`try_write(path, values)` and `try_append(path, values)` are `Option[i64]`
-wrappers over those helpers, and `write(path, values)` and
-`append(path, values)` are boolean compatibility wrappers.
-`try_read_to_string(ref mut zone, path)` and its short alias
-`try_read(ref mut zone, path)` return `Option[String]`, using `None` for a
-missing or unopenable file and `Some(empty)` for an empty file. `read(ref mut
-zone, path)` is the short compatibility alias for `read_to_string(ref mut zone,
-path)`, returning a zone-backed byte-oriented `std::string::String` and using
-an empty `String` when the file cannot be opened. Prefer `try_read` when
-absence matters. `truncate(path)` creates or empties a file. `try_copy(source,
+`write_byte` returns `Result[(), Error]`. `write_bytes` writes a `Slice[u8]`
+and returns `Result[i64, Error]` with the byte count.
+`write(path, values)` truncates or creates a small byte file, writes the whole
+`Slice[u8]`, and returns `Ok(byte_count)` when the write and close succeed.
+`append(path, values)` creates if needed and appends the whole slice with the
+same `Result[i64, Error]` policy. `write_result` and `append_result` are
+migration aliases; `write_raw_result` and `append_raw_result` preserve the raw
+`Result[i64, i64]` compatibility shape. `try_write(path, values)` and
+`try_append(path, values)` are `Option[i64]` wrappers, while
+`write_bool(path, values)` and `append_bool(path, values)` are boolean
+compatibility wrappers.
+`read_to_string(ref mut zone, path)` and its short alias `read(ref mut zone,
+path)` return `Result[String, Error]`, using the caller's zone for the
+byte-oriented `std::string::String`. `try_read_to_string`/`try_read` and
+`read_to_string_optional`/`read_optional` collapse failures to `None`; the
+`_or_default` helpers keep the old empty-string fallback. `truncate(path)`
+creates or empties a file. `try_copy(source,
 target)` streams bytes from the source handle into the target opened with
 truncating semantics and returns `Some(byte_count)` on success or `None` on
 open/write/close failure. `copy_result(source, target)` keeps those
@@ -1464,12 +1492,11 @@ that tree.
 `open_dir_result(path)` returns `Result[Dir, Error]` and
 `open_dir_raw_result(path)` keeps raw compatibility. `try_open_dir(path)` returns `Option[Dir]`, `dir.next(ref mut zone)` returns
 the next entry name while skipping `"."` and `".."`, and `dir.close()` closes
-the handle. `try_read_dir(ref mut zone, path)` opens, collects names into
-`std::vec::Vec[String]`, closes, and returns `None` on open/close failure.
-`read_dir_result(ref mut zone, path)` returns `Result[Vec[String], Error]`,
-and `read_dir(ref mut zone, path)` is the asserting wrapper. Use
-`try_read_dir_entries(ref mut zone, path)` or
-`read_dir_entries_result(ref mut zone, path)` or
+the handle. `read_dir(ref mut zone, path)` opens, collects names into
+`std::vec::Vec[String]`, closes, and returns `Result[Vec[String], Error]`.
+`read_dir_result(ref mut zone, path)` is a migration alias,
+`read_dir_optional`/`try_read_dir` discard the reason, and
+`read_dir_unchecked` asserts on failure. Use
 `read_dir_entries(ref mut zone, path)` when callers need `DirEntry` values with
 `entry.name()`, `entry.path()`, and lazy metadata/file-kind helpers. Entry
 `metadata`, `try_metadata`, `try_file_type`, `is_file`, `is_dir`, and

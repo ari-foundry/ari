@@ -55,11 +55,11 @@ fn main() -> i64 {
     score = score + 1;
   }
   var alpha = ['A'];
-  if fs::write(alpha_path, alpha.as_slice()) {
+  if fs::write_bool(alpha_path, alpha.as_slice()) {
     score = score + 2;
   }
   var beta = ['B'];
-  if fs::write(beta_path, beta.as_slice()) {
+  if fs::write_bool(beta_path, beta.as_slice()) {
     score = score + 3;
   }
   if fs::try_open_dir("build/prelude/std-fs-read-dir-missing.tmp").is_none() {
@@ -125,7 +125,7 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  let listed = fs::read_dir(ref mut zone, dir_path);
+  let listed = fs::read_dir_unchecked(ref mut zone, dir_path);
   if listed.len() == 2 {
     score = score + 19;
   }
@@ -143,7 +143,7 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  let detailed = fs::read_dir_entries(ref mut zone, dir_path);
+  let detailed = fs::read_dir_entries_unchecked(ref mut zone, dir_path);
   if has_dir_entry(ref detailed, "alpha.txt", alpha_path) &&
      has_dir_entry(ref detailed, "beta.txt", beta_path) {
     score = score + 22;

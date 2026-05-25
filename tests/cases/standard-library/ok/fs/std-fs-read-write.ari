@@ -1,6 +1,6 @@
 // Covers source std::fs whole-file conveniences: byte-slice write, append,
-// Option-returning byte counts, read-to-byte-string, missing-file empty reads,
-// and truncating rewrite.
+// Option-returning byte counts, read-to-byte-string, explicit missing-file
+// default reads, and truncating rewrite.
 fn main() -> i64 {
   let path = "build/prelude/std-fs-read-write.tmp";
   let missing_path = "build/prelude/std-fs-read-write-missing.tmp";
@@ -14,13 +14,13 @@ fn main() -> i64 {
   var zone = zone::create(1024);
   var score = 0;
 
-  let missing = fs::read_to_string(ref mut zone, missing_path);
+  let missing = fs::read_to_string_or_default(ref mut zone, missing_path);
   if missing.is_empty() {
     score = score + 1;
   }
 
   var first = [65 as u8, 66 as u8];
-  if fs::write(path, first.as_slice()) {
+  if fs::write(path, first.as_slice()).is_ok() {
     score = score + 2;
   }
   match fs::try_write(path, first.as_slice()) {
@@ -33,7 +33,7 @@ fn main() -> i64 {
   }
 
   var tail = [67 as u8, 68 as u8];
-  if fs::append(path, tail.as_slice()) {
+  if fs::append(path, tail.as_slice()).is_ok() {
     score = score + 3;
   }
   match fs::try_append(path, tail.as_slice()) {
@@ -45,7 +45,7 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  let text = fs::read_to_string(ref mut zone, path);
+  let text = fs::read_to_string_unchecked(ref mut zone, path);
   if !text.is_empty() {
     score = score + 4;
   }
@@ -71,7 +71,7 @@ fn main() -> i64 {
     }
     std::None => {}
   }
-  let after = fs::read_to_string(ref mut zone, path);
+  let after = fs::read_to_string_unchecked(ref mut zone, path);
   if after.len() == 1 {
     score = score + 9;
   }

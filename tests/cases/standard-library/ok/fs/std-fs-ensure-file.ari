@@ -33,7 +33,7 @@ fn main() -> i64 {
   }
 
   var keep = [107 as u8, 101 as u8, 101 as u8, 112 as u8];
-  if !fs::write(existing_path, keep.as_slice()) {
+  if !fs::write_bool(existing_path, keep.as_slice()) {
     return 1;
   }
   if !fs::ensure_file(existing_path) {
@@ -41,7 +41,7 @@ fn main() -> i64 {
   }
 
   var zone = zone::create(256);
-  let kept = fs::read(ref mut zone, existing_path);
+  let kept = fs::read_unchecked(ref mut zone, existing_path);
   if !kept.equals_text("keep") {
     zone::destroy(zone);
     return 3;
@@ -55,7 +55,7 @@ fn main() -> i64 {
     zone::destroy(zone);
     return 5;
   }
-  let created = fs::read(ref mut zone, missing_path);
+  let created = fs::read_unchecked(ref mut zone, missing_path);
   if !created.is_empty() {
     zone::destroy(zone);
     return 6;

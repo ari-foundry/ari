@@ -20,7 +20,7 @@ fn main() -> i64 {
 
   var score = 0;
   var seed = [65u8, 66u8, 67u8, 68u8];
-  if fs::write(path, seed.as_slice()) {
+  if fs::write_bool(path, seed.as_slice()) {
     score = score + 1;
   }
 

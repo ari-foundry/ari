@@ -20,7 +20,7 @@ fn main() -> i64 {
   fs::remove(source);
 
   var data = [76u8, 78u8, 75u8, 10u8];
-  if !fs::write(source, data.as_slice()) {
+  if !fs::write_bool(source, data.as_slice()) {
     return 1;
   }
 

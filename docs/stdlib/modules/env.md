@@ -1,7 +1,7 @@
 # std::env
 
 `std::env` is the user-facing home for process environment helpers. It exposes
-process arguments with natural names and `Option`-returning accessors, a small
+process arguments with natural `Result`-returning accessors, a small
 environment-variable surface, and the basic process-local path state that most
 CLIs need: current directory and executable path. Argument helpers are built on
 top of `std::context`, which owns the low-level runtime hooks initialized by
@@ -13,11 +13,11 @@ helpers that discard error detail are named explicitly: `try_get`,
 `try_get_os`, `get_or_default`, `get_os_or_default`, `set_unchecked`, and
 `remove_unchecked`.
 
-Argument helpers still include transitional `*_result` names because their
-natural names are tied to long-standing startup-context hooks. Process-path
-helpers now follow the default stdlib error model: natural fallible names return
-`Result`, while `_optional`, `_or_default`, `_raw`, or `_unchecked` names opt
-into information-discarding or boundary behavior.
+Argument and process-path helpers follow the default stdlib error model:
+natural fallible names return `Result`, while `_optional`, `_or_default`,
+`_raw`, or `_unchecked` names opt into information-discarding or boundary
+behavior. Transitional `*_result` aliases remain for older code that already
+used the explicit suffix while the natural names migrated.
 
 Use `std::env` from application code when you want friendly arguments,
 environment variables, or current process path state. Use `std::context` when
@@ -29,15 +29,21 @@ you specifically need the startup snapshot captured by the runtime context.
 env::Error
 env::ErrorKind
 env::arg_count() -> i64
-env::arg(index: i64) -> string
+env::arg(index: i64) -> Result[string, env::Error]
+env::arg_optional(index: i64) -> Option[string]
+env::arg_unchecked(index: i64) -> string
 env::has_arg(index: i64) -> bool
 env::try_arg(index: i64) -> Option[string]
 env::arg_result(index: i64) -> Result[string, env::Error]
-env::arg_os(index: i64) -> std::string::OsStr
+env::arg_os(index: i64) -> Result[std::string::OsStr, env::Error]
+env::arg_os_optional(index: i64) -> Option[std::string::OsStr]
+env::arg_os_unchecked(index: i64) -> std::string::OsStr
 env::try_arg_os(index: i64) -> Option[std::string::OsStr]
 env::arg_os_result(index: i64) -> Result[std::string::OsStr, env::Error]
-env::program_name() -> Option[string]
-env::program_name_os() -> Option[std::string::OsStr]
+env::program_name() -> Result[string, env::Error]
+env::program_name_optional() -> Option[string]
+env::program_name_os() -> Result[std::string::OsStr, env::Error]
+env::program_name_os_optional() -> Option[std::string::OsStr]
 env::program_name_result() -> Result[string, env::Error]
 env::program_name_os_result() -> Result[std::string::OsStr, env::Error]
 env::get(name: string) -> Result[string, env::Error]
@@ -83,28 +89,24 @@ env::try_executable_path_os() -> Option[std::string::OsStr]
 `has_arg(index)` returns `true` only when `0 <= index < arg_count()`.
 Negative indexes are always false.
 
-`try_arg(index)` is the preferred normal-control-flow accessor. It returns
-`Some(argument)` for an available argument and `None<string>()` when the index
-is missing.
+`arg(index)` returns `Ok(argument)` for an available argument and
+`Err(Error(NotFound))` for an out-of-range index. `arg_optional(index)` and the
+older `try_arg(index)` keep only the optional success payload.
+`arg_unchecked(index)` exposes the raw runtime-context string hook and keeps
+the older empty-string behavior for out-of-range indexes.
 
-`arg_result(index)` returns `Ok(argument)` for an available argument and
-`Err(Error(NotFound))` for an out-of-range index. `arg_os_result(index)` uses
-the same policy for OS-string bytes.
+`arg_os(index)` applies the same `Result` policy to an `std::string::OsStr`
+view. Use it when the argument should stay OS-boundary bytes until the caller
+explicitly validates it as UTF-8. `arg_os_optional(index)` and
+`try_arg_os(index)` discard the reason, while `arg_os_unchecked(index)` uses
+the raw context hook.
 
-`arg_os(index)` and `try_arg_os(index)` expose the same argument as an
-`std::string::OsStr`. Use them when the argument should stay OS-boundary bytes
-until the caller explicitly validates it as UTF-8.
-
-`program_name()` is `try_arg(0)`, so it returns the host-provided executable
-name when one exists.
-
-`program_name_os()` is the OS-string form of `program_name()`.
-`program_name_result()` and `program_name_os_result()` are the corresponding
-`Result` helpers and return `NotFound` if the host context has no argument 0.
-
-`arg(index)` returns the raw lowercase Ari `string` from the runtime context.
-It currently returns an empty string for out-of-range indexes, so prefer
-`try_arg` or `has_arg` unless absence is impossible in the surrounding code.
+`program_name()` is `arg(0)`, so it returns the host-provided executable name
+when one exists and `NotFound` when the host context has no argument 0.
+`program_name_optional()` is the explicit optional compatibility form.
+`program_name_os()` and `program_name_os_optional()` mirror that policy for
+`OsStr`. The `program_name_result()` and `program_name_os_result()` aliases are
+kept for source compatibility.
 
 `has(name)` returns whether an environment variable is visible to the current
 process. `get(name)` returns `Ok(value)` when the variable exists and
@@ -172,18 +174,12 @@ manipulation. `executable_path_os_or_default()` and
 
 ```ari
 fn main() -> i64 {
-  let name = env::program_name();
-
-  if name.is_some() {
-    println("program={}", name.unwrap());
+  match env::program_name() {
+    Ok(name) => println("program={}", name),
+    Err(_) => {}
   }
 
-  let first = env::try_arg(1);
-  if first.is_some() {
-    println("first arg={}", first.unwrap());
-  }
-
-  match env::arg_result(1) {
+  match env::arg(1) {
     Ok(value) => println("first arg={}", value),
     Err(reason) => {
       if reason.is_not_found() {
@@ -192,7 +188,7 @@ fn main() -> i64 {
     }
   }
 
-  let raw_first = env::try_arg_os(1);
+  let raw_first = env::arg_os_optional(1);
   if raw_first.is_some() {
     let first_os = raw_first.unwrap();
     let maybe_text = first_os.try_utf8();

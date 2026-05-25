@@ -39,7 +39,7 @@ fn main() -> i64 {
   }
 
   var data = [82 as u8, 78 as u8];
-  if fs::write(source_path, data.as_slice()) {
+  if fs::write_bool(source_path, data.as_slice()) {
     score = score + 6;
   }
   if fs::rename(source_path, target_path) {
@@ -53,7 +53,7 @@ fn main() -> i64 {
   }
 
   var zone = zone::create(512);
-  let renamed = fs::read(ref mut zone, target_path);
+  let renamed = fs::read_unchecked(ref mut zone, target_path);
   if renamed.len() == 2 {
     score = score + 10;
   }

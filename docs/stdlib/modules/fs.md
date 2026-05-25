@@ -6,15 +6,15 @@ declarations. The first slices are deliberately small: check whether a path
 exists, query access-style read/write/execute permissions, open a byte stream
 with a compact mode string, read and write bytes, write or append a byte slice
 in one call, create/truncate/copy small files, read a whole file into Ari's
-byte-oriented `String` with either compatibility or `Option`-returning absence
-behavior, rename paths, create hard or symbolic links, read symbolic-link
+byte-oriented `String` with natural `Result` APIs and explicit compatibility
+forms, rename paths, create hard or symbolic links, read symbolic-link
 targets, query no-follow symbolic-link metadata, ensure a single regular file exists without truncating an existing file, create or remove one empty
 directory, ensure a single directory exists without treating an existing
 directory as failure, recursively create missing directory parents, read
 directory entry names through an explicit `Dir` handle, collect `DirEntry`
-values with names, joined paths, lazy metadata helpers, and `Error`-returning
-directory query forms, query basic file metadata with `Option` or
-`Result[..., Error]`, ask direct path-kind predicates such as `is_file`
+values with names, joined paths, lazy metadata helpers, and natural
+`Error`-returning directory query forms, query basic file metadata with
+`Option` or `Result[..., Error]`, ask direct path-kind predicates such as `is_file`
 and `is_dir`, read and change POSIX permission bits, resolve an existing path
 to an absolute canonical path with `Option` or `Result` failure details, pass `File` handles to generic `std::io::Reader`
 and `std::io::Writer` helpers, inspect and move a file cursor through
@@ -24,25 +24,31 @@ The public names stay natural because the module path already says the domain:
 use `open(path, mode)`, `open_optional(path, mode)`, `try_open(path, mode)`,
 `create`, `create_optional`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
-`try_read_byte`, `write_byte`, `write_bytes`, `read`, `read_result`,
-`try_read`, `read_to_string_result`, `write`,
-`write_result`, `append`, `append_result`, `try_write`, `try_append`,
+`try_read_byte`, `write_byte`, `write_bytes`, `read`, `read_optional`,
+`read_or_default`, `read_unchecked`, `read_result`, `try_read`,
+`read_to_string`, `read_to_string_optional`, `read_to_string_or_default`,
+`read_to_string_unchecked`, `read_to_string_result`, `write`, `write_bool`,
+`write_result`, `append`, `append_bool`, `append_result`, `try_write`, `try_append`,
 `truncate`, `copy`, `copy_result`, `try_copy`, `metadata`,
 `metadata_result`, `try_metadata`, `symlink_metadata`,
 `symlink_metadata_result`, `try_symlink_metadata`,
 `file_type_result`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
 `is_other`, `mode`, `mode_result`, `try_mode`, `set_mode`, `set_permissions`,
-`canonicalize`, `canonicalize_result`, `try_canonicalize`, `rename`, `hard_link`,
-`symbolic_link`, `read_link`, `read_link_result`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`, `remove_dir_all`,
+`canonicalize`, `canonicalize_optional`, `canonicalize_unchecked`,
+`canonicalize_result`, `try_canonicalize`, `rename`, `hard_link`,
+`symbolic_link`, `read_link`, `read_link_optional`, `read_link_unchecked`,
+`read_link_result`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `remove_dir`, `remove_dir_all`,
 `create_dir_all`, `ensure_dir_all`, `open_dir_result`, `try_open_dir`, `read_dir`,
-`read_dir_result`, `try_read_dir`, `read_dir_entries`,
+`read_dir_optional`, `read_dir_unchecked`, `read_dir_result`, `try_read_dir`,
+`read_dir_entries`, `read_dir_entries_optional`, `read_dir_entries_unchecked`,
 `read_dir_entries_result`, `try_read_dir_entries`,
 `read_dir_next`, `position`, `seek`, `close_dir`, `close`, `exists`, and
 `remove`, not type-suffixed names. For the handle APIs touched by lifecycle
 cleanup, natural names return `Result`; `_optional` and `try_*` helpers keep
-absence-only compatibility, `_unchecked` helpers keep the old boolean,
-sentinel, or invalid-handle behavior, and `_raw` helpers keep compact integer
-errors.
+absence-only compatibility, `_or_default` helpers keep the old empty fallback,
+`_unchecked` helpers keep the old assert/invalid-handle behavior, `_bool`
+helpers keep old boolean whole-file write results, and `_raw` helpers keep
+compact integer errors.
 
 ## API
 
@@ -85,14 +91,18 @@ fs::try_mode(path)
 fs::set_mode(path, mode)
 fs::set_permissions(path, permissions)
 fs::canonicalize(ref mut zone, path)
+fs::canonicalize_optional(ref mut zone, path)
 fs::canonicalize_result(ref mut zone, path)
+fs::canonicalize_unchecked(ref mut zone, path)
 fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
 fs::rename(source, target)
 fs::hard_link(existing, link_path)
 fs::symbolic_link(target, link_path)
 fs::read_link(ref mut zone, path)
+fs::read_link_optional(ref mut zone, path)
 fs::read_link_result(ref mut zone, path)
+fs::read_link_unchecked(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
@@ -110,10 +120,14 @@ fs::open_dir_raw_result(path)
 fs::open_dir_result(path)
 fs::try_open_dir(path)
 fs::read_dir(ref mut zone, path)
+fs::read_dir_optional(ref mut zone, path)
 fs::read_dir_result(ref mut zone, path)
+fs::read_dir_unchecked(ref mut zone, path)
 fs::try_read_dir(ref mut zone, path)
 fs::read_dir_entries(ref mut zone, path)
+fs::read_dir_entries_optional(ref mut zone, path)
 fs::read_dir_entries_result(ref mut zone, path)
+fs::read_dir_entries_unchecked(ref mut zone, path)
 fs::try_read_dir_entries(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
@@ -161,13 +175,18 @@ fs::seek(file, position)
 fs::seek_raw(file, position)
 fs::seek_unchecked(file, position)
 fs::read(ref mut zone, path)
+fs::read_optional(ref mut zone, path)
+fs::read_or_default(ref mut zone, path)
 fs::read_result(ref mut zone, path)
+fs::read_unchecked(ref mut zone, path)
 fs::try_read(ref mut zone, path)
 fs::write(path, values)
+fs::write_bool(path, values)
 fs::write_raw_result(path, values)
 fs::write_result(path, values)
 fs::try_write(path, values)
 fs::append(path, values)
+fs::append_bool(path, values)
 fs::append_raw_result(path, values)
 fs::append_result(path, values)
 fs::try_append(path, values)
@@ -177,7 +196,10 @@ fs::copy_raw_result(source, target)
 fs::copy_result(source, target)
 fs::try_copy(source, target)
 fs::read_to_string(ref mut zone, path)
+fs::read_to_string_optional(ref mut zone, path)
+fs::read_to_string_or_default(ref mut zone, path)
 fs::read_to_string_result(ref mut zone, path)
+fs::read_to_string_unchecked(ref mut zone, path)
 fs::try_read_to_string(ref mut zone, path)
 
 fs::open_raw_result(path, mode)
@@ -419,17 +441,18 @@ control flow; they return `Option[u8]` and hide the sentinel from call sites.
 partial-count shapes; `write_byte_raw` and `write_bytes_raw` keep raw integer
 errors for compatibility adapters.
 
-`write_result(path, values)` opens `path` with `"w"`, writes the whole
-`Slice[u8]`, closes the handle, and returns `Ok(byte_count)` when the
-complete write and close succeeded. `append_result(path, values)` does the
-same with `"a"` mode. Failed opens, short writes, or failed closes return
-`Err(Error)`.
+`write(path, values)` opens `path` with `"w"`, writes the whole `Slice[u8]`,
+closes the handle, and returns `Ok(byte_count)` when the complete write and
+close succeeded. `append(path, values)` does the same with `"a"` mode. Failed
+opens, short writes, or failed closes return `Err(Error)`.
+`write_result(path, values)` and `append_result(path, values)` are migration
+aliases for older code that already used the explicit suffix.
 `try_write(path, values)` and `try_append(path, values)` are byte-counting
 `Option` wrappers over the same operation. Use `write_raw_result` and
 `append_raw_result` only when a compatibility caller needs `Result[i64, i64]`.
 
-`write(path, values)` and `append(path, values)` are compatibility boolean
-wrappers over `try_write` and `try_append`.
+`write_bool(path, values)` and `append_bool(path, values)` are compatibility
+boolean wrappers over `try_write` and `try_append`.
 
 `try_read_to_string(ref mut zone, path)` opens `path` with `"r"`, reads bytes
 until the current `read_byte` EOF/failure sentinel, closes the handle, and
@@ -441,14 +464,19 @@ UTF-8 or any other text encoding.
 `try_read(ref mut zone, path)` is the short natural alias for
 `try_read_to_string(ref mut zone, path)`.
 
-`read_to_string(ref mut zone, path)` keeps the original compatibility behavior:
-it returns the file bytes on success and an empty `String` when the file cannot
-be opened. Prefer `try_read_to_string` for new code that handles ordinary
-filesystem failure.
+`read_to_string(ref mut zone, path)` is the natural fallible whole-file read:
+it returns `Ok(String)` with the file bytes on success and `Err(Error)` for
+open or close failures. `read_to_string_result(ref mut zone, path)` is a
+migration alias. `read_to_string_optional(ref mut zone, path)` keeps only the
+success payload as `Option[String]`, while `read_to_string_or_default(ref mut
+zone, path)` preserves the old empty-string fallback behavior.
+`read_to_string_unchecked(ref mut zone, path)` asserts on failure.
 
 `read(ref mut zone, path)` is the short natural alias for
 `read_to_string(ref mut zone, path)`. It is still byte-oriented and returns the
-same `std::string::String` handle.
+same `Result[String, Error]` shape. `read_optional`, `read_or_default`, and
+`read_unchecked` mirror the corresponding `read_to_string_*` compatibility
+helpers; `read_result` remains a migration alias.
 
 `truncate(path)` creates the file if needed, truncates it to empty, closes the
 handle, and returns whether the operation and close succeeded.
@@ -558,16 +586,15 @@ discard the failure reason. `mode_unchecked(path)` asserts on failure.
 code that already has a `Permissions` value. `mode_result(path)` remains a
 migration alias and `mode_raw_result(path)` is kept for compatibility adapters.
 
-`try_canonicalize(ref mut zone, path)` resolves an existing path through the
-host filesystem and returns an owned absolute `String` in the caller-provided
-zone. Missing paths, permission failures, and paths that cannot be resolved
-return `None`. `canonicalize(ref mut zone, path)` is the asserting convenience
-wrapper for code that treats an unresolvable path as a programmer error. The
-current Linux/glibc runtime uses `realpath`, so it follows symbolic links and
-requires the path to exist.
-`canonicalize_result(ref mut zone, path)` returns `Result[String, Error]` so
-tools can report the specific filesystem failure instead of collapsing it to
-`None`.
+`canonicalize(ref mut zone, path)` resolves an existing path through the host
+filesystem and returns an owned absolute `String` in the caller-provided zone
+as `Result[String, Error]`. The current Linux/glibc runtime uses `realpath`, so
+it follows symbolic links and requires the path to exist.
+`canonicalize_optional(ref mut zone, path)` and the older
+`try_canonicalize(ref mut zone, path)` collapse missing paths, permission
+failures, and unresolved paths to `None`. `canonicalize_unchecked(ref mut zone,
+path)` asserts on failure. `canonicalize_result(ref mut zone, path)` is a
+migration alias for older code.
 
 `rename(source, target)` asks the host to move or rename one path to another.
 On the current Linux/glibc runtime path this follows host `rename` behavior,
@@ -590,16 +617,16 @@ are resolved by the host relative to the directory containing `link_path`, not
 the caller's current directory. Windows-specific file-vs-directory symlink
 behavior remains future platform work.
 
-`try_read_link(ref mut zone, path)` reads the target bytes stored in a symbolic
-link and copies them into a `String` owned by the caller's zone. Missing paths,
-regular files, unreadable links, and targets that do not fit the current
-runtime buffer return `None`. `read_link(ref mut zone, path)` is the asserting
-wrapper. This is intentionally different from `canonicalize`: `read_link`
-returns the link text as stored, while `canonicalize` resolves an existing path
-to an absolute host path.
-`read_link_result(ref mut zone, path)` preserves the same stored-link-target
-behavior while returning `Err(Error)` for missing paths, non-links, or host
-read failures.
+`read_link(ref mut zone, path)` reads the target bytes stored in a symbolic
+link and copies them into a `String` owned by the caller's zone as
+`Result[String, Error]`. This is intentionally different from `canonicalize`:
+`read_link` returns the link text as stored, while `canonicalize` resolves an
+existing path to an absolute host path. Missing paths, regular files,
+unreadable links, and targets that do not fit the current runtime buffer return
+`Err(Error)`. `read_link_optional(ref mut zone, path)` and
+`try_read_link(ref mut zone, path)` discard the reason; `read_link_unchecked`
+asserts on failure. `read_link_result(ref mut zone, path)` is a migration
+alias.
 
 `ensure_file(path)` is the file counterpart to `ensure_dir`: it creates one
 empty file only when the path is missing and otherwise succeeds only for an
@@ -641,16 +668,17 @@ handle and preserves invalid-handle and host close failures as `Result`. Use
 `dir.close_unchecked()` only for the older boolean compatibility shape. `Dir`
 follows the same value-handle rule as `File`: close it once and do not reuse
 copied handles after close.
-`try_read_dir(ref mut zone, path)` is the convenient one-shot helper:
-it opens the directory, collects names into `std::vec::Vec[String]`, closes the
-handle, and returns `None` when the directory cannot be opened or closed.
-`read_dir_result(ref mut zone, path)` keeps open/close failures as
-`Result[Vec[String], Error]`. `read_dir(ref mut zone, path)` is the asserting
-wrapper for code that treats a failed directory read as a programmer error. Use
-`try_read_dir_entries(ref mut zone, path)` or
-`read_dir_entries_result(ref mut zone, path)` or
-`read_dir_entries(ref mut zone, path)` when the call site needs the entry name,
-the joined child path, and lazy metadata. `DirEntry::name()` and
+`read_dir(ref mut zone, path)` is the convenient one-shot helper: it opens the
+directory, collects names into `std::vec::Vec[String]`, closes the handle, and
+returns `Result[Vec[String], Error]`. `read_dir_optional(ref mut zone, path)`
+and the older `try_read_dir(ref mut zone, path)` return `None` when the
+directory cannot be opened or closed. `read_dir_unchecked(ref mut zone, path)`
+asserts on failure, and `read_dir_result(ref mut zone, path)` is a migration
+alias. Use `read_dir_entries(ref mut zone, path)` when the call site needs the
+entry name, the joined child path, and lazy metadata; it follows the same
+`Result` policy. `read_dir_entries_optional`, `try_read_dir_entries`,
+`read_dir_entries_unchecked`, and `read_dir_entries_result` provide the
+matching compatibility shapes. `DirEntry::name()` and
 `DirEntry::path()` return borrowed `String` references; the `*_equals` helpers
 keep common tests short. `entry.metadata()`, `entry.file_type()`,
 `entry.is_file()`, `entry.is_dir()`, and `entry.is_other()` follow symbolic
@@ -658,13 +686,13 @@ links, matching the path-level `fs::metadata` policy. Use
 `entry.metadata_optional()`/`entry.try_metadata()` or
 `entry.file_type_optional()`/`entry.try_file_type()` when absence-only
 branching is enough, and `entry.metadata_unchecked()` or
-`entry.file_type_unchecked()` only for compatibility code that should panic on
-failure. `entry.symlink_metadata()` and `entry.is_symlink()` query the entry
-path with the no-follow `lstat` policy, with matching `_optional`, `try_*`, and
-`_unchecked` compatibility methods. The low-level `open_dir`, `read_dir_next`, and
-`close_dir` names exist for direct runtime-hook coverage, but ordinary code
-should prefer `try_read_dir`/`try_read_dir_entries` for collection-style reads
-or `try_open_dir` plus the `Dir` methods for manual streaming.
+  `entry.file_type_unchecked()` only for compatibility code that should panic on
+  failure. `entry.symlink_metadata()` and `entry.is_symlink()` query the entry
+  path with the no-follow `lstat` policy, with matching `_optional`, `try_*`, and
+  `_unchecked` compatibility methods. The low-level `open_dir`, `read_dir_next`,
+  and `close_dir` names exist for direct runtime-hook coverage, but ordinary code
+  should prefer `read_dir`/`read_dir_entries` for Result-returning collection
+  reads or `open_dir_result` plus the `Dir` methods for manual streaming.
 
 ## Feature Status
 
@@ -672,9 +700,9 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | --- | --- |
 | open | Current: `open(path, mode)` returns `Error`, `open_optional(path, mode)`/`try_open(path, mode)` discard reasons, `open_unchecked(path, mode)` preserves the invalid-handle compatibility shape, `open_result(path, mode)` remains a compatibility alias, raw compatibility `open_raw_result`, Result/optional/unchecked convenience wrappers for read/write/append modes, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open`/`open_optional`/`try_open`/`open_unchecked`/`open_result`/`open_raw_result`. |
 | create | Current: `create(path)` returns `Error`, `create_optional(path)`/`try_create(path)` discard reasons, `create_unchecked(path)` preserves the invalid-handle compatibility shape, `create_result(path)` remains a compatibility alias, and `ensure_file(path)` provides non-truncating idempotent file setup. |
-| read | Current: byte `read_byte`/`try_read_byte`, whole-file `read`/`read_to_string`, direct `Error` helpers `read_result`/`read_to_string_result`, and fallible `try_read`/`try_read_to_string`. Splitting byte-read EOF from byte-read errors remains roadmap. |
-| write | Current: byte `write_byte`, `write_bytes`, `write_byte_unchecked`, `write_bytes_unchecked`, whole-file `write`, byte-counting `try_write`, `Error`-returning `write_result`, and raw compatibility `write_raw_result`/`write_byte_raw`/`write_bytes_raw`. |
-| append | Current: `"a"`/`"a+"` modes, whole-file `append`, byte-counting `try_append`, `Error`-returning `append_result`, and raw compatibility `append_raw_result`. |
+| read | Current: byte `read_byte`/`try_read_byte`, Result-first whole-file `read`/`read_to_string`, `_optional`/`try_*` absence-only helpers, `_or_default` empty-string compatibility, `_unchecked` asserting compatibility, and `_result` migration aliases. Splitting byte-read EOF from byte-read errors remains roadmap. |
+| write | Current: byte `write_byte`, `write_bytes`, `write_byte_unchecked`, `write_bytes_unchecked`, Result-first whole-file `write`, `write_bool` boolean compatibility, byte-counting `try_write`, `write_result` migration alias, and raw compatibility `write_raw_result`/`write_byte_raw`/`write_bytes_raw`. |
+| append | Current: `"a"`/`"a+"` modes, Result-first whole-file `append`, `append_bool` boolean compatibility, byte-counting `try_append`, `append_result` migration alias, and raw compatibility `append_raw_result`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
 | metadata | Current: Result-first `metadata(path)`, `symlink_metadata(path)`, and `file_type(path)` with `Error`; `_optional`/`try_*` compatibility helpers that discard reasons; `_unchecked` compatibility helpers that assert; `_result` migration aliases; raw compatibility `metadata_raw_result(path)`, `symlink_metadata_raw_result(path)`, and `file_type_raw_result(path)` over Linux/glibc `stat`/`lstat`; direct predicates `is_file(path)`, `is_dir(path)`, `is_symlink(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
 | permissions | Current: access-style `can_read`, `can_write`, `can_execute`, `permissions`, Result-first stat-backed `mode(path)` with `Error`, `mode_optional(path)`/`try_mode(path)`, `mode_unchecked(path)`, `mode_result(path)` migration alias, raw compatibility `mode_raw_result`, and chmod-backed `set_mode`/`set_permissions`; richer ACL/owner/group policy is roadmap. |
@@ -682,10 +710,10 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | remove | Current: file removal with `remove(path)`/`remove_result(path)` plus raw compatibility `remove_raw_result`, empty directory removal with `remove_dir(path)`/`remove_dir_result(path)` plus raw compatibility `remove_dir_raw_result`, and recursive tree removal with `remove_dir_all(path)` using no-follow symlink policy for entries. |
 | copy | Current: source streaming `copy(source, target)`, byte-counting `try_copy(source, target)`, `Error`-returning `copy_result(source, target)`, and raw compatibility `copy_raw_result(source, target)` for byte files. |
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
-| symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, `read_link_result(ref mut zone, path)` with `Error`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
-| canonicalize | Current: `try_canonicalize(ref mut zone, path)`, `canonicalize_result(ref mut zone, path)` with `Error`, and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
+| symbolic link | Current: `symbolic_link(target, link_path)`, Result-first `read_link(ref mut zone, path)`, `read_link_optional(ref mut zone, path)`/`try_read_link(ref mut zone, path)`, `read_link_unchecked(ref mut zone, path)`, and `read_link_result(ref mut zone, path)` migration alias on the Linux/glibc path; Windows split is roadmap. |
+| canonicalize | Current: Result-first `canonicalize(ref mut zone, path)`, `canonicalize_optional(ref mut zone, path)`/`try_canonicalize(ref mut zone, path)`, `canonicalize_unchecked(ref mut zone, path)`, and `canonicalize_result(ref mut zone, path)` migration alias over the Linux/glibc `realpath` runtime path. |
 | file handle lifecycle | Current: explicit Result-returning `close`, `position`, and `seek` on value `File` handles, `_unchecked` compatibility helpers, and `_raw` integer-error helpers. Close once; copied handles are not disarmed. |
-| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir_result(ref mut zone, path)` with `Error`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries_result(ref mut zone, path)` with `Error`, `read_dir_entries(ref mut zone, path)`, `open_dir_result(path)` with `Error`, raw compatibility `open_dir_raw_result(path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`/`dir.close_unchecked()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors are roadmap. |
+| read directory | Current: Result-first `read_dir(ref mut zone, path)` and `read_dir_entries(ref mut zone, path)`, `_optional`/`try_*` absence-only helpers, `_unchecked` asserting compatibility, `_result` migration aliases, `open_dir_result(path)` with `Error`, raw compatibility `open_dir_raw_result(path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`/`dir.close_unchecked()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors are roadmap. |
 | create directory | Current: single-directory `create_dir(path)`, `Error`-returning `create_dir_result(path)`, raw compatibility `create_dir_raw_result(path)`, and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
@@ -744,13 +772,13 @@ Use the whole-file byte helpers for small files:
 
 ```ari
 var data = ['A', 'B'];
-fs::write(path, data.as_slice());
+fs::write(path, data.as_slice()).unwrap();
 
 var tail = ['C'];
-fs::append(path, tail.as_slice());
+fs::append(path, tail.as_slice()).unwrap();
 
 var zone = zone::create(4096);
-let text = fs::read(ref mut zone, path);
+let text = fs::read(ref mut zone, path).unwrap();
 let first = text.get(0);
 zone::destroy(zone);
 ```
@@ -787,7 +815,7 @@ Create nested output directories:
 ```ari
 let nested = "build/prelude/example-fs-dir.tmp/cache/shards";
 if fs::create_dir_all(nested) {
-  fs::write("build/prelude/example-fs-dir.tmp/cache/shards/data.txt", "ok");
+  fs::write("build/prelude/example-fs-dir.tmp/cache/shards/data.txt", "ok").unwrap();
 }
 ```
 
@@ -847,7 +875,7 @@ Read entries with joined paths:
 
 ```ari
 var zone = zone::create(512);
-let entries = fs::read_dir_entries(ref mut zone, "build/prelude");
+let entries = fs::read_dir_entries(ref mut zone, "build/prelude").unwrap();
 var index = 0;
 while index < entries.len() {
   let entry = entries.get(index);
@@ -866,7 +894,7 @@ Read entry metadata without rebuilding each path:
 
 ```ari
 var zone = zone::create(512);
-let entries = fs::read_dir_entries(ref mut zone, "build/prelude");
+let entries = fs::read_dir_entries(ref mut zone, "build/prelude").unwrap();
 var index = 0;
 while index < entries.len() {
   let entry = entries.get(index);
@@ -960,10 +988,13 @@ if file.is_open() {
 - The mode-string surface is intentionally small. Use `"rw"` or `"r+"` for
   existing read/write files, `"w+"` for create/truncate read/write, and `"a+"`
   for read/append. More detailed flags belong in a future options API.
-- Prefer the `*_result` helpers when the caller needs a reason. Compatibility
-  bool, `Option`, empty-string, and `-1` sentinel helpers remain for compact
-  code and older tests, but new filesystem APIs should use `std::error::Error`
-  instead of adding more sentinel conventions.
+- Prefer natural Result-returning names when the caller needs a reason. The
+  remaining natural boolean filesystem mutation hooks are compatibility surface
+  awaiting migration; use their explicit `*_result` variants until those names
+  move to the Result-first policy. Compatibility bool, `Option`, empty-string,
+  unchecked, raw, and `-1` sentinel helpers remain for compact code and older
+  tests, but new filesystem APIs should use `std::error::Error` instead of
+  adding more sentinel conventions.
 
 ## Tests
 
@@ -1015,17 +1046,18 @@ append-with-read behavior, and invalid option combinations.
 their `_optional` compatibility helpers, existing `*_result` aliases,
 `open_raw_result`, `create_raw_result`, and `OpenOptions::open_raw_result` for
 invalid input, missing files, exclusive-create failures, and successful
-handles. `std-fs-read-write.ari` covers source whole-file
-write/append compatibility wrappers, `try_write`/`try_append` byte counts,
-read-to-byte-string, missing-file empty reads, and truncating rewrite behavior.
-`std-fs-read-result.ari` covers direct `Error` whole-file read helpers,
+handles. `std-fs-read-write.ari` covers natural Result-returning whole-file
+write/append, `try_write`/`try_append` byte counts, read-to-byte-string,
+explicit missing-file default reads, and truncating rewrite behavior.
+`std-fs-read-result.ari` covers natural `Error` whole-file read helpers,
 successful byte-string reads, missing-file `NotFound`, and compatibility
-`try_read` absence.
+`try_read`/`read_optional` absence plus unchecked read aliases.
 `std-fs-query-result.ari` covers direct `Error` metadata, no-follow metadata,
 path-kind, mode, canonicalization, symbolic-link target, directory-open, and
 directory-list helpers.
-`std-fs-byte-result.ari` covers `write_result`, `append_result`, and
-`copy_result` direct Error payloads plus raw compatibility helpers.
+`std-fs-byte-result.ari` covers natural `write`/`append`, compatibility
+`write_result`/`append_result`, and `copy_result` direct Error payloads plus
+raw compatibility helpers.
 `std-fs-try-read.ari` covers `Option[String]` whole-file
 reads where missing files become `None` and empty files stay `Some(empty)`.
 `std-fs-create-truncate-copy.ari` covers source `create`, `try_create`,
@@ -1063,7 +1095,7 @@ permission snapshots, and stored zone path reuse. `std-fs-links.ari` covers
 runtime-backed `hard_link` and `symbolic_link` behavior plus read-through
 checks. `std-fs-read-link.ari` covers runtime-backed symbolic-link target
 reads, `Option[String]` failure behavior for regular and missing paths, and
-the asserting `read_link` helper. `std-fs-symlink-metadata.ari` covers
+the Result-returning `read_link` helper. `std-fs-symlink-metadata.ari` covers
 no-follow `lstat` metadata, `metadata` following a symbolic link to its target,
 direct `is_symlink` behavior, and missing-path `None`. `std-fs-permissions.ari` covers access-style readable/writable/
 executable checks, the `Permissions` wrapper methods, and missing-path

@@ -250,11 +250,15 @@ fn std::encoding::utf8_next_index|check-prelude std-encoding-utf8-codepoints UTF
 fn std::encoding::utf8_width|check-prelude std-encoding-utf8-codepoints UTF-8 lead-byte width helper; docs/stdlib/modules/encoding.md
 fn std::encoding::validate_utf8|check-prelude std-encoding-text Result-returning UTF-8 validation helper; docs/stdlib/modules/encoding.md
 fn std::encoding::validate_utf8_optional|check-prelude std-encoding-text Option-returning detailed UTF-8 validation compatibility helper; docs/stdlib/modules/encoding.md
-fn std::env::arg|check-prelude std-env-args argument wrapper; docs/stdlib/modules/env.md
+fn std::env::arg|check-prelude std-env-args Result-returning argument helper; docs/stdlib/modules/env.md
 fn std::env::arg_count|check-prelude std-env-args argument count wrapper; docs/stdlib/modules/env.md
-fn std::env::arg_os|check-prelude std-env-os-path-views OS-string argument view; docs/stdlib/modules/env.md
+fn std::env::arg_optional|check-prelude std-env-args Option-returning argument compatibility helper; docs/stdlib/modules/env.md
+fn std::env::arg_os|check-prelude std-env-os-path-views Result-returning OS-string argument view; docs/stdlib/modules/env.md
+fn std::env::arg_os_optional|check-prelude std-env-os-path-views Option-returning OS-string argument compatibility helper; docs/stdlib/modules/env.md
 fn std::env::arg_os_result|check-prelude std-env-args Result-returning OS-string argument helper; docs/stdlib/modules/env.md
+fn std::env::arg_os_unchecked|check-prelude std-env-os-path-views unchecked OS-string argument compatibility helper; docs/stdlib/modules/env.md
 fn std::env::arg_result|check-prelude std-env-args Result-returning argument helper; docs/stdlib/modules/env.md
+fn std::env::arg_unchecked|check-prelude std-env-args unchecked argument compatibility helper; docs/stdlib/modules/env.md
 fn std::env::current_dir|check-prelude std-env-paths Result-returning current directory helper; docs/stdlib/modules/env.md
 fn std::env::current_dir_optional|check-prelude std-env-paths Option-returning current directory compatibility helper; docs/stdlib/modules/env.md
 fn std::env::current_dir_or_default|check-prelude std-env-paths empty-string current directory compatibility helper; docs/stdlib/modules/env.md
@@ -278,8 +282,10 @@ fn std::env::get_os|check-prelude std-env-vars/std-env-os-path-views Result-retu
 fn std::env::get_os_or_default|check-prelude std-env-os-path-views OS-string compatibility environment variable lookup; docs/stdlib/modules/env.md
 fn std::env::has|check-prelude std-env-vars environment variable presence; docs/stdlib/modules/env.md
 fn std::env::has_arg|check-prelude std-env-args argument range helper; docs/stdlib/modules/env.md
-fn std::env::program_name|check-prelude std-env-args optional program name helper; docs/stdlib/modules/env.md
-fn std::env::program_name_os|check-prelude std-env-os-path-views optional OS-string program name helper; docs/stdlib/modules/env.md
+fn std::env::program_name|check-prelude std-env-args Result-returning program name helper; docs/stdlib/modules/env.md
+fn std::env::program_name_optional|check-prelude std-env-args Option-returning program name compatibility helper; docs/stdlib/modules/env.md
+fn std::env::program_name_os|check-prelude std-env-os-path-views Result-returning OS-string program name helper; docs/stdlib/modules/env.md
+fn std::env::program_name_os_optional|check-prelude std-env-os-path-views Option-returning OS-string program name compatibility helper; docs/stdlib/modules/env.md
 fn std::env::program_name_os_result|check-prelude std-env-args Result-returning OS-string program name helper; docs/stdlib/modules/env.md
 fn std::env::program_name_result|check-prelude std-env-args Result-returning program name helper; docs/stdlib/modules/env.md
 fn std::env::remove|check-prelude std-env-vars Result-returning environment variable removal; docs/stdlib/modules/env.md
@@ -353,14 +359,17 @@ fn std::fmt::write_integer[W: std::io::Writer]|check-prelude std-fmt-format-spec
 fn std::fmt::write_text[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed text formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_unsigned[W: std::io::Writer]|check-prelude std-fmt-format-spec Writer-backed base/width/precision formatting helper; docs/stdlib/modules/fmt.md
 fn std::fmt::write_value[W: std::io::Writer, T: std::fmt::Display]|check-prelude std-fmt-format-spec generic Writer-backed Display formatting helper; docs/stdlib/modules/fmt.md
-fn std::fs::append|check-prelude std-fs-read-write source whole-file append helper; docs/stdlib/modules/fs.md
+fn std::fs::append|check-prelude std-fs-read-write Result-returning whole-file append helper; docs/stdlib/modules/fs.md
+fn std::fs::append_bool|check-prelude std-fs-read-write bool whole-file append compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::append_raw_result|check-prelude std-fs-byte-result raw Result-returning whole-file append byte-count compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::append_result|check-prelude std-fs-byte-result Result-returning whole-file append byte-count helper with Error payload; docs/stdlib/modules/fs.md
 fn std::fs::can_execute|check-prelude std-fs-permissions execute/search access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_read|check-prelude std-fs-permissions read access hook; docs/stdlib/modules/fs.md
 fn std::fs::can_write|check-prelude std-fs-permissions write access hook; docs/stdlib/modules/fs.md
-fn std::fs::canonicalize|check-prelude std-fs-canonicalize asserting realpath-backed canonicalization helper; docs/stdlib/modules/fs.md
+fn std::fs::canonicalize|check-prelude std-fs-query-result Result-returning realpath-backed canonicalization helper; docs/stdlib/modules/fs.md
+fn std::fs::canonicalize_optional|check-prelude std-fs-query-result Option-returning realpath-backed canonicalization compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::canonicalize_result|check-prelude std-fs-query-result Error-returning realpath-backed canonicalization helper; docs/stdlib/modules/fs.md
+fn std::fs::canonicalize_unchecked|check-prelude std-fs-query-result unchecked realpath-backed canonicalization compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::close|check-prelude std-fs-basic Result-returning file close helper; docs/stdlib/modules/fs.md
 fn std::fs::close_dir|check-prelude std-fs-read-dir Result-returning directory close helper; docs/stdlib/modules/fs.md
 fn std::fs::close_dir_raw|check-prelude std-fs-read-dir raw Result-returning directory close compatibility helper; docs/stdlib/modules/fs.md
@@ -425,18 +434,30 @@ fn std::fs::permissions|check-prelude std-fs-permissions access permission wrapp
 fn std::fs::position|check-prelude std-fs-seek Result-returning file cursor position helper; docs/stdlib/modules/fs.md
 fn std::fs::position_or|check-prelude std-fs-seek fallback file position compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::position_raw|check-prelude std-fs-seek raw Result-returning file position compatibility helper; docs/stdlib/modules/fs.md
-fn std::fs::read|check-prelude std-fs-create-truncate-copy natural read alias for read_to_string; docs/stdlib/modules/fs.md
+fn std::fs::read|check-prelude std-fs-read-result Result-returning natural read alias for read_to_string; docs/stdlib/modules/fs.md
 fn std::fs::read_byte|check-prelude std-fs-basic file byte read hook; docs/stdlib/modules/fs.md
-fn std::fs::read_dir|check-prelude std-fs-read-dir asserting directory name-list helper; docs/stdlib/modules/fs.md
-fn std::fs::read_dir_entries|check-prelude std-fs-read-dir asserting directory entry-list helper; docs/stdlib/modules/fs.md
+fn std::fs::read_dir|check-prelude std-fs-query-result Result-returning directory name-list helper; docs/stdlib/modules/fs.md
+fn std::fs::read_dir_entries|check-prelude std-fs-query-result Result-returning directory entry-list helper; docs/stdlib/modules/fs.md
+fn std::fs::read_dir_entries_optional|check-prelude std-fs-query-result Option-returning directory entry-list compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::read_dir_entries_result|check-prelude std-fs-query-result Error-returning directory entry-list helper; docs/stdlib/modules/fs.md
+fn std::fs::read_dir_entries_unchecked|check-prelude std-fs-query-result unchecked directory entry-list compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::read_dir_next|check-prelude std-fs-read-dir Option-returning directory entry name helper; docs/stdlib/modules/fs.md
+fn std::fs::read_dir_optional|check-prelude std-fs-query-result Option-returning directory name-list compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::read_dir_result|check-prelude std-fs-query-result Error-returning directory name-list helper; docs/stdlib/modules/fs.md
-fn std::fs::read_link|check-prelude std-fs-read-link asserting symbolic-link target reader; docs/stdlib/modules/fs.md
+fn std::fs::read_dir_unchecked|check-prelude std-fs-query-result unchecked directory name-list compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::read_link|check-prelude std-fs-query-result Result-returning symbolic-link target reader; docs/stdlib/modules/fs.md
+fn std::fs::read_link_optional|check-prelude std-fs-query-result Option-returning symbolic-link target compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::read_link_result|check-prelude std-fs-query-result Error-returning symbolic-link target reader; docs/stdlib/modules/fs.md
+fn std::fs::read_link_unchecked|check-prelude std-fs-query-result unchecked symbolic-link target compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::read_optional|check-prelude std-fs-read-result Option-returning whole-file read compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::read_or_default|check-prelude std-fs-read-result empty-string whole-file read compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::read_result|check-prelude std-fs-read-result Error-returning whole-file read alias; docs/stdlib/modules/fs.md
-fn std::fs::read_to_string|check-prelude std-fs-read-write source whole-file byte-string read helper; docs/stdlib/modules/fs.md
+fn std::fs::read_to_string|check-prelude std-fs-read-result Result-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
+fn std::fs::read_to_string_optional|check-prelude std-fs-read-result Option-returning whole-file byte-string compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::read_to_string_or_default|check-prelude std-fs-read-write empty-string whole-file byte-string compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::read_to_string_result|check-prelude std-fs-read-result Error-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
+fn std::fs::read_to_string_unchecked|check-prelude std-fs-read-result unchecked whole-file byte-string compatibility helper; docs/stdlib/modules/fs.md
+fn std::fs::read_unchecked|check-prelude std-fs-read-result unchecked whole-file read compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::remove|check-prelude std-fs-basic unlink hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir|check-prelude std-fs-rename-dir runtime-backed single-directory removal hook; docs/stdlib/modules/fs.md
 fn std::fs::remove_dir_all|check-prelude std-fs-remove-dir-all recursive directory tree removal helper; docs/stdlib/modules/fs.md
@@ -479,7 +500,8 @@ fn std::fs::try_read_link|check-prelude std-fs-read-link Option-returning symbol
 fn std::fs::try_read_to_string|check-prelude std-fs-try-read Option-returning whole-file byte-string read helper; docs/stdlib/modules/fs.md
 fn std::fs::try_symlink_metadata|check-prelude std-fs-symlink-metadata Option-returning no-follow metadata helper; docs/stdlib/modules/fs.md
 fn std::fs::try_write|check-prelude std-fs-read-write Option-returning write byte-count helper; docs/stdlib/modules/fs.md
-fn std::fs::write|check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md
+fn std::fs::write|check-prelude std-fs-read-write Result-returning whole-file truncating write helper; docs/stdlib/modules/fs.md
+fn std::fs::write_bool|check-prelude std-fs-read-result bool whole-file truncating write compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::write_byte|check-prelude std-fs-basic Result-returning file byte write helper; docs/stdlib/modules/fs.md
 fn std::fs::write_byte_raw|check-prelude std-fs-basic raw Result-returning file byte write compatibility helper; docs/stdlib/modules/fs.md
 fn std::fs::write_byte_unchecked|check-prelude std-fs-basic unchecked file byte write compatibility hook; docs/stdlib/modules/fs.md
@@ -656,7 +678,7 @@ fn std::parse::binary_integer_or|check-prelude std-parse-basic signed binary int
 fn std::parse::boolean|check-prelude std-parse-basic Result-returning ASCII-trimmed lowercase bool parser; docs/stdlib/modules/parse.md
 fn std::parse::boolean_optional|check-prelude std-parse-basic Option-returning lowercase bool compatibility parser; docs/stdlib/modules/parse.md
 fn std::parse::boolean_or|check-prelude std-parse-basic lowercase bool parser with fallback; docs/stdlib/modules/parse.md
-fn std::parse::float|check-prelude std-parse-basic asserting decimal float parser; docs/stdlib/modules/parse.md
+fn std::parse::float|check-prelude std-parse-basic asserting decimal float parser until float enum payloads allow Result[f64, Error]; docs/stdlib/modules/parse.md
 fn std::parse::float_or|check-prelude std-parse-basic fallback decimal float parser; docs/stdlib/modules/parse.md
 fn std::parse::hex_integer|check-prelude std-parse-basic Result-returning signed hexadecimal integer parser; docs/stdlib/modules/parse.md
 fn std::parse::hex_integer_optional|check-prelude std-parse-basic Option-returning signed hexadecimal integer compatibility parser; docs/stdlib/modules/parse.md

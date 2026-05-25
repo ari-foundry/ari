@@ -891,8 +891,16 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env9arg_count" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env3arg" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env12arg_optional" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env13arg_unchecked" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env7try_arg" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env6arg_os" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env15arg_os_optional" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env12program_name" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env21program_name_optional" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env15program_name_os" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env24program_name_os_optional" $(BUILD_DIR)/prelude/std-env-args.ll
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-args.ari -o $(BUILD_DIR)/prelude/std-env-args.elf
 	$(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-args.elf; $(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98; fi
@@ -927,7 +935,11 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-paths.elf; $(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39; fi
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-os-path-views.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env6arg_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env15arg_os_optional" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env16arg_os_unchecked" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env10try_arg_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env15program_name_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env24program_name_os_optional" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env6get_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env10try_get_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env16current_dir_path" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
@@ -1017,17 +1029,26 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs9try_write" $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	grep -F -q "std2fs10try_append" $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	grep -F -q "std2fs14read_to_string" $(BUILD_DIR)/prelude/std-fs-read-write.ll
+	grep -F -q "std2fs25read_to_string_or_default" $(BUILD_DIR)/prelude/std-fs-read-write.ll
+	grep -F -q "std2fs24read_to_string_unchecked" $(BUILD_DIR)/prelude/std-fs-read-write.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari -o $(BUILD_DIR)/prelude/std-fs-read-write.elf
 	$(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 136
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-write.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-read-write.elf; $(BUILD_DIR)/prelude/std-fs-read-write.elf; code=$$?; test $$code -eq 136; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-read-result.ll
+	grep -F -q "std2fs4read" $(BUILD_DIR)/prelude/std-fs-read-result.ll
+	grep -F -q "std2fs13read_optional" $(BUILD_DIR)/prelude/std-fs-read-result.ll
+	grep -F -q "std2fs14read_unchecked" $(BUILD_DIR)/prelude/std-fs-read-result.ll
 	grep -F -q "std2fs11read_result" $(BUILD_DIR)/prelude/std-fs-read-result.ll
+	grep -F -q "std2fs14read_to_string" $(BUILD_DIR)/prelude/std-fs-read-result.ll
+	grep -F -q "std2fs24read_to_string_unchecked" $(BUILD_DIR)/prelude/std-fs-read-result.ll
 	grep -F -q "std2fs21read_to_string_result" $(BUILD_DIR)/prelude/std-fs-read-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-result.ari -o $(BUILD_DIR)/prelude/std-fs-read-result.elf
 	$(BUILD_DIR)/prelude/std-fs-read-result.elf; code=$$?; test $$code -eq 31
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-byte-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs5write" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs12write_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs16write_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs6append" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs13append_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs17append_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs11copy_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
@@ -1220,9 +1241,21 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs11mode_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs14mode_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs15open_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs8read_dir" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs17read_dir_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs18read_dir_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs15read_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs16read_dir_entries" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs25read_dir_entries_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs26read_dir_entries_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs23read_dir_entries_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs12canonicalize" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs21canonicalize_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs22canonicalize_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs19canonicalize_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs9read_link" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs18read_link_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs19read_link_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs16read_link_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-query-result.ari -o $(BUILD_DIR)/prelude/std-fs-query-result.elf
 	$(BUILD_DIR)/prelude/std-fs-query-result.elf; code=$$?; test $$code -eq 255

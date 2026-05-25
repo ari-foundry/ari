@@ -781,7 +781,7 @@ pub fn try_read_dir(zone: ref mut Zone, path: string) -> std::Option[std::vec::V
   return std::None<std::vec::Vec[std::string::String]>();
 }
 
-pub fn read_dir_result(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[std::string::String], std::error::Error] {
+pub fn read_dir(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[std::string::String], std::error::Error] {
   match open_dir_result(path) {
     std::Ok(dir) => {
       var entries = std::vec::new<std::string::String>(zone, 8);
@@ -812,12 +812,20 @@ pub fn read_dir_result(zone: ref mut Zone, path: string) -> std::Result[std::vec
   }
 }
 
-pub fn read_dir(zone: ref mut Zone, path: string) -> std::vec::Vec[std::string::String] {
-  match try_read_dir(zone, path) {
-    std::Some(entries) => {
+pub fn read_dir_result(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[std::string::String], std::error::Error] {
+  return read_dir(zone, path);
+}
+
+pub fn read_dir_optional(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[std::string::String]] {
+  return try_read_dir(zone, path);
+}
+
+pub fn read_dir_unchecked(zone: ref mut Zone, path: string) -> std::vec::Vec[std::string::String] {
+  match read_dir(zone, path) {
+    std::Ok(entries) => {
       return entries;
     }
-    std::None => {}
+    std::Err(_) => {}
   }
   std::panic();
   return std::vec::new<std::string::String>(zone, 0);
@@ -870,7 +878,7 @@ pub fn try_read_dir_entries(zone: ref mut Zone, path: string) -> std::Option[std
   return std::None<std::vec::Vec[DirEntry]>();
 }
 
-pub fn read_dir_entries_result(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
+pub fn read_dir_entries(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
   match open_dir_result(path) {
     std::Ok(dir) => {
       var entries = std::vec::new<DirEntry>(zone, 8);
@@ -901,6 +909,14 @@ pub fn read_dir_entries_result(zone: ref mut Zone, path: string) -> std::Result[
   }
 }
 
+pub fn read_dir_entries_result(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
+  return read_dir_entries(zone, path);
+}
+
+pub fn read_dir_entries_optional(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[DirEntry]] {
+  return try_read_dir_entries(zone, path);
+}
+
 fn try_read_dir_entries_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[DirEntry]] {
   match try_open_dir_bytes(path) {
     std::Some(dir) => {
@@ -927,12 +943,12 @@ fn try_read_dir_entries_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::
   return std::None<std::vec::Vec[DirEntry]>();
 }
 
-pub fn read_dir_entries(zone: ref mut Zone, path: string) -> std::vec::Vec[DirEntry] {
-  match try_read_dir_entries(zone, path) {
-    std::Some(entries) => {
+pub fn read_dir_entries_unchecked(zone: ref mut Zone, path: string) -> std::vec::Vec[DirEntry] {
+  match read_dir_entries(zone, path) {
+    std::Ok(entries) => {
       return entries;
     }
-    std::None => {}
+    std::Err(_) => {}
   }
   std::panic();
   return std::vec::new<DirEntry>(zone, 0);
@@ -998,7 +1014,7 @@ pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::st
   return std::Some<std::string::String>(std::string::from(zone, resolved));
 }
 
-pub fn canonicalize_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+pub fn canonicalize(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
   let resolved = canonicalize_raw(path);
   if std::string::c_len(resolved) == 0 {
     return std::Err<std::string::String, std::error::Error>(std::error::from_raw(last_errno_error_raw()));
@@ -1006,12 +1022,20 @@ pub fn canonicalize_result(zone: ref mut Zone, path: string) -> std::Result[std:
   return std::Ok<std::string::String, std::error::Error>(std::string::from(zone, resolved));
 }
 
-pub fn canonicalize(zone: ref mut Zone, path: string) -> std::string::String {
-  match try_canonicalize(zone, path) {
-    std::Some(value) => {
+pub fn canonicalize_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+  return canonicalize(zone, path);
+}
+
+pub fn canonicalize_optional(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
+  return try_canonicalize(zone, path);
+}
+
+pub fn canonicalize_unchecked(zone: ref mut Zone, path: string) -> std::string::String {
+  match canonicalize(zone, path) {
+    std::Ok(value) => {
       return value;
     }
-    std::None => {}
+    std::Err(_) => {}
   }
   std::panic();
   return std::string::empty(zone);
@@ -1025,7 +1049,7 @@ pub fn try_read_link(zone: ref mut Zone, path: string) -> std::Option[std::strin
   return std::Some<std::string::String>(std::string::from(zone, target));
 }
 
-pub fn read_link_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+pub fn read_link(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
   let target = read_link_raw(path);
   if std::string::c_len(target) == 0 {
     return std::Err<std::string::String, std::error::Error>(std::error::from_raw(last_errno_error_raw()));
@@ -1033,12 +1057,20 @@ pub fn read_link_result(zone: ref mut Zone, path: string) -> std::Result[std::st
   return std::Ok<std::string::String, std::error::Error>(std::string::from(zone, target));
 }
 
-pub fn read_link(zone: ref mut Zone, path: string) -> std::string::String {
-  match try_read_link(zone, path) {
-    std::Some(value) => {
+pub fn read_link_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+  return read_link(zone, path);
+}
+
+pub fn read_link_optional(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
+  return try_read_link(zone, path);
+}
+
+pub fn read_link_unchecked(zone: ref mut Zone, path: string) -> std::string::String {
+  match read_link(zone, path) {
+    std::Ok(value) => {
       return value;
     }
-    std::None => {}
+    std::Err(_) => {}
   }
   std::panic();
   return std::string::empty(zone);
@@ -1270,11 +1302,19 @@ fn write_all_raw_result_with_mode(path: string, mode: string, values: std::Slice
   }
 }
 
-pub fn write(path: string, values: std::Slice[u8]) -> bool {
+pub fn write(path: string, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return write_result(path, values);
+}
+
+pub fn write_bool(path: string, values: std::Slice[u8]) -> bool {
   return try_write(path, values).is_some();
 }
 
-pub fn append(path: string, values: std::Slice[u8]) -> bool {
+pub fn append(path: string, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return append_result(path, values);
+}
+
+pub fn append_bool(path: string, values: std::Slice[u8]) -> bool {
   return try_append(path, values).is_some();
 }
 
@@ -1302,17 +1342,7 @@ pub fn try_append(path: string, values: std::Slice[u8]) -> std::Option[i64] {
   return byte_count_option(append_raw_result(path, values));
 }
 
-pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {
-  match try_read_to_string(zone, path) {
-    std::Some(output) => {
-      return output;
-    }
-    std::None => {}
-  }
-  return std::string::new(zone, 64);
-}
-
-pub fn read_to_string_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+pub fn read_to_string(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
   match open(path, "r") {
     std::Err(reason) => {
       return std::Err<std::string::String, std::error::Error>(reason);
@@ -1335,6 +1365,35 @@ pub fn read_to_string_result(zone: ref mut Zone, path: string) -> std::Result[st
   }
 }
 
+pub fn read_to_string_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
+  return read_to_string(zone, path);
+}
+
+pub fn read_to_string_optional(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
+  return try_read_to_string(zone, path);
+}
+
+pub fn read_to_string_or_default(zone: ref mut Zone, path: string) -> std::string::String {
+  match try_read_to_string(zone, path) {
+    std::Some(output) => {
+      return output;
+    }
+    std::None => {}
+  }
+  return std::string::new(zone, 64);
+}
+
+pub fn read_to_string_unchecked(zone: ref mut Zone, path: string) -> std::string::String {
+  match read_to_string(zone, path) {
+    std::Ok(output) => {
+      return output;
+    }
+    std::Err(_) => {}
+  }
+  std::panic();
+  return std::string::new(zone, 64);
+}
+
 pub fn try_read_to_string(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
   var output = std::string::new(zone, 64);
   let file = try_open(path, "r").unwrap_or(File::invalid());
@@ -1353,12 +1412,24 @@ pub fn try_read_to_string(zone: ref mut Zone, path: string) -> std::Option[std::
   return std::Some<std::string::String>(output);
 }
 
-pub fn read(zone: ref mut Zone, path: string) -> std::string::String {
+pub fn read(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
   return read_to_string(zone, path);
 }
 
 pub fn read_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
-  return read_to_string_result(zone, path);
+  return read(zone, path);
+}
+
+pub fn read_optional(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
+  return try_read(zone, path);
+}
+
+pub fn read_or_default(zone: ref mut Zone, path: string) -> std::string::String {
+  return read_to_string_or_default(zone, path);
+}
+
+pub fn read_unchecked(zone: ref mut Zone, path: string) -> std::string::String {
+  return read_to_string_unchecked(zone, path);
 }
 
 pub fn try_read(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {

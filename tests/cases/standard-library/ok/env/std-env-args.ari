@@ -24,13 +24,15 @@ fn main() -> i64 {
   if first.is_some() {
     score = score + 13;
   }
-  match env::arg_result(0) {
+  assert(env::arg_optional(0).is_some());
+  match env::arg(0) {
     Ok(_) => {}
     Err(_) => {
       panic();
     }
   }
-  match env::arg_os_result(0) {
+  assert(env::arg_result(0).is_ok());
+  match env::arg_os(0) {
     Ok(raw_arg) => {
       assert(raw_arg.len() > 0);
     }
@@ -38,12 +40,15 @@ fn main() -> i64 {
       panic();
     }
   }
+  assert(env::arg_os_result(0).is_ok());
 
   let missing = env::try_arg(count);
   if missing.is_none() {
     score = score + 17;
   }
-  match env::arg_result(count) {
+  assert(env::arg_optional(count).is_none());
+  assert(env::arg_os_optional(count).is_none());
+  match env::arg(count) {
     Ok(_) => {
       panic();
     }
@@ -53,14 +58,17 @@ fn main() -> i64 {
   }
 
   if env::has_arg(0) {
-    score = score + consume_arg(env::arg(0));
+    score = score + consume_arg(env::arg_unchecked(0));
   }
 
   let program = env::program_name();
-  if program.is_some() {
+  if program.is_ok() {
     score = score + 23;
   }
+  assert(env::program_name_optional().is_some());
   assert(env::program_name_result().is_ok());
+  assert(env::program_name_os().is_ok());
+  assert(env::program_name_os_optional().is_some());
   assert(env::program_name_os_result().is_ok());
 
   return score;

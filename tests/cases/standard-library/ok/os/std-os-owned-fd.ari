@@ -2,7 +2,7 @@
 // while Fd remains only a borrowed descriptor identity view.
 fn main() -> i64 {
   let path = "build/std-os-owned-fd.tmp";
-  let wrote = std::fs::write(path, "owned-fd");
+  let wrote = std::fs::write_bool(path, "owned-fd");
   let file = std::fs::open(path, "r").unwrap();
   var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
   var invalid = std::os::OwnedFd::invalid();
