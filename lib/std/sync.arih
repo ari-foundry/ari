@@ -31,8 +31,23 @@ pub struct Mutex {
   mut state: AtomicI64,
 }
 
+pub struct MutexGuard {
+  lock: ptr std::sync::Mutex,
+  mut active: bool,
+}
+
 pub struct RwLock {
   mut state: AtomicI64,
+}
+
+pub struct RwLockReadGuard {
+  lock: ptr std::sync::RwLock,
+  mut active: bool,
+}
+
+pub struct RwLockWriteGuard {
+  lock: ptr std::sync::RwLock,
+  mut active: bool,
 }
 
 pub struct Once {
@@ -511,12 +526,26 @@ pub impl std::sync::Mutex {
     return Mutex { state: AtomicI64::new(0) };
   }
 
-  fn try_lock(self: ref mut Self) -> bool {
+  fn try_lock_bool(self: ref mut Self) -> bool {
     return std::sync::try_lock(self);
   }
 
-  fn lock(self: ref mut Self) -> void {
+  fn lock_raw(self: ref mut Self) -> void {
     std::sync::lock(self);
+  }
+
+  fn try_lock(self: ref mut Self) -> std::Option[std::sync::MutexGuard] {
+    if std::sync::try_lock(self) {
+      return std::Some<std::sync::MutexGuard>(
+        std::sync::MutexGuard { lock: self as ptr std::sync::Mutex, active: true }
+      );
+    }
+    return std::None<std::sync::MutexGuard>();
+  }
+
+  fn lock(self: ref mut Self) -> std::sync::MutexGuard {
+    std::sync::lock(self);
+    return std::sync::MutexGuard { lock: self as ptr std::sync::Mutex, active: true };
   }
 
   fn unlock(self: ref mut Self) -> void {
@@ -528,9 +557,58 @@ pub impl std::sync::Mutex {
   }
 }
 
+pub impl std::sync::MutexGuard {
+  fn unlock(self: ref mut Self) -> void {
+    if self.active {
+      std::sync::unlock(ref mut *self.lock);
+      self.active = false;
+    }
+  }
+
+  fn is_active(self: ref Self) -> bool {
+    return self.active;
+  }
+}
+
+impl std::Drop for std::sync::MutexGuard {
+  fn drop(self) -> void {
+    if self.active {
+      std::sync::unlock(ref mut *self.lock);
+    }
+  }
+}
+
 pub impl std::sync::RwLock {
   fn new() -> RwLock {
     return RwLock { state: AtomicI64::new(0) };
+  }
+
+  fn try_read(self: ref mut Self) -> std::Option[std::sync::RwLockReadGuard] {
+    if std::sync::try_read_lock(self) {
+      return std::Some<std::sync::RwLockReadGuard>(
+        std::sync::RwLockReadGuard { lock: self as ptr std::sync::RwLock, active: true }
+      );
+    }
+    return std::None<std::sync::RwLockReadGuard>();
+  }
+
+  fn read(self: ref mut Self) -> std::sync::RwLockReadGuard {
+    std::sync::read_lock(self);
+    return std::sync::RwLockReadGuard { lock: self as ptr std::sync::RwLock, active: true };
+  }
+
+  fn try_write(self: ref mut Self) -> std::Option[std::sync::RwLockWriteGuard] {
+    if std::sync::try_write_lock(self) {
+      return std::Some<std::sync::RwLockWriteGuard>(
+        std::sync::RwLockWriteGuard { lock: self as ptr std::sync::RwLock, active: true }
+      );
+    }
+    return std::None<std::sync::RwLockWriteGuard>();
+  }
+
+  fn write(self: ref mut Self) -> std::sync::RwLockWriteGuard {
+    std::sync::write_lock(self);
+    return std::sync::RwLockWriteGuard { lock: self as ptr std::sync::RwLock, active: true };
   }
 
   fn try_read_lock(self: ref mut Self) -> bool {
@@ -574,6 +652,48 @@ pub impl std::sync::RwLock {
   }
 }
 
+pub impl std::sync::RwLockReadGuard {
+  fn unlock(self: ref mut Self) -> void {
+    if self.active {
+      std::sync::read_unlock(ref mut *self.lock);
+      self.active = false;
+    }
+  }
+
+  fn is_active(self: ref Self) -> bool {
+    return self.active;
+  }
+}
+
+impl std::Drop for std::sync::RwLockReadGuard {
+  fn drop(self) -> void {
+    if self.active {
+      std::sync::read_unlock(ref mut *self.lock);
+    }
+  }
+}
+
+pub impl std::sync::RwLockWriteGuard {
+  fn unlock(self: ref mut Self) -> void {
+    if self.active {
+      std::sync::write_unlock(ref mut *self.lock);
+      self.active = false;
+    }
+  }
+
+  fn is_active(self: ref Self) -> bool {
+    return self.active;
+  }
+}
+
+impl std::Drop for std::sync::RwLockWriteGuard {
+  fn drop(self) -> void {
+    if self.active {
+      std::sync::write_unlock(ref mut *self.lock);
+    }
+  }
+}
+
 pub impl std::sync::Once {
   fn new() -> Once {
     return Once { state: AtomicI64::new(0) };
@@ -611,7 +731,7 @@ pub impl std::sync::Condvar {
     while self.sequence.load() == seen {
       std::thread::yield_now();
     }
-    lock.lock();
+    std::sync::lock(lock);
   }
 
   fn wait_while(self: ref mut Self, lock: ref mut std::sync::Mutex, condition: fn() -> bool) -> void {

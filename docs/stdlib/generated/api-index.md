@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2917`
+- API entries: `2932`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,16 +32,16 @@ platform notes.
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 742 | stable candidate |
-| `hosted` | 1146 | platform-backed |
+| `hosted` | 1161 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
 | `fn` | 1045 |
-| `method` | 1467 |
+| `method` | 1479 |
 | `module` | 39 |
-| `struct` | 155 |
+| `struct` | 158 |
 | `trait` | 39 |
 | `trait-method` | 39 |
 | `type` | 21 |
@@ -84,7 +84,7 @@ platform notes.
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 141 |
-| `std::sync` | `hosted` | 130 |
+| `std::sync` | `hosted` | 145 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 47 |
@@ -3470,10 +3470,14 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::Condvar::wait` | check-prelude std-sync-concurrency-api condition-variable wait helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Condvar::wait_while` | check-prelude std-sync-concurrency-api predicate condition-variable wait helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Mutex::is_locked` | check-prelude std-sync-mutex-once mutex method state predicate; docs/stdlib/modules/sync.md |
-| `method std::sync::Mutex::lock` | check-prelude std-sync-mutex-once mutex method spin lock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Mutex::lock` | check-prelude std-sync-mutex-once mutex method guard-returning spin lock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Mutex::lock_raw` | check-prelude std-sync-mutex-once mutex method raw spin lock compatibility helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Mutex::new` | check-prelude std-sync-mutex-once mutex associated constructor; docs/stdlib/modules/sync.md |
-| `method std::sync::Mutex::try_lock` | check-prelude std-sync-mutex-once mutex method nonblocking lock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Mutex::try_lock` | check-prelude std-sync-mutex-once mutex method optional guard nonblocking lock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Mutex::try_lock_bool` | check-prelude std-sync-mutex-once mutex method bool nonblocking lock compatibility helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Mutex::unlock` | check-prelude std-sync-mutex-once mutex method unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexGuard::is_active` | check-prelude std-sync-mutex-once mutex guard active-state predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::MutexGuard::unlock` | check-prelude std-sync-mutex-once mutex guard idempotent unlock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Once::call_once` | check-prelude std-sync-mutex-once once method execution helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Once::is_completed` | check-prelude std-sync-mutex-once once method completion predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::Once::new` | check-prelude std-sync-mutex-once once associated constructor; docs/stdlib/modules/sync.md |
@@ -3494,13 +3498,21 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::RwLock::is_read_locked` | check-prelude std-sync-rwlock rwlock method read-lock predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::is_write_locked` | check-prelude std-sync-rwlock rwlock method write-lock predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::new` | check-prelude std-sync-rwlock rwlock associated constructor; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLock::read` | check-prelude std-sync-rwlock rwlock method guard-returning read lock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::read_lock` | check-prelude std-sync-rwlock rwlock method read lock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::read_unlock` | check-prelude std-sync-rwlock rwlock method read unlock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::reader_count` | check-prelude std-sync-rwlock rwlock method reader count helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLock::try_read` | check-prelude std-sync-rwlock rwlock method optional read guard helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::try_read_lock` | check-prelude std-sync-rwlock rwlock method nonblocking read lock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLock::try_write` | check-prelude std-sync-rwlock rwlock method optional write guard helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::try_write_lock` | check-prelude std-sync-rwlock rwlock method nonblocking write lock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLock::write` | check-prelude std-sync-rwlock rwlock method guard-returning write lock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::write_lock` | check-prelude std-sync-rwlock rwlock method write lock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::write_unlock` | check-prelude std-sync-rwlock rwlock method write unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockReadGuard::is_active` | check-prelude std-sync-rwlock rwlock read guard active-state predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockReadGuard::unlock` | check-prelude std-sync-rwlock rwlock read guard idempotent unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockWriteGuard::is_active` | check-prelude std-sync-rwlock rwlock write guard active-state predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::RwLockWriteGuard::unlock` | check-prelude std-sync-rwlock rwlock write guard idempotent unlock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::close` | check-prelude std-sync-concurrency-api sender-side channel close helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::is_closed` | check-prelude std-sync-concurrency-api sender closed predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::send` | check-prelude std-sync-concurrency-api nonblocking single-slot send helper; docs/stdlib/modules/sync.md |
@@ -3523,10 +3535,13 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::sync::Channel[T]` | check-prelude std-sync-concurrency-api single-slot channel pair; docs/stdlib/modules/sync.md |
 | `struct std::sync::Condvar` | check-prelude std-sync-concurrency-api source condition variable primitive; docs/stdlib/modules/sync.md |
 | `struct std::sync::Mutex` | check-prelude std-sync-mutex-once source mutex primitive; docs/stdlib/modules/sync.md |
+| `struct std::sync::MutexGuard` | check-prelude std-sync-mutex-once explicit mutex unlock guard; docs/stdlib/modules/sync.md |
 | `struct std::sync::Once` | check-prelude std-sync-mutex-once source one-time initialization primitive; docs/stdlib/modules/sync.md |
 | `struct std::sync::OnceLock[T]` | check-prelude std-sync-concurrency-api source thread-facing one-time slot; docs/stdlib/modules/sync.md |
 | `struct std::sync::Receiver[T]` | check-prelude std-sync-concurrency-api channel receiver handle; docs/stdlib/modules/sync.md |
 | `struct std::sync::RwLock` | check-prelude std-sync-rwlock source reader-writer lock primitive; docs/stdlib/modules/sync.md |
+| `struct std::sync::RwLockReadGuard` | check-prelude std-sync-rwlock explicit rwlock read unlock guard; docs/stdlib/modules/sync.md |
+| `struct std::sync::RwLockWriteGuard` | check-prelude std-sync-rwlock explicit rwlock write unlock guard; docs/stdlib/modules/sync.md |
 | `struct std::sync::Sender[T]` | check-prelude std-sync-concurrency-api channel sender handle; docs/stdlib/modules/sync.md |
 
 ## `std::target`

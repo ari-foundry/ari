@@ -304,7 +304,8 @@ is an explicit zone-backed handle for current-thread values; compiler-level
 send/share typing remain richer thread-policy work.
 
 `std::sync` now starts with `AtomicI64`, `AtomicBool`, `AtomicUsize`,
-`AtomicPtr[T]`, source `Mutex`, `RwLock`, `Once`, `OnceLock`, `Condvar`,
+`AtomicPtr[T]`, source `Mutex`, `MutexGuard`, `RwLock`,
+`RwLockReadGuard`, `RwLockWriteGuard`, `Once`, `OnceLock`, `Condvar`,
 `Barrier`, and a single-slot MPSC channel shape. `std::cell` adds local
 interior mutability through `Cell`, runtime-checked `RefCell`, and zone-backed
 `OnceCell`/`Lazy` one-time initialization. `std::rc` adds explicit `Rc`,
@@ -314,12 +315,14 @@ developers expect:
 hooks lower directly to LLVM atomic operations. Default methods are
 sequentially consistent, while explicit-order methods lower Ari `Ordering`
 values to the matching LLVM ordering for load/store/RMW/compare-exchange.
-`Mutex` and `RwLock` are primitive spin/yield locks without protected payloads
-or guards, `Condvar` and `Barrier` are source coordination primitives, and
-channels carry only a shared state pointer rather than redundant zone handles.
-`Arc` uses an atomic control block, but send/share trait policy,
-value-protecting locks, semaphores, futex-backed blocking locks, timeout waits,
-and non-LLVM target atomic policy remain future work.
+`Mutex` and `RwLock` are primitive spin/yield locks with explicit unlock
+guards, but they do not yet protect typed payload borrows and do not promise
+automatic scope/early-return RAII cleanup. `Condvar` and `Barrier` are source
+coordination primitives, and channels carry only a shared state pointer rather
+than redundant zone handles. `Arc` uses an atomic control block, but
+send/share trait policy, value-protecting locks, semaphores, futex-backed
+blocking locks, timeout waits, and non-LLVM target atomic policy remain future
+work.
 
 `std::time` follows the same OS-facing pattern. `monotonic_nanos`,
 `unix_nanos`, and `sleep_nanos` are runtime-backed because they call the host

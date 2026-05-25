@@ -80,7 +80,7 @@ fn main() -> i64 {
 
   var mutex = Mutex::new();
   var condvar = Condvar::new();
-  mutex.lock();
+  mutex.lock_raw();
   condvar.wait_while(ref mut mutex, always_false);
   if mutex.is_locked() {
     score = score + 128;

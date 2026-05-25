@@ -1081,9 +1081,17 @@ atomic.compare_exchange_order(expected, replacement, success, failure)
 
 mutex.try_lock()
 mutex.lock()
+mutex.try_lock_bool()
+mutex.lock_raw()
 mutex.unlock()
 mutex.is_locked()
+mutex_guard.unlock()
+mutex_guard.is_active()
 
+rwlock.try_read()
+rwlock.read()
+rwlock.try_write()
+rwlock.write()
 rwlock.try_read_lock()
 rwlock.read_lock()
 rwlock.read_unlock()
@@ -1094,6 +1102,10 @@ rwlock.reader_count()
 rwlock.is_read_locked()
 rwlock.is_write_locked()
 rwlock.is_locked()
+rwlock_read_guard.unlock()
+rwlock_read_guard.is_active()
+rwlock_write_guard.unlock()
+rwlock_write_guard.is_active()
 
 once.call_once(action)
 once.is_completed()
@@ -1126,20 +1138,26 @@ matching LLVM atomic ordering where that operation allows it. `fetch_add` and
 `swap` return the previous value; `compare_exchange` returns whether the
 replacement happened.
 
-`Mutex` is a source spin/yield lock built on `AtomicI64`. It is not a
-value-protecting `Mutex[T]` and has no guard type yet, so keep lock/unlock
-scopes explicit and small. `RwLock` is a source reader/writer primitive built
-on the same atomic. It allows multiple readers or one writer, but it is not a
-value-protecting `RwLock[T]` and has no read/write guards yet. `Once` runs a
-plain `fn() -> void` at most once and reports whether the current caller ran it.
-`OnceLock[T]` is the sync-facing one-time value slot. `Condvar`, `Barrier`, and
-single-slot MPSC channels provide the standard shapes now, using spin/yield
-internals until Ari grows blocking wait/wake runtime support.
+`Mutex` is a source spin/yield lock built on `AtomicI64`. The natural method
+API returns `MutexGuard`: `lock` waits for an active guard and `try_lock`
+returns `Option[MutexGuard]`. The guard owns the unlock operation; `unlock` is
+idempotent, and explicit `drop guard` releases an active guard. The
+`try_lock_bool`, `lock_raw`, and top-level `sync::try_lock`/`sync::lock`
+helpers keep the older manual bool/void behavior for low-level compatibility.
+`RwLock` follows the same rule with `read`, `try_read`, `write`, and
+`try_write` returning read/write guards. These are still not value-protecting
+`Mutex[T]` or `RwLock[T]` payload locks, and automatic scope/early-return RAII
+cleanup is not promised yet. `Once` runs a plain `fn() -> void` at most once
+and reports whether the current caller ran it. `OnceLock[T]` is the
+sync-facing one-time value slot. `Condvar`, `Barrier`, and single-slot MPSC
+channels provide the standard shapes now, using spin/yield internals until Ari
+grows blocking wait/wake runtime support.
 
 Shared-ownership handles live in `std::rc` as `Rc`, `Arc`, and `Weak`.
-`LazyLock`, semaphores, futex-backed blocking locks, timeout waits, send/share
-trait checks, compiler-owned `thread_local` declarations, and target-native
-relaxed ordering remain future concurrency work.
+`LazyLock`, semaphores, value-protecting lock payload guards, futex-backed
+blocking locks, timeout waits, send/share trait checks, compiler-owned
+`thread_local` declarations, and target-native relaxed ordering remain future
+concurrency work.
 
 Runtime-backed time helpers live in `std::time`:
 

@@ -90,7 +90,7 @@ fn thread_local_state_ptr[T](local: ptr std::thread::ThreadLocal[T]) -> ptr std:
 
 fn thread_local_lock[T](state: ptr std::thread::ThreadLocalState[T]) -> void {
   let state_ref: ref mut std::thread::ThreadLocalState[T] = ref mut *state;
-  state_ref.lock.lock();
+  std::sync::lock(ref mut state_ref.lock);
   return;
 }
 

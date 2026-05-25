@@ -8,6 +8,63 @@ fn main() -> i64 {
     return 2;
   }
 
+  var read_guard = lock.read();
+  if !lock.is_read_locked() {
+    return 21;
+  }
+  if lock.try_write().is_some() {
+    return 22;
+  }
+  var maybe_second = lock.try_read();
+  if maybe_second.is_none() {
+    return 23;
+  }
+  if lock.reader_count() != 2 {
+    return 24;
+  }
+  var second = maybe_second.unwrap();
+  if !second.is_active() {
+    return 25;
+  }
+  second.unlock();
+  if second.is_active() {
+    return 26;
+  }
+  if lock.reader_count() != 1 {
+    return 27;
+  }
+  drop read_guard;
+  if lock.is_locked() {
+    return 28;
+  }
+
+  var write_guard = lock.write();
+  if !lock.is_write_locked() {
+    return 29;
+  }
+  if lock.try_read().is_some() {
+    return 30;
+  }
+  if lock.try_write().is_some() {
+    return 31;
+  }
+  write_guard.unlock();
+  if write_guard.is_active() {
+    return 32;
+  }
+  if lock.is_locked() {
+    return 33;
+  }
+
+  var drop_write_guard = lock.write();
+  if !drop_write_guard.is_active() {
+    return 34;
+  }
+  drop drop_write_guard;
+  if lock.is_locked() {
+    return 35;
+  }
+
   if !lock.try_read_lock() {
     return 3;
   }

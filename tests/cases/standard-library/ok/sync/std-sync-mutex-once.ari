@@ -8,46 +8,74 @@ fn main() -> i64 {
   if mutex.is_locked() {
     return 1;
   }
-  if !mutex.try_lock() {
+  var maybe_guard = mutex.try_lock();
+  if maybe_guard.is_none() {
     return 2;
   }
   if !mutex.is_locked() {
     return 3;
   }
-  if mutex.try_lock() {
+  if mutex.try_lock().is_some() {
     return 4;
   }
-  mutex.unlock();
-  if mutex.is_locked() {
+  var guard = maybe_guard.unwrap();
+  if !guard.is_active() {
     return 5;
   }
+  guard.unlock();
+  if guard.is_active() {
+    return 6;
+  }
+  if mutex.is_locked() {
+    return 7;
+  }
+
+  var scoped = mutex.lock();
+  if !mutex.is_locked() {
+    return 8;
+  }
+  drop scoped;
+  if mutex.is_locked() {
+    return 9;
+  }
+
+  if !mutex.try_lock_bool() {
+    return 10;
+  }
+  mutex.unlock();
+
+  mutex.lock_raw();
+  if !mutex.is_locked() {
+    return 11;
+  }
+  mutex.unlock();
 
   sync::lock(ref mut mutex);
   if !sync::is_locked(ref mutex) {
-    return 6;
+    return 12;
   }
   sync::unlock(ref mut mutex);
   if sync::is_locked(ref mutex) {
-    return 7;
+    return 13;
   }
 
   var once = Once::new();
   if once.is_completed() {
-    return 8;
+    return 14;
   }
   if !once.call_once(initialize_once) {
-    return 9;
+    return 15;
   }
   if !sync::is_completed(ref once) {
-    return 10;
+    return 16;
   }
   if once.call_once(initialize_once) {
-    return 11;
+    return 17;
   }
 
   var other = std::sync::Mutex::new();
   if !std::sync::try_lock(ref mut other) {
-    return 12;
+    return 18;
   }
   std::sync::unlock(ref mut other);
 
