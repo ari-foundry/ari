@@ -163,11 +163,41 @@ pub fn arg(value: string) -> std::process::Arg {
   return std::process::Arg { value: std::c::from_string(value) };
 }
 
+pub fn arg_bytes(zone: ref mut Zone, value: std::Slice[u8]) -> std::Result[std::process::Arg, std::error::Error] {
+  match std::c::from_slice_result_in(zone, value) {
+    std::Ok(text) => {
+      return std::Ok<std::process::Arg, std::error::Error>(std::process::Arg { value: text.as_c_str() });
+    }
+    std::Err(reason) => {
+      return std::Err<std::process::Arg, std::error::Error>(reason);
+    }
+  }
+}
+
 pub fn env_var(name: string, value: string) -> std::process::EnvVar {
   return std::process::EnvVar {
     name: std::c::from_string(name),
     value: std::c::from_string(value),
   };
+}
+
+pub fn env_var_bytes(
+  zone: ref mut Zone,
+  name: std::Slice[u8],
+  value: std::Slice[u8]
+) -> std::Result[std::process::EnvVar, std::error::Error] {
+  let name_result = std::c::from_slice_result_in(zone, name);
+  if name_result.is_err() {
+    return std::Err<std::process::EnvVar, std::error::Error>(name_result.unwrap_err());
+  }
+  let value_result = std::c::from_slice_result_in(zone, value);
+  if value_result.is_err() {
+    return std::Err<std::process::EnvVar, std::error::Error>(value_result.unwrap_err());
+  }
+  return std::Ok<std::process::EnvVar, std::error::Error>(std::process::EnvVar {
+    name: name_result.unwrap().as_c_str(),
+    value: value_result.unwrap().as_c_str(),
+  });
 }
 
 pub fn command(program: string) -> std::process::Command {
@@ -722,6 +752,18 @@ pub impl std::process::Command {
     self.arg_values = std::Slice<std::process::Arg> { data: storage, len: old_len + 1 };
   }
 
+  fn arg_bytes(self: ref mut Self, zone: ref mut Zone, value: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    match std::process::arg_bytes(zone, value) {
+      std::Ok(arg_value) => {
+        self.arg_value(zone, arg_value);
+        return std::Ok<(), std::error::Error>(());
+      }
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+    }
+  }
+
   fn env_values(self: ref mut Self, values: std::Slice[std::process::EnvVar]) -> void {
     self.env_values = values;
   }
@@ -746,8 +788,59 @@ pub impl std::process::Command {
     self.env_values = std::Slice<std::process::EnvVar> { data: storage, len: old_len + 1 };
   }
 
+  fn env_bytes(
+    self: ref mut Self,
+    zone: ref mut Zone,
+    name: std::Slice[u8],
+    value: std::Slice[u8]
+  ) -> std::Result[(), std::error::Error] {
+    match std::process::env_var_bytes(zone, name, value) {
+      std::Ok(env_value) => {
+        self.env_value(zone, env_value);
+        return std::Ok<(), std::error::Error>(());
+      }
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+    }
+  }
+
   fn current_dir(self: ref mut Self, path: string) -> void {
     self.cwd_path = std::Some<std::c::CStr>(std::c::from_string(path));
+  }
+
+  fn current_dir_bytes(self: ref mut Self, zone: ref mut Zone, path: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    match std::c::from_slice_result_in(zone, path) {
+      std::Ok(cwd) => {
+        self.cwd_path = std::Some<std::c::CStr>(cwd.as_c_str());
+        return std::Ok<(), std::error::Error>(());
+      }
+      std::Err(reason) => {
+        return std::Err<(), std::error::Error>(reason);
+      }
+    }
+  }
+
+  fn current_dir_path(self: ref mut Self, zone: ref mut Zone, path: std::path::PathBytes) -> std::Result[(), std::error::Error] {
+    return self.current_dir_bytes(zone, path.as_slice());
+  }
+
+  fn with_arg(self, zone: ref mut Zone, value: string) -> std::process::Command {
+    var command = self;
+    command.arg(zone, value);
+    return command;
+  }
+
+  fn with_env(self, zone: ref mut Zone, name: string, value: string) -> std::process::Command {
+    var command = self;
+    command.env(zone, name, value);
+    return command;
+  }
+
+  fn with_current_dir(self, path: string) -> std::process::Command {
+    var command = self;
+    command.current_dir(path);
+    return command;
   }
 
   fn spawn(self: ref Self) -> std::Result[std::process::Child, std::error::Error] {

@@ -5,10 +5,11 @@ child-process control. The implemented surface reads process identity values,
 terminates explicitly with `exit` or `abort`, uses natural status helper names
 in source Ari, and on the current Linux/LLVM path can fork/wait directly or use
 the `Command` builder for `arg`, `args`, `env`, `env_values`, `env_var`,
-`current_dir`, `spawn`, `status`, `status_code`, `output`, `output_in`, `exec`, typed `ExitStatus` and
-`ExitCode` inspection, typed signal helpers, small stdout/stderr capture,
-child-stream endpoint aliases, current path wrappers, and temp file/temp dir
-creation.
+`arg_bytes`, `env_bytes`, `current_dir`, `current_dir_path`,
+by-value `with_arg`/`with_env`/`with_current_dir` chaining, `spawn`, `status`,
+`status_code`, `output`, `output_in`, `exec`, typed `ExitStatus` and `ExitCode`
+inspection, typed signal helpers, small stdout/stderr capture, child-stream
+endpoint aliases, current path wrappers, and temp file/temp dir creation.
 
 ## Current API
 
@@ -45,7 +46,9 @@ process::sigquit()
 process::sigkill()
 process::sigterm()
 process::arg(value)
+process::arg_bytes(zone, value) -> Result[process::Arg, process::Error]
 process::env_var(name, value)
+process::env_var_bytes(zone, name, value) -> Result[process::EnvVar, process::Error]
 process::command(program)
 process::command_with_args(program, args)
 process::spawn(command)
@@ -78,13 +81,20 @@ process::ChildStderr
 process::Command::new(program)
 process::Command::with_args(program, args)
 Command::arg(zone, value)
+Command::arg_bytes(zone, value) -> Result[(), process::Error]
 Command::arg_value(zone, value)
 Command::args(args)
 Command::env(zone, name, value)
+Command::env_bytes(zone, name, value) -> Result[(), process::Error]
 Command::env_values(env_values)
 Command::env_var(zone, name, value)
 Command::env_value(zone, value)
 Command::current_dir(path)
+Command::current_dir_bytes(zone, path) -> Result[(), process::Error]
+Command::current_dir_path(zone, path) -> Result[(), process::Error]
+Command::with_arg(zone, value)
+Command::with_env(zone, name, value)
+Command::with_current_dir(path)
 Command::spawn()
 Command::status() -> Result[process::ExitStatus, process::Error]
 Command::status_code() -> Result[i64, process::Error]
@@ -192,6 +202,36 @@ in the caller-provided zone; this keeps the builder dynamic without storing a
 redundant allocator handle in `Command`. The zone must outlive the call to
 `spawn`, `status`, `status_code`, `exit_status`, `output`, or `exec`.
 
+There are two ergonomic construction styles:
+
+```ari
+var cmd = process::Command::new("sh");
+cmd.arg(ref mut zone, "-c");
+cmd.arg(ref mut zone, "exit 0");
+cmd.env(ref mut zone, "ARI_MODE", "test");
+
+var chained = process::Command::new("sh")
+  .with_arg(ref mut zone, "-c")
+  .with_arg(ref mut zone, "exit 0")
+  .with_env(ref mut zone, "ARI_MODE", "test");
+```
+
+The mutating `arg`/`env` methods return `void` because they take both
+`ref mut Command` and `ref mut Zone`; Ari's borrow-return tracking cannot
+currently return `ref mut Command` from a function with two mutable-borrow
+parameters. The `with_*` methods take the command by value, append using the
+explicit zone, and return the updated command, so they support arix-style
+builder chains without hiding allocation.
+
+Use `process::arg("...")` and `process::env_var("NAME", "value")` for string
+literals and other borrowed C-string-shaped values. Use `arg_bytes`,
+`env_var_bytes`, `Command::arg_bytes`, `Command::env_bytes`,
+`Command::current_dir_bytes`, or `Command::current_dir_path` when the value
+comes from an owned `String`, `PathBuf`, `Slice[u8]`, or `PathBytes`. These
+byte-boundary helpers allocate NUL-terminated storage in the caller's zone,
+return `Result`, and reject interior NUL bytes as `Error(InvalidInput)` through
+the shared C-string boundary helpers.
+
 `status()` spawns the command, waits for it, and returns
 `Result[ExitStatus, Error]` so natural fallible process APIs preserve signal
 termination detail. `status_code()` is the explicit compatibility helper for
@@ -201,6 +241,17 @@ before `status()` became typed. `spawn()` returns a `Child` handle with `pid`,
 `wait`, `wait_status`, raw `kill`, typed `signal`, and `terminate` methods.
 `exec()` applies the setup and replaces the current process with the program;
 if `execvp` returns, Ari reports the host error.
+
+`spawn`, `status`, `status_code`, `exit_status`, and `output` inherit the
+parent process stdin/stdout/stderr by default unless a helper explicitly says it
+captures output. Child environment policy is also inherited by default:
+`env`/`env_values` add or overwrite selected variables, and there is not yet an
+environment-clear mode. `current_dir` is applied in the child just before
+`exec`. For `exec()` in the current process, setup failures return `Error`. For
+fork-based `spawn`/`status`/`output`, setup or `execvp` failure happens in the
+child and currently appears to the parent as exit status `127`; richer
+parent-visible setup errors require a future error-reporting pipe in the
+process runtime.
 
 The module-level wrappers `process::spawn(ref command)`,
 `process::status(ref command)`, `process::status_code(ref command)`,
@@ -225,7 +276,9 @@ Arguments use `process::arg("...")` rather than raw `string` slices so the
 builder can keep an executable-friendly C argv representation. Environment
 entries use `process::env_var(name, value)`. The ergonomic rule is: call sites
 still look like command construction, while the stdlib owns the pointer-level
-ABI shape.
+ABI shape. When values come from `env::args`, path joins, format output, or
+other owned byte strings, pass `value.as_slice()` to the `_bytes` helpers and
+handle the returned `Result`.
 
 `kill(pid, signal)` sends a POSIX signal and returns `Result[(), Error]`.
 `kill_signal(pid, signal)` is the typed wrapper. `sig_check()` is signal `0`
@@ -314,14 +367,36 @@ Command status:
 ```ari
 fn main() -> i64 {
   var zone = zone::temp(128);
-  var cmd = process::Command::new("sh");
-  cmd.arg(ref mut zone, "-c");
-  cmd.arg(ref mut zone, "exit 17");
+  var cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "exit 17");
 
   match cmd.status() {
     Ok(status) => { return status.code_or(process::failure()); }
     Err(_) => { return process::failure(); }
   }
+}
+```
+
+arix-style compiler invocation with owned output text:
+
+```ari
+fn compile_main(
+  zone: ref mut Zone,
+  compiler: string,
+  output: std::string::String
+) -> std::Result[(), std::error::Error] {
+  var cmd = process::Command::new(compiler)
+    .with_arg(zone, "src/main.ari")
+    .with_arg(zone, "-o");
+
+  cmd.arg_bytes(zone, output.as_slice())?;
+
+  let status = cmd.status()?;
+  if !status.success() {
+    return std::Err<(), std::error::Error>(std::error::new(std::error::Other));
+  }
+  return std::Ok<(), std::error::Error>(());
 }
 ```
 
@@ -417,10 +492,12 @@ fn main() -> i64 {
 - `uid`, `gid`, `fork`, `wait`, `Command`, and `kill` are POSIX-flavored hosted
   runtime hooks today. The API shape is intended to stay portable, but Windows
   mapping still needs a separate implementation.
-- `Command` currently supports `arg`, `args`, `env`, `env_var`, `spawn`,
-  `status`, `exit_status`, `output`, `output_in`, `exec`, environment
-  assignments, working-directory setup, captured stdout and stderr, typed
-  status inspection, and `Child` wait/kill/signal helpers.
+- `Command` currently supports `arg`, `args`, `arg_bytes`, `env`, `env_var`,
+  `env_bytes`, by-value `with_arg`/`with_env`/`with_current_dir`, `spawn`,
+  `status`, `exit_status`, `output`, `output_in`, `exec`, inherited stdio by
+  default, inherited environment plus selected assignments, working-directory
+  setup, captured stdout and stderr, typed status inspection, and `Child`
+  wait/kill/signal helpers.
   `output_in` is intended for small captured outputs today: large concurrent
   stdout/stderr streams need future readiness/nonblocking draining to avoid
   pipe-buffer backpressure. Explicit stdin redirection, inherited/cleared
@@ -468,6 +545,8 @@ wrappers. The typed-status fixture covers
 and signal termination. The output fixture covers method and module-level small
 stdout/stderr capture, exit status accessors, and missing command status `127`.
 The high-level fixture covers zone-backed `Command::arg`/`env_var`, typed
+by-value `with_arg`/`with_env`/`with_current_dir` chains, byte-boundary
+`arg_bytes`/`env_bytes`/`current_dir_path` helpers, NUL rejection,
 `ExitCode`, typed `Signal`, child stream endpoint aliases, current path
 wrappers, and temp file/temp dir constructors.
 Public declarations are tracked in

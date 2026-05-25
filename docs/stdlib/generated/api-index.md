@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2988`
+- API entries: `2997`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 745 | stable candidate |
-| `hosted` | 1214 | platform-backed |
+| `hosted` | 1223 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 25 |
-| `fn` | 1052 |
-| `method` | 1517 |
+| `fn` | 1054 |
+| `method` | 1524 |
 | `module` | 39 |
 | `struct` | 161 |
 | `trait` | 39 |
@@ -79,7 +79,7 @@ platform notes.
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 45 |
 | `std::path` | `core` | 83 |
-| `std::process` | `hosted` | 130 |
+| `std::process` | `hosted` | 139 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
@@ -2917,12 +2917,14 @@ Tier: `hosted`. Stability reading: platform-backed.
 | --- | --- |
 | `fn std::process::abort` | check-prelude std-process-abort explicit process abort hook; docs/stdlib/modules/process.md |
 | `fn std::process::arg` | check-prelude std-process-command C-argv argument wrapper for Command; docs/stdlib/modules/process.md |
+| `fn std::process::arg_bytes` | check-prelude std-process-high-level Result-returning C-argv argument wrapper for owned byte text; docs/stdlib/modules/process.md |
 | `fn std::process::command` | check-prelude std-process-command natural Command constructor; docs/stdlib/modules/process.md |
 | `fn std::process::command_with_args` | check-prelude std-process-command Command constructor with argv slice; docs/stdlib/modules/process.md |
 | `fn std::process::current_dir` | check-prelude std-process-basic Result-returning process-facing current directory wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::current_dir_optional` | check-prelude std-process-basic Option-returning process-facing current directory wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::current_dir_or_default` | check-prelude std-process-basic empty-string process-facing current directory compatibility wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::env_var` | check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::env_var_bytes` | check-prelude std-process-high-level Result-returning child environment assignment wrapper for owned byte text; docs/stdlib/modules/process.md |
 | `fn std::process::exec` | check-prelude std-process-command module-level Command exec wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::executable_path` | check-prelude std-process-basic Result-returning process-facing executable path wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::executable_path_optional` | check-prelude std-process-basic Option-returning process-facing executable path wrapper; docs/stdlib/modules/process.md |
@@ -2982,10 +2984,14 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Child::wait` | check-prelude std-process-command child wait Result helper; docs/stdlib/modules/process.md |
 | `method std::process::Child::wait_status` | check-prelude std-process-exit-status child typed ExitStatus wait helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::arg` | check-prelude std-process-high-level explicit-zone single argv append helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::arg_bytes` | check-prelude std-process-high-level Result-returning explicit-zone argv append helper for owned byte text; docs/stdlib/modules/process.md |
 | `method std::process::Command::arg_value` | check-prelude std-process-high-level explicit-zone Arg append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::args` | check-prelude std-process-command replace command argument slice; docs/stdlib/modules/process.md |
 | `method std::process::Command::current_dir` | check-prelude std-process-command child working-directory setup; docs/stdlib/modules/process.md |
+| `method std::process::Command::current_dir_bytes` | check-prelude std-process-high-level Result-returning child working-directory setup from owned byte text; docs/stdlib/modules/process.md |
+| `method std::process::Command::current_dir_path` | check-prelude std-process-high-level Result-returning child working-directory setup from PathBytes; docs/stdlib/modules/process.md |
 | `method std::process::Command::env` | check-prelude std-process-command explicit-zone single environment append helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::env_bytes` | check-prelude std-process-high-level Result-returning environment append helper for owned byte text; docs/stdlib/modules/process.md |
 | `method std::process::Command::env_value` | check-prelude std-process-high-level explicit-zone EnvVar append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::env_values` | check-prelude std-process-command replace child environment assignment slice; docs/stdlib/modules/process.md |
 | `method std::process::Command::env_var` | check-prelude std-process-high-level explicit-zone environment append compatibility helper; docs/stdlib/modules/process.md |
@@ -2997,7 +3003,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Command::spawn` | check-prelude std-process-command spawn child process handle; docs/stdlib/modules/process.md |
 | `method std::process::Command::status` | check-prelude std-process-command spawn and wait for typed exit status; docs/stdlib/modules/process.md |
 | `method std::process::Command::status_code` | check-prelude std-process-command explicit normal-exit-code compatibility helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::with_arg` | check-prelude std-process-high-level by-value chainable single argv append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_args` | check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md |
+| `method std::process::Command::with_current_dir` | check-prelude std-process-high-level by-value chainable child working-directory setup helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::with_env` | check-prelude std-process-high-level by-value chainable environment append helper; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::code` | check-prelude std-process-high-level typed exit code accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::exit` | check-prelude std-process-high-level typed process exit helper; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::is_failure` | check-prelude std-process-high-level typed failure predicate; docs/stdlib/modules/process.md |

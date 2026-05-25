@@ -1,6 +1,8 @@
-// Covers the high-level process polish layer: explicit-zone Command::arg
-// builder growth, typed ExitCode and Signal wrappers, child-stream aliases,
-// current path wrappers, and temp file/temp dir constructors.
+// Covers the high-level process polish layer: explicit-zone mutating Command
+// builders, by-value chainable Command builders, byte-boundary argv/env/cwd
+// helpers, typed ExitCode and
+// Signal wrappers, child-stream aliases, current path wrappers, and temp
+// file/temp dir constructors.
 fn status_is(value: Result[process::ExitStatus, error::Error], expected: i64) -> bool {
   match value {
     Ok(status) => { return status.exited() && status.code_or(-1) == expected; }
@@ -26,10 +28,11 @@ fn main() -> i64 {
   var zone = zone::temp(2048);
   var score = 0;
 
-  var cmd = process::Command::new("sh");
-  cmd.arg(ref mut zone, "-c");
-  cmd.arg(ref mut zone, "test \"$ARI_HIGH_LEVEL\" = yes && exit 12");
-  cmd.env(ref mut zone, "ARI_HIGH_LEVEL", "yes");
+  var cmd = process::Command::new("sh")
+    .with_arg(ref mut zone, "-c")
+    .with_arg(ref mut zone, "test \"$ARI_HIGH_LEVEL\" = yes && pwd | grep -q '/build/prelude$' && exit 12")
+    .with_env(ref mut zone, "ARI_HIGH_LEVEL", "yes")
+    .with_current_dir("build/prelude");
   if status_is(cmd.status(), 12) {
     score = score + 11;
   }
@@ -45,6 +48,31 @@ fn main() -> i64 {
       }
     }
     Err(_) => {}
+  }
+
+  var owned_flag = std::string::from_string(ref mut zone, "-c");
+  var owned_script = std::string::from_string(
+    ref mut zone,
+    "test \"$ARI_BYTES\" = ok && pwd | grep -q '/build/prelude$' && exit 14"
+  );
+  var bytes_cmd = process::Command::new("sh");
+  if bytes_cmd.arg_bytes(ref mut zone, owned_flag.as_slice()).is_ok() &&
+     bytes_cmd.arg_bytes(ref mut zone, owned_script.as_slice()).is_ok() &&
+     bytes_cmd.env_bytes(ref mut zone, "ARI_BYTES", "ok").is_ok() &&
+     bytes_cmd.current_dir_path(ref mut zone, "build/prelude").is_ok() &&
+     status_is(bytes_cmd.status(), 14) {
+    score = score + 59;
+  }
+
+  var bad = [65u8, 0u8, 66u8];
+  if process::arg_bytes(ref mut zone, bad.as_slice()).is_err() {
+    score = score + 61;
+  }
+  if process::env_var_bytes(ref mut zone, "ARI_BAD", bad.as_slice()).is_err() {
+    score = score + 67;
+  }
+  if bytes_cmd.current_dir_bytes(ref mut zone, bad.as_slice()).is_err() {
+    score = score + 71;
   }
 
   let ok = process::success_code();
@@ -139,6 +167,6 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
-  assert_eq_i64(score, 364);
+  assert_eq_i64(score, 622);
   return score;
 }

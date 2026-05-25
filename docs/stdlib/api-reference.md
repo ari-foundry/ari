@@ -584,7 +584,9 @@ process::sigquit()
 process::sigkill()
 process::sigterm()
 process::arg(value)
+process::arg_bytes(zone, value)
 process::env_var(name, value)
+process::env_var_bytes(zone, name, value)
 process::command(program)
 process::command_with_args(program, args)
 process::spawn(command)
@@ -617,13 +619,20 @@ process::ChildStderr
 process::Command::new(program)
 process::Command::with_args(program, args)
 Command::arg(zone, value)
+Command::arg_bytes(zone, value)
 Command::arg_value(zone, value)
 Command::args(args)
 Command::env(zone, name, value)
+Command::env_bytes(zone, name, value)
 Command::env_values(env_values)
 Command::env_var(zone, name, value)
 Command::env_value(zone, value)
 Command::current_dir(path)
+Command::current_dir_bytes(zone, path)
+Command::current_dir_path(zone, path)
+Command::with_arg(zone, value)
+Command::with_env(zone, name, value)
+Command::with_current_dir(path)
 Command::spawn()
 Command::status()
 Command::status_code()
@@ -709,16 +718,23 @@ sentinel.
 argv entries and `process::env_var` for child environment assignments, or use
 the explicit-zone appenders `Command::arg(ref mut zone, value)` and
 `Command::env(ref mut zone, name, value)` / `Command::env_var(ref mut zone,
-name, value)` when the builder should grow one
-item at a time:
+name, value)` when the builder should grow one item at a time. Use
+`arg_bytes`, `env_var_bytes`, `Command::arg_bytes`, `Command::env_bytes`,
+`Command::current_dir_bytes`, and `Command::current_dir_path` for owned
+`String`, `PathBuf`, `PathBytes`, or `Slice[u8]` values; those helpers return
+`Result` and reject interior NUL before building C argv/env/cwd storage.
 
 ```ari
 var zone = zone::temp(128);
-var cmd = process::Command::new("sh");
-cmd.arg(ref mut zone, "-c");
-cmd.arg(ref mut zone, "exit 7");
+var cmd = process::Command::new("sh")
+  .with_arg(ref mut zone, "-c")
+  .with_arg(ref mut zone, "exit 7");
 let status = cmd.status();
 ```
+
+The `with_arg`, `with_env`, and `with_current_dir` helpers are by-value
+chainable forms. The mutating `arg`/`env` forms still return `void` because
+they take both `ref mut Command` and `ref mut Zone`.
 
 `status()` spawns and waits, returning typed `ExitStatus` so natural fallible
 process APIs preserve signal termination detail. `status_code()` is the
@@ -759,9 +775,10 @@ exit code compatibility accessor, `Output::is_success()` for the standard
 success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views.
 `stdout_string(zone)` and `stderr_string(zone)` validate the captured bytes as
 UTF-8, copy them into a zone-owned `String`, and return `Error(InvalidData)` for
-non-UTF-8 output. This slice is meant for small outputs today; large concurrent streams, stdin
-redirection, environment inheritance policy, portable Windows mapping, and
-platform-specific status detail are still future process-library work.
+non-UTF-8 output. This slice is meant for small outputs today; large concurrent
+streams, stdin redirection, environment-clear policy, parent-visible child
+setup errors, portable Windows mapping, and platform-specific status detail are
+still future process-library work.
 
 `ChildStdin`, `ChildStdout`, and `ChildStderr` name the current pipe endpoint
 types used by future streaming process IO. `current_dir`,
