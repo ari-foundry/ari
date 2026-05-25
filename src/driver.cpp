@@ -158,6 +158,25 @@ static std::vector<std::string> split_lines(const std::string& text) {
     return lines;
 }
 
+static CompileError llvm_fragment_error(const std::string& message, const std::string& symbol) {
+    CompileError error(message);
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "--emit-llvm-fragment extracts functions from the LLVM IR produced by the same compiler invocation",
+        DiagnosticNoteKind::Note});
+    if (!symbol.empty()) {
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "requested LLVM symbol: " + symbol,
+            DiagnosticNoteKind::Note});
+    }
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "check the generated --emit-llvm output for the exact mangled symbol, then pass it with --llvm-symbol",
+        DiagnosticNoteKind::Help});
+    return error;
+}
+
 static std::vector<std::string> extract_llvm_function(const std::vector<std::string>& lines,
                                                       const std::string& symbol) {
     const std::string needle = "@\"" + symbol + "\"";
@@ -169,10 +188,10 @@ static std::vector<std::string> extract_llvm_function(const std::vector<std::str
                 body.push_back(lines[current]);
                 if (lines[current] == "}") return body;
             }
-            throw CompileError("unterminated LLVM function for " + symbol);
+            throw llvm_fragment_error("unterminated LLVM function for " + symbol, symbol);
         }
     }
-    throw CompileError("LLVM function not found: " + symbol);
+    throw llvm_fragment_error("LLVM function not found: " + symbol, symbol);
 }
 
 static std::string dump_llvm_function_fragments(const std::string& llvm,

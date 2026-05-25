@@ -192,6 +192,15 @@ def main():
 
     ok &= require_failure(
         run_ari(
+            "--emit-llvm", OUT_DIR / "missing-symbol.ll",
+            "--emit-llvm-fragment", OUT_DIR / "missing-symbol.llvm-frag",
+            "--llvm-symbol", "_ARNv7missing",
+        ),
+        "check the generated --emit-llvm output for the exact mangled symbol",
+    )
+
+    ok &= require_failure(
+        run_ari(
             "--shared",
             "--emit-llvm", OUT_DIR / "symbols.ll",
             "--emit-symbols", OUT_DIR / "symbols.symbols",

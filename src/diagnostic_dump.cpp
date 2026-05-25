@@ -382,6 +382,8 @@ std::string classify_diagnostic_code(const std::string& message) {
         return "A0001";
     }
     if (contains(diagnostic, "LLVM backend") ||
+        contains(diagnostic, "LLVM function not found") ||
+        contains(diagnostic, "unterminated LLVM function") ||
         contains(diagnostic, "artifact") ||
         contains(diagnostic, "object")) {
         return "B0001";
