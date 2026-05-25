@@ -160,6 +160,10 @@ pub impl std::string::Utf8 {
   fn codepoint_at(self: ref Self, byte_index: i64) -> std::Option[std::encoding::Utf8Char] {
     return std::encoding::utf8_at(self.bytes, byte_index);
   }
+
+  fn next_index(self: ref Self, byte_index: i64) -> std::Option[i64] {
+    return std::encoding::utf8_next_index(self.bytes, byte_index);
+  }
 }
 
 pub impl std::string::OsStr {
@@ -759,6 +763,11 @@ pub impl std::string::String {
   fn codepoint_at(self: ref Self, byte_index: i64) -> std::Option[std::encoding::Utf8Char] {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::encoding::utf8_at(view, byte_index);
+  }
+
+  fn codepoint_next_index(self: ref Self, byte_index: i64) -> std::Option[i64] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::encoding::utf8_next_index(view, byte_index);
   }
 
   fn trim_start(self: ref Self) -> super::Slice[u8] {

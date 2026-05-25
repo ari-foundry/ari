@@ -1931,6 +1931,7 @@ method std::string::String::chunks|check-prelude std-string-split-join byte-view
 method std::string::String::clear|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::codepoint_at|check-prelude std-string-unicode-helpers UTF-8 scalar decode at byte offset; docs/stdlib/modules/string.md
 method std::string::String::codepoint_count|check-prelude std-string-unicode-helpers UTF-8 scalar count validator; docs/stdlib/modules/string.md
+method std::string::String::codepoint_next_index|check-prelude std-string-unicode-helpers UTF-8 scalar next byte offset helper; docs/stdlib/modules/string.md
 method std::string::String::contains|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::contains_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only search; docs/stdlib/api-reference.md String section
 method std::string::String::contains_slice|check-prelude std-string-split-join byte-slice search predicate; docs/stdlib/modules/string.md
@@ -2006,6 +2007,7 @@ method std::string::Utf8::codepoint_at|check-prelude std-string-text-kinds valid
 method std::string::Utf8::codepoint_count|check-prelude std-string-text-kinds validated UTF-8 scalar count; docs/stdlib/modules/string.md
 method std::string::Utf8::is_empty|check-prelude std-string-text-kinds UTF-8 byte empty predicate; docs/stdlib/modules/string.md
 method std::string::Utf8::len|check-prelude std-string-text-kinds UTF-8 byte length accessor; docs/stdlib/modules/string.md
+method std::string::Utf8::next_index|check-prelude std-string-unicode-helpers validated UTF-8 next byte offset helper; docs/stdlib/modules/string.md
 method std::sync::AtomicBool::compare_exchange|check-prelude std-sync-concurrency-api bool compare-and-exchange wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicBool::compare_exchange_order|check-prelude std-sync-concurrency-api bool atomic explicit-order compare-and-exchange wrapper; docs/stdlib/modules/sync.md
 method std::sync::AtomicBool::load|check-prelude std-sync-concurrency-api bool atomic load wrapper; docs/stdlib/modules/sync.md

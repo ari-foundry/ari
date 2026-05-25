@@ -333,6 +333,7 @@ text.is_utf8()
 text.try_utf8()
 text.codepoint_count()
 text.codepoint_at(byte_index)
+text.codepoint_next_index(byte_index)
 text.push_codepoint_in(ref mut zone, scalar)
 ```
 
@@ -343,8 +344,11 @@ rechecking at each call site. `codepoint_count` returns
 Unicode scalar at a byte offset and returns `Option[std::encoding::Utf8Char]`.
 It returns `None` for continuation-byte offsets, invalid sequences, and
 out-of-range indexes. The returned `Utf8Char` has `scalar()`, `len()`, and
-`next_index(byte_index)` accessors. These helpers count Unicode scalar values,
-not grapheme clusters.
+`next_index(byte_index)` accessors. `codepoint_next_index` returns the byte
+offset after the scalar at `byte_index`, or `None<i64>()` for the same invalid
+inputs as `codepoint_at`, so callers can iterate by byte offset without
+decoding the same scalar twice. These helpers count Unicode scalar values, not
+grapheme clusters.
 
 Validated borrowed UTF-8 bytes use `Utf8`:
 
@@ -356,6 +360,7 @@ view.len()
 view.is_empty()
 view.codepoint_count()
 view.codepoint_at(byte_index)
+view.next_index(byte_index)
 ```
 
 `Utf8` records the API intent that the bytes are text. Construct the view with
