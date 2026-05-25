@@ -394,6 +394,8 @@ Application code should usually use the user-facing `std::env` wrappers:
 ```ari
 env::arg_count()
 env::arg(index)
+env::args(ref mut zone)
+env::args_os(ref mut zone)
 env::arg_optional(index)
 env::arg_unchecked(index)
 env::arg_os(index)
@@ -406,6 +408,12 @@ env::program_name()
 env::program_name_optional()
 env::program_name_os()
 env::program_name_os_optional()
+env::var(name)
+env::var_optional(name)
+env::var_or_default(name)
+env::var_os(name)
+env::var_os_optional(name)
+env::var_os_or_default(name)
 env::get(name)
 env::get_os(name)
 env::get_or_default(name)
@@ -413,8 +421,10 @@ env::get_os_or_default(name)
 env::has(name)
 env::try_get(name)
 env::try_get_os(name)
+env::set_var(name, value)
 env::set(name, value)
 env::set_unchecked(name, value)
+env::remove_var(name)
 env::remove(name)
 env::remove_unchecked(name)
 env::current_dir()
@@ -436,6 +446,11 @@ env::try_executable_path()
 env::executable_path_os()
 env::executable_path_os_optional()
 env::try_executable_path_os()
+env::executable_path_path()
+env::executable_path_path_or_default()
+env::executable_path_path_optional()
+env::try_executable_path_path()
+env::home_dir()
 ```
 
 `env::arg(index)` returns `Result[string, Error]`, using `NotFound` for an
@@ -444,6 +459,9 @@ out-of-range argument index. `env::arg_optional(index)` and the older
 `env::arg_unchecked(index)` exposes the raw startup-context string hook.
 `env::program_name()` follows the same Result policy for `argv[0]`, and
 `env::program_name_optional()` is the optional compatibility form.
+`env::args(ref mut zone)` collects all arguments into an owned
+`Vec[std::string::String]`, while `env::args_os(ref mut zone)` collects
+OS-string views for CLI code that wants byte-preserving argument handling.
 
 `env::arg_os(index)`, `env::arg_os_optional(index)`,
 `env::arg_os_unchecked(index)`, `env::try_arg_os(index)`,
@@ -451,28 +469,34 @@ out-of-range argument index. `env::arg_optional(index)` and the older
 values as `std::string::OsStr` when an argument should stay in OS-string form
 until the caller chooses bytes or UTF-8.
 
-`env::get(name)` returns `Result[string, Error]` for environment variables,
-using `NotFound` for missing names. `env::try_get(name)` keeps only optional
-success, while `env::get_or_default(name)` keeps the older empty-string
-fallback. `env::set(name, value)` overwrites a current-process variable and
-`env::remove(name)` unsets it; both return `Result[(), Error]`.
-`set_unchecked` and `remove_unchecked` keep the older boolean compatibility
-shape. `env::current_dir()`, `env::executable_path()`, and
+`env::var(name)` returns `Result[string, Error]` for environment variables,
+using `NotFound` for missing names. `env::var_optional(name)` and
+`env::try_get(name)` keep only optional success, while `env::var_or_default(name)`
+and `env::get_or_default(name)` keep the older empty-string fallback.
+`env::get(name)` is a compatibility alias for `env::var(name)`.
+`env::set_var(name, value)` overwrites a current-process variable and
+`env::remove_var(name)` unsets it; both return `Result[(), Error]`.
+`env::set(name, value)` and `env::remove(name)` are compatibility aliases with
+the same Result behavior. `set_unchecked` and `remove_unchecked` keep the older
+boolean compatibility shape. `env::current_dir()`, `env::executable_path()`, and
 `env::set_current_dir(path)` return `Result[..., Error]`; `_optional` and
 `try_*` wrappers keep only the success payload, `_or_default` wrappers keep the
 older empty-string fallback, and `_unchecked`/`_raw` names are compatibility
 or boundary hooks. Portable child-process spawn handles remain roadmap work;
 thread helpers live in `std::thread`.
 
-`env::get_os(name)` returns a `Result[OsStr, Error]` environment view.
-`env::try_get_os(name)` keeps only optional success, and
-`env::get_os_or_default(name)` is the compatibility fallback.
+`env::var_os(name)` returns a `Result[OsStr, Error]` environment view.
+`env::var_os_optional(name)` and `env::try_get_os(name)` keep only optional
+success, and `env::var_os_or_default(name)` / `env::get_os_or_default(name)` are
+the compatibility fallbacks. `env::get_os(name)` aliases `env::var_os(name)`.
 `env::current_dir_os()` / `current_dir_os_optional()` and
 `env::executable_path_os()` / `executable_path_os_optional()` expose path-like
 host data as OS strings. `env::current_dir_path()` and
 `env::current_dir_path_optional()` expose the current directory as
-`std::path::PathBytes`; convert executable OS strings with `std::path::from_os`
-when the next step is path manipulation.
+`std::path::PathBytes`; `env::executable_path_path()` does the same for the
+running executable. `env::home_dir()` returns `Option[PathBytes]` from `HOME`,
+which is enough for package-manager paths such as `~/.ari` on the current
+POSIX-backed host slice.
 
 Target and platform facts live in `std::target`:
 

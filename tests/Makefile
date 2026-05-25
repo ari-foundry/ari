@@ -892,6 +892,8 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env9arg_count" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env3arg" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env4args" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env7args_os" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env12arg_optional" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env13arg_unchecked" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env7try_arg" $(BUILD_DIR)/prelude/std-env-args.ll
@@ -913,6 +915,12 @@ check-prelude: $(TARGET)
 	grep -q "@setenv" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -q "@unsetenv" $(BUILD_DIR)/prelude/std-env-vars.ll
 	grep -F -q "std3env7try_get" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "std3env3var" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "std3env12var_optional" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "std3env6var_os" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "std3env15var_os_optional" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "std3env7set_var" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "std3env10remove_var" $(BUILD_DIR)/prelude/std-env-vars.ll
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-vars.ari -o $(BUILD_DIR)/prelude/std-env-vars.elf
 	$(BUILD_DIR)/prelude/std-env-vars.elf; code=$$?; test $$code -eq 158
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-vars.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-vars.elf; $(BUILD_DIR)/prelude/std-env-vars.elf; code=$$?; test $$code -eq 158; fi
@@ -928,8 +936,11 @@ check-prelude: $(TARGET)
 	grep -F -q "std3env15set_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env20current_dir_optional" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env15try_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env8home_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env24executable_path_optional" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env19try_executable_path" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env20executable_path_path" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env29executable_path_path_optional" $(BUILD_DIR)/prelude/std-env-paths.ll
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari -o $(BUILD_DIR)/prelude/std-env-paths.elf
 	$(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-paths.elf; $(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39; fi

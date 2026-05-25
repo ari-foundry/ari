@@ -61,6 +61,19 @@ fn main() -> i64 {
     score = score + consume_arg(env::arg_unchecked(0));
   }
 
+  var zone = zone::create(512);
+  let collected = env::args(ref mut zone);
+  assert(collected.len() == count);
+  if count > 0 {
+    assert(!collected.get(0).is_empty());
+  }
+  let collected_os = env::args_os(ref mut zone);
+  assert(collected_os.len() == count);
+  if count > 0 {
+    assert(!collected_os.get(0).is_empty());
+  }
+  zone::destroy(zone);
+
   let program = env::program_name();
   if program.is_ok() {
     score = score + 23;

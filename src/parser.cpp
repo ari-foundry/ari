@@ -277,7 +277,8 @@ private:
         if (!check(TokenKind::Identifier) &&
             !check(TokenKind::KwDrop) &&
             !check(TokenKind::KwForget) &&
-            !check(TokenKind::KwNext)) {
+            !check(TokenKind::KwNext) &&
+            !check(TokenKind::KwVar)) {
             fail(peek().loc, message);
         }
         return tokens_[pos_++];

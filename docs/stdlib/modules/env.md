@@ -7,11 +7,13 @@ CLIs need: current directory and executable path. Argument helpers are built on
 top of `std::context`, which owns the low-level runtime hooks initialized by
 the generated host entry wrapper.
 
-Environment variable helpers use natural fallible names: `get`, `get_os`,
-`set`, and `remove` return `Result[..., env::Error]`. Compact compatibility
-helpers that discard error detail are named explicitly: `try_get`,
-`try_get_os`, `get_or_default`, `get_os_or_default`, `set_unchecked`, and
-`remove_unchecked`.
+Environment variable helpers use natural fallible names: `var`, `var_os`,
+`set_var`, and `remove_var` return `Result[..., env::Error]`. The older
+`get`, `get_os`, `set`, and `remove` names remain compatibility aliases with
+the same Result behavior. Compact compatibility helpers that discard error
+detail are named explicitly: `try_get`, `try_get_os`, `var_optional`,
+`var_os_optional`, `get_or_default`, `var_or_default`, `get_os_or_default`,
+`var_os_or_default`, `set_unchecked`, and `remove_unchecked`.
 
 Argument and process-path helpers follow the default stdlib error model:
 natural fallible names return `Result`, while `_optional`, `_or_default`,
@@ -30,6 +32,8 @@ env::Error
 env::ErrorKind
 env::arg_count() -> i64
 env::arg(index: i64) -> Result[string, env::Error]
+env::args(ref mut zone) -> std::vec::Vec[std::string::String]
+env::args_os(ref mut zone) -> std::vec::Vec[std::string::OsStr]
 env::arg_optional(index: i64) -> Option[string]
 env::arg_unchecked(index: i64) -> string
 env::has_arg(index: i64) -> bool
@@ -46,6 +50,12 @@ env::program_name_os() -> Result[std::string::OsStr, env::Error]
 env::program_name_os_optional() -> Option[std::string::OsStr]
 env::program_name_result() -> Result[string, env::Error]
 env::program_name_os_result() -> Result[std::string::OsStr, env::Error]
+env::var(name: string) -> Result[string, env::Error]
+env::var_optional(name: string) -> Option[string]
+env::var_or_default(name: string) -> string
+env::var_os(name: string) -> Result[std::string::OsStr, env::Error]
+env::var_os_optional(name: string) -> Option[std::string::OsStr]
+env::var_os_or_default(name: string) -> std::string::OsStr
 env::get(name: string) -> Result[string, env::Error]
 env::get_os(name: string) -> Result[std::string::OsStr, env::Error]
 env::get_or_default(name: string) -> string
@@ -53,8 +63,10 @@ env::get_os_or_default(name: string) -> std::string::OsStr
 env::has(name: string) -> bool
 env::try_get(name: string) -> Option[string]
 env::try_get_os(name: string) -> Option[std::string::OsStr]
+env::set_var(name: string, value: string) -> Result[(), env::Error]
 env::set(name: string, value: string) -> Result[(), env::Error]
 env::set_unchecked(name: string, value: string) -> bool
+env::remove_var(name: string) -> Result[(), env::Error]
 env::remove(name: string) -> Result[(), env::Error]
 env::remove_unchecked(name: string) -> bool
 env::current_dir() -> Result[string, env::Error]
@@ -82,6 +94,11 @@ env::executable_path_os() -> Result[std::string::OsStr, env::Error]
 env::executable_path_os_or_default() -> std::string::OsStr
 env::executable_path_os_optional() -> Option[std::string::OsStr]
 env::try_executable_path_os() -> Option[std::string::OsStr]
+env::executable_path_path() -> Result[std::path::PathBytes, env::Error]
+env::executable_path_path_or_default() -> std::path::PathBytes
+env::executable_path_path_optional() -> Option[std::path::PathBytes]
+env::try_executable_path_path() -> Option[std::path::PathBytes]
+env::home_dir() -> Option[std::path::PathBytes]
 ```
 
 `arg_count()` returns the number of host arguments.
@@ -101,6 +118,15 @@ explicitly validates it as UTF-8. `arg_os_optional(index)` and
 `try_arg_os(index)` discard the reason, while `arg_os_unchecked(index)` uses
 the raw context hook.
 
+`args(ref mut zone)` collects every host argument into owned
+`std::string::String` values in the caller-provided zone. This is the ergonomic
+form for CLI dispatch such as `arix build --release` or `arix run -- arg1`;
+callers can index or iterate the returned `Vec` instead of repeating an
+`arg_count()`/`arg(index)` loop. `args_os(ref mut zone)` collects the same
+argument list as `OsStr` views when the caller wants to postpone UTF-8 policy.
+The vector allocation is zone-owned; the `args_os` entries still borrow the
+runtime argument byte strings.
+
 `program_name()` is `arg(0)`, so it returns the host-provided executable name
 when one exists and `NotFound` when the host context has no argument 0.
 `program_name_optional()` is the explicit optional compatibility form.
@@ -109,29 +135,35 @@ when one exists and `NotFound` when the host context has no argument 0.
 kept for source compatibility.
 
 `has(name)` returns whether an environment variable is visible to the current
-process. `get(name)` returns `Ok(value)` when the variable exists and
+process. `var(name)` returns `Ok(value)` when the variable exists and
 `Err(Error(NotFound))` when it is absent. Missing environment variables are
 ordinary absence, not a runtime failure, but the `Result` shape lets APIs
 compose with other fallible hosted helpers without erasing the reason.
-`try_get(name)` keeps only the success payload as `Option[string]`, and
-`get_or_default(name)` is the compatibility helper for older code that wants
-an empty string when the variable is missing.
+`var_optional(name)` and the older `try_get(name)` keep only the success
+payload as `Option[string]`, and `var_or_default(name)` / `get_or_default(name)`
+are compatibility helpers for older code that wants an empty string when the
+variable is missing. `get(name)` is kept as an alias for `var(name)`. Because
+`var` is also Ari's mutable-binding keyword, call this helper as
+`env::var(...)` or `std::env::var(...)`; do not import it for bare `var(...)`
+calls.
 
-`get_os(name)` applies the same `Result` policy to an `std::string::OsStr`
-view. `try_get_os(name)` keeps only the optional success value, and
-`get_os_or_default(name)` is the compatibility helper. On the current POSIX
-target, OS-string environment values preserve the raw bytes from the runtime C
-string and let callers choose `try_utf8()` or a byte-level policy at the
-boundary.
+`var_os(name)` applies the same `Result` policy to an `std::string::OsStr`
+view. `var_os_optional(name)` and `try_get_os(name)` keep only the optional
+success value, and `var_os_or_default(name)` / `get_os_or_default(name)` are the
+compatibility helpers. On the current POSIX target, OS-string environment
+values preserve the raw bytes from the runtime C string and let callers choose
+`try_utf8()` or a byte-level policy at the boundary. `get_os(name)` is kept as
+an alias for `var_os(name)`.
 
-`set(name, value)` overwrites the current process environment variable and
-returns `Ok(())` when the host accepts the mutation. `remove(name)` unsets the
-variable and returns `Ok(())` on success. These mutations affect the current
+`set_var(name, value)` overwrites the current process environment variable and
+returns `Ok(())` when the host accepts the mutation. `remove_var(name)` unsets
+the variable and returns `Ok(())` on success. These mutations affect the current
 process and children spawned later by this process; they do not edit a user's
-shell profile or global system environment. `set_unchecked` and
-`remove_unchecked` keep the older boolean compatibility shape. Today failed
-host mutations become `Error(Other)` because the runtime bool hook does not
-yet expose a platform errno payload.
+shell profile or global system environment. `set(name, value)` and
+`remove(name)` are compatibility aliases with the same Result behavior.
+`set_unchecked` and `remove_unchecked` keep the older boolean compatibility
+shape. Today failed host mutations become `Error(Other)` because the runtime
+bool hook does not yet expose a platform errno payload.
 
 `current_dir()` returns the process current working directory as
 `Result[string, Error]`. The success string is borrowed from a runtime buffer.
@@ -147,6 +179,12 @@ preferred form for lexical path operations such as `is_absolute`, `components`,
 `file_name`, or `normalize_in`. `_or_default` and `_optional` variants discard
 the `Error` detail explicitly; the `try_*` names are compatibility aliases for
 the optional forms.
+
+`home_dir()` returns `Some(PathBytes)` when the current process has a non-empty
+`HOME` environment variable and `None` otherwise. It is intentionally optional
+because many hosted programs can run without a user profile. Package-manager
+style code can use it to derive paths such as `~/.ari` with
+`PathBytes::join_in`.
 
 `set_current_dir(path)` changes the current process working directory and
 returns `Ok(())` when the host accepts the request. This is process-local
@@ -169,6 +207,9 @@ keeps the older empty-string behavior, and `executable_path_optional()` /
 Convert the `Ok` value with `std::path::from_os` when the next operation is path
 manipulation. `executable_path_os_or_default()` and
 `executable_path_os_optional()` are the explicit information-discarding forms.
+`executable_path_path()` is the direct `Result[PathBytes, Error]` view for code
+that wants path operations without first going through `OsStr`; the `_optional`,
+`_or_default`, and `try_*` variants mirror the current-directory path helpers.
 
 ## Example
 
@@ -188,6 +229,16 @@ fn main() -> i64 {
     }
   }
 
+  var zone = zone::create(512);
+  let args = env::args(ref mut zone);
+  if args.len() > 1 {
+    let subcommand = args.get(1);
+    if subcommand.equals_text("build") {
+      println("building");
+    }
+  }
+  zone::destroy(zone);
+
   let raw_first = env::arg_os_optional(1);
   if raw_first.is_some() {
     let first_os = raw_first.unwrap();
@@ -205,14 +256,14 @@ Environment variables:
 
 ```ari
 fn main() -> i64 {
-  if env::set("ARI_MODE", "dev").is_ok() {
-    match env::get("ARI_MODE") {
+  if env::set_var("ARI_MODE", "dev").is_ok() {
+    match env::var("ARI_MODE") {
       Ok(value) => println("mode={}", value),
       Err(_) => {}
     }
   }
 
-  env::remove("ARI_MODE").unwrap();
+  env::remove_var("ARI_MODE").unwrap();
   return 0;
 }
 ```
@@ -246,6 +297,16 @@ fn main() -> i64 {
     Err(_) => println("exe unavailable"),
   }
 
+  match env::home_dir() {
+    std::Some(home) => {
+      var zone = zone::create(256);
+      let prefix = home.join_in(ref mut zone, ".ari");
+      println("prefix={}", prefix.as_slice());
+      zone::destroy(zone);
+    }
+    std::None => {}
+  }
+
   return 0;
 }
 ```
@@ -265,7 +326,8 @@ fn main() -> i64 {
 - Child-process mutation is a future OS-facing slice. Current process
   identity and termination helpers live in `std::process`.
 - Argument strings are borrowed from the host runtime context. Copy into a
-  zone-backed `std::string::String` when owned text is needed.
+  zone-backed `std::string::String` when owned text is needed. `args(ref mut
+  zone)` performs that copy for the full argument vector.
 - Environment variable values are also borrowed host strings. Copy into a
   zone-backed `std::string::String` before storing them beyond the immediate
   use site.
@@ -275,13 +337,15 @@ fn main() -> i64 {
 ## Tests
 
 - `tests/cases/standard-library/ok/env/std-env-args.ari` checks the source wrappers,
-  `Option` and `Result` result shapes, LLVM symbols, and executable behavior.
+  full argument collection, `Option` and `Result` result shapes, LLVM symbols,
+  and executable behavior.
 - `tests/cases/standard-library/ok/env/std-env-vars.ari` checks current-process
-  environment `get`/`get_or_default`/`has`/`try_get`/`get_os`/`set`/`remove`
-  plus `_unchecked` compatibility behavior and runtime hook lowering.
+  environment `var`/`var_or_default`/`has`/`try_get`/`var_os`/`set_var`/
+  `remove_var` plus older `get`/`set`/`remove`, `_unchecked` compatibility
+  behavior, and runtime hook lowering.
 - `tests/cases/standard-library/ok/env/std-env-paths.ari` checks current
-  directory, `set_current_dir`, executable-path lookup, `Option` and `Result`
-  wrappers, LLVM symbols, and executable behavior.
+  directory, `set_current_dir`, executable-path lookup, `home_dir`, `Option` and
+  `Result` wrappers, LLVM symbols, and executable behavior.
 - `tests/cases/standard-library/ok/env/std-env-os-path-views.ari` checks
   `OsStr` argument/environment/path views and `PathBytes` current-directory
   views.

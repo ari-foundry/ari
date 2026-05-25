@@ -31,6 +31,16 @@ fn main() -> i64 {
   }
   assert(env::current_dir_os().is_ok());
   assert(env::current_dir_path().is_ok());
+  assert(env::set_var("HOME", "/tmp/ari-home-test").is_ok());
+  match env::home_dir() {
+    std::Some(home) => {
+      assert(home.is_absolute());
+      assert(home.has_file_name(std::string::bytes("ari-home-test")));
+    }
+    std::None => {
+      panic();
+    }
+  }
   if env::set_current_dir(cwd).is_ok() {
     score = score + 7;
   }
@@ -52,6 +62,10 @@ fn main() -> i64 {
     }
   }
   assert(env::executable_path_os().is_ok());
+  assert(env::executable_path_path().is_ok());
+  assert(env::executable_path_path_optional().is_some());
+  assert(env::try_executable_path_path().is_some());
+  assert(!env::executable_path_path_or_default().is_empty());
 
   return score;
 }

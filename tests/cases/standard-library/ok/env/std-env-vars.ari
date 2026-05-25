@@ -22,7 +22,16 @@ fn main() -> i64 {
       assert(reason.is_not_found());
     }
   }
+  match env::var(name) {
+    Ok(_) => {
+      panic();
+    }
+    Err(var_reason) => {
+      assert(var_reason.is_not_found());
+    }
+  }
 
+  assert(env::set_var(name, "first").is_ok());
   assert(env::set(name, "first").is_ok());
   if env::set_unchecked(name, "first") {
     score = score + 7;
@@ -30,6 +39,10 @@ fn main() -> i64 {
   if env::has(name) {
     score = score + 11;
   }
+  assert(env::var(name).is_ok());
+  assert(env::var_optional(name).is_some());
+  assert(env::var_os(name).is_ok());
+  assert(env::var_os_optional(name).is_some());
 
   match env::try_get(name) {
     std::Some(value) => {
@@ -69,10 +82,15 @@ fn main() -> i64 {
   if updated.equals(second.as_slice()) {
     score = score + 19;
   }
+  var var_default = std::string::from_string(ref mut zone, env::var_or_default(name));
+  assert(var_default.equals(second.as_slice()));
+  assert(env::var_os_or_default(name).len() == 6);
 
   if env::remove(name).is_ok() {
     score = score + 23;
   }
+  assert(env::set_var(name, "third").is_ok());
+  assert(env::remove_var(name).is_ok());
   if !env::has(name) {
     score = score + 29;
   }
