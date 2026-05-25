@@ -182,7 +182,10 @@ pub use sync::Receiver;
 pub use sync::RwLock;
 pub use sync::Sender;
 pub use thread::Builder;
+pub use thread::JoinError;
+pub use thread::JoinHandle;
 pub use thread::Thread;
+pub use thread::ThreadId;
 pub use thread::ThreadLocal;
 
 pub impl[T] Slice[T] {

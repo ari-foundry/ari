@@ -644,10 +644,11 @@ Checklist:
       with `Option[i64]` overflow reporting and edge-case saturation behavior
 - [x] source `std::math` exposes wrapping add/sub/mul and overflowing
       add/sub/mul tuple-result helpers without adding public type suffixes
-- [x] runtime-backed `std::thread` exposes function-pointer spawn/join,
-      cooperative yield, duration sleep, hosted available parallelism, runtime
-      thread ids, invalid-handle checks, advisory completion, `Builder`, and
-      source handle wrappers
+- [x] runtime-backed `std::thread` exposes function-pointer Result-returning
+      spawn/join, `ThreadId`, owning `JoinHandle`, `JoinError`, explicit
+      detach, cooperative yield, duration sleep, hosted available parallelism,
+      runtime thread ids, invalid-handle checks, advisory completion,
+      `Builder`, and raw compatibility handle wrappers
 - [x] source `std::thread` exposes explicit zone-backed `ThreadLocal[T]`
       handles keyed by Ari runtime thread id
 - [x] source `std::sync` exposes primitive `RwLock` read/write lock helpers,

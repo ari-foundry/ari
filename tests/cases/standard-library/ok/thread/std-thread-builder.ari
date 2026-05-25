@@ -18,7 +18,7 @@ fn main() -> i64 {
     return 3;
   }
 
-  let spawned = builder.spawn(worker).unwrap_or(Thread::invalid());
+  var spawned = builder.spawn(worker).unwrap_or(JoinHandle::invalid());
   if !spawned.is_valid() {
     return 4;
   }
@@ -33,6 +33,17 @@ fn main() -> i64 {
   }
   if second.join_unchecked() != 23 {
     return 8;
+  }
+
+  var detached = builder.spawn(worker).unwrap_or(JoinHandle::invalid());
+  if detached.detach().is_err() {
+    return 9;
+  }
+  if !detached.is_finished() {
+    return 10;
+  }
+  if detached.join().is_ok() {
+    return 11;
   }
 
   return 42;

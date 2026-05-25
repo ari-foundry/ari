@@ -5,7 +5,7 @@ fn child_value() -> i64 {
   if thread::is_main() {
     return 90;
   }
-  let child_id = thread::id();
+  let child_id = thread::id().as_i64();
   if child_id <= 0 {
     return 91;
   }
@@ -14,15 +14,22 @@ fn child_value() -> i64 {
 }
 
 fn child_id_value() -> i64 {
-  return thread::id();
+  return thread::id().as_i64();
 }
 
 fn main() -> i64 {
   if !thread::is_main() {
     return 1;
   }
-  if thread::id() != 0 {
+  if thread::id().as_i64() != 0 {
     return 2;
+  }
+  if !thread::id().is_main() {
+    return 12;
+  }
+  let current = thread::current();
+  if !current.is_valid() || !current.id().is_main() {
+    return 13;
   }
 
   let invalid = Thread::invalid();
@@ -36,18 +43,60 @@ fn main() -> i64 {
     Ok(_) => {
       return 5;
     }
-    Err(reason) => {
-      if !reason.is_kind(error::InvalidInput) {
+    Err(invalid_reason) => {
+      match invalid_reason {
+        thread::InvalidHandle => {}
+        _ => {
+          return 6;
+        }
+      }
+    }
+  }
+
+  var invalid_join = JoinHandle::invalid();
+  match invalid_join.join() {
+    Ok(_) => {
+      return 14;
+    }
+    Err(invalid_join_reason) => {
+      match invalid_join_reason {
+        thread::InvalidHandle => {}
+        _ => {
+          return 15;
+        }
+      }
+    }
+  }
+  match invalid_join.detach() {
+    Ok(_) => {
+      return 16;
+    }
+    Err(invalid_detach_reason) => {
+      match invalid_detach_reason {
+        thread::InvalidHandle => {}
+        _ => {
+          return 17;
+        }
+      }
+    }
+  }
+
+  match thread::join_compat(invalid) {
+    Ok(_) => {
+      return 18;
+    }
+    Err(compat_reason) => {
+      if !compat_reason.is_kind(error::InvalidInput) {
         return 6;
       }
     }
   }
 
-  let first = thread::spawn(child_value).unwrap_or(Thread::invalid());
+  var first = thread::spawn(child_value).unwrap_or(JoinHandle::invalid());
   if !first.is_valid() {
     return 7;
   }
-  if first.id() <= 0 {
+  if first.thread_id().as_i64() <= 0 {
     return 8;
   }
   let first_result = first.join().unwrap_or(-1);
@@ -57,13 +106,26 @@ fn main() -> i64 {
   if first_result != 37 {
     return first_result;
   }
+  match first.join() {
+    Ok(_) => {
+      return 19;
+    }
+    Err(already_joined_reason) => {
+      match already_joined_reason {
+        thread::AlreadyJoined => {}
+        _ => {
+          return 20;
+        }
+      }
+    }
+  }
 
-  let second = Thread::spawn(child_id_value).unwrap_or(Thread::invalid());
+  var second = Thread::spawn(child_id_value).unwrap_or(JoinHandle::invalid());
   if !second.is_valid() {
     return 10;
   }
-  let second_id = second.id();
-  let second_result = thread::join(second).unwrap_or(-1);
+  let second_id = second.id().as_i64();
+  let second_result = thread::join(ref mut second).unwrap_or(-1);
   if second_result != second_id {
     return 11;
   }

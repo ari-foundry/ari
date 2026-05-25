@@ -24,34 +24,34 @@ platform notes.
 
 ## Summary
 
-- API entries: `2953`
+- API entries: `2983`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 742 | stable candidate |
-| `hosted` | 1182 | platform-backed |
+| `core` | 745 | stable candidate |
+| `hosted` | 1209 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
-| `enum` | 24 |
-| `fn` | 1045 |
-| `method` | 1495 |
+| `enum` | 25 |
+| `fn` | 1051 |
+| `method` | 1513 |
 | `module` | 39 |
-| `struct` | 159 |
+| `struct` | 161 |
 | `trait` | 39 |
 | `trait-method` | 39 |
 | `type` | 21 |
-| `use` | 92 |
+| `use` | 95 |
 
 ## Modules
 
 | Module | Tier | Entries |
 | --- | --- | ---: |
-| `std` | `core` | 289 |
+| `std` | `core` | 292 |
 | `std::algo` | `alloc` | 41 |
 | `std::ascii` | `core` | 33 |
 | `std::bits` | `core` | 26 |
@@ -87,7 +87,7 @@ platform notes.
 | `std::sync` | `hosted` | 166 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
-| `std::thread` | `hosted` | 47 |
+| `std::thread` | `hosted` | 74 |
 | `std::time` | `hosted` | 74 |
 | `std::vec` | `alloc` | 115 |
 | `std::zone` | `alloc` | 21 |
@@ -357,6 +357,8 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::ErrorKind` | check-prelude std-error-basic root alias for std::error::Kind; docs/stdlib/modules/error.md |
 | `use std::HashMap` | check-prelude std-collections-hash root alias for std::collections::HashMap[K, V]; docs/stdlib/modules/collections.md |
 | `use std::HashSet` | check-prelude std-collections-hash root alias for std::collections::HashSet[T]; docs/stdlib/modules/collections.md |
+| `use std::JoinError` | check-prelude std-thread-basic root alias for std::thread::JoinError; docs/stdlib/modules/thread.md |
+| `use std::JoinHandle` | check-prelude std-thread-basic root alias for std::thread::JoinHandle; docs/stdlib/modules/thread.md |
 | `use std::Lazy` | check-prelude std-cell-basic root alias for std::cell::Lazy[T]; docs/stdlib/modules/cell.md |
 | `use std::Library` | check-prelude std-c-interop root alias for std::c::Library; docs/stdlib/modules/c.md |
 | `use std::LinkedList` | check-prelude std-collections-linked-list root alias for std::collections::LinkedList[T]; docs/stdlib/modules/collections.md |
@@ -376,6 +378,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `use std::String` | prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
 | `use std::Symbol` | check-prelude std-c-interop root alias for std::c::Symbol; docs/stdlib/modules/c.md |
 | `use std::Thread` | check-prelude std-thread-basic root alias for std::thread::Thread; docs/stdlib/modules/thread.md |
+| `use std::ThreadId` | check-prelude std-thread-basic root alias for std::thread::ThreadId; docs/stdlib/modules/thread.md |
 | `use std::ThreadLocal` | check-prelude std-thread-local root alias for std::thread::ThreadLocal[T]; docs/stdlib/modules/thread.md |
 | `use std::TreeMap` | check-prelude std-collections-tree root alias for std::collections::TreeMap[K, V]; docs/stdlib/modules/collections.md |
 | `use std::TreeSet` | check-prelude std-collections-tree root alias for std::collections::TreeSet[T]; docs/stdlib/modules/collections.md |
@@ -3696,21 +3699,33 @@ Tier: `hosted`. Stability reading: platform-backed.
 
 Tier: `hosted`. Stability reading: platform-backed.
 
+### enum
+
+| API | Coverage note |
+| --- | --- |
+| `enum std::thread::JoinError` | check-prelude std-thread-basic join handle lifecycle failure reason; docs/stdlib/modules/thread.md |
+
 ### fn
 
 | API | Coverage note |
 | --- | --- |
-| `fn std::thread::available_parallelism` | check-prelude std-thread-runtime-helpers runtime online processor count helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::available_parallelism` | check-prelude std-thread-runtime-helpers Result-returning runtime online processor count helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::available_parallelism_or` | check-prelude std-thread-runtime-helpers fallback runtime online processor count helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::available_parallelism_raw` | check-prelude std-thread-runtime-helpers raw runtime online processor count hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::builder` | check-prelude std-thread-builder thread builder constructor helper; docs/stdlib/modules/thread.md |
-| `fn std::thread::id` | check-prelude std-thread-basic source wrapper around context thread id; docs/stdlib/modules/thread.md |
+| `fn std::thread::current` | check-prelude std-thread-basic current thread info helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::id` | check-prelude std-thread-basic typed source wrapper around context thread id; docs/stdlib/modules/thread.md |
+| `fn std::thread::id_raw` | check-prelude std-thread-basic raw source wrapper around context thread id; docs/stdlib/modules/thread.md |
 | `fn std::thread::is_finished` | check-prelude std-thread-builder advisory thread completion predicate hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::is_join_error` | check-prelude std-thread-basic join sentinel helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::is_main` | check-prelude std-thread-basic source main-thread predicate; docs/stdlib/modules/thread.md |
-| `fn std::thread::join` | check-prelude std-thread-basic Result-returning thread join helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::join` | check-prelude std-thread-basic Result-returning join handle helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::join_compat` | check-prelude std-thread-basic Error-returning raw thread join compatibility helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::join_thread` | check-prelude std-thread-basic JoinError-returning raw thread join bridge; docs/stdlib/modules/thread.md |
 | `fn std::thread::join_unchecked` | check-prelude std-thread-basic raw-status thread join compatibility hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::sleep` | check-prelude std-thread-runtime-helpers duration sleep convenience wrapper; docs/stdlib/modules/thread.md |
-| `fn std::thread::spawn` | check-prelude std-thread-basic Result-returning function-pointer spawn helper; docs/stdlib/modules/thread.md |
-| `fn std::thread::spawn_configured` | check-prelude std-thread-builder Result-returning configured thread spawn helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::spawn` | check-prelude std-thread-basic Result-returning function-pointer JoinHandle spawn helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::spawn_configured` | check-prelude std-thread-builder Result-returning configured JoinHandle spawn helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::spawn_configured_unchecked` | check-prelude std-thread-builder unchecked configured thread spawn hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::spawn_unchecked` | check-prelude std-thread-basic unchecked function-pointer spawn hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::thread_local[T]` | check-prelude std-thread-local default-capacity thread-local handle constructor; docs/stdlib/modules/thread.md |
@@ -3725,17 +3740,35 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::thread::Builder::configured_stack_size` | check-prelude std-thread-builder builder stack-size accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::name` | check-prelude std-thread-builder builder name setter; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::new` | check-prelude std-thread-builder builder constructor; docs/stdlib/modules/thread.md |
-| `method std::thread::Builder::spawn` | check-prelude std-thread-builder Result-returning builder spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::Builder::spawn` | check-prelude std-thread-builder Result-returning JoinHandle builder spawn helper; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::spawn_unchecked` | check-prelude std-thread-builder unchecked builder spawn compatibility method; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::stack_size` | check-prelude std-thread-builder builder stack-size setter; docs/stdlib/modules/thread.md |
-| `method std::thread::Thread::id` | check-prelude std-thread-basic handle id accessor; docs/stdlib/modules/thread.md |
-| `method std::thread::Thread::invalid` | check-prelude std-thread-basic invalid handle sentinel; docs/stdlib/modules/thread.md |
-| `method std::thread::Thread::is_finished` | check-prelude std-thread-builder advisory handle completion predicate; docs/stdlib/modules/thread.md |
-| `method std::thread::Thread::is_valid` | check-prelude std-thread-basic handle validity predicate; docs/stdlib/modules/thread.md |
-| `method std::thread::Thread::join` | check-prelude std-thread-basic Result-returning handle join helper; docs/stdlib/modules/thread.md |
-| `method std::thread::Thread::join_unchecked` | check-prelude std-thread-basic raw-status handle join compatibility method; docs/stdlib/modules/thread.md |
-| `method std::thread::Thread::spawn` | check-prelude std-thread-basic associated Result-returning spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::detach` | check-prelude std-thread-builder explicit thread detach lifecycle helper; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::from_thread` | check-prelude std-thread-basic raw Thread to JoinHandle bridge; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::id` | check-prelude std-thread-basic join handle id alias; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::invalid` | check-prelude std-thread-basic invalid join handle sentinel; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::is_finished` | check-prelude std-thread-builder advisory join handle completion predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::is_valid` | check-prelude std-thread-basic join handle validity predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::join` | check-prelude std-thread-basic Result-returning join handle lifecycle helper; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::thread` | check-prelude std-thread-basic raw thread info accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::JoinHandle::thread_id` | check-prelude std-thread-basic join handle thread id accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::current` | check-prelude std-thread-basic associated current thread info helper; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::id` | check-prelude std-thread-basic typed raw thread id accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::id_raw` | check-prelude std-thread-basic raw thread id accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::invalid` | check-prelude std-thread-basic invalid raw thread sentinel; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::is_finished` | check-prelude std-thread-builder advisory raw thread completion predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::is_joinable` | check-prelude std-thread-basic raw thread joinability predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::is_valid` | check-prelude std-thread-basic raw thread validity predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::join` | check-prelude std-thread-basic Result-returning raw thread join bridge; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::join_unchecked` | check-prelude std-thread-basic raw-status raw thread join compatibility method; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::spawn` | check-prelude std-thread-basic associated Result-returning JoinHandle spawn helper; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::spawn_unchecked` | check-prelude std-thread-basic associated unchecked spawn compatibility method; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadId::as_i64` | check-prelude std-thread-basic typed thread id raw accessor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadId::current` | check-prelude std-thread-basic associated current thread id helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadId::equals` | check-prelude std-thread-basic typed thread id equality helper; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadId::from_raw` | check-prelude std-thread-basic typed thread id raw constructor; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadId::is_main` | check-prelude std-thread-basic typed main-thread id predicate; docs/stdlib/modules/thread.md |
+| `method std::thread::ThreadId::is_valid` | check-prelude std-thread-basic typed thread id validity predicate; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::capacity` | check-prelude std-thread-local thread-local slot capacity accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::get` | check-prelude std-thread-local current-thread shared value view; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::get_mut` | check-prelude std-thread-local current-thread mutable value view; docs/stdlib/modules/thread.md |
@@ -3758,7 +3791,9 @@ Tier: `hosted`. Stability reading: platform-backed.
 | API | Coverage note |
 | --- | --- |
 | `struct std::thread::Builder` | check-prelude std-thread-builder thread builder options handle; docs/stdlib/modules/thread.md |
-| `struct std::thread::Thread` | check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md |
+| `struct std::thread::JoinHandle` | check-prelude std-thread-basic owning thread join/detach handle; docs/stdlib/modules/thread.md |
+| `struct std::thread::Thread` | check-prelude std-thread-basic raw thread info handle; docs/stdlib/modules/thread.md |
+| `struct std::thread::ThreadId` | check-prelude std-thread-basic typed runtime thread id handle; docs/stdlib/modules/thread.md |
 | `struct std::thread::ThreadLocal[T]` | check-prelude std-thread-local explicit thread-local storage handle; docs/stdlib/modules/thread.md |
 
 ### type

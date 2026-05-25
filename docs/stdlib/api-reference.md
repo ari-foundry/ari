@@ -975,17 +975,30 @@ Thread helpers live in `std::thread`:
 
 ```ari
 thread::spawn(entry)
-thread::join(thread)
+thread::join(ref mut handle)
+thread::join_thread(thread)
+thread::join_compat(thread)
 thread::is_finished(thread)
 thread::yield_now()
 thread::sleep(duration)
 thread::id()
+thread::id_raw()
+thread::current()
 thread::is_main()
 thread::available_parallelism()
+thread::available_parallelism_or(default)
+thread::available_parallelism_raw()
 thread::is_join_error(status)
 thread::builder()
 thread::thread_local<T>(ref mut zone)
 thread::thread_local_with_capacity<T>(ref mut zone, capacity)
+
+ThreadId::current()
+ThreadId::from_raw(raw)
+thread_id.as_i64()
+thread_id.is_main()
+thread_id.is_valid()
+thread_id.equals(other)
 
 Builder::new()
 builder.name(value)
@@ -994,11 +1007,24 @@ builder.configured_name()
 builder.configured_stack_size()
 builder.spawn(entry)
 Thread::spawn(entry)
+Thread::current()
 Thread::invalid()
 thread.id()
+thread.id_raw()
 thread.is_valid()
+thread.is_joinable()
 thread.is_finished()
 thread.join()
+
+JoinHandle::invalid()
+JoinHandle::from_thread(thread)
+handle.thread()
+handle.thread_id()
+handle.id()
+handle.is_valid()
+handle.is_finished()
+handle.detach()
+handle.join()
 
 ThreadLocal::new<T>(ref mut zone)
 ThreadLocal::with_capacity<T>(ref mut zone, capacity)
@@ -1013,20 +1039,28 @@ thread_local.remove()
 ```
 
 `spawn(entry)` starts a thread from a plain `fn() -> i64` entry function and
-returns a `Thread` value handle. `join(thread)` waits for the handle and
-returns the entry function's `i64` result, or `-1` for the current failure
-sentinel; use `is_join_error(status)` for that check. `id()` returns the
-current Ari runtime thread id, with main thread `0` and spawned threads
-positive. `yield_now()` is a host scheduler hint, not synchronization.
-`sleep(duration)` forwards to `std::time::sleep`. `available_parallelism()`
-returns the hosted runtime's online processor count and falls back to `1` when
-the platform call fails. `is_finished` is advisory and does not replace `join`.
+returns a `Result[JoinHandle, Error]`. `JoinHandle` owns the right to join or
+detach the native thread; join once, or call `detach()` when no result will be
+collected. `thread::join(ref mut handle)` and `handle.join()` return
+`Result[i64, JoinError]` so lifecycle mistakes do not collapse into raw
+sentinels. `Thread` is the raw thread-information value kept for inspection
+and compatibility, with `join_thread`, `join_compat`, and `join_unchecked`
+bridging older call sites. `id()` returns a `ThreadId`, with main thread `0`
+and spawned threads positive; use `id_raw()` for compatibility integer access.
+`yield_now()` is a host scheduler hint, not synchronization. `sleep(duration)`
+forwards to `std::time::sleep`. `available_parallelism()` now preserves host
+failure as `Result[u64, Error]`; use `available_parallelism_or(default)` for a
+fallback and `available_parallelism_raw()` only at runtime boundaries.
+`is_finished` is advisory and does not replace `join`.
 `Builder` records a requested thread name and stack size and delegates through
 `spawn_configured`; the LLVM/Linux pthread backend applies stack size with
 thread attributes and applies the name as a best-effort host hint.
 `ThreadLocal[T]` is an explicit zone-backed handle for per-thread values. It is
-the user-facing API available today; compiler-level `thread_local`
-declarations and TLS destructors remain roadmap work.
+fixed-capacity, uses a caller-owned zone, and returns `OptionRef[T]` from
+`get_or_init` until Ari can expose a direct borrowed `ref T` from indexed heap
+slots. Compiler-level `thread_local` declarations, TLS destructors, captured
+thread entries, scoped threads, and generic `JoinHandle[T]` remain roadmap
+work.
 
 Synchronization helpers live in `std::sync`:
 

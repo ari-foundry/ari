@@ -95,10 +95,11 @@ For a task-oriented path through the examples, see
 - [std::os](os.md): non-owning file-descriptor views, `OwnedFd` close,
   duplicate, close-on-exec, nonblocking policy, owned `Pipe` pairs, and the
   roadmap for raw OS primitives.
-- [std::thread](thread.md): function-pointer thread spawn/join, `Builder`,
-  advisory completion checks, runtime thread ids, invalid-handle sentinels,
-  cooperative sleep/yield, available parallelism, and explicit
-  `ThreadLocal[T]` handles.
+- [std::thread](thread.md): function-pointer thread spawn/join, `ThreadId`,
+  owning `JoinHandle`, `JoinError`, raw `Thread` compatibility handles,
+  `Builder`, advisory completion checks, runtime thread ids, explicit detach,
+  cooperative sleep/yield, Result-returning available parallelism, and
+  explicit `ThreadLocal[T]` handles.
 - [std::sync](sync.md): `Ordering`, concrete atomic wrappers, source `Mutex`,
   `MutexGuard`, `RwLock`, `RwLockReadGuard`, `RwLockWriteGuard`, `Once`,
   `OnceLock`, `Condvar`, `WaitTimeoutResult`, `Barrier`, capacity-1 channels,

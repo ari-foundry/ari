@@ -9,6 +9,23 @@ pub struct Thread {
   id: i64,
 }
 
+pub struct ThreadId {
+  raw: i64,
+}
+
+pub struct JoinHandle {
+  mut thread: std::thread::Thread,
+  mut joined: bool,
+  mut detached: bool,
+}
+
+pub enum JoinError {
+  InvalidHandle,
+  AlreadyJoined,
+  Detached,
+  JoinFailed,
+}
+
 pub struct Builder {
   name: string,
   stack_size_bytes: i64,
@@ -34,7 +51,8 @@ pub extern "ari" fn spawn_configured_unchecked(entry: fn() -> i64, name: string,
 pub extern "ari" fn join_unchecked(thread: Thread) -> i64 = "ari_builtin_thread_join";
 pub extern "ari" fn is_finished(thread: Thread) -> bool = "ari_builtin_thread_is_finished";
 pub extern "ari" fn yield_now() -> void = "ari_builtin_thread_yield";
-pub extern "ari" fn available_parallelism() -> i64 = "ari_builtin_thread_available_parallelism";
+pub extern "ari" fn available_parallelism_raw() -> i64 = "ari_builtin_thread_available_parallelism";
+extern "C" fn pthread_detach_raw(native: i64) -> i32 = "pthread_detach";
 
 pub fn builder() -> std::thread::Builder {
   return std::thread::Builder::new();
@@ -113,40 +131,57 @@ pub fn sleep(duration: std::time::Duration) -> void {
   return;
 }
 
-pub fn id() -> i64 {
+pub fn id_raw() -> i64 {
   return std::context::thread_id();
 }
 
+pub fn id() -> std::thread::ThreadId {
+  return std::thread::ThreadId { raw: std::thread::id_raw() };
+}
+
 pub fn is_main() -> bool {
-  return id() == 0;
+  return std::thread::id().is_main();
+}
+
+pub fn current() -> std::thread::Thread {
+  return std::thread::Thread { native: -1, id: std::thread::id_raw() };
 }
 
 pub fn is_join_error(status: i64) -> bool {
   return status < 0;
 }
 
-pub fn spawn(entry: fn() -> i64) -> std::Result[std::thread::Thread, std::error::Error] {
+pub fn spawn(entry: fn() -> i64) -> std::Result[std::thread::JoinHandle, std::error::Error] {
   let thread = std::thread::spawn_unchecked(entry);
-  if thread.is_valid() {
-    return std::Ok<std::thread::Thread, std::error::Error>(thread);
+  if thread.is_joinable() {
+    return std::Ok<std::thread::JoinHandle, std::error::Error>(std::thread::JoinHandle::from_thread(thread));
   }
-  return std::Err<std::thread::Thread, std::error::Error>(std::thread::other_error());
+  return std::Err<std::thread::JoinHandle, std::error::Error>(std::thread::other_error());
 }
 
 pub fn spawn_configured(
   entry: fn() -> i64,
   name: string,
   stack_size: i64
-) -> std::Result[std::thread::Thread, std::error::Error] {
+) -> std::Result[std::thread::JoinHandle, std::error::Error] {
   let thread = std::thread::spawn_configured_unchecked(entry, name, stack_size);
-  if thread.is_valid() {
-    return std::Ok<std::thread::Thread, std::error::Error>(thread);
+  if thread.is_joinable() {
+    return std::Ok<std::thread::JoinHandle, std::error::Error>(std::thread::JoinHandle::from_thread(thread));
   }
-  return std::Err<std::thread::Thread, std::error::Error>(std::thread::other_error());
+  return std::Err<std::thread::JoinHandle, std::error::Error>(std::thread::other_error());
 }
 
-pub fn join(thread: std::thread::Thread) -> std::Result[i64, std::error::Error] {
-  if !thread.is_valid() {
+pub fn join(handle: ref mut std::thread::JoinHandle) -> std::Result[i64, std::thread::JoinError] {
+  return handle.join();
+}
+
+pub fn join_thread(thread: std::thread::Thread) -> std::Result[i64, std::thread::JoinError] {
+  var handle = std::thread::JoinHandle::from_thread(thread);
+  return handle.join();
+}
+
+pub fn join_compat(thread: std::thread::Thread) -> std::Result[i64, std::error::Error] {
+  if !thread.is_joinable() {
     return std::Err<i64, std::error::Error>(std::thread::invalid_input_error());
   }
   let status = std::thread::join_unchecked(thread);
@@ -154,6 +189,25 @@ pub fn join(thread: std::thread::Thread) -> std::Result[i64, std::error::Error] 
     return std::Err<i64, std::error::Error>(std::thread::other_error());
   }
   return std::Ok<i64, std::error::Error>(status);
+}
+
+pub fn available_parallelism() -> std::Result[u64, std::error::Error] {
+  let count = std::thread::available_parallelism_raw();
+  if count < 1 {
+    return std::Err<u64, std::error::Error>(std::thread::other_error());
+  }
+  return std::Ok<u64, std::error::Error>(count as u64);
+}
+
+pub fn available_parallelism_or(default: u64) -> u64 {
+  match std::thread::available_parallelism() {
+    std::Ok(value) => {
+      return value;
+    }
+    std::Err(_) => {
+      return default;
+    }
+  }
 }
 
 pub impl std::thread::Builder {
@@ -182,8 +236,34 @@ pub impl std::thread::Builder {
     return std::thread::spawn_configured_unchecked(entry, self.name, self.stack_size_bytes);
   }
 
-  fn spawn(self: ref Self, entry: fn() -> i64) -> std::Result[std::thread::Thread, std::error::Error] {
+  fn spawn(self: ref Self, entry: fn() -> i64) -> std::Result[std::thread::JoinHandle, std::error::Error] {
     return std::thread::spawn_configured(entry, self.name, self.stack_size_bytes);
+  }
+}
+
+pub impl std::thread::ThreadId {
+  fn current() -> std::thread::ThreadId {
+    return std::thread::id();
+  }
+
+  fn from_raw(raw: i64) -> std::thread::ThreadId {
+    return std::thread::ThreadId { raw: raw };
+  }
+
+  fn as_i64(self) -> i64 {
+    return self.raw;
+  }
+
+  fn is_main(self) -> bool {
+    return self.raw == 0;
+  }
+
+  fn is_valid(self) -> bool {
+    return self.raw >= 0;
+  }
+
+  fn equals(self, other: std::thread::ThreadId) -> bool {
+    return self.raw == other.raw;
   }
 }
 
@@ -192,19 +272,31 @@ pub impl std::thread::Thread {
     return Thread { native: -1, id: -1 };
   }
 
+  fn current() -> Thread {
+    return std::thread::current();
+  }
+
   fn spawn_unchecked(entry: fn() -> i64) -> Thread {
     return std::thread::spawn_unchecked(entry);
   }
 
-  fn spawn(entry: fn() -> i64) -> std::Result[Thread, std::error::Error] {
+  fn spawn(entry: fn() -> i64) -> std::Result[std::thread::JoinHandle, std::error::Error] {
     return std::thread::spawn(entry);
   }
 
-  fn id(self: ref Self) -> i64 {
+  fn id(self: ref Self) -> std::thread::ThreadId {
+    return std::thread::ThreadId { raw: self.id };
+  }
+
+  fn id_raw(self: ref Self) -> i64 {
     return self.id;
   }
 
   fn is_valid(self: ref Self) -> bool {
+    return self.id >= 0;
+  }
+
+  fn is_joinable(self: ref Self) -> bool {
     return self.native >= 0 && self.id >= 0;
   }
 
@@ -217,8 +309,85 @@ pub impl std::thread::Thread {
     return std::thread::join_unchecked(self);
   }
 
-  fn join(self) -> std::Result[i64, std::error::Error] {
-    return std::thread::join(self);
+  fn join(self) -> std::Result[i64, std::thread::JoinError] {
+    return std::thread::join_thread(self);
+  }
+}
+
+pub impl std::thread::JoinHandle {
+  fn invalid() -> std::thread::JoinHandle {
+    return std::thread::JoinHandle {
+      thread: std::thread::Thread::invalid(),
+      joined: false,
+      detached: false,
+    };
+  }
+
+  fn from_thread(thread: std::thread::Thread) -> std::thread::JoinHandle {
+    return std::thread::JoinHandle {
+      thread: thread,
+      joined: false,
+      detached: false,
+    };
+  }
+
+  fn thread(self: ref Self) -> std::thread::Thread {
+    return self.thread;
+  }
+
+  fn thread_id(self: ref Self) -> std::thread::ThreadId {
+    return self.thread.id();
+  }
+
+  fn id(self: ref Self) -> std::thread::ThreadId {
+    return self.thread_id();
+  }
+
+  fn is_valid(self: ref Self) -> bool {
+    return self.thread.is_joinable() && !self.joined && !self.detached;
+  }
+
+  fn is_finished(self: ref Self) -> bool {
+    if !self.thread.is_joinable() || self.joined || self.detached {
+      return true;
+    }
+    return self.thread.is_finished();
+  }
+
+  fn detach(self: ref mut Self) -> std::Result[(), std::thread::JoinError] {
+    if self.joined {
+      return std::Err<(), std::thread::JoinError>(std::thread::AlreadyJoined);
+    }
+    if self.detached {
+      return std::Err<(), std::thread::JoinError>(std::thread::Detached);
+    }
+    if !self.thread.is_joinable() {
+      return std::Err<(), std::thread::JoinError>(std::thread::InvalidHandle);
+    }
+    if std::thread::pthread_detach_raw(self.thread.native) != 0 {
+      self.detached = true;
+      return std::Err<(), std::thread::JoinError>(std::thread::JoinFailed);
+    }
+    self.detached = true;
+    return std::Ok<(), std::thread::JoinError>(());
+  }
+
+  fn join(self: ref mut Self) -> std::Result[i64, std::thread::JoinError] {
+    if self.joined {
+      return std::Err<i64, std::thread::JoinError>(std::thread::AlreadyJoined);
+    }
+    if self.detached {
+      return std::Err<i64, std::thread::JoinError>(std::thread::Detached);
+    }
+    if !self.thread.is_joinable() {
+      return std::Err<i64, std::thread::JoinError>(std::thread::InvalidHandle);
+    }
+    self.joined = true;
+    let status = std::thread::join_unchecked(self.thread);
+    if std::thread::is_join_error(status) {
+      return std::Err<i64, std::thread::JoinError>(std::thread::JoinFailed);
+    }
+    return std::Ok<i64, std::thread::JoinError>(status);
   }
 }
 
@@ -263,7 +432,7 @@ pub impl[T] std::thread::ThreadLocal[T] {
     let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
     let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
     std::thread::thread_local_lock<T>(state_ptr);
-    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id());
+    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id_raw());
     if index < 0 {
       std::thread::thread_local_unlock<T>(state_ptr);
       return false;
@@ -278,7 +447,7 @@ pub impl[T] std::thread::ThreadLocal[T] {
     let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
     let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
     std::thread::thread_local_lock<T>(state_ptr);
-    let thread_id = std::thread::id();
+    let thread_id = std::thread::id_raw();
     var index = std::thread::thread_local_find<T>(state_ptr, thread_id);
     if index < 0 {
       index = std::thread::thread_local_empty_slot<T>(state_ptr);
@@ -298,7 +467,7 @@ pub impl[T] std::thread::ThreadLocal[T] {
     let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
     let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
     std::thread::thread_local_lock<T>(state_ptr);
-    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id());
+    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id_raw());
     if index < 0 {
       std::thread::thread_local_unlock<T>(state_ptr);
       return std::option::NoneRef<T>();
@@ -319,7 +488,7 @@ pub impl[T] std::thread::ThreadLocal[T] {
     let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
     let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
     std::thread::thread_local_lock<T>(state_ptr);
-    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id());
+    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id_raw());
     if index < 0 {
       std::thread::thread_local_unlock<T>(state_ptr);
       return std::option::NoneMut<T>();
@@ -340,7 +509,7 @@ pub impl[T] std::thread::ThreadLocal[T] {
     let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
     let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
     std::thread::thread_local_lock<T>(state_ptr);
-    let thread_id = std::thread::id();
+    let thread_id = std::thread::id_raw();
     var index = std::thread::thread_local_find<T>(state_ptr, thread_id);
     if index < 0 {
       index = std::thread::thread_local_empty_slot<T>(state_ptr);
@@ -364,7 +533,7 @@ pub impl[T] std::thread::ThreadLocal[T] {
     let raw: ptr std::thread::ThreadLocal[T] = self as ptr std::thread::ThreadLocal[T];
     let state_ptr = std::thread::thread_local_state_ptr<T>(raw);
     std::thread::thread_local_lock<T>(state_ptr);
-    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id());
+    let index = std::thread::thread_local_find<T>(state_ptr, std::thread::id_raw());
     if index < 0 {
       std::thread::thread_local_unlock<T>(state_ptr);
       return std::None<T>();
