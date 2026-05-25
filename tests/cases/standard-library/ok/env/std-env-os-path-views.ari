@@ -4,12 +4,13 @@ fn main() -> i64 {
   let name = "ARI_STD_ENV_OS_VIEW_VALUE";
   var expected = [97u8, 108u8, 112u8, 104u8, 97u8];
 
-  env::remove(name);
+  env::remove_unchecked(name);
   let missing = env::try_get_os(name);
   assert(missing.is_none());
+  assert(env::get_os_or_default(name).is_empty());
 
-  assert(env::set(name, "alpha"));
-  let value = env::get_os(name);
+  assert(env::set(name, "alpha").is_ok());
+  let value = env::get_os(name).unwrap();
   let value_slice = value.as_slice();
   assert(value_slice.equals(expected.as_slice()));
   assert(value.is_utf8());
@@ -18,6 +19,7 @@ fn main() -> i64 {
   assert_eq_i64(valid_value.codepoint_count(), 5);
   let present = env::try_get_os(name);
   assert(present.is_some());
+  assert(env::get_os_or_default(name).len() == 5);
 
   let count = env::arg_count();
   assert(env::has_arg(0));
@@ -52,6 +54,6 @@ fn main() -> i64 {
   let maybe_exe_os = env::try_executable_path_os();
   assert(maybe_exe_os.is_some());
 
-  env::remove(name);
+  env::remove_unchecked(name);
   return 0;
 }

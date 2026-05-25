@@ -402,11 +402,15 @@ env::program_name()
 env::program_name_os()
 env::get(name)
 env::get_os(name)
+env::get_or_default(name)
+env::get_os_or_default(name)
 env::has(name)
 env::try_get(name)
 env::try_get_os(name)
 env::set(name, value)
+env::set_unchecked(name, value)
 env::remove(name)
+env::remove_unchecked(name)
 env::current_dir()
 env::try_current_dir()
 env::current_dir_os()
@@ -427,18 +431,22 @@ the optional `argv[0]` value.
 `env::program_name_os()` return `std::string::OsStr` views when the argument
 should stay in OS-string form until the caller chooses bytes or UTF-8.
 
-`env::try_get(name)` returns `Option[string]` for environment variables.
-`env::get(name)` returns an empty string when the variable is missing, so prefer
-`try_get` or `has` when absence matters. `env::set(name, value)` overwrites a
-current-process variable and `env::remove(name)` unsets it; both return whether
-the host accepted the request. `env::current_dir()` and
+`env::get(name)` returns `Result[string, Error]` for environment variables,
+using `NotFound` for missing names. `env::try_get(name)` keeps only optional
+success, while `env::get_or_default(name)` keeps the older empty-string
+fallback. `env::set(name, value)` overwrites a current-process variable and
+`env::remove(name)` unsets it; both return `Result[(), Error]`.
+`set_unchecked` and `remove_unchecked` keep the older boolean compatibility
+shape. `env::current_dir()` and
 `env::executable_path()` return borrowed runtime strings, with `try_*` wrappers
 for ordinary failure; `env::set_current_dir(path)` mutates the current process
 working directory. Portable child-process spawn handles remain roadmap work;
 thread helpers live in `std::thread`.
 
-`env::get_os(name)` and `env::try_get_os(name)` return `OsStr` views for
-environment values. `env::current_dir_os()` / `try_current_dir_os()` and
+`env::get_os(name)` returns a `Result[OsStr, Error]` environment view.
+`env::try_get_os(name)` keeps only optional success, and
+`env::get_os_or_default(name)` is the compatibility fallback.
+`env::current_dir_os()` / `try_current_dir_os()` and
 `env::executable_path_os()` / `try_executable_path_os()` expose path-like host
 data as OS strings. `env::current_dir_path()` and
 `env::try_current_dir_path()` expose the current directory as

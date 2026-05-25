@@ -44,7 +44,7 @@ API evolution.
 | `std::error` | Shared recoverable error values. | `Kind`, `Error`, strict and fallible constructors, `from_errno`, `from_raw`, `kind`, `code`, `raw`, `is_kind`, `is_not_found`, `is_interrupted`, `is_retryable`, `name`, `message`. |
 | `std::c` | C ABI boundary helpers. | `CStr`, `CString`, `Library`, `Symbol`, `from_string`, `from_ptr`, `from_slice_in`, `from_cstr_in`, `is_null`, `errno`, `error`, `open`, `main_program`, `symbol`, `function`, `close`, `last_error`, `lazy`, `now`, `local`, `global`. |
 | `std::target` | Compiler-known target and platform facts. | `triple`, `arch`, `os`, `env`, `pointer_bits`, `uses_elf`, `uses_dwarf`, `syscall_abi`, Linux API-family predicates. |
-| `std::env` | User-facing process argument, environment-variable, OS-string, and path-state helpers. | `arg_count`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, `get`, `get_os`, `try_get`, `try_get_os`, `set`, `remove`, `current_dir`, `current_dir_os`, `current_dir_path`, `try_current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`. |
+| `std::env` | User-facing process argument, environment-variable, OS-string, and path-state helpers. | `arg_count`, `try_arg`, `try_arg_os`, `program_name`, `program_name_os`, Result-returning `get`, `get_os`, `set`, `remove`, compatibility `try_get`, `try_get_os`, `get_or_default`, `get_os_or_default`, `set_unchecked`, `remove_unchecked`, `current_dir`, `current_dir_os`, `current_dir_path`, `try_current_dir_path`, `set_current_dir`, `executable_path`, `executable_path_os`. |
 | `std::process` | Current-process helpers and POSIX child-process control. | `id`, `uid`, `gid`, `exit`, `abort`, `success`, `failure`, `ExitCode`, typed `Signal`, direct `Error` helpers `fork_result`, `wait_status_result`, `wait_result`, raw compatibility `fork`, `wait`, `Arg`, `EnvVar`, `Command`, `Child`, `ChildStdin`/`ChildStdout`/`ChildStderr`, `ExitStatus`, `Output`, `TempFile`, `TempDir`, `arg`, `env_var`, `command`, `command_with_args`, `kill`, `kill_signal`, `terminate`, command `arg`/`args`/`env`/`env_var`/`current_dir`/`spawn`/`status`/`exit_status`/`output`/`output_in`/`exec`, current/executable path wrappers, temp file/dir constructors, status/output/child accessors. |
 | `std::thread` | Function-pointer thread spawn/join, runtime ids, sleep/yield hints, and hosted parallelism. | `Thread`, `Builder`, `spawn`, `join`, `is_finished`, `yield_now`, `sleep`, `id`, `is_main`, `available_parallelism`, `is_join_error`. |
 | `std::sync` | Small explicit synchronization primitives. | `Ordering`, `AtomicI64`, `AtomicBool`, `AtomicUsize`, `AtomicPtr`, `Mutex`, `RwLock`, `Once`, `OnceLock`, `Condvar`, `Barrier`, `Channel`, `Sender`, `Receiver`, atomic helpers, lock helpers, `call_once`, `channel`, `mpsc_channel`. |
@@ -264,10 +264,12 @@ and adds `Option`-based argument access through `try_arg` and `program_name`.
 use small runtime-backed hooks for `get`, `has`, `set`, `remove`,
 `current_dir`, `set_current_dir`, and `executable_path`, with source
 `try_get`, `try_current_dir`, and `try_executable_path` helpers keeping
-ordinary absence in `Option[string]`. Use `get_os`, `try_get_os`,
-`current_dir_os`, `current_dir_path`, `try_current_dir_path`, and
-`executable_path_os` when OS strings or lexical path bytes should stay distinct
-from ordinary text.
+ordinary absence in `Option[string]`. `get` and `get_os` preserve missing
+environment variables as `Error(NotFound)`; use `get_or_default` and
+`get_os_or_default` only for the old empty-value compatibility policy. Use
+`get_os`, `try_get_os`, `current_dir_os`, `current_dir_path`,
+`try_current_dir_path`, and `executable_path_os` when OS strings or lexical
+path bytes should stay distinct from ordinary text.
 
 `std::process` starts with a runtime-backed process surface: `id` reads the
 host process id, `uid`/`gid` read current user and group identity, `exit`

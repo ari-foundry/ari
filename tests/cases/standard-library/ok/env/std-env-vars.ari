@@ -5,7 +5,7 @@ fn main() -> i64 {
   var zone = zone::create(256);
   var score = 0;
 
-  env::remove(name);
+  env::remove_unchecked(name);
   if !env::has(name) {
     score = score + 3;
   }
@@ -14,7 +14,7 @@ fn main() -> i64 {
   if missing.is_none() {
     score = score + 5;
   }
-  match env::get_result(name) {
+  match env::get(name) {
     Ok(_) => {
       panic();
     }
@@ -23,8 +23,8 @@ fn main() -> i64 {
     }
   }
 
-  assert(env::set_result(name, "first").is_ok());
-  if env::set(name, "first") {
+  assert(env::set(name, "first").is_ok());
+  if env::set_unchecked(name, "first") {
     score = score + 7;
   }
   if env::has(name) {
@@ -42,10 +42,10 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  if env::set(name, "second") {
+  if env::set_unchecked(name, "second") {
     score = score + 17;
   }
-  match env::get_result(name) {
+  match env::get(name) {
     Ok(result_value) => {
       var text_result = std::string::from_string(ref mut zone, result_value);
       var expected_result = std::string::from_string(ref mut zone, "second");
@@ -55,7 +55,7 @@ fn main() -> i64 {
       panic();
     }
   }
-  match env::get_os_result(name) {
+  match env::get_os(name) {
     Ok(raw_value) => {
       assert(raw_value.len() == 6);
     }
@@ -64,13 +64,13 @@ fn main() -> i64 {
     }
   }
 
-  var updated = std::string::from_string(ref mut zone, env::get(name));
+  var updated = std::string::from_string(ref mut zone, env::get_or_default(name));
   var second = std::string::from_string(ref mut zone, "second");
   if updated.equals(second.as_slice()) {
     score = score + 19;
   }
 
-  if env::remove_result(name).is_ok() {
+  if env::remove(name).is_ok() {
     score = score + 23;
   }
   if !env::has(name) {

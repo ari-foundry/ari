@@ -7,14 +7,17 @@ CLIs need: current directory and executable path. Argument helpers are built on
 top of `std::context`, which owns the low-level runtime hooks initialized by
 the generated host entry wrapper.
 
-Recoverable fallible helpers currently have `Result[..., env::Error]` forms.
-The `Option` helpers remain the compact compatibility surface for simple
-absence. Naming is in transition: the long-term stdlib direction is for natural
-fallible names such as `env::get`/`env::current_dir` to return `Result`, with
-`_optional`, `_or`, `_or_default`, `_raw`, or `_unchecked` reserved for
-information-discarding behavior. The existing `*_result` names are documented
-as transitional compatibility APIs until those natural names can move without
-stranding current callers.
+Environment variable helpers use natural fallible names: `get`, `get_os`,
+`set`, and `remove` return `Result[..., env::Error]`. Compact compatibility
+helpers that discard error detail are named explicitly: `try_get`,
+`try_get_os`, `get_or_default`, `get_os_or_default`, `set_unchecked`, and
+`remove_unchecked`.
+
+Argument and process-path helpers still include transitional `*_result` names
+because their natural names are tied to long-standing runtime hooks. The final
+direction remains the same across the module: natural fallible names return
+`Result`, while `_optional`, `_or`, `_or_default`, `_raw`, or `_unchecked`
+names opt into information-discarding or boundary behavior.
 
 Use `std::env` from application code when you want friendly arguments,
 environment variables, or current process path state. Use `std::context` when
@@ -37,17 +40,17 @@ env::program_name() -> Option[string]
 env::program_name_os() -> Option[std::string::OsStr]
 env::program_name_result() -> Result[string, env::Error]
 env::program_name_os_result() -> Result[std::string::OsStr, env::Error]
-env::get(name: string) -> string
-env::get_os(name: string) -> std::string::OsStr
+env::get(name: string) -> Result[string, env::Error]
+env::get_os(name: string) -> Result[std::string::OsStr, env::Error]
+env::get_or_default(name: string) -> string
+env::get_os_or_default(name: string) -> std::string::OsStr
 env::has(name: string) -> bool
 env::try_get(name: string) -> Option[string]
 env::try_get_os(name: string) -> Option[std::string::OsStr]
-env::get_result(name: string) -> Result[string, env::Error]
-env::get_os_result(name: string) -> Result[std::string::OsStr, env::Error]
-env::set(name: string, value: string) -> bool
-env::set_result(name: string, value: string) -> Result[(), env::Error]
-env::remove(name: string) -> bool
-env::remove_result(name: string) -> Result[(), env::Error]
+env::set(name: string, value: string) -> Result[(), env::Error]
+env::set_unchecked(name: string, value: string) -> bool
+env::remove(name: string) -> Result[(), env::Error]
+env::remove_unchecked(name: string) -> bool
 env::current_dir() -> string
 env::try_current_dir() -> Option[string]
 env::current_dir_result() -> Result[string, env::Error]
@@ -96,31 +99,27 @@ It currently returns an empty string for out-of-range indexes, so prefer
 `try_arg` or `has_arg` unless absence is impossible in the surrounding code.
 
 `has(name)` returns whether an environment variable is visible to the current
-process. `try_get(name)` is the preferred normal-control-flow accessor for
-environment variables: it returns `Some(value)` when the variable exists and
-`None<string>()` when it is missing.
+process. `get(name)` returns `Ok(value)` when the variable exists and
+`Err(Error(NotFound))` when it is absent. Missing environment variables are
+ordinary absence, not a runtime failure, but the `Result` shape lets APIs
+compose with other fallible hosted helpers without erasing the reason.
+`try_get(name)` keeps only the success payload as `Option[string]`, and
+`get_or_default(name)` is the compatibility helper for older code that wants
+an empty string when the variable is missing.
 
-`get_result(name)` returns `Ok(value)` when the variable exists and
-`Err(Error(NotFound))` when it is absent. `get_os_result(name)` applies the
-same policy to the `OsStr` view. Missing environment variables are ordinary
-absence, not a runtime failure, but the `Result` form lets APIs compose with
-other fallible hosted helpers without erasing the reason.
-
-`get(name)` returns a borrowed lowercase Ari `string` from the host
-environment. Missing variables return an empty string, so use `try_get` or
-`has` when absence matters.
-
-`get_os(name)` and `try_get_os(name)` expose environment variable values as
-`std::string::OsStr`. On the current POSIX target this preserves the raw bytes
-from the runtime C string and lets callers choose `try_utf8()` or a byte-level
-policy at the boundary.
+`get_os(name)` applies the same `Result` policy to an `std::string::OsStr`
+view. `try_get_os(name)` keeps only the optional success value, and
+`get_os_or_default(name)` is the compatibility helper. On the current POSIX
+target, OS-string environment values preserve the raw bytes from the runtime C
+string and let callers choose `try_utf8()` or a byte-level policy at the
+boundary.
 
 `set(name, value)` overwrites the current process environment variable and
-returns whether the host accepted the mutation. `remove(name)` unsets the
-variable and returns whether the host accepted the request. These mutations
-affect the current process and children spawned later by this process; they do
-not edit a user's shell profile or global system environment.
-`set_result` and `remove_result` are the error-preserving forms. Today failed
+returns `Ok(())` when the host accepts the mutation. `remove(name)` unsets the
+variable and returns `Ok(())` on success. These mutations affect the current
+process and children spawned later by this process; they do not edit a user's
+shell profile or global system environment. `set_unchecked` and
+`remove_unchecked` keep the older boolean compatibility shape. Today failed
 host mutations become `Error(Other)` because the runtime bool hook does not
 yet expose a platform errno payload.
 
@@ -205,14 +204,14 @@ Environment variables:
 
 ```ari
 fn main() -> i64 {
-  if env::set_result("ARI_MODE", "dev").is_ok() {
-    match env::get_result("ARI_MODE") {
+  if env::set("ARI_MODE", "dev").is_ok() {
+    match env::get("ARI_MODE") {
       Ok(value) => println("mode={}", value),
       Err(_) => {}
     }
   }
 
-  env::remove_result("ARI_MODE");
+  env::remove("ARI_MODE").unwrap();
   return 0;
 }
 ```
@@ -279,8 +278,8 @@ fn main() -> i64 {
 - `tests/cases/standard-library/ok/env/std-env-args.ari` checks the source wrappers,
   `Option` and `Result` result shapes, LLVM symbols, and executable behavior.
 - `tests/cases/standard-library/ok/env/std-env-vars.ari` checks current-process
-  environment `get`/`has`/`try_get`/`get_result`/`set_result`/`remove_result`
-  behavior and runtime hook lowering.
+  environment `get`/`get_or_default`/`has`/`try_get`/`get_os`/`set`/`remove`
+  plus `_unchecked` compatibility behavior and runtime hook lowering.
 - `tests/cases/standard-library/ok/env/std-env-paths.ari` checks current
   directory, `set_current_dir`, executable-path lookup, `Option` and `Result`
   wrappers, LLVM symbols, and executable behavior.
