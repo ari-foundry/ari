@@ -36,8 +36,9 @@ def main() -> int:
         "[Feature Status](language/feature-status.md)",
         "[Feature Crosswalk](language/feature-crosswalk.md)",
         "[Examples And Tests](language/examples-and-tests.md)",
-        "[Compiler Onboarding](dev/compiler-onboarding.md)",
-        "[Compiler Contributor Guide](dev/compiler-contributor-guide.md)",
+        "[Developer Overview](dev/README.md)",
+        "[Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)",
+        "[Roadmap](dev/roadmap.md)",
     ]:
         require(docs_index, needle, docs_index_path)
 
@@ -180,7 +181,7 @@ def main() -> int:
         "tests/cases/functions/",
         "tests/cases/modules/",
         "make check-compiler-artifacts",
-        "Bootstrap Readiness",
+        "Compiler Readiness Inventory",
     ]:
         require(feature_status, needle, feature_status_path)
 

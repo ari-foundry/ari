@@ -16,7 +16,7 @@ The test suite is grouped by feature first, then by expected outcome.
 | `tests/std_api_manifest.txt` | Public `lib/std` API manifest with coverage notes. |
 | `tests/bootstrap_readiness_manifest.txt` | Hosted compiler-writing readiness fixture groups. |
 | `tests/check_language_docs.py` | User-facing documentation smoke check for docs-only Ari usage and test navigation. |
-| `tests/check_bootstrap_readiness_docs.py` | Documentation smoke check for the production compiler design, bootstrap start-gate, and self-host roadmap links. |
+| `tests/check_compiler_docs.py` | Documentation smoke check for the current C++ hosted compiler developer path. |
 
 Feature case directories:
 
@@ -54,7 +54,7 @@ Within each feature directory, tests still use readable file prefixes:
   artifacts such as token, syntax, diagnostic, source-map, typed IR, or LLVM
   fragments.
 
-See `docs/dev/library-testing.md` for the full standard library testing policy.
+See `docs/stdlib/testing.md` for the full standard library testing policy.
 
 ## Focused Targets
 
@@ -69,7 +69,7 @@ Use the narrowest target that matches the changed surface:
 | `make check-core-language` | Executable core language smoke tests plus representative stable diagnostics for functions, locals, operators, casts, blocks, branches, loops, `break`, `continue`, and returns. |
 | `make check-traits` | Minimum static trait subset plus trait objects, impl conformance, generic trait dispatch, compiler-shaped Eq/Hash/Debug/Ord fixtures, and trait diagnostics. |
 | `make check-ownership` | Fast ownership/borrow/drop smoke for aggregate moves, reborrowing, compiler-shaped owner flow, active enum payload drop lowering, and representative ownership diagnostics. |
-| `make check-bootstrap-docs` | Later bootstrap start-gate docs and fixture-group manifest. |
+| `make check-compiler-docs` | Current compiler developer docs, roadmap, and readiness inventory. |
 | `make check-bootstrap-readiness` | Small pre-bootstrap Ari fixtures under `tests/cases/bootstrap-readiness/`. |
 
 Use `python3 tests/check_compiler_artifact_cli.py` when changing artifact CLI
@@ -89,10 +89,9 @@ Use `python3 tests/check_compiler_target_cli.py` when changing target triple,
 ABI fact, or `target("...")` predicate reporting.
 
 Documentation checks are intentionally small. For example,
-`make check-bootstrap-docs` only verifies that the bootstrap readiness guide
-keeps its production-language contract, readiness inventory, start gate, first
-implementation slices, fixture groups, roadmap, estimate, and test-plan
-sections linked from the developer docs.
+`make check-compiler-docs` verifies that the compiler developer overview,
+roadmap, readiness inventory, test matrix, and docs index still point at the
+current C++ hosted compiler workflow instead of stale self-host planning pages.
 
 `make check-bootstrap-readiness` compiles only the small pre-bootstrap Ari
 fixtures under `tests/cases/bootstrap-readiness/`. It is meant to stay fast and

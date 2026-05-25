@@ -30,8 +30,8 @@ The current module contract is intentionally small:
 - `std` is special-cased for the source standard library and should not become
   the pattern for ordinary user or compiler projects.
 
-When this contract changes, update [Compiler Project Model](compiler-project-model.md),
-module tests, and any artifact docs that mention module graphs or metadata.
+When this contract changes, update this page, module tests, and any artifact
+docs that mention module graphs or metadata.
 
 ## Project Layout Rule
 

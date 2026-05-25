@@ -1,9 +1,9 @@
 # Bootstrap readiness fixture manifest
 #
 # This manifest is intentionally documentation-like. It records the fixture
-# groups that must stay represented before any Ari compiler-in-Ari work starts. The
-# check-bootstrap-docs target verifies these group names so the readiness plan
-# does not silently collapse into one vague "self-host" bucket.
+# groups that must stay represented before any Ari compiler-in-Ari work starts.
+# The compiler docs point here as a source-pressure inventory, not as a request
+# to create a compiler implementation tree.
 
 modules: file-backed package roots, imports, visibility, module cache
 source: source ownership, byte spans, line lookup, char and UTF-8 text

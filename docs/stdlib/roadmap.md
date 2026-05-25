@@ -1,7 +1,8 @@
 # Standard Library Roadmap
 
-This page summarizes the library implementation plan. The detailed compiler
-roadmap remains in `docs/dev/standard-library-roadmap.md`.
+This page summarizes the library implementation plan. Compiler work that
+affects library support is tracked only when it requires a C++ hosted compiler
+change.
 
 ## Phase 1: Stabilize The Current Seed
 

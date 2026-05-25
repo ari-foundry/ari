@@ -40,7 +40,7 @@ facts before it reaches a linked binary.
 | Move, borrow, drop, or branch state is wrong | Ownership/control flow | `src/ownership_semantics.cpp`, `src/borrow_semantics.cpp`, `src/move_semantics.cpp`, `src/control_flow_semantics.cpp` | one ownership/borrowing error fixture |
 | LLVM text is wrong but typed facts look right | IR/backend boundary | `src/ir.hpp`, `src/ir_builders.cpp`, `src/llvm_codegen.cpp` | focused `--emit-llvm` |
 | Object, shared library, symbol, or executable behavior is wrong | Backend/toolchain | `src/llvm_codegen.cpp`, `src/symbol_mangle.cpp`, `src/toolchain.cpp` | focused LLVM/object/shared/executable check |
-| Docs and tests disagree | Docs/test policy | focused language or dev docs, `tests/Makefile` | `make check-language-docs` or `make check-bootstrap-docs` |
+| Docs and tests disagree | Docs/test policy | focused language or dev docs, `tests/Makefile` | `make check-language-docs` or `make check-compiler-docs` |
 
 ## Error Placement
 

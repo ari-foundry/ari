@@ -169,7 +169,7 @@ For expected failures, prefer the smallest observable artifact:
 Put diagnostic golden files under
 `tests/cases/compiler-development/artifact/errors/`. Keep paths normalized and
 messages deterministic. Run `make check-compiler-artifacts` when artifact text
-changes and `make check-bootstrap-docs` when bootstrap/readiness policy changes.
+changes and `make check-compiler-docs` when compiler-doc policy changes.
 Run `python3 tests/check_compiler_diagnostic_cli.py` when changing diagnostic
 catalog CLI behavior.
 

@@ -5,11 +5,11 @@ make today's compiler easier to maintain and review.
 
 Use this page with [Architecture](architecture.md),
 [Compiler Pipeline](compiler-pipeline.md),
-[Compiler Development Roadmap](compiler-development-roadmap.md),
-[Compiler Maturity Gates](compiler-maturity-gates.md),
-[Compiler Project Model](compiler-project-model.md),
-[Compiler Source And Diagnostics](compiler-source-diagnostics.md), and
-[Compiler Artifact Testing](compiler-artifact-testing.md).
+[Compiler Layer Map](compiler-layer-map.md),
+[Compiler Readiness Inventory](compiler-readiness-inventory.md),
+[Compiler Source Identity](compiler-source-identity.md),
+[Compiler Diagnostic Authoring](compiler-diagnostic-authoring.md), and
+[Compiler Artifact Authoring](compiler-artifact-authoring.md).
 
 ## Goals
 
@@ -134,8 +134,8 @@ symbols     object/shared-library symbol surface
 
 Artifact tests should compare earlier dumps before later ones. A syntax
 regression should not first appear as an executable failure. See
-[Compiler Artifact Testing](compiler-artifact-testing.md) for normalization and
-golden file policy.
+[Compiler Artifact Authoring](compiler-artifact-authoring.md) for normalization
+and golden file policy.
 
 The compiler also exposes the pass contract table directly:
 
@@ -203,7 +203,7 @@ Small focused checks are preferred while editing one pass:
 ```text
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/control-flow/ok/if-expression.ari --emit-llvm build/focused/if.ll
-make check-bootstrap-docs
+make check-compiler-docs
 ```
 
 Run broad checks before handoff for broad compiler changes. Sanitizer checks

@@ -293,7 +293,7 @@ focused target that owns the changed surface first:
 
 ```sh
 make check-language-docs
-make check-bootstrap-docs
+make check-compiler-docs
 make check-bootstrap-readiness
 ```
 

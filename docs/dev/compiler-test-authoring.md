@@ -58,7 +58,7 @@ next contributor should know why the test exists before opening compiler code.
 | Executable behavior | Link one case and compare its exit code or output. |
 | Bootstrap-readiness fixture | `make check-bootstrap-readiness` |
 | Compiler artifact or golden text | `make check-compiler-artifacts` |
-| Bootstrap/readiness docs only | `make check-bootstrap-docs` |
+| Compiler docs only | `make check-compiler-docs` |
 | Language docs only | `make check-language-docs` |
 | Unknown fixture bucket | `build/ari --list-test-buckets` |
 

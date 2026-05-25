@@ -63,7 +63,7 @@ in executable code. Parsed syntax is not always lowered all the way to LLVM.
 | Diagnostic codes and labels | [Compiler Diagnostic Authoring](../dev/compiler-diagnostic-authoring.md) | `diagnostic-parser-expected.diagnostic` | `tests/cases/compiler-development/artifact/errors/` | `make check-compiler-artifacts` |
 | Artifact producers and goldens | [Compiler Artifact Authoring](../dev/compiler-artifact-authoring.md) | `token-dump-basic.tokens` | `tests/cases/compiler-development/artifact/ok/` | `make check-compiler-artifacts` |
 | Module/project artifacts | [Compiler Module Project Authoring](../dev/compiler-module-project-authoring.md) | `module-graph-file-module.graph` | `tests/cases/compiler-development/artifact/ok/` | `make check-compiler-artifacts` |
-| Bootstrap readiness docs | [Bootstrap Readiness](../dev/bootstrap-readiness.md) | readiness fixtures | `tests/cases/bootstrap-readiness/` | `make check-bootstrap-readiness` |
+| Compiler readiness inventory | [Compiler Readiness Inventory](../dev/compiler-readiness-inventory.md) | readiness gates | `tests/cases/bootstrap-readiness/` | `make check-compiler-docs` |
 
 ## When Docs And Behavior Differ
 

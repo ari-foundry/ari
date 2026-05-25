@@ -40,8 +40,8 @@ Use this priority order when deciding the next small compiler task.
 
 | Area | Primary Locations |
 | --- | --- |
-| Source maps and spans | `src/source_map.*`, `tests/cases/compiler-development/artifact/ok/source-map-*`, `tests/check_source_map.cpp` |
-| Diagnostics | `src/diagnostic.*`, `src/diagnostic_catalog.*`, `tests/cases/compiler-development/artifact/errors/`, `tests/check_compiler_diagnostic_cli.py` |
+| Source maps and spans | `src/source_map.hpp`, `src/source_map.cpp`, `tests/source_map_unit.cpp`, `tests/cases/compiler-development/artifact/ok/source-map-*` |
+| Diagnostics | `src/common.hpp`, `src/common.cpp`, `src/diagnostic_dump.cpp`, `tests/cases/compiler-development/artifact/errors/`, `tests/check_compiler_diagnostic_cli.py` |
 | Modules and packages | `src/module_loader.*`, `src/sema.cpp`, `tests/cases/modules/`, `tests/packages/` |
 | Frontend | `src/lexer.cpp`, `src/parser.cpp`, lexer/parser diagnostic artifacts, syntax artifacts |
 | Bootstrap readiness pressure | `tests/cases/bootstrap-readiness/` |
@@ -81,7 +81,7 @@ For each gate, use this loop:
 | Module loader, resolver, metadata, or cache behavior | `make check-modules` |
 | Compiler artifact emitters or golden text | `make check-compiler-artifacts` |
 | Bootstrap-readiness source fixtures | `make check-bootstrap-readiness` |
-| Bootstrap/readiness docs | `make check-bootstrap-docs` |
+| Compiler docs index, roadmap, and readiness inventory | `make check-compiler-docs` |
 | Generics | `make check-generics` |
 | Traits | `make check-traits` |
 | Ownership | `make check-ownership` |

@@ -74,7 +74,7 @@ toward explicit helper files and forward-flowing data.
 | Ownership and borrowing | one `tests/cases/ownership/` or `tests/cases/borrowing/` fixture |
 | Bootstrap-readiness pressure | `make check-bootstrap-readiness` |
 | Compiler artifacts | `make check-compiler-artifacts` |
-| Developer docs | `make check-bootstrap-docs` |
+| Developer docs | `make check-compiler-docs` |
 
 Full `make check` belongs at handoff for broad changes. Sanitizer checks are
 useful for low-level compiler internals, but they are intentionally separate
@@ -86,11 +86,11 @@ from this small-slice loop.
 | --- | --- |
 | User syntax or semantics | language docs plus [Feature Status](../language/feature-status.md) and [Feature Crosswalk](../language/feature-crosswalk.md) |
 | Pass boundary or source file ownership | this page and [Compiler Pass Contracts](compiler-pass-contracts.md) |
-| Module search, metadata, or project layout | [Compiler Module Project Authoring](compiler-module-project-authoring.md) and [Compiler Project Model](compiler-project-model.md) |
+| Module search, metadata, or project layout | [Compiler Module Project Authoring](compiler-module-project-authoring.md) |
 | Diagnostic code, label, note, or renderer | [Compiler Diagnostic Authoring](compiler-diagnostic-authoring.md) and artifact goldens |
-| New artifact format | [Compiler Artifact Authoring](compiler-artifact-authoring.md) and [Compiler Artifact Testing](compiler-artifact-testing.md) |
+| New artifact format | [Compiler Artifact Authoring](compiler-artifact-authoring.md) |
 | Test bucket or target | [Compiler Test Authoring](compiler-test-authoring.md), `tests/README.md`, and `tests/Makefile` |
-| Maturity estimate or development gate | [Compiler Readiness Inventory](compiler-readiness-inventory.md) and [Compiler Maturity Gates](compiler-maturity-gates.md) |
+| Maturity estimate or development gate | [Compiler Readiness Inventory](compiler-readiness-inventory.md) |
 
 ## Adding A New Layer
 

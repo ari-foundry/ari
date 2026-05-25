@@ -1,6 +1,7 @@
 # Ari Documentation
 
-The docs are split by audience.
+The docs are split by audience. Start with the smallest path that matches what
+you are doing, then follow links only when you need deeper detail.
 
 ## Start Here
 
@@ -10,26 +11,17 @@ The docs are split by audience.
   [Cookbook](language/cookbook.md), then
   [Feature Crosswalk](language/feature-crosswalk.md).
 - New compiler contributor:
-  [Compiler Development Dashboard](dev/compiler-development-dashboard.md), then
-  [Compiler Onboarding](dev/compiler-onboarding.md), then
-  [Compiler Contributor Guide](dev/compiler-contributor-guide.md), then
-  [Compiler Concepts Glossary](dev/compiler-concepts-glossary.md), then
+  [Developer Overview](dev/README.md), then
+  [Architecture](dev/architecture.md), then
+  [Compiler Pipeline](dev/compiler-pipeline.md), then
   [Compiler Layer Map](dev/compiler-layer-map.md), then
-  [Compiler Triage Guide](dev/compiler-triage-guide.md), then
   [Compiler Source Identity](dev/compiler-source-identity.md), then
-  [Compiler Module Project Authoring](dev/compiler-module-project-authoring.md),
-  then
-  [Compiler Artifact Authoring](dev/compiler-artifact-authoring.md), then
   [Compiler Diagnostic Authoring](dev/compiler-diagnostic-authoring.md), then
+  [Compiler Artifact Authoring](dev/compiler-artifact-authoring.md), then
   [Compiler Test Authoring](dev/compiler-test-authoring.md), then
-  [Compiler Development Roadmap](dev/compiler-development-roadmap.md), then
-  [Compiler Implementation Playbook](dev/compiler-implementation-playbook.md),
-  then [Compiler Next Slices](dev/compiler-next-slices.md), then
-  [Compiler Change Checklist](dev/compiler-change-checklist.md), then
-  [Core Language Readiness](dev/core-language-readiness.md), then
-  [Minimum Trait Readiness](dev/trait-minimum-readiness.md), then
-  [Ownership Drop Readiness](dev/ownership-drop-readiness.md), then
-  [Build And Test](dev/build-test.md).
+  [Build And Test](dev/build-test.md), then
+  [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md), then
+  [Roadmap](dev/roadmap.md).
 
 ## Language Docs
 
@@ -60,9 +52,41 @@ Use these when writing Ari code:
 - [Memory And Ownership](language/memory.md)
 - [Front-End Only Syntax](language/front-end-only.md)
 
+## Developer Docs
+
+Use these when changing the current C++ hosted compiler:
+
+- [Developer Overview](dev/README.md)
+- [Architecture](dev/architecture.md)
+- [Compiler Pipeline](dev/compiler-pipeline.md)
+- [Compiler Layer Map](dev/compiler-layer-map.md)
+- [Compiler Concepts Glossary](dev/compiler-concepts-glossary.md)
+- [Compiler Triage Guide](dev/compiler-triage-guide.md)
+- [Compiler Source Identity](dev/compiler-source-identity.md)
+- [Compiler Module Project Authoring](dev/compiler-module-project-authoring.md)
+- [Compiler Diagnostic Authoring](dev/compiler-diagnostic-authoring.md)
+- [Compiler Artifact Authoring](dev/compiler-artifact-authoring.md)
+- [Compiler Test Authoring](dev/compiler-test-authoring.md)
+- [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)
+- [Compiler Pass Contracts](dev/compiler-pass-contracts.md)
+- [Core Language Readiness](dev/core-language-readiness.md)
+- [Minimum Trait Readiness](dev/trait-minimum-readiness.md)
+- [Ownership Drop Readiness](dev/ownership-drop-readiness.md)
+- [Generic Aggregate Monomorphization](dev/generic-aggregate-monomorphization.md)
+- [Trait-Backed Operators](dev/operator-trait-design.md)
+- [Aggregate ABI Classification](dev/aggregate-abi.md)
+- [Symbol Mangling](dev/symbol-mangling.md)
+- [Runtime And Backend](dev/runtime-backend.md)
+- [Runtime Support Roadmap](dev/runtime-support.md)
+- [Semantic Checker Decomposition](dev/sema-decomposition.md)
+- [Feature Test Matrix](dev/test-matrix.md)
+- [Build And Test](dev/build-test.md)
+- [Roadmap](dev/roadmap.md)
+
 ## Standard Library Docs
 
-Use these when writing or changing Ari libraries:
+Use these when writing or changing Ari libraries. Standard library maturity is
+tracked separately from compiler-writing readiness.
 
 - [Standard Library Overview](stdlib/README.md)
 - [Standard Library Module Map](stdlib/overview.md)
@@ -77,58 +101,6 @@ Use these when writing or changing Ari libraries:
 - [Standard Library Production Readiness](stdlib/production-readiness.md)
 - [Standard Library Testing](stdlib/testing.md)
 - [Standard Library Roadmap](stdlib/roadmap.md)
-
-## Developer Docs
-
-Use these when changing the compiler:
-
-- [Developer Overview](dev/README.md)
-- [Architecture](dev/architecture.md)
-- [Compiler Pipeline](dev/compiler-pipeline.md)
-- [Compiler Development Dashboard](dev/compiler-development-dashboard.md)
-- [Compiler Onboarding](dev/compiler-onboarding.md)
-- [Compiler Contributor Guide](dev/compiler-contributor-guide.md)
-- [Compiler Concepts Glossary](dev/compiler-concepts-glossary.md)
-- [Compiler Layer Map](dev/compiler-layer-map.md)
-- [Compiler Triage Guide](dev/compiler-triage-guide.md)
-- [Compiler Source Identity](dev/compiler-source-identity.md)
-- [Compiler Module Project Authoring](dev/compiler-module-project-authoring.md)
-- [Compiler Artifact Authoring](dev/compiler-artifact-authoring.md)
-- [Compiler Diagnostic Authoring](dev/compiler-diagnostic-authoring.md)
-- [Compiler Test Authoring](dev/compiler-test-authoring.md)
-- [Compiler Implementation Playbook](dev/compiler-implementation-playbook.md)
-- [Compiler Next Slices](dev/compiler-next-slices.md)
-- [Compiler Change Checklist](dev/compiler-change-checklist.md)
-- [Compiler Readiness Inventory](dev/compiler-readiness-inventory.md)
-- [Minimum Trait Readiness](dev/trait-minimum-readiness.md)
-- [Ownership Drop Readiness](dev/ownership-drop-readiness.md)
-- [Compiler Pass Contracts](dev/compiler-pass-contracts.md)
-- [Core Language Readiness](dev/core-language-readiness.md)
-- [Generic Aggregate Monomorphization](dev/generic-aggregate-monomorphization.md)
-- [Trait-Backed Operators](dev/operator-trait-design.md)
-- [Build And Test](dev/build-test.md)
-- [Aggregate ABI Classification](dev/aggregate-abi.md)
-- [Symbol Mangling](dev/symbol-mangling.md)
-- [Feature Test Matrix](dev/test-matrix.md)
-- [Runtime And Backend](dev/runtime-backend.md)
-- [Runtime Support Roadmap](dev/runtime-support.md)
-- [Standard Library Roadmap](dev/standard-library-roadmap.md)
-- [Compiler Development Roadmap](dev/compiler-development-roadmap.md)
-- [Compiler Maturity Gates](dev/compiler-maturity-gates.md)
-- [Compiler Project Model](dev/compiler-project-model.md)
-- [Compiler Source And Diagnostics](dev/compiler-source-diagnostics.md)
-- [Compiler Artifact Testing](dev/compiler-artifact-testing.md)
-- [Library Testing](dev/library-testing.md)
-- [Roadmap](dev/roadmap.md)
-- [Completed Milestones](dev/completed-milestones.md)
-- [Semantic Checker Decomposition](dev/sema-decomposition.md)
-
-Long-term self-hosting appendix:
-
-- [Production Compiler Design](dev/production-compiler-design.md)
-- [Compiler Bootstrap Fixture Plan](dev/bootstrap-fixture-plan.md)
-- [Bootstrap Readiness](dev/bootstrap-readiness.md)
-- [Self-Host Roadmap](dev/self-host-roadmap.md)
 
 ## Tooling Docs
 

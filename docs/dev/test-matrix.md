@@ -128,36 +128,27 @@ under `tests/cases/standard-library/`: `std-<module>-<feature>.ari` for source
 module APIs, `prelude-<feature>.ari` for implicit root aliases and macros, and
 `std-library-smoke.ari` for cross-library integration. Zone and pointer
 provenance hooks live under `tests/cases/memory/`. See
-[Library Testing](library-testing.md) for the full policy.
+[Standard Library Testing](../stdlib/testing.md) for the full policy.
 
-## Compiler And Bootstrap Documentation Coverage Note
+## Compiler Documentation Coverage Note
 
-Compiler development is tracked before bootstrapping work starts. The general
-language-docs entry path is checked by `make check-language-docs`, the hosted
-compiler readiness docs are checked by `make check-bootstrap-docs`, and the
+Compiler development is tracked for the current C++ hosted compiler. The
+general language-docs entry path is checked by `make check-language-docs`, the
+compiler developer docs are checked by `make check-compiler-docs`, and the
 small compiler-shaped Ari source fixtures are checked by
 `make check-bootstrap-readiness`. The docs targets run
-`tests/check_language_docs.py` and
-`tests/check_bootstrap_readiness_docs.py` and verify that
-[Getting Started](../language/getting-started.md),
-[Quick Reference](../language/quick-reference.md),
-[Cookbook](../language/cookbook.md),
-[Compiler Development Roadmap](compiler-development-roadmap.md),
-[Compiler Implementation Playbook](compiler-implementation-playbook.md),
-[Compiler Next Slices](compiler-next-slices.md),
-[Compiler Change Checklist](compiler-change-checklist.md),
-[Compiler Maturity Gates](compiler-maturity-gates.md),
+`tests/check_language_docs.py` and `tests/check_compiler_docs.py` and verify
+that [Getting Started](../language/getting-started.md),
+[Quick Reference](../language/quick-reference.md), [Cookbook](../language/cookbook.md),
+[Developer Overview](README.md), [Compiler Source Identity](compiler-source-identity.md),
+[Compiler Diagnostic Authoring](compiler-diagnostic-authoring.md),
+[Compiler Artifact Authoring](compiler-artifact-authoring.md),
+[Compiler Test Authoring](compiler-test-authoring.md),
 [Compiler Pass Contracts](compiler-pass-contracts.md),
-[Compiler Project Model](compiler-project-model.md),
-[Compiler Source And Diagnostics](compiler-source-diagnostics.md),
-[Compiler Artifact Testing](compiler-artifact-testing.md),
-[Production Compiler Design](production-compiler-design.md),
-[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
-[Bootstrap Readiness](bootstrap-readiness.md),
-[Self-Host Roadmap](self-host-roadmap.md), and the docs indexes stay linked and
-keep the production-language contract, readiness inventory, start gate, first
-implementation slices, fixture groups, roadmap, estimate, and test-plan
-sections.
+[Compiler Readiness Inventory](compiler-readiness-inventory.md), [Roadmap](roadmap.md),
+and the docs indexes stay linked. Self-host implementation plans, bootstrap
+stage layouts, and package-manager work are intentionally outside this
+compiler-doc path.
 
 ## Feature Plan
 

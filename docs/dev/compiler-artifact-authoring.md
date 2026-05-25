@@ -265,7 +265,7 @@ slice and its first files, artifact, and focused check.
 Use `--list-capabilities` or `--explain-capability` when the change is really a
 compiler feature-surface change rather than a new artifact format.
 
-For docs or artifact policy changes, use `make check-bootstrap-docs`.
+For docs or artifact policy changes, use `make check-compiler-docs`.
 Full `make check` belongs at handoff for broad changes. Sanitizer checks are
 intentionally separate.
 

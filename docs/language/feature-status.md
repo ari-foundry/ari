@@ -45,8 +45,8 @@ Status meanings:
 | --- | --- | --- | --- |
 | inline `mod`, `pub`, `use`, aliases | implemented | [Modules](modules.md) | `tests/cases/modules/` |
 | file-backed modules with `mod name;` | implemented, still hardening project ergonomics | [Modules](modules.md), [Getting Started](getting-started.md) | `tests/cases/modules/`, `tests/packages/` |
-| module metadata and cache | partial | [Compiler Project Model](../dev/compiler-project-model.md) | `tests/cases/modules/`, `tests/packages/` |
-| package manager | planned | [Compiler Next Slices](../dev/compiler-next-slices.md) | not yet |
+| module metadata and cache | partial | [Compiler Module Project Authoring](../dev/compiler-module-project-authoring.md) | `tests/cases/modules/`, `tests/packages/` |
+| package manager | planned later, outside compiler start readiness | [Roadmap](../dev/roadmap.md) | not yet |
 
 ## Traits And Methods
 
@@ -72,9 +72,9 @@ Status meanings:
 
 | Feature | Status | Read | Tests |
 | --- | --- | --- | --- |
-| token, syntax, diagnostic, source-map artifact dumps | implemented seed | [Compiler Artifact Testing](../dev/compiler-artifact-testing.md) | `make check-compiler-artifacts` |
-| implementation playbook and next slices | implemented docs | [Compiler Implementation Playbook](../dev/compiler-implementation-playbook.md), [Compiler Next Slices](../dev/compiler-next-slices.md) | docs-only |
-| bootstrap implementation | not started | [Bootstrap Readiness](../dev/bootstrap-readiness.md) | readiness fixtures only |
+| token, syntax, diagnostic, source-map artifact dumps | implemented seed | [Compiler Artifact Authoring](../dev/compiler-artifact-authoring.md) | `make check-compiler-artifacts` |
+| current compiler developer workflow | implemented docs | [Developer Overview](../dev/README.md), [Roadmap](../dev/roadmap.md) | `make check-compiler-docs` |
+| future Ari-written compiler implementation | not started and intentionally out of scope | [Compiler Readiness Inventory](../dev/compiler-readiness-inventory.md) | no implementation tree |
 
 ## How To Use This Page
 

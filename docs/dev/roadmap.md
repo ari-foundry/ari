@@ -1,126 +1,90 @@
-# Roadmap
+# Compiler Roadmap
 
-This page tracks unfinished work only. Completed compiler milestones are kept in
-[Completed Milestones](completed-milestones.md), and the supported language
-surface is documented in the language guide and [Feature Test Matrix](test-matrix.md).
+This page tracks active compiler work for the current C++ hosted compiler. It
+is deliberately short: detailed implementation rules live in the focused docs
+linked from [Developer Overview](README.md).
 
-Keep roadmap items small enough to land in a 0.x series. Do not describe an
-item as 1.0 work unless the whole language release is being scoped.
+## Scope
 
-## Near-Term Compiler Work
+The roadmap is for production compiler behavior:
 
-These are the next compiler-sized slices that should be possible without
-changing the long-term language contract.
+- source identity, spans, snippets, and multi-file diagnostics
+- lexer/parser reliability on malformed input
+- semantic diagnostics, module flow, traits, generics, ownership, and ABI
+- deterministic artifacts that make compiler regressions reviewable
 
-Phase-oriented sema decomposition is now tracked as ongoing maintenance in
-[Semantic Checker Decomposition](sema-decomposition.md) instead of as a finite
-near-term deliverable.
+This page is not a self-host implementation plan. Do not use it to create an
+Ari-written compiler tree, bootstrap/stage directories, or a cargo-like build
+tool. Standard-library/library maturity is tracked separately.
 
-Source standard library planning is tracked in
-[Standard Library Roadmap](standard-library-roadmap.md). Add compiler work here
-only when a library slice needs parser, semantic checker, IR, runtime, or
-backend changes that cannot be expressed in Ari source.
+## Near-Term Order
 
-Active near-term compiler design slices are tracked in
-[Production Compiler Design](production-compiler-design.md). Keep these as
-ordinary production language/compiler work, not bootstrap-only shortcuts:
+1. Source identity and spans: every source-backed diagnostic and artifact should
+   carry stable source ids, byte spans, line/column lookup, snippets, and
+   imported-file identity.
+2. Diagnostics: common parser, semantic, module, ownership, trait, generic, and
+   backend errors should be specific, source-aware, and stable.
+3. Module/project flow: nested imports, visibility, duplicate modules, missing
+   modules, cycles, same-filename directories, and module graph artifacts should
+   be deterministic.
+4. Frontend reliability: invalid characters, EOF edges, unterminated strings or
+   comments, malformed declarations, malformed expressions, recovery, and syntax
+   artifacts should stay stable.
+5. Compiler-shaped data readiness: normal Ari structs, enums, matches,
+   generics, and ownership should be enough to model tokens, spans, diagnostics,
+   symbols, type references, and pass results.
+6. Trait and generic readiness: generic functions, generic aggregates, trait
+   bounds, trait method resolution, monomorphization keys, and generic
+   ownership/drop should work through general compiler paths.
+7. Artifact comparison: token, source-map, syntax, diagnostic, module graph,
+   declaration index, typed IR, pass summary, LLVM fragment, object/shared
+   symbol, and runtime-output artifacts should be deterministic.
+8. ABI/backend reliability: primitive, pointer, aggregate, enum, generic
+   aggregate, function, object, shared library, and C FFI cases should either
+   work in the documented subset or fail with a clear diagnostic.
 
-1. File-backed project ergonomics: package roots, search paths, module-cache
-   summaries, and diagnostics for missing/private/ambiguous modules.
-2. Compiler-scale data modeling: generic aggregate monomorphization, readable
-   type aliases, and stable diagnostics for nested compiler data structures.
-3. Trait and formatting maturity: predictable `Hash`, `Eq`, `Ord`, `Debug`,
-   static dispatch, named formatting captures, and buffer-backed formatting.
-4. Tooling source and diagnostics: source maps, spans, labels, notes, and
-   golden diagnostic renderers in a compiler/tooling package outside runtime
-   `std`.
-5. Structural capability parameters: explore a lightweight parameter form such
-   as `fn save(x: has serialize() -> String)` for one-off method requirements
-   that do not deserve a named trait yet. This is roadmap-only and must not add
-   an `interface` keyword, implicit dynamic dispatch, or a bypass around normal
-   trait-bound diagnostics.
-6. Bootstrap artifact discipline: focused lexer/parser/report tests first,
-   then ordered stage comparisons for syntax, HIR, typed IR, LLVM text, and
-   executable behavior.
+## Language Ideas Parked For Later
 
-## Backend Work
+Structural capability parameters are worth exploring after the current trait
+and diagnostic path is solid:
 
-No active backend work is queued right now. Add the next concrete 0.x-sized
-backend slice here when it is ready to implement.
+```ari
+fn save(x: has serialize() -> String) {
+    file.write(x.serialize())
+}
+```
 
-## Long-Term Kernel-Grade Freestanding Track
+This is only a roadmap idea. It must not add an `interface` keyword, dynamic
+dispatch by accident, or a shortcut around normal trait-bound diagnostics.
 
-This is a deliberately long-term direction, not current implementation work.
-The goal is to make Ari capable of building kernel-scale freestanding systems
-after the hosted compiler, standard library, and runtime contracts are mature.
-Ari does not need to start a kernel from pure Ari source on day one: the
-expected bootstrap path is a small target-specific assembly entry, followed by
-progressively porting startup, runtime, and higher-level kernel subsystems to
-Ari as the compiler proves each layer.
+## What Not To Track Here
 
-Required compiler and runtime capabilities:
+- Ari compiler rewrite tasks
+- self-host stage plans
+- bootstrap/stage1 directory layouts
+- package manager or cargo-like tool work
+- standard-library maturity
+- broad kernel/freestanding roadmaps unless a narrow compiler ABI/backend fix is
+  ready to implement now
 
-- freestanding target profiles that do not require glibc, musl, or a host CRT
-- custom linker-script support and driver flags for kernel images
-- target-specific assembly or object startup for the first boot entry
-- Ari-owned `_start` or kernel entry lowering after assembly bootstrap
-- panic runtime that can abort, halt, or report through a platform hook
-- compiler-rt/libgcc-style helper replacement for no-libc targets
-- required builtins for `memcpy`, `memmove`, `memset`, integer arithmetic,
-  atomics, and stack-protector hooks where enabled
-- volatile loads/stores, MMIO-safe pointer APIs, fences, and explicit memory
-  ordering
-- inline assembly or a small set of architecture intrinsics for privileged
-  instructions, CPU registers, interrupt control, and barriers
-- target ABI documentation for x86_64, aarch64, and riscv64 kernel profiles
-- interrupt/exception ABI support, including stack frame layout and calling
-  convention rules
-- TLS or per-CPU/per-task runtime state policy for kernel execution
-- frame/unwind/backtrace policy that works without a userspace dynamic linker
-- allocator interfaces suitable for page, slab, zone, and bootstrap allocators
-- `core`/`alloc`/`std` layering so kernel code can avoid hosted `std`
-- raw-pointer, ownership, and drop rules that are explicit enough for device
-  buffers, DMA, page tables, and intrusive kernel data structures
-- synchronization primitives suitable for kernels, including spin locks,
-  interrupt-aware locking, atomics, and eventually wait queues
-- build/test fixtures for freestanding LLVM IR, objects, linker scripts, and
-  runnable emulator smoke tests
+## Work Loop
 
-Non-goals for the early part of this track:
+For each roadmap item:
 
-- replacing Linux or matching Linux performance
-- hiding the first boot entry behind unsupported Ari syntax
-- exposing hosted `std::fs`, `std::thread`, or libc-backed process APIs to
-  freestanding kernel code
-- starting broad driver or scheduler work before the freestanding ABI,
-  allocator, volatile/MMIO, and synchronization contracts are stable
+1. Find the implementation path and existing focused tests.
+2. Classify the gap as implementation missing, implementation buggy, or
+   verification missing.
+3. Fix the hosted compiler when behavior is missing or wrong.
+4. Add one focused fixture or golden only after the behavior exists.
+5. Run the narrow check for that layer.
+6. Update the focused doc so the next compiler developer can follow the same
+   path.
 
-## Bootstrap Direction
-
-The production language/compiler contract lives in
-[Production Compiler Design](production-compiler-design.md), the practical
-start gate lives in [Bootstrap Readiness](bootstrap-readiness.md), and the
-detailed path lives in [Self-Host Roadmap](self-host-roadmap.md).
-The short version is:
-
-1. Treat the current C++ compiler as `stage0`, not as the codebase to rewrite
-   in place.
-2. Build a separate Ari-written `stage1` compiler project.
-3. Start with isolated frontend pieces: lexer, spans, diagnostics, parser
-   dumps, and module graph fixtures.
-4. Add HIR, name resolution, type checking, ownership checks, and backend
-   output only after each previous layer has golden tests.
-5. Count Ari as self-hosted only when `stage0` builds `stage1`, `stage1` builds
-   `stage2`, and stage outputs match under a documented comparison policy.
-
-## Non-Goals For The Current Milestone
+## Current Non-Goals
 
 - class syntax
 - hidden inheritance
 - garbage collection
 - C++ ABI dependency as a source-level FFI surface
 - ambient global heap as a language primitive
-- non-local ownership for bare root `Vec[T]` without an explicit allocation
-  capability
-- adding a second backend during the current 0.x compiler/library stabilization
-  work
+- adding a second backend during current 0.x compiler stabilization

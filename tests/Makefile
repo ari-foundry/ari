@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-sanitize-run check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-source-map-unit check-layout-unit check-bootstrap-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-sanitize-run check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-source-map-unit check-layout-unit check-compiler-docs check-bootstrap-readiness check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -18,7 +18,7 @@ check-sanitize-run: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=ha
 check-sanitize-run: TOOL_ARI := $(SANITIZE_TARGET)
 check-sanitize-run: check
 
-check: check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-bootstrap-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-errors
+check: check-language-docs check-std-api check-stdlib-docs check-compiler-artifacts check-compiler-docs check-bootstrap-readiness $(TARGET) check-cli check-tools check-prelude check-core-language check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ownership check-ffi check-functions check-errors
 	mkdir -p $(BUILD_DIR)/ir
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/ir/count.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/ir/count.ll
@@ -576,8 +576,8 @@ check-ownership: $(TARGET)
 	if $(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-borrow-aggregate-enum-payload.ari --check >$(BUILD_DIR)/ownership/diagnostic-borrow-aggregate-enum-payload.err 2>&1; then exit 1; fi
 	grep -q "borrow-carrying aggregate enum payloads are not supported yet" $(BUILD_DIR)/ownership/diagnostic-borrow-aggregate-enum-payload.err
 
-check-bootstrap-docs:
-	python3 tests/check_bootstrap_readiness_docs.py
+check-compiler-docs:
+	python3 tests/check_compiler_docs.py
 
 check-bootstrap-readiness: $(TARGET)
 	mkdir -p $(BUILD_DIR)/bootstrap-readiness
