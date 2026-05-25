@@ -14,7 +14,7 @@ fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
 fn main() -> i64 {
   let unsupported = net::socket_addr(net::Ipv6Addr::localhost().as_ip(), 0 as u16);
   var score = 0;
-  match net::TcpListener::bind_result(unsupported) {
+  match net::TcpListener::bind(unsupported) {
     Ok(_direct_listener) => {}
     Err(reason) => {
       if error_is(reason, error::Unsupported) {
@@ -22,6 +22,8 @@ fn main() -> i64 {
       }
     }
   }
+  assert(net::TcpListener::bind_optional(unsupported).is_none());
+  assert(net::TcpStream::connect_optional(unsupported).is_none());
   match net::listen(unsupported) {
     Ok(_module_listener) => {}
     Err(module_reason) => {
@@ -56,9 +58,9 @@ fn main() -> i64 {
   }
 
   let bind_addr = net::SocketAddr::localhost(0 as u16);
-  let maybe_listener = net::TcpListener::bind(bind_addr);
+  let maybe_listener = net::TcpListener::bind_optional(bind_addr);
   if maybe_listener.is_none() {
-    match net::TcpListener::bind_result(bind_addr) {
+    match net::TcpListener::bind(bind_addr) {
       Ok(_retry_listener) => {}
       Err(bind_error) => {
         if bind_error.is_kind(error::PermissionDenied) || bind_error.is_kind(error::Unsupported) {
@@ -104,7 +106,7 @@ fn main() -> i64 {
     score = score + 8;
   }
 
-  let maybe_server = listener.accept();
+  let maybe_server = listener.accept_optional();
   assert(maybe_server.is_some());
   var server = maybe_server.unwrap();
   let maybe_server_addr = server.local_addr_optional();

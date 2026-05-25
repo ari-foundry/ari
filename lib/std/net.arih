@@ -119,10 +119,6 @@ pub fn localhost(port: u16) -> SocketAddr {
   return socket_addr(host.as_ip(), port);
 }
 
-pub fn lookup_v4(host: string, port: u16) -> std::Option[SocketAddr] {
-  return lookup_v4_result(host, port).ok();
-}
-
 pub fn lookup_v4_raw_result(host: string, port: u16) -> std::Result[SocketAddr, i64] {
   let packed = lookup_v4_raw(host, port as i64);
   if packed < 0 {
@@ -131,8 +127,16 @@ pub fn lookup_v4_raw_result(host: string, port: u16) -> std::Result[SocketAddr, 
   return std::Ok<SocketAddr, i64>(socket_addr_from_packed_v4(packed));
 }
 
-pub fn lookup_v4_result(host: string, port: u16) -> std::Result[SocketAddr, std::error::Error] {
+pub fn lookup_v4(host: string, port: u16) -> std::Result[SocketAddr, std::error::Error] {
   return std::error::from_raw_result<SocketAddr>(lookup_v4_raw_result(host, port));
+}
+
+pub fn lookup_v4_optional(host: string, port: u16) -> std::Option[SocketAddr] {
+  return lookup_v4(host, port).ok();
+}
+
+pub fn try_lookup_v4(host: string, port: u16) -> std::Option[SocketAddr] {
+  return lookup_v4_optional(host, port);
 }
 
 fn endpoint_port(endpoint: string) -> std::Option[u16] {
@@ -173,10 +177,6 @@ fn endpoint_port(endpoint: string) -> std::Option[u16] {
   return std::Some<u16>(port as u16);
 }
 
-pub fn resolve(endpoint: string) -> std::Option[SocketAddr] {
-  return resolve_result(endpoint).ok();
-}
-
 pub fn resolve_raw_result(endpoint: string) -> std::Result[SocketAddr, i64] {
   if endpoint_port(endpoint).is_none() {
     return std::Err<SocketAddr, i64>(invalid_input_error_raw());
@@ -189,34 +189,42 @@ pub fn resolve_raw_result(endpoint: string) -> std::Result[SocketAddr, i64] {
   return std::Ok<SocketAddr, i64>(socket_addr_from_packed_v4(packed));
 }
 
-pub fn resolve_result(endpoint: string) -> std::Result[SocketAddr, std::error::Error] {
+pub fn resolve(endpoint: string) -> std::Result[SocketAddr, std::error::Error] {
   return std::error::from_raw_result<SocketAddr>(resolve_raw_result(endpoint));
 }
 
+pub fn resolve_optional(endpoint: string) -> std::Option[SocketAddr] {
+  return resolve(endpoint).ok();
+}
+
+pub fn try_resolve(endpoint: string) -> std::Option[SocketAddr] {
+  return resolve_optional(endpoint);
+}
+
 pub fn to_socket_addrs(endpoint: string) -> std::Result[SocketAddr, std::error::Error] {
-  return resolve_result(endpoint);
+  return resolve(endpoint);
 }
 
 pub fn listen(addr: SocketAddr) -> std::Result[TcpListener, std::error::Error] {
-  return TcpListener::bind_result(addr);
+  return TcpListener::bind(addr);
 }
 
 pub fn tcp_listen(addr: SocketAddr) -> std::Result[TcpListener, std::error::Error] {
-  return TcpListener::bind_result(addr);
+  return TcpListener::bind(addr);
 }
 
 pub fn connect(addr: SocketAddr) -> std::Result[TcpStream, std::error::Error] {
-  return TcpStream::connect_result(addr);
+  return TcpStream::connect(addr);
 }
 
 pub fn tcp_connect(addr: SocketAddr) -> std::Result[TcpStream, std::error::Error] {
-  return TcpStream::connect_result(addr);
+  return TcpStream::connect(addr);
 }
 
 pub fn connect_host(endpoint: string) -> std::Result[TcpStream, std::error::Error] {
-  match resolve_result(endpoint) {
+  match resolve(endpoint) {
     std::Ok(addr) => {
-      return TcpStream::connect_result(addr);
+      return TcpStream::connect(addr);
     }
     std::Err(reason) => {
       return std::Err<TcpStream, std::error::Error>(reason);
@@ -229,15 +237,15 @@ pub fn tcp_connect_host(endpoint: string) -> std::Result[TcpStream, std::error::
 }
 
 pub fn udp_bind(addr: SocketAddr) -> std::Result[UdpSocket, std::error::Error] {
-  return UdpSocket::bind_result(addr);
+  return UdpSocket::bind(addr);
 }
 
 pub fn unix_listen(path: string) -> std::Result[UnixListener, std::error::Error] {
-  return UnixListener::bind_result(path);
+  return UnixListener::bind(path);
 }
 
 pub fn unix_connect(path: string) -> std::Result[UnixStream, std::error::Error] {
-  return UnixStream::connect_result(path);
+  return UnixStream::connect(path);
 }
 
 fn socket_addr_from_packed_v4(packed: i64) -> SocketAddr {
@@ -450,7 +458,7 @@ fn shutdown_mode(mode: Shutdown) -> i64 {
 
 impl std::net::ToSocketAddrs for string {
   pub fn to_socket_addrs(self) -> std::Result[std::net::SocketAddr, std::error::Error] {
-    return std::net::resolve_result(self);
+    return std::net::resolve(self);
   }
 }
 
@@ -508,7 +516,7 @@ fn udp_bind_raw(addr: SocketAddr) -> std::Result[i64, i64] {
   return std::Err<i64, i64>(last_errno_error_raw());
 }
 
-fn unix_listen_result_raw(path: string) -> std::Result[i64, i64] {
+fn unix_listen_raw_result(path: string) -> std::Result[i64, i64] {
   let raw = unix_listen_raw(path);
   if raw >= 0 {
     return std::Ok<i64, i64>(raw);
@@ -516,7 +524,7 @@ fn unix_listen_result_raw(path: string) -> std::Result[i64, i64] {
   return std::Err<i64, i64>(last_errno_error_raw());
 }
 
-fn unix_connect_result_raw(path: string) -> std::Result[i64, i64] {
+fn unix_connect_raw_result(path: string) -> std::Result[i64, i64] {
   let raw = unix_connect_raw(path);
   if raw >= 0 {
     return std::Ok<i64, i64>(raw);
@@ -710,12 +718,16 @@ pub impl std::net::SocketAddr {
 }
 
 pub impl std::net::TcpListener {
-  fn bind(addr: SocketAddr) -> std::Option[TcpListener] {
-    return TcpListener::bind_result(addr).ok();
+  fn bind(addr: SocketAddr) -> std::Result[TcpListener, std::error::Error] {
+    return std::error::from_raw_result<TcpListener>(TcpListener::bind_raw_result(addr));
+  }
+
+  fn bind_optional(addr: SocketAddr) -> std::Option[TcpListener] {
+    return TcpListener::bind(addr).ok();
   }
 
   fn try_bind(addr: SocketAddr) -> std::Option[TcpListener] {
-    return TcpListener::bind(addr);
+    return TcpListener::bind_optional(addr);
   }
 
   fn bind_raw_result(addr: SocketAddr) -> std::Result[TcpListener, i64] {
@@ -727,10 +739,6 @@ pub impl std::net::TcpListener {
         return std::Err<TcpListener, i64>(error);
       }
     }
-  }
-
-  fn bind_result(addr: SocketAddr) -> std::Result[TcpListener, std::error::Error] {
-    return std::error::from_raw_result<TcpListener>(TcpListener::bind_raw_result(addr));
   }
 
   fn descriptor(self: ref Self) -> std::os::Fd {
@@ -824,12 +832,16 @@ pub impl std::net::TcpListener {
     return std::error::from_raw_result<SocketAddr>(local_addr_v4_raw_result(self.handle.raw()));
   }
 
-  fn accept(self: ref Self) -> std::Option[TcpStream] {
-    return self.accept_result().ok();
+  fn accept(self: ref Self) -> std::Result[TcpStream, std::error::Error] {
+    return std::error::from_raw_result<TcpStream>(self.accept_raw_result());
+  }
+
+  fn accept_optional(self: ref Self) -> std::Option[TcpStream] {
+    return self.accept().ok();
   }
 
   fn try_accept(self: ref Self) -> std::Option[TcpStream] {
-    return self.accept();
+    return self.accept_optional();
   }
 
   fn accept_raw_result(self: ref Self) -> std::Result[TcpStream, i64] {
@@ -843,18 +855,19 @@ pub impl std::net::TcpListener {
     return std::Err<TcpStream, i64>(last_errno_error_raw());
   }
 
-  fn accept_result(self: ref Self) -> std::Result[TcpStream, std::error::Error] {
-    return std::error::from_raw_result<TcpStream>(self.accept_raw_result());
-  }
 }
 
 pub impl std::net::TcpStream {
-  fn connect(addr: SocketAddr) -> std::Option[TcpStream] {
-    return TcpStream::connect_result(addr).ok();
+  fn connect(addr: SocketAddr) -> std::Result[TcpStream, std::error::Error] {
+    return std::error::from_raw_result<TcpStream>(TcpStream::connect_raw_result(addr));
+  }
+
+  fn connect_optional(addr: SocketAddr) -> std::Option[TcpStream] {
+    return TcpStream::connect(addr).ok();
   }
 
   fn try_connect(addr: SocketAddr) -> std::Option[TcpStream] {
-    return TcpStream::connect(addr);
+    return TcpStream::connect_optional(addr);
   }
 
   fn connect_raw_result(addr: SocketAddr) -> std::Result[TcpStream, i64] {
@@ -866,10 +879,6 @@ pub impl std::net::TcpStream {
         return std::Err<TcpStream, i64>(error);
       }
     }
-  }
-
-  fn connect_result(addr: SocketAddr) -> std::Result[TcpStream, std::error::Error] {
-    return std::error::from_raw_result<TcpStream>(TcpStream::connect_raw_result(addr));
   }
 
   fn descriptor(self: ref Self) -> std::os::Fd {
@@ -1006,12 +1015,16 @@ pub impl std::net::TcpStream {
 }
 
 pub impl std::net::UdpSocket {
-  fn bind(addr: SocketAddr) -> std::Option[UdpSocket] {
-    return UdpSocket::bind_result(addr).ok();
+  fn bind(addr: SocketAddr) -> std::Result[UdpSocket, std::error::Error] {
+    return std::error::from_raw_result<UdpSocket>(UdpSocket::bind_raw_result(addr));
+  }
+
+  fn bind_optional(addr: SocketAddr) -> std::Option[UdpSocket] {
+    return UdpSocket::bind(addr).ok();
   }
 
   fn try_bind(addr: SocketAddr) -> std::Option[UdpSocket] {
-    return UdpSocket::bind(addr);
+    return UdpSocket::bind_optional(addr);
   }
 
   fn bind_raw_result(addr: SocketAddr) -> std::Result[UdpSocket, i64] {
@@ -1023,10 +1036,6 @@ pub impl std::net::UdpSocket {
         return std::Err<UdpSocket, i64>(error);
       }
     }
-  }
-
-  fn bind_result(addr: SocketAddr) -> std::Result[UdpSocket, std::error::Error] {
-    return std::error::from_raw_result<UdpSocket>(UdpSocket::bind_raw_result(addr));
   }
 
   fn descriptor(self: ref Self) -> std::os::Fd {
@@ -1189,16 +1198,20 @@ pub impl std::net::UdpSocket {
 }
 
 pub impl std::net::UnixListener {
-  fn bind(path: string) -> std::Option[UnixListener] {
-    return UnixListener::bind_result(path).ok();
+  fn bind(path: string) -> std::Result[UnixListener, std::error::Error] {
+    return std::error::from_raw_result<UnixListener>(UnixListener::bind_raw_result(path));
+  }
+
+  fn bind_optional(path: string) -> std::Option[UnixListener] {
+    return UnixListener::bind(path).ok();
   }
 
   fn try_bind(path: string) -> std::Option[UnixListener] {
-    return UnixListener::bind(path);
+    return UnixListener::bind_optional(path);
   }
 
   fn bind_raw_result(path: string) -> std::Result[UnixListener, i64] {
-    match unix_listen_result_raw(path) {
+    match unix_listen_raw_result(path) {
       std::Ok(raw) => {
         return std::Ok<UnixListener, i64>(unix_listener_from_raw(raw));
       }
@@ -1206,10 +1219,6 @@ pub impl std::net::UnixListener {
         return std::Err<UnixListener, i64>(error);
       }
     }
-  }
-
-  fn bind_result(path: string) -> std::Result[UnixListener, std::error::Error] {
-    return std::error::from_raw_result<UnixListener>(UnixListener::bind_raw_result(path));
   }
 
   fn descriptor(self: ref Self) -> std::os::Fd {
@@ -1244,12 +1253,16 @@ pub impl std::net::UnixListener {
     return self.handle.set_nonblocking_result(enabled);
   }
 
-  fn accept(self: ref Self) -> std::Option[UnixStream] {
-    return self.accept_result().ok();
+  fn accept(self: ref Self) -> std::Result[UnixStream, std::error::Error] {
+    return std::error::from_raw_result<UnixStream>(self.accept_raw_result());
+  }
+
+  fn accept_optional(self: ref Self) -> std::Option[UnixStream] {
+    return self.accept().ok();
   }
 
   fn try_accept(self: ref Self) -> std::Option[UnixStream] {
-    return self.accept();
+    return self.accept_optional();
   }
 
   fn accept_raw_result(self: ref Self) -> std::Result[UnixStream, i64] {
@@ -1263,22 +1276,23 @@ pub impl std::net::UnixListener {
     return std::Err<UnixStream, i64>(last_errno_error_raw());
   }
 
-  fn accept_result(self: ref Self) -> std::Result[UnixStream, std::error::Error] {
-    return std::error::from_raw_result<UnixStream>(self.accept_raw_result());
-  }
 }
 
 pub impl std::net::UnixStream {
-  fn connect(path: string) -> std::Option[UnixStream] {
-    return UnixStream::connect_result(path).ok();
+  fn connect(path: string) -> std::Result[UnixStream, std::error::Error] {
+    return std::error::from_raw_result<UnixStream>(UnixStream::connect_raw_result(path));
+  }
+
+  fn connect_optional(path: string) -> std::Option[UnixStream] {
+    return UnixStream::connect(path).ok();
   }
 
   fn try_connect(path: string) -> std::Option[UnixStream] {
-    return UnixStream::connect(path);
+    return UnixStream::connect_optional(path);
   }
 
   fn connect_raw_result(path: string) -> std::Result[UnixStream, i64] {
-    match unix_connect_result_raw(path) {
+    match unix_connect_raw_result(path) {
       std::Ok(raw) => {
         return std::Ok<UnixStream, i64>(unix_stream_from_raw(raw));
       }
@@ -1286,10 +1300,6 @@ pub impl std::net::UnixStream {
         return std::Err<UnixStream, i64>(error);
       }
     }
-  }
-
-  fn connect_result(path: string) -> std::Result[UnixStream, std::error::Error] {
-    return std::error::from_raw_result<UnixStream>(UnixStream::connect_raw_result(path));
   }
 
   fn descriptor(self: ref Self) -> std::os::Fd {

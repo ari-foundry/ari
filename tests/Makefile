@@ -1265,7 +1265,9 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_shutdown" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent18set_accept_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpListener8inherent13bind_optional" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent15bind_raw_result" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpListener8inherent15accept_optional" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpListener8inherent17accept_raw_result" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std3net6listen" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std3net10tcp_listen" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
@@ -1274,6 +1276,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__TcpStream8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent9peer_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpStream8inherent16connect_optional" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent18connect_raw_result" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
@@ -1293,6 +1296,7 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_set_reuse_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std3net8udp_bind" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent10local_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
+	grep -F -q "std__net__UdpSocket8inherent13bind_optional" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent15bind_raw_result" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
@@ -1305,8 +1309,11 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std3net11unix_listen" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std3net12unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixListener8inherent13bind_optional" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixListener8inherent15accept_optional" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixListener8inherent15bind_raw_result" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixListener8inherent17accept_raw_result" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixStream8inherent16connect_optional" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent18connect_raw_result" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
@@ -1318,10 +1325,14 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_lookup_v4" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -q "@ari_builtin_net_lookup_v4_endpoint" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -q "@getaddrinfo" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net9lookup_v4" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net18lookup_v4_optional" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net13try_lookup_v4" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net20lookup_v4_raw_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net7resolve" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net16resolve_optional" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net11try_resolve" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net18resolve_raw_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
-	grep -F -q "std3net14resolve_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net15to_socket_addrs" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net12connect_host" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net16tcp_connect_host" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll

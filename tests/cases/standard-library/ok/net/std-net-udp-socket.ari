@@ -14,7 +14,7 @@ fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
 fn main() -> i64 {
   let unsupported = net::socket_addr(net::Ipv6Addr::localhost().as_ip(), 0 as u16);
   var score = 0;
-  match net::UdpSocket::bind_result(unsupported) {
+  match net::UdpSocket::bind(unsupported) {
     Ok(_direct_socket) => {}
     Err(reason) => {
       if error_is(reason, error::Unsupported) {
@@ -22,6 +22,7 @@ fn main() -> i64 {
       }
     }
   }
+  assert(net::UdpSocket::bind_optional(unsupported).is_none());
   match net::udp_bind(unsupported) {
     Ok(_module_socket) => {}
     Err(module_reason) => {
@@ -40,9 +41,9 @@ fn main() -> i64 {
   }
 
   let bind_addr = net::SocketAddr::localhost(0 as u16);
-  let maybe_server = net::UdpSocket::bind(bind_addr);
+  let maybe_server = net::UdpSocket::bind_optional(bind_addr);
   if maybe_server.is_none() {
-    match net::UdpSocket::bind_result(bind_addr) {
+    match net::UdpSocket::bind(bind_addr) {
       Ok(_retry_socket) => {}
       Err(bind_error) => {
         if error_is(bind_error, error::PermissionDenied) || error_is(bind_error, error::Unsupported) {
@@ -71,7 +72,7 @@ fn main() -> i64 {
     score = score + 4;
   }
 
-  let maybe_client = net::UdpSocket::bind(bind_addr);
+  let maybe_client = net::UdpSocket::bind_optional(bind_addr);
   assert(maybe_client.is_some());
   var client = maybe_client.unwrap();
   if client.is_open() && client.descriptor().is_valid() {

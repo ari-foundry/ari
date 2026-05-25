@@ -14,9 +14,9 @@ with `close()` until Ari grows drop-time resource cleanup.
 The API deliberately keeps compatibility helpers beside `Result[..., Error]`
 methods. Natural method names are the error-preserving forms where this module
 owns the name; `_optional` and `_unchecked` methods discard error details for
-older call sites. Existing `bind_result`, `connect_result`, `accept_result`,
-and `*_raw_result` names are transitional compatibility forms until the older
-Option-returning bind/connect surface is migrated.
+older call sites. `try_*` helpers are compatibility aliases for the optional
+forms. `*_raw_result` names are low-level compatibility bridges for callers
+that need compact raw host errors instead of `std::error::Error`.
 
 ## API
 
@@ -39,11 +39,13 @@ net::ipv6(s0, s1, s2, s3, s4, s5, s6, s7)
 net::socket_addr(ip, port)
 net::localhost(port)
 net::lookup_v4(host, port)
+net::lookup_v4_optional(host, port)
+net::try_lookup_v4(host, port)
 net::lookup_v4_raw_result(host, port)
-net::lookup_v4_result(host, port)
 net::resolve(endpoint)
+net::resolve_optional(endpoint)
+net::try_resolve(endpoint)
 net::resolve_raw_result(endpoint)
-net::resolve_result(endpoint)
 net::to_socket_addrs(endpoint)
 net::listen(addr)
 net::tcp_listen(addr)
@@ -89,9 +91,9 @@ addr.is_unspecified()
 addr.is_loopback()
 
 TcpListener::bind(addr)
+TcpListener::bind_optional(addr)
 TcpListener::try_bind(addr)
 TcpListener::bind_raw_result(addr)
-TcpListener::bind_result(addr)
 listener.descriptor()
 listener.is_open()
 listener.local_port()
@@ -110,16 +112,16 @@ listener.set_accept_timeout(timeout)
 listener.set_accept_timeout_millis(millis)
 listener.set_accept_timeout_millis_unchecked(millis)
 listener.accept()
+listener.accept_optional()
 listener.try_accept()
 listener.accept_raw_result()
-listener.accept_result()
 listener.close()
 listener.close_unchecked()
 
 TcpStream::connect(addr)
+TcpStream::connect_optional(addr)
 TcpStream::try_connect(addr)
 TcpStream::connect_raw_result(addr)
-TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
 stream.local_addr()
@@ -150,9 +152,9 @@ stream.close()
 stream.close_unchecked()
 
 UdpSocket::bind(addr)
+UdpSocket::bind_optional(addr)
 UdpSocket::try_bind(addr)
 UdpSocket::bind_raw_result(addr)
-UdpSocket::bind_result(addr)
 socket.descriptor()
 socket.is_open()
 socket.local_port()
@@ -182,9 +184,9 @@ socket.close()
 socket.close_unchecked()
 
 UnixListener::bind(path)
+UnixListener::bind_optional(path)
 UnixListener::try_bind(path)
 UnixListener::bind_raw_result(path)
-UnixListener::bind_result(path)
 listener.descriptor()
 listener.is_open()
 listener.is_nonblocking()
@@ -192,16 +194,16 @@ listener.is_nonblocking_optional()
 listener.set_nonblocking(enabled)
 listener.set_nonblocking_unchecked(enabled)
 listener.accept()
+listener.accept_optional()
 listener.try_accept()
 listener.accept_raw_result()
-listener.accept_result()
 listener.close()
 listener.close_unchecked()
 
 UnixStream::connect(path)
+UnixStream::connect_optional(path)
 UnixStream::try_connect(path)
 UnixStream::connect_raw_result(path)
-UnixStream::connect_result(path)
 stream.descriptor()
 stream.is_open()
 stream.is_nonblocking()
@@ -257,17 +259,18 @@ or `SocketAddr::new(ip, port)` when the IP is already known. Use
 ## DNS Lookup
 
 `lookup_v4(host, port)` resolves one IPv4 address through the hosted
-`getaddrinfo` path and returns `Option[SocketAddr]`. It is intentionally a
-small first slice: the returned address uses the resolved IPv4 octets and the
-caller-provided port.
-
-`lookup_v4_result(host, port)` returns `Result[SocketAddr, Error]` for callers
-that want a failure branch. `lookup_v4_raw_result(host, port)` keeps the
-compatibility `Result[SocketAddr, i64]` shape.
+`getaddrinfo` path and returns `Result[SocketAddr, Error]`. It is
+intentionally a small first slice: the returned address uses the resolved IPv4
+octets and the caller-provided port. Use `lookup_v4_optional(host, port)` or
+`try_lookup_v4(host, port)` only when absence is enough and the caller is
+intentionally discarding the reason. `lookup_v4_raw_result(host, port)` keeps
+the compatibility `Result[SocketAddr, i64]` shape for low-level runtime
+adapter tests.
 
 `resolve(endpoint)` accepts the common `"host:port"` spelling and returns
-`Option[SocketAddr]`. `resolve_result(endpoint)` returns `Result[SocketAddr,
-Error]`, while `resolve_raw_result(endpoint)` preserves the compatibility
+`Result[SocketAddr, Error]`. `resolve_optional(endpoint)` and
+`try_resolve(endpoint)` are the compatibility forms that discard error detail,
+while `resolve_raw_result(endpoint)` preserves the compatibility
 `Result[SocketAddr, i64]` bridge. The endpoint form rejects missing hosts,
 missing ports, non-decimal ports, and ports outside `0..65535` as
 `InvalidInput` before it calls the hosted resolver.
@@ -285,28 +288,29 @@ owned multi-address result lists are future work.
 ## TCP Sockets
 
 At module level, `listen(addr)` and `tcp_listen(addr)` are natural aliases for
-`TcpListener::bind_result(addr)`, and `connect(addr)`/`tcp_connect(addr)` are
-aliases for `TcpStream::connect_result(addr)`. `connect_host(endpoint)` and
+`TcpListener::bind(addr)`, and `connect(addr)`/`tcp_connect(addr)` are aliases
+for `TcpStream::connect(addr)`. `connect_host(endpoint)` and
 `tcp_connect_host(endpoint)` combine `"host:port"` resolution with
-`TcpStream::connect_result`. Use the short names for ordinary TCP code and the
+`TcpStream::connect`. Use the short names for ordinary TCP code and the
 explicit `tcp_*` names where UDP or Unix socket code appears nearby.
 
-`TcpListener` owns a listening TCP descriptor. `bind` and `try_bind` return
-`Option[TcpListener]` for simple code. `bind_result` returns
-`Result[TcpListener, Error]`, while `bind_raw_result` keeps the old compact
-integer shape. Use `local_port()` after binding to port `0` to learn the
-ephemeral port chosen by the OS, or `local_addr()` when the caller needs the
-complete IPv4 `SocketAddr`. `accept`/`try_accept` return `Option[TcpStream]`;
-`accept_result` exposes `Error`, and `accept_raw_result` is the low-level
-compatibility form.
+`TcpListener` owns a listening TCP descriptor. `bind` returns
+`Result[TcpListener, Error]`; `bind_optional` and `try_bind` keep the old
+information-discarding shape for simple compatibility code. `bind_raw_result`
+keeps the old compact integer shape. Use `local_port()` after binding to port
+`0` to learn the ephemeral port chosen by the OS, or `local_addr()` when the
+caller needs the complete IPv4 `SocketAddr`. `accept` returns
+`Result[TcpStream, Error]`; `accept_optional` and `try_accept` discard the
+reason, and `accept_raw_result` is the low-level compatibility form.
 `local_port`, `local_addr`, option setter/query methods, and `close` preserve
 invalid-handle and host failures as `std::error::Error`; `_optional` and
 `_unchecked` methods remain compatibility helpers for callers that only need
 success or absence.
 
-`TcpStream` owns a connected TCP descriptor. `connect` and `try_connect` return
-`Option[TcpStream]`; `connect_result` preserves OS error detail as `Error`, and
-`connect_raw_result` keeps raw compatibility. Use
+`TcpStream` owns a connected TCP descriptor. `connect` returns
+`Result[TcpStream, Error]`; `connect_optional` and `try_connect` discard OS
+error detail for compatibility, and `connect_raw_result` keeps raw
+compatibility. Use
 `shutdown(Shutdown::Write)`, `shutdown(Shutdown::Read)`, or
 `shutdown(Shutdown::Both)` to half-close or fully shut down the stream without
 closing the descriptor owner. Use `write_all(values)` to send every byte in a
@@ -324,17 +328,19 @@ that natural name with an `i64` EOF sentinel.
 
 ## UDP Sockets
 
-`UdpSocket` owns an IPv4 UDP descriptor. `bind`, `try_bind`, `bind_result`, and
-`bind_raw_result` match the TCP listener return shapes. Use `local_port()` after binding to port
-`0` to discover the OS-selected port, or `local_addr()` to retrieve the full
-local IPv4 `SocketAddr`.
+`UdpSocket` owns an IPv4 UDP descriptor. `bind` returns
+`Result[UdpSocket, Error]`; `bind_optional` and `try_bind` are compatibility
+helpers that discard the reason; and `bind_raw_result` keeps the compact raw
+host-error bridge. Use `local_port()` after binding to port `0` to discover
+the OS-selected port, or `local_addr()` to retrieve the full local IPv4
+`SocketAddr`.
 
 The current datagram payload surface is intentionally tiny:
 `send_byte_to(value, addr)` sends one byte to an IPv4 `SocketAddr`,
-`recv_byte()` returns a received byte as `i64` or `-1`, and
-`try_recv_byte()` converts that shape to `Option[u8]`. Larger buffers,
-source-address reporting, connected UDP, multicast, and IPv6 UDP are future
-slices.
+`recv_byte()` returns `Result[u8, Error]`, and `try_recv_byte()` converts that
+shape to `Option[u8]`. `recv_byte_unchecked()` is the compatibility sentinel
+form that returns a byte as `i64` or `-1`. Larger buffers, source-address
+reporting, connected UDP, multicast, and IPv6 UDP are future slices.
 Use `send_byte_to`, `recv_byte`, `local_port`, `local_addr`, option
 setter/query methods, and `close` when a caller needs to keep invalid handles,
 unsupported address families, and host socket errors visible. Use
@@ -344,13 +350,17 @@ when discarding those errors is intentional.
 ## Unix Domain Sockets
 
 `UnixListener` and `UnixStream` are Linux/Unix hosted stream socket wrappers.
-`UnixListener::bind(path)` listens on a filesystem path, and
-`UnixStream::connect(path)` connects to it. Remove stale socket files with
+`UnixListener::bind(path)` listens on a filesystem path and returns
+`Result[UnixListener, Error]`; `UnixStream::connect(path)` connects to it and
+returns `Result[UnixStream, Error]`. `bind_optional`, `connect_optional`, and
+the matching `try_*` aliases keep compatibility call sites concise when they
+intentionally discard the reason. Remove stale socket files with
 `std::fs::remove(path)` before binding when tests or tools reuse a path.
 
-`UnixListener::accept()` returns a `UnixStream`. `UnixStream` implements the
-same `std::io::Reader` and `std::io::Writer` traits as `TcpStream`, so local
-IPC code can reuse byte-oriented IO helpers. It also has the same
+`UnixListener::accept()` returns `Result[UnixStream, Error]`; `accept_optional`
+and `try_accept` discard the reason. `UnixStream` implements the same
+`std::io::Reader` and `std::io::Writer` traits as `TcpStream`, so local IPC
+code can reuse byte-oriented IO helpers. It also has the same
 `write_all(values)` and `read_exact(output, len)` methods as `TcpStream` for
 buffer-style local message tests and tools.
 Unix stream/listener Result methods follow the same lifecycle policy as TCP:
@@ -403,18 +413,19 @@ Resolve a numeric IPv4 host:
 
 ```ari
 match net::lookup_v4("127.0.0.1", 8080 as u16) {
-  std::Some(addr) => {
+  std::Ok(addr) => {
     return addr.port() as i64;
   }
-  std::None => {}
+  std::Err(reason) => {
+    return reason.code();
+  }
 }
-return 1;
 ```
 
 Resolve a host-port endpoint:
 
 ```ari
-match net::resolve_result("127.0.0.1:8080") {
+match net::resolve("127.0.0.1:8080") {
   std::Ok(addr) => {
     return addr.port() as i64;
   }
@@ -428,14 +439,14 @@ Bind a listener and connect a stream:
 
 ```ari
 let bind_addr = net::SocketAddr::localhost(0 as u16);
-match net::TcpListener::bind_result(bind_addr) {
+match net::TcpListener::bind(bind_addr) {
   std::Ok(listener) => {
     var server = listener;
     let timeout = time::milliseconds(1000);
     server.set_accept_timeout(timeout).unwrap();
     let port = server.local_port().unwrap();
-    var client = net::TcpStream::connect_result(net::SocketAddr::localhost(port)).unwrap();
-    var accepted = server.accept_result().unwrap();
+    var client = net::TcpStream::connect(net::SocketAddr::localhost(port)).unwrap();
+    var accepted = server.accept().unwrap();
     client.set_write_timeout(timeout).unwrap();
     accepted.set_read_timeout(timeout).unwrap();
     var payload = [65u8, 66u8];
@@ -490,11 +501,11 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | --- | --- |
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
-| DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` with `Error`, `lookup_v4_raw_result` compatibility, `"host:port"` `resolve`/`resolve_result`/`resolve_raw_result`, module-level `to_socket_addrs`, and the `ToSocketAddrs` trait seed over `getaddrinfo`. |
-| TCP listener | Current hosted IPv4 slice: module-level `listen`/`tcp_listen`, `TcpListener::bind`, `try_bind`, transitional `bind_result` with `Error`, `bind_raw_result` compatibility, Result-returning `local_port`/`local_addr`, `_optional` lookup helpers, accept helpers, descriptor/open helpers, nonblocking and reuse-address setter/query with Result defaults, `Duration` and raw-millisecond accept timeout setters, unchecked timeout compatibility, and explicit close/close_unchecked. |
-| TCP stream | Current hosted IPv4 slice: module-level `connect`/`tcp_connect` plus host-port `connect_host`/`tcp_connect_host`, `TcpStream::connect`, `try_connect`, transitional `connect_result` with `Error`, `connect_raw_result` compatibility, Result-returning local/peer address helpers, descriptor/open helpers, nonblocking and TCP nodelay setter/query with Result defaults, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, Result-returning `read_exact`/`write_all`, unchecked buffer IO compatibility, explicit close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4 slice: module-level `udp_bind`, bind helpers with `Error` and raw compatibility forms, Result-returning local-port and local-address lookup, descriptor/open helpers, nonblocking and reuse-address setter/query with Result defaults, `Duration` and raw-millisecond read/write timeout setters, single-byte Result `send_byte_to`/`recv_byte`, `_unchecked` and `try_recv_byte` compatibility, and close/close_unchecked. |
-| Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect helpers with `Error` and raw compatibility forms, IO/shutdown Result methods, `Duration` and raw-millisecond timeout setters, and `read_exact`/`write_all` buffer helpers. |
+| DNS lookup | Current hosted IPv4 slice: `lookup_v4` and `"host:port"` `resolve` return `Error`, `lookup_v4_optional`/`try_lookup_v4` and `resolve_optional`/`try_resolve` discard error detail intentionally, `lookup_v4_raw_result`/`resolve_raw_result` are raw compatibility bridges, module-level `to_socket_addrs`, and the `ToSocketAddrs` trait seed over `getaddrinfo`. |
+| TCP listener | Current hosted IPv4 slice: module-level `listen`/`tcp_listen`, `TcpListener::bind` and `accept` return `Error`, `bind_optional`/`try_bind` and `accept_optional`/`try_accept` keep optional compatibility, `bind_raw_result`/`accept_raw_result` are raw compatibility bridges, Result-returning `local_port`/`local_addr`, `_optional` lookup helpers, descriptor/open helpers, nonblocking and reuse-address setter/query with Result defaults, `Duration` and raw-millisecond accept timeout setters, unchecked timeout compatibility, and explicit close/close_unchecked. |
+| TCP stream | Current hosted IPv4 slice: module-level `connect`/`tcp_connect` plus host-port `connect_host`/`tcp_connect_host`, `TcpStream::connect` returns `Error`, `connect_optional`/`try_connect` keep optional compatibility, `connect_raw_result` is the raw compatibility bridge, Result-returning local/peer address helpers, descriptor/open helpers, nonblocking and TCP nodelay setter/query with Result defaults, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, Result-returning `read_exact`/`write_all`, unchecked buffer IO compatibility, explicit close/close_unchecked, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4 slice: module-level `udp_bind`, `UdpSocket::bind` returns `Error`, `bind_optional`/`try_bind` keep optional compatibility, `bind_raw_result` is the raw compatibility bridge, Result-returning local-port and local-address lookup, descriptor/open helpers, nonblocking and reuse-address setter/query with Result defaults, `Duration` and raw-millisecond read/write timeout setters, single-byte Result `send_byte_to`/`recv_byte`, `_unchecked` and `try_recv_byte` compatibility, and close/close_unchecked. |
+| Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect return `Error`, optional/try compatibility helpers and raw compatibility bridges remain, IO/shutdown Result methods, `Duration` and raw-millisecond timeout setters, and `read_exact`/`write_all` buffer helpers. |
 | socket options | Current: nonblocking, read/write timeout, TCP listener/UDP reuse-address, and TCP nodelay helpers with Result defaults plus `_optional`/`_unchecked` compatibility; future buffer size, linger, multicast, and close-on-exec-at-creation options. |
 | timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond setters, all Result-returning, with `_unchecked` raw-millisecond compatibility helpers. |
 | shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
@@ -515,9 +526,9 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
   Unix datagram sockets, peer credentials, and platform guards need later
   design.
 - Tests may run on hosts that forbid socket creation. In that case
-  `*_result` helpers should report `PermissionDenied` or `Unsupported`
-  through `std::error::Error`; socket tests treat that as host policy, not a
-  language failure.
+  natural Result-returning helpers should report `PermissionDenied` or
+  `Unsupported` through `std::error::Error`; socket tests treat that as host
+  policy, not a language failure.
 - Socket handles are owned descriptor wrappers. Close them once with `close()`.
   A second close through the same handle returns an
   invalid-handle failure through the Result form; descriptor duplication and

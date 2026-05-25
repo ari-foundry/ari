@@ -8,7 +8,7 @@ fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
 fn main() -> i64 {
   var score = 0;
 
-  let loopback = net::lookup_v4("127.0.0.1", 8080 as u16);
+  let loopback = net::lookup_v4_optional("127.0.0.1", 8080 as u16);
   assert(loopback.is_some());
   let addr = loopback.unwrap();
   if addr.is_loopback() {
@@ -25,7 +25,8 @@ fn main() -> i64 {
     score = score + 8;
   }
 
-  match net::lookup_v4_result("127.0.0.1", 80 as u16) {
+  assert(net::try_lookup_v4("127.0.0.1", 80 as u16).is_some());
+  match net::lookup_v4("127.0.0.1", 80 as u16) {
     Ok(result_addr) => {
       if result_addr.port() == 80 as u16 && result_addr.is_loopback() {
         score = score + 16;
@@ -45,16 +46,16 @@ fn main() -> i64 {
     }
   }
 
-  if net::lookup_v4("::1", 80 as u16).is_none() {
+  if net::lookup_v4_optional("::1", 80 as u16).is_none() {
     score = score + 32;
   }
 
-  let any = net::lookup_v4("0.0.0.0", 0 as u16);
+  let any = net::lookup_v4_optional("0.0.0.0", 0 as u16);
   if any.is_some() && any.unwrap().is_unspecified() {
     score = score + 64;
   }
 
-  let broadcast = net::lookup_v4("255.255.255.255", 65535 as u16);
+  let broadcast = net::lookup_v4_optional("255.255.255.255", 65535 as u16);
   if broadcast.is_some() {
     let full = broadcast.unwrap();
     if full.port() == 65535 as u16 && !full.is_loopback() && !full.is_unspecified() {
@@ -62,7 +63,7 @@ fn main() -> i64 {
     }
   }
 
-  let endpoint = net::resolve("127.0.0.1:8082");
+  let endpoint = net::resolve_optional("127.0.0.1:8082");
   if endpoint.is_some() {
     let resolved = endpoint.unwrap();
     if resolved.is_loopback() && resolved.port() == 8082 as u16 {
@@ -70,7 +71,8 @@ fn main() -> i64 {
     }
   }
 
-  match net::resolve_result("127.0.0.1:8083") {
+  assert(net::try_resolve("127.0.0.1:8083").is_some());
+  match net::resolve("127.0.0.1:8083") {
     Ok(resolved_result) => {
       if resolved_result.is_loopback() && resolved_result.port() == 8083 as u16 {
         score = score + 512;

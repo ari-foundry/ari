@@ -16,9 +16,10 @@ fn main() -> i64 {
   fs::remove(path);
 
   var score = 0;
+  assert(net::UnixListener::bind_optional("build/prelude/missing-dir/std-net-unix-socket.sock").is_none());
   let maybe_listener = net::unix_listen(path);
   if maybe_listener.is_err() {
-    match net::UnixListener::bind_result(path) {
+    match net::UnixListener::bind(path) {
       Ok(_retry_listener) => {}
       Err(bind_error) => {
         if error_is(bind_error, error::PermissionDenied) || error_is(bind_error, error::Unsupported) {
@@ -43,6 +44,7 @@ fn main() -> i64 {
     score = score + 1;
   }
 
+  assert(net::UnixStream::connect_optional("build/prelude/std-net-unix-socket.missing").is_none());
   let maybe_client = net::unix_connect(path);
   assert(maybe_client.is_ok());
   var client = maybe_client.unwrap();
@@ -50,7 +52,7 @@ fn main() -> i64 {
     score = score + 2;
   }
 
-  let maybe_server = listener.accept();
+  let maybe_server = listener.accept_optional();
   assert(maybe_server.is_some());
   var server = maybe_server.unwrap();
   if server.is_open() && server.descriptor().is_valid() {
