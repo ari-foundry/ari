@@ -2098,11 +2098,14 @@ complete success. Failed byte writes become `Err(Error(BrokenPipe))`; failed
 final flushes return the writer's flush error. `io::try_copy` is the `Option[i64]`
 compatibility wrapper and `io::copy_unchecked` is the bool wrapper when the
 byte count is not needed.
-`io::write(ref mut writer, values)` returns the accepted byte count, and
-`io::write_all(ref mut writer, values)` returns `Ok(())` after every byte is
-accepted. Both return `Err(Error(BrokenPipe))` on the first failed write.
-`Stdout`, `Stderr`, `PipeWriter`, and `BufWriter` also expose
-`write(values)` and `write_all(values)` methods for direct call sites.
+`Writer::write(ref mut writer, values)` and
+`io::write(ref mut writer, values)` return the accepted byte count.
+`Writer::write_all(ref mut writer, values)` and
+`io::write_all(ref mut writer, values)` return `Ok(())` after every byte is
+accepted. These APIs return `Err(Error(BrokenPipe))` on the first failed byte
+write. `Stdout`, `Stderr`, `PipeWriter`, `BufWriter`, `std::fs::File`,
+`TcpStream`, and `UnixStream` implement the natural trait methods, so generic
+`W: io::Writer` code can call `writer.write(values)` directly.
 `io::write_all_unchecked` is the bool wrapper.
 `io::flush(ref mut writer)` returns `Ok(())` for a successful flush and
 the writer's `Error` for a failed flush; `io::flush_unchecked` is the bool

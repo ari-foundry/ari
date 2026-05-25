@@ -799,16 +799,20 @@ check-prelude: $(TARGET)
 	grep -qx "ERR" $(BUILD_DIR)/prelude/std-io-stderr.err
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-natural-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io24write__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-natural-api.ll
-	grep -q 'std__io__Stdout8inherent5write' $(BUILD_DIR)/prelude/std-io-natural-api.ll
-	grep -q 'std__io__Stderr8inherent5write' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q 'std__io__Stdout15std__io__Writer5write' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q 'std__io__Stdout15std__io__Writer9write_all' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q 'std__io__Stderr15std__io__Writer5write' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q 'std__io__Stderr15std__io__Writer9write_all' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io10print_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io12println_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io11eprint_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	grep -q '_ARNv3std2io13eprintln_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-natural-api.ari -o $(BUILD_DIR)/prelude/std-io-natural-api.elf
-	$(BUILD_DIR)/prelude/std-io-natural-api.elf >$(BUILD_DIR)/prelude/std-io-natural-api.out 2>$(BUILD_DIR)/prelude/std-io-natural-api.err; code=$$?; test $$code -eq 45
+	$(BUILD_DIR)/prelude/std-io-natural-api.elf >$(BUILD_DIR)/prelude/std-io-natural-api.out 2>$(BUILD_DIR)/prelude/std-io-natural-api.err; code=$$?; test $$code -eq 91
 	grep -qx "GWMPL" $(BUILD_DIR)/prelude/std-io-natural-api.out
+	grep -qx "TU" $(BUILD_DIR)/prelude/std-io-natural-api.out
 	grep -qx "EARS" $(BUILD_DIR)/prelude/std-io-natural-api.err
+	grep -qx "VX" $(BUILD_DIR)/prelude/std-io-natural-api.err
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-pipe.ll
 	grep -F -q "std__io__PipeReader" $(BUILD_DIR)/prelude/std-io-pipe.ll
 	grep -q "@ari_builtin_os_read_byte" $(BUILD_DIR)/prelude/std-io-pipe.ll
@@ -1399,7 +1403,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__TcpListener8inherent14set_reuse_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent7nodelay" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent11set_nodelay" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
-	grep -F -q "std__net__TcpStream8inherent9write_all" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -F -q "std__net__TcpStream15std__io__Writer9write_all" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari -o $(BUILD_DIR)/prelude/std-net-tcp-loopback.elf
 	$(BUILD_DIR)/prelude/std-net-tcp-loopback.elf; code=$$?; test $$code -eq 254
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-udp-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-udp-socket.ll
@@ -1449,7 +1453,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__UnixStream8inherent10read_exact" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent16set_read_timeout" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -F -q "std__net__UnixStream8inherent17set_write_timeout" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
-	grep -F -q "std__net__UnixStream8inherent9write_all" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
+	grep -F -q "std__net__UnixStream15std__io__Writer9write_all" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari -o $(BUILD_DIR)/prelude/std-net-unix-socket.elf
 	$(BUILD_DIR)/prelude/std-net-unix-socket.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-dns-lookup.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-dns-lookup.ll

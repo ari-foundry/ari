@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2997`
+- API entries: `2987`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,18 +32,18 @@ platform notes.
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 745 | stable candidate |
-| `hosted` | 1223 | platform-backed |
+| `hosted` | 1213 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 25 |
 | `fn` | 1054 |
-| `method` | 1524 |
+| `method` | 1512 |
 | `module` | 39 |
 | `struct` | 161 |
 | `trait` | 39 |
-| `trait-method` | 39 |
+| `trait-method` | 41 |
 | `type` | 21 |
 | `use` | 95 |
 
@@ -69,12 +69,12 @@ platform notes.
 | `std::fs` | `hosted` | 259 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
-| `std::io` | `hosted` | 93 |
+| `std::io` | `hosted` | 87 |
 | `std::iter` | `alloc` | 41 |
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
-| `std::net` | `hosted` | 276 |
+| `std::net` | `hosted` | 272 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 45 |
@@ -2036,8 +2036,6 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::io::BufWriter[W]::capacity` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::is_empty` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::new` | std io buffered tests; docs/stdlib/modules/io.md |
-| `method std::io::BufWriter[W]::write` | check-prelude std-io-natural-api/std-io-buffered Result-returning buffered writer byte-count helper; docs/stdlib/modules/io.md |
-| `method std::io::BufWriter[W]::write_all` | check-prelude std-io-natural-api/std-io-buffered Result-returning buffered writer whole-slice helper; docs/stdlib/modules/io.md |
 | `method std::io::Cursor::read_line` | check-prelude std-io-read-to-string Result-returning cursor line helper; docs/stdlib/modules/io.md |
 | `method std::io::Cursor::read_to_string` | check-prelude std-io-read-to-string Result-returning cursor whole-stream helper; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::close` | check-prelude std-io-pipe Result-returning close for remaining pipe adapter ends; docs/stdlib/modules/io.md |
@@ -2056,14 +2054,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::io::PipeWriter::close` | check-prelude std-io-pipe Result-returning pipe writer close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::close_bool` | check-prelude std-io-pipe bool compatibility pipe writer close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::is_open` | check-prelude std-io-pipe pipe writer open predicate; docs/stdlib/modules/io.md |
-| `method std::io::PipeWriter::write` | check-prelude std-io-pipe Result-returning pipe writer byte-count helper; docs/stdlib/modules/io.md |
-| `method std::io::PipeWriter::write_all` | check-prelude std-io-pipe Result-returning pipe writer whole-slice helper; docs/stdlib/modules/io.md |
-| `method std::io::Stderr::write` | check-prelude std-io-natural-api Result-returning stderr byte-count method; docs/stdlib/modules/io.md |
-| `method std::io::Stderr::write_all` | check-prelude std-io-natural-api Result-returning stderr whole-slice method; docs/stdlib/modules/io.md |
 | `method std::io::Stdin::read_line` | check-prelude std-io-read-to-string Result-returning stdin line method; docs/stdlib/modules/io.md |
 | `method std::io::Stdin::read_to_string` | check-prelude std-io-read-to-string Result-returning stdin whole-stream method; docs/stdlib/modules/io.md |
-| `method std::io::Stdout::write` | check-prelude std-io-natural-api Result-returning stdout byte-count method; docs/stdlib/modules/io.md |
-| `method std::io::Stdout::write_all` | check-prelude std-io-natural-api Result-returning stdout whole-slice method; docs/stdlib/modules/io.md |
 
 ### module
 
@@ -2101,6 +2093,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `trait-method std::io::Seek::position` | std io trait/cursor tests; docs/stdlib/modules/io.md |
 | `trait-method std::io::Seek::seek` | std io trait/cursor tests; docs/stdlib/modules/io.md |
 | `trait-method std::io::Writer::flush` | std io trait/cursor tests; docs/stdlib/modules/io.md |
+| `trait-method std::io::Writer::write` | check-prelude std-io-natural-api natural Result-returning trait byte-count write method; docs/stdlib/modules/io.md |
+| `trait-method std::io::Writer::write_all` | check-prelude std-io-natural-api natural Result-returning trait whole-slice write method; docs/stdlib/modules/io.md |
 | `trait-method std::io::Writer::write_byte` | std io trait/cursor tests; docs/stdlib/modules/io.md |
 
 ### type
@@ -2460,8 +2454,6 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpStream::shutdown` | check-prelude std-net-tcp-loopback stream half/full shutdown helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::try_connect` | check-prelude std-net-tcp-loopback Option-returning TCP connect compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::try_read_byte` | check-prelude std-net-tcp-loopback Option-returning single-byte stream read helper; docs/stdlib/modules/net.md |
-| `method std::net::TcpStream::write` | check-prelude std-net-tcp-loopback stream partial buffer write helper; docs/stdlib/modules/net.md |
-| `method std::net::TcpStream::write_all` | check-prelude std-net-tcp-loopback stream buffer write helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::write_all_unchecked` | check-prelude std-net-tcp-loopback unchecked stream write-all compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpRecvFrom::addr` | check-prelude std-net-udp-socket UDP receive source address accessor; docs/stdlib/modules/net.md |
 | `method std::net::UdpRecvFrom::len` | check-prelude std-net-udp-socket UDP receive byte-count accessor; docs/stdlib/modules/net.md |
@@ -2572,8 +2564,6 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UnixStream::shutdown` | check-prelude std-net-unix-socket Unix stream half/full shutdown helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::try_connect` | check-prelude std-net-unix-socket Option-returning Unix connect compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::try_read_byte` | check-prelude std-net-unix-socket Option-returning single-byte Unix stream read helper; docs/stdlib/modules/net.md |
-| `method std::net::UnixStream::write` | check-prelude std-net-unix-socket Unix stream partial buffer write helper; docs/stdlib/modules/net.md |
-| `method std::net::UnixStream::write_all` | check-prelude std-net-unix-socket Unix stream buffer write helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::write_all_unchecked` | check-prelude std-net-unix-socket unchecked Unix stream write-all compatibility helper; docs/stdlib/modules/net.md |
 
 ### module

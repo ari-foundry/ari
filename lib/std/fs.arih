@@ -1973,6 +1973,14 @@ impl std::io::Writer for std::fs::File {
     return std::fs::write_byte_unchecked(std::fs::File { fd: self.fd }, value);
   }
 
+  pub fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::io::write<std::fs::File>(self, values);
+  }
+
+  pub fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    return std::io::write_all<std::fs::File>(self, values);
+  }
+
   pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
     // File writes currently go straight through the runtime descriptor hook.
     // This keeps std::io::copy usable for File without inventing buffering.

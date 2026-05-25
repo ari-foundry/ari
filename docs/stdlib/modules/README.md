@@ -39,7 +39,7 @@ the Result-returning form for callers that need `Error(NotFound)`.
   `std::fs::File` adapters, caller-buffered `BufReader`/`BufWriter`, exact
   reads, direct `Error` result helpers, compatibility wrappers,
   whole-stream reads, whole-stream string reads, generic stream copies, and
-  whole-slice writes.
+  natural `Writer::write`/`Writer::write_all` whole-slice writes.
 - [std::input](input.md): stdin-facing byte and line input, including
   `try_read_byte` for `Option[u8]` EOF handling.
 - [std::mem](mem.md): layout queries, raw pointer helpers, byte memory

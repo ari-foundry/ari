@@ -20,6 +20,14 @@ impl io::Writer for MemoryWriter {
     return true;
   }
 
+  fn write(self: ref mut Self, values: Slice[u8]) -> Result[i64, error::Error] {
+    return io::write<MemoryWriter>(self, values);
+  }
+
+  fn write_all(self: ref mut Self, values: Slice[u8]) -> Result[(), error::Error] {
+    return io::write_all<MemoryWriter>(self, values);
+  }
+
   fn flush(self: ref mut Self) -> Result[(), error::Error] {
     self.flushed = true;
     return Ok(());
@@ -29,6 +37,14 @@ impl io::Writer for MemoryWriter {
 impl io::Writer for FlushFailWriter {
   fn write_byte(self: ref mut Self, value: u8) -> bool {
     return true;
+  }
+
+  fn write(self: ref mut Self, values: Slice[u8]) -> Result[i64, error::Error] {
+    return io::write<FlushFailWriter>(self, values);
+  }
+
+  fn write_all(self: ref mut Self, values: Slice[u8]) -> Result[(), error::Error] {
+    return io::write_all<FlushFailWriter>(self, values);
   }
 
   fn flush(self: ref mut Self) -> Result[(), error::Error] {

@@ -1726,14 +1726,6 @@ pub impl std::net::TcpStream {
     return write_all_raw(self.handle.raw(), values);
   }
 
-  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
-    return std::error::from_raw_result<()>(write_all_raw_result(self.handle.raw(), values));
-  }
-
-  fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-    return std::error::from_raw_result<i64>(write_raw_result(self.handle.raw(), values));
-  }
-
   fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
     if self.handle.is_open() {
       return std::Ok<(), std::error::Error>(());
@@ -2318,14 +2310,6 @@ pub impl std::net::UnixStream {
     return write_all_raw(self.handle.raw(), values);
   }
 
-  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
-    return std::error::from_raw_result<()>(write_all_raw_result(self.handle.raw(), values));
-  }
-
-  fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-    return std::error::from_raw_result<i64>(write_raw_result(self.handle.raw(), values));
-  }
-
   fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
     if self.handle.is_open() {
       return std::Ok<(), std::error::Error>(());
@@ -2351,6 +2335,14 @@ impl std::io::Writer for std::net::TcpStream {
     return write_socket_byte_raw(self.handle.raw(), value);
   }
 
+  pub fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(write_raw_result(self.handle.raw(), values));
+  }
+
+  pub fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    return std::error::from_raw_result<()>(write_all_raw_result(self.handle.raw(), values));
+  }
+
   pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
     if self.handle.is_open() {
       return std::Ok<(), std::error::Error>(());
@@ -2374,6 +2366,14 @@ impl std::io::Writer for std::net::UnixStream {
       return false;
     }
     return write_socket_byte_raw(self.handle.raw(), value);
+  }
+
+  pub fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(write_raw_result(self.handle.raw(), values));
+  }
+
+  pub fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    return std::error::from_raw_result<()>(write_all_raw_result(self.handle.raw(), values));
   }
 
   pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {

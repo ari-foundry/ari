@@ -13,6 +13,14 @@ fn count_ok(value: Result[i64, error::Error], expected: i64) -> bool {
   }
 }
 
+fn trait_write_ok[W: io::Writer](writer: ref mut W, values: Slice[u8], expected: i64) -> bool {
+  return count_ok(writer.write(values), expected);
+}
+
+fn trait_write_all_ok[W: io::Writer](writer: ref mut W, values: Slice[u8]) -> bool {
+  return unit_ok(writer.write_all(values));
+}
+
 fn main() -> i64 {
   var score = 0;
 
@@ -32,6 +40,12 @@ fn main() -> i64 {
   if unit_ok(io::println_text("L")) {
     score = score + 5;
   }
+  if trait_write_ok<io::Stdout>(ref mut out, std::string::bytes("T"), 1) {
+    score = score + 10;
+  }
+  if trait_write_all_ok<io::Stdout>(ref mut out, std::string::bytes("U")) {
+    score = score + 11;
+  }
 
   var err = io::stderr();
   if count_ok(err.write(std::string::bytes("E")), 1) {
@@ -46,7 +60,13 @@ fn main() -> i64 {
   if unit_ok(io::eprintln_text("S")) {
     score = score + 9;
   }
+  if trait_write_ok<io::Stderr>(ref mut err, std::string::bytes("V"), 1) {
+    score = score + 12;
+  }
+  if trait_write_all_ok<io::Stderr>(ref mut err, std::string::bytes("X")) {
+    score = score + 13;
+  }
 
-  assert_eq_i64(score, 45);
+  assert_eq_i64(score, 91);
   return score;
 }

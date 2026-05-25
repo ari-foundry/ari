@@ -310,11 +310,11 @@ stream.close()
 
 `TcpStream` and `UnixStream` implement `std::io::Reader` and
 `std::io::Writer`, so byte-oriented helpers such as `stream.write_byte(value)`,
-`stream.read_byte()`, `std::io::write_all`, and `std::io::read_exact` work
-through the common IO trait surface. They also expose inherent
-`stream.write_all(values)` and `stream.read_exact(output, len)` methods for
-the common case where callers want natural socket method syntax without
-spelling the generic IO trait adapter.
+`stream.read_byte()`, `stream.write(values)`, `stream.write_all(values)`,
+`std::io::write_all`, and `std::io::read_exact` work through the common IO
+trait surface. They also expose inherent read helpers such as
+`stream.read_exact(output, len)` for the common case where callers want natural
+socket method syntax without spelling the generic IO trait adapter.
 
 ## Address Values
 

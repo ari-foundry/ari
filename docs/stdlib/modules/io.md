@@ -12,11 +12,13 @@ Use `std::input` for ordinary stdin line/byte helpers, `std::fs` for files, and
 
 Fallible helpers use natural names and return `Result[..., Error]`:
 `read_exact`, `read_line_from`, `read_to_string`, `copy`, `write`, `write_all`,
-and `flush`. Compatibility helpers that discard error details use explicit
-suffixes such as `_unchecked`, `_optional`, or `_or`. `Reader::read_byte` and
-`Writer::write_byte` still use the older scalar/bool contracts because they
-mirror the current runtime hooks; higher-level helpers are the default
-recoverable API.
+and `flush`. `Writer` also exposes natural `write(values)` and
+`write_all(values)` trait methods, so generic writer-bound code can use method
+syntax instead of dropping back to module helpers. Compatibility helpers that
+discard error details use explicit suffixes such as `_unchecked`, `_optional`,
+or `_or`. `Reader::read_byte` and `Writer::write_byte` still use the older
+scalar/bool contracts because they mirror the current runtime hooks;
+higher-level helpers are the default recoverable API.
 
 Migration note: older snapshots exposed these recoverable helpers as
 `read_exact_result`, `copy_result`, `write_all_result`, and `flush_result`,
@@ -34,7 +36,9 @@ Implemented now:
 - raw stdout/scalar hooks: `write_i64`, `write_u64`, `write_bool`,
   `write_byte`, `write_bytes`, `newline`
 - raw stdin/line hooks: `read_byte`, `read_line`, `read_line_owned`
-- source traits: `Reader`, `Writer`, `Seek`
+- source traits: `Reader`, `Writer`, `Seek`; `Writer` includes natural
+  `write`, `write_all`, and `flush` Result methods plus the low-level
+  `write_byte` hook
 - source handles: `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`,
   `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`
 - filesystem adapters: `std::fs::File` implements `Reader`, `Writer`, and
@@ -66,6 +70,8 @@ pub trait Reader {
 
 pub trait Writer {
   fn write_byte(self: ref mut Self, value: u8) -> bool;
+  fn write(self: ref mut Self, values: Slice[u8]) -> Result[i64, Error];
+  fn write_all(self: ref mut Self, values: Slice[u8]) -> Result[(), Error];
   fn flush(self: ref mut Self) -> Result[(), Error];
 }
 
@@ -179,17 +185,28 @@ error.
 `try_copy` is the `Option[i64]` compatibility wrapper, and `copy_unchecked` is
 the bool wrapper for call sites that only care whether the whole stream moved.
 
-`Writer.write_byte` returns whether the byte was accepted.
-`write` returns the accepted byte count or `Err(Error(BrokenPipe))` on the
-first failed byte write. `write_all` returns `Ok(())` after all bytes are
-accepted and the same `BrokenPipe` error on failure. `Stdout`, `Stderr`,
-`PipeWriter`, and `BufWriter` also expose `write(values)` and
-`write_all(values)` methods for ordinary call sites. `write_all_unchecked` is
-the bool compatibility wrapper. `Writer.flush()` now returns `Result[(),
-Error]`; `io::flush` delegates to that natural method, and `flush_unchecked`
-keeps the bool compatibility shape. The current `Stdout.flush()` and
-`Stderr.flush()` are no-op successes because the existing process stream hooks
-write immediately; real flush hooks belong with future OS handles.
+`Writer.write_byte` returns whether the byte was accepted and remains the
+minimal hook implementors must define from their raw backend. `Writer.write`
+returns the accepted byte count or `Err(Error(BrokenPipe))` on the first failed
+byte write. `Writer.write_all` returns `Ok(())` after all bytes are accepted
+and the same `BrokenPipe` error on failure. The module-level `io::write` and
+`io::write_all` helpers delegate through the same contract, so
+`writer.write(bytes)`, `writer.write_all(bytes)`, `io::write(ref mut writer,
+bytes)`, and `io::write_all(ref mut writer, bytes)` agree. `Stdout`, `Stderr`,
+`PipeWriter`, `BufWriter`, `std::fs::File`, `TcpStream`, and `UnixStream`
+implement these trait methods. `write_all_unchecked` is the bool compatibility
+wrapper. `Writer.flush()` returns `Result[(), Error]`; `io::flush` delegates to
+that natural method, and `flush_unchecked` keeps the bool compatibility shape.
+The current `Stdout.flush()` and `Stderr.flush()` are no-op successes because
+the existing process stream hooks write immediately; real flush hooks belong
+with future OS handles.
+
+Custom `Writer` implementations should keep `write_byte` as the smallest raw
+operation and usually implement `write`/`write_all` by delegating to
+`io::write<YourWriter>(self, values)` and `io::write_all<YourWriter>(self,
+values)`. Implementors with an efficient host bulk-write path, such as network
+streams, can call that host path directly while preserving the same `Result`
+semantics.
 
 `print_text`, `println_text`, `eprint_text`, and `eprintln_text` are the
 Result-returning plain-text helpers for hosted CLI messages. The shorter
@@ -376,8 +393,8 @@ open because `File` itself does not buffer.
   compatibility helper, EOF after collection, and generated generic helper
   symbols.
 - `tests/cases/standard-library/ok/io/std-io-natural-api.ari` checks
-  natural `write`/`write_all` methods for stdout and stderr plus the
-  Result-returning plain-text output helpers.
+  natural `Writer::write`/`Writer::write_all` trait methods for stdout and
+  stderr plus the Result-returning plain-text output helpers.
 - `tests/cases/standard-library/ok/io/std-io-copy.ari` checks `try_copy` and
   `copy` over generic `Reader`/`Writer` values, copied byte counts, final
   flush, writer failure behavior, and generated generic helper symbols.
