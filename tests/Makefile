@@ -1812,27 +1812,35 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-ascii-case-search.elf; code=$$?; test $$code -eq 167
 	$(TARGET) tests/cases/standard-library/ok/parse/std-parse-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse13integer_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse22integer_radix_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16is_integer_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16integer_radix_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse7integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse16integer_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10is_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse8unsigned' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse17unsigned_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse11is_unsigned' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse11unsigned_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14unsigned_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse23unsigned_radix_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17is_unsigned_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17unsigned_radix_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse11hex_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse20hex_integer_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14is_hex_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14hex_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14binary_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse23binary_integer_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17is_binary_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17binary_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse13octal_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse22octal_integer_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16is_octal_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16octal_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse7boolean' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse16boolean_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10is_boolean' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10boolean_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse8is_float' $(BUILD_DIR)/prelude/std-parse-basic.ll

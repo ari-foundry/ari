@@ -2503,23 +2503,23 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
-| `fn std::parse::binary_integer` | check-prelude std-parse-basic signed binary integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::binary_integer` | check-prelude std-parse-basic Result-returning signed binary integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::binary_integer_optional` | check-prelude std-parse-basic Option-returning signed binary integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::binary_integer_or` | check-prelude std-parse-basic signed binary integer parser with fallback; docs/stdlib/modules/parse.md |
-| `fn std::parse::binary_integer_result` | check-prelude std-parse-basic Result-returning signed binary integer parser; docs/stdlib/modules/parse.md |
-| `fn std::parse::boolean` | check-prelude std-parse-basic ASCII-trimmed lowercase bool parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::boolean` | check-prelude std-parse-basic Result-returning ASCII-trimmed lowercase bool parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::boolean_optional` | check-prelude std-parse-basic Option-returning lowercase bool compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::boolean_or` | check-prelude std-parse-basic lowercase bool parser with fallback; docs/stdlib/modules/parse.md |
-| `fn std::parse::boolean_result` | check-prelude std-parse-basic Result-returning lowercase bool parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::float` | check-prelude std-parse-basic asserting decimal float parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_or` | check-prelude std-parse-basic fallback decimal float parser; docs/stdlib/modules/parse.md |
-| `fn std::parse::hex_integer` | check-prelude std-parse-basic signed hexadecimal integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::hex_integer` | check-prelude std-parse-basic Result-returning signed hexadecimal integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::hex_integer_optional` | check-prelude std-parse-basic Option-returning signed hexadecimal integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::hex_integer_or` | check-prelude std-parse-basic signed hexadecimal integer parser with fallback; docs/stdlib/modules/parse.md |
-| `fn std::parse::hex_integer_result` | check-prelude std-parse-basic Result-returning signed hexadecimal integer parser; docs/stdlib/modules/parse.md |
-| `fn std::parse::integer` | check-prelude std-parse-basic ASCII-trimmed signed integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer` | check-prelude std-parse-basic Result-returning ASCII-trimmed signed integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer_optional` | check-prelude std-parse-basic Option-returning signed integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::integer_or` | check-prelude std-parse-basic signed integer parser with fallback; docs/stdlib/modules/parse.md |
-| `fn std::parse::integer_radix` | check-prelude std-parse-basic signed radix integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer_radix` | check-prelude std-parse-basic Result-returning signed radix integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer_radix_optional` | check-prelude std-parse-basic Option-returning signed radix integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::integer_radix_or` | check-prelude std-parse-basic signed radix integer parser with fallback; docs/stdlib/modules/parse.md |
-| `fn std::parse::integer_radix_result` | check-prelude std-parse-basic Result-returning signed radix integer parser; docs/stdlib/modules/parse.md |
-| `fn std::parse::integer_result` | check-prelude std-parse-basic Result-returning signed integer parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_binary_integer` | check-prelude std-parse-basic signed binary integer parser validator; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_boolean` | check-prelude std-parse-basic lowercase bool parser validator; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_float` | check-prelude std-parse-basic decimal float validator; docs/stdlib/modules/parse.md |
@@ -2530,17 +2530,17 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::parse::is_parse[T: std::parse::Parse]` | check-prelude std-parse-basic trait-backed typed parser validator; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_unsigned` | check-prelude std-parse-basic unsigned integer parser validator; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_unsigned_radix` | check-prelude std-parse-basic unsigned radix integer parser validator; docs/stdlib/modules/parse.md |
-| `fn std::parse::octal_integer` | check-prelude std-parse-basic signed octal integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::octal_integer` | check-prelude std-parse-basic Result-returning signed octal integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::octal_integer_optional` | check-prelude std-parse-basic Option-returning signed octal integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::octal_integer_or` | check-prelude std-parse-basic signed octal integer parser with fallback; docs/stdlib/modules/parse.md |
-| `fn std::parse::octal_integer_result` | check-prelude std-parse-basic Result-returning signed octal integer parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::parse[T: std::parse::Parse]` | check-prelude std-parse-basic trait-backed typed parser dispatch; docs/stdlib/modules/parse.md |
 | `fn std::parse::parse_or[T: std::parse::Parse]` | check-prelude std-parse-basic trait-backed typed parser fallback dispatch; docs/stdlib/modules/parse.md |
-| `fn std::parse::unsigned` | check-prelude std-parse-basic unsigned decimal integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned` | check-prelude std-parse-basic Result-returning unsigned decimal integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned_optional` | check-prelude std-parse-basic Option-returning unsigned integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::unsigned_or` | check-prelude std-parse-basic unsigned decimal integer parser with fallback; docs/stdlib/modules/parse.md |
-| `fn std::parse::unsigned_radix` | check-prelude std-parse-basic unsigned radix integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned_radix` | check-prelude std-parse-basic Result-returning unsigned radix integer parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned_radix_optional` | check-prelude std-parse-basic Option-returning unsigned radix integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::unsigned_radix_or` | check-prelude std-parse-basic unsigned radix integer parser with fallback; docs/stdlib/modules/parse.md |
-| `fn std::parse::unsigned_radix_result` | check-prelude std-parse-basic Result-returning unsigned radix integer parser; docs/stdlib/modules/parse.md |
-| `fn std::parse::unsigned_result` | check-prelude std-parse-basic Result-returning unsigned decimal integer parser; docs/stdlib/modules/parse.md |
 
 ### module
 

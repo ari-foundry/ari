@@ -3468,27 +3468,35 @@ parse::parse[T: Parse](bytes)
 parse::parse_or[T: Parse](bytes, fallback)
 parse::is_parse[T: Parse](bytes)
 parse::integer(bytes)
+parse::integer_optional(bytes)
 parse::is_integer(bytes)
 parse::integer_or(bytes, fallback)
 parse::integer_radix(bytes, radix)
+parse::integer_radix_optional(bytes, radix)
 parse::is_integer_radix(bytes, radix)
 parse::integer_radix_or(bytes, radix, fallback)
 parse::unsigned(bytes)
+parse::unsigned_optional(bytes)
 parse::is_unsigned(bytes)
 parse::unsigned_or(bytes, fallback)
 parse::unsigned_radix(bytes, radix)
+parse::unsigned_radix_optional(bytes, radix)
 parse::is_unsigned_radix(bytes, radix)
 parse::unsigned_radix_or(bytes, radix, fallback)
 parse::hex_integer(bytes)
+parse::hex_integer_optional(bytes)
 parse::is_hex_integer(bytes)
 parse::hex_integer_or(bytes, fallback)
 parse::binary_integer(bytes)
+parse::binary_integer_optional(bytes)
 parse::is_binary_integer(bytes)
 parse::binary_integer_or(bytes, fallback)
 parse::octal_integer(bytes)
+parse::octal_integer_optional(bytes)
 parse::is_octal_integer(bytes)
 parse::octal_integer_or(bytes, fallback)
 parse::boolean(bytes)
+parse::boolean_optional(bytes)
 parse::is_boolean(bytes)
 parse::boolean_or(bytes, fallback)
 parse::is_float(bytes)
@@ -3496,19 +3504,23 @@ parse::float_or(bytes, fallback)
 parse::float(bytes)
 ```
 
-`integer` returns `Option[i64]` and accepts optional `+` or `-` signs.
+`integer` returns `Result[i64, Error]` and accepts optional `+` or `-` signs.
+`integer_optional` keeps the compact compatibility `Option[i64]` shape,
 `is_integer` validates the same shape, and `integer_or` returns a caller
 fallback on invalid input. Decimal and radix integer parsers reject values
 outside the `i64` range instead of wrapping. `integer_radix` accepts bases `2`
-through `36` with ASCII alphanumeric digits, and `hex_integer` /
-`binary_integer` / `octal_integer` are readable wrappers for common bases.
-`unsigned` and `unsigned_radix` are the matching `u64` parsers: they accept an
-optional leading `+`, reject `-`, check overflow against `u64::MAX`, and have
-matching `is_*` and `*_or` helpers.
+through `36` with ASCII alphanumeric digits, returns `InvalidInput` for invalid
+radices, and returns `InvalidData` for invalid or out-of-range input.
+`hex_integer` / `binary_integer` / `octal_integer` are readable wrappers for
+common bases. Each has a matching `_optional`, `is_*`, and `*_or` helper.
+`unsigned` and `unsigned_radix` are the matching `u64` `Result` parsers: they
+accept an optional leading `+`, reject `-`, check overflow against `u64::MAX`,
+and have matching `_optional`, `is_*`, and `*_or` helpers.
 These radix parsers trim whitespace but do not recognize prefixes such as
-`0x`, `0b`, or leading-zero octal policy. `boolean`
-returns `Option[bool]` and accepts only lowercase `true` and `false`;
-`is_boolean` and `boolean_or` provide the same validator/fallback pattern.
+`0x`, `0b`, or leading-zero octal policy. `boolean` returns
+`Result[bool, Error]` and accepts only lowercase `true` and `false`;
+`boolean_optional`, `is_boolean`, and `boolean_or` provide the same
+compatibility validator/fallback pattern.
 `is_float` validates a decimal float shape with optional sign, fraction, and
 exponent. `float_or` returns a fallback for invalid input, while `float` panics
 on invalid input.

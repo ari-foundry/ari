@@ -13,13 +13,16 @@ fn main() -> i64 {
   assert(parse::integer_or("nope", 5) == 5);
   assert(parse::integer("9223372036854775807").unwrap_or(0) == max);
   assert(parse::integer("-9223372036854775808").unwrap_or(0) == min);
-  assert(parse::integer("9223372036854775808").is_none());
-  assert(parse::integer("-9223372036854775809").is_none());
+  assert(parse::integer("9223372036854775808").is_err());
+  assert(parse::integer("-9223372036854775809").is_err());
+  assert(parse::integer_optional("-9223372036854775809").is_none());
   assert(parse::unsigned("18446744073709551615").unwrap_or(0u64) == 18446744073709551615u64);
   assert(parse::unsigned("+42").unwrap_or(0u64) == 42u64);
-  assert(parse::unsigned("18446744073709551616").is_none());
-  assert(parse::unsigned("-1").is_none());
+  assert(parse::unsigned("18446744073709551616").is_err());
+  assert(parse::unsigned("-1").is_err());
+  assert(parse::unsigned_optional("-1").is_none());
   assert(parse::unsigned_radix("ff", 16).unwrap_or(0u64) == 255u64);
+  assert(parse::unsigned_radix_optional("ff", 16).unwrap_or(0u64) == 255u64);
   assert(parse::unsigned_radix_or("zz", 36, 0u64) == 1295u64);
   assert(parse::unsigned_radix_or("bad", 10, 6u64) == 6u64);
   assert(parse::is_unsigned_radix("10", 2));
@@ -29,23 +32,24 @@ fn main() -> i64 {
   assert(parse::integer_radix("z", 36).unwrap_or(0) == 35);
   assert(parse::integer_radix_or("zz", 36, 0) == 1295);
   assert(parse::integer_radix_or("bad", 10, 6) == 6);
-  assert(parse::integer_radix("10", 1).is_none());
-  assert(parse::integer_radix("2", 2).is_none());
-  assert(parse::integer_result("123").unwrap_or(0) == 123);
-  match parse::integer_result("12x") {
+  assert(parse::integer_radix("10", 1).is_err());
+  assert(parse::integer_radix("2", 2).is_err());
+  assert(parse::integer_radix_optional("10", 1).is_none());
+  assert(parse::integer("123").unwrap_or(0) == 123);
+  match parse::integer("12x") {
     Ok(_) => { panic(); }
     Err(integer_reason) => {
       assert(integer_reason.is_kind(error::InvalidData));
     }
   }
-  match parse::integer_radix_result("10", 1) {
+  match parse::integer_radix("10", 1) {
     Ok(_) => { panic(); }
     Err(radix_reason) => {
       assert(radix_reason.is_kind(error::InvalidInput));
     }
   }
-  assert(parse::unsigned_result("+42").unwrap_or(0u64) == 42u64);
-  match parse::unsigned_radix_result("2", 2) {
+  assert(parse::unsigned("+42").unwrap_or(0u64) == 42u64);
+  match parse::unsigned_radix("2", 2) {
     Ok(_) => { panic(); }
     Err(unsigned_reason) => {
       assert(unsigned_reason.is_kind(error::InvalidData));
@@ -54,24 +58,25 @@ fn main() -> i64 {
   assert(parse::hex_integer("ff").unwrap_or(0) == 255);
   assert(parse::hex_integer("-F").unwrap_or(0) == -15);
   assert(parse::hex_integer_or("gg", 7) == 7);
-  assert(parse::hex_integer_result("ff").unwrap_or(0) == 255);
+  assert(parse::hex_integer_optional("ff").unwrap_or(0) == 255);
   assert(parse::is_hex_integer("Ab"));
   assert(parse::hex_integer("7fffffffffffffff").unwrap_or(0) == max);
   assert(parse::hex_integer("-8000000000000000").unwrap_or(0) == min);
-  assert(parse::hex_integer("8000000000000000").is_none());
+  assert(parse::hex_integer("8000000000000000").is_err());
+  assert(parse::hex_integer_optional("8000000000000000").is_none());
   assert(parse::binary_integer("1010").unwrap_or(0) == 10);
   assert(parse::binary_integer_or("102", 4) == 4);
-  assert(parse::binary_integer_result("1010").unwrap_or(0) == 10);
+  assert(parse::binary_integer_optional("1010").unwrap_or(0) == 10);
   assert(!parse::is_binary_integer("102"));
   assert(parse::octal_integer("755").unwrap_or(0) == 493);
   assert(parse::octal_integer("-10").unwrap_or(0) == -8);
   assert(parse::octal_integer_or("778", 12) == 12);
-  assert(parse::octal_integer_result("755").unwrap_or(0) == 493);
+  assert(parse::octal_integer_optional("755").unwrap_or(0) == 493);
   assert(parse::is_octal_integer("17"));
   assert(!parse::is_octal_integer("18"));
   match parse::integer(invalid_integer.as_slice()) {
-    std::Some(_) => { panic(); }
-    std::None => {}
+    Ok(_) => { panic(); }
+    Err(reason) => { assert(reason.is_kind(error::InvalidData)); }
   }
 
   var true_text = [116u8, 114u8, 117u8, 101u8];
@@ -83,14 +88,14 @@ fn main() -> i64 {
   assert(!parse::is_boolean("True"));
   assert(parse::boolean_or("false", true) == false);
   assert(parse::boolean_or("missing", true));
-  assert(parse::boolean_result("true").unwrap_or(false));
-  match parse::boolean_result("True") {
+  assert(parse::boolean("true").unwrap_or(false));
+  match parse::boolean("True") {
     Ok(_) => { panic(); }
     Err(boolean_reason) => {
       assert(boolean_reason.is_kind(error::InvalidData));
     }
   }
-  match parse::boolean(invalid_bool.as_slice()) {
+  match parse::boolean_optional(invalid_bool.as_slice()) {
     std::Some(_) => { panic(); }
     std::None => {}
   }
