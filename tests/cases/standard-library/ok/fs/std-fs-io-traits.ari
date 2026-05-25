@@ -33,7 +33,7 @@ fn main() -> i64 {
   if !io::read_exact<std::fs::File>(ref mut reader, eof_view.as_ptr(), 1) {
     score = score + 4;
   }
-  reader.close();
+  reader.close_unchecked();
 
   var copy_reader = fs::try_open(source_path, "r").unwrap_or(fs::File::invalid());
   var copy_writer = fs::try_open(copy_path, "w").unwrap_or(fs::File::invalid());
@@ -45,8 +45,8 @@ fn main() -> i64 {
     }
     std::None => {}
   }
-  copy_reader.close();
-  copy_writer.close();
+  copy_reader.close_unchecked();
+  copy_writer.close_unchecked();
   let copied = fs::read(ref mut zone, copy_path);
   if copied.equals_text("ABC") {
     score = score + 16;
@@ -60,7 +60,7 @@ fn main() -> i64 {
   if io::flush<std::fs::File>(ref mut writer) {
     score = score + 64;
   }
-  writer.close();
+  writer.close_unchecked();
   let written = fs::read(ref mut zone, write_path);
   if written.equals_text("xy") {
     score = score + 128;

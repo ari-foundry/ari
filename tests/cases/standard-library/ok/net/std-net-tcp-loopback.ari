@@ -75,14 +75,14 @@ fn main() -> i64 {
     score = score + 2;
   }
 
-  let maybe_port = listener.local_port();
+  let maybe_port = listener.local_port_optional();
   assert(maybe_port.is_some());
   let port = maybe_port.unwrap();
-  assert(listener.local_port_result().unwrap_or(0 as u16) == port);
-  let maybe_listener_addr = listener.local_addr();
+  assert(listener.local_port().unwrap_or(0 as u16) == port);
+  let maybe_listener_addr = listener.local_addr_optional();
   assert(maybe_listener_addr.is_some());
   let listener_addr = maybe_listener_addr.unwrap();
-  assert(listener.local_addr_result().is_ok());
+  assert(listener.local_addr().is_ok());
   if port > 0 as u16 && listener_addr.port() == port && listener_addr.is_loopback() {
     score = score + 4;
   }
@@ -91,14 +91,14 @@ fn main() -> i64 {
   let maybe_client = net::connect(connect_addr);
   assert(maybe_client.is_ok());
   var client = maybe_client.unwrap();
-  let maybe_client_addr = client.local_addr();
+  let maybe_client_addr = client.local_addr_optional();
   assert(maybe_client_addr.is_some());
   let client_addr = maybe_client_addr.unwrap();
-  let maybe_client_peer = client.peer_addr();
+  let maybe_client_peer = client.peer_addr_optional();
   assert(maybe_client_peer.is_some());
   let client_peer = maybe_client_peer.unwrap();
-  assert(client.local_addr_result().is_ok());
-  assert(client.peer_addr_result().is_ok());
+  assert(client.local_addr().is_ok());
+  assert(client.peer_addr().is_ok());
   if client.is_open() && client.descriptor().is_valid() && client_addr.port() > 0 as u16 &&
     client_addr.is_loopback() && client_peer.port() == port && client_peer.is_loopback() {
     score = score + 8;
@@ -107,10 +107,10 @@ fn main() -> i64 {
   let maybe_server = listener.accept();
   assert(maybe_server.is_some());
   var server = maybe_server.unwrap();
-  let maybe_server_addr = server.local_addr();
+  let maybe_server_addr = server.local_addr_optional();
   assert(maybe_server_addr.is_some());
   let server_addr = maybe_server_addr.unwrap();
-  let maybe_server_peer = server.peer_addr();
+  let maybe_server_peer = server.peer_addr_optional();
   assert(maybe_server_peer.is_some());
   let server_peer = maybe_server_peer.unwrap();
   if server.is_open() && server.descriptor().is_valid() && server_addr.port() == port &&
@@ -122,16 +122,16 @@ fn main() -> i64 {
     score = score + 512;
   }
 
-  if client.write_byte(65u8) && server.read_byte() == 65 {
+  if client.write_byte(65u8) && server.try_read_byte().unwrap_or(0u8) == 65u8 {
     score = score + 32;
   }
 
   var reply = [66u8, 67u8];
-  if server.write_all_result(reply.as_slice()).is_ok() {
+  if server.write_all(reply.as_slice()).is_ok() {
     var output = [0u8, 0u8];
     let view = output.as_slice();
     let output_raw = view.as_ptr();
-    if client.read_exact_result(output_raw, 2).is_ok() {
+    if client.read_exact(output_raw, 2).is_ok() {
       if ptr_load(output_raw) == 66u8 && ptr_load(ptr_add(output_raw, 1)) == 67u8 {
         score = score + 64;
       }
@@ -139,33 +139,33 @@ fn main() -> i64 {
   }
 
   let timeout = time::milliseconds(1000);
-  if listener.set_accept_timeout_result(timeout).is_ok() &&
-    listener.set_accept_timeout_millis(1000) &&
-    listener.set_reuse_addr_result(true).is_ok() &&
-    listener.reuse_addr_result().unwrap_or(false) &&
-    client.set_read_timeout_result(timeout).is_ok() &&
-    client.set_write_timeout_result(timeout).is_ok() &&
-    client.set_nodelay_result(true).is_ok() &&
-    client.nodelay_result().unwrap_or(false) &&
-    server.set_read_timeout_result(timeout).is_ok() &&
-    server.set_write_timeout_result(timeout).is_ok() &&
-    listener.set_nonblocking_result(false).is_ok() &&
-    client.set_nonblocking_result(false).is_ok() &&
-    server.set_nonblocking_result(false).is_ok() &&
-    client.shutdown_result(net::Write).is_ok() {
+  if listener.set_accept_timeout(timeout).is_ok() &&
+    listener.set_accept_timeout_millis(1000).is_ok() &&
+    listener.set_reuse_addr(true).is_ok() &&
+    listener.reuse_addr().unwrap_or(false) &&
+    client.set_read_timeout(timeout).is_ok() &&
+    client.set_write_timeout(timeout).is_ok() &&
+    client.set_nodelay(true).is_ok() &&
+    client.nodelay().unwrap_or(false) &&
+    server.set_read_timeout(timeout).is_ok() &&
+    server.set_write_timeout(timeout).is_ok() &&
+    listener.set_nonblocking(false).is_ok() &&
+    client.set_nonblocking(false).is_ok() &&
+    server.set_nonblocking(false).is_ok() &&
+    client.shutdown(net::Write).is_ok() {
     score = score + 256;
   }
 
-  if server.set_nodelay_result(true).is_ok() && server.nodelay_result().unwrap_or(false) {
+  if server.set_nodelay(true).is_ok() && server.nodelay().unwrap_or(false) {
     score = score + 8192;
   }
 
-  if server.close_result().is_ok() && client.close_result().is_ok() && listener.close_result().is_ok() {
+  if server.close().is_ok() && client.close().is_ok() && listener.close().is_ok() {
     score = score + 128;
   }
-  assert(server.close_result().is_err());
-  assert(client.close_result().is_err());
-  assert(listener.close_result().is_err());
+  assert(server.close().is_err());
+  assert(client.close().is_err());
+  assert(listener.close().is_err());
 
   assert_eq_i64(score, 16383);
   return score;

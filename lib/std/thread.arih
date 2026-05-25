@@ -29,9 +29,9 @@ pub struct ThreadLocal[T] {
   state: ptr std::thread::ThreadLocalState[T],
 }
 
-pub extern "ari" fn spawn(entry: fn() -> i64) -> Thread = "ari_builtin_thread_spawn";
-pub extern "ari" fn spawn_configured(entry: fn() -> i64, name: string, stack_size: i64) -> Thread = "ari_builtin_thread_spawn_configured";
-pub extern "ari" fn join(thread: Thread) -> i64 = "ari_builtin_thread_join";
+pub extern "ari" fn spawn_unchecked(entry: fn() -> i64) -> Thread = "ari_builtin_thread_spawn";
+pub extern "ari" fn spawn_configured_unchecked(entry: fn() -> i64, name: string, stack_size: i64) -> Thread = "ari_builtin_thread_spawn_configured";
+pub extern "ari" fn join_unchecked(thread: Thread) -> i64 = "ari_builtin_thread_join";
 pub extern "ari" fn is_finished(thread: Thread) -> bool = "ari_builtin_thread_is_finished";
 pub extern "ari" fn yield_now() -> void = "ari_builtin_thread_yield";
 pub extern "ari" fn available_parallelism() -> i64 = "ari_builtin_thread_available_parallelism";
@@ -125,31 +125,31 @@ pub fn is_join_error(status: i64) -> bool {
   return status < 0;
 }
 
-pub fn spawn_result(entry: fn() -> i64) -> std::Result[std::thread::Thread, std::error::Error] {
-  let thread = std::thread::spawn(entry);
+pub fn spawn(entry: fn() -> i64) -> std::Result[std::thread::Thread, std::error::Error] {
+  let thread = std::thread::spawn_unchecked(entry);
   if thread.is_valid() {
     return std::Ok<std::thread::Thread, std::error::Error>(thread);
   }
   return std::Err<std::thread::Thread, std::error::Error>(std::thread::other_error());
 }
 
-pub fn spawn_configured_result(
+pub fn spawn_configured(
   entry: fn() -> i64,
   name: string,
   stack_size: i64
 ) -> std::Result[std::thread::Thread, std::error::Error] {
-  let thread = std::thread::spawn_configured(entry, name, stack_size);
+  let thread = std::thread::spawn_configured_unchecked(entry, name, stack_size);
   if thread.is_valid() {
     return std::Ok<std::thread::Thread, std::error::Error>(thread);
   }
   return std::Err<std::thread::Thread, std::error::Error>(std::thread::other_error());
 }
 
-pub fn join_result(thread: std::thread::Thread) -> std::Result[i64, std::error::Error] {
+pub fn join(thread: std::thread::Thread) -> std::Result[i64, std::error::Error] {
   if !thread.is_valid() {
     return std::Err<i64, std::error::Error>(std::thread::invalid_input_error());
   }
-  let status = std::thread::join(thread);
+  let status = std::thread::join_unchecked(thread);
   if std::thread::is_join_error(status) {
     return std::Err<i64, std::error::Error>(std::thread::other_error());
   }
@@ -178,12 +178,12 @@ pub impl std::thread::Builder {
     return self.stack_size_bytes;
   }
 
-  fn spawn(self: ref Self, entry: fn() -> i64) -> std::thread::Thread {
-    return std::thread::spawn_configured(entry, self.name, self.stack_size_bytes);
+  fn spawn_unchecked(self: ref Self, entry: fn() -> i64) -> std::thread::Thread {
+    return std::thread::spawn_configured_unchecked(entry, self.name, self.stack_size_bytes);
   }
 
-  fn spawn_result(self: ref Self, entry: fn() -> i64) -> std::Result[std::thread::Thread, std::error::Error] {
-    return std::thread::spawn_configured_result(entry, self.name, self.stack_size_bytes);
+  fn spawn(self: ref Self, entry: fn() -> i64) -> std::Result[std::thread::Thread, std::error::Error] {
+    return std::thread::spawn_configured(entry, self.name, self.stack_size_bytes);
   }
 }
 
@@ -192,12 +192,12 @@ pub impl std::thread::Thread {
     return Thread { native: -1, id: -1 };
   }
 
-  fn spawn(entry: fn() -> i64) -> Thread {
-    return std::thread::spawn(entry);
+  fn spawn_unchecked(entry: fn() -> i64) -> Thread {
+    return std::thread::spawn_unchecked(entry);
   }
 
-  fn spawn_result(entry: fn() -> i64) -> std::Result[Thread, std::error::Error] {
-    return std::thread::spawn_result(entry);
+  fn spawn(entry: fn() -> i64) -> std::Result[Thread, std::error::Error] {
+    return std::thread::spawn(entry);
   }
 
   fn id(self: ref Self) -> i64 {
@@ -213,12 +213,12 @@ pub impl std::thread::Thread {
     return std::thread::is_finished(thread);
   }
 
-  fn join(self) -> i64 {
-    return std::thread::join(self);
+  fn join_unchecked(self) -> i64 {
+    return std::thread::join_unchecked(self);
   }
 
-  fn join_result(self) -> std::Result[i64, std::error::Error] {
-    return std::thread::join_result(self);
+  fn join(self) -> std::Result[i64, std::error::Error] {
+    return std::thread::join(self);
   }
 }
 

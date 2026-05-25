@@ -36,8 +36,10 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `create_dir_all`, `ensure_dir_all`, `open_dir_result`, `try_open_dir`, `read_dir`,
 `read_dir_result`, `try_read_dir`, `read_dir_entries`,
 `read_dir_entries_result`, `try_read_dir_entries`,
-`read_dir_next`, `position`, `seek`, `close_dir`, `close`, `exists`, and `remove`, not
-type-suffixed names.
+`read_dir_next`, `position`, `seek`, `close_dir`, `close`, `exists`, and
+`remove`, not type-suffixed names. For the handle APIs touched by lifecycle
+cleanup, natural names return `Result`; `_unchecked` helpers keep the old
+boolean or sentinel behavior, and `_raw` helpers keep compact integer errors.
 
 ## API
 
@@ -103,8 +105,8 @@ fs::read_dir_entries_result(ref mut zone, path)
 fs::try_read_dir_entries(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
-fs::close_dir_raw_result(dir)
-fs::close_dir_result(dir)
+fs::close_dir_raw(dir)
+fs::close_dir_unchecked(dir)
 fs::open(path, mode)
 fs::create(path)
 fs::remove_raw_result(path)
@@ -120,22 +122,22 @@ fs::try_open_read(path)
 fs::try_open_write(path)
 fs::try_open_append(path)
 fs::close(file)
-fs::close_raw_result(file)
-fs::close_result(file)
+fs::close_raw(file)
+fs::close_unchecked(file)
 fs::read_byte(file)
 fs::try_read_byte(file)
 fs::write_byte(file, value)
-fs::write_byte_raw_result(file, value)
-fs::write_byte_result(file, value)
+fs::write_byte_raw(file, value)
+fs::write_byte_unchecked(file, value)
 fs::write_bytes(file, values)
-fs::write_bytes_raw_result(file, values)
-fs::write_bytes_result(file, values)
+fs::write_bytes_raw(file, values)
+fs::write_bytes_unchecked(file, values)
 fs::position(file)
-fs::position_raw_result(file)
-fs::position_result(file)
+fs::position_raw(file)
+fs::position_or(file, fallback)
 fs::seek(file, position)
-fs::seek_raw_result(file, position)
-fs::seek_result(file, position)
+fs::seek_raw(file, position)
+fs::seek_unchecked(file, position)
 fs::read(ref mut zone, path)
 fs::read_result(ref mut zone, path)
 fs::try_read(ref mut zone, path)
@@ -177,17 +179,17 @@ File::invalid()
 file.descriptor()
 file.is_open()
 file.close()
-file.close_result()
+file.close_unchecked()
 file.read_byte()
 file.try_read_byte()
 file.write_byte(value)
-file.write_byte_result(value)
+file.write_byte_unchecked(value)
 file.write_bytes(values)
-file.write_bytes_result(values)
+file.write_bytes_unchecked(values)
 file.position()
-file.position_result()
+file.position_or(fallback)
 file.seek(position)
-file.seek_result(position)
+file.seek_unchecked(position)
 
 impl std::io::Reader for File
 impl std::io::Writer for File
@@ -197,7 +199,7 @@ Dir::invalid()
 dir.is_open()
 dir.next(ref mut zone)
 dir.close()
-dir.close_result()
+dir.close_unchecked()
 
 entry.name()
 entry.path()
@@ -252,13 +254,13 @@ suffix:
 var zone = zone::create(512);
 var input = fs::try_open("input.txt", "r").unwrap_or(fs::File::invalid());
 let text = io::read_to_string<std::fs::File>(ref mut zone, ref mut input);
-input.close();
+input.close().unwrap();
 
 var source = fs::try_open("input.txt", "r").unwrap_or(fs::File::invalid());
 var target = fs::try_open("output.txt", "w").unwrap_or(fs::File::invalid());
 io::copy<std::fs::File, std::fs::File>(ref mut source, ref mut target);
-source.close();
-target.close();
+source.close().unwrap();
+target.close().unwrap();
 zone::destroy(zone);
 ```
 
@@ -266,12 +268,15 @@ The `Writer` `flush` method is currently a direct-descriptor success check:
 file writes are not buffered by `File` itself. Use future or explicit buffered
 wrappers when the library grows owned buffering policy.
 
-`position(file)` returns the current byte offset from the host descriptor or
-`-1` for invalid or unseekable handles. `seek(file, position)` moves to an
-absolute byte offset from the start of the file and returns `false` for invalid
-handles, negative positions, or host seek failures. The trait methods expose
-the same behavior as `file.position()` and `file.seek(position)`, which keeps
-generic `S: io::Seek` code readable:
+`position(file)` returns `Result[i64, Error]` with the current byte offset from
+the host descriptor. `seek(file, position)` moves to an absolute byte offset
+from the start of the file and returns `Result[(), Error]`. Invalid handles and
+negative seek offsets return `Error(InvalidInput)`, while host seek/tell
+failures return errno-derived `Error` values. The `position_or` and
+`seek_unchecked` compatibility helpers discard those errors for older sentinel
+and boolean call sites. The `std::io::Seek` trait methods currently retain the
+older sentinel shape, which keeps generic `S: io::Seek` code readable while the
+trait error model is migrated:
 
 ```ari
 fn rewind[S: io::Seek](stream: ref mut S) -> bool {
@@ -282,11 +287,8 @@ fn rewind[S: io::Seek](stream: ref mut S) -> bool {
 }
 ```
 
-`position_result(file)` and `seek_result(file, position)` are the
-error-preserving forms. Invalid handles and negative seek offsets return
-`Error(InvalidInput)`, while host seek/tell failures return errno-derived
-`Error` values. The `*_raw_result` variants keep the same policy with raw
-integer errors for compatibility adapters.
+The `position_raw(file)` and `seek_raw(file, position)` variants keep the same
+policy with raw integer errors for compatibility adapters.
 
 Append-mode handles still follow host append semantics for writes: seeking can
 change the read cursor and reported position, but writes on an append descriptor
@@ -365,14 +367,14 @@ compatibility wrappers over `open(path, "r")`, `open(path, "w")`, and
 `read_byte(file)` returns the next byte as `i64` or `-1` at EOF or on failure.
 Use `try_read_byte(file)` or `file.try_read_byte()` when EOF is ordinary
 control flow; they return `Option[u8]` and hide the sentinel from call sites.
-`write_byte(file, value)` returns whether exactly one byte was written.
-`write_bytes(file, values)` writes each byte in a `Slice[u8]` until one write
-fails and returns the number of bytes written before that failure.
-`write_byte_result` and `write_bytes_result` are the error-preserving forms:
-closed or invalid handles return `Error(InvalidInput)`, host write failures
-return the current errno-derived `Error`, and successful whole-slice writes
-return `Ok(byte_count)`. The `*_raw_result` variants keep raw integer errors
-for compatibility adapters.
+`write_byte(file, value)` returns `Result[(), Error]`, and
+`write_bytes(file, values)` writes a whole `Slice[u8]` and returns
+`Result[i64, Error]` with the byte count. Closed or invalid handles return
+`Error(InvalidInput)`, host write failures return the current errno-derived
+`Error`, and successful whole-slice writes return `Ok(byte_count)`.
+`write_byte_unchecked` and `write_bytes_unchecked` keep the older boolean and
+partial-count shapes; `write_byte_raw` and `write_bytes_raw` keep raw integer
+errors for compatibility adapters.
 
 `write_result(path, values)` opens `path` with `"w"`, writes the whole
 `Slice[u8]`, closes the handle, and returns `Ok(byte_count)` when the
@@ -420,12 +422,12 @@ integer bridge for compatibility tests and low-level adapters.
 
 `copy(source, target)` is the compatibility boolean wrapper over `try_copy`.
 
-`close(file)` returns whether the host accepted the close request. Closing an
-invalid handle returns `false`; `close_result(file)` and `file.close_result()`
-return `Error(InvalidInput)` for invalid handles and errno-derived `Error`
-values for host close failures. The current first slice does not mutate or
-disarm copied `File` values after closing, so close a file handle once and do
-not reuse any copied handle after one copy has been closed.
+`close(file)` and `file.close()` return `Result[(), Error]`. Closing an invalid
+handle returns `Error(InvalidInput)`; host close failures return errno-derived
+`Error` values. Use `close_unchecked(file)` or `file.close_unchecked()` only
+when the older boolean compatibility shape is desired. The current first slice
+does not mutate or disarm copied `File` values after closing, so close a file
+handle once and do not reuse any copied handle after one copy has been closed.
 
 `exists(path)` checks whether the path exists. `remove(path)` removes a file
 path and returns whether the host accepted the request. `remove_result(path)`
@@ -592,9 +594,10 @@ as link entries to unlink rather than directories to follow.
 `try_open_dir(path)` opens one directory and returns `Option[Dir]`.
 `dir.next(ref mut zone)` returns the next entry name as `Option[String]`,
 skipping the host `"."` and `".."` entries. `dir.close()` closes the directory
-handle. `dir.close_result()` and `close_dir_result(dir)` preserve invalid
-handle and host close failures as `Result`. `Dir` follows the same value-handle
-rule as `File`: close it once and do not reuse copied handles after close.
+handle and preserves invalid-handle and host close failures as `Result`. Use
+`dir.close_unchecked()` only for the older boolean compatibility shape. `Dir`
+follows the same value-handle rule as `File`: close it once and do not reuse
+copied handles after close.
 `try_read_dir(ref mut zone, path)` is the convenient one-shot helper:
 it opens the directory, collects names into `std::vec::Vec[String]`, closes the
 handle, and returns `None` when the directory cannot be opened or closed.
@@ -623,7 +626,7 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | open | Current: `open(path, mode)`, `try_open(path, mode)`, `open_result(path, mode)` with `Error`, raw compatibility `open_raw_result`, compatibility wrappers, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open_result`/`open_raw_result`. |
 | create | Current: `create(path)` and `try_create(path)` over `"w"` mode, plus non-truncating `ensure_file(path)` for idempotent file setup. |
 | read | Current: byte `read_byte`/`try_read_byte`, whole-file `read`/`read_to_string`, direct `Error` helpers `read_result`/`read_to_string_result`, and fallible `try_read`/`try_read_to_string`. Splitting byte-read EOF from byte-read errors remains roadmap. |
-| write | Current: byte `write_byte`, `write_byte_result`, `write_bytes`, `write_bytes_result`, whole-file `write`, byte-counting `try_write`, `Error`-returning `write_result`, and raw compatibility `write_raw_result`/`write_byte_raw_result`/`write_bytes_raw_result`. |
+| write | Current: byte `write_byte`, `write_bytes`, `write_byte_unchecked`, `write_bytes_unchecked`, whole-file `write`, byte-counting `try_write`, `Error`-returning `write_result`, and raw compatibility `write_raw_result`/`write_byte_raw`/`write_bytes_raw`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, byte-counting `try_append`, `Error`-returning `append_result`, and raw compatibility `append_raw_result`. |
 | truncate | Current: `truncate(path)` and `"w"`/`"w+"` modes. |
 | metadata | Current: `try_metadata(path)`/`metadata(path)`, `metadata_result(path)` with `Error`, and raw compatibility `metadata_raw_result(path)` over the Linux/glibc `stat` runtime path; `try_symlink_metadata(path)`/`symlink_metadata(path)`, `symlink_metadata_result(path)` with `Error`, raw compatibility `symlink_metadata_raw_result(path)`, and `is_symlink(path)` over the Linux/glibc `lstat` runtime path; plus `try_file_type(path)`, `file_type_result(path)`, `is_file(path)`, `is_dir(path)`, `is_other(path)`, `Metadata`, `FileKind`, and `Metadata` access/modification/status-change timestamps; creation/birth time is platform-policy roadmap work. |
@@ -634,8 +637,8 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 | hard link | Current: `hard_link(existing, link_path)` runtime hook. |
 | symbolic link | Current: `symbolic_link(target, link_path)`, `try_read_link(ref mut zone, path)`, `read_link_result(ref mut zone, path)` with `Error`, and asserting `read_link(ref mut zone, path)` on the Linux/glibc path; Windows split is roadmap. |
 | canonicalize | Current: `try_canonicalize(ref mut zone, path)`, `canonicalize_result(ref mut zone, path)` with `Error`, and asserting `canonicalize(ref mut zone, path)` over the Linux/glibc `realpath` runtime path. |
-| file handle lifecycle | Current: explicit `close`/`close_result`, `position`/`position_result`, and `seek`/`seek_result` on value `File` handles. Close once; copied handles are not disarmed. |
-| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir_result(ref mut zone, path)` with `Error`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries_result(ref mut zone, path)` with `Error`, `read_dir_entries(ref mut zone, path)`, `open_dir_result(path)` with `Error`, raw compatibility `open_dir_raw_result(path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`/`dir.close_result()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors are roadmap. |
+| file handle lifecycle | Current: explicit Result-returning `close`, `position`, and `seek` on value `File` handles, `_unchecked` compatibility helpers, and `_raw` integer-error helpers. Close once; copied handles are not disarmed. |
+| read directory | Current: `try_read_dir(ref mut zone, path)`, `read_dir_result(ref mut zone, path)` with `Error`, `read_dir(ref mut zone, path)`, `try_read_dir_entries(ref mut zone, path)`, `read_dir_entries_result(ref mut zone, path)` with `Error`, `read_dir_entries(ref mut zone, path)`, `open_dir_result(path)` with `Error`, raw compatibility `open_dir_raw_result(path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`/`dir.close_unchecked()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors are roadmap. |
 | create directory | Current: single-directory `create_dir(path)`, `Error`-returning `create_dir_result(path)`, raw compatibility `create_dir_raw_result(path)`, and idempotent `ensure_dir(path)`, plus recursive `create_dir_all(path)` and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
 | path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |

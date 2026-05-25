@@ -12,10 +12,10 @@ fn main() -> i64 {
   if writer.is_open() {
     score = score + 1;
   }
-  if writer.write_byte(65 as u8) {
+  if writer.write_byte(65 as u8).is_ok() {
     score = score + 2;
   }
-  if writer.close() {
+  if writer.close().is_ok() {
     score = score + 3;
   }
 
@@ -23,14 +23,14 @@ fn main() -> i64 {
   if appender.is_open() {
     score = score + 4;
   }
-  if appender.write_byte(66 as u8) {
+  if appender.write_byte(66 as u8).is_ok() {
     score = score + 5;
   }
   var tail = [67 as u8, 68 as u8];
-  if appender.write_bytes(tail.as_slice()) == 2 {
+  if appender.write_bytes(tail.as_slice()).unwrap_or(0) == 2 {
     score = score + 6;
   }
-  if appender.close() {
+  if appender.close().is_ok() {
     score = score + 7;
   }
 
@@ -53,7 +53,7 @@ fn main() -> i64 {
   if reader.read_byte() < 0 {
     score = score + 13;
   }
-  if reader.close() {
+  if reader.close().is_ok() {
     score = score + 14;
   }
   if fs::remove(path) {

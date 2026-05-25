@@ -5,7 +5,7 @@ fn first_byte(path: string) -> i64 {
     return -1;
   }
   let byte = file.read_byte();
-  file.close();
+  file.close_unchecked();
   return byte;
 }
 

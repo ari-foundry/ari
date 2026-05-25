@@ -13,8 +13,12 @@ points: `parse::parse[T](bytes)`, `parse::parse_or[T](bytes, fallback)`, and
 
 The integer and boolean families have `Result[..., std::error::Error]`
 variants for callers that need a reason instead of the compact `Option`
-surface. Invalid radices return `InvalidInput`; syntactically invalid,
-empty, or out-of-range values return `InvalidData`.
+surface. Naming is in transition: the long-term stdlib direction is for natural
+fallible names such as `parse::integer` and `parse::boolean` to return
+`Result`, with `_optional` and `_or` reserved for information-discarding
+behavior. The current `*_result` names are transitional compatibility APIs.
+Invalid radices return `InvalidInput`; syntactically invalid, empty, or
+out-of-range values return `InvalidData`.
 
 ## API
 

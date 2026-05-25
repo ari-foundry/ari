@@ -17,13 +17,13 @@ fn main() -> i64 {
   if writer.is_open() {
     score = score + 1;
   }
-  if writer.write_byte(65 as u8) {
+  if writer.write_byte(65 as u8).is_ok() {
     score = score + 1;
   }
-  if writer.write_byte(66 as u8) {
+  if writer.write_byte(66 as u8).is_ok() {
     score = score + 1;
   }
-  if writer.close() {
+  if writer.close().is_ok() {
     score = score + 1;
   }
 
@@ -34,10 +34,10 @@ fn main() -> i64 {
   if both.read_byte() == 65 {
     score = score + 1;
   }
-  if both.write_byte(90 as u8) {
+  if both.write_byte(90 as u8).is_ok() {
     score = score + 1;
   }
-  if both.close() {
+  if both.close().is_ok() {
     score = score + 1;
   }
 
@@ -48,7 +48,7 @@ fn main() -> i64 {
   if reader.read_byte() == 90 {
     score = score + 1;
   }
-  if reader.close() {
+  if reader.close().is_ok() {
     score = score + 1;
   }
 
@@ -59,10 +59,10 @@ fn main() -> i64 {
   if plus.read_byte() == 65 {
     score = score + 1;
   }
-  if plus.write_byte(91 as u8) {
+  if plus.write_byte(91 as u8).is_ok() {
     score = score + 1;
   }
-  if plus.close() {
+  if plus.close().is_ok() {
     score = score + 1;
   }
 
@@ -73,7 +73,7 @@ fn main() -> i64 {
   if check_plus.read_byte() == 91 {
     score = score + 1;
   }
-  if check_plus.close() {
+  if check_plus.close().is_ok() {
     score = score + 1;
   }
 
@@ -81,10 +81,10 @@ fn main() -> i64 {
   if trunc.is_open() {
     score = score + 1;
   }
-  if trunc.write_byte(70 as u8) {
+  if trunc.write_byte(70 as u8).is_ok() {
     score = score + 1;
   }
-  if trunc.close() {
+  if trunc.close().is_ok() {
     score = score + 1;
   }
 
@@ -92,10 +92,10 @@ fn main() -> i64 {
   if appender.is_open() {
     score = score + 1;
   }
-  if appender.write_byte(71 as u8) {
+  if appender.write_byte(71 as u8).is_ok() {
     score = score + 1;
   }
-  if appender.close() {
+  if appender.close().is_ok() {
     score = score + 1;
   }
 
@@ -109,7 +109,7 @@ fn main() -> i64 {
   if final_reader.read_byte() < 0 {
     score = score + 1;
   }
-  if final_reader.close() {
+  if final_reader.close().is_ok() {
     score = score + 1;
   }
 

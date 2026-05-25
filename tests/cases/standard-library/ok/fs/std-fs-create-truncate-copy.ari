@@ -26,10 +26,10 @@ fn main() -> i64 {
   }
 
   var seed = [70 as u8, 83 as u8];
-  if created.write_bytes(seed.as_slice()) == 2 {
+  if created.write_bytes(seed.as_slice()).unwrap_or(0) == 2 {
     score = score + 2;
   }
-  if created.close() {
+  if created.close().is_ok() {
     score = score + 3;
   }
   if fs::exists(source_path) {

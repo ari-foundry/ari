@@ -10,13 +10,13 @@ fn main() -> i64 {
   if writer.is_open() {
     score = score + 1;
   }
-  if writer.write_byte('A') {
+  if writer.write_byte('A').is_ok() {
     score = score + 2;
   }
-  if writer.write_byte('B') {
+  if writer.write_byte('B').is_ok() {
     score = score + 3;
   }
-  if writer.close() {
+  if writer.close().is_ok() {
     score = score + 4;
   }
 
@@ -30,7 +30,7 @@ fn main() -> i64 {
   if reader.try_read_byte().is_none() {
     score = score + 7;
   }
-  if reader.close() {
+  if reader.close().is_ok() {
     score = score + 8;
   }
   if fs::File::invalid().try_read_byte().is_none() {

@@ -741,35 +741,35 @@ pub impl std::net::TcpListener {
     return self.handle.is_open();
   }
 
-  fn close(self: ref mut Self) -> bool {
+  fn close_unchecked(self: ref mut Self) -> bool {
     return self.handle.close();
   }
 
-  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
     return self.handle.close_result();
   }
 
-  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+  fn is_nonblocking_optional(self: ref Self) -> std::Option[bool] {
     return self.handle.is_nonblocking();
   }
 
-  fn is_nonblocking_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn is_nonblocking(self: ref Self) -> std::Result[bool, std::error::Error] {
     return self.handle.is_nonblocking_result();
   }
 
-  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+  fn set_nonblocking_unchecked(self: ref Self, enabled: bool) -> bool {
     return self.handle.set_nonblocking(enabled);
   }
 
-  fn set_nonblocking_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_nonblocking(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     return self.handle.set_nonblocking_result(enabled);
   }
 
-  fn reuse_addr(self: ref Self) -> std::Option[bool] {
+  fn reuse_addr_optional(self: ref Self) -> std::Option[bool] {
     return socket_bool_option(reuse_addr_raw(self.handle.raw()));
   }
 
-  fn reuse_addr_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn reuse_addr(self: ref Self) -> std::Result[bool, std::error::Error] {
     if !self.is_open() {
       return std::Err<bool, std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -778,11 +778,11 @@ pub impl std::net::TcpListener {
     );
   }
 
-  fn set_reuse_addr(self: ref Self, enabled: bool) -> bool {
-    return self.set_reuse_addr_result(enabled).is_ok();
+  fn set_reuse_addr_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.set_reuse_addr(enabled).is_ok();
   }
 
-  fn set_reuse_addr_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_reuse_addr(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -791,11 +791,11 @@ pub impl std::net::TcpListener {
     );
   }
 
-  fn set_accept_timeout_millis(self: ref Self, millis: i64) -> bool {
-    return self.set_accept_timeout_millis_result(millis).is_ok();
+  fn set_accept_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
+    return self.set_accept_timeout_millis(millis).is_ok();
   }
 
-  fn set_accept_timeout_millis_result(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
+  fn set_accept_timeout_millis(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -804,27 +804,23 @@ pub impl std::net::TcpListener {
     );
   }
 
-  fn set_accept_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+  fn set_accept_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_accept_timeout_millis(timeout.as_millis());
   }
 
-  fn set_accept_timeout_result(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
-    return self.set_accept_timeout_millis_result(timeout.as_millis());
+  fn local_port_optional(self: ref Self) -> std::Option[u16] {
+    return self.local_port().ok();
   }
 
-  fn local_port(self: ref Self) -> std::Option[u16] {
-    return self.local_port_result().ok();
-  }
-
-  fn local_port_result(self: ref Self) -> std::Result[u16, std::error::Error] {
+  fn local_port(self: ref Self) -> std::Result[u16, std::error::Error] {
     return std::error::from_raw_result<u16>(local_port_raw_result(self.handle.raw()));
   }
 
-  fn local_addr(self: ref Self) -> std::Option[SocketAddr] {
-    return self.local_addr_result().ok();
+  fn local_addr_optional(self: ref Self) -> std::Option[SocketAddr] {
+    return self.local_addr().ok();
   }
 
-  fn local_addr_result(self: ref Self) -> std::Result[SocketAddr, std::error::Error] {
+  fn local_addr(self: ref Self) -> std::Result[SocketAddr, std::error::Error] {
     return std::error::from_raw_result<SocketAddr>(local_addr_v4_raw_result(self.handle.raw()));
   }
 
@@ -884,35 +880,35 @@ pub impl std::net::TcpStream {
     return self.handle.is_open();
   }
 
-  fn close(self: ref mut Self) -> bool {
+  fn close_unchecked(self: ref mut Self) -> bool {
     return self.handle.close();
   }
 
-  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
     return self.handle.close_result();
   }
 
-  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+  fn is_nonblocking_optional(self: ref Self) -> std::Option[bool] {
     return self.handle.is_nonblocking();
   }
 
-  fn is_nonblocking_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn is_nonblocking(self: ref Self) -> std::Result[bool, std::error::Error] {
     return self.handle.is_nonblocking_result();
   }
 
-  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+  fn set_nonblocking_unchecked(self: ref Self, enabled: bool) -> bool {
     return self.handle.set_nonblocking(enabled);
   }
 
-  fn set_nonblocking_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_nonblocking(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     return self.handle.set_nonblocking_result(enabled);
   }
 
-  fn nodelay(self: ref Self) -> std::Option[bool] {
+  fn nodelay_optional(self: ref Self) -> std::Option[bool] {
     return socket_bool_option(nodelay_raw(self.handle.raw()));
   }
 
-  fn nodelay_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn nodelay(self: ref Self) -> std::Result[bool, std::error::Error] {
     if !self.is_open() {
       return std::Err<bool, std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -921,11 +917,11 @@ pub impl std::net::TcpStream {
     );
   }
 
-  fn set_nodelay(self: ref Self, enabled: bool) -> bool {
-    return self.set_nodelay_result(enabled).is_ok();
+  fn set_nodelay_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.set_nodelay(enabled).is_ok();
   }
 
-  fn set_nodelay_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_nodelay(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -934,11 +930,11 @@ pub impl std::net::TcpStream {
     );
   }
 
-  fn set_read_timeout_millis(self: ref Self, millis: i64) -> bool {
-    return self.set_read_timeout_millis_result(millis).is_ok();
+  fn set_read_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
+    return self.set_read_timeout_millis(millis).is_ok();
   }
 
-  fn set_read_timeout_millis_result(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
+  fn set_read_timeout_millis(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -947,19 +943,15 @@ pub impl std::net::TcpStream {
     );
   }
 
-  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_read_timeout_millis(timeout.as_millis());
   }
 
-  fn set_read_timeout_result(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
-    return self.set_read_timeout_millis_result(timeout.as_millis());
+  fn set_write_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
+    return self.set_write_timeout_millis(millis).is_ok();
   }
 
-  fn set_write_timeout_millis(self: ref Self, millis: i64) -> bool {
-    return self.set_write_timeout_millis_result(millis).is_ok();
-  }
-
-  fn set_write_timeout_millis_result(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
+  fn set_write_timeout_millis(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -968,59 +960,47 @@ pub impl std::net::TcpStream {
     );
   }
 
-  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_write_timeout_millis(timeout.as_millis());
   }
 
-  fn set_write_timeout_result(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
-    return self.set_write_timeout_millis_result(timeout.as_millis());
+  fn local_addr_optional(self: ref Self) -> std::Option[SocketAddr] {
+    return self.local_addr().ok();
   }
 
-  fn local_addr(self: ref Self) -> std::Option[SocketAddr] {
-    return self.local_addr_result().ok();
-  }
-
-  fn local_addr_result(self: ref Self) -> std::Result[SocketAddr, std::error::Error] {
+  fn local_addr(self: ref Self) -> std::Result[SocketAddr, std::error::Error] {
     return std::error::from_raw_result<SocketAddr>(local_addr_v4_raw_result(self.handle.raw()));
   }
 
-  fn peer_addr(self: ref Self) -> std::Option[SocketAddr] {
-    return self.peer_addr_result().ok();
+  fn peer_addr_optional(self: ref Self) -> std::Option[SocketAddr] {
+    return self.peer_addr().ok();
   }
 
-  fn peer_addr_result(self: ref Self) -> std::Result[SocketAddr, std::error::Error] {
+  fn peer_addr(self: ref Self) -> std::Result[SocketAddr, std::error::Error] {
     return std::error::from_raw_result<SocketAddr>(peer_addr_v4_raw_result(self.handle.raw()));
   }
 
-  fn shutdown(self: ref Self, mode: Shutdown) -> bool {
-    return self.shutdown_result(mode).is_ok();
-  }
-
-  fn shutdown_result(self: ref Self, mode: Shutdown) -> std::Result[(), std::error::Error] {
+  fn shutdown(self: ref Self, mode: Shutdown) -> std::Result[(), std::error::Error] {
     return std::error::from_raw_result<()>(shutdown_raw_result(self.handle.raw(), mode));
   }
 
   fn try_read_byte(self: ref mut Self) -> std::Option[u8] {
-    return self.read_byte_result().ok();
+    return std::error::from_raw_result<u8>(read_socket_byte_raw_result(self.handle.raw())).ok();
   }
 
-  fn read_byte_result(self: ref mut Self) -> std::Result[u8, std::error::Error] {
-    return std::error::from_raw_result<u8>(read_socket_byte_raw_result(self.handle.raw()));
-  }
-
-  fn read_exact(self: ref mut Self, output: ptr u8, len: i64) -> bool {
+  fn read_exact_unchecked(self: ref mut Self, output: ptr u8, len: i64) -> bool {
     return read_exact_raw(self.handle.raw(), output, len);
   }
 
-  fn read_exact_result(self: ref mut Self, output: ptr u8, len: i64) -> std::Result[(), std::error::Error] {
+  fn read_exact(self: ref mut Self, output: ptr u8, len: i64) -> std::Result[(), std::error::Error] {
     return std::error::from_raw_result<()>(read_exact_raw_result(self.handle.raw(), output, len));
   }
 
-  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> bool {
+  fn write_all_unchecked(self: ref mut Self, values: std::Slice[u8]) -> bool {
     return write_all_raw(self.handle.raw(), values);
   }
 
-  fn write_all_result(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
     return std::error::from_raw_result<()>(write_all_raw_result(self.handle.raw(), values));
   }
 }
@@ -1057,51 +1037,51 @@ pub impl std::net::UdpSocket {
     return self.handle.is_open();
   }
 
-  fn close(self: ref mut Self) -> bool {
+  fn close_unchecked(self: ref mut Self) -> bool {
     return self.handle.close();
   }
 
-  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
     return self.handle.close_result();
   }
 
-  fn local_port(self: ref Self) -> std::Option[u16] {
-    return self.local_port_result().ok();
+  fn local_port_optional(self: ref Self) -> std::Option[u16] {
+    return self.local_port().ok();
   }
 
-  fn local_port_result(self: ref Self) -> std::Result[u16, std::error::Error] {
+  fn local_port(self: ref Self) -> std::Result[u16, std::error::Error] {
     return std::error::from_raw_result<u16>(local_port_raw_result(self.handle.raw()));
   }
 
-  fn local_addr(self: ref Self) -> std::Option[SocketAddr] {
-    return self.local_addr_result().ok();
+  fn local_addr_optional(self: ref Self) -> std::Option[SocketAddr] {
+    return self.local_addr().ok();
   }
 
-  fn local_addr_result(self: ref Self) -> std::Result[SocketAddr, std::error::Error] {
+  fn local_addr(self: ref Self) -> std::Result[SocketAddr, std::error::Error] {
     return std::error::from_raw_result<SocketAddr>(local_addr_v4_raw_result(self.handle.raw()));
   }
 
-  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+  fn is_nonblocking_optional(self: ref Self) -> std::Option[bool] {
     return self.handle.is_nonblocking();
   }
 
-  fn is_nonblocking_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn is_nonblocking(self: ref Self) -> std::Result[bool, std::error::Error] {
     return self.handle.is_nonblocking_result();
   }
 
-  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+  fn set_nonblocking_unchecked(self: ref Self, enabled: bool) -> bool {
     return self.handle.set_nonblocking(enabled);
   }
 
-  fn set_nonblocking_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_nonblocking(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     return self.handle.set_nonblocking_result(enabled);
   }
 
-  fn reuse_addr(self: ref Self) -> std::Option[bool] {
+  fn reuse_addr_optional(self: ref Self) -> std::Option[bool] {
     return socket_bool_option(reuse_addr_raw(self.handle.raw()));
   }
 
-  fn reuse_addr_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn reuse_addr(self: ref Self) -> std::Result[bool, std::error::Error] {
     if !self.is_open() {
       return std::Err<bool, std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -1110,11 +1090,11 @@ pub impl std::net::UdpSocket {
     );
   }
 
-  fn set_reuse_addr(self: ref Self, enabled: bool) -> bool {
-    return self.set_reuse_addr_result(enabled).is_ok();
+  fn set_reuse_addr_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.set_reuse_addr(enabled).is_ok();
   }
 
-  fn set_reuse_addr_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_reuse_addr(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -1123,11 +1103,11 @@ pub impl std::net::UdpSocket {
     );
   }
 
-  fn set_read_timeout_millis(self: ref Self, millis: i64) -> bool {
-    return self.set_read_timeout_millis_result(millis).is_ok();
+  fn set_read_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
+    return self.set_read_timeout_millis(millis).is_ok();
   }
 
-  fn set_read_timeout_millis_result(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
+  fn set_read_timeout_millis(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -1136,19 +1116,15 @@ pub impl std::net::UdpSocket {
     );
   }
 
-  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_read_timeout_millis(timeout.as_millis());
   }
 
-  fn set_read_timeout_result(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
-    return self.set_read_timeout_millis_result(timeout.as_millis());
+  fn set_write_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
+    return self.set_write_timeout_millis(millis).is_ok();
   }
 
-  fn set_write_timeout_millis(self: ref Self, millis: i64) -> bool {
-    return self.set_write_timeout_millis_result(millis).is_ok();
-  }
-
-  fn set_write_timeout_millis_result(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
+  fn set_write_timeout_millis(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -1157,19 +1133,15 @@ pub impl std::net::UdpSocket {
     );
   }
 
-  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_write_timeout_millis(timeout.as_millis());
   }
 
-  fn set_write_timeout_result(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
-    return self.set_write_timeout_millis_result(timeout.as_millis());
+  fn send_byte_to_unchecked(self: ref Self, value: u8, addr: SocketAddr) -> bool {
+    return self.send_byte_to(value, addr).is_ok();
   }
 
-  fn send_byte_to(self: ref Self, value: u8, addr: SocketAddr) -> bool {
-    return self.send_byte_to_result(value, addr).is_ok();
-  }
-
-  fn send_byte_to_result(self: ref Self, value: u8, addr: SocketAddr) -> std::Result[(), std::error::Error] {
+  fn send_byte_to(self: ref Self, value: u8, addr: SocketAddr) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -1193,7 +1165,7 @@ pub impl std::net::UdpSocket {
     );
   }
 
-  fn recv_byte(self: ref mut Self) -> i64 {
+  fn recv_byte_unchecked(self: ref mut Self) -> i64 {
     if !self.is_open() {
       return -1;
     }
@@ -1201,10 +1173,10 @@ pub impl std::net::UdpSocket {
   }
 
   fn try_recv_byte(self: ref mut Self) -> std::Option[u8] {
-    return self.recv_byte_result().ok();
+    return self.recv_byte().ok();
   }
 
-  fn recv_byte_result(self: ref mut Self) -> std::Result[u8, std::error::Error] {
+  fn recv_byte(self: ref mut Self) -> std::Result[u8, std::error::Error] {
     if !self.is_open() {
       return std::Err<u8, std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -1248,27 +1220,27 @@ pub impl std::net::UnixListener {
     return self.handle.is_open();
   }
 
-  fn close(self: ref mut Self) -> bool {
+  fn close_unchecked(self: ref mut Self) -> bool {
     return self.handle.close();
   }
 
-  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
     return self.handle.close_result();
   }
 
-  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+  fn is_nonblocking_optional(self: ref Self) -> std::Option[bool] {
     return self.handle.is_nonblocking();
   }
 
-  fn is_nonblocking_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn is_nonblocking(self: ref Self) -> std::Result[bool, std::error::Error] {
     return self.handle.is_nonblocking_result();
   }
 
-  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+  fn set_nonblocking_unchecked(self: ref Self, enabled: bool) -> bool {
     return self.handle.set_nonblocking(enabled);
   }
 
-  fn set_nonblocking_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_nonblocking(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     return self.handle.set_nonblocking_result(enabled);
   }
 
@@ -1328,35 +1300,35 @@ pub impl std::net::UnixStream {
     return self.handle.is_open();
   }
 
-  fn close(self: ref mut Self) -> bool {
+  fn close_unchecked(self: ref mut Self) -> bool {
     return self.handle.close();
   }
 
-  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
     return self.handle.close_result();
   }
 
-  fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+  fn is_nonblocking_optional(self: ref Self) -> std::Option[bool] {
     return self.handle.is_nonblocking();
   }
 
-  fn is_nonblocking_result(self: ref Self) -> std::Result[bool, std::error::Error] {
+  fn is_nonblocking(self: ref Self) -> std::Result[bool, std::error::Error] {
     return self.handle.is_nonblocking_result();
   }
 
-  fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+  fn set_nonblocking_unchecked(self: ref Self, enabled: bool) -> bool {
     return self.handle.set_nonblocking(enabled);
   }
 
-  fn set_nonblocking_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+  fn set_nonblocking(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     return self.handle.set_nonblocking_result(enabled);
   }
 
-  fn set_read_timeout_millis(self: ref Self, millis: i64) -> bool {
-    return self.set_read_timeout_millis_result(millis).is_ok();
+  fn set_read_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
+    return self.set_read_timeout_millis(millis).is_ok();
   }
 
-  fn set_read_timeout_millis_result(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
+  fn set_read_timeout_millis(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -1365,19 +1337,15 @@ pub impl std::net::UnixStream {
     );
   }
 
-  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+  fn set_read_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_read_timeout_millis(timeout.as_millis());
   }
 
-  fn set_read_timeout_result(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
-    return self.set_read_timeout_millis_result(timeout.as_millis());
+  fn set_write_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
+    return self.set_write_timeout_millis(millis).is_ok();
   }
 
-  fn set_write_timeout_millis(self: ref Self, millis: i64) -> bool {
-    return self.set_write_timeout_millis_result(millis).is_ok();
-  }
-
-  fn set_write_timeout_millis_result(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
+  fn set_write_timeout_millis(self: ref Self, millis: i64) -> std::Result[(), std::error::Error] {
     if !self.is_open() {
       return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
     }
@@ -1386,43 +1354,31 @@ pub impl std::net::UnixStream {
     );
   }
 
-  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> bool {
+  fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_write_timeout_millis(timeout.as_millis());
   }
 
-  fn set_write_timeout_result(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
-    return self.set_write_timeout_millis_result(timeout.as_millis());
-  }
-
-  fn shutdown(self: ref Self, mode: Shutdown) -> bool {
-    return self.shutdown_result(mode).is_ok();
-  }
-
-  fn shutdown_result(self: ref Self, mode: Shutdown) -> std::Result[(), std::error::Error] {
+  fn shutdown(self: ref Self, mode: Shutdown) -> std::Result[(), std::error::Error] {
     return std::error::from_raw_result<()>(shutdown_raw_result(self.handle.raw(), mode));
   }
 
   fn try_read_byte(self: ref mut Self) -> std::Option[u8] {
-    return self.read_byte_result().ok();
+    return std::error::from_raw_result<u8>(read_socket_byte_raw_result(self.handle.raw())).ok();
   }
 
-  fn read_byte_result(self: ref mut Self) -> std::Result[u8, std::error::Error] {
-    return std::error::from_raw_result<u8>(read_socket_byte_raw_result(self.handle.raw()));
-  }
-
-  fn read_exact(self: ref mut Self, output: ptr u8, len: i64) -> bool {
+  fn read_exact_unchecked(self: ref mut Self, output: ptr u8, len: i64) -> bool {
     return read_exact_raw(self.handle.raw(), output, len);
   }
 
-  fn read_exact_result(self: ref mut Self, output: ptr u8, len: i64) -> std::Result[(), std::error::Error] {
+  fn read_exact(self: ref mut Self, output: ptr u8, len: i64) -> std::Result[(), std::error::Error] {
     return std::error::from_raw_result<()>(read_exact_raw_result(self.handle.raw(), output, len));
   }
 
-  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> bool {
+  fn write_all_unchecked(self: ref mut Self, values: std::Slice[u8]) -> bool {
     return write_all_raw(self.handle.raw(), values);
   }
 
-  fn write_all_result(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
     return std::error::from_raw_result<()>(write_all_raw_result(self.handle.raw(), values));
   }
 }

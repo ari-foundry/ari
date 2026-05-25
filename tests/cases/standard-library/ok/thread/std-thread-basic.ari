@@ -29,10 +29,10 @@ fn main() -> i64 {
   if invalid.is_valid() {
     return 3;
   }
-  if !thread::is_join_error(invalid.join()) {
+  if !thread::is_join_error(invalid.join_unchecked()) {
     return 4;
   }
-  match invalid.join_result() {
+  match invalid.join() {
     Ok(_) => {
       return 5;
     }
@@ -43,14 +43,14 @@ fn main() -> i64 {
     }
   }
 
-  let first = thread::spawn_result(child_value).unwrap_or(Thread::invalid());
+  let first = thread::spawn(child_value).unwrap_or(Thread::invalid());
   if !first.is_valid() {
     return 7;
   }
   if first.id() <= 0 {
     return 8;
   }
-  let first_result = first.join_result().unwrap_or(-1);
+  let first_result = first.join().unwrap_or(-1);
   if thread::is_join_error(first_result) {
     return 9;
   }
@@ -58,12 +58,12 @@ fn main() -> i64 {
     return first_result;
   }
 
-  let second = Thread::spawn_result(child_id_value).unwrap_or(Thread::invalid());
+  let second = Thread::spawn(child_id_value).unwrap_or(Thread::invalid());
   if !second.is_valid() {
     return 10;
   }
   let second_id = second.id();
-  let second_result = thread::join_result(second).unwrap_or(-1);
+  let second_result = thread::join(second).unwrap_or(-1);
   if second_result != second_id {
     return 11;
   }

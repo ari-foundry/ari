@@ -59,14 +59,14 @@ fn main() -> i64 {
     score = score + 2;
   }
 
-  let maybe_port = server.local_port();
+  let maybe_port = server.local_port_optional();
   assert(maybe_port.is_some());
   let port = maybe_port.unwrap();
-  assert(server.local_port_result().unwrap_or(0 as u16) == port);
-  let maybe_server_addr = server.local_addr();
+  assert(server.local_port().unwrap_or(0 as u16) == port);
+  let maybe_server_addr = server.local_addr_optional();
   assert(maybe_server_addr.is_some());
   let server_addr = maybe_server_addr.unwrap();
-  assert(server.local_addr_result().is_ok());
+  assert(server.local_addr().is_ok());
   if port > 0 as u16 && server_addr.port() == port && server_addr.is_loopback() {
     score = score + 4;
   }
@@ -79,39 +79,39 @@ fn main() -> i64 {
   }
 
   let timeout = time::milliseconds(1000);
-  if server.set_read_timeout_result(timeout).is_ok() &&
-    server.set_read_timeout_millis_result(1000).is_ok() &&
-    server.set_reuse_addr_result(true).is_ok() &&
-    server.reuse_addr_result().unwrap_or(false) &&
-    client.set_write_timeout_result(timeout).is_ok() &&
-    client.set_reuse_addr_result(true).is_ok() &&
-    client.reuse_addr_result().unwrap_or(false) &&
-    server.set_nonblocking_result(false).is_ok() &&
-    client.set_nonblocking_result(false).is_ok() &&
-    server.is_nonblocking_result().is_ok() &&
-    client.is_nonblocking_result().is_ok() {
+  if server.set_read_timeout(timeout).is_ok() &&
+    server.set_read_timeout_millis(1000).is_ok() &&
+    server.set_reuse_addr(true).is_ok() &&
+    server.reuse_addr().unwrap_or(false) &&
+    client.set_write_timeout(timeout).is_ok() &&
+    client.set_reuse_addr(true).is_ok() &&
+    client.reuse_addr().unwrap_or(false) &&
+    server.set_nonblocking(false).is_ok() &&
+    client.set_nonblocking(false).is_ok() &&
+    server.is_nonblocking().is_ok() &&
+    client.is_nonblocking().is_ok() {
     score = score + 528;
   }
 
-  if client.send_byte_to_result(90u8, net::SocketAddr::localhost(port)).is_ok() &&
-    server.recv_byte_result().unwrap_or(0u8) == 90u8 {
+  if client.send_byte_to(90u8, net::SocketAddr::localhost(port)).is_ok() &&
+    server.recv_byte().unwrap_or(0u8) == 90u8 {
     score = score + 32;
   }
 
-  let client_port = client.local_port();
-  let client_addr = client.local_addr();
+  let client_port = client.local_port_optional();
+  let client_addr = client.local_addr_optional();
   if client_port.is_some() && client_addr.is_some() &&
     client_addr.unwrap().port() == client_port.unwrap() {
     score = score + 64;
   }
-  assert(client.local_port_result().is_ok());
-  assert(client.local_addr_result().is_ok());
+  assert(client.local_port().is_ok());
+  assert(client.local_addr().is_ok());
 
-  if client.close_result().is_ok() && server.close_result().is_ok() {
+  if client.close().is_ok() && server.close().is_ok() {
     score = score + 128;
   }
-  assert(client.close_result().is_err());
-  assert(server.close_result().is_err());
+  assert(client.close().is_err());
+  assert(server.close().is_err());
 
   assert_eq_i64(score, 1023);
   return score;

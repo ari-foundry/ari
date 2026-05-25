@@ -17,7 +17,7 @@ fn raw_error_matches(raw: i64, kind: error::Kind, code: i64) -> bool {
 fn result_error_matches(value: Result[fs::File, error::Error], kind: error::Kind, code: i64) -> bool {
   match value {
     Ok(file) => {
-      file.close();
+      file.close_unchecked();
       return false;
     }
     Err(reason) => {
@@ -29,7 +29,7 @@ fn result_error_matches(value: Result[fs::File, error::Error], kind: error::Kind
 fn raw_result_error_matches(value: Result[fs::File, i64], kind: error::Kind, code: i64) -> bool {
   match value {
     Ok(file) => {
-      file.close();
+      file.close_unchecked();
       return false;
     }
     Err(raw) => {
@@ -60,7 +60,7 @@ fn main() -> i64 {
 
   match fs::create_result(path) {
     Ok(created_file) => {
-      if created_file.write_byte('R') && created_file.close() {
+      if created_file.write_byte('R').is_ok() && created_file.close().is_ok() {
         score = score + 4;
       }
     }
@@ -69,7 +69,7 @@ fn main() -> i64 {
 
   match fs::open_result(path, "rw") {
     Ok(read_write_file) => {
-      if read_write_file.read_byte() == 'R' && read_write_file.write_byte('W') && read_write_file.close() {
+      if read_write_file.read_byte() == 'R' && read_write_file.write_byte('W').is_ok() && read_write_file.close().is_ok() {
         var zone = std::zone::create(128);
         if read_text(ref mut zone, path, "RW") {
           score = score + 8;
@@ -99,7 +99,7 @@ fn main() -> i64 {
   let append_read = fs::OpenOptions::new().read(true).append(true).create(true);
   match append_read.open_result(path) {
     Ok(append_file) => {
-      if append_file.read_byte() == 'R' && append_file.write_byte('A') && append_file.close() {
+      if append_file.read_byte() == 'R' && append_file.write_byte('A').is_ok() && append_file.close().is_ok() {
         var zone2 = std::zone::create(128);
         if read_text(ref mut zone2, path, "RWA") {
           score = score + 128;

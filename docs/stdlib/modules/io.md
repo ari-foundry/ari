@@ -9,6 +9,12 @@ seekable streams with natural names.
 Use `std::input` for ordinary stdin line/byte helpers, `std::fs` for files, and
 `std::io` when you want the lower-level IO contracts directly.
 
+Naming is in transition. The long-term stdlib direction is for natural
+fallible helpers such as `read_exact`, `copy`, `write_all`, and `flush` to
+return `Result`, while `_unchecked`, `_optional`, or `_or` names discard error
+details. The current `*_result` helper names and bool-returning natural names
+remain compatibility APIs until the `Reader`/`Writer` trait contracts migrate.
+
 ## Current Scope
 
 Implemented now:

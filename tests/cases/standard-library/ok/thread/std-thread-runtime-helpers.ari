@@ -18,12 +18,12 @@ fn main() -> i64 {
 
   thread::sleep(time::Duration::zero());
 
-  let helper = thread::spawn(helper_value);
+  let helper = thread::spawn(helper_value).unwrap_or(Thread::invalid());
   if !helper.is_valid() {
     return 2;
   }
 
-  let result = helper.join();
+  let result = helper.join().unwrap_or(-1);
   if result != 11 {
     return result;
   }

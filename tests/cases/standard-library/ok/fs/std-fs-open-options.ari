@@ -32,7 +32,7 @@ fn main() -> i64 {
   let created = create_new.try_open(path).unwrap_or(fs::File::invalid());
   var create_new_ok = false;
   if created.is_open() {
-    if created.write_byte(78 as u8) && created.close() {
+    if created.write_byte(78 as u8).is_ok() && created.close().is_ok() {
       create_new_ok = true;
     }
   }
@@ -42,13 +42,13 @@ fn main() -> i64 {
 
   let read_only = fs::OpenOptions::new().read(true);
   let reader = read_only.try_open(path).unwrap_or(fs::File::invalid());
-  if reader.read_byte() == 78 && reader.read_byte() < 0 && reader.close() {
+  if reader.read_byte() == 78 && reader.read_byte() < 0 && reader.close().is_ok() {
     score = score + 8;
   }
 
   let read_write = fs::OpenOptions::new().read(true).write(true);
   let both = read_write.try_open(path).unwrap_or(fs::File::invalid());
-  if both.read_byte() == 78 && both.write_byte(87 as u8) && both.close() {
+  if both.read_byte() == 78 && both.write_byte(87 as u8).is_ok() && both.close().is_ok() {
     var zone = std::zone::create(128);
     if read_text(ref mut zone, path, "NW") {
       score = score + 16;
@@ -58,7 +58,7 @@ fn main() -> i64 {
 
   let truncate_existing = fs::OpenOptions::new().write(true).truncate(true);
   let trunc = truncate_existing.try_open(path).unwrap_or(fs::File::invalid());
-  if trunc.is_open() && trunc.write_byte(84 as u8) && trunc.close() {
+  if trunc.is_open() && trunc.write_byte(84 as u8).is_ok() && trunc.close().is_ok() {
     var zone2 = std::zone::create(128);
     if read_text(ref mut zone2, path, "T") {
       score = score + 32;
@@ -72,7 +72,7 @@ fn main() -> i64 {
 
   let append_read = fs::OpenOptions::new().read(true).append(true).create(true);
   let appender = append_read.try_open(path).unwrap_or(fs::File::invalid());
-  if appender.read_byte() == 84 && appender.write_byte(65 as u8) && appender.close() {
+  if appender.read_byte() == 84 && appender.write_byte(65 as u8).is_ok() && appender.close().is_ok() {
     var zone3 = std::zone::create(128);
     if read_text(ref mut zone3, path, "TA") {
       score = score + 128;

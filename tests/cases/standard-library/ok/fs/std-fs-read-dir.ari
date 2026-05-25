@@ -102,7 +102,7 @@ fn main() -> i64 {
   if entries == 2 {
     score = score + 8;
   }
-  if dir.close_result().is_ok() {
+  if dir.close().is_ok() {
     score = score + 9;
   }
 
@@ -156,7 +156,7 @@ fn main() -> i64 {
       score = score + 10;
     }
   }
-  assert(invalid.close_result().is_err());
+  assert(invalid.close().is_err());
 
   if fs::remove(alpha_path) {
     score = score + 11;

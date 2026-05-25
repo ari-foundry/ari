@@ -7,10 +7,14 @@ CLIs need: current directory and executable path. Argument helpers are built on
 top of `std::context`, which owns the low-level runtime hooks initialized by
 the generated host entry wrapper.
 
-Recoverable fallible helpers also have `Result[..., env::Error]` forms. The
-`Option` helpers remain the compact compatibility surface for simple absence;
-use the `*_result` helpers when the caller needs a predictable error category
-such as `NotFound` or `Other`.
+Recoverable fallible helpers currently have `Result[..., env::Error]` forms.
+The `Option` helpers remain the compact compatibility surface for simple
+absence. Naming is in transition: the long-term stdlib direction is for natural
+fallible names such as `env::get`/`env::current_dir` to return `Result`, with
+`_optional`, `_or`, `_or_default`, `_raw`, or `_unchecked` reserved for
+information-discarding behavior. The existing `*_result` names are documented
+as transitional compatibility APIs until those natural names can move without
+stranding current callers.
 
 Use `std::env` from application code when you want friendly arguments,
 environment variables, or current process path state. Use `std::context` when

@@ -7,6 +7,13 @@ separate from `std::hash` because hex/base64 are encodings, not hashing.
 Use it when code needs to validate ASCII, UTF-8, or UTF-16 input, or when it
 needs portable hex/base64 text for byte buffers.
 
+Naming is in transition. The long-term stdlib direction is for natural
+fallible names such as UTF-8 validation/counting and decoding helpers to return
+`Result`, with `_optional`, `_or`, `_raw`, and `_unchecked` reserved for
+information-discarding or boundary behavior. The current `*_result` codec and
+validation names are transitional compatibility APIs while existing
+Option/asserting names are migrated.
+
 ## API
 
 Validation helpers:

@@ -64,7 +64,7 @@ pub extern "ari" fn create_dir(path: string) -> bool = "ari_builtin_fs_create_di
 pub extern "ari" fn create_dir_all(path: string) -> bool = "ari_builtin_fs_create_dir_all";
 pub extern "ari" fn remove_dir(path: string) -> bool = "ari_builtin_fs_remove_dir";
 pub extern "ari" fn open_dir(path: string) -> Dir = "ari_builtin_fs_open_dir";
-pub extern "ari" fn close_dir(dir: Dir) -> bool = "ari_builtin_fs_close_dir";
+pub extern "ari" fn close_dir_unchecked(dir: Dir) -> bool = "ari_builtin_fs_close_dir";
 extern "ari" fn remove_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_bytes";
 extern "ari" fn remove_dir_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_dir_bytes";
 extern "ari" fn open_dir_bytes_raw(data: ptr u8, len: i64) -> Dir = "ari_builtin_fs_open_dir_bytes";
@@ -79,11 +79,11 @@ extern "ari" fn open_options_raw(
   create: bool,
   create_new: bool
 ) -> File = "ari_builtin_fs_open_options";
-pub extern "ari" fn close(file: File) -> bool = "ari_builtin_fs_close";
+pub extern "ari" fn close_unchecked(file: File) -> bool = "ari_builtin_fs_close";
 pub extern "ari" fn read_byte(file: File) -> i64 = "ari_builtin_fs_read_byte";
-pub extern "ari" fn write_byte(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
-pub extern "ari" fn position(file: File) -> i64 = "ari_builtin_fs_position";
-pub extern "ari" fn seek(file: File, position: i64) -> bool = "ari_builtin_fs_seek";
+pub extern "ari" fn write_byte_unchecked(file: File, value: u8) -> bool = "ari_builtin_fs_write_byte";
+extern "ari" fn position_unchecked(file: File) -> i64 = "ari_builtin_fs_position";
+pub extern "ari" fn seek_unchecked(file: File, position: i64) -> bool = "ari_builtin_fs_seek";
 extern "ari" fn metadata_size_raw(path: string) -> i64 = "ari_builtin_fs_metadata_size";
 extern "ari" fn metadata_kind_raw(path: string) -> i64 = "ari_builtin_fs_metadata_kind";
 extern "ari" fn metadata_mode_raw(path: string) -> i64 = "ari_builtin_fs_metadata_mode";
@@ -233,15 +233,15 @@ pub fn remove_dir_result(path: string) -> std::Result[(), std::error::Error] {
   return std::error::from_raw_result<()>(remove_dir_raw_result(path));
 }
 
-pub fn close_dir_raw_result(dir: Dir) -> std::Result[(), i64] {
+pub fn close_dir_raw(dir: Dir) -> std::Result[(), i64] {
   if !dir.is_open() {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
-  return unit_raw_result(close_dir(dir));
+  return unit_raw_result(close_dir_unchecked(dir));
 }
 
-pub fn close_dir_result(dir: Dir) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(close_dir_raw_result(dir));
+pub fn close_dir(dir: Dir) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(close_dir_raw(dir));
 }
 
 fn metadata_from_parts(
@@ -621,7 +621,7 @@ pub fn ensure_file(path: string) -> bool {
   if !file.is_open() {
     return false;
   }
-  return file.close();
+  return file.close().is_ok();
 }
 
 pub fn open_dir_raw_result(path: string) -> std::Result[Dir, i64] {
@@ -668,7 +668,7 @@ pub fn try_read_dir(zone: ref mut Zone, path: string) -> std::Option[std::vec::V
         }
       }
 
-      if !dir.close() {
+      if dir.close().is_err() {
         return std::None<std::vec::Vec[std::string::String]>();
       }
       return std::Some<std::vec::Vec[std::string::String]>(entries);
@@ -694,13 +694,17 @@ pub fn read_dir_result(zone: ref mut Zone, path: string) -> std::Result[std::vec
         }
       }
 
-      if dir.close() {
-        return std::Ok<std::vec::Vec[std::string::String], std::error::Error>(entries);
+      match dir.close() {
+        std::Ok(_) => {
+          return std::Ok<std::vec::Vec[std::string::String], std::error::Error>(entries);
+        }
+        std::Err(close_reason) => {
+          return std::Err<std::vec::Vec[std::string::String], std::error::Error>(close_reason);
+        }
       }
-      return std::Err<std::vec::Vec[std::string::String], std::error::Error>(std::error::from_raw(last_errno_error_raw()));
     }
-    std::Err(reason) => {
-      return std::Err<std::vec::Vec[std::string::String], std::error::Error>(reason);
+    std::Err(open_reason) => {
+      return std::Err<std::vec::Vec[std::string::String], std::error::Error>(open_reason);
     }
   }
 }
@@ -753,7 +757,7 @@ pub fn try_read_dir_entries(zone: ref mut Zone, path: string) -> std::Option[std
         }
       }
 
-      if !dir.close() {
+      if dir.close().is_err() {
         return std::None<std::vec::Vec[DirEntry]>();
       }
       return std::Some<std::vec::Vec[DirEntry]>(entries);
@@ -779,13 +783,17 @@ pub fn read_dir_entries_result(zone: ref mut Zone, path: string) -> std::Result[
         }
       }
 
-      if dir.close() {
-        return std::Ok<std::vec::Vec[DirEntry], std::error::Error>(entries);
+      match dir.close() {
+        std::Ok(_) => {
+          return std::Ok<std::vec::Vec[DirEntry], std::error::Error>(entries);
+        }
+        std::Err(close_reason) => {
+          return std::Err<std::vec::Vec[DirEntry], std::error::Error>(close_reason);
+        }
       }
-      return std::Err<std::vec::Vec[DirEntry], std::error::Error>(std::error::from_raw(last_errno_error_raw()));
     }
-    std::Err(reason) => {
-      return std::Err<std::vec::Vec[DirEntry], std::error::Error>(reason);
+    std::Err(open_reason) => {
+      return std::Err<std::vec::Vec[DirEntry], std::error::Error>(open_reason);
     }
   }
 }
@@ -806,7 +814,7 @@ fn try_read_dir_entries_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::
         }
       }
 
-      if !dir.close() {
+      if dir.close().is_err() {
         return std::None<std::vec::Vec[DirEntry]>();
       }
       return std::Some<std::vec::Vec[DirEntry]>(entries);
@@ -1000,10 +1008,10 @@ pub fn try_open_append(path: string) -> std::Option[File] {
   return try_open(path, "a");
 }
 
-pub fn write_bytes(file: File, values: std::Slice[u8]) -> i64 {
+pub fn write_bytes_unchecked(file: File, values: std::Slice[u8]) -> i64 {
   var index = 0;
   while index < values.len {
-    if !write_byte(file, values[index]) {
+    if !write_byte_unchecked(file, values[index]) {
       return index;
     }
     index = index + 1;
@@ -1011,36 +1019,36 @@ pub fn write_bytes(file: File, values: std::Slice[u8]) -> i64 {
   return index;
 }
 
-pub fn close_raw_result(file: File) -> std::Result[(), i64] {
+pub fn close_raw(file: File) -> std::Result[(), i64] {
   if !file.is_open() {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
-  return unit_raw_result(close(file));
+  return unit_raw_result(close_unchecked(file));
 }
 
-pub fn close_result(file: File) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(close_raw_result(file));
+pub fn close(file: File) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(close_raw(file));
 }
 
-pub fn write_byte_raw_result(file: File, value: u8) -> std::Result[(), i64] {
+pub fn write_byte_raw(file: File, value: u8) -> std::Result[(), i64] {
   if !file.is_open() {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
-  return unit_raw_result(write_byte(file, value));
+  return unit_raw_result(write_byte_unchecked(file, value));
 }
 
-pub fn write_byte_result(file: File, value: u8) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(write_byte_raw_result(file, value));
+pub fn write_byte(file: File, value: u8) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(write_byte_raw(file, value));
 }
 
-pub fn write_bytes_raw_result(file: File, values: std::Slice[u8]) -> std::Result[i64, i64] {
+pub fn write_bytes_raw(file: File, values: std::Slice[u8]) -> std::Result[i64, i64] {
   if !file.is_open() {
     return std::Err<i64, i64>(invalid_input_error_raw());
   }
 
   var index = 0;
   while index < values.len {
-    match write_byte_raw_result(file, values[index]) {
+    match write_byte_raw(file, values[index]) {
       std::Ok(_) => {}
       std::Err(raw) => {
         return std::Err<i64, i64>(raw);
@@ -1051,34 +1059,38 @@ pub fn write_bytes_raw_result(file: File, values: std::Slice[u8]) -> std::Result
   return std::Ok<i64, i64>(index);
 }
 
-pub fn write_bytes_result(file: File, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-  return std::error::from_raw_result<i64>(write_bytes_raw_result(file, values));
+pub fn write_bytes(file: File, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return std::error::from_raw_result<i64>(write_bytes_raw(file, values));
 }
 
-pub fn position_raw_result(file: File) -> std::Result[i64, i64] {
+pub fn position_raw(file: File) -> std::Result[i64, i64] {
   if !file.is_open() {
     return std::Err<i64, i64>(invalid_input_error_raw());
   }
-  let offset = position(file);
+  let offset = position_unchecked(file);
   if offset < 0 {
     return std::Err<i64, i64>(last_errno_error_raw());
   }
   return std::Ok<i64, i64>(offset);
 }
 
-pub fn position_result(file: File) -> std::Result[i64, std::error::Error] {
-  return std::error::from_raw_result<i64>(position_raw_result(file));
+pub fn position(file: File) -> std::Result[i64, std::error::Error] {
+  return std::error::from_raw_result<i64>(position_raw(file));
 }
 
-pub fn seek_raw_result(file: File, offset: i64) -> std::Result[(), i64] {
+pub fn position_or(file: File, fallback: i64) -> i64 {
+  return position(file).unwrap_or(fallback);
+}
+
+pub fn seek_raw(file: File, offset: i64) -> std::Result[(), i64] {
   if !file.is_open() || offset < 0 {
     return std::Err<(), i64>(invalid_input_error_raw());
   }
-  return unit_raw_result(seek(file, offset));
+  return unit_raw_result(seek_unchecked(file, offset));
 }
 
-pub fn seek_result(file: File, offset: i64) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(seek_raw_result(file, offset));
+pub fn seek(file: File, offset: i64) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(seek_raw(file, offset));
 }
 
 pub fn try_read_byte(file: File) -> std::Option[u8] {
@@ -1092,16 +1104,22 @@ pub fn try_read_byte(file: File) -> std::Option[u8] {
 fn write_all_raw_result_with_mode(path: string, mode: string, values: std::Slice[u8]) -> std::Result[i64, i64] {
   match open_raw_result(path, mode) {
     std::Ok(file) => {
-      let written = file.write_bytes(values);
-      if written != values.len {
-        let write_raw = last_errno_error_raw();
-        file.close();
-        return std::Err<i64, i64>(write_raw);
+      match write_bytes_raw(file, values) {
+        std::Ok(written) => {
+          match close_raw(file) {
+            std::Ok(_) => {
+              return std::Ok<i64, i64>(written);
+            }
+            std::Err(close_raw_error) => {
+              return std::Err<i64, i64>(close_raw_error);
+            }
+          }
+        }
+        std::Err(write_raw_error) => {
+          file.close_unchecked();
+          return std::Err<i64, i64>(write_raw_error);
+        }
       }
-      if file.close() {
-        return std::Ok<i64, i64>(written);
-      }
-      return std::Err<i64, i64>(last_errno_error_raw());
     }
     std::Err(open_raw) => {
       return std::Err<i64, i64>(open_raw);
@@ -1166,10 +1184,10 @@ pub fn read_to_string_result(zone: ref mut Zone, path: string) -> std::Result[st
         output.push_in(zone, byte as u8);
         byte = file.read_byte();
       }
-      if file.close() {
+      if file.close().is_ok() {
         return std::Ok<std::string::String, std::error::Error>(output);
       }
-      return std::Err<std::string::String, std::error::Error>(std::error::from_raw(last_errno_error_raw()));
+      return std::Err<std::string::String, std::error::Error>(std::error::new(std::error::Other));
     }
   }
 }
@@ -1188,7 +1206,7 @@ pub fn try_read_to_string(zone: ref mut Zone, path: string) -> std::Option[std::
     output.push_in(zone, byte as u8);
     byte = file.read_byte();
   }
-  file.close();
+  file.close_unchecked();
   return std::Some<std::string::String>(output);
 }
 
@@ -1209,7 +1227,7 @@ pub fn truncate(path: string) -> bool {
   if !file.is_open() {
     return false;
   }
-  return file.close();
+  return file.close().is_ok();
 }
 
 pub fn copy(source: string, target: string) -> bool {
@@ -1233,29 +1251,37 @@ pub fn copy_raw_result(source: string, target: string) -> std::Result[i64, i64] 
           var copied = 0;
           var byte = reader.read_byte();
           while byte >= 0 {
-            if !writer.write_byte(byte as u8) {
-              let write_raw = last_errno_error_raw();
-              reader.close();
-              writer.close();
-              return std::Err<i64, i64>(write_raw);
-            } else {
-              copied = copied + 1;
-              byte = reader.read_byte();
+            match write_byte_raw(writer, byte as u8) {
+              std::Ok(_) => {
+                copied = copied + 1;
+                byte = reader.read_byte();
+              }
+              std::Err(write_raw) => {
+                reader.close_unchecked();
+                writer.close_unchecked();
+                return std::Err<i64, i64>(write_raw);
+              }
             }
           }
 
-          if !reader.close() {
-            let read_close_raw = last_errno_error_raw();
-            writer.close();
-            return std::Err<i64, i64>(read_close_raw);
+          match close_raw(reader) {
+            std::Ok(_) => {}
+            std::Err(read_close_raw) => {
+              writer.close_unchecked();
+              return std::Err<i64, i64>(read_close_raw);
+            }
           }
-          if writer.close() {
-            return std::Ok<i64, i64>(copied);
+          match close_raw(writer) {
+            std::Ok(_) => {
+              return std::Ok<i64, i64>(copied);
+            }
+            std::Err(write_close_raw) => {
+              return std::Err<i64, i64>(write_close_raw);
+            }
           }
-          return std::Err<i64, i64>(last_errno_error_raw());
         }
         std::Err(target_open_raw) => {
-          reader.close();
+          reader.close_unchecked();
           return std::Err<i64, i64>(target_open_raw);
         }
       }
@@ -1413,12 +1439,12 @@ pub impl std::fs::File {
     return self.fd >= 0;
   }
 
-  fn close(self) -> bool {
+  fn close(self) -> std::Result[(), std::error::Error] {
     return close(self);
   }
 
-  fn close_result(self) -> std::Result[(), std::error::Error] {
-    return close_result(self);
+  fn close_unchecked(self) -> bool {
+    return close_unchecked(self);
   }
 
   fn read_byte(self) -> i64 {
@@ -1429,28 +1455,36 @@ pub impl std::fs::File {
     return try_read_byte(self);
   }
 
-  fn write_byte(self, value: u8) -> bool {
+  fn write_byte(self, value: u8) -> std::Result[(), std::error::Error] {
     return write_byte(self, value);
   }
 
-  fn write_byte_result(self, value: u8) -> std::Result[(), std::error::Error] {
-    return write_byte_result(self, value);
+  fn write_byte_unchecked(self, value: u8) -> bool {
+    return write_byte_unchecked(self, value);
   }
 
-  fn write_bytes(self, values: std::Slice[u8]) -> i64 {
+  fn write_bytes(self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
     return write_bytes(self, values);
   }
 
-  fn write_bytes_result(self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-    return write_bytes_result(self, values);
+  fn write_bytes_unchecked(self, values: std::Slice[u8]) -> i64 {
+    return write_bytes_unchecked(self, values);
   }
 
-  fn position_result(self) -> std::Result[i64, std::error::Error] {
-    return position_result(self);
+  fn position(self) -> std::Result[i64, std::error::Error] {
+    return position(self);
   }
 
-  fn seek_result(self, position: i64) -> std::Result[(), std::error::Error] {
-    return seek_result(self, position);
+  fn position_or(self, fallback: i64) -> i64 {
+    return position_or(self, fallback);
+  }
+
+  fn seek(self, position: i64) -> std::Result[(), std::error::Error] {
+    return seek(self, position);
+  }
+
+  fn seek_unchecked(self, position: i64) -> bool {
+    return seek_unchecked(self, position);
   }
 }
 
@@ -1582,7 +1616,7 @@ impl std::io::Writer for std::fs::File {
     if self.fd < 0 {
       return false;
     }
-    return std::fs::write_byte(std::fs::File { fd: self.fd }, value);
+    return std::fs::write_byte_unchecked(std::fs::File { fd: self.fd }, value);
   }
 
   pub fn flush(self: ref mut Self) -> bool {
@@ -1597,14 +1631,14 @@ impl std::io::Seek for std::fs::File {
     if self.fd < 0 {
       return -1;
     }
-    return std::fs::position(std::fs::File { fd: self.fd });
+    return std::fs::position_or(std::fs::File { fd: self.fd }, -1);
   }
 
   pub fn seek(self: ref mut Self, position: i64) -> bool {
     if self.fd < 0 {
       return false;
     }
-    return std::fs::seek(std::fs::File { fd: self.fd }, position);
+    return std::fs::seek_unchecked(std::fs::File { fd: self.fd }, position);
   }
 }
 
@@ -1618,12 +1652,12 @@ pub impl std::fs::Dir {
     return (self.handle as u64) != 0u64;
   }
 
-  fn close(self) -> bool {
+  fn close(self) -> std::Result[(), std::error::Error] {
     return close_dir(self);
   }
 
-  fn close_result(self) -> std::Result[(), std::error::Error] {
-    return close_dir_result(self);
+  fn close_unchecked(self) -> bool {
+    return close_dir_unchecked(self);
   }
 
   fn next(self, zone: ref mut Zone) -> std::Option[std::string::String] {
