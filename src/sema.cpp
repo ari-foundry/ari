@@ -13296,7 +13296,8 @@ private:
                     pattern,
                     type,
                     "struct match pattern",
-                    "struct match pattern must mention all fields or use '..'");
+                    "struct match pattern must mention all fields or use '..'",
+                    &info);
                 for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
                     collect_pattern_bindings(pattern.elements[i], type.field_types[field_indexes[i]], bindings);
                 }
@@ -14420,7 +14421,8 @@ private:
                     payload,
                     payload_type,
                     "enum payload pattern",
-                    "struct enum payload pattern must mention all fields or use '..'");
+                    "struct enum payload pattern must mention all fields or use '..'",
+                    &info);
                 for (std::size_t i = 0; i < payload.field_names.size(); ++i) {
                     std::size_t field_index = field_indexes[i];
                     std::vector<std::uint32_t> nested_path = field_path;
@@ -15090,7 +15092,7 @@ private:
             return lower_positional_product_match_pattern_condition(payload, source_name, source_type, prelude);
         }
         if (fields.size() != 1) {
-            fail_tuple_struct_match_pattern_arity(payload.loc, info.name, fields.size());
+            fail_tuple_struct_match_pattern_arity(payload.loc, info.name, fields.size(), info.loc);
         }
         return lower_tuple_element_match_condition(payload, source_name, source_type, 0, prelude);
     }
@@ -15148,7 +15150,8 @@ private:
             pattern,
             source_type,
             "struct match pattern",
-            "struct match pattern must mention all fields or use '..'");
+            "struct match pattern must mention all fields or use '..'",
+            &info);
         IrExprPtr condition;
         for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
             std::size_t field_index = field_indexes[i];
@@ -15668,7 +15671,7 @@ private:
             return;
         }
         if (fields.size() != 1) {
-            fail_tuple_struct_match_pattern_arity(payload.loc, info.name, fields.size());
+            fail_tuple_struct_match_pattern_arity(payload.loc, info.name, fields.size(), info.loc);
         }
         if (payload.binding_mode != BindingMode::Value) {
             if (skip_reference_bindings) return;
@@ -15763,7 +15766,8 @@ private:
             pattern,
             source_type,
             "struct match pattern",
-            "struct match pattern must mention all fields or use '..'");
+            "struct match pattern must mention all fields or use '..'",
+            &info);
         for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
             const std::string& field_name = pattern.field_names[i];
             std::size_t field_index = field_indexes[i];
@@ -16423,11 +16427,17 @@ private:
 
     [[noreturn]] static void fail_tuple_struct_match_pattern_arity(SourceLocation loc,
                                                                    const std::string& name,
-                                                                   std::size_t actual_fields) {
+                                                                   std::size_t actual_fields,
+                                                                   SourceLocation declaration_loc) {
         CompileError error(
             std::move(loc),
             "tuple-struct pattern for '" + name + "' has 1 field but value has " +
                 std::to_string(actual_fields));
+        add_location_label_if_valid(
+            error,
+            declaration_loc,
+            "tuple struct '" + name + "' declares " + std::to_string(actual_fields) +
+                " positional fields");
         error.add_note(DiagnosticNote{
             std::nullopt,
             "a bare payload pattern can destructure only single-field tuple structs",
@@ -19589,8 +19599,23 @@ private:
     }
 
     [[noreturn]] static void fail_struct_pattern_incomplete(SourceLocation loc,
-                                                            const std::string& message) {
+                                                            const std::string& message,
+                                                            const Pattern& pattern,
+                                                            const IrType& type,
+                                                            const StructInfo* info) {
         CompileError error(std::move(loc), message);
+        if (info) {
+            std::set<std::string> mentioned(pattern.field_names.begin(), pattern.field_names.end());
+            for (std::size_t i = 0; i < type.field_names.size(); ++i) {
+                const std::string& field_name = type.field_names[i];
+                if (mentioned.count(field_name) != 0) continue;
+                SourceLocation field_loc = i < info->fields.size() ? info->fields[i].loc : info->loc;
+                add_location_label_if_valid(
+                    error,
+                    field_loc,
+                    "missing field '" + field_name + "' declared here");
+            }
+        }
         error.add_note(DiagnosticNote{
             std::nullopt,
             "named product patterns must either mention every field or explicitly ignore the rest",
@@ -19606,7 +19631,8 @@ private:
         const Pattern& pattern,
         const IrType& type,
         const std::string& duplicate_context,
-        const std::string& completeness_message = ""
+        const std::string& completeness_message = "",
+        const StructInfo* info = nullptr
     ) const {
         if (pattern.field_names.size() != pattern.elements.size()) {
             throw CompileError("internal error: struct pattern field/value arity mismatch");
@@ -19626,7 +19652,7 @@ private:
         if (!completeness_message.empty() &&
             !pattern.has_rest &&
             pattern.field_names.size() != type.field_names.size()) {
-            fail_struct_pattern_incomplete(pattern.loc, completeness_message);
+            fail_struct_pattern_incomplete(pattern.loc, completeness_message, pattern, type, info);
         }
 
         return indexes;
