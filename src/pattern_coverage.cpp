@@ -12,8 +12,53 @@
 namespace ari {
 namespace {
 
+bool contains_text(const std::string& text, const std::string& needle) {
+    return text.find(needle) != std::string::npos;
+}
+
+std::pair<std::string, std::string> pattern_diagnostic_advice(const std::string& message) {
+    if (message == "range pattern start must be <= end") {
+        return {
+            "range patterns are checked as ordered intervals for the matched integer type",
+            "write the lower bound first or split this case into separate patterns"
+        };
+    }
+    if (contains_text(message, "integer literal")) {
+        return {
+            "literal patterns are type-checked against the value being matched before coverage is computed",
+            "change the literal suffix or use a value that fits the matched type"
+        };
+    }
+    if (contains_text(message, "match pattern has")) {
+        return {
+            "positional product patterns must match the tuple, array, or tuple-struct shape exactly unless '..' is used",
+            "add or remove pattern elements so the pattern shape matches the value"
+        };
+    }
+    if (contains_text(message, "struct match pattern")) {
+        return {
+            "named product patterns must either mention every field or explicitly ignore the rest",
+            "add the missing fields or include '..' in the pattern"
+        };
+    }
+    if (contains_text(message, "or-pattern bindings")) {
+        return {
+            "coverage currently expands or-pattern alternatives before binding-compatible alternatives are lowered",
+            "split this or-pattern into separate arms or remove bindings from its alternatives"
+        };
+    }
+    return {
+        "pattern coverage validates literal, range, and product patterns before exhaustiveness is checked",
+        "adjust the pattern so it is valid for the matched value, or use '_' for a fallback arm"
+    };
+}
+
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
-    throw CompileError(where(loc) + ": " + message);
+    CompileError error(std::move(loc), message);
+    auto advice = pattern_diagnostic_advice(message);
+    error.add_note(DiagnosticNote{std::nullopt, std::move(advice.first), DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{std::nullopt, std::move(advice.second), DiagnosticNoteKind::Help});
+    throw error;
 }
 
 void add_integer_coverage_interval(ScalarMatchCoverage& coverage,

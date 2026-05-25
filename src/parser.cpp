@@ -2384,6 +2384,10 @@ private:
         pattern.range_end_value = end.int_value;
         pattern.range_end_negative = end_negative;
         pattern.range_end_suffix = end.literal_suffix;
+        Span range_span = merge_spans(span_from_location(pattern.loc), span_from_location(end.loc));
+        if (span_has_source(range_span) && span_has_valid_order(range_span)) {
+            pattern.loc = source_location_for_span(range_span);
+        }
         return pattern;
     }
 

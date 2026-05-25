@@ -341,6 +341,7 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "match must have at least one arm") ||
         contains(diagnostic, "match must cover all cases") ||
         contains(diagnostic, "match pattern") ||
+        contains(diagnostic, "range pattern") ||
         contains(diagnostic, "unknown enum case") ||
         contains(diagnostic, "requires a payload pattern") ||
         contains(diagnostic, "has no payload") ||

@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=294
+CompilerArtifactFixtures version=1 group=all entries=295
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -112,6 +112,7 @@ CompilerArtifactFixtures version=1 group=all entries=294
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-nonexhaustive.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-or-pattern-binding-type.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-payload-required.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-match-range-pattern-order.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-runtime-owned-enum-payload-undropped.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-duplicate-field.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-match-struct-pattern-missing-field.diagnostic

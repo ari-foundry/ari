@@ -310,6 +310,8 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-empty.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-empty.diagnostic
 	$(TARGET) tests/cases/match/errors/match-expression-type-mismatch.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-expression-type-mismatch.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-expression-type-mismatch.diagnostic
+	$(TARGET) tests/cases/match/errors/match-range-pattern-order.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-range-pattern-order.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-match-range-pattern-order.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-match-range-pattern-order.diagnostic
 	$(TARGET) tests/cases/control-flow/errors/while-non-bool.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-condition-non-bool.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-condition-non-bool.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-condition-non-bool.diagnostic
 	$(TARGET) tests/cases/operators/errors/logical-non-bool.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-logical-operand-type.diagnostic

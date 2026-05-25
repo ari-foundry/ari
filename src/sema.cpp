@@ -9484,7 +9484,7 @@ private:
                     fail(pattern.loc, "range runtime sequence patterns require integer elements");
                 }
                 if (!range_start_le_end(pattern, element_type)) {
-                    fail(pattern.loc, "range pattern start must be <= end");
+                    fail_range_pattern_order(pattern.loc);
                 }
                 IrExprPtr lower = make_bool_binary_expr(
                     pattern.loc,
@@ -13764,7 +13764,7 @@ private:
             payload_type
         );
         if (!range_start_le_end(pattern, payload_type)) {
-            fail(pattern.loc, "range pattern start must be <= end");
+            fail_range_pattern_order(pattern.loc);
         }
 
         lowered_arm.payload_range_conditions.push_back(IrPayloadRangeCondition{
@@ -14028,7 +14028,7 @@ private:
             nested_payload_type
         );
         if (!range_start_le_end(pattern, nested_payload_type)) {
-            fail(pattern.loc, "range pattern start must be <= end");
+            fail_range_pattern_order(pattern.loc);
         }
         condition.has_payload_range = true;
         condition.range_start_int = pattern.int_value;
@@ -14615,7 +14615,7 @@ private:
         require_assignable(pattern.loc, match_type, start.type);
         require_assignable(pattern.loc, match_type, end.type);
         if (!range_start_le_end(pattern, match_type)) {
-            fail(pattern.loc, "range pattern start must be <= end");
+            fail_range_pattern_order(pattern.loc);
         }
 
         std::uint64_t covered_start = 0;
@@ -14806,7 +14806,7 @@ private:
                     fail(pattern.loc, "range tuple patterns require an integer tuple field");
                 }
                 if (!range_start_le_end(pattern, field_type)) {
-                    fail(pattern.loc, "range pattern start must be <= end");
+                    fail_range_pattern_order(pattern.loc);
                 }
                 IrExprPtr lower = make_bool_binary_expr(
                     pattern.loc,
@@ -27416,6 +27416,19 @@ private:
 
     [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
         throw CompileError(std::move(loc), message);
+    }
+
+    [[noreturn]] static void fail_range_pattern_order(SourceLocation loc) {
+        CompileError error(std::move(loc), "range pattern start must be <= end");
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "range patterns are checked as ordered intervals for the matched integer type",
+            DiagnosticNoteKind::Note});
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "write the lower bound first or split this case into separate patterns",
+            DiagnosticNoteKind::Help});
+        throw error;
     }
 
     static std::string type_argument_count_text(std::size_t count) {
