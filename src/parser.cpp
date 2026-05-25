@@ -2110,6 +2110,14 @@ private:
                     "match body starts here",
                     "}");
             }
+            if (should_recover_at_nested_declaration(open.loc)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated match",
+                    "match body starts here",
+                    "}");
+            }
             MatchArm arm;
             arm.pattern = parse_pattern();
             arm.loc = arm.pattern.loc;
@@ -3251,6 +3259,14 @@ private:
         std::vector<ExprMatchArm> arms;
         while (!match(TokenKind::RBrace)) {
             if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated match expression",
+                    "match expression body starts here",
+                    "}");
+            }
+            if (should_recover_at_nested_declaration(open.loc)) {
                 fail_unterminated_delimited(
                     peek().loc,
                     open.loc,

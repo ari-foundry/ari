@@ -1,0 +1,11 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-expression-close.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated match expression" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-expression-close.ari:4:1 source_id=0 bytes=73..75
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-expression-close.ari:4:1 source_id=0 bytes=73..75
+      SecondaryLabel message="match expression body starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-expression-close.ari:2:26 source_id=0 bytes=56..57
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching } before continuing"
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-expression-close.ari:4:4 source_id=0 bytes=76..81
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-expression-close.ari:5:3 source_id=0 bytes=95..101
+        Integer value=2 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-expression-close.ari:5:10 source_id=0 bytes=102..103

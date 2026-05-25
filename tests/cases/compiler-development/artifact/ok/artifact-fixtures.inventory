@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=295
+CompilerArtifactFixtures version=1 group=all entries=299
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -220,6 +220,10 @@ CompilerArtifactFixtures version=1 group=all entries=295
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-function-body.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-missing-function-close.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-function-close.syntax
+  Fixture group=errors kind=source path=errors/syntax-recovery-missing-match-close.ari
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-match-close.syntax
+  Fixture group=errors kind=source path=errors/syntax-recovery-missing-match-expression-close.ari
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-match-expression-close.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-missing-nested-block-close.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-nested-block-close.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-missing-struct-close.ari

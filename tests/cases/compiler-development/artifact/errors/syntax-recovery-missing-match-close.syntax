@@ -1,0 +1,11 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-close.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated match" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-close.ari:6:1 source_id=0 bytes=82..84
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-close.ari:6:1 source_id=0 bytes=82..84
+      SecondaryLabel message="match body starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-close.ari:2:14 source_id=0 bytes=44..45
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching } before continuing"
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-close.ari:6:4 source_id=0 bytes=85..90
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-close.ari:7:3 source_id=0 bytes=104..110
+        Integer value=2 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-match-close.ari:7:10 source_id=0 bytes=111..112
