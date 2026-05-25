@@ -321,6 +321,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     const AriBuiltinTypeExpectation ref_atomic_i64 = builtin_type("ref std::sync::AtomicI64");
     const AriBuiltinTypeExpectation ref_mut_atomic_i64 = builtin_type("ref mut std::sync::AtomicI64");
     const AriBuiltinTypeExpectation ptr_u8 = builtin_type("ptr u8");
+    const AriBuiltinTypeExpectation ptr_i64 = builtin_type("ptr i64");
     const AriBuiltinTypeExpectation ptr_u16 = builtin_type("ptr u16");
     const AriBuiltinTypeExpectation ptr_c_void = builtin_type("ptr c_void", {"ptr void"});
     const AriBuiltinTypeExpectation own_zone = builtin_type("own Zone");
@@ -414,11 +415,38 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_net_udp_send_byte_to_v6") {
         return builtin_sig({i64, u8, i64, i64, i64, i64, i64, i64, i64, i64, i64}, boolean);
     }
+    if (symbol == "ari_builtin_net_udp_send_to_v4") {
+        return builtin_sig({i64, ptr_u8, i64, i64, i64, i64, i64, i64}, i64);
+    }
+    if (symbol == "ari_builtin_net_udp_send_to_v6") {
+        return builtin_sig({i64, ptr_u8, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64);
+    }
+    if (symbol == "ari_builtin_net_udp_connect_v4") {
+        return builtin_sig({i64, i64, i64, i64, i64, i64}, boolean);
+    }
+    if (symbol == "ari_builtin_net_udp_connect_v6") {
+        return builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64, i64}, boolean);
+    }
+    if (symbol == "ari_builtin_net_udp_send") return builtin_sig({i64, ptr_u8, i64}, i64);
+    if (symbol == "ari_builtin_net_udp_recv") return builtin_sig({i64, ptr_u8, i64}, i64);
+    if (symbol == "ari_builtin_net_udp_recv_from") {
+        return builtin_sig({i64, ptr_u8, i64, i64, ptr_i64, ptr_i64, ptr_u16}, i64);
+    }
     if (symbol == "ari_builtin_net_udp_recv_byte") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_set_read_timeout_millis") return builtin_sig({i64, i64}, boolean);
     if (symbol == "ari_builtin_net_set_write_timeout_millis") return builtin_sig({i64, i64}, boolean);
     if (symbol == "ari_builtin_net_reuse_addr") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_set_reuse_addr") return builtin_sig({i64, boolean}, boolean);
+    if (symbol == "ari_builtin_net_reuse_port") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_set_reuse_port") return builtin_sig({i64, boolean}, boolean);
+    if (symbol == "ari_builtin_net_keepalive") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_set_keepalive") return builtin_sig({i64, boolean}, boolean);
+    if (symbol == "ari_builtin_net_broadcast") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_set_broadcast") return builtin_sig({i64, boolean}, boolean);
+    if (symbol == "ari_builtin_net_send_buffer_size") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_set_send_buffer_size") return builtin_sig({i64, i64}, boolean);
+    if (symbol == "ari_builtin_net_recv_buffer_size") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_set_recv_buffer_size") return builtin_sig({i64, i64}, boolean);
     if (symbol == "ari_builtin_net_nodelay") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_set_nodelay") return builtin_sig({i64, boolean}, boolean);
     if (symbol == "ari_builtin_net_shutdown") return builtin_sig({i64, i64}, boolean);

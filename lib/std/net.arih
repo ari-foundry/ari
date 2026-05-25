@@ -42,7 +42,12 @@ pub struct SocketAddr {
 }
 
 pub trait ToSocketAddrs {
-  fn to_socket_addrs(self) -> std::Result[std::net::SocketAddr, std::error::Error];
+  fn to_socket_addrs(self, zone: ref mut Zone) -> std::Result[std::vec::Vec[std::net::SocketAddr], std::error::Error];
+}
+
+pub struct UdpRecvFrom {
+  len: i64,
+  addr: SocketAddr,
 }
 
 pub struct TcpListener {
@@ -95,6 +100,25 @@ extern "ari" fn udp_send_byte_to_v4_raw(raw: i64, value: u8, a: i64, b: i64, c: 
   "ari_builtin_net_udp_send_byte_to_v4";
 extern "ari" fn udp_send_byte_to_v6_raw(raw: i64, value: u8, s0: i64, s1: i64, s2: i64, s3: i64, s4: i64, s5: i64, s6: i64, s7: i64, port: i64) -> bool =
   "ari_builtin_net_udp_send_byte_to_v6";
+extern "ari" fn udp_send_to_v4_raw(raw: i64, values: ptr u8, len: i64, a: i64, b: i64, c: i64, d: i64, port: i64) -> i64 =
+  "ari_builtin_net_udp_send_to_v4";
+extern "ari" fn udp_send_to_v6_raw(raw: i64, values: ptr u8, len: i64, s0: i64, s1: i64, s2: i64, s3: i64, s4: i64, s5: i64, s6: i64, s7: i64, port: i64) -> i64 =
+  "ari_builtin_net_udp_send_to_v6";
+extern "ari" fn udp_connect_v4_raw(raw: i64, a: i64, b: i64, c: i64, d: i64, port: i64) -> bool =
+  "ari_builtin_net_udp_connect_v4";
+extern "ari" fn udp_connect_v6_raw(raw: i64, s0: i64, s1: i64, s2: i64, s3: i64, s4: i64, s5: i64, s6: i64, s7: i64, port: i64) -> bool =
+  "ari_builtin_net_udp_connect_v6";
+extern "ari" fn udp_send_raw(raw: i64, values: ptr u8, len: i64) -> i64 = "ari_builtin_net_udp_send";
+extern "ari" fn udp_recv_raw(raw: i64, output: ptr u8, len: i64) -> i64 = "ari_builtin_net_udp_recv";
+extern "ari" fn udp_recv_from_raw(
+  raw: i64,
+  output: ptr u8,
+  len: i64,
+  flags: i64,
+  family_output: ptr i64,
+  port_output: ptr i64,
+  segments_output: ptr u16
+) -> i64 = "ari_builtin_net_udp_recv_from";
 extern "ari" fn udp_recv_byte_raw(raw: i64) -> i64 = "ari_builtin_net_udp_recv_byte";
 extern "ari" fn set_read_timeout_millis_raw(raw: i64, millis: i64) -> bool =
   "ari_builtin_net_set_read_timeout_millis";
@@ -103,6 +127,21 @@ extern "ari" fn set_write_timeout_millis_raw(raw: i64, millis: i64) -> bool =
 extern "ari" fn reuse_addr_raw(raw: i64) -> i64 = "ari_builtin_net_reuse_addr";
 extern "ari" fn set_reuse_addr_raw(raw: i64, enabled: bool) -> bool =
   "ari_builtin_net_set_reuse_addr";
+extern "ari" fn reuse_port_raw(raw: i64) -> i64 = "ari_builtin_net_reuse_port";
+extern "ari" fn set_reuse_port_raw(raw: i64, enabled: bool) -> bool =
+  "ari_builtin_net_set_reuse_port";
+extern "ari" fn keepalive_raw(raw: i64) -> i64 = "ari_builtin_net_keepalive";
+extern "ari" fn set_keepalive_raw(raw: i64, enabled: bool) -> bool =
+  "ari_builtin_net_set_keepalive";
+extern "ari" fn broadcast_raw(raw: i64) -> i64 = "ari_builtin_net_broadcast";
+extern "ari" fn set_broadcast_raw(raw: i64, enabled: bool) -> bool =
+  "ari_builtin_net_set_broadcast";
+extern "ari" fn send_buffer_size_raw(raw: i64) -> i64 = "ari_builtin_net_send_buffer_size";
+extern "ari" fn set_send_buffer_size_raw(raw: i64, value: i64) -> bool =
+  "ari_builtin_net_set_send_buffer_size";
+extern "ari" fn recv_buffer_size_raw(raw: i64) -> i64 = "ari_builtin_net_recv_buffer_size";
+extern "ari" fn set_recv_buffer_size_raw(raw: i64, value: i64) -> bool =
+  "ari_builtin_net_set_recv_buffer_size";
 extern "ari" fn nodelay_raw(raw: i64) -> i64 = "ari_builtin_net_nodelay";
 extern "ari" fn set_nodelay_raw(raw: i64, enabled: bool) -> bool =
   "ari_builtin_net_set_nodelay";
@@ -309,8 +348,54 @@ pub fn try_resolve(endpoint: string) -> std::Option[SocketAddr] {
   return resolve_optional(endpoint);
 }
 
-pub fn to_socket_addrs(endpoint: string) -> std::Result[SocketAddr, std::error::Error] {
-  return resolve(endpoint);
+pub fn resolve_all(
+  zone: ref mut Zone,
+  host: string,
+  port: u16
+) -> std::Result[std::vec::Vec[SocketAddr], std::error::Error] {
+  var output = std::vec::new<SocketAddr>(zone, 2);
+  var reason = std::error::new(std::error::Other);
+
+  match lookup_v4(host, port) {
+    std::Ok(v4) => {
+      output.push(v4);
+    }
+    std::Err(v4_error) => {
+      reason = v4_error;
+    }
+  }
+
+  match lookup_v6(host, port) {
+    std::Ok(v6) => {
+      output.push(v6);
+    }
+    std::Err(v6_error) => {
+      if output.is_empty() {
+        reason = v6_error;
+      }
+    }
+  }
+
+  if output.is_empty() {
+    return std::Err<std::vec::Vec<SocketAddr>, std::error::Error>(reason);
+  }
+  return std::Ok<std::vec::Vec<SocketAddr>, std::error::Error>(output);
+}
+
+pub fn to_socket_addrs(
+  zone: ref mut Zone,
+  endpoint: string
+) -> std::Result[std::vec::Vec[SocketAddr], std::error::Error] {
+  var output = std::vec::new<SocketAddr>(zone, 1);
+  match resolve(endpoint) {
+    std::Ok(addr) => {
+      output.push(addr);
+      return std::Ok<std::vec::Vec<SocketAddr>, std::error::Error>(output);
+    }
+    std::Err(reason) => {
+      return std::Err<std::vec::Vec<SocketAddr>, std::error::Error>(reason);
+    }
+  }
 }
 
 pub fn listen(addr: SocketAddr) -> std::Result[TcpListener, std::error::Error] {
@@ -625,6 +710,65 @@ fn write_all_raw_result(raw: i64, values: std::Slice[u8]) -> std::Result[(), i64
   return std::Ok<(), i64>(());
 }
 
+fn read_raw_result(raw: i64, output: std::Slice[u8]) -> std::Result[i64, i64] {
+  if raw < 0 {
+    return std::Err<i64, i64>(invalid_input_error_raw());
+  }
+  var index = 0;
+  while index < output.len {
+    match read_socket_byte_raw_result(raw) {
+      std::Ok(value) => {
+        std::mem::ptr_store(std::mem::ptr_add(output.data, index), value);
+      }
+      std::Err(reason) => {
+        if index > 0 {
+          return std::Ok<i64, i64>(index);
+        }
+        return std::Err<i64, i64>(reason);
+      }
+    }
+    index = index + 1;
+  }
+  return std::Ok<i64, i64>(index);
+}
+
+fn write_raw_result(raw: i64, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  if raw < 0 {
+    return std::Err<i64, i64>(invalid_input_error_raw());
+  }
+  var index = 0;
+  while index < values.len {
+    if !write_socket_byte_raw(raw, values[index]) {
+      if index > 0 {
+        return std::Ok<i64, i64>(index);
+      }
+      return std::Err<i64, i64>(broken_pipe_error_raw());
+    }
+    index = index + 1;
+  }
+  return std::Ok<i64, i64>(index);
+}
+
+fn udp_count_raw_result(raw: i64, count: i64) -> std::Result[i64, i64] {
+  if raw < 0 {
+    return std::Err<i64, i64>(invalid_input_error_raw());
+  }
+  if count < 0 {
+    return std::Err<i64, i64>(last_errno_error_raw());
+  }
+  return std::Ok<i64, i64>(count);
+}
+
+fn socket_int_raw_result(raw: i64, value: i64) -> std::Result[i64, i64] {
+  if raw < 0 {
+    return std::Err<i64, i64>(invalid_input_error_raw());
+  }
+  if value < 0 {
+    return std::Err<i64, i64>(last_errno_error_raw());
+  }
+  return std::Ok<i64, i64>(value);
+}
+
 fn read_exact_raw(raw: i64, output: ptr u8, len: i64) -> bool {
   return read_exact_raw_result(raw, output, len).is_ok();
 }
@@ -672,8 +816,11 @@ fn shutdown_mode(mode: Shutdown) -> i64 {
 }
 
 impl std::net::ToSocketAddrs for string {
-  pub fn to_socket_addrs(self) -> std::Result[std::net::SocketAddr, std::error::Error] {
-    return std::net::resolve(self);
+  pub fn to_socket_addrs(
+    self,
+    zone: ref mut Zone
+  ) -> std::Result[std::vec::Vec[std::net::SocketAddr], std::error::Error] {
+    return std::net::to_socket_addrs(zone, self);
   }
 }
 
@@ -780,6 +927,146 @@ fn udp_bind_raw(addr: SocketAddr) -> std::Result[i64, i64] {
     return std::Err<i64, i64>(last_errno_error_raw());
   }
   return std::Err<i64, i64>(unsupported_address_error_raw());
+}
+
+fn udp_send_to_raw_result(raw: i64, values: std::Slice[u8], addr: SocketAddr) -> std::Result[i64, i64] {
+  if raw < 0 {
+    return std::Err<i64, i64>(invalid_input_error_raw());
+  }
+  let ip = addr.ip;
+  if ip.is_v4() {
+    return udp_count_raw_result(
+      raw,
+      udp_send_to_v4_raw(
+        raw,
+        values.as_ptr(),
+        values.len,
+        ip.s0 as i64,
+        ip.s1 as i64,
+        ip.s2 as i64,
+        ip.s3 as i64,
+        addr.port as i64
+      )
+    );
+  }
+  if ip.is_v6() {
+    return udp_count_raw_result(
+      raw,
+      udp_send_to_v6_raw(
+        raw,
+        values.as_ptr(),
+        values.len,
+        ip.s0 as i64,
+        ip.s1 as i64,
+        ip.s2 as i64,
+        ip.s3 as i64,
+        ip.s4 as i64,
+        ip.s5 as i64,
+        ip.s6 as i64,
+        ip.s7 as i64,
+        addr.port as i64
+      )
+    );
+  }
+  return std::Err<i64, i64>(unsupported_address_error_raw());
+}
+
+fn udp_connect_raw_result(raw: i64, addr: SocketAddr) -> std::Result[(), i64] {
+  if raw < 0 {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  let ip = addr.ip;
+  if ip.is_v4() {
+    return socket_unit_raw_result(
+      raw,
+      udp_connect_v4_raw(
+        raw,
+        ip.s0 as i64,
+        ip.s1 as i64,
+        ip.s2 as i64,
+        ip.s3 as i64,
+        addr.port as i64
+      )
+    );
+  }
+  if ip.is_v6() {
+    return socket_unit_raw_result(
+      raw,
+      udp_connect_v6_raw(
+        raw,
+        ip.s0 as i64,
+        ip.s1 as i64,
+        ip.s2 as i64,
+        ip.s3 as i64,
+        ip.s4 as i64,
+        ip.s5 as i64,
+        ip.s6 as i64,
+        ip.s7 as i64,
+        addr.port as i64
+      )
+    );
+  }
+  return std::Err<(), i64>(unsupported_address_error_raw());
+}
+
+fn udp_recv_addr_from_parts(family: i64, port: i64, segments: std::Slice[u16]) -> std::Result[SocketAddr, i64] {
+  if port < 0 || port > 65535 {
+    return std::Err<SocketAddr, i64>(last_errno_error_raw());
+  }
+  if family == 4 {
+    return std::Ok<SocketAddr, i64>(
+      socket_addr(
+        ipv4(segments[0] as u8, segments[1] as u8, segments[2] as u8, segments[3] as u8).as_ip(),
+        port as u16
+      )
+    );
+  }
+  if family == 6 {
+    return std::Ok<SocketAddr, i64>(socket_addr_from_segments_v6(segments, port as u16));
+  }
+  return std::Err<SocketAddr, i64>(unsupported_address_error_raw());
+}
+
+fn udp_recv_from_raw_result(raw: i64, output: std::Slice[u8], flags: i64) -> std::Result[UdpRecvFrom, i64] {
+  if raw < 0 {
+    return std::Err<UdpRecvFrom, i64>(invalid_input_error_raw());
+  }
+  var family = [0];
+  var port = [0];
+  var segments = [
+    0 as u16,
+    0 as u16,
+    0 as u16,
+    0 as u16,
+    0 as u16,
+    0 as u16,
+    0 as u16,
+    0 as u16
+  ];
+  let count = udp_recv_from_raw(
+    raw,
+    output.as_ptr(),
+    output.len,
+    flags,
+    family.as_slice().as_ptr(),
+    port.as_slice().as_ptr(),
+    segments.as_slice().as_ptr()
+  );
+  if count < 0 {
+    return std::Err<UdpRecvFrom, i64>(last_errno_error_raw());
+  }
+  match udp_recv_addr_from_parts(
+    std::mem::ptr_load(family.as_slice().as_ptr()),
+    std::mem::ptr_load(port.as_slice().as_ptr()),
+    segments.as_slice()
+  ) {
+    std::Ok(addr) => {
+      return std::Ok<UdpRecvFrom, i64>(UdpRecvFrom { len: count, addr: addr });
+    }
+    std::Err(reason) => {
+      return std::Err<UdpRecvFrom, i64>(reason);
+    }
+  }
 }
 
 fn unix_listen_raw_result(path: string) -> std::Result[i64, i64] {
@@ -983,6 +1270,20 @@ pub impl std::net::SocketAddr {
   }
 }
 
+pub impl std::net::UdpRecvFrom {
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn addr(self: ref Self) -> SocketAddr {
+    return self.addr;
+  }
+
+  fn source(self: ref Self) -> SocketAddr {
+    return self.addr;
+  }
+}
+
 pub impl std::net::TcpListener {
   fn bind(addr: SocketAddr) -> std::Result[TcpListener, std::error::Error] {
     return std::error::from_raw_result<TcpListener>(TcpListener::bind_raw_result(addr));
@@ -1039,6 +1340,22 @@ pub impl std::net::TcpListener {
     return self.handle.set_nonblocking_result(enabled);
   }
 
+  fn close_on_exec_optional(self: ref Self) -> std::Option[bool] {
+    return self.handle.close_on_exec();
+  }
+
+  fn close_on_exec(self: ref Self) -> std::Result[bool, std::error::Error] {
+    return self.handle.close_on_exec_result();
+  }
+
+  fn set_close_on_exec_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_close_on_exec(enabled);
+  }
+
+  fn set_close_on_exec(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    return self.handle.set_close_on_exec_result(enabled);
+  }
+
   fn reuse_addr_optional(self: ref Self) -> std::Option[bool] {
     return socket_bool_option(reuse_addr_raw(self.handle.raw()));
   }
@@ -1062,6 +1379,32 @@ pub impl std::net::TcpListener {
     }
     return std::error::from_raw_result<()>(
       socket_unit_raw_result(self.handle.raw(), set_reuse_addr_raw(self.handle.raw(), enabled))
+    );
+  }
+
+  fn reuse_port_optional(self: ref Self) -> std::Option[bool] {
+    return socket_bool_option(reuse_port_raw(self.handle.raw()));
+  }
+
+  fn reuse_port(self: ref Self) -> std::Result[bool, std::error::Error] {
+    if !self.is_open() {
+      return std::Err<bool, std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::from_raw_result<bool>(
+      socket_flag_raw_result(self.handle.raw(), reuse_port_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_reuse_port_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.set_reuse_port(enabled).is_ok();
+  }
+
+  fn set_reuse_port(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    if !self.is_open() {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::from_raw_result<()>(
+      socket_unit_raw_result(self.handle.raw(), set_reuse_port_raw(self.handle.raw(), enabled))
     );
   }
 
@@ -1187,6 +1530,22 @@ pub impl std::net::TcpStream {
     return self.handle.set_nonblocking_result(enabled);
   }
 
+  fn close_on_exec_optional(self: ref Self) -> std::Option[bool] {
+    return self.handle.close_on_exec();
+  }
+
+  fn close_on_exec(self: ref Self) -> std::Result[bool, std::error::Error] {
+    return self.handle.close_on_exec_result();
+  }
+
+  fn set_close_on_exec_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_close_on_exec(enabled);
+  }
+
+  fn set_close_on_exec(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    return self.handle.set_close_on_exec_result(enabled);
+  }
+
   fn nodelay_optional(self: ref Self) -> std::Option[bool] {
     return socket_bool_option(nodelay_raw(self.handle.raw()));
   }
@@ -1210,6 +1569,56 @@ pub impl std::net::TcpStream {
     }
     return std::error::from_raw_result<()>(
       socket_unit_raw_result(self.handle.raw(), set_nodelay_raw(self.handle.raw(), enabled))
+    );
+  }
+
+  fn keepalive_optional(self: ref Self) -> std::Option[bool] {
+    return socket_bool_option(keepalive_raw(self.handle.raw()));
+  }
+
+  fn keepalive(self: ref Self) -> std::Result[bool, std::error::Error] {
+    if !self.is_open() {
+      return std::Err<bool, std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::from_raw_result<bool>(
+      socket_flag_raw_result(self.handle.raw(), keepalive_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_keepalive_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.set_keepalive(enabled).is_ok();
+  }
+
+  fn set_keepalive(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    if !self.is_open() {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::from_raw_result<()>(
+      socket_unit_raw_result(self.handle.raw(), set_keepalive_raw(self.handle.raw(), enabled))
+    );
+  }
+
+  fn send_buffer_size(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(
+      socket_int_raw_result(self.handle.raw(), send_buffer_size_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_send_buffer_size(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
+    return std::error::from_raw_result<()>(
+      socket_unit_raw_result(self.handle.raw(), set_send_buffer_size_raw(self.handle.raw(), value))
+    );
+  }
+
+  fn recv_buffer_size(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(
+      socket_int_raw_result(self.handle.raw(), recv_buffer_size_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_recv_buffer_size(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
+    return std::error::from_raw_result<()>(
+      socket_unit_raw_result(self.handle.raw(), set_recv_buffer_size_raw(self.handle.raw(), value))
     );
   }
 
@@ -1295,12 +1704,41 @@ pub impl std::net::TcpStream {
     return std::error::from_raw_result<()>(read_exact_raw_result(self.handle.raw(), output, len));
   }
 
+  fn read(self: ref mut Self, output: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(read_raw_result(self.handle.raw(), output));
+  }
+
+  fn read_exact_slice(self: ref mut Self, output: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    return self.read_exact(output.as_ptr(), output.len);
+  }
+
+  fn read_to_end(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::vec::Vec[u8], std::error::Error] {
+    return std::Ok<std::vec::Vec[u8], std::error::Error>(
+      std::io::read_all<std::net::TcpStream>(zone, self)
+    );
+  }
+
+  fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string<std::net::TcpStream>(zone, self);
+  }
+
   fn write_all_unchecked(self: ref mut Self, values: std::Slice[u8]) -> bool {
     return write_all_raw(self.handle.raw(), values);
   }
 
   fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
     return std::error::from_raw_result<()>(write_all_raw_result(self.handle.raw(), values));
+  }
+
+  fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(write_raw_result(self.handle.raw(), values));
+  }
+
+  fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    if self.handle.is_open() {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(std::error::new(std::error::BrokenPipe));
   }
 }
 
@@ -1384,6 +1822,22 @@ pub impl std::net::UdpSocket {
     return self.handle.set_nonblocking_result(enabled);
   }
 
+  fn close_on_exec_optional(self: ref Self) -> std::Option[bool] {
+    return self.handle.close_on_exec();
+  }
+
+  fn close_on_exec(self: ref Self) -> std::Result[bool, std::error::Error] {
+    return self.handle.close_on_exec_result();
+  }
+
+  fn set_close_on_exec_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_close_on_exec(enabled);
+  }
+
+  fn set_close_on_exec(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    return self.handle.set_close_on_exec_result(enabled);
+  }
+
   fn reuse_addr_optional(self: ref Self) -> std::Option[bool] {
     return socket_bool_option(reuse_addr_raw(self.handle.raw()));
   }
@@ -1407,6 +1861,82 @@ pub impl std::net::UdpSocket {
     }
     return std::error::from_raw_result<()>(
       socket_unit_raw_result(self.handle.raw(), set_reuse_addr_raw(self.handle.raw(), enabled))
+    );
+  }
+
+  fn reuse_port_optional(self: ref Self) -> std::Option[bool] {
+    return socket_bool_option(reuse_port_raw(self.handle.raw()));
+  }
+
+  fn reuse_port(self: ref Self) -> std::Result[bool, std::error::Error] {
+    if !self.is_open() {
+      return std::Err<bool, std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::from_raw_result<bool>(
+      socket_flag_raw_result(self.handle.raw(), reuse_port_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_reuse_port_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.set_reuse_port(enabled).is_ok();
+  }
+
+  fn set_reuse_port(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    if !self.is_open() {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::from_raw_result<()>(
+      socket_unit_raw_result(self.handle.raw(), set_reuse_port_raw(self.handle.raw(), enabled))
+    );
+  }
+
+  fn broadcast_optional(self: ref Self) -> std::Option[bool] {
+    return socket_bool_option(broadcast_raw(self.handle.raw()));
+  }
+
+  fn broadcast(self: ref Self) -> std::Result[bool, std::error::Error] {
+    if !self.is_open() {
+      return std::Err<bool, std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::from_raw_result<bool>(
+      socket_flag_raw_result(self.handle.raw(), broadcast_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_broadcast_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.set_broadcast(enabled).is_ok();
+  }
+
+  fn set_broadcast(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    if !self.is_open() {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::from_raw_result<()>(
+      socket_unit_raw_result(self.handle.raw(), set_broadcast_raw(self.handle.raw(), enabled))
+    );
+  }
+
+  fn send_buffer_size(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(
+      socket_int_raw_result(self.handle.raw(), send_buffer_size_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_send_buffer_size(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
+    return std::error::from_raw_result<()>(
+      socket_unit_raw_result(self.handle.raw(), set_send_buffer_size_raw(self.handle.raw(), value))
+    );
+  }
+
+  fn recv_buffer_size(self: ref Self) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(
+      socket_int_raw_result(self.handle.raw(), recv_buffer_size_raw(self.handle.raw()))
+    );
+  }
+
+  fn set_recv_buffer_size(self: ref Self, value: i64) -> std::Result[(), std::error::Error] {
+    return std::error::from_raw_result<()>(
+      socket_unit_raw_result(self.handle.raw(), set_recv_buffer_size_raw(self.handle.raw(), value))
     );
   }
 
@@ -1442,6 +1972,38 @@ pub impl std::net::UdpSocket {
 
   fn set_write_timeout(self: ref Self, timeout: std::time::Duration) -> std::Result[(), std::error::Error] {
     return self.set_write_timeout_millis(timeout.as_millis());
+  }
+
+  fn connect(self: ref Self, addr: SocketAddr) -> std::Result[(), std::error::Error] {
+    return std::error::from_raw_result<()>(udp_connect_raw_result(self.handle.raw(), addr));
+  }
+
+  fn send_to(self: ref Self, values: std::Slice[u8], addr: SocketAddr) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(udp_send_to_raw_result(self.handle.raw(), values, addr));
+  }
+
+  fn send(self: ref Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(
+      udp_count_raw_result(self.handle.raw(), udp_send_raw(self.handle.raw(), values.as_ptr(), values.len))
+    );
+  }
+
+  fn recv(self: ref mut Self, output: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(
+      udp_count_raw_result(self.handle.raw(), udp_recv_raw(self.handle.raw(), output.as_ptr(), output.len))
+    );
+  }
+
+  fn recv_from(self: ref mut Self, output: std::Slice[u8]) -> std::Result[UdpRecvFrom, std::error::Error] {
+    return std::error::from_raw_result<UdpRecvFrom>(
+      udp_recv_from_raw_result(self.handle.raw(), output, 0)
+    );
+  }
+
+  fn peek_from(self: ref mut Self, output: std::Slice[u8]) -> std::Result[UdpRecvFrom, std::error::Error] {
+    return std::error::from_raw_result<UdpRecvFrom>(
+      udp_recv_from_raw_result(self.handle.raw(), output, 2)
+    );
   }
 
   fn send_byte_to_unchecked(self: ref Self, value: u8, addr: SocketAddr) -> bool {
@@ -1571,6 +2133,22 @@ pub impl std::net::UnixListener {
     return self.handle.set_nonblocking_result(enabled);
   }
 
+  fn close_on_exec_optional(self: ref Self) -> std::Option[bool] {
+    return self.handle.close_on_exec();
+  }
+
+  fn close_on_exec(self: ref Self) -> std::Result[bool, std::error::Error] {
+    return self.handle.close_on_exec_result();
+  }
+
+  fn set_close_on_exec_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_close_on_exec(enabled);
+  }
+
+  fn set_close_on_exec(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    return self.handle.set_close_on_exec_result(enabled);
+  }
+
   fn accept(self: ref Self) -> std::Result[UnixStream, std::error::Error] {
     return std::error::from_raw_result<UnixStream>(self.accept_raw_result());
   }
@@ -1652,6 +2230,22 @@ pub impl std::net::UnixStream {
     return self.handle.set_nonblocking_result(enabled);
   }
 
+  fn close_on_exec_optional(self: ref Self) -> std::Option[bool] {
+    return self.handle.close_on_exec();
+  }
+
+  fn close_on_exec(self: ref Self) -> std::Result[bool, std::error::Error] {
+    return self.handle.close_on_exec_result();
+  }
+
+  fn set_close_on_exec_unchecked(self: ref Self, enabled: bool) -> bool {
+    return self.handle.set_close_on_exec(enabled);
+  }
+
+  fn set_close_on_exec(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
+    return self.handle.set_close_on_exec_result(enabled);
+  }
+
   fn set_read_timeout_millis_unchecked(self: ref Self, millis: i64) -> bool {
     return self.set_read_timeout_millis(millis).is_ok();
   }
@@ -1702,12 +2296,41 @@ pub impl std::net::UnixStream {
     return std::error::from_raw_result<()>(read_exact_raw_result(self.handle.raw(), output, len));
   }
 
+  fn read(self: ref mut Self, output: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(read_raw_result(self.handle.raw(), output));
+  }
+
+  fn read_exact_slice(self: ref mut Self, output: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    return self.read_exact(output.as_ptr(), output.len);
+  }
+
+  fn read_to_end(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::vec::Vec[u8], std::error::Error] {
+    return std::Ok<std::vec::Vec[u8], std::error::Error>(
+      std::io::read_all<std::net::UnixStream>(zone, self)
+    );
+  }
+
+  fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string<std::net::UnixStream>(zone, self);
+  }
+
   fn write_all_unchecked(self: ref mut Self, values: std::Slice[u8]) -> bool {
     return write_all_raw(self.handle.raw(), values);
   }
 
   fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
     return std::error::from_raw_result<()>(write_all_raw_result(self.handle.raw(), values));
+  }
+
+  fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::error::from_raw_result<i64>(write_raw_result(self.handle.raw(), values));
+  }
+
+  fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    if self.handle.is_open() {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(std::error::new(std::error::BrokenPipe));
   }
 }
 

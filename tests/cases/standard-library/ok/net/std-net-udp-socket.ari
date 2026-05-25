@@ -76,6 +76,58 @@ fn main() -> i64 {
   }
   assert(client.local_port().is_ok());
   assert(client.local_addr().is_ok());
+  let source_port = client.local_port().unwrap();
+
+  var datagram = [91u8, 92u8];
+  if client.send_to(datagram.as_slice(), net::SocketAddr::localhost(port)).unwrap_or(0) == 2 {
+    var peeked = [0u8, 0u8];
+    match server.peek_from(peeked.as_slice()) {
+      Ok(peek_info) => {
+        if peek_info.len() == 2 &&
+          peek_info.source().port() == source_port &&
+          peeked[0] == 91u8 &&
+          peeked[1] == 92u8 {
+          score = score + 1024;
+        }
+      }
+      Err(_peek_reason) => {}
+    }
+
+    var received = [0u8, 0u8];
+    match server.recv_from(received.as_slice()) {
+      Ok(recv_info) => {
+        if recv_info.len() == 2 &&
+          recv_info.addr().port() == source_port &&
+          received[0] == 91u8 &&
+          received[1] == 92u8 {
+          score = score + 2048;
+        }
+      }
+      Err(_recv_reason) => {}
+    }
+  }
+
+  if client.connect(net::SocketAddr::localhost(port)).is_ok() &&
+    client.send(datagram.as_slice()).unwrap_or(0) == 2 {
+    var connected_recv = [0u8, 0u8];
+    if server.recv(connected_recv.as_slice()).unwrap_or(0) == 2 &&
+      connected_recv[0] == 91u8 &&
+      connected_recv[1] == 92u8 {
+      score = score + 4096;
+    }
+  }
+
+  if client.close_on_exec().unwrap_or(false) &&
+    client.set_close_on_exec(true).is_ok() &&
+    client.set_broadcast(true).is_ok() &&
+    client.broadcast().unwrap_or(false) &&
+    server.set_reuse_port(true).is_ok() &&
+    server.set_send_buffer_size(4096).is_ok() &&
+    server.send_buffer_size().unwrap_or(0) > 0 &&
+    server.set_recv_buffer_size(4096).is_ok() &&
+    server.recv_buffer_size().unwrap_or(0) > 0 {
+    score = score + 8192;
+  }
 
   if client.close().is_ok() && server.close().is_ok() {
     score = score + 128;
@@ -83,6 +135,6 @@ fn main() -> i64 {
   assert(client.close().is_err());
   assert(server.close().is_err());
 
-  assert_eq_i64(score, 766);
+  assert_eq_i64(score, 16126);
   return score;
 }

@@ -97,6 +97,18 @@ fn main() -> i64 {
     }
   }
 
+  var more = [68u8, 69u8, 70u8];
+  if server.write(more.as_slice()).unwrap_or(0) == 3 {
+    var read_output = [0u8, 0u8, 0u8];
+    let read_view = read_output.as_slice();
+    if client.read(read_view).unwrap_or(0) == 3 &&
+      read_output[0] == 68u8 &&
+      read_output[1] == 69u8 &&
+      read_output[2] == 70u8 {
+      score = score + 16384;
+    }
+  }
+
   let timeout = time::milliseconds(1000);
   if listener.set_accept_timeout(timeout).is_ok() &&
     listener.set_accept_timeout_millis(1000).is_ok() &&
@@ -115,6 +127,18 @@ fn main() -> i64 {
     score = score + 256;
   }
 
+  if client.close_on_exec().unwrap_or(false) &&
+    client.set_close_on_exec(true).is_ok() &&
+    client.set_keepalive(true).is_ok() &&
+    client.keepalive().unwrap_or(false) &&
+    client.set_send_buffer_size(4096).is_ok() &&
+    client.send_buffer_size().unwrap_or(0) > 0 &&
+    client.set_recv_buffer_size(4096).is_ok() &&
+    client.recv_buffer_size().unwrap_or(0) > 0 &&
+    listener.set_reuse_port(true).is_ok() {
+    score = score + 32768;
+  }
+
   if server.set_nodelay(true).is_ok() && server.nodelay().unwrap_or(false) {
     score = score + 8192;
   }
@@ -126,6 +150,6 @@ fn main() -> i64 {
   assert(client.close().is_err());
   assert(listener.close().is_err());
 
-  assert_eq_i64(score, 9214);
+  assert_eq_i64(score, 58366);
   return score;
 }

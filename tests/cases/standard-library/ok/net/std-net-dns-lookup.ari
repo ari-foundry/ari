@@ -7,6 +7,7 @@ fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
 
 fn main() -> i64 {
   var score = 0;
+  var arena = zone::create(2048);
 
   let loopback = net::lookup_v4_optional("127.0.0.1", 8080 as u16);
   assert(loopback.is_some());
@@ -100,22 +101,35 @@ fn main() -> i64 {
     Err(_endpoint_reason) => {}
   }
 
-  match net::ToSocketAddrs::to_socket_addrs("127.0.0.1:8084") {
-    Ok(trait_addr) => {
-      if trait_addr.is_loopback() && trait_addr.port() == 8084 as u16 {
+  match net::ToSocketAddrs::to_socket_addrs("127.0.0.1:8084", ref mut arena) {
+    Ok(trait_addrs) => {
+      if trait_addrs.len() > 0 && trait_addrs.get(0).is_loopback() &&
+        trait_addrs.get(0).port() == 8084 as u16 {
         score = score + 1024;
       }
     }
     Err(_trait_reason) => {}
   }
 
-  match net::to_socket_addrs("127.0.0.1:8085") {
-    Ok(module_addr) => {
-      if module_addr.is_loopback() && module_addr.port() == 8085 as u16 {
+  match net::to_socket_addrs(ref mut arena, "127.0.0.1:8085") {
+    Ok(module_addrs) => {
+      if module_addrs.len() > 0 && module_addrs.get(0).is_loopback() &&
+        module_addrs.get(0).port() == 8085 as u16 {
         score = score + 16384;
       }
     }
     Err(_module_reason) => {}
+  }
+
+  match net::resolve_all(ref mut arena, "127.0.0.1", 8086 as u16) {
+    Ok(all_addrs) => {
+      if all_addrs.len() > 0 && all_addrs.get(0).is_loopback() {
+        score = score + 1048576;
+      }
+    }
+    Err(_all_reason) => {
+      panic();
+    }
   }
 
   match net::resolve("[::1]:8088") {
@@ -129,9 +143,12 @@ fn main() -> i64 {
     }
   }
 
-  match net::to_socket_addrs("[::1]:8089") {
-    Ok(module_v6) => {
-      if module_v6.is_loopback() && module_v6.port() == 8089 as u16 && module_v6.ip().is_v6() {
+  match net::to_socket_addrs(ref mut arena, "[::1]:8089") {
+    Ok(module_v6_addrs) => {
+      if module_v6_addrs.len() > 0 &&
+        module_v6_addrs.get(0).is_loopback() &&
+        module_v6_addrs.get(0).port() == 8089 as u16 &&
+        module_v6_addrs.get(0).ip().is_v6() {
         score = score + 262144;
       }
     }
@@ -173,6 +190,7 @@ fn main() -> i64 {
     }
   }
 
-  assert_eq_i64(score, 524287);
+  zone::destroy(arena);
+  assert_eq_i64(score, 1572863);
   return score;
 }

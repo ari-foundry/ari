@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2850`
+- API entries: `2917`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,16 +32,16 @@ platform notes.
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 742 | stable candidate |
-| `hosted` | 1079 | platform-backed |
+| `hosted` | 1146 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
-| `fn` | 1044 |
-| `method` | 1402 |
+| `fn` | 1045 |
+| `method` | 1467 |
 | `module` | 39 |
-| `struct` | 154 |
+| `struct` | 155 |
 | `trait` | 39 |
 | `trait-method` | 39 |
 | `type` | 21 |
@@ -74,7 +74,7 @@ platform notes.
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
-| `std::net` | `hosted` | 209 |
+| `std::net` | `hosted` | 276 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 45 |
@@ -2316,6 +2316,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::net::lookup_v6_optional` | check-prelude std-net-dns-lookup Option-returning IPv6 name lookup compatibility helper; docs/stdlib/modules/net.md |
 | `fn std::net::lookup_v6_raw_result` | check-prelude std-net-dns-lookup raw Result-returning IPv6 name lookup compatibility helper; docs/stdlib/modules/net.md |
 | `fn std::net::resolve` | check-prelude std-net-dns-lookup Result-returning host-port endpoint resolver; docs/stdlib/modules/net.md |
+| `fn std::net::resolve_all` | check-prelude std-net-dns-lookup zone-backed multi-address host resolver; docs/stdlib/modules/net.md |
 | `fn std::net::resolve_optional` | check-prelude std-net-dns-lookup Option-returning host-port endpoint resolver compatibility helper; docs/stdlib/modules/net.md |
 | `fn std::net::resolve_raw_result` | check-prelude std-net-dns-lookup raw Result-returning host-port endpoint resolver; docs/stdlib/modules/net.md |
 | `fn std::net::socket_addr` | check-prelude std-net-addresses source socket address constructor; docs/stdlib/modules/net.md |
@@ -2324,7 +2325,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::net::tcp_connect_v6` | check-prelude std-net-ipv6-socket explicit IPv6 TCP connect helper returning Error; docs/stdlib/modules/net.md |
 | `fn std::net::tcp_listen` | check-prelude std-net-tcp-loopback explicit TCP listener helper returning Error; docs/stdlib/modules/net.md |
 | `fn std::net::tcp_listen_v6` | check-prelude std-net-ipv6-socket explicit IPv6 TCP listener helper returning Error; docs/stdlib/modules/net.md |
-| `fn std::net::to_socket_addrs` | check-prelude std-net-dns-lookup module-level ToSocketAddrs-shaped endpoint resolver; docs/stdlib/modules/net.md |
+| `fn std::net::to_socket_addrs` | check-prelude std-net-dns-lookup module-level ToSocketAddrs-shaped endpoint resolver returning Vec; docs/stdlib/modules/net.md |
 | `fn std::net::try_lookup_v4` | check-prelude std-net-dns-lookup Option-returning IPv4 name lookup compatibility alias; docs/stdlib/modules/net.md |
 | `fn std::net::try_lookup_v6` | check-prelude std-net-dns-lookup Option-returning IPv6 name lookup compatibility alias; docs/stdlib/modules/net.md |
 | `fn std::net::try_resolve` | check-prelude std-net-dns-lookup Option-returning host-port endpoint resolver compatibility alias; docs/stdlib/modules/net.md |
@@ -2371,6 +2372,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpListener::bind_optional` | check-prelude std-net-tcp-loopback Option-returning TCP bind compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::bind_raw_result` | check-prelude std-net-tcp-loopback raw Result-returning TCP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::close` | check-prelude std-net-tcp-loopback explicit listener descriptor close helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::close_on_exec` | check-prelude std-net-tcp-loopback Result-returning listener close-on-exec descriptor flag query; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::close_on_exec_optional` | check-prelude std-net-tcp-loopback Option-returning listener close-on-exec compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::close_unchecked` | check-prelude std-net-tcp-loopback unchecked TCP listener close compatibility method; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::descriptor` | check-prelude std-net-tcp-loopback listener borrowed descriptor view; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::is_nonblocking` | check-prelude std-net-tcp-loopback listener nonblocking descriptor query; docs/stdlib/modules/net.md |
@@ -2384,24 +2387,35 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpListener::local_port_optional` | check-prelude std-net-tcp-loopback Option-returning listener local port compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::reuse_addr` | check-prelude std-net-tcp-loopback listener reuse-address socket option query; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::reuse_addr_optional` | check-prelude std-net-tcp-loopback Option-returning listener reuse-address compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::reuse_port` | check-prelude std-net-tcp-loopback listener reuse-port socket option query; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::reuse_port_optional` | check-prelude std-net-tcp-loopback Option-returning listener reuse-port compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_accept_timeout` | check-prelude std-net-tcp-loopback Duration-based listener accept timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_accept_timeout_millis` | check-prelude std-net-tcp-loopback listener accept timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_accept_timeout_millis_unchecked` | check-prelude std-net-tcp-loopback unchecked listener accept timeout compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::set_close_on_exec` | check-prelude std-net-tcp-loopback listener close-on-exec descriptor flag setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::set_close_on_exec_unchecked` | check-prelude std-net-tcp-loopback unchecked listener close-on-exec compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_nonblocking` | check-prelude std-net-tcp-loopback listener nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_nonblocking_unchecked` | check-prelude std-net-tcp-loopback unchecked listener nonblocking compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_reuse_addr` | check-prelude std-net-tcp-loopback listener reuse-address socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_reuse_addr_unchecked` | check-prelude std-net-tcp-loopback unchecked listener reuse-address compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::set_reuse_port` | check-prelude std-net-tcp-loopback listener reuse-port socket option setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::set_reuse_port_unchecked` | check-prelude std-net-tcp-loopback unchecked listener reuse-port compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::try_accept` | check-prelude std-net-tcp-loopback Option-returning TCP accept compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::try_bind` | check-prelude std-net-tcp-loopback Option-returning TCP bind compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::close` | check-prelude std-net-tcp-loopback explicit stream descriptor close helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::close_on_exec` | check-prelude std-net-tcp-loopback Result-returning stream close-on-exec descriptor flag query; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::close_on_exec_optional` | check-prelude std-net-tcp-loopback Option-returning stream close-on-exec compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::close_unchecked` | check-prelude std-net-tcp-loopback unchecked TCP stream close compatibility method; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::connect` | check-prelude std-net-tcp-loopback Result-returning IPv4/IPv6 TCP connect helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::connect_optional` | check-prelude std-net-tcp-loopback Option-returning TCP connect compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::connect_raw_result` | check-prelude std-net-tcp-loopback raw Result-returning TCP connect compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::descriptor` | check-prelude std-net-tcp-loopback stream borrowed descriptor view; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::flush` | check-prelude std-net-tcp-loopback stream flush helper preserving closed-handle errors; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::is_nonblocking` | check-prelude std-net-tcp-loopback stream nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::is_nonblocking_optional` | check-prelude std-net-tcp-loopback Option-returning stream nonblocking compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::is_open` | check-prelude std-net-tcp-loopback stream open predicate; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::keepalive` | check-prelude std-net-tcp-loopback TCP keepalive socket option query; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::keepalive_optional` | check-prelude std-net-tcp-loopback Option-returning TCP keepalive compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::local_addr` | check-prelude std-net-tcp-loopback stream local socket-address lookup; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::local_addr_optional` | check-prelude std-net-tcp-loopback Option-returning stream local address compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::local_addr_v6` | check-prelude std-net-ipv6-socket stream local IPv6 socket-address lookup; docs/stdlib/modules/net.md |
@@ -2412,8 +2426,18 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpStream::peer_addr_optional` | check-prelude std-net-tcp-loopback Option-returning stream peer address compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::peer_addr_v6` | check-prelude std-net-ipv6-socket stream peer IPv6 socket-address lookup; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::peer_addr_v6_optional` | check-prelude std-net-ipv6-socket Option-returning stream IPv6 peer address compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::read` | check-prelude std-net-tcp-loopback stream partial buffer read helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::read_exact` | check-prelude std-net-tcp-loopback stream buffer read helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::read_exact_slice` | check-prelude std-net-tcp-loopback stream exact slice read helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::read_exact_unchecked` | check-prelude std-net-tcp-loopback unchecked stream exact-read compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::read_to_end` | check-prelude std-net-tcp-loopback stream collect-to-Vec helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::read_to_string` | check-prelude std-net-tcp-loopback stream collect-to-String helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::recv_buffer_size` | check-prelude std-net-tcp-loopback TCP receive-buffer-size query; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::send_buffer_size` | check-prelude std-net-tcp-loopback TCP send-buffer-size query; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_close_on_exec` | check-prelude std-net-tcp-loopback stream close-on-exec descriptor flag setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_close_on_exec_unchecked` | check-prelude std-net-tcp-loopback unchecked stream close-on-exec compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_keepalive` | check-prelude std-net-tcp-loopback TCP keepalive socket option setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_keepalive_unchecked` | check-prelude std-net-tcp-loopback unchecked TCP keepalive compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_nodelay` | check-prelude std-net-tcp-loopback TCP nodelay socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_nodelay_unchecked` | check-prelude std-net-tcp-loopback unchecked TCP nodelay compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_nonblocking` | check-prelude std-net-tcp-loopback stream nonblocking descriptor setter; docs/stdlib/modules/net.md |
@@ -2421,19 +2445,30 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpStream::set_read_timeout` | check-prelude std-net-tcp-loopback Duration-based stream read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_read_timeout_millis` | check-prelude std-net-tcp-loopback stream read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_read_timeout_millis_unchecked` | check-prelude std-net-tcp-loopback unchecked stream read timeout compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_recv_buffer_size` | check-prelude std-net-tcp-loopback TCP receive-buffer-size setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_send_buffer_size` | check-prelude std-net-tcp-loopback TCP send-buffer-size setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_write_timeout` | check-prelude std-net-tcp-loopback Duration-based stream write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_write_timeout_millis` | check-prelude std-net-tcp-loopback stream write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_write_timeout_millis_unchecked` | check-prelude std-net-tcp-loopback unchecked stream write timeout compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::shutdown` | check-prelude std-net-tcp-loopback stream half/full shutdown helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::try_connect` | check-prelude std-net-tcp-loopback Option-returning TCP connect compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::try_read_byte` | check-prelude std-net-tcp-loopback Option-returning single-byte stream read helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::write` | check-prelude std-net-tcp-loopback stream partial buffer write helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::write_all` | check-prelude std-net-tcp-loopback stream buffer write helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::write_all_unchecked` | check-prelude std-net-tcp-loopback unchecked stream write-all compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpRecvFrom::addr` | check-prelude std-net-udp-socket UDP receive source address accessor; docs/stdlib/modules/net.md |
+| `method std::net::UdpRecvFrom::len` | check-prelude std-net-udp-socket UDP receive byte-count accessor; docs/stdlib/modules/net.md |
+| `method std::net::UdpRecvFrom::source` | check-prelude std-net-udp-socket UDP receive source-address alias; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::bind` | check-prelude std-net-udp-socket Result-returning IPv4/IPv6 UDP bind helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::bind_optional` | check-prelude std-net-udp-socket Option-returning UDP bind compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::bind_raw_result` | check-prelude std-net-udp-socket raw Result-returning UDP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::broadcast` | check-prelude std-net-udp-socket UDP broadcast socket option query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::broadcast_optional` | check-prelude std-net-udp-socket Option-returning UDP broadcast compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::close` | check-prelude std-net-udp-socket explicit UDP descriptor close helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::close_on_exec` | check-prelude std-net-udp-socket Result-returning UDP close-on-exec descriptor flag query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::close_on_exec_optional` | check-prelude std-net-udp-socket Option-returning UDP close-on-exec compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::close_unchecked` | check-prelude std-net-udp-socket unchecked UDP socket close compatibility method; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::connect` | check-prelude std-net-udp-socket connected UDP default-peer helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::descriptor` | check-prelude std-net-udp-socket UDP borrowed descriptor view; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::is_nonblocking` | check-prelude std-net-udp-socket UDP nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::is_nonblocking_optional` | check-prelude std-net-udp-socket Option-returning UDP nonblocking compatibility query; docs/stdlib/modules/net.md |
@@ -2444,19 +2479,36 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UdpSocket::local_addr_v6_optional` | check-prelude std-net-ipv6-socket Option-returning UDP IPv6 local address compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_port` | check-prelude std-net-udp-socket UDP bound-port lookup; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_port_optional` | check-prelude std-net-udp-socket Option-returning UDP local port compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::peek_from` | check-prelude std-net-udp-socket UDP source-address peek helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::recv` | check-prelude std-net-udp-socket connected UDP buffer receive helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::recv_buffer_size` | check-prelude std-net-udp-socket UDP receive-buffer-size query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::recv_byte` | check-prelude std-net-udp-socket single-byte UDP datagram receive helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::recv_byte_unchecked` | check-prelude std-net-udp-socket unchecked single-byte UDP receive compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::recv_from` | check-prelude std-net-udp-socket UDP source-address receive helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::reuse_addr` | check-prelude std-net-udp-socket UDP reuse-address socket option query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::reuse_addr_optional` | check-prelude std-net-udp-socket Option-returning UDP reuse-address compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::reuse_port` | check-prelude std-net-udp-socket UDP reuse-port socket option query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::reuse_port_optional` | check-prelude std-net-udp-socket Option-returning UDP reuse-port compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::send` | check-prelude std-net-udp-socket connected UDP buffer send helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::send_buffer_size` | check-prelude std-net-udp-socket UDP send-buffer-size query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::send_byte_to` | check-prelude std-net-udp-socket single-byte UDP datagram send helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::send_byte_to_unchecked` | check-prelude std-net-udp-socket unchecked single-byte UDP send compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::send_to` | check-prelude std-net-udp-socket UDP datagram buffer send helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_broadcast` | check-prelude std-net-udp-socket UDP broadcast socket option setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_broadcast_unchecked` | check-prelude std-net-udp-socket unchecked UDP broadcast compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_close_on_exec` | check-prelude std-net-udp-socket UDP close-on-exec descriptor flag setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_close_on_exec_unchecked` | check-prelude std-net-udp-socket unchecked UDP close-on-exec compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_nonblocking` | check-prelude std-net-udp-socket UDP nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_nonblocking_unchecked` | check-prelude std-net-udp-socket unchecked UDP nonblocking compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_read_timeout` | check-prelude std-net-udp-socket Duration-based UDP read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_read_timeout_millis` | check-prelude std-net-udp-socket UDP read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_read_timeout_millis_unchecked` | check-prelude std-net-udp-socket unchecked UDP read timeout compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_recv_buffer_size` | check-prelude std-net-udp-socket UDP receive-buffer-size setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_reuse_addr` | check-prelude std-net-udp-socket UDP reuse-address socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_reuse_addr_unchecked` | check-prelude std-net-udp-socket unchecked UDP reuse-address compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_reuse_port` | check-prelude std-net-udp-socket UDP reuse-port socket option setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_reuse_port_unchecked` | check-prelude std-net-udp-socket unchecked UDP reuse-port compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_send_buffer_size` | check-prelude std-net-udp-socket UDP send-buffer-size setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_write_timeout` | check-prelude std-net-udp-socket Duration-based UDP write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_write_timeout_millis` | check-prelude std-net-udp-socket UDP write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_write_timeout_millis_unchecked` | check-prelude std-net-udp-socket unchecked UDP write timeout compatibility setter; docs/stdlib/modules/net.md |
@@ -2469,26 +2521,39 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UnixListener::bind_optional` | check-prelude std-net-unix-socket Option-returning Unix listener bind compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::bind_raw_result` | check-prelude std-net-unix-socket raw Result-returning Unix listener bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::close` | check-prelude std-net-unix-socket explicit Unix listener close helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixListener::close_on_exec` | check-prelude std-net-unix-socket Result-returning Unix listener close-on-exec descriptor flag query; docs/stdlib/modules/net.md |
+| `method std::net::UnixListener::close_on_exec_optional` | check-prelude std-net-unix-socket Option-returning Unix listener close-on-exec compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::close_unchecked` | check-prelude std-net-unix-socket unchecked Unix listener close compatibility method; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::descriptor` | check-prelude std-net-unix-socket Unix listener borrowed descriptor view; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::is_nonblocking` | check-prelude std-net-unix-socket Unix listener nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::is_nonblocking_optional` | check-prelude std-net-unix-socket Option-returning Unix listener nonblocking compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::is_open` | check-prelude std-net-unix-socket Unix listener open predicate; docs/stdlib/modules/net.md |
+| `method std::net::UnixListener::set_close_on_exec` | check-prelude std-net-unix-socket Unix listener close-on-exec descriptor flag setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixListener::set_close_on_exec_unchecked` | check-prelude std-net-unix-socket unchecked Unix listener close-on-exec compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::set_nonblocking` | check-prelude std-net-unix-socket Unix listener nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::set_nonblocking_unchecked` | check-prelude std-net-unix-socket unchecked Unix listener nonblocking compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::try_accept` | check-prelude std-net-unix-socket Option-returning Unix accept compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::try_bind` | check-prelude std-net-unix-socket Option-returning Unix bind compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::close` | check-prelude std-net-unix-socket explicit Unix stream close helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::close_on_exec` | check-prelude std-net-unix-socket Result-returning Unix stream close-on-exec descriptor flag query; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::close_on_exec_optional` | check-prelude std-net-unix-socket Option-returning Unix stream close-on-exec compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::close_unchecked` | check-prelude std-net-unix-socket unchecked Unix stream close compatibility method; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::connect` | check-prelude std-net-unix-socket Result-returning Unix stream connect helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::connect_optional` | check-prelude std-net-unix-socket Option-returning Unix stream connect compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::connect_raw_result` | check-prelude std-net-unix-socket raw Result-returning Unix stream connect compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::descriptor` | check-prelude std-net-unix-socket Unix stream borrowed descriptor view; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::flush` | check-prelude std-net-unix-socket Unix stream flush helper preserving closed-handle errors; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::is_nonblocking` | check-prelude std-net-unix-socket Unix stream nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::is_nonblocking_optional` | check-prelude std-net-unix-socket Option-returning Unix stream nonblocking compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::is_open` | check-prelude std-net-unix-socket Unix stream open predicate; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::read` | check-prelude std-net-unix-socket Unix stream partial buffer read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read_exact` | check-prelude std-net-unix-socket Unix stream buffer read helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::read_exact_slice` | check-prelude std-net-unix-socket Unix stream exact slice read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read_exact_unchecked` | check-prelude std-net-unix-socket unchecked Unix stream exact-read compatibility helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::read_to_end` | check-prelude std-net-unix-socket Unix stream collect-to-Vec helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::read_to_string` | check-prelude std-net-unix-socket Unix stream collect-to-String helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::set_close_on_exec` | check-prelude std-net-unix-socket Unix stream close-on-exec descriptor flag setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::set_close_on_exec_unchecked` | check-prelude std-net-unix-socket unchecked Unix stream close-on-exec compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::set_nonblocking` | check-prelude std-net-unix-socket Unix stream nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::set_nonblocking_unchecked` | check-prelude std-net-unix-socket unchecked Unix stream nonblocking compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::set_read_timeout` | check-prelude std-net-unix-socket Duration-based Unix stream read timeout setter; docs/stdlib/modules/net.md |
@@ -2500,6 +2565,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UnixStream::shutdown` | check-prelude std-net-unix-socket Unix stream half/full shutdown helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::try_connect` | check-prelude std-net-unix-socket Option-returning Unix connect compatibility alias; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::try_read_byte` | check-prelude std-net-unix-socket Option-returning single-byte Unix stream read helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::write` | check-prelude std-net-unix-socket Unix stream partial buffer write helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::write_all` | check-prelude std-net-unix-socket Unix stream buffer write helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::write_all_unchecked` | check-prelude std-net-unix-socket unchecked Unix stream write-all compatibility helper; docs/stdlib/modules/net.md |
 
@@ -2519,6 +2585,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::net::SocketAddr` | std net socket address tests; docs/stdlib/modules/net.md |
 | `struct std::net::TcpListener` | check-prelude std-net-tcp-loopback owned TCP listener handle; docs/stdlib/modules/net.md |
 | `struct std::net::TcpStream` | check-prelude std-net-tcp-loopback owned TCP stream handle and IO traits; docs/stdlib/modules/net.md |
+| `struct std::net::UdpRecvFrom` | check-prelude std-net-udp-socket UDP receive metadata value; docs/stdlib/modules/net.md |
 | `struct std::net::UdpSocket` | check-prelude std-net-udp-socket owned UDP datagram socket handle; docs/stdlib/modules/net.md |
 | `struct std::net::UnixListener` | check-prelude std-net-unix-socket owned Unix domain listener handle; docs/stdlib/modules/net.md |
 | `struct std::net::UnixStream` | check-prelude std-net-unix-socket owned Unix domain stream handle and IO traits; docs/stdlib/modules/net.md |
@@ -2527,13 +2594,13 @@ Tier: `hosted`. Stability reading: platform-backed.
 
 | API | Coverage note |
 | --- | --- |
-| `trait std::net::ToSocketAddrs` | check-prelude std-net-dns-lookup host-port endpoint resolver trait seed; docs/stdlib/modules/net.md |
+| `trait std::net::ToSocketAddrs` | check-prelude std-net-dns-lookup host-port endpoint resolver trait returning Vec; docs/stdlib/modules/net.md |
 
 ### trait-method
 
 | API | Coverage note |
 | --- | --- |
-| `trait-method std::net::ToSocketAddrs::to_socket_addrs` | check-prelude std-net-dns-lookup trait-qualified host-port endpoint resolution; docs/stdlib/modules/net.md |
+| `trait-method std::net::ToSocketAddrs::to_socket_addrs` | check-prelude std-net-dns-lookup trait-qualified host-port endpoint resolution returning Vec; docs/stdlib/modules/net.md |
 
 ### type
 

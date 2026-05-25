@@ -1637,6 +1637,7 @@ net::SocketAddr
 net::TcpListener
 net::TcpStream
 net::UdpSocket
+net::UdpRecvFrom
 net::UnixListener
 net::UnixStream
 net::Shutdown
@@ -1657,7 +1658,8 @@ net::resolve(endpoint)
 net::resolve_optional(endpoint)
 net::try_resolve(endpoint)
 net::resolve_raw_result(endpoint)
-net::to_socket_addrs(endpoint)
+net::resolve_all(zone, host, port)
+net::to_socket_addrs(zone, endpoint)
 net::listen(addr)
 net::tcp_listen(addr)
 net::tcp_listen_v6(addr)
@@ -1671,7 +1673,7 @@ net::udp_bind_v6(addr)
 net::unix_listen(path)
 net::unix_connect(path)
 
-ToSocketAddrs::to_socket_addrs()
+ToSocketAddrs::to_socket_addrs(zone)
 
 Ipv4Addr::new(a, b, c, d)
 Ipv4Addr::any()
@@ -1715,8 +1717,12 @@ listener.local_addr()
 listener.local_addr_v6()
 listener.is_nonblocking()
 listener.set_nonblocking(enabled)
+listener.close_on_exec()
+listener.set_close_on_exec(enabled)
 listener.reuse_addr()
 listener.set_reuse_addr(enabled)
+listener.reuse_port()
+listener.set_reuse_port(enabled)
 listener.set_accept_timeout(timeout)
 listener.set_accept_timeout_millis(millis)
 listener.accept()
@@ -1737,16 +1743,30 @@ stream.peer_addr()
 stream.peer_addr_v6()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
+stream.close_on_exec()
+stream.set_close_on_exec(enabled)
 stream.nodelay()
 stream.set_nodelay(enabled)
+stream.keepalive()
+stream.set_keepalive(enabled)
+stream.send_buffer_size()
+stream.set_send_buffer_size(value)
+stream.recv_buffer_size()
+stream.set_recv_buffer_size(value)
 stream.set_read_timeout(timeout)
 stream.set_read_timeout_millis(millis)
 stream.set_write_timeout(timeout)
 stream.set_write_timeout_millis(millis)
 stream.shutdown(mode)
 stream.try_read_byte()
+stream.read(output)
 stream.read_exact(output, len)
+stream.read_exact_slice(output)
+stream.read_to_end(zone)
+stream.read_to_string(zone)
+stream.write(values)
 stream.write_all(values)
+stream.flush()
 stream.close()
 
 UdpSocket::bind(addr)
@@ -1760,16 +1780,36 @@ socket.local_addr()
 socket.local_addr_v6()
 socket.is_nonblocking()
 socket.set_nonblocking(enabled)
+socket.close_on_exec()
+socket.set_close_on_exec(enabled)
 socket.reuse_addr()
 socket.set_reuse_addr(enabled)
+socket.reuse_port()
+socket.set_reuse_port(enabled)
+socket.broadcast()
+socket.set_broadcast(enabled)
+socket.send_buffer_size()
+socket.set_send_buffer_size(value)
+socket.recv_buffer_size()
+socket.set_recv_buffer_size(value)
 socket.set_read_timeout(timeout)
 socket.set_read_timeout_millis(millis)
 socket.set_write_timeout(timeout)
 socket.set_write_timeout_millis(millis)
+socket.connect(addr)
+socket.send_to(values, addr)
+socket.send(values)
+socket.recv(output)
+socket.recv_from(output)
+socket.peek_from(output)
 socket.send_byte_to(value, addr)
 socket.recv_byte()
 socket.try_recv_byte()
 socket.close()
+
+recv.len()
+recv.addr()
+recv.source()
 
 UnixListener::bind(path)
 UnixListener::bind_optional(path)
@@ -1779,6 +1819,8 @@ listener.descriptor()
 listener.is_open()
 listener.is_nonblocking()
 listener.set_nonblocking(enabled)
+listener.close_on_exec()
+listener.set_close_on_exec(enabled)
 listener.accept()
 listener.accept_optional()
 listener.try_accept()
@@ -1793,14 +1835,22 @@ stream.descriptor()
 stream.is_open()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
+stream.close_on_exec()
+stream.set_close_on_exec(enabled)
 stream.set_read_timeout(timeout)
 stream.set_read_timeout_millis(millis)
 stream.set_write_timeout(timeout)
 stream.set_write_timeout_millis(millis)
 stream.shutdown(mode)
 stream.try_read_byte()
+stream.read(output)
 stream.read_exact(output, len)
+stream.read_exact_slice(output)
+stream.read_to_end(zone)
+stream.read_to_string(zone)
+stream.write(values)
 stream.write_all(values)
+stream.flush()
 stream.close()
 ```
 
@@ -1814,8 +1864,10 @@ the same Result/optional/raw naming policy. `resolve("host:port")`,
 and bracketed IPv6 endpoint spellings, rejecting malformed endpoints as
 `InvalidInput` before calling the resolver.
 `resolve_optional` and `try_resolve` keep the old absence-only shape.
-`to_socket_addrs(endpoint)` mirrors the `ToSocketAddrs` trait shape, and
-`string` implements that trait for the current single-address resolver seed.
+`resolve_all(zone, host, port)` and `to_socket_addrs(zone, endpoint)` return
+zone-backed `Vec[SocketAddr]` values; the hosted implementation currently
+collects the first IPv4 and first IPv6 address exposed by the resolver.
+`string` implements the matching `ToSocketAddrs` trait shape.
 Matching `*_raw_result` helpers are compatibility-only bridges for
 low-level callers that still need raw integer errors.
 `net::listen`/`net::connect` are TCP-focused module-level `Result` helpers;
@@ -1825,21 +1877,24 @@ use `tcp_listen`/`tcp_connect`, explicit IPv6 `tcp_listen_v6`/
 be explicit at the call site.
 `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, and `UnixStream` are
 owned descriptor-backed handles. They support hosted IPv4/IPv6 TCP
-bind/connect/accept, IPv4/IPv6 UDP bind/send-byte/receive-byte, Unix stream
+bind/connect/accept, IPv4/IPv6 UDP bind/buffer datagrams/source-address receive,
+connected UDP send/receive, Unix stream
 bind/connect/accept, local bound-port and local socket-address lookup,
 borrowed descriptor views, explicit close, nonblocking flags,
-reuse-address helpers for TCP listeners and UDP sockets, TCP nodelay helpers,
+reuse-address/reuse-port helpers, close-on-exec helpers, TCP nodelay and
+keepalive helpers, UDP broadcast, send/receive buffer-size helpers,
 `std::time::Duration` timeout setters with raw millisecond compatibility
 helpers, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
-`read_exact(output, len)` / `write_all(values)` helpers for natural stream
+`read`, `write`, `read_exact(output, len)`, `read_exact_slice(output)`,
+`read_to_end(zone)`, `read_to_string(zone)`, and `write_all(values)` helpers for natural stream
 method syntax. Natural bind/connect/accept/resolve names return
 `Result[..., Error]`; matching `_optional` and `try_*` helpers keep
 compatibility call sites concise when they intentionally discard the reason.
 Host-port `connect_host` first resolves through `resolve`, then delegates to
-`TcpStream::connect`. Buffered datagram APIs, richer socket options beyond the
-first common booleans, UDP source address helpers, multi-address DNS
-iteration, and timeout-specific error results remain roadmap work.
+`TcpStream::connect`. Full `getaddrinfo` iteration, multicast, TTL/hop-limit,
+readiness/poll abstractions, TLS packaging decisions, and timeout-specific
+error results remain roadmap work.
 
 ## IO And Input
 
