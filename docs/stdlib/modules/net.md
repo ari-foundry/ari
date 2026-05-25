@@ -9,7 +9,7 @@ The module has two layers today. Address values are plain Ari source structs:
 `std::os::OwnedFd` internally and expose owned TCP, UDP, and Unix stream
 socket shapes through `TcpListener`, `TcpStream`, `UdpSocket`,
 `UnixListener`, and `UnixStream`. Each successful handle should be closed once
-with `close()` until Ari grows drop-time resource cleanup.
+with `close()` or `close_result()` until Ari grows drop-time resource cleanup.
 
 The API deliberately keeps simple `Option` helpers beside `Result[..., Error]`
 helpers. Use `Option` when absence is enough; use `*_result` when a caller needs
@@ -93,18 +93,27 @@ TcpListener::bind_result(addr)
 listener.descriptor()
 listener.is_open()
 listener.local_port()
+listener.local_port_result()
 listener.local_addr()
+listener.local_addr_result()
 listener.is_nonblocking()
+listener.is_nonblocking_result()
 listener.set_nonblocking(enabled)
+listener.set_nonblocking_result(enabled)
 listener.reuse_addr()
+listener.reuse_addr_result()
 listener.set_reuse_addr(enabled)
+listener.set_reuse_addr_result(enabled)
 listener.set_accept_timeout(timeout)
+listener.set_accept_timeout_result(timeout)
 listener.set_accept_timeout_millis(millis)
+listener.set_accept_timeout_millis_result(millis)
 listener.accept()
 listener.try_accept()
 listener.accept_raw_result()
 listener.accept_result()
 listener.close()
+listener.close_result()
 
 TcpStream::connect(addr)
 TcpStream::try_connect(addr)
@@ -113,20 +122,35 @@ TcpStream::connect_result(addr)
 stream.descriptor()
 stream.is_open()
 stream.local_addr()
+stream.local_addr_result()
 stream.peer_addr()
+stream.peer_addr_result()
 stream.is_nonblocking()
+stream.is_nonblocking_result()
 stream.set_nonblocking(enabled)
+stream.set_nonblocking_result(enabled)
 stream.nodelay()
+stream.nodelay_result()
 stream.set_nodelay(enabled)
+stream.set_nodelay_result(enabled)
 stream.set_read_timeout(timeout)
+stream.set_read_timeout_result(timeout)
 stream.set_read_timeout_millis(millis)
+stream.set_read_timeout_millis_result(millis)
 stream.set_write_timeout(timeout)
+stream.set_write_timeout_result(timeout)
 stream.set_write_timeout_millis(millis)
+stream.set_write_timeout_millis_result(millis)
 stream.shutdown(mode)
+stream.shutdown_result(mode)
 stream.try_read_byte()
+stream.read_byte_result()
 stream.read_exact(output, len)
+stream.read_exact_result(output, len)
 stream.write_all(values)
+stream.write_all_result(values)
 stream.close()
+stream.close_result()
 
 UdpSocket::bind(addr)
 UdpSocket::try_bind(addr)
@@ -135,19 +159,32 @@ UdpSocket::bind_result(addr)
 socket.descriptor()
 socket.is_open()
 socket.local_port()
+socket.local_port_result()
 socket.local_addr()
+socket.local_addr_result()
 socket.is_nonblocking()
+socket.is_nonblocking_result()
 socket.set_nonblocking(enabled)
+socket.set_nonblocking_result(enabled)
 socket.reuse_addr()
+socket.reuse_addr_result()
 socket.set_reuse_addr(enabled)
+socket.set_reuse_addr_result(enabled)
 socket.set_read_timeout(timeout)
+socket.set_read_timeout_result(timeout)
 socket.set_read_timeout_millis(millis)
+socket.set_read_timeout_millis_result(millis)
 socket.set_write_timeout(timeout)
+socket.set_write_timeout_result(timeout)
 socket.set_write_timeout_millis(millis)
+socket.set_write_timeout_millis_result(millis)
 socket.send_byte_to(value, addr)
+socket.send_byte_to_result(value, addr)
 socket.recv_byte()
 socket.try_recv_byte()
+socket.recv_byte_result()
 socket.close()
+socket.close_result()
 
 UnixListener::bind(path)
 UnixListener::try_bind(path)
@@ -156,12 +193,15 @@ UnixListener::bind_result(path)
 listener.descriptor()
 listener.is_open()
 listener.is_nonblocking()
+listener.is_nonblocking_result()
 listener.set_nonblocking(enabled)
+listener.set_nonblocking_result(enabled)
 listener.accept()
 listener.try_accept()
 listener.accept_raw_result()
 listener.accept_result()
 listener.close()
+listener.close_result()
 
 UnixStream::connect(path)
 UnixStream::try_connect(path)
@@ -170,16 +210,27 @@ UnixStream::connect_result(path)
 stream.descriptor()
 stream.is_open()
 stream.is_nonblocking()
+stream.is_nonblocking_result()
 stream.set_nonblocking(enabled)
+stream.set_nonblocking_result(enabled)
 stream.set_read_timeout(timeout)
+stream.set_read_timeout_result(timeout)
 stream.set_read_timeout_millis(millis)
+stream.set_read_timeout_millis_result(millis)
 stream.set_write_timeout(timeout)
+stream.set_write_timeout_result(timeout)
 stream.set_write_timeout_millis(millis)
+stream.set_write_timeout_millis_result(millis)
 stream.shutdown(mode)
+stream.shutdown_result(mode)
 stream.try_read_byte()
+stream.read_byte_result()
 stream.read_exact(output, len)
+stream.read_exact_result(output, len)
 stream.write_all(values)
+stream.write_all_result(values)
 stream.close()
+stream.close_result()
 ```
 
 `TcpStream` and `UnixStream` implement `std::io::Reader` and
@@ -258,6 +309,10 @@ ephemeral port chosen by the OS, or `local_addr()` when the caller needs the
 complete IPv4 `SocketAddr`. `accept`/`try_accept` return `Option[TcpStream]`;
 `accept_result` exposes `Error`, and `accept_raw_result` is the low-level
 compatibility form.
+`local_port_result`, `local_addr_result`, option setter/query `_result`
+methods, and `close_result` preserve invalid-handle and host failures as
+`std::error::Error`; the shorter `Option`/`bool` methods remain compatibility
+helpers for callers that only need success or absence.
 
 `TcpStream` owns a connected TCP descriptor. `connect` and `try_connect` return
 `Option[TcpStream]`; `connect_result` preserves OS error detail as `Error`, and
@@ -270,6 +325,10 @@ or return `false` if the stream closes or errors first. `local_addr()` reports
 the bound local IPv4 socket address after connect or accept. `peer_addr()`
 reports the connected remote IPv4 `SocketAddr`: the listener address on the
 client side and the accepted client address on the server side.
+The `_result` stream methods expose the same operations with `Error` payloads:
+closed handles become `InvalidInput`, shutdown/option/address failures preserve
+host errors, write failures use `BrokenPipe`, and short reads or receive
+sentinels use `UnexpectedEof`.
 
 ## UDP Sockets
 
@@ -284,6 +343,10 @@ The current datagram payload surface is intentionally tiny:
 `try_recv_byte()` converts that shape to `Option[u8]`. Larger buffers,
 source-address reporting, connected UDP, multicast, and IPv6 UDP are future
 slices.
+Use `send_byte_to_result`, `recv_byte_result`, `local_port_result`,
+`local_addr_result`, option setter/query `_result` methods, and `close_result`
+when a caller needs to keep invalid handles, unsupported address families, and
+host socket errors visible.
 
 ## Unix Domain Sockets
 
@@ -297,6 +360,10 @@ same `std::io::Reader` and `std::io::Writer` traits as `TcpStream`, so local
 IPC code can reuse byte-oriented IO helpers. It also has the same
 `write_all(values)` and `read_exact(output, len)` methods as `TcpStream` for
 buffer-style local message tests and tools.
+Unix stream/listener `_result` methods follow the same lifecycle policy as TCP:
+owned handles close exactly once, closed-handle operations return
+`InvalidInput`, and stream read/write/shutdown methods preserve ordinary
+recoverable failures as `Error`.
 
 ## Options
 
@@ -310,6 +377,8 @@ read timeout used by `accept`.
 `std::os::OwnedFd` descriptor flags. They return `Option[bool]` or `bool`
 instead of panicking so invalid or already-closed handles can be handled by
 ordinary control flow.
+`is_nonblocking_result()` and `set_nonblocking_result(enabled)` expose the
+same descriptor flag operations with `Error` payloads.
 
 `TcpListener` and `UdpSocket` expose `reuse_addr()` and
 `set_reuse_addr(enabled)` for the common `SO_REUSEADDR` policy used by
@@ -317,12 +386,12 @@ servers, tests, and restartable tools. `TcpStream` exposes `nodelay()` and
 `set_nodelay(enabled)` for `TCP_NODELAY`, so latency-sensitive protocols can
 disable Nagle buffering without dropping to raw C socket APIs. Query methods
 return `Option[bool]`; setters return `false` for closed handles or platform
-failure.
+failure. The corresponding `_result` methods keep those failures explicit.
 
 Prefer the `Duration` setters in application and library code. The
 `*_timeout_millis(millis)` forms remain available as low-level compatibility
 helpers for FFI-style callers and tests that need to assert the runtime hook
-boundary directly.
+boundary directly. Both timeout setter shapes have `_result` variants.
 
 ## Examples
 
@@ -370,16 +439,19 @@ match net::TcpListener::bind_result(bind_addr) {
   std::Ok(listener) => {
     var server = listener;
     let timeout = time::milliseconds(1000);
-    server.set_accept_timeout(timeout);
-    let port = server.local_port().unwrap();
-    var client = net::TcpStream::connect(net::SocketAddr::localhost(port)).unwrap();
-    var accepted = server.accept().unwrap();
-    client.set_write_timeout(timeout);
-    accepted.set_read_timeout(timeout);
+    server.set_accept_timeout_result(timeout).unwrap();
+    let port = server.local_port_result().unwrap();
+    var client = net::TcpStream::connect_result(net::SocketAddr::localhost(port)).unwrap();
+    var accepted = server.accept_result().unwrap();
+    client.set_write_timeout_result(timeout).unwrap();
+    accepted.set_read_timeout_result(timeout).unwrap();
     var payload = [65u8, 66u8];
-    client.write_all(payload.as_slice());
+    client.write_all_result(payload.as_slice()).unwrap();
     var output = [0u8, 0u8];
-    accepted.read_exact(output.as_slice().as_ptr(), 2);
+    accepted.read_exact_result(output.as_slice().as_ptr(), 2).unwrap();
+    client.close_result().unwrap();
+    accepted.close_result().unwrap();
+    server.close_result().unwrap();
     return ptr_load(output.as_slice().as_ptr()) as i64;
   }
   std::Err(reason) => {
@@ -394,8 +466,11 @@ Send one UDP byte to a loopback socket:
 var server = net::UdpSocket::bind(net::SocketAddr::localhost(0 as u16)).unwrap();
 let port = server.local_port().unwrap();
 var client = net::UdpSocket::bind(net::SocketAddr::localhost(0 as u16)).unwrap();
-client.send_byte_to(42u8, net::SocketAddr::localhost(port));
-return server.recv_byte();
+client.send_byte_to_result(42u8, net::SocketAddr::localhost(port)).unwrap();
+let value = server.recv_byte_result().unwrap();
+client.close_result().unwrap();
+server.close_result().unwrap();
+return value as i64;
 ```
 
 Use a Unix stream socket:
@@ -407,9 +482,12 @@ var listener = net::UnixListener::bind(path).unwrap();
 var client = net::UnixStream::connect(path).unwrap();
 var server = listener.accept().unwrap();
 var payload = [7u8, 8u8];
-client.write_all(payload.as_slice());
+client.write_all_result(payload.as_slice()).unwrap();
 var output = [0u8, 0u8];
-server.read_exact(output.as_slice().as_ptr(), 2);
+server.read_exact_result(output.as_slice().as_ptr(), 2).unwrap();
+client.close_result().unwrap();
+server.close_result().unwrap();
+listener.close_result().unwrap();
 return ptr_load(output.as_slice().as_ptr()) as i64;
 ```
 
@@ -420,13 +498,13 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
 | IP address | Current: `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, constructors, strict and fallible indexed accessors, family predicates, loopback/unspecified checks. |
 | Socket address | Current: `SocketAddr`, `socket_addr`, `localhost`, `ip`, `port`, `with_port`. |
 | DNS lookup | Current hosted IPv4 slice: `lookup_v4`, `lookup_v4_result` with `Error`, `lookup_v4_raw_result` compatibility, `"host:port"` `resolve`/`resolve_result`/`resolve_raw_result`, module-level `to_socket_addrs`, and the `ToSocketAddrs` trait seed over `getaddrinfo`. |
-| TCP listener | Current hosted IPv4 slice: module-level `listen`/`tcp_listen`, `TcpListener::bind`, `try_bind`, `bind_result` with `Error`, `bind_raw_result` compatibility, `local_port`, `local_addr`, accept helpers, descriptor/open helpers, nonblocking and reuse-address setter/query, `Duration` and raw-millisecond accept timeout setters, and explicit close. |
-| TCP stream | Current hosted IPv4 slice: module-level `connect`/`tcp_connect` plus host-port `connect_host`/`tcp_connect_host`, `TcpStream::connect`, `try_connect`, `connect_result` with `Error`, `connect_raw_result` compatibility, `local_addr`, `peer_addr`, descriptor/open helpers, nonblocking and TCP nodelay setter/query, `Duration` and raw-millisecond read/write timeout setters, shutdown, `try_read_byte`, `read_exact`, `write_all`, explicit close, and `std::io::Reader`/`Writer` adapters. |
-| UDP socket | Current hosted IPv4 slice: module-level `udp_bind`, bind helpers with `Error` and raw compatibility forms, local-port and local-address lookup, descriptor/open helpers, nonblocking and reuse-address setter/query, `Duration` and raw-millisecond read/write timeout setters, single-byte `send_byte_to`, `recv_byte`, and `try_recv_byte`. |
-| Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect helpers with `Error` and raw compatibility forms, IO/shutdown plus `Duration` and raw-millisecond timeout setters and `read_exact`/`write_all` buffer helpers. |
-| socket options | Current: nonblocking, read/write timeout, TCP listener/UDP reuse-address, and TCP nodelay helpers; future buffer size, linger, multicast, and close-on-exec-at-creation options. |
-| timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond compatibility helpers; future timeout-specific error results. |
-| shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)` for TCP and Unix streams. |
+| TCP listener | Current hosted IPv4 slice: module-level `listen`/`tcp_listen`, `TcpListener::bind`, `try_bind`, `bind_result` with `Error`, `bind_raw_result` compatibility, `local_port`/`local_port_result`, `local_addr`/`local_addr_result`, accept helpers, descriptor/open helpers, nonblocking and reuse-address setter/query with Result variants, `Duration` and raw-millisecond accept timeout setters with Result variants, and explicit close/close_result. |
+| TCP stream | Current hosted IPv4 slice: module-level `connect`/`tcp_connect` plus host-port `connect_host`/`tcp_connect_host`, `TcpStream::connect`, `try_connect`, `connect_result` with `Error`, `connect_raw_result` compatibility, `local_addr`/`local_addr_result`, `peer_addr`/`peer_addr_result`, descriptor/open helpers, nonblocking and TCP nodelay setter/query with Result variants, `Duration` and raw-millisecond read/write timeout setters with Result variants, shutdown/shutdown_result, `try_read_byte`/`read_byte_result`, `read_exact`/`read_exact_result`, `write_all`/`write_all_result`, explicit close/close_result, and `std::io::Reader`/`Writer` adapters. |
+| UDP socket | Current hosted IPv4 slice: module-level `udp_bind`, bind helpers with `Error` and raw compatibility forms, local-port and local-address lookup with Result variants, descriptor/open helpers, nonblocking and reuse-address setter/query with Result variants, `Duration` and raw-millisecond read/write timeout setters with Result variants, single-byte `send_byte_to`/`send_byte_to_result`, `recv_byte`, `try_recv_byte`/`recv_byte_result`, and close_result. |
+| Unix domain socket | Current hosted stream slice: module-level `unix_listen`/`unix_connect`, `UnixListener` bind/accept and `UnixStream` connect helpers with `Error` and raw compatibility forms, IO/shutdown plus Result variants, `Duration` and raw-millisecond timeout setters with Result variants, and `read_exact`/`write_all` buffer helpers with Result variants. |
+| socket options | Current: nonblocking, read/write timeout, TCP listener/UDP reuse-address, and TCP nodelay helpers with `Option`/`bool` compatibility and `Result` variants; future buffer size, linger, multicast, and close-on-exec-at-creation options. |
+| timeout | Current: preferred `std::time::Duration` read/write/accept timeout setters plus raw millisecond compatibility helpers, all with `Result` variants. |
+| shutdown | Current: `Shutdown::{Read, Write, Both}` and stream `shutdown(mode)`/`shutdown_result(mode)` for TCP and Unix streams. |
 
 ## Current Limits
 
@@ -447,9 +525,10 @@ return ptr_load(output.as_slice().as_ptr()) as i64;
   `*_result` helpers should report `PermissionDenied` or `Unsupported`
   through `std::error::Error`; socket tests treat that as host policy, not a
   language failure.
-- Socket handles are owned descriptor wrappers. Close them once with `close()`;
-  descriptor duplication and richer drop policy should stay aligned with
-  `std::os::OwnedFd`.
+- Socket handles are owned descriptor wrappers. Close them once with `close()`
+  or `close_result()`. A second close through the same handle returns an
+  invalid-handle failure through the Result form; descriptor duplication and
+  richer drop policy should stay aligned with `std::os::OwnedFd`.
 - Text parsing and formatting of addresses are not implemented yet. The
   current constructors use numeric octets/segments so behavior is precise.
 
@@ -495,9 +574,8 @@ addresses.
   policy can express dotted IPv4 and compressed IPv6 cleanly.
 - Add IPv6 TCP and UDP socket handles, UDP source address helpers, and richer
   socket-address reporting.
-- Add Result-returning timeout setters and timeout-specific error categories now
-  that socket construction and accept/connect results use direct `Error`
-  payloads.
+- Add timeout-specific error categories once the runtime can distinguish
+  deadline expiry from ordinary read, write, accept, and connect failures.
 - Add UDP buffer-oriented send and receive helpers, including `recv_from`
   source-address reporting; TCP/Unix stream buffer helpers are available as
   `read_exact` and `write_all`.

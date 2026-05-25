@@ -62,9 +62,11 @@ fn main() -> i64 {
   let maybe_port = server.local_port();
   assert(maybe_port.is_some());
   let port = maybe_port.unwrap();
+  assert(server.local_port_result().unwrap_or(0 as u16) == port);
   let maybe_server_addr = server.local_addr();
   assert(maybe_server_addr.is_some());
   let server_addr = maybe_server_addr.unwrap();
+  assert(server.local_addr_result().is_ok());
   if port > 0 as u16 && server_addr.port() == port && server_addr.is_loopback() {
     score = score + 4;
   }
@@ -77,21 +79,22 @@ fn main() -> i64 {
   }
 
   let timeout = time::milliseconds(1000);
-  if server.set_read_timeout(timeout) &&
-    server.set_read_timeout_millis(1000) &&
-    server.set_reuse_addr(true) &&
-    server.reuse_addr().unwrap_or(false) &&
-    client.set_write_timeout(timeout) &&
-    client.set_reuse_addr(true) &&
-    client.reuse_addr().unwrap_or(false) &&
-    server.set_nonblocking(false) &&
-    client.set_nonblocking(false) &&
-    server.is_nonblocking().is_some() &&
-    client.is_nonblocking().is_some() {
+  if server.set_read_timeout_result(timeout).is_ok() &&
+    server.set_read_timeout_millis_result(1000).is_ok() &&
+    server.set_reuse_addr_result(true).is_ok() &&
+    server.reuse_addr_result().unwrap_or(false) &&
+    client.set_write_timeout_result(timeout).is_ok() &&
+    client.set_reuse_addr_result(true).is_ok() &&
+    client.reuse_addr_result().unwrap_or(false) &&
+    server.set_nonblocking_result(false).is_ok() &&
+    client.set_nonblocking_result(false).is_ok() &&
+    server.is_nonblocking_result().is_ok() &&
+    client.is_nonblocking_result().is_ok() {
     score = score + 528;
   }
 
-  if client.send_byte_to(90u8, net::SocketAddr::localhost(port)) && server.recv_byte() == 90 {
+  if client.send_byte_to_result(90u8, net::SocketAddr::localhost(port)).is_ok() &&
+    server.recv_byte_result().unwrap_or(0u8) == 90u8 {
     score = score + 32;
   }
 
@@ -101,10 +104,14 @@ fn main() -> i64 {
     client_addr.unwrap().port() == client_port.unwrap() {
     score = score + 64;
   }
+  assert(client.local_port_result().is_ok());
+  assert(client.local_addr_result().is_ok());
 
-  if client.close() && server.close() {
+  if client.close_result().is_ok() && server.close_result().is_ok() {
     score = score + 128;
   }
+  assert(client.close_result().is_err());
+  assert(server.close_result().is_err());
 
   assert_eq_i64(score, 1023);
   return score;

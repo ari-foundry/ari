@@ -25,27 +25,30 @@ fn main() -> i64 {
   }
 
   var file = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
-  if file.position() == 0 {
+  if file.position_result().unwrap_or(-1) == 0 {
     score = score + 2;
   }
   if file.read_byte() == 65 {
     score = score + 4;
   }
-  if fs::position(file) == 1 {
+  if fs::position_result(file).unwrap_or(-1) == 1 {
     score = score + 8;
   }
-  if file.seek(2) {
+  if file.seek_result(2).is_ok() {
     score = score + 16;
   }
-  if file.position() == 2 {
+  if file.position_result().unwrap_or(-1) == 2 {
     score = score + 32;
   }
   if file.read_byte() == 67 {
     score = score + 64;
   }
-  if !file.seek(-1) {
+  if file.seek_result(-1).is_err() {
     score = score + 128;
   }
+  let invalid = fs::File::invalid();
+  assert(fs::position_result(invalid).is_err());
+  assert(fs::seek_result(invalid, 0).is_err());
 
   let generic_ok = rewind<std::fs::File>(ref mut file) &&
                    file.position() == 0 &&

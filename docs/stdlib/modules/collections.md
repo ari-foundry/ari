@@ -40,6 +40,20 @@ also implement `ZoneBacked`; `HashMapEntry` and `TreeMapEntry` store the map
 pointer and key only, then recover the growth zone from the backing map with
 `map.zone()` when insertion has to allocate.
 
+## Iteration And Mutation
+
+Collection iterators are lightweight cursors over the collection state at the
+time they are created. Do not mutate a collection while a live iterator over the
+same collection is still being used, unless the method name is itself a
+mutation cursor such as `drain`, `entries_mut`, `values_mut`, or `range_mut`.
+Those cursors own the mutation path they expose and should be consumed before
+normal collection methods are called again.
+
+Linear containers (`Set`, `Deque`, `RingBuffer`, `LinkedList`) iterate in their
+documented storage order. Tree containers iterate by sorted key or value order.
+Hash containers walk currently live hash buckets; that order is stable only for
+an unchanged table and is not insertion order or sorted order.
+
 ## Linear Set
 
 ```ari

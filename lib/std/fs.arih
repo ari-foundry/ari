@@ -233,6 +233,17 @@ pub fn remove_dir_result(path: string) -> std::Result[(), std::error::Error] {
   return std::error::from_raw_result<()>(remove_dir_raw_result(path));
 }
 
+pub fn close_dir_raw_result(dir: Dir) -> std::Result[(), i64] {
+  if !dir.is_open() {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  return unit_raw_result(close_dir(dir));
+}
+
+pub fn close_dir_result(dir: Dir) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(close_dir_raw_result(dir));
+}
+
 fn metadata_from_parts(
   kind: i64,
   size: i64,
@@ -1000,6 +1011,76 @@ pub fn write_bytes(file: File, values: std::Slice[u8]) -> i64 {
   return index;
 }
 
+pub fn close_raw_result(file: File) -> std::Result[(), i64] {
+  if !file.is_open() {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  return unit_raw_result(close(file));
+}
+
+pub fn close_result(file: File) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(close_raw_result(file));
+}
+
+pub fn write_byte_raw_result(file: File, value: u8) -> std::Result[(), i64] {
+  if !file.is_open() {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  return unit_raw_result(write_byte(file, value));
+}
+
+pub fn write_byte_result(file: File, value: u8) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(write_byte_raw_result(file, value));
+}
+
+pub fn write_bytes_raw_result(file: File, values: std::Slice[u8]) -> std::Result[i64, i64] {
+  if !file.is_open() {
+    return std::Err<i64, i64>(invalid_input_error_raw());
+  }
+
+  var index = 0;
+  while index < values.len {
+    match write_byte_raw_result(file, values[index]) {
+      std::Ok(_) => {}
+      std::Err(raw) => {
+        return std::Err<i64, i64>(raw);
+      }
+    }
+    index = index + 1;
+  }
+  return std::Ok<i64, i64>(index);
+}
+
+pub fn write_bytes_result(file: File, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return std::error::from_raw_result<i64>(write_bytes_raw_result(file, values));
+}
+
+pub fn position_raw_result(file: File) -> std::Result[i64, i64] {
+  if !file.is_open() {
+    return std::Err<i64, i64>(invalid_input_error_raw());
+  }
+  let offset = position(file);
+  if offset < 0 {
+    return std::Err<i64, i64>(last_errno_error_raw());
+  }
+  return std::Ok<i64, i64>(offset);
+}
+
+pub fn position_result(file: File) -> std::Result[i64, std::error::Error] {
+  return std::error::from_raw_result<i64>(position_raw_result(file));
+}
+
+pub fn seek_raw_result(file: File, offset: i64) -> std::Result[(), i64] {
+  if !file.is_open() || offset < 0 {
+    return std::Err<(), i64>(invalid_input_error_raw());
+  }
+  return unit_raw_result(seek(file, offset));
+}
+
+pub fn seek_result(file: File, offset: i64) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(seek_raw_result(file, offset));
+}
+
 pub fn try_read_byte(file: File) -> std::Option[u8] {
   let byte = read_byte(file);
   if byte < 0 {
@@ -1336,6 +1417,10 @@ pub impl std::fs::File {
     return close(self);
   }
 
+  fn close_result(self) -> std::Result[(), std::error::Error] {
+    return close_result(self);
+  }
+
   fn read_byte(self) -> i64 {
     return read_byte(self);
   }
@@ -1348,8 +1433,24 @@ pub impl std::fs::File {
     return write_byte(self, value);
   }
 
+  fn write_byte_result(self, value: u8) -> std::Result[(), std::error::Error] {
+    return write_byte_result(self, value);
+  }
+
   fn write_bytes(self, values: std::Slice[u8]) -> i64 {
     return write_bytes(self, values);
+  }
+
+  fn write_bytes_result(self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return write_bytes_result(self, values);
+  }
+
+  fn position_result(self) -> std::Result[i64, std::error::Error] {
+    return position_result(self);
+  }
+
+  fn seek_result(self, position: i64) -> std::Result[(), std::error::Error] {
+    return seek_result(self, position);
   }
 }
 
@@ -1519,6 +1620,10 @@ pub impl std::fs::Dir {
 
   fn close(self) -> bool {
     return close_dir(self);
+  }
+
+  fn close_result(self) -> std::Result[(), std::error::Error] {
+    return close_dir_result(self);
   }
 
   fn next(self, zone: ref mut Zone) -> std::Option[std::string::String] {

@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2562`
+- API entries: `2639`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,19 +32,19 @@ platform notes.
 | `alloc` | 817 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 695 | stable candidate |
-| `hosted` | 863 | platform-backed |
+| `hosted` | 940 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
-| `fn` | 877 |
-| `method` | 1286 |
+| `fn` | 892 |
+| `method` | 1346 |
 | `module` | 39 |
 | `struct` | 153 |
 | `trait` | 39 |
 | `trait-method` | 39 |
-| `type` | 17 |
+| `type` | 19 |
 | `use` | 92 |
 
 ## Modules
@@ -66,7 +66,7 @@ platform notes.
 | `std::env` | `hosted` | 43 |
 | `std::error` | `core` | 37 |
 | `std::fmt` | `core` | 38 |
-| `std::fs` | `hosted` | 168 |
+| `std::fs` | `hosted` | 186 |
 | `std::hash` | `alloc` | 23 |
 | `std::input` | `hosted` | 6 |
 | `std::io` | `hosted` | 66 |
@@ -74,7 +74,7 @@ platform notes.
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
-| `std::net` | `hosted` | 152 |
+| `std::net` | `hosted` | 203 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 43 |
@@ -87,7 +87,7 @@ platform notes.
 | `std::sync` | `hosted` | 130 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
-| `std::thread` | `hosted` | 39 |
+| `std::thread` | `hosted` | 47 |
 | `std::time` | `hosted` | 74 |
 | `std::vec` | `alloc` | 115 |
 | `std::zone` | `alloc` | 21 |
@@ -1583,6 +1583,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::canonicalize_result` | check-prelude std-fs-query-result Error-returning realpath-backed canonicalization helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::close` | check-prelude std-fs-basic file close hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::close_dir` | check-prelude std-fs-read-dir directory close hook; docs/stdlib/modules/fs.md |
+| `fn std::fs::close_dir_raw_result` | check-prelude std-fs-read-dir raw Result-returning directory close compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::close_dir_result` | check-prelude std-fs-read-dir Error-returning directory close helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::close_raw_result` | check-prelude std-fs-basic raw Result-returning file close compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::close_result` | check-prelude std-fs-basic Error-returning file close helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::copy` | check-prelude std-fs-create-truncate-copy source streaming copy helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::copy_raw_result` | check-prelude std-fs-byte-result raw Result-returning streaming copy byte-count compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::copy_result` | check-prelude std-fs-byte-result Result-returning streaming copy byte-count helper with Error payload; docs/stdlib/modules/fs.md |
@@ -1622,6 +1626,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::open_write` | check-prelude std-fs-basic compatibility write wrapper over mode-string open; docs/stdlib/modules/fs.md |
 | `fn std::fs::permissions` | check-prelude std-fs-permissions access permission wrapper; docs/stdlib/modules/fs.md |
 | `fn std::fs::position` | check-prelude std-fs-seek file cursor position hook; docs/stdlib/modules/fs.md |
+| `fn std::fs::position_raw_result` | check-prelude std-fs-seek raw Result-returning file position compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::position_result` | check-prelude std-fs-seek Error-returning file position helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::read` | check-prelude std-fs-create-truncate-copy natural read alias for read_to_string; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_byte` | check-prelude std-fs-basic file byte read hook; docs/stdlib/modules/fs.md |
 | `fn std::fs::read_dir` | check-prelude std-fs-read-dir asserting directory name-list helper; docs/stdlib/modules/fs.md |
@@ -1645,6 +1651,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::rename_raw_result` | check-prelude std-fs-mutation-result raw Result-returning rename compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::rename_result` | check-prelude std-fs-mutation-result Result-returning rename helper with Error payload; docs/stdlib/modules/fs.md |
 | `fn std::fs::seek` | check-prelude std-fs-seek absolute file cursor seek hook; docs/stdlib/modules/fs.md |
+| `fn std::fs::seek_raw_result` | check-prelude std-fs-seek raw Result-returning file seek compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::seek_result` | check-prelude std-fs-seek Error-returning file seek helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::set_mode` | check-prelude std-fs-mode chmod-backed permission-mode mutation helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::set_permissions` | check-prelude std-fs-mode Permissions-to-mode mutation helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::symbolic_link` | check-prelude std-fs-links runtime-backed symbolic-link hook; docs/stdlib/modules/fs.md |
@@ -1674,7 +1682,11 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::fs::try_write` | check-prelude std-fs-read-write Option-returning write byte-count helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write` | check-prelude std-fs-read-write source whole-file truncating write helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_byte` | check-prelude std-fs-basic file byte write hook; docs/stdlib/modules/fs.md |
+| `fn std::fs::write_byte_raw_result` | check-prelude std-fs-basic raw Result-returning file byte write compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::write_byte_result` | check-prelude std-fs-basic Error-returning file byte write helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_bytes` | check-prelude std-fs-basic source byte-slice write helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::write_bytes_raw_result` | check-prelude std-fs-basic raw Result-returning file slice write compatibility helper; docs/stdlib/modules/fs.md |
+| `fn std::fs::write_bytes_result` | check-prelude std-fs-basic Error-returning file slice write helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_raw_result` | check-prelude std-fs-byte-result raw Result-returning whole-file truncating write byte-count compatibility helper; docs/stdlib/modules/fs.md |
 | `fn std::fs::write_result` | check-prelude std-fs-byte-result Result-returning whole-file truncating write byte-count helper with Error payload; docs/stdlib/modules/fs.md |
 
@@ -1683,6 +1695,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | API | Coverage note |
 | --- | --- |
 | `method std::fs::Dir::close` | check-prelude std-fs-read-dir value directory handle close method; docs/stdlib/modules/fs.md |
+| `method std::fs::Dir::close_result` | check-prelude std-fs-read-dir Error-returning directory close method; docs/stdlib/modules/fs.md |
 | `method std::fs::Dir::invalid` | check-prelude std-fs-read-dir invalid directory fallback constructor; docs/stdlib/modules/fs.md |
 | `method std::fs::Dir::is_open` | check-prelude std-fs-read-dir open directory handle predicate; docs/stdlib/modules/fs.md |
 | `method std::fs::Dir::next` | check-prelude std-fs-read-dir value directory handle next-name method; docs/stdlib/modules/fs.md |
@@ -1700,13 +1713,18 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::fs::DirEntry::try_metadata` | check-prelude std-fs-dir-entry-metadata Option-returning target-following directory entry metadata method; docs/stdlib/modules/fs.md |
 | `method std::fs::DirEntry::try_symlink_metadata` | check-prelude std-fs-dir-entry-metadata Option-returning no-follow directory entry metadata method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::close` | check-prelude std-fs-basic value file handle close method; docs/stdlib/modules/fs.md |
+| `method std::fs::File::close_result` | check-prelude std-fs-basic Error-returning file close method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::descriptor` | check-prelude std-os-fd non-owning std::os::Fd view over a file handle; docs/stdlib/modules/fs.md |
 | `method std::fs::File::invalid` | check-prelude std-fs-basic invalid file fallback constructor; docs/stdlib/modules/fs.md |
 | `method std::fs::File::is_open` | check-prelude std-fs-basic open-handle predicate; docs/stdlib/modules/fs.md |
+| `method std::fs::File::position_result` | check-prelude std-fs-seek Error-returning file position method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::read_byte` | check-prelude std-fs-basic value file handle byte read method; docs/stdlib/modules/fs.md |
+| `method std::fs::File::seek_result` | check-prelude std-fs-seek Error-returning file seek method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::try_read_byte` | check-prelude std-fs-try-byte value file handle Option-returning byte read method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::write_byte` | check-prelude std-fs-basic value file handle byte write method; docs/stdlib/modules/fs.md |
+| `method std::fs::File::write_byte_result` | check-prelude std-fs-basic Error-returning file byte write method; docs/stdlib/modules/fs.md |
 | `method std::fs::File::write_bytes` | check-prelude std-fs-basic value file handle slice write method; docs/stdlib/modules/fs.md |
+| `method std::fs::File::write_bytes_result` | check-prelude std-fs-basic Error-returning file slice write method; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::accessed` | check-prelude std-fs-metadata-times access timestamp accessor; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::changed` | check-prelude std-fs-metadata-times status-change timestamp accessor; docs/stdlib/modules/fs.md |
 | `method std::fs::Metadata::file_type` | check-prelude std-fs-metadata file kind accessor; docs/stdlib/modules/fs.md |
@@ -2202,57 +2220,94 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpListener::bind_raw_result` | check-prelude std-net-tcp-loopback raw Result-returning IPv4 TCP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::bind_result` | check-prelude std-net-tcp-loopback Result-returning IPv4 TCP bind helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::close` | check-prelude std-net-tcp-loopback explicit listener descriptor close helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::close_result` | check-prelude std-net-tcp-loopback Error-returning TCP listener close helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::descriptor` | check-prelude std-net-tcp-loopback listener borrowed descriptor view; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::is_nonblocking` | check-prelude std-net-tcp-loopback listener nonblocking descriptor query; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::is_nonblocking_result` | check-prelude std-net-tcp-loopback Error-returning listener nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::is_open` | check-prelude std-net-tcp-loopback listener open predicate; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::local_addr` | check-prelude std-net-tcp-loopback listener bound IPv4 socket-address lookup; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::local_addr_result` | check-prelude std-net-tcp-loopback Error-returning listener bound IPv4 socket-address lookup; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::local_port` | check-prelude std-net-tcp-loopback listener bound-port lookup; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::local_port_result` | check-prelude std-net-tcp-loopback Error-returning listener bound-port lookup; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::reuse_addr` | check-prelude std-net-tcp-loopback listener reuse-address socket option query; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::reuse_addr_result` | check-prelude std-net-tcp-loopback Error-returning listener reuse-address socket option query; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_accept_timeout` | check-prelude std-net-tcp-loopback Duration-based listener accept timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_accept_timeout_millis` | check-prelude std-net-tcp-loopback listener accept timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::set_accept_timeout_millis_result` | check-prelude std-net-tcp-loopback Error-returning listener accept timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::set_accept_timeout_result` | check-prelude std-net-tcp-loopback Error-returning Duration-based listener accept timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_nonblocking` | check-prelude std-net-tcp-loopback listener nonblocking descriptor setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::set_nonblocking_result` | check-prelude std-net-tcp-loopback Error-returning listener nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::set_reuse_addr` | check-prelude std-net-tcp-loopback listener reuse-address socket option setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpListener::set_reuse_addr_result` | check-prelude std-net-tcp-loopback Error-returning listener reuse-address socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::try_accept` | check-prelude std-net-tcp-loopback alias for fallible TCP accept; docs/stdlib/modules/net.md |
 | `method std::net::TcpListener::try_bind` | check-prelude std-net-tcp-loopback alias for fallible TCP bind; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::close` | check-prelude std-net-tcp-loopback explicit stream descriptor close helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::close_result` | check-prelude std-net-tcp-loopback Error-returning TCP stream close helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::connect` | check-prelude std-net-tcp-loopback Option-returning IPv4 TCP connect helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::connect_raw_result` | check-prelude std-net-tcp-loopback raw Result-returning IPv4 TCP connect compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::connect_result` | check-prelude std-net-tcp-loopback Result-returning IPv4 TCP connect helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::descriptor` | check-prelude std-net-tcp-loopback stream borrowed descriptor view; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::is_nonblocking` | check-prelude std-net-tcp-loopback stream nonblocking descriptor query; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::is_nonblocking_result` | check-prelude std-net-tcp-loopback Error-returning stream nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::is_open` | check-prelude std-net-tcp-loopback stream open predicate; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::local_addr` | check-prelude std-net-tcp-loopback stream local IPv4 socket-address lookup; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::local_addr_result` | check-prelude std-net-tcp-loopback Error-returning stream local IPv4 socket-address lookup; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::nodelay` | check-prelude std-net-tcp-loopback TCP nodelay socket option query; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::nodelay_result` | check-prelude std-net-tcp-loopback Error-returning TCP nodelay socket option query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::peer_addr` | check-prelude std-net-tcp-loopback stream peer IPv4 socket-address lookup; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::peer_addr_result` | check-prelude std-net-tcp-loopback Error-returning stream peer IPv4 socket-address lookup; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::read_byte_result` | check-prelude std-net-tcp-loopback Error-returning single-byte stream read helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::read_exact` | check-prelude std-net-tcp-loopback stream buffer read helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::read_exact_result` | check-prelude std-net-tcp-loopback Error-returning stream exact buffer read helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_nodelay` | check-prelude std-net-tcp-loopback TCP nodelay socket option setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_nodelay_result` | check-prelude std-net-tcp-loopback Error-returning TCP nodelay socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_nonblocking` | check-prelude std-net-tcp-loopback stream nonblocking descriptor setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_nonblocking_result` | check-prelude std-net-tcp-loopback Error-returning stream nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_read_timeout` | check-prelude std-net-tcp-loopback Duration-based stream read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_read_timeout_millis` | check-prelude std-net-tcp-loopback stream read timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_read_timeout_millis_result` | check-prelude std-net-tcp-loopback Error-returning stream read timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_read_timeout_result` | check-prelude std-net-tcp-loopback Error-returning Duration-based stream read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_write_timeout` | check-prelude std-net-tcp-loopback Duration-based stream write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_write_timeout_millis` | check-prelude std-net-tcp-loopback stream write timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_write_timeout_millis_result` | check-prelude std-net-tcp-loopback Error-returning stream write timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_write_timeout_result` | check-prelude std-net-tcp-loopback Error-returning Duration-based stream write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::shutdown` | check-prelude std-net-tcp-loopback stream half/full shutdown helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::shutdown_result` | check-prelude std-net-tcp-loopback Error-returning stream shutdown helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::try_connect` | check-prelude std-net-tcp-loopback alias for fallible TCP connect; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::try_read_byte` | check-prelude std-net-tcp-loopback Option-returning single-byte stream read helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::write_all` | check-prelude std-net-tcp-loopback stream buffer write helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::write_all_result` | check-prelude std-net-tcp-loopback Error-returning stream buffer write helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::bind` | check-prelude std-net-udp-socket Option-returning IPv4 UDP bind helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::bind_raw_result` | check-prelude std-net-udp-socket raw Result-returning IPv4 UDP bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::bind_result` | check-prelude std-net-udp-socket Result-returning IPv4 UDP bind helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::close` | check-prelude std-net-udp-socket explicit UDP descriptor close helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::close_result` | check-prelude std-net-udp-socket Error-returning UDP socket close helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::descriptor` | check-prelude std-net-udp-socket UDP borrowed descriptor view; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::is_nonblocking` | check-prelude std-net-udp-socket UDP nonblocking descriptor query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::is_nonblocking_result` | check-prelude std-net-udp-socket Error-returning UDP nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::is_open` | check-prelude std-net-udp-socket UDP open predicate; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_addr` | check-prelude std-net-udp-socket UDP local IPv4 socket-address lookup; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::local_addr_result` | check-prelude std-net-udp-socket Error-returning UDP local IPv4 socket-address lookup; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::local_port` | check-prelude std-net-udp-socket UDP bound-port lookup; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::local_port_result` | check-prelude std-net-udp-socket Error-returning UDP bound-port lookup; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::recv_byte` | check-prelude std-net-udp-socket single-byte UDP datagram receive helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::recv_byte_result` | check-prelude std-net-udp-socket Error-returning single-byte UDP datagram receive helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::reuse_addr` | check-prelude std-net-udp-socket UDP reuse-address socket option query; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::reuse_addr_result` | check-prelude std-net-udp-socket Error-returning UDP reuse-address socket option query; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::send_byte_to` | check-prelude std-net-udp-socket single-byte UDP datagram send helper; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::send_byte_to_result` | check-prelude std-net-udp-socket Error-returning single-byte UDP datagram send helper; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_nonblocking` | check-prelude std-net-udp-socket UDP nonblocking descriptor setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_nonblocking_result` | check-prelude std-net-udp-socket Error-returning UDP nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_read_timeout` | check-prelude std-net-udp-socket Duration-based UDP read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_read_timeout_millis` | check-prelude std-net-udp-socket UDP read timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_read_timeout_millis_result` | check-prelude std-net-udp-socket Error-returning UDP read timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_read_timeout_result` | check-prelude std-net-udp-socket Error-returning Duration-based UDP read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_reuse_addr` | check-prelude std-net-udp-socket UDP reuse-address socket option setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_reuse_addr_result` | check-prelude std-net-udp-socket Error-returning UDP reuse-address socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_write_timeout` | check-prelude std-net-udp-socket Duration-based UDP write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::set_write_timeout_millis` | check-prelude std-net-udp-socket UDP write timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_write_timeout_millis_result` | check-prelude std-net-udp-socket Error-returning UDP write timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UdpSocket::set_write_timeout_result` | check-prelude std-net-udp-socket Error-returning Duration-based UDP write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::try_bind` | check-prelude std-net-udp-socket alias for fallible UDP bind; docs/stdlib/modules/net.md |
 | `method std::net::UdpSocket::try_recv_byte` | check-prelude std-net-udp-socket Option-returning single-byte UDP datagram receive helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::accept` | check-prelude std-net-unix-socket Option-returning Unix stream accept helper; docs/stdlib/modules/net.md |
@@ -2262,29 +2317,43 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::UnixListener::bind_raw_result` | check-prelude std-net-unix-socket raw Result-returning Unix listener bind compatibility helper and restricted-host error bridge; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::bind_result` | check-prelude std-net-unix-socket Result-returning Unix listener bind helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::close` | check-prelude std-net-unix-socket explicit Unix listener close helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixListener::close_result` | check-prelude std-net-unix-socket Error-returning Unix listener close helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::descriptor` | check-prelude std-net-unix-socket Unix listener borrowed descriptor view; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::is_nonblocking` | check-prelude std-net-unix-socket Unix listener nonblocking descriptor query; docs/stdlib/modules/net.md |
+| `method std::net::UnixListener::is_nonblocking_result` | check-prelude std-net-unix-socket Error-returning Unix listener nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::is_open` | check-prelude std-net-unix-socket Unix listener open predicate; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::set_nonblocking` | check-prelude std-net-unix-socket Unix listener nonblocking descriptor setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixListener::set_nonblocking_result` | check-prelude std-net-unix-socket Error-returning Unix listener nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::try_accept` | check-prelude std-net-unix-socket alias for fallible Unix accept; docs/stdlib/modules/net.md |
 | `method std::net::UnixListener::try_bind` | check-prelude std-net-unix-socket alias for fallible Unix bind; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::close` | check-prelude std-net-unix-socket explicit Unix stream close helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::close_result` | check-prelude std-net-unix-socket Error-returning Unix stream close helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::connect` | check-prelude std-net-unix-socket Option-returning Unix stream connect helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::connect_raw_result` | check-prelude std-net-unix-socket raw Result-returning Unix stream connect compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::connect_result` | check-prelude std-net-unix-socket Result-returning Unix stream connect helper with Error payload; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::descriptor` | check-prelude std-net-unix-socket Unix stream borrowed descriptor view; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::is_nonblocking` | check-prelude std-net-unix-socket Unix stream nonblocking descriptor query; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::is_nonblocking_result` | check-prelude std-net-unix-socket Error-returning Unix stream nonblocking descriptor query; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::is_open` | check-prelude std-net-unix-socket Unix stream open predicate; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::read_byte_result` | check-prelude std-net-unix-socket Error-returning single-byte Unix stream read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::read_exact` | check-prelude std-net-unix-socket Unix stream buffer read helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::read_exact_result` | check-prelude std-net-unix-socket Error-returning Unix stream exact buffer read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::set_nonblocking` | check-prelude std-net-unix-socket Unix stream nonblocking descriptor setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::set_nonblocking_result` | check-prelude std-net-unix-socket Error-returning Unix stream nonblocking descriptor setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::set_read_timeout` | check-prelude std-net-unix-socket Duration-based Unix stream read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::set_read_timeout_millis` | check-prelude std-net-unix-socket Unix stream read timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::set_read_timeout_millis_result` | check-prelude std-net-unix-socket Error-returning Unix stream read timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::set_read_timeout_result` | check-prelude std-net-unix-socket Error-returning Duration-based Unix stream read timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::set_write_timeout` | check-prelude std-net-unix-socket Duration-based Unix stream write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::set_write_timeout_millis` | check-prelude std-net-unix-socket Unix stream write timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::set_write_timeout_millis_result` | check-prelude std-net-unix-socket Error-returning Unix stream write timeout setter; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::set_write_timeout_result` | check-prelude std-net-unix-socket Error-returning Duration-based Unix stream write timeout setter; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::shutdown` | check-prelude std-net-unix-socket Unix stream half/full shutdown helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::shutdown_result` | check-prelude std-net-unix-socket Error-returning Unix stream shutdown helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::try_connect` | check-prelude std-net-unix-socket alias for fallible Unix connect; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::try_read_byte` | check-prelude std-net-unix-socket Option-returning single-byte Unix stream read helper; docs/stdlib/modules/net.md |
 | `method std::net::UnixStream::write_all` | check-prelude std-net-unix-socket Unix stream buffer write helper; docs/stdlib/modules/net.md |
+| `method std::net::UnixStream::write_all_result` | check-prelude std-net-unix-socket Error-returning Unix stream buffer write helper; docs/stdlib/modules/net.md |
 
 ### module
 
@@ -3319,9 +3388,12 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::thread::is_join_error` | check-prelude std-thread-basic join sentinel helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::is_main` | check-prelude std-thread-basic source main-thread predicate; docs/stdlib/modules/thread.md |
 | `fn std::thread::join` | check-prelude std-thread-basic thread join hook; docs/stdlib/modules/thread.md |
+| `fn std::thread::join_result` | check-prelude std-thread-basic Result-returning thread join helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::sleep` | check-prelude std-thread-runtime-helpers duration sleep convenience wrapper; docs/stdlib/modules/thread.md |
 | `fn std::thread::spawn` | check-prelude std-thread-basic function-pointer spawn hook; docs/stdlib/modules/thread.md |
 | `fn std::thread::spawn_configured` | check-prelude std-thread-builder builder-backed configured spawn hook; docs/stdlib/modules/thread.md |
+| `fn std::thread::spawn_configured_result` | check-prelude std-thread-builder Result-returning configured thread spawn helper; docs/stdlib/modules/thread.md |
+| `fn std::thread::spawn_result` | check-prelude std-thread-basic Result-returning thread spawn helper; docs/stdlib/modules/thread.md |
 | `fn std::thread::thread_local[T]` | check-prelude std-thread-local default-capacity thread-local handle constructor; docs/stdlib/modules/thread.md |
 | `fn std::thread::thread_local_with_capacity[T]` | check-prelude std-thread-local explicit-capacity thread-local handle constructor; docs/stdlib/modules/thread.md |
 | `fn std::thread::yield_now` | check-prelude std-thread-basic scheduler yield hook; docs/stdlib/modules/thread.md |
@@ -3335,13 +3407,16 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::thread::Builder::name` | check-prelude std-thread-builder builder name setter; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::new` | check-prelude std-thread-builder builder constructor; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::spawn` | check-prelude std-thread-builder builder spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::Builder::spawn_result` | check-prelude std-thread-builder Result-returning builder spawn helper; docs/stdlib/modules/thread.md |
 | `method std::thread::Builder::stack_size` | check-prelude std-thread-builder builder stack-size setter; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::id` | check-prelude std-thread-basic handle id accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::invalid` | check-prelude std-thread-basic invalid handle sentinel; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::is_finished` | check-prelude std-thread-builder advisory handle completion predicate; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::is_valid` | check-prelude std-thread-basic handle validity predicate; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::join` | check-prelude std-thread-basic handle join helper; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::join_result` | check-prelude std-thread-basic Result-returning handle join helper; docs/stdlib/modules/thread.md |
 | `method std::thread::Thread::spawn` | check-prelude std-thread-basic associated function-pointer spawn helper; docs/stdlib/modules/thread.md |
+| `method std::thread::Thread::spawn_result` | check-prelude std-thread-basic associated Result-returning spawn helper; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::capacity` | check-prelude std-thread-local thread-local slot capacity accessor; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::get` | check-prelude std-thread-local current-thread shared value view; docs/stdlib/modules/thread.md |
 | `method std::thread::ThreadLocal[T]::get_mut` | check-prelude std-thread-local current-thread mutable value view; docs/stdlib/modules/thread.md |
@@ -3366,6 +3441,13 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::thread::Builder` | check-prelude std-thread-builder thread builder options handle; docs/stdlib/modules/thread.md |
 | `struct std::thread::Thread` | check-prelude std-thread-basic spawn/join handle; docs/stdlib/modules/thread.md |
 | `struct std::thread::ThreadLocal[T]` | check-prelude std-thread-local explicit thread-local storage handle; docs/stdlib/modules/thread.md |
+
+### type
+
+| API | Coverage note |
+| --- | --- |
+| `type std::thread::Error` | check-prelude std-thread-basic shared thread error alias; docs/stdlib/modules/thread.md |
+| `type std::thread::ErrorKind` | check-prelude std-thread-basic shared thread error-kind alias; docs/stdlib/modules/thread.md |
 
 ## `std::time`
 

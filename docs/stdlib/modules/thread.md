@@ -14,8 +14,12 @@ rules before Ari can make that surface safe. Shared-state primitives live in
 ## API
 
 ```ari
+thread::Error
+thread::ErrorKind
 thread::spawn(entry: fn() -> i64) -> Thread
+thread::spawn_result(entry: fn() -> i64) -> Result[Thread, thread::Error]
 thread::join(thread: Thread) -> i64
+thread::join_result(thread: Thread) -> Result[i64, thread::Error]
 thread::is_finished(thread: Thread) -> bool
 thread::yield_now() -> void
 thread::sleep(duration: std::time::Duration) -> void
@@ -25,15 +29,18 @@ thread::available_parallelism() -> i64
 thread::is_join_error(status: i64) -> bool
 thread::builder() -> Builder
 thread::spawn_configured(entry: fn() -> i64, name: string, stack_size: i64) -> Thread
+thread::spawn_configured_result(entry: fn() -> i64, name: string, stack_size: i64) -> Result[Thread, thread::Error]
 thread::thread_local<T>(ref mut Zone) -> ThreadLocal[T]
 thread::thread_local_with_capacity<T>(ref mut Zone, capacity: i64) -> ThreadLocal[T]
 
 Thread::spawn(entry: fn() -> i64) -> Thread
+Thread::spawn_result(entry: fn() -> i64) -> Result[Thread, thread::Error]
 Thread::invalid() -> Thread
 thread.id() -> i64
 thread.is_valid() -> bool
 thread.is_finished() -> bool
 thread.join() -> i64
+thread.join_result() -> Result[i64, thread::Error]
 
 Builder::new() -> Builder
 builder.name(value: string) -> Builder
@@ -41,6 +48,7 @@ builder.stack_size(bytes: i64) -> Builder
 builder.configured_name() -> string
 builder.configured_stack_size() -> i64
 builder.spawn(entry: fn() -> i64) -> Thread
+builder.spawn_result(entry: fn() -> i64) -> Result[Thread, thread::Error]
 
 ThreadLocal::new<T>(ref mut Zone) -> ThreadLocal[T]
 ThreadLocal::with_capacity<T>(ref mut Zone, capacity: i64) -> ThreadLocal[T]
@@ -64,6 +72,11 @@ runtime id. Join a native handle at most once. `join(thread)` waits for the
 entry result and returns `-1` on join failure or for an invalid handle; use
 `is_join_error(status)` for that sentinel. A successful worker may also return
 `-1`, so typed thread results remain future work.
+`join_result(thread)` and `thread.join_result()` are the recoverable forms for
+ordinary handle misuse and host join failure. Invalid handles return
+`Error(InvalidInput)`. The current runtime still reports a worker result of
+`-1` with the same sentinel as a join failure, so `join_result` treats negative
+status as `Error(Other)` until Ari has a distinct thread status type.
 
 `is_finished(thread)` is an advisory completion predicate. On the current
 pthread-backed LLVM host it treats invalid handles as finished and asks
@@ -77,6 +90,10 @@ backend when `stack_size > 0`. Non-empty names are passed to
 `pthread_setname_np` after successful creation as a best-effort host hint; Linux
 thread names are short and rejected names do not make spawn fail. Plain
 `thread::spawn` remains the zero-option helper.
+`spawn_result`, `spawn_configured_result`, `Thread::spawn_result`, and
+`Builder::spawn_result` turn invalid returned handles into `Error(Other)`.
+The raw `spawn` forms are kept for compatibility with the existing sentinel
+style.
 
 `yield_now()` asks the host scheduler to let another runnable thread make
 progress. It is only a hint and does not create a synchronization boundary.
@@ -124,21 +141,22 @@ fn main() -> i64 {
   let handle = thread::builder()
     .name("worker")
     .stack_size(0)
-    .spawn(worker);
+    .spawn_result(worker);
 
-  if !handle.is_valid() {
+  if handle.is_err() {
     return 1;
   }
-  if handle.is_finished() {
+  let joined = handle.unwrap();
+  if joined.is_finished() {
     // Advisory only. Always join to collect the result.
   }
 
-  let child_id = handle.id();
-  let result = handle.join();
-  if thread::is_join_error(result) {
+  let child_id = joined.id();
+  let result = joined.join_result();
+  if result.is_err() {
     return 2;
   }
-  if result != child_id {
+  if result.unwrap() != child_id {
     return 3;
   }
 
@@ -151,8 +169,9 @@ fn main() -> i64 {
 - Thread entry is a plain `fn() -> i64`, not a closure with captured state.
 - `Thread` is a value handle. Do not join the same copied native handle more
   than once.
-- Join failure is represented by `-1` until Ari has a richer thread result or
-  status type.
+- Join failure is represented by `-1` in the compatibility API; `join_result`
+  converts invalid handles to `InvalidInput` and negative join status to
+  `Other` until Ari has a richer thread result or status type.
 - `is_finished` is advisory and backend-specific. It should be used for status
   checks, not resource reclamation.
 - `Builder` options are implemented on the LLVM/Linux pthread backend. Other
@@ -168,14 +187,15 @@ fn main() -> i64 {
 
 - `tests/cases/standard-library/ok/thread/std-thread-basic.ari` checks
   main-thread identity, function-pointer spawn, child thread ids, join result
-  propagation, invalid-handle sentinels, method wrappers, root `Thread`, and
-  scheduler yield lowering.
+  propagation, invalid-handle sentinels, Result-returning spawn/join helpers,
+  method wrappers, root `Thread`, and scheduler yield lowering.
 - `tests/cases/standard-library/ok/thread/std-thread-runtime-helpers.ari`
   checks `available_parallelism`, `thread::sleep`, child thread use of both
   helpers, and runtime hooks they lower through.
 - `tests/cases/standard-library/ok/thread/std-thread-builder.ari` checks the
   `Builder` method surface, configured pthread spawn hook, stack-size lowering,
-  thread-name hook, and the advisory `is_finished` hook.
+  thread-name hook, Result-returning builder spawn, raw builder spawn
+  compatibility, and the advisory `is_finished` hook.
 - `tests/cases/standard-library/ok/thread/std-thread-local.ari` checks
   explicit `ThreadLocal[T]` construction, current-thread get/set/mutable
   access, lazy initialization, removal, root alias coverage, and zone-backed

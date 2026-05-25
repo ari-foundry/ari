@@ -58,39 +58,42 @@ fn main() -> i64 {
   }
 
   let timeout = time::milliseconds(1000);
-  if listener.set_nonblocking(false) &&
-    client.set_nonblocking(false) &&
-    server.set_nonblocking(false) &&
-    client.set_read_timeout(timeout) &&
-    client.set_write_timeout(timeout) &&
-    server.set_read_timeout(timeout) &&
-    server.set_write_timeout(timeout) &&
-    client.set_read_timeout_millis(1000) {
+  if listener.set_nonblocking_result(false).is_ok() &&
+    client.set_nonblocking_result(false).is_ok() &&
+    server.set_nonblocking_result(false).is_ok() &&
+    client.set_read_timeout_result(timeout).is_ok() &&
+    client.set_write_timeout_result(timeout).is_ok() &&
+    server.set_read_timeout_result(timeout).is_ok() &&
+    server.set_write_timeout_result(timeout).is_ok() &&
+    client.set_read_timeout_millis_result(1000).is_ok() {
     score = score + 8;
   }
 
-  if client.write_byte(81u8) && server.read_byte() == 81 {
+  if client.write_byte(81u8) && server.read_byte_result().unwrap_or(0u8) == 81u8 {
     score = score + 16;
   }
 
   var reply = [82u8, 83u8];
-  if server.write_all(reply.as_slice()) {
+  if server.write_all_result(reply.as_slice()).is_ok() {
     var output = [0u8, 0u8];
     let output_raw = output.as_slice().as_ptr();
-    if client.read_exact(output_raw, 2) {
+    if client.read_exact_result(output_raw, 2).is_ok() {
       if ptr_load(output_raw) == 82u8 && ptr_load(ptr_add(output_raw, 1)) == 83u8 {
         score = score + 32;
       }
     }
   }
 
-  if client.shutdown(net::Write) {
+  if client.shutdown_result(net::Write).is_ok() {
     score = score + 64;
   }
 
-  if server.close() && client.close() && listener.close() && fs::remove(path) {
+  if server.close_result().is_ok() && client.close_result().is_ok() && listener.close_result().is_ok() && fs::remove(path) {
     score = score + 128;
   }
+  assert(server.close_result().is_err());
+  assert(client.close_result().is_err());
+  assert(listener.close_result().is_err());
 
   assert_eq_i64(score, 255);
   return score;

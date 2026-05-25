@@ -1,6 +1,9 @@
 // Small thread helpers. The first runtime-backed slice deliberately accepts a
 // plain function pointer so thread entry does not hide capture or ownership
 // transfer rules behind a closure-like surface.
+pub type Error = std::error::Error;
+pub type ErrorKind = std::error::Kind;
+
 pub struct Thread {
   native: i64,
   id: i64,
@@ -35,6 +38,14 @@ pub extern "ari" fn available_parallelism() -> i64 = "ari_builtin_thread_availab
 
 pub fn builder() -> std::thread::Builder {
   return std::thread::Builder::new();
+}
+
+fn invalid_input_error() -> std::error::Error {
+  return std::error::new(std::error::InvalidInput);
+}
+
+fn other_error() -> std::error::Error {
+  return std::error::new(std::error::Other);
 }
 
 fn thread_local_slot[T](state: ptr std::thread::ThreadLocalState[T], index: i64) -> ptr std::thread::ThreadLocalSlot[T] {
@@ -114,6 +125,37 @@ pub fn is_join_error(status: i64) -> bool {
   return status < 0;
 }
 
+pub fn spawn_result(entry: fn() -> i64) -> std::Result[std::thread::Thread, std::error::Error] {
+  let thread = std::thread::spawn(entry);
+  if thread.is_valid() {
+    return std::Ok<std::thread::Thread, std::error::Error>(thread);
+  }
+  return std::Err<std::thread::Thread, std::error::Error>(std::thread::other_error());
+}
+
+pub fn spawn_configured_result(
+  entry: fn() -> i64,
+  name: string,
+  stack_size: i64
+) -> std::Result[std::thread::Thread, std::error::Error] {
+  let thread = std::thread::spawn_configured(entry, name, stack_size);
+  if thread.is_valid() {
+    return std::Ok<std::thread::Thread, std::error::Error>(thread);
+  }
+  return std::Err<std::thread::Thread, std::error::Error>(std::thread::other_error());
+}
+
+pub fn join_result(thread: std::thread::Thread) -> std::Result[i64, std::error::Error] {
+  if !thread.is_valid() {
+    return std::Err<i64, std::error::Error>(std::thread::invalid_input_error());
+  }
+  let status = std::thread::join(thread);
+  if std::thread::is_join_error(status) {
+    return std::Err<i64, std::error::Error>(std::thread::other_error());
+  }
+  return std::Ok<i64, std::error::Error>(status);
+}
+
 pub impl std::thread::Builder {
   fn new() -> std::thread::Builder {
     return std::thread::Builder { name: "", stack_size_bytes: 0 };
@@ -139,6 +181,10 @@ pub impl std::thread::Builder {
   fn spawn(self: ref Self, entry: fn() -> i64) -> std::thread::Thread {
     return std::thread::spawn_configured(entry, self.name, self.stack_size_bytes);
   }
+
+  fn spawn_result(self: ref Self, entry: fn() -> i64) -> std::Result[std::thread::Thread, std::error::Error] {
+    return std::thread::spawn_configured_result(entry, self.name, self.stack_size_bytes);
+  }
 }
 
 pub impl std::thread::Thread {
@@ -148,6 +194,10 @@ pub impl std::thread::Thread {
 
   fn spawn(entry: fn() -> i64) -> Thread {
     return std::thread::spawn(entry);
+  }
+
+  fn spawn_result(entry: fn() -> i64) -> std::Result[Thread, std::error::Error] {
+    return std::thread::spawn_result(entry);
   }
 
   fn id(self: ref Self) -> i64 {
@@ -165,6 +215,10 @@ pub impl std::thread::Thread {
 
   fn join(self) -> i64 {
     return std::thread::join(self);
+  }
+
+  fn join_result(self) -> std::Result[i64, std::error::Error] {
+    return std::thread::join_result(self);
   }
 }
 
