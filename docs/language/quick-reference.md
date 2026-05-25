@@ -249,7 +249,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | sync | `AtomicI64::new(value)`, `AtomicBool::new(false)`, `AtomicUsize::new(0u64)`, `AtomicPtr::new<T>(ptr)`, `.load_order(sync::Acquire)`, `.store_order(value, sync::Release)`, `.fetch_add(amount)`, `.compare_exchange(expected, replacement)` |
 | locks/channels | `Mutex::new()`, `.lock()`, `.unlock()`, `RwLock::new()`, `.read_lock()`, `.read_unlock()`, `.write_lock()`, `.write_unlock()`, `Once::new()`, `.call_once(init)`, `OnceLock::new<T>()`, `Condvar::new()`, `Barrier::new(parties)`, `sync::channel<T>(ref mut zone)` |
 | input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(&mut zone)` |
-| raw IO | `io::Reader`, `io::Writer`, `io::Seek`, `io::BufReader`, `io::BufWriter`, `io::cursor(bytes)`, `io::read_exact`, `io::stdout()`, `io::stderr()`, `io::write_all`, `io::flush`, `io::write_bytes`, `io::newline` |
+| raw IO | `io::Reader`, `io::Writer`, `io::Seek`, `io::BufReader`, `io::BufWriter`, `io::cursor(bytes)`, `io::read_exact`, `io::read_line_from`, `io::read_to_string`, `io::stdout()`, `io::stderr()`, `io::write`, `io::write_all`, `io::flush`, `io::print_text`, `io::eprintln_text`, `io::write_bytes`, `io::newline` |
 | layout | `size_of<T>()`, `align_of<T>()` |
 | raw pointers | `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `mem::copy_bytes`, `mem::move_bytes`, `mem::set_bytes` |
 | replace/swap | `mem::replace(&mut place, value)`, `mem::swap(&mut a, &mut b)` |

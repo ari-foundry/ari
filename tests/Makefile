@@ -768,8 +768,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-read-to-string.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-read-to-string.ll
 	grep -q '_ARNv3std2io33read_to_string__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-read-to-string.ll
 	grep -q '_ARNv3std2io53read_to_string__G_std__io__BufReader_std__io__Cursor_' $(BUILD_DIR)/prelude/std-io-read-to-string.ll
+	grep -q '_ARNv3std2io33read_line_from__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-read-to-string.ll
+	grep -q '_ARNv3std2io43read_to_string_unchecked__G_std__io__Cursor' $(BUILD_DIR)/prelude/std-io-read-to-string.ll
+	grep -q 'std__io__Cursor8inherent9read_line' $(BUILD_DIR)/prelude/std-io-read-to-string.ll
+	grep -q 'std__io__Cursor8inherent14read_to_string' $(BUILD_DIR)/prelude/std-io-read-to-string.ll
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-read-to-string.ari -o $(BUILD_DIR)/prelude/std-io-read-to-string.elf
-	$(BUILD_DIR)/prelude/std-io-read-to-string.elf; code=$$?; test $$code -eq 4
+	$(BUILD_DIR)/prelude/std-io-read-to-string.elf; code=$$?; test $$code -eq 6
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-copy.ll
 	grep -q '_ARNv3std2io36copy__G_std__io__Cursor_MemoryWriter' $(BUILD_DIR)/prelude/std-io-copy.ll
 	grep -q '_ARNv3std2io40try_copy__G_std__io__Cursor_MemoryWriter' $(BUILD_DIR)/prelude/std-io-copy.ll
@@ -793,6 +797,18 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-io-stderr.elf >$(BUILD_DIR)/prelude/std-io-stderr.out 2>$(BUILD_DIR)/prelude/std-io-stderr.err; code=$$?; test $$code -eq 3
 	grep -qx "OK" $(BUILD_DIR)/prelude/std-io-stderr.out
 	grep -qx "ERR" $(BUILD_DIR)/prelude/std-io-stderr.err
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-natural-api.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q '_ARNv3std2io24write__G_std__io__Stdout' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q 'std__io__Stdout8inherent5write' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q 'std__io__Stderr8inherent5write' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q '_ARNv3std2io10print_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q '_ARNv3std2io12println_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q '_ARNv3std2io11eprint_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	grep -q '_ARNv3std2io13eprintln_text' $(BUILD_DIR)/prelude/std-io-natural-api.ll
+	$(TARGET) tests/cases/standard-library/ok/io/std-io-natural-api.ari -o $(BUILD_DIR)/prelude/std-io-natural-api.elf
+	$(BUILD_DIR)/prelude/std-io-natural-api.elf >$(BUILD_DIR)/prelude/std-io-natural-api.out 2>$(BUILD_DIR)/prelude/std-io-natural-api.err; code=$$?; test $$code -eq 45
+	grep -qx "GWMPL" $(BUILD_DIR)/prelude/std-io-natural-api.out
+	grep -qx "EARS" $(BUILD_DIR)/prelude/std-io-natural-api.err
 	$(TARGET) tests/cases/standard-library/ok/io/std-io-pipe.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-pipe.ll
 	grep -F -q "std__io__PipeReader" $(BUILD_DIR)/prelude/std-io-pipe.ll
 	grep -q "@ari_builtin_os_read_byte" $(BUILD_DIR)/prelude/std-io-pipe.ll

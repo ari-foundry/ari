@@ -16,9 +16,9 @@ impl io::Writer for MemoryWriter {
     return true;
   }
 
-  fn flush(self: ref mut Self) -> bool {
+  fn flush(self: ref mut Self) -> Result[(), error::Error] {
     self.flushed = true;
-    return true;
+    return Ok(());
   }
 }
 

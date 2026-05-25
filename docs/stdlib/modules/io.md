@@ -2,19 +2,21 @@
 
 `std::io` is the byte-oriented process IO module. It keeps the raw runtime
 hooks visible, then layers a small Ari-source interface over them so code can
-talk about readers, writers, exact reads, whole-stream reads, whole-stream
-string reads, stream copies, whole-slice writes, buffered wrappers, and
+talk about readers, writers, exact reads, line reads, whole-stream reads,
+whole-stream string reads, stream copies, whole-slice writes, text output,
+buffered wrappers, and
 seekable streams with natural names.
 
 Use `std::input` for ordinary stdin line/byte helpers, `std::fs` for files, and
 `std::io` when you want the lower-level IO contracts directly.
 
 Fallible helpers use natural names and return `Result[..., Error]`:
-`read_exact`, `copy`, `write_all`, and `flush`. Compatibility helpers that
-discard error details use explicit suffixes such as `_unchecked`, `_optional`,
-or `_or`. The `Reader`/`Writer` trait methods still use the older scalar/bool
-contracts because they mirror the current runtime hooks; the module-level
-helpers are the default recoverable API.
+`read_exact`, `read_line_from`, `read_to_string`, `copy`, `write`, `write_all`,
+and `flush`. Compatibility helpers that discard error details use explicit
+suffixes such as `_unchecked`, `_optional`, or `_or`. `Reader::read_byte` and
+`Writer::write_byte` still use the older scalar/bool contracts because they
+mirror the current runtime hooks; higher-level helpers are the default
+recoverable API.
 
 Migration note: older snapshots exposed these recoverable helpers as
 `read_exact_result`, `copy_result`, `write_all_result`, and `flush_result`,
@@ -25,6 +27,8 @@ natural names and update bool-only call sites to the `_unchecked` names.
 
 Implemented now:
 
+- stdout/stderr text helpers: `print_text`, `println_text`, `eprint_text`,
+  `eprintln_text`
 - raw stdout/scalar hooks: `write_i64`, `write_u64`, `write_bool`,
   `write_byte`, `write_bytes`, `newline`
 - raw stdin/line hooks: `read_byte`, `read_line`, `read_line_owned`
@@ -35,10 +39,11 @@ Implemented now:
   `Seek`
 - source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
   `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
-- direct error helpers: `read_exact`, `copy`, `write_all`, `flush`
-- collection helpers: `read_all`, `read_to_string`
-- compatibility helpers: `read_exact_unchecked`, `try_copy`,
-  `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`
+- direct error helpers: `read_exact`, `read_line_from`, `read_to_string`,
+  `copy`, `write`, `write_all`, `flush`
+- collection helper: `read_all`
+- compatibility helpers: `read_exact_unchecked`, `read_to_string_unchecked`,
+  `try_copy`, `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`
 
 Roadmap, not implemented yet:
 
@@ -58,7 +63,7 @@ pub trait Reader {
 
 pub trait Writer {
   fn write_byte(self: ref mut Self, value: u8) -> bool;
-  fn flush(self: ref mut Self) -> bool;
+  fn flush(self: ref mut Self) -> Result[(), Error];
 }
 
 pub trait Seek {
@@ -93,19 +98,30 @@ io::cursor(values: Slice[u8]) -> io::Cursor
 io::buf_reader[R: Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::buf_writer[W: Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
 io::BufReader::new<R>(inner: R, buffer: Slice[u8]) -> io::BufReader[R]
+reader.read_line(zone) -> Result[String, Error]
+reader.read_to_string(zone) -> Result[String, Error]
 io::BufWriter::new<W>(inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
+writer.write(values) -> Result[i64, Error]
+writer.write_all(values) -> Result[(), Error]
 
 io::read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> Result[(), Error]
 io::read_exact_unchecked[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::Vec[u8]
-io::read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::string::String
+io::read_line_from[R: Reader](zone: ref mut Zone, reader: ref mut R) -> Result[String, Error]
+io::read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> Result[String, Error]
+io::read_to_string_unchecked[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::string::String
 io::copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> Result[i64, Error]
 io::try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> Option[i64]
 io::copy_unchecked[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> bool
+io::write[W: Writer](writer: ref mut W, values: Slice[u8]) -> Result[i64, Error]
 io::write_all[W: Writer](writer: ref mut W, values: Slice[u8]) -> Result[(), Error]
 io::write_all_unchecked[W: Writer](writer: ref mut W, values: Slice[u8]) -> bool
 io::flush[W: Writer](writer: ref mut W) -> Result[(), Error]
 io::flush_unchecked[W: Writer](writer: ref mut W) -> bool
+io::print_text(text) -> Result[(), Error]
+io::println_text(text) -> Result[(), Error]
+io::eprint_text(text) -> Result[(), Error]
+io::eprintln_text(text) -> Result[(), Error]
 
 io::write_i64(value: i64) -> i64
 io::write_u64(value: u64) -> i64
@@ -137,25 +153,42 @@ the bool compatibility wrapper over that result shape.
 `read_all(ref mut zone, ref mut reader)` repeatedly reads until EOF and returns
 a zone-backed `Vec[u8]`. Use it when the caller wants the whole remaining byte
 stream and can make allocation explicit through the zone.
+`read_line_from(ref mut zone, ref mut reader)` reads through the first newline
+or EOF and returns a zone-backed `String`. EOF after some bytes is success;
+EOF before any bytes returns an empty `String`. Reader methods named
+`read_line(zone)` are available on `Stdin`, `Cursor`, `BufReader`, and
+`PipeReader`.
 `read_to_string(ref mut zone, ref mut reader)` follows the same EOF rule but
-collects directly into an owned `std::string::String`. Ari strings are
-byte-backed, so this helper does not validate UTF-8; call `text.try_utf8()`
-when a caller needs a validated UTF-8 view.
+collects the whole remaining stream into an owned `std::string::String` inside
+`Result`. Ari strings are byte-backed, so this helper does not validate UTF-8;
+call `text.try_utf8()` when a caller needs a validated UTF-8 view.
+`read_to_string_unchecked` is the compatibility helper for older call sites
+that intentionally discard the `Result` wrapper.
 `copy(ref mut reader, ref mut writer)` streams from any `Reader` into any
 `Writer`, flushes the writer after EOF, and returns `Ok(byte_count)` when all
 writes and the final flush succeed. A failed byte write returns
-`Err(Error(BrokenPipe))`; a failed final flush returns `Err(Error(Other))`.
+`Err(Error(BrokenPipe))`; a failed final flush returns the writer's flush
+error.
 `try_copy` is the `Option[i64]` compatibility wrapper, and `copy_unchecked` is
 the bool wrapper for call sites that only care whether the whole stream moved.
 
 `Writer.write_byte` returns whether the byte was accepted.
-`write_all` returns `Ok(())` after all bytes are accepted and
-`Err(Error(BrokenPipe))` on the first failed byte write.
-`write_all_unchecked` is its bool compatibility wrapper. `flush` delegates to
-the writer and turns a failed flush into `Err(Error(Other))`;
-`flush_unchecked` is the bool wrapper. The current `Stdout.flush()` and
+`write` returns the accepted byte count or `Err(Error(BrokenPipe))` on the
+first failed byte write. `write_all` returns `Ok(())` after all bytes are
+accepted and the same `BrokenPipe` error on failure. `Stdout`, `Stderr`,
+`PipeWriter`, and `BufWriter` also expose `write(values)` and
+`write_all(values)` methods for ordinary call sites. `write_all_unchecked` is
+the bool compatibility wrapper. `Writer.flush()` now returns `Result[(),
+Error]`; `io::flush` delegates to that natural method, and `flush_unchecked`
+keeps the bool compatibility shape. The current `Stdout.flush()` and
 `Stderr.flush()` are no-op successes because the existing process stream hooks
 write immediately; real flush hooks belong with future OS handles.
+
+`print_text`, `println_text`, `eprint_text`, and `eprintln_text` are the
+Result-returning plain-text helpers for hosted CLI messages. The shorter
+`io::print`, `io::println`, and `io::eprintln` spellings are currently compiler
+format builtins, so the stdlib uses the `_text` names for recoverable
+plain-text output until Ari has a unified formatting-Result story.
 
 `Cursor` reads from a borrowed `Slice[u8]`. It implements `Reader` and `Seek`,
 so it is useful for tests, parsers, and examples that should not depend on
@@ -233,10 +266,18 @@ fn main() -> i64 {
 fn main() -> i64 {
   var zone = zone::create(128);
   var input = io::cursor("owned text");
-  let text = io::read_to_string<io::Cursor>(ref mut zone, ref mut input);
+  let text = io::read_to_string<io::Cursor>(ref mut zone, ref mut input).unwrap();
   let count = text.len();
   zone::destroy(zone);
   return count;
+}
+```
+
+```ari
+fn main() -> i64 {
+  io::println_text("Created package hello").unwrap();
+  io::eprintln_text("error: Ari.toml not found").unwrap();
+  return 0;
 }
 ```
 
@@ -319,7 +360,12 @@ open because `File` itself does not buffer.
   after collection, and generated generic helper symbols.
 - `tests/cases/standard-library/ok/io/std-io-read-to-string.ari` checks
   `read_to_string` over `Cursor` and `BufReader[Cursor]`, owned byte-string
-  contents, EOF after collection, and generated generic helper symbols.
+  contents, `read_line_from`, reader method forms, the unchecked
+  compatibility helper, EOF after collection, and generated generic helper
+  symbols.
+- `tests/cases/standard-library/ok/io/std-io-natural-api.ari` checks
+  natural `write`/`write_all` methods for stdout and stderr plus the
+  Result-returning plain-text output helpers.
 - `tests/cases/standard-library/ok/io/std-io-copy.ari` checks `try_copy` and
   `copy` over generic `Reader`/`Writer` values, copied byte counts, final
   flush, writer failure behavior, and generated generic helper symbols.

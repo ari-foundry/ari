@@ -24,7 +24,7 @@ fn main() -> i64 {
   var zone = zone::create(512);
 
   var reader = fs::try_open(source_path, "r").unwrap_or(fs::File::invalid());
-  let text = io::read_to_string<std::fs::File>(ref mut zone, ref mut reader);
+  let text = io::read_to_string<std::fs::File>(ref mut zone, ref mut reader).unwrap();
   if text.equals_text("ABC") && text.len() == 3 {
     score = score + 2;
   }

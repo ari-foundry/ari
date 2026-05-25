@@ -340,7 +340,7 @@ suffix:
 ```ari
 var zone = zone::create(512);
 var input = fs::try_open("input.txt", "r").unwrap_or(fs::File::invalid());
-let text = io::read_to_string<std::fs::File>(ref mut zone, ref mut input);
+let text = io::read_to_string<std::fs::File>(ref mut zone, ref mut input).unwrap();
 input.close().unwrap();
 
 var source = fs::try_open("input.txt", "r").unwrap_or(fs::File::invalid());
@@ -351,9 +351,9 @@ target.close().unwrap();
 zone::destroy(zone);
 ```
 
-The `Writer` `flush` method is currently a direct-descriptor success check:
-file writes are not buffered by `File` itself. Use future or explicit buffered
-wrappers when the library grows owned buffering policy.
+The `Writer` `flush` method returns `Ok(())` while the descriptor is open and
+`Err(InvalidInput)` after close: file writes are not buffered by `File` itself.
+Use explicit buffered wrappers when code needs caller-managed buffering.
 
 `position(file)` returns `Result[i64, Error]` with the current byte offset from
 the host descriptor. `seek(file, position)` moves to an absolute byte offset

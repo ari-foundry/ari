@@ -60,7 +60,7 @@ pub trait Reader {
 
 pub trait Writer {
   fn write_byte(self: ref mut Self, value: u8) -> bool;
-  fn flush(self: ref mut Self) -> bool;
+  fn flush(self: ref mut Self) -> std::Result[(), std::error::Error];
 }
 
 pub trait Seek {
@@ -120,6 +120,38 @@ pub fn write_bytes(values: std::Slice[u8]) -> i64 {
   return index;
 }
 
+pub fn print_text(text: string) -> std::Result[(), std::error::Error] {
+  var output = std::io::stdout();
+  return std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes(text));
+}
+
+pub fn println_text(text: string) -> std::Result[(), std::error::Error] {
+  var output = std::io::stdout();
+  match std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes(text)) {
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+    std::Ok(_) => {}
+  }
+  return std::io::write_all<std::io::Stdout>(ref mut output, std::string::bytes("\n"));
+}
+
+pub fn eprint_text(text: string) -> std::Result[(), std::error::Error] {
+  var output = std::io::stderr();
+  return std::io::write_all<std::io::Stderr>(ref mut output, std::string::bytes(text));
+}
+
+pub fn eprintln_text(text: string) -> std::Result[(), std::error::Error] {
+  var output = std::io::stderr();
+  match std::io::write_all<std::io::Stderr>(ref mut output, std::string::bytes(text)) {
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+    std::Ok(_) => {}
+  }
+  return std::io::write_all<std::io::Stderr>(ref mut output, std::string::bytes("\n"));
+}
+
 fn unexpected_eof_error() -> std::error::Error {
   return std::error::new(std::error::UnexpectedEof);
 }
@@ -130,10 +162,6 @@ fn invalid_input_error() -> std::error::Error {
 
 fn broken_pipe_error() -> std::error::Error {
   return std::error::new(std::error::BrokenPipe);
-}
-
-fn flush_error() -> std::error::Error {
-  return std::error::new(std::error::Other);
 }
 
 pub fn read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> std::Result[(), std::error::Error] {
@@ -166,7 +194,7 @@ pub fn read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::V
   return output;
 }
 
-pub fn read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::string::String {
+pub fn read_to_string_unchecked[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::string::String {
   var output = std::string::new(zone, 16);
   var value = reader.read_byte();
   while value >= 0 {
@@ -174,6 +202,25 @@ pub fn read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::
     value = reader.read_byte();
   }
   return output;
+}
+
+pub fn read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::Result[std::string::String, std::error::Error] {
+  return std::Ok<std::string::String, std::error::Error>(
+    std::io::read_to_string_unchecked<R>(zone, reader)
+  );
+}
+
+pub fn read_line_from[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::Result[std::string::String, std::error::Error] {
+  var output = std::string::new(zone, 16);
+  var value = reader.read_byte();
+  while value >= 0 {
+    output.push_in(zone, value as u8);
+    if value == 10 {
+      return std::Ok<std::string::String, std::error::Error>(output);
+    }
+    value = reader.read_byte();
+  }
+  return std::Ok<std::string::String, std::error::Error>(output);
 }
 
 pub fn copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> std::Result[i64, std::error::Error] {
@@ -186,8 +233,11 @@ pub fn copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> std::
     copied = copied + 1;
     value = reader.read_byte();
   }
-  if !writer.flush() {
-    return std::Err<i64, std::error::Error>(std::io::flush_error());
+  match writer.flush() {
+    std::Err(reason) => {
+      return std::Err<i64, std::error::Error>(reason);
+    }
+    std::Ok(_) => {}
   }
   return std::Ok<i64, std::error::Error>(copied);
 }
@@ -200,13 +250,23 @@ pub fn copy_unchecked[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W
   return copy<R, W>(reader, writer).is_ok();
 }
 
-pub fn write_all[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+pub fn write[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
   var index = 0;
   while index < values.len {
     if !writer.write_byte(values[index]) {
-      return std::Err<(), std::error::Error>(std::io::broken_pipe_error());
+      return std::Err<i64, std::error::Error>(std::io::broken_pipe_error());
     }
     index = index + 1;
+  }
+  return std::Ok<i64, std::error::Error>(index);
+}
+
+pub fn write_all[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+  match std::io::write<W>(writer, values) {
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+    std::Ok(_) => {}
   }
   return std::Ok<(), std::error::Error>(());
 }
@@ -216,10 +276,7 @@ pub fn write_all_unchecked[W: Writer](writer: ref mut W, values: std::Slice[u8])
 }
 
 pub fn flush[W: Writer](writer: ref mut W) -> std::Result[(), std::error::Error] {
-  if writer.flush() {
-    return std::Ok<(), std::error::Error>(());
-  }
-  return std::Err<(), std::error::Error>(std::io::flush_error());
+  return writer.flush();
 }
 
 pub fn flush_unchecked[W: Writer](writer: ref mut W) -> bool {
@@ -269,6 +326,14 @@ pub impl[R: Reader] std::io::BufReader[R] {
   fn is_empty(self: ref Self) -> bool {
     return self.buffered_len() == 0;
   }
+
+  fn read_line(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_line_from<std::io::BufReader[R]>(zone, self);
+  }
+
+  fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string<std::io::BufReader[R]>(zone, self);
+  }
 }
 
 pub impl[W: Writer] std::io::BufWriter[W] {
@@ -286,6 +351,44 @@ pub impl[W: Writer] std::io::BufWriter[W] {
 
   fn is_empty(self: ref Self) -> bool {
     return self.len == 0;
+  }
+
+  fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::io::write<std::io::BufWriter[W]>(self, values);
+  }
+
+  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    return std::io::write_all<std::io::BufWriter[W]>(self, values);
+  }
+}
+
+pub impl std::io::Stdin {
+  fn read_line(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_line_from<std::io::Stdin>(zone, self);
+  }
+
+  fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string<std::io::Stdin>(zone, self);
+  }
+}
+
+pub impl std::io::Stdout {
+  fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::io::write<std::io::Stdout>(self, values);
+  }
+
+  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    return std::io::write_all<std::io::Stdout>(self, values);
+  }
+}
+
+pub impl std::io::Stderr {
+  fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::io::write<std::io::Stderr>(self, values);
+  }
+
+  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    return std::io::write_all<std::io::Stderr>(self, values);
   }
 }
 
@@ -323,6 +426,14 @@ pub impl std::io::PipeReader {
   fn close(self: ref mut Self) -> bool {
     return self.handle.close();
   }
+
+  fn read_line(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_line_from<std::io::PipeReader>(zone, self);
+  }
+
+  fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string<std::io::PipeReader>(zone, self);
+  }
 }
 
 pub impl std::io::PipeWriter {
@@ -337,6 +448,24 @@ pub impl std::io::PipeWriter {
   fn close(self: ref mut Self) -> bool {
     return self.handle.close();
   }
+
+  fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+    return std::io::write<std::io::PipeWriter>(self, values);
+  }
+
+  fn write_all(self: ref mut Self, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+    return std::io::write_all<std::io::PipeWriter>(self, values);
+  }
+}
+
+pub impl std::io::Cursor {
+  fn read_line(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_line_from<std::io::Cursor>(zone, self);
+  }
+
+  fn read_to_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
+    return std::io::read_to_string<std::io::Cursor>(zone, self);
+  }
 }
 
 impl std::io::Reader for std::io::Stdin {
@@ -350,10 +479,10 @@ impl std::io::Writer for std::io::Stdout {
     return std::io::write_byte(value) >= 0;
   }
 
-  pub fn flush(self: ref mut Self) -> bool {
+  pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
     // The current stdout hook writes directly; a real flush hook belongs with
     // future owned OS handles.
-    return true;
+    return std::Ok<(), std::error::Error>(());
   }
 }
 
@@ -362,10 +491,10 @@ impl std::io::Writer for std::io::Stderr {
     return std::io::write_error_byte(value) == 1;
   }
 
-  pub fn flush(self: ref mut Self) -> bool {
+  pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
     // Stderr currently writes through the host descriptor immediately. A real
     // flush hook belongs with future owned OS handles.
-    return true;
+    return std::Ok<(), std::error::Error>(());
   }
 }
 
@@ -386,10 +515,13 @@ impl std::io::Writer for std::io::PipeWriter {
     return std::io::write_fd_byte(self.handle.raw(), value);
   }
 
-  pub fn flush(self: ref mut Self) -> bool {
+  pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
     // Pipe writes go straight to the descriptor. Use BufWriter[PipeWriter]
     // when a caller wants explicit buffering.
-    return self.handle.is_open();
+    if self.handle.is_open() {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(std::io::broken_pipe_error());
   }
 }
 
@@ -449,9 +581,9 @@ impl[W: std::io::Writer] std::io::Writer for std::io::BufWriter[W] {
     return true;
   }
 
-  pub fn flush(self: ref mut Self) -> bool {
+  pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
     if !std::io::flush_buffer<W>(self) {
-      return false;
+      return std::Err<(), std::error::Error>(std::io::broken_pipe_error());
     }
     return self.inner.flush();
   }

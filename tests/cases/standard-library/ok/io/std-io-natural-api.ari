@@ -1,0 +1,52 @@
+// Covers ergonomic Result-returning std::io writer methods and text helpers.
+fn unit_ok(value: Result[(), error::Error]) -> bool {
+  match value {
+    Ok(_) => { return true; }
+    Err(_) => { return false; }
+  }
+}
+
+fn count_ok(value: Result[i64, error::Error], expected: i64) -> bool {
+  match value {
+    Ok(count) => { return count == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn main() -> i64 {
+  var score = 0;
+
+  var out = io::stdout();
+  if count_ok(io::write<io::Stdout>(ref mut out, std::string::bytes("G")), 1) {
+    score = score + 1;
+  }
+  if count_ok(out.write(std::string::bytes("W")), 1) {
+    score = score + 2;
+  }
+  if unit_ok(out.write_all(std::string::bytes("M"))) {
+    score = score + 3;
+  }
+  if unit_ok(io::print_text("P")) {
+    score = score + 4;
+  }
+  if unit_ok(io::println_text("L")) {
+    score = score + 5;
+  }
+
+  var err = io::stderr();
+  if count_ok(err.write(std::string::bytes("E")), 1) {
+    score = score + 6;
+  }
+  if unit_ok(err.write_all(std::string::bytes("A"))) {
+    score = score + 7;
+  }
+  if unit_ok(io::eprint_text("R")) {
+    score = score + 8;
+  }
+  if unit_ok(io::eprintln_text("S")) {
+    score = score + 9;
+  }
+
+  assert_eq_i64(score, 45);
+  return score;
+}

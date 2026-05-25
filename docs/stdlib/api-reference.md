@@ -1501,9 +1501,10 @@ while `create_unchecked(path)` keeps the invalid-handle compatibility shape.
 helpers such as `io::read_to_string<std::fs::File>`, `io::copy`,
 `io::try_copy`, `io::write_all`, `io::flush`, or a caller's own
 `S: io::Seek` helper. `File` writes are direct descriptor writes; `flush`
-currently reports whether the handle is open rather than draining a separate
-file buffer. `position(file)`/`file.position()` returns the current byte
-offset or `-1` for invalid or unseekable handles. `seek(file, position)` and
+returns `Ok(())` while the handle is open and `Err(InvalidInput)` after close,
+rather than draining a separate file buffer. `position(file)`/`file.position()`
+returns the current byte offset or `-1` for invalid or unseekable handles.
+`seek(file, position)` and
 `file.seek(position)` move to an absolute offset from the start of the file and
 return `false` for negative positions, invalid handles, or host seek failures.
 Append-mode writes still follow host append semantics.
@@ -1863,17 +1864,28 @@ pipe_writer.close()
 io::cursor(values)
 io::buf_reader[R: Reader](inner, buffer)
 io::buf_writer[W: Writer](inner, buffer)
+reader.read_line(zone)
+reader.read_to_string(zone)
+writer.write(values)
+writer.write_all(values)
 io::read_exact[R: Reader](reader: ref mut R, output, len)
 io::read_exact_unchecked[R: Reader](reader: ref mut R, output, len)
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R)
+io::read_line_from[R: Reader](zone: ref mut Zone, reader: ref mut R)
 io::read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R)
+io::read_to_string_unchecked[R: Reader](zone: ref mut Zone, reader: ref mut R)
 io::copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
 io::try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
 io::copy_unchecked[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
+io::write[W: Writer](writer: ref mut W, values)
 io::write_all[W: Writer](writer: ref mut W, values)
 io::write_all_unchecked[W: Writer](writer: ref mut W, values)
 io::flush[W: Writer](writer: ref mut W)
 io::flush_unchecked[W: Writer](writer: ref mut W)
+io::print_text(text)
+io::println_text(text)
+io::eprint_text(text)
+io::eprintln_text(text)
 io::write_i64(value)
 io::write_u64(value)
 io::write_bool(value)
@@ -1903,21 +1915,35 @@ compatibility wrapper. A negative `len` returns `Err(Error(InvalidInput))`.
 `io::read_all(ref mut zone, ref mut reader)` collects the remaining bytes from
 any `Reader` into a zone-backed `Vec[u8]`, stopping at the same EOF sentinel as
 `read_exact`.
+`io::read_line_from(ref mut zone, ref mut reader)` reads through the first
+newline or EOF and returns a zone-backed `String`. EOF before any bytes is
+`Ok(empty)`. `Stdin`, `Cursor`, `BufReader`, and `PipeReader` expose matching
+`read_line(zone)` and `read_to_string(zone)` method forms.
 `io::read_to_string(ref mut zone, ref mut reader)` collects the remaining bytes
-directly into an owned `std::string::String`. It is byte-oriented like the rest
-of `std::io`; use `String::try_utf8()` when a validated UTF-8 view is needed.
+directly into an owned `std::string::String` inside `Result`.
+`io::read_to_string_unchecked` is the compatibility helper for old call sites
+that intentionally discard that wrapper. The read is byte-oriented like the
+rest of `std::io`; use `String::try_utf8()` when a validated UTF-8 view is
+needed.
 `io::copy(ref mut reader, ref mut writer)` streams bytes from any `Reader` to
 any `Writer`, flushes at EOF, and returns `Ok(byte_count)` on
 complete success. Failed byte writes become `Err(Error(BrokenPipe))`; failed
-final flushes become `Err(Error(Other))`. `io::try_copy` is the `Option[i64]`
+final flushes return the writer's flush error. `io::try_copy` is the `Option[i64]`
 compatibility wrapper and `io::copy_unchecked` is the bool wrapper when the
 byte count is not needed.
-`io::write_all(ref mut writer, values)` returns `Ok(())` after every
-byte is accepted and `Err(Error(BrokenPipe))` on the first failed write.
+`io::write(ref mut writer, values)` returns the accepted byte count, and
+`io::write_all(ref mut writer, values)` returns `Ok(())` after every byte is
+accepted. Both return `Err(Error(BrokenPipe))` on the first failed write.
+`Stdout`, `Stderr`, `PipeWriter`, and `BufWriter` also expose
+`write(values)` and `write_all(values)` methods for direct call sites.
 `io::write_all_unchecked` is the bool wrapper.
 `io::flush(ref mut writer)` returns `Ok(())` for a successful flush and
-`Err(Error(Other))` for a failed flush; `io::flush_unchecked` is the bool
+the writer's `Error` for a failed flush; `io::flush_unchecked` is the bool
 wrapper.
+`io::print_text`, `io::println_text`, `io::eprint_text`, and
+`io::eprintln_text` are Result-returning plain-text helpers for CLI messages.
+The shorter `io::print`/`io::println` spellings are still compiler formatting
+builtins, so the stdlib reserves `_text` for these direct byte-output helpers.
 `io::Stdout` and `io::Stderr` implement `Writer` over the current process
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit

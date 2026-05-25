@@ -1410,8 +1410,11 @@ impl std::io::Writer for std::net::TcpStream {
     return write_socket_byte_raw(self.handle.raw(), value);
   }
 
-  pub fn flush(self: ref mut Self) -> bool {
-    return self.handle.is_open();
+  pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    if self.handle.is_open() {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(std::error::new(std::error::BrokenPipe));
   }
 }
 
@@ -1432,7 +1435,10 @@ impl std::io::Writer for std::net::UnixStream {
     return write_socket_byte_raw(self.handle.raw(), value);
   }
 
-  pub fn flush(self: ref mut Self) -> bool {
-    return self.handle.is_open();
+  pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    if self.handle.is_open() {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(std::error::new(std::error::BrokenPipe));
   }
 }

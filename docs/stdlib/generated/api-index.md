@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2777`
+- API entries: `2800`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 819 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 730 | stable candidate |
-| `hosted` | 1041 | platform-backed |
+| `hosted` | 1064 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
-| `fn` | 1000 |
-| `method` | 1374 |
+| `fn` | 1007 |
+| `method` | 1390 |
 | `module` | 39 |
 | `struct` | 153 |
 | `trait` | 39 |
@@ -69,7 +69,7 @@ platform notes.
 | `std::fs` | `hosted` | 259 |
 | `std::hash` | `alloc` | 23 |
 | `std::input` | `hosted` | 6 |
-| `std::io` | `hosted` | 66 |
+| `std::io` | `hosted` | 89 |
 | `std::iter` | `alloc` | 41 |
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
@@ -1974,21 +1974,28 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::io::copy[R: Reader, W: Writer]` | check-prelude std-io-copy/std-io-result Result-returning Reader-to-Writer byte-count helper; docs/stdlib/modules/io.md |
 | `fn std::io::copy_unchecked[R: Reader, W: Writer]` | check-prelude std-io-copy/std-io-result bool compatibility Reader-to-Writer copy wrapper; docs/stdlib/modules/io.md |
 | `fn std::io::cursor` | std io trait/cursor tests; docs/stdlib/modules/io.md |
+| `fn std::io::eprint_text` | check-prelude std-io-natural-api Result-returning stderr text helper; docs/stdlib/modules/io.md |
+| `fn std::io::eprintln_text` | check-prelude std-io-natural-api Result-returning stderr line helper; docs/stdlib/modules/io.md |
 | `fn std::io::flush[W: Writer]` | check-prelude std-io-result/std-io-traits-cursor Result-returning writer flush helper; docs/stdlib/modules/io.md |
 | `fn std::io::flush_unchecked[W: Writer]` | check-prelude std-io-result bool compatibility writer flush helper; docs/stdlib/modules/io.md |
 | `fn std::io::newline` | prelude IO and print tests; docs/dev/test-matrix.md Prelude row |
 | `fn std::io::pipe` | check-prelude std-io-pipe pipe Reader/Writer adapter constructor; docs/stdlib/modules/io.md |
+| `fn std::io::print_text` | check-prelude std-io-natural-api Result-returning stdout text helper; docs/stdlib/modules/io.md |
+| `fn std::io::println_text` | check-prelude std-io-natural-api Result-returning stdout line helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_all[R: Reader]` | check-prelude std-io-read-all generic Reader whole-stream collector; docs/stdlib/modules/io.md |
 | `fn std::io::read_byte` | prelude byte input tests; docs/dev/test-matrix.md Prelude row |
 | `fn std::io::read_exact[R: Reader]` | check-prelude std-io-result/std-io-traits-cursor Result-returning exact-read helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_exact_unchecked[R: Reader]` | check-prelude std-io-result bool compatibility exact-read helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_line` | prelude read_line/input tests; docs/dev/test-matrix.md Prelude row |
+| `fn std::io::read_line_from[R: Reader]` | check-prelude std-io-read-to-string Result-returning generic line reader helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_line_owned` | prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows |
-| `fn std::io::read_to_string[R: Reader]` | check-prelude std-io-read-to-string generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md |
+| `fn std::io::read_to_string[R: Reader]` | check-prelude std-io-read-to-string Result-returning generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md |
+| `fn std::io::read_to_string_unchecked[R: Reader]` | check-prelude std-io-read-to-string unchecked generic Reader whole-stream owned String collector; docs/stdlib/modules/io.md |
 | `fn std::io::stderr` | std io stderr tests; docs/stdlib/modules/io.md |
 | `fn std::io::stdin` | std io trait/cursor tests; docs/stdlib/modules/io.md |
 | `fn std::io::stdout` | std io trait/cursor tests; docs/stdlib/modules/io.md |
 | `fn std::io::try_copy[R: Reader, W: Writer]` | check-prelude std-io-copy generic Reader-to-Writer copy byte-count helper; docs/stdlib/modules/io.md |
+| `fn std::io::write[W: Writer]` | check-prelude std-io-natural-api Result-returning generic whole-slice byte-count writer; docs/stdlib/modules/io.md |
 | `fn std::io::write_all[W: Writer]` | check-prelude std-io-result/std-io-traits-cursor Result-returning whole-slice write helper; docs/stdlib/modules/io.md |
 | `fn std::io::write_all_unchecked[W: Writer]` | check-prelude std-io-result bool compatibility whole-slice write helper; docs/stdlib/modules/io.md |
 | `fn std::io::write_bool` | prelude IO and format tests; docs/dev/test-matrix.md Prelude row |
@@ -2005,10 +2012,16 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::io::BufReader[R]::capacity` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufReader[R]::is_empty` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufReader[R]::new` | std io buffered tests; docs/stdlib/modules/io.md |
+| `method std::io::BufReader[R]::read_line` | check-prelude std-io-read-to-string Result-returning buffered reader line helper; docs/stdlib/modules/io.md |
+| `method std::io::BufReader[R]::read_to_string` | check-prelude std-io-read-to-string Result-returning buffered reader whole-stream helper; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::buffered_len` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::capacity` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::is_empty` | std io buffered tests; docs/stdlib/modules/io.md |
 | `method std::io::BufWriter[W]::new` | std io buffered tests; docs/stdlib/modules/io.md |
+| `method std::io::BufWriter[W]::write` | check-prelude std-io-natural-api/std-io-buffered Result-returning buffered writer byte-count helper; docs/stdlib/modules/io.md |
+| `method std::io::BufWriter[W]::write_all` | check-prelude std-io-natural-api/std-io-buffered Result-returning buffered writer whole-slice helper; docs/stdlib/modules/io.md |
+| `method std::io::Cursor::read_line` | check-prelude std-io-read-to-string Result-returning cursor line helper; docs/stdlib/modules/io.md |
+| `method std::io::Cursor::read_to_string` | check-prelude std-io-read-to-string Result-returning cursor whole-stream helper; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::close` | check-prelude std-io-pipe close remaining pipe adapter ends; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::read_end` | check-prelude std-io-pipe borrowed pipe adapter read descriptor view; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::take_reader` | check-prelude std-io-pipe take pipe reader adapter ownership; docs/stdlib/modules/io.md |
@@ -2017,9 +2030,19 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::io::PipeReader::as_fd` | check-prelude std-io-pipe borrowed descriptor view from pipe reader; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::close` | check-prelude std-io-pipe explicit pipe reader close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::is_open` | check-prelude std-io-pipe pipe reader open predicate; docs/stdlib/modules/io.md |
+| `method std::io::PipeReader::read_line` | check-prelude std-io-pipe Result-returning pipe reader line helper; docs/stdlib/modules/io.md |
+| `method std::io::PipeReader::read_to_string` | check-prelude std-io-pipe Result-returning pipe reader whole-stream helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::as_fd` | check-prelude std-io-pipe borrowed descriptor view from pipe writer; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::close` | check-prelude std-io-pipe explicit pipe writer close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::is_open` | check-prelude std-io-pipe pipe writer open predicate; docs/stdlib/modules/io.md |
+| `method std::io::PipeWriter::write` | check-prelude std-io-pipe Result-returning pipe writer byte-count helper; docs/stdlib/modules/io.md |
+| `method std::io::PipeWriter::write_all` | check-prelude std-io-pipe Result-returning pipe writer whole-slice helper; docs/stdlib/modules/io.md |
+| `method std::io::Stderr::write` | check-prelude std-io-natural-api Result-returning stderr byte-count method; docs/stdlib/modules/io.md |
+| `method std::io::Stderr::write_all` | check-prelude std-io-natural-api Result-returning stderr whole-slice method; docs/stdlib/modules/io.md |
+| `method std::io::Stdin::read_line` | check-prelude std-io-read-to-string Result-returning stdin line method; docs/stdlib/modules/io.md |
+| `method std::io::Stdin::read_to_string` | check-prelude std-io-read-to-string Result-returning stdin whole-stream method; docs/stdlib/modules/io.md |
+| `method std::io::Stdout::write` | check-prelude std-io-natural-api Result-returning stdout byte-count method; docs/stdlib/modules/io.md |
+| `method std::io::Stdout::write_all` | check-prelude std-io-natural-api Result-returning stdout whole-slice method; docs/stdlib/modules/io.md |
 
 ### module
 

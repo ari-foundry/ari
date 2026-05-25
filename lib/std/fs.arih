@@ -1973,10 +1973,13 @@ impl std::io::Writer for std::fs::File {
     return std::fs::write_byte_unchecked(std::fs::File { fd: self.fd }, value);
   }
 
-  pub fn flush(self: ref mut Self) -> bool {
+  pub fn flush(self: ref mut Self) -> std::Result[(), std::error::Error] {
     // File writes currently go straight through the runtime descriptor hook.
     // This keeps std::io::copy usable for File without inventing buffering.
-    return self.fd >= 0;
+    if self.fd >= 0 {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
   }
 }
 

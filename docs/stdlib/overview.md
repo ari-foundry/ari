@@ -36,7 +36,7 @@ API evolution.
 | `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `char`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `CStr`, `CString`, `Library`, `Symbol`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. Root `char` is an ASCII `u8` alias; root `Slice[T]` includes `len`, access, subslicing, subsequence search, compare, chunks, windows, split, copy helpers, stable/unstable partitioning, dedup variants, and direct algorithm wrappers. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `filter`, `flatten`, `transpose`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
-| `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`, `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `pipe`, `cursor`, `buf_reader`, `buf_writer`, direct `Error` helpers `read_exact`, `copy`, `write_all`, `flush`, compatibility `read_exact_unchecked`, `try_copy`, `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`, collection helpers `read_all`, `read_to_string`, raw `write_bytes`, `read_line`. |
+| `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`, `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `pipe`, `cursor`, `buf_reader`, `buf_writer`, direct `Error` helpers `read_exact`, `read_line_from`, `read_to_string`, `copy`, `write`, `write_all`, `flush`, plain-text helpers `print_text`, `println_text`, `eprint_text`, `eprintln_text`, compatibility `read_exact_unchecked`, `read_to_string_unchecked`, `try_copy`, `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`, collection helper `read_all`, raw `write_bytes`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, startup `cwd`, startup `executable_path`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::test` | Executable unit-test helpers. | `Report`, `Bench`, `report`, `scratch`, `temp_file`, `temp_dir`, `bench`, `benchmark`, `check`, `equal`, `not_equal`, `matches_snapshot`, `golden_matches`, `check_snapshot`, pass/fail accessors, `ok`, `finish`, `require`. |
@@ -429,14 +429,16 @@ zone-backed collection and map-entry handles.
 the raw `-1` EOF sentinel into `Option[u8]`.
 
 `std::io` keeps raw process IO visible and adds a small source trait layer.
-Scalar and line operations are runtime hooks. `write_bytes`,
-result-returning `read_exact`, `copy`, `write_all`, and `flush`,
-byte-collecting `read_all`/`read_to_string`, compatibility
-`read_exact_unchecked`, `try_copy`, `copy_unchecked`,
+Scalar and borrowed line operations are runtime hooks. `write_bytes`,
+result-returning `read_exact`, `read_line_from`, `read_to_string`, `copy`,
+`write`, `write_all`, `flush`, and plain-text
+`print_text`/`println_text`/`eprint_text`/`eprintln_text`, byte-collecting
+`read_all`, compatibility `read_exact_unchecked`,
+`read_to_string_unchecked`, `try_copy`, `copy_unchecked`,
 `write_all_unchecked`, and `flush_unchecked`,
-`Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, and `BufWriter` are source Ari over
-`Slice[u8]`, raw pointers, explicit caller-provided buffers, and the process
-stream hooks. `PipeReader` and
+`Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, and `BufWriter` are source
+Ari over `Slice[u8]`, raw pointers, explicit caller-provided buffers, and the
+process stream hooks. `PipeReader` and
 `PipeWriter` adapt `std::os::Pipe` into the same traits. `std::fs::File`
 also adapts to `Reader`, `Writer`, and `Seek` so filesystem handles can use
 the same generic helpers. The next IO roadmap items are zone-owning buffered
