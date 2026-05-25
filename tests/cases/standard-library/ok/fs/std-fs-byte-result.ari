@@ -2,10 +2,10 @@
 // success and preserve direct Error payloads plus the raw bridge on ordinary
 // open, write, and close failures.
 fn cleanup(path: string, copy_path: string, missing_source: string, missing_parent: string) -> void {
-  fs::remove(path);
-  fs::remove(copy_path);
-  fs::remove(missing_source);
-  fs::remove_dir(missing_parent);
+  fs::remove_bool(path);
+  fs::remove_bool(copy_path);
+  fs::remove_bool(missing_source);
+  fs::remove_dir_bool(missing_parent);
 }
 
 fn error_matches(value: error::Error, kind: error::Kind, code: i64) -> bool {
@@ -78,7 +78,8 @@ fn main() -> i64 {
     score = score + 32;
   }
 
-  if byte_result_ok(fs::copy_result(path, copy_path), 5) {
+  if byte_result_ok(fs::copy(path, copy_path), 5) &&
+    byte_result_ok(fs::copy_result(path, copy_path), 5) {
     score = score + 64;
   }
   let copied = fs::read_unchecked(ref mut zone, copy_path);
@@ -86,6 +87,19 @@ fn main() -> i64 {
     score = score + 128;
   }
 
+  assert(fs::write_string(path, "ZX").is_ok());
+  match fs::read_bytes(ref mut zone, path) {
+    std::Ok(bytes) => {
+      assert(bytes.len() == 2);
+      assert(bytes.get(0) == 90 as u8);
+      assert(bytes.get(1) == 88 as u8);
+    }
+    std::Err(_) => {
+      panic();
+    }
+  }
+
+  assert(byte_result_error(fs::copy(missing_source, copy_path), error::NotFound, 2));
   assert(byte_result_error(fs::copy_result(missing_source, copy_path), error::NotFound, 2));
   assert(byte_raw_result_error(fs::copy_raw_result(missing_source, copy_path), error::NotFound, 2));
   cleanup(path, copy_path, missing_source, missing_parent);

@@ -3,7 +3,7 @@
 fn main() -> i64 {
   let path = "build/prelude/std-fs-basic.tmp";
   if fs::exists(path) {
-    fs::remove(path);
+    fs::remove_bool(path);
   }
 
   var score = 0;
@@ -58,7 +58,7 @@ fn main() -> i64 {
   assert(invalid.close().is_err());
   assert(fs::write_byte(invalid, 1 as u8).is_err());
   assert(fs::write_bytes(invalid, tail.as_slice()).is_err());
-  if fs::remove(path) {
+  if fs::remove_bool(path) {
     score = score + 14;
   }
   if !fs::exists(path) {

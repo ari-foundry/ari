@@ -26,8 +26,8 @@ fn string_err(value: Result[std::string::String, error::Error], kind: error::Kin
 fn main() -> i64 {
   let path = "build/prelude/std-fs-read-result.tmp";
   let missing = "build/prelude/std-fs-read-result-missing.tmp";
-  fs::remove(path);
-  fs::remove(missing);
+  fs::remove_bool(path);
+  fs::remove_bool(missing);
 
   var zone = zone::create(1024);
   var bytes = [65u8, 114u8, 105u8];
@@ -55,7 +55,7 @@ fn main() -> i64 {
   assert(fs::read_unchecked(ref mut zone, path).equals_text("Ari"));
   assert(fs::read_to_string_unchecked(ref mut zone, path).equals_text("Ari"));
 
-  fs::remove(path);
+  fs::remove_bool(path);
   zone::destroy(zone);
   assert_eq_i64(score, 31);
   return score;

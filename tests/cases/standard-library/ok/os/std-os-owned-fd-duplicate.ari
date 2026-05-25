@@ -37,6 +37,6 @@ fn main() -> i64 {
     score = score + 128;
   }
 
-  std::fs::remove(path);
+  std::fs::remove_bool(path);
   return score;
 }

@@ -2,7 +2,7 @@
 fn main() -> i64 {
   let path = "build/prelude/std-fs-try-byte.tmp";
   if fs::exists(path) {
-    fs::remove(path);
+    fs::remove_bool(path);
   }
 
   var score = 0;
@@ -36,7 +36,7 @@ fn main() -> i64 {
   if fs::File::invalid().try_read_byte().is_none() {
     score = score + 9;
   }
-  if fs::remove(path) {
+  if fs::remove_bool(path) {
     score = score + 10;
   }
 

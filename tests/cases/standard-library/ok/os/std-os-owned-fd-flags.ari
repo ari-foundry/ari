@@ -36,6 +36,6 @@ fn main() -> i64 {
   }
 
   owned.close();
-  std::fs::remove(path);
+  std::fs::remove_bool(path);
   return score;
 }

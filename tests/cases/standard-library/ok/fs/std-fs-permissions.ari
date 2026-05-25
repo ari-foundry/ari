@@ -6,10 +6,10 @@ fn main() -> i64 {
   let missing_path = "build/prelude/std-fs-permissions-missing.tmp";
 
   if fs::exists(file_path) {
-    fs::remove(file_path);
+    fs::remove_bool(file_path);
   }
   if fs::exists(dir_path) {
-    fs::remove_dir(dir_path);
+    fs::remove_dir_bool(dir_path);
   }
 
   var score = 0;
@@ -60,7 +60,7 @@ fn main() -> i64 {
     score = score + 13;
   }
 
-  if fs::create_dir(dir_path) {
+  if fs::create_dir_bool(dir_path) {
     score = score + 14;
   }
   if fs::can_execute(dir_path) {
@@ -70,10 +70,10 @@ fn main() -> i64 {
   if dir_permissions.can_execute() {
     score = score + 16;
   }
-  if fs::remove_dir(dir_path) {
+  if fs::remove_dir_bool(dir_path) {
     score = score + 17;
   }
-  if fs::remove(file_path) {
+  if fs::remove_bool(file_path) {
     score = score + 18;
   }
 

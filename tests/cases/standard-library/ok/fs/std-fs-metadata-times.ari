@@ -15,9 +15,9 @@ fn has_all_timestamps(info: fs::Metadata) -> bool {
 }
 
 fn cleanup(root: string, file_path: string, link_path: string) -> void {
-  fs::remove(link_path);
-  fs::remove(file_path);
-  fs::remove_dir(root);
+  fs::remove_bool(link_path);
+  fs::remove_bool(file_path);
+  fs::remove_dir_bool(root);
 }
 
 fn main() -> i64 {
@@ -28,13 +28,13 @@ fn main() -> i64 {
   cleanup(root, file_path, link_path);
 
   var score = 0;
-  if fs::create_dir(root) {
+  if fs::create_dir_bool(root) {
     score = score + 1;
   }
   if fs::write_bool(file_path, "time") {
     score = score + 2;
   }
-  if fs::symbolic_link(link_target, link_path) {
+  if fs::symbolic_link_bool(link_target, link_path) {
     score = score + 4;
   }
 

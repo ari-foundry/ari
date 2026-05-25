@@ -3,13 +3,13 @@
 // natural idempotent alias, and existing file paths still fail.
 fn cleanup_file(path: string) -> void {
   if fs::exists(path) {
-    fs::remove(path);
+    fs::remove_bool(path);
   }
 }
 
 fn cleanup_dir(path: string) -> void {
   if fs::exists(path) {
-    fs::remove_dir(path);
+    fs::remove_dir_bool(path);
   }
 }
 
@@ -30,15 +30,16 @@ fn main() -> i64 {
   cleanup_file(file_path);
 
   var score = 0;
-  if fs::create_dir_all(nested) {
+  if fs::create_dir_all(nested).is_ok() {
     score = score + 1;
   }
   if fs::is_dir(root) && fs::is_dir(first) && fs::is_dir(second) && fs::is_dir(nested) {
     score = score + 2;
   }
-  if fs::create_dir_all(nested) {
+  if fs::create_dir_all(nested).is_ok() {
     score = score + 4;
   }
+  assert(fs::create_dir_all_bool(nested));
   if fs::ensure_dir_all(nested) {
     score = score + 8;
   }
@@ -48,10 +49,10 @@ fn main() -> i64 {
   if fs::write_bool(file_path, "file") {
     score = score + 32;
   }
-  if !fs::create_dir_all(file_path) {
+  if fs::create_dir_all(file_path).is_err() {
     score = score + 64;
   }
-  if !fs::create_dir_all(file_child) {
+  if fs::create_dir_all(file_child).is_err() {
     score = score + 128;
   }
 

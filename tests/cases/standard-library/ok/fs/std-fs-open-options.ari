@@ -2,8 +2,8 @@
 // the older mode-string surface and checks non-truncating read/write,
 // exclusive creation, append, and invalid option combinations.
 fn cleanup(path: string, missing: string) -> void {
-  fs::remove(path);
-  fs::remove(missing);
+  fs::remove_bool(path);
+  fs::remove_bool(missing);
 }
 
 fn read_text(zone: ref mut Zone, path: string, expected: string) -> bool {

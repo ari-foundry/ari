@@ -1062,8 +1062,11 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs6append" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs13append_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs17append_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs4copy" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs11copy_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	grep -F -q "std2fs15copy_raw_result" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs10read_bytes" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
+	grep -F -q "std2fs12write_string" $(BUILD_DIR)/prelude/std-fs-byte-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-byte-result.ari -o $(BUILD_DIR)/prelude/std-fs-byte-result.elf
 	$(BUILD_DIR)/prelude/std-fs-byte-result.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-try-read.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-try-read.ll
@@ -1077,6 +1080,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs4read" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	grep -F -q "std2fs8truncate" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	grep -F -q "std2fs4copy" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
+	grep -F -q "std2fs9copy_bool" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	grep -F -q "std2fs8try_copy" $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-truncate-copy.ari -o $(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf
 	$(BUILD_DIR)/prelude/std-fs-create-truncate-copy.elf; code=$$?; test $$code -eq 171
@@ -1105,12 +1109,17 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/fs/std-fs-rename-dir.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; $(BUILD_DIR)/prelude/std-fs-rename-dir.elf; code=$$?; test $$code -eq 120; fi
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mutation-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs6remove" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs11remove_file" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs13remove_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs17remove_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs6rename" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs13rename_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs17rename_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs10create_dir" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs17create_dir_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs21create_dir_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
+	grep -F -q "std2fs10remove_dir" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs17remove_dir_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	grep -F -q "std2fs21remove_dir_raw_result" $(BUILD_DIR)/prelude/std-fs-mutation-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-mutation-result.ari -o $(BUILD_DIR)/prelude/std-fs-mutation-result.elf
@@ -1123,11 +1132,14 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-fs-ensure-dir.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-create-dir-all.ll
 	grep -F -q "std2fs14ensure_dir_all" $(BUILD_DIR)/prelude/std-fs-create-dir-all.ll
+	grep -F -q "std2fs14create_dir_all" $(BUILD_DIR)/prelude/std-fs-create-dir-all.ll
+	grep -F -q "std2fs19create_dir_all_bool" $(BUILD_DIR)/prelude/std-fs-create-dir-all.ll
 	grep -q "@ari_builtin_fs_create_dir_all" $(BUILD_DIR)/prelude/std-fs-create-dir-all.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-create-dir-all.ari -o $(BUILD_DIR)/prelude/std-fs-create-dir-all.elf
 	$(BUILD_DIR)/prelude/std-fs-create-dir-all.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-remove-dir-all.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
 	grep -F -q "std2fs14remove_dir_all" $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
+	grep -F -q "std2fs19remove_dir_all_bool" $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
 	grep -q "@ari_builtin_fs_remove_bytes" $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
 	grep -q "@ari_builtin_fs_remove_dir_bytes" $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
 	grep -q "@ari_builtin_fs_open_dir_bytes" $(BUILD_DIR)/prelude/std-fs-remove-dir-all.ll
@@ -1148,7 +1160,10 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs12try_open_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -F -q "std2fs13read_dir_next" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -F -q "std2fs12try_read_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -F -q "std2fs14read_dir_names" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -F -q "std2fs24read_dir_names_unchecked" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -F -q "std2fs8read_dir" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
+	grep -F -q "std2fs18read_dir_unchecked" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -F -q "std2fs20try_read_dir_entries" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	grep -F -q "std2fs16read_dir_entries" $(BUILD_DIR)/prelude/std-fs-read-dir.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-read-dir.ari -o $(BUILD_DIR)/prelude/std-fs-read-dir.elf
@@ -1238,35 +1253,29 @@ check-prelude: $(TARGET)
 	grep -F -q "std2fs8metadata" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs17metadata_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs15metadata_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs18metadata_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs16symlink_metadata" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs25symlink_metadata_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs23symlink_metadata_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs26symlink_metadata_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs9file_type" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs18file_type_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs16file_type_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs19file_type_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs4mode" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs13mode_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs11mode_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs14mode_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs15open_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs14read_dir_names" $(BUILD_DIR)/prelude/std-fs-query-result.ll
+	grep -F -q "std2fs23read_dir_names_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs8read_dir" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs17read_dir_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs18read_dir_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs15read_dir_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs16read_dir_entries" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs25read_dir_entries_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs26read_dir_entries_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs23read_dir_entries_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs12canonicalize" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs21canonicalize_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs22canonicalize_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs19canonicalize_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs9read_link" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs18read_link_optional" $(BUILD_DIR)/prelude/std-fs-query-result.ll
-	grep -F -q "std2fs19read_link_unchecked" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	grep -F -q "std2fs16read_link_result" $(BUILD_DIR)/prelude/std-fs-query-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-query-result.ari -o $(BUILD_DIR)/prelude/std-fs-query-result.elf
 	$(BUILD_DIR)/prelude/std-fs-query-result.elf; code=$$?; test $$code -eq 255

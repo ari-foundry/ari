@@ -3,7 +3,7 @@
 fn main() -> i64 {
   let path = "build/prelude/std-fs-append.tmp";
   if fs::exists(path) {
-    fs::remove(path);
+    fs::remove_bool(path);
   }
 
   var score = 0;
@@ -56,7 +56,7 @@ fn main() -> i64 {
   if reader.close().is_ok() {
     score = score + 14;
   }
-  if fs::remove(path) {
+  if fs::remove_bool(path) {
     score = score + 15;
   }
   if !fs::exists(path) {

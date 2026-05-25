@@ -15,9 +15,9 @@ fn main() -> i64 {
   let symbolic = "build/prelude/std-fs-links-symbolic.tmp";
   let symbolic_target = "std-fs-links-source.tmp";
 
-  fs::remove(symbolic);
-  fs::remove(hard);
-  fs::remove(source);
+  fs::remove_bool(symbolic);
+  fs::remove_bool(hard);
+  fs::remove_bool(source);
 
   var data = [76u8, 78u8, 75u8, 10u8];
   if !fs::write_bool(source, data.as_slice()) {
@@ -25,27 +25,27 @@ fn main() -> i64 {
   }
 
   var score = 0;
-  if fs::hard_link(source, hard) {
+  if fs::hard_link_bool(source, hard) {
     score = score + 1;
   }
   if first_byte(hard) == 76 {
     score = score + 2;
   }
-  if !fs::hard_link("build/prelude/std-fs-links-missing.tmp", hard) {
+  if !fs::hard_link_bool("build/prelude/std-fs-links-missing.tmp", hard) {
     score = score + 4;
   }
-  if fs::symbolic_link(symbolic_target, symbolic) {
+  if fs::symbolic_link_bool(symbolic_target, symbolic) {
     score = score + 8;
   }
   if first_byte(symbolic) == 76 {
     score = score + 16;
   }
-  if !fs::symbolic_link(symbolic_target, symbolic) {
+  if !fs::symbolic_link_bool(symbolic_target, symbolic) {
     score = score + 32;
   }
 
-  fs::remove(symbolic);
-  fs::remove(hard);
-  fs::remove(source);
+  fs::remove_bool(symbolic);
+  fs::remove_bool(hard);
+  fs::remove_bool(source);
   return score;
 }

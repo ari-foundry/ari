@@ -5,13 +5,13 @@ fn main() -> i64 {
   let empty_path = "build/prelude/std-fs-try-read-empty.tmp";
   let missing_path = "build/prelude/std-fs-try-read-missing.tmp";
   if fs::exists(path) {
-    fs::remove(path);
+    fs::remove_bool(path);
   }
   if fs::exists(empty_path) {
-    fs::remove(empty_path);
+    fs::remove_bool(empty_path);
   }
   if fs::exists(missing_path) {
-    fs::remove(missing_path);
+    fs::remove_bool(missing_path);
   }
 
   var zone = zone::create(1024);
@@ -64,10 +64,10 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  if fs::remove(path) {
+  if fs::remove_bool(path) {
     score = score + 10;
   }
-  if fs::remove(empty_path) {
+  if fs::remove_bool(empty_path) {
     score = score + 11;
   }
   if !fs::exists(missing_path) {

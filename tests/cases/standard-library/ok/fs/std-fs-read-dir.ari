@@ -39,19 +39,19 @@ fn main() -> i64 {
   let alpha_path = "build/prelude/std-fs-read-dir.tmp/alpha.txt";
   let beta_path = "build/prelude/std-fs-read-dir.tmp/beta.txt";
   if fs::exists(alpha_path) {
-    fs::remove(alpha_path);
+    fs::remove_bool(alpha_path);
   }
   if fs::exists(beta_path) {
-    fs::remove(beta_path);
+    fs::remove_bool(beta_path);
   }
   if fs::exists(dir_path) {
-    fs::remove_dir(dir_path);
+    fs::remove_dir_bool(dir_path);
   }
 
   var score = 0;
   var zone = zone::create(4096);
 
-  if fs::create_dir(dir_path) {
+  if fs::create_dir_bool(dir_path) {
     score = score + 1;
   }
   var alpha = ['A'];
@@ -125,7 +125,7 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  let listed = fs::read_dir_unchecked(ref mut zone, dir_path);
+  let listed = fs::read_dir_names_unchecked(ref mut zone, dir_path);
   if listed.len() == 2 {
     score = score + 19;
   }
@@ -143,11 +143,13 @@ fn main() -> i64 {
     std::None => {}
   }
 
-  let detailed = fs::read_dir_entries_unchecked(ref mut zone, dir_path);
+  let detailed = fs::read_dir_unchecked(ref mut zone, dir_path);
   if has_dir_entry(ref detailed, "alpha.txt", alpha_path) &&
      has_dir_entry(ref detailed, "beta.txt", beta_path) {
     score = score + 22;
   }
+  assert(fs::read_dir(ref mut zone, dir_path).is_ok());
+  assert(fs::read_dir_entries_unchecked(ref mut zone, dir_path).len() == 2);
 
   let invalid = fs::Dir::invalid();
   match invalid.next(ref mut zone) {
@@ -158,13 +160,13 @@ fn main() -> i64 {
   }
   assert(invalid.close().is_err());
 
-  if fs::remove(alpha_path) {
+  if fs::remove_bool(alpha_path) {
     score = score + 11;
   }
-  if fs::remove(beta_path) {
+  if fs::remove_bool(beta_path) {
     score = score + 12;
   }
-  if fs::remove_dir(dir_path) {
+  if fs::remove_dir_bool(dir_path) {
     score = score + 13;
   }
   if !fs::exists(dir_path) {

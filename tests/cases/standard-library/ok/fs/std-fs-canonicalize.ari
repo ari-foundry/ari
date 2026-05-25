@@ -7,10 +7,10 @@ fn main() -> i64 {
   let missing = "build/prelude/std-fs-canonicalize-missing.tmp";
 
   if fs::exists(path) {
-    fs::remove(path);
+    fs::remove_bool(path);
   }
   if fs::exists(missing) {
-    fs::remove(missing);
+    fs::remove_bool(missing);
   }
 
   var zone = zone::create(2048);
@@ -53,7 +53,7 @@ fn main() -> i64 {
     }
   }
 
-  if fs::remove(path) {
+  if fs::remove_bool(path) {
     score = score + 7;
   }
 

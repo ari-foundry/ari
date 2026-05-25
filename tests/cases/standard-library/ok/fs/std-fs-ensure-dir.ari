@@ -7,16 +7,16 @@ fn main() -> i64 {
   let missing_parent_path = "build/prelude/std-fs-ensure-dir-missing/child";
 
   if fs::exists(missing_parent_path) {
-    fs::remove_dir(missing_parent_path);
+    fs::remove_dir_bool(missing_parent_path);
   }
   if fs::exists(missing_parent_dir) {
-    fs::remove_dir(missing_parent_dir);
+    fs::remove_dir_bool(missing_parent_dir);
   }
   if fs::exists(file_path) {
-    fs::remove(file_path);
+    fs::remove_bool(file_path);
   }
   if fs::exists(dir_path) {
-    fs::remove_dir(dir_path);
+    fs::remove_dir_bool(dir_path);
   }
 
   var score = 0;
@@ -38,17 +38,17 @@ fn main() -> i64 {
   if !fs::ensure_dir(missing_parent_path) {
     score = score + 32;
   }
-  if fs::remove(file_path) {
+  if fs::remove_bool(file_path) {
     score = score + 64;
   }
-  if fs::remove_dir(dir_path) {
+  if fs::remove_dir_bool(dir_path) {
     score = score + 128;
   }
   if fs::exists(missing_parent_path) {
-    fs::remove_dir(missing_parent_path);
+    fs::remove_dir_bool(missing_parent_path);
   }
   if fs::exists(missing_parent_dir) {
-    fs::remove_dir(missing_parent_dir);
+    fs::remove_dir_bool(missing_parent_dir);
   }
 
   assert_eq_i64(score, 255);

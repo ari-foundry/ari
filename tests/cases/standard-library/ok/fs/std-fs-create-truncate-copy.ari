@@ -7,16 +7,16 @@ fn main() -> i64 {
   let counted_path = "build/prelude/std-fs-create-truncate-copy-counted.tmp";
   let missing_path = "build/prelude/std-fs-create-truncate-copy-missing.tmp";
   if fs::exists(source_path) {
-    fs::remove(source_path);
+    fs::remove_bool(source_path);
   }
   if fs::exists(copy_path) {
-    fs::remove(copy_path);
+    fs::remove_bool(copy_path);
   }
   if fs::exists(counted_path) {
-    fs::remove(counted_path);
+    fs::remove_bool(counted_path);
   }
   if fs::exists(missing_path) {
-    fs::remove(missing_path);
+    fs::remove_bool(missing_path);
   }
 
   var score = 0;
@@ -37,7 +37,7 @@ fn main() -> i64 {
   }
 
   var zone = zone::create(1024);
-  if fs::copy(source_path, copy_path) {
+  if fs::copy(source_path, copy_path).is_ok() {
     score = score + 5;
   }
 
@@ -80,7 +80,7 @@ fn main() -> i64 {
     }
     std::None => {}
   }
-  if !fs::copy(missing_path, copy_path) {
+  if !fs::copy_bool(missing_path, copy_path) {
     score = score + 11;
   }
   match fs::try_copy(missing_path, counted_path) {
@@ -90,13 +90,13 @@ fn main() -> i64 {
     }
   }
 
-  if fs::remove(source_path) {
+  if fs::remove_bool(source_path) {
     score = score + 12;
   }
-  if fs::remove(copy_path) {
+  if fs::remove_bool(copy_path) {
     score = score + 13;
   }
-  if fs::remove(counted_path) {
+  if fs::remove_bool(counted_path) {
     score = score + 18;
   }
 

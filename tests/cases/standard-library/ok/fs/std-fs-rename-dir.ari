@@ -6,32 +6,32 @@ fn main() -> i64 {
   let missing_path = "build/prelude/std-fs-rename-dir-missing.tmp";
 
   if fs::exists(dir_path) {
-    fs::remove(dir_path);
-    fs::remove_dir(dir_path);
+    fs::remove_bool(dir_path);
+    fs::remove_dir_bool(dir_path);
   }
   if fs::exists(source_path) {
-    fs::remove(source_path);
+    fs::remove_bool(source_path);
   }
   if fs::exists(target_path) {
-    fs::remove(target_path);
-    fs::remove_dir(target_path);
+    fs::remove_bool(target_path);
+    fs::remove_dir_bool(target_path);
   }
   if fs::exists(missing_path) {
-    fs::remove(missing_path);
+    fs::remove_bool(missing_path);
   }
 
   var score = 0;
 
-  if fs::create_dir(dir_path) {
+  if fs::create_dir_bool(dir_path) {
     score = score + 1;
   }
   if fs::exists(dir_path) {
     score = score + 2;
   }
-  if !fs::create_dir(dir_path) {
+  if !fs::create_dir_bool(dir_path) {
     score = score + 3;
   }
-  if fs::remove_dir(dir_path) {
+  if fs::remove_dir_bool(dir_path) {
     score = score + 4;
   }
   if !fs::exists(dir_path) {
@@ -42,7 +42,7 @@ fn main() -> i64 {
   if fs::write_bool(source_path, data.as_slice()) {
     score = score + 6;
   }
-  if fs::rename(source_path, target_path) {
+  if fs::rename_bool(source_path, target_path) {
     score = score + 7;
   }
   if !fs::exists(source_path) {
@@ -63,10 +63,10 @@ fn main() -> i64 {
   if renamed.get(1) == 78 as u8 {
     score = score + 12;
   }
-  if !fs::rename(missing_path, source_path) {
+  if !fs::rename_bool(missing_path, source_path) {
     score = score + 13;
   }
-  if fs::remove(target_path) {
+  if fs::remove_bool(target_path) {
     score = score + 14;
   }
   if !fs::exists(target_path) {

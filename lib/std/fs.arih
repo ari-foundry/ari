@@ -53,16 +53,16 @@ pub extern "ari" fn exists(path: string) -> bool = "ari_builtin_fs_exists";
 pub extern "ari" fn can_read(path: string) -> bool = "ari_builtin_fs_can_read";
 pub extern "ari" fn can_write(path: string) -> bool = "ari_builtin_fs_can_write";
 pub extern "ari" fn can_execute(path: string) -> bool = "ari_builtin_fs_can_execute";
-pub extern "ari" fn remove(path: string) -> bool = "ari_builtin_fs_remove";
-pub extern "ari" fn rename(source: string, target: string) -> bool = "ari_builtin_fs_rename";
+pub extern "ari" fn remove_unchecked(path: string) -> bool = "ari_builtin_fs_remove";
+pub extern "ari" fn rename_unchecked(source: string, target: string) -> bool = "ari_builtin_fs_rename";
 // Relative symbolic-link targets are resolved by the host from the link's
 // parent directory, matching POSIX symlink behavior.
-pub extern "ari" fn hard_link(existing: string, link_path: string) -> bool = "ari_builtin_fs_hard_link";
-pub extern "ari" fn symbolic_link(target: string, link_path: string) -> bool = "ari_builtin_fs_symbolic_link";
+pub extern "ari" fn hard_link_unchecked(existing: string, link_path: string) -> bool = "ari_builtin_fs_hard_link";
+pub extern "ari" fn symbolic_link_unchecked(target: string, link_path: string) -> bool = "ari_builtin_fs_symbolic_link";
 extern "ari" fn read_link_raw(path: string) -> string = "ari_builtin_fs_read_link";
-pub extern "ari" fn create_dir(path: string) -> bool = "ari_builtin_fs_create_dir";
-pub extern "ari" fn create_dir_all(path: string) -> bool = "ari_builtin_fs_create_dir_all";
-pub extern "ari" fn remove_dir(path: string) -> bool = "ari_builtin_fs_remove_dir";
+pub extern "ari" fn create_dir_unchecked(path: string) -> bool = "ari_builtin_fs_create_dir";
+pub extern "ari" fn create_dir_all_unchecked(path: string) -> bool = "ari_builtin_fs_create_dir_all";
+pub extern "ari" fn remove_dir_unchecked(path: string) -> bool = "ari_builtin_fs_remove_dir";
 pub extern "ari" fn open_dir(path: string) -> Dir = "ari_builtin_fs_open_dir";
 pub extern "ari" fn close_dir_unchecked(dir: Dir) -> bool = "ari_builtin_fs_close_dir";
 extern "ari" fn remove_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_bytes";
@@ -202,35 +202,111 @@ fn system_time_from_nanos(nanos: i64) -> std::time::SystemTime {
 }
 
 pub fn remove_raw_result(path: string) -> std::Result[(), i64] {
-  return unit_raw_result(remove(path));
+  return unit_raw_result(remove_unchecked(path));
 }
 
-pub fn remove_result(path: string) -> std::Result[(), std::error::Error] {
+pub fn remove(path: string) -> std::Result[(), std::error::Error] {
   return std::error::from_raw_result<()>(remove_raw_result(path));
 }
 
-pub fn rename_raw_result(source: string, target: string) -> std::Result[(), i64] {
-  return unit_raw_result(rename(source, target));
+pub fn remove_file(path: string) -> std::Result[(), std::error::Error] {
+  return remove(path);
 }
 
-pub fn rename_result(source: string, target: string) -> std::Result[(), std::error::Error] {
+pub fn remove_result(path: string) -> std::Result[(), std::error::Error] {
+  return remove(path);
+}
+
+pub fn remove_bool(path: string) -> bool {
+  return remove_unchecked(path);
+}
+
+pub fn remove_file_bool(path: string) -> bool {
+  return remove_bool(path);
+}
+
+pub fn rename_raw_result(source: string, target: string) -> std::Result[(), i64] {
+  return unit_raw_result(rename_unchecked(source, target));
+}
+
+pub fn rename(source: string, target: string) -> std::Result[(), std::error::Error] {
   return std::error::from_raw_result<()>(rename_raw_result(source, target));
 }
 
-pub fn create_dir_raw_result(path: string) -> std::Result[(), i64] {
-  return unit_raw_result(create_dir(path));
+pub fn rename_result(source: string, target: string) -> std::Result[(), std::error::Error] {
+  return rename(source, target);
 }
 
-pub fn create_dir_result(path: string) -> std::Result[(), std::error::Error] {
+pub fn rename_bool(source: string, target: string) -> bool {
+  return rename_unchecked(source, target);
+}
+
+pub fn hard_link_raw_result(existing: string, link_path: string) -> std::Result[(), i64] {
+  return unit_raw_result(hard_link_unchecked(existing, link_path));
+}
+
+pub fn hard_link(existing: string, link_path: string) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(hard_link_raw_result(existing, link_path));
+}
+
+pub fn hard_link_bool(existing: string, link_path: string) -> bool {
+  return hard_link_unchecked(existing, link_path);
+}
+
+pub fn symbolic_link_raw_result(target: string, link_path: string) -> std::Result[(), i64] {
+  return unit_raw_result(symbolic_link_unchecked(target, link_path));
+}
+
+pub fn symbolic_link(target: string, link_path: string) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(symbolic_link_raw_result(target, link_path));
+}
+
+pub fn symbolic_link_bool(target: string, link_path: string) -> bool {
+  return symbolic_link_unchecked(target, link_path);
+}
+
+pub fn create_dir_raw_result(path: string) -> std::Result[(), i64] {
+  return unit_raw_result(create_dir_unchecked(path));
+}
+
+pub fn create_dir(path: string) -> std::Result[(), std::error::Error] {
   return std::error::from_raw_result<()>(create_dir_raw_result(path));
 }
 
+pub fn create_dir_result(path: string) -> std::Result[(), std::error::Error] {
+  return create_dir(path);
+}
+
+pub fn create_dir_bool(path: string) -> bool {
+  return create_dir_unchecked(path);
+}
+
+pub fn create_dir_all_raw_result(path: string) -> std::Result[(), i64] {
+  return unit_raw_result(create_dir_all_unchecked(path));
+}
+
+pub fn create_dir_all(path: string) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(create_dir_all_raw_result(path));
+}
+
+pub fn create_dir_all_bool(path: string) -> bool {
+  return create_dir_all_unchecked(path);
+}
+
 pub fn remove_dir_raw_result(path: string) -> std::Result[(), i64] {
-  return unit_raw_result(remove_dir(path));
+  return unit_raw_result(remove_dir_unchecked(path));
+}
+
+pub fn remove_dir(path: string) -> std::Result[(), std::error::Error] {
+  return std::error::from_raw_result<()>(remove_dir_raw_result(path));
 }
 
 pub fn remove_dir_result(path: string) -> std::Result[(), std::error::Error] {
-  return std::error::from_raw_result<()>(remove_dir_raw_result(path));
+  return remove_dir(path);
+}
+
+pub fn remove_dir_bool(path: string) -> bool {
+  return remove_dir_unchecked(path);
 }
 
 pub fn close_dir_raw(dir: Dir) -> std::Result[(), i64] {
@@ -704,11 +780,11 @@ pub fn ensure_dir(path: string) -> bool {
   if exists(path) {
     return false;
   }
-  return create_dir(path);
+  return create_dir(path).is_ok();
 }
 
 pub fn ensure_dir_all(path: string) -> bool {
-  return create_dir_all(path);
+  return create_dir_all(path).is_ok();
 }
 
 // Keep setup code rerunnable without truncating existing regular files.
@@ -781,7 +857,7 @@ pub fn try_read_dir(zone: ref mut Zone, path: string) -> std::Option[std::vec::V
   return std::None<std::vec::Vec[std::string::String]>();
 }
 
-pub fn read_dir(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[std::string::String], std::error::Error] {
+pub fn read_dir_names(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[std::string::String], std::error::Error] {
   match open_dir_result(path) {
     std::Ok(dir) => {
       var entries = std::vec::new<std::string::String>(zone, 8);
@@ -812,16 +888,16 @@ pub fn read_dir(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[s
   }
 }
 
-pub fn read_dir_result(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[std::string::String], std::error::Error] {
-  return read_dir(zone, path);
-}
-
-pub fn read_dir_optional(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[std::string::String]] {
+pub fn read_dir_names_optional(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[std::string::String]] {
   return try_read_dir(zone, path);
 }
 
-pub fn read_dir_unchecked(zone: ref mut Zone, path: string) -> std::vec::Vec[std::string::String] {
-  match read_dir(zone, path) {
+pub fn try_read_dir_names(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[std::string::String]] {
+  return try_read_dir(zone, path);
+}
+
+pub fn read_dir_names_unchecked(zone: ref mut Zone, path: string) -> std::vec::Vec[std::string::String] {
+  match read_dir_names(zone, path) {
     std::Ok(entries) => {
       return entries;
     }
@@ -917,6 +993,29 @@ pub fn read_dir_entries_optional(zone: ref mut Zone, path: string) -> std::Optio
   return try_read_dir_entries(zone, path);
 }
 
+pub fn read_dir(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
+  return read_dir_entries(zone, path);
+}
+
+pub fn read_dir_result(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[DirEntry], std::error::Error] {
+  return read_dir(zone, path);
+}
+
+pub fn read_dir_optional(zone: ref mut Zone, path: string) -> std::Option[std::vec::Vec[DirEntry]] {
+  return try_read_dir_entries(zone, path);
+}
+
+pub fn read_dir_unchecked(zone: ref mut Zone, path: string) -> std::vec::Vec[DirEntry] {
+  match read_dir(zone, path) {
+    std::Ok(entries) => {
+      return entries;
+    }
+    std::Err(_) => {}
+  }
+  std::panic();
+  return std::vec::new<DirEntry>(zone, 0);
+}
+
 fn try_read_dir_entries_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::Option[std::vec::Vec[DirEntry]] {
   match try_open_dir_bytes(path) {
     std::Some(dir) => {
@@ -999,11 +1098,18 @@ fn remove_dir_all_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> bool {
   return remove_dir_bytes_raw(path.data, path.len);
 }
 
-pub fn remove_dir_all(path: string) -> bool {
+pub fn remove_dir_all_bool(path: string) -> bool {
   var zone = std::zone::create(4096);
   let ok = remove_dir_all_bytes(ref mut zone, std::string::bytes(path));
   std::zone::destroy(zone);
   return ok;
+}
+
+pub fn remove_dir_all(path: string) -> std::Result[(), std::error::Error] {
+  if remove_dir_all_bool(path) {
+    return std::Ok<(), std::error::Error>(());
+  }
+  return std::Err<(), std::error::Error>(std::error::from_raw(last_errno_error_raw()));
 }
 
 pub fn try_canonicalize(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
@@ -1334,6 +1440,17 @@ pub fn append_result(path: string, values: std::Slice[u8]) -> std::Result[i64, s
   return std::error::from_raw_result<i64>(append_raw_result(path, values));
 }
 
+pub fn write_string(path: string, text: string) -> std::Result[(), std::error::Error] {
+  match write(path, std::string::bytes(text)) {
+    std::Ok(_) => {
+      return std::Ok<(), std::error::Error>(());
+    }
+    std::Err(reason) => {
+      return std::Err<(), std::error::Error>(reason);
+    }
+  }
+}
+
 pub fn try_write(path: string, values: std::Slice[u8]) -> std::Option[i64] {
   return byte_count_option(write_raw_result(path, values));
 }
@@ -1420,6 +1537,17 @@ pub fn read_result(zone: ref mut Zone, path: string) -> std::Result[std::string:
   return read(zone, path);
 }
 
+pub fn read_bytes(zone: ref mut Zone, path: string) -> std::Result[std::vec::Vec[u8], std::error::Error] {
+  match read(zone, path) {
+    std::Ok(text) => {
+      return std::Ok<std::vec::Vec[u8], std::error::Error>(std::vec::from_slice_in<u8>(zone, text.as_slice()));
+    }
+    std::Err(reason) => {
+      return std::Err<std::vec::Vec[u8], std::error::Error>(reason);
+    }
+  }
+}
+
 pub fn read_optional(zone: ref mut Zone, path: string) -> std::Option[std::string::String] {
   return try_read(zone, path);
 }
@@ -1444,7 +1572,7 @@ pub fn truncate(path: string) -> bool {
   return file.close().is_ok();
 }
 
-pub fn copy(source: string, target: string) -> bool {
+pub fn copy_bool(source: string, target: string) -> bool {
   match try_copy(source, target) {
     std::Some(_bytes) => {
       return true;
@@ -1507,6 +1635,10 @@ pub fn copy_raw_result(source: string, target: string) -> std::Result[i64, i64] 
 }
 
 pub fn copy_result(source: string, target: string) -> std::Result[i64, std::error::Error] {
+  return copy(source, target);
+}
+
+pub fn copy(source: string, target: string) -> std::Result[i64, std::error::Error] {
   return std::error::from_raw_result<i64>(copy_raw_result(source, target));
 }
 

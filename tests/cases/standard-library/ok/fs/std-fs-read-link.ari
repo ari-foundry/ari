@@ -2,7 +2,7 @@
 // inspection separate from canonicalization: read_link returns the stored link
 // target bytes, while canonicalize resolves an existing path.
 fn cleanup(path: string) -> void {
-  fs::remove(path);
+  fs::remove_bool(path);
 }
 
 fn main() -> i64 {
@@ -20,7 +20,7 @@ fn main() -> i64 {
 
   var zone = zone::create(512);
   var score = 0;
-  if fs::symbolic_link(target, link) {
+  if fs::symbolic_link_bool(target, link) {
     score = score + 1;
   }
 

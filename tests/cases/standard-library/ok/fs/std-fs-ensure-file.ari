@@ -9,26 +9,26 @@ fn main() -> i64 {
   let missing_parent_path = "build/prelude/std-fs-ensure-file-missing/child.tmp";
 
   if fs::exists(existing_path) {
-    fs::remove(existing_path);
+    fs::remove_bool(existing_path);
   }
   if fs::exists(missing_path) {
-    fs::remove(missing_path);
+    fs::remove_bool(missing_path);
   }
   if fs::exists(dir_path) {
     if fs::is_dir(dir_path) {
-      fs::remove_dir(dir_path);
+      fs::remove_dir_bool(dir_path);
     } else {
-      fs::remove(dir_path);
+      fs::remove_bool(dir_path);
     }
   }
   if fs::exists(missing_parent_path) {
-    fs::remove(missing_parent_path);
+    fs::remove_bool(missing_parent_path);
   }
   if fs::exists(missing_parent_dir) {
     if fs::is_dir(missing_parent_dir) {
-      fs::remove_dir(missing_parent_dir);
+      fs::remove_dir_bool(missing_parent_dir);
     } else {
-      fs::remove(missing_parent_dir);
+      fs::remove_bool(missing_parent_dir);
     }
   }
 
@@ -74,15 +74,15 @@ fn main() -> i64 {
     return 9;
   }
 
-  if !fs::remove(existing_path) {
+  if !fs::remove_bool(existing_path) {
     zone::destroy(zone);
     return 10;
   }
-  if !fs::remove(missing_path) {
+  if !fs::remove_bool(missing_path) {
     zone::destroy(zone);
     return 11;
   }
-  if !fs::remove_dir(dir_path) {
+  if !fs::remove_dir_bool(dir_path) {
     zone::destroy(zone);
     return 12;
   }

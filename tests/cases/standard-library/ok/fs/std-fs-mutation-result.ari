@@ -2,9 +2,9 @@
 // unit because callers only need to know that the operation completed; failures
 // use direct Error payloads while raw helpers stay available for compatibility.
 fn cleanup(dir_path: string, source_path: string, target_path: string) -> void {
-  fs::remove(source_path);
-  fs::remove(target_path);
-  fs::remove_dir(dir_path);
+  fs::remove_bool(source_path);
+  fs::remove_bool(target_path);
+  fs::remove_dir_bool(dir_path);
 }
 
 fn error_matches(value: error::Error, kind: error::Kind, code: i64) -> bool {
@@ -42,39 +42,45 @@ fn main() -> i64 {
   let target_path = "build/prelude/std-fs-mutation-result-target.tmp";
   let missing_path = "build/prelude/std-fs-mutation-result-missing.tmp";
   cleanup(dir_path, source_path, target_path);
-  fs::remove(missing_path);
+  fs::remove_bool(missing_path);
 
   var score = 0;
 
-  if result_error_matches(fs::remove_result(missing_path), error::NotFound, 2) &&
+  if result_error_matches(fs::remove(missing_path), error::NotFound, 2) &&
+    result_error_matches(fs::remove_result(missing_path), error::NotFound, 2) &&
     raw_result_error_matches(fs::remove_raw_result(missing_path), error::NotFound, 2) {
     score = score + 1;
   }
-  if result_ok(fs::create_dir_result(dir_path)) && fs::exists(dir_path) {
+  if result_ok(fs::create_dir(dir_path)) && fs::exists(dir_path) {
     score = score + 2;
   }
-  if result_error_matches(fs::create_dir_result(dir_path), error::AlreadyExists, 17) &&
+  if result_error_matches(fs::create_dir(dir_path), error::AlreadyExists, 17) &&
+    result_error_matches(fs::create_dir_result(dir_path), error::AlreadyExists, 17) &&
     raw_result_error_matches(fs::create_dir_raw_result(dir_path), error::AlreadyExists, 17) {
     score = score + 4;
   }
-  if result_ok(fs::remove_dir_result(dir_path)) && !fs::exists(dir_path) {
+  if result_ok(fs::remove_dir(dir_path)) && !fs::exists(dir_path) {
     score = score + 8;
   }
-  if result_error_matches(fs::remove_dir_result(dir_path), error::NotFound, 2) &&
+  if result_error_matches(fs::remove_dir(dir_path), error::NotFound, 2) &&
+    result_error_matches(fs::remove_dir_result(dir_path), error::NotFound, 2) &&
     raw_result_error_matches(fs::remove_dir_raw_result(dir_path), error::NotFound, 2) {
     score = score + 16;
   }
 
   assert(fs::write_bool(source_path, "RN"));
-  if result_ok(fs::rename_result(source_path, target_path)) &&
+  if result_ok(fs::rename(source_path, target_path)) &&
     !fs::exists(source_path) && fs::exists(target_path) {
     score = score + 32;
   }
-  if result_error_matches(fs::rename_result(missing_path, source_path), error::NotFound, 2) &&
+  assert(fs::rename_result(target_path, source_path).is_ok());
+  assert(fs::rename_result(source_path, target_path).is_ok());
+  if result_error_matches(fs::rename(missing_path, source_path), error::NotFound, 2) &&
+    result_error_matches(fs::rename_result(missing_path, source_path), error::NotFound, 2) &&
     raw_result_error_matches(fs::rename_raw_result(missing_path, source_path), error::NotFound, 2) {
     score = score + 64;
   }
-  if result_ok(fs::remove_result(target_path)) && !fs::exists(target_path) {
+  if result_ok(fs::remove_file(target_path)) && !fs::exists(target_path) {
     score = score + 128;
   }
 

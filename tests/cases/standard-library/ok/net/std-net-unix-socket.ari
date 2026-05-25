@@ -13,7 +13,7 @@ fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
 
 fn main() -> i64 {
   let path = "build/prelude/std-net-unix-socket.sock";
-  fs::remove(path);
+  fs::remove_bool(path);
 
   var score = 0;
   assert(net::UnixListener::bind_optional("build/prelude/missing-dir/std-net-unix-socket.sock").is_none());
@@ -90,7 +90,7 @@ fn main() -> i64 {
     score = score + 64;
   }
 
-  if server.close().is_ok() && client.close().is_ok() && listener.close().is_ok() && fs::remove(path) {
+  if server.close().is_ok() && client.close().is_ok() && listener.close().is_ok() && fs::remove_bool(path) {
     score = score + 128;
   }
   assert(server.close().is_err());

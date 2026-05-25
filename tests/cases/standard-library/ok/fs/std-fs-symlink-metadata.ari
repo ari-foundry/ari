@@ -1,7 +1,7 @@
 // Covers no-follow symbolic-link metadata. `metadata` follows a link to its
 // target, while `symlink_metadata` reports the link object itself.
 fn cleanup(path: string) -> void {
-  fs::remove(path);
+  fs::remove_bool(path);
 }
 
 fn main() -> i64 {
@@ -17,7 +17,7 @@ fn main() -> i64 {
   if fs::write_bool(source, data.as_slice()) {
     score = score + 1;
   }
-  if fs::symbolic_link(target, link) {
+  if fs::symbolic_link_bool(target, link) {
     score = score + 2;
   }
 

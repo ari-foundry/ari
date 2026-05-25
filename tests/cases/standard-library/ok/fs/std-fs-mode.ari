@@ -5,7 +5,7 @@ fn main() -> i64 {
   let path = "build/prelude/std-fs-mode.tmp";
   if fs::exists(path) {
     fs::set_mode(path, 420);
-    fs::remove(path);
+    fs::remove_bool(path);
   }
 
   var score = 0;
@@ -51,7 +51,7 @@ fn main() -> i64 {
   }
 
   fs::set_mode(path, 420);
-  if fs::remove(path) {
+  if fs::remove_bool(path) {
     score = score + 12;
   }
   if !fs::exists(path) {

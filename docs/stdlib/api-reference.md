@@ -1208,9 +1208,21 @@ fs::canonicalize_result(ref mut zone, path)
 fs::canonicalize_unchecked(ref mut zone, path)
 fs::try_canonicalize(ref mut zone, path)
 fs::remove(path)
+fs::remove_file(path)
+fs::remove_bool(path)
+fs::remove_file_bool(path)
+fs::remove_unchecked(path)
 fs::rename(source, target)
+fs::rename_bool(source, target)
+fs::rename_unchecked(source, target)
 fs::hard_link(existing, link_path)
+fs::hard_link_bool(existing, link_path)
+fs::hard_link_raw_result(existing, link_path)
+fs::hard_link_unchecked(existing, link_path)
 fs::symbolic_link(target, link_path)
+fs::symbolic_link_bool(target, link_path)
+fs::symbolic_link_raw_result(target, link_path)
+fs::symbolic_link_unchecked(target, link_path)
 fs::read_link(ref mut zone, path)
 fs::read_link_optional(ref mut zone, path)
 fs::read_link_result(ref mut zone, path)
@@ -1218,15 +1230,23 @@ fs::read_link_unchecked(ref mut zone, path)
 fs::try_read_link(ref mut zone, path)
 fs::ensure_file(path)
 fs::create_dir(path)
+fs::create_dir_bool(path)
 fs::create_dir_raw_result(path)
 fs::create_dir_result(path)
+fs::create_dir_unchecked(path)
 fs::ensure_dir(path)
 fs::create_dir_all(path)
+fs::create_dir_all_bool(path)
+fs::create_dir_all_raw_result(path)
+fs::create_dir_all_unchecked(path)
 fs::ensure_dir_all(path)
 fs::remove_dir(path)
+fs::remove_dir_bool(path)
 fs::remove_dir_raw_result(path)
 fs::remove_dir_result(path)
+fs::remove_dir_unchecked(path)
 fs::remove_dir_all(path)
+fs::remove_dir_all_bool(path)
 fs::open_dir(path)
 fs::open_dir_raw_result(path)
 fs::open_dir_result(path)
@@ -1236,6 +1256,10 @@ fs::read_dir_optional(ref mut zone, path)
 fs::read_dir_result(ref mut zone, path)
 fs::read_dir_unchecked(ref mut zone, path)
 fs::try_read_dir(ref mut zone, path)
+fs::read_dir_names(ref mut zone, path)
+fs::read_dir_names_optional(ref mut zone, path)
+fs::read_dir_names_unchecked(ref mut zone, path)
+fs::try_read_dir_names(ref mut zone, path)
 fs::read_dir_entries(ref mut zone, path)
 fs::read_dir_entries_optional(ref mut zone, path)
 fs::read_dir_entries_result(ref mut zone, path)
@@ -1275,6 +1299,7 @@ fs::write_bytes(file, values)
 fs::position(file)
 fs::seek(file, position)
 fs::read(ref mut zone, path)
+fs::read_bytes(ref mut zone, path)
 fs::read_optional(ref mut zone, path)
 fs::read_or_default(ref mut zone, path)
 fs::read_result(ref mut zone, path)
@@ -1284,6 +1309,7 @@ fs::write(path, values)
 fs::write_bool(path, values)
 fs::write_raw_result(path, values)
 fs::write_result(path, values)
+fs::write_string(path, text)
 fs::try_write(path, values)
 fs::append(path, values)
 fs::append_bool(path, values)
@@ -1292,6 +1318,7 @@ fs::append_result(path, values)
 fs::try_append(path, values)
 fs::truncate(path)
 fs::copy(source, target)
+fs::copy_bool(source, target)
 fs::copy_raw_result(source, target)
 fs::copy_result(source, target)
 fs::try_copy(source, target)
@@ -1482,6 +1509,8 @@ alias.
 and returns `Result[i64, Error]` with the byte count.
 `write(path, values)` truncates or creates a small byte file, writes the whole
 `Slice[u8]`, and returns `Ok(byte_count)` when the write and close succeed.
+`write_string(path, text)` writes Ari's byte-oriented `String` and returns
+`Result[(), Error]` after discarding the byte count.
 `append(path, values)` creates if needed and appends the whole slice with the
 same `Result[i64, Error]` policy. `write_result` and `append_result` are
 migration aliases; `write_raw_result` and `append_raw_result` preserve the raw
@@ -1491,36 +1520,41 @@ migration aliases; `write_raw_result` and `append_raw_result` preserve the raw
 compatibility wrappers.
 `read_to_string(ref mut zone, path)` and its short alias `read(ref mut zone,
 path)` return `Result[String, Error]`, using the caller's zone for the
-byte-oriented `std::string::String`. `try_read_to_string`/`try_read` and
+byte-oriented `std::string::String`. `read_bytes(ref mut zone, path)` copies
+those bytes into `Vec[u8]`. `try_read_to_string`/`try_read` and
 `read_to_string_optional`/`read_optional` collapse failures to `None`; the
 `_or_default` helpers keep the old empty-string fallback. `truncate(path)`
-creates or empties a file. `try_copy(source,
-target)` streams bytes from the source handle into the target opened with
-truncating semantics and returns `Some(byte_count)` on success or `None` on
-open/write/close failure. `copy_result(source, target)` keeps those
-open/write/close failures as `Err(Error)`, `copy_raw_result(source, target)`
-keeps the raw `Result[i64, i64]` bridge, and `copy(source, target)` is the
-boolean compatibility wrapper over `try_copy`. `rename(source, target)` moves or renames one path
-according to the host runtime's current behavior, and
-`rename_result(source, target)` preserves a `std::error::Error` value on failure.
-`remove_result(path)`, `create_dir_result(path)`, and
-`remove_dir_result(path)` are the same `Result[(), Error]` shape for file
-removal and single-directory creation/removal; `*_raw_result` variants remain
-for compatibility. `create_dir(path)` creates
-one directory, `ensure_dir(path)` treats an existing directory as success or
-creates a missing one, `create_dir_all(path)` recursively creates missing
-parent directories, `ensure_dir_all(path)` is the idempotent recursive alias,
-`remove_dir(path)` removes one empty directory, and `remove_dir_all(path)`
-recursively removes a directory tree without following symlink entries outside
-that tree.
+creates or empties a file. `try_copy(source, target)` streams bytes from the
+source handle into the target opened with truncating semantics and returns
+`Some(byte_count)` on success or `None` on open/write/close failure.
+`copy(source, target)` is the natural `Result[i64, Error]` copy helper,
+`copy_result(source, target)` is its migration alias,
+`copy_raw_result(source, target)` keeps the raw `Result[i64, i64]` bridge, and
+`copy_bool(source, target)` is the boolean compatibility wrapper over
+`try_copy`. `rename(source, target)` moves or renames one path according to the
+host runtime's current behavior and returns `Result[(), Error]`;
+`rename_result` is a migration alias, `rename_bool` is the compatibility
+boolean shape, and `rename_unchecked` is the direct runtime hook.
+`remove(path)`/`remove_file(path)`, `create_dir(path)`, `remove_dir(path)`,
+`create_dir_all(path)`, and `remove_dir_all(path)` are natural `Result[(),
+Error]` helpers. Their `*_result` names are migration aliases where present,
+their `*_bool` names keep old boolean compatibility, and their `*_raw_result`
+or `*_unchecked` forms are only for compatibility/runtime-hook code.
+`ensure_dir(path)` and `ensure_dir_all(path)` stay boolean setup helpers.
+`hard_link(existing, link_path)` and `symbolic_link(target, link_path)` are
+also Result-first; their `_bool`, `_unchecked`, and `_raw_result` variants are
+the non-default compatibility forms.
 `open_dir_result(path)` returns `Result[Dir, Error]` and
-`open_dir_raw_result(path)` keeps raw compatibility. `try_open_dir(path)` returns `Option[Dir]`, `dir.next(ref mut zone)` returns
-the next entry name while skipping `"."` and `".."`, and `dir.close()` closes
-the handle. `read_dir(ref mut zone, path)` opens, collects names into
-`std::vec::Vec[String]`, closes, and returns `Result[Vec[String], Error]`.
-`read_dir_result(ref mut zone, path)` is a migration alias,
-`read_dir_optional`/`try_read_dir` discard the reason, and
-`read_dir_unchecked` asserts on failure. Use
+`open_dir_raw_result(path)` keeps raw compatibility. `try_open_dir(path)`
+returns `Option[Dir]`, `dir.next(ref mut zone)` returns the next entry name
+while skipping `"."` and `".."`, and `dir.close()` closes the handle.
+`read_dir(ref mut zone, path)` opens, collects `DirEntry` values, closes, and
+returns `Result[Vec[DirEntry], Error]`. `read_dir_result(ref mut zone, path)`
+is a migration alias, `read_dir_optional` discards the reason, and
+`read_dir_unchecked` asserts on failure. Use `read_dir_names(ref mut zone,
+path)` for the old `Vec[String]` name-list shape; `try_read_dir`,
+`try_read_dir_names`, `read_dir_names_optional`, and `read_dir_names_unchecked`
+are the absence-only and unchecked name-list compatibility helpers. Use
 `read_dir_entries(ref mut zone, path)` when callers need `DirEntry` values with
 `entry.name()`, `entry.path()`, and lazy metadata/file-kind helpers. Entry
 `metadata`, `try_metadata`, `try_file_type`, `is_file`, `is_dir`, and

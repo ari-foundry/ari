@@ -14,17 +14,17 @@ fn cleanup_manual(
   standalone: string,
   empty: string
 ) -> void {
-  fs::remove(link_file);
-  fs::remove(link_dir);
-  fs::remove(nested_file);
-  fs::remove(file_path);
-  fs::remove(outside_file);
-  fs::remove(standalone);
-  fs::remove_dir(beta);
-  fs::remove_dir(alpha);
-  fs::remove_dir(root);
-  fs::remove_dir(outside);
-  fs::remove_dir(empty);
+  fs::remove_bool(link_file);
+  fs::remove_bool(link_dir);
+  fs::remove_bool(nested_file);
+  fs::remove_bool(file_path);
+  fs::remove_bool(outside_file);
+  fs::remove_bool(standalone);
+  fs::remove_dir_bool(beta);
+  fs::remove_dir_bool(alpha);
+  fs::remove_dir_bool(root);
+  fs::remove_dir_bool(outside);
+  fs::remove_dir_bool(empty);
 }
 
 fn main() -> i64 {
@@ -56,35 +56,36 @@ fn main() -> i64 {
   );
 
   var score = 0;
-  if fs::create_dir_all(beta) {
+  if fs::create_dir_all_bool(beta) {
     score = score + 1;
   }
   if fs::write_bool(file_path, "root") && fs::write_bool(nested_file, "nested") {
     score = score + 2;
   }
-  if fs::create_dir(outside) && fs::write_bool(outside_file, "keep") {
+  if fs::create_dir_bool(outside) && fs::write_bool(outside_file, "keep") {
     score = score + 4;
   }
-  if fs::symbolic_link("file.txt", link_file) &&
-     fs::symbolic_link("../std-fs-remove-dir-all-target.tmp", link_dir) {
+  if fs::symbolic_link_bool("file.txt", link_file) &&
+     fs::symbolic_link_bool("../std-fs-remove-dir-all-target.tmp", link_dir) {
     score = score + 8;
   }
   if fs::write_bool(standalone, "no") {
     score = score + 16;
   }
-  if fs::create_dir(empty) {
+  if fs::create_dir_bool(empty) {
     score = score + 32;
   }
-  if !fs::remove_dir_all(missing) {
+  assert(fs::remove_dir_all(missing).is_err());
+  if fs::remove_dir_all(missing).is_err() {
     score = score + 64;
   }
-  if !fs::remove_dir_all(standalone) && fs::is_file(standalone) {
+  if fs::remove_dir_all(standalone).is_err() && fs::is_file(standalone) {
     score = score + 128;
   }
-  if fs::remove_dir_all(empty) && !fs::exists(empty) {
+  if fs::remove_dir_all(empty).is_ok() && !fs::exists(empty) {
     score = score + 256;
   }
-  if fs::remove_dir_all(root) {
+  if fs::remove_dir_all(root).is_ok() {
     score = score + 512;
   }
   if !fs::exists(root) && !fs::exists(file_path) && !fs::exists(nested_file) &&

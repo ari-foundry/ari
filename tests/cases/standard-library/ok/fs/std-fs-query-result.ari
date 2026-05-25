@@ -31,26 +31,25 @@ fn main() -> i64 {
   let link_path = "build/prelude/std-fs-query-result-dir.tmp/item.link";
   let missing = "build/prelude/std-fs-query-result-missing.tmp";
 
-  fs::remove(link_path);
-  fs::remove(file_path);
-  fs::remove_dir(dir_path);
-  fs::remove(missing);
+  fs::remove_bool(link_path);
+  fs::remove_bool(file_path);
+  fs::remove_dir_bool(dir_path);
+  fs::remove_bool(missing);
 
   var zone = zone::create(4096);
   var bytes = [81u8, 82u8, 89u8];
   var score = 0;
 
-  fs::create_dir(dir_path);
+  fs::create_dir_bool(dir_path);
   fs::write_bool(file_path, bytes.as_slice());
-  fs::symbolic_link(file_path, link_path);
+  fs::symbolic_link_bool(file_path, link_path);
 
   match fs::metadata(file_path) {
     std::Ok(file_info) => {
       if file_info.len() == 3 && file_info.is_file() &&
          fs::metadata_result(file_path).is_ok() &&
          fs::metadata_optional(file_path).is_some() &&
-         fs::try_metadata(file_path).is_some() &&
-         fs::metadata_unchecked(file_path).len() == 3 {
+         fs::try_metadata(file_path).is_some() {
         score = score + 1;
       }
     }
@@ -64,12 +63,7 @@ fn main() -> i64 {
           if fs::file_type_result(file_path).is_ok() &&
              fs::file_type_optional(file_path).is_some() &&
              fs::try_file_type(file_path).is_some() {
-            match fs::file_type_unchecked(file_path) {
-              fs::Regular => {
-                score = score + 2;
-              }
-              _ => {}
-            }
+            score = score + 2;
           }
         }
         _ => {}
@@ -83,8 +77,7 @@ fn main() -> i64 {
       if mode >= 0 &&
          fs::mode_result(file_path).is_ok() &&
          fs::mode_optional(file_path).is_some() &&
-         fs::try_mode(file_path).is_some() &&
-         fs::mode_unchecked(file_path) >= 0 {
+         fs::try_mode(file_path).is_some() {
         score = score + 4;
       }
     }
@@ -105,8 +98,7 @@ fn main() -> i64 {
       if link_info.is_symlink() &&
          fs::symlink_metadata_result(link_path).is_ok() &&
          fs::symlink_metadata_optional(link_path).is_some() &&
-         fs::try_symlink_metadata(link_path).is_some() &&
-         fs::symlink_metadata_unchecked(link_path).is_symlink() {
+         fs::try_symlink_metadata(link_path).is_some() {
         score = score + 16;
       }
     }
@@ -115,11 +107,9 @@ fn main() -> i64 {
 
   match fs::read_link(ref mut zone, link_path) {
     std::Ok(target) => {
-      let unchecked_target = fs::read_link_unchecked(ref mut zone, link_path);
       if target.equals_text(file_path) &&
          fs::read_link_result(ref mut zone, link_path).is_ok() &&
-         fs::read_link_optional(ref mut zone, link_path).is_some() &&
-         unchecked_target.equals_text(file_path) {
+         fs::read_link_optional(ref mut zone, link_path).is_some() {
         score = score + 32;
       }
     }
@@ -128,12 +118,10 @@ fn main() -> i64 {
 
   match fs::canonicalize(ref mut zone, file_path) {
     std::Ok(resolved) => {
-      let unchecked_resolved = fs::canonicalize_unchecked(ref mut zone, file_path);
       if path::is_absolute(resolved.as_slice()) &&
          resolved.ends_with("item.txt") &&
          fs::canonicalize_result(ref mut zone, file_path).is_ok() &&
-         fs::canonicalize_optional(ref mut zone, file_path).is_some() &&
-         path::is_absolute(unchecked_resolved.as_slice()) {
+         fs::canonicalize_optional(ref mut zone, file_path).is_some() {
         score = score + 64;
       }
     }
@@ -147,14 +135,11 @@ fn main() -> i64 {
     }
     std::Err(_) => {}
   }
-  match fs::read_dir(ref mut zone, dir_path) {
+  match fs::read_dir_names(ref mut zone, dir_path) {
     std::Ok(names) => {
-      let unchecked_names = fs::read_dir_unchecked(ref mut zone, dir_path);
       directory_results_ok = directory_results_ok &&
         has_name(ref names, "item.txt") &&
-        fs::read_dir_result(ref mut zone, dir_path).is_ok() &&
-        fs::read_dir_optional(ref mut zone, dir_path).is_some() &&
-        has_name(ref unchecked_names, "item.txt");
+        fs::read_dir_names_optional(ref mut zone, dir_path).is_some();
     }
     std::Err(_) => {
       directory_results_ok = false;
@@ -162,12 +147,13 @@ fn main() -> i64 {
   }
   match fs::read_dir_entries(ref mut zone, dir_path) {
     std::Ok(entries) => {
-      let unchecked_entries = fs::read_dir_entries_unchecked(ref mut zone, dir_path);
       directory_results_ok = directory_results_ok &&
         has_entry(ref entries, "item.link") &&
+        fs::read_dir(ref mut zone, dir_path).is_ok() &&
+        fs::read_dir_result(ref mut zone, dir_path).is_ok() &&
+        fs::read_dir_optional(ref mut zone, dir_path).is_some() &&
         fs::read_dir_entries_result(ref mut zone, dir_path).is_ok() &&
-        fs::read_dir_entries_optional(ref mut zone, dir_path).is_some() &&
-        has_entry(ref unchecked_entries, "item.link");
+        fs::read_dir_entries_optional(ref mut zone, dir_path).is_some();
     }
     std::Err(_) => {
       directory_results_ok = false;
@@ -177,9 +163,9 @@ fn main() -> i64 {
     score = score + 128;
   }
 
-  fs::remove(link_path);
-  fs::remove(file_path);
-  fs::remove_dir(dir_path);
+  fs::remove_bool(link_path);
+  fs::remove_bool(file_path);
+  fs::remove_dir_bool(dir_path);
   zone::destroy(zone);
 
   assert_eq_i64(score, 255);

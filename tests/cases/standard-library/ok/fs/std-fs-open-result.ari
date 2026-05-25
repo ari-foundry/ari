@@ -1,8 +1,8 @@
 // Covers natural Result-returning filesystem open helpers. Compatibility
 // aliases remain available for Option-only and raw host-error callers.
 fn cleanup(path: string, missing: string) -> void {
-  fs::remove(path);
-  fs::remove(missing);
+  fs::remove_bool(path);
+  fs::remove_bool(missing);
 }
 
 fn error_matches(value: error::Error, kind: error::Kind, code: i64) -> bool {
@@ -47,7 +47,7 @@ fn main() -> i64 {
   let missing = "build/prelude/std-fs-open-result-missing.tmp";
   let aux = "build/prelude/std-fs-open-result-aux.tmp";
   cleanup(path, missing);
-  fs::remove(aux);
+  fs::remove_bool(aux);
 
   var score = 0;
 
@@ -123,7 +123,7 @@ fn main() -> i64 {
       panic();
     }
   }
-  fs::remove(missing);
+  fs::remove_bool(missing);
   match fs::create_raw_result(missing) {
     Ok(temp_raw_file) => {
       temp_raw_file.close_unchecked();
@@ -132,7 +132,7 @@ fn main() -> i64 {
       panic();
     }
   }
-  fs::remove(missing);
+  fs::remove_bool(missing);
 
   let unchecked_bad = fs::open_unchecked(path, "bad");
   assert(!unchecked_bad.is_open());
@@ -164,7 +164,7 @@ fn main() -> i64 {
       panic();
     }
   }
-  fs::remove(aux);
+  fs::remove_bool(aux);
   match fs::open_write_optional(aux) {
     Some(write_optional_file) => {
       write_optional_file.close_unchecked();
@@ -173,11 +173,11 @@ fn main() -> i64 {
       panic();
     }
   }
-  fs::remove(aux);
+  fs::remove_bool(aux);
   let write_unchecked = fs::open_write_unchecked(aux);
   assert(write_unchecked.is_open());
   write_unchecked.close_unchecked();
-  fs::remove(aux);
+  fs::remove_bool(aux);
 
   match fs::open_append(aux) {
     Ok(aux_append_file) => {
@@ -187,7 +187,7 @@ fn main() -> i64 {
       panic();
     }
   }
-  fs::remove(aux);
+  fs::remove_bool(aux);
   match fs::open_append_optional(aux) {
     Some(append_optional_file) => {
       append_optional_file.close_unchecked();
@@ -196,11 +196,11 @@ fn main() -> i64 {
       panic();
     }
   }
-  fs::remove(aux);
+  fs::remove_bool(aux);
   let append_unchecked = fs::open_append_unchecked(aux);
   assert(append_unchecked.is_open());
   append_unchecked.close_unchecked();
-  fs::remove(aux);
+  fs::remove_bool(aux);
 
   match fs::create_optional(aux) {
     Some(optional_create_file) => {
@@ -210,14 +210,14 @@ fn main() -> i64 {
       panic();
     }
   }
-  fs::remove(aux);
+  fs::remove_bool(aux);
   let unchecked_create_file = fs::create_unchecked(aux);
   assert(unchecked_create_file.is_open());
   unchecked_create_file.close_unchecked();
-  fs::remove(aux);
+  fs::remove_bool(aux);
 
   cleanup(path, missing);
-  fs::remove(aux);
+  fs::remove_bool(aux);
   assert_eq_i64(score, 255);
   return score;
 }

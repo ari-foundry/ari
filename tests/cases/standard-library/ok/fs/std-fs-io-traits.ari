@@ -3,7 +3,7 @@
 // flush direct file writes, and reject invalid handles through the traits.
 fn cleanup(path: string) -> void {
   if fs::exists(path) {
-    fs::remove(path);
+    fs::remove_bool(path);
   }
 }
 
