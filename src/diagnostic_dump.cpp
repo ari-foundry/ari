@@ -352,6 +352,8 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "duplicate struct") ||
         contains(diagnostic, "duplicate enum") ||
         contains(diagnostic, "duplicate trait") ||
+        contains(diagnostic, "duplicate method") ||
+        contains(diagnostic, "duplicate associated type") ||
         contains(diagnostic, "impl of trait") ||
         contains(diagnostic, "no matching") ||
         contains(diagnostic, "ambiguous")) {

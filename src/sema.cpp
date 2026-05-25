@@ -552,7 +552,7 @@ private:
     std::map<std::string, std::vector<GenericTraitBound>> trait_supertraits_;
     std::map<std::string, ModuleInfo> modules_;
     std::map<std::string, std::map<std::string, UseInfo>> uses_;
-    std::set<std::string> impl_keys_;
+    std::map<std::string, SourceLocation> impl_keys_;
     LocalScopeStack local_scopes_;
     BorrowContext borrow_context_;
     std::vector<LoopInfo> loops_;
@@ -2273,8 +2273,12 @@ private:
                 trait_type.loc = associated_type.loc;
                 auto inserted = info.associated_types.emplace(trait_type.name, std::move(trait_type));
                 if (!inserted.second) {
-                    fail(associated_type.loc,
-                         "duplicate associated type '" + associated_type.name + "' in trait '" + decl.name + "'");
+                    fail_duplicate_declaration(
+                        associated_type.loc,
+                        inserted.first->second.loc,
+                        "duplicate associated type '" + associated_type.name + "' in trait '" + decl.name + "'",
+                        "previous associated type '" + associated_type.name + "'",
+                        "rename or remove one of the associated types");
                 }
             }
 
@@ -2314,12 +2318,24 @@ private:
                 }
                 auto method_inserted = info.methods.emplace(trait_method.name, std::move(trait_method));
                 if (!method_inserted.second) {
-                    fail(method.loc, "duplicate method '" + method_name + "' in trait '" + decl.name + "'");
+                    fail_duplicate_declaration(
+                        method.loc,
+                        method_inserted.first->second.loc,
+                        "duplicate method '" + method_name + "' in trait '" + decl.name + "'",
+                        "previous method '" + method_name + "' in trait '" + decl.name + "'",
+                        "rename or remove one of the trait methods");
                 }
             }
 
             auto inserted = traits_.emplace(decl.name, std::move(info));
-            if (!inserted.second) fail(decl.loc, "duplicate trait '" + decl.name + "'");
+            if (!inserted.second) {
+                fail_duplicate_declaration(
+                    decl.loc,
+                    inserted.first->second.loc,
+                    "duplicate trait '" + decl.name + "'",
+                    "previous declaration of trait '" + decl.name + "'",
+                    "rename or remove one of the trait declarations");
+            }
         });
     }
 
@@ -3411,10 +3427,16 @@ private:
             std::string key = impl.generics.empty()
                 ? trait_impl_key(trait.name, trait_args, self_type)
                 : ("generic " + type_ref_key(impl.trait_type) + " for " + type_ref_key(impl.for_type));
-            if (!impl_keys_.insert(key).second) {
+            auto impl_key_inserted = impl_keys_.emplace(key, impl.trait_type.loc);
+            if (!impl_key_inserted.second) {
                 current_type_substitutions_ = std::move(previous_substitutions);
                 current_module_name_ = previous_module;
-                fail(impl.trait_type.loc, "duplicate impl of trait '" + trait.name + "' for " + type_name(self_type));
+                fail_duplicate_declaration(
+                    impl.trait_type.loc,
+                    impl_key_inserted.first->second,
+                    "duplicate impl of trait '" + trait.name + "' for " + type_name(self_type),
+                    "previous impl of trait '" + trait.name + "' for " + type_name(self_type),
+                    "merge the impl methods or remove one of the duplicate impl blocks");
             }
 
             TraitImplCoherenceInfo coherence;

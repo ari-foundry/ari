@@ -28,6 +28,7 @@ CompilerArtifactFixtures version=1 group=all entries=287
   Fixture group=errors kind=diagnostic path=errors/diagnostic-double-move.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-function.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-module-file-identity.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-trait-impl.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-duplicate-name.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-name.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-constructor-payload-type.diagnostic
@@ -171,6 +172,8 @@ CompilerArtifactFixtures version=1 group=all entries=287
   Fixture group=errors kind=diagnostic path=errors/diagnostic-struct-literal-missing-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-trait-bound-missing-impl.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-bound-missing-impl.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-duplicate-decl.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-duplicate-method.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-impl-extra-method.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-impl-missing-method.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-trait-impl-param-mismatch.diagnostic

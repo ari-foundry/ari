@@ -258,6 +258,12 @@ check-compiler-artifacts: $(TARGET) check-source-map-unit
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-name.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-name.diagnostic
 	$(TARGET) tests/cases/functions/errors/function-overload-params.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-function.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-function.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-function.diagnostic
+	$(TARGET) tests/cases/traits/errors/trait-duplicate-decl.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-duplicate-decl.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-duplicate-decl.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-duplicate-decl.diagnostic
+	$(TARGET) tests/cases/traits/errors/trait-duplicate-method.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-duplicate-method.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-trait-duplicate-method.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-trait-duplicate-method.diagnostic
+	$(TARGET) tests/cases/traits/errors/duplicate-trait-impl.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-trait-impl.diagnostic
+	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-duplicate-trait-impl.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-duplicate-trait-impl.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-wrong-function-arity.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-wrong-function-arity.diagnostic
 	python3 tests/check_compiler_artifacts.py tests/cases/compiler-development/artifact/errors/diagnostic-wrong-function-arity.diagnostic $(BUILD_DIR)/compiler-development/artifact/diagnostic-wrong-function-arity.diagnostic
 	$(TARGET) tests/cases/compiler-development/artifact/errors/diagnostic-method-arity.ari --emit-diagnostics $(BUILD_DIR)/compiler-development/artifact/diagnostic-method-arity.diagnostic
