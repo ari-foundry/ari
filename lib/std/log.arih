@@ -92,13 +92,13 @@ pub fn write(level: std::log::Level, values: std::Slice[u8]) -> bool {
   if !std::log::write_prefix(ref mut stderr, level) {
     return false;
   }
-  if !std::io::write_all<std::io::Stderr>(ref mut stderr, values) {
+  if std::io::write_all<std::io::Stderr>(ref mut stderr, values).is_err() {
     return false;
   }
   if !std::log::write_newline(ref mut stderr) {
     return false;
   }
-  return std::io::flush<std::io::Stderr>(ref mut stderr);
+  return std::io::flush<std::io::Stderr>(ref mut stderr).is_ok();
 }
 
 pub fn message(level: std::log::Level, text: string) -> bool {
@@ -112,7 +112,7 @@ pub fn message(level: std::log::Level, text: string) -> bool {
   if !std::log::write_newline(ref mut stderr) {
     return false;
   }
-  return std::io::flush<std::io::Stderr>(ref mut stderr);
+  return std::io::flush<std::io::Stderr>(ref mut stderr).is_ok();
 }
 
 pub fn trace(text: string) -> bool {

@@ -1,5 +1,5 @@
-// Covers generic std::io stream copy helpers. try_copy returns copied byte
-// counts, copy gives a bool wrapper, and writer failure becomes None/false.
+// Covers generic std::io stream copy helpers. copy preserves Error payloads,
+// try_copy returns copied byte counts, and copy_unchecked gives a bool wrapper.
 struct MemoryWriter {
   data: Slice[u8],
   mut position: i64,
@@ -50,7 +50,7 @@ fn main() -> i64 {
   var bool_cursor = io::cursor(bool_source.as_slice());
   var bool_output = [0u8, 0u8];
   var bool_writer = MemoryWriter { data: bool_output.as_slice(), position: 0, flushed: false };
-  if io::copy<io::Cursor, MemoryWriter>(ref mut bool_cursor, ref mut bool_writer) {
+  if io::copy<io::Cursor, MemoryWriter>(ref mut bool_cursor, ref mut bool_writer).unwrap_or(0) == 2 {
     if bool_output[0] == 68u8 && bool_output[1] == 69u8 && bool_writer.flushed {
       score = score + 1;
     }
@@ -70,7 +70,7 @@ fn main() -> i64 {
   var fail_reader = io::cursor(fail_source.as_slice());
   var fail_output = [0u8];
   var fail_writer = MemoryWriter { data: fail_output.as_slice(), position: 0, flushed: false };
-  if !io::copy<io::Cursor, MemoryWriter>(ref mut fail_reader, ref mut fail_writer) {
+  if io::copy_unchecked<io::Cursor, MemoryWriter>(ref mut fail_reader, ref mut fail_writer) == false {
     score = score + 1;
   }
 

@@ -14,7 +14,7 @@ fn main() -> i64 {
   var output = [0u8, 0u8];
   let output_view = output.as_slice();
   let output_raw = output_view.as_ptr();
-  if io::read_exact<io::Cursor>(ref mut cursor, output_raw, 2) {
+  if io::read_exact<io::Cursor>(ref mut cursor, output_raw, 2).is_ok() {
     if ptr_load(output_raw) == 66u8 && ptr_load(ptr_add(output_raw, 1)) == 67u8 {
       score = score + 1;
     }
@@ -28,17 +28,17 @@ fn main() -> i64 {
     }
   }
   if cursor.seek(3) {
-    if !io::read_exact<io::Cursor>(ref mut cursor, output_raw, 2) {
+    if io::read_exact<io::Cursor>(ref mut cursor, output_raw, 2).is_err() {
       score = score + 1;
     }
   }
 
   var stdout = io::stdout();
   var payload = [79u8, 75u8, 10u8];
-  if io::write_all<io::Stdout>(ref mut stdout, payload.as_slice()) {
+  if io::write_all<io::Stdout>(ref mut stdout, payload.as_slice()).is_ok() {
     score = score + 1;
   }
-  if io::flush<io::Stdout>(ref mut stdout) {
+  if io::flush<io::Stdout>(ref mut stdout).is_ok() {
     score = score + 1;
   }
 

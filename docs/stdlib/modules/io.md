@@ -9,11 +9,17 @@ seekable streams with natural names.
 Use `std::input` for ordinary stdin line/byte helpers, `std::fs` for files, and
 `std::io` when you want the lower-level IO contracts directly.
 
-Naming is in transition. The long-term stdlib direction is for natural
-fallible helpers such as `read_exact`, `copy`, `write_all`, and `flush` to
-return `Result`, while `_unchecked`, `_optional`, or `_or` names discard error
-details. The current `*_result` helper names and bool-returning natural names
-remain compatibility APIs until the `Reader`/`Writer` trait contracts migrate.
+Fallible helpers use natural names and return `Result[..., Error]`:
+`read_exact`, `copy`, `write_all`, and `flush`. Compatibility helpers that
+discard error details use explicit suffixes such as `_unchecked`, `_optional`,
+or `_or`. The `Reader`/`Writer` trait methods still use the older scalar/bool
+contracts because they mirror the current runtime hooks; the module-level
+helpers are the default recoverable API.
+
+Migration note: older snapshots exposed these recoverable helpers as
+`read_exact_result`, `copy_result`, `write_all_result`, and `flush_result`,
+while the natural names returned `bool`. Update fallible call sites to the
+natural names and update bool-only call sites to the `_unchecked` names.
 
 ## Current Scope
 
@@ -29,10 +35,10 @@ Implemented now:
   `Seek`
 - source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
   `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
-- direct error helpers: `read_exact_result`, `copy_result`,
-  `write_all_result`, `flush_result`
-- compatibility helpers: `read_exact`, `read_all`, `read_to_string`,
-  `try_copy`, `copy`, `write_all`, `flush`
+- direct error helpers: `read_exact`, `copy`, `write_all`, `flush`
+- collection helpers: `read_all`, `read_to_string`
+- compatibility helpers: `read_exact_unchecked`, `try_copy`,
+  `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`
 
 Roadmap, not implemented yet:
 
@@ -89,17 +95,17 @@ io::buf_writer[W: Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
 io::BufReader::new<R>(inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::BufWriter::new<W>(inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
 
-io::read_exact_result[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> Result[(), Error]
-io::read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
+io::read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> Result[(), Error]
+io::read_exact_unchecked[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::Vec[u8]
 io::read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::string::String
-io::copy_result[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> Result[i64, Error]
+io::copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> Result[i64, Error]
 io::try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> Option[i64]
-io::copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> bool
-io::write_all_result[W: Writer](writer: ref mut W, values: Slice[u8]) -> Result[(), Error]
-io::write_all[W: Writer](writer: ref mut W, values: Slice[u8]) -> bool
-io::flush_result[W: Writer](writer: ref mut W) -> Result[(), Error]
-io::flush[W: Writer](writer: ref mut W) -> bool
+io::copy_unchecked[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> bool
+io::write_all[W: Writer](writer: ref mut W, values: Slice[u8]) -> Result[(), Error]
+io::write_all_unchecked[W: Writer](writer: ref mut W, values: Slice[u8]) -> bool
+io::flush[W: Writer](writer: ref mut W) -> Result[(), Error]
+io::flush_unchecked[W: Writer](writer: ref mut W) -> bool
 
 io::write_i64(value: i64) -> i64
 io::write_u64(value: u64) -> i64
@@ -123,11 +129,11 @@ read_line_owned(ref mut zone)
 ```
 
 `Reader.read_byte` returns the next byte as `i64` or `-1` at EOF. That sentinel
-matches the existing runtime hook. Prefer `read_exact_result` when the caller
-needs recoverable failure: it returns `Ok(())` only when every requested byte
-was copied into `output`, and `Err(Error(UnexpectedEof))` when EOF arrives
-early. Negative lengths return `Err(Error(InvalidInput))`. `read_exact` is the
-bool compatibility wrapper over that result shape.
+matches the existing runtime hook. Prefer `read_exact` when the caller needs
+recoverable failure: it returns `Ok(())` only when every requested byte was
+copied into `output`, and `Err(Error(UnexpectedEof))` when EOF arrives early.
+Negative lengths return `Err(Error(InvalidInput))`. `read_exact_unchecked` is
+the bool compatibility wrapper over that result shape.
 `read_all(ref mut zone, ref mut reader)` repeatedly reads until EOF and returns
 a zone-backed `Vec[u8]`. Use it when the caller wants the whole remaining byte
 stream and can make allocation explicit through the zone.
@@ -135,21 +141,21 @@ stream and can make allocation explicit through the zone.
 collects directly into an owned `std::string::String`. Ari strings are
 byte-backed, so this helper does not validate UTF-8; call `text.try_utf8()`
 when a caller needs a validated UTF-8 view.
-`copy_result(ref mut reader, ref mut writer)` streams from any `Reader` into
-any `Writer`, flushes the writer after EOF, and returns `Ok(byte_count)` when
-all writes and the final flush succeed. A failed byte write returns
+`copy(ref mut reader, ref mut writer)` streams from any `Reader` into any
+`Writer`, flushes the writer after EOF, and returns `Ok(byte_count)` when all
+writes and the final flush succeed. A failed byte write returns
 `Err(Error(BrokenPipe))`; a failed final flush returns `Err(Error(Other))`.
-`try_copy` is the `Option[i64]` compatibility wrapper, and `copy` is the bool
-wrapper for call sites that only care whether the whole stream moved.
+`try_copy` is the `Option[i64]` compatibility wrapper, and `copy_unchecked` is
+the bool wrapper for call sites that only care whether the whole stream moved.
 
 `Writer.write_byte` returns whether the byte was accepted.
-`write_all_result` returns `Ok(())` after all bytes are accepted and
-`Err(Error(BrokenPipe))` on the first failed byte write. `write_all` is its bool
-compatibility wrapper. `flush_result` delegates to the writer and turns a
-failed flush into `Err(Error(Other))`; `flush` is the bool wrapper. The current
-`Stdout.flush()` and `Stderr.flush()` are no-op successes because the existing
-process stream hooks write immediately; real flush hooks belong with future OS
-handles.
+`write_all` returns `Ok(())` after all bytes are accepted and
+`Err(Error(BrokenPipe))` on the first failed byte write.
+`write_all_unchecked` is its bool compatibility wrapper. `flush` delegates to
+the writer and turns a failed flush into `Err(Error(Other))`;
+`flush_unchecked` is the bool wrapper. The current `Stdout.flush()` and
+`Stderr.flush()` are no-op successes because the existing process stream hooks
+write immediately; real flush hooks belong with future OS handles.
 
 `Cursor` reads from a borrowed `Slice[u8]`. It implements `Reader` and `Seek`,
 so it is useful for tests, parsers, and examples that should not depend on
@@ -181,15 +187,15 @@ fn main() -> i64 {
   var output = [0u8, 0u8];
   let output_view = output.as_slice();
   let output_raw = output_view.as_ptr();
-  if !io::read_exact<io::BufReader[io::Cursor]>(ref mut reader, output_raw, 2) {
+  if io::read_exact<io::BufReader[io::Cursor]>(ref mut reader, output_raw, 2).is_err() {
     return 1;
   }
 
   var out = io::stdout();
   var out_storage = [0u8, 0u8];
   var writer = io::BufWriter::new<io::Stdout>(out, out_storage.as_slice());
-  io::write_all<io::BufWriter[io::Stdout]>(ref mut writer, output.as_slice());
-  io::flush<io::BufWriter[io::Stdout]>(ref mut writer);
+  io::write_all<io::BufWriter[io::Stdout]>(ref mut writer, output.as_slice()).unwrap();
+  io::flush<io::BufWriter[io::Stdout]>(ref mut writer).unwrap();
   return reader.buffered_len();
 }
 ```
@@ -199,7 +205,7 @@ fn main() -> i64 {
   var input = [65u8, 66u8];
   var cursor = io::cursor(input.as_slice());
   var output = [0u8, 0u8];
-  match io::read_exact_result<io::Cursor>(ref mut cursor, output.as_slice().as_ptr(), 2) {
+  match io::read_exact<io::Cursor>(ref mut cursor, output.as_slice().as_ptr(), 2) {
     Ok(_) => { return 0; }
     Err(reason) => {
       if reason.is_kind(error::UnexpectedEof) {
@@ -241,7 +247,7 @@ fn main() -> i64 {
   var reader = pipe.take_reader();
   var writer = pipe.take_writer();
   var input = io::cursor("copy me");
-  if !io::copy<io::Cursor, io::PipeWriter>(ref mut input, ref mut writer) {
+  if io::copy<io::Cursor, io::PipeWriter>(ref mut input, ref mut writer).is_err() {
     return 1;
   }
   writer.close();
@@ -259,11 +265,11 @@ fn main() -> i64 {
   var pipe = io::pipe().unwrap();
   var reader = pipe.take_reader();
   var writer = pipe.take_writer();
-  io::write_all<io::PipeWriter>(ref mut writer, "ok");
+  io::write_all<io::PipeWriter>(ref mut writer, "ok").unwrap();
   writer.close();
 
   var bytes = [0u8, 0u8];
-  if !io::read_exact<io::PipeReader>(ref mut reader, bytes.as_slice().as_ptr(), 2) {
+  if io::read_exact<io::PipeReader>(ref mut reader, bytes.as_slice().as_ptr(), 2).is_err() {
     return 1;
   }
   reader.close();
@@ -318,8 +324,8 @@ open because `File` itself does not buffer.
   `copy` over generic `Reader`/`Writer` values, copied byte counts, final
   flush, writer failure behavior, and generated generic helper symbols.
 - `tests/cases/standard-library/ok/io/std-io-result.ari` checks
-  `read_exact_result`, `write_all_result`, `flush_result`, and `copy_result`
-  direct `Error` payloads plus the compatibility wrappers they now delegate to.
+  `read_exact`, `write_all`, `flush`, and `copy` direct `Error` payloads plus
+  the explicit `_unchecked` compatibility wrappers.
 - `tests/cases/standard-library/ok/fs/std-fs-io-traits.ari` checks the
   filesystem adapter side: `File` as `Reader`/`Writer`, generic
   `read_to_string`, `read_exact`, `try_copy`, `write_all`, `flush`, and

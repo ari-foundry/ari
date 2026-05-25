@@ -319,15 +319,16 @@ var reader = io::buf_reader<io::Cursor>(cursor, storage.as_slice())
 var out = io::stdout()
 var out_storage = [0u8, 0u8]
 var writer = io::BufWriter::new<io::Stdout>(out, out_storage.as_slice())
-io::write_all<io::BufWriter[io::Stdout]>(ref mut writer, source.as_slice())
-io::flush<io::BufWriter[io::Stdout]>(ref mut writer)
+io::write_all<io::BufWriter[io::Stdout]>(ref mut writer, source.as_slice()).unwrap()
+io::flush<io::BufWriter[io::Stdout]>(ref mut writer).unwrap()
 ```
 
 `io::Cursor` implements `io::Reader` and `io::Seek` over a borrowed
 `Slice[u8]`. `io::Stdout` and `io::Stderr` implement `io::Writer`.
 `io::BufReader` and `io::BufWriter` add buffering with explicit
 caller-provided `Slice[u8]` storage. `io::read_exact` copies from any
-`Reader` into a raw byte buffer and returns `false` if EOF arrives early.
+`Reader` into a raw byte buffer and returns `Err(Error(UnexpectedEof))` if
+EOF arrives early.
 
 Unqualified aliases are also available:
 
@@ -496,9 +497,12 @@ io::stderr() -> io::Stderr
 io::cursor(values: Slice[u8]) -> io::Cursor
 io::buf_reader[R: io::Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::buf_writer[W: io::Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
-io::read_exact[R: io::Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
-io::write_all[W: io::Writer](writer: ref mut W, values: Slice[u8]) -> bool
-io::flush[W: io::Writer](writer: ref mut W) -> bool
+io::read_exact[R: io::Reader](reader: ref mut R, output: ptr u8, len: i64) -> Result[(), io::Error]
+io::read_exact_unchecked[R: io::Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool
+io::write_all[W: io::Writer](writer: ref mut W, values: Slice[u8]) -> Result[(), io::Error]
+io::write_all_unchecked[W: io::Writer](writer: ref mut W, values: Slice[u8]) -> bool
+io::flush[W: io::Writer](writer: ref mut W) -> Result[(), io::Error]
+io::flush_unchecked[W: io::Writer](writer: ref mut W) -> bool
 io::newline() -> i64
 io::read_byte() -> i64
 io::read_line() -> string

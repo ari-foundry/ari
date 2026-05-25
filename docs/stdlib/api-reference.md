@@ -1669,17 +1669,17 @@ pipe_writer.close()
 io::cursor(values)
 io::buf_reader[R: Reader](inner, buffer)
 io::buf_writer[W: Writer](inner, buffer)
-io::read_exact_result[R: Reader](reader: ref mut R, output, len)
 io::read_exact[R: Reader](reader: ref mut R, output, len)
+io::read_exact_unchecked[R: Reader](reader: ref mut R, output, len)
 io::read_all[R: Reader](zone: ref mut Zone, reader: ref mut R)
 io::read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R)
-io::copy_result[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
-io::try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
 io::copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
-io::write_all_result[W: Writer](writer: ref mut W, values)
+io::try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
+io::copy_unchecked[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W)
 io::write_all[W: Writer](writer: ref mut W, values)
-io::flush_result[W: Writer](writer: ref mut W)
+io::write_all_unchecked[W: Writer](writer: ref mut W, values)
 io::flush[W: Writer](writer: ref mut W)
+io::flush_unchecked[W: Writer](writer: ref mut W)
 io::write_i64(value)
 io::write_u64(value)
 io::write_bool(value)
@@ -1703,8 +1703,8 @@ Borrowed line input uses a reusable runtime buffer; use the owned forms when
 the line must survive later input reads.
 
 `io::Cursor` implements `Reader` and `Seek` over a borrowed `Slice[u8]`.
-`io::read_exact_result(ref mut reader, output, len)` copies exactly `len`
-bytes or returns `Err(Error(UnexpectedEof))`; `io::read_exact` is the bool
+`io::read_exact(ref mut reader, output, len)` copies exactly `len` bytes or
+returns `Err(Error(UnexpectedEof))`; `io::read_exact_unchecked` is the bool
 compatibility wrapper. A negative `len` returns `Err(Error(InvalidInput))`.
 `io::read_all(ref mut zone, ref mut reader)` collects the remaining bytes from
 any `Reader` into a zone-backed `Vec[u8]`, stopping at the same EOF sentinel as
@@ -1712,17 +1712,18 @@ any `Reader` into a zone-backed `Vec[u8]`, stopping at the same EOF sentinel as
 `io::read_to_string(ref mut zone, ref mut reader)` collects the remaining bytes
 directly into an owned `std::string::String`. It is byte-oriented like the rest
 of `std::io`; use `String::try_utf8()` when a validated UTF-8 view is needed.
-`io::copy_result(ref mut reader, ref mut writer)` streams bytes from any
-`Reader` to any `Writer`, flushes at EOF, and returns `Ok(byte_count)` on
+`io::copy(ref mut reader, ref mut writer)` streams bytes from any `Reader` to
+any `Writer`, flushes at EOF, and returns `Ok(byte_count)` on
 complete success. Failed byte writes become `Err(Error(BrokenPipe))`; failed
 final flushes become `Err(Error(Other))`. `io::try_copy` is the `Option[i64]`
-compatibility wrapper and `io::copy` is the bool wrapper when the byte count is
-not needed.
-`io::write_all_result(ref mut writer, values)` returns `Ok(())` after every
+compatibility wrapper and `io::copy_unchecked` is the bool wrapper when the
+byte count is not needed.
+`io::write_all(ref mut writer, values)` returns `Ok(())` after every
 byte is accepted and `Err(Error(BrokenPipe))` on the first failed write.
-`io::write_all` is the bool wrapper. `io::flush_result(ref mut writer)` returns
-`Ok(())` for a successful flush and `Err(Error(Other))` for a failed flush;
-`io::flush` is the bool wrapper.
+`io::write_all_unchecked` is the bool wrapper.
+`io::flush(ref mut writer)` returns `Ok(())` for a successful flush and
+`Err(Error(Other))` for a failed flush; `io::flush_unchecked` is the bool
+wrapper.
 `io::Stdout` and `io::Stderr` implement `Writer` over the current process
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit

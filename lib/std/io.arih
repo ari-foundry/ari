@@ -136,7 +136,7 @@ fn flush_error() -> std::error::Error {
   return std::error::new(std::error::Other);
 }
 
-pub fn read_exact_result[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> std::Result[(), std::error::Error] {
+pub fn read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> std::Result[(), std::error::Error] {
   if len < 0 {
     return std::Err<(), std::error::Error>(std::io::invalid_input_error());
   }
@@ -152,8 +152,8 @@ pub fn read_exact_result[R: Reader](reader: ref mut R, output: ptr u8, len: i64)
   return std::Ok<(), std::error::Error>(());
 }
 
-pub fn read_exact[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool {
-  return read_exact_result<R>(reader, output, len).is_ok();
+pub fn read_exact_unchecked[R: Reader](reader: ref mut R, output: ptr u8, len: i64) -> bool {
+  return read_exact<R>(reader, output, len).is_ok();
 }
 
 pub fn read_all[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::vec::Vec[u8] {
@@ -176,7 +176,7 @@ pub fn read_to_string[R: Reader](zone: ref mut Zone, reader: ref mut R) -> std::
   return output;
 }
 
-pub fn copy_result[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> std::Result[i64, std::error::Error] {
+pub fn copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> std::Result[i64, std::error::Error] {
   var copied = 0;
   var value = reader.read_byte();
   while value >= 0 {
@@ -193,14 +193,14 @@ pub fn copy_result[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -
 }
 
 pub fn try_copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> std::Option[i64] {
-  return copy_result<R, W>(reader, writer).ok();
+  return copy<R, W>(reader, writer).ok();
 }
 
-pub fn copy[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> bool {
-  return copy_result<R, W>(reader, writer).is_ok();
+pub fn copy_unchecked[R: Reader, W: Writer](reader: ref mut R, writer: ref mut W) -> bool {
+  return copy<R, W>(reader, writer).is_ok();
 }
 
-pub fn write_all_result[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+pub fn write_all[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   var index = 0;
   while index < values.len {
     if !writer.write_byte(values[index]) {
@@ -211,19 +211,19 @@ pub fn write_all_result[W: Writer](writer: ref mut W, values: std::Slice[u8]) ->
   return std::Ok<(), std::error::Error>(());
 }
 
-pub fn write_all[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> bool {
-  return write_all_result<W>(writer, values).is_ok();
+pub fn write_all_unchecked[W: Writer](writer: ref mut W, values: std::Slice[u8]) -> bool {
+  return write_all<W>(writer, values).is_ok();
 }
 
-pub fn flush_result[W: Writer](writer: ref mut W) -> std::Result[(), std::error::Error] {
+pub fn flush[W: Writer](writer: ref mut W) -> std::Result[(), std::error::Error] {
   if writer.flush() {
     return std::Ok<(), std::error::Error>(());
   }
   return std::Err<(), std::error::Error>(std::io::flush_error());
 }
 
-pub fn flush[W: Writer](writer: ref mut W) -> bool {
-  return flush_result<W>(writer).is_ok();
+pub fn flush_unchecked[W: Writer](writer: ref mut W) -> bool {
+  return flush<W>(writer).is_ok();
 }
 
 fn fill_buffer[R: Reader](reader: ref mut std::io::BufReader[R]) -> bool {

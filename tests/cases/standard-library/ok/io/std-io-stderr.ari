@@ -4,16 +4,16 @@ fn main() -> i64 {
 
   var stderr = io::stderr();
   var error = [69u8, 82u8, 82u8, 10u8];
-  if io::write_all<io::Stderr>(ref mut stderr, error.as_slice()) {
+  if io::write_all<io::Stderr>(ref mut stderr, error.as_slice()).is_ok() {
     score = score + 1;
   }
-  if io::flush<io::Stderr>(ref mut stderr) {
+  if io::flush<io::Stderr>(ref mut stderr).is_ok() {
     score = score + 1;
   }
 
   var stdout = io::stdout();
   var ok = [79u8, 75u8, 10u8];
-  if io::write_all<io::Stdout>(ref mut stdout, ok.as_slice()) {
+  if io::write_all<io::Stdout>(ref mut stdout, ok.as_slice()).is_ok() {
     score = score + 1;
   }
 

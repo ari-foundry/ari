@@ -25,10 +25,10 @@ fn main() -> i64 {
   }
 
   var payload = [112u8, 105u8, 112u8, 101u8];
-  if std::io::write_all<std::io::PipeWriter>(ref mut writer, payload.as_slice()) {
+  if std::io::write_all<std::io::PipeWriter>(ref mut writer, payload.as_slice()).is_ok() {
     score = score + 1;
   }
-  if std::io::flush<std::io::PipeWriter>(ref mut writer) {
+  if std::io::flush<std::io::PipeWriter>(ref mut writer).is_ok() {
     score = score + 1;
   }
   if writer.close() {
@@ -38,7 +38,7 @@ fn main() -> i64 {
   var output = [0u8, 0u8, 0u8, 0u8];
   let view = output.as_slice();
   let raw = view.as_ptr();
-  if std::io::read_exact<std::io::PipeReader>(ref mut reader, raw, 4) {
+  if std::io::read_exact<std::io::PipeReader>(ref mut reader, raw, 4).is_ok() {
     if ptr_load(raw) == 112u8 &&
        ptr_load(ptr_add(raw, 1)) == 105u8 &&
        ptr_load(ptr_add(raw, 2)) == 112u8 &&

@@ -36,7 +36,7 @@ API evolution.
 | `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `char`, `try_get`, `move`, `take`, `assert`, `panic`, `Error`, `ErrorKind`, `CStr`, `CString`, `Library`, `Symbol`, `AtomicI64`, `Mutex`, `RwLock`, `Once`. Root `char` is an ASCII `u8` alias; root `Slice[T]` includes `len`, access, subslicing, subsequence search, compare, chunks, windows, split, copy helpers, stable/unstable partitioning, dedup variants, and direct algorithm wrappers. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `filter`, `flatten`, `transpose`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
-| `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`, `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `pipe`, `cursor`, `buf_reader`, `buf_writer`, direct `Error` helpers `read_exact_result`, `copy_result`, `write_all_result`, `flush_result`, compatibility `read_exact`, `read_all`, `read_to_string`, `try_copy`, `copy`, `write_all`, `flush`, `write_bytes`, `read_line`. |
+| `std::io` | Byte-oriented process IO contracts and hooks. | `Reader`, `Writer`, `Seek`, `Stdin`, `Stdout`, `Stderr`, `Pipe`, `PipeReader`, `PipeWriter`, `Cursor`, `BufReader`, `BufWriter`, `stdin`, `stdout`, `stderr`, `pipe`, `cursor`, `buf_reader`, `buf_writer`, direct `Error` helpers `read_exact`, `copy`, `write_all`, `flush`, compatibility `read_exact_unchecked`, `try_copy`, `copy_unchecked`, `write_all_unchecked`, `flush_unchecked`, collection helpers `read_all`, `read_to_string`, raw `write_bytes`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, startup `cwd`, startup `executable_path`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::test` | Executable unit-test helpers. | `Report`, `Bench`, `report`, `scratch`, `temp_file`, `temp_dir`, `bench`, `benchmark`, `check`, `equal`, `not_equal`, `matches_snapshot`, `golden_matches`, `check_snapshot`, pass/fail accessors, `ok`, `finish`, `require`. |
@@ -335,7 +335,7 @@ file-descriptor APIs. `permissions`,
 non-truncating `ensure_file`, `create`/`try_create`,
 `write_bytes`, whole-file `read`, `write`, `write_result`,
 `try_read`, `try_write`, `append`, `append_result`, `try_append`, `truncate`, `copy`,
-`copy_result`, byte-counting `try_copy`, byte-string `read_to_string`, fallible
+`copy`, byte-counting `try_copy`, byte-string `read_to_string`, fallible
 `try_read_to_string`, `try_read_dir`/`read_dir`,
 `try_read_dir_entries`/`read_dir_entries`,
 `try_open_dir`/`Dir::next`/`Dir::close`,
@@ -421,8 +421,10 @@ the raw `-1` EOF sentinel into `Option[u8]`.
 
 `std::io` keeps raw process IO visible and adds a small source trait layer.
 Scalar and line operations are runtime hooks. `write_bytes`,
-`read_exact_result`, `copy_result`, `write_all_result`, `flush_result`,
-`read_exact`, `read_all`, `read_to_string`, `try_copy`, `copy`, `write_all`, `flush`,
+result-returning `read_exact`, `copy`, `write_all`, and `flush`,
+byte-collecting `read_all`/`read_to_string`, compatibility
+`read_exact_unchecked`, `try_copy`, `copy_unchecked`,
+`write_all_unchecked`, and `flush_unchecked`,
 `Stdin`, `Stdout`, `Stderr`, `Cursor`, `BufReader`, and `BufWriter` are source Ari over
 `Slice[u8]`, raw pointers, explicit caller-provided buffers, and the process
 stream hooks. `PipeReader` and

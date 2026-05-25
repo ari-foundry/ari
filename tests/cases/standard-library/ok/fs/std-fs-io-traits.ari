@@ -30,7 +30,7 @@ fn main() -> i64 {
   }
   var eof = [0u8];
   let eof_view = eof.as_slice();
-  if !io::read_exact<std::fs::File>(ref mut reader, eof_view.as_ptr(), 1) {
+  if io::read_exact<std::fs::File>(ref mut reader, eof_view.as_ptr(), 1).is_err() {
     score = score + 4;
   }
   reader.close_unchecked();
@@ -54,10 +54,10 @@ fn main() -> i64 {
 
   var writer = fs::try_open(write_path, "w").unwrap_or(fs::File::invalid());
   var payload = [120u8, 121u8];
-  if io::write_all<std::fs::File>(ref mut writer, payload.as_slice()) {
+  if io::write_all<std::fs::File>(ref mut writer, payload.as_slice()).is_ok() {
     score = score + 32;
   }
-  if io::flush<std::fs::File>(ref mut writer) {
+  if io::flush<std::fs::File>(ref mut writer).is_ok() {
     score = score + 64;
   }
   writer.close_unchecked();
@@ -69,8 +69,8 @@ fn main() -> i64 {
   var invalid = fs::File::invalid();
   var invalid_output = [0u8];
   let invalid_view = invalid_output.as_slice();
-  let invalid_ok = !io::read_exact<std::fs::File>(ref mut invalid, invalid_view.as_ptr(), 1) &&
-                   !io::flush<std::fs::File>(ref mut invalid);
+  let invalid_ok = io::read_exact<std::fs::File>(ref mut invalid, invalid_view.as_ptr(), 1).is_err() &&
+                   io::flush<std::fs::File>(ref mut invalid).is_err();
 
   cleanup(source_path);
   cleanup(copy_path);

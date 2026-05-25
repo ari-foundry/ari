@@ -258,7 +258,7 @@ input.close().unwrap();
 
 var source = fs::try_open("input.txt", "r").unwrap_or(fs::File::invalid());
 var target = fs::try_open("output.txt", "w").unwrap_or(fs::File::invalid());
-io::copy<std::fs::File, std::fs::File>(ref mut source, ref mut target);
+io::copy<std::fs::File, std::fs::File>(ref mut source, ref mut target).unwrap();
 source.close().unwrap();
 target.close().unwrap();
 zone::destroy(zone);
