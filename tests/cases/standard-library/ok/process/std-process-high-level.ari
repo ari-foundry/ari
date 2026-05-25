@@ -85,7 +85,7 @@ fn main() -> i64 {
   }
 
   let maybe_pipe = std::io::pipe();
-  if maybe_pipe.is_some() {
+  if maybe_pipe.is_ok() {
     var pipe = maybe_pipe.unwrap();
     var child_out: process::ChildStdout = pipe.take_reader();
     var child_in: process::ChildStdin = pipe.take_writer();
@@ -97,7 +97,7 @@ fn main() -> i64 {
   }
 
   let maybe_err_pipe = std::io::pipe();
-  if maybe_err_pipe.is_some() {
+  if maybe_err_pipe.is_ok() {
     var err_pipe = maybe_err_pipe.unwrap();
     var child_err: process::ChildStderr = err_pipe.take_reader();
     var err_sink = err_pipe.take_writer();
@@ -118,7 +118,12 @@ fn main() -> i64 {
   match process::temp_file(ref mut zone) {
     Ok(temp_value) => {
       var temp = temp_value;
-      if temp.path().len > 0 && temp.is_open() && unit_ok(temp.close_and_remove()) {
+      if temp.path().len > 0 &&
+         temp.is_open() &&
+         unit_ok(temp.close()) &&
+         !temp.is_open() &&
+         !temp.close_bool() &&
+         unit_ok(temp.remove()) {
         score = score + 43;
       }
     }

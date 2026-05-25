@@ -20,40 +20,23 @@ to an absolute canonical path with `Option` or `Result` failure details, pass `F
 and `std::io::Writer` helpers, inspect and move a file cursor through
 `std::io::Seek`, close the handle, and remove a file.
 
-The public names stay natural because the module path already says the domain:
-use `open(path, mode)`, `open_optional(path, mode)`, `try_open(path, mode)`,
-`create`, `create_optional`, `try_create`,
-`can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
-`try_read_byte`, `write_byte`, `write_bytes`, `read`, `read_optional`,
-`read_or_default`, `read_unchecked`, `read_result`, `try_read`,
-`read_to_string`, `read_to_string_optional`, `read_to_string_or_default`,
-`read_to_string_unchecked`, `read_to_string_result`, `read_bytes`, `write`,
-`write_string`, `write_bool`, `write_result`, `append`, `append_bool`,
-`append_result`, `try_write`, `try_append`,
-`truncate`, `copy`, `copy_bool`, `copy_result`, `try_copy`, `metadata`,
-`metadata_result`, `try_metadata`, `symlink_metadata`,
-`symlink_metadata_result`, `try_symlink_metadata`,
-`file_type_result`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`,
-`is_other`, `mode`, `mode_result`, `try_mode`, `set_mode`, `set_permissions`,
-`canonicalize`, `canonicalize_optional`, `canonicalize_unchecked`,
-`canonicalize_result`, `try_canonicalize`, `rename`, `rename_bool`,
-`hard_link`, `hard_link_bool`,
-`symbolic_link`, `read_link`, `read_link_optional`, `read_link_unchecked`,
-`read_link_result`, `try_read_link`, `ensure_file`, `create_dir`,
-`create_dir_bool`, `ensure_dir`, `remove_dir`, `remove_dir_bool`,
-`remove_dir_all`, `remove_dir_all_bool`, `create_dir_all`,
-`create_dir_all_bool`, `ensure_dir_all`, `remove_file`, `remove_bool`,
-`open_dir_result`, `try_open_dir`, `read_dir_names`, `read_dir`,
-`read_dir_optional`, `read_dir_unchecked`, `read_dir_result`, `try_read_dir`,
-`read_dir_entries`, `read_dir_entries_optional`, `read_dir_entries_unchecked`,
-`read_dir_entries_result`, `try_read_dir_entries`,
-`read_dir_next`, `position`, `seek`, `close_dir`, `close`, `exists`, and
-`remove`, not type-suffixed names. For the handle APIs touched by lifecycle
-cleanup, natural names return `Result`; `_optional` and `try_*` helpers keep
-absence-only compatibility, `_or_default` helpers keep the old empty fallback,
-`_unchecked` helpers keep the old assert/invalid-handle behavior, `_bool`
-helpers keep old boolean whole-file write results, and `_raw` helpers keep
-compact integer errors.
+The default spelling rule is Result-first: recoverable filesystem operations
+use natural names such as `open`, `create`, `read`, `read_to_string`,
+`read_bytes`, `write`, `write_string`, `append`, `copy`, `metadata`,
+`symlink_metadata`, `file_type`, `mode`, `canonicalize`, `read_link`,
+`read_dir`, `read_dir_entries`, `read_dir_names`, `create_dir`,
+`create_dir_all`, `remove_file`, `remove_dir`, `remove_dir_all`, `rename`,
+`hard_link`, `symbolic_link`, `position`, `seek`, `close`, and `close_dir`,
+and they return `Result[..., fs::Error]` unless the operation is only a
+predicate such as `exists`, `can_read`, or `is_file`.
+
+Suffixes are reserved for non-default behavior. `_optional` and older `try_*`
+helpers discard error details and return `Option`; `_or_default` helpers keep
+the old empty fallback; `_unchecked` helpers keep the old assert or
+invalid-handle behavior; `_bool` helpers keep old success-flag behavior; and
+`_raw_result` helpers expose compact host integer errors. Existing
+`*_result` names remain migration aliases for older call sites, but new Ari
+code should prefer the natural names.
 
 ## API
 
@@ -339,12 +322,12 @@ suffix:
 
 ```ari
 var zone = zone::create(512);
-var input = fs::try_open("input.txt", "r").unwrap_or(fs::File::invalid());
+var input = fs::open("input.txt", "r").unwrap();
 let text = io::read_to_string<std::fs::File>(ref mut zone, ref mut input).unwrap();
 input.close().unwrap();
 
-var source = fs::try_open("input.txt", "r").unwrap_or(fs::File::invalid());
-var target = fs::try_open("output.txt", "w").unwrap_or(fs::File::invalid());
+var source = fs::open("input.txt", "r").unwrap();
+var target = fs::open("output.txt", "w").unwrap();
 io::copy<std::fs::File, std::fs::File>(ref mut source, ref mut target).unwrap();
 source.close().unwrap();
 target.close().unwrap();
@@ -785,34 +768,28 @@ Write and read a small file:
 ```ari
 fn main() -> i64 {
   let path = "build/prelude/example-fs.tmp";
-  let writer = fs::try_open(path, "w").unwrap_or(fs::File::invalid());
-  if !writer.is_open() {
-    return 1;
-  }
+  let writer = fs::open(path, "w").unwrap();
 
   var data = ['A', 'B', 'C'];
   if writer.write_bytes(data.as_slice()).is_err() {
-    writer.close();
+    writer.close().unwrap();
     return 2;
   }
-  writer.close();
+  writer.close().unwrap();
 
-  let reader = fs::try_open(path, "r").unwrap_or(fs::File::invalid());
-  if !reader.is_open() {
-    return 3;
-  }
+  let reader = fs::open(path, "r").unwrap();
   let first = reader.read_byte();
-  reader.close();
-  fs::remove(path);
+  reader.close().unwrap();
+  fs::remove(path).unwrap();
   return first - 65;
 }
 ```
 
-Handle absence without a sentinel:
+Handle absence without losing the reason:
 
 ```ari
-let maybe_file = fs::try_open("missing-file.txt", "r");
-if maybe_file.is_none() {
+let file = fs::open("missing-file.txt", "r");
+if file.is_err() {
   return 0;
 }
 ```
@@ -820,11 +797,9 @@ if maybe_file.is_none() {
 Append to an existing file:
 
 ```ari
-let appender = fs::try_open(path, "a").unwrap_or(fs::File::invalid());
-if appender.is_open() {
-  appender.write_byte('\n');
-  appender.close();
-}
+let appender = fs::open(path, "a").unwrap();
+appender.write_byte('\n').unwrap();
+appender.close().unwrap();
 ```
 
 Use the whole-file byte helpers for small files:
@@ -991,9 +966,13 @@ Check current-process access permissions:
 ```ari
 let access = fs::permissions(path);
 if access.can_read() && access.can_write() {
-  let file = fs::try_open(path, "rw").unwrap_or(fs::File::invalid());
-  if file.is_open() {
-    file.close();
+  match fs::open(path, "rw") {
+    std::Ok(file) => {
+      file.close().unwrap();
+    }
+    std::Err(_) => {
+      return 1;
+    }
   }
 }
 ```
@@ -1017,11 +996,15 @@ if fs::set_permissions(path, read_only) {
 Open an existing file for both reading and writing:
 
 ```ari
-let file = fs::try_open(path, "rw").unwrap_or(fs::File::invalid());
-if file.is_open() {
-  let first = file.read_byte();
-  file.write_byte((first + 1) as u8);
-  file.close();
+match fs::open(path, "rw") {
+  std::Ok(file) => {
+    let first = file.read_byte();
+    file.write_byte((first + 1) as u8).unwrap();
+    file.close().unwrap();
+  }
+  std::Err(_) => {
+    return 1;
+  }
 }
 ```
 

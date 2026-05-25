@@ -1,9 +1,9 @@
-// Covers std::io pipe adapters. The OS pipe owns raw descriptors, while
-// PipeReader/PipeWriter implement the byte-oriented Reader/Writer traits.
+// Covers std::io pipe adapters. pipe() preserves creation errors through
+// Result, while PipeReader/PipeWriter implement Reader/Writer traits.
 fn main() -> i64 {
   let maybe_pipe = std::io::pipe();
   var score = 0;
-  if maybe_pipe.is_some() {
+  if maybe_pipe.is_ok() {
     score = score + 1;
   }
 
@@ -31,7 +31,7 @@ fn main() -> i64 {
   if std::io::flush<std::io::PipeWriter>(ref mut writer).is_ok() {
     score = score + 1;
   }
-  if writer.close() {
+  if writer.close().is_ok() {
     score = score + 1;
   }
 
@@ -50,7 +50,11 @@ fn main() -> i64 {
   if reader.read_byte() < 0 {
     score = score + 1;
   }
-  if reader.close() {
+  if reader.close().is_ok() {
+    score = score + 1;
+  }
+
+  if std::io::pipe_optional().is_some() {
     score = score + 1;
   }
 

@@ -80,12 +80,19 @@ pub fn stderr() -> std::io::Stderr {
   return std::io::Stderr {};
 }
 
-pub fn pipe() -> std::Option[std::io::Pipe] {
-  let raw = std::os::pipe();
-  if raw.is_none() {
-    return std::None<std::io::Pipe>();
+pub fn pipe() -> std::Result[std::io::Pipe, std::error::Error] {
+  match std::os::pipe_result() {
+    std::Err(reason) => {
+      return std::Err<std::io::Pipe, std::error::Error>(reason);
+    }
+    std::Ok(raw) => {
+      return std::Ok<std::io::Pipe, std::error::Error>(std::io::Pipe { raw: raw });
+    }
   }
-  return std::Some<std::io::Pipe>(std::io::Pipe { raw: raw.unwrap() });
+}
+
+pub fn pipe_optional() -> std::Option[std::io::Pipe] {
+  return std::io::pipe().ok();
 }
 
 pub fn cursor(values: std::Slice[u8]) -> std::io::Cursor {
@@ -409,8 +416,12 @@ pub impl std::io::Pipe {
     return std::io::PipeWriter { handle: self.raw.take_write_end() };
   }
 
-  fn close(self: ref mut Self) -> bool {
-    return self.raw.close();
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.raw.close_result();
+  }
+
+  fn close_bool(self: ref mut Self) -> bool {
+    return self.close().is_ok();
   }
 }
 
@@ -423,8 +434,12 @@ pub impl std::io::PipeReader {
     return self.handle.is_open();
   }
 
-  fn close(self: ref mut Self) -> bool {
-    return self.handle.close();
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.handle.close_result();
+  }
+
+  fn close_bool(self: ref mut Self) -> bool {
+    return self.close().is_ok();
   }
 
   fn read_line(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
@@ -445,8 +460,12 @@ pub impl std::io::PipeWriter {
     return self.handle.is_open();
   }
 
-  fn close(self: ref mut Self) -> bool {
-    return self.handle.close();
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.handle.close_result();
+  }
+
+  fn close_bool(self: ref mut Self) -> bool {
+    return self.close().is_ok();
   }
 
   fn write(self: ref mut Self, values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {

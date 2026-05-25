@@ -28,7 +28,9 @@ natural names and update bool-only call sites to the `_unchecked` names.
 Implemented now:
 
 - stdout/stderr text helpers: `print_text`, `println_text`, `eprint_text`,
-  `eprintln_text`
+  `eprintln_text`; these are the recoverable plain-text helpers while
+  `io::print`/`io::println`/`io::eprintln` remain compiler-known formatting
+  calls
 - raw stdout/scalar hooks: `write_i64`, `write_u64`, `write_bool`,
   `write_byte`, `write_bytes`, `newline`
 - raw stdin/line hooks: `read_byte`, `read_line`, `read_line_owned`
@@ -38,7 +40,8 @@ Implemented now:
 - filesystem adapters: `std::fs::File` implements `Reader`, `Writer`, and
   `Seek`
 - source constructors and adapters: `stdin`, `stdout`, `stderr`, `pipe`,
-  `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`, `BufWriter::new`
+  `pipe_optional`, `cursor`, `buf_reader`, `buf_writer`, `BufReader::new`,
+  `BufWriter::new`
 - direct error helpers: `read_exact`, `read_line_from`, `read_to_string`,
   `copy`, `write`, `write_all`, `flush`
 - collection helper: `read_all`
@@ -82,18 +85,22 @@ io::PipeWriter
 io::stdin() -> io::Stdin
 io::stdout() -> io::Stdout
 io::stderr() -> io::Stderr
-io::pipe() -> Option[io::Pipe]
+io::pipe() -> Result[io::Pipe, Error]
+io::pipe_optional() -> Option[io::Pipe]
 pipe.read_end()
 pipe.write_end()
 pipe.take_reader()
 pipe.take_writer()
-pipe.close()
+pipe.close() -> Result[(), Error]
+pipe.close_bool() -> bool
 pipe_reader.as_fd()
 pipe_reader.is_open()
-pipe_reader.close()
+pipe_reader.close() -> Result[(), Error]
+pipe_reader.close_bool() -> bool
 pipe_writer.as_fd()
 pipe_writer.is_open()
-pipe_writer.close()
+pipe_writer.close() -> Result[(), Error]
+pipe_writer.close_bool() -> bool
 io::cursor(values: Slice[u8]) -> io::Cursor
 io::buf_reader[R: Reader](inner: R, buffer: Slice[u8]) -> io::BufReader[R]
 io::buf_writer[W: Writer](inner: W, buffer: Slice[u8]) -> io::BufWriter[W]
@@ -194,13 +201,18 @@ plain-text output until Ari has a unified formatting-Result story.
 so it is useful for tests, parsers, and examples that should not depend on
 host stdin.
 
-`io::pipe()` returns `Option[io::Pipe]`. A successful pipe owns the raw
-descriptor pair through `std::os::Pipe`, then `take_reader()` and
-`take_writer()` split it into a `PipeReader` and `PipeWriter`.
+`io::pipe()` returns `Result[io::Pipe, Error]`; the error is the hosted OS
+pipe creation error mapped through `std::error`. Use `io::pipe_optional()` only
+when an application deliberately wants to discard the failure reason. A
+successful pipe owns the raw descriptor pair through `std::os::Pipe`, then
+`take_reader()` and `take_writer()` split it into a `PipeReader` and
+`PipeWriter`.
 `PipeReader` implements `Reader`, `PipeWriter` implements `Writer`, and both
-ends expose `as_fd()`, `is_open()`, and explicit `close()` helpers. A pipe
-writer flush succeeds while its descriptor is open because writes go directly
-to the descriptor; use `BufWriter[PipeWriter]` for caller-managed buffering.
+ends expose `as_fd()`, `is_open()`, and explicit Result-returning `close()`
+helpers. The `close_bool()` methods are compatibility wrappers for call sites
+that intentionally discard close errors. A pipe writer flush succeeds while
+its descriptor is open because writes go directly to the descriptor; use
+`BufWriter[PipeWriter]` for caller-managed buffering.
 
 `BufReader[R]` and `BufWriter[W]` wrap any `Reader` or `Writer` with an
 explicit caller-provided `Slice[u8]` buffer. This keeps allocation visible and
@@ -291,11 +303,11 @@ fn main() -> i64 {
   if io::copy<io::Cursor, io::PipeWriter>(ref mut input, ref mut writer).is_err() {
     return 1;
   }
-  writer.close();
+  writer.close().unwrap();
 
   var output = io::read_all<io::PipeReader>(ref mut zone, ref mut reader);
   let count = output.len();
-  reader.close();
+  reader.close().unwrap();
   zone::destroy(zone);
   return count;
 }
@@ -307,13 +319,13 @@ fn main() -> i64 {
   var reader = pipe.take_reader();
   var writer = pipe.take_writer();
   io::write_all<io::PipeWriter>(ref mut writer, "ok").unwrap();
-  writer.close();
+  writer.close().unwrap();
 
   var bytes = [0u8, 0u8];
   if io::read_exact<io::PipeReader>(ref mut reader, bytes.as_slice().as_ptr(), 2).is_err() {
     return 1;
   }
-  reader.close();
+  reader.close().unwrap();
   return 0;
 }
 ```

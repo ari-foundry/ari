@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2983`
+- API entries: `2988`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 745 | stable candidate |
-| `hosted` | 1209 | platform-backed |
+| `hosted` | 1214 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 25 |
-| `fn` | 1051 |
-| `method` | 1513 |
+| `fn` | 1052 |
+| `method` | 1517 |
 | `module` | 39 |
 | `struct` | 161 |
 | `trait` | 39 |
@@ -69,7 +69,7 @@ platform notes.
 | `std::fs` | `hosted` | 259 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
-| `std::io` | `hosted` | 89 |
+| `std::io` | `hosted` | 93 |
 | `std::iter` | `alloc` | 41 |
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
@@ -79,7 +79,7 @@ platform notes.
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 45 |
 | `std::path` | `core` | 83 |
-| `std::process` | `hosted` | 129 |
+| `std::process` | `hosted` | 130 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
@@ -1996,7 +1996,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::io::flush[W: Writer]` | check-prelude std-io-result/std-io-traits-cursor Result-returning writer flush helper; docs/stdlib/modules/io.md |
 | `fn std::io::flush_unchecked[W: Writer]` | check-prelude std-io-result bool compatibility writer flush helper; docs/stdlib/modules/io.md |
 | `fn std::io::newline` | prelude IO and print tests; docs/dev/test-matrix.md Prelude row |
-| `fn std::io::pipe` | check-prelude std-io-pipe pipe Reader/Writer adapter constructor; docs/stdlib/modules/io.md |
+| `fn std::io::pipe` | check-prelude std-io-pipe Result-returning pipe Reader/Writer adapter constructor; docs/stdlib/modules/io.md |
+| `fn std::io::pipe_optional` | check-prelude std-io-pipe Option-returning pipe constructor compatibility helper; docs/stdlib/modules/io.md |
 | `fn std::io::print_text` | check-prelude std-io-natural-api Result-returning stdout text helper; docs/stdlib/modules/io.md |
 | `fn std::io::println_text` | check-prelude std-io-natural-api Result-returning stdout line helper; docs/stdlib/modules/io.md |
 | `fn std::io::read_all[R: Reader]` | check-prelude std-io-read-all generic Reader whole-stream collector; docs/stdlib/modules/io.md |
@@ -2039,18 +2040,21 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::io::BufWriter[W]::write_all` | check-prelude std-io-natural-api/std-io-buffered Result-returning buffered writer whole-slice helper; docs/stdlib/modules/io.md |
 | `method std::io::Cursor::read_line` | check-prelude std-io-read-to-string Result-returning cursor line helper; docs/stdlib/modules/io.md |
 | `method std::io::Cursor::read_to_string` | check-prelude std-io-read-to-string Result-returning cursor whole-stream helper; docs/stdlib/modules/io.md |
-| `method std::io::Pipe::close` | check-prelude std-io-pipe close remaining pipe adapter ends; docs/stdlib/modules/io.md |
+| `method std::io::Pipe::close` | check-prelude std-io-pipe Result-returning close for remaining pipe adapter ends; docs/stdlib/modules/io.md |
+| `method std::io::Pipe::close_bool` | check-prelude std-io-pipe bool compatibility close for remaining pipe adapter ends; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::read_end` | check-prelude std-io-pipe borrowed pipe adapter read descriptor view; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::take_reader` | check-prelude std-io-pipe take pipe reader adapter ownership; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::take_writer` | check-prelude std-io-pipe take pipe writer adapter ownership; docs/stdlib/modules/io.md |
 | `method std::io::Pipe::write_end` | check-prelude std-io-pipe borrowed pipe adapter write descriptor view; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::as_fd` | check-prelude std-io-pipe borrowed descriptor view from pipe reader; docs/stdlib/modules/io.md |
-| `method std::io::PipeReader::close` | check-prelude std-io-pipe explicit pipe reader close helper; docs/stdlib/modules/io.md |
+| `method std::io::PipeReader::close` | check-prelude std-io-pipe Result-returning pipe reader close helper; docs/stdlib/modules/io.md |
+| `method std::io::PipeReader::close_bool` | check-prelude std-io-pipe bool compatibility pipe reader close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::is_open` | check-prelude std-io-pipe pipe reader open predicate; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::read_line` | check-prelude std-io-pipe Result-returning pipe reader line helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeReader::read_to_string` | check-prelude std-io-pipe Result-returning pipe reader whole-stream helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::as_fd` | check-prelude std-io-pipe borrowed descriptor view from pipe writer; docs/stdlib/modules/io.md |
-| `method std::io::PipeWriter::close` | check-prelude std-io-pipe explicit pipe writer close helper; docs/stdlib/modules/io.md |
+| `method std::io::PipeWriter::close` | check-prelude std-io-pipe Result-returning pipe writer close helper; docs/stdlib/modules/io.md |
+| `method std::io::PipeWriter::close_bool` | check-prelude std-io-pipe bool compatibility pipe writer close helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::is_open` | check-prelude std-io-pipe pipe writer open predicate; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::write` | check-prelude std-io-pipe Result-returning pipe writer byte-count helper; docs/stdlib/modules/io.md |
 | `method std::io::PipeWriter::write_all` | check-prelude std-io-pipe Result-returning pipe writer whole-slice helper; docs/stdlib/modules/io.md |
@@ -3024,8 +3028,9 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::TempDir::remove` | check-prelude std-process-high-level temp directory removal helper; docs/stdlib/modules/process.md |
 | `method std::process::TempFile::as_c_str` | check-prelude std-process-high-level temp file C path view; docs/stdlib/modules/process.md |
 | `method std::process::TempFile::as_fd` | check-prelude std-process-high-level temp file descriptor view; docs/stdlib/modules/process.md |
-| `method std::process::TempFile::close` | check-prelude std-process-high-level temp file close helper; docs/stdlib/modules/process.md |
+| `method std::process::TempFile::close` | check-prelude std-process-high-level Result-returning temp file close helper; docs/stdlib/modules/process.md |
 | `method std::process::TempFile::close_and_remove` | check-prelude std-process-high-level temp file cleanup helper; docs/stdlib/modules/process.md |
+| `method std::process::TempFile::close_bool` | check-prelude std-process-high-level bool compatibility temp file close helper; docs/stdlib/modules/process.md |
 | `method std::process::TempFile::is_open` | check-prelude std-process-high-level temp file open-state predicate; docs/stdlib/modules/process.md |
 | `method std::process::TempFile::path` | check-prelude std-process-high-level temp file byte path view; docs/stdlib/modules/process.md |
 | `method std::process::TempFile::remove` | check-prelude std-process-high-level temp file unlink helper; docs/stdlib/modules/process.md |

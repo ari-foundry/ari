@@ -663,7 +663,8 @@ TempFile::path()
 TempFile::as_c_str()
 TempFile::as_fd()
 TempFile::is_open()
-TempFile::close()
+TempFile::close() -> Result[(), process::Error]
+TempFile::close_bool() -> bool
 TempFile::remove()
 TempFile::close_and_remove()
 
@@ -1992,18 +1993,22 @@ io::BufWriter[W]
 io::stdin()
 io::stdout()
 io::stderr()
-io::pipe()
+io::pipe() -> Result[io::Pipe, io::Error]
+io::pipe_optional() -> Option[io::Pipe]
 pipe.read_end()
 pipe.write_end()
 pipe.take_reader()
 pipe.take_writer()
-pipe.close()
+pipe.close() -> Result[(), io::Error]
+pipe.close_bool() -> bool
 pipe_reader.as_fd()
 pipe_reader.is_open()
-pipe_reader.close()
+pipe_reader.close() -> Result[(), io::Error]
+pipe_reader.close_bool() -> bool
 pipe_writer.as_fd()
 pipe_writer.is_open()
-pipe_writer.close()
+pipe_writer.close() -> Result[(), io::Error]
+pipe_writer.close_bool() -> bool
 io::cursor(values)
 io::buf_reader[R: Reader](inner, buffer)
 io::buf_writer[W: Writer](inner, buffer)
@@ -2091,9 +2096,12 @@ builtins, so the stdlib reserves `_text` for these direct byte-output helpers.
 stream hooks, with `flush` currently succeeding as a no-op. `io::BufReader`
 and `io::BufWriter` wrap any `Reader` or `Writer` with an explicit
 caller-provided `Slice[u8]` buffer, so allocation and buffer lifetime stay
-visible. `io::pipe()` wraps `std::os::Pipe` in `PipeReader` and `PipeWriter`
-adapters. The reader implements `Reader`, the writer implements `Writer`, and
-both expose explicit close helpers. `std::fs::File` implements `Reader`,
+visible. `io::pipe()` returns `Result[io::Pipe, Error]` and wraps
+`std::os::Pipe` in `PipeReader` and `PipeWriter` adapters; use
+`io::pipe_optional()` only when the caller intentionally discards creation
+errors. The reader implements `Reader`, the writer implements `Writer`, and
+both expose explicit Result-returning close helpers plus `_bool`
+compatibility wrappers. `std::fs::File` implements `Reader`,
 `Writer`, and `Seek`; zone-owning buffered constructors and drop-time writer
 flush remain roadmap items until generic resource policy is specified.
 

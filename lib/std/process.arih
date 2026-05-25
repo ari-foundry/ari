@@ -242,10 +242,6 @@ fn non_normal_exit_error() -> std::error::Error {
   return std::error::new(std::error::Other);
 }
 
-fn pipe_error() -> std::error::Error {
-  return std::error::new(std::error::Other);
-}
-
 fn invalid_data_error() -> std::error::Error {
   return std::error::new(std::error::InvalidData);
 }
@@ -573,8 +569,12 @@ pub impl std::process::TempFile {
     return self.fd_value.is_open();
   }
 
-  fn close(self: ref mut Self) -> bool {
-    return self.fd_value.close();
+  fn close(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.fd_value.close_result();
+  }
+
+  fn close_bool(self: ref mut Self) -> bool {
+    return self.close().is_ok();
   }
 
   fn remove(self: ref Self) -> std::Result[(), std::error::Error] {
@@ -809,15 +809,15 @@ pub impl std::process::Command {
 
   fn output_in(self: ref Self, zone: ref mut Zone) -> std::Result[std::process::Output, std::error::Error] {
     let maybe_stdout_pipe = std::io::pipe();
-    if maybe_stdout_pipe.is_none() {
-      return std::Err<std::process::Output, std::error::Error>(std::process::pipe_error());
+    if maybe_stdout_pipe.is_err() {
+      return std::Err<std::process::Output, std::error::Error>(maybe_stdout_pipe.unwrap_err());
     }
     var stdout_pipe = maybe_stdout_pipe.unwrap();
 
     let maybe_stderr_pipe = std::io::pipe();
-    if maybe_stderr_pipe.is_none() {
+    if maybe_stderr_pipe.is_err() {
       stdout_pipe.close();
-      return std::Err<std::process::Output, std::error::Error>(std::process::pipe_error());
+      return std::Err<std::process::Output, std::error::Error>(maybe_stderr_pipe.unwrap_err());
     }
     var stderr_pipe = maybe_stderr_pipe.unwrap();
 

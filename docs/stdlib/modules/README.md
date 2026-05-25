@@ -8,6 +8,18 @@ For a task-oriented path through the examples, see
 [../examples.md](../examples.md). For exact public spellings, see
 [../generated/api-index.md](../generated/api-index.md).
 
+## Result-First Naming
+
+Recoverable stdlib operations use the natural module or method name and return
+`Result[..., std::error::Error]` unless a module documents a more specific
+error type such as `std::encoding::Utf8Error`. Compatibility helpers that
+discard information are named explicitly: `_optional` returns `Option`,
+`_or`/`_or_default` use caller-provided or empty fallbacks, `_bool` returns only
+a success flag, `_unchecked` preserves older asserting or invalid-handle
+behavior, and `_raw`/`_raw_result` expose low-level host or ABI shapes. Existing
+`*_result` aliases are migration spellings for older Ari code; new code should
+prefer the natural Result-returning names shown in each module guide.
+
 ## Available Guides
 
 - [std::option and std::result](option-result.md): ADT helpers for absence,

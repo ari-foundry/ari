@@ -126,7 +126,8 @@ TempFile::path()
 TempFile::as_c_str()
 TempFile::as_fd()
 TempFile::is_open()
-TempFile::close()
+TempFile::close() -> Result[(), process::Error]
+TempFile::close_bool() -> bool
 TempFile::remove()
 TempFile::close_and_remove()
 
@@ -248,6 +249,9 @@ the older empty-string fallback behavior.
 current hosted backend. The `_in` variants accept a path prefix. Temp paths are
 owned by the returned handle; `TempFile` owns the file descriptor until
 `close`, `close_and_remove`, or drop, while path removal remains explicit.
+`TempFile::close()` preserves close failures as `Result[(), Error]`;
+`close_bool()` is the compatibility helper for callers that intentionally only
+need a success flag.
 
 ## Example
 
