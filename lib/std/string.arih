@@ -16,6 +16,11 @@ pub struct OsStr {
   bytes: std::Slice[u8],
 }
 
+pub struct SplitOnce {
+  left: std::Slice[u8],
+  right: std::Slice[u8],
+}
+
 pub extern "ari" fn alloc_buffer(zone: ref mut Zone, capacity: i64) -> ptr u8 = "ari_builtin_string_alloc_buffer";
 pub extern "ari" fn with_capacity(zone: ref mut Zone, capacity: i64) -> RawString = "ari_builtin_string_with_capacity";
 pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::String = "ari_builtin_string_new";
@@ -103,6 +108,108 @@ pub fn join_in(
   return output;
 }
 
+fn matches_at(values: std::Slice[u8], offset: i64, needle: std::Slice[u8]) -> bool {
+  if offset < 0 {
+    return false;
+  }
+  if needle.len < 0 {
+    return false;
+  }
+  if offset + needle.len > values.len {
+    return false;
+  }
+  var index = 0;
+  while index < needle.len {
+    if values[offset + index] != needle[index] {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+pub fn lines(values: std::Slice[u8]) -> std::SliceSplit[u8] {
+  return values.split('\n');
+}
+
+pub fn trim_start(values: std::Slice[u8]) -> std::Slice[u8] {
+  return std::ascii::trim_start(values);
+}
+
+pub fn trim_end(values: std::Slice[u8]) -> std::Slice[u8] {
+  return std::ascii::trim_end(values);
+}
+
+pub fn trim(values: std::Slice[u8]) -> std::Slice[u8] {
+  return std::ascii::trim(values);
+}
+
+pub fn split(values: std::Slice[u8], delimiter: char) -> std::SliceSplit[u8] {
+  return values.split(delimiter);
+}
+
+pub fn split_once(values: std::Slice[u8], delimiter: std::Slice[u8]) -> std::Option[std::string::SplitOnce] {
+  let offset = values.find(delimiter);
+  if offset < 0 {
+    return std::None<std::string::SplitOnce>();
+  }
+  let left = values.slice(0, offset);
+  let right = values.slice(offset + delimiter.len, values.len);
+  return std::Some<std::string::SplitOnce>(std::string::SplitOnce { left: left, right: right });
+}
+
+pub fn starts_with(values: std::Slice[u8], prefix: std::Slice[u8]) -> bool {
+  return values.starts_with(prefix);
+}
+
+pub fn ends_with(values: std::Slice[u8], suffix: std::Slice[u8]) -> bool {
+  return values.ends_with(suffix);
+}
+
+pub fn contains(values: std::Slice[u8], needle: std::Slice[u8]) -> bool {
+  return values.contains_slice(needle);
+}
+
+pub fn find(values: std::Slice[u8], needle: std::Slice[u8]) -> i64 {
+  return values.find(needle);
+}
+
+pub fn strip_prefix(values: std::Slice[u8], prefix: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  return values.strip_prefix(prefix);
+}
+
+pub fn strip_suffix(values: std::Slice[u8], suffix: std::Slice[u8]) -> std::Option[std::Slice[u8]] {
+  return values.strip_suffix(suffix);
+}
+
+pub fn substring(values: std::Slice[u8], start: i64, end: i64) -> std::Slice[u8] {
+  return values.slice(start, end);
+}
+
+pub fn replace(
+  zone: ref mut Zone,
+  values: std::Slice[u8],
+  needle: std::Slice[u8],
+  replacement: std::Slice[u8]
+) -> std::string::String {
+  if needle.len == 0 {
+    return std::string::from_slice_in(zone, values);
+  }
+
+  var output = std::string::new(zone, values.len);
+  var index = 0;
+  while index < values.len {
+    if std::string::matches_at(values, index, needle) {
+      output.extend_from_slice_in(zone, replacement);
+      index = index + needle.len;
+    } else {
+      output.push_in(zone, values[index]);
+      index = index + 1;
+    }
+  }
+  return output;
+}
+
 fn next_growth_capacity(current: i64, minimum: i64) -> i64 {
   var capacity = current * 2;
   if capacity < minimum {
@@ -185,6 +292,16 @@ pub impl std::string::OsStr {
 
   fn try_utf8(self: ref Self) -> std::Option[std::string::Utf8] {
     return std::string::utf8(self.bytes);
+  }
+}
+
+pub impl std::string::SplitOnce {
+  fn left(self: ref Self) -> std::Slice[u8] {
+    return self.left;
+  }
+
+  fn right(self: ref Self) -> std::Slice[u8] {
+    return self.right;
   }
 }
 
@@ -275,6 +392,10 @@ pub impl std::string::String {
       append_byte_in(self, zone, values[index]);
       index = index + 1;
     }
+  }
+
+  fn push_str(self: ref mut Self, zone: ref mut Zone, values: super::Slice[u8]) -> void {
+    self.append_bytes(zone, values);
   }
 
   fn append(self: ref mut Self, zone: ref mut Zone, value: string) -> void {

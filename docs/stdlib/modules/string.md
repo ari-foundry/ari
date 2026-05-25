@@ -17,6 +17,20 @@ you only need a borrowed view. Use `std::ascii` or the `String` ASCII helpers
 for byte classification, ASCII-only comparison/search, trimming, and integer
 parsing.
 
+For parser-style code that works mostly with borrowed bytes, use the module
+view helpers. They accept `Slice[u8]`, so string literals can be passed
+directly and owned `String` values can pass `text.as_slice()`:
+
+```ari
+std::string::lines(bytes)
+std::string::trim(bytes)
+std::string::split_once(bytes, "=")
+std::string::starts_with(bytes, "[")
+std::string::ends_with(bytes, "]")
+std::string::strip_prefix(bytes, "\"")
+std::string::strip_suffix(bytes, "\"")
+```
+
 Use the typed view helpers when the byte source has a more specific meaning:
 
 ```ari
@@ -77,6 +91,7 @@ std::string::from_string(ref mut zone, "text")
 std::string::copy(ref mut zone, bytes)
 std::string::from_slice_in(ref mut zone, bytes)
 std::string::join_in(ref mut zone, parts, separator)
+std::string::replace(ref mut zone, bytes, needle, replacement)
 ```
 
 `new` creates an empty buffer with fixed starting capacity.
@@ -87,6 +102,10 @@ forwards to `from_slice_in`. The older names stay documented because they make
 the backing source explicit in low-level library code.
 `join_in` joins a `Slice[Slice[u8]]` with a byte separator and returns an owned
 `String` in the provided zone.
+`replace` copies `bytes` into the provided zone while replacing non-overlapping
+matches of `needle` with `replacement`. An empty `needle` is treated as a no-op
+copy so byte-oriented parser code does not accidentally allocate unbounded
+separator output.
 
 Copies also require a target zone:
 
@@ -172,6 +191,7 @@ source-level contract:
 text.append(ref mut zone, "text")
 text.append_byte(ref mut zone, char)
 text.append_bytes(ref mut zone, bytes)
+text.push_str(ref mut zone, bytes)
 text.push_in(ref mut zone, char)
 text.insert_in(ref mut zone, index, char)
 text.reserve(ref mut zone, capacity)
@@ -181,11 +201,12 @@ text.resize_in(ref mut zone, length, char)
 ```
 
 Use `append` for Ari `string` values, `append_byte` for one ASCII byte
-character such as `'!'`, and `append_bytes` for a borrowed `Slice[u8]`. `char`
-is a public alias for `u8`, so binary byte buffers can still call these APIs,
-but text-like call sites should prefer single-quoted character literals. The
-`_in` forms remain the lower level names used by older tests and
-compiler-assisted formatting.
+character such as `'!'`, and `append_bytes` or `push_str` for a borrowed
+`Slice[u8]`. `push_str` is the CLI/parser-friendly builder spelling; `String`
+itself is the current `StringBuilder` shape. `char` is a public alias for `u8`,
+so binary byte buffers can still call these APIs, but text-like call sites
+should prefer single-quoted character literals. The `_in` forms remain the
+lower level names used by older tests and compiler-assisted formatting.
 
 For tracked local `String` handles, Ari can infer the same source zone for the
 common non-`_in` convenience calls documented in the language guide. The
@@ -225,7 +246,33 @@ panicking for an invalid Unicode scalar value.
 
 ## Search And Comparison
 
-Search helpers operate on bytes:
+Module view helpers and `String` methods operate on bytes:
+
+```ari
+std::string::lines(bytes)
+std::string::trim_start(bytes)
+std::string::trim_end(bytes)
+std::string::trim(bytes)
+std::string::split(bytes, delimiter)
+std::string::split_once(bytes, delimiter)
+std::string::find(bytes, needle)
+std::string::contains(bytes, needle)
+std::string::starts_with(bytes, prefix)
+std::string::ends_with(bytes, suffix)
+std::string::strip_prefix(bytes, prefix)
+std::string::strip_suffix(bytes, suffix)
+std::string::substring(bytes, start, end)
+```
+
+`lines` is a borrowed `'\n'` split iterator. It leaves any preceding `'\r'` in
+the line; call `trim` on each line for CRLF-tolerant ASCII manifest parsing.
+`split_once` returns `Option[std::string::SplitOnce]`; call `.left()` and
+`.right()` for the borrowed views around the first delimiter occurrence. Empty
+delimiter matches at byte offset `0`. `strip_prefix` and `strip_suffix` return
+`Option[Slice[u8]]`, preserving the reason-less absence shape used by borrowed
+view helpers.
+
+Owned `String` search helpers use the same byte policy:
 
 ```ari
 text.index_of(byte)
@@ -319,6 +366,24 @@ first and parse the returned slice with `std::ascii`:
 ```ari
 let view = text.trim();
 let value = std::ascii::parse_decimal(view).unwrap_or(0);
+```
+
+Small manifest-style parsing can stay allocation-free until it needs to keep a
+value:
+
+```ari
+var lines = std::string::lines(file_text.as_slice());
+let line = std::string::trim(lines.next().unwrap());
+if std::string::starts_with(line, "#") {
+  return 0;
+}
+let pair = std::string::split_once(line, "=").unwrap();
+let key = std::string::trim(pair.left());
+let raw_value = std::string::trim(pair.right());
+let unquoted = std::string::strip_suffix(
+  std::string::strip_prefix(raw_value, "\"").unwrap(),
+  "\""
+).unwrap();
 ```
 
 Overflow behavior is not promised yet.
@@ -444,6 +509,7 @@ tests/cases/standard-library/ok/string/std-string-byte-retain.ari
 tests/cases/standard-library/ok/string/std-string-search.ari
 tests/cases/standard-library/ok/string/std-string-split-join.ari
 tests/cases/standard-library/ok/string/std-string-natural-api.ari
+tests/cases/standard-library/ok/string/std-string-module-views.ari
 tests/cases/standard-library/ok/string/std-string-prefix-suffix.ari
 tests/cases/standard-library/ok/string/std-string-equals.ari
 tests/cases/standard-library/ok/string/std-string-ascii-helpers.ari

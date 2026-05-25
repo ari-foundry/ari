@@ -1,0 +1,56 @@
+// Covers module-level std::string view helpers used by small manifest parsers.
+fn expect_bytes(values: Slice[u8], expected: Slice[u8]) -> void {
+  assert(values.equals(expected));
+}
+
+fn main() -> i64 {
+  var zone = zone::create(512);
+  let manifest = "# Ari package\n[package]\nname = \"hello\"\nversion = \"0.1.0\"\n";
+
+  var lines = std::string::lines(std::string::bytes(manifest));
+  assert(std::string::trim(lines.next().unwrap()).starts_with("#"));
+
+  let section_line = std::string::trim(lines.next().unwrap());
+  assert(std::string::starts_with(section_line, "["));
+  assert(std::string::ends_with(section_line, "]"));
+  let section = std::string::strip_suffix(
+    std::string::strip_prefix(section_line, "[").unwrap(),
+    "]"
+  ).unwrap();
+  expect_bytes(section, "package");
+
+  let name_line = std::string::trim(lines.next().unwrap());
+  let name_pair = std::string::split_once(name_line, "=").unwrap();
+  expect_bytes(std::string::trim(name_pair.left()), "name");
+  let raw_name = std::string::trim(name_pair.right());
+  let name = std::string::strip_suffix(
+    std::string::strip_prefix(raw_name, "\"").unwrap(),
+    "\""
+  ).unwrap();
+  expect_bytes(name, "hello");
+
+  let version_line = std::string::trim(lines.next().unwrap());
+  assert(std::string::contains(version_line, "0.1"));
+  assert_eq_i64(std::string::find(version_line, "="), 8);
+  expect_bytes(std::string::substring(version_line, 0, 7), "version");
+
+  var pieces = std::string::split("a,b,c", ',');
+  expect_bytes(pieces.next().unwrap(), "a");
+  expect_bytes(pieces.next().unwrap(), "b");
+  expect_bytes(pieces.next().unwrap(), "c");
+  assert(pieces.next().is_none());
+
+  let replaced = std::string::replace(ref mut zone, "hello-ari-ari", "ari", "pkg");
+  assert(replaced.equals_text("hello-pkg-pkg"));
+
+  var builder = std::string::empty(ref mut zone);
+  builder.push_str(ref mut zone, "Created package ");
+  builder.push_str(ref mut zone, name);
+  assert(builder.equals_text("Created package hello"));
+
+  let missing = std::string::split_once("name", "=");
+  assert(missing.is_none());
+
+  zone::destroy(zone);
+  return 0;
+}

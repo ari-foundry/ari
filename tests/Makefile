@@ -2380,6 +2380,16 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/string/std-string-natural-api.ari -o $(BUILD_DIR)/prelude/std-string-natural-api.elf
 	$(BUILD_DIR)/prelude/std-string-natural-api.elf; code=$$?; test $$code -eq 0
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/string/std-string-natural-api.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-natural-api.elf; $(BUILD_DIR)/prelude/std-string-natural-api.elf; code=$$?; test $$code -eq 0; fi
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-module-views.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-module-views.ll
+	grep -q '_ARNv3std6string5lines' $(BUILD_DIR)/prelude/std-string-module-views.ll
+	grep -q '_ARNv3std6string4trim' $(BUILD_DIR)/prelude/std-string-module-views.ll
+	grep -q '_ARNv3std6string10split_once' $(BUILD_DIR)/prelude/std-string-module-views.ll
+	grep -q '_ARNv3std6string12strip_prefix' $(BUILD_DIR)/prelude/std-string-module-views.ll
+	grep -q '_ARNv3std6string12strip_suffix' $(BUILD_DIR)/prelude/std-string-module-views.ll
+	grep -q '_ARNv3std6string7replace' $(BUILD_DIR)/prelude/std-string-module-views.ll
+	grep -q 'std__string__String8inherent8push_str' $(BUILD_DIR)/prelude/std-string-module-views.ll
+	$(TARGET) tests/cases/standard-library/ok/string/std-string-module-views.ari -o $(BUILD_DIR)/prelude/std-string-module-views.elf
+	$(BUILD_DIR)/prelude/std-string-module-views.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/c/std-c-interop.ari --emit-llvm $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q 'declare ptr @"dlopen"' $(BUILD_DIR)/prelude/std-c-interop.ll
 	grep -q 'declare ptr @"dlsym"' $(BUILD_DIR)/prelude/std-c-interop.ll

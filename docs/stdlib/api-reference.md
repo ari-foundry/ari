@@ -2788,6 +2788,22 @@ std::string::from_string(ref mut zone, "text")
 std::string::copy(ref mut zone, bytes)
 std::string::from_slice_in(ref mut zone, bytes)
 std::string::join_in(ref mut zone, parts, separator)
+std::string::lines(bytes)
+std::string::trim_start(bytes)
+std::string::trim_end(bytes)
+std::string::trim(bytes)
+std::string::split(bytes, delimiter)
+std::string::split_once(bytes, delimiter)
+std::string::find(bytes, needle)
+std::string::contains(bytes, needle)
+std::string::starts_with(bytes, prefix)
+std::string::ends_with(bytes, suffix)
+std::string::strip_prefix(bytes, prefix)
+std::string::strip_suffix(bytes, suffix)
+std::string::substring(bytes, start, end)
+std::string::replace(ref mut zone, bytes, needle, replacement)
+split_once.left()
+split_once.right()
 text.len()
 text.capacity()
 text.is_empty()
@@ -2815,6 +2831,7 @@ text.reserve_extra(ref mut zone, additional)
 text.append(ref mut zone, "text")
 text.append_byte(ref mut zone, char)
 text.append_bytes(ref mut zone, bytes)
+text.push_str(ref mut zone, bytes)
 text.extend_from_slice_in(ref mut zone, bytes)
 text.resize_in(ref mut zone, length, char)
 text.index_of(char)
@@ -2918,20 +2935,29 @@ is clearer.
 bytes)`, and `std::string::empty(ref mut zone)` are the natural constructors
 for everyday code. The older `from_string` and `from_slice_in` names remain
 available when the source kind should be explicit. `text.append`, `append_byte`,
-and `append_bytes` grow with the owning zone while hiding the lower-level
-`append_string_in`, `append_value_in`, `append_debug_in`, and
-`extend_from_slice_in` names from normal call sites.
+`append_bytes`, and `push_str` grow with the owning zone while hiding the
+lower-level `append_string_in`, `append_value_in`, `append_debug_in`, and
+`extend_from_slice_in` names from normal call sites. `String` is the current
+builder shape for CLI output and parser diagnostics.
 Tracked local strings can also call `text.append_value(value)` for `Display`
 values and `text.append_debug(value)` for `Debug` values; the compiler lowers
 those convenience calls to same-zone explicit forms.
 
-`String` stores bytes, so `join_in`, `find`, `contains_slice`, `slice`,
-`split_at`, `chunks`, `windows`, and delimiter `split` operate on byte offsets
-and borrowed `Slice[u8]` views. `find_text`, `contains_text`,
-`starts_with_text`, `ends_with_text`, and `equals_text` accept Ari `string`
-values directly by using `std::string::bytes` internally. `join_in` is the
-allocating helper: it joins `Slice[Slice[u8]]` parts with a byte separator into
-the caller's zone.
+`String` stores bytes, so module helpers such as `lines`, `trim`,
+`split_once`, `starts_with`, `ends_with`, `contains`, `find`, `strip_prefix`,
+`strip_suffix`, and `substring` operate on borrowed `Slice[u8]` views.
+String literals can be passed directly to these helpers when the parameter type
+is a byte slice. `split_once` returns `Option[std::string::SplitOnce]` with
+borrowed `.left()` and `.right()` views around the first delimiter match.
+`lines` splits on `'\n'` and leaves `'\r'` for a later ASCII trim step.
+`replace(ref mut zone, bytes, needle, replacement)` is the allocating helper
+for non-overlapping byte replacement; an empty needle is a no-op copy.
+Owned `String` helpers such as `find`, `contains_slice`, `slice`, `split_at`,
+`chunks`, `windows`, and delimiter `split` use the same byte offsets and
+borrowed views. `find_text`, `contains_text`, `starts_with_text`,
+`ends_with_text`, and `equals_text` accept Ari `string` values directly by
+using `std::string::bytes` internally. `join_in` joins `Slice[Slice[u8]]` parts
+with a byte separator into the caller's zone.
 `equals_ignore_case`, `starts_with_ignore_case`,
 `ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`,
 `trim_start`, `trim_end`, `trim`, `parse_decimal`, `parse_decimal_prefix`,
