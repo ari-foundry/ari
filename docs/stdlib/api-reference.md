@@ -1200,7 +1200,11 @@ fs::try_read_dir_entries(ref mut zone, path)
 fs::read_dir_next(ref mut zone, dir)
 fs::close_dir(dir)
 fs::open(path, mode)
+fs::open_optional(path, mode)
+fs::open_unchecked(path, mode)
 fs::create(path)
+fs::create_optional(path)
+fs::create_unchecked(path)
 fs::remove_raw_result(path)
 fs::remove_result(path)
 fs::rename_raw_result(source, target)
@@ -1208,6 +1212,12 @@ fs::rename_result(source, target)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
+fs::open_read_optional(path)
+fs::open_write_optional(path)
+fs::open_append_optional(path)
+fs::open_read_unchecked(path)
+fs::open_write_unchecked(path)
+fs::open_append_unchecked(path)
 fs::try_open(path, mode)
 fs::try_create(path)
 fs::try_open_read(path)
@@ -1253,6 +1263,8 @@ options.truncate(enabled)
 options.create(enabled)
 options.create_new(enabled)
 options.open(path)
+options.open_optional(path)
+options.open_unchecked(path)
 options.open_raw_result(path)
 options.open_result(path)
 options.try_open(path)
@@ -1311,31 +1323,37 @@ metadata.is_symlink()
 metadata.is_other()
 ```
 
-Use `try_open(path, mode)` for ordinary fallible open operations; it returns
-`Option[File]`. The raw `open(path, mode)` call returns a `File` directly,
-with `File::invalid()` and `file.is_open()` exposing the invalid-handle
-convention. Supported modes are `"r"` for read, `"w"` for create/truncate
-write, `"a"` for create/append write, `"rw"` for existing read/write, `"r+"`
-as a familiar alias for `"rw"`, `"w+"` for create/truncate read/write, and
-`"a+"` for read/append. `open_read`, `open_write`, `open_append`, and their
-`try_open_*` variants are compatibility wrappers over those mode strings.
-Use `open_result(path, mode)` or `create_result(path)` when callers need more
-than presence/absence. They return `Result[File, Error]`. Use
-`open_raw_result(path, mode)` or `create_raw_result(path)` only for
-compatibility callers that still need `Result[File, i64]`.
+Use `open(path, mode)` for ordinary fallible open operations; it returns
+`Result[File, Error]`. `open_optional(path, mode)` and `try_open(path, mode)`
+discard failures into `None`, while `open_unchecked(path, mode)` keeps the old
+invalid-handle sentinel convention. Supported modes are `"r"` for read, `"w"`
+for create/truncate write, `"a"` for create/append write, `"rw"` for existing
+read/write, `"r+"` as a familiar alias for `"rw"`, `"w+"` for create/truncate
+read/write, and `"a+"` for read/append. `open_read`, `open_write`, and
+`open_append` are Result-returning wrappers over those mode strings; their
+`_optional`/`try_open_*` partners discard reasons, and their `_unchecked`
+partners preserve the invalid-handle shape. `open_result(path, mode)` and
+`create_result(path)` remain compatibility aliases for existing Result-suffix
+callers. Use `open_raw_result(path, mode)` or `create_raw_result(path)` only
+for compatibility callers that still need `Result[File, i64]`.
 Use `read_result(ref mut zone, path)` or
 `read_to_string_result(ref mut zone, path)` when a missing file should return
 `Error(NotFound)` instead of the compatibility empty string/`None` behavior.
 Use `OpenOptions::new()` or `fs::open_options()` when named policy is clearer:
 `read`, `write`, `append`, `truncate`, `create`, and `create_new` each return a
 new options value, `options.try_open(path)` returns `Option[File]`, and
-`options.open_result(path)` returns `Result[File, Error]`.
+`options.open(path)` returns `Result[File, Error]`. `options.open_optional`
+and `options.try_open(path)` discard failures into `None`; `options.open_unchecked`
+keeps the old invalid-handle sentinel; and `options.open_result(path)` remains
+a compatibility alias.
 `options.open_raw_result(path)` keeps the raw integer compatibility `Result`
 shape.
 `create_new(true)` is exclusive creation; `append(true).truncate(true)` and
 create/truncate without write or append are rejected as invalid option sets.
-`create(path)` and `try_create(path)` are the natural create/truncate helpers
-over `"w"` mode. `File` implements `std::io::Reader`, `std::io::Writer`, and
+`create(path)` is the natural Result-returning create/truncate helper over
+`"w"` mode. `create_optional(path)` and `try_create(path)` discard the reason,
+while `create_unchecked(path)` keeps the invalid-handle compatibility shape.
+`File` implements `std::io::Reader`, `std::io::Writer`, and
 `std::io::Seek`, so a handle from `try_open` can be passed to generic IO
 helpers such as `io::read_to_string<std::fs::File>`, `io::copy`,
 `io::try_copy`, `io::write_all`, `io::flush`, or a caller's own

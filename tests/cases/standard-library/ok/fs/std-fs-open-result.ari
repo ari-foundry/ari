@@ -1,6 +1,5 @@
-// Covers Result-returning filesystem open helpers. This keeps error detail
-// separate from the Option-based try_open surface and exercises both direct
-// Error payloads and the compatibility raw bridge.
+// Covers natural Result-returning filesystem open helpers. Compatibility
+// aliases remain available for Option-only and raw host-error callers.
 fn cleanup(path: string, missing: string) -> void {
   fs::remove(path);
   fs::remove(missing);
@@ -46,19 +45,23 @@ fn read_text(zone: ref mut Zone, path: string, expected: string) -> bool {
 fn main() -> i64 {
   let path = "build/prelude/std-fs-open-result.tmp";
   let missing = "build/prelude/std-fs-open-result-missing.tmp";
+  let aux = "build/prelude/std-fs-open-result-aux.tmp";
   cleanup(path, missing);
+  fs::remove(aux);
 
   var score = 0;
 
-  if result_error_matches(fs::open_result(path, "bad"), error::InvalidInput, 22) {
+  if result_error_matches(fs::open(path, "bad"), error::InvalidInput, 22) &&
+    fs::open_optional(path, "bad").is_none() {
     score = score + 1;
   }
-  if result_error_matches(fs::open_result(missing, "r"), error::NotFound, 2) &&
+  if result_error_matches(fs::open(missing, "r"), error::NotFound, 2) &&
+    result_error_matches(fs::open_result(missing, "r"), error::NotFound, 2) &&
     raw_result_error_matches(fs::open_raw_result(missing, "r"), error::NotFound, 2) {
     score = score + 2;
   }
 
-  match fs::create_result(path) {
+  match fs::create(path) {
     Ok(created_file) => {
       if created_file.write_byte('R').is_ok() && created_file.close().is_ok() {
         score = score + 4;
@@ -67,7 +70,7 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
-  match fs::open_result(path, "rw") {
+  match fs::open(path, "rw") {
     Ok(read_write_file) => {
       if read_write_file.read_byte() == 'R' && read_write_file.write_byte('W').is_ok() && read_write_file.close().is_ok() {
         var zone = std::zone::create(128);
@@ -81,23 +84,25 @@ fn main() -> i64 {
   }
 
   let exclusive = fs::OpenOptions::new().write(true).create_new(true);
-  if result_error_matches(exclusive.open_result(path), error::AlreadyExists, 17) &&
+  if result_error_matches(exclusive.open(path), error::AlreadyExists, 17) &&
+    exclusive.open_optional(path).is_none() &&
+    result_error_matches(exclusive.open_result(path), error::AlreadyExists, 17) &&
     raw_result_error_matches(exclusive.open_raw_result(path), error::AlreadyExists, 17) {
     score = score + 16;
   }
 
   let empty_options = fs::open_options();
-  if result_error_matches(empty_options.open_result(path), error::InvalidInput, 22) {
+  if result_error_matches(empty_options.open(path), error::InvalidInput, 22) {
     score = score + 32;
   }
 
   let bad_create_read = fs::OpenOptions::new().read(true).create(true);
-  if result_error_matches(bad_create_read.open_result(path), error::InvalidInput, 22) {
+  if result_error_matches(bad_create_read.open(path), error::InvalidInput, 22) {
     score = score + 64;
   }
 
   let append_read = fs::OpenOptions::new().read(true).append(true).create(true);
-  match append_read.open_result(path) {
+  match append_read.open(path) {
     Ok(append_file) => {
       if append_file.read_byte() == 'R' && append_file.write_byte('A').is_ok() && append_file.close().is_ok() {
         var zone2 = std::zone::create(128);
@@ -110,7 +115,109 @@ fn main() -> i64 {
     Err(_) => {}
   }
 
+  match fs::create_result(missing) {
+    Ok(temp_file) => {
+      temp_file.close_unchecked();
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  fs::remove(missing);
+  match fs::create_raw_result(missing) {
+    Ok(temp_raw_file) => {
+      temp_raw_file.close_unchecked();
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  fs::remove(missing);
+
+  let unchecked_bad = fs::open_unchecked(path, "bad");
+  assert(!unchecked_bad.is_open());
+  match fs::open_read(path) {
+    Ok(read_file) => {
+      read_file.close_unchecked();
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  match fs::open_read_optional(path) {
+    Some(read_optional_file) => {
+      read_optional_file.close_unchecked();
+    }
+    None => {
+      panic();
+    }
+  }
+  let read_unchecked = fs::open_read_unchecked(path);
+  assert(read_unchecked.is_open());
+  read_unchecked.close_unchecked();
+
+  match fs::open_write(aux) {
+    Ok(write_file) => {
+      write_file.close_unchecked();
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  fs::remove(aux);
+  match fs::open_write_optional(aux) {
+    Some(write_optional_file) => {
+      write_optional_file.close_unchecked();
+    }
+    None => {
+      panic();
+    }
+  }
+  fs::remove(aux);
+  let write_unchecked = fs::open_write_unchecked(aux);
+  assert(write_unchecked.is_open());
+  write_unchecked.close_unchecked();
+  fs::remove(aux);
+
+  match fs::open_append(aux) {
+    Ok(aux_append_file) => {
+      aux_append_file.close_unchecked();
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  fs::remove(aux);
+  match fs::open_append_optional(aux) {
+    Some(append_optional_file) => {
+      append_optional_file.close_unchecked();
+    }
+    None => {
+      panic();
+    }
+  }
+  fs::remove(aux);
+  let append_unchecked = fs::open_append_unchecked(aux);
+  assert(append_unchecked.is_open());
+  append_unchecked.close_unchecked();
+  fs::remove(aux);
+
+  match fs::create_optional(aux) {
+    Some(optional_create_file) => {
+      optional_create_file.close_unchecked();
+    }
+    None => {
+      panic();
+    }
+  }
+  fs::remove(aux);
+  let unchecked_create_file = fs::create_unchecked(aux);
+  assert(unchecked_create_file.is_open());
+  unchecked_create_file.close_unchecked();
+  fs::remove(aux);
+
   cleanup(path, missing);
+  fs::remove(aux);
   assert_eq_i64(score, 255);
   return score;
 }

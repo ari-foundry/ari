@@ -152,7 +152,7 @@ fn main() -> i64 {
 
 ```ari
 fn main() -> i64 {
-  let file = std::fs::open("build/output.tmp", "w");
+  let file = std::fs::open("build/output.tmp", "w").unwrap();
   var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
   owned.set_close_on_exec(true);
   owned.set_nonblocking(true);

@@ -986,10 +986,27 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-options.ari -o $(BUILD_DIR)/prelude/std-fs-open-options.elf
 	$(BUILD_DIR)/prelude/std-fs-open-options.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs4open" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs13open_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs11open_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs15open_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs6create" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs15create_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs16create_unchecked" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs13create_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "std2fs17create_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs9open_read" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs18open_read_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs19open_read_unchecked" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs10open_write" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs19open_write_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs20open_write_unchecked" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs11open_append" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs20open_append_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "std2fs21open_append_unchecked" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "OpenOptions8inherent4open" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "OpenOptions8inherent13open_optional" $(BUILD_DIR)/prelude/std-fs-open-result.ll
+	grep -F -q "OpenOptions8inherent14open_unchecked" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "OpenOptions8inherent11open_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	grep -F -q "OpenOptions8inherent15open_raw_result" $(BUILD_DIR)/prelude/std-fs-open-result.ll
 	$(TARGET) tests/cases/standard-library/ok/fs/std-fs-open-result.ari -o $(BUILD_DIR)/prelude/std-fs-open-result.elf

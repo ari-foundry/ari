@@ -3,7 +3,7 @@
 fn main() -> i64 {
   let path = "build/std-os-owned-fd.tmp";
   let wrote = std::fs::write(path, "owned-fd");
-  let file = std::fs::open(path, "r");
+  let file = std::fs::open(path, "r").unwrap();
   var owned = std::os::OwnedFd::from_raw(file.descriptor().raw());
   var invalid = std::os::OwnedFd::invalid();
 

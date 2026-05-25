@@ -69,7 +69,7 @@ extern "ari" fn remove_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_
 extern "ari" fn remove_dir_bytes_raw(data: ptr u8, len: i64) -> bool = "ari_builtin_fs_remove_dir_bytes";
 extern "ari" fn open_dir_bytes_raw(data: ptr u8, len: i64) -> Dir = "ari_builtin_fs_open_dir_bytes";
 // Modes: "r", "w", "a", "rw", "r+", "w+", and "a+".
-pub extern "ari" fn open(path: string, mode: string) -> File = "ari_builtin_fs_open";
+pub extern "ari" fn open_unchecked(path: string, mode: string) -> File = "ari_builtin_fs_open";
 extern "ari" fn open_options_raw(
   path: string,
   read: bool,
@@ -941,39 +941,55 @@ pub fn read_link(zone: ref mut Zone, path: string) -> std::string::String {
   return std::string::empty(zone);
 }
 
-pub fn try_open(path: string, mode: string) -> std::Option[File] {
-  let file = open(path, mode);
+pub fn open_optional(path: string, mode: string) -> std::Option[File] {
+  let file = open_unchecked(path, mode);
   if file.is_open() {
     return std::Some<File>(file);
   }
   return std::None<File>();
 }
 
+pub fn try_open(path: string, mode: string) -> std::Option[File] {
+  return open_optional(path, mode);
+}
+
 pub fn open_raw_result(path: string, mode: string) -> std::Result[File, i64] {
   if !supported_open_mode(mode) {
     return std::Err<File, i64>(invalid_input_error_raw());
   }
-  let file = open(path, mode);
+  let file = open_unchecked(path, mode);
   if file.is_open() {
     return std::Ok<File, i64>(file);
   }
   return std::Err<File, i64>(last_errno_error_raw());
 }
 
-pub fn open_result(path: string, mode: string) -> std::Result[File, std::error::Error] {
+pub fn open(path: string, mode: string) -> std::Result[File, std::error::Error] {
   return std::error::from_raw_result<File>(open_raw_result(path, mode));
+}
+
+pub fn open_result(path: string, mode: string) -> std::Result[File, std::error::Error] {
+  return open(path, mode);
 }
 
 pub fn open_options() -> OpenOptions {
   return OpenOptions::new();
 }
 
-pub fn create(path: string) -> File {
+pub fn create_unchecked(path: string) -> File {
+  return open_unchecked(path, "w");
+}
+
+pub fn create(path: string) -> std::Result[File, std::error::Error] {
   return open(path, "w");
 }
 
+pub fn create_optional(path: string) -> std::Option[File] {
+  return open_optional(path, "w");
+}
+
 pub fn try_create(path: string) -> std::Option[File] {
-  return try_open(path, "w");
+  return create_optional(path);
 }
 
 pub fn create_raw_result(path: string) -> std::Result[File, i64] {
@@ -981,31 +997,55 @@ pub fn create_raw_result(path: string) -> std::Result[File, i64] {
 }
 
 pub fn create_result(path: string) -> std::Result[File, std::error::Error] {
-  return std::error::from_raw_result<File>(create_raw_result(path));
+  return create(path);
 }
 
-pub fn open_read(path: string) -> File {
+pub fn open_read_unchecked(path: string) -> File {
+  return open_unchecked(path, "r");
+}
+
+pub fn open_read(path: string) -> std::Result[File, std::error::Error] {
   return open(path, "r");
 }
 
-pub fn open_write(path: string) -> File {
+pub fn open_write_unchecked(path: string) -> File {
+  return open_unchecked(path, "w");
+}
+
+pub fn open_write(path: string) -> std::Result[File, std::error::Error] {
   return open(path, "w");
 }
 
-pub fn open_append(path: string) -> File {
+pub fn open_append_unchecked(path: string) -> File {
+  return open_unchecked(path, "a");
+}
+
+pub fn open_append(path: string) -> std::Result[File, std::error::Error] {
   return open(path, "a");
 }
 
+pub fn open_read_optional(path: string) -> std::Option[File] {
+  return open_optional(path, "r");
+}
+
+pub fn open_write_optional(path: string) -> std::Option[File] {
+  return open_optional(path, "w");
+}
+
+pub fn open_append_optional(path: string) -> std::Option[File] {
+  return open_optional(path, "a");
+}
+
 pub fn try_open_read(path: string) -> std::Option[File] {
-  return try_open(path, "r");
+  return open_read_optional(path);
 }
 
 pub fn try_open_write(path: string) -> std::Option[File] {
-  return try_open(path, "w");
+  return open_write_optional(path);
 }
 
 pub fn try_open_append(path: string) -> std::Option[File] {
-  return try_open(path, "a");
+  return open_append_optional(path);
 }
 
 pub fn write_bytes_unchecked(file: File, values: std::Slice[u8]) -> i64 {
@@ -1170,7 +1210,7 @@ pub fn read_to_string(zone: ref mut Zone, path: string) -> std::string::String {
 }
 
 pub fn read_to_string_result(zone: ref mut Zone, path: string) -> std::Result[std::string::String, std::error::Error] {
-  match open_result(path, "r") {
+  match open(path, "r") {
     std::Err(reason) => {
       return std::Err<std::string::String, std::error::Error>(reason);
     }
@@ -1566,7 +1606,7 @@ pub impl std::fs::OpenOptions {
     };
   }
 
-  fn open(self: ref Self, path: string) -> File {
+  fn open_unchecked(self: ref Self, path: string) -> File {
     return open_options_raw(
       path,
       self.read_enabled,
@@ -1582,23 +1622,31 @@ pub impl std::fs::OpenOptions {
     if !open_options_valid(self) {
       return std::Err<File, i64>(invalid_input_error_raw());
     }
-    let file = self.open(path);
+    let file = self.open_unchecked(path);
     if file.is_open() {
       return std::Ok<File, i64>(file);
     }
     return std::Err<File, i64>(last_errno_error_raw());
   }
 
-  fn open_result(self: ref Self, path: string) -> std::Result[File, std::error::Error] {
+  fn open(self: ref Self, path: string) -> std::Result[File, std::error::Error] {
     return std::error::from_raw_result<File>(self.open_raw_result(path));
   }
 
-  fn try_open(self: ref Self, path: string) -> std::Option[File] {
-    let file = self.open(path);
+  fn open_result(self: ref Self, path: string) -> std::Result[File, std::error::Error] {
+    return self.open(path);
+  }
+
+  fn open_optional(self: ref Self, path: string) -> std::Option[File] {
+    let file = self.open_unchecked(path);
     if file.is_open() {
       return std::Some<File>(file);
     }
     return std::None<File>();
+  }
+
+  fn try_open(self: ref Self, path: string) -> std::Option[File] {
+    return self.open_optional(path);
   }
 }
 

@@ -21,7 +21,8 @@ and `std::io::Writer` helpers, inspect and move a file cursor through
 `std::io::Seek`, close the handle, and remove a file.
 
 The public names stay natural because the module path already says the domain:
-use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
+use `open(path, mode)`, `open_optional(path, mode)`, `try_open(path, mode)`,
+`create`, `create_optional`, `try_create`,
 `can_read`, `can_write`, `can_execute`, `permissions`, `read_byte`,
 `try_read_byte`, `write_byte`, `write_bytes`, `read`, `read_result`,
 `try_read`, `read_to_string_result`, `write`,
@@ -38,8 +39,10 @@ use `open(path, mode)`, `try_open(path, mode)`, `create`, `try_create`,
 `read_dir_entries_result`, `try_read_dir_entries`,
 `read_dir_next`, `position`, `seek`, `close_dir`, `close`, `exists`, and
 `remove`, not type-suffixed names. For the handle APIs touched by lifecycle
-cleanup, natural names return `Result`; `_unchecked` helpers keep the old
-boolean or sentinel behavior, and `_raw` helpers keep compact integer errors.
+cleanup, natural names return `Result`; `_optional` and `try_*` helpers keep
+absence-only compatibility, `_unchecked` helpers keep the old boolean,
+sentinel, or invalid-handle behavior, and `_raw` helpers keep compact integer
+errors.
 
 ## API
 
@@ -108,7 +111,11 @@ fs::close_dir(dir)
 fs::close_dir_raw(dir)
 fs::close_dir_unchecked(dir)
 fs::open(path, mode)
+fs::open_optional(path, mode)
+fs::open_unchecked(path, mode)
 fs::create(path)
+fs::create_optional(path)
+fs::create_unchecked(path)
 fs::remove_raw_result(path)
 fs::remove_result(path)
 fs::rename_raw_result(source, target)
@@ -116,6 +123,12 @@ fs::rename_result(source, target)
 fs::open_read(path)
 fs::open_write(path)
 fs::open_append(path)
+fs::open_read_optional(path)
+fs::open_write_optional(path)
+fs::open_append_optional(path)
+fs::open_read_unchecked(path)
+fs::open_write_unchecked(path)
+fs::open_append_unchecked(path)
 fs::try_open(path, mode)
 fs::try_create(path)
 fs::try_open_read(path)
@@ -171,6 +184,8 @@ options.truncate(enabled)
 options.create(enabled)
 options.create_new(enabled)
 options.open(path)
+options.open_optional(path)
+options.open_unchecked(path)
 options.open_raw_result(path)
 options.open_result(path)
 options.try_open(path)
@@ -237,9 +252,11 @@ metadata.is_other()
 ```
 
 `File` is a small value handle around the runtime file descriptor. Failed open
-operations return an invalid handle where `file.is_open()` is false. Prefer
-`try_open(path, mode)` for normal control flow; it returns `Option[File]` and
-avoids making callers remember the invalid-handle sentinel. Use
+operations return an invalid handle where `file.is_open()` is false only
+through `_unchecked` compatibility helpers. Prefer `open(path, mode)` for
+normal control flow; it returns `Result[File, Error]` and preserves the reason.
+Use `open_optional(path, mode)` or `try_open(path, mode)` only when
+presence/absence is enough. Use
 `file.descriptor()` when code needs a non-owning `std::os::Fd` view over the
 handle. That view does not close or extend the lifetime of the file. If code
 intentionally takes over close responsibility from a file descriptor, wrap the
@@ -307,9 +324,12 @@ shape for common modes while also accepting the direct `"rw"` spelling:
 | `"w+"` | Create or truncate a file for reading and writing. |
 | `"a+"` | Create if needed, read, and append writes at the end. |
 
-Invalid or unsupported mode strings return an invalid `File`; `try_open`
-turns that into `None`. Use `open_result(path, mode)` when callers need error
-detail. It returns `Result[File, Error]`, so callers can branch on
+`open(path, mode)` returns `Result[File, Error]`. Invalid or unsupported mode
+strings return `InvalidInput`; missing paths and host failures preserve their
+`std::error::Error` category. `open_optional(path, mode)` and
+`try_open(path, mode)` turn failures into `None`, while `open_unchecked`
+returns the old invalid-handle sentinel directly. The Result shape lets
+callers branch on
 `reason.kind()`, `reason.code()`, or predicates such as `reason.is_not_found()`.
 `open_raw_result(path, mode)` remains available for low-level compatibility
 tests and FFI-style bridges that still need `Result[File, i64]`.
@@ -323,11 +343,13 @@ let options = fs::OpenOptions::new()
   .write(true)
   .create(true);
 
-match options.try_open("cache.bin") {
-  std::Some(file) => {
+match options.open("cache.bin") {
+  std::Ok(file) => {
     file.close();
   }
-  std::None => {}
+  std::Err(reason) => {
+    return reason.code();
+  }
 }
 ```
 
@@ -339,18 +361,21 @@ existing file when it is opened, `create(true)` creates a missing file, and
 `create_new(true)` creates exclusively and fails when the path already exists.
 `truncate`, `create`, and `create_new` require `write(true)` or `append(true)`;
 `append(true).truncate(true)` is rejected because Ari keeps that ambiguous
-combination out of the portable surface. `options.open(path)` returns a `File`
-directly, `options.try_open(path)` turns invalid handles into `None`, and
-`options.open_result(path)` returns `Result[File, Error]` for callers that
-need to distinguish `NotFound`, `AlreadyExists`, or `InvalidInput`.
+combination out of the portable surface. `options.open(path)` returns
+`Result[File, Error]`, `options.open_optional(path)` and
+`options.try_open(path)` turn failures into `None`, and
+`options.open_unchecked(path)` returns the old invalid-handle sentinel.
+`options.open_result(path)` remains a compatibility alias for callers already
+using the older Result-suffixed name.
 `options.open_raw_result(path)` is the compatibility form with a raw integer
 error payload.
 
-`create(path)` is the natural spelling for `open(path, "w")`: it creates a
-file if needed and truncates existing contents. `try_create(path)` wraps that
-same operation in `Option[File]`; `create_result(path)` returns
-`Result[File, Error]`. `create_raw_result(path)` keeps the old raw payload
-shape.
+`create(path)` is the natural Result-returning spelling for `open(path, "w")`:
+it creates a file if needed and truncates existing contents.
+`create_optional(path)` and `try_create(path)` wrap that same operation in
+`Option[File]`; `create_unchecked(path)` returns the old invalid-handle
+sentinel; `create_result(path)` is a compatibility alias; and
+`create_raw_result(path)` keeps the old raw payload shape.
 
 `ensure_file(path)` is the idempotent regular-file helper. It returns `true`
 when `path` is already a regular file, creates an empty file when the path is
@@ -359,10 +384,12 @@ parent directory is missing. Unlike `create(path)`, it does not truncate an
 existing file, so it is the safer setup primitive for tests, caches, and tools
 that merely need a file to exist.
 
-`open_read`, `open_write`, `open_append`, and their `try_open_*` partners are
-compatibility wrappers over `open(path, "r")`, `open(path, "w")`, and
-`open(path, "a")`. New docs and tests should usually prefer `try_open`,
-`OpenOptions`, or `create`/`try_create` when creating a file.
+`open_read`, `open_write`, and `open_append` are Result-returning convenience
+wrappers over `open(path, "r")`, `open(path, "w")`, and `open(path, "a")`.
+The matching `_optional`/`try_open_*` helpers discard the reason, while the
+matching `_unchecked` helpers preserve the old invalid-handle convention. New
+docs and tests should usually prefer `open`, `OpenOptions`, or `create` when
+creating a file.
 
 `read_byte(file)` returns the next byte as `i64` or `-1` at EOF or on failure.
 Use `try_read_byte(file)` or `file.try_read_byte()` when EOF is ordinary
@@ -564,7 +591,8 @@ empty file only when the path is missing and otherwise succeeds only for an
 existing regular file. It returns `false` for directories, symlinks resolved to
 non-regular targets, other path kinds, or missing parents. It is deliberately
 not recursive and deliberately not an `OpenOptions` replacement; use
-`try_open(path, mode)` or `try_create(path)` when the caller needs a handle.
+`open(path, mode)` or `create(path)` when the caller needs a handle and failure
+reason.
 
 `create_dir(path)` creates one directory with the current default permission
 mode used by Ari's runtime shim. It does not create parent directories.
@@ -623,8 +651,8 @@ or `try_open_dir` plus the `Dir` methods for manual streaming.
 
 | Need | Status |
 | --- | --- |
-| open | Current: `open(path, mode)`, `try_open(path, mode)`, `open_result(path, mode)` with `Error`, raw compatibility `open_raw_result`, compatibility wrappers, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open_result`/`open_raw_result`. |
-| create | Current: `create(path)` and `try_create(path)` over `"w"` mode, plus non-truncating `ensure_file(path)` for idempotent file setup. |
+| open | Current: `open(path, mode)` returns `Error`, `open_optional(path, mode)`/`try_open(path, mode)` discard reasons, `open_unchecked(path, mode)` preserves the invalid-handle compatibility shape, `open_result(path, mode)` remains a compatibility alias, raw compatibility `open_raw_result`, Result/optional/unchecked convenience wrappers for read/write/append modes, and `OpenOptions` for named read/write/append/truncate/create/create-new policy plus `OpenOptions::open`/`open_optional`/`try_open`/`open_unchecked`/`open_result`/`open_raw_result`. |
+| create | Current: `create(path)` returns `Error`, `create_optional(path)`/`try_create(path)` discard reasons, `create_unchecked(path)` preserves the invalid-handle compatibility shape, `create_result(path)` remains a compatibility alias, and `ensure_file(path)` provides non-truncating idempotent file setup. |
 | read | Current: byte `read_byte`/`try_read_byte`, whole-file `read`/`read_to_string`, direct `Error` helpers `read_result`/`read_to_string_result`, and fallible `try_read`/`try_read_to_string`. Splitting byte-read EOF from byte-read errors remains roadmap. |
 | write | Current: byte `write_byte`, `write_bytes`, `write_byte_unchecked`, `write_bytes_unchecked`, whole-file `write`, byte-counting `try_write`, `Error`-returning `write_result`, and raw compatibility `write_raw_result`/`write_byte_raw`/`write_bytes_raw`. |
 | append | Current: `"a"`/`"a+"` modes, whole-file `append`, byte-counting `try_append`, `Error`-returning `append_result`, and raw compatibility `append_raw_result`. |
@@ -956,10 +984,11 @@ the mode-string contract, including `"rw"`, `"r+"`, `"w+"`, `"a+"`, empty modes,
 and invalid mode strings. `std-fs-open-options.ari` covers the `OpenOptions`
 value builder, exclusive creation, non-truncating read/write opens,
 append-with-read behavior, and invalid option combinations.
-`std-fs-open-result.ari` covers `open_result`, `open_raw_result`,
-`create_result`, `create_raw_result`, and `OpenOptions::open_result`/
-`open_raw_result` for invalid input, missing files, exclusive-create failures,
-and successful handles. `std-fs-read-write.ari` covers source whole-file
+`std-fs-open-result.ari` covers natural `open`, `create`, `OpenOptions::open`,
+their `_optional` compatibility helpers, existing `*_result` aliases,
+`open_raw_result`, `create_raw_result`, and `OpenOptions::open_raw_result` for
+invalid input, missing files, exclusive-create failures, and successful
+handles. `std-fs-read-write.ari` covers source whole-file
 write/append compatibility wrappers, `try_write`/`try_append` byte counts,
 read-to-byte-string, missing-file empty reads, and truncating rewrite behavior.
 `std-fs-read-result.ari` covers direct `Error` whole-file read helpers,
