@@ -446,15 +446,37 @@ bool merge_state_snapshot_entry_borrow_state_conservatively(StateSnapshotEntry& 
     return true;
 }
 
-std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& left,
-                                                         const StateSnapshot& right,
-                                                         const std::string& message) {
+static StateSnapshotMismatch make_state_snapshot_mismatch(const std::string& key,
+                                                          const std::string& message,
+                                                          const StateSnapshotEntry& left,
+                                                          const StateSnapshotEntry& right) {
+    StateSnapshotMismatch mismatch;
+    mismatch.message = "binding '" + key + "' " + message;
+    if (left.state != LocalState::Alive && left.state_change_loc) {
+        mismatch.first_change_loc = left.state_change_loc;
+        mismatch.first_change_label =
+            "one control-flow path left '" + key + "' " + local_state_name(left.state) + " here";
+    }
+    if (right.state != LocalState::Alive && right.state_change_loc) {
+        mismatch.second_change_loc = right.state_change_loc;
+        mismatch.second_change_label =
+            "another control-flow path left '" + key + "' " + local_state_name(right.state) + " here";
+    }
+    return mismatch;
+}
+
+std::optional<StateSnapshotMismatch> state_snapshot_mismatch_detail(const StateSnapshot& left,
+                                                                    const StateSnapshot& right,
+                                                                    const std::string& message) {
     for (const auto& item : left) {
         LocalState right_state = snapshot_state(right, item.first);
         if (item.second.state != right_state &&
             !compatible_unavailable_owner_states(item.second.state, right_state) &&
             !field_state_irrelevant_after_base_unavailable(left, right, item.first)) {
-            return "binding '" + item.first + "' " + message;
+            auto found = right.find(item.first);
+            StateSnapshotEntry default_entry;
+            const StateSnapshotEntry& actual = found == right.end() ? default_entry : found->second;
+            return make_state_snapshot_mismatch(item.first, message, item.second, actual);
         }
         if (state_snapshot_key_is_field(item.first)) continue;
         auto found = right.find(item.first);
@@ -462,11 +484,24 @@ std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& le
         const StateSnapshotEntry& actual = found == right.end() ? default_entry : found->second;
         if (item.second.owned_field_states_complete != actual.owned_field_states_complete &&
             !both_states_unavailable(item.second.state, actual.state)) {
-            return "binding '" + item.first + "' " + message;
+            return make_state_snapshot_mismatch(item.first, message, item.second, actual);
         }
         if (!state_snapshot_entry_borrow_state_equal(item.second, actual)) {
-            return "binding '" + item.first + "' has incompatible borrow states";
+            return make_state_snapshot_mismatch(
+                item.first,
+                "has incompatible borrow states",
+                item.second,
+                actual);
         }
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& left,
+                                                         const StateSnapshot& right,
+                                                         const std::string& message) {
+    if (auto mismatch = state_snapshot_mismatch_detail(left, right, message)) {
+        return mismatch->message;
     }
     return std::nullopt;
 }

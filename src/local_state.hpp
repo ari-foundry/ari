@@ -87,6 +87,14 @@ struct StateSnapshotEntry {
 
 using StateSnapshot = std::map<std::string, StateSnapshotEntry>;
 
+struct StateSnapshotMismatch {
+    std::string message;
+    std::optional<SourceLocation> first_change_loc;
+    std::string first_change_label;
+    std::optional<SourceLocation> second_change_loc;
+    std::string second_change_label;
+};
+
 LocalInfo make_local_info(SourceLocation loc, const IrType& type, bool mutable_binding);
 bool local_is_alive(const LocalInfo& local);
 std::optional<std::string> local_unavailable_binding_error(const std::string& name, const LocalInfo& local);
@@ -149,6 +157,9 @@ std::optional<std::string> local_method_mutability_error(const std::string& name
 std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& left,
                                                          const StateSnapshot& right,
                                                          const std::string& message);
+std::optional<StateSnapshotMismatch> state_snapshot_mismatch_detail(const StateSnapshot& left,
+                                                                    const StateSnapshot& right,
+                                                                    const std::string& message);
 bool state_snapshot_key_is_field(const std::string& key);
 bool state_snapshot_entry_borrow_state_equal(const StateSnapshotEntry& left,
                                              const StateSnapshotEntry& right);

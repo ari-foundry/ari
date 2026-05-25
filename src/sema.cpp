@@ -6224,14 +6224,61 @@ private:
         throw error;
     }
 
+    static void add_state_snapshot_change_label(CompileError& error,
+                                                const Span& primary_span,
+                                                const std::optional<SourceLocation>& loc,
+                                                const std::string& label) {
+        if (!loc || label.empty()) return;
+        Span span = span_from_location(*loc);
+        if (!span_has_source(span) || !span_has_valid_order(span)) return;
+        if (span.source_id.value == primary_span.source_id.value &&
+            span.start == primary_span.start &&
+            span.end == primary_span.end) {
+            return;
+        }
+        error.add_label(DiagnosticLabel{span, label, false});
+    }
+
+    [[noreturn]] static void fail_state_snapshot_mismatch(SourceLocation loc,
+                                                          const StateSnapshotMismatch& mismatch) {
+        Span primary_span = span_from_location(loc);
+        CompileError error(std::move(loc), mismatch.message);
+        add_state_snapshot_change_label(
+            error,
+            primary_span,
+            mismatch.first_change_loc,
+            mismatch.first_change_label);
+        add_state_snapshot_change_label(
+            error,
+            primary_span,
+            mismatch.second_change_loc,
+            mismatch.second_change_label);
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "ownership state must agree across every continuing control-flow path before execution continues",
+            DiagnosticNoteKind::Note});
+        if (auto name = binding_name_from_state_mismatch_message(mismatch.message)) {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "make every branch move, drop, or keep '" + *name + "' consistently",
+                DiagnosticNoteKind::Help});
+        } else {
+            error.add_note(DiagnosticNote{
+                std::nullopt,
+                "make every branch leave tracked ownership bindings in the same state",
+                DiagnosticNoteKind::Help});
+        }
+        throw error;
+    }
+
     static void require_same_states(
         SourceLocation loc,
         const StateSnapshot& left,
         const StateSnapshot& right,
         const std::string& message
     ) {
-        if (auto error = state_snapshot_mismatch_error(left, right, message)) {
-            fail_state_snapshot_mismatch(loc, *error);
+        if (auto mismatch = state_snapshot_mismatch_detail(left, right, message)) {
+            fail_state_snapshot_mismatch(loc, *mismatch);
         }
     }
 
