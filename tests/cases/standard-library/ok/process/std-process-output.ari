@@ -45,6 +45,23 @@ fn main() -> i64 {
       if bytes_equal(output.stderr(), expected_stderr.as_slice()) {
         score = score + 19;
       }
+
+      match output.stdout_string(ref mut zone) {
+        Ok(stdout_text) => {
+          if stdout_text.equals_text("out") {
+            score = score + 31;
+          }
+        }
+        Err(_) => {}
+      }
+      match output.stderr_string(ref mut zone) {
+        Ok(stderr_text) => {
+          if stderr_text.equals_text("err") {
+            score = score + 37;
+          }
+        }
+        Err(_) => {}
+      }
     }
   }
 
@@ -62,6 +79,21 @@ fn main() -> i64 {
     }
   }
 
-  assert_eq_i64(score, 112);
+  var invalid_args = [
+    process::arg("-c"),
+    process::arg("printf '\\303\\050'")
+  ];
+  var invalid_cmd = process::command_with_args("sh", invalid_args.as_slice());
+  match invalid_cmd.output(ref mut zone) {
+    Err(_) => {}
+    Ok(invalid_value) => {
+      var invalid_output = invalid_value;
+      if invalid_output.stdout_string(ref mut zone).is_err() {
+        score = score + 41;
+      }
+    }
+  }
+
+  assert_eq_i64(score, 221);
   return score;
 }

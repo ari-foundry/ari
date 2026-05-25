@@ -4,8 +4,8 @@
 child-process control. The implemented surface reads process identity values,
 terminates explicitly with `exit` or `abort`, uses natural status helper names
 in source Ari, and on the current Linux/LLVM path can fork/wait directly or use
-the `Command` builder for `arg`, `args`, `env`, `env_var`, `current_dir`,
-`spawn`, `status`, `output`, `output_in`, `exec`, typed `ExitStatus` and
+the `Command` builder for `arg`, `args`, `env`, `env_values`, `env_var`,
+`current_dir`, `spawn`, `status`, `status_code`, `output`, `output_in`, `exec`, typed `ExitStatus` and
 `ExitCode` inspection, typed signal helpers, small stdout/stderr capture,
 child-stream endpoint aliases, current path wrappers, and temp file/temp dir
 creation.
@@ -49,7 +49,8 @@ process::env_var(name, value)
 process::command(program)
 process::command_with_args(program, args)
 process::spawn(command)
-process::status(command)
+process::status(command) -> Result[process::ExitStatus, process::Error]
+process::status_code(command) -> Result[i64, process::Error]
 process::exit_status(command)
 process::output_in(command, zone)
 process::output(command, zone)
@@ -79,12 +80,14 @@ process::Command::with_args(program, args)
 Command::arg(zone, value)
 Command::arg_value(zone, value)
 Command::args(args)
-Command::env(env_values)
+Command::env(zone, name, value)
+Command::env_values(env_values)
 Command::env_var(zone, name, value)
 Command::env_value(zone, value)
 Command::current_dir(path)
 Command::spawn()
-Command::status()
+Command::status() -> Result[process::ExitStatus, process::Error]
+Command::status_code() -> Result[i64, process::Error]
 Command::exit_status()
 Command::output_in(zone)
 Command::output(zone)
@@ -105,6 +108,7 @@ ExitStatus::exit_code()
 ExitStatus::signal()
 ExitStatus::signal_or(fallback)
 ExitStatus::is_success()
+ExitStatus::success()
 ExitStatus::is_failure()
 
 Signal::raw()
@@ -114,7 +118,9 @@ Output::status()
 Output::exit_status()
 Output::is_success()
 Output::stdout()
+Output::stdout_string(zone)
 Output::stderr()
+Output::stderr_string(zone)
 
 TempFile::path()
 TempFile::as_c_str()
@@ -177,26 +183,30 @@ compatibility helper; it returns the child's normal exit status or `-1`. Use
 `is_wait_error(status)` to make that sentinel explicit.
 
 `Command` is the higher-level process builder. It stores the program, argument
-slice, child environment assignments, and child working directory. `args` and
-`env` replace the current slices. `arg(zone, value)` and
+slice, child environment assignments, and child working directory. `args`
+replaces the current argv slice, and `env_values` replaces the child
+environment assignment slice. `arg(zone, value)`, `env(zone, name, value)`, and
 `env_var(zone, name, value)` append one item by allocating a new backing slice
 in the caller-provided zone; this keeps the builder dynamic without storing a
 redundant allocator handle in `Command`. The zone must outlive the call to
-`spawn`, `status`, `exit_status`, `output`, or `exec`.
+`spawn`, `status`, `status_code`, `exit_status`, `output`, or `exec`.
 
-`status()` spawns the command, waits for it, and returns `Result[i64, Error]`
-for compatibility with earlier tests. New code should prefer `exit_status()`
-when signal termination matters. `spawn()` returns a `Child` handle with `pid`,
+`status()` spawns the command, waits for it, and returns
+`Result[ExitStatus, Error]` so natural fallible process APIs preserve signal
+termination detail. `status_code()` is the explicit compatibility helper for
+callers that only want a normal exit code; it reports signal termination as
+`Error(Other)`. `exit_status()` is kept as a readable alias for code written
+before `status()` became typed. `spawn()` returns a `Child` handle with `pid`,
 `wait`, `wait_status`, raw `kill`, typed `signal`, and `terminate` methods.
 `exec()` applies the setup and replaces the current process with the program;
 if `execvp` returns, Ari reports the host error.
 
 The module-level wrappers `process::spawn(ref command)`,
-`process::status(ref command)`, `process::exit_status(ref command)`,
-`process::output_in(ref command, ref mut zone)`, `process::output(ref command,
-ref mut zone)`, and
+`process::status(ref command)`, `process::status_code(ref command)`,
+`process::exit_status(ref command)`, `process::output_in(ref command, ref mut
+zone)`, `process::output(ref command, ref mut zone)`, and
 `process::exec(ref command)` call the matching `Command` methods. They exist so
-code can use either fluent builder style or the direct `process::spawn(cmd)`
+code can use either builder method style or the direct `process::spawn(cmd)`
 shape common in other standard libraries without losing `Error` detail.
 
 `output_in(zone)` spawns the command with stdout and stderr redirected to
@@ -205,8 +215,10 @@ allocated in `zone`, and returns `Result[Output, Error]`. `Output::exit_status()
 returns the typed child status, `Output::status()` returns the normal exit code
 or `-1` for compatibility, `Output::is_success()` checks the typed status, and
 `Output::stdout()` / `Output::stderr()` expose borrowed `Slice[u8]` views over
-the captured bytes. The `_in` suffix is intentional: captured output owns
-buffers, so the caller chooses the allocation zone.
+the captured bytes. `stdout_string(zone)` and `stderr_string(zone)` validate the
+captured bytes as UTF-8, copy them into a zone-owned `String`, and return
+`Error(InvalidData)` for non-UTF-8 output. The `_in` suffix is intentional:
+captured output owns buffers, so the caller chooses the allocation zone.
 
 Arguments use `process::arg("...")` rather than raw `string` slices so the
 builder can keep an executable-friendly C argv representation. Environment
@@ -303,7 +315,7 @@ fn main() -> i64 {
   cmd.arg(ref mut zone, "exit 17");
 
   match cmd.status() {
-    Ok(status) => { return status; }
+    Ok(status) => { return status.code_or(process::failure()); }
     Err(_) => { return process::failure(); }
   }
 }
@@ -338,7 +350,7 @@ fn main() -> i64 {
   var args = [process::arg("-c"), process::arg("test \"$ARI_MODE\" = test")];
   var env = [process::env_var("ARI_MODE", "test")];
   var cmd = process::command_with_args("sh", args.as_slice());
-  cmd.env(env.as_slice());
+  cmd.env_values(env.as_slice());
   cmd.current_dir("build/prelude");
 
   match cmd.spawn() {
@@ -368,7 +380,10 @@ fn main() -> i64 {
       if output.status() != process::success() {
         return process::failure();
       }
-      return output.stdout().len;
+      match output.stdout_string(ref mut zone) {
+        Err(_) => { return process::failure(); }
+        Ok(text) => { return text.len(); }
+      }
     }
   }
 }

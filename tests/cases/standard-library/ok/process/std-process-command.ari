@@ -1,8 +1,15 @@
 // Covers the first Command API slice: argument passing, environment and
 // working-directory setup, spawn/status helpers, and non-destructive kill(0).
-fn status_is(value: Result[i64, error::Error], expected: i64) -> bool {
+fn status_is(value: Result[process::ExitStatus, error::Error], expected: i64) -> bool {
   match value {
-    Ok(status) => { return status == expected; }
+    Ok(status) => { return status.exited() && status.code_or(-1) == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn status_code_is(value: Result[i64, error::Error], expected: i64) -> bool {
+  match value {
+    Ok(code) => { return code == expected; }
     Err(_) => { return false; }
   }
 }
@@ -22,12 +29,16 @@ fn unit_err_with_code(value: Result[(), error::Error]) -> bool {
 }
 
 fn main() -> i64 {
+  var zone = zone::temp(512);
   var score = 0;
 
   var status_args = [process::arg("-c"), process::arg("exit 17")];
   var status_cmd = process::Command::with_args("sh", status_args.as_slice());
   if status_is(status_cmd.status(), 17) {
     score = score + 11;
+  }
+  if status_code_is(status_cmd.status_code(), 17) {
+    score = score + 2;
   }
 
   var setter_args = [process::arg("-c"), process::arg("exit 19")];
@@ -41,6 +52,11 @@ fn main() -> i64 {
   var module_status_cmd = process::command_with_args("sh", module_status_args.as_slice());
   if status_is(process::status(ref module_status_cmd), 7) {
     score = score + 41;
+  }
+  var module_status_code_args = [process::arg("-c"), process::arg("exit 8")];
+  var module_status_code_cmd = process::command_with_args("sh", module_status_code_args.as_slice());
+  if status_code_is(process::status_code(ref module_status_code_cmd), 8) {
+    score = score + 3;
   }
 
   var module_exit_status_args = [process::arg("-c"), process::arg("exit 3")];
@@ -56,8 +72,7 @@ fn main() -> i64 {
 
   var env_args = [process::arg("-c"), process::arg("test \"$ARI_COMMAND_TEST\" = yes && pwd | grep -q '/build/prelude$'")];
   var env_cmd = process::command_with_args("sh", env_args.as_slice());
-  var env_values = [process::env_var("ARI_COMMAND_TEST", "yes")];
-  env_cmd.env(env_values.as_slice());
+  env_cmd.env(ref mut zone, "ARI_COMMAND_TEST", "yes");
   env_cmd.current_dir("build/prelude");
   if status_is(env_cmd.status(), 0) {
     score = score + 17;
@@ -68,7 +83,7 @@ fn main() -> i64 {
   match spawn_cmd.spawn() {
     Err(_) => {}
     Ok(child) => {
-      if child.pid() > 0 && unit_ok(child.kill(0)) && status_is(child.wait(), 23) {
+      if child.pid() > 0 && unit_ok(child.kill(0)) && status_code_is(child.wait(), 23) {
         score = score + 29;
       }
     }
@@ -79,7 +94,7 @@ fn main() -> i64 {
   match process::spawn(ref module_spawn_cmd) {
     Err(_) => {}
     Ok(module_child) => {
-      if module_child.pid() > 0 && status_is(module_child.wait(), 5) {
+      if module_child.pid() > 0 && status_code_is(module_child.wait(), 5) {
         score = score + 43;
       }
     }
@@ -92,6 +107,6 @@ fn main() -> i64 {
     score = score + 37;
   }
 
-  assert_eq_i64(score, 227);
+  assert_eq_i64(score, 232);
   return score;
 }

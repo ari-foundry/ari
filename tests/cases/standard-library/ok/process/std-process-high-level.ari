@@ -1,9 +1,16 @@
 // Covers the high-level process polish layer: explicit-zone Command::arg
 // builder growth, typed ExitCode and Signal wrappers, child-stream aliases,
 // current path wrappers, and temp file/temp dir constructors.
-fn status_is(value: Result[i64, error::Error], expected: i64) -> bool {
+fn status_is(value: Result[process::ExitStatus, error::Error], expected: i64) -> bool {
   match value {
-    Ok(status) => { return status == expected; }
+    Ok(status) => { return status.exited() && status.code_or(-1) == expected; }
+    Err(_) => { return false; }
+  }
+}
+
+fn status_code_is(value: Result[i64, error::Error], expected: i64) -> bool {
+  match value {
+    Ok(code) => { return code == expected; }
     Err(_) => { return false; }
   }
 }
@@ -22,7 +29,7 @@ fn main() -> i64 {
   var cmd = process::Command::new("sh");
   cmd.arg(ref mut zone, "-c");
   cmd.arg(ref mut zone, "test \"$ARI_HIGH_LEVEL\" = yes && exit 12");
-  cmd.env_var(ref mut zone, "ARI_HIGH_LEVEL", "yes");
+  cmd.env(ref mut zone, "ARI_HIGH_LEVEL", "yes");
   if status_is(cmd.status(), 12) {
     score = score + 11;
   }
@@ -70,7 +77,7 @@ fn main() -> i64 {
   var child_cmd = process::command_with_args("sh", child_args.as_slice());
   match child_cmd.spawn() {
     Ok(child) => {
-      if unit_ok(child.signal(process::sig_check())) && status_is(child.wait(), 4) {
+      if unit_ok(child.signal(process::sig_check())) && status_code_is(child.wait(), 4) {
         score = score + 29;
       }
     }

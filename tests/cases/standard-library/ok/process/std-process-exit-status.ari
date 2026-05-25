@@ -1,5 +1,5 @@
-// Covers typed process exit status helpers. `status()` keeps the old i64 shape,
-// while `exit_status()` and `wait_status()` preserve signal termination.
+// Covers typed process exit status helpers. `status()` returns typed status;
+// `status_code()` keeps the explicit normal-exit-code compatibility shape.
 fn code_is(value: Option[i64], expected: i64) -> bool {
   match value {
     Some(code) => { return code == expected; }
@@ -24,6 +24,7 @@ fn status_ok(value: Result[process::ExitStatus, error::Error], expected: i64) ->
         && status.code_or(-1) == expected
         && status.signal_or(0) == 0
         && status.is_success() == (expected == 0)
+        && status.success() == (expected == 0)
         && status.is_failure() == (expected != 0);
     }
   }
@@ -78,7 +79,7 @@ fn main() -> i64 {
 
   var old_args = [process::arg("-c"), process::arg("exit 7")];
   var old_cmd = process::command_with_args("sh", old_args.as_slice());
-  match old_cmd.status() {
+  match old_cmd.status_code() {
     Ok(code) => {
       if code == 7 {
         score = score + 23;

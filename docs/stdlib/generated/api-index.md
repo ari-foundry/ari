@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2771`
+- API entries: `2777`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 819 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 730 | stable candidate |
-| `hosted` | 1035 | platform-backed |
+| `hosted` | 1041 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
-| `fn` | 999 |
-| `method` | 1369 |
+| `fn` | 1000 |
+| `method` | 1374 |
 | `module` | 39 |
 | `struct` | 153 |
 | `trait` | 39 |
@@ -79,7 +79,7 @@ platform notes.
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 43 |
 | `std::path` | `core` | 83 |
-| `std::process` | `hosted` | 123 |
+| `std::process` | `hosted` | 129 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
@@ -2827,7 +2827,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::sigquit` | check-prelude std-process-high-level POSIX SIGQUIT typed signal helper; docs/stdlib/modules/process.md |
 | `fn std::process::sigterm` | check-prelude std-process-high-level POSIX SIGTERM typed signal helper; docs/stdlib/modules/process.md |
 | `fn std::process::spawn` | check-prelude std-process-command module-level Command spawn wrapper returning Error; docs/stdlib/modules/process.md |
-| `fn std::process::status` | check-prelude std-process-command module-level Command exit-code wrapper returning Error; docs/stdlib/modules/process.md |
+| `fn std::process::status` | check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md |
+| `fn std::process::status_code` | check-prelude std-process-command explicit normal-exit-code compatibility wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::success` | check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md |
 | `fn std::process::success_code` | check-prelude std-process-high-level typed success exit code helper; docs/stdlib/modules/process.md |
 | `fn std::process::temp_dir` | check-prelude std-process-high-level default temp directory constructor; docs/stdlib/modules/process.md |
@@ -2856,16 +2857,18 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::Command::arg_value` | check-prelude std-process-high-level explicit-zone Arg append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::args` | check-prelude std-process-command replace command argument slice; docs/stdlib/modules/process.md |
 | `method std::process::Command::current_dir` | check-prelude std-process-command child working-directory setup; docs/stdlib/modules/process.md |
-| `method std::process::Command::env` | check-prelude std-process-command child environment setup; docs/stdlib/modules/process.md |
+| `method std::process::Command::env` | check-prelude std-process-command explicit-zone single environment append helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::env_value` | check-prelude std-process-high-level explicit-zone EnvVar append helper; docs/stdlib/modules/process.md |
-| `method std::process::Command::env_var` | check-prelude std-process-high-level explicit-zone single environment append helper; docs/stdlib/modules/process.md |
+| `method std::process::Command::env_values` | check-prelude std-process-command replace child environment assignment slice; docs/stdlib/modules/process.md |
+| `method std::process::Command::env_var` | check-prelude std-process-high-level explicit-zone environment append compatibility helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::exec` | check-prelude std-process-command replace current process with command; docs/stdlib/modules/process.md |
 | `method std::process::Command::exit_status` | check-prelude std-process-exit-status spawn and wait for typed ExitStatus; docs/stdlib/modules/process.md |
 | `method std::process::Command::new` | check-prelude std-process-command associated Command constructor; docs/stdlib/modules/process.md |
 | `method std::process::Command::output` | check-prelude std-process-high-level natural output capture alias; docs/stdlib/modules/process.md |
 | `method std::process::Command::output_in` | check-prelude std-process-output zone-backed stdout/stderr capture helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::spawn` | check-prelude std-process-command spawn child process handle; docs/stdlib/modules/process.md |
-| `method std::process::Command::status` | check-prelude std-process-command spawn and wait for exit status; docs/stdlib/modules/process.md |
+| `method std::process::Command::status` | check-prelude std-process-command spawn and wait for typed exit status; docs/stdlib/modules/process.md |
+| `method std::process::Command::status_code` | check-prelude std-process-command explicit normal-exit-code compatibility helper; docs/stdlib/modules/process.md |
 | `method std::process::Command::with_args` | check-prelude std-process-command associated Command constructor with argv slice; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::code` | check-prelude std-process-high-level typed exit code accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitCode::exit` | check-prelude std-process-high-level typed process exit helper; docs/stdlib/modules/process.md |
@@ -2882,11 +2885,14 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::process::ExitStatus::signal` | check-prelude std-process-exit-status optional signal number accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::signal_or` | check-prelude std-process-exit-status signal fallback accessor; docs/stdlib/modules/process.md |
 | `method std::process::ExitStatus::signaled` | check-prelude std-process-exit-status signal termination predicate; docs/stdlib/modules/process.md |
+| `method std::process::ExitStatus::success` | check-prelude std-process-exit-status natural success predicate alias; docs/stdlib/modules/process.md |
 | `method std::process::Output::exit_status` | check-prelude std-process-exit-status captured typed ExitStatus accessor; docs/stdlib/modules/process.md |
 | `method std::process::Output::is_success` | check-prelude std-process-output captured exit-success predicate; docs/stdlib/modules/process.md |
 | `method std::process::Output::status` | check-prelude std-process-output captured exit-status accessor; docs/stdlib/modules/process.md |
 | `method std::process::Output::stderr` | check-prelude std-process-output captured stderr byte view; docs/stdlib/modules/process.md |
+| `method std::process::Output::stderr_string` | check-prelude std-process-output UTF-8 stderr copy returning Error on invalid data; docs/stdlib/modules/process.md |
 | `method std::process::Output::stdout` | check-prelude std-process-output captured stdout byte view; docs/stdlib/modules/process.md |
+| `method std::process::Output::stdout_string` | check-prelude std-process-output UTF-8 stdout copy returning Error on invalid data; docs/stdlib/modules/process.md |
 | `method std::process::Signal::is_check` | check-prelude std-process-high-level signal-zero predicate; docs/stdlib/modules/process.md |
 | `method std::process::Signal::raw` | check-prelude std-process-high-level raw signal accessor; docs/stdlib/modules/process.md |
 | `method std::process::TempDir::as_c_str` | check-prelude std-process-high-level temp directory C path view; docs/stdlib/modules/process.md |

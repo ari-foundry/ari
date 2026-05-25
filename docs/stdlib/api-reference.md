@@ -587,6 +587,7 @@ process::command(program)
 process::command_with_args(program, args)
 process::spawn(command)
 process::status(command)
+process::status_code(command)
 process::exit_status(command)
 process::output_in(command, zone)
 process::output(command, zone)
@@ -616,12 +617,14 @@ process::Command::with_args(program, args)
 Command::arg(zone, value)
 Command::arg_value(zone, value)
 Command::args(args)
-Command::env(env_values)
+Command::env(zone, name, value)
+Command::env_values(env_values)
 Command::env_var(zone, name, value)
 Command::env_value(zone, value)
 Command::current_dir(path)
 Command::spawn()
 Command::status()
+Command::status_code()
 Command::exit_status()
 Command::output_in(zone)
 Command::output(zone)
@@ -642,6 +645,7 @@ ExitStatus::exit_code()
 ExitStatus::signal()
 ExitStatus::signal_or(fallback)
 ExitStatus::is_success()
+ExitStatus::success()
 ExitStatus::is_failure()
 
 Signal::raw()
@@ -651,7 +655,9 @@ Output::status()
 Output::exit_status()
 Output::is_success()
 Output::stdout()
+Output::stdout_string(zone)
 Output::stderr()
+Output::stderr_string(zone)
 
 TempFile::path()
 TempFile::as_c_str()
@@ -699,7 +705,8 @@ sentinel.
 `Command` is the higher-level child-process builder. Use `process::arg` for
 argv entries and `process::env_var` for child environment assignments, or use
 the explicit-zone appenders `Command::arg(ref mut zone, value)` and
-`Command::env_var(ref mut zone, name, value)` when the builder should grow one
+`Command::env(ref mut zone, name, value)` / `Command::env_var(ref mut zone,
+name, value)` when the builder should grow one
 item at a time:
 
 ```ari
@@ -710,17 +717,20 @@ cmd.arg(ref mut zone, "exit 7");
 let status = cmd.status();
 ```
 
-`status()` spawns and waits, returning a normal exit code for compatibility.
-`exit_status()` spawns and waits, returning the typed `ExitStatus` that can
-distinguish normal exit from signal termination. `spawn()` returns a `Child`
-handle. `exec()` replaces the current process on success and returns
-`Err(Error)` only if the host `execvp` path fails. `kill(pid, signal)` and
+`status()` spawns and waits, returning typed `ExitStatus` so natural fallible
+process APIs preserve signal termination detail. `status_code()` is the
+explicit normal-exit-code compatibility helper and reports signal termination
+as `Error(Other)`. `exit_status()` remains as a readable typed-status alias.
+`spawn()` returns a `Child` handle. `exec()` replaces the current process on
+success and returns `Err(Error)` only if the host `execvp` path fails.
+`kill(pid, signal)` and
 `Child::kill(signal)` return `Result[(), Error]`; `kill_signal` and
 `Child::signal` use the typed `Signal` wrapper. `sig_check()` is signal `0`,
 and `terminate` sends `SIGTERM`.
 Module-level `process::spawn(ref cmd)`, `process::status(ref cmd)`,
-`process::exit_status(ref cmd)`, `process::output_in(ref cmd, ref mut zone)`,
-`process::output(ref cmd, ref mut zone)`, and `process::exec(ref cmd)` are
+`process::status_code(ref cmd)`, `process::exit_status(ref cmd)`,
+`process::output_in(ref cmd, ref mut zone)`, `process::output(ref cmd, ref mut
+zone)`, and `process::exec(ref cmd)` are
 direct wrappers over the matching `Command` methods for call sites that prefer
 function-style process APIs.
 
@@ -743,8 +753,10 @@ let result = cmd.output(ref mut zone);
 
 Use `Output::exit_status()` for typed status, `Output::status()` for the normal
 exit code compatibility accessor, `Output::is_success()` for the standard
-success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views. This
-slice is meant for small outputs today; large concurrent streams, stdin
+success check, and `stdout()` / `stderr()` for borrowed `Slice[u8]` views.
+`stdout_string(zone)` and `stderr_string(zone)` validate the captured bytes as
+UTF-8, copy them into a zone-owned `String`, and return `Error(InvalidData)` for
+non-UTF-8 output. This slice is meant for small outputs today; large concurrent streams, stdin
 redirection, environment inheritance policy, portable Windows mapping, and
 platform-specific status detail are still future process-library work.
 
