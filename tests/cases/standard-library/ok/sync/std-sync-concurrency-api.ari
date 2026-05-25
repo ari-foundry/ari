@@ -9,6 +9,14 @@ fn make_value() -> i64 {
   return 77;
 }
 
+fn make_try_value() -> std::Result[i64, std::error::Error] {
+  return std::Ok<i64, std::error::Error>(88);
+}
+
+fn make_try_error() -> std::Result[i64, std::error::Error] {
+  return std::Err<i64, std::error::Error>(std::error::new(std::error::Other));
+}
+
 fn touch_i64(value: ref i64) -> void {
   return;
 }
@@ -31,8 +39,12 @@ fn main() -> i64 {
   number.store_order(12, sync::SeqCst);
   if number.load_order(sync::Acquire) == 12 &&
      number.fetch_add_order(3, sync::AcqRel) == 12 &&
-     number.compare_exchange_order(15, 21, sync::SeqCst, sync::Acquire) {
+     number.compare_exchange_order(15, 21, sync::SeqCst, sync::Acquire).unwrap_or(0) == 15 {
     score = score + 2;
+  }
+  let failed_number = number.compare_exchange_order(15, 22, sync::SeqCst, sync::Acquire);
+  if failed_number.is_err() && failed_number.unwrap_err() == 21 {
+    score = score + 8192;
   }
 
   var flag = AtomicBool::new(false);
@@ -40,14 +52,14 @@ fn main() -> i64 {
   if flag.load() &&
      flag.swap_order(false, sync::AcqRel) &&
      !flag.load_order(sync::Relaxed) &&
-     flag.compare_exchange_order(false, true, sync::SeqCst, sync::Acquire) {
+     !flag.compare_exchange_order(false, true, sync::SeqCst, sync::Acquire).unwrap_or(true) {
     score = score + 4;
   }
 
   var size = AtomicUsize::new(5u64);
   if size.fetch_add_order(7u64, sync::AcqRel) == 5u64 &&
      size.swap_order(12u64, sync::SeqCst) == 12u64 &&
-     size.compare_exchange_order(12u64, 13u64, sync::SeqCst, sync::Acquire) &&
+     size.compare_exchange_order(12u64, 13u64, sync::SeqCst, sync::Acquire).unwrap_or(0u64) == 12u64 &&
      size.load() == 13u64 {
     score = score + 8;
   }
@@ -57,18 +69,19 @@ fn main() -> i64 {
   let loaded = pointer.load();
   if ptr_load(loaded) == 31 {
     ptr_store(loaded, 32);
+    let pointer_exchange = pointer.compare_exchange_order(loaded, 0u64 as ptr i64, sync::SeqCst, sync::Acquire);
     if pointed == 32 &&
-       pointer.compare_exchange_order(loaded, 0u64 as ptr i64, sync::SeqCst, sync::Acquire) {
+       pointer_exchange.unwrap_or(0u64) == loaded as u64 {
       score = score + 16;
     }
   }
 
   var once = OnceLock::new<i64>();
   let was_empty = once.is_empty();
-  let set_once = once.set(41);
+  let set_once = once.set(41).is_ok();
   let set_twice = once.set(42);
   let once_ref = once.get();
-  if was_empty && set_once && !set_twice && once_ref.unwrap() == 41 {
+  if was_empty && set_once && set_twice.is_err() && set_twice.unwrap_err() == 42 && once_ref.unwrap() == 41 {
     score = score + 32;
   }
   let taken_once = once.take().unwrap_or(0);
@@ -76,6 +89,14 @@ fn main() -> i64 {
   let initialized_ref = once.get();
   if taken_once == 41 && initialized_ref.unwrap() == 77 {
     score = score + 64;
+  }
+  var fallible_once = OnceLock::new<i64>();
+  if fallible_once.get_or_try_init(make_try_error).is_err() && fallible_once.is_empty() {
+    let try_initialized = fallible_once.get_or_try_init(make_try_value);
+    let try_value_ref = fallible_once.get();
+    if try_initialized.is_ok() && try_value_ref.unwrap() == 88 {
+      score = score + 16384;
+    }
   }
 
   var mutex = Mutex::new();
@@ -91,6 +112,12 @@ fn main() -> i64 {
   if condvar.generation() == before_notify + 1 {
     score = score + 256;
   }
+  mutex.lock_raw();
+  let timeout = condvar.wait_timeout(ref mut mutex, std::time::Duration::zero()).unwrap();
+  if timeout.timed_out() && mutex.is_locked() {
+    score = score + 32768;
+  }
+  mutex.unlock();
 
   var barrier = Barrier::new(1);
   if barrier.parties() == 1 && barrier.wait() {
@@ -101,18 +128,21 @@ fn main() -> i64 {
   let channel = sync::channel<i64>(ref mut zone);
   var sender = channel.sender();
   var receiver = channel.receiver();
-  if receiver.is_empty() && sender.send(99) && !sender.send(100) {
+  if receiver.is_empty() && sender.send(99).is_ok() && sender.try_send(100).is_err() {
     score = score + 1024;
   }
-  if receiver.try_recv().unwrap_or(0) == 99 && receiver.is_empty() {
+  if receiver.try_recv().unwrap_or(0) == 99 && receiver.is_empty() && sender.send_bool(101) {
     score = score + 2048;
   }
+  if receiver.recv().unwrap_or(0) == 101 {
+    score = score + 65536;
+  }
   sender.close();
-  if receiver.recv().is_none() && sender.is_closed() {
+  if receiver.recv().is_err() && receiver.recv_optional().is_none() && sender.is_closed() {
     score = score + 4096;
   }
   zone::destroy(zone);
 
-  assert_eq_i64(score, 8191);
+  assert_eq_i64(score, 131071);
   return score;
 }

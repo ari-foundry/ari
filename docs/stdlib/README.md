@@ -73,8 +73,9 @@ errno, syscall, and Linux API-family facts,
 `std::thread` adds
 function-pointer spawn/join, scheduler sleep/yield helpers, available
 parallelism, and per-thread runtime ids,
-`std::sync` adds the first concrete atomic integer primitive plus source
-`Mutex`/`RwLock` guard helpers and `Once` helpers, `std::cell` adds `Cell`,
+`std::sync` adds concrete atomic wrappers, source no-poison `Mutex`/`RwLock`
+guard helpers, `Once`/`OnceLock`, generation `Condvar`, `Barrier`, and
+capacity-1 channel helpers with Result errors, `std::cell` adds `Cell`,
 runtime checked `RefCell`, zone-backed `OnceCell`, and `Lazy`, `std::rc` adds
 `Rc`, `Arc`, and `Weak` shared ownership handles, `std::time` adds monotonic
 instants,

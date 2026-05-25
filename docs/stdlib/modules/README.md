@@ -101,8 +101,8 @@ For a task-oriented path through the examples, see
   `ThreadLocal[T]` handles.
 - [std::sync](sync.md): `Ordering`, concrete atomic wrappers, source `Mutex`,
   `MutexGuard`, `RwLock`, `RwLockReadGuard`, `RwLockWriteGuard`, `Once`,
-  `OnceLock`, `Condvar`, `Barrier`, single-slot channels, current memory-order
-  policy, and blocking/runtime roadmap.
+  `OnceLock`, `Condvar`, `WaitTimeoutResult`, `Barrier`, capacity-1 channels,
+  current memory-order/no-poison policy, and blocking/runtime roadmap.
 - [std::time](time.md): runtime-backed monotonic instants, wall-clock
   timestamps, non-negative durations, elapsed-time helpers, monotonic
   deadlines/timeouts, UTC calendar conversion, and sleep.

@@ -1077,7 +1077,9 @@ atomic.store_order(replacement, ordering)
 atomic.swap(replacement)
 atomic.fetch_add(amount)
 atomic.compare_exchange(expected, replacement)
+atomic.compare_exchange_bool(expected, replacement)
 atomic.compare_exchange_order(expected, replacement, success, failure)
+atomic.compare_exchange_order_bool(expected, replacement, success, failure)
 
 mutex.try_lock()
 mutex.lock()
@@ -1111,32 +1113,44 @@ once.call_once(action)
 once.is_completed()
 
 once_lock.set(value)
+once_lock.set_bool(value)
 once_lock.get()
 once_lock.get_mut()
 once_lock.get_or_init(initializer)
+once_lock.get_or_try_init(initializer)
 once_lock.take()
 
 condvar.notify_one()
 condvar.notify_all()
 condvar.wait(ref mut mutex)
+condvar.wait_timeout(ref mut mutex, duration)
 condvar.wait_while(ref mut mutex, condition)
+wait_timeout_result.timed_out()
 
 barrier.wait()
 
 channel.sender()
 channel.receiver()
 sender.send(value)
+sender.try_send(value)
+sender.send_bool(value)
 receiver.try_recv()
+receiver.try_recv_optional()
 receiver.recv()
+receiver.recv_optional()
 ```
 
 The atomic slice now has `AtomicI64`, `AtomicBool`, `AtomicUsize`, and
 `AtomicPtr[T]`. `AtomicI64` lowers to LLVM atomic operations; the other wrappers
 compose over it. Default methods are sequentially consistent; explicit-order
 methods lower `Relaxed`, `Acquire`, `Release`, `AcqRel`, and `SeqCst` to the
-matching LLVM atomic ordering where that operation allows it. `fetch_add` and
-`swap` return the previous value; `compare_exchange` returns whether the
-replacement happened.
+matching LLVM atomic ordering where that operation allows it. Invalid ordering
+arguments are programmer errors and assert/panic instead of returning
+recoverable errors. `fetch_add` and `swap` return the previous value;
+`compare_exchange` now returns `Result[old, current]`; `_bool` compare-exchange
+helpers keep the older success/failure-only compatibility shape. For
+`AtomicPtr[T]`, the Result payload is the old/current raw pointer value as
+`u64`, with casts back to `ptr T` left explicit.
 
 `Mutex` is a source spin/yield lock built on `AtomicI64`. The natural method
 API returns `MutexGuard`: `lock` waits for an active guard and `try_lock`
@@ -1147,15 +1161,24 @@ helpers keep the older manual bool/void behavior for low-level compatibility.
 `RwLock` follows the same rule with `read`, `try_read`, `write`, and
 `try_write` returning read/write guards. These are still not value-protecting
 `Mutex[T]` or `RwLock[T]` payload locks, and automatic scope/early-return RAII
-cleanup is not promised yet. `Once` runs a plain `fn() -> void` at most once
-and reports whether the current caller ran it. `OnceLock[T]` is the
-sync-facing one-time value slot. `Condvar`, `Barrier`, and single-slot MPSC
-channels provide the standard shapes now, using spin/yield internals until Ari
-grows blocking wait/wake runtime support.
+cleanup is not promised yet. `Mutex` and `RwLock` do not poison after
+panic/failure; shared-state consistency remains caller-owned unless a future
+poison-aware type is introduced. `Once` runs a plain `fn() -> void` at most
+once and reports whether the current caller ran it. `OnceLock[T]` is the
+sync-facing one-time value slot: `set` preserves the rejected value through
+`Result[(), T]`, `set_bool` is the lossy compatibility form, and
+`get_or_try_init` resets the slot to empty when the initializer returns
+`Err`. `Condvar`, `Barrier`, and single-slot MPSC channels provide the
+standard shapes now, using spin/yield internals until Ari grows blocking
+wait/wake runtime support. `Condvar::wait_timeout` is a monotonic deadline
+spin/yield wait, not an OS sleeping condvar. Channels are capacity-1 MPSC:
+`send`/`try_send` and `recv`/`try_recv` return Result errors, while `_bool` and
+`_optional` helpers intentionally discard detail.
 
 Shared-ownership handles live in `std::rc` as `Rc`, `Arc`, and `Weak`.
-`LazyLock`, semaphores, value-protecting lock payload guards, futex-backed
-blocking locks, timeout waits, send/share trait checks, compiler-owned
+`LazyLock`, semaphores, value-protecting lock payload guards,
+poison-aware lock variants, futex-backed blocking locks, channel timeout
+receives, sender cloning, send/share trait checks, compiler-owned
 `thread_local` declarations, and target-native relaxed ordering remain future
 concurrency work.
 

@@ -47,6 +47,12 @@ Compare-exchange validates both success and failure orderings: failure may be
 `Relaxed`, may be `Acquire` only when the success ordering observes reads, and
 may be `SeqCst` only when success is also `SeqCst`.
 
+Invalid memory-order arguments are programmer errors, not recoverable runtime
+failures. The ordered atomic methods assert/panic for invalid combinations
+instead of returning `Result`, so callers should validate dynamic ordering
+values with `is_load_order`, `is_store_order`, or
+`is_compare_exchange_order` before calling them.
+
 ## Atomic API
 
 ```ari
@@ -61,12 +67,14 @@ atomic.load_order(ordering)
 atomic.store(replacement)
 atomic.store_order(replacement, ordering)
 atomic.swap(replacement)
-atomic.compare_exchange(expected, replacement)
+atomic.compare_exchange(expected, replacement) -> Result[old, current]
+atomic.compare_exchange_bool(expected, replacement) -> bool
 
 i64_atomic.fetch_add(amount)
 i64_atomic.fetch_add_order(amount, ordering)
 i64_atomic.swap_order(replacement, ordering)
-i64_atomic.compare_exchange_order(expected, replacement, success, failure)
+i64_atomic.compare_exchange_order(expected, replacement, success, failure) -> Result[old, current]
+i64_atomic.compare_exchange_order_bool(expected, replacement, success, failure) -> bool
 usize_atomic.fetch_add(amount)
 ```
 
@@ -75,6 +83,13 @@ usize_atomic.fetch_add(amount)
 reusing the i64 primitive. `AtomicPtr[T]` stores the raw pointer value as a
 machine-sized unsigned integer; normal pointer loads, stores, casts, and payload
 access still use the returned user pointer directly.
+
+The natural `compare_exchange` methods now return `Result`: `Ok(old)` means
+the expected value was observed and replaced, and `Err(current)` reports the
+current value observed after a failed exchange. `_bool` compatibility methods
+keep the older success/failure-only shape for low-level code. `AtomicPtr[T]`
+returns the old/current raw pointer values as `u64` in the Result payload; cast
+back to `ptr T` only at the boundary where a raw pointer is actually needed.
 
 The root prelude re-exports `AtomicI64`, `AtomicBool`, `AtomicUsize`, and
 `AtomicPtr`.
@@ -117,6 +132,12 @@ This is still not `Mutex[T]`: the guard owns the unlock operation, not a
 protected payload borrow. Current Ari code should use `guard.unlock()` or
 explicit `drop guard`; automatic scope/early-return RAII unlock is not a
 language guarantee yet.
+
+Ari's current `Mutex` is not poisoned. If code panics or otherwise fails while
+holding a lock, later lock acquisition does not report that event. Consistency
+of shared state after failure is the caller's responsibility. A future
+`PoisonMutex`/`PoisonRwLock` can add opt-in poisoning without changing this
+default no-poison policy.
 
 ## RwLock API
 
@@ -168,6 +189,10 @@ protected payload borrows, poisoning policy, fairness policy, or futex-backed
 parking. Use explicit `drop guard` or `guard.unlock()` today; automatic
 scope/early-return guard cleanup remains language/runtime work.
 
+`RwLock` follows the same no-poison policy as `Mutex`: unlock after a panic or
+explicit failure does not mark the lock poisoned, and later readers/writers do
+not receive a poison error.
+
 ## Once And OnceLock
 
 ```ari
@@ -178,10 +203,12 @@ once.call_once(action) -> bool
 once.is_completed() -> bool
 
 OnceLock::new<T>() -> OnceLock[T]
-once_lock.set(value) -> bool
+once_lock.set(value) -> Result[(), T]
+once_lock.set_bool(value) -> bool
 once_lock.get() -> option::OptionRef[T]
 once_lock.get_mut() -> option::OptionMut[T]
 once_lock.get_or_init(initializer: fn() -> T) -> ref T
+once_lock.get_or_try_init(initializer: fn() -> Result[T, Error]) -> Result[(), Error]
 once_lock.take() -> Option[T]
 once_lock.is_initialized() -> bool
 once_lock.is_empty() -> bool
@@ -192,10 +219,15 @@ that ran the action and `false` for later callers. Concurrent callers spin/yield
 while the action is in progress.
 
 `OnceLock[T]` is the sync-facing one-time value slot. `set` wins only when the
-slot is empty. `get` and `get_mut` expose borrowed option views so callers can
-inspect initialized values without copying. `get_or_init` initializes lazily and
-returns a shared reference. `take` resets an initialized slot and returns its
-value.
+slot is empty and returns the rejected value on failure. `set_bool` preserves
+the older compatibility shape and drops the rejected value. `get` and `get_mut`
+expose borrowed option views so callers can inspect initialized values without
+copying. `get_or_init` initializes lazily and returns a shared reference.
+`get_or_try_init` lets the initializer fail; on `Err`, the slot is reset to
+empty and callers can try again. Because current Ari `Result` payloads cannot
+ergonomically carry `ref T`, `get_or_try_init` returns `Result[(), Error]`;
+call `get()` after `Ok(())` to borrow the initialized value. `take` resets an
+initialized slot and returns its value.
 
 ## Condvar
 
@@ -205,17 +237,25 @@ condvar.notify_one() -> void
 condvar.notify_all() -> void
 condvar.generation() -> i64
 condvar.wait(ref mut mutex) -> void
+condvar.wait_timeout(ref mut mutex, duration) -> Result[WaitTimeoutResult, Error]
 condvar.wait_while(ref mut mutex, condition: fn() -> bool) -> void
+wait_result.timed_out() -> bool
 ```
 
 The current `Condvar` is generation-based and source-level. `notify_one` and
 `notify_all` both advance a notification generation. `wait` records the current
 generation, unlocks the mutex, yields until the generation changes, then locks
-the mutex again. `wait_while` repeats while the predicate returns `true`.
+the mutex again. `wait_timeout` follows the same spin/yield policy but returns
+`Ok(WaitTimeoutResult)` with `timed_out() == true` when the monotonic deadline
+expires before another generation is observed. `wait_while` repeats while the
+predicate returns `true`.
 
 This API gives code the usual condition-variable shape now. It does not yet
-promise OS parking, fairness, spurious wake policy, timeout waits, or a
-guard-bearing `Mutex[T]` integration.
+promise OS parking, fairness, spurious wake policy, or a guard-bearing
+`Mutex[T]` integration. `notify_one` is currently not selective; like
+`notify_all`, it only advances the shared generation. Treat the current
+primitive as a hosted runtime spin/yield condition helper, not as a pthread
+condition variable or futex-backed sleeping wait.
 
 ## Barrier
 
@@ -240,26 +280,37 @@ channel.sender() -> Sender[T]
 channel.receiver() -> Receiver[T]
 channel.split() -> Channel[T]
 
-sender.send(value) -> bool
+sender.send(value) -> Result[(), SendError[T]]
+sender.try_send(value) -> Result[(), TrySendError[T]]
+sender.send_bool(value) -> bool
 sender.close() -> void
 sender.is_closed() -> bool
 
-receiver.try_recv() -> Option[T]
-receiver.recv() -> Option[T]
+receiver.try_recv() -> Result[T, TryRecvError]
+receiver.try_recv_optional() -> Option[T]
+receiver.recv() -> Result[T, RecvError]
+receiver.recv_optional() -> Option[T]
 receiver.close() -> void
 receiver.is_closed() -> bool
 receiver.is_empty() -> bool
 ```
 
-The first channel is a single-slot MPSC shape. `send` is nonblocking and returns
-`false` when the slot is full or closed. `try_recv` returns immediately.
-`recv` yields until a value arrives or the channel closes, then returns
-`Some(value)` or `None`. The channel state is allocated in the caller's `Zone`;
-`Sender`, `Receiver`, and `Channel` carry only the shared state pointer, not a
-redundant zone handle.
+The first channel is a bounded single-slot MPSC shape. `channel` and
+`mpsc_channel` are aliases for that capacity-1 channel; there is no unbounded
+channel constructor yet. `try_send` returns `TrySendFull(value)` when the slot
+already holds a value and `TrySendClosed(value)` when the channel is closed.
+`send` yields while the slot is full and returns `SendClosed(value)` if the
+channel closes before the value is accepted. `try_recv` returns
+`TryRecvEmpty` for an open empty slot and `TryRecvClosed` for a closed empty
+channel; `recv` yields until a value arrives or the channel closes. The
+`_optional` and `_bool` helpers intentionally discard error detail for
+compatibility. The channel state is allocated in the caller's `Zone`; `Sender`,
+`Receiver`, and `Channel` carry only the shared state pointer, not a redundant
+zone handle.
 
-Future channel work should add bounded capacity, blocking wake integration,
-`send` returning the unsent value on failure, and send/share trait checks.
+Future channel work should add explicit `bounded_channel(capacity)`,
+unbounded-channel policy if desired, sender cloning, timeout receives,
+blocking wake integration, richer close semantics, and send/share trait checks.
 
 ## Example
 
@@ -276,7 +327,7 @@ fn main() -> i64 {
   }
 
   var once = OnceLock::new<i64>();
-  once.set(make_value());
+  once.set(make_value()).unwrap();
   let current = once.get();
   if current.unwrap() != 77 {
     return 2;
@@ -300,7 +351,7 @@ fn main() -> i64 {
   let channel = sync::channel<i64>(ref mut zone);
   var tx = channel.sender();
   var rx = channel.receiver();
-  if !tx.send(10) {
+  if tx.send(10).is_err() {
     return 5;
   }
   if rx.recv().unwrap_or(0) != 10 {
@@ -317,13 +368,16 @@ fn main() -> i64 {
   `AtomicI64`, not target-specialized native atomic widths yet.
 - `Mutex`, `RwLock`, `Condvar`, `Barrier`, and channels spin/yield; they do not
   park on futexes or condition-variable OS primitives.
+- `Mutex` and `RwLock` do not poison after panic/failure. Shared-state
+  consistency is caller-owned unless a future poison-aware type is introduced.
 - `MutexGuard`, `RwLockReadGuard`, and `RwLockWriteGuard` own unlock
   operations, but there are no value-protecting `Mutex[T]` or `RwLock[T]`
   payload guards yet.
 - Guard drops release active locks when callers use explicit `drop guard`;
   automatic RAII cleanup at scope exit or early return is not promised yet.
-- There is no `LazyLock[T]`, semaphore, or timeout wait yet. Explicit
-  `ThreadLocal[T]` handles live in `std::thread`; compiler-level
+- There is no `LazyLock[T]`, semaphore, channel timeout receive, sender clone,
+  or configurable channel capacity yet. Explicit `ThreadLocal[T]` handles live
+  in `std::thread`; compiler-level
   `thread_local` declarations remain future work.
 - Send/share trait checking is still roadmap work, so cross-thread value
   transfer APIs remain conservative.
@@ -334,11 +388,11 @@ fn main() -> i64 {
 | --- | --- |
 | Atomic types | Current `AtomicI64`, `AtomicBool`, `AtomicUsize`, and `AtomicPtr[T]`; future target-native width policy and more integer widths. |
 | Memory ordering | Current explicit `Ordering` vocabulary with LLVM hosted lowering for load/store/RMW/compare-exchange; future examples and non-LLVM backend policy. |
-| Mutex/RwLock | Current primitive lock state with explicit unlock guards; future value-protecting payload guards, poisoning/no-poisoning, fairness, and futex-backed parking. |
-| Condvar | Current generation-based source API; future blocking wait/wake, spurious wake documentation, and timeout waits. |
-| Once/OnceLock | Current source one-time execution and value slot; future panic/poison policy and optional `LazyLock`. |
+| Mutex/RwLock | Current primitive no-poison lock state with explicit unlock guards; future value-protecting payload guards, optional poison-aware lock types, fairness, and futex-backed parking. |
+| Condvar | Current generation-based source API with spin/yield timeout waits; future blocking wait/wake and spurious wake documentation. |
+| Once/OnceLock | Current source one-time execution, value slot, value-preserving `set`, and fallible initializer status; future ref-in-Result return ergonomics, panic policy, and optional `LazyLock`. |
 | Barrier | Current source reusable barrier; future parking implementation. |
-| MPSC channel | Current single-slot MPSC shape; future bounded queues, blocking wake, unsent-value return, and close semantics. |
+| MPSC channel | Current single-slot MPSC shape with Result errors and unsent-value return; future configurable bounded queues, sender cloning, timeout receives, blocking wake, and richer close semantics. |
 | Thread local | Current explicit `std::thread::ThreadLocal[T]` handles; future compiler-level static TLS declarations and destructor policy. |
 
 ## Tests

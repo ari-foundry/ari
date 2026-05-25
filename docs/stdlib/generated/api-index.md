@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2932`
+- API entries: `2953`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,16 +32,16 @@ platform notes.
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 742 | stable candidate |
-| `hosted` | 1161 | platform-backed |
+| `hosted` | 1182 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
-| `enum` | 20 |
+| `enum` | 24 |
 | `fn` | 1045 |
-| `method` | 1479 |
+| `method` | 1495 |
 | `module` | 39 |
-| `struct` | 158 |
+| `struct` | 159 |
 | `trait` | 39 |
 | `trait-method` | 39 |
 | `type` | 21 |
@@ -84,7 +84,7 @@ platform notes.
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 141 |
-| `std::sync` | `hosted` | 145 |
+| `std::sync` | `hosted` | 166 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 47 |
@@ -3379,6 +3379,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | API | Coverage note |
 | --- | --- |
 | `enum std::sync::Ordering` | check-prelude std-sync-concurrency-api explicit atomic memory-order vocabulary; docs/stdlib/modules/sync.md |
+| `enum std::sync::RecvError` | check-prelude std-sync-concurrency-api channel blocking receive failure reason; docs/stdlib/modules/sync.md |
+| `enum std::sync::SendError[T]` | check-prelude std-sync-concurrency-api channel blocking send failure with unsent value; docs/stdlib/modules/sync.md |
+| `enum std::sync::TryRecvError` | check-prelude std-sync-concurrency-api channel nonblocking receive failure reason; docs/stdlib/modules/sync.md |
+| `enum std::sync::TrySendError[T]` | check-prelude std-sync-concurrency-api channel nonblocking send failure with unsent value; docs/stdlib/modules/sync.md |
 
 ### fn
 
@@ -3416,8 +3420,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 
 | API | Coverage note |
 | --- | --- |
-| `method std::sync::AtomicBool::compare_exchange` | check-prelude std-sync-concurrency-api bool compare-and-exchange wrapper; docs/stdlib/modules/sync.md |
-| `method std::sync::AtomicBool::compare_exchange_order` | check-prelude std-sync-concurrency-api bool atomic explicit-order compare-and-exchange wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicBool::compare_exchange` | check-prelude std-sync-concurrency-api bool compare-and-exchange Result wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicBool::compare_exchange_bool` | check-prelude std-sync-concurrency-api bool compare-and-exchange compatibility predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicBool::compare_exchange_order` | check-prelude std-sync-concurrency-api bool atomic explicit-order compare-and-exchange Result wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicBool::compare_exchange_order_bool` | check-prelude std-sync-concurrency-api bool atomic explicit-order compare-and-exchange compatibility predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicBool::load` | check-prelude std-sync-concurrency-api bool atomic load wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicBool::load_order` | check-prelude std-sync-concurrency-api bool atomic explicit-order load wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicBool::new` | check-prelude std-sync-concurrency-api bool atomic constructor; docs/stdlib/modules/sync.md |
@@ -3425,8 +3431,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::AtomicBool::store_order` | check-prelude std-sync-concurrency-api bool atomic explicit-order store wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicBool::swap` | check-prelude std-sync-concurrency-api bool atomic exchange wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicBool::swap_order` | check-prelude std-sync-concurrency-api bool atomic explicit-order exchange wrapper; docs/stdlib/modules/sync.md |
-| `method std::sync::AtomicI64::compare_exchange` | check-prelude std-sync-atomic-i64 compare-and-exchange method wrapper; docs/stdlib/modules/sync.md |
-| `method std::sync::AtomicI64::compare_exchange_order` | check-prelude std-sync-concurrency-api explicit-order compare-and-exchange wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicI64::compare_exchange` | check-prelude std-sync-atomic-i64 compare-and-exchange Result method wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicI64::compare_exchange_bool` | check-prelude std-sync-atomic-i64 compare-and-exchange compatibility predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicI64::compare_exchange_order` | check-prelude std-sync-concurrency-api explicit-order compare-and-exchange Result wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicI64::compare_exchange_order_bool` | check-prelude std-sync-concurrency-api explicit-order compare-and-exchange compatibility predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicI64::fetch_add` | check-prelude std-sync-atomic-i64 fetch-add method wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicI64::fetch_add_order` | check-prelude std-sync-concurrency-api explicit-order fetch-add wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicI64::load` | check-prelude std-sync-atomic-i64 load method wrapper; docs/stdlib/modules/sync.md |
@@ -3436,8 +3444,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::AtomicI64::store_order` | check-prelude std-sync-concurrency-api explicit-order store wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicI64::swap` | check-prelude std-sync-atomic-i64 exchange method wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicI64::swap_order` | check-prelude std-sync-concurrency-api explicit-order exchange wrapper; docs/stdlib/modules/sync.md |
-| `method std::sync::AtomicPtr[T]::compare_exchange` | check-prelude std-sync-concurrency-api pointer atomic compare-and-exchange wrapper; docs/stdlib/modules/sync.md |
-| `method std::sync::AtomicPtr[T]::compare_exchange_order` | check-prelude std-sync-concurrency-api pointer atomic explicit-order compare-and-exchange wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicPtr[T]::compare_exchange` | check-prelude std-sync-concurrency-api pointer atomic compare-and-exchange raw-value Result wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicPtr[T]::compare_exchange_bool` | check-prelude std-sync-concurrency-api pointer atomic compare-and-exchange compatibility predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicPtr[T]::compare_exchange_order` | check-prelude std-sync-concurrency-api pointer atomic explicit-order compare-and-exchange raw-value Result wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicPtr[T]::compare_exchange_order_bool` | check-prelude std-sync-concurrency-api pointer atomic explicit-order compare-and-exchange compatibility predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicPtr[T]::load` | check-prelude std-sync-concurrency-api pointer atomic load wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicPtr[T]::load_order` | check-prelude std-sync-concurrency-api pointer atomic explicit-order load wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicPtr[T]::new` | check-prelude std-sync-concurrency-api pointer atomic constructor; docs/stdlib/modules/sync.md |
@@ -3446,8 +3456,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::AtomicPtr[T]::store_order` | check-prelude std-sync-concurrency-api pointer atomic explicit-order store wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicPtr[T]::swap` | check-prelude std-sync-concurrency-api pointer atomic exchange wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicPtr[T]::swap_order` | check-prelude std-sync-concurrency-api pointer atomic explicit-order exchange wrapper; docs/stdlib/modules/sync.md |
-| `method std::sync::AtomicUsize::compare_exchange` | check-prelude std-sync-concurrency-api usize atomic compare-and-exchange wrapper; docs/stdlib/modules/sync.md |
-| `method std::sync::AtomicUsize::compare_exchange_order` | check-prelude std-sync-concurrency-api usize atomic explicit-order compare-and-exchange wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicUsize::compare_exchange` | check-prelude std-sync-concurrency-api usize atomic compare-and-exchange Result wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicUsize::compare_exchange_bool` | check-prelude std-sync-concurrency-api usize atomic compare-and-exchange compatibility predicate; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicUsize::compare_exchange_order` | check-prelude std-sync-concurrency-api usize atomic explicit-order compare-and-exchange Result wrapper; docs/stdlib/modules/sync.md |
+| `method std::sync::AtomicUsize::compare_exchange_order_bool` | check-prelude std-sync-concurrency-api usize atomic explicit-order compare-and-exchange compatibility predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicUsize::fetch_add` | check-prelude std-sync-concurrency-api usize atomic fetch-add wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicUsize::fetch_add_order` | check-prelude std-sync-concurrency-api usize atomic explicit-order fetch-add wrapper; docs/stdlib/modules/sync.md |
 | `method std::sync::AtomicUsize::load` | check-prelude std-sync-concurrency-api usize atomic load wrapper; docs/stdlib/modules/sync.md |
@@ -3468,6 +3480,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::Condvar::notify_all` | check-prelude std-sync-concurrency-api condition-variable broadcast notification; docs/stdlib/modules/sync.md |
 | `method std::sync::Condvar::notify_one` | check-prelude std-sync-concurrency-api condition-variable single notification; docs/stdlib/modules/sync.md |
 | `method std::sync::Condvar::wait` | check-prelude std-sync-concurrency-api condition-variable wait helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Condvar::wait_timeout` | check-prelude std-sync-concurrency-api condition-variable spin-yield timeout wait helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Condvar::wait_while` | check-prelude std-sync-concurrency-api predicate condition-variable wait helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Mutex::is_locked` | check-prelude std-sync-mutex-once mutex method state predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::Mutex::lock` | check-prelude std-sync-mutex-once mutex method guard-returning spin lock helper; docs/stdlib/modules/sync.md |
@@ -3484,16 +3497,20 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::OnceLock[T]::get` | check-prelude std-sync-concurrency-api thread-facing once-lock shared value view; docs/stdlib/modules/sync.md |
 | `method std::sync::OnceLock[T]::get_mut` | check-prelude std-sync-concurrency-api thread-facing once-lock mutable value view; docs/stdlib/modules/sync.md |
 | `method std::sync::OnceLock[T]::get_or_init` | check-prelude std-sync-concurrency-api thread-facing lazy initialization helper; docs/stdlib/modules/sync.md |
+| `method std::sync::OnceLock[T]::get_or_try_init` | check-prelude std-sync-concurrency-api thread-facing fallible lazy initialization status helper; docs/stdlib/modules/sync.md |
 | `method std::sync::OnceLock[T]::is_empty` | check-prelude std-sync-concurrency-api once-lock empty predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::OnceLock[T]::is_initialized` | check-prelude std-sync-concurrency-api once-lock initialized predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::OnceLock[T]::new` | check-prelude std-sync-concurrency-api once-lock constructor; docs/stdlib/modules/sync.md |
-| `method std::sync::OnceLock[T]::set` | check-prelude std-sync-concurrency-api once-lock one-time setter; docs/stdlib/modules/sync.md |
+| `method std::sync::OnceLock[T]::set` | check-prelude std-sync-concurrency-api once-lock one-time Result setter preserving rejected value; docs/stdlib/modules/sync.md |
+| `method std::sync::OnceLock[T]::set_bool` | check-prelude std-sync-concurrency-api once-lock lossy bool setter compatibility helper; docs/stdlib/modules/sync.md |
 | `method std::sync::OnceLock[T]::take` | check-prelude std-sync-concurrency-api once-lock value extraction helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::close` | check-prelude std-sync-concurrency-api receiver-side channel close helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::is_closed` | check-prelude std-sync-concurrency-api receiver closed predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::is_empty` | check-prelude std-sync-concurrency-api receiver empty predicate; docs/stdlib/modules/sync.md |
-| `method std::sync::Receiver[T]::recv` | check-prelude std-sync-concurrency-api yielding channel receive helper; docs/stdlib/modules/sync.md |
-| `method std::sync::Receiver[T]::try_recv` | check-prelude std-sync-concurrency-api nonblocking channel receive helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Receiver[T]::recv` | check-prelude std-sync-concurrency-api yielding channel Result receive helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Receiver[T]::recv_optional` | check-prelude std-sync-concurrency-api yielding channel optional receive compatibility helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Receiver[T]::try_recv` | check-prelude std-sync-concurrency-api nonblocking channel Result receive helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Receiver[T]::try_recv_optional` | check-prelude std-sync-concurrency-api nonblocking channel optional receive compatibility helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::is_locked` | check-prelude std-sync-rwlock rwlock method any-lock predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::is_read_locked` | check-prelude std-sync-rwlock rwlock method read-lock predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::is_write_locked` | check-prelude std-sync-rwlock rwlock method write-lock predicate; docs/stdlib/modules/sync.md |
@@ -3515,7 +3532,10 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::RwLockWriteGuard::unlock` | check-prelude std-sync-rwlock rwlock write guard idempotent unlock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::close` | check-prelude std-sync-concurrency-api sender-side channel close helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::is_closed` | check-prelude std-sync-concurrency-api sender closed predicate; docs/stdlib/modules/sync.md |
-| `method std::sync::Sender[T]::send` | check-prelude std-sync-concurrency-api nonblocking single-slot send helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Sender[T]::send` | check-prelude std-sync-concurrency-api yielding single-slot Result send helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Sender[T]::send_bool` | check-prelude std-sync-concurrency-api lossy nonblocking send compatibility helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Sender[T]::try_send` | check-prelude std-sync-concurrency-api nonblocking single-slot Result send helper; docs/stdlib/modules/sync.md |
+| `method std::sync::WaitTimeoutResult::timed_out` | check-prelude std-sync-concurrency-api condition-variable timeout predicate; docs/stdlib/modules/sync.md |
 
 ### module
 
@@ -3543,6 +3563,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `struct std::sync::RwLockReadGuard` | check-prelude std-sync-rwlock explicit rwlock read unlock guard; docs/stdlib/modules/sync.md |
 | `struct std::sync::RwLockWriteGuard` | check-prelude std-sync-rwlock explicit rwlock write unlock guard; docs/stdlib/modules/sync.md |
 | `struct std::sync::Sender[T]` | check-prelude std-sync-concurrency-api channel sender handle; docs/stdlib/modules/sync.md |
+| `struct std::sync::WaitTimeoutResult` | check-prelude std-sync-concurrency-api condition-variable timeout result handle; docs/stdlib/modules/sync.md |
 
 ## `std::target`
 

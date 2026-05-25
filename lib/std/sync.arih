@@ -58,6 +58,10 @@ pub struct Condvar {
   mut sequence: AtomicI64,
 }
 
+pub struct WaitTimeoutResult {
+  timed_out_value: bool,
+}
+
 pub struct Barrier {
   parties: i64,
   mut arrived: AtomicI64,
@@ -67,6 +71,24 @@ pub struct Barrier {
 pub struct OnceLock[T] {
   mut state: AtomicI64,
   mut value: std::Option[T],
+}
+
+pub enum SendError[T] {
+  SendClosed(T),
+}
+
+pub enum TrySendError[T] {
+  TrySendClosed(T),
+  TrySendFull(T),
+}
+
+pub enum RecvError {
+  RecvClosed,
+}
+
+pub enum TryRecvError {
+  TryRecvEmpty,
+  TryRecvClosed,
 }
 
 struct MpscState[T] {
@@ -163,7 +185,7 @@ pub fn is_compare_exchange_order(success: std::sync::Ordering, failure: std::syn
 }
 
 pub fn try_lock(lock: ref mut std::sync::Mutex) -> bool {
-  return lock.state.compare_exchange(0, 1);
+  return lock.state.compare_exchange_bool(0, 1);
 }
 
 pub fn lock(lock: ref mut std::sync::Mutex) -> void {
@@ -185,7 +207,7 @@ pub fn try_read_lock(lock: ref mut std::sync::RwLock) -> bool {
   if current < 0 {
     return false;
   }
-  return lock.state.compare_exchange(current, current + 1);
+  return lock.state.compare_exchange_bool(current, current + 1);
 }
 
 pub fn read_lock(lock: ref mut std::sync::RwLock) -> void {
@@ -203,7 +225,7 @@ pub fn read_unlock(lock: ref mut std::sync::RwLock) -> void {
 }
 
 pub fn try_write_lock(lock: ref mut std::sync::RwLock) -> bool {
-  return lock.state.compare_exchange(0, -1);
+  return lock.state.compare_exchange_bool(0, -1);
 }
 
 pub fn write_lock(lock: ref mut std::sync::RwLock) -> void {
@@ -237,7 +259,7 @@ pub fn call_once(once: ref mut std::sync::Once, action: fn() -> void) -> bool {
   if once.state.load() == 2 {
     return false;
   }
-  if once.state.compare_exchange(0, 1) {
+  if once.state.compare_exchange_bool(0, 1) {
     action();
     once.state.store(2);
     return true;
@@ -315,11 +337,18 @@ pub impl std::sync::AtomicI64 {
     return std::sync::fetch_add_order_raw(self, amount, std::sync::ordering_code(ordering));
   }
 
-  fn compare_exchange(self: ref mut Self, expected: i64, replacement: i64) -> bool {
+  fn compare_exchange_bool(self: ref mut Self, expected: i64, replacement: i64) -> bool {
     return std::sync::compare_exchange(self, expected, replacement);
   }
 
-  fn compare_exchange_order(
+  fn compare_exchange(self: ref mut Self, expected: i64, replacement: i64) -> std::Result[i64, i64] {
+    if self.compare_exchange_bool(expected, replacement) {
+      return std::Ok<i64, i64>(expected);
+    }
+    return std::Err<i64, i64>(self.load());
+  }
+
+  fn compare_exchange_order_bool(
     self: ref mut Self,
     expected: i64,
     replacement: i64,
@@ -334,6 +363,26 @@ pub impl std::sync::AtomicI64 {
       std::sync::ordering_code(success),
       std::sync::ordering_code(failure)
     );
+  }
+
+  fn compare_exchange_order(
+    self: ref mut Self,
+    expected: i64,
+    replacement: i64,
+    success: std::sync::Ordering,
+    failure: std::sync::Ordering
+  ) -> std::Result[i64, i64] {
+    std::assert(std::sync::is_compare_exchange_order(success, failure));
+    if std::sync::compare_exchange_order_raw(
+      self,
+      expected,
+      replacement,
+      std::sync::ordering_code(success),
+      std::sync::ordering_code(failure)
+    ) {
+      return std::Ok<i64, i64>(expected);
+    }
+    return std::Err<i64, i64>(self.load_order(failure));
   }
 }
 
@@ -380,7 +429,7 @@ pub impl std::sync::AtomicBool {
     return self.swap(replacement);
   }
 
-  fn compare_exchange(self: ref mut Self, expected: bool, replacement: bool) -> bool {
+  fn compare_exchange_bool(self: ref mut Self, expected: bool, replacement: bool) -> bool {
     var expected_raw = 0;
     var replacement_raw = 0;
     if expected {
@@ -389,10 +438,17 @@ pub impl std::sync::AtomicBool {
     if replacement {
       replacement_raw = 1;
     }
-    return self.bits.compare_exchange(expected_raw, replacement_raw);
+    return self.bits.compare_exchange_bool(expected_raw, replacement_raw);
   }
 
-  fn compare_exchange_order(
+  fn compare_exchange(self: ref mut Self, expected: bool, replacement: bool) -> std::Result[bool, bool] {
+    if self.compare_exchange_bool(expected, replacement) {
+      return std::Ok<bool, bool>(expected);
+    }
+    return std::Err<bool, bool>(self.load());
+  }
+
+  fn compare_exchange_order_bool(
     self: ref mut Self,
     expected: bool,
     replacement: bool,
@@ -408,7 +464,20 @@ pub impl std::sync::AtomicBool {
     if replacement {
       replacement_raw = 1;
     }
-    return self.bits.compare_exchange_order(expected_raw, replacement_raw, success, failure);
+    return self.bits.compare_exchange_order_bool(expected_raw, replacement_raw, success, failure);
+  }
+
+  fn compare_exchange_order(
+    self: ref mut Self,
+    expected: bool,
+    replacement: bool,
+    success: std::sync::Ordering,
+    failure: std::sync::Ordering
+  ) -> std::Result[bool, bool] {
+    if self.compare_exchange_order_bool(expected, replacement, success, failure) {
+      return std::Ok<bool, bool>(expected);
+    }
+    return std::Err<bool, bool>(self.load_order(failure));
   }
 }
 
@@ -453,8 +522,26 @@ pub impl std::sync::AtomicUsize {
     return self.fetch_add(amount);
   }
 
-  fn compare_exchange(self: ref mut Self, expected: u64, replacement: u64) -> bool {
-    return self.bits.compare_exchange(expected as i64, replacement as i64);
+  fn compare_exchange_bool(self: ref mut Self, expected: u64, replacement: u64) -> bool {
+    return self.bits.compare_exchange_bool(expected as i64, replacement as i64);
+  }
+
+  fn compare_exchange(self: ref mut Self, expected: u64, replacement: u64) -> std::Result[u64, u64] {
+    if self.compare_exchange_bool(expected, replacement) {
+      return std::Ok<u64, u64>(expected);
+    }
+    return std::Err<u64, u64>(self.load());
+  }
+
+  fn compare_exchange_order_bool(
+    self: ref mut Self,
+    expected: u64,
+    replacement: u64,
+    success: std::sync::Ordering,
+    failure: std::sync::Ordering
+  ) -> bool {
+    std::assert(std::sync::is_compare_exchange_order(success, failure));
+    return self.bits.compare_exchange_order_bool(expected as i64, replacement as i64, success, failure);
   }
 
   fn compare_exchange_order(
@@ -463,9 +550,11 @@ pub impl std::sync::AtomicUsize {
     replacement: u64,
     success: std::sync::Ordering,
     failure: std::sync::Ordering
-  ) -> bool {
-    std::assert(std::sync::is_compare_exchange_order(success, failure));
-    return self.bits.compare_exchange_order(expected as i64, replacement as i64, success, failure);
+  ) -> std::Result[u64, u64] {
+    if self.compare_exchange_order_bool(expected, replacement, success, failure) {
+      return std::Ok<u64, u64>(expected);
+    }
+    return std::Err<u64, u64>(self.load_order(failure));
   }
 }
 
@@ -505,8 +594,26 @@ pub impl[T] std::sync::AtomicPtr[T] {
     return self.swap(replacement);
   }
 
-  fn compare_exchange(self: ref mut Self, expected: ptr T, replacement: ptr T) -> bool {
-    return self.bits.compare_exchange(expected as u64, replacement as u64);
+  fn compare_exchange_bool(self: ref mut Self, expected: ptr T, replacement: ptr T) -> bool {
+    return self.bits.compare_exchange_bool(expected as u64, replacement as u64);
+  }
+
+  fn compare_exchange(self: ref mut Self, expected: ptr T, replacement: ptr T) -> std::Result[u64, u64] {
+    if self.compare_exchange_bool(expected, replacement) {
+      return std::Ok<u64, u64>(expected as u64);
+    }
+    return std::Err<u64, u64>(self.load() as u64);
+  }
+
+  fn compare_exchange_order_bool(
+    self: ref mut Self,
+    expected: ptr T,
+    replacement: ptr T,
+    success: std::sync::Ordering,
+    failure: std::sync::Ordering
+  ) -> bool {
+    std::assert(std::sync::is_compare_exchange_order(success, failure));
+    return self.bits.compare_exchange_order_bool(expected as u64, replacement as u64, success, failure);
   }
 
   fn compare_exchange_order(
@@ -515,9 +622,11 @@ pub impl[T] std::sync::AtomicPtr[T] {
     replacement: ptr T,
     success: std::sync::Ordering,
     failure: std::sync::Ordering
-  ) -> bool {
-    std::assert(std::sync::is_compare_exchange_order(success, failure));
-    return self.bits.compare_exchange_order(expected as u64, replacement as u64, success, failure);
+  ) -> std::Result[u64, u64] {
+    if self.compare_exchange_order_bool(expected, replacement, success, failure) {
+      return std::Ok<u64, u64>(expected as u64);
+    }
+    return std::Err<u64, u64>(self.load_order(failure) as u64);
   }
 }
 
@@ -734,10 +843,39 @@ pub impl std::sync::Condvar {
     std::sync::lock(lock);
   }
 
+  fn wait_timeout(
+    self: ref mut Self,
+    lock: ref mut std::sync::Mutex,
+    duration: std::time::Duration
+  ) -> std::Result[std::sync::WaitTimeoutResult, std::error::Error] {
+    let seen = self.sequence.load();
+    let deadline = std::time::timeout(duration);
+    lock.unlock();
+    while self.sequence.load() == seen {
+      if deadline.has_expired() {
+        std::sync::lock(lock);
+        return std::Ok<std::sync::WaitTimeoutResult, std::error::Error>(
+          std::sync::WaitTimeoutResult { timed_out_value: true }
+        );
+      }
+      std::thread::yield_now();
+    }
+    std::sync::lock(lock);
+    return std::Ok<std::sync::WaitTimeoutResult, std::error::Error>(
+      std::sync::WaitTimeoutResult { timed_out_value: false }
+    );
+  }
+
   fn wait_while(self: ref mut Self, lock: ref mut std::sync::Mutex, condition: fn() -> bool) -> void {
     while condition() {
       self.wait(lock);
     }
+  }
+}
+
+pub impl std::sync::WaitTimeoutResult {
+  fn timed_out(self) -> bool {
+    return self.timed_out_value;
   }
 }
 
@@ -783,8 +921,8 @@ pub impl[T] std::sync::OnceLock[T] {
     return !self.is_initialized();
   }
 
-  fn set(self: ref mut Self, value: T) -> bool {
-    if self.state.compare_exchange(0, 1) {
+  fn set_bool(self: ref mut Self, value: T) -> bool {
+    if self.state.compare_exchange_bool(0, 1) {
       let previous = self.value.replace(value);
       drop previous;
       self.state.store(2);
@@ -792,6 +930,16 @@ pub impl[T] std::sync::OnceLock[T] {
     }
     drop value;
     return false;
+  }
+
+  fn set(self: ref mut Self, value: T) -> std::Result[(), T] {
+    if self.state.compare_exchange_bool(0, 1) {
+      let previous = self.value.replace(value);
+      drop previous;
+      self.state.store(2);
+      return std::Ok<(), T>(());
+    }
+    return std::Err<(), T>(value);
   }
 
   fn get(self: ref Self) -> std::option::OptionRef[T] {
@@ -809,15 +957,46 @@ pub impl[T] std::sync::OnceLock[T] {
   }
 
   fn get_or_init(self: ref mut Self, initializer: fn() -> T) -> ref T {
-    if self.state.load() == 0 && self.state.compare_exchange(0, 1) {
-      let previous = self.value.replace(initializer());
-      drop previous;
-      self.state.store(2);
-    }
-    while self.state.load() == 1 {
+    while true {
+      if self.state.load() == 2 {
+        return ref *((ref (*((ref self.value) as ptr std::Option[T])).0) as ptr T);
+      }
+      if self.state.load() == 0 && self.state.compare_exchange_bool(0, 1) {
+        let previous = self.value.replace(initializer());
+        drop previous;
+        self.state.store(2);
+        return ref *((ref (*((ref self.value) as ptr std::Option[T])).0) as ptr T);
+      }
       std::thread::yield_now();
     }
     return ref *((ref (*((ref self.value) as ptr std::Option[T])).0) as ptr T);
+  }
+
+  fn get_or_try_init(
+    self: ref mut Self,
+    initializer: fn() -> std::Result[T, std::error::Error]
+  ) -> std::Result[(), std::error::Error] {
+    while true {
+      if self.state.load() == 2 {
+        return std::Ok<(), std::error::Error>(());
+      }
+      if self.state.load() == 0 && self.state.compare_exchange_bool(0, 1) {
+        match initializer() {
+          std::Ok(value) => {
+            let previous = self.value.replace(value);
+            drop previous;
+            self.state.store(2);
+            return std::Ok<(), std::error::Error>(());
+          }
+          std::Err(reason) => {
+            self.state.store(0);
+            return std::Err<(), std::error::Error>(reason);
+          }
+        }
+      }
+      std::thread::yield_now();
+    }
+    return std::Err<(), std::error::Error>(std::error::new(std::error::Other));
   }
 
   fn take(self: ref mut Self) -> std::Option[T] {
@@ -830,20 +1009,51 @@ pub impl[T] std::sync::OnceLock[T] {
 }
 
 pub impl[T] std::sync::Sender[T] {
-  fn send(self: ref mut Self, value: T) -> bool {
+  fn try_send(self: ref mut Self, value: T) -> std::Result[(), std::sync::TrySendError[T]] {
     let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
     if state.closed.load() != 0 {
-      drop value;
-      return false;
+      return std::Err<(), std::sync::TrySendError[T]>(std::sync::TrySendClosed<T>(value));
     }
-    if state.ready.compare_exchange(0, -1) {
+    if state.ready.compare_exchange_bool(0, -1) {
+      if state.closed.load() != 0 {
+        state.ready.store(0);
+        return std::Err<(), std::sync::TrySendError[T]>(std::sync::TrySendClosed<T>(value));
+      }
       let previous = state.slot.replace(value);
       drop previous;
       state.ready.store(1);
-      return true;
+      return std::Ok<(), std::sync::TrySendError[T]>(());
     }
-    drop value;
-    return false;
+    return std::Err<(), std::sync::TrySendError[T]>(std::sync::TrySendFull<T>(value));
+  }
+
+  fn send(self: ref mut Self, value: T) -> std::Result[(), std::sync::SendError[T]] {
+    let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
+    while state.closed.load() == 0 {
+      if state.ready.compare_exchange_bool(0, -1) {
+        if state.closed.load() != 0 {
+          state.ready.store(0);
+          return std::Err<(), std::sync::SendError[T]>(std::sync::SendClosed<T>(value));
+        }
+        let previous = state.slot.replace(value);
+        drop previous;
+        state.ready.store(1);
+        return std::Ok<(), std::sync::SendError[T]>(());
+      }
+      std::thread::yield_now();
+    }
+    return std::Err<(), std::sync::SendError[T]>(std::sync::SendClosed<T>(value));
+  }
+
+  fn send_bool(self: ref mut Self, value: T) -> bool {
+    match self.try_send(value) {
+      std::Ok(_) => {
+        return true;
+      }
+      std::Err(_) => {
+        return false;
+      }
+    }
   }
 
   fn close(self: ref mut Self) -> void {
@@ -858,25 +1068,59 @@ pub impl[T] std::sync::Sender[T] {
 }
 
 pub impl[T] std::sync::Receiver[T] {
-  fn try_recv(self: ref mut Self) -> std::Option[T] {
+  fn try_recv(self: ref mut Self) -> std::Result[T, std::sync::TryRecvError] {
     let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
-    if state.ready.compare_exchange(1, -1) {
+    if state.ready.compare_exchange_bool(1, -1) {
       let value = state.slot.take();
       state.ready.store(0);
-      return value;
+      return std::Ok<T, std::sync::TryRecvError>(value.unwrap());
     }
-    return std::None<T>();
+    if state.closed.load() != 0 {
+      return std::Err<T, std::sync::TryRecvError>(std::sync::TryRecvClosed);
+    }
+    return std::Err<T, std::sync::TryRecvError>(std::sync::TryRecvEmpty);
   }
 
-  fn recv(self: ref mut Self) -> std::Option[T] {
-    while !self.is_closed() {
-      let value = self.try_recv();
-      if value.is_some() {
-        return value;
+  fn try_recv_optional(self: ref mut Self) -> std::Option[T] {
+    match self.try_recv() {
+      std::Ok(value) => {
+        return std::Some<T>(value);
+      }
+      std::Err(_) => {
+        return std::None<T>();
+      }
+    }
+  }
+
+  fn recv(self: ref mut Self) -> std::Result[T, std::sync::RecvError] {
+    while true {
+      match self.try_recv() {
+        std::Ok(value) => {
+          return std::Ok<T, std::sync::RecvError>(value);
+        }
+        std::Err(reason) => {
+          match reason {
+            std::sync::TryRecvClosed => {
+              return std::Err<T, std::sync::RecvError>(std::sync::RecvClosed);
+            }
+            std::sync::TryRecvEmpty => {}
+          }
+        }
       }
       std::thread::yield_now();
     }
-    return self.try_recv();
+    return std::Err<T, std::sync::RecvError>(std::sync::RecvClosed);
+  }
+
+  fn recv_optional(self: ref mut Self) -> std::Option[T] {
+    match self.recv() {
+      std::Ok(value) => {
+        return std::Some<T>(value);
+      }
+      std::Err(_) => {
+        return std::None<T>();
+      }
+    }
   }
 
   fn close(self: ref mut Self) -> void {

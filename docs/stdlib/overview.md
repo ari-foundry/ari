@@ -315,14 +315,19 @@ developers expect:
 hooks lower directly to LLVM atomic operations. Default methods are
 sequentially consistent, while explicit-order methods lower Ari `Ordering`
 values to the matching LLVM ordering for load/store/RMW/compare-exchange.
-`Mutex` and `RwLock` are primitive spin/yield locks with explicit unlock
-guards, but they do not yet protect typed payload borrows and do not promise
-automatic scope/early-return RAII cleanup. `Condvar` and `Barrier` are source
-coordination primitives, and channels carry only a shared state pointer rather
-than redundant zone handles. `Arc` uses an atomic control block, but
+Natural compare-exchange methods return the old/current value through
+`Result`, while `_bool` forms keep the previous success-only compatibility
+shape. Invalid ordering values are programmer errors and assert.
+`Mutex` and `RwLock` are primitive no-poison spin/yield locks with explicit
+unlock guards, but they do not yet protect typed payload borrows and do not
+promise automatic scope/early-return RAII cleanup. `Condvar` and `Barrier` are
+source coordination primitives; `Condvar` timeout waits are monotonic
+spin/yield waits rather than OS sleeping waits. Channels are capacity-1 MPSC
+handles with Result send/receive errors and carry only a shared state pointer
+rather than redundant zone handles. `Arc` uses an atomic control block, but
 send/share trait policy, value-protecting locks, semaphores, futex-backed
-blocking locks, timeout waits, and non-LLVM target atomic policy remain future
-work.
+blocking locks, configurable channel capacity, sender cloning, and non-LLVM
+target atomic policy remain future work.
 
 `std::time` follows the same OS-facing pattern. `monotonic_nanos`,
 `unix_nanos`, and `sleep_nanos` are runtime-backed because they call the host
