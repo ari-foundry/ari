@@ -24,21 +24,21 @@ platform notes.
 
 ## Summary
 
-- API entries: `2630`
+- API entries: `2633`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 817 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 695 | stable candidate |
+| `core` | 698 | stable candidate |
 | `hosted` | 931 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
-| `fn` | 892 |
+| `fn` | 895 |
 | `method` | 1337 |
 | `module` | 39 |
 | `struct` | 153 |
@@ -62,7 +62,7 @@ platform notes.
 | `std::collections` | `alloc` | 361 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
-| `std::encoding` | `core` | 50 |
+| `std::encoding` | `core` | 53 |
 | `std::env` | `hosted` | 43 |
 | `std::error` | `core` | 37 |
 | `std::fmt` | `core` | 38 |
@@ -1294,40 +1294,43 @@ Tier: `core`. Stability reading: stable candidate.
 
 | API | Coverage note |
 | --- | --- |
-| `fn std::encoding::base64_decoded_len` | check-prelude std-encoding-codec standard base64 decoded length validator; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::base64_decoded_len_result` | check-prelude std-encoding-codec Result-returning standard base64 decoded length validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::base64_decoded_len` | check-prelude std-encoding-codec Result-returning standard base64 decoded length validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::base64_decoded_len_optional` | check-prelude std-encoding-codec Option-returning standard base64 decoded length compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::base64_encoded_len` | check-prelude std-encoding-codec standard base64 encoded length helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::can_decode_base64` | check-prelude std-encoding-codec standard base64 validation guard; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::can_decode_hex` | check-prelude std-encoding-codec hexadecimal validation guard; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::decode_base64_in` | check-prelude std-encoding-codec standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::decode_base64_result_in` | check-prelude std-encoding-codec Result-returning standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::decode_hex_in` | check-prelude std-encoding-codec hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::decode_hex_result_in` | check-prelude std-encoding-codec Result-returning hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_base64_in` | check-prelude std-encoding-codec Result-returning standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_base64_optional_in` | check-prelude std-encoding-codec Option-returning standard base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_base64_unchecked_in` | check-prelude std-encoding-codec asserting standard base64 zone-backed compatibility decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_hex_in` | check-prelude std-encoding-codec Result-returning hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_hex_optional_in` | check-prelude std-encoding-codec Option-returning hexadecimal zone-backed compatibility decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::decode_hex_unchecked_in` | check-prelude std-encoding-codec asserting hexadecimal zone-backed compatibility decoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::encode_base64_in` | check-prelude std-encoding-codec standard base64 zone-backed encoder; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::encode_hex_in` | check-prelude std-encoding-codec lowercase hexadecimal zone-backed encoder; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::encode_utf8_in` | check-prelude std-encoding-utf8-codepoints UTF-8 scalar encoder; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::encode_utf8_result_in` | check-prelude std-encoding-utf8-codepoints Result-returning UTF-8 scalar encoder; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::hex_decoded_len` | check-prelude std-encoding-codec hexadecimal decoded length validator; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::hex_decoded_len_result` | check-prelude std-encoding-codec Result-returning hexadecimal decoded length validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::encode_utf8_in` | check-prelude std-encoding-utf8-codepoints Result-returning UTF-8 scalar encoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::encode_utf8_optional_in` | check-prelude std-encoding-utf8-codepoints Option-returning UTF-8 scalar compatibility encoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::encode_utf8_unchecked_in` | check-prelude std-encoding-utf8-codepoints asserting UTF-8 scalar compatibility encoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::hex_decoded_len` | check-prelude std-encoding-codec Result-returning hexadecimal decoded length validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::hex_decoded_len_optional` | check-prelude std-encoding-codec Option-returning hexadecimal decoded length compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::hex_encoded_len` | check-prelude std-encoding-codec hexadecimal encoded length helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::is_ascii` | check-prelude std-encoding-text ASCII byte-slice validation; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::is_unicode_scalar` | check-prelude std-encoding-utf8-codepoints Unicode scalar value predicate; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::is_utf16` | check-prelude std-encoding-text UTF-16 boolean validation; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::is_utf8` | check-prelude std-encoding-text UTF-8 boolean validation; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::try_decode_base64_in` | check-prelude std-encoding-codec fallible standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::try_decode_hex_in` | check-prelude std-encoding-codec fallible hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::try_encode_utf8_in` | check-prelude std-encoding-utf8-codepoints fallible UTF-8 scalar encoder; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::utf16_count` | check-prelude std-encoding-text UTF-16 code-point count validator; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::utf16_count_result` | check-prelude std-encoding-text Result-returning UTF-16 code-point count validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::try_decode_base64_in` | check-prelude std-encoding-codec Option-returning standard base64 compatibility decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::try_decode_hex_in` | check-prelude std-encoding-codec Option-returning hexadecimal compatibility decoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::try_encode_utf8_in` | check-prelude std-encoding-utf8-codepoints Option-returning UTF-8 scalar compatibility encoder; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::utf16_count` | check-prelude std-encoding-text Result-returning UTF-16 code-point count validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::utf16_count_optional` | check-prelude std-encoding-text Option-returning UTF-16 code-point count compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::utf8_at` | check-prelude std-encoding-utf8-codepoints UTF-8 scalar decode at byte offset; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::utf8_count` | check-prelude std-encoding-text UTF-8 code-point count validator; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::utf8_count_result` | check-prelude std-encoding-text Result-returning UTF-8 code-point count validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::utf8_count` | check-prelude std-encoding-text Result-returning UTF-8 code-point count validator; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::utf8_count_optional` | check-prelude std-encoding-text Option-returning UTF-8 code-point count compatibility validator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::utf8_encoded_len` | check-prelude std-encoding-utf8-codepoints UTF-8 scalar encoded length helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::utf8_error` | check-prelude std-encoding-text detailed UTF-8 validation failure locator; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::utf8_next_index` | check-prelude std-encoding-utf8-codepoints UTF-8 next byte offset helper; docs/stdlib/modules/encoding.md |
 | `fn std::encoding::utf8_width` | check-prelude std-encoding-utf8-codepoints UTF-8 lead-byte width helper; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::validate_utf8` | check-prelude std-encoding-text alias for detailed UTF-8 validation; docs/stdlib/modules/encoding.md |
-| `fn std::encoding::validate_utf8_result` | check-prelude std-encoding-text Result-returning UTF-8 validation helper; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::validate_utf8` | check-prelude std-encoding-text Result-returning UTF-8 validation helper; docs/stdlib/modules/encoding.md |
+| `fn std::encoding::validate_utf8_optional` | check-prelude std-encoding-text Option-returning detailed UTF-8 validation compatibility helper; docs/stdlib/modules/encoding.md |
 
 ### method
 

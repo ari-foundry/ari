@@ -753,7 +753,7 @@ pub impl std::string::String {
 
   fn codepoint_count(self: ref Self) -> std::Option[i64] {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
-    return std::encoding::utf8_count(view);
+    return std::encoding::utf8_count_optional(view);
   }
 
   fn codepoint_at(self: ref Self, byte_index: i64) -> std::Option[std::encoding::Utf8Char] {

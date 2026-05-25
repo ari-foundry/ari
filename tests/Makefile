@@ -1863,10 +1863,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-text.ari --emit-llvm $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding8is_ascii' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding10utf8_count' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding19utf8_count_optional' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding7is_utf8' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding10utf8_error' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding13validate_utf8' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding22validate_utf8_optional' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding11utf16_count' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding20utf16_count_optional' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding8is_utf16' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-text.ari -o $(BUILD_DIR)/prelude/std-encoding-text.elf
 	$(BUILD_DIR)/prelude/std-encoding-text.elf; code=$$?; test $$code -eq 10
@@ -1874,18 +1877,28 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding10utf8_width' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding7utf8_at' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding14encode_utf8_in' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
+	grep -q '_ARNv3std8encoding23encode_utf8_optional_in' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding18try_encode_utf8_in' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
+	grep -q '_ARNv3std8encoding24encode_utf8_unchecked_in' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q 'std__encoding__Utf8Char' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-utf8-codepoints.ari -o $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf
 	$(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf; code=$$?; test $$code -eq 13
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-utf8-codepoints.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf; $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.elf; code=$$?; test $$code -eq 13; fi
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-codec.ari --emit-llvm $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding13encode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding15hex_decoded_len' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding24hex_decoded_len_optional' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding13decode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding22decode_hex_optional_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding17try_decode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding23decode_hex_unchecked_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding16encode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding18base64_decoded_len' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding27base64_decoded_len_optional' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding16decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding25decode_base64_optional_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding20try_decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding26decode_base64_unchecked_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-codec.ari -o $(BUILD_DIR)/prelude/std-encoding-codec.elf
 	$(BUILD_DIR)/prelude/std-encoding-codec.elf; code=$$?; test $$code -eq 13
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-basic.ll

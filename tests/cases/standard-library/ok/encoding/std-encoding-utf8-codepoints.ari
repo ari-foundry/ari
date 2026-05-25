@@ -50,7 +50,8 @@ fn main() -> i64 {
     score = score + 1;
   }
 
-  if encoding::utf8_count(text.as_slice()).unwrap_or(0) == 4 {
+  if encoding::utf8_count(text.as_slice()).unwrap_or(0) == 4 &&
+     encoding::utf8_count_optional(text.as_slice()).unwrap_or(0) == 4 {
     score = score + 1;
   }
 
@@ -84,12 +85,12 @@ fn main() -> i64 {
   }
 
   var zone = zone::create(32);
-  var euro = encoding::encode_utf8_in(ref mut zone, 8364u32);
+  var euro = encoding::encode_utf8_unchecked_in(ref mut zone, 8364u32);
   if euro.len() == 3 && euro.get(0) == 226u8 && euro.get(1) == 130u8 && euro.get(2) == 172u8 {
     score = score + 1;
   }
 
-  match encoding::try_encode_utf8_in(ref mut zone, 128512u32) {
+  match encoding::encode_utf8_optional_in(ref mut zone, 128512u32) {
     std::Some(smile) => {
       if smile.len() == 4 && smile.get(0) == 240u8 && smile.get(1) == 159u8 &&
          smile.get(2) == 152u8 && smile.get(3) == 128u8 {
@@ -98,7 +99,7 @@ fn main() -> i64 {
     }
     std::None => {}
   }
-  match encoding::encode_utf8_result_in(ref mut zone, 128512u32) {
+  match encoding::encode_utf8_in(ref mut zone, 128512u32) {
     std::Ok(smile_result) => {
       assert(smile_result.len() == 4);
       assert(smile_result.get(0) == 240u8);
@@ -114,7 +115,7 @@ fn main() -> i64 {
       score = score + 1;
     }
   }
-  match encoding::encode_utf8_result_in(ref mut zone, 55296u32) {
+  match encoding::encode_utf8_in(ref mut zone, 55296u32) {
     std::Ok(_) => {
       panic();
     }

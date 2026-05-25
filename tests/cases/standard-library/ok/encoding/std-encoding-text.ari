@@ -22,10 +22,10 @@ fn check_utf8() -> bool {
     if encoding::utf8_count(utf8_text.as_slice()).unwrap_or(0) != 3 {
       return false;
     }
-    if encoding::utf8_count_result(utf8_text.as_slice()).unwrap_or(0) != 3 {
+    if encoding::utf8_count_optional(utf8_text.as_slice()).unwrap_or(0) != 3 {
       return false;
     }
-    if encoding::validate_utf8_result(utf8_text.as_slice()).is_err() {
+    if encoding::validate_utf8(utf8_text.as_slice()).is_err() {
       return false;
     }
     match encoding::utf8_error(utf8_text.as_slice()) {
@@ -37,12 +37,12 @@ fn check_utf8() -> bool {
     if encoding::is_utf8(overlong.as_slice()) {
       return false;
     }
-    match encoding::validate_utf8(overlong.as_slice()) {
+    match encoding::validate_utf8_optional(overlong.as_slice()) {
       Some(overlong_reason) => {
         if !overlong_reason.is_overlong() || overlong_reason.index() != 0 || overlong_reason.byte() != 192u8 {
           return false;
         }
-        match encoding::validate_utf8_result(overlong.as_slice()) {
+        match encoding::validate_utf8(overlong.as_slice()) {
           Ok(_) => {
             return false;
           }
@@ -119,13 +119,13 @@ fn check_utf16() -> bool {
     if encoding::utf16_count(utf16_text.as_slice()).unwrap_or(0) != 3 {
       return false;
     }
-    if encoding::utf16_count_result(utf16_text.as_slice()).unwrap_or(0) != 3 {
+    if encoding::utf16_count_optional(utf16_text.as_slice()).unwrap_or(0) != 3 {
       return false;
     }
     if encoding::is_utf16(utf16_lone_high.as_slice()) {
       return false;
     }
-    if encoding::utf16_count_result(utf16_lone_high.as_slice()).is_ok() {
+    if encoding::utf16_count(utf16_lone_high.as_slice()).is_ok() {
       return false;
     }
     if encoding::is_utf16(utf16_lone_low.as_slice()) {

@@ -312,11 +312,11 @@ pub fn utf8_error(values: std::Slice[u8]) -> std::Option[std::encoding::Utf8Erro
   return std::None<std::encoding::Utf8Error>();
 }
 
-pub fn validate_utf8(values: std::Slice[u8]) -> std::Option[std::encoding::Utf8Error] {
+pub fn validate_utf8_optional(values: std::Slice[u8]) -> std::Option[std::encoding::Utf8Error] {
   return utf8_error(values);
 }
 
-pub fn validate_utf8_result(values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+pub fn validate_utf8(values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
   match utf8_error(values) {
     std::Some(_) => {
       return std::Err<(), std::error::Error>(invalid_data_error());
@@ -460,7 +460,7 @@ pub fn utf8_next_index(values: std::Slice[u8], index: i64) -> std::Option[i64] {
   return std::None<i64>();
 }
 
-pub fn utf8_count(values: std::Slice[u8]) -> std::Option[i64] {
+pub fn utf8_count_optional(values: std::Slice[u8]) -> std::Option[i64] {
   var index = 0;
   var count = 0;
   while index != values.len {
@@ -536,8 +536,8 @@ pub fn utf8_count(values: std::Slice[u8]) -> std::Option[i64] {
   return std::Some<i64>(count);
 }
 
-pub fn utf8_count_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-  match utf8_count(values) {
+pub fn utf8_count(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  match utf8_count_optional(values) {
     std::Some(value) => {
       return std::Ok<i64, std::error::Error>(value);
     }
@@ -548,7 +548,7 @@ pub fn utf8_count_result(values: std::Slice[u8]) -> std::Result[i64, std::error:
 }
 
 pub fn is_utf8(values: std::Slice[u8]) -> bool {
-  match utf8_count(values) {
+  match utf8_count_optional(values) {
     std::Some(_) => {
       return true;
     }
@@ -558,7 +558,7 @@ pub fn is_utf8(values: std::Slice[u8]) -> bool {
   }
 }
 
-pub fn utf16_count(values: std::Slice[u16]) -> std::Option[i64] {
+pub fn utf16_count_optional(values: std::Slice[u16]) -> std::Option[i64] {
   var index = 0;
   var count = 0;
   while index != values.len {
@@ -582,8 +582,8 @@ pub fn utf16_count(values: std::Slice[u16]) -> std::Option[i64] {
   return std::Some<i64>(count);
 }
 
-pub fn utf16_count_result(values: std::Slice[u16]) -> std::Result[i64, std::error::Error] {
-  match utf16_count(values) {
+pub fn utf16_count(values: std::Slice[u16]) -> std::Result[i64, std::error::Error] {
+  match utf16_count_optional(values) {
     std::Some(value) => {
       return std::Ok<i64, std::error::Error>(value);
     }
@@ -594,7 +594,7 @@ pub fn utf16_count_result(values: std::Slice[u16]) -> std::Result[i64, std::erro
 }
 
 pub fn is_utf16(values: std::Slice[u16]) -> bool {
-  match utf16_count(values) {
+  match utf16_count_optional(values) {
     std::Some(_) => {
       return true;
     }
@@ -604,7 +604,7 @@ pub fn is_utf16(values: std::Slice[u16]) -> bool {
   }
 }
 
-pub fn encode_utf8_in(zone: ref mut Zone, value: u32) -> std::string::String {
+pub fn encode_utf8_unchecked_in(zone: ref mut Zone, value: u32) -> std::string::String {
   var length = 0;
   match utf8_encoded_len(value) {
     std::Some(width) => {
@@ -639,18 +639,22 @@ pub fn encode_utf8_in(zone: ref mut Zone, value: u32) -> std::string::String {
   return output;
 }
 
-pub fn try_encode_utf8_in(zone: ref mut Zone, value: u32) -> std::Option[std::string::String] {
+pub fn encode_utf8_optional_in(zone: ref mut Zone, value: u32) -> std::Option[std::string::String] {
   if !is_unicode_scalar(value) {
     return std::None<std::string::String>();
   }
-  return std::Some<std::string::String>(encode_utf8_in(zone, value));
+  return std::Some<std::string::String>(encode_utf8_unchecked_in(zone, value));
 }
 
-pub fn encode_utf8_result_in(zone: ref mut Zone, value: u32) -> std::Result[std::string::String, std::error::Error] {
+pub fn try_encode_utf8_in(zone: ref mut Zone, value: u32) -> std::Option[std::string::String] {
+  return encode_utf8_optional_in(zone, value);
+}
+
+pub fn encode_utf8_in(zone: ref mut Zone, value: u32) -> std::Result[std::string::String, std::error::Error] {
   if !is_unicode_scalar(value) {
     return std::Err<std::string::String, std::error::Error>(invalid_data_error());
   }
-  return std::Ok<std::string::String, std::error::Error>(encode_utf8_in(zone, value));
+  return std::Ok<std::string::String, std::error::Error>(encode_utf8_unchecked_in(zone, value));
 }
 
 pub fn hex_encoded_len(values: std::Slice[u8]) -> i64 {
@@ -669,7 +673,7 @@ pub fn encode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string:
   return output;
 }
 
-pub fn hex_decoded_len(values: std::Slice[u8]) -> std::Option[i64] {
+pub fn hex_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i64] {
   if values.len % 2 != 0 {
     return std::None<i64>();
   }
@@ -686,8 +690,8 @@ pub fn hex_decoded_len(values: std::Slice[u8]) -> std::Option[i64] {
   return std::Some<i64>(values.len / 2);
 }
 
-pub fn hex_decoded_len_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-  match hex_decoded_len(values) {
+pub fn hex_decoded_len(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  match hex_decoded_len_optional(values) {
     std::Some(value) => {
       return std::Ok<i64, std::error::Error>(value);
     }
@@ -698,7 +702,7 @@ pub fn hex_decoded_len_result(values: std::Slice[u8]) -> std::Result[i64, std::e
 }
 
 pub fn can_decode_hex(values: std::Slice[u8]) -> bool {
-  match hex_decoded_len(values) {
+  match hex_decoded_len_optional(values) {
     std::Some(_) => {
       return true;
     }
@@ -708,9 +712,9 @@ pub fn can_decode_hex(values: std::Slice[u8]) -> bool {
   }
 }
 
-pub fn decode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
+pub fn decode_hex_unchecked_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
   var length = 0;
-  match hex_decoded_len(values) {
+  match hex_decoded_len_optional(values) {
     std::Some(decoded_length) => {
       length = decoded_length;
     }
@@ -738,18 +742,22 @@ pub fn decode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string:
   return output;
 }
 
-pub fn try_decode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
+pub fn decode_hex_optional_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
   if !can_decode_hex(values) {
     return std::None<std::string::String>();
   }
-  return std::Some<std::string::String>(decode_hex_in(zone, values));
+  return std::Some<std::string::String>(decode_hex_unchecked_in(zone, values));
 }
 
-pub fn decode_hex_result_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+pub fn try_decode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
+  return decode_hex_optional_in(zone, values);
+}
+
+pub fn decode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
   if !can_decode_hex(values) {
     return std::Err<std::string::String, std::error::Error>(invalid_data_error());
   }
-  return std::Ok<std::string::String, std::error::Error>(decode_hex_in(zone, values));
+  return std::Ok<std::string::String, std::error::Error>(decode_hex_unchecked_in(zone, values));
 }
 
 pub fn base64_encoded_len(values: std::Slice[u8]) -> i64 {
@@ -787,7 +795,7 @@ pub fn encode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::stri
   return output;
 }
 
-pub fn base64_decoded_len(values: std::Slice[u8]) -> std::Option[i64] {
+pub fn base64_decoded_len_optional(values: std::Slice[u8]) -> std::Option[i64] {
   if values.len == 0 {
     return std::Some<i64>(0);
   }
@@ -823,8 +831,8 @@ pub fn base64_decoded_len(values: std::Slice[u8]) -> std::Option[i64] {
   return std::Some<i64>(((values.len / 4) * 3) - padding);
 }
 
-pub fn base64_decoded_len_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
-  match base64_decoded_len(values) {
+pub fn base64_decoded_len(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  match base64_decoded_len_optional(values) {
     std::Some(value) => {
       return std::Ok<i64, std::error::Error>(value);
     }
@@ -835,7 +843,7 @@ pub fn base64_decoded_len_result(values: std::Slice[u8]) -> std::Result[i64, std
 }
 
 pub fn can_decode_base64(values: std::Slice[u8]) -> bool {
-  match base64_decoded_len(values) {
+  match base64_decoded_len_optional(values) {
     std::Some(_) => {
       return true;
     }
@@ -845,9 +853,9 @@ pub fn can_decode_base64(values: std::Slice[u8]) -> bool {
   }
 }
 
-pub fn decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
+pub fn decode_base64_unchecked_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
   var length = 0;
-  match base64_decoded_len(values) {
+  match base64_decoded_len_optional(values) {
     std::Some(decoded_length) => {
       length = decoded_length;
     }
@@ -893,16 +901,20 @@ pub fn decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::stri
   return output;
 }
 
-pub fn try_decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
+pub fn decode_base64_optional_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
   if !can_decode_base64(values) {
     return std::None<std::string::String>();
   }
-  return std::Some<std::string::String>(decode_base64_in(zone, values));
+  return std::Some<std::string::String>(decode_base64_unchecked_in(zone, values));
 }
 
-pub fn decode_base64_result_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+pub fn try_decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
+  return decode_base64_optional_in(zone, values);
+}
+
+pub fn decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
   if !can_decode_base64(values) {
     return std::Err<std::string::String, std::error::Error>(invalid_data_error());
   }
-  return std::Ok<std::string::String, std::error::Error>(decode_base64_in(zone, values));
+  return std::Ok<std::string::String, std::error::Error>(decode_base64_unchecked_in(zone, values));
 }

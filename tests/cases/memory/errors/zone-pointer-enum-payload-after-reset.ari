@@ -1,5 +1,5 @@
 fn decoded(zone: ref mut Zone) -> std::Option[String] {
-  return encoding::try_decode_hex_in(zone, "4142");
+  return encoding::decode_hex_optional_in(zone, "4142");
 }
 
 fn main() -> i64 {
