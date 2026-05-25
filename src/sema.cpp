@@ -13207,7 +13207,12 @@ private:
         }
     }
 
-    using PatternBindingSignature = std::map<std::string, IrType>;
+    struct PatternBindingInfo {
+        IrType type;
+        SourceLocation loc;
+    };
+
+    using PatternBindingSignature = std::map<std::string, PatternBindingInfo>;
 
     static IrType pattern_binding_type(const Pattern& pattern, IrType type) {
         if (pattern.binding_mode == BindingMode::Ref) {
@@ -13222,7 +13227,7 @@ private:
                                     PatternBindingSignature& bindings,
                                     const std::string& name,
                                     const IrType& type) {
-        auto inserted = bindings.emplace(name, type);
+        auto inserted = bindings.emplace(name, PatternBindingInfo{type, loc});
         if (!inserted.second) {
             fail(loc, "duplicate binding '" + name + "' in pattern");
         }
@@ -13372,12 +13377,20 @@ private:
 
     [[noreturn]] static void fail_or_pattern_binding_type(SourceLocation loc,
                                                           const std::string& name,
-                                                          const IrType& expected,
-                                                          const IrType& actual) {
+                                                          const PatternBindingInfo& expected,
+                                                          const PatternBindingInfo& actual) {
         CompileError error(
             std::move(loc),
             "or-pattern binding '" + name + "' has inconsistent types: " +
-                type_name(expected) + " and " + type_name(actual));
+                type_name(expected.type) + " and " + type_name(actual.type));
+        add_location_label_if_valid(
+            error,
+            expected.loc,
+            "binding '" + name + "' has type " + type_name(expected.type) + " in this alternative");
+        add_location_label_if_valid(
+            error,
+            actual.loc,
+            "binding '" + name + "' has type " + type_name(actual.type) + " in this alternative");
         error.add_note(DiagnosticNote{
             std::nullopt,
             "all alternatives in an or-pattern must give a shared binding one concrete type",
@@ -13408,13 +13421,13 @@ private:
             if (actual.size() != expected.size()) {
                 fail_or_pattern_binding_names(loc);
             }
-            for (const auto& [name, expected_type] : expected) {
+            for (const auto& [name, expected_info] : expected) {
                 auto found = actual.find(name);
                 if (found == actual.end()) {
                     fail_or_pattern_binding_names(loc);
                 }
-                if (!same_type(expected_type, found->second)) {
-                    fail_or_pattern_binding_type(loc, name, expected_type, found->second);
+                if (!same_type(expected_info.type, found->second.type)) {
+                    fail_or_pattern_binding_type(loc, name, expected_info, found->second);
                 }
             }
         }
