@@ -4007,12 +4007,102 @@ private:
         return payloads;
     }
 
+    struct EnumPayloadCapabilityCause {
+        SourceLocation loc;
+        std::string message;
+    };
+
+    static std::string append_payload_cause_path(const std::string& path,
+                                                 const std::string& field) {
+        if (path.empty()) return field;
+        return path + "." + field;
+    }
+
+    static std::optional<EnumPayloadCapabilityCause> owner_payload_cause(
+        const IrType& type,
+        const std::string& path = ""
+    ) {
+        if (type.qualifier == TypeQualifier::Own) {
+            std::string message = path.empty()
+                ? "payload carries owner type " + type_name(type)
+                : "field '" + path + "' carries owner type " + type_name(type);
+            return EnumPayloadCapabilityCause{type.loc, std::move(message)};
+        }
+        if (type.qualifier != TypeQualifier::Value) return std::nullopt;
+
+        for (std::size_t i = 0; i < type.field_types.size(); ++i) {
+            const IrType& field_type = type.field_types[i];
+            if (!is_owner_type(field_type)) continue;
+            std::string field_name = i < type.field_names.size()
+                ? type.field_names[i]
+                : std::to_string(i);
+            auto cause = owner_payload_cause(
+                field_type,
+                append_payload_cause_path(path, field_name));
+            if (cause) return cause;
+        }
+        for (std::size_t i = 0; i < type.args.size(); ++i) {
+            const IrType& arg_type = type.args[i];
+            if (!is_owner_type(arg_type)) continue;
+            auto cause = owner_payload_cause(
+                arg_type,
+                append_payload_cause_path(path, "type argument " + std::to_string(i + 1)));
+            if (cause) return cause;
+        }
+        return std::nullopt;
+    }
+
+    static std::optional<EnumPayloadCapabilityCause> borrow_payload_cause(
+        const IrType& type,
+        const std::string& path = ""
+    ) {
+        if (is_borrow_type(type)) {
+            std::string message = path.empty()
+                ? "payload carries borrow type " + type_name(type)
+                : "field '" + path + "' carries borrow type " + type_name(type);
+            return EnumPayloadCapabilityCause{type.loc, std::move(message)};
+        }
+        if (type.qualifier != TypeQualifier::Value) return std::nullopt;
+
+        for (std::size_t i = 0; i < type.field_types.size(); ++i) {
+            const IrType& field_type = type.field_types[i];
+            if (!contains_borrow_type(field_type)) continue;
+            std::string field_name = i < type.field_names.size()
+                ? type.field_names[i]
+                : std::to_string(i);
+            auto cause = borrow_payload_cause(
+                field_type,
+                append_payload_cause_path(path, field_name));
+            if (cause) return cause;
+        }
+        for (std::size_t i = 0; i < type.args.size(); ++i) {
+            const IrType& arg_type = type.args[i];
+            if (!contains_borrow_type(arg_type)) continue;
+            auto cause = borrow_payload_cause(
+                arg_type,
+                append_payload_cause_path(path, "type argument " + std::to_string(i + 1)));
+            if (cause) return cause;
+        }
+        return std::nullopt;
+    }
+
+    static void add_enum_payload_cause_label(
+        CompileError& error,
+        const std::optional<EnumPayloadCapabilityCause>& cause
+    ) {
+        if (!cause) return;
+        Span span = span_from_location(cause->loc);
+        if (!span_has_source(span) || !span_has_valid_order(span)) return;
+        error.add_label(DiagnosticLabel{span, cause->message, false});
+    }
+
     [[noreturn]] static void fail_ownership_enum_payload_layout(SourceLocation loc,
                                                                 const IrType& payload_type) {
         CompileError error(
             std::move(loc),
             "ownership-carrying aggregate enum payloads are not supported yet; use a direct own i64/u64 payload or store the owner outside the enum payload, got " +
                 type_name(payload_type));
+        add_enum_payload_cause_label(error, owner_payload_cause(payload_type));
         error.add_note(DiagnosticNote{
             std::nullopt,
             "aggregate enum payload layout can drop only direct owner words today; nested owner-bearing aggregates would need per-field active-payload drop state",
@@ -4030,6 +4120,7 @@ private:
             std::move(loc),
             "borrow-carrying aggregate enum payloads are not supported yet; store the borrow outside the enum payload, got " +
                 type_name(payload_type));
+        add_enum_payload_cause_label(error, borrow_payload_cause(payload_type));
         error.add_note(DiagnosticNote{
             std::nullopt,
             "aggregate enum payload layout does not currently preserve borrow lifetime state through nested payload aggregates",
