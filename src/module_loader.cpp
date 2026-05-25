@@ -247,8 +247,10 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
     }
 
     CompileError error(import.loc,
-                       "cannot find module file for '" + import.name +
-                           "'; searched " + searched_paths_text(result.searched));
+                       "cannot find module file for '" + import.name + "'");
+    error.add_note(DiagnosticNote{std::nullopt,
+                                  "searched: " + searched_paths_text(result.searched),
+                                  DiagnosticNoteKind::Note});
     error.add_note(DiagnosticNote{std::nullopt,
                                   "module search paths are tried in deterministic order",
                                   DiagnosticNoteKind::Note});
