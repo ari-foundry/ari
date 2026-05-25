@@ -18,15 +18,35 @@ fn main() -> i64 {
   if maybe_cwd.is_some() {
     score = score + 5;
   }
+  match env::current_dir_result() {
+    Ok(current_path) => {
+      assert(!is_empty_text(current_path));
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  assert(env::current_dir_os_result().is_ok());
+  assert(env::current_dir_path_result().is_ok());
   if env::set_current_dir(cwd) {
     score = score + 7;
   }
+  assert(env::set_current_dir_result(cwd).is_ok());
   if !is_empty_text(exe) {
     score = score + 11;
   }
   if maybe_exe.is_some() {
     score = score + 13;
   }
+  match env::executable_path_result() {
+    Ok(executable_path) => {
+      assert(!is_empty_text(executable_path));
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  assert(env::executable_path_os_result().is_ok());
 
   return score;
 }

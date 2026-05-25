@@ -14,7 +14,16 @@ fn main() -> i64 {
   if missing.is_none() {
     score = score + 5;
   }
+  match env::get_result(name) {
+    Ok(_) => {
+      panic();
+    }
+    Err(reason) => {
+      assert(reason.is_not_found());
+    }
+  }
 
+  assert(env::set_result(name, "first").is_ok());
   if env::set(name, "first") {
     score = score + 7;
   }
@@ -36,6 +45,24 @@ fn main() -> i64 {
   if env::set(name, "second") {
     score = score + 17;
   }
+  match env::get_result(name) {
+    Ok(result_value) => {
+      var text_result = std::string::from_string(ref mut zone, result_value);
+      var expected_result = std::string::from_string(ref mut zone, "second");
+      assert(text_result.equals(expected_result.as_slice()));
+    }
+    Err(_) => {
+      panic();
+    }
+  }
+  match env::get_os_result(name) {
+    Ok(raw_value) => {
+      assert(raw_value.len() == 6);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
 
   var updated = std::string::from_string(ref mut zone, env::get(name));
   var second = std::string::from_string(ref mut zone, "second");
@@ -43,7 +70,7 @@ fn main() -> i64 {
     score = score + 19;
   }
 
-  if env::remove(name) {
+  if env::remove_result(name).is_ok() {
     score = score + 23;
   }
   if !env::has(name) {

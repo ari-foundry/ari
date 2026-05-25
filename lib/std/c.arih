@@ -51,6 +51,14 @@ fn contains_nul(bytes: std::Slice[u8]) -> bool {
   return false;
 }
 
+fn invalid_input_error() -> std::error::Error {
+  return std::error::new(std::error::InvalidInput);
+}
+
+fn other_error() -> std::error::Error {
+  return std::error::new(std::error::Other);
+}
+
 pub fn is_null(value: ptr c_void) -> bool {
   return is_null_ptr(value);
 }
@@ -62,6 +70,13 @@ pub fn from_string(text: string) -> std::c::CStr {
 pub fn from_ptr(data: ptr c_char) -> std::c::CStr {
   std::assert(!is_null_ptr(data as ptr c_void));
   return std::c::CStr { data: data };
+}
+
+pub fn from_ptr_result(data: ptr c_char) -> std::Result[std::c::CStr, std::error::Error] {
+  if is_null_ptr(data as ptr c_void) {
+    return std::Err<std::c::CStr, std::error::Error>(invalid_input_error());
+  }
+  return std::Ok<std::c::CStr, std::error::Error>(std::c::CStr { data: data });
 }
 
 pub fn from_slice_in(zone: ref mut Zone, bytes: std::Slice[u8]) -> std::c::CString {
@@ -76,8 +91,19 @@ pub fn from_slice_in(zone: ref mut Zone, bytes: std::Slice[u8]) -> std::c::CStri
   return std::c::CString { data: data, len: bytes.len };
 }
 
+pub fn from_slice_result_in(zone: ref mut Zone, bytes: std::Slice[u8]) -> std::Result[std::c::CString, std::error::Error] {
+  if contains_nul(bytes) {
+    return std::Err<std::c::CString, std::error::Error>(invalid_input_error());
+  }
+  return std::Ok<std::c::CString, std::error::Error>(from_slice_in(zone, bytes));
+}
+
 pub fn from_cstr_in(zone: ref mut Zone, value: std::c::CStr) -> std::c::CString {
   return std::c::from_slice_in(zone, value.as_slice());
+}
+
+pub fn from_cstr_result_in(zone: ref mut Zone, value: std::c::CStr) -> std::Result[std::c::CString, std::error::Error] {
+  return std::c::from_slice_result_in(zone, value.as_slice());
 }
 
 pub fn errno() -> i64 {
@@ -108,13 +134,37 @@ pub fn open(path: std::c::CStr, flags: i64) -> std::c::Library {
   return std::c::Library { handle: raw_dlopen(path.as_ptr(), flags as c_int) };
 }
 
+pub fn open_result(path: std::c::CStr, flags: i64) -> std::Result[std::c::Library, std::error::Error] {
+  let library = open(path, flags);
+  if library.is_open() {
+    return std::Ok<std::c::Library, std::error::Error>(library);
+  }
+  return std::Err<std::c::Library, std::error::Error>(other_error());
+}
+
 pub fn main_program(flags: i64) -> std::c::Library {
   let path: ptr c_char = null;
   return std::c::Library { handle: raw_dlopen(path, flags as c_int) };
 }
 
+pub fn main_program_result(flags: i64) -> std::Result[std::c::Library, std::error::Error] {
+  let library = main_program(flags);
+  if library.is_open() {
+    return std::Ok<std::c::Library, std::error::Error>(library);
+  }
+  return std::Err<std::c::Library, std::error::Error>(other_error());
+}
+
 pub fn symbol(library: ref std::c::Library, name: std::c::CStr) -> std::c::Symbol {
   return std::c::Symbol { address: raw_dlsym(library.handle, name.as_ptr()) };
+}
+
+pub fn symbol_result(library: ref std::c::Library, name: std::c::CStr) -> std::Result[std::c::Symbol, std::error::Error] {
+  let found = symbol(library, name);
+  if found.is_valid() {
+    return std::Ok<std::c::Symbol, std::error::Error>(found);
+  }
+  return std::Err<std::c::Symbol, std::error::Error>(other_error());
 }
 
 pub fn function[T](symbol: ref std::c::Symbol) -> T {
@@ -122,17 +172,21 @@ pub fn function[T](symbol: ref std::c::Symbol) -> T {
   return symbol.address as T;
 }
 
-pub fn close(library: ref mut std::c::Library) -> bool {
+pub fn close_result(library: ref mut std::c::Library) -> std::Result[(), std::error::Error] {
   if is_null_ptr(library.handle) {
-    return true;
+    return std::Ok<(), std::error::Error>(());
   }
   let status = raw_dlclose(library.handle);
   if status == 0 {
     let empty: ptr c_void = null;
     library.handle = empty;
-    return true;
+    return std::Ok<(), std::error::Error>(());
   }
-  return false;
+  return std::Err<(), std::error::Error>(other_error());
+}
+
+pub fn close(library: ref mut std::c::Library) -> bool {
+  return close_result(library).is_ok();
 }
 
 pub fn last_error() -> std::c::CStr {
@@ -201,8 +255,16 @@ pub impl std::c::Library {
     return std::c::close(self);
   }
 
+  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return std::c::close_result(self);
+  }
+
   fn symbol(self: ref Self, name: std::c::CStr) -> std::c::Symbol {
     return std::c::symbol(self, name);
+  }
+
+  fn symbol_result(self: ref Self, name: std::c::CStr) -> std::Result[std::c::Symbol, std::error::Error] {
+    return std::c::symbol_result(self, name);
   }
 }
 

@@ -210,12 +210,20 @@ pub fn try_executable_path() -> std::Option[string] {
   return std::env::try_executable_path();
 }
 
+pub fn executable_path_result() -> std::Result[string, std::error::Error] {
+  return std::env::executable_path_result();
+}
+
 pub fn current_dir() -> string {
   return std::env::current_dir();
 }
 
 pub fn try_current_dir() -> std::Option[string] {
   return std::env::try_current_dir();
+}
+
+pub fn current_dir_result() -> std::Result[string, std::error::Error] {
+  return std::env::current_dir_result();
 }
 
 fn non_normal_exit_error() -> std::error::Error {

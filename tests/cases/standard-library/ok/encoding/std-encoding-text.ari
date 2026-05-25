@@ -22,6 +22,12 @@ fn check_utf8() -> bool {
     if encoding::utf8_count(utf8_text.as_slice()).unwrap_or(0) != 3 {
       return false;
     }
+    if encoding::utf8_count_result(utf8_text.as_slice()).unwrap_or(0) != 3 {
+      return false;
+    }
+    if encoding::validate_utf8_result(utf8_text.as_slice()).is_err() {
+      return false;
+    }
     match encoding::utf8_error(utf8_text.as_slice()) {
       Some(_) => {
         return false;
@@ -35,6 +41,16 @@ fn check_utf8() -> bool {
       Some(overlong_reason) => {
         if !overlong_reason.is_overlong() || overlong_reason.index() != 0 || overlong_reason.byte() != 192u8 {
           return false;
+        }
+        match encoding::validate_utf8_result(overlong.as_slice()) {
+          Ok(_) => {
+            return false;
+          }
+          Err(reason) => {
+            if !reason.is_kind(error::InvalidData) {
+              return false;
+            }
+          }
         }
       }
       None => {
@@ -103,7 +119,13 @@ fn check_utf16() -> bool {
     if encoding::utf16_count(utf16_text.as_slice()).unwrap_or(0) != 3 {
       return false;
     }
+    if encoding::utf16_count_result(utf16_text.as_slice()).unwrap_or(0) != 3 {
+      return false;
+    }
     if encoding::is_utf16(utf16_lone_high.as_slice()) {
+      return false;
+    }
+    if encoding::utf16_count_result(utf16_lone_high.as_slice()).is_ok() {
       return false;
     }
     if encoding::is_utf16(utf16_lone_low.as_slice()) {

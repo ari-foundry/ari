@@ -24,10 +24,32 @@ fn main() -> i64 {
   if first.is_some() {
     score = score + 13;
   }
+  match env::arg_result(0) {
+    Ok(_) => {}
+    Err(_) => {
+      panic();
+    }
+  }
+  match env::arg_os_result(0) {
+    Ok(raw_arg) => {
+      assert(raw_arg.len() > 0);
+    }
+    Err(_) => {
+      panic();
+    }
+  }
 
   let missing = env::try_arg(count);
   if missing.is_none() {
     score = score + 17;
+  }
+  match env::arg_result(count) {
+    Ok(_) => {
+      panic();
+    }
+    Err(reason) => {
+      assert(reason.is_not_found());
+    }
   }
 
   if env::has_arg(0) {
@@ -38,6 +60,8 @@ fn main() -> i64 {
   if program.is_some() {
     score = score + 23;
   }
+  assert(env::program_name_result().is_ok());
+  assert(env::program_name_os_result().is_ok());
 
   return score;
 }

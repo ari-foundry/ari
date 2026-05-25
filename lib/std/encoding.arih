@@ -104,6 +104,10 @@ fn utf8_error_at(index: i64, byte: u8, kind: std::encoding::Utf8ErrorKind) -> st
   };
 }
 
+fn invalid_data_error() -> std::error::Error {
+  return std::error::new(std::error::InvalidData);
+}
+
 fn hex_digit(value: i64) -> u8 {
   if value < 10 {
     return (value + ('0' as i64)) as u8;
@@ -310,6 +314,17 @@ pub fn utf8_error(values: std::Slice[u8]) -> std::Option[std::encoding::Utf8Erro
 
 pub fn validate_utf8(values: std::Slice[u8]) -> std::Option[std::encoding::Utf8Error] {
   return utf8_error(values);
+}
+
+pub fn validate_utf8_result(values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+  match utf8_error(values) {
+    std::Some(_) => {
+      return std::Err<(), std::error::Error>(invalid_data_error());
+    }
+    std::None => {
+      return std::Ok<(), std::error::Error>(());
+    }
+  }
 }
 
 pub fn utf8_width(first: u8) -> std::Option[i64] {
@@ -521,6 +536,17 @@ pub fn utf8_count(values: std::Slice[u8]) -> std::Option[i64] {
   return std::Some<i64>(count);
 }
 
+pub fn utf8_count_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  match utf8_count(values) {
+    std::Some(value) => {
+      return std::Ok<i64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<i64, std::error::Error>(invalid_data_error());
+    }
+  }
+}
+
 pub fn is_utf8(values: std::Slice[u8]) -> bool {
   match utf8_count(values) {
     std::Some(_) => {
@@ -554,6 +580,17 @@ pub fn utf16_count(values: std::Slice[u16]) -> std::Option[i64] {
     }
   }
   return std::Some<i64>(count);
+}
+
+pub fn utf16_count_result(values: std::Slice[u16]) -> std::Result[i64, std::error::Error] {
+  match utf16_count(values) {
+    std::Some(value) => {
+      return std::Ok<i64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<i64, std::error::Error>(invalid_data_error());
+    }
+  }
 }
 
 pub fn is_utf16(values: std::Slice[u16]) -> bool {
@@ -609,6 +646,13 @@ pub fn try_encode_utf8_in(zone: ref mut Zone, value: u32) -> std::Option[std::st
   return std::Some<std::string::String>(encode_utf8_in(zone, value));
 }
 
+pub fn encode_utf8_result_in(zone: ref mut Zone, value: u32) -> std::Result[std::string::String, std::error::Error] {
+  if !is_unicode_scalar(value) {
+    return std::Err<std::string::String, std::error::Error>(invalid_data_error());
+  }
+  return std::Ok<std::string::String, std::error::Error>(encode_utf8_in(zone, value));
+}
+
 pub fn hex_encoded_len(values: std::Slice[u8]) -> i64 {
   return values.len * 2;
 }
@@ -640,6 +684,17 @@ pub fn hex_decoded_len(values: std::Slice[u8]) -> std::Option[i64] {
     index = index + 1;
   }
   return std::Some<i64>(values.len / 2);
+}
+
+pub fn hex_decoded_len_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  match hex_decoded_len(values) {
+    std::Some(value) => {
+      return std::Ok<i64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<i64, std::error::Error>(invalid_data_error());
+    }
+  }
 }
 
 pub fn can_decode_hex(values: std::Slice[u8]) -> bool {
@@ -688,6 +743,13 @@ pub fn try_decode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Opt
     return std::None<std::string::String>();
   }
   return std::Some<std::string::String>(decode_hex_in(zone, values));
+}
+
+pub fn decode_hex_result_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+  if !can_decode_hex(values) {
+    return std::Err<std::string::String, std::error::Error>(invalid_data_error());
+  }
+  return std::Ok<std::string::String, std::error::Error>(decode_hex_in(zone, values));
 }
 
 pub fn base64_encoded_len(values: std::Slice[u8]) -> i64 {
@@ -761,6 +823,17 @@ pub fn base64_decoded_len(values: std::Slice[u8]) -> std::Option[i64] {
   return std::Some<i64>(((values.len / 4) * 3) - padding);
 }
 
+pub fn base64_decoded_len_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  match base64_decoded_len(values) {
+    std::Some(value) => {
+      return std::Ok<i64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<i64, std::error::Error>(invalid_data_error());
+    }
+  }
+}
+
 pub fn can_decode_base64(values: std::Slice[u8]) -> bool {
   match base64_decoded_len(values) {
     std::Some(_) => {
@@ -825,4 +898,11 @@ pub fn try_decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::
     return std::None<std::string::String>();
   }
   return std::Some<std::string::String>(decode_base64_in(zone, values));
+}
+
+pub fn decode_base64_result_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+  if !can_decode_base64(values) {
+    return std::Err<std::string::String, std::error::Error>(invalid_data_error());
+  }
+  return std::Ok<std::string::String, std::error::Error>(decode_base64_in(zone, values));
 }

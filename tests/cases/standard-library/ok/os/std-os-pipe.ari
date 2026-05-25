@@ -7,6 +7,15 @@ fn main() -> i64 {
   if maybe_pipe.is_some() {
     score = score + 1;
   }
+  match std::os::pipe_result() {
+    Ok(result_pipe) => {
+      var closable = result_pipe;
+      assert(closable.close_result().is_ok());
+    }
+    Err(_) => {
+      panic();
+    }
+  }
 
   var pipe = maybe_pipe.unwrap();
   if pipe.read_end().is_valid() {
@@ -27,12 +36,17 @@ fn main() -> i64 {
   if reader.set_nonblocking(true) {
     score = score + 32;
   }
+  assert(reader.set_nonblocking_result(true).is_ok());
+  assert(reader.is_nonblocking_result().unwrap_or(false));
   if writer.set_close_on_exec(true) {
     score = score + 64;
   }
+  assert(writer.set_close_on_exec_result(true).is_ok());
+  assert(writer.close_on_exec_result().unwrap_or(false));
   if reader.close() && writer.close() {
     score = score + 128;
   }
+  assert(pipe.close_result().is_ok());
 
   return score;
 }

@@ -133,11 +133,15 @@ fn std::bits::trailing_zeros|std bits scan helper tests; docs/stdlib/api-referen
 fn std::bits::wrapping_align_up|std bits alignment policy tests; docs/stdlib/modules/bits.md
 fn std::boxed::new[T]|check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::c::close|check-prelude std-c-interop dynamic library close wrapper; docs/stdlib/modules/c.md
+fn std::c::close_result|check-prelude std-c-interop Result-returning dynamic library close wrapper; docs/stdlib/modules/c.md
 fn std::c::errno|check-prelude std-c-interop POSIX errno accessor; docs/stdlib/modules/c.md
 fn std::c::error|check-prelude std-c-interop errno-to-Error bridge; docs/stdlib/modules/c.md
 fn std::c::from_cstr_in|check-prelude std-c-interop owned CString copy from borrowed CStr; docs/stdlib/modules/c.md
+fn std::c::from_cstr_result_in|check-prelude std-c-interop Result-returning CString copy from borrowed CStr; docs/stdlib/modules/c.md
 fn std::c::from_ptr|check-prelude std-c-interop borrowed non-null raw C string wrapper; docs/stdlib/modules/c.md
+fn std::c::from_ptr_result|check-prelude std-c-interop null-checked Result C string wrapper; docs/stdlib/modules/c.md
 fn std::c::from_slice_in|check-prelude std-c-interop zone-backed NUL-terminated CString constructor; docs/stdlib/modules/c.md
+fn std::c::from_slice_result_in|check-prelude std-c-interop Result-returning CString constructor rejecting interior NUL bytes; docs/stdlib/modules/c.md
 fn std::c::from_string|check-prelude std-c-interop borrowed Ari string to CStr wrapper; docs/stdlib/modules/c.md
 fn std::c::function[T]|check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md
 fn std::c::global|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
@@ -146,9 +150,12 @@ fn std::c::last_error|check-prelude std-c-interop dynamic loader error view; doc
 fn std::c::lazy|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
 fn std::c::local|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
 fn std::c::main_program|check-prelude std-c-interop current process dynamic symbol handle; docs/stdlib/modules/c.md
+fn std::c::main_program_result|check-prelude std-c-interop Result-returning current process dynamic symbol handle; docs/stdlib/modules/c.md
 fn std::c::now|check-prelude std-c-interop dynamic loader flag helper; docs/stdlib/modules/c.md
 fn std::c::open|check-prelude std-c-interop dynamic library open wrapper; docs/stdlib/modules/c.md
+fn std::c::open_result|check-prelude std-c-interop Result-returning dynamic library open wrapper; docs/stdlib/modules/c.md
 fn std::c::symbol|check-prelude std-c-interop dynamic symbol lookup wrapper; docs/stdlib/modules/c.md
+fn std::c::symbol_result|check-prelude std-c-interop Result-returning dynamic symbol lookup wrapper; docs/stdlib/modules/c.md
 fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::clamp_by[T]|check-prelude std-cmp-by-helpers comparator-based clamping; docs/stdlib/modules/cmp.md
 fn std::cmp::compare[T: Ord[T]|check-prelude std-cmp-ordering generic three-way comparison; docs/stdlib/modules/cmp.md
@@ -207,15 +214,20 @@ fn std::convert::try_from[T, U: TryFrom[T]|std convert try helper tests; docs/st
 fn std::convert::try_into[T, U: TryInto[T]|std convert try helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
 fn std::encoding::base64_decoded_len|check-prelude std-encoding-codec standard base64 decoded length validator; docs/stdlib/modules/encoding.md
+fn std::encoding::base64_decoded_len_result|check-prelude std-encoding-codec Result-returning standard base64 decoded length validator; docs/stdlib/modules/encoding.md
 fn std::encoding::base64_encoded_len|check-prelude std-encoding-codec standard base64 encoded length helper; docs/stdlib/modules/encoding.md
 fn std::encoding::can_decode_base64|check-prelude std-encoding-codec standard base64 validation guard; docs/stdlib/modules/encoding.md
 fn std::encoding::can_decode_hex|check-prelude std-encoding-codec hexadecimal validation guard; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_base64_in|check-prelude std-encoding-codec standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_base64_result_in|check-prelude std-encoding-codec Result-returning standard base64 zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::decode_hex_in|check-prelude std-encoding-codec hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md
+fn std::encoding::decode_hex_result_in|check-prelude std-encoding-codec Result-returning hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_base64_in|check-prelude std-encoding-codec standard base64 zone-backed encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_hex_in|check-prelude std-encoding-codec lowercase hexadecimal zone-backed encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::encode_utf8_in|check-prelude std-encoding-utf8-codepoints UTF-8 scalar encoder; docs/stdlib/modules/encoding.md
+fn std::encoding::encode_utf8_result_in|check-prelude std-encoding-utf8-codepoints Result-returning UTF-8 scalar encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::hex_decoded_len|check-prelude std-encoding-codec hexadecimal decoded length validator; docs/stdlib/modules/encoding.md
+fn std::encoding::hex_decoded_len_result|check-prelude std-encoding-codec Result-returning hexadecimal decoded length validator; docs/stdlib/modules/encoding.md
 fn std::encoding::hex_encoded_len|check-prelude std-encoding-codec hexadecimal encoded length helper; docs/stdlib/modules/encoding.md
 fn std::encoding::is_ascii|check-prelude std-encoding-text ASCII byte-slice validation; docs/stdlib/modules/encoding.md
 fn std::encoding::is_unicode_scalar|check-prelude std-encoding-utf8-codepoints Unicode scalar value predicate; docs/stdlib/modules/encoding.md
@@ -225,30 +237,47 @@ fn std::encoding::try_decode_base64_in|check-prelude std-encoding-codec fallible
 fn std::encoding::try_decode_hex_in|check-prelude std-encoding-codec fallible hexadecimal zone-backed decoder; docs/stdlib/modules/encoding.md
 fn std::encoding::try_encode_utf8_in|check-prelude std-encoding-utf8-codepoints fallible UTF-8 scalar encoder; docs/stdlib/modules/encoding.md
 fn std::encoding::utf16_count|check-prelude std-encoding-text UTF-16 code-point count validator; docs/stdlib/modules/encoding.md
+fn std::encoding::utf16_count_result|check-prelude std-encoding-text Result-returning UTF-16 code-point count validator; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_at|check-prelude std-encoding-utf8-codepoints UTF-8 scalar decode at byte offset; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_count|check-prelude std-encoding-text UTF-8 code-point count validator; docs/stdlib/modules/encoding.md
+fn std::encoding::utf8_count_result|check-prelude std-encoding-text Result-returning UTF-8 code-point count validator; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_encoded_len|check-prelude std-encoding-utf8-codepoints UTF-8 scalar encoded length helper; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_error|check-prelude std-encoding-text detailed UTF-8 validation failure locator; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_next_index|check-prelude std-encoding-utf8-codepoints UTF-8 next byte offset helper; docs/stdlib/modules/encoding.md
 fn std::encoding::utf8_width|check-prelude std-encoding-utf8-codepoints UTF-8 lead-byte width helper; docs/stdlib/modules/encoding.md
 fn std::encoding::validate_utf8|check-prelude std-encoding-text alias for detailed UTF-8 validation; docs/stdlib/modules/encoding.md
+fn std::encoding::validate_utf8_result|check-prelude std-encoding-text Result-returning UTF-8 validation helper; docs/stdlib/modules/encoding.md
 fn std::env::arg|check-prelude std-env-args argument wrapper; docs/stdlib/modules/env.md
 fn std::env::arg_count|check-prelude std-env-args argument count wrapper; docs/stdlib/modules/env.md
 fn std::env::arg_os|check-prelude std-env-os-path-views OS-string argument view; docs/stdlib/modules/env.md
+fn std::env::arg_os_result|check-prelude std-env-args Result-returning OS-string argument helper; docs/stdlib/modules/env.md
+fn std::env::arg_result|check-prelude std-env-args Result-returning argument helper; docs/stdlib/modules/env.md
 fn std::env::current_dir|check-prelude std-env-paths current directory hook; docs/stdlib/modules/env.md
 fn std::env::current_dir_os|check-prelude std-env-os-path-views OS-string current directory view; docs/stdlib/modules/env.md
+fn std::env::current_dir_os_result|check-prelude std-env-paths Result-returning OS-string current directory helper; docs/stdlib/modules/env.md
 fn std::env::current_dir_path|check-prelude std-env-os-path-views path-byte current directory view; docs/stdlib/modules/env.md
+fn std::env::current_dir_path_result|check-prelude std-env-paths Result-returning path-byte current directory helper; docs/stdlib/modules/env.md
+fn std::env::current_dir_result|check-prelude std-env-paths Result-returning current directory helper; docs/stdlib/modules/env.md
 fn std::env::executable_path|check-prelude std-env-paths executable path hook; docs/stdlib/modules/env.md
 fn std::env::executable_path_os|check-prelude std-env-os-path-views OS-string executable path view; docs/stdlib/modules/env.md
+fn std::env::executable_path_os_result|check-prelude std-env-paths Result-returning OS-string executable path helper; docs/stdlib/modules/env.md
+fn std::env::executable_path_result|check-prelude std-env-paths Result-returning executable path helper; docs/stdlib/modules/env.md
 fn std::env::get|check-prelude std-env-vars environment variable lookup; docs/stdlib/modules/env.md
 fn std::env::get_os|check-prelude std-env-os-path-views OS-string environment variable lookup; docs/stdlib/modules/env.md
+fn std::env::get_os_result|check-prelude std-env-vars Result-returning OS-string environment variable helper; docs/stdlib/modules/env.md
+fn std::env::get_result|check-prelude std-env-vars Result-returning environment variable helper; docs/stdlib/modules/env.md
 fn std::env::has|check-prelude std-env-vars environment variable presence; docs/stdlib/modules/env.md
 fn std::env::has_arg|check-prelude std-env-args argument range helper; docs/stdlib/modules/env.md
 fn std::env::program_name|check-prelude std-env-args optional program name helper; docs/stdlib/modules/env.md
 fn std::env::program_name_os|check-prelude std-env-os-path-views optional OS-string program name helper; docs/stdlib/modules/env.md
+fn std::env::program_name_os_result|check-prelude std-env-args Result-returning OS-string program name helper; docs/stdlib/modules/env.md
+fn std::env::program_name_result|check-prelude std-env-args Result-returning program name helper; docs/stdlib/modules/env.md
 fn std::env::remove|check-prelude std-env-vars environment variable removal; docs/stdlib/modules/env.md
+fn std::env::remove_result|check-prelude std-env-vars Result-returning environment variable removal helper; docs/stdlib/modules/env.md
 fn std::env::set|check-prelude std-env-vars environment variable mutation; docs/stdlib/modules/env.md
 fn std::env::set_current_dir|check-prelude std-env-paths current directory mutation; docs/stdlib/modules/env.md
+fn std::env::set_current_dir_result|check-prelude std-env-paths Result-returning current directory mutation helper; docs/stdlib/modules/env.md
+fn std::env::set_result|check-prelude std-env-vars Result-returning environment variable mutation helper; docs/stdlib/modules/env.md
 fn std::env::try_arg|check-prelude std-env-args optional argument helper; docs/stdlib/modules/env.md
 fn std::env::try_arg_os|check-prelude std-env-os-path-views optional OS-string argument helper; docs/stdlib/modules/env.md
 fn std::env::try_current_dir|check-prelude std-env-paths optional current directory helper; docs/stdlib/modules/env.md
@@ -572,22 +601,28 @@ fn std::net::unix_listen|check-prelude std-net-unix-socket module-level Unix lis
 fn std::os::fd|check-prelude std-os-fd non-owning descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::invalid|check-prelude std-os-fd invalid descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::pipe|check-prelude std-os-pipe owned OS pipe descriptor pair constructor; docs/stdlib/modules/os.md
+fn std::os::pipe_result|check-prelude std-os-pipe Result-returning owned OS pipe descriptor pair constructor; docs/stdlib/modules/os.md
 fn std::os::stderr|check-prelude std-os-fd stderr descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::stdin|check-prelude std-os-fd stdin descriptor view constructor; docs/stdlib/modules/os.md
 fn std::os::stdout|check-prelude std-os-fd stdout descriptor view constructor; docs/stdlib/modules/os.md
 fn std::panic|prelude panic helpers; docs/dev/test-matrix.md Prelude row
 fn std::parse::binary_integer|check-prelude std-parse-basic signed binary integer parser; docs/stdlib/modules/parse.md
 fn std::parse::binary_integer_or|check-prelude std-parse-basic signed binary integer parser with fallback; docs/stdlib/modules/parse.md
+fn std::parse::binary_integer_result|check-prelude std-parse-basic Result-returning signed binary integer parser; docs/stdlib/modules/parse.md
 fn std::parse::boolean|check-prelude std-parse-basic ASCII-trimmed lowercase bool parser; docs/stdlib/modules/parse.md
 fn std::parse::boolean_or|check-prelude std-parse-basic lowercase bool parser with fallback; docs/stdlib/modules/parse.md
+fn std::parse::boolean_result|check-prelude std-parse-basic Result-returning lowercase bool parser; docs/stdlib/modules/parse.md
 fn std::parse::float|check-prelude std-parse-basic asserting decimal float parser; docs/stdlib/modules/parse.md
 fn std::parse::float_or|check-prelude std-parse-basic fallback decimal float parser; docs/stdlib/modules/parse.md
 fn std::parse::hex_integer|check-prelude std-parse-basic signed hexadecimal integer parser; docs/stdlib/modules/parse.md
 fn std::parse::hex_integer_or|check-prelude std-parse-basic signed hexadecimal integer parser with fallback; docs/stdlib/modules/parse.md
+fn std::parse::hex_integer_result|check-prelude std-parse-basic Result-returning signed hexadecimal integer parser; docs/stdlib/modules/parse.md
 fn std::parse::integer|check-prelude std-parse-basic ASCII-trimmed signed integer parser; docs/stdlib/modules/parse.md
 fn std::parse::integer_or|check-prelude std-parse-basic signed integer parser with fallback; docs/stdlib/modules/parse.md
 fn std::parse::integer_radix|check-prelude std-parse-basic signed radix integer parser; docs/stdlib/modules/parse.md
 fn std::parse::integer_radix_or|check-prelude std-parse-basic signed radix integer parser with fallback; docs/stdlib/modules/parse.md
+fn std::parse::integer_radix_result|check-prelude std-parse-basic Result-returning signed radix integer parser; docs/stdlib/modules/parse.md
+fn std::parse::integer_result|check-prelude std-parse-basic Result-returning signed integer parser; docs/stdlib/modules/parse.md
 fn std::parse::is_binary_integer|check-prelude std-parse-basic signed binary integer parser validator; docs/stdlib/modules/parse.md
 fn std::parse::is_boolean|check-prelude std-parse-basic lowercase bool parser validator; docs/stdlib/modules/parse.md
 fn std::parse::is_float|check-prelude std-parse-basic decimal float validator; docs/stdlib/modules/parse.md
@@ -600,12 +635,15 @@ fn std::parse::is_unsigned|check-prelude std-parse-basic unsigned integer parser
 fn std::parse::is_unsigned_radix|check-prelude std-parse-basic unsigned radix integer parser validator; docs/stdlib/modules/parse.md
 fn std::parse::octal_integer|check-prelude std-parse-basic signed octal integer parser; docs/stdlib/modules/parse.md
 fn std::parse::octal_integer_or|check-prelude std-parse-basic signed octal integer parser with fallback; docs/stdlib/modules/parse.md
+fn std::parse::octal_integer_result|check-prelude std-parse-basic Result-returning signed octal integer parser; docs/stdlib/modules/parse.md
 fn std::parse::parse[T: std::parse::Parse]|check-prelude std-parse-basic trait-backed typed parser dispatch; docs/stdlib/modules/parse.md
 fn std::parse::parse_or[T: std::parse::Parse]|check-prelude std-parse-basic trait-backed typed parser fallback dispatch; docs/stdlib/modules/parse.md
 fn std::parse::unsigned|check-prelude std-parse-basic unsigned decimal integer parser; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_or|check-prelude std-parse-basic unsigned decimal integer parser with fallback; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_radix|check-prelude std-parse-basic unsigned radix integer parser; docs/stdlib/modules/parse.md
 fn std::parse::unsigned_radix_or|check-prelude std-parse-basic unsigned radix integer parser with fallback; docs/stdlib/modules/parse.md
+fn std::parse::unsigned_radix_result|check-prelude std-parse-basic Result-returning unsigned radix integer parser; docs/stdlib/modules/parse.md
+fn std::parse::unsigned_result|check-prelude std-parse-basic Result-returning unsigned decimal integer parser; docs/stdlib/modules/parse.md
 fn std::path::bytes|check-prelude std-path-bytes typed borrowed path-byte view constructor; docs/stdlib/modules/path.md
 fn std::path::components|check-prelude std-path-components borrowed lexical component iterator; docs/stdlib/modules/path.md
 fn std::path::ends_with|check-prelude std-path-affixes component-aware suffix predicate; docs/stdlib/modules/path.md
@@ -635,9 +673,11 @@ fn std::process::arg|check-prelude std-process-command C-argv argument wrapper f
 fn std::process::command|check-prelude std-process-command natural Command constructor; docs/stdlib/modules/process.md
 fn std::process::command_with_args|check-prelude std-process-command Command constructor with argv slice; docs/stdlib/modules/process.md
 fn std::process::current_dir|check-prelude std-process-high-level process-facing current directory wrapper; docs/stdlib/modules/process.md
+fn std::process::current_dir_result|check-prelude std-process-basic Result-returning process-facing current directory wrapper; docs/stdlib/modules/process.md
 fn std::process::env_var|check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md
 fn std::process::exec|check-prelude std-process-command module-level Command exec wrapper returning Error; docs/stdlib/modules/process.md
 fn std::process::executable_path|check-prelude std-process-high-level process-facing executable path wrapper; docs/stdlib/modules/process.md
+fn std::process::executable_path_result|check-prelude std-process-basic Result-returning process-facing executable path wrapper; docs/stdlib/modules/process.md
 fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
 fn std::process::exit_code|check-prelude std-process-high-level typed exit code constructor; docs/stdlib/modules/process.md
 fn std::process::exit_status|check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md
@@ -1031,9 +1071,11 @@ method std::c::CString::as_slice|check-prelude std-c-interop owned bytes without
 method std::c::CString::is_empty|check-prelude std-c-interop owned C string empty predicate; docs/stdlib/modules/c.md
 method std::c::CString::len|check-prelude std-c-interop owned C string byte length; docs/stdlib/modules/c.md
 method std::c::Library::close|check-prelude std-c-interop dynamic library close method; docs/stdlib/modules/c.md
+method std::c::Library::close_result|check-prelude std-c-interop Result-returning dynamic library close method; docs/stdlib/modules/c.md
 method std::c::Library::invalid|check-prelude std-c-interop invalid dynamic library sentinel; docs/stdlib/modules/c.md
 method std::c::Library::is_open|check-prelude std-c-interop dynamic library validity predicate; docs/stdlib/modules/c.md
 method std::c::Library::symbol|check-prelude std-c-interop dynamic symbol lookup method; docs/stdlib/modules/c.md
+method std::c::Library::symbol_result|check-prelude std-c-interop Result-returning dynamic symbol lookup method; docs/stdlib/modules/c.md
 method std::c::Symbol::as_ptr|check-prelude std-c-interop dynamic symbol raw pointer accessor; docs/stdlib/modules/c.md
 method std::c::Symbol::function[T]|check-prelude std-c-dynamic-function typed dynamic function pointer extraction; docs/stdlib/modules/c.md
 method std::c::Symbol::invalid|check-prelude std-c-interop invalid dynamic symbol sentinel; docs/stdlib/modules/c.md
@@ -1623,19 +1665,28 @@ method std::os::Fd::raw|check-prelude std-os-fd raw descriptor accessor; docs/st
 method std::os::OwnedFd::as_fd|check-prelude std-os-owned-fd borrowed descriptor view from owned handle; docs/stdlib/modules/os.md
 method std::os::OwnedFd::close|check-prelude std-os-owned-fd explicit owned descriptor close and disarm helper; docs/stdlib/modules/os.md
 method std::os::OwnedFd::close_on_exec|check-prelude std-os-owned-fd-flags close-on-exec descriptor flag query; docs/stdlib/modules/os.md
+method std::os::OwnedFd::close_on_exec_result|check-prelude std-os-owned-fd direct Error close-on-exec descriptor flag query; docs/stdlib/modules/os.md
+method std::os::OwnedFd::close_result|check-prelude std-os-owned-fd direct Error owned descriptor close and disarm helper; docs/stdlib/modules/os.md
 method std::os::OwnedFd::from_raw|check-prelude std-os-owned-fd raw descriptor ownership handoff constructor; docs/stdlib/modules/os.md
 method std::os::OwnedFd::invalid|check-prelude std-os-owned-fd invalid owned descriptor constructor; docs/stdlib/modules/os.md
 method std::os::OwnedFd::is_closed|check-prelude std-os-owned-fd owned descriptor closed predicate; docs/stdlib/modules/os.md
 method std::os::OwnedFd::is_nonblocking|check-prelude std-os-owned-fd-nonblocking nonblocking descriptor flag query; docs/stdlib/modules/os.md
+method std::os::OwnedFd::is_nonblocking_result|check-prelude std-os-owned-fd direct Error nonblocking descriptor flag query; docs/stdlib/modules/os.md
 method std::os::OwnedFd::is_open|check-prelude std-os-owned-fd owned descriptor open predicate; docs/stdlib/modules/os.md
 method std::os::OwnedFd::raw|check-prelude std-os-owned-fd owned descriptor raw accessor; docs/stdlib/modules/os.md
 method std::os::OwnedFd::set_close_on_exec|check-prelude std-os-owned-fd-flags close-on-exec descriptor flag setter; docs/stdlib/modules/os.md
+method std::os::OwnedFd::set_close_on_exec_result|check-prelude std-os-owned-fd direct Error close-on-exec descriptor flag setter; docs/stdlib/modules/os.md
 method std::os::OwnedFd::set_nonblocking|check-prelude std-os-owned-fd-nonblocking nonblocking descriptor flag setter; docs/stdlib/modules/os.md
+method std::os::OwnedFd::set_nonblocking_result|check-prelude std-os-owned-fd direct Error nonblocking descriptor flag setter; docs/stdlib/modules/os.md
 method std::os::OwnedFd::take|check-prelude std-os-owned-fd disarming raw descriptor take helper; docs/stdlib/modules/os.md
 method std::os::OwnedFd::try_clone|check-prelude std-os-owned-fd-duplicate fallible owned descriptor duplication helper; docs/stdlib/modules/os.md
+method std::os::OwnedFd::try_clone_result|check-prelude std-os-owned-fd direct Error owned descriptor duplication helper; docs/stdlib/modules/os.md
 method std::os::Pipe::close|check-prelude std-os-pipe close both owned pipe ends; docs/stdlib/modules/os.md
 method std::os::Pipe::close_read_end|check-prelude std-os-pipe close owned pipe read end; docs/stdlib/modules/os.md
+method std::os::Pipe::close_read_end_result|check-prelude std-os-pipe Result-returning close of owned pipe read end; docs/stdlib/modules/os.md
+method std::os::Pipe::close_result|check-prelude std-os-pipe Result-returning close of both owned pipe ends; docs/stdlib/modules/os.md
 method std::os::Pipe::close_write_end|check-prelude std-os-pipe close owned pipe write end; docs/stdlib/modules/os.md
+method std::os::Pipe::close_write_end_result|check-prelude std-os-pipe Result-returning close of owned pipe write end; docs/stdlib/modules/os.md
 method std::os::Pipe::read_end|check-prelude std-os-pipe borrowed pipe read descriptor view; docs/stdlib/modules/os.md
 method std::os::Pipe::take_read_end|check-prelude std-os-pipe take pipe read end ownership; docs/stdlib/modules/os.md
 method std::os::Pipe::take_write_end|check-prelude std-os-pipe take pipe write end ownership; docs/stdlib/modules/os.md
@@ -2411,6 +2462,8 @@ trait-method std::parse::Parse::parse|check-prelude std-parse-basic typed parser
 trait-method std::parse::Parse::parse_or|check-prelude std-parse-basic typed parser fallback method; docs/stdlib/modules/parse.md
 trait-method std::zone::ZoneBacked::zone|std zone backed handle metadata tests; docs/stdlib/modules/zone.md
 type std::char|check-generics type-alias-char/no-implicit-std tests; docs/language/types.md Type Aliases section
+type std::env::Error|check-prelude std-env-vars shared environment error alias; docs/stdlib/modules/env.md
+type std::env::ErrorKind|check-prelude std-env-vars shared environment error-kind alias; docs/stdlib/modules/env.md
 type std::error::ErrorKind|check-prelude std-error-integration module-local alias for std::error::Kind; docs/stdlib/modules/error.md
 type std::fs::Error|check-prelude std-error-integration shared filesystem error alias; docs/stdlib/modules/fs.md
 type std::fs::ErrorKind|check-prelude std-error-integration shared filesystem error-kind alias; docs/stdlib/modules/fs.md

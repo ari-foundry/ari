@@ -26,6 +26,12 @@ fn check_hex(zone: ref mut Zone) -> bool {
   if encoding::hex_decoded_len(hex_text.as_slice()).unwrap_or(0) != 3 {
     return false;
   }
+  if encoding::hex_decoded_len_result(hex_text.as_slice()).unwrap_or(0) != 3 {
+    return false;
+  }
+  if encoding::hex_decoded_len_result(invalid_hex.as_slice()).is_ok() {
+    return false;
+  }
 
   var decoded = encoding::decode_hex_in(zone, hex_text.as_slice());
   if decoded.len() != 3 {
@@ -64,6 +70,26 @@ fn check_hex(zone: ref mut Zone) -> bool {
       return false;
     }
     std::None => {}
+  }
+  match encoding::decode_hex_result_in(zone, hex_text.as_slice()) {
+    std::Ok(hex_result_value) => {
+      if hex_result_value.len() != 3 || hex_result_value.get(0) != (65 as u8) {
+        return false;
+      }
+    }
+    std::Err(_) => {
+      return false;
+    }
+  }
+  match encoding::decode_hex_result_in(zone, invalid_hex.as_slice()) {
+    std::Ok(_) => {
+      return false;
+    }
+    std::Err(reason) => {
+      if !reason.is_kind(error::InvalidData) {
+        return false;
+      }
+    }
   }
   return true;
 }
@@ -116,6 +142,12 @@ fn check_base64(zone: ref mut Zone) -> bool {
   if encoding::base64_decoded_len(base64_m.as_slice()).unwrap_or(0) != 1 {
     return false;
   }
+  if encoding::base64_decoded_len_result(base64_m.as_slice()).unwrap_or(0) != 1 {
+    return false;
+  }
+  if encoding::base64_decoded_len_result(invalid_base64.as_slice()).is_ok() {
+    return false;
+  }
 
   var decoded_man = encoding::decode_base64_in(zone, base64_man.as_slice());
   var decoded_ma = encoding::decode_base64_in(zone, base64_ma.as_slice());
@@ -164,6 +196,26 @@ fn check_base64(zone: ref mut Zone) -> bool {
       return false;
     }
     std::None => {}
+  }
+  match encoding::decode_base64_result_in(zone, base64_ma.as_slice()) {
+    std::Ok(base64_result_value) => {
+      if base64_result_value.len() != 2 || base64_result_value.get(1) != (97 as u8) {
+        return false;
+      }
+    }
+    std::Err(_) => {
+      return false;
+    }
+  }
+  match encoding::decode_base64_result_in(zone, invalid_base64.as_slice()) {
+    std::Ok(_) => {
+      return false;
+    }
+    std::Err(reason) => {
+      if !reason.is_kind(error::InvalidData) {
+        return false;
+      }
+    }
   }
   return true;
 }

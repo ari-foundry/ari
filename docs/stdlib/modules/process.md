@@ -59,8 +59,10 @@ process::kill_signal(pid, signal)
 process::terminate(pid)
 process::current_dir()
 process::try_current_dir()
+process::current_dir_result()
 process::executable_path()
 process::try_executable_path()
+process::executable_path_result()
 process::temp_file(zone)
 process::temp_file_in(zone, prefix)
 process::temp_dir(zone)
@@ -222,9 +224,12 @@ endpoint types used by process IO. Full streaming `spawn` redirection is still
 future work, but these names let API users and future stdlib code share the
 right handle vocabulary now.
 
-`current_dir`, `try_current_dir`, `executable_path`, and
-`try_executable_path` delegate to `std::env` so process-oriented code can stay
-inside `std::process` when it needs runtime path introspection.
+`current_dir`, `try_current_dir`, `current_dir_result`, `executable_path`,
+`try_executable_path`, and `executable_path_result` delegate to `std::env` so
+process-oriented code can stay inside `std::process` when it needs runtime path
+introspection. The `_result` variants preserve `std::error::Error` detail:
+host runtime failures are reported as `Error(Other)` instead of being collapsed
+to an empty string or `Option::None`.
 
 `temp_file(zone)` and `temp_dir(zone)` create unique paths under `/tmp` on the
 current hosted backend. The `_in` variants accept a path prefix. Temp paths are
@@ -437,7 +442,8 @@ the programs. The abort fixture compiles and runs only a non-aborting path while
 checking that the abort hook lowers to the host `abort` declaration. The command
 fixture covers argument passing, environment setup, working-directory setup,
 method and module-level `status`/`spawn`, module-level `exit_status`,
-`Child::wait`, and non-destructive `kill(0)`. The typed-status fixture covers
+`Child::wait`, non-destructive `kill(0)`, and the env-backed Result path
+wrappers. The typed-status fixture covers
 `ExitStatus`, `Command::exit_status`, `Child::wait_status`, normal exit codes,
 and signal termination. The output fixture covers method and module-level small
 stdout/stderr capture, exit status accessors, and missing command status `127`.

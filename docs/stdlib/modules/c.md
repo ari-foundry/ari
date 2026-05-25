@@ -49,8 +49,11 @@ std::c::Symbol
 
 c::from_string(text: string) -> CStr
 c::from_ptr(data: ptr c_char) -> CStr
+c::from_ptr_result(data: ptr c_char) -> Result[CStr, std::error::Error]
 c::from_slice_in(zone: ref mut Zone, bytes: Slice[u8]) -> CString
+c::from_slice_result_in(zone: ref mut Zone, bytes: Slice[u8]) -> Result[CString, std::error::Error]
 c::from_cstr_in(zone: ref mut Zone, value: CStr) -> CString
+c::from_cstr_result_in(zone: ref mut Zone, value: CStr) -> Result[CString, std::error::Error]
 c::is_null(value: ptr c_void) -> bool
 
 c::errno() -> i64
@@ -61,10 +64,14 @@ c::now() -> i64
 c::local() -> i64
 c::global() -> i64
 c::open(path: CStr, flags: i64) -> Library
+c::open_result(path: CStr, flags: i64) -> Result[Library, std::error::Error]
 c::main_program(flags: i64) -> Library
+c::main_program_result(flags: i64) -> Result[Library, std::error::Error]
 c::symbol(library: ref Library, name: CStr) -> Symbol
+c::symbol_result(library: ref Library, name: CStr) -> Result[Symbol, std::error::Error]
 c::function[T](symbol: ref Symbol) -> T
 c::close(library: ref mut Library) -> bool
+c::close_result(library: ref mut Library) -> Result[(), std::error::Error]
 c::last_error() -> CStr
 ```
 
@@ -99,16 +106,26 @@ not included because normal Ari `Slice[u8]` APIs expect a length, not a
 sentinel. When a `CStr` is the expected type, a string literal can coerce
 directly to that borrowed C string view; use `c::from_string(text)` when the
 conversion should be visually explicit.
+`from_ptr(data)` asserts that the pointer is non-null; use
+`from_ptr_result(data)` for C APIs where null is an ordinary failure result.
+The result form returns `Error(InvalidInput)` for null.
 
 `CString` is a zone-backed owned C string buffer. It copies a byte slice,
 asserts that the input has no interior NUL byte, appends one trailing NUL, and
 keeps the logical length without that terminator.
+`from_slice_result_in` and `from_cstr_result_in` are the non-asserting
+constructors. They return `Error(InvalidInput)` when an owned byte slice would
+contain an interior NUL.
 
 ```ari
 fn copy_name(zone: ref mut Zone, bytes: Slice[u8]) -> CString {
   let owned = c::from_slice_in(zone, bytes);
   assert(owned.as_bytes_with_nul()[owned.len()] == 0u8);
   return owned;
+}
+
+fn try_copy_name(zone: ref mut Zone, bytes: Slice[u8]) -> Result[CString, Error] {
+  return c::from_slice_result_in(zone, bytes);
 }
 ```
 
@@ -225,6 +242,12 @@ for symbols in the main program image. `Library::invalid()` and
 `Symbol::invalid()` are explicit sentinels for code that needs a default value.
 `Symbol.as_ptr()` is still available when a binding needs a raw address instead
 of a callable function pointer.
+`open_result`, `main_program_result`, `symbol_result`, and
+`Library::symbol_result` convert loader null sentinels into `Error(Other)`.
+Use `last_error()` after a loader failure when the platform string is useful
+for diagnostics. `close_result` and `Library::close_result` return `Ok(())`
+for an already-closed handle, so library close is idempotent at the Ari wrapper
+level.
 
 ## Null Pointers
 
@@ -236,18 +259,17 @@ let raw: ptr c_void = null;
 assert(c::is_null(raw));
 ```
 
-`CStr::from_ptr` rejects null pointers with `assert`. Use a nullable raw
-pointer and branch before constructing `CStr` when null is an ordinary C
-result.
+`c::from_ptr` rejects null pointers with `assert`. Use
+`c::from_ptr_result` when null is an ordinary C result and the caller wants a
+recoverable `Error(InvalidInput)` branch.
 
 ## Roadmap
 
-- Add a fallible `Result`-based C string constructor once `Result[T, Error]`
-  can carry richer payloads naturally.
 - Add explicit, documented FFI escape rules for passing zone-backed `CString`
   storage to imported C calls.
 - Add richer dynamic-symbol wrappers for non-function data symbols and for
-  APIs that want `Option`/`Result` instead of sentinel values.
+  APIs that need loader-specific error payloads beyond the current shared
+  `Error(Other)` category.
 - Move OS-specific descriptor, syscall, signal, mmap, and socket wrappers into
   `std::os` or the appropriate portable modules rather than expanding
   `std::c` into a broad libc surface.
@@ -262,7 +284,8 @@ tests/cases/standard-library/ok/c/std-c-dynamic-function.ari
 ```
 
 The focused tests cover borrowed C string views, owned NUL-terminated
-`CString` storage, C ABI aliases through imported libc calls, POSIX `errno`
-mapping, dynamic loading through `dlopen`/`dlsym`/`dlclose`, typed dynamic
-function-pointer extraction, indirect calls through resolved C functions, and
-LLVM symbol checks for the hosted C loader functions.
+`CString` storage, Result-returning C string boundary constructors, C ABI
+aliases through imported libc calls, POSIX `errno` mapping, dynamic loading
+through `dlopen`/`dlsym`/`dlclose`, Result-returning loader wrappers, typed
+dynamic function-pointer extraction, indirect calls through resolved C
+functions, and LLVM symbol checks for the hosted C loader functions.

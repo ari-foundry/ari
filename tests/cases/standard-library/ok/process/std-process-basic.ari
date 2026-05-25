@@ -18,6 +18,8 @@ fn main() -> i64 {
   if process::is_failure(9) {
     score = score + 17;
   }
+  assert(process::current_dir_result().is_ok());
+  assert(process::executable_path_result().is_ok());
 
   return score;
 }

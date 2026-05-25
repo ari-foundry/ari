@@ -28,6 +28,14 @@ extern "ari" fn nonblocking_raw(raw: i64) -> i64 = "ari_builtin_os_nonblocking";
 extern "ari" fn set_nonblocking_raw(raw: i64, enabled: bool) -> bool = "ari_builtin_os_set_nonblocking";
 extern "ari" fn pipe_raw() -> i64 = "ari_builtin_os_pipe";
 
+fn invalid_input_error() -> std::error::Error {
+  return std::error::new(std::error::InvalidInput);
+}
+
+fn other_error() -> std::error::Error {
+  return std::error::new(std::error::Other);
+}
+
 pub fn fd(raw: i64) -> std::os::Fd {
   return std::os::Fd { raw_value: raw };
 }
@@ -49,15 +57,19 @@ pub fn stderr() -> std::os::Fd {
 }
 
 pub fn pipe() -> std::Option[std::os::Pipe] {
+  return pipe_result().ok();
+}
+
+pub fn pipe_result() -> std::Result[std::os::Pipe, std::error::Error] {
   let packed = pipe_raw();
   if packed < 0 {
-    return std::None<std::os::Pipe>();
+    return std::Err<std::os::Pipe, std::error::Error>(other_error());
   }
 
   let low_word_mask = 4294967295;
   let read_raw = packed & low_word_mask;
   let write_raw = packed >> 32;
-  return std::Some<std::os::Pipe>(std::os::Pipe {
+  return std::Ok<std::os::Pipe, std::error::Error>(std::os::Pipe {
     read_handle: std::os::OwnedFd::from_raw(read_raw),
     write_handle: std::os::OwnedFd::from_raw(write_raw),
   });
@@ -117,22 +129,50 @@ pub impl std::os::Pipe {
   }
 
   fn close_read_end(self: ref mut Self) -> bool {
-    return self.read_handle.close();
+    return self.close_read_end_result().is_ok();
+  }
+
+  fn close_read_end_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.read_handle.close_result();
   }
 
   fn close_write_end(self: ref mut Self) -> bool {
-    return self.write_handle.close();
+    return self.close_write_end_result().is_ok();
+  }
+
+  fn close_write_end_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
+    return self.write_handle.close_result();
   }
 
   fn close(self: ref mut Self) -> bool {
+    return self.close_result().is_ok();
+  }
+
+  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
     var ok = true;
+    var reason = other_error();
     if self.read_handle.is_open() {
-      ok = self.read_handle.close() && ok;
+      match self.read_handle.close_result() {
+        std::Ok(_) => {}
+        std::Err(read_close_error) => {
+          reason = read_close_error;
+          ok = false;
+        }
+      }
     }
     if self.write_handle.is_open() {
-      ok = self.write_handle.close() && ok;
+      match self.write_handle.close_result() {
+        std::Ok(_) => {}
+        std::Err(write_close_error) => {
+          reason = write_close_error;
+          ok = false;
+        }
+      }
     }
-    return ok;
+    if ok {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(reason);
   }
 }
 
@@ -168,64 +208,97 @@ pub impl std::os::OwnedFd {
   }
 
   fn try_clone(self: ref Self) -> std::Option[std::os::OwnedFd] {
+    return self.try_clone_result().ok();
+  }
+
+  fn try_clone_result(self: ref Self) -> std::Result[std::os::OwnedFd, std::error::Error] {
     if self.is_closed() {
-      return std::None<std::os::OwnedFd>();
+      return std::Err<std::os::OwnedFd, std::error::Error>(invalid_input_error());
     }
 
     let raw = duplicate_raw(self.raw_value);
     if raw < 0 {
-      return std::None<std::os::OwnedFd>();
+      return std::Err<std::os::OwnedFd, std::error::Error>(other_error());
     }
-    return std::Some<std::os::OwnedFd>(std::os::OwnedFd::from_raw(raw));
+    return std::Ok<std::os::OwnedFd, std::error::Error>(std::os::OwnedFd::from_raw(raw));
   }
 
   fn close_on_exec(self: ref Self) -> std::Option[bool] {
+    return self.close_on_exec_result().ok();
+  }
+
+  fn close_on_exec_result(self: ref Self) -> std::Result[bool, std::error::Error] {
     if self.is_closed() {
-      return std::None<bool>();
+      return std::Err<bool, std::error::Error>(invalid_input_error());
     }
 
     let state = close_on_exec_raw(self.raw_value);
     if state < 0 {
-      return std::None<bool>();
+      return std::Err<bool, std::error::Error>(other_error());
     }
-    return std::Some<bool>(state != 0);
+    return std::Ok<bool, std::error::Error>(state != 0);
   }
 
   fn set_close_on_exec(self: ref Self, enabled: bool) -> bool {
+    return self.set_close_on_exec_result(enabled).is_ok();
+  }
+
+  fn set_close_on_exec_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     if self.is_closed() {
-      return false;
+      return std::Err<(), std::error::Error>(invalid_input_error());
     }
-    return set_close_on_exec_raw(self.raw_value, enabled);
+    if set_close_on_exec_raw(self.raw_value, enabled) {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(other_error());
   }
 
   fn is_nonblocking(self: ref Self) -> std::Option[bool] {
+    return self.is_nonblocking_result().ok();
+  }
+
+  fn is_nonblocking_result(self: ref Self) -> std::Result[bool, std::error::Error] {
     if self.is_closed() {
-      return std::None<bool>();
+      return std::Err<bool, std::error::Error>(invalid_input_error());
     }
 
     let state = nonblocking_raw(self.raw_value);
     if state < 0 {
-      return std::None<bool>();
+      return std::Err<bool, std::error::Error>(other_error());
     }
-    return std::Some<bool>(state != 0);
+    return std::Ok<bool, std::error::Error>(state != 0);
   }
 
   fn set_nonblocking(self: ref Self, enabled: bool) -> bool {
+    return self.set_nonblocking_result(enabled).is_ok();
+  }
+
+  fn set_nonblocking_result(self: ref Self, enabled: bool) -> std::Result[(), std::error::Error] {
     if self.is_closed() {
-      return false;
+      return std::Err<(), std::error::Error>(invalid_input_error());
     }
-    return set_nonblocking_raw(self.raw_value, enabled);
+    if set_nonblocking_raw(self.raw_value, enabled) {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(other_error());
   }
 
   fn close(self: ref mut Self) -> bool {
+    return self.close_result().is_ok();
+  }
+
+  fn close_result(self: ref mut Self) -> std::Result[(), std::error::Error] {
     if self.is_closed() {
-      return false;
+      return std::Err<(), std::error::Error>(invalid_input_error());
     }
 
     // Disarm before calling close so the same OwnedFd cannot close twice even
     // if the platform reports a close error.
     let raw = self.raw_value;
     self.raw_value = -1;
-    return close_raw(raw);
+    if close_raw(raw) {
+      return std::Ok<(), std::error::Error>(());
+    }
+    return std::Err<(), std::error::Error>(other_error());
   }
 }

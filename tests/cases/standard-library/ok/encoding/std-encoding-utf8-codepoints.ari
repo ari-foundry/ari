@@ -98,11 +98,28 @@ fn main() -> i64 {
     }
     std::None => {}
   }
+  match encoding::encode_utf8_result_in(ref mut zone, 128512u32) {
+    std::Ok(smile_result) => {
+      assert(smile_result.len() == 4);
+      assert(smile_result.get(0) == 240u8);
+    }
+    std::Err(_) => {
+      panic();
+    }
+  }
 
   match encoding::try_encode_utf8_in(ref mut zone, 55296u32) {
     std::Some(_) => {}
     std::None => {
       score = score + 1;
+    }
+  }
+  match encoding::encode_utf8_result_in(ref mut zone, 55296u32) {
+    std::Ok(_) => {
+      panic();
+    }
+    std::Err(reason) => {
+      assert(reason.is_kind(error::InvalidData));
     }
   }
 

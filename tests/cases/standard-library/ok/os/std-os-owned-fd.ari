@@ -23,9 +23,23 @@ fn main() -> i64 {
   if !invalid.close() && invalid.is_closed() {
     score = score + 16;
   }
+  match invalid.close_result() {
+    Ok(_) => {
+      panic();
+    }
+    Err(reason) => {
+      assert(reason.is_kind(error::InvalidInput));
+    }
+  }
+  assert(invalid.try_clone_result().is_err());
+  assert(invalid.close_on_exec_result().is_err());
+  assert(invalid.set_close_on_exec_result(true).is_err());
+  assert(invalid.is_nonblocking_result().is_err());
+  assert(invalid.set_nonblocking_result(true).is_err());
   if owned.close() && owned.is_closed() {
     score = score + 32;
   }
+  assert(owned.close_result().is_err());
   if !owned.close() {
     score = score + 64;
   }

@@ -31,19 +31,42 @@ fn main() -> i64 {
   assert(parse::integer_radix_or("bad", 10, 6) == 6);
   assert(parse::integer_radix("10", 1).is_none());
   assert(parse::integer_radix("2", 2).is_none());
+  assert(parse::integer_result("123").unwrap_or(0) == 123);
+  match parse::integer_result("12x") {
+    Ok(_) => { panic(); }
+    Err(integer_reason) => {
+      assert(integer_reason.is_kind(error::InvalidData));
+    }
+  }
+  match parse::integer_radix_result("10", 1) {
+    Ok(_) => { panic(); }
+    Err(radix_reason) => {
+      assert(radix_reason.is_kind(error::InvalidInput));
+    }
+  }
+  assert(parse::unsigned_result("+42").unwrap_or(0u64) == 42u64);
+  match parse::unsigned_radix_result("2", 2) {
+    Ok(_) => { panic(); }
+    Err(unsigned_reason) => {
+      assert(unsigned_reason.is_kind(error::InvalidData));
+    }
+  }
   assert(parse::hex_integer("ff").unwrap_or(0) == 255);
   assert(parse::hex_integer("-F").unwrap_or(0) == -15);
   assert(parse::hex_integer_or("gg", 7) == 7);
+  assert(parse::hex_integer_result("ff").unwrap_or(0) == 255);
   assert(parse::is_hex_integer("Ab"));
   assert(parse::hex_integer("7fffffffffffffff").unwrap_or(0) == max);
   assert(parse::hex_integer("-8000000000000000").unwrap_or(0) == min);
   assert(parse::hex_integer("8000000000000000").is_none());
   assert(parse::binary_integer("1010").unwrap_or(0) == 10);
   assert(parse::binary_integer_or("102", 4) == 4);
+  assert(parse::binary_integer_result("1010").unwrap_or(0) == 10);
   assert(!parse::is_binary_integer("102"));
   assert(parse::octal_integer("755").unwrap_or(0) == 493);
   assert(parse::octal_integer("-10").unwrap_or(0) == -8);
   assert(parse::octal_integer_or("778", 12) == 12);
+  assert(parse::octal_integer_result("755").unwrap_or(0) == 493);
   assert(parse::is_octal_integer("17"));
   assert(!parse::is_octal_integer("18"));
   match parse::integer(invalid_integer.as_slice()) {
@@ -60,6 +83,13 @@ fn main() -> i64 {
   assert(!parse::is_boolean("True"));
   assert(parse::boolean_or("false", true) == false);
   assert(parse::boolean_or("missing", true));
+  assert(parse::boolean_result("true").unwrap_or(false));
+  match parse::boolean_result("True") {
+    Ok(_) => { panic(); }
+    Err(boolean_reason) => {
+      assert(boolean_reason.is_kind(error::InvalidData));
+    }
+  }
   match parse::boolean(invalid_bool.as_slice()) {
     std::Some(_) => { panic(); }
     std::None => {}

@@ -59,6 +59,14 @@ fn radix_digit_value(value: char, radix: i64) -> std::Option[i64] {
   return std::None<i64>();
 }
 
+fn invalid_input_error() -> std::error::Error {
+  return std::error::new(std::error::InvalidInput);
+}
+
+fn invalid_data_error() -> std::error::Error {
+  return std::error::new(std::error::InvalidData);
+}
+
 pub trait Parse {
   fn parse(values: std::Slice[u8]) -> Self;
   fn parse_or(values: std::Slice[u8], fallback: Self) -> Self;
@@ -126,6 +134,20 @@ pub fn integer_radix(values: std::Slice[u8], radix: i64) -> std::Option[i64] {
   return std::Some<i64>(result as i64);
 }
 
+pub fn integer_radix_result(values: std::Slice[u8], radix: i64) -> std::Result[i64, std::error::Error] {
+  if radix < 2 || radix > 36 {
+    return std::Err<i64, std::error::Error>(invalid_input_error());
+  }
+  match integer_radix(values, radix) {
+    std::Some(value) => {
+      return std::Ok<i64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<i64, std::error::Error>(invalid_data_error());
+    }
+  }
+}
+
 pub fn unsigned_radix(values: std::Slice[u8], radix: i64) -> std::Option[u64] {
   let input = std::ascii::trim(values);
   if input.len == 0 {
@@ -165,6 +187,20 @@ pub fn unsigned_radix(values: std::Slice[u8], radix: i64) -> std::Option[u64] {
     index = index + 1;
   }
   return std::Some<u64>(result);
+}
+
+pub fn unsigned_radix_result(values: std::Slice[u8], radix: i64) -> std::Result[u64, std::error::Error] {
+  if radix < 2 || radix > 36 {
+    return std::Err<u64, std::error::Error>(invalid_input_error());
+  }
+  match unsigned_radix(values, radix) {
+    std::Some(value) => {
+      return std::Ok<u64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<u64, std::error::Error>(invalid_data_error());
+    }
+  }
 }
 
 pub fn is_unsigned_radix(values: std::Slice[u8], radix: i64) -> bool {
@@ -215,6 +251,10 @@ pub fn integer(values: std::Slice[u8]) -> std::Option[i64] {
   return integer_radix(values, 10);
 }
 
+pub fn integer_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return integer_radix_result(values, 10);
+}
+
 pub fn is_integer(values: std::Slice[u8]) -> bool {
   match integer(values) {
     std::Some(_) => {
@@ -239,6 +279,10 @@ pub fn integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
 
 pub fn unsigned(values: std::Slice[u8]) -> std::Option[u64] {
   return unsigned_radix(values, 10);
+}
+
+pub fn unsigned_result(values: std::Slice[u8]) -> std::Result[u64, std::error::Error] {
+  return unsigned_radix_result(values, 10);
 }
 
 pub fn is_unsigned(values: std::Slice[u8]) -> bool {
@@ -267,6 +311,10 @@ pub fn hex_integer(values: std::Slice[u8]) -> std::Option[i64] {
   return integer_radix(values, 16);
 }
 
+pub fn hex_integer_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return integer_radix_result(values, 16);
+}
+
 pub fn is_hex_integer(values: std::Slice[u8]) -> bool {
   return is_integer_radix(values, 16);
 }
@@ -279,6 +327,10 @@ pub fn binary_integer(values: std::Slice[u8]) -> std::Option[i64] {
   return integer_radix(values, 2);
 }
 
+pub fn binary_integer_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return integer_radix_result(values, 2);
+}
+
 pub fn is_binary_integer(values: std::Slice[u8]) -> bool {
   return is_integer_radix(values, 2);
 }
@@ -289,6 +341,10 @@ pub fn binary_integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
 
 pub fn octal_integer(values: std::Slice[u8]) -> std::Option[i64] {
   return integer_radix(values, 8);
+}
+
+pub fn octal_integer_result(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return integer_radix_result(values, 8);
 }
 
 pub fn is_octal_integer(values: std::Slice[u8]) -> bool {
@@ -311,6 +367,17 @@ pub fn boolean(values: std::Slice[u8]) -> std::Option[bool] {
     return std::Some<bool>(false);
   }
   return std::None<bool>();
+}
+
+pub fn boolean_result(values: std::Slice[u8]) -> std::Result[bool, std::error::Error] {
+  match boolean(values) {
+    std::Some(value) => {
+      return std::Ok<bool, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<bool, std::error::Error>(invalid_data_error());
+    }
+  }
 }
 
 pub fn is_boolean(values: std::Slice[u8]) -> bool {
