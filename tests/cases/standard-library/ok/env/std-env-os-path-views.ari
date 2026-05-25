@@ -32,13 +32,17 @@ fn main() -> i64 {
   let program = env::program_name_os();
   assert(program.is_some());
 
-  let cwd_os = env::current_dir_os();
+  let cwd_os = env::current_dir_os().unwrap();
   assert(!cwd_os.is_empty());
   assert(cwd_os.is_utf8());
+  assert(!env::current_dir_os_or_default().is_empty());
+  assert(env::current_dir_os_optional().is_some());
 
-  let cwd_path = env::current_dir_path();
+  let cwd_path = env::current_dir_path().unwrap();
   assert(!cwd_path.is_empty());
   assert(cwd_path.is_absolute());
+  assert(env::current_dir_path_or_default().is_absolute());
+  assert(env::current_dir_path_optional().is_some());
 
   let maybe_cwd_os = env::try_current_dir_os();
   assert(maybe_cwd_os.is_some());
@@ -47,8 +51,10 @@ fn main() -> i64 {
   let unwrapped_cwd_path = maybe_cwd_path.unwrap();
   assert(unwrapped_cwd_path.is_absolute());
 
-  let exe_os = env::executable_path_os();
+  let exe_os = env::executable_path_os().unwrap();
   assert(!exe_os.is_empty());
+  assert(!env::executable_path_os_or_default().is_empty());
+  assert(env::executable_path_os_optional().is_some());
   let exe_path = std::path::from_os(exe_os);
   assert(!exe_path.is_empty());
   let maybe_exe_os = env::try_executable_path_os();

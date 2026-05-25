@@ -13,11 +13,11 @@ helpers that discard error detail are named explicitly: `try_get`,
 `try_get_os`, `get_or_default`, `get_os_or_default`, `set_unchecked`, and
 `remove_unchecked`.
 
-Argument and process-path helpers still include transitional `*_result` names
-because their natural names are tied to long-standing runtime hooks. The final
-direction remains the same across the module: natural fallible names return
-`Result`, while `_optional`, `_or`, `_or_default`, `_raw`, or `_unchecked`
-names opt into information-discarding or boundary behavior.
+Argument helpers still include transitional `*_result` names because their
+natural names are tied to long-standing startup-context hooks. Process-path
+helpers now follow the default stdlib error model: natural fallible names return
+`Result`, while `_optional`, `_or_default`, `_raw`, or `_unchecked` names opt
+into information-discarding or boundary behavior.
 
 Use `std::env` from application code when you want friendly arguments,
 environment variables, or current process path state. Use `std::context` when
@@ -51,23 +51,31 @@ env::set(name: string, value: string) -> Result[(), env::Error]
 env::set_unchecked(name: string, value: string) -> bool
 env::remove(name: string) -> Result[(), env::Error]
 env::remove_unchecked(name: string) -> bool
-env::current_dir() -> string
+env::current_dir() -> Result[string, env::Error]
+env::current_dir_or_default() -> string
+env::current_dir_optional() -> Option[string]
 env::try_current_dir() -> Option[string]
-env::current_dir_result() -> Result[string, env::Error]
-env::current_dir_os() -> std::string::OsStr
+env::current_dir_raw() -> string
+env::current_dir_os() -> Result[std::string::OsStr, env::Error]
+env::current_dir_os_or_default() -> std::string::OsStr
+env::current_dir_os_optional() -> Option[std::string::OsStr]
 env::try_current_dir_os() -> Option[std::string::OsStr]
-env::current_dir_os_result() -> Result[std::string::OsStr, env::Error]
-env::current_dir_path() -> std::path::PathBytes
+env::current_dir_path() -> Result[std::path::PathBytes, env::Error]
+env::current_dir_path_or_default() -> std::path::PathBytes
+env::current_dir_path_optional() -> Option[std::path::PathBytes]
 env::try_current_dir_path() -> Option[std::path::PathBytes]
-env::current_dir_path_result() -> Result[std::path::PathBytes, env::Error]
-env::set_current_dir(path: string) -> bool
-env::set_current_dir_result(path: string) -> Result[(), env::Error]
-env::executable_path() -> string
+env::set_current_dir(path: string) -> Result[(), env::Error]
+env::set_current_dir_raw(path: string) -> bool
+env::set_current_dir_unchecked(path: string) -> bool
+env::executable_path() -> Result[string, env::Error]
+env::executable_path_or_default() -> string
+env::executable_path_optional() -> Option[string]
 env::try_executable_path() -> Option[string]
-env::executable_path_result() -> Result[string, env::Error]
-env::executable_path_os() -> std::string::OsStr
+env::executable_path_raw() -> string
+env::executable_path_os() -> Result[std::string::OsStr, env::Error]
+env::executable_path_os_or_default() -> std::string::OsStr
+env::executable_path_os_optional() -> Option[std::string::OsStr]
 env::try_executable_path_os() -> Option[std::string::OsStr]
-env::executable_path_os_result() -> Result[std::string::OsStr, env::Error]
 ```
 
 `arg_count()` returns the number of host arguments.
@@ -123,45 +131,42 @@ shell profile or global system environment. `set_unchecked` and
 host mutations become `Error(Other)` because the runtime bool hook does not
 yet expose a platform errno payload.
 
-`current_dir()` returns the process current working directory as a borrowed
-lowercase Ari `string`. It returns an empty string if the host cannot provide
-one. `try_current_dir()` is the preferred accessor when failure is an ordinary
-branch.
-`current_dir_result()` returns `Err(Error(Other))` for that same runtime
-failure sentinel.
+`current_dir()` returns the process current working directory as
+`Result[string, Error]`. The success string is borrowed from a runtime buffer.
+`current_dir_or_default()` is the compatibility helper for older code that
+wants an empty string when the host cannot provide one, and
+`current_dir_optional()` / `try_current_dir()` keep only the optional success
+payload. `current_dir_raw()` exposes the runtime hook directly and should be
+used only at boundary or compatibility sites.
 
-`current_dir_os()` and `try_current_dir_os()` expose the current directory as
-`std::string::OsStr`. `current_dir_path()` and `try_current_dir_path()` expose
-the same borrowed bytes as `std::path::PathBytes`, which is the preferred form
-for lexical path operations such as `is_absolute`, `components`, `file_name`,
-or `normalize_in`.
-`current_dir_os_result()` and `current_dir_path_result()` keep the same borrowed
-view policy while preserving the failure branch as `Result`.
+`current_dir_os()` and `current_dir_path()` use the same `Result` policy for
+`std::string::OsStr` and `std::path::PathBytes` views. `PathBytes` is the
+preferred form for lexical path operations such as `is_absolute`, `components`,
+`file_name`, or `normalize_in`. `_or_default` and `_optional` variants discard
+the `Error` detail explicitly; the `try_*` names are compatibility aliases for
+the optional forms.
 
 `set_current_dir(path)` changes the current process working directory and
-returns whether the host accepted the request. This is process-local state:
-later relative paths in this process will observe the change, and child
-processes spawned later should inherit it.
-`set_current_dir_result(path)` returns `Ok(())` on success and `Error(Other)`
-when the current runtime rejects the change.
+returns `Ok(())` when the host accepts the request. This is process-local
+state: later relative paths in this process will observe the change, and child
+processes spawned later should inherit it. `set_current_dir_unchecked(path)` and
+`set_current_dir_raw(path)` keep the older boolean compatibility shape.
 
 `std::context::cwd()` is different: it is the working-directory snapshot taken
 before source `main` runs, so it stays stable even if `set_current_dir(path)`
 later succeeds.
 
-`executable_path()` returns the host path to the running executable when the
-platform can provide it. On the current Linux backend this uses
-`/proc/self/exe`. It returns an empty string if the path cannot be read or does
-not fit the runtime buffer. `try_executable_path()` wraps that policy in
-`Option[string]`.
-`executable_path_result()` returns `Err(Error(Other))` for the same failure
-sentinel.
+`executable_path()` returns the host path to the running executable as
+`Result[string, Error]` when the platform can provide it. On the current Linux
+backend this uses `/proc/self/exe`. If the path cannot be read or does not fit
+the runtime buffer, it returns `Err(Error(Other))`. `executable_path_or_default`
+keeps the older empty-string behavior, and `executable_path_optional()` /
+`try_executable_path()` keep only the optional success payload.
 
-`executable_path_os()` and `try_executable_path_os()` expose the executable
-path as `std::string::OsStr`. Convert that value with `std::path::from_os`
-when the next operation is path manipulation.
-`executable_path_os_result()` is the `Result` form for code that wants to keep
-path lookup failures explicit.
+`executable_path_os()` exposes the executable path as `Result[OsStr, Error]`.
+Convert the `Ok` value with `std::path::from_os` when the next operation is path
+manipulation. `executable_path_os_or_default()` and
+`executable_path_os_optional()` are the explicit information-discarding forms.
 
 ## Example
 
@@ -220,31 +225,29 @@ Current directory and executable path:
 
 ```ari
 fn main() -> i64 {
-  let cwd = env::try_current_dir();
-  if cwd.is_some() {
-    println("cwd={}", cwd.unwrap());
-  }
+  match env::current_dir() {
+    Ok(cwd) => {
+      println("cwd={}", cwd);
 
-  let cwd_path = env::try_current_dir_path();
-  if cwd_path.is_some() {
-    let path = cwd_path.unwrap();
-    if path.is_absolute() {
-      println("cwd is absolute");
+      if env::set_current_dir(cwd).is_ok() {
+        println("cwd unchanged");
+      }
     }
-  }
-
-  if env::set_current_dir(env::current_dir()) {
-    println("cwd unchanged");
-  }
-
-  match env::current_dir_result() {
-    Ok(path) => println("cwd={}", path),
     Err(_) => println("cwd unavailable"),
   }
 
-  let exe = env::try_executable_path();
-  if exe.is_some() {
-    println("exe={}", exe.unwrap());
+  match env::current_dir_path() {
+    Ok(path) => {
+      if path.is_absolute() {
+        println("cwd is absolute");
+      }
+    }
+    Err(_) => {}
+  }
+
+  match env::executable_path() {
+    Ok(exe) => println("exe={}", exe),
+    Err(_) => println("exe unavailable"),
   }
 
   return 0;

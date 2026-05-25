@@ -1,4 +1,8 @@
 // Covers the first current-process helper slice: pid plus status-code helpers.
+fn is_empty_text(value: string) -> bool {
+  return std::mem::ptr_load(value as ptr u8) == 0;
+}
+
 fn main() -> i64 {
   let pid = process::id();
   var score = 0;
@@ -18,8 +22,12 @@ fn main() -> i64 {
   if process::is_failure(9) {
     score = score + 17;
   }
-  assert(process::current_dir_result().is_ok());
-  assert(process::executable_path_result().is_ok());
+  assert(process::current_dir().is_ok());
+  assert(process::current_dir_optional().is_some());
+  assert(!is_empty_text(process::current_dir_or_default()));
+  assert(process::executable_path().is_ok());
+  assert(process::executable_path_optional().is_some());
+  assert(!is_empty_text(process::executable_path_or_default()));
 
   return score;
 }

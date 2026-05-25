@@ -19,8 +19,9 @@ together. Use this page when deciding which API a library should accept.
   path interpretation.
 - Prefer `std::env`'s `*_os` helpers for arguments, environment variables, and
   executable paths when byte-preserving OS-boundary behavior matters.
-- Prefer `std::env::current_dir_path()` or `try_current_dir_path()` when the
-  current directory will immediately be inspected as a path.
+- Prefer `std::env::current_dir_path()` when the current directory will
+  immediately be inspected as a path, and use `current_dir_path_optional()` or
+  `try_current_dir_path()` only when discarding the error detail is intended.
 - Keep path manipulation in `std::path`; path bytes are not normal text even
   when they happen to be UTF-8.
 - Use `std::string::c_str(text)` or `std::c::from_string(text)` to create the

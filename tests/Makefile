@@ -915,7 +915,12 @@ check-prelude: $(TARGET)
 	grep -q "@getcwd" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -q "@chdir" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -q "@readlink" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env11current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env15executable_path" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env15set_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env20current_dir_optional" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env15try_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env24executable_path_optional" $(BUILD_DIR)/prelude/std-env-paths.ll
 	grep -F -q "std3env19try_executable_path" $(BUILD_DIR)/prelude/std-env-paths.ll
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-paths.ari -o $(BUILD_DIR)/prelude/std-env-paths.elf
 	$(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39
@@ -926,6 +931,12 @@ check-prelude: $(TARGET)
 	grep -F -q "std3env6get_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env10try_get_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env16current_dir_path" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env23current_dir_os_optional" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env25current_dir_os_or_default" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env25current_dir_path_optional" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env27current_dir_path_or_default" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env27executable_path_os_optional" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
+	grep -F -q "std3env29executable_path_os_or_default" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	grep -F -q "std3env22try_executable_path_os" $(BUILD_DIR)/prelude/std-env-os-path-views.ll
 	$(TARGET) tests/cases/standard-library/ok/env/std-env-os-path-views.ari -o $(BUILD_DIR)/prelude/std-env-os-path-views.elf
 	$(BUILD_DIR)/prelude/std-env-os-path-views.elf; code=$$?; test $$code -eq 0
@@ -1366,14 +1377,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-fork-wait.ari -o $(BUILD_DIR)/prelude/std-process-fork-wait.elf
 	$(BUILD_DIR)/prelude/std-process-fork-wait.elf; code=$$?; test $$code -eq 112
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-result.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-result.ll
-	grep -F -q "std7process11fork_result" $(BUILD_DIR)/prelude/std-process-result.ll
-	grep -F -q "std7process11wait_result" $(BUILD_DIR)/prelude/std-process-result.ll
+	grep -F -q "std7process4fork" $(BUILD_DIR)/prelude/std-process-result.ll
+	grep -F -q "std7process4wait" $(BUILD_DIR)/prelude/std-process-result.ll
 	grep -q "declare i32 @fork" $(BUILD_DIR)/prelude/std-process-result.ll
 	grep -q "declare i32 @waitpid" $(BUILD_DIR)/prelude/std-process-result.ll
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-result.ari -o $(BUILD_DIR)/prelude/std-process-result.elf
 	$(BUILD_DIR)/prelude/std-process-result.elf; code=$$?; test $$code -eq 142
 	$(TARGET) tests/cases/standard-library/ok/process/std-process-exit-status.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-exit-status.ll
-	grep -F -q "std7process18wait_status_result" $(BUILD_DIR)/prelude/std-process-exit-status.ll
+	grep -F -q "std7process11wait_status" $(BUILD_DIR)/prelude/std-process-exit-status.ll
 	grep -F -q "std__process__Command8inherent11exit_status" $(BUILD_DIR)/prelude/std-process-exit-status.ll
 	grep -F -q "std__process__Child8inherent11wait_status" $(BUILD_DIR)/prelude/std-process-exit-status.ll
 	grep -F -q "std__process__ExitStatus8inherent6signal" $(BUILD_DIR)/prelude/std-process-exit-status.ll

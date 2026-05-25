@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `2633`
+- API entries: `2643`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,13 +32,13 @@ platform notes.
 | `alloc` | 817 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 698 | stable candidate |
-| `hosted` | 931 | platform-backed |
+| `hosted` | 941 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
-| `fn` | 895 |
+| `fn` | 905 |
 | `method` | 1337 |
 | `module` | 39 |
 | `struct` | 153 |
@@ -63,7 +63,7 @@ platform notes.
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 53 |
-| `std::env` | `hosted` | 43 |
+| `std::env` | `hosted` | 51 |
 | `std::error` | `core` | 37 |
 | `std::fmt` | `core` | 38 |
 | `std::fs` | `hosted` | 188 |
@@ -79,7 +79,7 @@ platform notes.
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 43 |
 | `std::path` | `core` | 51 |
-| `std::process` | `hosted` | 121 |
+| `std::process` | `hosted` | 123 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
@@ -1375,16 +1375,23 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::env::arg_os` | check-prelude std-env-os-path-views OS-string argument view; docs/stdlib/modules/env.md |
 | `fn std::env::arg_os_result` | check-prelude std-env-args Result-returning OS-string argument helper; docs/stdlib/modules/env.md |
 | `fn std::env::arg_result` | check-prelude std-env-args Result-returning argument helper; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir` | check-prelude std-env-paths current directory hook; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir_os` | check-prelude std-env-os-path-views OS-string current directory view; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir_os_result` | check-prelude std-env-paths Result-returning OS-string current directory helper; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir_path` | check-prelude std-env-os-path-views path-byte current directory view; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir_path_result` | check-prelude std-env-paths Result-returning path-byte current directory helper; docs/stdlib/modules/env.md |
-| `fn std::env::current_dir_result` | check-prelude std-env-paths Result-returning current directory helper; docs/stdlib/modules/env.md |
-| `fn std::env::executable_path` | check-prelude std-env-paths executable path hook; docs/stdlib/modules/env.md |
-| `fn std::env::executable_path_os` | check-prelude std-env-os-path-views OS-string executable path view; docs/stdlib/modules/env.md |
-| `fn std::env::executable_path_os_result` | check-prelude std-env-paths Result-returning OS-string executable path helper; docs/stdlib/modules/env.md |
-| `fn std::env::executable_path_result` | check-prelude std-env-paths Result-returning executable path helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir` | check-prelude std-env-paths Result-returning current directory helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_optional` | check-prelude std-env-paths Option-returning current directory compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_or_default` | check-prelude std-env-paths empty-string current directory compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_os` | check-prelude std-env-os-path-views Result-returning OS-string current directory view; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_os_optional` | check-prelude std-env-os-path-views Option-returning OS-string current directory compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_os_or_default` | check-prelude std-env-os-path-views OS-string current directory compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_path` | check-prelude std-env-os-path-views Result-returning path-byte current directory view; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_path_optional` | check-prelude std-env-os-path-views Option-returning path-byte current directory compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_path_or_default` | check-prelude std-env-os-path-views path-byte current directory compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::current_dir_raw` | check-prelude std-env-paths raw runtime current directory hook; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path` | check-prelude std-env-paths Result-returning executable path helper; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path_optional` | check-prelude std-env-paths Option-returning executable path compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path_or_default` | check-prelude std-env-paths empty-string executable path compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path_os` | check-prelude std-env-os-path-views Result-returning OS-string executable path view; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path_os_optional` | check-prelude std-env-os-path-views Option-returning OS-string executable path compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path_os_or_default` | check-prelude std-env-os-path-views OS-string executable path compatibility helper; docs/stdlib/modules/env.md |
+| `fn std::env::executable_path_raw` | check-prelude std-env-paths raw runtime executable path hook; docs/stdlib/modules/env.md |
 | `fn std::env::get` | check-prelude std-env-vars Result-returning environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::get_or_default` | check-prelude std-env-vars empty-string compatibility environment variable lookup; docs/stdlib/modules/env.md |
 | `fn std::env::get_os` | check-prelude std-env-vars/std-env-os-path-views Result-returning OS-string environment variable lookup; docs/stdlib/modules/env.md |
@@ -1398,8 +1405,9 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::env::remove` | check-prelude std-env-vars Result-returning environment variable removal; docs/stdlib/modules/env.md |
 | `fn std::env::remove_unchecked` | check-prelude std-env-vars bool compatibility environment variable removal; docs/stdlib/modules/env.md |
 | `fn std::env::set` | check-prelude std-env-vars Result-returning environment variable mutation; docs/stdlib/modules/env.md |
-| `fn std::env::set_current_dir` | check-prelude std-env-paths current directory mutation; docs/stdlib/modules/env.md |
-| `fn std::env::set_current_dir_result` | check-prelude std-env-paths Result-returning current directory mutation helper; docs/stdlib/modules/env.md |
+| `fn std::env::set_current_dir` | check-prelude std-env-paths Result-returning current directory mutation; docs/stdlib/modules/env.md |
+| `fn std::env::set_current_dir_raw` | check-prelude std-env-paths raw runtime current directory mutation hook; docs/stdlib/modules/env.md |
+| `fn std::env::set_current_dir_unchecked` | check-prelude std-env-paths bool current directory mutation compatibility helper; docs/stdlib/modules/env.md |
 | `fn std::env::set_unchecked` | check-prelude std-env-vars bool compatibility environment variable mutation; docs/stdlib/modules/env.md |
 | `fn std::env::try_arg` | check-prelude std-env-args optional argument helper; docs/stdlib/modules/env.md |
 | `fn std::env::try_arg_os` | check-prelude std-env-os-path-views optional OS-string argument helper; docs/stdlib/modules/env.md |
@@ -2652,19 +2660,21 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::arg` | check-prelude std-process-command C-argv argument wrapper for Command; docs/stdlib/modules/process.md |
 | `fn std::process::command` | check-prelude std-process-command natural Command constructor; docs/stdlib/modules/process.md |
 | `fn std::process::command_with_args` | check-prelude std-process-command Command constructor with argv slice; docs/stdlib/modules/process.md |
-| `fn std::process::current_dir` | check-prelude std-process-high-level process-facing current directory wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::current_dir_result` | check-prelude std-process-basic Result-returning process-facing current directory wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::current_dir` | check-prelude std-process-basic Result-returning process-facing current directory wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::current_dir_optional` | check-prelude std-process-basic Option-returning process-facing current directory wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::current_dir_or_default` | check-prelude std-process-basic empty-string process-facing current directory compatibility wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::env_var` | check-prelude std-process-command child environment assignment wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::exec` | check-prelude std-process-command module-level Command exec wrapper returning Error; docs/stdlib/modules/process.md |
-| `fn std::process::executable_path` | check-prelude std-process-high-level process-facing executable path wrapper; docs/stdlib/modules/process.md |
-| `fn std::process::executable_path_result` | check-prelude std-process-basic Result-returning process-facing executable path wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::executable_path` | check-prelude std-process-basic Result-returning process-facing executable path wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::executable_path_optional` | check-prelude std-process-basic Option-returning process-facing executable path wrapper; docs/stdlib/modules/process.md |
+| `fn std::process::executable_path_or_default` | check-prelude std-process-basic empty-string process-facing executable path compatibility wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::exit` | check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md |
 | `fn std::process::exit_code` | check-prelude std-process-high-level typed exit code constructor; docs/stdlib/modules/process.md |
 | `fn std::process::exit_status` | check-prelude std-process-command module-level Command typed status wrapper returning Error; docs/stdlib/modules/process.md |
 | `fn std::process::failure` | check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md |
 | `fn std::process::failure_code` | check-prelude std-process-high-level typed failure exit code helper; docs/stdlib/modules/process.md |
-| `fn std::process::fork` | check-prelude std-process-fork-wait POSIX fork hook; docs/stdlib/modules/process.md |
-| `fn std::process::fork_result` | check-prelude std-process-result POSIX fork direct Error result helper; docs/stdlib/modules/process.md |
+| `fn std::process::fork` | check-prelude std-process-result POSIX fork direct Error result helper; docs/stdlib/modules/process.md |
+| `fn std::process::fork_raw` | check-prelude std-process-fork-wait POSIX fork raw compatibility hook; docs/stdlib/modules/process.md |
 | `fn std::process::gid` | check-prelude std-process-identity current process group id hook; docs/stdlib/modules/process.md |
 | `fn std::process::id` | check-prelude std-process-basic current process id hook; docs/stdlib/modules/process.md |
 | `fn std::process::is_child` | check-prelude std-process-fork-wait source child-branch predicate; docs/stdlib/modules/process.md |
@@ -2697,9 +2707,9 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `fn std::process::try_current_dir` | check-prelude std-process-high-level optional current directory wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::try_executable_path` | check-prelude std-process-high-level optional executable path wrapper; docs/stdlib/modules/process.md |
 | `fn std::process::uid` | check-prelude std-process-identity current process user id hook; docs/stdlib/modules/process.md |
-| `fn std::process::wait` | check-prelude std-process-fork-wait POSIX wait hook and exit-status decode; docs/stdlib/modules/process.md |
-| `fn std::process::wait_result` | check-prelude std-process-result POSIX wait direct Error result helper; docs/stdlib/modules/process.md |
-| `fn std::process::wait_status_result` | check-prelude std-process-exit-status POSIX wait typed ExitStatus helper; docs/stdlib/modules/process.md |
+| `fn std::process::wait` | check-prelude std-process-result POSIX wait direct Error result helper; docs/stdlib/modules/process.md |
+| `fn std::process::wait_raw` | check-prelude std-process-fork-wait POSIX wait raw compatibility hook; docs/stdlib/modules/process.md |
+| `fn std::process::wait_status` | check-prelude std-process-exit-status POSIX wait typed ExitStatus helper; docs/stdlib/modules/process.md |
 
 ### method
 

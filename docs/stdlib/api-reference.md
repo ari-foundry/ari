@@ -412,15 +412,23 @@ env::set_unchecked(name, value)
 env::remove(name)
 env::remove_unchecked(name)
 env::current_dir()
+env::current_dir_optional()
+env::current_dir_or_default()
 env::try_current_dir()
 env::current_dir_os()
+env::current_dir_os_optional()
 env::try_current_dir_os()
 env::current_dir_path()
+env::current_dir_path_optional()
 env::try_current_dir_path()
 env::set_current_dir(path)
+env::set_current_dir_unchecked(path)
 env::executable_path()
+env::executable_path_optional()
+env::executable_path_or_default()
 env::try_executable_path()
 env::executable_path_os()
+env::executable_path_os_optional()
 env::try_executable_path_os()
 ```
 
@@ -437,19 +445,20 @@ success, while `env::get_or_default(name)` keeps the older empty-string
 fallback. `env::set(name, value)` overwrites a current-process variable and
 `env::remove(name)` unsets it; both return `Result[(), Error]`.
 `set_unchecked` and `remove_unchecked` keep the older boolean compatibility
-shape. `env::current_dir()` and
-`env::executable_path()` return borrowed runtime strings, with `try_*` wrappers
-for ordinary failure; `env::set_current_dir(path)` mutates the current process
-working directory. Portable child-process spawn handles remain roadmap work;
+shape. `env::current_dir()`, `env::executable_path()`, and
+`env::set_current_dir(path)` return `Result[..., Error]`; `_optional` and
+`try_*` wrappers keep only the success payload, `_or_default` wrappers keep the
+older empty-string fallback, and `_unchecked`/`_raw` names are compatibility
+or boundary hooks. Portable child-process spawn handles remain roadmap work;
 thread helpers live in `std::thread`.
 
 `env::get_os(name)` returns a `Result[OsStr, Error]` environment view.
 `env::try_get_os(name)` keeps only optional success, and
 `env::get_os_or_default(name)` is the compatibility fallback.
-`env::current_dir_os()` / `try_current_dir_os()` and
-`env::executable_path_os()` / `try_executable_path_os()` expose path-like host
-data as OS strings. `env::current_dir_path()` and
-`env::try_current_dir_path()` expose the current directory as
+`env::current_dir_os()` / `current_dir_os_optional()` and
+`env::executable_path_os()` / `executable_path_os_optional()` expose path-like
+host data as OS strings. `env::current_dir_path()` and
+`env::current_dir_path_optional()` expose the current directory as
 `std::path::PathBytes`; convert executable OS strings with `std::path::from_os`
 when the next step is path manipulation.
 
@@ -520,11 +529,11 @@ process::failure_code()
 process::is_success(code)
 process::is_failure(code)
 process::is_root()
-process::fork_result()
 process::fork()
-process::wait_status_result(pid)
-process::wait_result(pid)
+process::fork_raw()
+process::wait_status(pid)
 process::wait(pid)
+process::wait_raw(pid)
 process::is_child(pid)
 process::is_parent(pid)
 process::is_fork_error(pid)
@@ -550,8 +559,12 @@ process::kill(pid, signal)
 process::kill_signal(pid, signal)
 process::terminate(pid)
 process::current_dir()
+process::current_dir_optional()
+process::current_dir_or_default()
 process::try_current_dir()
 process::executable_path()
+process::executable_path_optional()
+process::executable_path_or_default()
 process::try_executable_path()
 process::temp_file(zone)
 process::temp_file_in(zone, prefix)
@@ -632,19 +645,20 @@ helpers are source functions for the common `0` success and `1` failure
 convention. `ExitCode` is the typed wrapper for code values before returning
 or calling `exit`.
 
-`fork_result()` and `wait_status_result(pid)` are the preferred POSIX
-child-process helpers when failure matters. `fork_result()` returns `Ok(0)` in
+`fork()` and `wait_status(pid)` are the preferred POSIX child-process helpers
+when failure matters. `fork()` returns `Ok(0)` in
 the child, `Ok(child_pid)` in the parent, or `Err(Error)` from the host `fork`
-failure. `wait_status_result(pid)` returns a typed `ExitStatus`, maps host
+failure. `wait_status(pid)` returns a typed `ExitStatus`, maps host
 `waitpid` failures through `std::c::error()`, and preserves signal termination
-without flattening it into an `i64` sentinel. `wait_result(pid)` remains the
-convenient compatibility form for normal exit codes only.
+without flattening it into an `i64` sentinel. `wait(pid)` returns a normal exit
+code as `Result[i64, Error]` and reports signal termination as `Error(Other)`.
 
-`fork()` and `wait(pid)` are the raw compatibility slice on the Linux/LLVM
-runtime path. `fork()` returns `0` in the child, a positive child pid in the
-parent, and a negative value on failure; use `is_child`, `is_parent`, and
-`is_fork_error` to make that branch readable. `wait(pid)` returns a normal
-child exit status or `-1`; use `is_wait_error` for that sentinel.
+`fork_raw()` and `wait_raw(pid)` are the raw compatibility slice on the
+Linux/LLVM runtime path. `fork_raw()` returns `0` in the child, a positive child
+pid in the parent, and a negative value on failure; use `is_child`,
+`is_parent`, and `is_fork_error` to make that branch readable. `wait_raw(pid)`
+returns a normal child exit status or `-1`; use `is_wait_error` for that
+sentinel.
 
 `Command` is the higher-level child-process builder. Use `process::arg` for
 argv entries and `process::env_var` for child environment assignments, or use
@@ -701,7 +715,9 @@ platform-specific status detail are still future process-library work.
 `ChildStdin`, `ChildStdout`, and `ChildStderr` name the current pipe endpoint
 types used by future streaming process IO. `current_dir`,
 `try_current_dir`, `executable_path`, and `try_executable_path` are
-process-oriented wrappers around the `std::env` path helpers. `temp_file` and
+process-oriented wrappers around the `std::env` path helpers; the natural names
+return `Result`, and optional/default wrappers make discarded errors explicit.
+`temp_file` and
 `temp_dir` create unique hosted paths under `/tmp`; removal is explicit through
 `TempFile::close_and_remove`, `TempFile::remove`, or `TempDir::remove`.
 

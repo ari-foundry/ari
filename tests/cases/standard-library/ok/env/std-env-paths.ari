@@ -6,19 +6,22 @@ fn is_empty_text(value: string) -> bool {
 }
 
 fn main() -> i64 {
-  let cwd = env::current_dir();
-  let exe = env::executable_path();
-  let maybe_cwd = env::try_current_dir();
-  let maybe_exe = env::try_executable_path();
+  let cwd = env::current_dir_or_default();
+  let exe = env::executable_path_or_default();
+  let maybe_cwd = env::current_dir_optional();
+  let maybe_exe = env::executable_path_optional();
   var score = 0;
 
+  assert(!is_empty_text(env::current_dir_raw()));
+  assert(!is_empty_text(env::executable_path_raw()));
   if !is_empty_text(cwd) {
     score = score + 3;
   }
   if maybe_cwd.is_some() {
     score = score + 5;
   }
-  match env::current_dir_result() {
+  assert(env::try_current_dir().is_some());
+  match env::current_dir() {
     Ok(current_path) => {
       assert(!is_empty_text(current_path));
     }
@@ -26,19 +29,21 @@ fn main() -> i64 {
       panic();
     }
   }
-  assert(env::current_dir_os_result().is_ok());
-  assert(env::current_dir_path_result().is_ok());
-  if env::set_current_dir(cwd) {
+  assert(env::current_dir_os().is_ok());
+  assert(env::current_dir_path().is_ok());
+  if env::set_current_dir(cwd).is_ok() {
     score = score + 7;
   }
-  assert(env::set_current_dir_result(cwd).is_ok());
+  assert(env::set_current_dir_raw(cwd));
+  assert(env::set_current_dir_unchecked(cwd));
   if !is_empty_text(exe) {
     score = score + 11;
   }
   if maybe_exe.is_some() {
     score = score + 13;
   }
-  match env::executable_path_result() {
+  assert(env::try_executable_path().is_some());
+  match env::executable_path() {
     Ok(executable_path) => {
       assert(!is_empty_text(executable_path));
     }
@@ -46,7 +51,7 @@ fn main() -> i64 {
       panic();
     }
   }
-  assert(env::executable_path_os_result().is_ok());
+  assert(env::executable_path_os().is_ok());
 
   return score;
 }

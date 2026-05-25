@@ -544,10 +544,15 @@ env::arg(index: i64) -> string
 env::has_arg(index: i64) -> bool
 env::try_arg(index: i64) -> Option[string]
 env::program_name() -> Option[string]
-env::current_dir() -> string
+env::current_dir() -> Result[string, std::error::Error]
+env::current_dir_or_default() -> string
+env::current_dir_optional() -> Option[string]
 env::try_current_dir() -> Option[string]
-env::set_current_dir(path: string) -> bool
-env::executable_path() -> string
+env::set_current_dir(path: string) -> Result[(), std::error::Error]
+env::set_current_dir_unchecked(path: string) -> bool
+env::executable_path() -> Result[string, std::error::Error]
+env::executable_path_or_default() -> string
+env::executable_path_optional() -> Option[string]
 env::try_executable_path() -> Option[string]
 arg_count() -> i64
 arg(index: i64) -> string
@@ -731,10 +736,15 @@ env::arg(index: i64) -> string
 env::has_arg(index: i64) -> bool
 env::try_arg(index: i64) -> Option[string]
 env::program_name() -> Option[string]
-env::current_dir() -> string
+env::current_dir() -> Result[string, std::error::Error]
+env::current_dir_or_default() -> string
+env::current_dir_optional() -> Option[string]
 env::try_current_dir() -> Option[string]
-env::set_current_dir(path: string) -> bool
-env::executable_path() -> string
+env::set_current_dir(path: string) -> Result[(), std::error::Error]
+env::set_current_dir_unchecked(path: string) -> bool
+env::executable_path() -> Result[string, std::error::Error]
+env::executable_path_or_default() -> string
+env::executable_path_optional() -> Option[string]
 env::try_executable_path() -> Option[string]
 arg_count() -> i64
 arg(index: i64) -> string
@@ -749,9 +759,10 @@ Out-of-range `arg(index)` currently returns an empty string, so use
 `0`; spawned `std::thread` workers receive positive ids.
 `context::cwd()` and `context::executable_path()` are startup snapshots; they
 do not change after `env::set_current_dir(path)`. `env::program_name()` is the
-optional `argv[0]` value. `env::try_current_dir()` and
-`env::try_executable_path()` are the preferred path accessors when code wants
-the current process state and host lookup failure should be handled normally.
+optional `argv[0]` value. `env::current_dir()` and
+`env::executable_path()` preserve current process path lookup failures as
+`Result[..., Error]`; `_optional`/`try_*` wrappers keep only the success value,
+and `_or_default` wrappers keep the older empty-string fallback.
 
 ## Layout Queries
 

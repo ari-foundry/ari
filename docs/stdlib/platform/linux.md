@@ -80,7 +80,7 @@ useful for modern systems work.
 
 | API Family | Current Status | Future Module Shape |
 | --- | --- | --- |
-| procfs | `target::has_procfs()` reports the Linux family; `std::env::executable_path()` currently reads `/proc/self/exe`. | `std::os::linux::proc` should expose typed reads only after file/path/error policy improves. |
+| procfs | `target::has_procfs()` reports the Linux family; `std::env::executable_path()` currently reads `/proc/self/exe` and reports lookup failure as `Result`. | `std::os::linux::proc` should expose typed reads only after file/path/error policy improves. |
 | sysfs | `target::has_sysfs()` reports the Linux family. | Keep as roadmap until a safe text/file parser pattern exists. |
 | cgroups | `target::has_cgroups_api()` reports the Linux family only. | Optional future wrapper; mount/layout differences should be explicit. |
 | namespaces | `target::has_namespaces_api()` reports the Linux family only. | Optional future process/capability API; requires privilege and error modeling. |
@@ -134,9 +134,9 @@ useful for modern systems work.
 | exit/abort | `std::process::exit` and `abort` exist. | Document destructor/cleanup limits anywhere higher-level runtime teardown is added. |
 | spawn | `Command::spawn` and module-level `process::spawn(ref command)` are exposed through a portable-looking builder backed by POSIX `fork`/`execvp` today. | Add Windows mapping and decide stdin ownership before broadening the API. |
 | output capture | `Command::output_in(ref mut zone)` captures small child stdout/stderr into a zone-backed `Output` handle using `pipe(2)` and `dup2(2)`. | Add readiness or nonblocking draining before promising large-output capture, then add stdin redirection. |
-| fork | `std::process::fork` exists as a POSIX slice. | Keep marked as sharp; fork-with-threads and async-signal-safe limitations need more docs. |
+| fork | `std::process::fork` exists as a POSIX `Result` slice, with `fork_raw` for old sentinel-style code. | Keep marked as sharp; fork-with-threads and async-signal-safe limitations need more docs. |
 | exec | `Command::exec` replaces the current process after applying child setup. | Add richer setup policy and document noreturn behavior in more examples. |
-| wait | `std::process::wait_status_result`, `Command::exit_status`, and `Child::wait_status` preserve typed `ExitStatus` values for normal exits and signal termination. Compatibility `wait`, `wait_result`, `Command::status`, and `Child::wait` still expose normal exit codes. | Add richer platform-specific status fields and Windows mapping. |
+| wait | `std::process::wait_status`, `Command::exit_status`, and `Child::wait_status` preserve typed `ExitStatus` values for normal exits and signal termination. Compatibility `wait_raw`, `Command::status`, and `Child::wait` still expose normal exit-code oriented paths. | Add richer platform-specific status fields and Windows mapping. |
 | kill | `process::kill`, `process::terminate`, `Child::kill`, and `Child::terminate` are exposed. | Add signal constants and more structured permission/error mapping. |
 | working directory | `std::env::current_dir`, `set_current_dir`, `std::fs::try_canonicalize`, and `std::fs::canonicalize_result` exist. | Owned path values should wrap the existing `std::path`/`std::fs` split. |
 | daemon helpers | Not exposed. | Optional; should be policy-heavy and probably separate from core process APIs. |

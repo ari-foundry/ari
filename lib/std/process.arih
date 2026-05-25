@@ -8,8 +8,8 @@ pub extern "ari" fn uid() -> i64 = "ari_builtin_process_uid";
 pub extern "ari" fn gid() -> i64 = "ari_builtin_process_gid";
 pub extern "ari" fn exit(code: i64) -> void = "ari_builtin_process_exit";
 pub extern "ari" fn abort() -> void = "ari_builtin_process_abort";
-pub extern "ari" fn fork() -> i64 = "ari_builtin_process_fork";
-pub extern "ari" fn wait(pid: i64) -> i64 = "ari_builtin_process_wait";
+pub extern "ari" fn fork_raw() -> i64 = "ari_builtin_process_fork";
+pub extern "ari" fn wait_raw(pid: i64) -> i64 = "ari_builtin_process_wait";
 
 extern "C" fn raw_fork() -> c_int = "fork";
 extern "C" fn raw_waitpid(pid: c_int, status: ptr c_int, options: c_int) -> c_int = "waitpid";
@@ -202,28 +202,36 @@ pub fn output(command: ref std::process::Command, zone: ref mut Zone) -> std::Re
   return command.output(zone);
 }
 
-pub fn executable_path() -> string {
+pub fn executable_path() -> std::Result[string, std::error::Error] {
   return std::env::executable_path();
 }
 
+pub fn executable_path_or_default() -> string {
+  return std::env::executable_path_or_default();
+}
+
+pub fn executable_path_optional() -> std::Option[string] {
+  return std::env::executable_path_optional();
+}
+
 pub fn try_executable_path() -> std::Option[string] {
-  return std::env::try_executable_path();
+  return std::process::executable_path_optional();
 }
 
-pub fn executable_path_result() -> std::Result[string, std::error::Error] {
-  return std::env::executable_path_result();
-}
-
-pub fn current_dir() -> string {
+pub fn current_dir() -> std::Result[string, std::error::Error] {
   return std::env::current_dir();
 }
 
-pub fn try_current_dir() -> std::Option[string] {
-  return std::env::try_current_dir();
+pub fn current_dir_or_default() -> string {
+  return std::env::current_dir_or_default();
 }
 
-pub fn current_dir_result() -> std::Result[string, std::error::Error] {
-  return std::env::current_dir_result();
+pub fn current_dir_optional() -> std::Option[string] {
+  return std::env::current_dir_optional();
+}
+
+pub fn try_current_dir() -> std::Option[string] {
+  return std::process::current_dir_optional();
 }
 
 fn non_normal_exit_error() -> std::error::Error {
@@ -246,7 +254,7 @@ fn signal_from_raw(raw_status: i64) -> i64 {
   return raw_status & 127;
 }
 
-pub fn fork_result() -> std::Result[i64, std::error::Error] {
+pub fn fork() -> std::Result[i64, std::error::Error] {
   let raw = raw_fork();
   if raw < 0 {
     return std::Err<i64, std::error::Error>(std::c::error());
@@ -254,7 +262,7 @@ pub fn fork_result() -> std::Result[i64, std::error::Error] {
   return std::Ok<i64, std::error::Error>(raw as i64);
 }
 
-pub fn wait_status_result(pid: i64) -> std::Result[std::process::ExitStatus, std::error::Error] {
+pub fn wait_status(pid: i64) -> std::Result[std::process::ExitStatus, std::error::Error] {
   var status = 0 as c_int;
   let waited = raw_waitpid(pid as c_int, (ref mut status) as ptr c_int, 0 as c_int);
   if waited <= 0 {
@@ -265,8 +273,8 @@ pub fn wait_status_result(pid: i64) -> std::Result[std::process::ExitStatus, std
   );
 }
 
-pub fn wait_result(pid: i64) -> std::Result[i64, std::error::Error] {
-  match std::process::wait_status_result(pid) {
+pub fn wait(pid: i64) -> std::Result[i64, std::error::Error] {
+  match std::process::wait_status(pid) {
     std::Err(reason) => {
       return std::Err<i64, std::error::Error>(reason);
     }
@@ -619,11 +627,11 @@ pub impl std::process::Child {
   }
 
   fn wait(self: ref Self) -> std::Result[i64, std::error::Error] {
-    return std::process::wait_result(self.pid_value);
+    return std::process::wait(self.pid_value);
   }
 
   fn wait_status(self: ref Self) -> std::Result[std::process::ExitStatus, std::error::Error] {
-    return std::process::wait_status_result(self.pid_value);
+    return std::process::wait_status(self.pid_value);
   }
 
   fn kill(self: ref Self, signal: i64) -> std::Result[(), std::error::Error] {
@@ -706,7 +714,7 @@ pub impl std::process::Command {
     var scratch = zone::temp(std::process::argv_capacity(self));
     let argv = std::process::build_argv(ref mut scratch, self);
 
-    match std::process::fork_result() {
+    match std::process::fork() {
       std::Err(reason) => {
         return std::Err<std::process::Child, std::error::Error>(reason);
       }
@@ -776,7 +784,7 @@ pub impl std::process::Command {
     var scratch = zone::temp(std::process::argv_capacity(self));
     let argv = std::process::build_argv(ref mut scratch, self);
 
-    match std::process::fork_result() {
+    match std::process::fork() {
       std::Err(reason) => {
         stdout_reader.close();
         stdout_writer.close();
@@ -807,7 +815,7 @@ pub impl std::process::Command {
         stdout_reader.close();
         stderr_reader.close();
 
-        match std::process::wait_status_result(pid) {
+        match std::process::wait_status(pid) {
           std::Err(wait_reason) => {
             return std::Err<std::process::Output, std::error::Error>(wait_reason);
           }

@@ -28,11 +28,11 @@ process::failure_code()
 process::is_success(code)
 process::is_failure(code)
 process::is_root()
-process::fork_result()
-process::fork()
-process::wait_status_result(pid)
-process::wait_result(pid)
-process::wait(pid)
+process::fork() -> Result[i64, process::Error]
+process::fork_raw() -> i64
+process::wait_status(pid) -> Result[process::ExitStatus, process::Error]
+process::wait(pid) -> Result[i64, process::Error]
+process::wait_raw(pid) -> i64
 process::is_child(pid)
 process::is_parent(pid)
 process::is_fork_error(pid)
@@ -57,12 +57,14 @@ process::exec(command)
 process::kill(pid, signal)
 process::kill_signal(pid, signal)
 process::terminate(pid)
-process::current_dir()
+process::current_dir() -> Result[string, process::Error]
+process::current_dir_or_default()
+process::current_dir_optional()
 process::try_current_dir()
-process::current_dir_result()
-process::executable_path()
+process::executable_path() -> Result[string, process::Error]
+process::executable_path_or_default()
+process::executable_path_optional()
 process::try_executable_path()
-process::executable_path_result()
 process::temp_file(zone)
 process::temp_file_in(zone, prefix)
 process::temp_dir(zone)
@@ -156,24 +158,23 @@ will be returned or passed to `exit`: use `success_code`, `failure_code`, or
 permission guarantee; filesystem and process permissions can still change after
 the check.
 
-`fork_result()` creates a child process on the current POSIX runtime path and
-returns `Result[i64, Error]`: `Ok(0)` in the child, `Ok(child_pid)` in the
-parent, or `Err(std::c::error())` when the host `fork` fails. `fork()` keeps the
-older raw host convention: `0` in the child, a positive child pid in the
-parent, or a negative value on failure. Use `is_child`, `is_parent`, and
-`is_fork_error` instead of spelling those comparisons at every call site.
+`fork()` creates a child process on the current POSIX runtime path and returns
+`Result[i64, Error]`: `Ok(0)` in the child, `Ok(child_pid)` in the parent, or
+`Err(std::c::error())` when the host `fork` fails. `fork_raw()` keeps the older
+raw host convention: `0` in the child, a positive child pid in the parent, or a
+negative value on failure. Use `is_child`, `is_parent`, and `is_fork_error`
+instead of spelling those comparisons at every call site.
 
-`wait_status_result(pid)` waits for a child process and returns
+`wait_status(pid)` waits for a child process and returns
 `Result[ExitStatus, Error]`. Host `waitpid` failures become
 `Err(std::c::error())`; normal exit and signal termination are represented in
 the returned `ExitStatus`. Use `ExitStatus::code()` for an optional normal exit
 code and `ExitStatus::signal()` for an optional terminating signal number.
 
-`wait_result(pid)` keeps the older convenient `Result[i64, Error]` shape: it
-returns `Ok(exit_code)` only for a normal child exit and reports non-normal child
-states as `Error(Other)`. `wait(pid)` is the raw compatibility helper; it returns
-the child's normal exit status or `-1`. Use `is_wait_error(status)` to make that
-sentinel explicit.
+`wait(pid)` returns `Ok(exit_code)` only for a normal child exit and reports
+non-normal child states as `Error(Other)`. `wait_raw(pid)` is the raw
+compatibility helper; it returns the child's normal exit status or `-1`. Use
+`is_wait_error(status)` to make that sentinel explicit.
 
 `Command` is the higher-level process builder. It stores the program, argument
 slice, child environment assignments, and child working directory. `args` and
@@ -224,12 +225,12 @@ endpoint types used by process IO. Full streaming `spawn` redirection is still
 future work, but these names let API users and future stdlib code share the
 right handle vocabulary now.
 
-`current_dir`, `try_current_dir`, `current_dir_result`, `executable_path`,
-`try_executable_path`, and `executable_path_result` delegate to `std::env` so
-process-oriented code can stay inside `std::process` when it needs runtime path
-introspection. The `_result` variants preserve `std::error::Error` detail:
-host runtime failures are reported as `Error(Other)` instead of being collapsed
-to an empty string or `Option::None`.
+`current_dir` and `executable_path` delegate to `std::env` and return
+`Result[string, Error]` so process-oriented code can stay inside
+`std::process` without losing failure detail. The `_optional` wrappers keep only
+the success payload, `try_current_dir` and `try_executable_path` are
+compatibility aliases for those optional forms, and `_or_default` wrappers keep
+the older empty-string fallback behavior.
 
 `temp_file(zone)` and `temp_dir(zone)` create unique paths under `/tmp` on the
 current hosted backend. The `_in` variants accept a path prefix. Temp paths are
@@ -273,7 +274,7 @@ Fork and wait:
 
 ```ari
 fn main() -> i64 {
-  match process::fork_result() {
+  match process::fork() {
     Err(_) => {
       return process::failure();
     }
@@ -283,7 +284,7 @@ fn main() -> i64 {
         return 1;
       }
 
-      match process::wait_result(child) {
+      match process::wait(child) {
         Ok(status) => { return status; }
         Err(_) => { return process::failure(); }
       }
@@ -410,10 +411,10 @@ fn main() -> i64 {
   or zone cleanup to run after `process::exit`.
 - Abort also terminates immediately through the host runtime and should be
   treated as noreturn.
-- `wait(pid)` currently decodes only normal child exit statuses and returns
+- `wait_raw(pid)` currently decodes only normal child exit statuses and returns
   `-1` for wait failures, signaled children, and other non-normal states.
-  Prefer `wait_status_result(pid)` or `Child::wait_status()` when signal
-  termination matters.
+  Prefer `wait_status(pid)` or `Child::wait_status()` when signal termination
+  matters.
 - `exec()` never returns on success. Use it only when replacing the current
   process is the desired behavior.
 - The API is intentionally not a raw syscall grab bag. Keep future process

@@ -85,8 +85,8 @@ For a task-oriented path through the examples, see
   API-family predicates.
 - [std::env](env.md): user-facing process argument and environment-variable
   helpers plus OS-string/path-byte views, including `try_arg`, `try_arg_os`,
-  `program_name_os`, `try_get`, `try_get_os`, `current_dir_path`,
-  `set_current_dir`, and `try_executable_path_os`.
+  `program_name_os`, `try_get`, `try_get_os`, Result-returning
+  `current_dir_path`, `set_current_dir`, and `executable_path_os`.
 - [std::process](process.md): current process id, uid/gid, explicit exit and
   abort hooks, status helper functions, POSIX fork/wait direct `Error` result
   helpers, typed `ExitCode`/`ExitStatus`/`Signal` inspection, temp path
