@@ -103,8 +103,9 @@ caller's zone before returning it. No-follow filesystem metadata uses hosted
 than the link target.
 
 The compiler keeps Ari-owned builtin source aliases and their `ari_builtin_*`
-symbols in one runtime table. That table is used by `extern "ari"` validation,
-and LLVM builtin calls, so root re-export forms such as
+symbols in one runtime registry backed by direct lookup maps. That registry is
+used by `extern "ari"` validation and LLVM builtin calls, so root re-export
+forms such as
 `std::write_i64` / `std::write_u64` and direct forms such as
 `write_i64` / `write_u64` share the same backend hook. Semantic lowering also
 marks those declarations with an explicit Ari builtin ABI in IR, separate from

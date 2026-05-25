@@ -1,6 +1,7 @@
 #include "ari_builtin.hpp"
 
 #include <initializer_list>
+#include <unordered_map>
 #include <utility>
 
 namespace ari {
@@ -299,256 +300,274 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
     return aliases;
 }
 
-bool is_ari_builtin_symbol(const std::string& symbol) {
-    return ari_builtin_signature_for_symbol(symbol).has_value();
+namespace {
+
+const std::unordered_map<std::string, std::string>& ari_builtin_source_alias_map() {
+    static const std::unordered_map<std::string, std::string> aliases = [] {
+        std::unordered_map<std::string, std::string> map;
+        for (const auto& alias : ari_builtin_source_aliases()) {
+            map.emplace(alias.source_name, alias.symbol);
+        }
+        return map;
+    }();
+    return aliases;
 }
 
-std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(const std::string& symbol) {
-    const AriBuiltinTypeExpectation i64 = builtin_type("i64");
-    const AriBuiltinTypeExpectation u64 = builtin_type("u64");
-    const AriBuiltinTypeExpectation u8 = builtin_type("u8");
-    const AriBuiltinTypeExpectation boolean = builtin_type("bool");
-    const AriBuiltinTypeExpectation void_type = builtin_type("void");
-    const AriBuiltinTypeExpectation source_string = builtin_type("string");
-    const AriBuiltinTypeExpectation thread_entry = builtin_type("fn() -> i64");
-    const AriBuiltinTypeExpectation thread_handle = builtin_type("std::thread::Thread");
-    const AriBuiltinTypeExpectation target_arch = builtin_type("std::target::Arch");
-    const AriBuiltinTypeExpectation target_os = builtin_type("std::target::Os");
-    const AriBuiltinTypeExpectation target_env = builtin_type("std::target::Env");
-    const AriBuiltinTypeExpectation target_object_format = builtin_type("std::target::ObjectFormat");
-    const AriBuiltinTypeExpectation target_debug_format = builtin_type("std::target::DebugFormat");
-    const AriBuiltinTypeExpectation target_errno_abi = builtin_type("std::target::ErrnoAbi");
-    const AriBuiltinTypeExpectation ref_atomic_i64 = builtin_type("ref std::sync::AtomicI64");
-    const AriBuiltinTypeExpectation ref_mut_atomic_i64 = builtin_type("ref mut std::sync::AtomicI64");
-    const AriBuiltinTypeExpectation ptr_u8 = builtin_type("ptr u8");
-    const AriBuiltinTypeExpectation ptr_i64 = builtin_type("ptr i64");
-    const AriBuiltinTypeExpectation ptr_u16 = builtin_type("ptr u16");
-    const AriBuiltinTypeExpectation ptr_c_void = builtin_type("ptr c_void", {"ptr void"});
-    const AriBuiltinTypeExpectation own_zone = builtin_type("own Zone");
-    const AriBuiltinTypeExpectation ref_mut_zone = builtin_type("ref mut Zone");
-    const AriBuiltinTypeExpectation raw_string = builtin_type("std::string::RawString");
-    const AriBuiltinTypeExpectation std_string = builtin_type("std::string::String");
-    const AriBuiltinTypeExpectation ref_std_string = builtin_type("ref std::string::String");
-    const AriBuiltinTypeExpectation fs_file = builtin_type("std::fs::File");
-    const AriBuiltinTypeExpectation fs_dir = builtin_type("std::fs::Dir");
+} // namespace
 
-    if (symbol == "ari_builtin_context_argc") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_context_arg") return builtin_sig({i64}, source_string);
-    if (symbol == "ari_builtin_context_thread_id") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_context_cwd") return builtin_sig({}, source_string);
-    if (symbol == "ari_builtin_context_executable_path") return builtin_sig({}, source_string);
-    if (symbol == "ari_builtin_target_triple") return builtin_sig({}, source_string);
-    if (symbol == "ari_builtin_target_arch") return builtin_sig({}, target_arch);
-    if (symbol == "ari_builtin_target_arch_name") return builtin_sig({}, source_string);
-    if (symbol == "ari_builtin_target_os") return builtin_sig({}, target_os);
-    if (symbol == "ari_builtin_target_os_name") return builtin_sig({}, source_string);
-    if (symbol == "ari_builtin_target_env") return builtin_sig({}, target_env);
-    if (symbol == "ari_builtin_target_env_name") return builtin_sig({}, source_string);
-    if (symbol == "ari_builtin_target_object_format") return builtin_sig({}, target_object_format);
-    if (symbol == "ari_builtin_target_debug_format") return builtin_sig({}, target_debug_format);
-    if (symbol == "ari_builtin_target_errno_abi") return builtin_sig({}, target_errno_abi);
-    if (symbol == "ari_builtin_target_pointer_bits") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_target_long_bits") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_env_get") return builtin_sig({source_string}, source_string);
-    if (symbol == "ari_builtin_env_has") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_env_set") return builtin_sig({source_string, source_string}, boolean);
-    if (symbol == "ari_builtin_env_remove") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_env_current_dir") return builtin_sig({}, source_string);
-    if (symbol == "ari_builtin_env_set_current_dir") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_env_executable_path") return builtin_sig({}, source_string);
-    if (symbol == "ari_builtin_process_id") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_process_uid") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_process_gid") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_process_exit") return builtin_sig({i64}, void_type);
-    if (symbol == "ari_builtin_process_abort") return builtin_sig({}, void_type);
-    if (symbol == "ari_builtin_process_fork") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_process_wait") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_mem_page_size") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_thread_spawn") return builtin_sig({thread_entry}, thread_handle);
-    if (symbol == "ari_builtin_thread_spawn_configured") return builtin_sig({thread_entry, source_string, i64}, thread_handle);
-    if (symbol == "ari_builtin_thread_join") return builtin_sig({thread_handle}, i64);
-    if (symbol == "ari_builtin_thread_is_finished") return builtin_sig({thread_handle}, boolean);
-    if (symbol == "ari_builtin_thread_yield") return builtin_sig({}, void_type);
-    if (symbol == "ari_builtin_thread_available_parallelism") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_sync_atomic_i64_load") return builtin_sig({ref_atomic_i64}, i64);
-    if (symbol == "ari_builtin_sync_atomic_i64_store") return builtin_sig({ref_mut_atomic_i64, i64}, void_type);
-    if (symbol == "ari_builtin_sync_atomic_i64_swap") return builtin_sig({ref_mut_atomic_i64, i64}, i64);
-    if (symbol == "ari_builtin_sync_atomic_i64_fetch_add") return builtin_sig({ref_mut_atomic_i64, i64}, i64);
-    if (symbol == "ari_builtin_sync_atomic_i64_compare_exchange") return builtin_sig({ref_mut_atomic_i64, i64, i64}, boolean);
-    if (symbol == "ari_builtin_sync_atomic_i64_load_order") return builtin_sig({ref_atomic_i64, i64}, i64);
-    if (symbol == "ari_builtin_sync_atomic_i64_store_order") return builtin_sig({ref_mut_atomic_i64, i64, i64}, void_type);
-    if (symbol == "ari_builtin_sync_atomic_i64_swap_order") return builtin_sig({ref_mut_atomic_i64, i64, i64}, i64);
-    if (symbol == "ari_builtin_sync_atomic_i64_fetch_add_order") return builtin_sig({ref_mut_atomic_i64, i64, i64}, i64);
-    if (symbol == "ari_builtin_sync_atomic_i64_compare_exchange_order") return builtin_sig({ref_mut_atomic_i64, i64, i64, i64, i64}, boolean);
-    if (symbol == "ari_builtin_time_monotonic_nanos") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_time_unix_nanos") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_time_sleep_nanos") return builtin_sig({i64}, void_type);
-    if (symbol == "ari_builtin_random_entropy") return builtin_sig({}, u64);
-    if (symbol == "ari_builtin_random_fill") return builtin_sig({ptr_u8, i64}, void_type);
-    if (symbol == "ari_builtin_random_fill_result") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_os_close") return builtin_sig({i64}, boolean);
-    if (symbol == "ari_builtin_os_dup") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_os_close_on_exec") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_os_set_close_on_exec") return builtin_sig({i64, boolean}, boolean);
-    if (symbol == "ari_builtin_os_nonblocking") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_os_set_nonblocking") return builtin_sig({i64, boolean}, boolean);
-    if (symbol == "ari_builtin_os_pipe") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_os_read_byte") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_os_write_byte") return builtin_sig({i64, u8}, boolean);
-    if (symbol == "ari_builtin_net_tcp_listen_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
-    if (symbol == "ari_builtin_net_tcp_connect_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
-    if (symbol == "ari_builtin_net_tcp_listen_v6") return builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64);
-    if (symbol == "ari_builtin_net_tcp_connect_v6") return builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64);
-    if (symbol == "ari_builtin_net_tcp_accept") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_local_port") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_local_addr_family") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_peer_addr_family") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_local_addr_v4") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_peer_addr_v4") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_local_addr_v6") return builtin_sig({i64, ptr_u16}, i64);
-    if (symbol == "ari_builtin_net_peer_addr_v6") return builtin_sig({i64, ptr_u16}, i64);
-    if (symbol == "ari_builtin_net_udp_bind_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
-    if (symbol == "ari_builtin_net_udp_bind_v6") return builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64);
-    if (symbol == "ari_builtin_net_udp_send_byte_to_v4") {
-        return builtin_sig({i64, u8, i64, i64, i64, i64, i64}, boolean);
-    }
-    if (symbol == "ari_builtin_net_udp_send_byte_to_v6") {
-        return builtin_sig({i64, u8, i64, i64, i64, i64, i64, i64, i64, i64, i64}, boolean);
-    }
-    if (symbol == "ari_builtin_net_udp_send_to_v4") {
-        return builtin_sig({i64, ptr_u8, i64, i64, i64, i64, i64, i64}, i64);
-    }
-    if (symbol == "ari_builtin_net_udp_send_to_v6") {
-        return builtin_sig({i64, ptr_u8, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64);
-    }
-    if (symbol == "ari_builtin_net_udp_connect_v4") {
-        return builtin_sig({i64, i64, i64, i64, i64, i64}, boolean);
-    }
-    if (symbol == "ari_builtin_net_udp_connect_v6") {
-        return builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64, i64}, boolean);
-    }
-    if (symbol == "ari_builtin_net_udp_send") return builtin_sig({i64, ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_net_udp_recv") return builtin_sig({i64, ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_net_udp_recv_from") {
-        return builtin_sig({i64, ptr_u8, i64, i64, ptr_i64, ptr_i64, ptr_u16}, i64);
-    }
-    if (symbol == "ari_builtin_net_udp_recv_byte") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_set_read_timeout_millis") return builtin_sig({i64, i64}, boolean);
-    if (symbol == "ari_builtin_net_set_write_timeout_millis") return builtin_sig({i64, i64}, boolean);
-    if (symbol == "ari_builtin_net_reuse_addr") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_set_reuse_addr") return builtin_sig({i64, boolean}, boolean);
-    if (symbol == "ari_builtin_net_reuse_port") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_set_reuse_port") return builtin_sig({i64, boolean}, boolean);
-    if (symbol == "ari_builtin_net_keepalive") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_set_keepalive") return builtin_sig({i64, boolean}, boolean);
-    if (symbol == "ari_builtin_net_broadcast") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_set_broadcast") return builtin_sig({i64, boolean}, boolean);
-    if (symbol == "ari_builtin_net_send_buffer_size") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_set_send_buffer_size") return builtin_sig({i64, i64}, boolean);
-    if (symbol == "ari_builtin_net_recv_buffer_size") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_set_recv_buffer_size") return builtin_sig({i64, i64}, boolean);
-    if (symbol == "ari_builtin_net_nodelay") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_net_set_nodelay") return builtin_sig({i64, boolean}, boolean);
-    if (symbol == "ari_builtin_net_shutdown") return builtin_sig({i64, i64}, boolean);
-    if (symbol == "ari_builtin_net_unix_listen") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_net_unix_connect") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_net_lookup_v4") return builtin_sig({source_string, i64}, i64);
-    if (symbol == "ari_builtin_net_lookup_v4_endpoint") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_net_lookup_v6") return builtin_sig({source_string, i64, ptr_u16}, i64);
-    if (symbol == "ari_builtin_net_lookup_v6_endpoint") return builtin_sig({source_string, ptr_u16}, i64);
-    if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_fs_can_read") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_fs_can_write") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_fs_can_execute") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_fs_can_read_bytes") return builtin_sig({ptr_u8, i64}, boolean);
-    if (symbol == "ari_builtin_fs_can_write_bytes") return builtin_sig({ptr_u8, i64}, boolean);
-    if (symbol == "ari_builtin_fs_can_execute_bytes") return builtin_sig({ptr_u8, i64}, boolean);
-    if (symbol == "ari_builtin_fs_remove") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_fs_rename") return builtin_sig({source_string, source_string}, boolean);
-    if (symbol == "ari_builtin_fs_hard_link") return builtin_sig({source_string, source_string}, boolean);
-    if (symbol == "ari_builtin_fs_symbolic_link") return builtin_sig({source_string, source_string}, boolean);
-    if (symbol == "ari_builtin_fs_read_link") return builtin_sig({source_string}, source_string);
-    if (symbol == "ari_builtin_fs_create_dir") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_fs_create_dir_all") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_fs_remove_dir") return builtin_sig({source_string}, boolean);
-    if (symbol == "ari_builtin_fs_open_dir") return builtin_sig({source_string}, fs_dir);
-    if (symbol == "ari_builtin_fs_remove_bytes") return builtin_sig({ptr_u8, i64}, boolean);
-    if (symbol == "ari_builtin_fs_remove_dir_bytes") return builtin_sig({ptr_u8, i64}, boolean);
-    if (symbol == "ari_builtin_fs_open_dir_bytes") return builtin_sig({ptr_u8, i64}, fs_dir);
-    if (symbol == "ari_builtin_fs_close_dir") return builtin_sig({fs_dir}, boolean);
-    if (symbol == "ari_builtin_fs_read_dir_next") return builtin_sig({fs_dir}, source_string);
-    if (symbol == "ari_builtin_fs_open") return builtin_sig({source_string, source_string}, fs_file);
-    if (symbol == "ari_builtin_fs_open_options") {
-        return builtin_sig({source_string, boolean, boolean, boolean, boolean, boolean, boolean}, fs_file);
-    }
-    if (symbol == "ari_builtin_fs_open_read") return builtin_sig({source_string}, fs_file);
-    if (symbol == "ari_builtin_fs_open_write") return builtin_sig({source_string}, fs_file);
-    if (symbol == "ari_builtin_fs_open_append") return builtin_sig({source_string}, fs_file);
-    if (symbol == "ari_builtin_fs_close") return builtin_sig({fs_file}, boolean);
-    if (symbol == "ari_builtin_fs_read_byte") return builtin_sig({fs_file}, i64);
-    if (symbol == "ari_builtin_fs_write_byte") return builtin_sig({fs_file, u8}, boolean);
-    if (symbol == "ari_builtin_fs_position") return builtin_sig({fs_file}, i64);
-    if (symbol == "ari_builtin_fs_seek") return builtin_sig({fs_file, i64}, boolean);
-    if (symbol == "ari_builtin_fs_metadata_size") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_metadata_kind") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_metadata_mode") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_metadata_accessed_nanos") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_metadata_modified_nanos") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_metadata_changed_nanos") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_size") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_kind") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_accessed_nanos") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_modified_nanos") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_changed_nanos") return builtin_sig({source_string}, i64);
-    if (symbol == "ari_builtin_fs_metadata_size_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_metadata_kind_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_metadata_accessed_nanos_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_metadata_modified_nanos_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_metadata_changed_nanos_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_size_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_kind_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_accessed_nanos_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_modified_nanos_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_symlink_metadata_changed_nanos_bytes") return builtin_sig({ptr_u8, i64}, i64);
-    if (symbol == "ari_builtin_fs_set_mode") return builtin_sig({source_string, i64}, boolean);
-    if (symbol == "ari_builtin_fs_canonicalize") return builtin_sig({source_string}, source_string);
-    if (symbol == "ari_builtin_mem_copy_bytes") return builtin_sig({ptr_u8, ptr_u8, i64}, void_type);
-    if (symbol == "ari_builtin_mem_move_bytes") return builtin_sig({ptr_u8, ptr_u8, i64}, void_type);
-    if (symbol == "ari_builtin_mem_set_bytes") return builtin_sig({ptr_u8, u8, i64}, void_type);
-    if (symbol == "ari_builtin_write_i64") return builtin_sig({i64}, i64);
-    if (symbol == "ari_builtin_write_u64") return builtin_sig({u64}, i64);
-    if (symbol == "ari_builtin_write_bool") return builtin_sig({boolean}, i64);
-    if (symbol == "ari_builtin_write_byte") return builtin_sig({u8}, i64);
-    if (symbol == "ari_builtin_write_error_byte") return builtin_sig({u8}, i64);
-    if (symbol == "ari_builtin_newline") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_read_byte") return builtin_sig({}, i64);
-    if (symbol == "ari_builtin_read_line") return builtin_sig({}, source_string);
-    if (symbol == "ari_builtin_read_line_owned") return builtin_sig({ref_mut_zone}, std_string);
-    if (symbol == "ari_builtin_zone_create") return builtin_sig({i64}, own_zone);
-    if (symbol == "ari_builtin_zone_alloc") return builtin_sig({ref_mut_zone, i64, i64}, ptr_u8);
-    if (symbol == "ari_builtin_zone_alloc_handle") return builtin_sig({ptr_c_void, i64, i64}, ptr_u8);
-    if (symbol == "ari_builtin_zone_handle") return builtin_sig({ref_mut_zone}, ptr_c_void);
-    if (symbol == "ari_builtin_zone_allocation_zone") return builtin_sig({ptr_u8}, ptr_c_void);
-    if (symbol == "ari_builtin_string_alloc_buffer") return builtin_sig({ref_mut_zone, i64}, ptr_u8);
-    if (symbol == "ari_builtin_string_with_capacity") return builtin_sig({ref_mut_zone, i64}, raw_string);
-    if (symbol == "ari_builtin_string_new") return builtin_sig({ref_mut_zone, i64}, std_string);
-    if (symbol == "ari_builtin_string_from_string") return builtin_sig({ref_mut_zone, source_string}, std_string);
-    if (symbol == "ari_builtin_string_copy_to") return builtin_sig({ref_std_string, ref_mut_zone}, std_string);
-    if (symbol == "ari_builtin_zone_reset") return builtin_sig({ref_mut_zone}, void_type);
-    if (symbol == "ari_builtin_zone_destroy") return builtin_sig({own_zone}, void_type);
-    if (symbol == "ari_builtin_assert") return builtin_sig({boolean}, i64);
-    if (symbol == "ari_builtin_assert_eq_i64") return builtin_sig({i64, i64}, i64);
-    if (symbol == "ari_builtin_assert_ne_i64") return builtin_sig({i64, i64}, i64);
-    if (symbol == "ari_builtin_assert_eq_bool") return builtin_sig({boolean, boolean}, i64);
-    if (symbol == "ari_builtin_assert_ne_bool") return builtin_sig({boolean, boolean}, i64);
-    if (symbol == "ari_builtin_panic") return builtin_sig({}, void_type);
-    return std::nullopt;
+namespace {
+
+const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_builtin_signature_map() {
+    static const std::unordered_map<std::string, AriBuiltinSignatureExpectation> signatures = [] {
+        std::unordered_map<std::string, AriBuiltinSignatureExpectation> map;
+        auto add = [&map](std::string symbol, AriBuiltinSignatureExpectation signature) {
+            map.emplace(std::move(symbol), std::move(signature));
+        };
+        const AriBuiltinTypeExpectation i64 = builtin_type("i64");
+        const AriBuiltinTypeExpectation u64 = builtin_type("u64");
+        const AriBuiltinTypeExpectation u8 = builtin_type("u8");
+        const AriBuiltinTypeExpectation boolean = builtin_type("bool");
+        const AriBuiltinTypeExpectation void_type = builtin_type("void");
+        const AriBuiltinTypeExpectation source_string = builtin_type("string");
+        const AriBuiltinTypeExpectation thread_entry = builtin_type("fn() -> i64");
+        const AriBuiltinTypeExpectation thread_handle = builtin_type("std::thread::Thread");
+        const AriBuiltinTypeExpectation target_arch = builtin_type("std::target::Arch");
+        const AriBuiltinTypeExpectation target_os = builtin_type("std::target::Os");
+        const AriBuiltinTypeExpectation target_env = builtin_type("std::target::Env");
+        const AriBuiltinTypeExpectation target_object_format = builtin_type("std::target::ObjectFormat");
+        const AriBuiltinTypeExpectation target_debug_format = builtin_type("std::target::DebugFormat");
+        const AriBuiltinTypeExpectation target_errno_abi = builtin_type("std::target::ErrnoAbi");
+        const AriBuiltinTypeExpectation ref_atomic_i64 = builtin_type("ref std::sync::AtomicI64");
+        const AriBuiltinTypeExpectation ref_mut_atomic_i64 = builtin_type("ref mut std::sync::AtomicI64");
+        const AriBuiltinTypeExpectation ptr_u8 = builtin_type("ptr u8");
+        const AriBuiltinTypeExpectation ptr_i64 = builtin_type("ptr i64");
+        const AriBuiltinTypeExpectation ptr_u16 = builtin_type("ptr u16");
+        const AriBuiltinTypeExpectation ptr_c_void = builtin_type("ptr c_void", {"ptr void"});
+        const AriBuiltinTypeExpectation own_zone = builtin_type("own Zone");
+        const AriBuiltinTypeExpectation ref_mut_zone = builtin_type("ref mut Zone");
+        const AriBuiltinTypeExpectation raw_string = builtin_type("std::string::RawString");
+        const AriBuiltinTypeExpectation std_string = builtin_type("std::string::String");
+        const AriBuiltinTypeExpectation ref_std_string = builtin_type("ref std::string::String");
+        const AriBuiltinTypeExpectation fs_file = builtin_type("std::fs::File");
+        const AriBuiltinTypeExpectation fs_dir = builtin_type("std::fs::Dir");
+
+        add("ari_builtin_context_argc", builtin_sig({}, i64));
+        add("ari_builtin_context_arg", builtin_sig({i64}, source_string));
+        add("ari_builtin_context_thread_id", builtin_sig({}, i64));
+        add("ari_builtin_context_cwd", builtin_sig({}, source_string));
+        add("ari_builtin_context_executable_path", builtin_sig({}, source_string));
+        add("ari_builtin_target_triple", builtin_sig({}, source_string));
+        add("ari_builtin_target_arch", builtin_sig({}, target_arch));
+        add("ari_builtin_target_arch_name", builtin_sig({}, source_string));
+        add("ari_builtin_target_os", builtin_sig({}, target_os));
+        add("ari_builtin_target_os_name", builtin_sig({}, source_string));
+        add("ari_builtin_target_env", builtin_sig({}, target_env));
+        add("ari_builtin_target_env_name", builtin_sig({}, source_string));
+        add("ari_builtin_target_object_format", builtin_sig({}, target_object_format));
+        add("ari_builtin_target_debug_format", builtin_sig({}, target_debug_format));
+        add("ari_builtin_target_errno_abi", builtin_sig({}, target_errno_abi));
+        add("ari_builtin_target_pointer_bits", builtin_sig({}, i64));
+        add("ari_builtin_target_long_bits", builtin_sig({}, i64));
+        add("ari_builtin_env_get", builtin_sig({source_string}, source_string));
+        add("ari_builtin_env_has", builtin_sig({source_string}, boolean));
+        add("ari_builtin_env_set", builtin_sig({source_string, source_string}, boolean));
+        add("ari_builtin_env_remove", builtin_sig({source_string}, boolean));
+        add("ari_builtin_env_current_dir", builtin_sig({}, source_string));
+        add("ari_builtin_env_set_current_dir", builtin_sig({source_string}, boolean));
+        add("ari_builtin_env_executable_path", builtin_sig({}, source_string));
+        add("ari_builtin_process_id", builtin_sig({}, i64));
+        add("ari_builtin_process_uid", builtin_sig({}, i64));
+        add("ari_builtin_process_gid", builtin_sig({}, i64));
+        add("ari_builtin_process_exit", builtin_sig({i64}, void_type));
+        add("ari_builtin_process_abort", builtin_sig({}, void_type));
+        add("ari_builtin_process_fork", builtin_sig({}, i64));
+        add("ari_builtin_process_wait", builtin_sig({i64}, i64));
+        add("ari_builtin_mem_page_size", builtin_sig({}, i64));
+        add("ari_builtin_thread_spawn", builtin_sig({thread_entry}, thread_handle));
+        add("ari_builtin_thread_spawn_configured", builtin_sig({thread_entry, source_string, i64}, thread_handle));
+        add("ari_builtin_thread_join", builtin_sig({thread_handle}, i64));
+        add("ari_builtin_thread_is_finished", builtin_sig({thread_handle}, boolean));
+        add("ari_builtin_thread_yield", builtin_sig({}, void_type));
+        add("ari_builtin_thread_available_parallelism", builtin_sig({}, i64));
+        add("ari_builtin_sync_atomic_i64_load", builtin_sig({ref_atomic_i64}, i64));
+        add("ari_builtin_sync_atomic_i64_store", builtin_sig({ref_mut_atomic_i64, i64}, void_type));
+        add("ari_builtin_sync_atomic_i64_swap", builtin_sig({ref_mut_atomic_i64, i64}, i64));
+        add("ari_builtin_sync_atomic_i64_fetch_add", builtin_sig({ref_mut_atomic_i64, i64}, i64));
+        add("ari_builtin_sync_atomic_i64_compare_exchange", builtin_sig({ref_mut_atomic_i64, i64, i64}, boolean));
+        add("ari_builtin_sync_atomic_i64_load_order", builtin_sig({ref_atomic_i64, i64}, i64));
+        add("ari_builtin_sync_atomic_i64_store_order", builtin_sig({ref_mut_atomic_i64, i64, i64}, void_type));
+        add("ari_builtin_sync_atomic_i64_swap_order", builtin_sig({ref_mut_atomic_i64, i64, i64}, i64));
+        add("ari_builtin_sync_atomic_i64_fetch_add_order", builtin_sig({ref_mut_atomic_i64, i64, i64}, i64));
+        add("ari_builtin_sync_atomic_i64_compare_exchange_order", builtin_sig({ref_mut_atomic_i64, i64, i64, i64, i64}, boolean));
+        add("ari_builtin_time_monotonic_nanos", builtin_sig({}, i64));
+        add("ari_builtin_time_unix_nanos", builtin_sig({}, i64));
+        add("ari_builtin_time_sleep_nanos", builtin_sig({i64}, void_type));
+        add("ari_builtin_random_entropy", builtin_sig({}, u64));
+        add("ari_builtin_random_fill", builtin_sig({ptr_u8, i64}, void_type));
+        add("ari_builtin_random_fill_result", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_os_close", builtin_sig({i64}, boolean));
+        add("ari_builtin_os_dup", builtin_sig({i64}, i64));
+        add("ari_builtin_os_close_on_exec", builtin_sig({i64}, i64));
+        add("ari_builtin_os_set_close_on_exec", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_os_nonblocking", builtin_sig({i64}, i64));
+        add("ari_builtin_os_set_nonblocking", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_os_pipe", builtin_sig({}, i64));
+        add("ari_builtin_os_read_byte", builtin_sig({i64}, i64));
+        add("ari_builtin_os_write_byte", builtin_sig({i64, u8}, boolean));
+        add("ari_builtin_net_tcp_listen_v4", builtin_sig({i64, i64, i64, i64, i64}, i64));
+        add("ari_builtin_net_tcp_connect_v4", builtin_sig({i64, i64, i64, i64, i64}, i64));
+        add("ari_builtin_net_tcp_listen_v6", builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64));
+        add("ari_builtin_net_tcp_connect_v6", builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64));
+        add("ari_builtin_net_tcp_accept", builtin_sig({i64}, i64));
+        add("ari_builtin_net_local_port", builtin_sig({i64}, i64));
+        add("ari_builtin_net_local_addr_family", builtin_sig({i64}, i64));
+        add("ari_builtin_net_peer_addr_family", builtin_sig({i64}, i64));
+        add("ari_builtin_net_local_addr_v4", builtin_sig({i64}, i64));
+        add("ari_builtin_net_peer_addr_v4", builtin_sig({i64}, i64));
+        add("ari_builtin_net_local_addr_v6", builtin_sig({i64, ptr_u16}, i64));
+        add("ari_builtin_net_peer_addr_v6", builtin_sig({i64, ptr_u16}, i64));
+        add("ari_builtin_net_udp_bind_v4", builtin_sig({i64, i64, i64, i64, i64}, i64));
+        add("ari_builtin_net_udp_bind_v6", builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64));
+        add("ari_builtin_net_udp_send_byte_to_v4", builtin_sig({i64, u8, i64, i64, i64, i64, i64}, boolean));
+        add("ari_builtin_net_udp_send_byte_to_v6", builtin_sig({i64, u8, i64, i64, i64, i64, i64, i64, i64, i64, i64}, boolean));
+        add("ari_builtin_net_udp_send_to_v4", builtin_sig({i64, ptr_u8, i64, i64, i64, i64, i64, i64}, i64));
+        add("ari_builtin_net_udp_send_to_v6", builtin_sig({i64, ptr_u8, i64, i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64));
+        add("ari_builtin_net_udp_connect_v4", builtin_sig({i64, i64, i64, i64, i64, i64}, boolean));
+        add("ari_builtin_net_udp_connect_v6", builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64, i64}, boolean));
+        add("ari_builtin_net_udp_send", builtin_sig({i64, ptr_u8, i64}, i64));
+        add("ari_builtin_net_udp_recv", builtin_sig({i64, ptr_u8, i64}, i64));
+        add("ari_builtin_net_udp_recv_from", builtin_sig({i64, ptr_u8, i64, i64, ptr_i64, ptr_i64, ptr_u16}, i64));
+        add("ari_builtin_net_udp_recv_byte", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_read_timeout_millis", builtin_sig({i64, i64}, boolean));
+        add("ari_builtin_net_set_write_timeout_millis", builtin_sig({i64, i64}, boolean));
+        add("ari_builtin_net_reuse_addr", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_reuse_addr", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_net_reuse_port", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_reuse_port", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_net_keepalive", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_keepalive", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_net_broadcast", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_broadcast", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_net_send_buffer_size", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_send_buffer_size", builtin_sig({i64, i64}, boolean));
+        add("ari_builtin_net_recv_buffer_size", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_recv_buffer_size", builtin_sig({i64, i64}, boolean));
+        add("ari_builtin_net_nodelay", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_nodelay", builtin_sig({i64, boolean}, boolean));
+        add("ari_builtin_net_shutdown", builtin_sig({i64, i64}, boolean));
+        add("ari_builtin_net_unix_listen", builtin_sig({source_string}, i64));
+        add("ari_builtin_net_unix_connect", builtin_sig({source_string}, i64));
+        add("ari_builtin_net_lookup_v4", builtin_sig({source_string, i64}, i64));
+        add("ari_builtin_net_lookup_v4_endpoint", builtin_sig({source_string}, i64));
+        add("ari_builtin_net_lookup_v6", builtin_sig({source_string, i64, ptr_u16}, i64));
+        add("ari_builtin_net_lookup_v6_endpoint", builtin_sig({source_string, ptr_u16}, i64));
+        add("ari_builtin_fs_exists", builtin_sig({source_string}, boolean));
+        add("ari_builtin_fs_can_read", builtin_sig({source_string}, boolean));
+        add("ari_builtin_fs_can_write", builtin_sig({source_string}, boolean));
+        add("ari_builtin_fs_can_execute", builtin_sig({source_string}, boolean));
+        add("ari_builtin_fs_can_read_bytes", builtin_sig({ptr_u8, i64}, boolean));
+        add("ari_builtin_fs_can_write_bytes", builtin_sig({ptr_u8, i64}, boolean));
+        add("ari_builtin_fs_can_execute_bytes", builtin_sig({ptr_u8, i64}, boolean));
+        add("ari_builtin_fs_remove", builtin_sig({source_string}, boolean));
+        add("ari_builtin_fs_rename", builtin_sig({source_string, source_string}, boolean));
+        add("ari_builtin_fs_hard_link", builtin_sig({source_string, source_string}, boolean));
+        add("ari_builtin_fs_symbolic_link", builtin_sig({source_string, source_string}, boolean));
+        add("ari_builtin_fs_read_link", builtin_sig({source_string}, source_string));
+        add("ari_builtin_fs_create_dir", builtin_sig({source_string}, boolean));
+        add("ari_builtin_fs_create_dir_all", builtin_sig({source_string}, boolean));
+        add("ari_builtin_fs_remove_dir", builtin_sig({source_string}, boolean));
+        add("ari_builtin_fs_open_dir", builtin_sig({source_string}, fs_dir));
+        add("ari_builtin_fs_remove_bytes", builtin_sig({ptr_u8, i64}, boolean));
+        add("ari_builtin_fs_remove_dir_bytes", builtin_sig({ptr_u8, i64}, boolean));
+        add("ari_builtin_fs_open_dir_bytes", builtin_sig({ptr_u8, i64}, fs_dir));
+        add("ari_builtin_fs_close_dir", builtin_sig({fs_dir}, boolean));
+        add("ari_builtin_fs_read_dir_next", builtin_sig({fs_dir}, source_string));
+        add("ari_builtin_fs_open", builtin_sig({source_string, source_string}, fs_file));
+        add("ari_builtin_fs_open_options", builtin_sig({source_string, boolean, boolean, boolean, boolean, boolean, boolean}, fs_file));
+        add("ari_builtin_fs_open_read", builtin_sig({source_string}, fs_file));
+        add("ari_builtin_fs_open_write", builtin_sig({source_string}, fs_file));
+        add("ari_builtin_fs_open_append", builtin_sig({source_string}, fs_file));
+        add("ari_builtin_fs_close", builtin_sig({fs_file}, boolean));
+        add("ari_builtin_fs_read_byte", builtin_sig({fs_file}, i64));
+        add("ari_builtin_fs_write_byte", builtin_sig({fs_file, u8}, boolean));
+        add("ari_builtin_fs_position", builtin_sig({fs_file}, i64));
+        add("ari_builtin_fs_seek", builtin_sig({fs_file, i64}, boolean));
+        add("ari_builtin_fs_metadata_size", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_metadata_kind", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_metadata_mode", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_metadata_accessed_nanos", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_metadata_modified_nanos", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_metadata_changed_nanos", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_symlink_metadata_size", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_symlink_metadata_kind", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_symlink_metadata_accessed_nanos", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_symlink_metadata_modified_nanos", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_symlink_metadata_changed_nanos", builtin_sig({source_string}, i64));
+        add("ari_builtin_fs_metadata_size_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_metadata_kind_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_metadata_accessed_nanos_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_metadata_modified_nanos_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_metadata_changed_nanos_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_symlink_metadata_size_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_symlink_metadata_kind_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_symlink_metadata_accessed_nanos_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_symlink_metadata_modified_nanos_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_symlink_metadata_changed_nanos_bytes", builtin_sig({ptr_u8, i64}, i64));
+        add("ari_builtin_fs_set_mode", builtin_sig({source_string, i64}, boolean));
+        add("ari_builtin_fs_canonicalize", builtin_sig({source_string}, source_string));
+        add("ari_builtin_mem_copy_bytes", builtin_sig({ptr_u8, ptr_u8, i64}, void_type));
+        add("ari_builtin_mem_move_bytes", builtin_sig({ptr_u8, ptr_u8, i64}, void_type));
+        add("ari_builtin_mem_set_bytes", builtin_sig({ptr_u8, u8, i64}, void_type));
+        add("ari_builtin_write_i64", builtin_sig({i64}, i64));
+        add("ari_builtin_write_u64", builtin_sig({u64}, i64));
+        add("ari_builtin_write_bool", builtin_sig({boolean}, i64));
+        add("ari_builtin_write_byte", builtin_sig({u8}, i64));
+        add("ari_builtin_write_error_byte", builtin_sig({u8}, i64));
+        add("ari_builtin_newline", builtin_sig({}, i64));
+        add("ari_builtin_read_byte", builtin_sig({}, i64));
+        add("ari_builtin_read_line", builtin_sig({}, source_string));
+        add("ari_builtin_read_line_owned", builtin_sig({ref_mut_zone}, std_string));
+        add("ari_builtin_zone_create", builtin_sig({i64}, own_zone));
+        add("ari_builtin_zone_alloc", builtin_sig({ref_mut_zone, i64, i64}, ptr_u8));
+        add("ari_builtin_zone_alloc_handle", builtin_sig({ptr_c_void, i64, i64}, ptr_u8));
+        add("ari_builtin_zone_handle", builtin_sig({ref_mut_zone}, ptr_c_void));
+        add("ari_builtin_zone_allocation_zone", builtin_sig({ptr_u8}, ptr_c_void));
+        add("ari_builtin_string_alloc_buffer", builtin_sig({ref_mut_zone, i64}, ptr_u8));
+        add("ari_builtin_string_with_capacity", builtin_sig({ref_mut_zone, i64}, raw_string));
+        add("ari_builtin_string_new", builtin_sig({ref_mut_zone, i64}, std_string));
+        add("ari_builtin_string_from_string", builtin_sig({ref_mut_zone, source_string}, std_string));
+        add("ari_builtin_string_copy_to", builtin_sig({ref_std_string, ref_mut_zone}, std_string));
+        add("ari_builtin_zone_reset", builtin_sig({ref_mut_zone}, void_type));
+        add("ari_builtin_zone_destroy", builtin_sig({own_zone}, void_type));
+        add("ari_builtin_assert", builtin_sig({boolean}, i64));
+        add("ari_builtin_assert_eq_i64", builtin_sig({i64, i64}, i64));
+        add("ari_builtin_assert_ne_i64", builtin_sig({i64, i64}, i64));
+        add("ari_builtin_assert_eq_bool", builtin_sig({boolean, boolean}, i64));
+        add("ari_builtin_assert_ne_bool", builtin_sig({boolean, boolean}, i64));
+        add("ari_builtin_panic", builtin_sig({}, void_type));
+        return map;
+    }();
+    return signatures;
+}
+
+} // namespace
+
+std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(const std::string& symbol) {
+    const auto& signatures = ari_builtin_signature_map();
+    auto found = signatures.find(symbol);
+    if (found == signatures.end()) return std::nullopt;
+    return found->second;
+}
+
+bool is_ari_builtin_symbol(const std::string& symbol) {
+    const auto& signatures = ari_builtin_signature_map();
+    return signatures.find(symbol) != signatures.end();
 }
 
 std::optional<std::string> ari_builtin_symbol_for_source_name(const std::string& source_name) {
-    for (const auto& alias : ari_builtin_source_aliases()) {
-        if (alias.source_name == source_name) return alias.symbol;
-    }
+    const auto& aliases = ari_builtin_source_alias_map();
+    auto found = aliases.find(source_name);
+    if (found != aliases.end()) return found->second;
     return std::nullopt;
 }
 
