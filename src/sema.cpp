@@ -19582,11 +19582,16 @@ private:
     }
 
     [[noreturn]] static void fail_struct_pattern_duplicate_field(SourceLocation loc,
+                                                                 SourceLocation previous_loc,
                                                                  const std::string& field_name,
                                                                  const std::string& context) {
         CompileError error(
             std::move(loc),
             "duplicate field '" + field_name + "' in " + context);
+        add_location_label_if_valid(
+            error,
+            previous_loc,
+            "previous field '" + field_name + "' pattern starts here");
         error.add_note(DiagnosticNote{
             std::nullopt,
             "named product patterns check each field name once before lowering bindings",
@@ -19640,11 +19645,16 @@ private:
 
         std::vector<std::size_t> indexes;
         indexes.reserve(pattern.field_names.size());
-        std::set<std::string> seen_fields;
+        std::map<std::string, SourceLocation> seen_fields;
         for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
             const std::string& field_name = pattern.field_names[i];
-            if (!seen_fields.insert(field_name).second) {
-                fail_struct_pattern_duplicate_field(pattern.elements[i].loc, field_name, duplicate_context);
+            auto [previous, inserted] = seen_fields.emplace(field_name, pattern.elements[i].loc);
+            if (!inserted) {
+                fail_struct_pattern_duplicate_field(
+                    pattern.elements[i].loc,
+                    previous->second,
+                    field_name,
+                    duplicate_context);
             }
             indexes.push_back(struct_field_index(pattern.elements[i].loc, type, field_name));
         }

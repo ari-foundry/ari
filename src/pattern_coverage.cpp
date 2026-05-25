@@ -61,6 +61,33 @@ std::pair<std::string, std::string> pattern_diagnostic_advice(const std::string&
     throw error;
 }
 
+void add_location_label_if_valid(CompileError& error,
+                                 SourceLocation loc,
+                                 const std::string& message) {
+    Span span = span_from_location(loc);
+    if (!span_has_source(span) || !span_has_valid_order(span)) return;
+    error.add_label(DiagnosticLabel{span, message, false});
+}
+
+[[noreturn]] void fail_duplicate_struct_pattern_field(SourceLocation loc,
+                                                      SourceLocation previous_loc,
+                                                      const std::string& field_name) {
+    CompileError error(std::move(loc), "duplicate field '" + field_name + "' in struct match pattern");
+    add_location_label_if_valid(
+        error,
+        previous_loc,
+        "previous field '" + field_name + "' pattern starts here");
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "named product patterns check each field name once before lowering bindings",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "remove the duplicate '" + field_name + "' entry or merge its nested pattern with the first one",
+        DiagnosticNoteKind::Help});
+    throw error;
+}
+
 void add_integer_coverage_interval(ScalarMatchCoverage& coverage,
                                    std::uint64_t start,
                                    std::uint64_t end) {
@@ -469,12 +496,17 @@ bool finite_struct_product_pattern_values(const Pattern& pattern,
     }
 
     std::vector<const Pattern*> field_patterns(type.field_names.size(), nullptr);
-    std::set<std::string> seen_fields;
+    std::vector<std::pair<std::string, SourceLocation>> seen_fields;
     for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
         const std::string& field_name = pattern.field_names[i];
-        if (!seen_fields.insert(field_name).second) {
-            fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
+        auto previous = std::find_if(
+            seen_fields.begin(),
+            seen_fields.end(),
+            [&](const auto& entry) { return entry.first == field_name; });
+        if (previous != seen_fields.end()) {
+            fail_duplicate_struct_pattern_field(pattern.elements[i].loc, previous->second, field_name);
         }
+        seen_fields.push_back({field_name, pattern.elements[i].loc});
         std::size_t field_index = hooks.struct_field_index(pattern.elements[i].loc, type, field_name);
         field_patterns[field_index] = &pattern.elements[i];
     }
@@ -655,12 +687,17 @@ bool symbolic_struct_product_pattern_rects(const Pattern& pattern,
     }
 
     std::vector<const Pattern*> field_patterns(type.field_names.size(), nullptr);
-    std::set<std::string> seen_fields;
+    std::vector<std::pair<std::string, SourceLocation>> seen_fields;
     for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
         const std::string& field_name = pattern.field_names[i];
-        if (!seen_fields.insert(field_name).second) {
-            fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
+        auto previous = std::find_if(
+            seen_fields.begin(),
+            seen_fields.end(),
+            [&](const auto& entry) { return entry.first == field_name; });
+        if (previous != seen_fields.end()) {
+            fail_duplicate_struct_pattern_field(pattern.elements[i].loc, previous->second, field_name);
         }
+        seen_fields.push_back({field_name, pattern.elements[i].loc});
         std::size_t field_index = hooks.struct_field_index(pattern.elements[i].loc, type, field_name);
         field_patterns[field_index] = &pattern.elements[i];
     }
