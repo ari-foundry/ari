@@ -104,7 +104,8 @@ Omit the semicolon only for the final value expression in a function, block,
 | OS string byte view | `std::string::OsStr` | Borrowed OS boundary bytes; not necessarily UTF-8. |
 | C string view | `std::c::CStr`, `CStr` | Borrowed wrapper around NUL-terminated `string` or `ptr c_char`; `std::string::c_str(text)` returns this same type. |
 | owned C string | `std::c::CString`, `CString` | Zone-backed bytes with one trailing NUL for C-shaped storage. |
-| path byte view | `std::path::PathBytes` | Borrowed bytes interpreted by lexical path helpers. |
+| path byte view | `std::path::Path`, `std::path::PathBytes` | Borrowed bytes interpreted by hosted Linux/POSIX lexical path helpers. Not validated UTF-8. |
+| owned path buffer | `std::path::PathBuf` | Zone-backed POSIX path byte buffer; currently aliases `std::string::String`. |
 | tuple | `(i64, bool)`, `()` | Single-element tuples are not supported. |
 | fixed array | `[i64, 3]` | Constant length, stack/aggregate storage. |
 | local vector | `Vec<i64>`, `Vec[i64]` | Compiler-known local vector surface from list literals. |
@@ -241,6 +242,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | process args | `env::try_arg(index)`, `env::try_arg_os(index)`, `env::program_name()`, `env::program_name_os()`, `env::arg_count()`, root `arg_count()`, `has_arg(index)` |
 | runtime context | `context::argc()`, `context::arg(index)`, `context::thread_id()`, `context::cwd()`, `context::cwd_path()`, `context::executable_path()`, `context::is_main_thread()` |
 | environment/path state | `env::args(ref mut zone)`, `env::args_os(ref mut zone)`, `env::var(name)`, `env::var_os(name)`, `env::get(name)`, `env::try_get(name)`, `env::get_os(name)`, `env::try_get_os(name)`, `env::set_var(name, value)`, `env::remove_var(name)`, `env::current_dir_path()`, `env::set_current_dir(path)`, `env::executable_path_path()`, `env::executable_path_os()`, `env::home_dir()` |
+| lexical path ops | `path::bytes(bytes)`, `path::from_os(os)`, `path::from_bytes(ref mut zone, bytes)`, `path::from_string(ref mut zone, text)`, `path::to_string(ref mut zone, path)`, `path::is_empty(path)`, `path::contains_nul(path)`, `path::as_bytes(path)`, `path::components(path)`, `path::file_name(path)`, `path::parent(path)`, `path::join(ref mut zone, base, child)`, `path::join_many(ref mut zone, parts)`, `path::current_dir_join(ref mut zone, child)`, `path::normalize_in(ref mut zone, path)` |
 | current process | `process::id()`, `process::exit(code)`, `process::success()`, `process::failure()` |
 | POSIX child process | `process::fork()`, `process::wait(pid)`, `process::wait_status(pid)`, `process::is_child(pid)`, `process::is_parent(pid)`, raw `process::fork_raw()`, raw `process::wait_raw(pid)` |
 | process command | `process::arg(value)`, `process::env_var(name, value)`, `process::command(program)`, `process::command_with_args(program, args)`, `process::spawn(ref cmd)`, `process::status(ref cmd)`, `process::status_code(ref cmd)`, `process::exit_status(ref cmd)`, `process::output_in(ref cmd, ref mut zone)`, `process::exec(ref cmd)`, `cmd.spawn()`, `cmd.status()`, `cmd.status_code()`, `cmd.exit_status()`, `cmd.output_in(ref mut zone)`, `cmd.exec()`, `child.wait()`, `child.wait_status()`, `child.kill(signal)`, `status.code()`, `status.signal()`, `output.stdout()`, `output.stdout_string(ref mut zone)`, `output.stderr()`, `output.stderr_string(ref mut zone)`, `process::kill(pid, signal)` |

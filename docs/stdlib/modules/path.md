@@ -7,15 +7,59 @@ without opening the filesystem or depending on host state.
 This first slice is deliberately hosted Linux/POSIX-style: `/` is the only
 separator and paths are byte strings, not validated UTF-8 strings. Ari's
 zone-backed `std::string::String` is also byte-oriented, while
-`std::string::Utf8` is the explicit validated UTF-8 view. Windows drive
-prefixes, UNC paths, and platform-specific normalization belong to future
-runtime/path policy work. Filesystem-backed existing-path canonicalization
-lives in `std::fs::canonicalize`.
+`std::string::Utf8` is the explicit validated UTF-8 view. `std::string::OsStr`
+is the borrowed OS-boundary byte view, and `PathBytes` is the borrowed
+path-policy view over those bytes. `PathBuf` is the current owned POSIX path
+buffer and aliases `std::string::String`.
+
+Windows drive prefixes, UNC paths, verbatim paths, alternate separators, and
+platform-specific normalization belong to future runtime/path policy work.
+Filesystem-backed existing-path canonicalization lives in
+`std::fs::canonicalize`; this module stays lexical unless a helper explicitly
+says it reads hosted process state, such as `current_dir_join`.
 
 Lexical helpers preserve interior NUL bytes because they work on `Slice[u8]`.
 Hosted filesystem and C-string boundaries cannot safely pass such paths, so use
 `path::contains_nul` before crossing into OS APIs when the bytes are not known
 to be clean.
+
+## Policy
+
+Use these rules when choosing or extending path APIs:
+
+| Value | Meaning | Ownership |
+| --- | --- | --- |
+| `Slice[u8]` | Generic borrowed bytes with no path policy. | Borrowed from caller. |
+| `std::string::String` | Owned byte string, not guaranteed UTF-8. | Zone-backed owner. |
+| `std::string::Utf8` | Borrowed bytes already validated as UTF-8. | Borrowed view. |
+| `std::string::OsStr` | Borrowed host OS bytes. | Borrowed view. |
+| `std::path::PathBytes` / `Path` | Borrowed bytes interpreted with POSIX lexical path rules. | Borrowed view. |
+| `std::path::PathBuf` | Owned POSIX path bytes. Currently a `String` alias. | Zone-backed owner. |
+
+`String` and `PathBuf` are byte buffers. Do not assume UTF-8 unless the caller
+validates through `std::string::Utf8` or `std::encoding`. `PathBytes` and
+`PathBuf` do not reject NUL; they make NUL visible through `contains_nul` so
+callers can reject it before `std::fs`, `std::c`, or other hosted boundaries.
+
+Most path helpers are infallible because they only inspect or copy bytes.
+Helpers that allocate take `ref mut Zone`. The only Result-returning helper in
+this module today is `current_dir_join`, because reading the current directory
+can fail before the lexical join happens.
+
+## Choosing APIs
+
+| Task | Preferred API | Notes |
+| --- | --- | --- |
+| Treat bytes as a path | `path::bytes(bytes)` or direct literal coercion to `PathBytes` | No allocation; keeps the original bytes borrowed. |
+| Convert from OS boundary data | `path::from_os(os)` | Keeps bytes borrowed from `OsStr`; no UTF-8 validation. |
+| Own a path | `path::from_bytes(ref mut zone, bytes)` or `path::from_string(ref mut zone, text)` | Copies bytes into the zone and returns `PathBuf`. |
+| Copy a borrowed path to owned text | `path::to_string(ref mut zone, path)` or `path_buf.to_string(ref mut zone)` | Still byte-oriented text, not validated UTF-8. |
+| Inspect components | `components`, `file_name`, `parent`, `extension`, `stem`, `file_stem` | Borrowed slices point into the original path. |
+| Compare path prefixes/suffixes | `starts_with`, `strip_prefix`, `ends_with`, `strip_suffix` | Component-aware: `src` matches `src/main.ari` but not `src2/main.ari`. |
+| Join paths | `path::join(ref mut zone, base, child)`, `base.join(ref mut zone, child)`, or `join_many` | Returns `PathBuf`; absolute children replace the accumulated base. |
+| Join against the process cwd | `path::current_dir_join(ref mut zone, child)` | Returns `Result[PathBuf, Error]` because cwd lookup can fail. |
+| Lexically clean a path | `normalize_in(ref mut zone, path)` or `path.normalize(ref mut zone)` | Collapses repeated separators and `.`, keeps `..`. |
+| Check OS-boundary safety | `contains_nul` | Lexical helpers allow NUL; hosted boundaries should reject it. |
 
 ## API
 
@@ -194,13 +238,56 @@ separators and removes `.` components, but intentionally keeps `..`
 components. Removing `..` safely requires a stronger policy around roots,
 symlinks, and platform behavior.
 
-## Example
+## Examples
+
+Collect arix-style command paths without hand-written byte plumbing:
+
+```ari
+fn manifest_path(zone: ref mut Zone) -> std::Result[std::path::PathBuf, std::error::Error] {
+  return path::current_dir_join(zone, "Ari.toml");
+}
+
+fn cache_prefix(zone: ref mut Zone, home: std::path::Path) -> std::path::PathBuf {
+  return home.join(zone, ".ari");
+}
+```
+
+Build a target path from several path parts:
+
+```ari
+fn target_binary(zone: ref mut Zone, package: std::path::Path) -> std::path::PathBuf {
+  var parts: [std::path::PathBytes, 4] = [
+    "target",
+    "debug",
+    package,
+    "main"
+  ];
+  return path::join_many(zone, parts.as_slice());
+}
+```
+
+Reject NUL before a hosted filesystem call:
+
+```ari
+fn safe_to_open(path_bytes: std::path::Path) -> bool {
+  if path_bytes.contains_nul() {
+    return false;
+  }
+  return !path_bytes.is_empty();
+}
+```
+
+Use borrowed component views without allocation:
 
 ```ari
 fn module_name(path_bytes: Slice[u8]) -> Slice[u8] {
   return path::file_stem(path_bytes).unwrap_or(path_bytes);
 }
+```
 
+Use owned path edits when the result must outlive the input view:
+
+```ari
 fn child_path(zone: ref mut Zone, dir: Slice[u8], name: Slice[u8]) -> String {
   return path::join_in(zone, dir, name);
 }
@@ -222,6 +309,32 @@ fn score(path_bytes: Slice[u8]) -> i64 {
   return total;
 }
 ```
+
+## Development Notes
+
+Use this section when adding or reviewing path helpers.
+
+- Keep pure lexical helpers source-only and filesystem-free. They should not
+  call `std::fs`, `std::env`, or C/OS hooks unless their name explicitly says
+  they read hosted state.
+- Keep borrowed helpers allocation-free. Return `Slice[u8]`, `Option[Slice[u8]]`,
+  or iterators whose slices point into the original input.
+- Put allocating helpers behind an explicit `ref mut Zone`. Use `_in` when the
+  historical return shape is a `String`; use natural owned-path wrappers such
+  as `join`, `join_many`, `normalize`, `with_file_name`, and `with_extension`
+  for `PathBuf`.
+- Preserve the POSIX byte policy until a platform path model exists. Do not add
+  Windows drive/UNC behavior by guessing in individual helpers.
+- Preserve NUL bytes lexically. Add explicit boundary validation near OS or C
+  calls instead of making lexical path parsing silently reject bytes.
+- Keep `normalize_in` conservative. It may collapse repeated `/` and remove
+  `.` components, but it must not erase `..` until Ari has a symlink/root-aware
+  normalization policy.
+- Prefer `PathBytes`/`Path` in APIs when the value should be interpreted as a
+  path. Prefer raw `Slice[u8]` when the helper is genuinely byte-generic.
+- Remember that `PathBuf` is currently a type alias for `String`. Do not rely
+  on representation-specific behavior that would block a future distinct
+  owned path type.
 
 ## Tests
 
