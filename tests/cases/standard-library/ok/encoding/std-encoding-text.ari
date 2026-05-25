@@ -47,7 +47,7 @@ fn check_utf8() -> bool {
             return false;
           }
           Err(reason) => {
-            if !reason.is_kind(error::InvalidData) {
+            if !reason.is_overlong() || reason.index() != 0 {
               return false;
             }
           }
@@ -111,6 +111,67 @@ fn check_utf8() -> bool {
   return false;
 }
 
+fn check_decode_utf8() -> bool {
+  var utf8_text = [65u8, 195u8, 169u8, 240u8, 159u8, 152u8, 128u8];
+  var overlong = [192u8, 128u8];
+  var zone = zone::create(256);
+  var ok = true;
+
+  match encoding::decode_utf8(ref mut zone, utf8_text.as_slice()) {
+    Ok(text) => {
+      if text.len() != 7 || text.get(0) != 65u8 || text.get(1) != 195u8 {
+        ok = false;
+      }
+    }
+    Err(_) => {
+      ok = false;
+    }
+  }
+  match encoding::decode_utf8_in(ref mut zone, utf8_text.as_slice()) {
+    Ok(text_in) => {
+      if text_in.len() != 7 || text_in.get(6) != 128u8 {
+        ok = false;
+      }
+    }
+    Err(_) => {
+      ok = false;
+    }
+  }
+  match encoding::decode_utf8_optional_in(ref mut zone, utf8_text.as_slice()) {
+    Some(optional_text) => {
+      if optional_text.len() != 7 {
+        ok = false;
+      }
+    }
+    None => {
+      ok = false;
+    }
+  }
+  var unchecked = encoding::decode_utf8_unchecked_in(ref mut zone, utf8_text.as_slice());
+  if unchecked.len() != 7 {
+    ok = false;
+  }
+  match encoding::decode_utf8(ref mut zone, overlong.as_slice()) {
+    Ok(_) => {
+      ok = false;
+    }
+    Err(reason) => {
+      if !reason.is_overlong() || reason.byte() != 192u8 {
+        ok = false;
+      }
+    }
+  }
+  match encoding::decode_utf8_optional_in(ref mut zone, overlong.as_slice()) {
+    Some(_) => {
+      ok = false;
+    }
+    None => {}
+  }
+
+  zone::destroy(zone);
+  return ok;
+}
+
 fn check_utf16() -> bool {
   var utf16_text = [65u16, 55357u16, 56832u16, 66u16];
   var utf16_lone_high = [55357u16];
@@ -140,7 +201,10 @@ fn main() -> i64 {
   if check_ascii() {
     if check_utf8() {
       if check_utf16() {
-        return 10;
+        if check_decode_utf8() {
+          return 10;
+        }
+        return 4;
       }
       return 3;
     }

@@ -3793,6 +3793,10 @@ encoding::Utf8Error
 encoding::utf8_error(bytes)
 encoding::validate_utf8(bytes)
 encoding::validate_utf8_optional(bytes)
+encoding::decode_utf8(ref mut zone, bytes)
+encoding::decode_utf8_in(ref mut zone, bytes)
+encoding::decode_utf8_optional_in(ref mut zone, bytes)
+encoding::decode_utf8_unchecked_in(ref mut zone, bytes)
 encoding::utf8_count(bytes)
 encoding::utf8_count_optional(bytes)
 encoding::is_utf8(bytes)
@@ -3800,6 +3804,7 @@ encoding::utf8_width(first_byte)
 encoding::utf8_encoded_len(scalar)
 encoding::utf8_at(bytes, byte_index)
 encoding::utf8_next_index(bytes, byte_index)
+encoding::encode_utf8(ref mut zone, scalar)
 encoding::encode_utf8_in(ref mut zone, scalar)
 encoding::encode_utf8_optional_in(ref mut zone, scalar)
 encoding::try_encode_utf8_in(ref mut zone, scalar)
@@ -3812,6 +3817,7 @@ encoding::encode_hex_in(ref mut zone, bytes)
 encoding::hex_decoded_len(bytes)
 encoding::hex_decoded_len_optional(bytes)
 encoding::can_decode_hex(bytes)
+encoding::decode_hex(ref mut zone, bytes)
 encoding::decode_hex_in(ref mut zone, bytes)
 encoding::decode_hex_optional_in(ref mut zone, bytes)
 encoding::try_decode_hex_in(ref mut zone, bytes)
@@ -3821,6 +3827,7 @@ encoding::encode_base64_in(ref mut zone, bytes)
 encoding::base64_decoded_len(bytes)
 encoding::base64_decoded_len_optional(bytes)
 encoding::can_decode_base64(bytes)
+encoding::decode_base64(ref mut zone, bytes)
 encoding::decode_base64_in(ref mut zone, bytes)
 encoding::decode_base64_optional_in(ref mut zone, bytes)
 encoding::try_decode_base64_in(ref mut zone, bytes)
@@ -3830,21 +3837,27 @@ encoding::decode_base64_unchecked_in(ref mut zone, bytes)
 `utf8_count` and `utf16_count` validate and return code-point counts through
 `Result[i64, Error]`; the `*_optional` forms discard invalid-input detail into
 `Option[i64]`, and the `is_*` forms return only a bool. `validate_utf8`
-returns `Result[(), Error]`. `utf8_error` and `validate_utf8_optional` return
-`None` for valid UTF-8 or `Some(Utf8Error)` with the failing byte index, byte
-value, and a `Utf8ErrorKind` such as `InvalidContinuation`, `OverlongEncoding`,
-or `SurrogateCodePoint`.
+returns `Result[(), Utf8Error]`. `utf8_error` and `validate_utf8_optional`
+return `None` for valid UTF-8 or `Some(Utf8Error)` with the failing byte index,
+byte value, and a `Utf8ErrorKind` such as `InvalidContinuation`,
+`OverlongEncoding`, or `SurrogateCodePoint`. `decode_utf8(ref mut zone, bytes)`
+validates and copies UTF-8 bytes into a zone-backed `String`;
+`decode_utf8_in` is the compatibility spelling, while `_optional_in` and
+`_unchecked_in` discard details or assert trusted input.
 `Utf8Char` is the decoded UTF-8 scalar wrapper with `scalar()`, `len()`, and
 `next_index(byte_index)`. `utf8_at` validates at one byte offset, while
-`utf8_width` only classifies a lead byte. `encode_utf8_in` returns
-`Result[String, Error]` for one Unicode scalar. Use `encode_utf8_optional_in`
+`utf8_width` only classifies a lead byte. `encode_utf8(ref mut zone, scalar)`
+returns `Result[String, Utf8Error]` for one Unicode scalar, and
+`encode_utf8_in` is its compatibility spelling. Use `encode_utf8_optional_in`
 or the compatibility `try_encode_utf8_in` alias when invalid scalars should be
 `None`; use `encode_utf8_unchecked_in` only for trusted scalars.
 Hex encoding emits lowercase digits and decoding accepts ASCII hex digits.
 Base64 uses the standard `+`/`/` alphabet with `=` padding. Decoders use the
-natural `decode_*_in` names for `Result[String, Error]`, `_optional_in` or
-older `try_decode_*_in` aliases for `Option[String]`, and `_unchecked_in` for
-the asserting compatibility behavior.
+natural `decode_hex` and `decode_base64` names for `Result[String, Error]`.
+The older `decode_*_in` names are compatibility spellings for the same
+explicit-zone operations, `_optional_in` or older `try_decode_*_in` aliases
+return `Option[String]`, and `_unchecked_in` keeps the asserting compatibility
+behavior.
 
 ## Choosing The Right Collection
 

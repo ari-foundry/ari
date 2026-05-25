@@ -99,10 +99,19 @@ fn main() -> i64 {
     }
     std::None => {}
   }
-  match encoding::encode_utf8_in(ref mut zone, 128512u32) {
+  match encoding::encode_utf8(ref mut zone, 128512u32) {
     std::Ok(smile_result) => {
       assert(smile_result.len() == 4);
       assert(smile_result.get(0) == 240u8);
+    }
+    std::Err(_) => {
+      panic();
+    }
+  }
+  match encoding::encode_utf8_in(ref mut zone, 128512u32) {
+    std::Ok(smile_alias) => {
+      assert(smile_alias.len() == 4);
+      assert(smile_alias.get(0) == 240u8);
     }
     std::Err(_) => {
       panic();
@@ -115,12 +124,28 @@ fn main() -> i64 {
       score = score + 1;
     }
   }
-  match encoding::encode_utf8_in(ref mut zone, 55296u32) {
+  match encoding::encode_utf8(ref mut zone, 55296u32) {
     std::Ok(_) => {
       panic();
     }
     std::Err(reason) => {
-      assert(reason.is_kind(error::InvalidData));
+      assert(reason.is_surrogate());
+    }
+  }
+  match encoding::encode_utf8_in(ref mut zone, 55296u32) {
+    std::Ok(_) => {
+      panic();
+    }
+    std::Err(alias_reason) => {
+      assert(alias_reason.is_surrogate());
+    }
+  }
+  match encoding::encode_utf8(ref mut zone, 1114112u32) {
+    std::Ok(_) => {
+      panic();
+    }
+    std::Err(range_reason) => {
+      assert(range_reason.is_out_of_range());
     }
   }
 

@@ -91,6 +91,26 @@ fn check_hex(zone: ref mut Zone) -> bool {
       }
     }
   }
+  match encoding::decode_hex(zone, hex_text.as_slice()) {
+    std::Ok(hex_result_natural) => {
+      if hex_result_natural.len() != 3 || hex_result_natural.get(2) != (255 as u8) {
+        return false;
+      }
+    }
+    std::Err(_) => {
+      return false;
+    }
+  }
+  match encoding::decode_hex(zone, invalid_hex.as_slice()) {
+    std::Ok(_) => {
+      return false;
+    }
+    std::Err(natural_reason) => {
+      if !natural_reason.is_kind(error::InvalidData) {
+        return false;
+      }
+    }
+  }
   return true;
 }
 
@@ -213,6 +233,26 @@ fn check_base64(zone: ref mut Zone) -> bool {
     }
     std::Err(reason) => {
       if !reason.is_kind(error::InvalidData) {
+        return false;
+      }
+    }
+  }
+  match encoding::decode_base64(zone, base64_ma.as_slice()) {
+    std::Ok(base64_result_natural) => {
+      if base64_result_natural.len() != 2 || base64_result_natural.get(0) != (77 as u8) {
+        return false;
+      }
+    }
+    std::Err(_) => {
+      return false;
+    }
+  }
+  match encoding::decode_base64(zone, invalid_base64.as_slice()) {
+    std::Ok(_) => {
+      return false;
+    }
+    std::Err(natural_reason) => {
+      if !natural_reason.is_kind(error::InvalidData) {
         return false;
       }
     }

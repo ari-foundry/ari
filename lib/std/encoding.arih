@@ -108,6 +108,13 @@ fn invalid_data_error() -> std::error::Error {
   return std::error::new(std::error::InvalidData);
 }
 
+fn utf8_scalar_error(value: u32) -> std::encoding::Utf8Error {
+  if is_surrogate_scalar(value) {
+    return utf8_error_at(0, 0u8, std::encoding::SurrogateCodePoint);
+  }
+  return utf8_error_at(0, 0u8, std::encoding::OutOfRangeCodePoint);
+}
+
 fn hex_digit(value: i64) -> u8 {
   if value < 10 {
     return (value + ('0' as i64)) as u8;
@@ -316,13 +323,52 @@ pub fn validate_utf8_optional(values: std::Slice[u8]) -> std::Option[std::encodi
   return utf8_error(values);
 }
 
-pub fn validate_utf8(values: std::Slice[u8]) -> std::Result[(), std::error::Error] {
+pub fn validate_utf8(values: std::Slice[u8]) -> std::Result[(), std::encoding::Utf8Error] {
   match utf8_error(values) {
-    std::Some(_) => {
-      return std::Err<(), std::error::Error>(invalid_data_error());
+    std::Some(reason) => {
+      return std::Err<(), std::encoding::Utf8Error>(reason);
     }
     std::None => {
-      return std::Ok<(), std::error::Error>(());
+      return std::Ok<(), std::encoding::Utf8Error>(());
+    }
+  }
+}
+
+pub fn decode_utf8(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::encoding::Utf8Error] {
+  match validate_utf8(values) {
+    std::Err(reason) => {
+      return std::Err<std::string::String, std::encoding::Utf8Error>(reason);
+    }
+    std::Ok(_) => {
+      return std::Ok<std::string::String, std::encoding::Utf8Error>(
+        std::string::from_slice_in(zone, values)
+      );
+    }
+  }
+}
+
+pub fn decode_utf8_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::encoding::Utf8Error] {
+  return decode_utf8(zone, values);
+}
+
+pub fn decode_utf8_optional_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Option[std::string::String] {
+  match decode_utf8(zone, values) {
+    std::Ok(text) => {
+      return std::Some<std::string::String>(text);
+    }
+    std::Err(_) => {
+      return std::None<std::string::String>();
+    }
+  }
+}
+
+pub fn decode_utf8_unchecked_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::string::String {
+  match decode_utf8(zone, values) {
+    std::Ok(text) => {
+      return text;
+    }
+    std::Err(_) => {
+      std::panic();
     }
   }
 }
@@ -650,11 +696,15 @@ pub fn try_encode_utf8_in(zone: ref mut Zone, value: u32) -> std::Option[std::st
   return encode_utf8_optional_in(zone, value);
 }
 
-pub fn encode_utf8_in(zone: ref mut Zone, value: u32) -> std::Result[std::string::String, std::error::Error] {
+pub fn encode_utf8(zone: ref mut Zone, value: u32) -> std::Result[std::string::String, std::encoding::Utf8Error] {
   if !is_unicode_scalar(value) {
-    return std::Err<std::string::String, std::error::Error>(invalid_data_error());
+    return std::Err<std::string::String, std::encoding::Utf8Error>(utf8_scalar_error(value));
   }
-  return std::Ok<std::string::String, std::error::Error>(encode_utf8_unchecked_in(zone, value));
+  return std::Ok<std::string::String, std::encoding::Utf8Error>(encode_utf8_unchecked_in(zone, value));
+}
+
+pub fn encode_utf8_in(zone: ref mut Zone, value: u32) -> std::Result[std::string::String, std::encoding::Utf8Error] {
+  return encode_utf8(zone, value);
 }
 
 pub fn hex_encoded_len(values: std::Slice[u8]) -> i64 {
@@ -758,6 +808,10 @@ pub fn decode_hex_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[
     return std::Err<std::string::String, std::error::Error>(invalid_data_error());
   }
   return std::Ok<std::string::String, std::error::Error>(decode_hex_unchecked_in(zone, values));
+}
+
+pub fn decode_hex(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+  return decode_hex_in(zone, values);
 }
 
 pub fn base64_encoded_len(values: std::Slice[u8]) -> i64 {
@@ -917,4 +971,8 @@ pub fn decode_base64_in(zone: ref mut Zone, values: std::Slice[u8]) -> std::Resu
     return std::Err<std::string::String, std::error::Error>(invalid_data_error());
   }
   return std::Ok<std::string::String, std::error::Error>(decode_base64_unchecked_in(zone, values));
+}
+
+pub fn decode_base64(zone: ref mut Zone, values: std::Slice[u8]) -> std::Result[std::string::String, std::error::Error] {
+  return decode_base64_in(zone, values);
 }

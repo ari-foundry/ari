@@ -2014,6 +2014,10 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding10utf8_error' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding13validate_utf8' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding22validate_utf8_optional' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding11decode_utf8' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding14decode_utf8_in' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding23decode_utf8_optional_in' $(BUILD_DIR)/prelude/std-encoding-text.ll
+	grep -q '_ARNv3std8encoding24decode_utf8_unchecked_in' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding11utf16_count' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding20utf16_count_optional' $(BUILD_DIR)/prelude/std-encoding-text.ll
 	grep -q '_ARNv3std8encoding8is_utf16' $(BUILD_DIR)/prelude/std-encoding-text.ll
@@ -2022,6 +2026,7 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/encoding/std-encoding-utf8-codepoints.ari --emit-llvm $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding10utf8_width' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding7utf8_at' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
+	grep -q '_ARNv3std8encoding11encode_utf8' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding14encode_utf8_in' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding23encode_utf8_optional_in' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
 	grep -q '_ARNv3std8encoding18try_encode_utf8_in' $(BUILD_DIR)/prelude/std-encoding-utf8-codepoints.ll
@@ -2034,6 +2039,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding13encode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding15hex_decoded_len' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding24hex_decoded_len_optional' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding10decode_hex' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding13decode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding22decode_hex_optional_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding17try_decode_hex_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
@@ -2041,6 +2047,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std8encoding16encode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding18base64_decoded_len' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding27base64_decoded_len_optional' $(BUILD_DIR)/prelude/std-encoding-codec.ll
+	grep -q '_ARNv3std8encoding13decode_base64' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding16decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding25decode_base64_optional_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll
 	grep -q '_ARNv3std8encoding20try_decode_base64_in' $(BUILD_DIR)/prelude/std-encoding-codec.ll

@@ -246,6 +246,10 @@ fn pipe_error() -> std::error::Error {
   return std::error::new(std::error::Other);
 }
 
+fn invalid_data_error() -> std::error::Error {
+  return std::error::new(std::error::InvalidData);
+}
+
 fn exit_status_from_raw(raw_status: i64) -> std::process::ExitStatus {
   return std::process::ExitStatus { raw_value: raw_status };
 }
@@ -626,14 +630,12 @@ pub impl std::process::Output {
 
   fn stdout_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     let bytes = self.stdout_bytes.as_slice();
-    match std::encoding::validate_utf8(bytes) {
-      std::Err(reason) => {
-        return std::Err<std::string::String, std::error::Error>(reason);
+    match std::encoding::decode_utf8(zone, bytes) {
+      std::Err(_) => {
+        return std::Err<std::string::String, std::error::Error>(std::process::invalid_data_error());
       }
-      std::Ok(_) => {
-        return std::Ok<std::string::String, std::error::Error>(
-          std::string::from_slice_in(zone, bytes)
-        );
+      std::Ok(text) => {
+        return std::Ok<std::string::String, std::error::Error>(text);
       }
     }
   }
@@ -644,14 +646,12 @@ pub impl std::process::Output {
 
   fn stderr_string(self: ref mut Self, zone: ref mut Zone) -> std::Result[std::string::String, std::error::Error] {
     let bytes = self.stderr_bytes.as_slice();
-    match std::encoding::validate_utf8(bytes) {
-      std::Err(reason) => {
-        return std::Err<std::string::String, std::error::Error>(reason);
+    match std::encoding::decode_utf8(zone, bytes) {
+      std::Err(_) => {
+        return std::Err<std::string::String, std::error::Error>(std::process::invalid_data_error());
       }
-      std::Ok(_) => {
-        return std::Ok<std::string::String, std::error::Error>(
-          std::string::from_slice_in(zone, bytes)
-        );
+      std::Ok(text) => {
+        return std::Ok<std::string::String, std::error::Error>(text);
       }
     }
   }
