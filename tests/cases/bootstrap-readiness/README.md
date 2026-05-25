@@ -1,7 +1,7 @@
 # Bootstrap Readiness Tests
 
 These fixtures prove that normal Ari code can express compiler-shaped data
-before the real `bootstrap/` tree exists.
+before any Ari compiler-in-Ari tree exists.
 
 Keep files grouped by the pressure point they exercise:
 

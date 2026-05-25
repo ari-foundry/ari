@@ -1,7 +1,7 @@
 # Compiler Bootstrap Fixture Plan
 
-This page defines the pre-bootstrap fixtures Ari should add before a real
-`bootstrap/` compiler tree exists.
+This page defines the small readiness fixtures Ari should keep before any real
+Ari compiler-in-Ari tree exists.
 
 The fixtures are not a hidden stage1 implementation. They are normal Ari programs
 and expected-output files that prove the public language can express
@@ -33,7 +33,7 @@ Pre-bootstrap fixtures should answer these questions:
 
 ## Placement
 
-Do not create the real `bootstrap/` tree until the lexer pilot starts. Before
+Do not create an Ari compiler-in-Ari tree until the lexer pilot starts. Before
 that, keep readiness fixtures under the normal test tree:
 
 ```text
@@ -109,24 +109,22 @@ unrelated helpers, split it.
 Keep targets small. Do not make early readiness checks depend on a full
 `make check` run.
 
-Current and recommended targets:
+Current targets:
 
 ```text
 make check-bootstrap-docs
 make check-bootstrap-readiness
-make check-bootstrap-readiness-model
-make check-bootstrap-readiness-modules
-make check-bootstrap-readiness-artifacts
 ```
 
-`check-bootstrap-readiness` is the first concrete target. It should stay tiny:
-compile a few normal Ari programs that model compiler-shaped data, including
-source line/column lookup, aggregate `Result[Token, LexError]` failure values,
-and named-capture artifact formatting, then grow only when a new readiness
-fixture proves a specific pressure point.
+`check-bootstrap-readiness` should stay tiny: compile a few normal Ari programs
+that model compiler-shaped data, including source line/column lookup, aggregate
+`Result[Token, LexError]` failure values, and named-capture artifact formatting.
+Grow it only when a new readiness fixture proves a specific pressure point. Use
+feature targets such as `make check-modules`, `make check-generics`, or
+`make check-traits` when the behavior primarily belongs to that feature.
 
-Once the lexer pilot starts and the real `bootstrap/` tree exists, move from
-readiness fixtures to stage tool checks:
+Once the future lexer pilot starts and a real Ari compiler tree exists, move
+from readiness fixtures to stage tool checks:
 
 ```text
 make -C bootstrap check-lex
@@ -154,8 +152,8 @@ visible in a small textual artifact before it becomes a backend mystery.
 
 ## Start Gate
 
-The real `bootstrap/` tree may start when readiness fixtures prove these
-properties:
+The real Ari compiler-in-Ari tree may start when readiness fixtures and hosted
+compiler checks prove these properties:
 
 - source text and span values are easy to represent
 - compiler diagnostics can be rendered as stable text and kept not in runtime `std`

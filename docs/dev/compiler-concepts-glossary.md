@@ -76,7 +76,7 @@ according to the smallest affected layer.
 | Focused check | The smallest command that proves the changed layer. |
 | Handoff check | Broader verification before sharing a large change. |
 
-Use `make check-compiler-development` for model fixtures and
+Use `make check-bootstrap-readiness` for bootstrap-readiness fixtures and
 `make check-compiler-artifacts` for stage artifacts. Full `make check` belongs
 at handoff. Sanitizer checks are intentionally separate.
 

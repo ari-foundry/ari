@@ -40,53 +40,58 @@ Read this page with [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)
 
 ## Current Bootstrap Readiness
 
-Current practical estimate:
-
-- **38-42% ready** to begin full compiler bootstrapping
-- **58-62% remaining** before a self-host attempt is likely to be productive
+Current practical readiness is tracked as a gate-based inventory in
+[Compiler Readiness Inventory](compiler-readiness-inventory.md). Do not use the
+old single-number self-host estimate as the current score.
 
 This is not a judgment on Ari's ambition. Ari already has a large hosted
 systems-language surface: LLVM output, modules, structs, enums, traits,
 generics, zones, ownership checks, C FFI, formatting, file IO, collections, and
 tests.
 
-The gap is mostly production compiler scale:
+The active start gate is about the C++ hosted compiler core, not stdlib size,
+an Ari-written build tool, or an Ari compiler rewrite. The gap is mostly
+production compiler scale:
 
 - file-backed project layout that feels boring and predictable
 - source ownership, spans, and line/column lookup outside runtime `std`
 - structured compiler diagnostics with stable golden output
 - generic aggregate and trait behavior that stays comfortable in large code
-- enough module metadata and build/test flow to support many compiler files
+- enough module metadata and existing Make/test flow to support many compiler
+  files
 - stage artifact comparison so regressions are explained by the failing layer
 
 Small Ari tools can be written now. A full compiler bootstrap should wait until
-the start bar below is green.
+the start bar below is green and the hosted compiler proves those gates with
+focused checks.
 
-## Readiness Scorecard
+## Readiness Gate Model
 
-The 38-42% number comes from Ari having a real hosted systems-language
-substrate, not from having an Ari compiler implementation already underway.
-The missing percent is mostly about scale, project shape, and compiler-quality
-tooling.
+The readiness model is no longer a single executable fixture. It is a set of hosted
+compiler gates. Each row improves only when compiler behavior is implemented or
+fixed; tests lock the behavior after it exists.
 
 | Area | Current State | Bootstrap Impact |
 | --- | --- | --- |
 | Hosted executable pipeline | Usable. The current compiler emits LLVM IR, links through an LLVM driver, and runs Linux/glibc executables. | Good enough for stage0-built tools. |
 | Core language model | Usable but still maturing. Functions, control flow, structs, enums, traits, generics, ownership, zones, C FFI, formatting, and modules exist. | Enough for small tools; large compiler code will stress generic aggregates and trait dispatch. |
 | File-backed projects | Partial. File-backed modules and module cache work exist, but large project ergonomics and diagnostics need hardening. | Start blocker for a multi-directory compiler project. |
-| Text and bytes | Partial. `char`, byte strings, string slices, ASCII, UTF-8 validation, formatting, and file reads exist. | Good for a lexer pilot; source-map ownership and diagnostic snippets are still missing. |
-| Compiler diagnostics | Missing as a reusable Ari layer. Runtime `std` has logging, panic, and formatting, but not compiler source maps, labels, reports, or golden renderers. | Hard blocker before parser-scale work. |
-| Data structures | Partial. Vectors, slices, maps, sets, trees, heaps, and iterators exist, but nested generic aggregate behavior needs more stress coverage. | Hard blocker before AST/HIR/symbol tables are comfortable. |
-| Error flow | Partial. `Option`, `Result`, and compact errors exist, but large expected-failure workflows still need ergonomic pressure testing. | Soft blocker for lexer; hard blocker for parser/sema. |
-| Build/test flow | Partial. `make` and focused compiler/std checks exist. Bootstrap-specific fixtures and stage comparison do not exist yet. | Hard blocker before claiming self-host progress. |
-| Stage comparison | Seeded. Token, syntax, diagnostic, and basic typed IR artifact checks exist; HIR, richer typed IR, LLVM text, and stage comparison still need implementation. | Hard blocker before stage1/stage2 comparison. |
+| Source identity | Improving. Source maps, source ids, byte spans, line/column lookup, snippets, EOF/CRLF cases, and imported-file diagnostics have focused checks. | Hard blocker until common diagnostics and artifacts are consistently source-backed. |
+| Compiler diagnostics | Improving. Codes, families, labels, notes, help, diagnostic catalog CLI, and diagnostic artifacts exist for many layers. | Hard blocker until common user errors avoid vague fallback text. |
+| Module/project flow | Partial but active. File-backed modules, metadata, cache validation, imported diagnostics, and module graph artifacts exist. | Hard blocker for a multi-directory compiler project. |
+| Frontend reliability | Partial. Lexer/parser diagnostics and syntax artifacts cover many malformed inputs, but recovery and span stability still need hardening. | Hard blocker before parser-scale work. |
+| Compiler-shaped data | Partial. Bootstrap-readiness and feature tests cover small source/token/diagnostic/generic shapes. | Hard blocker before AST/HIR/symbol tables are comfortable. |
+| Trait/generic readiness | Partial. Static traits, generic aggregates, generic functions, and monomorphization have focused tests, with deeper compiler-shaped stress still needed. | Hard blocker before large generic compiler code is comfortable. |
+| Artifact comparison | Improving. Token, source-map, syntax, diagnostic, module graph, declaration, typed IR, pass-summary, LLVM-fragment, symbols, and runtime outputs have checks. | Hard blocker before any future stage comparison. |
+| Tool build flow | Later ecosystem gate. Existing Make targets are enough for readiness work. | Do not count an Ari package/build tool against the current start gate. |
 
 The practical interpretation:
 
-- Ari can start experimental compiler components now.
-- Ari should not start a full self-hosting tree until source maps,
-  diagnostics, multi-file project flow, and stage artifact comparison have
-  their first focused tests.
+- Ari can start small experimental tools now.
+- Ari should not start a full self-hosting tree until source identity,
+  diagnostics, multi-file project flow, frontend reliability, compiler-shaped
+  data, trait/generic behavior, and artifact comparison are boring under the
+  hosted compiler.
 
 ## Design Goal
 
@@ -116,7 +121,7 @@ roadmap.
 
 ## Bootstrap Start Bar
 
-Create a real `bootstrap/` tree only when all of these are true:
+Start a real Ari compiler-in-Ari tree only when all of these are true:
 
 | Area | Required State |
 | --- | --- |
@@ -245,7 +250,7 @@ Exit criteria:
 
 - Add small compiler-facing fixtures that compile with today's Ari and stress
   the public language surface a future stage1 compiler would use.
-- Keep them outside a real `bootstrap/` tree until the lexer pilot starts.
+- Keep them under the normal test tree until the future lexer pilot starts.
 - Group fixtures by language pressure point: modules, generic aggregates,
   traits, formatting, source-text bytes, zones, and error values.
 

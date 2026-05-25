@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Keep the compiler bootstrap design docs linked and useful.
+"""Keep the compiler-writing readiness docs linked and useful.
 
 This is intentionally a small documentation smoke check. It does not prove
 bootstrapping works; it prevents the production-design and entry-gate documents
-from losing the sections that contributors need before the first Ari-written
-compiler component lands.
+from losing the sections that contributors need before any Ari-written compiler
+work starts.
 """
 
 from pathlib import Path
@@ -42,7 +42,7 @@ def main() -> int:
     for heading in [
         "# Production Compiler Design",
         "## Current Bootstrap Readiness",
-        "## Readiness Scorecard",
+        "## Readiness Gate Model",
         "## Design Goal",
         "## Bootstrap Start Bar",
         "## Production Language Contract",
@@ -55,8 +55,9 @@ def main() -> int:
     ]:
         require(design, heading, design_path)
     for needle in [
-        "38-42% ready",
-        "58-62% remaining",
+        "[Compiler Readiness Inventory](compiler-readiness-inventory.md)",
+        "gate-based",
+        "hosted compiler core",
         "not a bootstrap-only checklist",
         "ordinary production Ari program",
         "[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)",
@@ -118,6 +119,11 @@ def main() -> int:
         "[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)",
         readiness_path,
     )
+    require(
+        readiness,
+        "[Compiler Readiness Inventory](compiler-readiness-inventory.md)",
+        readiness_path,
+    )
     for heading in [
         "# Bootstrap Readiness",
         "## Current Estimate",
@@ -131,16 +137,17 @@ def main() -> int:
     ]:
         require(readiness, heading, readiness_path)
 
-    if not re.search(r"38-42% ready", readiness):
-        print(f"{readiness_path}: missing ready percentage", file=sys.stderr)
+    if not re.search(r"hosted compiler core", readiness):
+        print(f"{readiness_path}: missing hosted compiler scope", file=sys.stderr)
         return 1
-    if not re.search(r"58-62% remaining", readiness):
-        print(f"{readiness_path}: missing remaining percentage", file=sys.stderr)
+    if not re.search(r"excludes stdlib/library", readiness):
+        print(f"{readiness_path}: missing stdlib exclusion", file=sys.stderr)
         return 1
 
     self_host_path = "docs/dev/self-host-roadmap.md"
     self_host = read(self_host_path)
     require(self_host, "[Compiler Development Roadmap](compiler-development-roadmap.md)", self_host_path)
+    require(self_host, "[Compiler Readiness Inventory](compiler-readiness-inventory.md)", self_host_path)
     require(self_host, "[Production Compiler Design](production-compiler-design.md)", self_host_path)
     require(self_host, "[Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md)", self_host_path)
     require(self_host, "[Bootstrap Readiness](bootstrap-readiness.md)", self_host_path)

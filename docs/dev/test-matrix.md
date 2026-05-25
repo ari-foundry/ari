@@ -133,14 +133,12 @@ provenance hooks live under `tests/cases/memory/`. See
 ## Compiler And Bootstrap Documentation Coverage Note
 
 Compiler development is tracked before bootstrapping work starts. The general
-language-docs entry path is checked by `make check-language-docs`, the general
-compiler roadmap is checked by `make check-compiler-dev-docs`, the later
-bootstrap start gate is checked by `make check-bootstrap-docs`, and the first
-compiler-shaped Ari fixtures are
-checked by `make check-bootstrap-readiness`. The docs target runs
-`tests/check_language_docs.py`,
-`tests/check_compiler_development_docs.py` and
-`tests/check_bootstrap_readiness_docs.py` and verifies that
+language-docs entry path is checked by `make check-language-docs`, the hosted
+compiler readiness docs are checked by `make check-bootstrap-docs`, and the
+small compiler-shaped Ari source fixtures are checked by
+`make check-bootstrap-readiness`. The docs targets run
+`tests/check_language_docs.py` and
+`tests/check_bootstrap_readiness_docs.py` and verify that
 [Getting Started](../language/getting-started.md),
 [Quick Reference](../language/quick-reference.md),
 [Cookbook](../language/cookbook.md),
@@ -157,7 +155,7 @@ checked by `make check-bootstrap-readiness`. The docs target runs
 [Compiler Bootstrap Fixture Plan](bootstrap-fixture-plan.md),
 [Bootstrap Readiness](bootstrap-readiness.md),
 [Self-Host Roadmap](self-host-roadmap.md), and the docs indexes stay linked and
-keep the production-language contract, readiness scorecard, start gate, first
+keep the production-language contract, readiness inventory, start gate, first
 implementation slices, fixture groups, roadmap, estimate, and test-plan
 sections.
 

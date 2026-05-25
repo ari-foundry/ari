@@ -12,7 +12,7 @@ Use this page with:
 - [Compiler Contributor Guide](compiler-contributor-guide.md) for the practical
   edit map, test categories, and small-check loop.
 - [Compiler Readiness Inventory](compiler-readiness-inventory.md) for the
-  current strengths, blocking gaps, backlog, and health scorecard.
+  current gates, proof locations, blocking gaps, and focused checks.
 - [Compiler Pass Contracts](compiler-pass-contracts.md) for lexer, parser,
   resolver, sema, IR, and backend boundary rules.
 - [Compiler Source And Diagnostics](compiler-source-diagnostics.md) for the
@@ -27,14 +27,15 @@ Use this page with:
 
 ## Current Estimate
 
-Ari is currently about **48-49% through the current compiler-development
-maturity work**.
+Use [Compiler Readiness Inventory](compiler-readiness-inventory.md) for the
+current start-readiness estimate. This page keeps the gate definitions stable;
+it no longer treats a deleted readiness fixture or test count as the score.
 
-This estimate is intentionally conservative. Ari already has enough language
-surface to build small tools. The remaining work is about compiler scale:
-multi-file project flow, stable diagnostics, source maps, generic aggregate
-maturity, predictable trait selection, artifact comparison, and tests that fail
-near the layer that regressed.
+The estimate is intentionally conservative. Ari already has enough language
+surface to build small tools. The remaining work is about hosted compiler
+scale: multi-file project flow, stable diagnostics, source maps, frontend
+recovery, generic/trait maturity, artifact comparison, and tests that fail near
+the layer that regressed.
 
 ## How To Read The Gates
 
@@ -45,18 +46,20 @@ lines of Ari source to rely on it without awkward encodings.
 
 The healthiest order is:
 
-1. Make the current C++ compiler more reliable.
-2. Add public Ari language features only when ordinary Ari programs benefit.
-3. Add compiler/tooling packages for source maps, diagnostics, and artifact
-   rendering.
-4. Add broader tools only after the gates that feed them are green.
+1. Decide whether a gap is implementation missing, implementation buggy, or
+   verification missing.
+2. Make the current C++ compiler more reliable when behavior is missing or
+   wrong.
+3. Add public Ari language features only when ordinary Ari programs benefit.
+4. Add compiler/tooling packages or broader tools only after the hosted
+   compiler gates that feed them are green.
 
 ## Maturity Gates
 
 | Gate | Required State | Test Shape | Status |
 | --- | --- | --- | --- |
 | Frontend grammar | Lexer and parser rules are documented, boring, and reject malformed syntax with useful spans. | `tests/cases/<feature>/ok` and `errors` plus parser-focused diagnostics. | Partial |
-| Source identity | A compiler/tooling package can own files, `SourceId`, byte spans, line/column lookup, and snippets. | `source/ok/source-line-column`, span edge cases, multi-file source maps. | Seed fixture only |
+| Source identity | The hosted compiler can own files, `SourceId`, byte spans, line/column lookup, and snippets. | SourceMap unit checks, source-map artifacts, imported diagnostics. | Improving |
 | Diagnostics | Compiler errors have stable codes, labels, notes, and stable golden rendering outside runtime `std`. | Golden text tests for single-label, multi-label, note order, and recovery. | Seeded |
 | Module projects | File-backed modules, roots, search paths, visibility, and module cache invalidation are predictable. | Missing/private/stale-cache diagnostics plus multi-file ok fixtures. | Partial |
 | Generic data models | Nested structs, enums, aliases, tuples, vectors, maps, sets, and `Result` payloads monomorphize cleanly for local/codegen-supported shapes. | User-defined aggregate, stdlib stress, compiler-shaped token, AST, symbol-table, and error-model fixtures. | Good first pass |
@@ -65,7 +68,7 @@ The healthiest order is:
 | Allocation model | Zones, scratch arenas, ownership, drops, and borrow diagnostics scale to compiler graphs. | Arena fixture tests, reset/destroy invalidation tests, owned graph cleanup tests. | Partial |
 | IR contract | Sema lowers resolved facts into IR so backend codegen stays mechanical. | IR text checks for names, layouts, ABI, runtime hooks, and symbols. | Partial |
 | Backend artifacts | LLVM IR, object, executable, and shared library output are deterministic enough to inspect. | Focused `--emit-llvm`, `--emit-obj`, symbol, relocation, and exit-code checks. | Good first pass |
-| Tool build flow | A Makefile can build one Ari tool, run its fixtures, and compare outputs without hidden flags. | Focused tool targets that run in seconds and compare artifacts. | Planned |
+| Tool build flow | Later ecosystem work for an Ari package/build tool; not a core start gate while hosted compiler reliability still has gaps. | Existing Make targets. | Later |
 | Stage comparison | Token, syntax, HIR, typed IR, LLVM text, and executable behavior have a comparison order. | Normalized text artifact checks, then executable checks only after earlier layers match. | Seeded |
 
 ## Implementation Order
@@ -167,7 +170,7 @@ Small checks should stay narrow while developing:
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/generics/ok/generic-function.ari --emit-llvm build/focused/generic.ll
 make check-language-docs
-make check-compiler-dev-docs
+make check-bootstrap-docs
 make check-compiler-artifacts
 ```
 
@@ -215,9 +218,9 @@ readiness =
 - private shortcuts or untested special cases
 ```
 
-The current estimate is about **48-49%** because Ari has a substantial hosted
-systems-language base, but diagnostics, compiler-tooling packages, module
-scale, and artifact comparison still need hardening.
+Do not update readiness by adding tests for unsupported behavior. Update it
+when the hosted compiler actually handles the gate more reliably, then add the
+focused test or artifact that proves the improvement.
 
 ## Non-Goals For Now
 

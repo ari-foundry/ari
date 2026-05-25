@@ -293,8 +293,8 @@ focused target that owns the changed surface first:
 
 ```sh
 make check-language-docs
-make check-compiler-dev-docs
-make check-compiler-development
+make check-bootstrap-docs
+make check-bootstrap-readiness
 ```
 
 For larger compiler code changes, run:

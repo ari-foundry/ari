@@ -177,7 +177,8 @@ Use these folders:
   declaration index goldens
 - `tests/cases/compiler-development/artifact/errors/` for module diagnostic
   goldens
-- `tests/cases/compiler-development/ok/model/` for planning/model fixtures
+- `tests/cases/bootstrap-readiness/ok/` only when the project fixture is
+  compiler-shaped rather than specifically about module behavior
 
 Name tests after behavior: `module-missing-candidates`,
 `module-private-item`, `module-graph-file-module`,

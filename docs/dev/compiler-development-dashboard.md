@@ -7,11 +7,12 @@ compiler contributors.
 
 ## Current Status
 
-Ari is roughly **48-49% through the current compiler-development maturity
-work**. Treat that number as a practical compiler-health estimate, not a
-release promise. It should move when normal Ari code can express larger data
-models, produce stable diagnostics, build multi-file projects, and compare
-compiler artifacts before relying on linked executables.
+Ari readiness is tracked by the gate table in
+[Compiler Readiness Inventory](compiler-readiness-inventory.md), not by the
+old single-number readiness fixture. Treat readiness as a practical compiler-health
+estimate, not a release promise. It should move when the hosted compiler can
+handle larger data models, produce stable diagnostics, build multi-file
+projects, and compare compiler artifacts before relying on linked executables.
 
 ## Read First
 
@@ -47,7 +48,7 @@ Use this order when joining compiler work:
 14. [Compiler Change Checklist](compiler-change-checklist.md): review and
    handoff checklist for normal compiler changes.
 15. [Compiler Readiness Inventory](compiler-readiness-inventory.md): current
-   strengths, blocking gaps, scorecard, and development gates.
+   gates, proof locations, blocking gaps, and focused checks.
 
 For language behavior while writing Ari fixtures, pair these with
 [Getting Started](../language/getting-started.md),
@@ -60,9 +61,9 @@ example, test family, and small check for a language feature.
 
 | Area | Why It Matters | First Proof |
 | --- | --- | --- |
-| Source identity | Diagnostics, modules, and artifacts need stable source ownership before the compiler grows more stages. | Source-map golden fixtures and compiler model tests. |
+| Source identity | Diagnostics, modules, and artifacts need stable source ownership before the compiler grows more stages. | Source-map unit tests, source-map goldens, and bootstrap-readiness source fixtures. |
 | Diagnostic data | Users and contributors need stable codes, labels, notes, and normalized paths. | `--emit-diagnostics` golden files under `tests/cases/compiler-development/artifact/errors/`. |
-| Test classification | Each compiler change should land near the layer it protects. | `ok/model`, `artifact/ok`, `artifact/errors`, and `errors` fixture placement. |
+| Test classification | Each compiler change should land near the layer it protects. | Feature `ok`/`errors`, bootstrap-readiness, artifact `ok`/`errors`, and package fixture placement. |
 | Artifact comparison | Regressions should fail near tokens, syntax, diagnostics, typed IR, or backend output instead of only at executable behavior. | `make check-compiler-artifacts`. |
 
 ## Do Next
@@ -70,8 +71,8 @@ example, test family, and small check for a language feature.
 | Area | Direction | First Small Check |
 | --- | --- | --- |
 | File-backed project flow | Harden roots, search paths, `.ari`/`.arih`, visibility, metadata, and cache validation. | One module fixture or `--emit-module-graph` golden. |
-| Generic compiler models | Keep nested structs, enums, vectors, maps, and `Result[T, E]` natural in normal Ari. | One fixture under `tests/cases/compiler-development/ok/model/`. |
-| Trait and formatting selection | Make `Drop`, `Debug`, formatting, `Eq`, `Ord`, `Hash`, and iterator behavior deterministic. | Focused trait tests plus one compiler-shaped model. |
+| Generic compiler models | Keep nested structs, enums, vectors, maps, and `Result[T, E]` natural in normal Ari. | Focused generics tests plus bootstrap-readiness only when the case is compiler-shaped. |
+| Trait and formatting selection | Make `Drop`, `Debug`, formatting, `Eq`, `Ord`, `Hash`, and iterator behavior deterministic. | Focused trait tests plus one compiler-shaped fixture when needed. |
 | HIR and ownership artifacts | Add text artifacts before broadening sema and backend behavior. | Future HIR or ownership-fact golden output. |
 
 ## Not Yet
@@ -96,8 +97,8 @@ Run the smallest check that proves the slice you touched:
 | Change | Focused Check |
 | --- | --- |
 | Language docs or feature index | `make check-language-docs` |
-| Compiler roadmap, dashboard, or dev docs | `make check-compiler-dev-docs` |
-| Compiler-shaped Ari model fixture | `make check-compiler-development` |
+| Compiler roadmap, dashboard, or dev docs | `make check-bootstrap-docs` |
+| Compiler-shaped Ari model fixture | `make check-bootstrap-readiness` |
 | Stage-plan, capability inventory, token, syntax, diagnostic catalog, diagnostic, module, declaration, typed-IR, or pass-summary golden | `make check-compiler-artifacts` |
 | One Ari source while iterating | `build/ari path/to/file.ari --check` |
 
@@ -111,10 +112,10 @@ Compiler-development tests use these buckets:
 
 | Bucket | Meaning |
 | --- | --- |
-| `tests/cases/compiler-development/ok/model/` | Ari programs that model compiler-shaped data and pass flow. |
+| `tests/cases/bootstrap-readiness/ok/` | Ari programs that model compiler-shaped data and pass flow. |
 | `tests/cases/compiler-development/artifact/ok/` | Golden artifacts expected to match exactly after normalization. |
 | `tests/cases/compiler-development/artifact/errors/` | Golden diagnostics and mismatch reports for expected failures. |
-| `tests/cases/compiler-development/errors/` | Source fixtures that should be rejected by the compiler. |
+| `tests/cases/bootstrap-readiness/errors/` | Source fixtures that should be rejected by the compiler. |
 
 Name each file by the behavior it protects, not by the implementation helper
 you happened to edit.

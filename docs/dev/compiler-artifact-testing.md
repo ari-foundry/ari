@@ -202,7 +202,7 @@ Golden update policy:
 Small targets should compare one artifact family at a time:
 
 ```text
-make check-compiler-dev-docs
+make check-bootstrap-docs
 make check-compiler-artifacts
 ```
 

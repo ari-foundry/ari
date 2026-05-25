@@ -26,8 +26,8 @@ Each stable diagnostic should be designed as data before text:
 
 | Field | Rule |
 | --- | --- |
-| Code | Use a stable family such as `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, or `B0001` when the rule is durable. |
-| Family | Emit the owning layer name such as `lexer`, `parser`, `module`, `type`, `ownership`, `ir`, or `backend`. |
+| Code | Use a stable family such as `C0001`, `L0001`, `P0001`, `M0001`, `T0001`, `O0001`, `I0001`, or `B0001` when the rule is durable. |
+| Family | Emit the owning layer name such as `cli`, `lexer`, `parser`, `module`, `type`, `ownership`, `ir`, or `backend`. |
 | Severity | Use `error` for rejected source; reserve warnings until warning policy is explicit. |
 | Source | Emit a normalized source path when the error has a source location. |
 | Line and column | Emit one-based `line=` and `column=` fields for tool-friendly parsing. |
@@ -109,6 +109,7 @@ Start with families, then add individual codes when behavior is stable:
 
 | Family | Owns |
 | --- | --- |
+| `C0001` | command-line options, driver entry checks, and source-less CLI misuse |
 | `L0001` | lexer characters, escapes, and invalid tokens |
 | `P0001` | parser grammar and recovery |
 | `M0001` | modules, imports, visibility, metadata, and caches |
@@ -142,9 +143,16 @@ Common source-level diagnostics should not land in the `ari/compiler`
 fallback. Keep lexer errors in `L0001`, parser errors in `P0001`, module and
 visibility errors in `M0001`, type/trait/generic/aggregate/match errors in
 `T0001`, ownership and borrow errors in `O0001`, ABI/FFI errors in `A0001`,
-and backend/toolchain errors in `B0001`. Reserve `ari/compiler` for genuinely
-source-less driver, option, generated, or internal fallback failures while the
-compiler still uses transitional `CompileError` text.
+backend/toolchain errors in `B0001`, and CLI/driver option errors in `C0001`.
+Reserve `ari/compiler` for genuinely unclassified generated or internal
+fallback failures while the compiler still uses transitional `CompileError`
+text.
+
+Module metadata and cache diagnostics should name what was validated and why it
+failed. Prefer a short note for the stale or mismatched fact and a help line
+that tells the user how to regenerate or remove the cache. These diagnostics may
+be source-less when the invalid input is an external cache file, but they should
+still stay in the module family instead of the generic fallback.
 
 ## Golden Tests
 
@@ -161,7 +169,7 @@ For expected failures, prefer the smallest observable artifact:
 Put diagnostic golden files under
 `tests/cases/compiler-development/artifact/errors/`. Keep paths normalized and
 messages deterministic. Run `make check-compiler-artifacts` when artifact text
-changes and `make check-compiler-dev-docs` when this policy changes.
+changes and `make check-bootstrap-docs` when bootstrap/readiness policy changes.
 Run `python3 tests/check_compiler_diagnostic_cli.py` when changing diagnostic
 catalog CLI behavior.
 

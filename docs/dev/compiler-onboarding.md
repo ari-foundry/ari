@@ -21,7 +21,7 @@ Read in this order:
 4. [Compiler Test Authoring](compiler-test-authoring.md) before adding or
    moving a fixture.
 5. [Compiler Readiness Inventory](compiler-readiness-inventory.md) for the
-   current 48-49% compiler-development estimate.
+   current gate-based readiness map and proof links.
 
 When writing Ari source for fixtures, keep
 [Quick Reference](../language/quick-reference.md),
@@ -44,8 +44,8 @@ build/ari path/to/case.ari --check
 build/ari path/to/case.ari --emit-llvm build/focused/case.ll
 build/ari --explain-pass sema
 build/ari --explain-test-bucket compiler-artifact-ok
-make check-compiler-dev-docs
-make check-compiler-development
+make check-bootstrap-docs
+make check-bootstrap-readiness
 make check-compiler-artifacts
 ```
 
@@ -61,13 +61,14 @@ Choose by behavior, not by the implementation file you edited.
 | --- | --- | --- |
 | `tests/cases/<feature>/ok/` | Valid language behavior that should compile, emit LLVM, link, or run. | `build/ari path/to/case.ari --check` |
 | `tests/cases/<feature>/errors/` | Invalid source that should fail with a stable diagnostic. | A focused failing `--check` command plus a diagnostic assertion. |
-| `tests/cases/compiler-development/ok/model/` | Ari programs that model compiler-shaped data, pass flow, docs, readiness, or test policy. | `make check-compiler-development` |
+| `tests/cases/bootstrap-readiness/ok/` | Small compiler-shaped Ari source fixtures used to pressure future compiler-writing readiness. | `make check-bootstrap-readiness` |
+| `tests/cases/bootstrap-readiness/errors/` | Unsupported compiler-shaped source forms that must stay rejected. | `make check-bootstrap-readiness` |
 | `tests/cases/compiler-development/artifact/ok/` | Deterministic compiler text artifacts that should match committed goldens. | `make check-compiler-artifacts` |
 | `tests/cases/compiler-development/artifact/errors/` | Expected diagnostic artifacts or artifact-comparison reports. | `make check-compiler-artifacts` |
-| `tests/cases/compiler-development/errors/` | Compiler-development policy rejections, such as unsupported private syntax. | `make check-compiler-development` |
+| `tests/packages/` | Multi-file module, cache, and package-style project fixtures. | `make check-modules` |
 
 Name the file after the behavior it protects: `module-private-import.ari`,
-`diagnostic-parser-expected.diagnostic`, `compiler-onboarding-workflow.ari`.
+`diagnostic-parser-expected.diagnostic`, `model-token-span.ari`.
 
 ## Docs-Only Ari Fixture Path
 
@@ -84,9 +85,10 @@ Use normal Ari modeling tools:
 - `type` aliases for domain names such as `SourceId`, `Span`, and `TypeId`
 - explicit `Zone` values for owned compiler data
 
-If the public language makes a compiler-shaped fixture awkward, record that as
-compiler-development pressure in the roadmap instead of hiding it in a private
-bootstrap path.
+If the public language makes a compiler-shaped fixture awkward, first decide
+whether that is a real compiler implementation gap or only missing
+documentation. Fix compiler behavior when the implementation is lacking; use a
+fixture only to lock behavior that already exists or was just fixed.
 
 ## Working Beside Library Changes
 

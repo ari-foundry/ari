@@ -23,56 +23,50 @@ is the entry gate for starting that work without turning the current C++
 compiler into a second rewrite project.
 
 For active compiler work, use
-[Compiler Development Roadmap](compiler-development-roadmap.md). This page is a
+[Compiler Development Roadmap](compiler-development-roadmap.md) and
+[Compiler Readiness Inventory](compiler-readiness-inventory.md). This page is a
 readiness gauge, not a request to implement bootstrapping now.
 
 ## Current Estimate
 
-As of the current hosted compiler and standard library, Ari is roughly:
+The active start-readiness estimate is now gate-based and lives in
+[Compiler Readiness Inventory](compiler-readiness-inventory.md). Do not use the
+old single-number self-host estimate or a deleted readiness fixture as the current
+source of truth.
 
-- **38-42% ready to start full compiler bootstrapping**
-- **58-62% remaining before a self-host attempt is likely to be productive**
+This gate is about the hosted compiler core only: source identity, diagnostics,
+module/project flow, frontend reliability, compiler-shaped data models,
+trait/generic readiness, artifact comparison, and large multi-file Ari project
+behavior. It deliberately excludes stdlib/library maturity, an Ari-written
+package/build tool, and any actual Ari compiler rewrite.
 
-This estimate is about practical implementation readiness, not language
-ambition. Ari already has many pieces needed by a compiler: modules, structs,
-enums, traits, generics, zones, strings, vectors, maps/sets, formatting,
-filesystem IO, process/environment helpers, logging/error helpers, and an
-LLVM-backed executable pipeline. The remaining work should be treated as
-general production language and compiler design, not as bootstrap-only
-exceptions. Source-coordinate, source-map, and diagnostic builder APIs do not
-belong in production `std`; they need to exist as a compiler/tooling-local
-layer before the lexer/parser bootstrap track starts. The missing work is
-mostly around scale, ergonomics, owned source text maps, diagnostic rendering,
-stable compiler data structures, multi-file project flow, and comparison
-tooling.
-
-Small Ari-written compiler components can start now. A complete self-hosting
-compiler should wait until the start gate below is green.
+The remaining work should be treated as normal production compiler work, not as
+bootstrap-only exceptions. Source-coordinate, source-map, and diagnostic
+builder APIs belong in compiler/tooling layers, not in runtime `std`.
+A complete self-hosting compiler should wait until the start gate below is
+green.
 
 ## Bootstrap Start Gate
 
-Start the first real `bootstrap/` tree only when these are all true:
+Start the first real Ari compiler-in-Ari track only when these are all true:
 
 | Gate | Required State | Why It Matters |
 | --- | --- | --- |
-| Source text | Ari can read source files and validate UTF-8; a compiler/tooling-local source-map layer still needs byte spans and line/column lookup. | Lexer/parser diagnostics need exact source spans. |
-| Error reporting | Runtime `std` only supplies logging, panic, formatting, errors, and test helpers; compiler tools still need their own source spans, labels, report builders, and stable golden renderers. | Golden tests need comparable errors before the parser grows. |
-| Strings | `String`, string slices, ASCII, UTF-8, split/search/join, and C/OS/path string boundaries are documented and tested. | Compiler frontend code is mostly text handling. |
-| Collections | `Vec`, `Slice`, maps, sets, iterators, and common algorithms are stable enough for syntax trees and symbol tables. | AST/HIR and name resolution need predictable containers. |
-| File modules | Ari can load file-backed modules in a predictable project shape without special one-off flags. | A compiler cannot stay a single file for long. |
-| Result/errors | `Result[T, E]` and small error structs are comfortable enough for parse and IO error propagation. | Stage1 should not use panic for ordinary compiler errors. |
-| Zone policy | A documented arena policy exists for AST, HIR, interned strings, diagnostics, and per-test scratch data. | Self-host data lives longer than toy examples. |
-| Test runner | Focused fixtures can run stage tools and compare stdout/stderr/golden files. | Each compiler layer must be reviewable in isolation. |
-| Backend strategy | Stage1 has an initial artifact target: token dump, syntax dump, HIR dump, normalized IR, then LLVM text. | Stage1 should not wait for full executable output. |
-| No stage0 hacks | Any stage0 C++ change is a normal language/std/runtime fix, not a private shortcut for stage1. | Keeps bootstrap honest and maintainable. |
+| Source identity | The C++ hosted compiler has stable `SourceId`, byte spans, line/column lookup, snippets, EOF behavior, CRLF behavior, imported-file ids, and duplicate-source handling. | Lexer/parser diagnostics need exact source spans. |
+| Error reporting | The hosted compiler emits stable codes, labels, notes, help, source ids, and normalized golden diagnostics for common user errors. | Golden tests need comparable errors before the parser grows. |
+| File modules | The hosted compiler loads file-backed modules in a predictable project shape and reports missing, private, cyclic, duplicate, stale-cache, and imported-file errors cleanly. | A compiler cannot stay a single file for long. |
+| Frontend reliability | Lexer and parser reject malformed input with stable recovery, spans, and syntax/diagnostic artifacts. | Future compiler work depends on trustworthy frontend failures. |
+| Compiler data | Ari can express small compiler-shaped source, token, diagnostic, symbol, and result values using normal structs, enums, generics, traits, and ownership rules. | AST/HIR and name resolution need predictable data models. |
+| Traits and generics | Generic aggregates, generic functions, trait selection, method resolution, and monomorphization work for compiler-shaped data without name-specific shortcuts. | Compiler data naturally uses nested generic containers and trait bounds. |
+| Artifact comparison | Token, source-map, syntax, diagnostic, module graph, declaration, typed IR, pass summary, LLVM fragment, symbol, and runtime-output artifacts are deterministic enough for focused review. | Each compiler layer must be reviewable in isolation. |
+| No private shortcuts | Any C++ change is a normal language/compiler fix, not private syntax or a hidden helper for a future Ari compiler. | Keeps the future rewrite honest and maintainable. |
 
-The recommended first green target is not "self compile". It is:
+The recommended first green target is not "self compile". It is still a
+hosted-compiler proof:
 
 ```text
-stage0 builds an Ari lexer tool
-the lexer tool reads fixture .ari files
-the lexer tool emits stable token and diagnostic output
-tests compare that output to golden files
+the C++ hosted compiler emits stable source, token, syntax, diagnostic,
+module, typed-IR, and backend artifacts for focused fixtures
 ```
 
 ## Needed Language Work
@@ -94,39 +88,28 @@ bootstrapping:
    error-report values in compiler/tooling packages rather than runtime `std`.
 6. More natural text APIs: keep reducing awkward casts and helper suffixes in
    code that manipulates source bytes, chars, and Unicode boundaries.
-7. Better build surfaces: Makefile support is fine for now, but stage1 needs a
-   repeatable project layout and per-component fixture targets.
+7. Better build surfaces: the existing Make/test runner is enough for this
+   readiness gate; an Ari-written build/package tool is a later ecosystem task.
 8. Production compiler contract: keep the language changes public and useful to
    ordinary Ari projects, as described in
    [Production Compiler Design](production-compiler-design.md).
 
 ## Needed Standard Library Work
 
-The stage1 compiler should start with a conservative hosted subset:
+Standard library maturity is intentionally out of scope for the current
+compiler-writing readiness score. Keep stdlib/library work in the library
+roadmap and test targets. This page may mention text, collections, or zones as
+future compiler needs, but do not count library progress as a start-gate
+increase.
 
-| Area | Minimum Surface |
-| --- | --- |
-| Text | `String`, `Slice[u8]`, `char`, ASCII helpers, UTF-8 validation/decode, split/search/join, trim, parse integer/bool/float. |
-| Collections | `Vec`, `Slice`, `HashMap`, `HashSet`, `TreeMap`, `TreeSet`, iterators, sort, binary search, dedup, copy/fill, and stable comparison helpers. |
-| IO/FS | `read`, `try_read`, `write`, `try_write`, `read_dir`, `read_dir_entries`, `read_link`, `symlink_metadata`, path join/normalize/canonicalize, current directory, env args. |
-| Error reporting | formatting, debug formatting, log output, panic/unreachable messages, test report helpers, and compiler-tooling source spans/maps/report builders/renderers outside production `std`. |
-| Memory | explicit `Zone`, temporary zones, copy-to-zone helpers, same-zone container growth, and reset/destroy invalidation checks. |
-| Process | command-line args and exit codes; do not require spawn/fork for the first lexer/parser stage. |
-| Platform | target facts, pointer sizes, errno policy, and hosted Linux/glibc assumptions documented for stage0. |
-
-Avoid these until the single-threaded hosted compiler path works:
-
-- threads and channels
-- sockets
-- dynamic loading
-- kernel/freestanding APIs
-- async IO
-- arbitrary plugin loading
-- optimizing backend work
+For this gate, prefer hosted compiler fixes and focused compiler artifacts over
+new library APIs. Avoid threads, sockets, dynamic loading, package-manager work,
+freestanding startup, async IO, arbitrary plugin loading, and optimizer work.
 
 ## Proposed Bootstrap Project Shape
 
-Create this tree only when the lexer milestone starts:
+Do not create this tree during readiness work. Keep the shape here only as a
+future reference for the day the lexer milestone starts:
 
 ```text
 bootstrap/
@@ -154,9 +137,9 @@ bootstrap/
       golden/
 ```
 
-The first `Makefile` should only call `build/ari`, run a focused tool, and
-compare output. A package manager can replace this later; bootstrapping should
-not wait for one.
+The first future `Makefile` should only call `build/ari`, run a focused tool,
+and compare output. A package manager can replace this later; readiness work
+should not build one now.
 
 ## Roadmap To Start
 

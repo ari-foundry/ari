@@ -41,8 +41,8 @@ modules, sema boundaries, IR, LLVM output, and focused artifacts.
 | Diagnostics | lexer/parser/sema throw sites, `src/diagnostic_dump.cpp` | `--emit-diagnostics` golden | `make check-compiler-artifacts` | Expected failures have stable codes and normalized text. |
 | Lexer/parser surface | `src/lexer.cpp`, `src/parser.cpp`, `src/ast.hpp` | token or syntax dump | focused `build/ari case.ari --check` | New syntax has ok and error coverage plus docs. |
 | Module flow | `src/module_loader.cpp`, `src/module_metadata.cpp`, `src/module_graph_dump.cpp` | module graph or metadata golden | `make check-modules` or one module fixture | Missing/private/stale module behavior is predictable. |
-| Sema boundary | `src/sema.cpp` and the relevant `*_semantics.cpp` helper | compiler-model fixture or typed IR | `make check-compiler-development` | One semantic area owns the rule and diagnostics name the source construct. |
-| Generic data models | type, trait, layout, enum payload helpers | `tests/cases/compiler-development/ok/model/` fixture | `make check-compiler-development` | Compiler-shaped data uses normal Ari structs, enums, `Result`, and containers. |
+| Sema boundary | `src/sema.cpp` and the relevant `*_semantics.cpp` helper | feature fixture, bootstrap-readiness fixture, or typed IR | focused feature check or `make check-bootstrap-readiness` | One semantic area owns the rule and diagnostics name the source construct. |
+| Generic data models | type, trait, layout, enum payload helpers | `tests/cases/bootstrap-readiness/ok/` fixture | `make check-bootstrap-readiness` | Compiler-shaped data uses normal Ari structs, enums, `Result`, and containers. |
 | IR contract | `src/ir.hpp`, `src/ir_builders.cpp`, `src/llvm_codegen.cpp` | `--emit-typed-ir` or LLVM text | focused `--emit-llvm` | LLVM codegen consumes resolved facts instead of re-resolving source names. |
 | Backend artifact | `src/llvm_codegen.cpp`, `src/toolchain.cpp`, ABI helpers | LLVM/object/shared-library check | focused `--emit-llvm` or `--emit-obj` | ABI, visibility, symbols, and runtime hooks are reviewable as small artifacts. |
 
@@ -80,7 +80,7 @@ Choose the test folder by what the fixture proves:
 | What Changed | Put The Test Here |
 | --- | --- |
 | User-visible language behavior | `tests/cases/<feature>/ok/` or `tests/cases/<feature>/errors/` |
-| Compiler-shaped data model | `tests/cases/compiler-development/ok/model/` |
+| Compiler-shaped data model | `tests/cases/bootstrap-readiness/ok/` |
 | Deterministic compiler artifact | `tests/cases/compiler-development/artifact/ok/` |
 | Expected compiler diagnostic artifact | `tests/cases/compiler-development/artifact/errors/` |
 
@@ -112,6 +112,6 @@ repeatable. It helps most when a change adds one of these:
 - a generic aggregate or trait case that removes awkward compiler-shaped code
 - an IR fact that keeps LLVM lowering mechanical
 
-Ari is about **48-49% through the current compiler-development maturity work**.
-The useful work is to make each normal compiler change smaller, clearer, and
-easier to test.
+Use [Compiler Readiness Inventory](compiler-readiness-inventory.md) for the
+current gate-based readiness estimate. The useful work is to make each normal
+compiler change smaller, clearer, and easier to test.

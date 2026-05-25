@@ -20,20 +20,23 @@ Ari is not ready for full self-hosting yet.
 
 Current practical estimate:
 
-- **38-42% ready** to begin full compiler bootstrapping
-- **58-62% remaining** before a self-host attempt is likely to be productive
+- The active hosted-compiler start-readiness estimate lives in
+  [Compiler Readiness Inventory](compiler-readiness-inventory.md).
+- This roadmap deliberately does not count stdlib/library maturity or an
+  Ari-written package/build tool as part of that start gate.
+- The old single-number self-host estimate is obsolete.
 
-The language and standard library are mature enough to start isolated
-compiler-component experiments in Ari, especially lexing, byte-oriented source
-text processing, logging/error helpers, formatting, small parser utilities, and
-golden-test tools. Source-coordinate values, source maps, structured
-compiler-error reports, labels, and rich renderers need to live in a
-compiler/tooling package rather than production `std`.
+The language and hosted compiler are mature enough for isolated Ari tool
+experiments, especially lexing, byte-oriented source text processing,
+formatting, small parser utilities, and golden-test tools. Source-coordinate
+values, source maps, structured compiler-error reports, labels, and rich
+renderers need to live in a compiler/tooling package rather than production
+`std`.
 Any C++ compiler work on this path should still be normal production Ari
 language/compiler work, not a private feature for the bootstrap compiler.
 They are not yet mature enough to build the whole compiler, type checker,
 ownership checker, module graph, and backend in Ari without repeatedly falling
-back to C++ changes.
+back to hosted compiler fixes.
 
 That distinction matters:
 

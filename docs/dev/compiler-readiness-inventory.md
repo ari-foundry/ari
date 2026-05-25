@@ -1,450 +1,90 @@
 # Compiler Readiness Inventory
 
-This page is the inventory for Ari compiler development. It answers one
-question: what has to become true for Ari to feel like a practical compiler
-project?
+This page tracks whether the current C++ hosted Ari compiler is becoming
+mature enough that a future Ari-written compiler could be started later.
 
-Use it to keep the hosted compiler reliable, make the language pleasant for
-large programs, and make compiler behavior easy to test in small pieces.
+It is not a self-host plan. Do not use this inventory to add bootstrap
+scaffolding, an Ari compiler rewrite, a package manager, or stdlib/library
+work. The only question here is whether today's hosted compiler has reliable
+source identity, diagnostics, modules, frontend behavior, compiler-shaped data,
+traits/generics, and artifacts.
 
-## Current Readiness
+## How To Read This Page
 
-Ari is about **48-49% through the current compiler-development maturity work**.
+Readiness is an engineering judgment, not a count of tests. A gate improves
+only when the underlying compiler behavior is implemented or fixed. Tests and
+goldens matter because they lock behavior after the implementation is real; they
+do not make an unsupported feature mature by themselves.
 
-The number is conservative because Ari already compiles useful programs, but a
-compiler is a large program with hard requirements: stable diagnostics,
-multi-file project flow, data-heavy generic models, deterministic artifacts,
-and tests that fail near the layer that regressed.
+The old executable readiness/model fixture bucket was removed. Compiler-shaped
+Ari source pressure now belongs under `tests/cases/bootstrap-readiness/` or the
+owning feature bucket. `tests/cases/compiler-development/` is artifact-only.
 
-## Compiler Health Scorecard
+## Start Gates
 
-The estimate is a weighted engineering score. The current seed fixture
-`tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari`
-models the same shape and returns `49`, keeping the scorecard executable as
-ordinary Ari data.
+Use this priority order when deciding the next small compiler task.
 
-| Gate | Weight | Current Score | What Moves It |
+| Gate | What It Means | Current Proof | What Still Moves It |
 | --- | --- | --- | --- |
-| Frontend reliability | 10 | 55 | Span-aware lexer/parser errors, recovery fixtures, and syntax docs that match parser behavior. |
-| Source identity | 12 | 30 | Owned source maps/files, canonical/display paths, stable `SourceId`, byte spans, line tables, EOF offsets, and snippets. |
-| Diagnostics | 13 | 30 | Diagnostic codes, labels, notes, source rendering, and normalized golden output. |
-| Module projects | 12 | 55 | Predictable roots/search paths, `.ari`/`.arih` policy, visibility errors, cycles, source identity, metadata, and cache invalidation. |
-| Compiler data models | 15 | 60 | Nested generic aggregates, `Result` payloads, vectors/maps/sets, compiler-shaped ownership patterns, and stable rejection of infinite value layouts. |
-| Trait selection | 12 | 45 | The minimum static subset is locked; broader trait objects, associated-type solving, and collection defaults can still deepen it. |
-| Artifact comparison | 24 | 68 | Token, syntax, diagnostic, source-map, module graph, declaration, typed IR, LLVM-fragment, runtime stdout/stderr catalog, HIR, object/shared, and executable comparison order. |
-| Tool build flow | 10 | 35 | Focused Make targets for one Ari tool, fixture roots, and golden comparison without hidden flags. |
+| Source identity / source-map / span | Every source-backed diagnostic and artifact can name a stable source id, byte span, line/column, snippet, and file identity across single-file and imported-file paths. | `make check-source-map-unit`, source-map artifacts, imported diagnostic artifacts. | Fix any remaining source-less compiler path that should have a `Span`; add tests only for uncovered edge cases after behavior is confirmed. |
+| Diagnostics | Errors are source-aware, stable, useful, and classified by compiler layer instead of falling through vague text. | Diagnostic catalog CLI, diagnostic artifacts, parser/module/sema/ownership/backend expected failures. | Retire fallback diagnostics for common user errors; add labels, notes, and help where they reduce guesswork. |
+| Module/project flow | Multi-file Ari projects load deterministically, preserve imported-file source identity, and reject cycles, visibility mistakes, duplicate modules, and stale caches cleanly. | `make check-modules`, module graph artifacts, package fixtures. | Fix resolver/metadata/cache bugs before adding more project fixtures. |
+| Frontend reliability | Lexer and parser stay stable for invalid characters, EOF edges, malformed declarations/expressions, recovery, syntax dumps, and span propagation. | Lexer/parser diagnostic artifacts and syntax artifacts. | Improve recovery or span generation when malformed input breaks later layers or produces misleading diagnostics. |
+| Compiler-shaped data models | Ari can express small AST/HIR/token/source/diagnostic-shaped values with ordinary structs, enums, results, options, and ownership rules. | `make check-bootstrap-readiness`, focused struct/match/generic/ownership tests. | Fix real typecheck/codegen/ownership gaps; do not add source fixtures just to raise a score. |
+| Trait/generic readiness | Generic aggregates, generic functions, trait bounds, method resolution, monomorphization, and generic ownership work for compiler-like data. | `make check-generics`, `make check-traits`, relevant diagnostic artifacts. | Fix semantic, diagnostic, or codegen bugs in the general generic/trait path, not by special-casing `Vec`, `Option`, `Result`, or map types. |
+| Artifact comparison | Each compiler stage can emit normalized, deterministic text that makes regressions reviewable before executable behavior. | `make check-compiler-artifacts`, `--list-artifacts`, `--explain-artifact`. | Add or fix emitters when a stage is nondeterministic, missing, or too raw to compare. |
+| Large multi-file Ari project readiness | Larger Ari programs can be split across normal files and checked by the hosted compiler and existing Make/test runner. | Module package fixtures and focused module checks. | Fix project/module/compiler behavior; an Ari-written build tool is not part of this gate. |
+| Tool build flow | Later ecosystem work for an Ari package/build tool. | Existing Make runner only. | Track separately after the compiler is mature enough; do not subtract heavily from start readiness today. |
 
-Weighted together, this lands in the high-40s. Treat each row as normal compiler
-development: a row moves when ordinary Ari programs, diagnostics, or artifacts
-get more reliable, not when a private shortcut is added.
+## Current Proof Locations
 
-## Already Strong
-
-| Area | Current Strength | Why It Matters |
-| --- | --- | --- |
-| Hosted LLVM backend | Ari emits LLVM IR, objects, executables, and shared libraries through the LLVM path. | Compiler work can be validated as real artifacts instead of toy interpreter behavior. |
-| Core executable language | Functions, locals, scalar operators, casts, blocks, branches, loops, `break`, `continue`, and returns are locked by `make check-core-language`; richer enums, structs, modules, FFI, and formatting are covered by their focused suites. | Compiler-shaped fixtures can be written as ordinary Ari programs on top of a stable scalar/control-flow base. |
-| Generic calls and ADTs | Generic functions, generic structs, generic enums, generic aliases, nested aggregate payloads, stdlib generic stress cases, and compiler-shaped generic models are locked by `make check-generics` and `make check-compiler-development`. | Source models, tokens, AST nodes, pass results, diagnostics, and expected failures can use natural types without stdlib name-specific shortcuts. |
-| Generic aggregate scale | Nested structs, enums, aliases, vectors, maps, `Result` payloads, ownership-qualified generic fields, and recursive-value diagnostics have production-focused coverage. | Compiler data models can grow through the general generic aggregate path rather than one-off container or bootstrap scaffolds. |
-| Minimum static traits | Trait declarations, impl conformance, deterministic static dispatch, generic bounds, Eq/Ord/Hash/Debug-like fixtures, iterator-shaped helpers, and missing/ambiguous diagnostics are locked by `make check-traits`. | Compiler-shaped data can compare, hash, format, and traverse values through normal trait behavior instead of name-specific shortcuts. |
-| SourceMap and diagnostics | `SourceMap`, `SourceId`, `SourceFile`, `Span`, `SourceLocation`, line/column lookup, snippets, diagnostic codes, labels, notes, and source-aware golden artifacts are locked by `make check-source-map-unit` and `make check-compiler-artifacts`. | User-facing compiler errors keep source identity and deterministic artifact rows across lexer, parser, module, semantic, trait, and ownership paths. |
-| File-backed projects | Entry-file roots, explicit `-I`/`--module-path` roots, `.ari`/`.arih` candidate policy, aliases, package-style child directories, visibility, cycles, duplicate source identities, imported-file diagnostics, metadata, cache invalidation, and module graph artifacts are locked by `make check-modules` and `make check-compiler-artifacts`. | Multi-file Ari tools can be structured as ordinary source/diagnostic/symbol/parser modules without package-manager or bootstrap scaffolding. |
-| Ownership checks | Move, borrow, drop, aggregate field moves, compiler-shaped owner movement, active enum payload cleanup, and explicit-zone checks are locked by `make check-ownership`, `make check-errors`, `make check-variables`, and ownership artifact goldens. | Large compiler graphs can be kept explicit instead of hiding allocation in globals. |
-| Focused test culture | Many feature folders already separate `ok` and `errors` tests. | New compiler behavior can be guarded with one small fixture at a time. |
-
-## Blocking Gaps
-
-| Gap | Needed State | First Work |
-| --- | --- | --- |
-| Trait selection beyond the minimum subset | Trait objects, associated-type solving, trait-driven collection defaults, and richer iterator ownership policies need the same stability as the static subset. | Keep minimum-subset fixtures green while adding one focused advanced trait fixture at a time. |
-| Pass artifacts | HIR plus richer object/header/relocation and broader executable-output goldens still need the same depth as token, syntax, typed IR, LLVM-fragment, stdout, and seeded object/shared-symbol artifacts. | Add normalized text dumps before broad executable checks. |
-| Build ergonomics | Large Ari tools need boring Make targets and project fixtures before a package manager exists. | Keep `make check-compiler-development` small and add one target per compiler slice. |
-
-## Recent Compiler Support
-
-Mixed aggregate enum payload slots now use byte storage when no single payload
-type can safely represent every case. This lets normal compiler-shaped values
-such as `Result[Span, DiagnosticBuildError]` compile without replacing rich
-payloads with numeric sentinels. The LLVM backend materializes those slots by
-storing the source payload into scratch byte storage and loading the active
-payload type back out only after the enum tag has selected the case.
-
-Postfix `?` can now propagate residual payloads through aggregate enum layouts.
-This lets compiler-shaped functions keep natural code such as
-`let checked = validate_span(file, span)?;` even when the success payload type
-changes between `Result[Span, E]` and `Result[LineColumnRange, E]`. The backend
-extracts the active residual payload from the operand enum slot, re-materializes
-the function return enum, and uses the same byte-storage cast path as match
-payload bindings.
-
-This is deliberately a general language feature. It is useful for any large
-Ari program that returns structured errors, not only for a future compiler
-written in Ari.
-
-Generic aggregate monomorphization is now treated as implemented for local
-executable/compiler-model code. User-defined fixtures cover generic structs,
-enums, aliases, nested payloads, methods, match bindings, ownership-qualified
-fields, and stable recursive-value diagnostics; stdlib fixtures use `Vec`,
-`Option`, `Result`, `HashMap`, and diagnostic vectors only as stress cases for
-the same general machinery.
-
-The hosted compiler now also has the first artifact producers:
-`--emit-stage-plan path`, `--emit-capability-inventory path`,
-`--emit-source-map path`, `--emit-tokens path`, `--emit-syntax path`,
-`--emit-diagnostics path`, `--emit-diagnostic-catalog path`,
-`--emit-module-graph path`, `--emit-declaration-index path`,
-`--emit-resolved-index path`, `--emit-typed-ir path`,
-`--emit-pass-summary path`, `--emit-c-header path`,
-`--emit-llvm path --emit-llvm-fragment path --llvm-symbol name`, and
-`--emit-symbols path --symbol name`. They write deterministic stage order and first-check
-routing, compiler capability status tables, source byte/line tables, lexer token text,
-parser tree text, expected-failure diagnostic text,
-diagnostic code ownership tables,
-file-backed source/import/item graph text, declaration signature text,
-resolver-facing normalized facts, sema-lowered typed IR, stage-boundary counts
-with stable source/import summaries, C-compatible header text, requested LLVM
-function fragments, and requested object/shared symbol inventories.
-`make check-compiler-artifacts` also compares stdout goldens, while
-`--list-artifacts`/`--explain-artifact` declare the shared-library and
-stdout/stderr runtime comparison surfaces. This is the current
-stage-comparison path for normal compiler development: when source loading,
-lexer, parser, diagnostic, module, declaration surface, typed lowering,
-backend lowering, ABI visibility, or runtime output changes, reviewers can
-inspect a focused golden diff before reaching for a broad suite run.
-Diagnostic artifacts now include stable codes, explicit layer families,
-source ids, parseable label byte spans, note/help location policy, and
-snippets such as
-`Label index=0 role=primary source_id=0 source="file.ari" line=1 column=19 end_line=1 end_column=31 byte_start=18 byte_end=30`,
-so triage can route failures without reading the classifier implementation
-first.
-The hosted compiler also exposes `ari --list-capabilities` and
-`ari --explain-capability <name>` for the same capability table, which makes
-roadmap triage available from the binary without first creating an artifact
-file.
-
-## Development Backlog
-
-Use this order for general compiler development:
-
-1. Frontend contracts: lexer/parser span accuracy, literal behavior, recovery,
-   and malformed syntax diagnostics.
-2. Source model maintenance: keep `SourceMap`, `SourceFile`, `SourceId`,
-   `Span`, canonical/display paths, byte offsets, line tables, EOF offsets,
-   line/column conversion, and snippet extraction covered as new compiler paths
-   are added.
-3. Diagnostic model polish: keep diagnostic codes, severity,
-   primary/secondary labels, notes, stable sorting, and path normalization
-   covered while expanding rule-specific codes and retiring transitional string
-   constructors.
-4. Module projects: file-backed modules, project roots, header/source
-   separation, module metadata, and module caches.
-5. Type and trait maturity: advanced generic constraints, associated types,
-   trait selection beyond the static subset, and clear ambiguity diagnostics.
-6. Ownership scale: arena/zone patterns for compiler graphs, borrowed views,
-   scratch reset rules, and predictable drops.
-7. IR contract: lower resolved facts into typed IR so LLVM codegen is mostly a
-   mechanical emitter.
-8. Artifact testing: normalize and compare capability inventory, token,
-   diagnostic, syntax, HIR, typed IR, LLVM, compiler-emitted symbol inventory,
-   and executable outputs.
-
-## Compiler Development Gates
-
-Use these gates to decide whether Ari is becoming a practical compiler project.
-Their job is to keep today's compiler reliable and pleasant to extend:
-
-| Gate | Green Signal |
+| Area | Primary Locations |
 | --- | --- |
-| Frontend reliability | New syntax has ok tests, error tests, docs, and span-aware diagnostics. |
-| Compiler data models | Compiler-shaped structs/enums/generic containers compile without awkward casts or hidden runtime hooks. |
-| Diagnostic stability | Expected failures can be reviewed as normalized text artifacts. |
-| Module project flow | A multi-directory Ari tool builds from Make with explicit search paths and no hidden stage flags. |
-| Artifact comparison | The project can compare earlier artifacts before relying on linked executable behavior. |
-| Developer loop | A contributor can find the right source file and run one focused check from docs alone. |
+| Source maps and spans | `src/source_map.*`, `tests/cases/compiler-development/artifact/ok/source-map-*`, `tests/check_source_map.cpp` |
+| Diagnostics | `src/diagnostic.*`, `src/diagnostic_catalog.*`, `tests/cases/compiler-development/artifact/errors/`, `tests/check_compiler_diagnostic_cli.py` |
+| Modules and packages | `src/module_loader.*`, `src/sema.cpp`, `tests/cases/modules/`, `tests/packages/` |
+| Frontend | `src/lexer.cpp`, `src/parser.cpp`, lexer/parser diagnostic artifacts, syntax artifacts |
+| Bootstrap readiness pressure | `tests/cases/bootstrap-readiness/` |
+| Generics and traits | `tests/cases/generics/`, `tests/cases/traits/`, related diagnostic artifacts |
+| Artifact comparison | `src/compiler_summary_dump.cpp`, `src/driver.cpp`, `tests/cases/compiler-development/artifact/` |
 
-## Natural Syntax Pressure
+## What Not To Add
 
-When compiler code looks ugly, prefer improving the general language surface:
+- Do not recreate deleted source-model fixture buckets.
+- Do not recreate deleted compiler-development source-error buckets.
+- Do not start writing the Ari compiler in Ari.
+- Do not add bootstrap/stage1 directories.
+- Do not count stdlib/library work toward this inventory.
+- Do not count an Ari-written package/build tool as a start gate.
+- Do not claim readiness improved when only tests were added for an
+  unsupported feature.
 
-- use `type` aliases for domain terms such as `SourceId`, `ByteOffset`,
-  `SymbolId`, and `TypeId`
-- use `char` literals like `'0'` instead of integer byte constants
-- use `Result[T, E]` for expected compiler failures
-- use tuple returns for always-present product values such as
-  `(value, overflowed)`
-- use `Option[T]` for absence instead of sentinel values when the type can be
-  expressed cleanly
-- use named formatting captures for stable artifact text
-- keep compiler/tooling diagnostics outside runtime `std`
+## Small Work Loop
 
-Do not add private compiler-only keywords, hidden global allocation, or backend
-hooks that ordinary Ari programs cannot use.
+For each gate, use this loop:
 
-## Test Inventory
+1. Find the implementation path and the existing focused tests.
+2. Classify the gap as implementation missing, implementation buggy, or
+   verification missing.
+3. Fix the hosted compiler when behavior is missing or wrong.
+4. Add one focused fixture or golden only when behavior exists and needs to be
+   locked.
+5. Run the narrow target for that gate.
+6. Update the relevant docs so the next contributor can find the same path.
 
-Current compiler-development tests:
+## Focused Checks
 
-- `tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari`:
-  one-page compiler-development dashboard status, next-action categories, and
-  the 40% readiness seed as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari`:
-  first-day compiler contributor path, layer choice, fixture bucket choice,
-  focused checks, and non-bootstrap scope as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari`:
-  compiler layer concepts, review vocabulary, and artifact ownership as normal
-  Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-layer-map.ari`:
-  compiler source-layer ownership, first artifact, and focused-check routing as
-  normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-triage-guide.ari`:
-  symptom-to-layer routing, first artifact choice, and smallest-check selection
-  as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-source-identity.ari`:
-  source kinds, stable source ids, byte span states, and source-map policy as
-  normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-module-project-authoring.ari`:
-  module surfaces, file-backed project state, metadata, cache, and module graph
-  policy as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-artifact-authoring.ari`:
-  artifact stage order, golden policy, handoff boundary, and executable-last
-  review policy as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-diagnostic-authoring.ari`:
-  diagnostic code families, labels, notes, source spans, and golden-test policy
-  as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-test-authoring.ari`:
-  compiler test bucket selection, expected results, and focused-check policy as
-  normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-pass-worklist.ari`:
-  normal compiler pass/worklist data model.
-- `tests/cases/compiler-development/ok/model/compiler-diagnostic-workflow.ari`:
-  normal diagnostic data flow as Ari values.
-- `tests/cases/compiler-development/ok/model/compiler-change-checklist.ari`:
-  review checklist areas, focused-test choice, and non-goal tracking as normal
-  Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-source-map-workflow.ari`:
-  normal source identity, span validation, line/column lookup, structured
-  source errors, and tuple return flow as Ari values.
-- `tests/cases/compiler-development/ok/model/compiler-implementation-slices.ari`:
-  implementation playbook slices, first-check selection, artifact choice, and
-  review readiness as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-next-slices.ari`:
-  near-term compiler-development queue, readiness blockers, and first artifact
-  choices as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-stage-gates.ari`:
-  compiler-development readiness gates, percent windows, enum state payloads,
-  tuple returns, and `Result`-based not-ready flow as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari`:
-  weighted readiness gates, current percentage scoring, and compiler pressure
-  as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-test-classification.ari`:
-  compiler test categories, artifact families, backend/runtime distinction, and
-  fixture naming policy as normal Ari data.
-- `tests/cases/compiler-development/ok/model/compiler-doc-crosswalk.ari`:
-  language docs-to-tests navigation, focused checks, and feature-family
-  coverage as normal Ari data.
-- `tests/cases/compiler-development/errors/bootstrap-class-keyword.ari`:
-  compiler-development policy fixture proving `class` is rejected instead of
-  becoming a private abstraction shortcut.
-- `tests/cases/compiler-development/errors/bootstrap-interface-keyword.ari`:
-  compiler-development policy fixture proving `interface` is rejected and
-  compiler abstraction boundaries should use `trait`.
-  Together these prove class/interface private syntax stays rejected in ordinary
-  compiler-development fixtures.
-- `tests/cases/compiler-development/artifact/ok/token-dump-basic.ari`,
-  `token-dump-lexical-surface.ari`, and `token-dump-crlf.tokens`: lexer
-  artifact fixtures checked through `--emit-tokens`.
-- `tests/cases/compiler-development/artifact/ok/source-map-file-module.map`:
-  source byte/line table golden checked through `--emit-source-map`.
-- `tests/cases/compiler-development/artifact/ok/source-map-empty.map`,
-  `source-map-crlf.map`, and `source-map-utf8.map`: empty-file, CRLF, and
-  UTF-8 byte/line table goldens checked through `--emit-source-map`.
-- `tests/cases/compiler-development/artifact/ok/syntax-dump-basic.syntax` and
-  `syntax-declarations.syntax`: parser artifact goldens checked through
-  `--emit-syntax`.
-- `tests/cases/compiler-development/artifact/ok/syntax-control-flow.syntax`:
-  parser control-flow artifact golden checked through `--emit-syntax`.
-- `tests/cases/compiler-development/artifact/ok/module-graph-file-module.graph`:
-  file-backed source/import/item graph golden checked through
-  `--emit-module-graph`.
-- `tests/cases/compiler-development/artifact/ok/declaration-index-basic.decls`:
-  declaration signature, visibility, and source-location golden checked through
-  `--emit-declaration-index`.
-- `tests/cases/compiler-development/artifact/ok/declaration-index-project-compiler.decls`:
-  compiler-shaped file-backed project declaration inventory checked through
-  `--emit-declaration-index`.
-- `tests/cases/compiler-development/artifact/ok/declaration-index-generic-aggregate.decls`:
-  generic aggregate aliases, impls, nested payloads, and owned-field
-  declaration inventory checked through `--emit-declaration-index`.
-- `tests/cases/compiler-development/artifact/ok/stage-plan-basic.plan`:
-  stage order, owner, first-check, and development-gate golden checked through
-  `--emit-stage-plan`.
-- `tests/cases/compiler-development/artifact/ok/capability-inventory.inventory`:
-  implemented, partial, planned, and rejected compiler capability status
-  checked through `--emit-capability-inventory`.
-- `tests/cases/compiler-development/artifact/ok/diagnostic-catalog.catalog`:
-  diagnostic code, family, owner, and fallback-policy golden checked through
-  `--emit-diagnostic-catalog`.
-- `tests/cases/compiler-development/artifact/ok/typed-ir-basic.ir`: sema and
-  typed-IR artifact golden checked through `--emit-typed-ir`.
-- `tests/cases/compiler-development/artifact/ok/project-compiler.ir`:
-  compiler-shaped file-backed module typed-IR artifact golden checked through
-  `--emit-typed-ir`.
-- `tests/cases/compiler-development/artifact/ok/ownership-aggregate-field-move.ir`:
-  ownership/drop typed-IR artifact golden checked through `--emit-typed-ir`.
-- `tests/cases/compiler-development/artifact/ok/backend-ownership-drop-aggregate.llvm-frag`
-  and `backend-ownership-drop-runtime-enum.llvm-frag`: review-sized LLVM
-  fragments for aggregate field drop calls and runtime-tagged active enum
-  payload cleanup.
-- `tests/cases/compiler-development/artifact/ok/backend-ownership-compiler-shaped.llvm-frag`:
-  review-sized LLVM fragment for the compiler-shaped ownership fixture covering
-  generic aggregate field moves, local `Vec[WorkItem]` owner moves, result-like
-  enum matching, and deterministic `Drop` calls.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-assignment-while-borrowed.diagnostic`,
-  `diagnostic-field-assignment-while-borrowed.diagnostic`,
-  `diagnostic-return-live-owner.diagnostic`,
-  `diagnostic-loop-break-live-owner.diagnostic`,
-  `diagnostic-loop-continue-live-owner.diagnostic`,
-  `diagnostic-borrow-after-move.diagnostic`, `diagnostic-double-move.diagnostic`,
-  `diagnostic-match-branch-state-mismatch.diagnostic`,
-  `diagnostic-enum-payload-invalid-move.diagnostic`,
-  `diagnostic-stored-owned-enum-payload-undropped.diagnostic`,
-  `diagnostic-match-runtime-owned-enum-payload-undropped.diagnostic`,
-  `diagnostic-runtime-owned-enum-conditional-payload-slot-move.diagnostic`,
-  `diagnostic-compact-enum-payload-ref.diagnostic`, and
-  `diagnostic-ownership-aggregate-enum-payload.diagnostic`, and
-  `diagnostic-borrow-aggregate-enum-payload.diagnostic`: source-aware
-  ownership diagnostic goldens for borrow conflicts, live-owner control-flow
-  exits, repeated moves, match arm ownership-state mismatches, invalid enum
-  payload moves, undropped stored or matched enum owners, conditional
-  runtime-owned enum payload-slot moves, and rejected compact enum payload
-  reference patterns or ownership-/borrow-carrying aggregate enum payloads.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-access-non-struct.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-duplicate-arm.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-unreachable-after-wildcard.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-or-pattern-binding-type.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-tuple-struct-pattern-arity.diagnostic`,
-  and
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic`:
-  source-aware aggregate and match diagnostic goldens for non-struct field
-  access, missing struct-field lookup, match arm type mismatches, duplicate or
-  unreachable arms, or-pattern binding type mismatches, tuple-struct positional
-  arity, and missing enum-case coverage.
-- `tests/cases/compiler-development/artifact/ok/pass-summary-basic.summary`:
-  pass-boundary count golden checked through `--emit-pass-summary`.
-- `tests/cases/compiler-development/artifact/ok/backend-core.llvm-frag`,
-  `backend-generic-aggregate.llvm-frag`,
-  `backend-aggregate-match-model.llvm-frag`,
-  `backend-layout-aggregate.llvm-frag`, and `backend-trait-dispatch.llvm-frag`:
-  LLVM backend fragments checked through `--emit-llvm-fragment` after full
-  `--emit-llvm` generation.
-  The aggregate match model fragment locks compiler-shaped struct construction,
-  nested enum payload matches, branch lowering, and byte-backed aggregate enum
-  payload extraction. The layout fragment locks mixed struct field GEPs, tuple
-  and fixed-array `size_of`/`align_of` constants, and payload enum tag/value
-  lowering.
-- `tests/layout_unit.cpp`: direct C++ layout service and non-local aggregate ABI
-  classifier checks for primitive size/alignment, struct/tuple/array field
-  offsets, aggregate enum storage, root-`Vec` layout-unavailable rejection, and
-  64-bit Unix direct aggregate ABI limits.
-- `tests/cases/compiler-development/artifact/ok/c-header-repr-struct.h`,
-  `c-header-repr-payload-enum.h`, and `c-header-generated-aggregates.h`:
-  C header golden artifacts for public `@repr(C)` structs, fieldless enums,
-  payload-bearing enums, generated tuple/array/vector wrappers, and ABI-facing
-  function prototypes.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-c-header-*.diagnostic`:
-  source-aware `A0001` C-header export diagnostics for oversized or
-  target-unsupported by-value struct, tuple, fixed-array, and aggregate-enum
-  boundaries.
-- `tests/cases/compiler-development/artifact/ok/object-library-export.symbols`,
-  `object-aggregate-extern-link.symbols`, and `shared-visibility.symbols`:
-  normalized object and linked shared-library symbol inventories checked
-  through `--emit-symbols`. The aggregate object artifact locks exported
-  `@repr(C)` aggregate symbols, unresolved C helper imports, and the no-`main`
-  library-object surface.
-- `tests/cases/compiler-development/artifact/ok/runtime-output-basic.stdout` and
-  `runtime-output-trait.stdout`: executable stdout goldens checked when the LLVM
-  driver is available.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-unexpected-character.diagnostic`:
-  lexer diagnostic golden checked through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-lexer-unicode-escape-eof.diagnostic`:
-  lexer EOF-edge diagnostic golden for an unterminated Unicode escape checked
-  through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-parser-expected.diagnostic`:
-  parser diagnostic-code golden checked through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-parser-malformed-expression.diagnostic`
-  and `diagnostic-parser-malformed-struct-field.diagnostic`: malformed
-  expression and declaration span goldens checked through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-missing-module.diagnostic`:
-  module diagnostic-code golden checked through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-ambiguous-module.diagnostic`
-  and `diagnostic-cyclic-module.diagnostic`: module graph validation
-  diagnostic goldens checked through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-imported-semantic-source-id.diagnostic`:
-  imported-file semantic diagnostic golden checked through
-  `--emit-diagnostics`, proving the primary label keeps the child file's
-  `SourceId`, display path, byte span, line, column, and snippet instead of the
-  importing root file's source identity.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-unknown-trait.diagnostic`:
-  type and trait diagnostic-code golden checked through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-type-assignment.diagnostic`:
-  assignment type diagnostic span golden checked through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-access-non-struct.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-struct-field-unknown.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-expression-type-mismatch.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-duplicate-arm.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-unreachable-after-wildcard.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-or-pattern-binding-type.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-tuple-struct-pattern-arity.diagnostic`,
-  and
-  `tests/cases/compiler-development/artifact/errors/diagnostic-match-nonexhaustive.diagnostic`:
-  aggregate and match diagnostic goldens checked through `--emit-diagnostics`,
-  covering non-struct field access, missing struct-field lookup, match arm type
-  mismatches, duplicate/unreachable arms, or-pattern binding type mismatches,
-  tuple-struct positional arity, and missing enum-case coverage with source
-  spans.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-abi.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-body.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-generic.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-invalid-link-name.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-aggregate.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-empty.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-function-pointer.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-varargs-nonextern.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-extern-void-param.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-nonrepr-aggregate-import.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-large-aggregate-import.diagnostic`,
-  and
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ffi-target-aggregate-import.diagnostic`:
-  ABI diagnostic-code goldens for rejecting invalid extern ABI strings,
-  extern bodies, generic extern declarations, invalid link names, unsupported
-  varargs surfaces, `c_void` parameters, and non-`@repr(C)`, oversized, or
-  target-unsupported by-value extern C aggregate imports with source spans.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-borrow-conflict.diagnostic`:
-  ownership diagnostic-code golden checked through `--emit-diagnostics`.
-- `tests/cases/compiler-development/artifact/errors/diagnostic-use-after-move.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-return-live-owner.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-loop-break-live-owner.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-loop-continue-live-owner.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-move-borrowed-owner.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-compact-enum-payload-ref.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-aggregate-enum-payload.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-borrow-aggregate-enum-payload.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-partial-move.diagnostic`,
-  `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-vector-dynamic-move.diagnostic`,
-  and `tests/cases/compiler-development/artifact/errors/diagnostic-ownership-temporary-element-move.diagnostic`:
-  source-aware ownership diagnostics for representative move, borrow,
-  control-flow live-owner, rejected compact enum payload reference patterns,
-  ownership- or borrow-carrying aggregate enum payloads, partial-move,
-  unsupported container-element, and temporary aggregate element ownership
-  failures.
+| Change | First Check |
+| --- | --- |
+| SourceMap or source-location behavior | `make check-source-map-unit` |
+| Diagnostic rendering, catalog, or diagnostic artifacts | `make check-compiler-artifacts` and `python3 tests/check_compiler_diagnostic_cli.py` when CLI/catalog behavior changes |
+| Module loader, resolver, metadata, or cache behavior | `make check-modules` |
+| Compiler artifact emitters or golden text | `make check-compiler-artifacts` |
+| Bootstrap-readiness source fixtures | `make check-bootstrap-readiness` |
+| Bootstrap/readiness docs | `make check-bootstrap-docs` |
+| Generics | `make check-generics` |
+| Traits | `make check-traits` |
+| Ownership | `make check-ownership` |
 
-The first command to run after changing this area is:
-
-```text
-make check-compiler-development
-```
-
-Run `make check-compiler-dev-docs` when changing the roadmap, maturity gates,
-or this inventory.
+Full `make check` is useful before large handoffs, but normal development
+should start with the smallest target that can fail near the changed layer.

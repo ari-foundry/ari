@@ -8,13 +8,13 @@ The test suite is grouped by feature first, then by expected outcome.
 | `tests/cases/<feature>/errors/` | Invalid Ari programs. Makefile targets assert the expected diagnostic text. |
 | `tests/cases/compiler-development/artifact/ok/` | Golden text artifacts and source fixtures that should compare cleanly. |
 | `tests/cases/compiler-development/artifact/errors/` | Expected diagnostic artifacts and text-comparator mismatch reports. |
-| `tests/cases/bootstrap-readiness/` | Compiler-shaped Ari fixtures used before a real `bootstrap/` tree exists. |
+| `tests/cases/bootstrap-readiness/` | Small compiler-shaped Ari fixtures for hosted-compiler readiness; this is not an Ari compiler implementation tree. |
 | `tests/packages/` | File-backed module and module-cache fixtures. |
 | `tests/ffi/` | C helper sources used by FFI and object-linking tests. |
 | `tests/fixtures/` | Alternate module roots and intentionally incomplete fixtures. |
 | `tests/tools/` | LSP, lint, and editor integration smoke checks. |
 | `tests/std_api_manifest.txt` | Public `lib/std` API manifest with coverage notes. |
-| `tests/bootstrap_readiness_manifest.txt` | Planned compiler-bootstrap readiness fixture groups. |
+| `tests/bootstrap_readiness_manifest.txt` | Hosted compiler-writing readiness fixture groups. |
 | `tests/check_language_docs.py` | User-facing documentation smoke check for docs-only Ari usage and test navigation. |
 | `tests/check_bootstrap_readiness_docs.py` | Documentation smoke check for the production compiler design, bootstrap start-gate, and self-host roadmap links. |
 
@@ -90,7 +90,7 @@ ABI fact, or `target("...")` predicate reporting.
 
 Documentation checks are intentionally small. For example,
 `make check-bootstrap-docs` only verifies that the bootstrap readiness guide
-keeps its production-language contract, readiness scorecard, start gate, first
+keeps its production-language contract, readiness inventory, start gate, first
 implementation slices, fixture groups, roadmap, estimate, and test-plan
 sections linked from the developer docs.
 

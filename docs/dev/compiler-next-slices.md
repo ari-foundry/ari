@@ -26,7 +26,7 @@ Choose a slice when it satisfies all of these:
 | 1 | Source span edge cases | `src/source_map_dump.cpp`, source loading, lexer span creation | Add one `--emit-source-map` golden and one lexer/parser diagnostic golden. | CRLF, final-newline, empty-file, and multi-file line lookup stay deterministic. |
 | 2 | Diagnostic code expansion | `src/diagnostic_dump.cpp`, lexer/parser/module/sema diagnostics | Add one `artifact/errors/diagnostic-*.diagnostic` per diagnostic family. | Expected failures show stable code families before renderer wording changes. |
 | 3 | Module metadata reviewability | `src/module_metadata.cpp`, `src/module_graph_dump.cpp`, module loader | Add focused metadata/module-graph fixtures. | Imports, visibility, generic impl surfaces, and stale-cache errors can be reviewed from text. |
-| 4 | Compiler-shaped aggregate pressure | type/layout/trait/enum payload helpers | Add `compiler-development/ok/model/` fixtures. | Tokens, diagnostics, source maps, and pass states use normal Ari structs/enums/results without awkward sentinels. |
+| 4 | Compiler-shaped aggregate pressure | type/layout/trait/enum payload helpers | First classify implementation vs verification; then add a feature or bootstrap-readiness fixture only after behavior works. | Tokens, diagnostics, source maps, and pass states use normal Ari structs/enums/results without awkward sentinels. |
 | 5 | HIR artifact sketch | `src/ir.hpp`, sema lowering helpers, future HIR dump code | Add a small HIR text format before a large pass rewrite. | Reviewers can inspect lowered source facts before typed IR and LLVM output. |
 | 6 | IR metadata audit | `src/ir.hpp`, `src/ir_builders.cpp`, `src/llvm_codegen.cpp` | Add typed-IR or LLVM text checks for the moved fact. | Backend codegen stops rediscovering source names, visibility, or layout choices. |
 
@@ -34,11 +34,12 @@ Choose a slice when it satisfies all of these:
 
 Each slice should be split into these steps:
 
-1. Add or update the smallest fixture first.
-2. Make the compiler emit the artifact or diagnostic needed by that fixture.
-3. Update the focused docs page.
-4. Run the narrow target.
-5. Only then consider broader checks.
+1. Decide whether the slice needs a compiler fix or only missing verification.
+2. Fix compiler behavior first when implementation is missing or buggy.
+3. Add or update the smallest fixture or artifact that locks the behavior.
+4. Update the focused docs page.
+5. Run the narrow target.
+6. Only then consider broader checks.
 
 Example for source span work:
 
@@ -69,6 +70,8 @@ large rewrites become a good idea.
 
 ## Readiness Impact
 
-Completing these slices should move Ari beyond the current **48-49% compiler
-maturity** range by improving deterministic source identity, diagnostics,
-modules, generic data modeling, HIR/IR visibility, and backend mechanicalness.
+Completing these slices should move Ari beyond the current readiness gates by
+improving deterministic source identity, diagnostics, modules, generic data
+modeling, HIR/IR visibility, and backend mechanicalness. Count the movement
+only when the hosted compiler behavior improves, not when a test is added for
+behavior that still does not work.

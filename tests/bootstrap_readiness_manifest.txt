@@ -1,7 +1,7 @@
 # Bootstrap readiness fixture manifest
 #
 # This manifest is intentionally documentation-like. It records the fixture
-# groups that must stay represented before a real bootstrap/ tree starts. The
+# groups that must stay represented before any Ari compiler-in-Ari work starts. The
 # check-bootstrap-docs target verifies these group names so the readiness plan
 # does not silently collapse into one vague "self-host" bucket.
 

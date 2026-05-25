@@ -179,7 +179,7 @@ Compiler pass tests should say which pass they protect:
 tests/cases/modules/ok/
 tests/cases/modules/errors/
 tests/cases/ir/ok/
-tests/cases/compiler-development/ok/model/
+tests/cases/bootstrap-readiness/ok/
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 ```
@@ -203,7 +203,7 @@ Small focused checks are preferred while editing one pass:
 ```text
 build/ari tests/cases/modules/ok/module-llvm.ari --check
 build/ari tests/cases/control-flow/ok/if-expression.ari --emit-llvm build/focused/if.ll
-make check-compiler-dev-docs
+make check-bootstrap-docs
 ```
 
 Run broad checks before handoff for broad compiler changes. Sanitizer checks

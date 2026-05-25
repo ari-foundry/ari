@@ -102,7 +102,8 @@ Use these locations:
   artifacts
 - `tests/cases/compiler-development/artifact/errors/` for diagnostic goldens
   and comparison mismatch reports
-- `tests/cases/compiler-development/ok/model/` for artifact policy models
+- `tests/cases/bootstrap-readiness/ok/` only for Ari source fixtures that
+  exercise compiler-shaped artifact data
 - `tests/cases/<feature>/ok/` when the behavior is better proven by a feature
   fixture plus one producer command
 
@@ -264,7 +265,7 @@ slice and its first files, artifact, and focused check.
 Use `--list-capabilities` or `--explain-capability` when the change is really a
 compiler feature-surface change rather than a new artifact format.
 
-For docs or artifact policy changes, use `make check-compiler-dev-docs`.
+For docs or artifact policy changes, use `make check-bootstrap-docs`.
 Full `make check` belongs at handoff for broad changes. Sanitizer checks are
 intentionally separate.
 

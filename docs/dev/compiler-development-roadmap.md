@@ -96,10 +96,10 @@ useful for ordinary Ari users and compiler contributors on its own.
 
 | Slice | Build | Focused Check | Done When |
 | --- | --- | --- | --- |
-| Source identity | Stable source ownership, source ids, byte spans, line/column lookup, and snippet extraction as compiler/tooling data. | `make check-compiler-development` and source-map artifact checks. | Lexer/parser diagnostics can name files and spans without runtime `std` carrying compiler-only APIs. |
+| Source identity | Stable source ownership, source ids, byte spans, line/column lookup, and snippet extraction as compiler/tooling data. | `make check-bootstrap-readiness` and source-map artifact checks. | Lexer/parser diagnostics can name files and spans without runtime `std` carrying compiler-only APIs. |
 | Diagnostic data | Diagnostic codes, severity, labels, notes, normalized paths, and golden rendering. | `make check-compiler-artifacts` for `--emit-diagnostics`. | Expected compiler failures are reviewed as deterministic text artifacts. |
 | Project flow | File-backed modules, package roots, `.ari`/`.arih` policy, module metadata, and cache validation. | Module ok/error fixtures plus `--emit-module-graph`. | A multi-directory Ari tool builds from Make without hidden stage flags. |
-| Compiler data models | Structs, enum payloads, type aliases, nested generics, tuple returns, and `Result[T, E]` in compiler-shaped code. | `tests/cases/compiler-development/ok/model/compiler-stage-gates.ari`. | Tokens, syntax nodes, pass states, and diagnostics can be expressed naturally in Ari. |
+| Compiler data models | Structs, enum payloads, type aliases, nested generics, tuple returns, and `Result[T, E]` in compiler-shaped code. | `tests/cases/bootstrap-readiness/ok/model/model-token-span.ari` plus feature-focused generics, structs, match, and ownership tests. | Tokens, syntax nodes, pass states, and diagnostics can be expressed naturally in Ari. |
 | Pass artifacts | Token, syntax, HIR, typed IR, LLVM text, object symbols, and executable behavior in comparison order. | `make check-compiler-artifacts`. | Regressions fail near the compiler layer that changed. |
 | Backend contract | LLVM/object/shared output, ABI facts, runtime hooks, and symbol mangling stay deterministic. | Focused `--emit-llvm`, object, and shared-library checks. | Codegen consumes resolved IR facts instead of re-resolving source-level names. |
 
@@ -119,22 +119,17 @@ future Ari-written compiler plan.
 | --- | --- | --- | --- |
 | P0 | Source identity hardening | Keep source ids, filenames, byte offsets, newline tables, and snippets as deterministic compiler artifacts. | `make check-compiler-artifacts` plus one `--emit-source-map` golden. |
 | P0 | Diagnostic code/data model | Classify lexer, parser, module, type, ownership, IR, and backend failures with stable codes before polishing prose. | `--emit-diagnostics` golden under `tests/cases/compiler-development/artifact/errors/`. |
-| P0 | Test classification | Keep compiler fixtures grouped by `model`, `artifact`, `ok`, and `errors`, and name each file by the behavior it protects. | `make check-language-docs` and `make check-compiler-development`. |
-| P0 | Compiler health scorecard | Keep the maturity estimate tied to weighted compiler-development gates instead of a vague long-term milestone. | `tests/cases/compiler-development/ok/model/compiler-readiness-scorecard.ari`. |
-| P0 | Development dashboard | Keep current status, next actions, small checks, and non-goals visible from one page. | `tests/cases/compiler-development/ok/model/compiler-development-dashboard.ari`. |
-| P0 | Compiler onboarding | Keep the first-day compiler-development path, fixture bucket choice, focused checks, and dirty-worktree scoping easy to follow. | `tests/cases/compiler-development/ok/model/compiler-onboarding-workflow.ari`. |
-| P0 | Concepts glossary | Keep compiler layer terms, artifact vocabulary, and review language understandable to first-time compiler contributors. | `tests/cases/compiler-development/ok/model/compiler-concepts-glossary.ari`. |
-| P0 | Compiler layer map | Keep source-file ownership, first artifacts, docs, and focused checks discoverable for each compiler layer. | `tests/cases/compiler-development/ok/model/compiler-layer-map.ari`. |
-| P0 | Compiler triage guide | Route symptoms, bug reports, and artifact diffs to the earliest owning layer and smallest useful check. | `tests/cases/compiler-development/ok/model/compiler-triage-guide.ari`. |
-| P0 | Source identity authoring | Keep source files, source ids, byte spans, line/column lookup, and source-map artifacts deterministic. | `tests/cases/compiler-development/ok/model/compiler-source-identity.ari`. |
-| P0 | Module project authoring | Keep file modules, roots, search paths, metadata, caches, and module graph artifacts reviewable. | `tests/cases/compiler-development/ok/model/compiler-module-project-authoring.ari`. |
-| P0 | Artifact authoring | Keep stage artifacts deterministic, normalized, small, and ordered before executable checks. | `tests/cases/compiler-development/ok/model/compiler-artifact-authoring.ari`. |
-| P0 | Diagnostic authoring | Keep error codes, messages, labels, notes, and golden expected-failure tests stable and user-oriented. | `tests/cases/compiler-development/ok/model/compiler-diagnostic-authoring.ari`. |
-| P0 | Test authoring policy | Keep fixture buckets, file names, expected results, and artifact update rules reviewable. | `tests/cases/compiler-development/ok/model/compiler-test-authoring.ari`. |
+| P0 | Test classification | Keep feature fixtures, bootstrap-readiness fixtures, artifact goldens, and package fixtures clearly separated and named by behavior. | `make check-language-docs`, `make check-bootstrap-docs`, and `make check-bootstrap-readiness`. |
+| P0 | Readiness inventory | Keep maturity tied to real hosted-compiler gates instead of deleted readiness fixtures or test-count inflation. | `docs/dev/compiler-readiness-inventory.md` plus the focused checks named there. |
+| P0 | Contributor workflow docs | Keep current status, first-day path, target choice, and non-goals visible from the dev docs. | `make check-bootstrap-docs`. |
+| P0 | Source identity authoring | Keep source files, source ids, byte spans, line/column lookup, and source-map artifacts deterministic. | `make check-source-map-unit` and source-map artifact goldens. |
+| P0 | Module project authoring | Keep file modules, roots, search paths, metadata, caches, and module graph artifacts reviewable. | `make check-modules` and module graph artifacts. |
+| P0 | Artifact authoring | Keep stage artifacts deterministic, normalized, small, and ordered before executable checks. | `make check-compiler-artifacts`. |
+| P0 | Diagnostic authoring | Keep error codes, messages, labels, notes, and golden expected-failure tests stable and user-oriented. | `make check-compiler-artifacts` plus diagnostic catalog CLI checks when needed. |
 | P1 | Parser and declaration artifacts | Expand syntax and declaration-index dumps around attributes, patterns, generics, modules, and malformed input. | One syntax/declaration golden per changed surface. |
 | P1 | Module project ergonomics | Harden package roots, `-I`, `.ari`/`.arih`, visibility, metadata, and cache invalidation diagnostics. | `make check-modules` or a single module fixture while iterating. |
-| P1 | Generic aggregate stress | Maintain compiler-shaped nested structs/enums/vectors/maps/results without special lowering escapes. | `tests/cases/generics/ok/generic-aggregate-monomorphization.ari`, `tests/cases/generics/ok/generic-aggregate-stdlib-stress.ari`, and `tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari`. |
-| P2 | Trait and formatting selection | Make `Eq`, `Ord`, `Hash`, `Debug`, formatting, `Drop`, and trait-backed operator dispatch predictable in generic data-heavy code. | `make check-traits` and one compiler-model fixture. |
+| P1 | Generic aggregate stress | Maintain compiler-shaped nested structs/enums/vectors/maps/results without special lowering escapes. | `tests/cases/generics/ok/generic-aggregate-monomorphization.ari`, `tests/cases/generics/ok/generic-aggregate-stdlib-stress.ari`, and `tests/cases/generics/ok/generic-function-compiler-shaped.ari`. |
+| P2 | Trait and formatting selection | Make `Eq`, `Ord`, `Hash`, `Debug`, formatting, `Drop`, and trait-backed operator dispatch predictable in generic data-heavy code. | `make check-traits` and a focused feature or bootstrap-readiness fixture if the behavior is compiler-shaped. |
 | P2 | Ownership fact visibility | Add a small artifact for owner states, borrow sources, and inserted drops before broadening ownership behavior. | Future `--emit-ownership-facts` golden or equivalent typed-IR section. |
 | P2 | HIR sketch | Define the minimal lowered node vocabulary and artifact format before implementing a large HIR pass. | HIR text golden before backend checks. |
 
@@ -281,7 +276,7 @@ tests/cases/traits/
 tests/cases/variables/
 tests/cases/control-flow/
 tests/cases/ffi/
-tests/cases/compiler-development/ok/model/
+tests/cases/bootstrap-readiness/ok/
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 ```
@@ -307,7 +302,7 @@ build/ari --explain-pass sema
 build/ari --explain-test-bucket compiler-artifact-ok
 build/ari --explain-work-item generic-aggregate-stress
 build/ari --explain-capability trait-resolution
-make check-compiler-dev-docs
+make check-bootstrap-docs
 make check-compiler-artifacts
 ```
 
@@ -325,8 +320,8 @@ are intentionally not required by this document for every small slice.
 
 ## Compiler Development Health
 
-Treat Ari as roughly **48-49% through the current compiler-development
-maturity work**. That number is intentionally conservative and should move only
-when normal compiler surfaces improve: better diagnostics, cleaner sema
+Treat Ari readiness as the gate-based estimate in
+[Compiler Readiness Inventory](compiler-readiness-inventory.md). It should move
+only when normal compiler surfaces improve: better diagnostics, cleaner sema
 boundaries, mature generic aggregates and traits, reliable modules, and focused
 artifact tests.

@@ -90,7 +90,7 @@ Positive fixtures:
 - `tests/cases/generics/ok/generic-aggregate-monomorphization.ari`
 - `tests/cases/generics/ok/generic-aggregate-stdlib-stress.ari`
 - `tests/cases/generics/ok/generic-aggregate-recursive-pointer.ari`
-- `tests/cases/compiler-development/ok/model/compiler-generic-aggregates.ari`
+- `tests/cases/generics/ok/generic-function-compiler-shaped.ari`
 
 Negative fixtures:
 
@@ -137,6 +137,5 @@ unsupported direct recursive value layout case.
 
 ```sh
 make check-generics
-make check-compiler-development
 make check-compiler-artifacts
 ```

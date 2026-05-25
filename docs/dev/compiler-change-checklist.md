@@ -14,7 +14,7 @@ Before review, answer these questions:
 | --- | --- | --- |
 | Scope | Which compiler layer owns the change? | One layer is primary; other changes are supporting and explained. |
 | Docs | Did user-facing behavior or contributor workflow change? | The focused language or dev page is updated. |
-| Tests | Is there one narrow fixture that proves the change? | `ok`, `errors`, `artifact`, or `compiler-development/ok/model` placement is clear. |
+| Tests | Is there one narrow fixture that proves the change? | `ok`, `errors`, `artifact`, or `bootstrap-readiness` placement is clear. |
 | Diagnostics | If failure behavior changed, is the diagnostic stable? | The message has a code-family or golden artifact when appropriate. |
 | Sema | Does sema still own source-level facts? | Names, modules, types, traits, and ownership are resolved before backend lowering. |
 | IR | Does codegen consume lowered facts mechanically? | Backend code does not re-resolve source-level names or visibility. |
@@ -30,8 +30,8 @@ Use the smallest check that observes the changed behavior:
 | Change | First Check |
 | --- | --- |
 | Docs-only language or navigation update | `make check-language-docs` |
-| Compiler roadmap, playbook, readiness, or artifact policy | `make check-compiler-dev-docs` |
-| Compiler-shaped Ari model fixture | `make check-compiler-development` |
+| Compiler roadmap, playbook, readiness, or artifact policy | `make check-bootstrap-docs` |
+| Compiler-shaped Ari model fixture | `make check-bootstrap-readiness` |
 | Deterministic compiler artifact | `make check-compiler-artifacts` |
 | Module loading, visibility, metadata, or cache | `make check-modules` or one module fixture |
 | One executable language feature | `build/ari tests/cases/<feature>/ok/<case>.ari --check` |
@@ -81,5 +81,6 @@ A change improves the readiness score when it makes normal compiler development
 smaller, clearer, or more deterministic. It does not improve the score merely
 because it resembles a long-term side project.
 
-Ari is about **48-49% through the current compiler-development maturity work**.
-Use this checklist to keep that progress grounded in ordinary compiler quality.
+Use [Compiler Readiness Inventory](compiler-readiness-inventory.md) for the
+current gate-based readiness estimate. Use this checklist to keep that progress
+grounded in ordinary compiler quality.

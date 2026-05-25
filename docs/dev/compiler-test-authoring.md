@@ -2,7 +2,7 @@
 
 This page explains how to add tests for Ari compiler work. It is for
 contributors who are changing the hosted compiler, developer docs, artifacts,
-or compiler-shaped Ari fixtures.
+or Ari source fixtures that put pressure on compiler behavior.
 
 The goal is to keep compiler development testable in small pieces.
 
@@ -14,10 +14,11 @@ Pick the bucket by behavior, not by the source file you edited.
 | --- | --- | --- |
 | `tests/cases/<feature>/ok/` | The language behavior should compile, emit LLVM, link, or run. | `tests/cases/control-flow/ok/for-vector-llvm.ari` |
 | `tests/cases/<feature>/errors/` | The source should be rejected with a stable diagnostic. | `tests/cases/functions/errors/return-type.ari` |
-| `tests/cases/compiler-development/ok/model/` | Ari code models compiler-shaped data, pass state, readiness, or test policy. | `compiler-test-classification.ari` |
+| `tests/cases/bootstrap-readiness/ok/` | Ari source models a small compiler-shaped data or source/diagnostic workflow without starting self-host work. | `model/model-token-span.ari` |
+| `tests/cases/bootstrap-readiness/errors/` | A bootstrap-readiness source fixture should be rejected with a stable diagnostic. | `model/<behavior>.ari` |
 | `tests/cases/compiler-development/artifact/ok/` | A compiler stage emits deterministic text that should match a golden file. | `token-dump-basic.tokens` |
 | `tests/cases/compiler-development/artifact/errors/` | A diagnostic artifact or artifact-comparison report should match. | `diagnostic-parser-expected.diagnostic` |
-| `tests/cases/compiler-development/errors/` | A compiler-development source case should be rejected. | `bootstrap-class-keyword.ari` |
+| `tests/packages/` | A file-backed module or package-style project needs multiple source files. | `module_cache_stale/` |
 
 If a test could fit two buckets, choose the one closest to the first layer that
 can fail. A lexer artifact should not wait for LLVM. A type error should not be
@@ -38,9 +39,9 @@ intended use.
 
 Use behavior names:
 
-- `compiler-readiness-scorecard.ari`
-- `compiler-test-classification.ari`
-- `bootstrap-class-keyword.ari`
+- `model-token-span.ari`
+- `errors-result-flow.ari`
+- `no-class-keyword.ari`
 - `diagnostic-parser-expected.diagnostic`
 - `module-graph-file-module.graph`
 - `typed-ir-basic.ir`
@@ -55,9 +56,9 @@ next contributor should know why the test exists before opening compiler code.
 | One valid Ari source | `build/ari path/to/case.ari --check` |
 | LLVM smoke | `build/ari path/to/case.ari --emit-llvm build/focused/case.ll` |
 | Executable behavior | Link one case and compare its exit code or output. |
-| Compiler-development model | `make check-compiler-development` |
+| Bootstrap-readiness fixture | `make check-bootstrap-readiness` |
 | Compiler artifact or golden text | `make check-compiler-artifacts` |
-| Developer docs only | `make check-compiler-dev-docs` |
+| Bootstrap/readiness docs only | `make check-bootstrap-docs` |
 | Language docs only | `make check-language-docs` |
 | Unknown fixture bucket | `build/ari --list-test-buckets` |
 
@@ -66,9 +67,9 @@ intentionally separate and are not part of this focused authoring loop.
 
 ## Expected Results
 
-For executable model fixtures, keep the expected exit code in `tests/Makefile`
+For executable source fixtures, keep the expected exit code in `tests/Makefile`
 near the command that builds and runs the fixture. The source fixture should
-compute that value from meaningful model data, not return a magic constant.
+compute that value from meaningful data, not return a magic constant.
 
 For artifact fixtures, commit the expected text under
 `tests/cases/compiler-development/artifact/ok/` or
@@ -76,11 +77,15 @@ For artifact fixtures, commit the expected text under
 raw paths, temp names, or pointer-shaped values.
 
 For error fixtures, assert the diagnostic phrase or code that proves the
-intended layer rejected the source.
+intended layer rejected the source. Put normal language failures under the
+owning feature's `errors/` bucket; reserve compiler-development artifact errors
+for stable diagnostic text emitted through `--emit-diagnostics` or related
+artifact flags.
 
 ## Comments In Tests
 
-Use one short comment at the top of compiler-development model fixtures:
+Use one short comment at the top of bootstrap-readiness or compiler-shaped
+feature fixtures:
 
 ```ari
 // Covers test authoring policy as ordinary Ari data.

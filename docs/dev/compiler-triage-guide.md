@@ -40,7 +40,7 @@ facts before it reaches a linked binary.
 | Move, borrow, drop, or branch state is wrong | Ownership/control flow | `src/ownership_semantics.cpp`, `src/borrow_semantics.cpp`, `src/move_semantics.cpp`, `src/control_flow_semantics.cpp` | one ownership/borrowing error fixture |
 | LLVM text is wrong but typed facts look right | IR/backend boundary | `src/ir.hpp`, `src/ir_builders.cpp`, `src/llvm_codegen.cpp` | focused `--emit-llvm` |
 | Object, shared library, symbol, or executable behavior is wrong | Backend/toolchain | `src/llvm_codegen.cpp`, `src/symbol_mangle.cpp`, `src/toolchain.cpp` | focused LLVM/object/shared/executable check |
-| Docs and tests disagree | Docs/test policy | focused language or dev docs, `tests/Makefile` | `make check-language-docs` or `make check-compiler-dev-docs` |
+| Docs and tests disagree | Docs/test policy | focused language or dev docs, `tests/Makefile` | `make check-language-docs` or `make check-bootstrap-docs` |
 
 ## Error Placement
 
@@ -50,10 +50,10 @@ Put the test where the first failing layer can see it:
 | --- | --- |
 | Accepted program behavior | `tests/cases/<feature>/ok/` |
 | Rejected source-level rule | `tests/cases/<feature>/errors/` |
-| Compiler-development policy rejection | `tests/cases/compiler-development/errors/` |
+| Bootstrap-readiness source rejection | `tests/cases/bootstrap-readiness/errors/` |
 | Stage-plan, capability inventory, source-map, token, diagnostic catalog, syntax, module, declaration, typed-IR, or pass-summary text | `tests/cases/compiler-development/artifact/ok/` |
 | Expected diagnostic artifact or artifact mismatch report | `tests/cases/compiler-development/artifact/errors/` |
-| Compiler-shaped data model pressure | `tests/cases/compiler-development/ok/model/` |
+| Compiler-shaped data model pressure | `tests/cases/bootstrap-readiness/ok/` |
 
 If a test only proves that a linked executable exits differently, ask whether a
 token, syntax, module, declaration, typed fact, or LLVM artifact can catch the
@@ -74,7 +74,7 @@ First file:
   Which source file should be opened first?
 
 Fixture:
-  Which ok, errors, artifact, or model test proves the behavior?
+  Which ok, errors, artifact, or bootstrap-readiness test proves the behavior?
 
 Small check:
   Which single command should fail before broad checks?

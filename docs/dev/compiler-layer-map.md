@@ -18,7 +18,8 @@ Start with the earliest layer that can know the behavior:
 2. Run `build/ari --list-passes` or `build/ari --explain-pass sema` when the
    boundary, owner, input, or first artifact is unclear.
 3. Read the linked contract page before editing.
-4. Add or update the closest `ok`, `errors`, `artifact`, or model fixture.
+4. Add or update the closest `ok`, `errors`, `artifact`, or
+   bootstrap-readiness fixture.
 5. Run the smallest check listed for that layer.
 6. Update user docs if the public Ari rule changed.
 
@@ -71,9 +72,9 @@ toward explicit helper files and forward-flowing data.
 | Types and generics | `make check-generics` or one focused `--check` fixture |
 | Traits | `make check-traits` or one focused trait fixture |
 | Ownership and borrowing | one `tests/cases/ownership/` or `tests/cases/borrowing/` fixture |
-| Compiler model pressure | `make check-compiler-development` |
+| Bootstrap-readiness pressure | `make check-bootstrap-readiness` |
 | Compiler artifacts | `make check-compiler-artifacts` |
-| Developer docs | `make check-compiler-dev-docs` |
+| Developer docs | `make check-bootstrap-docs` |
 
 Full `make check` belongs at handoff for broad changes. Sanitizer checks are
 useful for low-level compiler internals, but they are intentionally separate

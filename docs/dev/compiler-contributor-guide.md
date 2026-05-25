@@ -31,8 +31,8 @@ For a compiler change, read these in order:
 9. [Build And Test](build-test.md): focused Make targets and direct
    `build/ari` commands.
 
-Use [Compiler Maturity Gates](compiler-maturity-gates.md) as the health
-scorecard for normal compiler work.
+Use [Compiler Maturity Gates](compiler-maturity-gates.md) as the gate map for
+normal compiler work.
 
 ## Edit Map
 
@@ -46,7 +46,7 @@ scorecard for normal compiler work.
 | Patterns and control flow | `src/pattern_semantics.cpp`, `src/control_flow_semantics.cpp`, `src/loop_state_semantics.cpp` | `make check-control-flow`, `make check-match` |
 | IR facts | `src/ir.hpp`, `src/ir_builders.cpp`, `src/sema.cpp` | focused `--emit-llvm` plus IR text checks |
 | LLVM output and artifacts | `src/llvm_codegen.cpp`, `src/toolchain.cpp`, `src/driver.cpp` | `--emit-llvm`, `--emit-obj`, linked executable or shared object |
-| Source docs and gates | `docs/dev/*.md`, `tests/*manifest*.txt` | `make check-compiler-dev-docs` |
+| Source docs and gates | `docs/dev/*.md`, `tests/*manifest*.txt` | `make check-bootstrap-docs` |
 
 If a backend change needs information that sema already knows, add that fact to
 IR instead of making codegen re-resolve source names.
@@ -58,12 +58,12 @@ Choose the smallest target that observes the behavior you changed:
 | Change Shape | First Check |
 | --- | --- |
 | User-facing language docs or navigation | `make check-language-docs` |
-| Compiler roadmap, maturity gates, pass contracts, or readiness docs | `make check-compiler-dev-docs` |
+| Compiler roadmap, maturity gates, pass contracts, or readiness docs | `make check-bootstrap-docs` |
 | Compiler pass ownership, inputs, outputs, or first artifact routing | `build/ari --list-passes` or `build/ari --explain-pass sema` |
 | Compiler fixture placement or test bucket routing | `build/ari --list-test-buckets` or `build/ari --explain-test-bucket compiler-artifact-ok` |
 | Compiler implementation slice selection | `build/ari --list-work-items` or `build/ari --explain-work-item generic-aggregate-stress` |
 | Stage-plan, capability inventory, token, source-map, syntax, diagnostic catalog, diagnostic, module-graph, declaration, typed-IR, or pass-summary artifacts | `make check-compiler-artifacts` |
-| Compiler-shaped Ari model fixtures | `make check-compiler-development` |
+| Compiler-shaped Ari model fixtures | `make check-bootstrap-readiness` |
 | One ordinary Ari program | `build/ari path/to/case.ari --check` |
 | One backend lowering shape | `build/ari path/to/case.ari --emit-llvm build/focused/name.ll` |
 
@@ -82,8 +82,8 @@ build/ari --explain-pass sema
 build/ari --explain-test-bucket compiler-artifact-ok
 build/ari --explain-work-item generic-aggregate-stress
 make check-language-docs
-make check-compiler-dev-docs
-make check-compiler-development
+make check-bootstrap-docs
+make check-bootstrap-readiness
 ```
 
 Run broader targets before handoff only when the change crosses a boundary:
@@ -107,26 +107,23 @@ Tests should explain what they protect from the path alone:
 ```text
 tests/cases/<feature>/ok/
 tests/cases/<feature>/errors/
-tests/cases/compiler-development/ok/model/
+tests/cases/bootstrap-readiness/ok/
 tests/cases/compiler-development/artifact/ok/
 tests/cases/compiler-development/artifact/errors/
 ```
 
-Use `compiler-development` for fixtures that prove normal Ari can model
-compiler-shaped data and compiler artifacts.
-
-Use `artifact/ok` and `artifact/errors` for text artifacts and comparison
-reports. Use ordinary feature folders such as `modules`, `generics`, `traits`,
-`ownership`, or `ffi` when the fixture primarily protects a language feature
-instead of compiler-development infrastructure.
+Use `bootstrap-readiness/ok` for small compiler-shaped Ari source pressure.
+Use `compiler-development/artifact/ok` and `artifact/errors` for text artifacts
+and comparison reports. Use ordinary feature folders such as `modules`,
+`generics`, `traits`, `ownership`, or `ffi` when the fixture primarily protects
+a language feature instead of readiness infrastructure.
 
 Prefer names like:
 
-- `compiler-pass-worklist.ari`
 - `source-line-column.ari`
 - `errors-result-flow.ari`
 - `formatting-artifact-line.ari`
-- `compiler-test-classification.ari`
+- `model-token-span.ari`
 
 Each test should have one reason to exist. If a file starts proving lexer,
 parser, generics, ownership, and backend behavior all at once, split it.
@@ -166,6 +163,6 @@ A compiler change is healthy when it:
   behavior
 - leaves unsupported features rejected with clear diagnostics
 
-The current practical compiler-development maturity is about **48-49%**. Treat
-that number as a health metric tied to normal compiler surfaces, not a separate
-project goal.
+The current practical compiler-development maturity is gate-based. Treat the
+readiness inventory as a health metric tied to normal compiler surfaces, not a
+separate project goal.
