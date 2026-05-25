@@ -38,6 +38,24 @@ invalid-handle behavior; `_bool` helpers keep old success-flag behavior; and
 `*_result` names remain migration aliases for older call sites, but new Ari
 code should prefer the natural names.
 
+Allocation-returning helpers take `ref mut Zone` because Ari has no hidden
+global heap. Whole-file reads, directory collection, link reads, and
+canonicalization copy bytes into the caller's zone. The current path model is
+POSIX-style byte paths: `std::path::PathBytes` is a borrowed byte view and
+`std::path::PathBuf` is an owned `std::string::String` alias. In this module
+`canonicalize(ref mut zone, path)` therefore returns an owned byte string that
+can be used as a `PathBuf`/path byte source.
+
+Common natural API shapes:
+
+| Operation | Preferred API | Compatibility APIs |
+| --- | --- | --- |
+| Read text/bytes | `read(ref mut zone, path) -> Result[String, Error]`, `read_to_string(ref mut zone, path) -> Result[String, Error]`, `read_bytes(ref mut zone, path) -> Result[Vec[u8], Error]` | `read_optional`, `try_read`, `read_or_default`, `read_unchecked`, `read_result` |
+| Write text/bytes | `write(path, values) -> Result[i64, Error]`, `write_string(path, text) -> Result[(), Error]`, `append(path, values) -> Result[i64, Error]` | `write_bool`, `try_write`, `write_raw_result`, `write_result`, `append_bool`, `try_append` |
+| Directories | `create_dir(path) -> Result[(), Error]`, `create_dir_all(path) -> Result[(), Error]`, `remove_dir(path) -> Result[(), Error]`, `remove_dir_all(path) -> Result[(), Error]` | `*_bool`, `*_unchecked`, `*_raw_result`, migration `*_result` aliases |
+| Files and moves | `remove_file(path) -> Result[(), Error]`, `rename(source, target) -> Result[(), Error]`, `copy(source, target) -> Result[i64, Error]` | `remove_bool`, `rename_bool`, `copy_bool`, `try_copy`, raw/result aliases |
+| Paths and directories | `canonicalize(ref mut zone, path) -> Result[PathBuf, Error]`, `read_dir(ref mut zone, path) -> Result[Vec[DirEntry], Error]` | `_optional`, `try_*`, `_unchecked`, migration `*_result` aliases |
+
 ## API
 
 ```ari
@@ -758,7 +776,7 @@ branching is enough, and `entry.metadata_unchecked()` or
 | read directory | Current: Result-first entry-list `read_dir(ref mut zone, path)` and `read_dir_entries(ref mut zone, path)`, name-list `read_dir_names(ref mut zone, path)` with `try_read_dir` compatibility, `_optional`/`try_*` absence-only helpers, `_unchecked` asserting compatibility, `_result` migration aliases, `open_dir_result(path)` with `Error`, raw compatibility `open_dir_raw_result(path)`, `try_open_dir(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`/`dir.close_unchecked()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors are roadmap. |
 | create directory | Current: Result-first single-directory `create_dir(path)`, `create_dir_result(path)` migration alias, `create_dir_bool(path)` boolean compatibility, raw compatibility `create_dir_raw_result(path)`, idempotent `ensure_dir(path)`, Result-first recursive `create_dir_all(path)`, `create_dir_all_bool(path)` boolean compatibility, raw compatibility `create_dir_all_raw_result(path)`, and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Roadmap: secure temp file/dir constructors after owned handles and paths. |
-| path manipulation | Current: source lexical helpers in `std::path`; owned `Path`/`PathBuf` and platform-specific paths are roadmap. |
+| path manipulation | Current: source lexical helpers in `std::path`, borrowed `PathBytes`/`Path` views, and owned POSIX `PathBuf` as a `std::string::String` alias; platform-specific owned paths remain roadmap. |
 | file locking | Optional roadmap: advisory locking after platform behavior is documented. |
 
 ## Examples
@@ -772,7 +790,9 @@ fn main() -> i64 {
 
   var data = ['A', 'B', 'C'];
   if writer.write_bytes(data.as_slice()).is_err() {
-    writer.close().unwrap();
+    if writer.close().is_err() {
+      return 2;
+    }
     return 2;
   }
   writer.close().unwrap();
@@ -820,10 +840,8 @@ zone::destroy(zone);
 Create, copy, and truncate small files:
 
 ```ari
-let file = fs::try_create(path).unwrap_or(fs::File::invalid());
-if file.is_open() {
-  file.close();
-}
+let file = fs::create(path).unwrap();
+file.close().unwrap();
 
 let backup_path = "build/prelude/example-fs.bak";
 fs::copy(path, backup_path).unwrap();
@@ -862,21 +880,33 @@ if fs::remove_dir_all(tree).is_ok() {
 }
 ```
 
-Read the names in one directory:
+Read directory entries:
 
 ```ari
 var zone = zone::create(512);
-let names = fs::try_read_dir(ref mut zone, "build/prelude").unwrap_or(
-  std::vec::new<std::string::String>(ref mut zone, 0)
-);
+let entries = fs::read_dir(ref mut zone, "build/prelude").unwrap();
 
 var index = 0;
-while index < names.len() {
-  let name = names.get(index);
-  if name.equals_text("example-fs.tmp") {
-    index = names.len();
+while index < entries.len() {
+  let entry = entries.get(index);
+  if entry.name_equals("example-fs.tmp") {
+    index = entries.len();
   }
   index = index + 1;
+}
+zone::destroy(zone);
+```
+
+Read only names when entries are not needed:
+
+```ari
+var zone = zone::create(512);
+let names = fs::read_dir_names(ref mut zone, "build/prelude").unwrap();
+if names.len() > 0 {
+  let first = names.get(0);
+  if first.is_empty() {
+    panic();
+  }
 }
 zone::destroy(zone);
 ```
@@ -885,22 +915,26 @@ Manually stream a directory when you do not want to collect every name:
 
 ```ari
 var zone = zone::create(512);
-let dir = fs::try_open_dir("build/prelude").unwrap_or(fs::Dir::invalid());
-if dir.is_open() {
-  var reading = true;
-  while reading {
-    match dir.next(ref mut zone) {
-      std::Some(name) => {
-        if name.equals_text("example-fs.tmp") {
+match fs::open_dir_result("build/prelude") {
+  std::Ok(dir) => {
+    var reading = true;
+    while reading {
+      match dir.next(ref mut zone) {
+        std::Some(name) => {
+          if name.equals_text("example-fs.tmp") {
+            reading = false;
+          }
+        }
+        std::None => {
           reading = false;
         }
       }
-      std::None => {
-        reading = false;
-      }
     }
+    dir.close().unwrap();
   }
-  dir.close();
+  std::Err(_) => {
+    panic();
+  }
 }
 zone::destroy(zone);
 ```
