@@ -26,20 +26,20 @@ bool valid_label_span(SourceLocation loc) {
     std::string second_type = type_name(second);
     CompileError error(
         std::move(loc),
-        "generic type '" + name + "' inferred as both " + first_type + " and " + second_type);
+        "generic type '" + name + "' cannot be both " + first_type + " and " + second_type);
     if (valid_label_span(first.loc)) {
         error.add_label(DiagnosticLabel{
             span_from_location(first.loc),
-            "first inferred '" + name + "' as " + first_type,
+            "previous binding for '" + name + "' was " + first_type,
             false});
     }
     error.add_note(DiagnosticNote{
         std::nullopt,
-        "generic type inference must choose one concrete type for '" + name + "'",
+        "generic specialization must choose one concrete type for '" + name + "'",
         DiagnosticNoteKind::Note});
     error.add_note(DiagnosticNote{
         std::nullopt,
-        "make every use of '" + name + "' agree, or pass explicit type arguments",
+        "make every use of '" + name + "' agree; if explicit type arguments are present, choose one that matches the values",
         DiagnosticNoteKind::Help});
     throw error;
 }

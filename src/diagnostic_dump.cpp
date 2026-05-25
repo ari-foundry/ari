@@ -317,7 +317,6 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "generic function") ||
         contains(diagnostic, "generic parameter") ||
         contains(diagnostic, "generic specialization") ||
-        contains(diagnostic, "inferred as both") ||
         contains(diagnostic, "unsupported executable type") ||
         contains(diagnostic, "missing executable function") ||
         contains(diagnostic, "main cannot take parameters") ||

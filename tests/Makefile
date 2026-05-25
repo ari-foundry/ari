@@ -4566,9 +4566,9 @@ check-generics: $(TARGET)
 	$(TARGET) tests/cases/generics/ok/generic-enum-constants.ari -o $(BUILD_DIR)/generics/generic-enum-constants.elf
 	$(BUILD_DIR)/generics/generic-enum-constants.elf; code=$$?; test $$code -eq 7
 	if $(TARGET) tests/cases/generics/errors/generic-inference-conflict.ari -o $(BUILD_DIR)/generics/generic-inference-conflict.elf >$(BUILD_DIR)/generics/generic-inference-conflict.err 2>&1; then exit 1; fi
-	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-inference-conflict.err
-	grep -q "secondary label: .*first inferred 'T' as i64" $(BUILD_DIR)/generics/generic-inference-conflict.err
-	grep -q "help: make every use of 'T' agree, or pass explicit type arguments" $(BUILD_DIR)/generics/generic-inference-conflict.err
+	grep -q "generic type 'T' cannot be both i64 and bool" $(BUILD_DIR)/generics/generic-inference-conflict.err
+	grep -q "secondary label: .*previous binding for 'T' was i64" $(BUILD_DIR)/generics/generic-inference-conflict.err
+	grep -q "help: make every use of 'T' agree; if explicit type arguments are present, choose one that matches the values" $(BUILD_DIR)/generics/generic-inference-conflict.err
 	if $(TARGET) tests/cases/generics/errors/generic-uninferred.ari -o $(BUILD_DIR)/generics/generic-uninferred.elf >$(BUILD_DIR)/generics/generic-uninferred.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' could not be inferred for 'make'" $(BUILD_DIR)/generics/generic-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-return-context-uninferred.ari -o $(BUILD_DIR)/generics/generic-return-context-uninferred.elf >$(BUILD_DIR)/generics/generic-return-context-uninferred.err 2>&1; then exit 1; fi
@@ -4618,7 +4618,7 @@ check-generics: $(TARGET)
 	if $(TARGET) tests/cases/generics/errors/generic-function-pointer-uninferred.ari -o $(BUILD_DIR)/generics/generic-function-pointer-uninferred.elf >$(BUILD_DIR)/generics/generic-function-pointer-uninferred.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' could not be inferred for function pointer 'keep'" $(BUILD_DIR)/generics/generic-function-pointer-uninferred.err
 	if $(TARGET) tests/cases/generics/errors/generic-function-pointer-mismatch.ari -o $(BUILD_DIR)/generics/generic-function-pointer-mismatch.elf >$(BUILD_DIR)/generics/generic-function-pointer-mismatch.err 2>&1; then exit 1; fi
-	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-function-pointer-mismatch.err
+	grep -q "generic type 'T' cannot be both i64 and bool" $(BUILD_DIR)/generics/generic-function-pointer-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-function-value-unexpected.ari -o $(BUILD_DIR)/generics/generic-function-value-unexpected.elf >$(BUILD_DIR)/generics/generic-function-value-unexpected.err 2>&1; then exit 1; fi
 	grep -q "generic function 'identity' requires an expected function pointer type or a call" $(BUILD_DIR)/generics/generic-function-value-unexpected.err
 	if $(TARGET) tests/cases/generics/errors/generic-function-unknown-type-arg.ari -o $(BUILD_DIR)/generics/generic-function-unknown-type-arg.elf >$(BUILD_DIR)/generics/generic-function-unknown-type-arg.err 2>&1; then exit 1; fi
@@ -4630,7 +4630,7 @@ check-generics: $(TARGET)
 	if $(TARGET) tests/cases/generics/errors/generic-explicit-arity.ari -o $(BUILD_DIR)/generics/generic-explicit-arity.elf >$(BUILD_DIR)/generics/generic-explicit-arity.err 2>&1; then exit 1; fi
 	grep -q "generic function 'identity' expects 1 type argument" $(BUILD_DIR)/generics/generic-explicit-arity.err
 	if $(TARGET) tests/cases/generics/errors/generic-explicit-mismatch.ari -o $(BUILD_DIR)/generics/generic-explicit-mismatch.elf >$(BUILD_DIR)/generics/generic-explicit-mismatch.err 2>&1; then exit 1; fi
-	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-explicit-mismatch.err
+	grep -q "generic type 'T' cannot be both i64 and bool" $(BUILD_DIR)/generics/generic-explicit-mismatch.err
 	if $(TARGET) tests/cases/generics/errors/generic-nongeneric-type-args.ari -o $(BUILD_DIR)/generics/generic-nongeneric-type-args.elf >$(BUILD_DIR)/generics/generic-nongeneric-type-args.err 2>&1; then exit 1; fi
 	grep -q "function 'add' does not take type arguments" $(BUILD_DIR)/generics/generic-nongeneric-type-args.err
 	if $(TARGET) tests/cases/generics/errors/generic-specialization-name-conflict.ari -o $(BUILD_DIR)/generics/generic-specialization-name-conflict.elf >$(BUILD_DIR)/generics/generic-specialization-name-conflict.err 2>&1; then exit 1; fi
