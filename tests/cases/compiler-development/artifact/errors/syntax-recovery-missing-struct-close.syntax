@@ -1,0 +1,11 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-close.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated struct" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-close.ari:3:1 source_id=0 bytes=29..31
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-close.ari:3:1 source_id=0 bytes=29..31
+      SecondaryLabel message="struct body starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-close.ari:1:15 source_id=0 bytes=14..15
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching } before continuing"
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-close.ari:3:4 source_id=0 bytes=32..37
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-close.ari:4:3 source_id=0 bytes=51..57
+        Integer value=5 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-close.ari:4:10 source_id=0 bytes=58..59

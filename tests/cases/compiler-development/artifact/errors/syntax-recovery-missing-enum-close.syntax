@@ -1,0 +1,11 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-enum-close.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated enum" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-enum-close.ari:3:1 source_id=0 bytes=18..20
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-enum-close.ari:3:1 source_id=0 bytes=18..20
+      SecondaryLabel message="enum body starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-enum-close.ari:1:13 source_id=0 bytes=12..13
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching } before continuing"
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-enum-close.ari:3:4 source_id=0 bytes=21..26
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-enum-close.ari:4:3 source_id=0 bytes=40..46
+        Integer value=6 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-enum-close.ari:4:10 source_id=0 bytes=47..48

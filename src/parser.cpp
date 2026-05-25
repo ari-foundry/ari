@@ -1220,12 +1220,28 @@ private:
                     "struct body starts here",
                     "}");
             }
+            if (should_recover_at_nested_declaration(open.loc)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated struct",
+                    "struct body starts here",
+                    "}");
+            }
             bool mutable_field = match(TokenKind::KwMut);
             Token field = expect(TokenKind::Identifier, "expected struct field name");
             if (!match(TokenKind::Colon)) {
                 fail_expected_struct_field_colon(peek().loc, field.loc, field.text);
             }
             decl.fields.push_back(StructField{field.text, parse_type(), mutable_field, field.loc});
+            if (should_recover_at_nested_declaration(open.loc)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated struct",
+                    "struct body starts here",
+                    "}");
+            }
             aggregate_member_separator(
                 "expected , or } after struct field",
                 "expected , after struct field; struct fields are comma-separated");
@@ -1245,6 +1261,14 @@ private:
         Token open = expect(TokenKind::LBrace, "expected { after enum name");
         while (!match(TokenKind::RBrace)) {
             if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated enum",
+                    "enum body starts here",
+                    "}");
+            }
+            if (should_recover_at_nested_declaration(open.loc)) {
                 fail_unterminated_delimited(
                     peek().loc,
                     open.loc,
@@ -1272,6 +1296,14 @@ private:
                 }
             }
             decl.cases.push_back(std::move(item));
+            if (should_recover_at_nested_declaration(open.loc)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated enum",
+                    "enum body starts here",
+                    "}");
+            }
             aggregate_member_separator(
                 "expected , or } after enum case",
                 "expected , after enum case; enum cases are comma-separated");
@@ -1296,6 +1328,14 @@ private:
         Token open = expect(TokenKind::LBrace, "expected { after trait name");
         while (!match(TokenKind::RBrace)) {
             if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated trait",
+                    "trait body starts here",
+                    "}");
+            }
+            if (should_recover_at_nested_declaration(open.loc)) {
                 fail_unterminated_delimited(
                     peek().loc,
                     open.loc,
@@ -1346,6 +1386,14 @@ private:
         Token open = expect(TokenKind::LBrace, "expected { after impl header");
         while (!match(TokenKind::RBrace)) {
             if (check(TokenKind::End)) {
+                fail_unterminated_delimited(
+                    peek().loc,
+                    open.loc,
+                    "unterminated impl",
+                    "impl body starts here",
+                    "}");
+            }
+            if (should_recover_at_nested_declaration(open.loc)) {
                 fail_unterminated_delimited(
                     peek().loc,
                     open.loc,

@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=287
+CompilerArtifactFixtures version=1 group=all entries=294
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -28,9 +28,9 @@ CompilerArtifactFixtures version=1 group=all entries=287
   Fixture group=errors kind=diagnostic path=errors/diagnostic-double-move.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-function.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-module-file-identity.diagnostic
-  Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-trait-impl.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-duplicate-name.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-name.diagnostic
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-duplicate-trait-impl.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-constructor-payload-type.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-duplicate-case.diagnostic
   Fixture group=errors kind=diagnostic path=errors/diagnostic-enum-payload-count.diagnostic
@@ -214,11 +214,15 @@ CompilerArtifactFixtures version=1 group=all entries=287
   Fixture group=errors kind=source path=errors/syntax-recovery-item-macro-token-tree.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-item-macro-token-tree.syntax
   Fixture group=errors kind=syntax path=errors/syntax-recovery-malformed-function-param.syntax
+  Fixture group=errors kind=source path=errors/syntax-recovery-missing-enum-close.ari
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-enum-close.syntax
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-function-body.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-missing-function-close.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-function-close.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-missing-nested-block-close.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-nested-block-close.syntax
+  Fixture group=errors kind=source path=errors/syntax-recovery-missing-struct-close.ari
+  Fixture group=errors kind=syntax path=errors/syntax-recovery-missing-struct-close.syntax
   Fixture group=errors kind=source path=errors/syntax-recovery-top-level.ari
   Fixture group=errors kind=syntax path=errors/syntax-recovery-top-level.syntax
   Fixture group=errors kind=text path=errors/text-line-mismatch.actual.txt

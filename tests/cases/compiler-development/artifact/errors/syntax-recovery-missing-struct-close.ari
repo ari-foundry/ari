@@ -1,0 +1,5 @@
+struct Broken {
+  value: i64
+fn after() -> i64 {
+  return 5;
+}
