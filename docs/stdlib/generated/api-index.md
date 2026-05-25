@@ -24,21 +24,21 @@ platform notes.
 
 ## Summary
 
-- API entries: `2832`
+- API entries: `2835`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 739 | stable candidate |
+| `core` | 742 | stable candidate |
 | `hosted` | 1064 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 20 |
-| `fn` | 1034 |
+| `fn` | 1037 |
 | `method` | 1394 |
 | `module` | 39 |
 | `struct` | 154 |
@@ -65,7 +65,7 @@ platform notes.
 | `std::encoding` | `core` | 60 |
 | `std::env` | `hosted` | 72 |
 | `std::error` | `core` | 37 |
-| `std::fmt` | `core` | 38 |
+| `std::fmt` | `core` | 41 |
 | `std::fs` | `hosted` | 259 |
 | `std::hash` | `alloc` | 24 |
 | `std::input` | `hosted` | 6 |
@@ -1547,11 +1547,14 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::fmt::boolean_in` | check-prelude std-fmt-format-spec allocator-backed bool formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::center` | check-prelude std-fmt-format-spec center alignment spec helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::char_in` | check-prelude std-fmt-char-values allocator-backed byte character display helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::concat2[A: std::fmt::Display, B: std::fmt::Display]` | check-prelude std-fmt-concat-format-value two-value Display concatenation helper; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::concat3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display]` | check-prelude std-fmt-concat-format-value three-value Display concatenation helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::debug_char_in` | check-prelude std-fmt-char-values allocator-backed byte character debug helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::debug_text_in` | check-prelude std-fmt-format-spec source debug text quoting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::debug_value[T: std::fmt::Debug]` | check-prelude std-fmt-debug-values generic allocator-backed Debug formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::decimal` | check-prelude std-fmt-format-spec decimal integer spec helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::float_in` | check-prelude std-fmt-display-builtins allocator-backed float formatting helper and Display impls; docs/stdlib/modules/fmt.md |
+| `fn std::fmt::format_value[T: std::fmt::Display]` | check-prelude std-fmt-concat-format-value generic allocator-backed Display formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::hex` | check-prelude std-fmt-format-spec hexadecimal integer spec helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::integer_in` | check-prelude std-fmt-format-spec allocator-backed signed integer formatting helper; docs/stdlib/modules/fmt.md |
 | `fn std::fmt::left` | check-prelude std-fmt-format-spec left alignment spec helper; docs/stdlib/modules/fmt.md |

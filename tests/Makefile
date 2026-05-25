@@ -2497,6 +2497,11 @@ check-prelude: $(TARGET)
 	grep -q 'write_unsigned' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	grep -q 'write_value' $(BUILD_DIR)/prelude/std-fmt-format-spec.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-spec.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; $(BUILD_DIR)/prelude/std-fmt-format-spec.elf; code=$$?; test $$code -eq 9; fi
+	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-concat-format-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
+	grep -q 'format_value' $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
+	grep -q 'concat2' $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
+	grep -q 'concat3' $(BUILD_DIR)/prelude/std-fmt-concat-format-value.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/format/std-fmt-concat-format-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-fmt-concat-format-value.elf; $(BUILD_DIR)/prelude/std-fmt-concat-format-value.elf; code=$$?; test $$code -eq 31; fi
 	$(TARGET) tests/cases/standard-library/ok/format/std-fmt-format-validation.ari --emit-llvm $(BUILD_DIR)/prelude/std-fmt-format-validation.ll
 	grep -q '_ARNv3std3fmt14try_with_width' $(BUILD_DIR)/prelude/std-fmt-format-validation.ll
 	grep -q '_ARNv3std3fmt18try_with_precision' $(BUILD_DIR)/prelude/std-fmt-format-validation.ll

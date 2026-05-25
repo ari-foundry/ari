@@ -1,0 +1,58 @@
+// Covers source-level formatting conveniences for ordinary CLI-style messages
+// without requiring compiler format macro lowering.
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+impl fmt::Display for Point {
+  fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    var output = std::string::new(zone, 8);
+    output.append_string_in(zone, "(");
+    output.append_i64_in(zone, self.x);
+    output.append_string_in(zone, ",");
+    output.append_i64_in(zone, self.y);
+    output.append_string_in(zone, ")");
+    return output;
+  }
+}
+
+fn equals_text(value: String, expected: string) -> bool {
+  return value.equals(std::string::bytes(expected));
+}
+
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var score = 0;
+
+  let number = fmt::format_value<i64>(ref mut zone, -42);
+  if equals_text(number, "-42") {
+    score = score + 1;
+  }
+
+  let name = std::string::from(ref mut zone, "hello");
+  let compiling = fmt::concat2<string, String>(ref mut zone, "Compiling ", name);
+  if equals_text(compiling, "Compiling hello") {
+    score = score + 2;
+  }
+
+  let target = fmt::concat3<string, i64, string>(ref mut zone, "target/debug/", 7, ".ari");
+  if equals_text(target, "target/debug/7.ari") {
+    score = score + 4;
+  }
+
+  let point = Point { x: 3, y: 5 };
+  let display = fmt::format_value<Point>(ref mut zone, point);
+  if equals_text(display, "(3,5)") {
+    score = score + 8;
+  }
+
+  let other = Point { x: 8, y: 13 };
+  let message = fmt::concat3<string, Point, string>(ref mut zone, "point=", other, "!");
+  if equals_text(message, "point=(8,13)!") {
+    score = score + 16;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

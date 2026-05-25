@@ -461,6 +461,35 @@ pub fn debug_value[T: std::fmt::Debug](zone: ref mut Zone, value: T) -> std::str
   return value.debug_in(zone);
 }
 
+pub fn format_value[T: std::fmt::Display](zone: ref mut Zone, value: T) -> std::string::String {
+  return value.format_in(zone);
+}
+
+pub fn concat2[A: std::fmt::Display, B: std::fmt::Display](
+  zone: ref mut Zone,
+  first: A,
+  second: B
+) -> std::string::String {
+  var output = std::string::new(zone, 0);
+  let first_text = first.format_in(zone);
+  output.append_bytes(zone, first_text.as_slice());
+  let second_text = second.format_in(zone);
+  output.append_bytes(zone, second_text.as_slice());
+  return output;
+}
+
+pub fn concat3[A: std::fmt::Display, B: std::fmt::Display, C: std::fmt::Display](
+  zone: ref mut Zone,
+  first: A,
+  second: B,
+  third: C
+) -> std::string::String {
+  var output = std::fmt::concat2<A, B>(zone, first, second);
+  let third_text = third.format_in(zone);
+  output.append_bytes(zone, third_text.as_slice());
+  return output;
+}
+
 pub fn write_debug[W: std::io::Writer, T: std::fmt::Debug](writer: ref mut W, zone: ref mut Zone, value: T) -> bool {
   var text = value.debug_in(zone);
   return std::io::write_all_unchecked<W>(writer, text.as_slice());

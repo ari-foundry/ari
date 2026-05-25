@@ -3192,7 +3192,10 @@ fmt::text_in(ref mut zone, value)
 fmt::char_in(ref mut zone, value)
 fmt::debug_text_in(ref mut zone, value)
 fmt::debug_char_in(ref mut zone, value)
+fmt::format_value<T: Display>(ref mut zone, value)
 fmt::debug_value<T: Debug>(ref mut zone, value)
+fmt::concat2<A: Display, B: Display>(ref mut zone, first, second)
+fmt::concat3<A: Display, B: Display, C: Display>(ref mut zone, first, second, third)
 fmt::write_unsigned<W: io::Writer>(ref mut writer, ref mut zone, value, spec)
 fmt::write_integer<W: io::Writer>(ref mut writer, ref mut zone, value)
 fmt::write_boolean<W: io::Writer>(ref mut writer, ref mut zone, value)
@@ -3218,6 +3221,11 @@ Built-in `Debug` impls cover the same initial scalar/text set. `string` and
 `String` debug output are quoted; `char` debug output is single-quoted. Use
 `fmt::debug_value`, `fmt::write_debug`, or `fmt::println_debug` when diagnostic
 output should use that policy.
+`fmt::format_value` is the named source helper for the common one-value
+`Display` case. `fmt::concat2` and `fmt::concat3` build small explicit-zone
+strings from `Display` values, which is handy for CLI messages such as
+`"Compiling " + name` while Ari keeps general string interpolation and hidden
+allocation out of the language.
 
 The executable formatting path is still macro-based: `print!`, `println!`,
 `eprintln!`, and `format_in!(ref mut zone, "...", values...)`. `{}` uses
@@ -3245,8 +3253,8 @@ values. `try_with_width` and `try_with_precision` return `Option[FormatSpec]`
 for runtime input so callers can reject invalid negative width or precision
 without panicking.
 
-`integer_in`, `boolean_in`, `text_in`, `char_in`, `debug_text_in`, and
-`debug_char_in` are small
+`integer_in`, `boolean_in`, `text_in`, `char_in`, `format_value`,
+`debug_text_in`, and `debug_char_in` are small
 allocator-backed helpers for common scalar/text values. `write_*` helpers
 format through an explicit temporary zone and then write to any `io::Writer`.
 Full custom formatter objects and direct streaming formatters remain roadmap

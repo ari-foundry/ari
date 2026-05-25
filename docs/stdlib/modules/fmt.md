@@ -45,7 +45,10 @@ text_in(zone: ref mut Zone, value: string) -> String
 char_in(zone: ref mut Zone, value: char) -> String
 debug_text_in(zone: ref mut Zone, value: string) -> String
 debug_char_in(zone: ref mut Zone, value: char) -> String
+format_value[T: Display](zone: ref mut Zone, value: T) -> String
 debug_value[T: Debug](zone: ref mut Zone, value: T) -> String
+concat2[A: Display, B: Display](zone: ref mut Zone, first: A, second: B) -> String
+concat3[A: Display, B: Display, C: Display](zone: ref mut Zone, first: A, second: B, third: C) -> String
 
 write_unsigned[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: u64, spec: FormatSpec) -> bool
 write_integer[W: io::Writer](writer: ref mut W, zone: ref mut Zone, value: i64) -> bool
@@ -144,6 +147,23 @@ zone::destroy(zone);
 Use `float_in(ref mut zone, value, precision)` when source code wants an
 explicit float precision without going through a format string.
 
+Use `format_value` when a caller wants the ordinary `Display` string for one
+value without naming the trait method at the call site. Use `concat2` and
+`concat3` for short hosted-program messages assembled from `Display` values
+without invoking a compiler format macro:
+
+```ari
+var zone = zone::create(128);
+let name = std::string::from(ref mut zone, "hello");
+let line = fmt::concat2(ref mut zone, "Compiling ", name);
+let output = fmt::concat3(ref mut zone, "target/debug/", 7, ".ari");
+zone::destroy(zone);
+```
+
+These helpers still allocate through the explicit zone and use `Display`, so
+they follow the same text policy as `format_in!`, `print_value`, and
+`String.append_value`.
+
 ## Formatting Macros
 
 The executable formatting surface today is still macro-based:
@@ -181,6 +201,10 @@ explicit zone.
 The source helpers complement the macros:
 
 - Use `format_in!` for mixed literal templates and type-safe argument counting.
+- Use `format_value` for one `Display` value when a named source function is
+  clearer than calling `value.format_in(zone)` directly.
+- Use `concat2` and `concat3` for small CLI/status strings such as
+  `"Compiling " + name` while Ari does not have general string interpolation.
 - Use `Display::format_in` for standard display values and user-defined values
   that participate in `{}`.
 - Use `Debug::debug_in`, `{:?}`, and `debug_value` for diagnostic output that
@@ -228,6 +252,7 @@ Representative coverage lives in:
 
 ```text
 tests/cases/standard-library/ok/format/std-fmt-format-spec.ari
+tests/cases/standard-library/ok/format/std-fmt-concat-format-value.ari
 tests/cases/standard-library/ok/format/std-fmt-format-validation.ari
 tests/cases/standard-library/ok/format/std-fmt-debug-values.ari
 tests/cases/standard-library/ok/format/std-fmt-char-values.ari
