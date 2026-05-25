@@ -720,13 +720,19 @@ IPv6 input for the IPv4 resolver, and edge IPv4 addresses.
 
 - Add address parsing and formatting once `std::string` formatting and parse
   policy can express dotted IPv4 and compressed IPv6 cleanly.
-- Add UDP source address helpers and richer socket-address reporting.
+- Expand DNS from the current first-IPv4 plus first-IPv6 list into fuller
+  `getaddrinfo` result iteration, including service-name ports, canonical
+  names, and detailed resolver status.
 - Add timeout-specific error categories once the runtime can distinguish
   deadline expiry from ordinary read, write, accept, and connect failures.
-- Add UDP buffer-oriented send and receive helpers, including `recv_from`
-  source-address reporting; TCP/Unix stream buffer helpers are available as
-  `read_exact` and `write_all`.
-- Add remaining socket options such as buffer sizes, linger, multicast options,
-  and close-on-exec-at-creation only with focused platform docs and tests.
+- Add remaining socket options such as linger, TTL/hop-limit, multicast
+  join/leave, and close-on-exec-at-creation only with focused platform docs and
+  tests.
+- Add readiness/poll abstractions (`net::Poll`/`Events` or shared
+  `io::poll_read`/`poll_write`) after the event-loop and nonblocking policy is
+  clearer; arix MVP does not need this layer.
+- Keep `std::net` focused on raw TCP/UDP/Unix sockets. TLS should live in a
+  future arix package-layer library until the package ecosystem and certificate
+  policy are deliberate.
 - Add Unix datagram sockets, abstract namespace policy, and peer credential
   helpers behind explicit Linux/Unix platform documentation.
