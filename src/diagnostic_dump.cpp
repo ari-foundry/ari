@@ -384,6 +384,8 @@ std::string classify_diagnostic_code(const std::string& message) {
     if (contains(diagnostic, "LLVM backend") ||
         contains(diagnostic, "LLVM function not found") ||
         contains(diagnostic, "unterminated LLVM function") ||
+        contains(diagnostic, "symbol inventory extraction with nm") ||
+        contains(diagnostic, "cannot run symbol inventory extraction") ||
         contains(diagnostic, "artifact") ||
         contains(diagnostic, "object")) {
         return "B0001";

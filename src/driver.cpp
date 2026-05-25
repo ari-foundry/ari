@@ -72,16 +72,42 @@ static std::string shell_quote(const std::string& text) {
     return quoted;
 }
 
+static CompileError external_tool_error(const std::string& message,
+                                        const std::string& description,
+                                        const std::string& command) {
+    CompileError error(message);
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "Ari invokes external tools after compiler analysis when producing backend artifacts",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "external command: " + command,
+        DiagnosticNoteKind::Note});
+    if (description.find("nm") != std::string::npos) {
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "install nm/binutils or skip --emit-symbols when symbol inventory is not required",
+            DiagnosticNoteKind::Help});
+    } else {
+        error.add_note(DiagnosticNote{
+            std::nullopt,
+            "make sure the external tool is installed and visible on PATH",
+            DiagnosticNoteKind::Help});
+    }
+    return error;
+}
+
 static std::string run_command_capture(const std::string& command, const std::string& description) {
     std::array<char, 4096> buffer{};
     std::string output;
     FILE* pipe = popen(command.c_str(), "r");
-    if (pipe == nullptr) throw CompileError("cannot run " + description);
+    if (pipe == nullptr) throw external_tool_error("cannot run " + description, description, command);
     while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
         output += buffer.data();
     }
     int status = pclose(pipe);
-    if (status != 0) throw CompileError(description + " failed");
+    if (status != 0) throw external_tool_error(description + " failed", description, command);
     return output;
 }
 
@@ -173,6 +199,27 @@ static CompileError llvm_fragment_error(const std::string& message, const std::s
     error.add_note(DiagnosticNote{
         std::nullopt,
         "check the generated --emit-llvm output for the exact mangled symbol, then pass it with --llvm-symbol",
+        DiagnosticNoteKind::Help});
+    return error;
+}
+
+static CompileError llvm_backend_error(const std::string& compiler, const std::string& command) {
+    CompileError error("LLVM backend failed while producing output; install clang or pass --llvm-cc");
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "Ari emitted LLVM IR successfully, then invoked an LLVM-compatible driver to produce the requested backend output",
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "LLVM driver: " + compiler,
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "external command: " + command,
+        DiagnosticNoteKind::Note});
+    error.add_note(DiagnosticNote{
+        std::nullopt,
+        "install clang, pass --llvm-cc path/to/clang, or use --emit-llvm to keep the IR artifact for inspection",
         DiagnosticNoteKind::Help});
     return error;
 }
@@ -941,7 +988,7 @@ int run(int argc, char** argv) {
     if (llvm_output.empty()) {
         std::remove(llvm_path.c_str());
     }
-    if (status != 0) throw CompileError("LLVM backend failed while producing output; install clang or pass --llvm-cc");
+    if (status != 0) throw llvm_backend_error(llvm_compiler, command);
     if (!object_output.empty()) {
         report_wrote(object_output, "LLVM object");
         if (!symbol_inventory_output.empty()) {

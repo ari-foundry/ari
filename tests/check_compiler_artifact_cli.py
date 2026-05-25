@@ -201,6 +201,14 @@ def main():
 
     ok &= require_failure(
         run_ari(
+            "--llvm-cc", OUT_DIR / "missing-clang",
+            "-o", OUT_DIR / "missing-compiler.elf",
+        ),
+        "use --emit-llvm to keep the IR artifact for inspection",
+    )
+
+    ok &= require_failure(
+        run_ari(
             "--shared",
             "--emit-llvm", OUT_DIR / "symbols.ll",
             "--emit-symbols", OUT_DIR / "symbols.symbols",
