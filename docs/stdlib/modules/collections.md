@@ -723,13 +723,48 @@ fn main() -> i64 {
   var zone = zone::create(2048);
   var names = collections::string_hash_map<String>(ref mut zone, 8);
 
-  names.insert(string::from(ref mut zone, "name"), string::from(ref mut zone, "hello"));
-  let value = names.get(string::from(ref mut zone, "name"));
+  let name_key = string::from(ref mut zone, "name");
+  let hello_value = string::from(ref mut zone, "hello");
+  names.insert(name_key, hello_value);
+
+  let lookup_key = string::from(ref mut zone, "name");
+  let value = names.get(lookup_key);
+  let result = value.len();
 
   zone::destroy(zone);
-  return value.len();
+  return result;
 }
 ```
+
+For arix-style manifest parsing, prefer `string_hash_map` for section and
+key/value tables today:
+
+```ari
+fn main() -> i64 {
+  var zone = zone::create(4096);
+  var package = collections::string_hash_map<String>(ref mut zone, 4);
+
+  let version_key = string::from(ref mut zone, "version");
+  let version_value = string::from(ref mut zone, "0.1.0");
+  package.insert(version_key, version_value);
+
+  let query = string::from(ref mut zone, "version");
+  let fallback = string::from(ref mut zone, "0.0.0");
+  let version = package.get_or(query, fallback);
+  let result = version.len();
+
+  zone::destroy(zone);
+  return result;
+}
+```
+
+`HashMap::new(ref mut zone, capacity, hash)` remains the custom-hasher
+constructor. The intended future spelling for ordinary hashable keys is
+`HashMap::new<K: Hash[K] + Eq[K], V>(ref mut zone, capacity)`, with the
+explicit hash-function form moved to a `with_hash`-style name once generic
+function-pointer specialization is strong enough. Until then, `string_hash_map`
+is the natural `HashMap[String, V]` constructor and uses content hashing plus
+content equality for independently allocated `String` values.
 
 Ordered tree:
 
