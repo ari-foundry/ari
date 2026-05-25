@@ -1,21 +1,37 @@
 # std::path
 
-`std::path` contains source-only lexical path helpers over `Slice[u8]`. It
+`std::path` contains source-only lexical path helpers over POSIX path bytes. It
 exists so file and tooling code can split, join, and lightly normalize paths
 without opening the filesystem or depending on host state.
 
-This first slice is deliberately POSIX-style: `/` is the only separator.
-Windows drive prefixes, UNC paths, and platform-specific normalization belong
-to future runtime/path policy work. Filesystem-backed existing-path
-canonicalization lives in `std::fs::try_canonicalize`.
+This first slice is deliberately hosted Linux/POSIX-style: `/` is the only
+separator and paths are byte strings, not validated UTF-8 strings. Ari's
+zone-backed `std::string::String` is also byte-oriented, while
+`std::string::Utf8` is the explicit validated UTF-8 view. Windows drive
+prefixes, UNC paths, and platform-specific normalization belong to future
+runtime/path policy work. Filesystem-backed existing-path canonicalization
+lives in `std::fs::canonicalize`.
+
+Lexical helpers preserve interior NUL bytes because they work on `Slice[u8]`.
+Hosted filesystem and C-string boundaries cannot safely pass such paths, so use
+`path::contains_nul` before crossing into OS APIs when the bytes are not known
+to be clean.
 
 ## API
 
 ```ari
+path::Path
 path::PathBytes
+path::PathBuf
 path::bytes(path) -> PathBytes
 path::from_os(os) -> PathBytes
+path::from_bytes(ref mut zone, path) -> PathBuf
+path::from_string(ref mut zone, text) -> PathBuf
+path::to_string(ref mut zone, path) -> String
 path::is_separator(value: char) -> bool
+path::is_empty(path) -> bool
+path::contains_nul(path) -> bool
+path::as_bytes(path) -> Slice[u8]
 path::is_absolute(path) -> bool
 path::is_relative(path) -> bool
 path::trim_trailing_separators(path) -> Slice[u8]
@@ -36,23 +52,29 @@ path::strip_suffix(path, suffix) -> Option[Slice[u8]]
 path::with_file_name_in(ref mut zone, path, new_file_name) -> String
 path::with_extension_in(ref mut zone, path, new_extension) -> String
 path::join_in(ref mut zone, base, child) -> String
+path::join(ref mut zone, base, child) -> PathBuf
+path::join_many(ref mut zone, parts) -> PathBuf
+path::current_dir_join(ref mut zone, child) -> Result[PathBuf, Error]
 path::normalize_in(ref mut zone, path) -> String
 ```
 
 `is_separator` takes `char` because it checks Ari's ASCII byte character
 literal spelling such as `'/'`; `char` is the root alias for `u8`.
 
-`PathBytes` is the typed borrowed view for bytes that should be interpreted as
-a path. It keeps path logic out of generic byte strings and out of OS string
-handling:
+`Path` is a readability alias for `PathBytes`. `PathBytes` is the typed
+borrowed view for bytes that should be interpreted as a path. It keeps path
+logic out of generic byte strings and out of OS string handling:
 
 ```ari
 let path = path::bytes(bytes);
 let from_os = path::from_os(os);
-let literal_path: std::path::PathBytes = "/tmp/ari";
+let literal_path: std::path::Path = "/tmp/ari";
 path.as_slice()
+path.as_bytes()
+path.to_string(ref mut zone)
 path.len()
 path.is_empty()
+path.contains_nul()
 path.is_absolute()
 path.is_relative()
 path.components()
@@ -72,7 +94,9 @@ path.strip_suffix(suffix)
 path.with_file_name_in(ref mut zone, new_file_name)
 path.with_extension_in(ref mut zone, new_extension)
 path.join_in(ref mut zone, child)
+path.join(ref mut zone, child)
 path.normalize_in(ref mut zone)
+path.normalize(ref mut zone)
 ```
 
 Borrowed helpers return views into the original byte slice; they do not
@@ -89,6 +113,38 @@ whose names do not overlap with generic byte-slice helpers:
 "src/main.ari".extension()
 "/tmp".join_in(ref mut zone, "bin")
 ```
+
+`PathBuf` is the current owned POSIX path buffer. In this compiler slice it is
+a type alias for `std::string::String`, so ownership, lifetime, copying, and
+zone behavior match `String`: the bytes live in the zone used to create the
+buffer and remain valid until that zone is reset or destroyed. `PathBuf` does
+not validate UTF-8. It exposes path-specific wrappers for common inspections
+while inherited `String` methods such as `len`, `is_empty`, `as_slice`,
+`starts_with`, and `ends_with` remain byte-string operations:
+
+```ari
+let owned = path::from_string(ref mut zone, "src/main.ari");
+owned.as_bytes()
+owned.as_path()
+owned.to_string(ref mut zone)
+owned.contains_nul()
+owned.is_absolute()
+owned.is_relative()
+owned.components()
+owned.file_name()
+owned.parent()
+owned.extension()
+owned.stem()
+owned.file_stem()
+owned.join(ref mut zone, "cache")
+owned.normalize(ref mut zone)
+owned.with_file_name(ref mut zone, "lib.ari")
+owned.with_extension(ref mut zone, "o")
+```
+
+`from_bytes` and `from_string` copy into the caller-provided zone. `to_string`
+copies a borrowed path view into an owned byte string. `as_bytes` returns a
+borrowed view and does not allocate.
 
 `trim_trailing_separators` removes trailing `/` bytes while preserving root
 `/`. `file_name` returns the last component after trimming trailing
@@ -118,17 +174,20 @@ matching and require a path component boundary, so `src` matches
 paths and strips to the relative remainder. Strip helpers return borrowed views
 into the trimmed input path and return `None` when the affix is absent.
 
-`with_file_name_in` and `with_extension_in` allocate a new owned
-`std::string::String` in the provided zone. `with_file_name_in` keeps the
-current parent when one exists, preserves root for paths such as `/`, and
-otherwise returns a copy of the new final component. `with_extension_in`
-replaces the final extension, appends one when the path has no extension, and
-removes the extension when `new_extension` is empty. Paths without a final
-component, such as `/`, are copied unchanged by `with_extension_in`.
+`with_file_name_in`, `with_extension_in`, `join_in`, and `normalize_in` are the
+compatibility/string-returning allocation helpers. The natural owned-path
+wrappers are `PathBytes::join`, `PathBytes::normalize`, `PathBuf::join`,
+`PathBuf::normalize`, `PathBuf::with_file_name`, and
+`PathBuf::with_extension`; they return `PathBuf`.
 
-`join_in` copies into the caller-provided zone. If `child` is absolute, it
-returns a copy of `child`. Otherwise it inserts one `/` between `base` and
-`child` when needed.
+`join` copies into the caller-provided zone. If `child` is absolute, it returns
+a copy of `child`. Otherwise it inserts one `/` between `base` and `child` when
+needed. `join_many` skips empty parts and resets the accumulated path whenever
+it sees an absolute part.
+
+`current_dir_join` reads the hosted current directory with
+`std::env::current_dir_path()` and returns `Result[PathBuf, Error]`, because
+the current-directory lookup can fail. The join itself is still lexical.
 
 `normalize_in` is lightweight lexical normalization. It collapses repeated
 separators and removes `.` components, but intentionally keeps `..`
@@ -144,6 +203,10 @@ fn module_name(path_bytes: Slice[u8]) -> Slice[u8] {
 
 fn child_path(zone: ref mut Zone, dir: Slice[u8], name: Slice[u8]) -> String {
   return path::join_in(zone, dir, name);
+}
+
+fn owned_child_path(zone: ref mut Zone, dir: std::path::Path, name: std::path::Path) -> std::path::PathBuf {
+  return path::join(zone, dir, name);
 }
 
 fn ari_to_object(zone: ref mut Zone, source: Slice[u8]) -> String {
@@ -169,6 +232,7 @@ tests/cases/standard-library/ok/path/std-path-bytes.ari
 tests/cases/standard-library/ok/path/std-path-predicates.ari
 tests/cases/standard-library/ok/path/std-path-affixes.ari
 tests/cases/standard-library/ok/path/std-path-edit.ari
+tests/cases/standard-library/ok/path/std-path-buf.ari
 ```
 
 The focused test covers separator policy, absolute/relative checks, trailing
@@ -176,16 +240,18 @@ separator trimming, final component views, parent/stem/extension behavior,
 explicit `file_stem` aliases, zone-backed path editing, zone-backed join,
 lightweight normalization, component iteration, typed `PathBytes` views, and
 allocation-free final-component predicates plus component-aware path
-prefix/suffix predicates and stripping.
+prefix/suffix predicates and stripping. It also covers `Path`/`PathBuf`,
+owned path construction from strings and bytes, byte access, NUL detection,
+multi-part joins, current-directory joins, and `PathBuf` editing wrappers.
 `make check-prelude` checks representative helper symbols and executable
 results.
 
 ## Future Work
 
 - platform-specific separators and Windows drive/UNC rules
-- owned `Path`/`PathBuf` values after the string/path ownership policy is
-  stronger
-- deeper integration with `std::fs::try_canonicalize` once owned `PathBuf`
-  exists
+- a distinct non-alias `PathBuf` representation if Ari later needs
+  platform-specific ownership separate from `std::string::String`
+- deeper integration with `std::fs::canonicalize` and other filesystem APIs as
+  more of them accept path-byte values directly
 - richer component kinds such as root, current directory, and parent directory
   if Ari later adds an owned `Path` model

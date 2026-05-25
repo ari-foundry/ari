@@ -831,13 +831,21 @@ fails.
 
 ## Paths
 
-`std::path` contains source-only lexical path helpers over `Slice[u8]`:
+`std::path` contains source-only lexical path helpers over POSIX path bytes:
 
 ```ari
+path::Path
 path::PathBytes
+path::PathBuf
 path::bytes(path)
 path::from_os(os)
+path::from_bytes(ref mut zone, path)
+path::from_string(ref mut zone, text)
+path::to_string(ref mut zone, path)
 path::is_separator(value: char)
+path::is_empty(path)
+path::contains_nul(path)
+path::as_bytes(path)
 path::is_absolute(path)
 path::is_relative(path)
 path::trim_trailing_separators(path)
@@ -858,11 +866,17 @@ path::strip_suffix(path, suffix)
 path::with_file_name_in(ref mut zone, path, new_file_name)
 path::with_extension_in(ref mut zone, path, new_extension)
 path::join_in(ref mut zone, base, child)
+path::join(ref mut zone, base, child)
+path::join_many(ref mut zone, parts)
+path::current_dir_join(ref mut zone, child)
 path::normalize_in(ref mut zone, path)
 
 path.as_slice()
+path.as_bytes()
+path.to_string(ref mut zone)
 path.len()
 path.is_empty()
+path.contains_nul()
 path.is_absolute()
 path.is_relative()
 path.trim_trailing_separators()
@@ -883,25 +897,57 @@ path.strip_suffix(suffix)
 path.with_file_name_in(ref mut zone, new_file_name)
 path.with_extension_in(ref mut zone, new_extension)
 path.join_in(ref mut zone, child)
+path.join(ref mut zone, child)
 path.normalize_in(ref mut zone)
+path.normalize(ref mut zone)
+
+path_buf.as_bytes()
+path_buf.as_path()
+path_buf.to_string(ref mut zone)
+path_buf.contains_nul()
+path_buf.is_absolute()
+path_buf.is_relative()
+path_buf.components()
+path_buf.file_name()
+path_buf.parent()
+path_buf.extension()
+path_buf.stem()
+path_buf.file_stem()
+path_buf.join(ref mut zone, child)
+path_buf.normalize(ref mut zone)
+path_buf.with_file_name(ref mut zone, new_file_name)
+path_buf.with_extension(ref mut zone, new_extension)
 ```
 
-The current separator policy is POSIX-style `/` only. Single-component helpers
-return `Option[Slice[u8]]` views into the original path bytes.
+The current separator policy is hosted Linux/POSIX-style `/` only. Paths are
+byte strings, not validated UTF-8. `std::string::String` is Ari's zone-backed
+owned byte string, `std::string::Utf8` is the validated UTF-8 view, and
+`PathBytes`/`PathBuf` interpret bytes as lexical paths. Lexical helpers
+preserve interior NUL bytes; reject them with `path::contains_nul` before
+crossing into C-string or hosted filesystem APIs when the bytes are not known
+to be clean.
+
+Single-component helpers return `Option[Slice[u8]]` views into the original
+path bytes.
 `components(path)` returns a lazy iterator over non-empty borrowed components
 and skips leading, repeated, and trailing separators.
-`join_in` and `normalize_in` allocate byte strings in the caller-provided
-zone. Normalization collapses repeated separators and removes `.` components,
-but keeps `..` components because resolving them safely depends on stronger
+`join_in` and `normalize_in` are the string-returning compatibility helpers;
+the owned-path wrappers `join`, `join_many`, `PathBytes::join`,
+`PathBytes::normalize`, and the matching `PathBuf` methods return `PathBuf`.
+Normalization collapses repeated separators and removes `.` components, but
+keeps `..` components because resolving them safely depends on stronger
 filesystem and platform policy.
 `with_file_name_in` and `with_extension_in` are zone-backed lexical editing
 helpers for replacing the final component or final extension without touching
 the filesystem. `with_file_name_in` preserves root paths, while
 `with_extension_in` leaves paths without a final component unchanged.
-`PathBytes` is the typed borrowed path-byte view. Use it when a byte slice or
-`std::string::OsStr` should be treated as a path rather than as generic bytes
-or validated text. When `PathBytes` is expected, a string literal can be used
-directly as a borrowed path-byte view.
+`Path` is a readability alias for `PathBytes`. `PathBytes` is the typed
+borrowed path-byte view. `PathBuf` is the current owned POSIX path buffer; in
+this slice it aliases `std::string::String`, so its bytes live in the zone used
+to create it and remain valid until that zone is reset or destroyed. Use these
+types when a byte slice or `std::string::OsStr` should be treated as a path
+rather than as generic bytes or validated text. When `PathBytes` is expected,
+a string literal can be used directly as a borrowed path-byte view.
 The `has_*` helpers are allocation-free predicates over `file_name`,
 `extension`, `stem`, and `file_stem`; they return `false` when the
 corresponding view is absent. `file_stem` is an explicit alias for `stem`.
@@ -909,6 +955,9 @@ corresponding view is absent. `file_stem` is an explicit alias for `stem`.
 component-aware: trailing separators are ignored, and a match must end on a
 path component boundary. The strip helpers return borrowed views into the
 trimmed input path.
+`current_dir_join` uses `std::env::current_dir_path()` and returns
+`Result[PathBuf, Error]` because the current-directory lookup can fail; the
+join step itself remains lexical.
 
 Thread helpers live in `std::thread`:
 

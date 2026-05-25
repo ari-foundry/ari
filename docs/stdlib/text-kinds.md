@@ -9,7 +9,7 @@ together. Use this page when deciding which API a library should accept.
 | Owned byte string | `std::string::String` | Zone-backed mutable bytes with no UTF-8 promise. | Output buffers, parser buffers, byte-oriented file reads, formatting results. |
 | UTF-8 string view | `std::string::Utf8` | Borrowed bytes that have already passed UTF-8 validation. | Unicode scalar counting and byte-offset scalar lookup. |
 | OS string view | `std::string::OsStr` | Borrowed operating-system string bytes. On the current POSIX slice this is raw bytes and may not be UTF-8. | Environment/path boundary data before deciding whether it is text. |
-| Path bytes | `std::path::PathBytes` | Borrowed bytes interpreted as a lexical path. | Splitting, joining, normalizing, and component inspection. |
+| Path bytes | `std::path::PathBytes`, `std::path::PathBuf` | Borrowed or owned bytes interpreted as a lexical POSIX path. `PathBuf` is currently a zone-backed `std::string::String` alias. | Splitting, joining, normalizing, and component inspection. |
 
 ## Rules Of Thumb
 
@@ -24,6 +24,11 @@ together. Use this page when deciding which API a library should accept.
   `try_current_dir_path()` only when discarding the error detail is intended.
 - Keep path manipulation in `std::path`; path bytes are not normal text even
   when they happen to be UTF-8.
+- The current path policy is hosted Linux/POSIX-oriented: `/` is the separator,
+  paths are byte strings, and Windows drive/UNC rules are future work.
+- Lexical path helpers preserve interior NUL bytes. Reject them with
+  `std::path::contains_nul` before passing untrusted path bytes to C-string or
+  hosted filesystem APIs.
 - Use `std::string::c_str(text)` or `std::c::from_string(text)` to create the
   same borrowed `std::c::CStr` view. Use
   `std::c::from_slice_in(ref mut zone, bytes)` when owned NUL-terminated
@@ -39,10 +44,11 @@ together. Use this page when deciding which API a library should accept.
 ## Current Limits
 
 The first slice now includes `std::c::CString` for owned NUL-terminated byte
-storage, but fallible construction and direct arbitrary C-call handoff for
-zone-backed buffers still need explicit FFI escape policy. Owned `Utf8String`,
-`OsString`, and `PathBuf` values remain roadmap work after owned path buffers,
-fallible owned decoders, and OS-resource error policy are stronger.
+storage and `std::path::PathBuf` as an owned POSIX byte-buffer alias, but
+fallible construction and direct arbitrary C-call handoff for zone-backed
+buffers still need explicit FFI escape policy. Owned `Utf8String`, `OsString`,
+and a distinct platform-specific `PathBuf` representation remain roadmap work
+after owned decoders and OS-resource error policy are stronger.
 
 Windows OS-string and path semantics are also future work. Today `OsStr` and
 `PathBytes` use byte slices because the current runtime target is POSIX-style.

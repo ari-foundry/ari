@@ -2070,6 +2070,17 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-bytes.ari -o $(BUILD_DIR)/prelude/std-path-bytes.elf
 	$(BUILD_DIR)/prelude/std-path-bytes.elf; code=$$?; test $$code -eq 0
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/path/std-path-bytes.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-path-bytes.elf; $(BUILD_DIR)/prelude/std-path-bytes.elf; code=$$?; test $$code -eq 0; fi
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-buf.ari --emit-llvm $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path4join' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path9join_many' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path10from_bytes' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path11from_string' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path9to_string' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q '_ARNv3std4path16current_dir_join' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q 'std__string__String8inherent7as_path' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q 'std__string__String8inherent8as_bytes' $(BUILD_DIR)/prelude/std-path-buf.ll
+	$(TARGET) tests/cases/standard-library/ok/path/std-path-buf.ari -o $(BUILD_DIR)/prelude/std-path-buf.elf
+	$(BUILD_DIR)/prelude/std-path-buf.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits6is_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits7any_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
