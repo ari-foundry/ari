@@ -539,7 +539,7 @@ std::optional<std::string> append_auto_destroy_zone_cleanup(SourceLocation loc,
         [&](const std::string& name, LocalInfo& local) {
             if (!is_auto_destroy_zone(local) || !local_is_alive(local)) return;
             statements.push_back(make_zone_destroy_stmt(loc, name, local.type));
-            mark_local_zone_destroyed(local);
+            mark_local_zone_destroyed(local, loc);
         });
     return std::nullopt;
 }

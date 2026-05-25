@@ -5962,7 +5962,7 @@ private:
                 };
                 append_drop_stmts_for_value(loc, local.type, make_value, statements, &local);
                 mark_all_local_owned_fields(local, LocalState::Dropped);
-                mark_local_dropped(local);
+                mark_local_dropped(local, loc);
             });
     }
 
@@ -6071,6 +6071,20 @@ private:
         return "use '" + name + "' only while the binding is available";
     }
 
+    static std::string unavailable_binding_state_change_label(const std::string& name, LocalState state) {
+        switch (state) {
+            case LocalState::Moved:
+                return "binding '" + name + "' was moved here";
+            case LocalState::Dropped:
+                return "binding '" + name + "' was dropped here";
+            case LocalState::MaybeUnavailable:
+                return "binding '" + name + "' became maybe-unavailable here";
+            case LocalState::Alive:
+                break;
+        }
+        return "binding '" + name + "' became unavailable here";
+    }
+
     [[noreturn]] static void fail_unavailable_binding(SourceLocation loc,
                                                       const std::string& name,
                                                       const LocalInfo& local) {
@@ -6082,11 +6096,25 @@ private:
         Span use_span = span_from_location(loc);
         CompileError error(std::move(loc), *message);
         Span declaration_span = span_from_location(local.loc);
+        auto same_span = [](const Span& left, const Span& right) {
+            return left.source_id.value == right.source_id.value &&
+                   left.start == right.start &&
+                   left.end == right.end;
+        };
+        if (local.state_change_loc) {
+            Span state_span = span_from_location(*local.state_change_loc);
+            if (span_has_source(state_span) &&
+                span_has_valid_order(state_span) &&
+                !same_span(state_span, use_span)) {
+                error.add_label(DiagnosticLabel{
+                    state_span,
+                    unavailable_binding_state_change_label(name, local.state),
+                    false});
+            }
+        }
         if (span_has_source(declaration_span) &&
             span_has_valid_order(declaration_span) &&
-            !(declaration_span.source_id.value == use_span.source_id.value &&
-              declaration_span.start == use_span.start &&
-              declaration_span.end == use_span.end)) {
+            !same_span(declaration_span, use_span)) {
             error.add_label(DiagnosticLabel{
                 declaration_span,
                 "binding '" + name + "' was declared here",
@@ -9818,7 +9846,7 @@ private:
         };
         append_drop_stmts_for_value(item.loc, element_type, make_value, statements, &element_local);
         mark_all_local_owned_fields(element_local, LocalState::Dropped);
-        mark_local_dropped(element_local);
+        mark_local_dropped(element_local, item.loc);
     }
 
     void lower_runtime_sequence_match_pattern_bindings_from_local(const Pattern& pattern,
@@ -10007,10 +10035,10 @@ private:
                     fail_partially_moved_owner(loc, source.name, local, "move");
                 }
                 mark_all_local_owned_fields(local, LocalState::Moved);
-                mark_local_moved(local);
+                mark_local_moved(local, loc);
                 return;
             }
-            mark_local_moved(local);
+            mark_local_moved(local, loc);
             return;
         }
         mark_owned_field_moved(loc, source.name, source.path);
@@ -12033,7 +12061,7 @@ private:
             set_ir_stmt_statements(lowered, std::move(drop_statements));
         }
         mark_all_local_owned_fields(local, LocalState::Dropped);
-        mark_local_dropped(local);
+        mark_local_dropped(local, stmt.loc);
         set_ir_stmt_drop_name(lowered, drop_name);
     }
 
@@ -12058,7 +12086,7 @@ private:
         }
 
         mark_all_local_owned_fields(local, LocalState::Moved);
-        mark_local_moved(local);
+        mark_local_moved(local, stmt.loc);
         lowered.kind = IrStmtKind::ExprStmt;
         lowered.expr = make_void_noop_expr(stmt.loc);
     }
@@ -17427,7 +17455,7 @@ private:
         };
         append_drop_stmts_for_value(loc, local->type, make_value, statements, local);
         mark_all_local_owned_fields(*local, LocalState::Dropped);
-        mark_local_dropped(*local);
+        mark_local_dropped(*local, loc);
     }
 
     void append_loop_exit_owner_cleanup(SourceLocation loc,
@@ -19315,7 +19343,7 @@ private:
                     if (local_has_moved_or_dropped_owned_fields(local)) {
                         fail_partially_moved_owner(expr.loc, expr.name, local, "move");
                     }
-                    mark_local_moved(local);
+                    mark_local_moved(local, expr.loc);
                 }
                 return lowered;
             }

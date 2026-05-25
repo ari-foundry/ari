@@ -77,14 +77,27 @@ void set_local_integer_known_value(LocalInfo& local, std::uint64_t value, bool n
 
 void mark_local_alive(LocalInfo& local) {
     local.state = LocalState::Alive;
+    local.state_change_loc.reset();
 }
 
 void mark_local_moved(LocalInfo& local) {
     local.state = LocalState::Moved;
+    local.state_change_loc.reset();
+}
+
+void mark_local_moved(LocalInfo& local, SourceLocation loc) {
+    local.state = LocalState::Moved;
+    local.state_change_loc = std::move(loc);
 }
 
 void mark_local_dropped(LocalInfo& local) {
     local.state = LocalState::Dropped;
+    local.state_change_loc.reset();
+}
+
+void mark_local_dropped(LocalInfo& local, SourceLocation loc) {
+    local.state = LocalState::Dropped;
+    local.state_change_loc = std::move(loc);
 }
 
 void bump_local_zone_generation(LocalInfo& local) {
@@ -93,6 +106,11 @@ void bump_local_zone_generation(LocalInfo& local) {
 
 void mark_local_zone_destroyed(LocalInfo& local) {
     mark_local_moved(local);
+    bump_local_zone_generation(local);
+}
+
+void mark_local_zone_destroyed(LocalInfo& local, SourceLocation loc) {
+    mark_local_moved(local, std::move(loc));
     bump_local_zone_generation(local);
 }
 
@@ -629,6 +647,7 @@ StateSnapshot LocalScopeStack::snapshot_states() const {
         for (const auto& item : scope) {
             snapshot[item.first] = StateSnapshotEntry{
                 item.second.state,
+                item.second.state_change_loc,
                 item.second.zone_generation,
                 item.second.vector_length_known,
                 item.second.vector_known_length,
@@ -662,6 +681,7 @@ void LocalScopeStack::restore_states(const StateSnapshot& snapshot) {
         } else {
             LocalInfo& local = require_for_restore(item.first);
             local.state = item.second.state;
+            local.state_change_loc = item.second.state_change_loc;
             local.owned_field_states.clear();
             local.zone_generation = item.second.zone_generation;
             local.vector_length_known = item.second.vector_length_known;

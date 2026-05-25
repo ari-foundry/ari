@@ -64,10 +64,12 @@ struct LocalInfo {
     };
     std::vector<BorrowSource> aggregate_borrow_sources;
     SourceLocation loc;
+    std::optional<SourceLocation> state_change_loc;
 };
 
 struct StateSnapshotEntry {
     LocalState state = LocalState::Alive;
+    std::optional<SourceLocation> state_change_loc;
     std::uint64_t zone_generation = 0;
     bool vector_length_known = false;
     std::uint64_t vector_known_length = 0;
@@ -94,9 +96,12 @@ void clear_local_integer_known_value(LocalInfo& local);
 void set_local_integer_known_value(LocalInfo& local, std::uint64_t value, bool negative);
 void mark_local_alive(LocalInfo& local);
 void mark_local_moved(LocalInfo& local);
+void mark_local_moved(LocalInfo& local, SourceLocation loc);
 void mark_local_dropped(LocalInfo& local);
+void mark_local_dropped(LocalInfo& local, SourceLocation loc);
 void bump_local_zone_generation(LocalInfo& local);
 void mark_local_zone_destroyed(LocalInfo& local);
+void mark_local_zone_destroyed(LocalInfo& local, SourceLocation loc);
 std::string local_owned_field_path(const std::string& base, std::size_t index);
 bool local_owned_field_path_matches(const std::string& candidate, const std::string& selected);
 bool local_owned_field_is_live(const LocalInfo& local, const std::string& path);
