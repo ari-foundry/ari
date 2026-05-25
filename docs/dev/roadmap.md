@@ -57,6 +57,42 @@ fn save(x: has serialize() -> String) {
 This is only a roadmap idea. It must not add an `interface` keyword, dynamic
 dispatch by accident, or a shortcut around normal trait-bound diagnostics.
 
+Discriminant-linked variant fields are also worth exploring for protocol and
+binary-format records whose payload shape is controlled by data already present
+in the surrounding value or in an explicit context value. The intent is the
+same modeling niche as a tagged union inside a struct, but with the tag tied to
+a real field or context expression instead of inventing a second hidden enum
+tag:
+
+```ari
+struct TLSCiphertext {
+  content_type: ContentType,
+  version: ProtocolVersion,
+  length: u16,
+  security: SecurityParameters,
+  fragment: variant by security.cipher_type {
+    stream => GenericStreamCipher,
+    block => GenericBlockCipher,
+    aead => GenericAEADCipher,
+  },
+}
+```
+
+The tentative spelling is `variant by` for the discriminant link and `=>` arms
+for the alternatives. Avoid `select` and `case` as the surface names: Ari
+already uses `match` for executable branching, and this feature is a
+declaration-time data layout relationship rather than a statement switch.
+Other names such as `choice by` or `payload by` may be considered before
+implementation, but the core rule should stay explicit: the variant field's
+active payload type is determined by the named discriminant value.
+
+This is only a roadmap idea. It should not replace ordinary `enum` ADTs,
+unchecked C unions, or `match`. A future design must specify construction
+rules, exhaustive arm checking against enum-like discriminants, ownership/drop
+for the active arm only, borrowing/narrowing after matching the discriminant,
+layout/ABI behavior, and diagnostics when the selector is not a stable field or
+context path.
+
 ## What Not To Track Here
 
 - Ari compiler rewrite tasks
