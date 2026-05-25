@@ -1,4 +1,4 @@
-CompilerArtifactFixtures version=1 group=all entries=305
+CompilerArtifactFixtures version=1 group=all entries=311
   Fixture group=errors kind=source path=errors/diagnostic-ambiguous-module.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-ambiguous-module.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-assignment-while-borrowed.ari
@@ -149,10 +149,16 @@ CompilerArtifactFixtures version=1 group=all entries=305
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-malformed-struct-field.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-mismatched-token-tree.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-mismatched-token-tree.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-missing-angle-type-arg-close.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-angle-type-arg-close.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-missing-call-close.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-call-close.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-missing-function-body.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-function-body.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-missing-generic-close.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-generic-close.diagnostic
+  Fixture group=errors kind=source path=errors/diagnostic-parser-missing-type-arg-close.ari
+  Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-missing-type-arg-close.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-parser-top-level.ari
   Fixture group=errors kind=diagnostic path=errors/diagnostic-parser-top-level.diagnostic
   Fixture group=errors kind=source path=errors/diagnostic-private-access.ari

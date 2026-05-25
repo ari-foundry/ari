@@ -852,6 +852,7 @@ private:
     std::vector<GenericParam> parse_generics() {
         std::vector<GenericParam> generics;
         if (!match(TokenKind::LBracket)) return generics;
+        Token open = tokens_[pos_ - 1];
         if (!check(TokenKind::RBracket)) {
             do {
                 Token name = expect(TokenKind::Identifier, "expected generic parameter name");
@@ -865,7 +866,12 @@ private:
                 generics.push_back(std::move(param));
             } while (match(TokenKind::Comma));
         }
-        expect(TokenKind::RBracket, "expected ] after generic parameter list");
+        expect_closing_delimiter_with_open(
+            TokenKind::RBracket,
+            open.loc,
+            "expected ] after generic parameter list",
+            "generic parameter list starts here",
+            "]");
         return generics;
     }
 
@@ -921,19 +927,29 @@ private:
             type.loc = qualifier == TypeQualifier::Value ? dyn.loc : loc;
             type.is_dyn_object = true;
             if (match(TokenKind::LBracket)) {
+                Token open = tokens_[pos_ - 1];
                 if (!check(TokenKind::RBracket)) {
                     do {
                         type.args.push_back(parse_type());
                     } while (match(TokenKind::Comma));
                 }
-                expect(TokenKind::RBracket, "expected ] after dyn trait type arguments");
+                expect_closing_delimiter_with_open(
+                    TokenKind::RBracket,
+                    open.loc,
+                    "expected ] after dyn trait type arguments",
+                    "dyn trait type argument list starts here",
+                    "]");
             } else if (match(TokenKind::Less)) {
+                Token open = tokens_[pos_ - 1];
                 if (!check_type_argument_close()) {
                     do {
                         type.args.push_back(parse_type());
                     } while (match(TokenKind::Comma));
                 }
-                expect_type_argument_close("expected > after dyn trait type arguments");
+                expect_type_argument_close_with_open(
+                    open.loc,
+                    "expected > after dyn trait type arguments",
+                    "dyn trait type argument list starts here");
             }
             return finish_type(std::move(type));
         }
@@ -976,6 +992,7 @@ private:
             type.is_macro_invocation = true;
             type.macro_tokens = parse_macro_token_tree(bang.loc);
         } else if (match(TokenKind::LBracket)) {
+            Token open = tokens_[pos_ - 1];
             if (type.name == "Vec" || type.name == "prelude::Vec") {
                 parse_vec_type_args(type);
             } else if (!check(TokenKind::RBracket)) {
@@ -983,7 +1000,12 @@ private:
                     type.args.push_back(parse_type());
                 } while (match(TokenKind::Comma));
             }
-            expect(TokenKind::RBracket, "expected ] after type arguments");
+            expect_closing_delimiter_with_open(
+                TokenKind::RBracket,
+                open.loc,
+                "expected ] after type arguments",
+                "type argument list starts here",
+                "]");
             if (match(TokenKind::ColonColon)) {
                 Token projection =
                     expect_identifier_or_contextual_name_keyword("expected associated type name after ::");
@@ -991,6 +1013,7 @@ private:
                 type.associated_projection = projection.text;
             }
         } else if (match(TokenKind::Less)) {
+            Token open = tokens_[pos_ - 1];
             if (type.name == "Vec" || type.name == "prelude::Vec") {
                 parse_vec_type_args(type);
             } else if (!check_type_argument_close()) {
@@ -998,7 +1021,10 @@ private:
                     type.args.push_back(parse_type());
                 } while (match(TokenKind::Comma));
             }
-            expect_type_argument_close("expected > after type arguments");
+            expect_type_argument_close_with_open(
+                open.loc,
+                "expected > after type arguments",
+                "type argument list starts here");
             if (match(TokenKind::ColonColon)) {
                 Token projection =
                     expect_identifier_or_contextual_name_keyword("expected associated type name after ::");
@@ -1041,6 +1067,22 @@ private:
 
     void expect_type_argument_close(const std::string& message) {
         if (!match_type_argument_close()) fail(peek().loc, message);
+    }
+
+    void expect_closing_delimiter_with_open(TokenKind kind,
+                                            SourceLocation open_loc,
+                                            const std::string& message,
+                                            const std::string& open_label,
+                                            const std::string& closing_delimiter) {
+        if (match(kind)) return;
+        fail_expected_closing_delimiter(peek().loc, open_loc, message, open_label, closing_delimiter);
+    }
+
+    void expect_type_argument_close_with_open(SourceLocation open_loc,
+                                              const std::string& message,
+                                              const std::string& open_label) {
+        if (match_type_argument_close()) return;
+        fail_expected_closing_delimiter(peek().loc, open_loc, message, open_label, ">");
     }
 
     TypeRef finish_type(TypeRef type) {

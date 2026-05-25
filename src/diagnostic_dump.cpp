@@ -301,6 +301,11 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "drop")) {
         return "O0001";
     }
+    if (contains(diagnostic, "expected") ||
+        contains(diagnostic, "unexpected token") ||
+        contains(diagnostic, "unterminated")) {
+        return "P0001";
+    }
     if (contains(diagnostic, "unknown type") ||
         contains(diagnostic, "unknown name") ||
         contains(diagnostic, "unknown trait") ||
@@ -359,11 +364,6 @@ std::string classify_diagnostic_code(const std::string& message) {
         contains(diagnostic, "no matching") ||
         contains(diagnostic, "ambiguous")) {
         return "T0001";
-    }
-    if (contains(diagnostic, "expected") ||
-        contains(diagnostic, "unexpected token") ||
-        contains(diagnostic, "unterminated")) {
-        return "P0001";
     }
     if (contains(diagnostic, "IR") || contains(diagnostic, "lowering")) return "I0001";
     if (contains(diagnostic, "extern C") ||

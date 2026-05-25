@@ -1,0 +1,8 @@
+diagnostic error code=P0001 family=parser message="expected ] after generic parameter list" sources=1 labels=2 notes=1 helps=1
+  Source source_id=0 kind=file path="tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-generic-close.ari" display="tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-generic-close.ari" bytes=49
+  Label index=0 role=primary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-generic-close.ari" line=1 column=14 end_line=1 end_column=15 byte_start=13 byte_end=14 message=""
+  Snippet label=0 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-generic-close.ari:1:14\n   |\n 1 | fn identity[T(value: T) -> T {\n   |              ^"
+  Label index=1 role=secondary source_id=0 source="tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-generic-close.ari" line=1 column=12 end_line=1 end_column=13 byte_start=11 byte_end=12 message="generic parameter list starts here"
+  Snippet label=1 text="  --> tests/cases/compiler-development/artifact/errors/diagnostic-parser-missing-generic-close.ari:1:12\n   |\n 1 | fn identity[T(value: T) -> T {\n   |            ^"
+  Note index=0 location=none message="delimited constructs must close before the surrounding statement or declaration continues"
+  Help index=0 location=none message="add a matching ] before continuing"
