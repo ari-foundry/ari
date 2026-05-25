@@ -159,6 +159,14 @@ void add_generic_param_names(std::set<std::string>& names,
     for (const auto& generic : generics) names.insert(generic.name);
 }
 
+void add_secondary_label_if_valid(CompileError& error,
+                                  SourceLocation loc,
+                                  const std::string& message) {
+    Span span = span_from_location(loc);
+    if (!span_has_source(span) || !span_has_valid_order(span)) return;
+    error.add_label(DiagnosticLabel{span, message, false});
+}
+
 std::string impl_origin_method_key(const std::string& trait_key,
                                    const std::string& method_name) {
     return trait_key + "::" + method_name;
@@ -280,6 +288,7 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
 }
 
 [[noreturn]] void fail_duplicate_module_source_identity(SourceLocation loc,
+                                                        SourceLocation previous_loc,
                                                         const std::string& source_path,
                                                         const std::string& loaded_name,
                                                         const std::string& requested_name) {
@@ -287,6 +296,10 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
                        "module file '" + source_path +
                            "' was already loaded as '" + loaded_name +
                            "', not '" + requested_name + "'");
+    add_secondary_label_if_valid(
+        error,
+        previous_loc,
+        "previous import loaded this source file as '" + loaded_name + "'");
     error.add_note(DiagnosticNote{
         std::nullopt,
         "a single source file has one module identity during a compile",
@@ -804,6 +817,7 @@ public:
         Program program = std::move(root.program);
         collect_source(input, root, {}, program, true);
         loaded_source_modules_.emplace(input, "<root>");
+        loaded_source_module_locs_.emplace(input, SourceLocation{});
         if (options_.implicit_std) load_standard_module(program);
         resolve_imports(program, dirname(input));
         ModuleCache cache;
@@ -826,6 +840,7 @@ private:
     std::vector<ModuleCacheIrFunctionSummary> cached_ir_functions_;
     std::map<std::string, std::string> loaded_modules_;
     std::map<std::string, std::string> loaded_source_modules_;
+    std::map<std::string, SourceLocation> loaded_source_module_locs_;
     std::set<std::string> loading_modules_;
     std::set<std::string> loading_source_paths_;
 
@@ -876,6 +891,7 @@ private:
         move_append(cached_ir_functions_, standard_file.cached_ir_functions);
         loaded_modules_.emplace(name, *path);
         loaded_source_modules_.emplace(*path, name);
+        loaded_source_module_locs_.emplace(*path, decl.loc);
         resolve_imports(standard, dirname(*path));
         append_program(program, std::move(standard));
     }
@@ -909,8 +925,12 @@ private:
             auto loaded_source = loaded_source_modules_.find(source_path);
             if (loaded_source != loaded_source_modules_.end() &&
                 loaded_source->second != import.name) {
+                auto loaded_source_loc = loaded_source_module_locs_.find(source_path);
                 fail_duplicate_module_source_identity(
                     import.loc,
+                    loaded_source_loc == loaded_source_module_locs_.end()
+                        ? SourceLocation{}
+                        : loaded_source_loc->second,
                     source_path,
                     loaded_source->second,
                     import.name);
@@ -935,6 +955,7 @@ private:
             loading_modules_.erase(import.name);
             loaded_modules_.emplace(import.name, source_path);
             loaded_source_modules_.emplace(source_path, import.name);
+            loaded_source_module_locs_.emplace(source_path, import.loc);
             append_program(program, std::move(child));
         }
     }
