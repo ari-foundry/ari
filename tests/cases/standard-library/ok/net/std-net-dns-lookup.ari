@@ -50,6 +50,25 @@ fn main() -> i64 {
     score = score + 32;
   }
 
+  let loopback6 = net::lookup_v6_optional("::1", 8086 as u16);
+  assert(loopback6.is_some());
+  let addr6 = loopback6.unwrap();
+  if addr6.is_loopback() && addr6.port() == 8086 as u16 && addr6.ip().is_v6() {
+    score = score + 32768;
+  }
+
+  assert(net::try_lookup_v6("::1", 80 as u16).is_some());
+  match net::lookup_v6_raw_result("::1", 8087 as u16) {
+    Ok(raw_addr6) => {
+      if raw_addr6.port() == 8087 as u16 && raw_addr6.is_loopback() && raw_addr6.ip().is_v6() {
+        score = score + 65536;
+      }
+    }
+    Err(_raw6) => {
+      panic();
+    }
+  }
+
   let any = net::lookup_v4_optional("0.0.0.0", 0 as u16);
   if any.is_some() && any.unwrap().is_unspecified() {
     score = score + 64;
@@ -99,6 +118,28 @@ fn main() -> i64 {
     Err(_module_reason) => {}
   }
 
+  match net::resolve("[::1]:8088") {
+    Ok(resolved_v6) => {
+      if resolved_v6.is_loopback() && resolved_v6.port() == 8088 as u16 && resolved_v6.ip().is_v6() {
+        score = score + 131072;
+      }
+    }
+    Err(_v6_endpoint_reason) => {
+      panic();
+    }
+  }
+
+  match net::to_socket_addrs("[::1]:8089") {
+    Ok(module_v6) => {
+      if module_v6.is_loopback() && module_v6.port() == 8089 as u16 && module_v6.ip().is_v6() {
+        score = score + 262144;
+      }
+    }
+    Err(_module_v6_reason) => {
+      panic();
+    }
+  }
+
   match net::connect_host("127.0.0.1") {
     Ok(_unexpected_stream) => {
       panic();
@@ -132,6 +173,6 @@ fn main() -> i64 {
     }
   }
 
-  assert_eq_i64(score, 32767);
+  assert_eq_i64(score, 524287);
   return score;
 }

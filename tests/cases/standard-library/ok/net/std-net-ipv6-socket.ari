@@ -1,0 +1,85 @@
+// Covers hosted IPv6 DNS, bracketed endpoint parsing, TCP loopback, UDP
+// loopback, and v6-specific local/peer address helpers. Hosts without IPv6
+// sockets may report Unsupported/PermissionDenied/Other; the lookup-only
+// checks still exercise the deterministic getaddrinfo path.
+fn allowed_socket_error(value: error::Error) -> bool {
+  return value.is_kind(error::PermissionDenied) ||
+    value.is_kind(error::Unsupported) ||
+    value.is_kind(error::Other);
+}
+
+fn main() -> i64 {
+  var score = 255;
+
+  let looked_up = net::lookup_v6("::1", 8080 as u16).unwrap();
+  assert(looked_up.ip().is_v6());
+  assert(looked_up.is_loopback());
+  assert(looked_up.port() == 8080 as u16);
+  score = score + 256;
+
+  let endpoint = net::resolve("[::1]:8081").unwrap();
+  assert(endpoint.ip().is_v6());
+  assert(endpoint.is_loopback());
+  assert(endpoint.port() == 8081 as u16);
+  assert(net::resolve_optional("[::1]:8082").is_some());
+  assert(net::try_resolve("[::1]:8083").is_some());
+  score = score + 512;
+
+  let bind_addr = net::socket_addr(net::Ipv6Addr::localhost().as_ip(), 0 as u16);
+  let maybe_listener = net::tcp_listen_v6(bind_addr);
+  if maybe_listener.is_err() {
+    assert(allowed_socket_error(maybe_listener.unwrap_err()));
+    return score;
+  }
+
+  var listener = maybe_listener.unwrap();
+  assert(listener.is_open());
+  let listener_addr = listener.local_addr().unwrap();
+  let listener_v6 = listener.local_addr_v6().unwrap();
+  assert(listener_addr.ip().is_v6());
+  assert(listener_v6.ip().is_v6());
+  assert(listener_addr.port() == listener_v6.port());
+  let port = listener_v6.port();
+  assert(port > 0 as u16);
+  score = score + 1024;
+
+  let connect_addr = net::socket_addr(net::Ipv6Addr::localhost().as_ip(), port);
+  var client = net::tcp_connect_v6(connect_addr).unwrap();
+  assert(client.local_addr().unwrap().ip().is_v6());
+  assert(client.local_addr_v6().unwrap().ip().is_v6());
+  assert(client.peer_addr().unwrap().ip().is_v6());
+  assert(client.peer_addr_v6().unwrap().port() == port);
+  score = score + 2048;
+
+  var server = listener.accept().unwrap();
+  assert(server.local_addr().unwrap().ip().is_v6());
+  assert(server.peer_addr().unwrap().ip().is_v6());
+  if client.write_byte(81u8) && server.try_read_byte().unwrap_or(0u8) == 81u8 {
+    score = score + 4096;
+  }
+
+  assert(server.close().is_ok());
+  assert(client.close().is_ok());
+  assert(listener.close().is_ok());
+  score = score + 8192;
+
+  let maybe_udp_server = net::udp_bind_v6(bind_addr);
+  if maybe_udp_server.is_err() {
+    assert(allowed_socket_error(maybe_udp_server.unwrap_err()));
+    return score;
+  }
+
+  var udp_server = maybe_udp_server.unwrap();
+  let udp_port = udp_server.local_addr_v6().unwrap().port();
+  var udp_client = net::UdpSocket::bind(bind_addr).unwrap();
+  let udp_target = net::socket_addr(net::Ipv6Addr::localhost().as_ip(), udp_port);
+  assert(udp_client.send_byte_to(82u8, udp_target).is_ok());
+  assert(udp_server.recv_byte().unwrap_or(0u8) == 82u8);
+  assert(udp_client.local_addr().unwrap().ip().is_v6());
+  assert(udp_server.local_addr().unwrap().ip().is_v6());
+  assert(udp_client.close().is_ok());
+  assert(udp_server.close().is_ok());
+  score = score + 16384;
+
+  return score;
+}

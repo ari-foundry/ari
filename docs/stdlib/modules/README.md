@@ -119,7 +119,8 @@ For a task-oriented path through the examples, see
   direct literal coercion, borrowed components, join, and lightweight
   normalization.
 - [std::net](net.md): IPv4, IPv6, generic IP, socket-address values, hosted
-  IPv4 DNS lookup, host-port endpoint resolution, TCP listener/stream handles, UDP single-byte datagrams,
+  IPv4/IPv6 DNS lookup, host-port and bracketed IPv6 endpoint resolution,
+  IPv4/IPv6 TCP listener/stream handles, IPv4/IPv6 UDP single-byte datagrams,
   direct `Error` results with raw compatibility variants, TCP/UDP local-address
   helpers, TCP peer-address helpers, Unix stream sockets, TCP/Unix stream buffer helpers,
   nonblocking/timeout/shutdown helpers, and networking runtime roadmap.

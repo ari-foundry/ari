@@ -133,7 +133,8 @@ match error::try_from_errno(code_from_c) {
 preserves the platform code when one exists. `from_errno` maps common
 POSIX/Linux `errno` values such as `ENOENT`, `EACCES`, `EEXIST`, `EINVAL`,
 `EINTR`, `EAGAIN`, `ETIMEDOUT`, `EPIPE`, `ENOMEM`, `EBUSY`, `ENOTDIR`,
-`EISDIR`, `ENOTEMPTY`, `ENOSPC`, `EXDEV`, and `ECONNREFUSED`.
+`EISDIR`, `ENOTEMPTY`, `ENOSPC`, `EXDEV`, `ECONNREFUSED`, `ENOSYS`,
+`ENOTSUP`, and `EAFNOSUPPORT`.
 
 Use `is_retryable` when an operation may be worth trying again. It currently
 returns true for `Interrupted`, `WouldBlock`, `TimedOut`, and `InProgress`.

@@ -1401,7 +1401,7 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__TcpStream8inherent11set_nodelay" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -F -q "std__net__TcpStream8inherent9write_all" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-tcp-loopback.ari -o $(BUILD_DIR)/prelude/std-net-tcp-loopback.elf
-	$(BUILD_DIR)/prelude/std-net-tcp-loopback.elf; code=$$?; test $$code -eq 255
+	$(BUILD_DIR)/prelude/std-net-tcp-loopback.elf; code=$$?; test $$code -eq 254
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-udp-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -q "@ari_builtin_net_udp_bind_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -q "@ari_builtin_net_local_addr_v4" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
@@ -1418,7 +1418,23 @@ check-prelude: $(TARGET)
 	grep -F -q "std__net__UdpSocket8inherent10reuse_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	grep -F -q "std__net__UdpSocket8inherent14set_reuse_addr" $(BUILD_DIR)/prelude/std-net-udp-socket.ll
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-udp-socket.ari -o $(BUILD_DIR)/prelude/std-net-udp-socket.elf
-	$(BUILD_DIR)/prelude/std-net-udp-socket.elf; code=$$?; test $$code -eq 255
+	$(BUILD_DIR)/prelude/std-net-udp-socket.elf; code=$$?; test $$code -eq 254
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-ipv6-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_tcp_listen_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_tcp_connect_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_udp_bind_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_udp_send_byte_to_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_local_addr_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_peer_addr_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_lookup_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -q "@ari_builtin_net_lookup_v6_endpoint" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -F -q "std3net13tcp_listen_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -F -q "std3net14tcp_connect_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -F -q "std3net11udp_bind_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -F -q "std__net__TcpStream8inherent12peer_addr_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	grep -F -q "std__net__UdpSocket8inherent13local_addr_v6" $(BUILD_DIR)/prelude/std-net-ipv6-socket.ll
+	$(TARGET) tests/cases/standard-library/ok/net/std-net-ipv6-socket.ari -o $(BUILD_DIR)/prelude/std-net-ipv6-socket.elf
+	$(BUILD_DIR)/prelude/std-net-ipv6-socket.elf; code=$$?; test $$code -eq 255
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-unix-socket.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_listen" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
 	grep -q "@ari_builtin_net_unix_connect" $(BUILD_DIR)/prelude/std-net-unix-socket.ll
@@ -1439,11 +1455,17 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/net/std-net-dns-lookup.ari --emit-llvm $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -q "@ari_builtin_net_lookup_v4" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -q "@ari_builtin_net_lookup_v4_endpoint" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -q "@ari_builtin_net_lookup_v6" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -q "@ari_builtin_net_lookup_v6_endpoint" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -q "@getaddrinfo" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net9lookup_v4" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net9lookup_v6" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net18lookup_v4_optional" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net18lookup_v6_optional" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net13try_lookup_v4" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net13try_lookup_v6" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net20lookup_v4_raw_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
+	grep -F -q "std3net20lookup_v6_raw_result" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net7resolve" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net16resolve_optional" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll
 	grep -F -q "std3net11try_resolve" $(BUILD_DIR)/prelude/std-net-dns-lookup.ll

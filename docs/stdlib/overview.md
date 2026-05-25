@@ -53,7 +53,7 @@ API evolution.
 | `std::time` | Monotonic time, wall-clock time, sleep, deadlines, and UTC calendar values. | `Duration`, `Instant`, `SystemTime`, `Deadline`, `UtcDateTime`, strict and fallible duration constructors, strict and fallible Unix timestamp constructors, strict and fallible calendar helpers, `now`, `system_now`, `elapsed`, `sleep`, `timeout`, `timeout_after`, `deadline_at`. |
 | `std::fs` | Byte-oriented filesystem handles. | `File`, `Dir`, `DirEntry`, `FileKind`, `Metadata`, `Permissions`, `exists`, `can_read`, `can_write`, `can_execute`, `permissions`, `metadata`, `try_metadata`, `symlink_metadata`, `try_symlink_metadata`, `try_file_type`, `is_file`, `is_dir`, `is_symlink`, `is_other`, `mode`, `try_mode`, `set_mode`, `set_permissions`, `canonicalize`, `try_canonicalize`, `remove`, `rename`, `hard_link`, `symbolic_link`, `read_link`, `try_read_link`, `ensure_file`, `create_dir`, `ensure_dir`, `create_dir_all`, `ensure_dir_all`, `remove_dir`, `remove_dir_all`, `try_read_dir`, `read_dir`, `try_read_dir_entries`, `read_dir_entries`, `try_open_dir`, `Dir::next`, `Dir::close`, `DirEntry::metadata`, `DirEntry::try_metadata`, `DirEntry::symlink_metadata`, `DirEntry::try_symlink_metadata`, `DirEntry::try_file_type`, `DirEntry::is_file`, `DirEntry::is_dir`, `DirEntry::is_symlink`, `DirEntry::is_other`, `open`, `try_open`, `create`, `try_create`, compatibility `open_read`/`open_write`/`open_append`, `read_byte`, `try_read_byte`, `write_byte`, `write_bytes`, `position`, `seek`, whole-file `read`, `try_read`, `write`, `try_write`, `append`, `try_append`, `truncate`, `copy`, `try_copy`, `read_to_string`, `try_read_to_string`, `close`. |
 | `std::path` | Source lexical path manipulation. | `Path`/`PathBytes`, owned POSIX `PathBuf` alias, `bytes`, `from_os`, `from_bytes`, `from_string`, `to_string`, `is_empty`, `contains_nul`, `as_bytes`, method-style path-byte and owned-path helpers, `is_separator`, `is_absolute`, `is_relative`, `trim_trailing_separators`, `components`, `file_name`, `parent`, `extension`, `stem`, `file_stem`, `has_file_name`, `has_extension`, `has_stem`, `has_file_stem`, `starts_with`, `strip_prefix`, `ends_with`, `strip_suffix`, `with_file_name_in`, `with_extension_in`, `join_in`, `join`, `join_many`, `current_dir_join`, `normalize_in`. |
-| `std::net` | Network address values, DNS lookup, and explicit socket handles. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, `UnixStream`, `Shutdown`, `ToSocketAddrs`, address constructors/accessors, family/loopback/unspecified predicates, IPv4 DNS lookup plus `"host:port"` endpoint resolution with direct `Error` and raw compatibility results, host-port TCP connect helpers, IPv4 TCP bind/connect/accept/local-port/local-address/peer-address helpers, IPv4 UDP bind/local-address/send-byte/receive-byte helpers, Unix stream bind/connect/accept helpers, direct `Error` and raw compatibility socket construction/accept/connect results, descriptor views, nonblocking flags, TCP listener/UDP reuse-address helpers, TCP nodelay helpers, `std::time::Duration` timeouts with raw millisecond compatibility helpers, stream shutdown, explicit close, TCP/Unix `std::io` byte adapters, and TCP/Unix `read_exact`/`write_all` stream buffer helpers. |
+| `std::net` | Network address values, DNS lookup, and explicit socket handles. | `Ipv4Addr`, `Ipv6Addr`, `IpAddr`, `SocketAddr`, `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, `UnixStream`, `Shutdown`, `ToSocketAddrs`, address constructors/accessors, family/loopback/unspecified predicates, IPv4/IPv6 DNS lookup plus `"host:port"` and `"[host]:port"` endpoint resolution with direct `Error` and raw compatibility results, host-port TCP connect helpers, IPv4/IPv6 TCP bind/connect/accept/local-port/local-address/peer-address helpers, IPv4/IPv6 UDP bind/local-address/send-byte/receive-byte helpers, Unix stream bind/connect/accept helpers, direct `Error` and raw compatibility socket construction/accept/connect results, descriptor views, nonblocking flags, TCP listener/UDP reuse-address helpers, TCP nodelay helpers, `std::time::Duration` timeouts with raw millisecond compatibility helpers, stream shutdown, explicit close, TCP/Unix `std::io` byte adapters, and TCP/Unix `read_exact`/`write_all` stream buffer helpers. |
 | `std::mem` | Layout, raw pointer, byte memory, and hosted page-size operations. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `copy_bytes`, `move_bytes`, `set_bytes`, `page_size`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `allocation_zone`, `metadata`, `from_zone`, `ZoneMetadata`, metadata handle allocation, `ZoneBacked`, `of`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `try_get`, `set`, `take`, `try_take`, `copy_to`. |
@@ -251,16 +251,16 @@ memory mapping still wait for duplicate-with-flags policy and richer error
 results.
 
 `std::net` builds on that owned-descriptor work. Address values and socket
-address helpers stay source Ari, while hosted runtime hooks provide IPv4 TCP,
-IPv4 UDP, Unix stream sockets, one-address IPv4 lookup, host-port endpoint
-resolution, direct `Error` result
+address helpers stay source Ari, while hosted runtime hooks provide IPv4/IPv6
+TCP, IPv4/IPv6 UDP, Unix stream sockets, one-address IPv4/IPv6 lookup,
+host-port and bracketed IPv6 endpoint resolution, direct `Error` result
 helpers with raw compatibility variants, millisecond socket timeouts, and stream shutdown. TCP and Unix streams implement the shared
 `std::io::Reader`/`Writer` traits so higher-level byte helpers do not need
-socket-specific overloads, and TCP/UDP handles can report their local IPv4
-socket address. TCP listeners and UDP sockets expose reuse-address policy, and
-TCP streams can report the connected peer IPv4 address and nodelay policy.
-The current network layer still keeps IPv6 socket handles,
-buffer-oriented datagrams, UDP source address queries, remaining socket options, and
+socket-specific overloads, and TCP/UDP handles can report their local socket
+address. TCP listeners and UDP sockets expose reuse-address policy, and TCP
+streams can report the connected peer address and nodelay policy. The current
+network layer still keeps buffer-oriented datagrams, UDP source address
+queries, remaining socket options, and
 timeout-specific error results on the roadmap.
 
 `std::env` wraps the context hooks with the names application code should use
@@ -373,14 +373,14 @@ filesystem boundaries.
 `std::net` starts with deterministic value types: IPv4, IPv6, generic IP, and
 socket addresses. Address components support strict access for known-good
 indexes and fallible access for parsed indexes. The hosted socket layer now
-adds one-address IPv4 lookup, IPv4 `TcpListener`/`TcpStream` handles, IPv4
-`UdpSocket` single-byte datagrams, Unix stream sockets, ephemeral local-port
+adds one-address IPv4/IPv6 lookup, IPv4/IPv6 `TcpListener`/`TcpStream`
+handles, IPv4/IPv6 `UdpSocket` single-byte datagrams, Unix stream sockets, ephemeral local-port
 and local-address lookup where it applies, descriptor views, nonblocking
 flags, `std::time::Duration` timeout setters with raw millisecond
 compatibility helpers, stream shutdown, explicit close, and TCP/Unix
 `std::io::Reader`/`Writer` byte adapters plus method-style
-`read_exact`/`write_all` stream buffer helpers. IPv6 socket handles,
-buffer-oriented UDP datagrams, broad options, UDP source address helpers, and
+`read_exact`/`write_all` stream buffer helpers. Buffer-oriented UDP datagrams,
+broad options, UDP source address helpers, and
 timeout-specific error results remain roadmap work.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a

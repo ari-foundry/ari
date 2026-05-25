@@ -321,6 +321,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     const AriBuiltinTypeExpectation ref_atomic_i64 = builtin_type("ref std::sync::AtomicI64");
     const AriBuiltinTypeExpectation ref_mut_atomic_i64 = builtin_type("ref mut std::sync::AtomicI64");
     const AriBuiltinTypeExpectation ptr_u8 = builtin_type("ptr u8");
+    const AriBuiltinTypeExpectation ptr_u16 = builtin_type("ptr u16");
     const AriBuiltinTypeExpectation ptr_c_void = builtin_type("ptr c_void", {"ptr void"});
     const AriBuiltinTypeExpectation own_zone = builtin_type("own Zone");
     const AriBuiltinTypeExpectation ref_mut_zone = builtin_type("ref mut Zone");
@@ -395,13 +396,23 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_os_write_byte") return builtin_sig({i64, u8}, boolean);
     if (symbol == "ari_builtin_net_tcp_listen_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
     if (symbol == "ari_builtin_net_tcp_connect_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
+    if (symbol == "ari_builtin_net_tcp_listen_v6") return builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64);
+    if (symbol == "ari_builtin_net_tcp_connect_v6") return builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64);
     if (symbol == "ari_builtin_net_tcp_accept") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_local_port") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_local_addr_family") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_peer_addr_family") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_local_addr_v4") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_peer_addr_v4") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_net_local_addr_v6") return builtin_sig({i64, ptr_u16}, i64);
+    if (symbol == "ari_builtin_net_peer_addr_v6") return builtin_sig({i64, ptr_u16}, i64);
     if (symbol == "ari_builtin_net_udp_bind_v4") return builtin_sig({i64, i64, i64, i64, i64}, i64);
+    if (symbol == "ari_builtin_net_udp_bind_v6") return builtin_sig({i64, i64, i64, i64, i64, i64, i64, i64, i64}, i64);
     if (symbol == "ari_builtin_net_udp_send_byte_to_v4") {
         return builtin_sig({i64, u8, i64, i64, i64, i64, i64}, boolean);
+    }
+    if (symbol == "ari_builtin_net_udp_send_byte_to_v6") {
+        return builtin_sig({i64, u8, i64, i64, i64, i64, i64, i64, i64, i64, i64}, boolean);
     }
     if (symbol == "ari_builtin_net_udp_recv_byte") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_net_set_read_timeout_millis") return builtin_sig({i64, i64}, boolean);
@@ -415,6 +426,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_net_unix_connect") return builtin_sig({source_string}, i64);
     if (symbol == "ari_builtin_net_lookup_v4") return builtin_sig({source_string, i64}, i64);
     if (symbol == "ari_builtin_net_lookup_v4_endpoint") return builtin_sig({source_string}, i64);
+    if (symbol == "ari_builtin_net_lookup_v6") return builtin_sig({source_string, i64, ptr_u16}, i64);
+    if (symbol == "ari_builtin_net_lookup_v6_endpoint") return builtin_sig({source_string, ptr_u16}, i64);
     if (symbol == "ari_builtin_fs_exists") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_read") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_fs_can_write") return builtin_sig({source_string}, boolean);

@@ -179,7 +179,7 @@ pub fn from_errno(code: i64) -> std::error::Error {
   if code == 32 {
     return std::error::with_code(BrokenPipe, code);
   }
-  if code == 38 || code == 95 {
+  if code == 38 || code == 95 || code == 97 {
     return std::error::with_code(Unsupported, code);
   }
   if code == 12 {

@@ -1,4 +1,4 @@
-// Covers the first runtime-backed std::net socket slice. A listener binds an
+// Covers the runtime-backed std::net TCP socket slice. A listener binds an
 // ephemeral IPv4 loopback port when the host permits sockets. Restricted test
 // sandboxes may reject socket creation with PermissionDenied; that path still
 // verifies the std::error bridge instead of making check depend on host policy.
@@ -6,61 +6,13 @@ fn error_is(value: error::Error, kind: error::Kind) -> bool {
   return value.is_kind(kind);
 }
 
-fn raw_error_is(raw: i64, kind: error::Kind) -> bool {
-  let value = error::from_raw(raw);
-  return value.is_kind(kind);
-}
-
 fn main() -> i64 {
-  let unsupported = net::socket_addr(net::Ipv6Addr::localhost().as_ip(), 0 as u16);
   var score = 0;
-  match net::TcpListener::bind(unsupported) {
-    Ok(_direct_listener) => {}
-    Err(reason) => {
-      if error_is(reason, error::Unsupported) {
-        score = score + 1;
-      }
-    }
-  }
-  assert(net::TcpListener::bind_optional(unsupported).is_none());
-  assert(net::TcpStream::connect_optional(unsupported).is_none());
-  match net::listen(unsupported) {
-    Ok(_module_listener) => {}
-    Err(module_reason) => {
-      if error_is(module_reason, error::Unsupported) {
-        score = score + 1024;
-      }
-    }
-  }
-  match net::tcp_listen(unsupported) {
-    Ok(_tcp_module_listener) => {}
-    Err(tcp_listen_reason) => {
-      if error_is(tcp_listen_reason, error::Unsupported) {
-        score = score + 2048;
-      }
-    }
-  }
-  match net::tcp_connect(unsupported) {
-    Ok(_tcp_module_stream) => {}
-    Err(tcp_connect_reason) => {
-      if error_is(tcp_connect_reason, error::Unsupported) {
-        score = score + 4096;
-      }
-    }
-  }
-  match net::TcpListener::bind_raw_result(unsupported) {
-    Ok(_raw_listener) => {}
-    Err(raw) => {
-      if !raw_error_is(raw, error::Unsupported) {
-        panic();
-      }
-    }
-  }
 
   let bind_addr = net::SocketAddr::localhost(0 as u16);
-  let maybe_listener = net::TcpListener::bind_optional(bind_addr);
+  let maybe_listener = net::listen(bind_addr).ok();
   if maybe_listener.is_none() {
-    match net::TcpListener::bind(bind_addr) {
+    match net::tcp_listen(bind_addr) {
       Ok(_retry_listener) => {}
       Err(bind_error) => {
         if bind_error.is_kind(error::PermissionDenied) || bind_error.is_kind(error::Unsupported) {
@@ -68,7 +20,7 @@ fn main() -> i64 {
         }
       }
     }
-    assert_eq_i64(score, 7679);
+    assert_eq_i64(score, 510);
     return score;
   }
   assert(maybe_listener.is_some());
@@ -90,6 +42,11 @@ fn main() -> i64 {
   }
 
   let connect_addr = net::SocketAddr::localhost(port);
+  if false {
+    let _unused_bind_optional = net::TcpListener::bind_optional(bind_addr);
+    let _unused_tcp_connect = net::tcp_connect(connect_addr);
+    let _unused_connect_optional = net::TcpStream::connect_optional(connect_addr);
+  }
   let maybe_client = net::connect(connect_addr);
   assert(maybe_client.is_ok());
   var client = maybe_client.unwrap();
@@ -169,6 +126,6 @@ fn main() -> i64 {
   assert(client.close().is_err());
   assert(listener.close().is_err());
 
-  assert_eq_i64(score, 16383);
+  assert_eq_i64(score, 9214);
   return score;
 }

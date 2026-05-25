@@ -1649,6 +1649,10 @@ net::lookup_v4(host, port)
 net::lookup_v4_optional(host, port)
 net::try_lookup_v4(host, port)
 net::lookup_v4_raw_result(host, port)
+net::lookup_v6(host, port)
+net::lookup_v6_optional(host, port)
+net::try_lookup_v6(host, port)
+net::lookup_v6_raw_result(host, port)
 net::resolve(endpoint)
 net::resolve_optional(endpoint)
 net::try_resolve(endpoint)
@@ -1656,11 +1660,14 @@ net::resolve_raw_result(endpoint)
 net::to_socket_addrs(endpoint)
 net::listen(addr)
 net::tcp_listen(addr)
+net::tcp_listen_v6(addr)
 net::connect(addr)
 net::tcp_connect(addr)
+net::tcp_connect_v6(addr)
 net::connect_host(endpoint)
 net::tcp_connect_host(endpoint)
 net::udp_bind(addr)
+net::udp_bind_v6(addr)
 net::unix_listen(path)
 net::unix_connect(path)
 
@@ -1705,6 +1712,7 @@ listener.descriptor()
 listener.is_open()
 listener.local_port()
 listener.local_addr()
+listener.local_addr_v6()
 listener.is_nonblocking()
 listener.set_nonblocking(enabled)
 listener.reuse_addr()
@@ -1724,7 +1732,9 @@ TcpStream::connect_raw_result(addr)
 stream.descriptor()
 stream.is_open()
 stream.local_addr()
+stream.local_addr_v6()
 stream.peer_addr()
+stream.peer_addr_v6()
 stream.is_nonblocking()
 stream.set_nonblocking(enabled)
 stream.nodelay()
@@ -1747,6 +1757,7 @@ socket.descriptor()
 socket.is_open()
 socket.local_port()
 socket.local_addr()
+socket.local_addr_v6()
 socket.is_nonblocking()
 socket.set_nonblocking(enabled)
 socket.reuse_addr()
@@ -1797,22 +1808,25 @@ Address values are deterministic source structs. Use `octet`/`segment` for
 known-good indexes and `try_octet`/`try_segment` when validating parsed input.
 `lookup_v4` resolves one IPv4 address through the hosted `getaddrinfo` path and
 returns `Result[SocketAddr, Error]`. `lookup_v4_optional` and `try_lookup_v4`
-discard the reason intentionally. `resolve("host:port")` and
-`resolve_raw_result` parse the common host-port endpoint spelling and reject
-malformed endpoints as `InvalidInput` before calling the resolver.
+discard the reason intentionally. `lookup_v6` is the IPv6 sibling and follows
+the same Result/optional/raw naming policy. `resolve("host:port")`,
+`resolve("[::1]:port")`, and `resolve_raw_result` parse common IPv4/host-name
+and bracketed IPv6 endpoint spellings, rejecting malformed endpoints as
+`InvalidInput` before calling the resolver.
 `resolve_optional` and `try_resolve` keep the old absence-only shape.
 `to_socket_addrs(endpoint)` mirrors the `ToSocketAddrs` trait shape, and
-`string` implements that trait for the current single-address IPv4 resolver
-seed. Matching `*_raw_result` helpers are compatibility-only bridges for
+`string` implements that trait for the current single-address resolver seed.
+Matching `*_raw_result` helpers are compatibility-only bridges for
 low-level callers that still need raw integer errors.
 `net::listen`/`net::connect` are TCP-focused module-level `Result` helpers;
-use `tcp_listen`/`tcp_connect`, `connect_host`/`tcp_connect_host`, `udp_bind`,
-`unix_listen`, and `unix_connect` when the socket family should be explicit at
-the call site.
+use `tcp_listen`/`tcp_connect`, explicit IPv6 `tcp_listen_v6`/
+`tcp_connect_v6`, `connect_host`/`tcp_connect_host`, `udp_bind`,
+`udp_bind_v6`, `unix_listen`, and `unix_connect` when the socket family should
+be explicit at the call site.
 `TcpListener`, `TcpStream`, `UdpSocket`, `UnixListener`, and `UnixStream` are
-owned descriptor-backed handles. They support hosted IPv4 TCP bind/connect/
-accept, IPv4 UDP bind/send-byte/receive-byte, Unix stream bind/connect/accept,
-local bound-port and local IPv4 socket-address lookup where it applies,
+owned descriptor-backed handles. They support hosted IPv4/IPv6 TCP
+bind/connect/accept, IPv4/IPv6 UDP bind/send-byte/receive-byte, Unix stream
+bind/connect/accept, local bound-port and local socket-address lookup,
 borrowed descriptor views, explicit close, nonblocking flags,
 reuse-address helpers for TCP listeners and UDP sockets, TCP nodelay helpers,
 `std::time::Duration` timeout setters with raw millisecond compatibility
@@ -1823,10 +1837,9 @@ method syntax. Natural bind/connect/accept/resolve names return
 `Result[..., Error]`; matching `_optional` and `try_*` helpers keep
 compatibility call sites concise when they intentionally discard the reason.
 Host-port `connect_host` first resolves through `resolve`, then delegates to
-`TcpStream::connect`. IPv6 socket
-handles, buffered datagram APIs, richer socket options beyond the first common
-booleans, UDP source address helpers, multi-address DNS iteration, and timeout-specific error results remain
-roadmap work.
+`TcpStream::connect`. Buffered datagram APIs, richer socket options beyond the
+first common booleans, UDP source address helpers, multi-address DNS
+iteration, and timeout-specific error results remain roadmap work.
 
 ## IO And Input
 
