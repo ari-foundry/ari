@@ -1,0 +1,13 @@
+Program source=tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-literal-close.ari
+  ParseDiagnostics count=1
+    ParseDiagnostic message="unterminated struct literal" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-literal-close.ari:7:1 source_id=0 bytes=77..79
+      PrimaryLabel message="" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-literal-close.ari:7:1 source_id=0 bytes=77..79
+      SecondaryLabel message="struct literal starts here" @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-literal-close.ari:6:21 source_id=0 bytes=69..70
+      Note message="the parser reached the next declaration or end of file before this construct was closed"
+      Help message="add a matching } before continuing"
+  Struct name=Point @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-literal-close.ari:1:8 source_id=0 bytes=7..12
+    Field name=x type=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-literal-close.ari:2:3 source_id=0 bytes=17..18
+  Function name=after return=i64 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-literal-close.ari:7:4 source_id=0 bytes=80..85
+    Body
+      Return @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-literal-close.ari:8:3 source_id=0 bytes=99..105
+        Integer value=2 @tests/cases/compiler-development/artifact/errors/syntax-recovery-missing-struct-literal-close.ari:8:10 source_id=0 bytes=106..107

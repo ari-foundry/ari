@@ -1,0 +1,9 @@
+struct Point {
+  x: i64,
+}
+
+fn broken() -> i64 {
+  let point = Point { x: 1,
+fn after() -> i64 {
+  return 2;
+}

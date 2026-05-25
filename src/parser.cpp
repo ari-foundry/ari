@@ -3127,18 +3127,41 @@ private:
     }
 
     ExprPtr parse_struct_literal(ExprPtr name_expr) {
-        expect(TokenKind::LBrace, "expected { after struct literal type");
+        Token open = expect(TokenKind::LBrace, "expected { after struct literal type");
         std::vector<std::string> field_names;
         std::vector<ExprPtr> field_values;
         if (!check(TokenKind::RBrace)) {
             do {
+                if (check(TokenKind::End)) {
+                    fail_unterminated_delimited(
+                        peek().loc,
+                        open.loc,
+                        "unterminated struct literal",
+                        "struct literal starts here",
+                        "}");
+                }
+                if (should_recover_at_nested_declaration(open.loc)) {
+                    fail_unterminated_delimited(
+                        peek().loc,
+                        open.loc,
+                        "unterminated struct literal",
+                        "struct literal starts here",
+                        "}");
+                }
                 Token field = expect(TokenKind::Identifier, "expected struct literal field name");
                 expect(TokenKind::Colon, "expected : after struct literal field name");
                 field_names.push_back(field.text);
                 field_values.push_back(parse_expression());
             } while (match(TokenKind::Comma) && !check(TokenKind::RBrace));
         }
-        expect(TokenKind::RBrace, "expected } after struct literal");
+        if (!match(TokenKind::RBrace)) {
+            fail_expected_closing_delimiter(
+                peek().loc,
+                open.loc,
+                "expected } after struct literal",
+                "struct literal starts here",
+                "}");
+        }
         return make_ast_struct_literal_expr(
             name_expr->loc,
             std::move(name_expr->name),
