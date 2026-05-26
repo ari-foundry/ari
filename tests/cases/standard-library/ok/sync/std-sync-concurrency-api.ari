@@ -127,8 +127,9 @@ fn main() -> i64 {
   var zone = zone::create(4096);
   let channel = sync::channel<i64>(ref mut zone);
   var sender = channel.sender();
+  var sender_clone = sender.clone();
   var receiver = channel.receiver();
-  if receiver.is_empty() && sender.send(99).is_ok() && sender.try_send(100).is_err() {
+  if receiver.is_empty() && sender_clone.send(99).is_ok() && sender.try_send(100).is_err() {
     score = score + 1024;
   }
   if receiver.try_recv().unwrap_or(0) == 99 && receiver.is_empty() && sender.send_bool(101) {

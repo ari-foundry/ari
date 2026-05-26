@@ -1259,12 +1259,14 @@ standard shapes now, using spin/yield internals until Ari grows blocking
 wait/wake runtime support. `Condvar::wait_timeout` is a monotonic deadline
 spin/yield wait, not an OS sleeping condvar. Channels are capacity-1 MPSC:
 `send`/`try_send` and `recv`/`try_recv` return Result errors, while `_bool` and
-`_optional` helpers intentionally discard detail.
+`_optional` helpers intentionally discard detail. `Sender[T]::clone` creates
+another handle to the same capacity-1 channel state; closing any sender closes
+the shared channel.
 
 Shared-ownership handles live in `std::rc` as `Rc`, `Arc`, and `Weak`.
 `LazyLock`, semaphores, value-protecting lock payload guards,
 poison-aware lock variants, futex-backed blocking locks, channel timeout
-receives, sender cloning, send/share trait checks, compiler-owned
+receives, sender-counted close semantics, send/share trait checks, compiler-owned
 `thread_local` declarations, and target-native relaxed ordering remain future
 concurrency work.
 

@@ -1009,6 +1009,10 @@ pub impl[T] std::sync::OnceLock[T] {
 }
 
 pub impl[T] std::sync::Sender[T] {
+  fn clone(self) -> std::sync::Sender[T] {
+    return self;
+  }
+
   fn try_send(self: ref mut Self, value: T) -> std::Result[(), std::sync::TrySendError[T]] {
     let state: ref mut std::sync::MpscState[T] = ref mut *self.state;
     if state.closed.load() != 0 {

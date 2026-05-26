@@ -2525,6 +2525,7 @@ method std::sync::RwLockReadGuard::is_active|check-prelude std-sync-rwlock rwloc
 method std::sync::RwLockReadGuard::unlock|check-prelude std-sync-rwlock rwlock read guard idempotent unlock helper; docs/stdlib/modules/sync.md
 method std::sync::RwLockWriteGuard::is_active|check-prelude std-sync-rwlock rwlock write guard active-state predicate; docs/stdlib/modules/sync.md
 method std::sync::RwLockWriteGuard::unlock|check-prelude std-sync-rwlock rwlock write guard idempotent unlock helper; docs/stdlib/modules/sync.md
+method std::sync::Sender[T]::clone|check-prelude std-sync-concurrency-api sender handle clone sharing the same single-slot channel state; docs/stdlib/modules/sync.md
 method std::sync::Sender[T]::close|check-prelude std-sync-concurrency-api sender-side channel close helper; docs/stdlib/modules/sync.md
 method std::sync::Sender[T]::is_closed|check-prelude std-sync-concurrency-api sender closed predicate; docs/stdlib/modules/sync.md
 method std::sync::Sender[T]::send|check-prelude std-sync-concurrency-api yielding single-slot Result send helper; docs/stdlib/modules/sync.md

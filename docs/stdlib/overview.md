@@ -340,10 +340,11 @@ unlock guards, but they do not yet protect typed payload borrows and do not
 promise automatic scope/early-return RAII cleanup. `Condvar` and `Barrier` are
 source coordination primitives; `Condvar` timeout waits are monotonic
 spin/yield waits rather than OS sleeping waits. Channels are capacity-1 MPSC
-handles with Result send/receive errors and carry only a shared state pointer
-rather than redundant zone handles. `Arc` uses an atomic control block, but
+handles with Result send/receive errors, clonable sender handles, and only a
+shared state pointer rather than redundant zone handles. `Arc` uses an atomic
+control block, but
 send/share trait policy, value-protecting locks, semaphores, futex-backed
-blocking locks, configurable channel capacity, sender cloning, and non-LLVM
+blocking locks, configurable channel capacity, sender-counted close semantics, and non-LLVM
 target atomic policy remain future work.
 
 `std::time` follows the same OS-facing pattern. `monotonic_nanos`,

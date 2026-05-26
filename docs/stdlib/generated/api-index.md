@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3134`
+- API entries: `3135`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 853 | stable candidate |
-| `hosted` | 1246 | platform-backed |
+| `hosted` | 1247 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 28 |
 | `fn` | 1156 |
-| `method` | 1547 |
+| `method` | 1548 |
 | `module` | 39 |
 | `struct` | 166 |
 | `trait` | 39 |
@@ -84,7 +84,7 @@ platform notes.
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 145 |
-| `std::sync` | `hosted` | 166 |
+| `std::sync` | `hosted` | 167 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 74 |
@@ -3704,6 +3704,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::RwLockReadGuard::unlock` | check-prelude std-sync-rwlock rwlock read guard idempotent unlock helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLockWriteGuard::is_active` | check-prelude std-sync-rwlock rwlock write guard active-state predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLockWriteGuard::unlock` | check-prelude std-sync-rwlock rwlock write guard idempotent unlock helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Sender[T]::clone` | check-prelude std-sync-concurrency-api sender handle clone sharing the same single-slot channel state; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::close` | check-prelude std-sync-concurrency-api sender-side channel close helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::is_closed` | check-prelude std-sync-concurrency-api sender closed predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::Sender[T]::send` | check-prelude std-sync-concurrency-api yielding single-slot Result send helper; docs/stdlib/modules/sync.md |

@@ -283,6 +283,7 @@ channel.split() -> Channel[T]
 sender.send(value) -> Result[(), SendError[T]]
 sender.try_send(value) -> Result[(), TrySendError[T]]
 sender.send_bool(value) -> bool
+sender.clone() -> Sender[T]
 sender.close() -> void
 sender.is_closed() -> bool
 
@@ -308,9 +309,15 @@ compatibility. The channel state is allocated in the caller's `Zone`; `Sender`,
 `Receiver`, and `Channel` carry only the shared state pointer, not a redundant
 zone handle.
 
+`sender.clone()` creates another sender handle to the same single-slot channel
+state. Cloned senders do not allocate and they do not carry separate ownership
+counts yet; closing any sender closes the shared channel for all sender and
+receiver handles.
+
 Future channel work should add explicit `bounded_channel(capacity)`,
-unbounded-channel policy if desired, sender cloning, timeout receives,
-blocking wake integration, richer close semantics, and send/share trait checks.
+unbounded-channel policy if desired, sender-counted close semantics, timeout
+receives, blocking wake integration, richer close semantics, and send/share
+trait checks.
 
 ## Example
 
@@ -350,8 +357,9 @@ fn main() -> i64 {
   var zone = zone::create(4096);
   let channel = sync::channel<i64>(ref mut zone);
   var tx = channel.sender();
+  var tx2 = tx.clone();
   var rx = channel.receiver();
-  if tx.send(10).is_err() {
+  if tx2.send(10).is_err() {
     return 5;
   }
   if rx.recv().unwrap_or(0) != 10 {
@@ -375,9 +383,9 @@ fn main() -> i64 {
   payload guards yet.
 - Guard drops release active locks when callers use explicit `drop guard`;
   automatic RAII cleanup at scope exit or early return is not promised yet.
-- There is no `LazyLock[T]`, semaphore, channel timeout receive, sender clone,
-  or configurable channel capacity yet. Explicit `ThreadLocal[T]` handles live
-  in `std::thread`; compiler-level
+- There is no `LazyLock[T]`, semaphore, channel timeout receive,
+  sender-counted close policy, or configurable channel capacity yet. Explicit
+  `ThreadLocal[T]` handles live in `std::thread`; compiler-level
   `thread_local` declarations remain future work.
 - Send/share trait checking is still roadmap work, so cross-thread value
   transfer APIs remain conservative.
@@ -392,7 +400,7 @@ fn main() -> i64 {
 | Condvar | Current generation-based source API with spin/yield timeout waits; future blocking wait/wake and spurious wake documentation. |
 | Once/OnceLock | Current source one-time execution, value slot, value-preserving `set`, and fallible initializer status; future ref-in-Result return ergonomics, panic policy, and optional `LazyLock`. |
 | Barrier | Current source reusable barrier; future parking implementation. |
-| MPSC channel | Current single-slot MPSC shape with Result errors and unsent-value return; future configurable bounded queues, sender cloning, timeout receives, blocking wake, and richer close semantics. |
+| MPSC channel | Current single-slot MPSC shape with Result errors, unsent-value return, and clonable sender handles; future configurable bounded queues, sender-counted close semantics, timeout receives, blocking wake, and richer close semantics. |
 | Thread local | Current explicit `std::thread::ThreadLocal[T]` handles; future compiler-level static TLS declarations and destructor policy. |
 
 ## Tests
