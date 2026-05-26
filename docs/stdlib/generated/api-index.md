@@ -24,12 +24,12 @@ platform notes.
 
 ## Summary
 
-- API entries: `3107`
+- API entries: `3109`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
-| `alloc` | 846 | usable |
+| `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 853 | stable candidate |
 | `hosted` | 1221 | platform-backed |
@@ -39,7 +39,7 @@ platform notes.
 | --- | ---: |
 | `enum` | 28 |
 | `fn` | 1144 |
-| `method` | 1534 |
+| `method` | 1536 |
 | `module` | 39 |
 | `struct` | 166 |
 | `trait` | 39 |
@@ -59,7 +59,7 @@ platform notes.
 | `std::c` | `platform` | 49 |
 | `std::cell` | `alloc` | 44 |
 | `std::cmp` | `core` | 38 |
-| `std::collections` | `alloc` | 364 |
+| `std::collections` | `alloc` | 366 |
 | `std::context` | `hosted` | 20 |
 | `std::convert` | `core` | 14 |
 | `std::encoding` | `core` | 94 |
@@ -943,6 +943,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::HashMap[K,V]::try_get_mut` | check-prelude std-collections-map-mut-access optional hash map mutable value handle lookup; docs/stdlib/modules/collections.md |
 | `method std::collections::HashMap[K,V]::values` | check-prelude std-collections-hash-iter bucket-order value iterator; docs/stdlib/modules/collections.md |
 | `method std::collections::HashMap[K,V]::values_mut` | check-prelude std-collections-view-api mutable live-bucket value cursor; docs/stdlib/modules/collections.md |
+| `method std::collections::HashMap[K,V]::with_hash` | check-prelude std-collections-hash-with-hash explicit custom-hasher constructor and HashMap::new migration path; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::capacity` | check-prelude std-collections-hash hash set capacity metadata; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::clear` | check-prelude std-collections-hash drops live hash set entries; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::contains` | check-prelude std-collections-hash hash set lookup predicate; docs/stdlib/modules/collections.md |
@@ -968,6 +969,7 @@ Tier: `alloc`. Stability reading: usable.
 | `method std::collections::HashSet[T]::retain` | check-prelude std-collections-retain hash set in-place predicate filtering; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::take` | check-prelude std-collections-hash Option-returning removal; docs/stdlib/modules/collections.md |
 | `method std::collections::HashSet[T]::try_get` | check-prelude std-collections-set-representatives optional stored representative lookup; docs/stdlib/modules/collections.md |
+| `method std::collections::HashSet[T]::with_hash` | check-prelude std-collections-hash-with-hash explicit custom-hasher constructor and HashSet::new migration path; docs/stdlib/modules/collections.md |
 | `method std::collections::LinkedList[T]::back` | check-prelude std-collections-linked-list asserting back accessor; docs/stdlib/modules/collections.md |
 | `method std::collections::LinkedList[T]::capacity` | check-prelude std-collections-linked-list linked list capacity metadata; docs/stdlib/modules/collections.md |
 | `method std::collections::LinkedList[T]::clear` | check-prelude std-collections-linked-list drops live linked list values; docs/stdlib/modules/collections.md |

@@ -1023,6 +1023,14 @@ pub impl[K, V] std::collections::HashMap[K, V] {
     return std::collections::hash_map<K, V>(zone, capacity, hash);
   }
 
+  fn with_hash(
+    zone: ref mut Zone,
+    capacity: i64,
+    hash: fn(K) -> u64
+  ) -> std::collections::HashMap[K, V] {
+    return std::collections::hash_map<K, V>(zone, capacity, hash);
+  }
+
   fn from_iter[I: std::Iterator[std::collections::MapEntry[K, V]]](
     zone: ref mut Zone,
     capacity: i64,
@@ -1655,6 +1663,14 @@ fn hash_set_drop_values[T](set: ref mut std::collections::HashSet[T]) -> void {
 
 pub impl[T] std::collections::HashSet[T] {
   fn new(
+    zone: ref mut Zone,
+    capacity: i64,
+    hash: fn(T) -> u64
+  ) -> std::collections::HashSet[T] {
+    return std::collections::hash_set<T>(zone, capacity, hash);
+  }
+
+  fn with_hash(
     zone: ref mut Zone,
     capacity: i64,
     hash: fn(T) -> u64

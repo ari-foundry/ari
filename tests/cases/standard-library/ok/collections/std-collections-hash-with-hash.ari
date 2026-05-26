@@ -1,0 +1,35 @@
+// Covers the explicit-hasher constructor name that lets future HashMap::new
+// become the default-hasher constructor without losing custom hash policy.
+fn constant_hash(value: i64) -> u64 {
+  return 5u64;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(1024);
+  var score = 0;
+
+  var map = HashMap::with_hash<i64, i64>(ref mut zone, 1, constant_hash);
+  if map.is_empty() {
+    score = score + 1;
+  }
+  if map.insert(4, 40).is_none() {
+    score = score + 2;
+  }
+  if map.insert(12, 120).is_none() {
+    score = score + 4;
+  }
+  if map.contains_key(12) && map.get_or(4, 0) == 40 {
+    score = score + 8;
+  }
+
+  var set = HashSet::with_hash<i64>(ref mut zone, 1, constant_hash);
+  if set.insert(7) {
+    score = score + 16;
+  }
+  if !set.insert(7) && set.contains(7) {
+    score = score + 32;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

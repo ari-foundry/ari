@@ -2919,6 +2919,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-hash.ll
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash.ari -o $(BUILD_DIR)/prelude/std-collections-hash.elf
 	$(BUILD_DIR)/prelude/std-collections-hash.elf; code=$$?; test $$code -eq 255
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-with-hash.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-hash-with-hash.ll
+	grep -q '_ARNv4impl35std__collections__HashMap_i64__i64_8inherent9with_hash' $(BUILD_DIR)/prelude/std-collections-hash-with-hash.ll
+	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent9with_hash' $(BUILD_DIR)/prelude/std-collections-hash-with-hash.ll
+	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-with-hash.ari -o $(BUILD_DIR)/prelude/std-collections-hash-with-hash.elf
+	$(BUILD_DIR)/prelude/std-collections-hash-with-hash.elf; code=$$?; test $$code -eq 63
 	$(TARGET) tests/cases/standard-library/ok/collections/std-collections-hash-set-relations.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent6equals' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll
 	grep -q '_ARNv4impl30std__collections__HashSet_i64_8inherent9is_subset' $(BUILD_DIR)/prelude/std-collections-hash-set-relations.ll

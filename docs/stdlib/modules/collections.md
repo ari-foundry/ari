@@ -276,10 +276,12 @@ collections::hash_string(value)
 collections::hash_map<K, V>(ref mut zone, capacity, hash)
 collections::string_hash_map<V>(ref mut zone, capacity)
 HashMap::new<K, V>(ref mut zone, capacity, hash)
+HashMap::with_hash<K, V>(ref mut zone, capacity, hash)
 HashMap::from_iter<K, V, I>(ref mut zone, capacity, hash, iter)
 collections::hash_set<T>(ref mut zone, capacity, hash)
 collections::string_hash_set(ref mut zone, capacity)
 HashSet::new<T>(ref mut zone, capacity, hash)
+HashSet::with_hash<T>(ref mut zone, capacity, hash)
 HashSet::from_iter<T, I>(ref mut zone, capacity, hash, iter)
 ```
 
@@ -293,9 +295,10 @@ compatibility helper for i64 keys and delegates to `std::hash::value<i64>`.
 find the same hash map entry.
 The planned trait-driven shape is for `HashMap::new<K: Hash[K] + Eq[K], V>`
 and `HashSet::new<T: Hash[T] + Eq[T]>` to select the default hash/equality
-policy automatically. Explicit custom hash policy should remain available
-under a name such as `with_hash` instead of forcing every ordinary map call
-site to pass a function pointer.
+policy automatically. Use `HashMap::with_hash` and `HashSet::with_hash` when a
+custom hash policy is intentional; `HashMap::new(zone, capacity, hash)` and
+`HashSet::new(zone, capacity, hash)` remain compatibility spellings for the
+current explicit-hasher constructor shape.
 
 ```ari
 map.len()
@@ -705,7 +708,7 @@ Hash table:
 ```ari
 fn main() -> i64 {
   var zone = zone::create(2048);
-  var map = HashMap::new<i64, i64>(ref mut zone, 8, collections::hash_i64);
+  var map = HashMap::with_hash<i64, i64>(ref mut zone, 8, collections::hash_i64);
 
   map.insert(7, 70);
   map.insert(11, 110);
@@ -758,13 +761,15 @@ fn main() -> i64 {
 }
 ```
 
-`HashMap::new(ref mut zone, capacity, hash)` remains the custom-hasher
-constructor. The intended future spelling for ordinary hashable keys is
+`HashMap::with_hash(ref mut zone, capacity, hash)` is the named custom-hasher
+constructor. `HashMap::new(ref mut zone, capacity, hash)` is still accepted as a
+compatibility spelling while the stdlib waits for trait-driven default hasher
+selection. The intended future spelling for ordinary hashable keys is
 `HashMap::new<K: Hash[K] + Eq[K], V>(ref mut zone, capacity)`, with the
-explicit hash-function form moved to a `with_hash`-style name once generic
-function-pointer specialization is strong enough. Until then, `string_hash_map`
-is the natural `HashMap[String, V]` constructor and uses content hashing plus
-content equality for independently allocated `String` values.
+explicit hash-function form living under `with_hash`. Until then,
+`string_hash_map` is the natural `HashMap[String, V]` constructor and uses
+content hashing plus content equality for independently allocated `String`
+values.
 
 Ordered tree:
 
