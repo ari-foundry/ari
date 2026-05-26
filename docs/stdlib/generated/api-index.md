@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3404`
+- API entries: `3409`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 893 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 902 | stable candidate |
-| `hosted` | 1410 | platform-backed |
+| `hosted` | 1415 | platform-backed |
 | `platform` | 163 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1194 |
-| `method` | 1760 |
+| `method` | 1765 |
 | `module` | 39 |
 | `struct` | 178 |
 | `trait` | 39 |
@@ -74,7 +74,7 @@ platform notes.
 | `std::log` | `hosted` | 12 |
 | `std::math` | `core` | 39 |
 | `std::mem` | `core` | 13 |
-| `std::net` | `hosted` | 310 |
+| `std::net` | `hosted` | 315 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 62 |
 | `std::parse` | `core` | 101 |
@@ -2595,6 +2595,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpStream::connect_optional` | check-prelude std-net-tcp-loopback Option-returning TCP connect compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::connect_raw` | check-prelude std-net-tcp-loopback raw Result-returning TCP connect compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::descriptor` | check-prelude std-net-tcp-loopback stream borrowed descriptor view; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::disable_linger` | check-prelude std-net-tcp-loopback TCP SO_LINGER disable helper; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::disable_linger_unchecked` | check-prelude std-net-tcp-loopback unchecked TCP SO_LINGER disable compatibility helper; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::flush` | check-prelude std-net-tcp-loopback stream flush helper preserving closed-handle errors; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::hop_limit` | check-prelude std-net-ipv6-socket TCP IPv6 hop-limit socket option query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::hop_limit_optional` | check-prelude std-net-ipv6-socket Option-returning TCP IPv6 hop-limit compatibility query; docs/stdlib/modules/net.md |
@@ -2603,6 +2605,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpStream::is_open` | check-prelude std-net-tcp-loopback stream open predicate; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::keepalive` | check-prelude std-net-tcp-loopback TCP keepalive socket option query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::keepalive_optional` | check-prelude std-net-tcp-loopback Option-returning TCP keepalive compatibility query; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::linger_seconds` | check-prelude std-net-tcp-loopback TCP SO_LINGER seconds query with None for disabled linger; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::local_addr` | check-prelude std-net-tcp-loopback stream local socket-address lookup; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::local_addr_optional` | check-prelude std-net-tcp-loopback Option-returning stream local address compatibility query; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::local_addr_v6` | check-prelude std-net-ipv6-socket stream local IPv6 socket-address lookup; docs/stdlib/modules/net.md |
@@ -2629,6 +2632,8 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::net::TcpStream::set_hop_limit_unchecked` | check-prelude std-net-ipv6-socket unchecked TCP IPv6 hop-limit compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_keepalive` | check-prelude std-net-tcp-loopback TCP keepalive socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_keepalive_unchecked` | check-prelude std-net-tcp-loopback unchecked TCP keepalive compatibility setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_linger_seconds` | check-prelude std-net-tcp-loopback TCP SO_LINGER seconds setter; docs/stdlib/modules/net.md |
+| `method std::net::TcpStream::set_linger_seconds_unchecked` | check-prelude std-net-tcp-loopback unchecked TCP SO_LINGER seconds compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_nodelay` | check-prelude std-net-tcp-loopback TCP nodelay socket option setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_nodelay_unchecked` | check-prelude std-net-tcp-loopback unchecked TCP nodelay compatibility setter; docs/stdlib/modules/net.md |
 | `method std::net::TcpStream::set_nonblocking` | check-prelude std-net-tcp-loopback stream nonblocking descriptor setter; docs/stdlib/modules/net.md |

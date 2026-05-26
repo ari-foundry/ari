@@ -1424,6 +1424,9 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_net_set_reuse_addr" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_ttl" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_set_ttl" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_linger_enabled" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_linger_seconds" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
+	grep -q "@ari_builtin_net_set_linger" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_nodelay" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_set_nodelay" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll
 	grep -q "@ari_builtin_net_shutdown" $(BUILD_DIR)/prelude/std-net-tcp-loopback.ll

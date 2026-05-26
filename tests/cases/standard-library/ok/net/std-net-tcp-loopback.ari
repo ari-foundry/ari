@@ -138,6 +138,11 @@ fn main() -> i64 {
     client.set_ttl(64).is_ok() &&
     client.ttl().unwrap_or(0) > 0 &&
     client.set_ttl(0).is_err() &&
+    client.disable_linger().is_ok() &&
+    client.linger_seconds().unwrap().is_none() &&
+    client.set_linger_seconds(1).is_ok() &&
+    client.linger_seconds().unwrap().unwrap_or(-1) == 1 &&
+    client.set_linger_seconds(-1).is_err() &&
     listener.set_reuse_port(true).is_ok() {
     score = score + 32768;
   }

@@ -146,6 +146,10 @@ extern "ari" fn ttl_raw(raw: i64) -> i64 = "ari_builtin_net_ttl";
 extern "ari" fn set_ttl_raw(raw: i64, value: i64) -> bool = "ari_builtin_net_set_ttl";
 extern "ari" fn hop_limit_raw(raw: i64) -> i64 = "ari_builtin_net_hop_limit";
 extern "ari" fn set_hop_limit_raw(raw: i64, value: i64) -> bool = "ari_builtin_net_set_hop_limit";
+extern "ari" fn linger_enabled_raw(raw: i64) -> i64 = "ari_builtin_net_linger_enabled";
+extern "ari" fn linger_seconds_raw(raw: i64) -> i64 = "ari_builtin_net_linger_seconds";
+extern "ari" fn set_linger_raw(raw: i64, enabled: bool, seconds: i64) -> bool =
+  "ari_builtin_net_set_linger";
 extern "ari" fn nodelay_raw(raw: i64) -> i64 = "ari_builtin_net_nodelay";
 extern "ari" fn set_nodelay_raw(raw: i64, enabled: bool) -> bool =
   "ari_builtin_net_set_nodelay";
@@ -1782,6 +1786,50 @@ pub impl std::net::TcpStream {
     }
     return std::error::map_raw<()>(
       socket_unit_raw(self.handle.raw(), set_hop_limit_raw(self.handle.raw(), value))
+    );
+  }
+
+  fn linger_seconds(self: ref Self) -> std::Result[std::Option[i64], std::error::Error] {
+    match socket_flag_raw(self.handle.raw(), linger_enabled_raw(self.handle.raw())) {
+      std::Ok(enabled) => {
+        if !enabled {
+          return std::Ok<std::Option[i64], std::error::Error>(std::None<i64>());
+        }
+      }
+      std::Err(reason) => {
+        return std::error::map_raw<std::Option[i64]>(std::Err<std::Option[i64], i64>(reason));
+      }
+    }
+    match socket_int_raw(self.handle.raw(), linger_seconds_raw(self.handle.raw())) {
+      std::Ok(seconds) => {
+        return std::Ok<std::Option[i64], std::error::Error>(std::Some<i64>(seconds));
+      }
+      std::Err(seconds_reason) => {
+        return std::error::map_raw<std::Option[i64]>(std::Err<std::Option[i64], i64>(seconds_reason));
+      }
+    }
+  }
+
+  fn set_linger_seconds_unchecked(self: ref Self, seconds: i64) -> bool {
+    return self.set_linger_seconds(seconds).is_ok();
+  }
+
+  fn set_linger_seconds(self: ref Self, seconds: i64) -> std::Result[(), std::error::Error] {
+    if seconds < 0 {
+      return std::Err<(), std::error::Error>(std::error::new(std::error::InvalidInput));
+    }
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_linger_raw(self.handle.raw(), true, seconds))
+    );
+  }
+
+  fn disable_linger_unchecked(self: ref Self) -> bool {
+    return self.disable_linger().is_ok();
+  }
+
+  fn disable_linger(self: ref Self) -> std::Result[(), std::error::Error] {
+    return std::error::map_raw<()>(
+      socket_unit_raw(self.handle.raw(), set_linger_raw(self.handle.raw(), false, 0))
     );
   }
 

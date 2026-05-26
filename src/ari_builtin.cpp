@@ -462,6 +462,9 @@ const std::unordered_map<std::string, AriBuiltinSignatureExpectation>& ari_built
         add("ari_builtin_net_set_ttl", builtin_sig({i64, i64}, boolean));
         add("ari_builtin_net_hop_limit", builtin_sig({i64}, i64));
         add("ari_builtin_net_set_hop_limit", builtin_sig({i64, i64}, boolean));
+        add("ari_builtin_net_linger_enabled", builtin_sig({i64}, i64));
+        add("ari_builtin_net_linger_seconds", builtin_sig({i64}, i64));
+        add("ari_builtin_net_set_linger", builtin_sig({i64, boolean, i64}, boolean));
         add("ari_builtin_net_nodelay", builtin_sig({i64}, i64));
         add("ari_builtin_net_set_nodelay", builtin_sig({i64, boolean}, boolean));
         add("ari_builtin_net_shutdown", builtin_sig({i64, i64}, boolean));

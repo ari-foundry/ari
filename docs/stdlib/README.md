@@ -107,7 +107,7 @@ send/receive, TCP/UDP local-address helpers, TCP peer-address helpers, Unix
 stream sockets, direct `Error` result helpers with raw compatibility variants,
 nonblocking flags, `std::time::Duration` socket timeouts with raw
 millisecond compatibility helpers, TCP listener/UDP reuse-address options,
-TCP nodelay and keepalive options, UDP broadcast, reuse-port, send/receive
+TCP nodelay, keepalive, and linger options, UDP broadcast, reuse-port, send/receive
 buffer-size options, IPv4 TTL, IPv6 hop-limit, stream shutdown, TCP/Unix `read`/`write`/
 `read_exact`/`write_all`/`read_to_end`/`read_to_string` helpers,
 buffer-oriented UDP datagrams, UDP source address helpers, and

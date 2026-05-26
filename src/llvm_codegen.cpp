@@ -588,6 +588,7 @@ private:
             symbol == "ari_builtin_net_set_recv_buffer_size" ||
             symbol == "ari_builtin_net_set_ttl" ||
             symbol == "ari_builtin_net_set_hop_limit" ||
+            symbol == "ari_builtin_net_set_linger" ||
             symbol == "ari_builtin_net_set_nodelay" ||
             symbol == "ari_builtin_net_udp_connect_v4" ||
             symbol == "ari_builtin_net_udp_connect_v6" ||
@@ -3161,6 +3162,67 @@ private:
         line("entry:");
         line("  %ok = call i1 @ari_runtime_net_set_int_option(i64 %fd, i32 41, i32 16, i64 %value)");
         line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define private i64 @ari_runtime_net_linger_field(i64 %fd, i64 %offset) {");
+        line("entry:");
+        line("  %invalid = icmp slt i64 %fd, 0");
+        line("  br i1 %invalid, label %fail, label %get");
+        line("get:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %linger = alloca [8 x i8], align 4");
+        line("  %linger.ptr = getelementptr inbounds [8 x i8], ptr %linger, i64 0, i64 0");
+        line("  %len.ptr = alloca i32, align 4");
+        line("  store i32 8, ptr %len.ptr, align 4");
+        line("  %code = call i32 @getsockopt(i32 %fd32, i32 1, i32 13, ptr %linger.ptr, ptr %len.ptr)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  br i1 %ok, label %load, label %fail");
+        line("load:");
+        line("  %field.ptr = getelementptr inbounds i8, ptr %linger.ptr, i64 %offset");
+        line("  %field = load i32, ptr %field.ptr, align 4");
+        line("  %wide = sext i32 %field to i64");
+        line("  ret i64 %wide");
+        line("fail:");
+        line("  ret i64 -1");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_linger_enabled(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_linger_field(i64 %fd, i64 0)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_net_linger_seconds(i64 %fd) {");
+        line("entry:");
+        line("  %value = call i64 @ari_runtime_net_linger_field(i64 %fd, i64 4)");
+        line("  ret i64 %value");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_net_set_linger(i64 %fd, i1 %enabled, i64 %seconds) {");
+        line("entry:");
+        line("  %invalid.fd = icmp slt i64 %fd, 0");
+        line("  %invalid.seconds = icmp slt i64 %seconds, 0");
+        line("  %invalid = or i1 %invalid.fd, %invalid.seconds");
+        line("  br i1 %invalid, label %fail, label %set");
+        line("set:");
+        line("  %fd32 = trunc i64 %fd to i32");
+        line("  %linger = alloca [8 x i8], align 4");
+        line("  %linger.ptr = getelementptr inbounds [8 x i8], ptr %linger, i64 0, i64 0");
+        line("  %enabled32 = zext i1 %enabled to i32");
+        line("  %enabled.ptr = getelementptr inbounds i8, ptr %linger.ptr, i64 0");
+        line("  store i32 %enabled32, ptr %enabled.ptr, align 4");
+        line("  %seconds32 = trunc i64 %seconds to i32");
+        line("  %seconds.ptr = getelementptr inbounds i8, ptr %linger.ptr, i64 4");
+        line("  store i32 %seconds32, ptr %seconds.ptr, align 4");
+        line("  %code = call i32 @setsockopt(i32 %fd32, i32 1, i32 13, ptr %linger.ptr, i32 8)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("fail:");
+        line("  ret i1 false");
         line("}");
         line();
 

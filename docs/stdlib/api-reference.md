@@ -1953,6 +1953,9 @@ stream.nodelay()
 stream.set_nodelay(enabled)
 stream.keepalive()
 stream.set_keepalive(enabled)
+stream.linger_seconds()
+stream.set_linger_seconds(value)
+stream.disable_linger()
 stream.send_buffer_size()
 stream.set_send_buffer_size(value)
 stream.recv_buffer_size()
@@ -2099,9 +2102,9 @@ bind/connect/accept, IPv4/IPv6 UDP bind/buffer datagrams/source-address receive,
 connected UDP send/receive, Unix stream
 bind/connect/accept, local bound-port and local socket-address lookup,
 borrowed descriptor views, explicit close, nonblocking flags,
-reuse-address/reuse-port helpers, close-on-exec helpers, TCP nodelay and
-keepalive helpers, UDP broadcast, send/receive buffer-size helpers, IPv4 TTL
-and IPv6 hop-limit helpers,
+reuse-address/reuse-port helpers, close-on-exec helpers, TCP nodelay,
+keepalive, and linger helpers, UDP broadcast, send/receive buffer-size helpers,
+IPv4 TTL and IPv6 hop-limit helpers,
 `std::time::Duration` timeout setters with raw millisecond compatibility
 helpers, and stream shutdown. TCP and
 Unix streams adapt to `std::io::Reader`/`Writer` and provide inherent
@@ -2113,10 +2116,12 @@ compatibility call sites concise when they intentionally discard the reason.
 Host-port `connect_host` first resolves through `resolve`, then delegates to
 `TcpStream::connect`. `*_ready` helpers expose single-descriptor readiness
 over `std::os::poll_read`/`poll_write`; they are advisory and callers must
-still handle the actual operation result. `ttl` controls IPv4 `IP_TTL` and
+still handle the actual operation result. `linger_seconds` reads TCP
+`SO_LINGER` as `Option[i64]`, where `None` means disabled; `set_linger_seconds`
+enables it and `disable_linger` clears it. `ttl` controls IPv4 `IP_TTL` and
 `hop_limit` controls IPv6 `IPV6_UNICAST_HOPS`; setters accept `1..=255` and
 return `InvalidInput` outside that range. Full `getaddrinfo` iteration, host
-service-database lookup, multicast, linger, multi-descriptor poll/event loops,
+service-database lookup, multicast, multi-descriptor poll/event loops,
 TLS packaging decisions, and timeout-specific error results remain roadmap
 work.
 

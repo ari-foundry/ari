@@ -272,8 +272,8 @@ socket-specific overloads, and TCP/UDP handles can report their local socket
 address. TCP listeners and UDP sockets expose reuse-address policy, and TCP
 streams can report the connected peer address and nodelay policy. The current
 network layer still keeps fuller DNS iteration, host service-database lookup,
-multi-descriptor poll/event loops, linger, multicast, Unix datagram helpers,
-and timeout-specific error results on the roadmap.
+multi-descriptor poll/event loops, multicast, Unix datagram helpers, and
+timeout-specific error results on the roadmap.
 
 `std::env` wraps the context hooks with the names application code should use
 and adds `Option`-based argument access through `try_arg` and program-name
@@ -421,8 +421,8 @@ with raw millisecond compatibility helpers, stream shutdown, explicit close,
 common socket options, IPv4 TTL, IPv6 hop-limit, single-descriptor readiness probes, and TCP/Unix
 `std::io::Reader`/`Writer` byte adapters plus method-style
 `read_exact`/`write_all` stream buffer helpers. Full DNS iteration, host
-service-database lookup, multi-descriptor poll/event loops, linger,
-multicast, Unix datagram helpers, and timeout-specific error results remain
+service-database lookup, multi-descriptor poll/event loops, multicast, Unix
+datagram helpers, and timeout-specific error results remain
 roadmap work.
 
 `std::collections` is source Ari over typed zone allocation. `Set[T]` remains a
