@@ -29,30 +29,58 @@ parse::integer(bytes) -> Result[i64, std::error::Error]
 parse::integer_optional(bytes) -> Option[i64]
 parse::is_integer(bytes) -> bool
 parse::integer_or(bytes, fallback) -> i64
+parse::integer_with_underscores(bytes) -> Result[i64, std::error::Error]
+parse::integer_with_underscores_optional(bytes) -> Option[i64]
+parse::is_integer_with_underscores(bytes) -> bool
+parse::integer_with_underscores_or(bytes, fallback) -> i64
 parse::integer_radix(bytes, radix) -> Result[i64, std::error::Error]
 parse::integer_radix_optional(bytes, radix) -> Option[i64]
 parse::is_integer_radix(bytes, radix) -> bool
 parse::integer_radix_or(bytes, radix, fallback) -> i64
+parse::integer_radix_with_underscores(bytes, radix) -> Result[i64, std::error::Error]
+parse::integer_radix_with_underscores_optional(bytes, radix) -> Option[i64]
+parse::is_integer_radix_with_underscores(bytes, radix) -> bool
+parse::integer_radix_with_underscores_or(bytes, radix, fallback) -> i64
 parse::unsigned(bytes) -> Result[u64, std::error::Error]
 parse::unsigned_optional(bytes) -> Option[u64]
 parse::is_unsigned(bytes) -> bool
 parse::unsigned_or(bytes, fallback) -> u64
+parse::unsigned_with_underscores(bytes) -> Result[u64, std::error::Error]
+parse::unsigned_with_underscores_optional(bytes) -> Option[u64]
+parse::is_unsigned_with_underscores(bytes) -> bool
+parse::unsigned_with_underscores_or(bytes, fallback) -> u64
 parse::unsigned_radix(bytes, radix) -> Result[u64, std::error::Error]
 parse::unsigned_radix_optional(bytes, radix) -> Option[u64]
 parse::is_unsigned_radix(bytes, radix) -> bool
 parse::unsigned_radix_or(bytes, radix, fallback) -> u64
+parse::unsigned_radix_with_underscores(bytes, radix) -> Result[u64, std::error::Error]
+parse::unsigned_radix_with_underscores_optional(bytes, radix) -> Option[u64]
+parse::is_unsigned_radix_with_underscores(bytes, radix) -> bool
+parse::unsigned_radix_with_underscores_or(bytes, radix, fallback) -> u64
 parse::hex_integer(bytes) -> Result[i64, std::error::Error]
 parse::hex_integer_optional(bytes) -> Option[i64]
 parse::is_hex_integer(bytes) -> bool
 parse::hex_integer_or(bytes, fallback) -> i64
+parse::hex_integer_with_underscores(bytes) -> Result[i64, std::error::Error]
+parse::hex_integer_with_underscores_optional(bytes) -> Option[i64]
+parse::is_hex_integer_with_underscores(bytes) -> bool
+parse::hex_integer_with_underscores_or(bytes, fallback) -> i64
 parse::binary_integer(bytes) -> Result[i64, std::error::Error]
 parse::binary_integer_optional(bytes) -> Option[i64]
 parse::is_binary_integer(bytes) -> bool
 parse::binary_integer_or(bytes, fallback) -> i64
+parse::binary_integer_with_underscores(bytes) -> Result[i64, std::error::Error]
+parse::binary_integer_with_underscores_optional(bytes) -> Option[i64]
+parse::is_binary_integer_with_underscores(bytes) -> bool
+parse::binary_integer_with_underscores_or(bytes, fallback) -> i64
 parse::octal_integer(bytes) -> Result[i64, std::error::Error]
 parse::octal_integer_optional(bytes) -> Option[i64]
 parse::is_octal_integer(bytes) -> bool
 parse::octal_integer_or(bytes, fallback) -> i64
+parse::octal_integer_with_underscores(bytes) -> Result[i64, std::error::Error]
+parse::octal_integer_with_underscores_optional(bytes) -> Option[i64]
+parse::is_octal_integer_with_underscores(bytes) -> bool
+parse::octal_integer_with_underscores_or(bytes, fallback) -> i64
 parse::boolean(bytes) -> Result[bool, std::error::Error]
 parse::boolean_optional(bytes) -> Option[bool]
 parse::is_boolean(bytes) -> bool
@@ -61,6 +89,10 @@ parse::is_float(bytes) -> bool
 parse::float(bytes) -> Result[f64, std::error::Error]
 parse::float_optional(bytes) -> Option[f64]
 parse::float_or(bytes, fallback) -> f64
+parse::is_float_with_underscores(bytes) -> bool
+parse::float_with_underscores(bytes) -> Result[f64, std::error::Error]
+parse::float_with_underscores_optional(bytes) -> Option[f64]
+parse::float_with_underscores_or(bytes, fallback) -> f64
 parse::float_unchecked(bytes) -> f64
 ```
 
@@ -83,6 +115,16 @@ side is rejected. It intentionally does not recognize prefixes such as `0x` or
 `binary_integer`, and `octal_integer` are readable wrappers for bases `16`,
 `2`, and `8`. All three wrappers have matching `_optional`, `is_*`, and
 `*_or` forms.
+
+Default integer parsers are strict and reject underscores. Use the explicit
+`*_with_underscores` family for human-edited configuration values such as
+`1_000`, `ff_ff`, or `1010_0101`. Underscores are accepted only between two
+valid digits in the chosen radix. Leading, trailing, repeated, sign-adjacent,
+prefix-adjacent, and suffix-adjacent underscores are rejected:
+`_1`, `1_`, `1__0`, `+_1`, and `1_e2` are invalid. The underscore-aware
+integer helpers keep the same overflow checks and the same `InvalidInput` versus
+`InvalidData` split as the strict radix helpers, and they have matching
+`_optional`, `is_*`, and `*_or` forms.
 
 `unsigned` and `unsigned_radix` mirror the signed integer parsers for `u64`.
 They trim ASCII whitespace, accept an optional leading `+`, reject `-`, and
@@ -108,14 +150,22 @@ digits[.digits][e[+|-]digits]
 ```
 
 At least one digit is required before or after the decimal point. Exponents
-accept `e` or `E`. Hex floats, `NaN`, `inf`, locale decimal separators, and
-underscores are future policy work.
+accept `e` or `E`. Hex floats, `NaN`, `inf`, and locale decimal separators are
+future policy work.
 
 `float` returns `Result[f64, Error]` and reports `InvalidData` for empty input,
 unsupported spelling, or trailing garbage. `float_optional` is the compact
 compatibility form for validation-style callers, `float_or` returns the parsed
 `f64` or the caller's fallback, and `float_unchecked` preserves the old
 asserting behavior by panicking when `is_float(bytes)` is false.
+
+Default float parsing also rejects underscores. Use
+`float_with_underscores`, `float_with_underscores_optional`,
+`is_float_with_underscores`, or `float_with_underscores_or` when a decimal
+float may contain digit separators. The underscore rule is the same as for
+integers: `_` must sit between two decimal digits within the integer, fraction,
+or exponent digit run. Examples such as `1_000.5_0e1_2` and `.2_5` are valid;
+`1_.0`, `1._0`, `1e_2`, and `1__0` are invalid.
 
 The `Parse` trait gives generic code one spelling for common built-in types:
 
@@ -144,7 +194,7 @@ fn read_size(bytes: Slice[u8]) -> u64 {
 }
 
 fn read_hex_color(bytes: Slice[u8]) -> i64 {
-  return parse::hex_integer_or(bytes, 0);
+  return parse::hex_integer_with_underscores_or(bytes, 0);
 }
 
 fn read_mode(bytes: Slice[u8]) -> i64 {
@@ -160,7 +210,7 @@ fn require_count(bytes: Slice[u8]) -> Result[i64, Error] {
 }
 
 fn require_ratio(bytes: Slice[u8]) -> Result[f64, Error] {
-  return parse::float(bytes);
+  return parse::float_with_underscores(bytes);
 }
 ```
 
@@ -173,9 +223,9 @@ tests/cases/standard-library/ok/parse/std-parse-basic.ari
 The focused test covers ASCII-trimmed signed integer parsing, radix wrappers
 for binary, octal, and hexadecimal input, unsigned integer parsing, boolean
 parsing, natural `Result` error categories for invalid data and invalid radix
-input, `_optional` compatibility helpers, `Result` float parsing, float
-validation, float conversion, trait-backed typed parsing, and invalid
-whole-input cases. It is wired into
+input, `_optional` compatibility helpers, underscore-aware integer/radix/float
+parsing, `Result` float parsing, float validation, float conversion,
+trait-backed typed parsing, and invalid whole-input cases. It is wired into
 `make check-prelude` with LLVM symbol checks for the public helpers.
 
 ## Future Work

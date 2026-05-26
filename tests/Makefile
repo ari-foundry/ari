@@ -1999,30 +1999,58 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5parse22integer_radix_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16is_integer_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16integer_radix_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse30integer_radix_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse39integer_radix_with_underscores_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse33is_integer_radix_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse33integer_radix_with_underscores_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse7integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16integer_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10is_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse24integer_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse33integer_with_underscores_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse27is_integer_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse27integer_with_underscores_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse8unsigned' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17unsigned_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse11is_unsigned' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse11unsigned_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse25unsigned_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse34unsigned_with_underscores_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse28is_unsigned_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse28unsigned_with_underscores_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14unsigned_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse23unsigned_radix_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17is_unsigned_radix' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17unsigned_radix_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse31unsigned_radix_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse40unsigned_radix_with_underscores_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse34is_unsigned_radix_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse34unsigned_radix_with_underscores_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse11hex_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse20hex_integer_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14is_hex_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14hex_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse28hex_integer_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse37hex_integer_with_underscores_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse31is_hex_integer_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse31hex_integer_with_underscores_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse14binary_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse23binary_integer_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17is_binary_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse17binary_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse31binary_integer_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse40binary_integer_with_underscores_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse34is_binary_integer_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse34binary_integer_with_underscores_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse13octal_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse22octal_integer_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16is_octal_integer' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16octal_integer_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse30octal_integer_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse39octal_integer_with_underscores_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse33is_octal_integer_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse33octal_integer_with_underscores_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse7boolean' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse16boolean_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse10is_boolean' $(BUILD_DIR)/prelude/std-parse-basic.ll
@@ -2032,6 +2060,10 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5parse14float_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse5float' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse15float_unchecked' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse25is_float_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse25float_with_underscores_or' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse31float_with_underscores_optional' $(BUILD_DIR)/prelude/std-parse-basic.ll
+	grep -q '_ARNv3std5parse22float_with_underscores' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse12parse__G_i64' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse12parse__G_u64' $(BUILD_DIR)/prelude/std-parse-basic.ll
 	grep -q '_ARNv3std5parse12parse__G_f64' $(BUILD_DIR)/prelude/std-parse-basic.ll

@@ -148,6 +148,94 @@ pub fn integer_radix(values: std::Slice[u8], radix: i64) -> std::Result[i64, std
   }
 }
 
+pub fn integer_radix_with_underscores_optional(values: std::Slice[u8], radix: i64) -> std::Option[i64] {
+  let input = std::ascii::trim(values);
+  if input.len == 0 {
+    return std::None<i64>();
+  }
+  if radix < 2 || radix > 36 {
+    return std::None<i64>();
+  }
+
+  var sign = 1;
+  var index = 0;
+  if input[0] == '-' {
+    sign = -1;
+    index = 1;
+  } else if input[0] == '+' {
+    index = 1;
+  }
+
+  if index >= input.len {
+    return std::None<i64>();
+  }
+
+  let limit = if sign < 0 { i64_min_magnitude() } else { i64_max_magnitude() };
+  let radix_value = radix as u64;
+  var result = 0u64;
+  var seen_digit = false;
+  var previous_digit = false;
+  while index < input.len {
+    let integer_byte = input[index];
+    if integer_byte == '_' {
+      if !previous_digit {
+        return std::None<i64>();
+      }
+      if index + 1 >= input.len {
+        return std::None<i64>();
+      }
+      match radix_digit_value(input[index + 1], radix) {
+        std::Some(_) => {}
+        std::None => {
+          return std::None<i64>();
+        }
+      }
+      previous_digit = false;
+    } else {
+      match radix_digit_value(integer_byte, radix) {
+        std::Some(value) => {
+          let digit = value as u64;
+          if result > (limit - digit) / radix_value {
+            return std::None<i64>();
+          }
+          result = (result * radix_value) + digit;
+          seen_digit = true;
+          previous_digit = true;
+        }
+        std::None => {
+          return std::None<i64>();
+        }
+      }
+    }
+    index = index + 1;
+  }
+
+  if !seen_digit || !previous_digit {
+    return std::None<i64>();
+  }
+  if sign < 0 {
+    if result == i64_min_magnitude() {
+      return std::Some<i64>(i64_min_value());
+    }
+    return std::Some<i64>(0 - (result as i64));
+  }
+  return std::Some<i64>(result as i64);
+}
+
+pub fn integer_radix_with_underscores(values: std::Slice[u8], radix: i64) -> std::Result[i64, std::error::Error] {
+  if radix < 2 || radix > 36 {
+    return std::Err<i64, std::error::Error>(invalid_input_error());
+  }
+  match integer_radix_with_underscores_optional(values, radix) {
+    std::Some(value) => {
+      return std::Ok<i64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<i64, std::error::Error>(invalid_data_error());
+    }
+  }
+}
+
 pub fn unsigned_radix_optional(values: std::Slice[u8], radix: i64) -> std::Option[u64] {
   let input = std::ascii::trim(values);
   if input.len == 0 {
@@ -203,8 +291,99 @@ pub fn unsigned_radix(values: std::Slice[u8], radix: i64) -> std::Result[u64, st
   }
 }
 
+pub fn unsigned_radix_with_underscores_optional(values: std::Slice[u8], radix: i64) -> std::Option[u64] {
+  let input = std::ascii::trim(values);
+  if input.len == 0 {
+    return std::None<u64>();
+  }
+  if radix < 2 || radix > 36 {
+    return std::None<u64>();
+  }
+
+  var index = 0;
+  if input[0] == '+' {
+    index = 1;
+  } else if input[0] == '-' {
+    return std::None<u64>();
+  }
+
+  if index >= input.len {
+    return std::None<u64>();
+  }
+
+  let limit = u64_max_value();
+  let radix_value = radix as u64;
+  var result = 0u64;
+  var seen_digit = false;
+  var previous_digit = false;
+  while index < input.len {
+    let integer_byte = input[index];
+    if integer_byte == '_' {
+      if !previous_digit {
+        return std::None<u64>();
+      }
+      if index + 1 >= input.len {
+        return std::None<u64>();
+      }
+      match radix_digit_value(input[index + 1], radix) {
+        std::Some(_) => {}
+        std::None => {
+          return std::None<u64>();
+        }
+      }
+      previous_digit = false;
+    } else {
+      match radix_digit_value(integer_byte, radix) {
+        std::Some(value) => {
+          let digit = value as u64;
+          if result > (limit - digit) / radix_value {
+            return std::None<u64>();
+          }
+          result = (result * radix_value) + digit;
+          seen_digit = true;
+          previous_digit = true;
+        }
+        std::None => {
+          return std::None<u64>();
+        }
+      }
+    }
+    index = index + 1;
+  }
+
+  if !seen_digit || !previous_digit {
+    return std::None<u64>();
+  }
+  return std::Some<u64>(result);
+}
+
+pub fn unsigned_radix_with_underscores(values: std::Slice[u8], radix: i64) -> std::Result[u64, std::error::Error] {
+  if radix < 2 || radix > 36 {
+    return std::Err<u64, std::error::Error>(invalid_input_error());
+  }
+  match unsigned_radix_with_underscores_optional(values, radix) {
+    std::Some(value) => {
+      return std::Ok<u64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<u64, std::error::Error>(invalid_data_error());
+    }
+  }
+}
+
 pub fn is_unsigned_radix(values: std::Slice[u8], radix: i64) -> bool {
   match unsigned_radix_optional(values, radix) {
+    std::Some(_) => {
+      return true;
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+pub fn is_unsigned_radix_with_underscores(values: std::Slice[u8], radix: i64) -> bool {
+  match unsigned_radix_with_underscores_optional(values, radix) {
     std::Some(_) => {
       return true;
     }
@@ -225,8 +404,30 @@ pub fn unsigned_radix_or(values: std::Slice[u8], radix: i64, fallback: u64) -> u
   }
 }
 
+pub fn unsigned_radix_with_underscores_or(values: std::Slice[u8], radix: i64, fallback: u64) -> u64 {
+  match unsigned_radix_with_underscores_optional(values, radix) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {
+      return fallback;
+    }
+  }
+}
+
 pub fn is_integer_radix(values: std::Slice[u8], radix: i64) -> bool {
   match integer_radix_optional(values, radix) {
+    std::Some(_) => {
+      return true;
+    }
+    std::None => {
+      return false;
+    }
+  }
+}
+
+pub fn is_integer_radix_with_underscores(values: std::Slice[u8], radix: i64) -> bool {
+  match integer_radix_with_underscores_optional(values, radix) {
     std::Some(_) => {
       return true;
     }
@@ -247,12 +448,31 @@ pub fn integer_radix_or(values: std::Slice[u8], radix: i64, fallback: i64) -> i6
   }
 }
 
+pub fn integer_radix_with_underscores_or(values: std::Slice[u8], radix: i64, fallback: i64) -> i64 {
+  match integer_radix_with_underscores_optional(values, radix) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {
+      return fallback;
+    }
+  }
+}
+
 pub fn integer_optional(values: std::Slice[u8]) -> std::Option[i64] {
   return integer_radix_optional(values, 10);
 }
 
 pub fn integer(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
   return integer_radix(values, 10);
+}
+
+pub fn integer_with_underscores_optional(values: std::Slice[u8]) -> std::Option[i64] {
+  return integer_radix_with_underscores_optional(values, 10);
+}
+
+pub fn integer_with_underscores(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return integer_radix_with_underscores(values, 10);
 }
 
 pub fn is_integer(values: std::Slice[u8]) -> bool {
@@ -266,6 +486,10 @@ pub fn is_integer(values: std::Slice[u8]) -> bool {
   }
 }
 
+pub fn is_integer_with_underscores(values: std::Slice[u8]) -> bool {
+  return is_integer_radix_with_underscores(values, 10);
+}
+
 pub fn integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
   match integer_optional(values) {
     std::Some(value) => {
@@ -277,12 +501,24 @@ pub fn integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
   }
 }
 
+pub fn integer_with_underscores_or(values: std::Slice[u8], fallback: i64) -> i64 {
+  return integer_radix_with_underscores_or(values, 10, fallback);
+}
+
 pub fn unsigned_optional(values: std::Slice[u8]) -> std::Option[u64] {
   return unsigned_radix_optional(values, 10);
 }
 
 pub fn unsigned(values: std::Slice[u8]) -> std::Result[u64, std::error::Error] {
   return unsigned_radix(values, 10);
+}
+
+pub fn unsigned_with_underscores_optional(values: std::Slice[u8]) -> std::Option[u64] {
+  return unsigned_radix_with_underscores_optional(values, 10);
+}
+
+pub fn unsigned_with_underscores(values: std::Slice[u8]) -> std::Result[u64, std::error::Error] {
+  return unsigned_radix_with_underscores(values, 10);
 }
 
 pub fn is_unsigned(values: std::Slice[u8]) -> bool {
@@ -296,6 +532,10 @@ pub fn is_unsigned(values: std::Slice[u8]) -> bool {
   }
 }
 
+pub fn is_unsigned_with_underscores(values: std::Slice[u8]) -> bool {
+  return is_unsigned_radix_with_underscores(values, 10);
+}
+
 pub fn unsigned_or(values: std::Slice[u8], fallback: u64) -> u64 {
   match unsigned_optional(values) {
     std::Some(value) => {
@@ -307,6 +547,10 @@ pub fn unsigned_or(values: std::Slice[u8], fallback: u64) -> u64 {
   }
 }
 
+pub fn unsigned_with_underscores_or(values: std::Slice[u8], fallback: u64) -> u64 {
+  return unsigned_radix_with_underscores_or(values, 10, fallback);
+}
+
 pub fn hex_integer_optional(values: std::Slice[u8]) -> std::Option[i64] {
   return integer_radix_optional(values, 16);
 }
@@ -315,12 +559,28 @@ pub fn hex_integer(values: std::Slice[u8]) -> std::Result[i64, std::error::Error
   return integer_radix(values, 16);
 }
 
+pub fn hex_integer_with_underscores_optional(values: std::Slice[u8]) -> std::Option[i64] {
+  return integer_radix_with_underscores_optional(values, 16);
+}
+
+pub fn hex_integer_with_underscores(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return integer_radix_with_underscores(values, 16);
+}
+
 pub fn is_hex_integer(values: std::Slice[u8]) -> bool {
   return is_integer_radix(values, 16);
 }
 
+pub fn is_hex_integer_with_underscores(values: std::Slice[u8]) -> bool {
+  return is_integer_radix_with_underscores(values, 16);
+}
+
 pub fn hex_integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
   return integer_radix_or(values, 16, fallback);
+}
+
+pub fn hex_integer_with_underscores_or(values: std::Slice[u8], fallback: i64) -> i64 {
+  return integer_radix_with_underscores_or(values, 16, fallback);
 }
 
 pub fn binary_integer_optional(values: std::Slice[u8]) -> std::Option[i64] {
@@ -331,12 +591,28 @@ pub fn binary_integer(values: std::Slice[u8]) -> std::Result[i64, std::error::Er
   return integer_radix(values, 2);
 }
 
+pub fn binary_integer_with_underscores_optional(values: std::Slice[u8]) -> std::Option[i64] {
+  return integer_radix_with_underscores_optional(values, 2);
+}
+
+pub fn binary_integer_with_underscores(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return integer_radix_with_underscores(values, 2);
+}
+
 pub fn is_binary_integer(values: std::Slice[u8]) -> bool {
   return is_integer_radix(values, 2);
 }
 
+pub fn is_binary_integer_with_underscores(values: std::Slice[u8]) -> bool {
+  return is_integer_radix_with_underscores(values, 2);
+}
+
 pub fn binary_integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
   return integer_radix_or(values, 2, fallback);
+}
+
+pub fn binary_integer_with_underscores_or(values: std::Slice[u8], fallback: i64) -> i64 {
+  return integer_radix_with_underscores_or(values, 2, fallback);
 }
 
 pub fn octal_integer_optional(values: std::Slice[u8]) -> std::Option[i64] {
@@ -347,12 +623,28 @@ pub fn octal_integer(values: std::Slice[u8]) -> std::Result[i64, std::error::Err
   return integer_radix(values, 8);
 }
 
+pub fn octal_integer_with_underscores_optional(values: std::Slice[u8]) -> std::Option[i64] {
+  return integer_radix_with_underscores_optional(values, 8);
+}
+
+pub fn octal_integer_with_underscores(values: std::Slice[u8]) -> std::Result[i64, std::error::Error] {
+  return integer_radix_with_underscores(values, 8);
+}
+
 pub fn is_octal_integer(values: std::Slice[u8]) -> bool {
   return is_integer_radix(values, 8);
 }
 
+pub fn is_octal_integer_with_underscores(values: std::Slice[u8]) -> bool {
+  return is_integer_radix_with_underscores(values, 8);
+}
+
 pub fn octal_integer_or(values: std::Slice[u8], fallback: i64) -> i64 {
   return integer_radix_or(values, 8, fallback);
+}
+
+pub fn octal_integer_with_underscores_or(values: std::Slice[u8], fallback: i64) -> i64 {
+  return integer_radix_with_underscores_or(values, 8, fallback);
 }
 
 pub fn boolean_optional(values: std::Slice[u8]) -> std::Option[bool] {
@@ -489,6 +781,151 @@ pub fn is_float(values: std::Slice[u8]) -> bool {
   return index == input.len;
 }
 
+pub fn is_float_with_underscores(values: std::Slice[u8]) -> bool {
+  let input = std::ascii::trim(values);
+  if input.len == 0 {
+    return false;
+  }
+
+  var index = 0;
+  if input[0] == '-' {
+    index = 1;
+  } else if input[0] == '+' {
+    index = 1;
+  }
+
+  var seen_digit = false;
+  var previous_digit = false;
+  while index < input.len {
+    let integer_byte = input[index];
+    if integer_byte == '_' {
+      if !previous_digit {
+        return false;
+      }
+      if index + 1 >= input.len {
+        return false;
+      }
+      match std::ascii::digit_value(input[index + 1]) {
+        std::Some(_) => {}
+        std::None => {
+          return false;
+        }
+      }
+      previous_digit = false;
+      index = index + 1;
+    } else {
+      match std::ascii::digit_value(integer_byte) {
+        std::Some(_) => {
+          seen_digit = true;
+          previous_digit = true;
+          index = index + 1;
+        }
+        std::None => {
+          break;
+        }
+      }
+    }
+  }
+
+  if index < input.len {
+    if input[index] == '.' {
+      index = index + 1;
+      var previous_fraction_digit = false;
+      while index < input.len {
+        let fraction_byte = input[index];
+        if fraction_byte == '_' {
+          if !previous_fraction_digit {
+            return false;
+          }
+          if index + 1 >= input.len {
+            return false;
+          }
+          match std::ascii::digit_value(input[index + 1]) {
+            std::Some(_) => {}
+            std::None => {
+              return false;
+            }
+          }
+          previous_fraction_digit = false;
+          index = index + 1;
+        } else {
+          match std::ascii::digit_value(fraction_byte) {
+            std::Some(_) => {
+              seen_digit = true;
+              previous_fraction_digit = true;
+              index = index + 1;
+            }
+            std::None => {
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if !seen_digit {
+    return false;
+  }
+
+  if index < input.len {
+    if input[index] == 'e' || input[index] == 'E' {
+      index = index + 1;
+      if index >= input.len {
+        return false;
+      }
+
+      if input[index] == '-' {
+        index = index + 1;
+      } else if input[index] == '+' {
+        index = index + 1;
+      }
+
+      if index >= input.len {
+        return false;
+      }
+
+      var seen_exponent_digit = false;
+      var previous_exponent_digit = false;
+      while index < input.len {
+        let exponent_byte = input[index];
+        if exponent_byte == '_' {
+          if !previous_exponent_digit {
+            return false;
+          }
+          if index + 1 >= input.len {
+            return false;
+          }
+          match std::ascii::digit_value(input[index + 1]) {
+            std::Some(_) => {}
+            std::None => {
+              return false;
+            }
+          }
+          previous_exponent_digit = false;
+          index = index + 1;
+        } else {
+          match std::ascii::digit_value(exponent_byte) {
+            std::Some(_) => {
+              seen_exponent_digit = true;
+              previous_exponent_digit = true;
+            }
+            std::None => {
+              return false;
+            }
+          }
+          index = index + 1;
+        }
+      }
+      if !seen_exponent_digit || !previous_exponent_digit {
+        return false;
+      }
+    }
+  }
+
+  return index == input.len;
+}
+
 pub fn float_or(values: std::Slice[u8], fallback: f64) -> f64 {
   let input = std::ascii::trim(values);
   if input.len == 0 {
@@ -589,6 +1026,98 @@ pub fn float_or(values: std::Slice[u8], fallback: f64) -> f64 {
   return value * sign;
 }
 
+pub fn float_with_underscores_or(values: std::Slice[u8], fallback: f64) -> f64 {
+  if !is_float_with_underscores(values) {
+    return fallback;
+  }
+
+  let input = std::ascii::trim(values);
+  var sign = 1.0f64;
+  var index = 0;
+  if input[0] == '-' {
+    sign = -1.0f64;
+    index = 1;
+  } else if input[0] == '+' {
+    index = 1;
+  }
+
+  var value = 0.0f64;
+  while index < input.len {
+    let integer_byte = input[index];
+    if integer_byte == '_' {
+      index = index + 1;
+    } else {
+      match std::ascii::digit_value(integer_byte) {
+        std::Some(integer_digit) => {
+          value = (value * 10.0f64) + (integer_digit as f64);
+          index = index + 1;
+        }
+        std::None => {
+          break;
+        }
+      }
+    }
+  }
+
+  if index < input.len {
+    if input[index] == '.' {
+      index = index + 1;
+      var scale = 0.1f64;
+      while index < input.len {
+        let fraction_byte = input[index];
+        if fraction_byte == '_' {
+          index = index + 1;
+        } else {
+          match std::ascii::digit_value(fraction_byte) {
+            std::Some(fraction_digit) => {
+              value = value + ((fraction_digit as f64) * scale);
+              scale = scale / 10.0f64;
+              index = index + 1;
+            }
+            std::None => {
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if index < input.len {
+    if input[index] == 'e' || input[index] == 'E' {
+      index = index + 1;
+      var exponent_sign = 1;
+      if input[index] == '-' {
+        exponent_sign = -1;
+        index = index + 1;
+      } else if input[index] == '+' {
+        index = index + 1;
+      }
+
+      var exponent = 0;
+      while index < input.len {
+        let exponent_byte = input[index];
+        if exponent_byte == '_' {
+          index = index + 1;
+        } else {
+          match std::ascii::digit_value(exponent_byte) {
+            std::Some(exponent_digit) => {
+              exponent = (exponent * 10) + exponent_digit;
+            }
+            std::None => {
+              return fallback;
+            }
+          }
+          index = index + 1;
+        }
+      }
+      value = value * pow10(exponent * exponent_sign);
+    }
+  }
+
+  return value * sign;
+}
+
 pub fn float_optional(values: std::Slice[u8]) -> std::Option[f64] {
   if !is_float(values) {
     return std::None<f64>();
@@ -596,8 +1125,26 @@ pub fn float_optional(values: std::Slice[u8]) -> std::Option[f64] {
   return std::Some<f64>(float_or(values, 0.0f64));
 }
 
+pub fn float_with_underscores_optional(values: std::Slice[u8]) -> std::Option[f64] {
+  if !is_float_with_underscores(values) {
+    return std::None<f64>();
+  }
+  return std::Some<f64>(float_with_underscores_or(values, 0.0f64));
+}
+
 pub fn float(values: std::Slice[u8]) -> std::Result[f64, std::error::Error] {
   match float_optional(values) {
+    std::Some(value) => {
+      return std::Ok<f64, std::error::Error>(value);
+    }
+    std::None => {
+      return std::Err<f64, std::error::Error>(invalid_data_error());
+    }
+  }
+}
+
+pub fn float_with_underscores(values: std::Slice[u8]) -> std::Result[f64, std::error::Error] {
+  match float_with_underscores_optional(values) {
     std::Some(value) => {
       return std::Ok<f64, std::error::Error>(value);
     }

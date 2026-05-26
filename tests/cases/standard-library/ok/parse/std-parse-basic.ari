@@ -35,6 +35,30 @@ fn main() -> i64 {
   assert(parse::integer_radix("10", 1).is_err());
   assert(parse::integer_radix("2", 2).is_err());
   assert(parse::integer_radix_optional("10", 1).is_none());
+  assert(parse::integer("1_000").is_err());
+  assert(parse::integer_with_underscores("1_000").unwrap_or(0) == 1000);
+  assert(parse::integer_with_underscores_optional("-9_223").unwrap_or(0) == -9223);
+  assert(parse::integer_with_underscores_or("bad_value", 11) == 11);
+  assert(parse::is_integer_with_underscores("+1_2_3"));
+  assert(!parse::is_integer_with_underscores("_123"));
+  assert(!parse::is_integer_with_underscores("123_"));
+  assert(!parse::is_integer_with_underscores("12__3"));
+  assert(parse::integer_radix_with_underscores("7f_ff", 16).unwrap_or(0) == 32767);
+  assert(parse::integer_radix_with_underscores_optional("-10_10", 2).unwrap_or(0) == -10);
+  assert(parse::integer_radix_with_underscores_or("bad_value", 16, 33) == 33);
+  assert(parse::is_integer_radix_with_underscores("z_z", 36));
+  assert(!parse::is_integer_radix_with_underscores("1_", 10));
+  assert(parse::unsigned_with_underscores("18_446_744_073_709_551_615").unwrap_or(0u64) == 18446744073709551615u64);
+  assert(parse::unsigned_with_underscores_optional("+1_024").unwrap_or(0u64) == 1024u64);
+  assert(parse::unsigned_with_underscores_or("bad_value", 55u64) == 55u64);
+  assert(parse::unsigned_with_underscores("18_446_744_073_709_551_616").is_err());
+  assert(parse::is_unsigned_with_underscores("1_2_3"));
+  assert(!parse::is_unsigned_with_underscores("12__3"));
+  assert(parse::unsigned_radix_with_underscores("ff_ff", 16).unwrap_or(0u64) == 65535u64);
+  assert(parse::unsigned_radix_with_underscores_optional("10_10", 2).unwrap_or(0u64) == 10u64);
+  assert(parse::unsigned_radix_with_underscores_or("bad_value", 16, 77u64) == 77u64);
+  assert(parse::is_unsigned_radix_with_underscores("7_7", 8));
+  assert(!parse::is_unsigned_radix_with_underscores("_77", 8));
   assert(parse::integer("123").unwrap_or(0) == 123);
   match parse::integer("12x") {
     Ok(_) => { panic(); }
@@ -64,16 +88,28 @@ fn main() -> i64 {
   assert(parse::hex_integer("-8000000000000000").unwrap_or(0) == min);
   assert(parse::hex_integer("8000000000000000").is_err());
   assert(parse::hex_integer_optional("8000000000000000").is_none());
+  assert(parse::hex_integer_with_underscores("7fff_ffff_ffff_ffff").unwrap_or(0) == max);
+  assert(parse::hex_integer_with_underscores_optional("-8_0000").unwrap_or(0) == -524288);
+  assert(parse::hex_integer_with_underscores_or("bad_value", 9) == 9);
+  assert(parse::is_hex_integer_with_underscores("ab_cd"));
   assert(parse::binary_integer("1010").unwrap_or(0) == 10);
   assert(parse::binary_integer_or("102", 4) == 4);
   assert(parse::binary_integer_optional("1010").unwrap_or(0) == 10);
   assert(!parse::is_binary_integer("102"));
+  assert(parse::binary_integer_with_underscores("1010_0101").unwrap_or(0) == 165);
+  assert(parse::binary_integer_with_underscores_optional("-101_0").unwrap_or(0) == -10);
+  assert(parse::binary_integer_with_underscores_or("10_2", 8) == 8);
+  assert(parse::is_binary_integer_with_underscores("1_0_1"));
   assert(parse::octal_integer("755").unwrap_or(0) == 493);
   assert(parse::octal_integer("-10").unwrap_or(0) == -8);
   assert(parse::octal_integer_or("778", 12) == 12);
   assert(parse::octal_integer_optional("755").unwrap_or(0) == 493);
   assert(parse::is_octal_integer("17"));
   assert(!parse::is_octal_integer("18"));
+  assert(parse::octal_integer_with_underscores("7_55").unwrap_or(0) == 493);
+  assert(parse::octal_integer_with_underscores_optional("-1_0").unwrap_or(0) == -8);
+  assert(parse::octal_integer_with_underscores_or("7_8", 12) == 12);
+  assert(parse::is_octal_integer_with_underscores("1_7"));
   match parse::integer(invalid_integer.as_slice()) {
     Ok(_) => { panic(); }
     Err(reason) => { assert(reason.is_kind(error::InvalidData)); }
@@ -107,6 +143,14 @@ fn main() -> i64 {
   assert((parse::float_optional(float_text.as_slice()).unwrap_or(0.0f64) as i64) == -1250);
   assert((parse::float_unchecked(float_text.as_slice()) as i64) == -1250);
   assert(!parse::is_float(invalid_float.as_slice()));
+  assert(!parse::is_float("1_000.0"));
+  assert(parse::is_float_with_underscores("1_000.5_0e1_2"));
+  assert(!parse::is_float_with_underscores("1_.0"));
+  assert(!parse::is_float_with_underscores("1._0"));
+  assert(!parse::is_float_with_underscores("1e_2"));
+  assert((parse::float_with_underscores("1_000.5_0e1").unwrap_or(0.0f64) as i64) == 10005);
+  assert(((parse::float_with_underscores_optional(".2_5").unwrap_or(0.0f64) * 100.0f64) as i64) == 25);
+  assert((parse::float_with_underscores_or("1__0", 4.0f64) as i64) == 4);
   match parse::float(invalid_float.as_slice()) {
     Ok(_) => { panic(); }
     Err(float_reason) => {

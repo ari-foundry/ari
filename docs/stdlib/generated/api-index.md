@@ -24,21 +24,21 @@ platform notes.
 
 ## Summary
 
-- API entries: `3013`
+- API entries: `3045`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 842 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 767 | stable candidate |
+| `core` | 799 | stable candidate |
 | `hosted` | 1217 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
 | `enum` | 25 |
-| `fn` | 1076 |
+| `fn` | 1108 |
 | `method` | 1516 |
 | `module` | 39 |
 | `struct` | 161 |
@@ -77,7 +77,7 @@ platform notes.
 | `std::net` | `hosted` | 272 |
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 50 |
-| `std::parse` | `core` | 45 |
+| `std::parse` | `core` | 77 |
 | `std::path` | `core` | 83 |
 | `std::process` | `hosted` | 143 |
 | `std::random` | `alloc/hosted` | 36 |
@@ -2749,6 +2749,9 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::parse::binary_integer` | check-prelude std-parse-basic Result-returning signed binary integer parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::binary_integer_optional` | check-prelude std-parse-basic Option-returning signed binary integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::binary_integer_or` | check-prelude std-parse-basic signed binary integer parser with fallback; docs/stdlib/modules/parse.md |
+| `fn std::parse::binary_integer_with_underscores` | check-prelude std-parse-basic Result-returning signed binary integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::binary_integer_with_underscores_optional` | check-prelude std-parse-basic Option-returning signed binary integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::binary_integer_with_underscores_or` | check-prelude std-parse-basic signed binary integer parser with digit separators and fallback; docs/stdlib/modules/parse.md |
 | `fn std::parse::boolean` | check-prelude std-parse-basic Result-returning ASCII-trimmed lowercase bool parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::boolean_optional` | check-prelude std-parse-basic Option-returning lowercase bool compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::boolean_or` | check-prelude std-parse-basic lowercase bool parser with fallback; docs/stdlib/modules/parse.md |
@@ -2756,28 +2759,51 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::parse::float_optional` | check-prelude std-parse-basic Option-returning decimal float compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_or` | check-prelude std-parse-basic fallback decimal float parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::float_unchecked` | check-prelude std-parse-basic asserting decimal float compatibility parser; docs/stdlib/modules/parse.md |
+| `fn std::parse::float_with_underscores` | check-prelude std-parse-basic Result-returning decimal float parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::float_with_underscores_optional` | check-prelude std-parse-basic Option-returning decimal float parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::float_with_underscores_or` | check-prelude std-parse-basic fallback decimal float parser with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::hex_integer` | check-prelude std-parse-basic Result-returning signed hexadecimal integer parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::hex_integer_optional` | check-prelude std-parse-basic Option-returning signed hexadecimal integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::hex_integer_or` | check-prelude std-parse-basic signed hexadecimal integer parser with fallback; docs/stdlib/modules/parse.md |
+| `fn std::parse::hex_integer_with_underscores` | check-prelude std-parse-basic Result-returning signed hexadecimal integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::hex_integer_with_underscores_optional` | check-prelude std-parse-basic Option-returning signed hexadecimal integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::hex_integer_with_underscores_or` | check-prelude std-parse-basic signed hexadecimal integer parser with digit separators and fallback; docs/stdlib/modules/parse.md |
 | `fn std::parse::integer` | check-prelude std-parse-basic Result-returning ASCII-trimmed signed integer parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::integer_optional` | check-prelude std-parse-basic Option-returning signed integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::integer_or` | check-prelude std-parse-basic signed integer parser with fallback; docs/stdlib/modules/parse.md |
 | `fn std::parse::integer_radix` | check-prelude std-parse-basic Result-returning signed radix integer parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::integer_radix_optional` | check-prelude std-parse-basic Option-returning signed radix integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::integer_radix_or` | check-prelude std-parse-basic signed radix integer parser with fallback; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer_radix_with_underscores` | check-prelude std-parse-basic Result-returning signed radix integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer_radix_with_underscores_optional` | check-prelude std-parse-basic Option-returning signed radix integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer_radix_with_underscores_or` | check-prelude std-parse-basic signed radix integer parser with digit separators and fallback; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer_with_underscores` | check-prelude std-parse-basic Result-returning signed integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer_with_underscores_optional` | check-prelude std-parse-basic Option-returning signed integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::integer_with_underscores_or` | check-prelude std-parse-basic signed integer parser with digit separators and fallback; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_binary_integer` | check-prelude std-parse-basic signed binary integer parser validator; docs/stdlib/modules/parse.md |
+| `fn std::parse::is_binary_integer_with_underscores` | check-prelude std-parse-basic signed binary integer parser validator with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_boolean` | check-prelude std-parse-basic lowercase bool parser validator; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_float` | check-prelude std-parse-basic decimal float validator; docs/stdlib/modules/parse.md |
+| `fn std::parse::is_float_with_underscores` | check-prelude std-parse-basic decimal float validator with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_hex_integer` | check-prelude std-parse-basic signed hexadecimal integer parser validator; docs/stdlib/modules/parse.md |
+| `fn std::parse::is_hex_integer_with_underscores` | check-prelude std-parse-basic signed hexadecimal integer parser validator with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_integer` | check-prelude std-parse-basic signed integer parser validator; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_integer_radix` | check-prelude std-parse-basic signed radix integer parser validator; docs/stdlib/modules/parse.md |
+| `fn std::parse::is_integer_radix_with_underscores` | check-prelude std-parse-basic signed radix integer parser validator with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::is_integer_with_underscores` | check-prelude std-parse-basic signed integer parser validator with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_octal_integer` | check-prelude std-parse-basic signed octal integer parser validator; docs/stdlib/modules/parse.md |
+| `fn std::parse::is_octal_integer_with_underscores` | check-prelude std-parse-basic signed octal integer parser validator with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_parse[T: std::parse::Parse]` | check-prelude std-parse-basic trait-backed typed parser validator; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_unsigned` | check-prelude std-parse-basic unsigned integer parser validator; docs/stdlib/modules/parse.md |
 | `fn std::parse::is_unsigned_radix` | check-prelude std-parse-basic unsigned radix integer parser validator; docs/stdlib/modules/parse.md |
+| `fn std::parse::is_unsigned_radix_with_underscores` | check-prelude std-parse-basic unsigned radix integer parser validator with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::is_unsigned_with_underscores` | check-prelude std-parse-basic unsigned integer parser validator with digit separators; docs/stdlib/modules/parse.md |
 | `fn std::parse::octal_integer` | check-prelude std-parse-basic Result-returning signed octal integer parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::octal_integer_optional` | check-prelude std-parse-basic Option-returning signed octal integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::octal_integer_or` | check-prelude std-parse-basic signed octal integer parser with fallback; docs/stdlib/modules/parse.md |
+| `fn std::parse::octal_integer_with_underscores` | check-prelude std-parse-basic Result-returning signed octal integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::octal_integer_with_underscores_optional` | check-prelude std-parse-basic Option-returning signed octal integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::octal_integer_with_underscores_or` | check-prelude std-parse-basic signed octal integer parser with digit separators and fallback; docs/stdlib/modules/parse.md |
 | `fn std::parse::parse[T: std::parse::Parse]` | check-prelude std-parse-basic trait-backed typed parser dispatch; docs/stdlib/modules/parse.md |
 | `fn std::parse::parse_or[T: std::parse::Parse]` | check-prelude std-parse-basic trait-backed typed parser fallback dispatch; docs/stdlib/modules/parse.md |
 | `fn std::parse::unsigned` | check-prelude std-parse-basic Result-returning unsigned decimal integer parser; docs/stdlib/modules/parse.md |
@@ -2786,6 +2812,12 @@ Tier: `core`. Stability reading: stable candidate.
 | `fn std::parse::unsigned_radix` | check-prelude std-parse-basic Result-returning unsigned radix integer parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::unsigned_radix_optional` | check-prelude std-parse-basic Option-returning unsigned radix integer compatibility parser; docs/stdlib/modules/parse.md |
 | `fn std::parse::unsigned_radix_or` | check-prelude std-parse-basic unsigned radix integer parser with fallback; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned_radix_with_underscores` | check-prelude std-parse-basic Result-returning unsigned radix integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned_radix_with_underscores_optional` | check-prelude std-parse-basic Option-returning unsigned radix integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned_radix_with_underscores_or` | check-prelude std-parse-basic unsigned radix integer parser with digit separators and fallback; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned_with_underscores` | check-prelude std-parse-basic Result-returning unsigned decimal integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned_with_underscores_optional` | check-prelude std-parse-basic Option-returning unsigned integer parser with digit separators; docs/stdlib/modules/parse.md |
+| `fn std::parse::unsigned_with_underscores_or` | check-prelude std-parse-basic unsigned decimal integer parser with digit separators and fallback; docs/stdlib/modules/parse.md |
 
 ### module
 
