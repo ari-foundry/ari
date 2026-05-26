@@ -105,7 +105,7 @@ Omit the semicolon only for the final value expression in a function, block,
 | C string view | `std::c::CStr`, `CStr` | Borrowed wrapper around NUL-terminated `string` or `ptr c_char`; `std::string::c_str(text)` returns this same type. |
 | owned C string | `std::c::CString`, `CString` | Zone-backed bytes with one trailing NUL for C-shaped storage. |
 | path byte view | `std::path::Path`, `std::path::PathBytes` | Borrowed bytes interpreted by hosted Linux/POSIX lexical path helpers. Not validated UTF-8. |
-| owned path buffer | `std::path::PathBuf` | Zone-backed POSIX path byte buffer; currently aliases `std::string::String`. |
+| owned path buffer | `std::path::PathBuf` | Distinct zone-backed POSIX path byte buffer. |
 | tuple | `(i64, bool)`, `()` | Single-element tuples are not supported. |
 | fixed array | `[i64, 3]` | Constant length, stack/aggregate storage. |
 | local vector | `Vec<i64>`, `Vec[i64]` | Compiler-known local vector surface from list literals. |

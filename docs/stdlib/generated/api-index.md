@@ -24,14 +24,14 @@ platform notes.
 
 ## Summary
 
-- API entries: `3224`
+- API entries: `3227`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
 | --- | ---: | --- |
 | `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
-| `core` | 865 | stable candidate |
+| `core` | 868 | stable candidate |
 | `hosted` | 1324 | platform-backed |
 | `platform` | 151 | platform-specific |
 
@@ -39,12 +39,12 @@ platform notes.
 | --- | ---: |
 | `enum` | 32 |
 | `fn` | 1169 |
-| `method` | 1614 |
+| `method` | 1617 |
 | `module` | 39 |
-| `struct` | 170 |
+| `struct` | 171 |
 | `trait` | 39 |
 | `trait-method` | 41 |
-| `type` | 23 |
+| `type` | 22 |
 | `use` | 97 |
 
 ## Modules
@@ -78,7 +78,7 @@ platform notes.
 | `std::option` | `core` | 12 |
 | `std::os` | `platform` | 50 |
 | `std::parse` | `core` | 91 |
-| `std::path` | `core` | 95 |
+| `std::path` | `core` | 98 |
 | `std::process` | `hosted` | 149 |
 | `std::random` | `alloc/hosted` | 36 |
 | `std::rc` | `alloc` | 32 |
@@ -3058,6 +3058,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::path::Component::kind` | check-prelude std-path-components kinded path component classifier accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::as_bytes` | check-prelude std-path-buf owned path byte accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::as_path` | check-prelude std-path-buf borrowed view from owned path buffer; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::as_string` | check-prelude std-path-buf borrowed internal byte-string view from owned path buffer; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::components` | check-prelude std-path-buf owned path component iterator wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::components_with_kinds` | check-prelude std-path-components owned path kinded component iterator wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::contains_nul` | check-prelude std-path-buf owned path NUL-byte predicate; docs/stdlib/modules/path.md |
@@ -3065,8 +3066,10 @@ Tier: `core`. Stability reading: stable candidate.
 | `method std::path::PathBuf::file_name` | check-prelude std-path-buf owned path file-name wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::file_stem` | check-prelude std-path-buf owned path file-stem wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::is_absolute` | check-prelude std-path-buf owned path absolute predicate; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::is_empty` | check-prelude std-path-buf owned path empty predicate; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::is_relative` | check-prelude std-path-buf owned path relative predicate; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::join` | check-prelude std-path-buf owned path lexical join method; docs/stdlib/modules/path.md |
+| `method std::path::PathBuf::len` | check-prelude std-path-buf owned path byte length accessor; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::normalize` | check-prelude std-path-buf owned path normalization method; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::parent` | check-prelude std-path-buf owned path parent wrapper; docs/stdlib/modules/path.md |
 | `method std::path::PathBuf::stem` | check-prelude std-path-buf owned path stem wrapper; docs/stdlib/modules/path.md |
@@ -3117,6 +3120,7 @@ Tier: `core`. Stability reading: stable candidate.
 | `struct std::path::Component` | check-prelude std-path-components borrowed kinded path component handle; docs/stdlib/modules/path.md |
 | `struct std::path::Components` | check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md |
 | `struct std::path::ComponentsWithKinds` | check-prelude std-path-components borrowed kinded path component iterator; docs/stdlib/modules/path.md |
+| `struct std::path::PathBuf` | check-prelude std-path-buf distinct owned POSIX path byte buffer; docs/stdlib/modules/path.md |
 | `struct std::path::PathBytes` | check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md |
 
 ### type
@@ -3124,7 +3128,6 @@ Tier: `core`. Stability reading: stable candidate.
 | API | Coverage note |
 | --- | --- |
 | `type std::path::Path` | check-prelude std-path-buf readability alias for borrowed path bytes; docs/stdlib/modules/path.md |
-| `type std::path::PathBuf` | check-prelude std-path-buf owned POSIX path byte-buffer alias; docs/stdlib/modules/path.md |
 
 ## `std::process`
 

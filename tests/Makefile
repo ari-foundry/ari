@@ -2256,8 +2256,9 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4path11from_string' $(BUILD_DIR)/prelude/std-path-buf.ll
 	grep -q '_ARNv3std4path9to_string' $(BUILD_DIR)/prelude/std-path-buf.ll
 	grep -q '_ARNv3std4path16current_dir_join' $(BUILD_DIR)/prelude/std-path-buf.ll
-	grep -q 'std__string__String8inherent7as_path' $(BUILD_DIR)/prelude/std-path-buf.ll
-	grep -q 'std__string__String8inherent8as_bytes' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q 'std__path__PathBuf8inherent7as_path' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q 'std__path__PathBuf8inherent8as_bytes' $(BUILD_DIR)/prelude/std-path-buf.ll
+	grep -q 'std__path__PathBuf8inherent9as_string' $(BUILD_DIR)/prelude/std-path-buf.ll
 	$(TARGET) tests/cases/standard-library/ok/path/std-path-buf.ari -o $(BUILD_DIR)/prelude/std-path-buf.elf
 	$(BUILD_DIR)/prelude/std-path-buf.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll

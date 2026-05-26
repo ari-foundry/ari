@@ -9,8 +9,9 @@ separator and paths are byte strings, not validated UTF-8 strings. Ari's
 zone-backed `std::string::String` is also byte-oriented, while
 `std::string::Utf8` is the explicit validated UTF-8 view. `std::string::OsStr`
 is the borrowed OS-boundary byte view, and `PathBytes` is the borrowed
-path-policy view over those bytes. `PathBuf` is the current owned POSIX path
-buffer and aliases `std::string::String`.
+path-policy view over those bytes. `PathBuf` is the owned POSIX path buffer:
+it is a distinct path type whose storage is an internal zone-backed
+`std::string::String`.
 
 Windows drive prefixes, UNC paths, verbatim paths, alternate separators, and
 platform-specific normalization belong to future runtime/path policy work.
@@ -34,7 +35,7 @@ Use these rules when choosing or extending path APIs:
 | `std::string::Utf8` | Borrowed bytes already validated as UTF-8. | Borrowed view. |
 | `std::string::OsStr` | Borrowed host OS bytes. | Borrowed view. |
 | `std::path::PathBytes` / `Path` | Borrowed bytes interpreted with POSIX lexical path rules. | Borrowed view. |
-| `std::path::PathBuf` | Owned POSIX path bytes. Currently a `String` alias. | Zone-backed owner. |
+| `std::path::PathBuf` | Owned POSIX path bytes with path-specific methods. | Zone-backed owner wrapping an internal `String`. |
 
 `String` and `PathBuf` are byte buffers. Do not assume UTF-8 unless the caller
 validates through `std::string::Utf8` or `std::encoding`. `PathBytes` and
@@ -109,6 +110,12 @@ path::join(ref mut zone, base, child) -> PathBuf
 path::join_many(ref mut zone, parts) -> PathBuf
 path::current_dir_join(ref mut zone, child) -> Result[PathBuf, Error]
 path::normalize_in(ref mut zone, path) -> String
+path_buf.as_string() -> ref String
+path_buf.as_bytes() -> Slice[u8]
+path_buf.as_path() -> PathBytes
+path_buf.to_string(ref mut zone) -> String
+path_buf.len() -> i64
+path_buf.is_empty() -> bool
 ```
 
 `is_separator` takes `char` because it checks Ari's ASCII byte character
@@ -168,19 +175,22 @@ whose names do not overlap with generic byte-slice helpers:
 "/tmp".join_in(ref mut zone, "bin")
 ```
 
-`PathBuf` is the current owned POSIX path buffer. In this compiler slice it is
-a type alias for `std::string::String`, so ownership, lifetime, copying, and
-zone behavior match `String`: the bytes live in the zone used to create the
-buffer and remain valid until that zone is reset or destroyed. `PathBuf` does
-not validate UTF-8. It exposes path-specific wrappers for common inspections
-while inherited `String` methods such as `len`, `is_empty`, `as_slice`,
-`starts_with`, and `ends_with` remain byte-string operations:
+`PathBuf` is the current owned POSIX path buffer. It is a distinct struct, not
+a `String` type alias, so APIs can require an owned path without accepting every
+byte string by accident. Internally it stores a zone-backed `String`; the bytes
+live in the zone used to create the buffer and remain valid until that zone is
+reset or destroyed. `PathBuf` does not validate UTF-8. Use `as_string` when a
+caller explicitly needs the internal byte string view, `as_bytes` for a
+borrowed slice, and `as_path` for a borrowed path-policy view:
 
 ```ari
 let owned = path::from_string(ref mut zone, "src/main.ari");
+owned.as_string()
 owned.as_bytes()
 owned.as_path()
 owned.to_string(ref mut zone)
+owned.len()
+owned.is_empty()
 owned.contains_nul()
 owned.is_absolute()
 owned.is_relative()
@@ -353,9 +363,8 @@ Use this section when adding or reviewing path helpers.
   normalization policy.
 - Prefer `PathBytes`/`Path` in APIs when the value should be interpreted as a
   path. Prefer raw `Slice[u8]` when the helper is genuinely byte-generic.
-- Remember that `PathBuf` is currently a type alias for `String`. Do not rely
-  on representation-specific behavior that would block a future distinct
-  owned path type.
+- Treat `PathBuf` as an opaque owned path. Convert through `as_bytes`,
+  `as_path`, `as_string`, or `to_string` instead of relying on its field layout.
 
 ## Tests
 
@@ -383,7 +392,7 @@ results.
 ## Future Work
 
 - platform-specific separators and Windows drive/UNC rules
-- a distinct non-alias `PathBuf` representation if Ari later needs
-  platform-specific ownership separate from `std::string::String`
+- richer platform-owned path representations if Ari later separates POSIX byte
+  paths from target OS strings
 - deeper integration with `std::fs::canonicalize` and other filesystem APIs as
   more of them accept path-byte values directly

@@ -46,9 +46,9 @@ Allocation-returning helpers take `ref mut Zone` because Ari has no hidden
 global heap. Whole-file reads, directory collection, link reads, and
 canonicalization copy bytes into the caller's zone. The current path model is
 POSIX-style byte paths: `std::path::PathBytes` is a borrowed byte view and
-`std::path::PathBuf` is an owned `std::string::String` alias. In this module
-`canonicalize(ref mut zone, path)` therefore returns an owned byte string that
-can be used as a `PathBuf`/path byte source.
+`std::path::PathBuf` is a distinct owned path wrapper around a zone-backed
+byte string. In this module `canonicalize(ref mut zone, path)` therefore
+returns an owned path byte buffer.
 
 Common natural API shapes:
 
@@ -919,7 +919,7 @@ branching is enough, and `entry.metadata_unchecked()` or
 | read directory | Current: Result-first entry-list `read_dir(ref mut zone, path)` and `read_dir_entries(ref mut zone, path)`, name-list `read_dir_names(ref mut zone, path)` with `try_read_dir` compatibility, `_optional`/`try_*` absence-only helpers, `_unchecked` asserting compatibility, `open_dir(path)` with `Error`, raw compatibility `open_dir_raw(path)`, `try_open_dir(path)`, `open_dir_unchecked(path)`, `Dir`, `DirEntry`, `dir.next(ref mut zone)`, `dir.close()`/`dir.close_unchecked()`, borrowed entry name/path methods, and lazy `DirEntry` metadata/file-kind predicates; richer per-entry errors are roadmap. |
 | create directory | Current: Result-first single-directory `create_dir(path)`, `create_dir_bool(path)` boolean compatibility, raw compatibility `create_dir_raw(path)`, idempotent `ensure_dir(path)`, Result-first recursive `create_dir_all(path)`, `create_dir_all_bool(path)` boolean compatibility, raw compatibility `create_dir_all_raw(path)`, and `ensure_dir_all(path)` for missing parent directories. |
 | temporary files | Current: Result-first `temp_file(ref mut zone)` / `temp_file_in(ref mut zone, prefix)` and `temp_dir(ref mut zone)` / `temp_dir_in(ref mut zone, prefix)` wrappers over the hosted POSIX `mkstemp`/`mkdtemp` implementation. `TempFile` owns the descriptor and path buffer, `TempDir` owns the path buffer, and callers should explicitly close/remove the resource when they want recoverable cleanup errors. |
-| path manipulation | Current: source lexical helpers in `std::path`, borrowed `PathBytes`/`Path` views, and owned POSIX `PathBuf` as a `std::string::String` alias; platform-specific owned paths remain roadmap. |
+| path manipulation | Current: source lexical helpers in `std::path`, borrowed `PathBytes`/`Path` views, and a distinct owned POSIX `PathBuf` wrapper; platform-specific owned paths remain roadmap. |
 | file locking | Current: hosted POSIX advisory locks through `flock(2)` with shared, exclusive, nonblocking try, and unlock helpers on `File`; Windows and mandatory-locking policy remain roadmap. |
 
 Temporary files and directories are exposed from `std::fs` because ordinary

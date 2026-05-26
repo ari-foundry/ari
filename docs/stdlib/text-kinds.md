@@ -9,7 +9,7 @@ together. Use this page when deciding which API a library should accept.
 | Owned byte string | `std::string::String` | Zone-backed mutable bytes with no UTF-8 promise. | Output buffers, parser buffers, byte-oriented file reads, formatting results. |
 | UTF-8 string view | `std::string::Utf8` | Borrowed bytes that have already passed UTF-8 validation. | Unicode scalar counting and byte-offset scalar lookup. |
 | OS string view | `std::string::OsStr` | Borrowed operating-system string bytes. On the current POSIX slice this is raw bytes and may not be UTF-8. | Environment/path boundary data before deciding whether it is text. |
-| Path bytes | `std::path::PathBytes`, `std::path::PathBuf` | Borrowed or owned bytes interpreted as a lexical POSIX path. `PathBuf` is currently a zone-backed `std::string::String` alias. | Splitting, joining, normalizing, and component inspection. |
+| Path bytes | `std::path::PathBytes`, `std::path::PathBuf` | Borrowed or owned bytes interpreted as a lexical POSIX path. `PathBuf` is a distinct owned path wrapper around a zone-backed byte string. | Splitting, joining, normalizing, and component inspection. |
 
 ## Rules Of Thumb
 
@@ -44,7 +44,7 @@ together. Use this page when deciding which API a library should accept.
 ## Current Limits
 
 The first slice now includes `std::c::CString` for owned NUL-terminated byte
-storage and `std::path::PathBuf` as an owned POSIX byte-buffer alias, but
+storage and `std::path::PathBuf` as an owned POSIX byte-buffer wrapper, but
 fallible construction and direct arbitrary C-call handoff for zone-backed
 buffers still need explicit FFI escape policy. Owned `Utf8String`, `OsString`,
 and a distinct platform-specific `PathBuf` representation remain roadmap work

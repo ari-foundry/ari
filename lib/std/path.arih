@@ -54,8 +54,15 @@ pub struct PathBytes {
   bytes: std::Slice[u8],
 }
 
+pub struct PathBuf {
+  bytes_value: std::string::String,
+}
+
 pub type Path = std::path::PathBytes;
-pub type PathBuf = std::string::String;
+
+fn path_buf_from_string(value: std::string::String) -> std::path::PathBuf {
+  return std::path::PathBuf { bytes_value: value };
+}
 
 pub fn is_separator(value: char) -> bool {
   return value == '/';
@@ -89,7 +96,7 @@ pub fn as_bytes(path: std::path::PathBytes) -> std::Slice[u8] {
 }
 
 pub fn from_bytes(zone: ref mut Zone, path: std::Slice[u8]) -> std::path::PathBuf {
-  return std::string::from_slice_in(zone, path);
+  return path_buf_from_string(std::string::from_slice_in(zone, path));
 }
 
 pub fn from_string(zone: ref mut Zone, text: string) -> std::path::PathBuf {
@@ -444,7 +451,7 @@ pub fn join_in(zone: ref mut Zone, base: std::Slice[u8], child: std::Slice[u8]) 
 }
 
 pub fn join(zone: ref mut Zone, base: std::path::PathBytes, child: std::path::PathBytes) -> std::path::PathBuf {
-  return join_in(zone, base.as_slice(), child.as_slice());
+  return path_buf_from_string(join_in(zone, base.as_slice(), child.as_slice()));
 }
 
 pub fn join_many(zone: ref mut Zone, parts: std::Slice[std::path::PathBytes]) -> std::path::PathBuf {
@@ -467,7 +474,7 @@ pub fn join_many(zone: ref mut Zone, parts: std::Slice[std::path::PathBytes]) ->
     }
     index = index + 1;
   }
-  return output;
+  return path_buf_from_string(output);
 }
 
 pub fn current_dir_join(zone: ref mut Zone, child: std::path::PathBytes) -> std::Result[std::path::PathBuf, std::error::Error] {
@@ -782,61 +789,73 @@ pub impl std::path::PathBytes {
   }
 
   fn normalize(self: ref Self, zone: ref mut Zone) -> std::path::PathBuf {
-    return std::path::normalize_in(zone, self.bytes);
+    return std::path::path_buf_from_string(std::path::normalize_in(zone, self.bytes));
   }
 }
 
 pub impl std::path::PathBuf {
+  fn as_string(self: ref Self) -> ref std::string::String {
+    return ref self.bytes_value;
+  }
+
   fn as_bytes(self: ref Self) -> std::Slice[u8] {
-    return self.as_slice();
+    return self.bytes_value.as_slice();
   }
 
   fn as_path(self: ref Self) -> std::path::PathBytes {
-    return std::path::bytes(self.as_slice());
+    return std::path::bytes(self.as_bytes());
   }
 
   fn to_string(self: ref Self, zone: ref mut Zone) -> std::string::String {
-    return self.copy_to(zone);
+    return self.bytes_value.copy_to(zone);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.bytes_value.len();
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.bytes_value.is_empty();
   }
 
   fn contains_nul(self: ref Self) -> bool {
-    return std::path::contains_nul(self.as_slice());
+    return std::path::contains_nul(self.as_bytes());
   }
 
   fn is_absolute(self: ref Self) -> bool {
-    return std::path::is_absolute(self.as_slice());
+    return std::path::is_absolute(self.as_bytes());
   }
 
   fn is_relative(self: ref Self) -> bool {
-    return std::path::is_relative(self.as_slice());
+    return std::path::is_relative(self.as_bytes());
   }
 
   fn components(self: ref Self) -> std::path::Components {
-    return std::path::components(self.as_slice());
+    return std::path::components(self.as_bytes());
   }
 
   fn components_with_kinds(self: ref Self) -> std::path::ComponentsWithKinds {
-    return std::path::components_with_kinds(self.as_slice());
+    return std::path::components_with_kinds(self.as_bytes());
   }
 
   fn file_name(self: ref Self) -> std::Option[std::Slice[u8]] {
-    return std::path::file_name(self.as_slice());
+    return std::path::file_name(self.as_bytes());
   }
 
   fn parent(self: ref Self) -> std::Option[std::Slice[u8]] {
-    return std::path::parent(self.as_slice());
+    return std::path::parent(self.as_bytes());
   }
 
   fn extension(self: ref Self) -> std::Option[std::Slice[u8]] {
-    return std::path::extension(self.as_slice());
+    return std::path::extension(self.as_bytes());
   }
 
   fn stem(self: ref Self) -> std::Option[std::Slice[u8]] {
-    return std::path::stem(self.as_slice());
+    return std::path::stem(self.as_bytes());
   }
 
   fn file_stem(self: ref Self) -> std::Option[std::Slice[u8]] {
-    return std::path::file_stem(self.as_slice());
+    return std::path::file_stem(self.as_bytes());
   }
 
   fn join(self: ref Self, zone: ref mut Zone, child: std::path::PathBytes) -> std::path::PathBuf {
@@ -844,14 +863,20 @@ pub impl std::path::PathBuf {
   }
 
   fn normalize(self: ref Self, zone: ref mut Zone) -> std::path::PathBuf {
-    return std::path::normalize_in(zone, self.as_slice());
+    return std::path::path_buf_from_string(std::path::normalize_in(zone, self.as_bytes()));
   }
 
   fn with_file_name(self: ref Self, zone: ref mut Zone, new_file_name: std::Slice[u8]) -> std::path::PathBuf {
-    return std::path::with_file_name_in(zone, self.as_slice(), new_file_name);
+    return std::path::path_buf_from_string(std::path::with_file_name_in(zone, self.as_bytes(), new_file_name));
   }
 
   fn with_extension(self: ref Self, zone: ref mut Zone, new_extension: std::Slice[u8]) -> std::path::PathBuf {
-    return std::path::with_extension_in(zone, self.as_slice(), new_extension);
+    return std::path::path_buf_from_string(std::path::with_extension_in(zone, self.as_bytes(), new_extension));
+  }
+}
+
+impl std::zone::ZoneBacked for std::path::PathBuf {
+  pub fn zone(self: ref Self) -> std::zone::ZoneMetadata {
+    return std::zone::of<std::string::String>(ref self.bytes_value);
   }
 }

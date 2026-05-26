@@ -20,6 +20,9 @@ fn main() -> i64 {
 
   let from_text = std::path::from_string(ref mut zone, "src/main.ari");
   expect_buf(ref from_text, "src/main.ari");
+  assert(from_text.len() == 12);
+  assert(!from_text.is_empty());
+  assert(from_text.as_string().equals_text("src/main.ari"));
   assert(from_text.as_path().has_extension(std::string::bytes("ari")));
   assert(from_text.file_stem().unwrap().equals(std::string::bytes("main")));
 

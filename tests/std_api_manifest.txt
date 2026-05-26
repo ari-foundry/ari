@@ -2206,6 +2206,7 @@ method std::path::Component::is_root|check-prelude std-path-components root comp
 method std::path::Component::kind|check-prelude std-path-components kinded path component classifier accessor; docs/stdlib/modules/path.md
 method std::path::PathBuf::as_bytes|check-prelude std-path-buf owned path byte accessor; docs/stdlib/modules/path.md
 method std::path::PathBuf::as_path|check-prelude std-path-buf borrowed view from owned path buffer; docs/stdlib/modules/path.md
+method std::path::PathBuf::as_string|check-prelude std-path-buf borrowed internal byte-string view from owned path buffer; docs/stdlib/modules/path.md
 method std::path::PathBuf::components|check-prelude std-path-buf owned path component iterator wrapper; docs/stdlib/modules/path.md
 method std::path::PathBuf::components_with_kinds|check-prelude std-path-components owned path kinded component iterator wrapper; docs/stdlib/modules/path.md
 method std::path::PathBuf::contains_nul|check-prelude std-path-buf owned path NUL-byte predicate; docs/stdlib/modules/path.md
@@ -2213,8 +2214,10 @@ method std::path::PathBuf::extension|check-prelude std-path-buf owned path exten
 method std::path::PathBuf::file_name|check-prelude std-path-buf owned path file-name wrapper; docs/stdlib/modules/path.md
 method std::path::PathBuf::file_stem|check-prelude std-path-buf owned path file-stem wrapper; docs/stdlib/modules/path.md
 method std::path::PathBuf::is_absolute|check-prelude std-path-buf owned path absolute predicate; docs/stdlib/modules/path.md
+method std::path::PathBuf::is_empty|check-prelude std-path-buf owned path empty predicate; docs/stdlib/modules/path.md
 method std::path::PathBuf::is_relative|check-prelude std-path-buf owned path relative predicate; docs/stdlib/modules/path.md
 method std::path::PathBuf::join|check-prelude std-path-buf owned path lexical join method; docs/stdlib/modules/path.md
+method std::path::PathBuf::len|check-prelude std-path-buf owned path byte length accessor; docs/stdlib/modules/path.md
 method std::path::PathBuf::normalize|check-prelude std-path-buf owned path normalization method; docs/stdlib/modules/path.md
 method std::path::PathBuf::parent|check-prelude std-path-buf owned path parent wrapper; docs/stdlib/modules/path.md
 method std::path::PathBuf::stem|check-prelude std-path-buf owned path stem wrapper; docs/stdlib/modules/path.md
@@ -2974,6 +2977,7 @@ struct std::parse::ParseError|check-prelude std-parse-basic integer parse diagno
 struct std::path::Component|check-prelude std-path-components borrowed kinded path component handle; docs/stdlib/modules/path.md
 struct std::path::Components|check-prelude std-path-components borrowed lexical path component iterator; docs/stdlib/modules/path.md
 struct std::path::ComponentsWithKinds|check-prelude std-path-components borrowed kinded path component iterator; docs/stdlib/modules/path.md
+struct std::path::PathBuf|check-prelude std-path-buf distinct owned POSIX path byte buffer; docs/stdlib/modules/path.md
 struct std::path::PathBytes|check-prelude std-path-bytes typed borrowed path-byte view; docs/stdlib/modules/path.md
 struct std::process::Arg|check-prelude std-process-command borrowed C argv argument wrapper; docs/stdlib/modules/process.md
 struct std::process::Child|check-prelude std-process-command child process handle; docs/stdlib/modules/process.md
@@ -3125,7 +3129,6 @@ type std::net::ErrorKind|check-prelude std-error-integration shared networking e
 type std::os::Error|check-prelude std-error-integration shared OS error alias; docs/stdlib/modules/os.md
 type std::os::ErrorKind|check-prelude std-error-integration shared OS error-kind alias; docs/stdlib/modules/os.md
 type std::path::Path|check-prelude std-path-buf readability alias for borrowed path bytes; docs/stdlib/modules/path.md
-type std::path::PathBuf|check-prelude std-path-buf owned POSIX path byte-buffer alias; docs/stdlib/modules/path.md
 type std::process::ChildStderr|check-prelude std-process-high-level child stderr pipe alias; docs/stdlib/modules/process.md
 type std::process::ChildStdin|check-prelude std-process-high-level child stdin pipe alias; docs/stdlib/modules/process.md
 type std::process::ChildStdout|check-prelude std-process-high-level child stdout pipe alias; docs/stdlib/modules/process.md
