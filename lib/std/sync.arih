@@ -86,6 +86,11 @@ pub enum RecvError {
   RecvClosed,
 }
 
+pub enum RecvTimeoutError {
+  RecvTimeoutClosed,
+  RecvTimedOut,
+}
+
 pub enum TryRecvError {
   TryRecvEmpty,
   TryRecvClosed,
@@ -1114,6 +1119,33 @@ pub impl[T] std::sync::Receiver[T] {
       std::thread::yield_now();
     }
     return std::Err<T, std::sync::RecvError>(std::sync::RecvClosed);
+  }
+
+  fn recv_timeout(
+    self: ref mut Self,
+    duration: std::time::Duration
+  ) -> std::Result[T, std::sync::RecvTimeoutError] {
+    let deadline = std::time::timeout(duration);
+    while true {
+      match self.try_recv() {
+        std::Ok(value) => {
+          return std::Ok<T, std::sync::RecvTimeoutError>(value);
+        }
+        std::Err(reason) => {
+          match reason {
+            std::sync::TryRecvClosed => {
+              return std::Err<T, std::sync::RecvTimeoutError>(std::sync::RecvTimeoutClosed);
+            }
+            std::sync::TryRecvEmpty => {}
+          }
+        }
+      }
+      if deadline.has_expired() {
+        return std::Err<T, std::sync::RecvTimeoutError>(std::sync::RecvTimedOut);
+      }
+      std::thread::yield_now();
+    }
+    return std::Err<T, std::sync::RecvTimeoutError>(std::sync::RecvTimeoutClosed);
   }
 
   fn recv_optional(self: ref mut Self) -> std::Option[T] {

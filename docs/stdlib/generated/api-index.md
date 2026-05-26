@@ -24,7 +24,7 @@ platform notes.
 
 ## Summary
 
-- API entries: `3135`
+- API entries: `3137`
 - Modules: `40`
 
 | Tier | Entries | Stability reading |
@@ -32,14 +32,14 @@ platform notes.
 | `alloc` | 848 | usable |
 | `alloc/hosted` | 36 | usable with hosted entropy APIs |
 | `core` | 853 | stable candidate |
-| `hosted` | 1247 | platform-backed |
+| `hosted` | 1249 | platform-backed |
 | `platform` | 151 | platform-specific |
 
 | Kind | Entries |
 | --- | ---: |
-| `enum` | 28 |
+| `enum` | 29 |
 | `fn` | 1156 |
-| `method` | 1548 |
+| `method` | 1549 |
 | `module` | 39 |
 | `struct` | 166 |
 | `trait` | 39 |
@@ -84,7 +84,7 @@ platform notes.
 | `std::rc` | `alloc` | 32 |
 | `std::result` | `core` | 12 |
 | `std::string` | `alloc` | 145 |
-| `std::sync` | `hosted` | 167 |
+| `std::sync` | `hosted` | 169 |
 | `std::target` | `platform` | 52 |
 | `std::test` | `hosted` | 32 |
 | `std::thread` | `hosted` | 74 |
@@ -3554,6 +3554,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | --- | --- |
 | `enum std::sync::Ordering` | check-prelude std-sync-concurrency-api explicit atomic memory-order vocabulary; docs/stdlib/modules/sync.md |
 | `enum std::sync::RecvError` | check-prelude std-sync-concurrency-api channel blocking receive failure reason; docs/stdlib/modules/sync.md |
+| `enum std::sync::RecvTimeoutError` | check-prelude std-sync-concurrency-api channel timeout receive failure reason; docs/stdlib/modules/sync.md |
 | `enum std::sync::SendError[T]` | check-prelude std-sync-concurrency-api channel blocking send failure with unsent value; docs/stdlib/modules/sync.md |
 | `enum std::sync::TryRecvError` | check-prelude std-sync-concurrency-api channel nonblocking receive failure reason; docs/stdlib/modules/sync.md |
 | `enum std::sync::TrySendError[T]` | check-prelude std-sync-concurrency-api channel nonblocking send failure with unsent value; docs/stdlib/modules/sync.md |
@@ -3683,6 +3684,7 @@ Tier: `hosted`. Stability reading: platform-backed.
 | `method std::sync::Receiver[T]::is_empty` | check-prelude std-sync-concurrency-api receiver empty predicate; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::recv` | check-prelude std-sync-concurrency-api yielding channel Result receive helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::recv_optional` | check-prelude std-sync-concurrency-api yielding channel optional receive compatibility helper; docs/stdlib/modules/sync.md |
+| `method std::sync::Receiver[T]::recv_timeout` | check-prelude std-sync-concurrency-api timeout channel Result receive helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::try_recv` | check-prelude std-sync-concurrency-api nonblocking channel Result receive helper; docs/stdlib/modules/sync.md |
 | `method std::sync::Receiver[T]::try_recv_optional` | check-prelude std-sync-concurrency-api nonblocking channel optional receive compatibility helper; docs/stdlib/modules/sync.md |
 | `method std::sync::RwLock::is_locked` | check-prelude std-sync-rwlock rwlock method any-lock predicate; docs/stdlib/modules/sync.md |

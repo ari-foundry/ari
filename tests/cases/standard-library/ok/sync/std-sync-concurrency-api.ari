@@ -138,12 +138,28 @@ fn main() -> i64 {
   if receiver.recv().unwrap_or(0) == 101 {
     score = score + 65536;
   }
+  if sender_clone.send(202).is_ok() &&
+     receiver.recv_timeout(std::time::Duration::zero()).unwrap_or(0) == 202 {
+    score = score + 131072;
+  }
+  match receiver.recv_timeout(std::time::Duration::zero()) {
+    std::Err(std::sync::RecvTimedOut) => {
+      score = score + 262144;
+    }
+    _ => {}
+  }
   sender.close();
+  match receiver.recv_timeout(std::time::Duration::zero()) {
+    std::Err(std::sync::RecvTimeoutClosed) => {
+      score = score + 524288;
+    }
+    _ => {}
+  }
   if receiver.recv().is_err() && receiver.recv_optional().is_none() && sender.is_closed() {
     score = score + 4096;
   }
   zone::destroy(zone);
 
-  assert_eq_i64(score, 131071);
+  assert_eq_i64(score, 1048575);
   return score;
 }

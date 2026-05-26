@@ -25,6 +25,7 @@ enum std::result::ResultMut[T, E]|check-prelude prelude-option-result-ref-access
 enum std::result::ResultRef[T, E]|check-prelude prelude-option-result-ref-access shared borrowed result payload view union; docs/stdlib/modules/option-result.md
 enum std::sync::Ordering|check-prelude std-sync-concurrency-api explicit atomic memory-order vocabulary; docs/stdlib/modules/sync.md
 enum std::sync::RecvError|check-prelude std-sync-concurrency-api channel blocking receive failure reason; docs/stdlib/modules/sync.md
+enum std::sync::RecvTimeoutError|check-prelude std-sync-concurrency-api channel timeout receive failure reason; docs/stdlib/modules/sync.md
 enum std::sync::SendError[T]|check-prelude std-sync-concurrency-api channel blocking send failure with unsent value; docs/stdlib/modules/sync.md
 enum std::sync::TryRecvError|check-prelude std-sync-concurrency-api channel nonblocking receive failure reason; docs/stdlib/modules/sync.md
 enum std::sync::TrySendError[T]|check-prelude std-sync-concurrency-api channel nonblocking send failure with unsent value; docs/stdlib/modules/sync.md
@@ -2504,6 +2505,7 @@ method std::sync::Receiver[T]::is_closed|check-prelude std-sync-concurrency-api 
 method std::sync::Receiver[T]::is_empty|check-prelude std-sync-concurrency-api receiver empty predicate; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::recv|check-prelude std-sync-concurrency-api yielding channel Result receive helper; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::recv_optional|check-prelude std-sync-concurrency-api yielding channel optional receive compatibility helper; docs/stdlib/modules/sync.md
+method std::sync::Receiver[T]::recv_timeout|check-prelude std-sync-concurrency-api timeout channel Result receive helper; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::try_recv|check-prelude std-sync-concurrency-api nonblocking channel Result receive helper; docs/stdlib/modules/sync.md
 method std::sync::Receiver[T]::try_recv_optional|check-prelude std-sync-concurrency-api nonblocking channel optional receive compatibility helper; docs/stdlib/modules/sync.md
 method std::sync::RwLock::is_locked|check-prelude std-sync-rwlock rwlock method any-lock predicate; docs/stdlib/modules/sync.md
